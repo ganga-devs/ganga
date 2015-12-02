@@ -118,8 +118,8 @@ class Node(object):
         return obj
 
     def _getParent(self):
-        #if not hasattr(self, '_parent'):
-        #    self._parent = None
+        if not hasattr(self, '_parent'):
+            self._setParent(None)
         return self._parent
 
     def _setParent(self, parent):
@@ -127,7 +127,7 @@ class Node(object):
         #    import traceback
         #    traceback.print_stack()
         #    logger.error("Setting NONE Parent!!!")
-        self._parent = parent
+        setattr(self, '_parent', parent)
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
@@ -882,6 +882,7 @@ class GangaObject(Node):
     def __deepcopy__(self, memo=None):
         true_parent = self._getParent()
         self = stripProxy(self)
+        ## This triggers a read of the job from disk
         self._getReadAccess()
         self_copy = super(GangaObject, self).__deepcopy__(memo)
 
