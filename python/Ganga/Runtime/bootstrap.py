@@ -1449,6 +1449,12 @@ default_backends = LCG
         if not_exist:
             os.makedirs(os.environ['IPYTHONDIR'])
 
+        rc_file = os.path.join(os.environ['IPYTHONDIR'], 'ipythonrc')
+	logger.info("Checking: %s" % str(rc_file))
+        if not os.path.isfile(rc_file):
+            lock = open(rc_file, "w")
+            lock.close()
+
         return None
 
     @staticmethod
