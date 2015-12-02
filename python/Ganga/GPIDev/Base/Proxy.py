@@ -621,7 +621,7 @@ def GPIProxyClassFactory(name, pluginclass):
 
     def _setattr(self, x, v):
         'something'
-        logger.debug("_setattr")
+        #logger.debug("_setattr")
         global proxyRef
         # need to know about the types that require metadata attribute checking
         # this allows derived types to get same behaviour for free.
@@ -638,7 +638,18 @@ def GPIProxyClassFactory(name, pluginclass):
             if x not in [proxyRef, proxyObject]:
                 raise GangaAttributeError("'%s' has no attribute '%s'" % (getattr(self, proxyClass)._name, x))
 
-        object.__setattr__(self, x, v)
+        if type(v) == str:
+            try:
+                import __main__
+                new_v = eval(v, __main__.__dict__)
+            except Exception as err:
+                logger.debug("Proxy Cannot evaluate v=:%s" % str(v))
+                logger.debug("Using raw value instead")
+                new_v = v
+        else:
+            new_v = v
+
+        object.__setattr__(self, x, new_v)
 
         #new_obj = getattr(self, x)
         #if hasattr(new_obj, '_setParent'):
