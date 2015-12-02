@@ -97,6 +97,8 @@ class ShareRef(GangaObject):
 
     def __construct__(self):
         super(ShareRef, self).__construct__()
+        if sel.name is None:
+            self.name = {}
         self._setRegistry(None)
 
     def __getstate__(self):
@@ -117,6 +119,11 @@ class ShareRef(GangaObject):
             #self._releaseWriteAccess()
             self._setDirty()
 
+    def __getName(self):
+        if self.name is None:
+            self.name = {}
+        return self.name
+
     def increase(self, shareddir, force=False):
         """Increase the reference counter for a given shared directory by 1. If the directory
         doesn't currently have a reference counter, one is initialised with a value of 1.
@@ -131,17 +138,17 @@ class ShareRef(GangaObject):
         shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
         basedir = os.path.basename(shareddir)
         if os.path.isdir(shareddir) and force is False:
-            if basedir not in self.name.keys():
+            if basedir not in self.__getName().keys():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
-                self.name[basedir] = 1
+                self.__getName()[basedir] = 1
             else:
-                self.name[basedir] += 1
+                self.__getName()[basedir] += 1
         elif not os.path.isdir(shareddir) and force is True and basedir is not '':
-            if basedir not in self.name:
+            if basedir not in self.__getName().keys():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
-                self.name[basedir] = 0
+                self.__getName()[basedir] = 0
             else:
-                self.name[basedir] += 1
+                self.__getName()[basedir] += 1
         else:
             logger.error('Directory %s does not exist' % shareddir)
 
@@ -161,16 +168,16 @@ class ShareRef(GangaObject):
         basedir = os.path.basename(shareddir)
         # if remove==1, we force the shareref counter to 0
         try:
-            if self.name[basedir] > 0:
+            if self.__getName()[basedir] > 0:
                 if remove == 1:
-                    self.name[basedir] = 0
+                    self.__getName()[basedir] = 0
                 else:
-                    self.name[basedir] -= 1
+                    self.__getName()[basedir] -= 1
         # if we try to decrease a shareref that doesn't exist, we just set the
         # corresponding shareref to 0
         except KeyError as err:
             logger.debug("KeyError: %s" % str(err))
-            self.name[basedir] = 0
+            self.__getName()[basedir] = 0
 
         self._setDirty()
         #self._releaseWriteAccess()
@@ -251,12 +258,12 @@ class ShareRef(GangaObject):
         from Ganga.GPIDev.Lib.File import getSharedPath
         shareddir = os.path.join(getSharedPath(), os.path.basename(this_object))
         logger.debug('Adding %s to the shareref table.' % shareddir)
-        if os.path.basename(this_object) in self.name.keys():
-            self.name[os.path.basename(this_object)] += 1
+        if os.path.basename(this_object) in self.__getName().keys():
+            self.__getName()[os.path.basename(this_object)] += 1
         else:
-            self.name[os.path.basename(this_object)] = 1
+            self.__getName()[os.path.basename(this_object)] = 1
         if numsubjobs > 0:
-            self.name[os.path.basename(this_object)] += numsubjobs
+            self.__getName()[os.path.basename(this_object)] += numsubjobs
         if not os.path.isdir(shareddir) and os.path.basename(this_object) not in lookup_input:
            logger.info('Shared directory %s not found on disk.' % shareddir)
            if unp == True:
@@ -334,10 +341,10 @@ class ShareRef(GangaObject):
         # check to see that all sharedirs have an entry in the shareref. Otherwise, set their ref counter to 0
         # so the user is made aware of them at shutdown
         for this_dir in os.listdir(getSharedDir()):
-            if this_dir not in self.name.keys() and rmdir is False:
+            if this_dir not in self.__getName().keys() and rmdir is False:
                 logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository." % this_dir)
-                self.name[this_dir] = 0
-            elif this_dir not in self.name.keys() and rmdir is True:
+                self.__getName()[this_dir] = 0
+            elif this_dir not in self.__getName().keys() and rmdir is True:
                 logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository. Removing directory." % this_dir)
                 shutil.rmtree(os.path.join(getSharedPath(), this_dir))
 
@@ -398,7 +405,7 @@ class ShareRef(GangaObject):
             full_shareddir_path = os.path.join(getSharedPath(), shareddir)
             # for each sharedir in the shareref table that also exists in the
             # filesystem
-            if self.name[shareddir] == 0 and os.path.isdir(full_shareddir_path):
+            if self.__getName()[shareddir] == 0 and os.path.isdir(full_shareddir_path):
                 if ask_delete == 'Ask':
                     ask_delete = self.yes_no('', default=default)
                 if ask_delete == 'yes':
@@ -437,7 +444,7 @@ class ShareRef(GangaObject):
             ## DISABLED BY RCURRIE
 
         self._getWriteAccess()
-        for element in cleanup_list:
+        for element in cleanup_list and element in self.__getName():
             del self.name[element]
         self._setDirty()
         #self._releaseWriteAccess()
@@ -467,7 +474,7 @@ class ShareRef(GangaObject):
         """Prints content of the shareref metadata in a well formatted way.
         """
 
-        if len(self.name) > 0:
+        if len(self.__getName.keys()) > 0:
             from Ganga.GPIDev.Lib.File import getSharedPath
             fstring = " %48s | %20s |  %15s"
             disp_string = fstring % (
@@ -477,14 +484,14 @@ class ShareRef(GangaObject):
                                       "--------------------", "---------------\n")
             zero_ref = False
             unsorted = []
-            all_elements = copy.deepcopy(self.name)
+            all_elements = copy.deepcopy(self.__getName())
             for element in all_elements:
                 full_shareddir_path = os.path.join(getSharedPath(), os.path.basename(element))
                 if os.path.isdir(full_shareddir_path):
                     unsorted.append(shareref_data(os.path.basename(element), int(
-                        os.path.getctime(full_shareddir_path)), self.name[element]))
+                        os.path.getctime(full_shareddir_path)), self.__getName()[element]))
                 else:
-                    unsorted.append(shareref_data(os.path.basename(element), "Directory not found", self.name[element]))
+                    unsorted.append(shareref_data(os.path.basename(element), "Directory not found", self.__getName()[element]))
             decorated = sorted((name.date, i, name) for i, name in enumerate(unsorted))
             sorted_refs = [name for date, i, name in decorated]
             for line in sorted_refs:
