@@ -1482,6 +1482,9 @@ default_backends = LCG
         # First we set up the prompt
         from IPython.config.loader import Config
         cfg = Config()
+        cfg.TerminalInteractiveShell.colors = 'LightBG'
+        cfg.TerminalInteractiveShell.autocall = 0
+        cfg.PlainTextFormatter.pprint = True
         banner = exit_msg = ''
         prompt_config = cfg.PromptManager
         prompt_config.in_template = '[{time}]\nGanga In [\\#]: '
