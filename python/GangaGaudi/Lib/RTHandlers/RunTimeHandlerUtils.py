@@ -65,8 +65,10 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=None):
     logger.debug("RTUTils master_sandbox_prepare")
 
     # catch errors from not preparing properly
-    if not hasattr(app, 'is_prepared') or app.is_prepared is None:
+    if not hasattr(stripProxy(app), 'is_prepared') or app.is_prepared is None:
         logger.warning('Application is not prepared properly')
+        import traceback
+        traceback.print_stack()
         raise GangaException(None, 'Application not prepared properly')
 
     # Note EITHER the master inputsandbox OR the job.inputsandbox is added to
