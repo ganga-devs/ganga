@@ -526,7 +526,25 @@ class Item(object):
             if item._meta['sequence']:
                 logger.warning('type-checking is incomplete: type information not provided for a sequence %s, contact plugin developer', name)
             else:
-                self.__check(isinstance(val, type(item._meta['defvalue'])), name, type(item._meta['defvalue']), val)
+
+                logger.debug("valType: %s defValueType: %s name: %s" % (type(val), type(item._meta['defvalue']), name))
+                self.__check(self.__actualCheck(val, item._meta['defvalue']), name, type(item._meta['defvalue']), val)
+
+
+    @staticmethod
+    def __actualCheck( val, defVal ):
+
+        try:
+            from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+            knownLists = (list, tuple, GangaList)
+        except Exception as err:
+            knownLists = (list, tuple)
+        from Ganga.GPIDev.Base.Proxy import isType
+        if isType(defVal, knownLists):
+            if isType(val, knownLists):
+                return True
+        else:
+            return isinstance(val, type(defVal))
 
 
 class ComponentItem(Item):
