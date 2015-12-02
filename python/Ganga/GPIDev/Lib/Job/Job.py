@@ -217,7 +217,6 @@ class Job(GangaObject):
     def __init__(self):
         ## These NEED to be defined before The Schema is initialized due to the getter methods for some object cauing a LOT of code to be run!
         setattr(self, '_parent', None)
-        setattr(self, 'id', '')
         setattr(self, 'status', 'new')
         ## Finished initializing 'special' objects which are used in getter methods and alike
         super(Job, self).__init__()
@@ -569,9 +568,6 @@ class Job(GangaObject):
         Such default transitions do not have hooks.
         """
 
-        logger.info("updatStatus: Job: %s from %s to %s" % (self.getFQID('.'), self.status, newstatus))
-
-
         # For debugging to trace Failures and such
         #import traceback
         # traceback.print_stack()
@@ -760,13 +756,13 @@ class Job(GangaObject):
 
         j = self
         stats = []
-        
+
         if isType(j.subjobs, SubJobXMLList):
             for sj_id in range(len(j.subjobs)):
                 if j.subjobs.isLoaded(sj_id):
                     stats.append(j.subjobs(sj_id).status)
                 else:
-                    stats.append(j.subjobs.getAllCachedData()['status'] )
+                    stats.append(j.subjobs.getAllCachedData()[sj_id]['status'] )
         else:
             for sj in j.subjobs:
                 stats.append(sj.status)
@@ -979,8 +975,8 @@ class Job(GangaObject):
         """
         ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
         ## This prevents exceptions during initialization
-        if 'id' in stripProxy(self).__dict__.keys():
-            fqid = [stripProxy(self).__dict__['id']]
+        if hasattr(self, 'id'):
+            fqid = [self.id]
         else:
             return None
         cur = stripProxy(self)._getParent()  # FIXME: or use master attribute?
@@ -1810,19 +1806,20 @@ class Job(GangaObject):
         if not template:
             # remove the corresponding workspace files
 
-            for sj in self.subjobs:
-                def doit_sj(f):
-                    try:
-                        f()
-                    except OSError, err:
-                        logger.warning('cannot remove file workspace associated with the sub-job %s : %s', self.getFQID('.'), str(err))
+            if len(self.subjobs) > 0:
+                for sj in self.subjobs:
+                    def doit_sj(f):
+                        try:
+                            f()
+                        except OSError, err:
+                            logger.warning('cannot remove file workspace associated with the sub-job %s : %s', self.getFQID('.'), str(err))
 
-                wsp_input = self.getInputWorkspace(create=False)
-                doit_sj(wsp_input.remove)
-                wsp_output = self.getOutputWorkspace(create=False)
-                doit_sj(wsp_output.remove)
-                wsp_debug = self.getDebugWorkspace(create=False)
-                doit_sj(wsp_debug.remove)
+                    wsp_input = stripProxy(sj).getInputWorkspace(create=False)
+                    doit_sj(wsp_input.remove)
+                    wsp_output = stripProxy(sj).getOutputWorkspace(create=False)
+                    doit_sj(wsp_output.remove)
+                    wsp_debug = stripProxy(sj).getDebugWorkspace(create=False)
+                    doit_sj(wsp_debug.remove)
 
             def doit(f):
                 try:
