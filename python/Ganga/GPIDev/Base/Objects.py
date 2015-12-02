@@ -507,8 +507,13 @@ class Descriptor(object):
                 v = new_v
                 return v
             elif not isType(v, Node):
-                logger.error("v: %s" % str(v))
-                raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (str(v), str(type(v))))
+                if inspect.isclass(v):
+                    new_v = v()
+                if not isType(new_v, Node):
+                    logger.error("v: %s" % str(v))
+                    raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (str(v), str(type(v))))
+                else:
+                    v = self.__copyNodeObject(new_v, obj)
             else:
                 v = self.__copyNodeObject(v, obj)
 
