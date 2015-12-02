@@ -27,6 +27,7 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
     if mapfunction is not None:
         _list = map(mapfunction, _list)
 
+    logger.debug("Making a GangaList of size: %s" % str(len(_list)))
     result = makeGangaListByRef(_list)
 
     result._is_preparable = preparable
@@ -121,6 +122,7 @@ class GangaList(GangaObject):
 
     ## Attempt to prevent raw assignment of _list causing Proxied objects to get inside the GangaList
     def _attribute_filter__set__(self, name, value):
+        logger.debug("GangaList filter")
         if name == "_list":
             if is_list(value):
                 new_list = []
