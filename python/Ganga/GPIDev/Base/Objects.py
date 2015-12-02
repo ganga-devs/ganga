@@ -72,14 +72,8 @@ class Node(object):
 
     def __setstate__(self, this_dict):
         for key, val in this_dict['_data'].iteritems():
-            if isType(val, Node):
+            if isType(val, Node) and key not in self._ref_list:
                 val._setParent(self)
-            if hasattr(val, "__iter__") and not hasattr(val, "iteritems"):
-                # set the parent of the list or dictionary (or other iterable)
-                # items
-                for elem in val:
-                    if isType(elem, Node):
-                        elem._setParent(self)
 
         for attr in self._ref_list:
             if not hasattr(self, attr):
@@ -200,7 +194,7 @@ class Node(object):
         src_dict = new_obj.__dict__
         for key, val in src_dict.iteritems():
             this_attr = getattr(new_obj, key)
-            if isType(this_attr, GangaObject):
+            if isType(this_attr, Node) and key not in Node._ref_list:
                 #logger.debug("k: %s  Parent: %s" % (str(key), (stripProxy(srcobj))))
                 stripProxy(this_attr)._setParent(stripProxy(new_obj))
 
@@ -208,7 +202,7 @@ class Node(object):
         src_dict = self.__dict__
         for key, val in src_dict.iteritems():
             this_attr = getattr(self, key)
-            if isType(this_attr, GangaObject):
+            if isType(this_attr, Node) and key not in Node._ref_list:
                 #logger.debug("k: %s  Parent: %s" % (str(key), (stripProxy(srcobj))))
                 stripProxy(this_attr)._setParent(stripProxy(self))
 
@@ -249,7 +243,7 @@ class Node(object):
         src_dict = srcobj.__dict__
         for key, val in src_dict.iteritems():
             this_attr = getattr(srcobj, key)
-            if isType(this_attr, GangaObject):
+            if isType(this_attr, Node) and key not in Node._ref_list:
                 #logger.debug("k: %s  Parent: %s" % (str(key), (stripProxy(srcobj))))
                 stripProxy(this_attr)._setParent(stripProxy(srcobj))
 
@@ -269,12 +263,12 @@ class Node(object):
                 #raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(getName(_srcobj),getName(self)))
                 setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
-                if isType(this_attr, GangaObject):
+                if isType(this_attr, Node) and name not in Node._ref_list:
                     this_attr._setParent(self)
             elif not item['copyable']: ## Default of '1' instead of True...
                 setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
-                if isType(this_attr, GangaObject):
+                if isType(this_attr, Node) and name not in Node._ref_list:
                     this_attr._setParent(self)
             else:
                 copy_obj = deepcopy(getattr(_srcobj, name))
@@ -518,7 +512,7 @@ class Descriptor(object):
             else:
                 v = self.__copyNodeObject(v, obj)
 
-            if isType(v, GangaObject):
+            if isType(v, Node):
                 #logger.debug("Seeting Parent: %s" % stripProxy(obj))
                 stripProxy(v)._setParent(stripProxy(obj))
             return v
@@ -553,7 +547,7 @@ class Descriptor(object):
         ## _obj: parent class which 'owns' the attribute
         ## _val: value of the attribute which we're about to set
 
-        if getName(self) in ['_proxyObject', '_impl', '_proxyClass']:
+        if getName(self) in ['_parent', '_proxyObject', '_impl', '_proxyClass']:
             object.__setattr__(_obj, getName(self), _val)
             return
 
@@ -588,7 +582,7 @@ class Descriptor(object):
 
         set_obj = getattr(stripProxy(_obj), getName(self))
 
-        if isType(set_obj, GangaObject):
+        if isType(set_obj, Node):
             stripProxy(set_obj)._setParent(stripProxy(_obj))
 
         if val_reg is not None:
@@ -679,7 +673,7 @@ class Descriptor(object):
             else:
                 val = deepcopy(val)
 
-        if isType(val, GangaObject):
+        if isType(val, Node):
             val._setParent(obj)
 
         stripProxy(obj).setNodeAttribute(getName(self), val)
@@ -844,7 +838,7 @@ class GangaObject(Node):
                 defVal = self._schema.getDefaultValue(attr)
                 setattr(self, attr, defVal)
                 new_attr = getattr(self, attr)
-                if isType(new_attr, GangaObject):
+                if isType(new_attr, Node):
                     new_attr._setParent(self)
 
         # Overwrite default values with any config values specified
@@ -896,7 +890,7 @@ class GangaObject(Node):
                 if not item['copyable']:
                     setattr(self_copy, name, self._schema.getDefaultValue(name))
                     this_attr = getattr(self_copy, name)
-                    if isType(this_attr, GangaObject):
+                    if isType(this_attr, Node):
                         this_attr._setParent(self_copy)
                 else:
                     setattr(self_copy, name, deepcopy(getattr(self, name)))
