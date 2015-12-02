@@ -1296,8 +1296,7 @@ default_backends = LCG
             try:
                 execfile(fileName, local_ns)
             except Exception as x:
-                logger.error(
-                    'Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(x))
+                logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(x))
         # exec StartupGPI code
         from Ganga.Utility.Config import getConfig
         config = getConfig('Configuration')
@@ -1450,7 +1449,7 @@ default_backends = LCG
             os.makedirs(os.environ['IPYTHONDIR'])
 
         rc_file = os.path.join(os.environ['IPYTHONDIR'], 'ipythonrc')
-	logger.info("Checking: %s" % str(rc_file))
+	logger.debug("Checking: %s" % str(rc_file))
         if not os.path.isfile(rc_file):
             lock = open(rc_file, "w")
             lock.close()
