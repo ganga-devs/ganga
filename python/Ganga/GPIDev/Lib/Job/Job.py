@@ -1806,20 +1806,26 @@ class Job(GangaObject):
         if not template:
             # remove the corresponding workspace files
 
-            if len(self.subjobs) > 0:
-                for sj in self.subjobs:
-                    def doit_sj(f):
-                        try:
-                            f()
-                        except OSError, err:
-                            logger.warning('cannot remove file workspace associated with the sub-job %s : %s', self.getFQID('.'), str(err))
+            try:
 
-                    wsp_input = stripProxy(sj).getInputWorkspace(create=False)
-                    doit_sj(wsp_input.remove)
-                    wsp_output = stripProxy(sj).getOutputWorkspace(create=False)
-                    doit_sj(wsp_output.remove)
-                    wsp_debug = stripProxy(sj).getDebugWorkspace(create=False)
-                    doit_sj(wsp_debug.remove)
+                if len(self.subjobs) > 0:
+                    for sj in self.subjobs:
+                        def doit_sj(f):
+                            try:
+                                f()
+                            except OSError, err:
+                                logger.warning('cannot remove file workspace associated with the sub-job %s : %s', self.getFQID('.'), str(err))
+
+                        wsp_input = stripProxy(sj).getInputWorkspace(create=False)
+                        doit_sj(wsp_input.remove)
+                        wsp_output = stripProxy(sj).getOutputWorkspace(create=False)
+                        doit_sj(wsp_output.remove)
+                        wsp_debug = stripProxy(sj).getDebugWorkspace(create=False)
+                        doit_sj(wsp_debug.remove)
+            except KeyError as err:
+                logger.debug("KeyError, likely job hasn't been loaded.")
+                logger.debug("In that case try and skip")
+                pass
 
             def doit(f):
                 try:
