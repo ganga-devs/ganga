@@ -938,9 +938,20 @@ class JobRegistry_Monitor(GangaThread):
             try:
                 log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
                 for j in jobList_fromset:
-                    if hasattr(j, 'backend'):
-                        if hasattr(j.backend, 'setup'):
+
+            	    if hasattr(stripProxy(j), 'getNodeIndexCache') and\
+                        stripProxy(j).getNodeIndexCache() is not None and\
+                        'display:backend' in stripProxy(j).getNodeIndexCache().keys():
+
+                        name = stripProxy(j).getNodeIndexCache()['display:backend']
+                        import __main__
+                        new_backend = eval(str(name)+'()', __main__.__dict__)
+                        if hasattr(new_backend, 'setup'):
                             j.backend.setup()
+                    else:
+                        if hasattr(j, 'backend'):
+                            if hasattr(j.backend, 'setup'):
+                                j.backend.setup()
 
                 if self.enabled is False and self.alive is False:
                     log.debug("NOT enabled, leaving")
@@ -965,11 +976,11 @@ class JobRegistry_Monitor(GangaThread):
                     ### This tries to loop over ALL jobs in 'this_job_list' with the maximum amount of redundancy to keep
                     ### going and attempting to update all (sub)jobs if some fail
                     ### ALL ERRORS AND EXCEPTIONS ARE REPORTED VIA log.error SO NO INFORMATION IS LOST/IGNORED HERE!
+                    job_ids = ''
+                    for this_job in this_job_list:
+                        job_ids += ' %s' % str(this_job.id) 
+                    log.debug("Updating Jobs: %s" % job_ids)
                     try:
-                        job_ids = ''
-                        for this_job in this_job_list:
-                            job_ids += ' %s' % str(this_job.id) 
-                        log.debug("Updating Jobs: %s" % job_ids)
                         stripProxy(backendObj).master_updateMonitoringInformation(this_job_list)
                     except Exception as err:
                         #raise err
