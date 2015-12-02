@@ -201,6 +201,7 @@ class GangaRepositoryLocal(GangaRepository):
         self.saved_idxpaths = {}
         self._cache_load_timestamp = {}
         self.printed_explanation = False
+        self._fully_loaded = {}
 
     def startup(self):
         """ Starts a repository and reads in a directory structure.
@@ -630,6 +631,9 @@ class GangaRepositoryLocal(GangaRepository):
         else:
             raise RepositoryError(self, "Cannot flush an Empty object for ID: %s" % str(this_id))
 
+        if this_id not in self._fully_loaded.keys():
+            self._fully_loaded[this_id] = obj
+
     def flush(self, ids):
         logger.debug("Flushing: %s" % ids)
         #import traceback
@@ -661,10 +665,14 @@ class GangaRepositoryLocal(GangaRepository):
 
         return node_count
 
+    def _actually_loaded(self, this_id):
+        return this_id in self._fully_loaded.keys()
+
     def _actually_load_xml(self, fobj, fn, this_id, load_backup):
 
         must_load = (not this_id in self.objects) or (self.objects[this_id].getNodeData() is None)
         tmpobj = None
+
         if must_load or (self._load_timestamp.get(this_id, 0) != os.fstat(fobj.fileno()).st_ctime):
             tmpobj, errs = self.from_file(fobj)
 
@@ -721,6 +729,9 @@ class GangaRepositoryLocal(GangaRepository):
                             # process modifying the repo
                             obj.setNodeIndexCache(None)
                 obj.setNodeIndexCache(None)
+
+                if this_id not in self._fully_loaded.keys():
+                    self._fully_loaded[this_id] = obj
 
             else:
                 tmpobj.setNodeIndexCache(None)
@@ -847,6 +858,8 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("Delete Error: %s" % str(err))
             self._internal_del__(this_id)
             rmrf(os.path.dirname(fn))
+            if this_id in self._fully_loaded.keys():
+                del self._fully_loaded[this_id]
 
     def lock(self, ids):
         return self.sessionlock.lock_ids(ids)
