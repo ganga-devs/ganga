@@ -209,7 +209,7 @@ class GaudiBase(IPrepareApp):
         except Exception, err:
             # Cleanup after self on fail as self.is_prepared is used as test to
             # see if I'm prepared
-            logger.debug("Prepare Error:\n%s" % str(err))
+            logger.error("Prepare Error:\n%s" % str(err))
             self._unregister()
             raise
 
