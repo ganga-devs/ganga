@@ -97,11 +97,13 @@ last_modified_valid = False
 ############################
 
 
-def _dirac_check_proxy( renew = True ):
+def _dirac_check_proxy( renew = True):
     global last_modified_valid
-    if not proxy.isValid():
+    global proxy
+    _isValid = proxy.isValid()
+    if not _isValid:
         if renew is True:
-            proxy.create()
+            proxy.renew()
             if not proxy.isValid():
                 last_modified_valid = False
                 raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
@@ -128,7 +130,7 @@ def _checkProxy( delay=60, renew = True ):
     if last_modified_time is None:
         # This will move/change when new credential system in place
         ############################
-        _dirac_check_proxy( renew )
+        _dirac_check_proxy( True )
         ############################
         last_modified_time = time.time()
 

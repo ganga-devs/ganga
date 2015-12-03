@@ -328,6 +328,9 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
 
     split_files = []
 
+    if inputs is None:
+        raise SplittingError("Cannot Split Job as the inputdata appears to be None!")
+
     if len(inputs.getLFNs()) != len(inputs.files):
         raise SplittingError("Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
 
