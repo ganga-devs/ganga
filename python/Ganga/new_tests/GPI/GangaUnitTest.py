@@ -1,5 +1,7 @@
-
-import unittest
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 
 def startGanga():
@@ -41,7 +43,6 @@ def startGanga():
     # End taken from the ganga binary
 
     import Ganga.Runtime
-    import sys
     import Ganga.Utility.logging
     logger = Ganga.Utility.logging.getLogger()
 
@@ -52,8 +53,8 @@ def startGanga():
 
     logger.info("Parsing Command Line options")
     import Ganga.Runtime
-    import sys
     this_argv = []
+    this_argv.append('')  # This is needed for some reason. Otherwise first entry in list is not parsed.
     this_argv.append('-o[Configuration]RUNTIME_PATH=GangaTest')
     this_argv.append('-o[Configuration]user=testframework')
     this_argv.append('-o[Configuration]gangadir=$HOME/gangadir_testing')
