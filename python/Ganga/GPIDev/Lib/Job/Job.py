@@ -22,7 +22,7 @@ from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
-from Ganga.GPIDev.Base.Proxy import isType, getName, GPIProxyObjectFactory, addProxy, stripProxy, runProxyMethod
+from Ganga.GPIDev.Base.Proxy import isType, getName, GPIProxyObjectFactory, addProxy, stripProxy, runProxyMethod, runtimeEvalString
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
 from Ganga.Lib.Splitters import DefaultSplitter
@@ -2321,32 +2321,15 @@ class Job(GangaObject):
 
                 super(Job, self).__setattr__('backend', new_value)
             else:
-                if type(value) == str:
-                    try:
-                        import __main__
-                        new_value = eval(value, __main__.__dict__)
-                    except Exception as err:
-                        logger.debug("Cannot Evaluate: %s" % str(value))
-                        new_value = value
-                else:
-                    new_value = value
-                from Ganga.GPIDev.Base.Objects import Node
-                if isType(new_value, Node):
-                    stripProxy(new_value)._setParent(self)
+                new_value = runtimeEvalString(self, attr, value)
+                #from Ganga.GPIDev.Base.Objects import Node
+                #if isType(new_value, Node):
+                #    stripProxy(new_value)._setParent(self)
                 super(Job, self).__setattr__('backend', new_value)
         #elif attr == 'postprocessors':
         #    super(Job, self).__setattr__('postprocessors', GangaList())
         else:
-            #logger.debug("attr: %s" % str(attr))
-            if type(value) == str:
-                try:
-                    import __main__
-                    new_value = eval(value. __main__.__dict__)
-                except Exception as err:
-                    logger.debug("Cannot Evaluate: %s" % str(value))
-                    new_value = value
-            else:
-                new_value = value
+            new_value = runtimeEvalString(self, attr, value)
             #from Ganga.GPIDev.Base.Objects import Node
             #if isType(new_value, Node):
             #    stripProxy(new_value)._setParent(self)
