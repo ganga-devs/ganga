@@ -1027,13 +1027,11 @@ default_backends = LCG
         # cache
         credential = getCredential(name='GridProxy', create=False)
         if credential:
-            exportToGPI('gridProxy', GPIProxyObjectFactory(
-                credential), 'Objects', 'Grid proxy management object.')
+            exportToGPI('gridProxy', GPIProxyObjectFactory(credential), 'Objects', 'Grid proxy management object.')
 
         credential = getCredential('AfsToken')
         if credential:
-            exportToGPI('afsToken', GPIProxyObjectFactory(
-                credential), 'Objects', 'AFS token management object.')
+            exportToGPI('afsToken', GPIProxyObjectFactory(credential), 'Objects', 'AFS token management object.')
 
         # add built-in functions
 
