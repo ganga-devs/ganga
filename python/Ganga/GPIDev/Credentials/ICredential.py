@@ -172,8 +172,7 @@ class ICredential(GangaObject):
         self.inputPW_Widget = None
         return
 
-    def create(self, validity="", maxTry=0, minValidity="",
-               check=False):
+    def create(self, validity="", maxTry=0, minValidity="", check=False):
         """
         Create credential.
 
@@ -224,8 +223,7 @@ class ICredential(GangaObject):
         validityInSeconds = self.timeInSeconds(validity)
 
         if not validityInSeconds:
-            logger.warning("Problems with requested validity: %s"
-                           % str(validity))
+            logger.warning("Problems with requested validity: %s" % str(validity))
             return False
         if check and self.isValid(minValidity):
             return True
@@ -241,8 +239,7 @@ class ICredential(GangaObject):
                 # ignored since renew() and create() in GUI mode will not be
                 # called with any arguments.
                 if self.inputPW_Widget.ask(self._proxyObject):
-                    logger.debug(
-                        "Proceeding to retrieve password from inputPW_Widget.")
+                    logger.dg("Proceeding to retrieve password from inputPW_Widget.")
                     __pw = self.inputPW_Widget.getPassword(self._proxyObject)
                     if not __pw:
                         logger.warning("Password/passphrase expected!")
@@ -253,8 +250,7 @@ class ICredential(GangaObject):
                         tFile.flush()
                     except:
                         del __pw
-                        logger.warning(
-                            "Could not create secure temporary file for password!")
+                        logger.warning("Could not create secure temporary file for password!")
                         return False
                     del __pw
                 else:
@@ -265,13 +261,11 @@ class ICredential(GangaObject):
                 # Calling buildOpts() to take them into account.
                 self.buildOpts(self.command.init, False)
                 # Create initialisation list with the 'pipe' parameter
-                initList = [
-                    self.command.init, self.command.init_parameters["pipe"]]
+                initList = [self.command.init, self.command.init_parameters["pipe"]]
                 # Append option value pairs
                 for optName, optVal in self.command.currentOpts.iteritems():
                     initList.append("%s %s" % (optName, optVal))
-                status = self.shell.system(
-                    "cat %s|%s" % (tFile.name, " ".join(initList)))
+                status = self.shell.system("cat %s|%s" % (tFile.name, " ".join(initList)))
                 tFile.close()
                 # self.inputPW_Widget dialog postprocessing.
                 # E.g. disable autorenew mechanism if status != 0.
@@ -280,28 +274,25 @@ class ICredential(GangaObject):
                     logger.info("%s creation/renewal successful." % self._name)
                     return True
                 else:
-                    logger.warning(
-                        "%s creation/renewal failed [%s]." % (self._name, status))
+                    logger.warning("%s creation/renewal failed [%s]." % (self._name, status))
                     return False
             else:  # Non-GUI credential renewal/creation
                 # Check if renewal is from main process (i.e. by bootstrap or
                 # user)
-                if threading.currentThread().getName() == 'MainThread':
+                if threading.currentThread().getName() == 'MainThread' or\
+                        threading.currentThread().getName().startswith('GANGA_Update_Thread_Ganga_Worker_'):
                     if "valid" in self.command.init_parameters:
-                        self.command.currentOpts\
-                            [self.command.init_parameters['valid']] = validity
+                        self.command.currentOpts[self.command.init_parameters['valid']] = validity
                     initList = [self.command.init]
                     # Append option value pairs
                     for optName, optVal in self.command.currentOpts.iteritems():
                         initList.append("%s %s" % (optName, optVal))
                     status = self.shell.system(" ".join(initList))
                     if status == 0:
-                        logger.info(
-                            "%s creation/renewal successful." % self._name)
+                        logger.info("%s creation/renewal successful." % self._name)
                         return True
                     else:
-                        logger.warning(
-                            "%s creation/renewal failed [%s]." % (self._name, status))
+                        logger.warning("%s creation/renewal failed [%s]." % (self._name, status))
                 # create initiated from worker thread from monitoring
                 # component.
                 else:
@@ -311,22 +302,18 @@ class ICredential(GangaObject):
 
                         # Check validity but print logging messages this time
                         self.isValid("", True)
-                        _credentialObject = self._name[
-                            0].lower() + self._name[1:]
-                        logger.warning(
-                            "Renew by typing '%s.renew()' at the prompt." %
-                            (_credentialObject))
+                        _credentialObject = self._name[0].lower() + self._name[1:]
+                        logger.warning("Renew by typing '%s.renew()' at the prompt." % (_credentialObject))
 
                         # notify the Core that the credential is not valid
                         _validity = self.timeInSeconds(self.timeleft())
-                        _minValidity = self.timeInSeconds(minValidity) / 2
+                        _minValidity = self.timeInSeconds(minValidity) / 2.
                         if _validity <= max(120, _minValidity):
                             Coordinator.notifyInvalidCredential(self)
 
                     return True
 
-        logger.warning(
-            "%s creation/renewal attempts exceeded %s tries!" % (self._name, maxTry))
+        logger.warning("%s creation/renewal attempts exceeded %s tries!" % (self._name, maxTry))
         return False
 
     def destroy(self, allowed_exit=[0]):

@@ -237,8 +237,7 @@ class GridProxy(ICredential):
             if clear:
                 self.command.infoOpts.clear()
 
-    def create\
-            (self, validity="", maxTry=0, minValidity="", check=False):
+    def create(self, validity="", maxTry=0, minValidity="", check=False):
         self.chooseCommandSet()
         self.buildOpts(self.command.init)
         status = ICredential.create(self, validity, maxTry, minValidity, check)
