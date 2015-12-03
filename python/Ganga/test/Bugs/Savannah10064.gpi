@@ -1,7 +1,0 @@
-j = Job(backend=TestSubmitter(),application=TestApplication())
-j.submit()
-import os.path
-assert(os.path.exists(j.inputdir))
-templates.remove()
-assert(os.path.exists(j.inputdir))
-
