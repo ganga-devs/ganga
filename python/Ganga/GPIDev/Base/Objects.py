@@ -21,7 +21,7 @@ import inspect
 
 import Ganga.GPIDev.Schema as Schema
 
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, addProxy
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, addProxy, runtimeEvalString
 from Ganga.Core.exceptions import GangaValueError, GangaException
 
 from Ganga.Utility.Plugin import allPlugins
@@ -93,7 +93,7 @@ class Node(object):
                 this_dict[elem] = deepcopy(stripProxy(this_dict[elem]), memo)
             else:
                 this_dict[elem] = None
-        obj.__setstate__(this_dict)
+        #obj.__setstate__(this_dict)
         obj.getParent(self._getParent())
         setattr(obj, '_index_cache', None)
         setattr(obj, '_registry', self._registry)
@@ -109,7 +109,7 @@ class Node(object):
                 this_dict[elem] = deepcopy(stripProxy(this_dict[elem]), memo)  # FIXED
             else:
                 this_dict[elem] = None
-        obj.__setstate__(this_dict)
+        #obj.__setstate__(this_dict)
 
         if self._getParent() is not None:
             obj._setParent(self._getParent())
@@ -188,7 +188,7 @@ class Node(object):
     # clone self and return a properly initialized object
     def clone(self):
         new_obj = deepcopy(self)
-        new_obj.__setstate__(self.__getstate__())
+        #new_obj.__setstate__(self.__getstate__())
 
         ## Fix some objects losing parent knowledge
         src_dict = new_obj.__dict__
@@ -583,12 +583,16 @@ class Descriptor(object):
                 if val_prevState is True and hasattr(val_reg, 'turnOffAutoFlushing'):
                     val_reg.turnOffAutoFlushing()
 
+        _val = runtimeEvalString(_obj, getName(self), _val)
+
         self.__atomic_set__(_obj, _val)
 
         set_obj = getattr(stripProxy(_obj), getName(self))
 
         if isType(set_obj, Node):
             stripProxy(set_obj)._setParent(stripProxy(_obj))
+
+
 
         if val_reg is not None:
             if val_prevState is True and hasattr(val_reg, 'turnOnAutoFlushing'):
@@ -601,7 +605,6 @@ class Descriptor(object):
         if self_reg is not None:
             if self_prevState is True and hasattr(self_ref, 'turnOnAutoFlushing'):
                 self_reg.turnOnAutoFlushing()
-
 
     def __atomic_set__(self, _obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case getName(self) gives the name of the attribute being changed
@@ -676,7 +679,8 @@ class Descriptor(object):
                 else:
                     val = cloneVal(val)
             else:
-                val = deepcopy(val)
+                pass
+                #val = deepcopy(val)
 
         if isType(val, Node):
             val._setParent(obj)
