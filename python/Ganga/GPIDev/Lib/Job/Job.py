@@ -217,6 +217,7 @@ class Job(GangaObject):
     def __init__(self):
         ## These NEED to be defined before The Schema is initialized due to the getter methods for some object cauing a LOT of code to be run!
         setattr(self, '_parent', None)
+        setattr(self, 'id', '')
         setattr(self, 'status', 'new')
         ## Finished initializing 'special' objects which are used in getter methods and alike
         super(Job, self).__init__()
