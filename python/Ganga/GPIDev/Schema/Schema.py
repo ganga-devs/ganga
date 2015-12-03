@@ -580,7 +580,12 @@ class SimpleItem(Item):
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
         super(SimpleItem, self).__init__()
-        if typelist == defaultValue or None:
+        if typelist == defaultValue:
+            if type(defvalue) == dict:
+                typelist = None
+            else:
+                typelist = [type(defvalue)]
+        elif typelist is None:
             typelist = []
         kwds['defvalue'] = defvalue
         kwds['typelist'] = typelist
@@ -593,7 +598,12 @@ class SharedItem(Item):
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
         super(SharedItem, self).__init__()
-        if typelist == defaultValue or None:
+        if typelist == defaultValue:
+            if type(defvalue) == dict:
+                typelist = None
+            else:
+                typelist = [type(defvalue)]
+        elif typelist is None:
             typelist = []
         kwds['defvalue'] = defvalue
         kwds['typelist'] = typelist
