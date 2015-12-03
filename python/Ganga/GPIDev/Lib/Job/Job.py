@@ -1157,7 +1157,7 @@ class Job(GangaObject):
             raise JobError(msg)
         if (self.application.is_prepared is None):
             add_to_inputsandbox = addProxy(self.application).prepare()
-            if isType(add_to_inputsandbox, list):
+            if isType(add_to_inputsandbox, (list, tuple, GangaList)):
                 self.inputsandbox.extend(add_to_inputsandbox)
         elif (self.application.is_prepared is not None) and (force is True):
             self.application.unprepare(force=True)
@@ -1169,16 +1169,14 @@ class Job(GangaObject):
         Returns True on success.
         '''
         if not hasattr(self.application, 'is_prepared'):
-            logger.warning(
-                "Non-preparable application %s cannot be unprepared" % getName(self.application))
+            logger.warning("Non-preparable application %s cannot be unprepared" % getName(self.application))
             return
 
         if not self._readonly():
             logger.debug("Running unprepare() within Job.py")
             self.application.unprepare()
         else:
-            logger.error("Cannot unprepare a job in the %s state" %
-                         self.status)
+            logger.error("Cannot unprepare a job in the %s state" % self.status)
 
     def _getMasterAppConfig(self):
 
@@ -1219,10 +1217,8 @@ class Job(GangaObject):
 
             if appsubconfig is None or len(appsubconfig) == 0:
                 appmasterconfig = self._getMasterAppConfig()
-                logger.debug("Job %s Calling application.configure %s times" % (
-                    str(self.getFQID('.')), str(len(self.subjobs))))
-                appsubconfig = [
-                    j.application.configure(appmasterconfig)[1] for j in subjobs]
+                logger.debug("Job %s Calling application.configure %s times" % (str(self.getFQID('.')), str(len(self.subjobs))))
+                appsubconfig = [j.application.configure(appmasterconfig)[1] for j in subjobs]
 
         else:
             #   I am a sub-job, lets just generate our own config
@@ -1234,8 +1230,7 @@ class Job(GangaObject):
 
             if appsubconfig is None or len(appsubconfig) == 0:
                 appmasterconfig = self._getMasterAppConfig()
-                logger.debug(
-                    "Job %s Calling application.configure 1 times" % str(self.getFQID('.')))
+                logger.debug("Job %s Calling application.configure 1 times" % str(self.getFQID('.')))
                 appsubconfig = [self.application.configure(appmasterconfig)[1]]
 
         self._storedAppSubConfig = appsubconfig
@@ -1390,6 +1385,8 @@ class Job(GangaObject):
                     raise JobError(msg)
         else:
             logger.debug("Not calling prepare")
+
+        logger.debug("App preparedness: %s" % str(self.application.is_prepared))
 
         return
 
