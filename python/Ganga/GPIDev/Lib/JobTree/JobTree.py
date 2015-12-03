@@ -366,7 +366,7 @@ class JobTree(GangaObject):
         do_clean = False
         if registry is not None:
             try:
-                registry = registry._getParent()
+                registry = registry._parent
             except:
                 Ganga.Utility.logging.log_unknown_exception()
                 pass
@@ -431,7 +431,7 @@ class JobTree(GangaObject):
         """
         registry = self._getRegistry()
         if registry is not None:
-            registry = registry._getParent()
+            registry = registry._parent
             pp = self.__get_path(path)
             fc = self.__folder_cd(pp)
 
