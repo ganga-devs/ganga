@@ -168,9 +168,9 @@ RecoToDST-07/90000000/DST" ,
 
         from Ganga.GPI import DiracFile
         #ds = LHCbDataset()
-        new_files = []
-        for f in files:
-            new_files.append(DiracFile(lfn=f))
+        new_files = [DiracFile(lfn=_file) for _file in files]
+        #for f in files:
+        #    new_files.append(DiracFile(lfn=f))
             #ds.extend([DiracFile(lfn = f)])
 
         ds = LHCbDataset(new_files)
@@ -262,11 +262,14 @@ class BKQueryDict(GangaObject):
                 files = files['LFNs'].keys()
 
         from Ganga.GPI import DiracFile
-        ds = LHCbDataset()
+        #ds = LHCbDataset()
+
+        this_list = [DiracFile(lfn=_file) for _file in files]
+        ds = LHCbDataSet(this_list)
         #new_files = []
-        for f in files:
-            #new_files.append('LFN:' + str(f))
-            ds.append([DiracFile(lfn = f)])
+        #for f in files:
+        #    #new_files.append('LFN:' + str(f))
+        #    ds.append([DiracFile(lfn = f)])
 
         #ds = LHCbDataset(new_files)
 

@@ -1,6 +1,6 @@
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Filters import allComponentFilters
-from Ganga.GPIDev.Base.Proxy import addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError
+from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError
 from Ganga.GPIDev.Base.VPrinter import full_print, summary_print
 from Ganga.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
 from Ganga.Utility.util import containsGangaObjects
@@ -55,10 +55,8 @@ def stripGangaList(_list):
 def makeGangaListByRef(_list):
     """Faster version of makeGangaList. Does not make a copy of _list but use it by reference."""
     result = GangaList()
-    _bare_list = []
-    for element in _list:
-        _bare_list.append(stripProxy(element))
-    result._list = _bare_list
+    temp_list = [stripProxy(element) for element in _list]
+    result._list = temp_list
     return result
 
 
@@ -104,9 +102,9 @@ class GangaList(GangaObject):
         super(GangaList, self).__construct__()
 
         if len(args) == 1:
-            if hasattr(args[0], '__len__'):
+            if isType(args[0], (len, GangaList, tuple)):
                 for element_i in args[0]:
-                    self._list.append( strip_proxy(element_i))
+                    self._list.expand(strip_proxy(element_i))
             elif _list is None:
                 self._list = None
             else:
@@ -116,19 +114,24 @@ class GangaList(GangaObject):
         return
 
     # convenience methods
-    def is_list(self, obj):
-        result = (obj is not None) and (isType(obj, GangaList) or isinstance(obj, list))
+    @staticmethod
+    def is_list(obj):
+        result = (obj is not None) and isType(obj, (GangaList, list, tuple))
         return result
+
+    @staticmethod
+    def has_proxy_element(_list):
+        return all([isProxy(element) for element in _list])
 
     ## Attempt to prevent raw assignment of _list causing Proxied objects to get inside the GangaList
     def _attribute_filter__set__(self, name, value):
         logger.debug("GangaList filter")
         if name == "_list":
             if is_list(value):
-                new_list = []
-                for element_i in value:
-                    new_list.append(strip_proxy(element_i))
-                return new_list
+                if has_proxy_elemnt(value):
+                    return [stripProxy(element) for element in value]
+                else:
+                    return value
             elif _list is None:
                 return None
             else:
@@ -161,8 +164,8 @@ class GangaList(GangaObject):
 
         def applyFilter(obj, item):
             category = item['category']
-            filter = allComponentFilters[category]
-            filter_obj = filter(obj, item)
+            this_filter = allComponentFilters[category]
+            filter_obj = this_filter(obj, item)
             if filter_obj is None:
                 raise TypeMismatchError('%s is not of type %s.' % (str(obj), category))
             return filter_obj
@@ -352,7 +355,6 @@ class GangaList(GangaObject):
 
     def __reversed__(self):
         """Implements the __reversed__ list method introduced in 2.4"""
-
         return reversed(self._list)
 
     def _export___reversed__(self):
@@ -382,8 +384,7 @@ class GangaList(GangaObject):
         self.__setitem__(index, obj)
 
     def __setslice__(self, start, end, obj_list):
-        self._list.__setslice__(
-            start, end, self.strip_proxy_list(obj_list, True))
+        self._list.__setslice__(start, end, self.strip_proxy_list(obj_list, True))
 
     def _export___setslice__(self, start, end, obj_list):
         self.checkReadOnly()
@@ -488,8 +489,7 @@ class GangaList(GangaObject):
                 return
 
             if (maxLen != -1) and (self_len > maxLen):
-                out.write(
-                    decorateListEntries(self_len, type(self[0]).__name__))
+                out.write(decorateListEntries(self_len, type(self[0]).__name__))
                 return
             else:
                 summary_print(self, out)

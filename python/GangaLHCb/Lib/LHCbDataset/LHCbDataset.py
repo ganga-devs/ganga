@@ -61,6 +61,7 @@ class LHCbDataset(GangaDataset):
                       'isEmpty', 'hasPFNs', 'getPFNs']  # ,'pop']
 
     def __init__(self, files=None, persistency=None, depth=0):
+        super(LHCbDataset, self).__init__()
         if files is None:
             files = []
         new_files = GangaList()
@@ -69,21 +70,23 @@ class LHCbDataset(GangaDataset):
                 new_files.append(copy.deepcopy(this_file))
         elif isType(files, IGangaFile):
             new_files.append(copy.deepcopy(this_file))
-        elif type(files) == type([]) or type( stripProxy( files ) ) == type(GangaList()):
+        elif isType(files, (list, tuple, GangaList)):
+            new_list = []
             for this_file in files:
-                if type(this_file) == type(''):
-                    new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+                if type(this_file) == str:
+                    new_list.append(string_datafile_shortcut_lhcb(this_file, None))
                 elif isType(this_file, IGangaFile):
-                    new_files.append(this_file, False)
+                    new_list.append(this_file)
                 else:
-                    new_files.append(strToDataFile(this_file))
+                    newlist.append(strToDataFile(this_file))
+            stripProxy(new_files)._list = new_list
         elif type(files) == type(''):
             new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
         else:
             from Ganga.Core.exceptions import GangaException
             raise GangaException("Unknown object passed to LHCbDataset constructor!")
         new_files._setParent(self)
-        super(LHCbDataset, self).__init__()
+
         # Feel free to turn this on again for debugging but it's potentially quite expensive
         #logger.debug( "Creating dataset with:\n%s" % files )
         self.files = new_files
@@ -94,13 +97,13 @@ class LHCbDataset(GangaDataset):
     def __deepcopy__(self, memo):
         cls = type(stripProxy(self))
         obj = super(cls, cls).__new__(cls)
-        dict = stripProxy(self).__getstate__()
-        for n in dict:
-            dict[n] = deepcopy(dict[n], memo)
+        this_dict = stripProxy(self).__getstate__()
+        for n in this_dict:
+            this_dict[n] = deepcopy(this_dict[n], memo)
             if n == 'files':
-                for file in dict['files']:
-                    stripProxy(file)._setParent(obj)
-        obj.__setstate__(dict)
+                for this_file in this_dict['files']:
+                    stripProxy(this_file)._setParent(obj)
+        obj.__setstate__(this_dict)
         return obj
 
     def __construct__(self, args):
