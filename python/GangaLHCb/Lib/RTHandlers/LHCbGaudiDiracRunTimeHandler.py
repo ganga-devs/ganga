@@ -25,8 +25,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
     def master_prepare(self, app, appmasterconfig):
 
-        inputsandbox, outputsandbox = master_sandbox_prepare(
-            app, appmasterconfig, ['inputsandbox'])
+        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig, ['inputsandbox'])
 
         # add summary.xml
         outputsandbox += ['summary.xml', '__parsedxmlsummary__']
