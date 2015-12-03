@@ -9,7 +9,7 @@ import Ganga.Utility.logging
 from Ganga.Utility.Config import getConfig
 
 import Ganga.GPIDev.Schema as Schema
-
+from Ganga.GPIDev.Schema import ComponentItem
 
 from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
@@ -30,6 +30,63 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 # some proxy related convieniance methods
 
 _knownLists = None
+
+def runtimeEvalString(this_obj, attr_name, val):
+
+    ## Don't check or try to auto-eval non-string objects
+    if type(val) != str:
+        return val
+
+    raw_obj = stripProxy(this_obj)
+    shouldEval = None
+
+    ## Lets check the Schema to see if a string object is allowed here
+    ## If this is a ComponentItem we know in advance that we need to try and evaluate this
+    ## If the object is NOT a ComponentItem but is still in the schema, check to see if the object is allowed to be a string or not
+    ## If an object is NOT allowed to be a string then it should be 'eval'-ed
+    if hasattr(raw_obj, '_schema'):
+        if raw_obj._schema.hasAttribute(attr_name):
+            this_attr = raw_obj._schema.getItem(attr_name)
+            if isType(this_attr, ComponentItem):
+                shouldEval = True
+            else:
+                allowedTypes = this_attr.getProperties()['typelist']
+                for this_type in allowedTypes:
+                    if this_type == str:
+                        shouldEval = False
+                        break
+                    else:
+                        shouldEval = True
+
+    ## If the attribute is not in the Schema lets see if this class instance knows about this object or not
+    ## If the attribute is NOT a string but is in this instane then we should try and eval
+    ## But if it's known by the instance and is a string, we should just use the value
+    elif hasattr(raw_obj, attr_name):
+
+        if type(getattr(raw_obj, attr_name)) == str:
+            shouldEval = False
+        else:
+            shouldEval = True
+
+    ## If the object is not in the schema then try and eval the object anyway as we a-priori don't know any better
+    ## THIS IS POTENTIALLY DANGEROUS AND IF A LOT OF USERS COMPLAIN THIS SHOULD BE REVERSED TO FALSE!!!
+    else:
+        shouldEval = True
+
+    if shouldEval is True:
+        try:
+            import __main__
+            new_val = eval(val, __main__.__dict__)
+            if isclass(new_val):
+                new_val = new_val()
+        except Exception as err:
+            logger.debug("Proxy Cannot evaluate v=: '%s'" % str(val))
+            logger.debug("Using raw value instead")
+            new_val = val
+    else:
+        new_val = val
+
+    return new_val
 
 def getKnownLists():
     global _knownLists
@@ -142,8 +199,8 @@ def stripComponentObject(v, cfilter, item):
         if v is None:
             if not item['optional']:
                 raise TypeMismatchError(
-                    None, 'component is mandatory and None may not be used')
-            return v
+                        None, 'component is mandatory and None may not be used')
+                return v
         if isType(v, GangaObject):
             return v
         if not isinstance(v, GPIProxyObject):
@@ -296,20 +353,20 @@ class ProxyDataDescriptor(object):
 
                 #a=Job(); a.prepare(); a.application=Executable()
                 if obj.application.is_prepared not in [None, True] and\
-                    hasattr(val, 'is_prepared') and val.is_prepared is None:
-                    logger.debug('Overwriting a prepared application with one that is unprepared')
-                    obj.application.unprepare()
+                        hasattr(val, 'is_prepared') and val.is_prepared is None:
+                            logger.debug('Overwriting a prepared application with one that is unprepared')
+                            obj.application.unprepare()
 
                 #a=Job(); b=Executable(); b.prepare(); a.application=b
-                elif obj.application.is_prepared is not True:
-                    if hasattr(val, 'is_prepared'):
-                        if val.is_prepared not in [None, True]:
-                            from Ganga.Core.GangaRepository import getRegistry
-                            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                            logger.debug('Overwriting application with a prepared one')
-                            if stripProxy(obj.application) != val:
-                                stripProxy(obj.application).unprepare()
-                                shareref.increase(val.is_prepared.name)
+            elif obj.application.is_prepared is not True:
+                if hasattr(val, 'is_prepared'):
+                    if val.is_prepared not in [None, True]:
+                        from Ganga.Core.GangaRepository import getRegistry
+                        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                        logger.debug('Overwriting application with a prepared one')
+                        if stripProxy(obj.application) != val:
+                            stripProxy(obj.application).unprepare()
+                            shareref.increase(val.is_prepared.name)
 
                 # check that the shared directory actually exists before
                 # assigning the (prepared) application to a job
@@ -457,7 +514,7 @@ def GPIProxyClassFactory(name, pluginclass):
 
         from Ganga.GPIDev.Base.Objects import Node
         for key, val in getattr(self, proxyClass)._schema.allItems():
-            if not val['protected'] and not val['hidden'] and isType(val, Schema.ComponentItem):
+            if not val['protected'] and not val['hidden'] and isType(val, Schema.ComponentItem) and key not in Node._ref_list:
                 val = getattr(self, key)
                 if isType(val, Node):
                     stripProxy(val)._setParent(getattr(self, proxyRef))
@@ -638,16 +695,7 @@ def GPIProxyClassFactory(name, pluginclass):
             if x not in [proxyRef, proxyObject]:
                 raise GangaAttributeError("'%s' has no attribute '%s'" % (getattr(self, proxyClass)._name, x))
 
-        if type(v) == str:
-            try:
-                import __main__
-                new_v = eval(v, __main__.__dict__)
-            except Exception as err:
-                logger.debug("Proxy Cannot evaluate v=:%s" % str(v))
-                logger.debug("Using raw value instead")
-                new_v = v
-        else:
-            new_v = v
+        new_v = runtimeEvalString(self, x, v)
 
         object.__setattr__(self, x, new_v)
 
@@ -659,7 +707,7 @@ def GPIProxyClassFactory(name, pluginclass):
     helptext(_setattr, """Set a property of %(classname)s with consistency and safety checks.
 Setting a [protected] or a unexisting property raises AttributeError.""")
 
-#    def _getattr(self, name):
+    #    def _getattr(self, name):
 #        if name == '_impl': return self._impl
 #        if '_attribute_filter__get__' in dir(self._impl):
 #            return self._impl._attribute_filter__get__(name)
@@ -690,26 +738,26 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
                 proxyInstance.__class__.__name__ != 'ObjectMetaclass' and \
                 proxyInstance._schema.hasItem(name) and \
                 not proxyInstance._schema.getItem(name)['hidden']:
-            return addProxy(proxyInstance._attribute_filter__get__(name))
+                    return addProxy(proxyInstance._attribute_filter__get__(name))
         else:
             return object.__getattribute__(self, name)
 
     # but at the class level _impl is a ganga plugin class
     d = {proxyRef: pluginclass,
-         '__init__': _init,
-         '__str__': _str,
-         '__repr__': _repr,
-         '_repr_pretty_': _repr_pretty_,
-         '__eq__': _eq,
-         '__ne__': _ne,
-         'copy': _copy,
-         '__doc__': publicdoc,
-         '__setattr__': _setattr,
-         #          '__getattr__': _getattr,
-         '__getattribute__': _getattribute,
-         proxyClass: pluginclass,
-         proxyObject: None
-         }
+            '__init__': _init,
+            '__str__': _str,
+            '__repr__': _repr,
+            '_repr_pretty_': _repr_pretty_,
+            '__eq__': _eq,
+            '__ne__': _ne,
+            'copy': _copy,
+            '__doc__': publicdoc,
+            '__setattr__': _setattr,
+            #          '__getattr__': _getattr,
+            '__getattribute__': _getattribute,
+            proxyClass: pluginclass,
+            proxyObject: None
+            }
 
 
     # TODO: this makes GangaList inherit from the list
