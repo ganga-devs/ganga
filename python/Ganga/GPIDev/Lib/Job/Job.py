@@ -218,7 +218,9 @@ class Job(GangaObject):
         ## These NEED to be defined before The Schema is initialized due to the getter methods for some object cauing a LOT of code to be run!
         setattr(self, '_parent', None)
         setattr(self, 'status', 'new')
-        ## Finished initializing 'special' objects which are used in getter methods and alike
+        self.id = ''
+        setattr(stripProxy(self), 'id', '')
+        # Finished initializing 'special' objects which are used in getter methods and alike
         super(Job, self).__init__()
         self.time.newjob()  # <-----------NEW: timestamp method
         logger.debug("__init__")
@@ -975,7 +977,7 @@ class Job(GangaObject):
         """
         ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
         ## This prevents exceptions during initialization
-        if hasattr(self, 'id'):
+        if stripProxy(self)._getRegistry() is not None and hasattr(self, 'id'):
             fqid = [self.id]
         else:
             return None
@@ -1766,24 +1768,38 @@ class Job(GangaObject):
 
             if stripProxy(self).getNodeIndexCache() is not None and 'display:backend' in stripProxy(self).getNodeIndexCache().keys():
                 name = stripProxy(self).getNodeIndexCache()['display:backend']
-                import __main__
-                new_backend = eval(str(name)+'()', __main__.__dict__)
-                if hasattr(new_backend, 'remove'):
-                    self.backend.remove()
-                del new_backend
+                if name is not None:
+                    import __main__
+                    new_backend = eval(str(name)+'()', __main__.__dict__)
+                    if hasattr(new_backend, 'remove'):
+                        self.backend.remove()
+                    del new_backend
+                else:
+                    if hasattr(stripProxy(self.backend), 'remove'):
+                        stripProxy(self.backend.remove())
             else:
                 if hasattr(stripProxy(self.backend), 'remove'):
                     stripProxy(self.backend).remove()
 
             if stripProxy(self).getNodeIndexCache() is not None and 'display:application' in stripProxy(self).getNodeIndexCache().keys():
                 name = stripProxy(self).getNodeIndexCache()['display:application']
-                import __main__
-                new_app = eval(str(name)+'()', __main__.__dict__)
-                if hasattr(new_app, 'transition_update'):
-                    self.application.transition_update("removed")
-                    for sj in self.subjobs:
-                        sj.application.transition_update("removed")
-                del new_app
+                if name is not None:
+                    import __main__
+                    new_app = eval(str(name)+'()', __main__.__dict__)
+                    if hasattr(new_app, 'transition_update'):
+                        self.application.transition_update("removed")
+                        for sj in self.subjobs:
+                            sj.application.transition_update("removed")
+                    del new_app
+                else:
+                    try:
+                        self.application.transition_update("removed")
+                        for sj in self.subjobs:
+                            sj.application.transition_update("removed")
+                    except AttributeError as err:
+                        logger.debug("AttributeError: %s" % str(err))
+                        # Some applications do not have transition_update
+                        pass
             else:
                 # tell the application that the job was removed
                 try:
