@@ -944,10 +944,15 @@ class JobRegistry_Monitor(GangaThread):
                         'display:backend' in stripProxy(j).getNodeIndexCache().keys():
 
                         name = stripProxy(j).getNodeIndexCache()['display:backend']
-                        import __main__
-                        new_backend = eval(str(name)+'()', __main__.__dict__)
-                        if hasattr(new_backend, 'setup'):
-                            j.backend.setup()
+                        if name is not None:
+                            import __main__
+                            new_backend = eval(str(name)+'()', __main__.__dict__)
+                            if hasattr(new_backend, 'setup'):
+                                j.backend.setup()
+                        else:
+                            if hasattr(j, 'backend'):
+                                if hasattr(j.backend, 'setup'):
+                                    j.backend.setup()
                     else:
                         if hasattr(j, 'backend'):
                             if hasattr(j.backend, 'setup'):
