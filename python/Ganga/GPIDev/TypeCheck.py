@@ -17,6 +17,10 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
         except ImportError:
             isType = isinstance
 
+        if _t is None:
+            if val is None:
+                return True
+
         if not isType(_t, str) and isclass(_t):
             _type = _t
             _val = val
