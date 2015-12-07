@@ -158,7 +158,7 @@ class Registry(object):
         """Registry constructor, giving public name and documentation"""
         self.name = name
         self.doc = doc
-        self._started = False
+        self._hasStarted = False
         self.dirty_flush_counter = dirty_flush_counter
         self.dirty_objs = {}
         self.dirty_hits = 0
@@ -191,6 +191,9 @@ class Registry(object):
 #        self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
 #        self.releaseThread.daemon = True
 #        self.releaseThread.start()
+
+    def hasStarted(self):
+        return self._hasStarted
 
     # Methods intended to be called from ''outside code''
     def __getitem__(self, this_id):
@@ -350,7 +353,8 @@ class Registry(object):
         """ Returns the list of ids of this registry """
         self._lock.acquire()
         try:
-            if self._started and time.time() > self._update_index_timer + self.update_index_time:
+            if self.hasStarted() is True and\
+                    (time.time() > self._update_index_timer + self.update_index_time):
                 try:
                     changed_ids = self.repository.update_index()
                     for this_d in self.changed_ids.itervalues():
@@ -372,7 +376,8 @@ class Registry(object):
         Recommended access for iteration, since accessing by ID can fail if the ID iterator is old"""
         self._lock.acquire()
         try:
-            if self._started and time.time() > self._update_index_timer + self.update_index_time:
+            if self.hasStarted() is True and\
+                    (time.time() > self._update_index_timer + self.update_index_time):
                 #self._lock.acquire()
                 try:
                     changed_ids = self.repository.update_index()
@@ -445,27 +450,27 @@ class Registry(object):
         obj = stripProxy(_obj)
         try:
             if hasattr(obj, '_registry_id'):
-                #assert obj == self._objects[obj._registry_id]
+                assert obj == self._objects[obj._registry_id]
                 if hasattr(obj, 'id') and hasattr(self._objects[obj._registry_id], 'id'):
                     assert obj.id == self._objects[obj._registry_id].id
                 assert obj._registry_id == self._objects[obj._registry_id]._registry_id
                 return obj._registry_id
             else:
-                raise ObjectNotInRegistryError("Repo find: Object %s does not seem to be in this registry!" % getName(obj))
+                raise ObjectNotInRegistryError("Repo find: Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
         except AttributeError as err:
             logger.debug("%s" % str(err))
             raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % getName(obj))
         except AssertionError as err:
             logger.warning("%s" % str(err))
-            from Ganga.GPIDev.Lib.JobTree import JobTree
-            if isType(obj, JobTree):
-                return obj._registry_id
+            #from Ganga.GPIDev.Lib.JobTree import JobTree
+            #if isType(obj, JobTree):
+            #    return obj._registry_id
             #import traceback
             #traceback.print_stack()
-            raise ObjectNotInRegistryError("Object %s is a duplicated version of the one in this registry!" % getName(obj))
+            raise ObjectNotInRegistryError("Object '%s' is a duplicated version of the one in this registry: %s !" % (getName(obj), self.name))
         except KeyError as err:
             logger.debug("%s", str(err))
-            raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % getName(obj))
+            raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
         finally:
             #logger.info("FIND END: %s" % str(id(_obj)))
             pass
@@ -475,7 +480,7 @@ class Registry(object):
         if force == True it removes them regardless of other sessions.
         Returns True on success, False on failure."""
 
-        if not self._started:
+        if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot clean a disconnected repository!")
         self._lock.acquire()
         try:
@@ -498,6 +503,34 @@ class Registry(object):
         finally:
             self._lock.release()
 
+    def __safe_add(self, obj, force_index=None):
+        if force_index is None:
+            ids = self.repository.add([obj])
+        else:
+            if len(self.repository.lock([force_index])) == 0:
+                raise RegistryLockError("Could not lock '%s' id #%i for a new object!" % (self.name, force_index))
+                # raises exception if len(ids) < 1
+            ids = self.repository.add([obj], [force_index])
+
+        obj._setRegistry(self)
+        obj._registry_locked = True
+
+        this_id = self.find(obj)
+        self._inprogressDict[this_id] = "_add"
+
+        self.repository.flush(ids)
+        for this_v in self.changed_ids.itervalues():
+            this_v.update(ids)
+
+        for _id in ids:
+            if hasattr(self._objects[_id], '_registry_id'):
+                assert(self._objects[_id]._registry_id == _id)
+            if hasattr(self._objects[_id], 'id'):
+                assert(self._objects[_id].id == _id)
+
+        #logger.info("_add-ed as: %s" % str(ids))
+        return ids[0]
+
     # Methods that can be called by derived classes or Ganga-internal classes like Job
     # if the dirty objects list is modified, the methods must be locked by self._lock
     # all accesses to the repository must also be locked!
@@ -511,40 +544,18 @@ class Registry(object):
 
         #logger.info("ADD START: %s" % str(id(obj)))
 
-        import traceback
-        traceback.print_stack()
+        #import traceback
+        #traceback.print_stack()
 
-        if not self._started:
-            raise RegistepositoryError("Cannot add objects to a disconnected repository!")
+        if self.hasStarted() is not True:
+            raise RepositoryError("Cannot add objects to a disconnected repository!")
 
         self._lock.acquire()
         this_id = None
+        returnable = None
+
         try:
-            if force_index is None:
-                ids = self.repository.add([obj])
-            else:
-                if len(self.repository.lock([force_index])) == 0:
-                    raise RegistryLockError("Could not lock '%s' id #%i for a new object!" % (self.name, force_index))
-                # raises exception if len(ids) < 1
-                ids = self.repository.add([obj], [force_index])
-            obj._registry_locked = True
-
-            this_id = self.find(stripProxy(obj))
-            self._inprogressDict[this_id] = "_add"
-
-            self.repository.flush(ids)
-            for this_v in self.changed_ids.itervalues():
-                this_v.update(ids)
-
-            for _id in ids:
-                if hasattr(self._objects[_id], '_registry_id'):
-                    assert(self._objects[_id]._registry_id == _id)
-                if hasattr(self._objects[_id], 'id'):
-                    assert(self._objects[_id].id == _id)
-
-            #logger.info("_add-ed as: %s" % str(ids))
-
-            return ids[0]
+            returnable = self.__safe_add(obj, force_index)
         except (RepositoryError) as err:
             raise err
         except Exception as err:
@@ -552,10 +563,16 @@ class Registry(object):
             raise err
         finally:
             self._lock.release()
+            try:
+                this_id = self.find(obj)
+            except:
+                pass
             if this_id is not None:
                 self._inprogressDict[this_id] = False
                 del self._inprogressDict[this_id]
             #logger.info("ADD END: %s as %s" % (str(id(obj)), self.find(obj)))
+
+        return returnable
 
     def _remove(self, obj, auto_removed=0):
         """ Private method removing the obj from the registry. This method always called.
@@ -598,7 +615,7 @@ class Registry(object):
         obj_id = self.find(stripProxy(obj))
         self._inprogressDict[obj_id] = "_remove"
 
-        if not self._started:
+        if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot remove objects from a disconnected repository!")
         if not auto_removed and hasattr(obj, "remove"):
             obj.remove()
@@ -692,7 +709,7 @@ class Registry(object):
         if _objs is not None and isType(_objs, (list, tuple, GangaList)):
             objs = [stripProxy(_obj) for _obj in _objs]
         elif _objs is not None:
-            _objs = [_objs]
+            objs = [stripProxy(_objs)]
         else: #if _objs is None:
             objs = []
 
@@ -704,7 +721,7 @@ class Registry(object):
             self._inprogressDict[self.find(stripProxy(obj))] = "_flush"
 
         #logger.debug("Reg: %s _flush(%s)" % (self.name, objs))
-        if not self._started:
+        if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot flush to a disconnected repository!")
         for obj in objs:
             self._write_access(obj)
@@ -750,7 +767,7 @@ class Registry(object):
         self._lock.acquire()
         #logger.info("READ_ACCESS START: %s" % str(self.find(_obj)))
         try:
-            self.__read_access(_obj, sub_obj)
+            self.__safe_read_access(_obj, sub_obj)
         except Exception as err:
             raise err
         finally:
@@ -758,7 +775,7 @@ class Registry(object):
             self._lock.release()
 
 
-    def __read_access(self,  _obj, sub_obj):
+    def __safe_read_access(self,  _obj, sub_obj):
 
         if self.find(stripProxy(_obj)) in self._inprogressDict.keys():
             return
@@ -769,7 +786,7 @@ class Registry(object):
             logger.debug("Triggering Load: %s %s" %(str(self.name),  str(self.find(_obj))))
             #import traceback
             #traceback.print_stack()
-            if not self._started:
+            if self.hasStarted() is not True:
                 raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
 
             if hasattr(obj, "_registry_refresh"):
@@ -831,7 +848,7 @@ class Registry(object):
         #    import traceback
         #    traceback.print_stack()
 
-        if not self._started:
+        if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot get write access to a disconnected repository!")
         if not hasattr(obj, '_registry_locked') or not obj._registry_locked:
            with self._lock:
@@ -891,7 +908,7 @@ class Registry(object):
         if self.find(stripProxy(obj)) in self._inprogressDict.keys():
             return
 
-        if not self._started:
+        if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot manipulate locks of a disconnected repository!")
         logger.debug("Reg: %s _release_lock(%s)" % (self.name, str(self.find(obj))))
         self._lock.acquire()
@@ -919,7 +936,8 @@ class Registry(object):
 
         self._lock.acquire()
         try:
-            if self._started and time.time() > self._update_index_timer + self.update_index_time:
+            if self.hasStarted() is True and\
+                    (time.time() > self._update_index_timer + self.update_index_time):
                 changed_ids = self.repository.update_index()
                 for this_d in self.changed_ids.itervalues():
                     this_d.update(changed_ids)
@@ -939,6 +957,7 @@ class Registry(object):
         """Connect the repository to the registry. Called from Repository_runtime.py"""
         self._lock.acquire()
         try:
+            self._hasStarted = True
             t0 = time.time()
             self.repository = makeRepository(self)
             self._objects = self.repository.objects
@@ -957,12 +976,16 @@ class Registry(object):
                 logger.debug("Startup of %s.metadata took %s sec" % (str(self.name), str(t3-t2)))
 
             logger.debug("repo startup")
+            #self.hasStarted() = True
             self.repository.startup()
             # All Ids could have changed
             self.changed_ids = {}
             t1 = time.time()
             logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
-            self._started = True
+        except Exception as err:
+            logger.debug("Logging Repo startup Error: %s" % str(err))
+            raise err
+            self._hasStarted = False
         finally:
             self._lock.release()
 
@@ -975,6 +998,7 @@ class Registry(object):
         logger.debug("Shutting Down Registry")
         self._lock.acquire()
         try:
+            self._hasStarted = True
             try:
                 if not self.metadata is None:
                     try:
@@ -988,12 +1012,12 @@ class Registry(object):
                 self._flush()
             except Exception as err:
                 logger.debug("Exception on flushing '%s' registry: %s", self.name, str(err))
-            self._started = False
             for obj in self._objects.values():
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
             self.repository.shutdown()
         finally:
+            self._hasStarted = False
             self._lock.release()
 
     def info(self, full=False):
