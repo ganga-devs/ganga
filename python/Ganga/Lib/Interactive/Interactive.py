@@ -266,6 +266,7 @@ class Interactive(IBackend):
     def updateMonitoringInformation(jobs):
 
         for j in jobs:
+            stripProxy(j)._getWriteAccess()
 
             if not j.backend.id:
                 id = j.backend._getIntFromOutfile("PID:", "__id__")
