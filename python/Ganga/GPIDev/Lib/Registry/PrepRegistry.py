@@ -52,25 +52,29 @@ class PrepRegistry(Registry):
         except Exception as err:
             logger.error("Shutdown Error in ShareRef")
             logger.error("Err: %s" % str(err))
+
         try:
-            try:
-                if not self.metadata is None:
-                    self.metadata.shutdown()
-            except Exception as x:
-                logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
-            try:
-                self._flush()
-            except Exception as x:
-                logger.error("Exception on flushing '%s' registry: %s", self.name, x)
-            self._started = False
-            for obj in self._objects.values():
-                # locks are not guaranteed to survive repository shutdown
-                obj._registry_locked = False
-            self.repository.shutdown()
+            self._safe_shutdown()
         except Exception as err:
             logger.debug("Shutdown Error: %s" % str(err))
         finally:
             self._lock.release()
+
+    def _safe_shutdown(self):
+        try:
+            if not self.metadata is None:
+                self.metadata.shutdown()
+        except Exception as x:
+            logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
+        try:
+            self._flush()
+        except Exception as x:
+            logger.error("Exception on flushing '%s' registry: %s", self.name, x)
+        self._started = False
+        for obj in self._objects.values():
+            # locks are not guaranteed to survive repository shutdown
+            obj._registry_locked = False
+        self.repository.shutdown()
 
 class ShareRef(GangaObject):
 
@@ -97,7 +101,7 @@ class ShareRef(GangaObject):
 
     def __construct__(self):
         super(ShareRef, self).__construct__()
-        if sel.name is None:
+        if self.name is None:
             self.name = {}
         self._setRegistry(None)
 
@@ -398,7 +402,8 @@ class ShareRef(GangaObject):
 
         try:
             ## FIXME. this triggers maximum recusion depth bug on shutdown in some situations! rcurrie
-            all_dirs = getattr(self, name).keys()
+            _name = getattr(self, name)
+            all_dirs = _name.keys()
         except:
             all_dirs = {}
         for shareddir in all_dirs:
@@ -474,7 +479,7 @@ class ShareRef(GangaObject):
         """Prints content of the shareref metadata in a well formatted way.
         """
 
-        if len(self.__getName.keys()) > 0:
+        if len(self.__getName().keys()) > 0:
             from Ganga.GPIDev.Lib.File import getSharedPath
             fstring = " %48s | %20s |  %15s"
             disp_string = fstring % (
