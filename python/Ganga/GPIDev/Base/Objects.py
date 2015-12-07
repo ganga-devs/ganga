@@ -148,6 +148,7 @@ class Node(object):
         return root
 
     def _getdata(self, name):
+        logger.debug("Getting: %s" % name)
         if hasattr(self, name):
             return getattr(self, name)
         else:
@@ -467,6 +468,10 @@ class Descriptor(object):
                     if lookup_exception is not None:
                         err = lookup_exception
                     else:
+                        logger.debug("Object: %s" % str(getName(obj)))
+                        logger.debug("Index: %s" % str(stripProxy(obj).getNodeIndexCache()))
+                        logger.debug("NodeD: %s" % str(stripProxy(obj).getNodeData()))
+                        logger.debug("dict: %s" % str(stripProxy(obj).__class__.__dict__))
                         err = GangaException("Error finding parameter %s in object %s" % (getName(self), getName(obj)))
                     raise err
 
