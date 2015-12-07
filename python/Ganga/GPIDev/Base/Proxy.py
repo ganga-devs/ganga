@@ -48,15 +48,36 @@ def runtimeEvalString(this_obj, attr_name, val):
         if raw_obj._schema.hasAttribute(attr_name):
             this_attr = raw_obj._schema.getItem(attr_name)
             if isType(this_attr, ComponentItem):
+                ## This is a component Item and isn't equivalent to a string
                 shouldEval = True
             else:
                 allowedTypes = this_attr.getProperties()['typelist']
                 for this_type in allowedTypes:
                     if this_type == str:
+                        ## This type is a string and shouldn't be evaluated
                         shouldEval = False
                         break
                     else:
-                        shouldEval = True
+                        ## This type is written as a string so need to work out what it is
+                        if type(this_type) == str:
+                            try:
+                                import __main__
+                                eval_type = eval(this_type, __main__.__dict__)
+                                if eval_type == str:
+                                    ## This type was written as "str" ... slightly annoying but OK...
+                                    shouldEval = False
+                                    break
+                                else:
+                                    ## This type is NOT a string so based on this we should Eval
+                                    shouldEval = True
+                            except Exception as err:
+                                logger.debug("Failed to evalute type: %s" % str(this_type))
+                                logger.debug("Err: %s" % str(err))
+                                ## We can't eval in this case. It may just be the type which is broken
+                                shouldEval = True
+                        else:
+                            ## This type isn't in a string format so we don't need to work out what it is
+                            shouldEval = True
 
     ## If the attribute is not in the Schema lets see if this class instance knows about this object or not
     ## If the attribute is NOT a string but is in this instane then we should try and eval
@@ -72,6 +93,8 @@ def runtimeEvalString(this_obj, attr_name, val):
     ## THIS IS POTENTIALLY DANGEROUS AND IF A LOT OF USERS COMPLAIN THIS SHOULD BE REVERSED TO FALSE!!!
     else:
         shouldEval = True
+
+    assert(shouldEval is not None)
 
     if shouldEval is True:
         try:
