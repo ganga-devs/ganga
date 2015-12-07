@@ -144,6 +144,7 @@ def rmrf(name, count=0):
         except OSError as err:
             if err.errno != errno.ENOENT:
                 logger.debug("rmrf Err: %s" % str(err))
+                logger.debug("name: %s" % str(name))
                 remove_name = name
                 raise err
             return
@@ -154,6 +155,7 @@ def rmrf(name, count=0):
             except OSError as err:
                 if err.errno == errno.EBUSY:
                     logger.debug("rmrf Remove err: %s" % str(err))
+                    logger.debug("name: %s" % str(remove_name))
                     ## Sleep 2 sec and try again
                     time.sleep(2.)
                     rmrf(os.path.join(remove_name, sfn), count+1)
@@ -174,6 +176,7 @@ def rmrf(name, count=0):
             if err.errno not in [errno.ENOENT, errno.EBUSY]:
                 raise err
             logger.debug("rmrf Move err: %s" % str(err))
+            logger.debug("name: %s" % str(name))
             if err.errno == errno.EBUSY:
                 rmrf(name, count+1)
             return
@@ -183,6 +186,7 @@ def rmrf(name, count=0):
         except OSError as err:
             if err.errno != errno.ENOENT:
                 logger.debug("%s" % str(err))
+                logger.debug("name: %s" % str(remove_name))
                 raise err
             return
 
@@ -387,6 +391,7 @@ class GangaRepositoryLocal(GangaRepository):
                     if obj is not None:
                         new_index = self.registry.getIndexCache(obj)
                     if new_index is not None and new_index != obj.getNodeIndexCache():
+                        logger.debug("k: %s" % str(k))
                         arr_k = [k]
                         if len(self.lock(arr_k)) != 0:
                             self.index_write(arr_k)
@@ -685,6 +690,8 @@ class GangaRepositoryLocal(GangaRepository):
 
             if this_id in self.objects:
                 obj = self.objects[this_id]
+                logger.info("Loading")
+                logger.info("tmpobj: %s" % str(tmpobj))
                 #logger.info("\n\nobj: %s\n\n" % str(type(obj)))
                 obj.setNodeData(copy.deepcopy(tmpobj.getNodeData()))
                 #obj.__dict__ = tmpobj.__dict__
@@ -813,6 +820,7 @@ class GangaRepositoryLocal(GangaRepository):
                 raise err
 
             except Exception as err:
+                raise err
 
                 if isType(err, XMLFileError):
                     logger.error("XML File failed to load for Job id: %s" % str(this_id))
