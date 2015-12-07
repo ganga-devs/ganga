@@ -130,8 +130,7 @@ class BoxRegistry(Registry):
         if obj._category == 'applications':
             if hasattr(obj, 'is_prepared'):
                 if obj.is_prepared is not None and obj.is_prepared is not True:
-                    logger.debug(
-                        'Adding a prepared application to the box and increasing the shareref counter')
+                    logger.debug('Adding a prepared application to the box and increasing the shareref counter')
                     obj.incrementShareCounter(obj.is_prepared.name)
 
         obj = obj.clone()
