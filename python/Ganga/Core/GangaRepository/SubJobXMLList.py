@@ -76,6 +76,7 @@ class SubJobXMLList(GangaObject):
         self._from_file = None
         self._dataFileName = None
         self._load_backup = None
+        self._cachedJobs = {}
 
     def __deepcopy__(self, memo=None):
         cls = type(self)
@@ -146,6 +147,13 @@ class SubJobXMLList(GangaObject):
         return
 
     def write_subJobIndex(self):
+        try:
+            self.__really_writeIndex()
+        except Exception as err:
+            logger.debug("Can't write Index. Moving on as this is not essential to functioning it's a performance bug")
+            logger.debug("Error: %s" % str(err))
+
+    def __really_writeIndex(self):
 
         raw_self = stripProxy(self)
 
@@ -212,10 +220,21 @@ class SubJobXMLList(GangaObject):
             job_obj = stripProxy(self).getJobObject()
         except Exception, err:
             logger.debug( "Error: %s" % str(err) )
+            try:
+                job_obj = stripProxy(self)._getParent()
+            except Exception as err:
+                job_obj = None
             job_obj = None
         if job_obj is not None:
-            fqid = job_obj.getFQID('.')
-            logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
+            try:
+                fqid = job_obj.getFQID('.')
+                logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
+            except Exception as err:
+                try:
+                    _id = job_obj.id
+                except:
+                    _id = "unknown"
+                logger.debug("Loading subjob at: $s for job %s" % (subjob_data, _id))
         else:
             logger.debug( "Loading subjob at: %s" % subjob_data )
         sj_file = open(subjob_data, "r")
@@ -225,6 +244,15 @@ class SubJobXMLList(GangaObject):
         return stripProxy(self).__getitem__(index)
 
     def __getitem__(self, index):
+
+        return self._getItem(index)
+        try:
+            return self._getItem(index)
+        except Exception as err:
+            logger.error("CANNOT LOAD SUBJOB INDEX: %s" % str(index))
+            return None
+
+    def _getItem(self, index):
 
         raw_self = stripProxy(self)
         logger.debug("Requesting: %s" % str(index))
@@ -260,7 +288,12 @@ class SubJobXMLList(GangaObject):
                     raise err
 
         if raw_self._definedParent is not None:
-            parent_name = "Job: %s" % raw_self._definedParent.getFQID('.')
+            if hasattr(raw_self._definedParent, 'getFQID'):
+                parent_name = "Job: %s" % raw_self._definedParent.getFQID('.')
+            elif hasattr(raw_self._definedParent, 'id'):
+                parent_name = "Job: %s" % raw_self._definedParent.id
+            else:
+                parent_name = "Job: unknown"
         else:
             parent_name = "None"
         logger.debug('Setting Parent [%s]: %s' % (str(index), (parent_name)))
@@ -271,8 +304,10 @@ class SubJobXMLList(GangaObject):
     def _setParent(self, parentObj):
         
         raw_self = stripProxy(self)
-        if parentObj is not None:
+        if parentObj is not None and hasattr(parentObj, 'getFQID'):
             parent_name = "Job: %s" % parentObj.getFQID('.')
+        elif parentObj is not None and hasattr(parentObj, 'id'):
+            parent_name = "Job: %s" % parentObj.id
         else:
             parent_name = "None"
         logger.debug('Setting Parent: %s' % parent_name)
