@@ -44,16 +44,21 @@ class XMLFileError(GangaException):
             err = ''
         return "XMLFileError: %s %s" % (self.message, err)
 
+def _raw_to_file(j, fobj=None, ignore_subs=''):
+    vstreamer = VStreamer(out=fobj, selection=ignore_subs)
+    vstreamer.begin_root()
+    stripProxy(j).accept(vstreamer)
+    vstreamer.end_root()
+
 def to_file(j, fobj=None, ignore_subs=''):
+    #used to debug write problems - rcurrie
+    #_raw_to_file(j, fobj, ignore_subs)
+    #return
     try:
-        vstreamer = VStreamer(out=fobj, selection=ignore_subs)
-        vstreamer.begin_root()
-        stripProxy(j).accept(vstreamer)
-        vstreamer.end_root()
+        _raw_to_file(j, fobj, ignore_subs)
     except Exception as err:
         logger.error("XML to-file error for file:\n%s" % (str(err)))
         raise XMLFileError(err, "to-file error")
-        #raise err
 
 # Faster, but experimental version of to_file without accept()
 # def to_file(j,f=None,ignore_subs=''):
@@ -71,13 +76,15 @@ def to_file(j, fobj=None, ignore_subs=''):
 # * AssertionError (corruption: multiple objects in <root>...</root>
 # * Exception (probably corrupted data problem)
 
+def _raw_from_file(f):
+    # logger.debug('----------------------------')
+    ###logger.debug('Parsing file: %s',f.name)
+    obj, errors = Loader().parse(f.read())
+    return obj, errors
 
 def from_file(f):
     try:
-        # logger.debug('----------------------------')
-        ###logger.debug('Parsing file: %s',f.name)
-        obj, errors = Loader().parse(f.read())
-        return obj, errors
+        return _raw_from_file(f)
     except Exception as err:
         logger.error("XML from-file error for file:\n%s" % str(err))
         raise XMLFileError(err, "from-file error")
