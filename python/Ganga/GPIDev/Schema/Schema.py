@@ -582,7 +582,7 @@ class SimpleItem(Item):
         super(SimpleItem, self).__init__()
         if typelist == defaultValue:
             if type(defvalue) == dict:
-                typelist = None
+                typelist = []
             else:
                 typelist = [type(defvalue)]
         elif typelist is None:
@@ -600,7 +600,7 @@ class SharedItem(Item):
         super(SharedItem, self).__init__()
         if typelist == defaultValue:
             if type(defvalue) == dict:
-                typelist = None
+                typelist = []
             else:
                 typelist = [type(defvalue)]
         elif typelist is None:
