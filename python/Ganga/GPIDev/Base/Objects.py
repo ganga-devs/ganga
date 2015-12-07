@@ -148,7 +148,7 @@ class Node(object):
         return root
 
     def _getdata(self, name):
-        logger.debug("Getting: %s" % name)
+        #logger.debug("Getting: %s" % name)
         if hasattr(self, name):
             return getattr(self, name)
         else:
