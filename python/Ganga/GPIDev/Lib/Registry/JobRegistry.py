@@ -72,7 +72,12 @@ class JobRegistry(Registry):
                 cache[cv] = obj.getNodeAttribute(cv)
         this_slice = JobRegistrySlice("jobs")
         for dpv in this_slice._display_columns:
-            cache["display:" + dpv] = this_slice._get_display_value(obj, dpv)
+            #logger.debug("Storing: %s" % str(dpv))
+            try:
+                value = this_slice._get_display_value(obj, dpv)
+                cache["display:" + dpv] = value
+            except Exception as err:
+                value = None
         del this_slice
 
         # store subjob status
@@ -84,6 +89,8 @@ class JobRegistry(Registry):
             else:
                 for sj in obj.subjobs:
                     cache["subjobs:status"].append(sj.status)
+
+        print("Cache: %s" % str(cache))
         return cache
 
     def startup(self):
@@ -91,7 +98,9 @@ class JobRegistry(Registry):
         super(JobRegistry, self).startup()
         if len(self.metadata.ids()) == 0:
             from Ganga.GPIDev.Lib.JobTree import JobTree
-            self.metadata._add(JobTree())
+            jt = JobTree()
+            stripProxy(jt)._setRegistry(self.metadata)
+            self.metadata._add(jt)
         self.jobtree = self.metadata[self.metadata.ids()[-1]]
 
     def getJobTree(self):
