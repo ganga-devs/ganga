@@ -394,7 +394,7 @@ class GangaRepositoryLocal(GangaRepository):
                         logger.debug("k: %s" % str(k))
                         arr_k = [k]
                         if len(self.lock(arr_k)) != 0:
-                            self.index_write(arr_k)
+                            self.index_write(k)
                             self.unlock(arr_k)
                 except Exception as err:
                     logger.debug("Failed to update index: %s on startup/shutdown" % str(k))
@@ -420,7 +420,6 @@ class GangaRepositoryLocal(GangaRepository):
                     cached_list.append(self._cached_cls[k])
                     cached_list.append(self._cached_obj[k])
                     this_master_cache.append(cached_list)
-
             try:
                 with open(_master_idx, 'w') as of:
                     pickle_to_file(this_master_cache, of)
@@ -544,7 +543,7 @@ class GangaRepositoryLocal(GangaRepository):
         """ Add the given objects to the repository, forcing the IDs if told to.
         Raise RepositoryError"""
 
-        if not force_ids is None:  # assume the ids are already locked by Registry
+        if force_ids not in [None, []]:  # assume the ids are already locked by Registry
             if not len(objs) == len(force_ids):
                 raise RepositoryError(self, "Internal Error: add with different number of objects and force_ids!")
             ids = force_ids
@@ -690,8 +689,8 @@ class GangaRepositoryLocal(GangaRepository):
 
             if this_id in self.objects:
                 obj = self.objects[this_id]
-                logger.info("Loading")
-                logger.info("tmpobj: %s" % str(tmpobj))
+                #logger.info("Loading")
+                #logger.info("tmpobj: %s" % str(tmpobj))
                 #logger.info("\n\nobj: %s\n\n" % str(type(obj)))
                 obj.setNodeData(copy.deepcopy(tmpobj.getNodeData()))
                 #obj.__dict__ = tmpobj.__dict__
