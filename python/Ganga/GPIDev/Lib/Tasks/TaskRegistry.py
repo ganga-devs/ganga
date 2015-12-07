@@ -86,7 +86,7 @@ class TaskRegistry(Registry):
                     name, backend, allHandlers.get(basename, backend))
 
         from Ganga.Core.GangaRepository import getRegistry
-        while not getRegistry("jobs")._started:
+        while getRegistry("jobs").hasStarted() is not True:
             time.sleep(0.1)
             if self._main_thread is None or self._main_thread.should_stop():
                 return
