@@ -38,6 +38,7 @@ class PrepRegistry(Registry):
 
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
+        self._hasStarted = True
         from Ganga.Utility.logging import getLogger
         self.shouldRun = True
         ## Aparently this shuts down the metadata repo before we want to shut it down...
@@ -58,6 +59,7 @@ class PrepRegistry(Registry):
         except Exception as err:
             logger.debug("Shutdown Error: %s" % str(err))
         finally:
+            self._hasStarted = False
             self._lock.release()
 
     def _safe_shutdown(self):
@@ -70,7 +72,7 @@ class PrepRegistry(Registry):
             self._flush()
         except Exception as x:
             logger.error("Exception on flushing '%s' registry: %s", self.name, x)
-        self._started = False
+        #self._hasStarted = False
         for obj in self._objects.values():
             # locks are not guaranteed to survive repository shutdown
             obj._registry_locked = False
@@ -383,6 +385,7 @@ class ShareRef(GangaObject):
     def closedown(self):
         """Cleans up the Shared Directory registry upon shutdown of the registry, ie. when exiting a Ganga session."""
 
+        stripProxy(self)._getRegistry()._hasStarted = True
         from Ganga.GPIDev.Lib.File import getSharedPath
 
         delete_share_config = Ganga.Utility.Config.getConfig('Configuration')['deleteUnusedShareDir']
@@ -453,6 +456,8 @@ class ShareRef(GangaObject):
             del self.name[element]
         self._setDirty()
         #self._releaseWriteAccess()
+
+        stripProxy(self)._getRegistry()._hasStarted = False
 
     def ls(self, shareddir, print_files=True):
         """
