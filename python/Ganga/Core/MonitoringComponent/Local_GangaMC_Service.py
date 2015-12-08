@@ -308,6 +308,7 @@ class UpdateDict(object):
                     _l = time.time()
                     entry.timeoutCounter -= _l - entry.timeLastUpdate
                     entry.timeLastUpdate = _l
+                    entry.entryLock.release()
 #               log.debug( "%s backend counter is %s." % ( backend, entry.timeoutCounter ) )
 
     def isBackendLocked(self, backend):
