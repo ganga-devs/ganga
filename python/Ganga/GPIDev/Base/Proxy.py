@@ -329,13 +329,85 @@ class ProxyDataDescriptor(object):
             logger.debug('%s property: assigned a component object (%s used)' % (self._name, proxyRef))
         return getattr(obj, proxyRef)._attribute_filter__set__(self._name, v)
 
+    def __app_set__(self, obj, val):
+
+        if hasattr(obj.application, '_is_prepared'):
+
+            #a=Job(); a.prepare(); a.application=Executable()
+            if obj.application.is_prepared not in [None, True] and\
+                 hasattr(val, 'is_prepared') and val.is_prepared is None:
+                 logger.debug('Overwriting a prepared application with one that is unprepared')
+                 obj.application.unprepare()
+
+            #a=Job(); b=Executable(); b.prepare(); a.application=b
+        elif obj.application.is_prepared is not True:
+            if hasattr(val, 'is_prepared'):
+                if val.is_prepared not in [None, True]:
+                    from Ganga.Core.GangaRepository import getRegistry
+                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    logger.debug('Overwriting application with a prepared one')
+                    if stripProxy(obj.application) != val:
+                        stripProxy(obj.application).unprepare()
+                        shareref.increase(val.is_prepared.name)
+
+            # check that the shared directory actually exists before
+            # assigning the (prepared) application to a job
+            if hasattr(val, 'is_prepared'):
+                if val.is_prepared not in [None, True]:
+                    if hasattr(val.is_prepared, 'name'):
+                        from Ganga.Utility.files import expandfilename
+                        Config_conf = getConfig('Configuration')
+                        shared_path = os.path.join(expandfilename(Config_conf['gangadir']), 'shared', Config_conf['user'])
+                        if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
+                            logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
+
+    def __prep_set__(self, obj, val):
+
+        # if we set is_prepared to None in the GPI, that should effectively
+        # unprepare the application
+        if val is None:
+            if stripProxy(obj).is_prepared is not None:
+                logger.info('Unpreparing application.')
+                stripProxy(obj).unprepare()
+
+        # Replace is_prepared on an application for another ShareDir object
+        if hasattr( stripProxy(obj), '_getRegistry'):
+            from Ganga.GPIDev.Lib.File import ShareDir
+            if stripProxy(obj)._getRegistry() is not None and isType(val, ShareDir):
+                logger.debug('Overwriting is_prepared attribute with a ShareDir object')
+                # it's safe to unprepare 'not-prepared' applications.
+                stripProxy(obj).unprepare()
+                from Ganga.Core.GangaRepository import getRegistry
+                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                shareref.increase(val.name)
+
+    def __sequence_set__(self, obj, val):
+
+        # we need to explicitly check for the list type, because simple
+        # values (such as strings) may be iterable
+        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
+        if isType(val, getKnownLists()):
+            # create GangaList
+            if stripper is not None:
+                val = makeGangaList(val, stripper)
+            else:
+                val = makeGangaList(self._stripAttribute(obj, val))
+        else:
+            # val is not iterable
+            if item['strict_sequence']:
+                raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), getattr(obj, proxyClass)._schema.name, self._name))
+            if stripper is not None:
+                val = makeGangaList(stripper(val))
+            else:
+                val = makeGangaList(self._stripAttribute(obj, val))
+
     def __set__(self, obj, val):
         # self is the attribute we're about to change
         # obj is the object we're about to make the change in
         # val is the value we're setting the attribute to.
         # item is the schema entry of the attribute we're about to change
 
-        logger.debug("__set__")
+        #logger.debug("__set__")
         global proxyRef
         item = getattr(obj, proxyClass)._schema[self._name]
         if item['protected']:
@@ -353,54 +425,12 @@ class ProxyDataDescriptor(object):
         # if we set is_prepared to None in the GPI, that should effectively
         # unprepare the application
         if self._name == 'is_prepared':
-            if val is None:
-                if stripProxy(obj).is_prepared is not None:
-                    logger.info('Unpreparing application.')
-                    stripProxy(obj).unprepare()
-
-        # Replace is_prepared on an application for another ShareDir object
-        if self._name == 'is_prepared':
-            if hasattr( stripProxy(obj), '_getRegistry'):
-                from Ganga.GPIDev.Lib.File import ShareDir
-                if stripProxy(obj)._getRegistry() is not None and isType(val, ShareDir):
-                    logger.debug('Overwriting is_prepared attribute with a ShareDir object')
-                    # it's safe to unprepare 'not-prepared' applications.
-                    stripProxy(obj).unprepare()
-                    from Ganga.Core.GangaRepository import getRegistry
-                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                    shareref.increase(val.name)
+            # Replace is_prepared on an application for another ShareDir object
+            self.__prep__set__(obj, val)
 
         # catch assignment of 'something'  to a preparable application
         if self._name == 'application':
-            if hasattr(obj.application, 'is_prepared'):
-
-                #a=Job(); a.prepare(); a.application=Executable()
-                if obj.application.is_prepared not in [None, True] and\
-                        hasattr(val, 'is_prepared') and val.is_prepared is None:
-                            logger.debug('Overwriting a prepared application with one that is unprepared')
-                            obj.application.unprepare()
-
-                #a=Job(); b=Executable(); b.prepare(); a.application=b
-            elif obj.application.is_prepared is not True:
-                if hasattr(val, 'is_prepared'):
-                    if val.is_prepared not in [None, True]:
-                        from Ganga.Core.GangaRepository import getRegistry
-                        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                        logger.debug('Overwriting application with a prepared one')
-                        if stripProxy(obj.application) != val:
-                            stripProxy(obj.application).unprepare()
-                            shareref.increase(val.is_prepared.name)
-
-                # check that the shared directory actually exists before
-                # assigning the (prepared) application to a job
-                if hasattr(val, 'is_prepared'):
-                    if val.is_prepared not in [None, True]:
-                        if hasattr(val.is_prepared, 'name'):
-                            from Ganga.Utility.files import expandfilename
-                            Config_conf = getConfig('Configuration')
-                            shared_path = os.path.join(expandfilename(Config_conf['gangadir']), 'shared', Config_conf['user'])
-                            if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
-                                logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
+            self.__app_set__(obj, val)
 
         # unwrap proxy
         if item.isA(Schema.ComponentItem):
@@ -413,23 +443,8 @@ class ProxyDataDescriptor(object):
             #stripper = self._stripAttribute
 
         if item['sequence']:
-            # we need to explicitly check for the list type, because simple
-            # values (such as strings) may be iterable
-            from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
-            if isType(val, getKnownLists()):
-                # create GangaList
-                if stripper is not None:
-                    val = makeGangaList(val, stripper)
-                else:
-                    val = makeGangaList(self._stripAttribute(obj, val))
-            else:
-                # val is not iterable
-                if item['strict_sequence']:
-                    raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), getattr(obj, proxyClass)._schema.name, self._name))
-                if stripper is not None:
-                    val = makeGangaList(stripper(val))
-                else:
-                    val = makeGangaList(self._stripAttribute(obj, val))
+            self.__sequence_set__(obj, val)
+
         else:
             if stripper is not None:
                 val = stripper(val)
@@ -547,11 +562,15 @@ def GPIProxyClassFactory(name, pluginclass):
         # initialize all properties from keywords of the constructor
         for k in kwds:
             if getattr(self, proxyClass)._schema.hasAttribute(k):
-                this_val = kwds[k]
-                if isType(this_val, Node):
-                    setattr(stripProxy(this_val), proxyObject, None)
-                    stripProxy(this_val)._setParent(getattr(self, proxyRef))
-                setattr(getattr(self, proxyRef), k, addProxy(this_val))
+                this_arg = kwds[k]
+                if isType(this_arg, Node):
+                    if this_arg == 'application':
+                        ProxyDataDescriptor.__app_set__(getattr(self, k), self, this_arg)
+                    if this_arg == 'is_prepared':
+                        ProxyDataDescriptor.__prep__set__(getattr(self, k), self, this_arg)
+                    setattr(this_arg, proxyObject, None)
+                    stripProxy(this_arg)._setParent(getattr(self, proxyRef))
+                setattr(self, k, addProxy(this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
