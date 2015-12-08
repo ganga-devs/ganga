@@ -80,17 +80,13 @@ def startGanga():
         # Perform the configuration and bootstrap steps in ganga
         logger.info("Parsing Configuration Options")
         Ganga.Runtime._prog.configure()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('PollThread', 'forced_shutdown_policy', 'batch')
         logger.info("Initializing")
-        Ganga.Runtime._prog.initEnvironment(False)
+        Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
         logger.info("Bootstrapping")
-        Ganga.Runtime._prog.bootstrap('Batch')
+        Ganga.Runtime._prog.bootstrap(interactive=False)
     else:
         # No need to perform the bootstrap but we need to test if the internal
         # services need to be reinitialized
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('PollThread', 'forced_shutdown_policy', 'batch')
         from Ganga.Core.InternalServices import Coordinator
         if not Coordinator.servicesEnabled:
             # Start internal services
@@ -160,7 +156,7 @@ def stopGanga():
     from Ganga.Core.InternalServices import ShutdownManager
 
     import Ganga.Core
-    Ganga.Core.change_atexitPolicy('batch')
+    Ganga.Core.change_atexitPolicy(interactive_session=False, new_policy='batch')
     # This should now be safe
     ShutdownManager._ganga_run_exitfuncs()
 
