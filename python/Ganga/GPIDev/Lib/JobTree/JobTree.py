@@ -137,6 +137,8 @@ class JobTree(GangaObject):
 
         ##  Perform some anity checking before returning the local folder structure
     def __get_folders(self):
+        if not hasattr(self, 'folders'):
+            setattr(self, 'folders', {os.sep: {}})
         f = self.folders
         if os.sep not in f.keys():
             f[os.sep] = {}
