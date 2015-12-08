@@ -3,8 +3,11 @@ from GangaTest.Framework.utils import sleep_until_completed
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
-from Ganga.GPI import templatesLHCb, Job
-
+try:
+    from Ganga.GPI import templatesLHCb, Job
+except ImportError:
+    templatesLHCb=[]
+    pass
 
 class TestTemplatesLHCb(GangaGPITestCase):
 
