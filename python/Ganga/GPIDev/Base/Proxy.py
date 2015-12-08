@@ -381,7 +381,7 @@ class ProxyDataDescriptor(object):
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                 shareref.increase(val.name)
 
-    def __sequence_set__(self, obj, val):
+    def __sequence_set__(self, stripper, obj, val):
 
         # we need to explicitly check for the list type, because simple
         # values (such as strings) may be iterable
@@ -401,6 +401,12 @@ class ProxyDataDescriptor(object):
             else:
                 val = makeGangaList(self._stripAttribute(obj, val))
 
+    def __preparable_set__(self, obj, val):
+        if obj.is_prepared is not None:
+            if obj.is_prepared is not True:
+                raise ProtectedAttributeError('AttributeError: "%s" attribute belongs to a prepared application and so cannot be modified.\
+                                                unprepare() the application or copy the job/application (using j.copy(unprepare=True)) and modify that new instance.' % (getName(self),))
+
     def __set__(self, obj, val):
         # self is the attribute we're about to change
         # obj is the object we're about to make the change in
@@ -418,9 +424,7 @@ class ProxyDataDescriptor(object):
 
         # mechanism for locking of preparable attributes
         if item['preparable']:
-            if obj.is_prepared is not None:
-                if obj.is_prepared is not True:
-                    raise ProtectedAttributeError('AttributeError: "%s" attribute belongs to a prepared application and so cannot be modified. unprepare() the application or copy the job/application (using j.copy(unprepare=True)) and modify that new instance.' % (self._name,))
+            self.__preparable_set__(obj, val)
 
         # if we set is_prepared to None in the GPI, that should effectively
         # unprepare the application
@@ -443,7 +447,7 @@ class ProxyDataDescriptor(object):
             #stripper = self._stripAttribute
 
         if item['sequence']:
-            self.__sequence_set__(obj, val)
+            self.__sequence_set__(stripper, obj, val)
 
         else:
             if stripper is not None:
