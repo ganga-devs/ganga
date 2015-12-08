@@ -126,7 +126,7 @@ class ShareRef(GangaObject):
             self._setDirty()
 
     def __getName(self):
-        if self.name is None:
+        if not hasattr(self, 'name') or self.name is None:
             self.name = {}
         return self.name
 
