@@ -450,7 +450,7 @@ class Registry(object):
         obj = stripProxy(_obj)
         try:
             if hasattr(obj, '_registry_id'):
-                assert obj == self._objects[obj._registry_id]
+                #assert obj == self._objects[obj._registry_id]
                 if hasattr(obj, 'id') and hasattr(self._objects[obj._registry_id], 'id'):
                     assert obj.id == self._objects[obj._registry_id].id
                 assert obj._registry_id == self._objects[obj._registry_id]._registry_id
