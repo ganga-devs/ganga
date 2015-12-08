@@ -99,7 +99,7 @@ class GangaList(GangaObject):
 
     def __construct__(self, args):
 
-        super(GangaList, self).__construct__()
+        #super(GangaList, self).__construct__(args)
 
         if len(args) == 1:
             if isType(args[0], (len, GangaList, tuple)):
@@ -111,6 +111,7 @@ class GangaList(GangaObject):
                 raise GangaError("Construct: Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
         else:
             super(GangaList, self).__construct__(args)
+
         return
 
     # convenience methods
