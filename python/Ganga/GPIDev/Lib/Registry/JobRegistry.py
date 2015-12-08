@@ -90,7 +90,7 @@ class JobRegistry(Registry):
                 for sj in obj.subjobs:
                     cache["subjobs:status"].append(sj.status)
 
-        print("Cache: %s" % str(cache))
+        #print("Cache: %s" % str(cache))
         return cache
 
     def startup(self):
