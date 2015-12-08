@@ -1388,7 +1388,8 @@ class Job(GangaObject):
         else:
             logger.debug("Not calling prepare")
 
-        logger.debug("App preparedness: %s" % str(self.application.is_prepared))
+        if hasattr(self.application, 'is_prepared'):
+            logger.debug("App preparedness: %s" % str(self.application.is_prepared))
 
         return
 
