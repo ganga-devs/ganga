@@ -124,7 +124,7 @@ class IncompleteObject(GangaObject):
             if self.id in self.registry.dirty_objs.keys() and self.registry.checkShouldFlush():
                 self.registry.repository.flush([self.registry._objects[self.id]])
                 self.registry.repository.load([self.id])
-            if this_id not in self._loaded_ids:
+            if self.id not in self.registry_loaded_ids:
                 self.registry.repository.load([self.id])
                 self.registry._loaded_ids.append(self.id)
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
