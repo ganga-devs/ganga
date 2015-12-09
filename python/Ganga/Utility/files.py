@@ -20,22 +20,26 @@ def expandfilename(filename, force=False):
     else:
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
-        logger.warning("Filename: %s doesn't exist using it anyway" % filename)
-        import traceback
-        traceback.print_stack()
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.warning("Filename: %s doesn't exist using it anyway" % filename)
+            import traceback
+            traceback.print_stack()
         return filename
     #return os.path.expandvars(os.path.expanduser(filename))
 
 
 def fullpath(path, force=False):
     "expandfilename() and additionally: strip leading and trailing whitespaces and expand symbolic links"
-    full_path = os.path.realpath(expandfilename(path.strip()))
+    full_path = os.path.realpath(expandfilename(path.strip(), True))
     if os.path.exists(full_path) or force:
         return full_path
     else:
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
-        logger.warning("path: %s doesn't exist using it anyway" % path)
+        if self.logger.isEnabledFor(logging.DEBUG):
+            logger.warning("path: %s doesn't exist using it anyway" % path)
+            import traceback
+            traceback.print_stack()
         return path
     #return os.path.realpath(expandfilename(path.strip()))
 
