@@ -383,6 +383,7 @@ class ProxyDataDescriptor(object):
 
     def __sequence_set__(self, stripper, obj, val):
 
+        item = getattr(obj, proxyClass)._schema[self._name]
         # we need to explicitly check for the list type, because simple
         # values (such as strings) may be iterable
         from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
@@ -400,12 +401,36 @@ class ProxyDataDescriptor(object):
                 val = makeGangaList(stripper(val))
             else:
                 val = makeGangaList(self._stripAttribute(obj, val))
+        return val
 
     def __preparable_set__(self, obj, val):
         if obj.is_prepared is not None:
             if obj.is_prepared is not True:
                 raise ProtectedAttributeError('AttributeError: "%s" attribute belongs to a prepared application and so cannot be modified.\
                                                 unprepare() the application or copy the job/application (using j.copy(unprepare=True)) and modify that new instance.' % (getName(self),))
+
+    ## Inspect this given item to determine if it has editable attributes if it has been set as read-only
+    @staticmethod
+    def __subitems_read_only(obj):
+        can_be_modified = []
+        for name, item in getattr(obj, proxyClass)._schema.allItems():
+            ## This object inherits from Node therefore likely has a schema too.
+            obj_attr = getattr(obj, name)
+            if isType(obj_attr, Node):
+                can_be_modified.append( ProxyDataDescriptor.__subitems_read_only(obj_attr) )
+            else:
+
+                ## This object doesn't inherit from Node and therefore needs to be evaluated
+                if item.getProperties()['changable_at_resubmit']:
+                    can_be_modified.append( True )
+                else:
+                    can_be_modified.append( False )
+        
+        can_modify = False
+        for i in can_be_modified:
+            can_modify = can_modify or i
+
+        return can_modify
 
     def __set__(self, obj, val):
         # self is the attribute we're about to change
@@ -415,12 +440,14 @@ class ProxyDataDescriptor(object):
 
         #logger.debug("__set__")
         global proxyRef
-        item = getattr(obj, proxyClass)._schema[self._name]
+        item = getattr(obj, proxyClass)._schema[getName(self)]
         if item['protected']:
-            raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified' % (self._name,))
+            raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified' % (getName(self),))
         if getattr(obj, proxyRef)._readonly():
-            if not (self._name == 'comment' and getattr(obj, proxyRef)._name == 'Job'):
-                raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now' % (repr(obj), self._name))
+
+            if not item.getProperties()['changable_at_resubmit']:
+                raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now' % (repr(obj), getName(self)))
+            
 
         # mechanism for locking of preparable attributes
         if item['preparable']:
@@ -430,7 +457,7 @@ class ProxyDataDescriptor(object):
         # unprepare the application
         if self._name == 'is_prepared':
             # Replace is_prepared on an application for another ShareDir object
-            self.__prep__set__(obj, val)
+            self.__prep_set__(obj, val)
 
         # catch assignment of 'something'  to a preparable application
         if self._name == 'application':
@@ -447,8 +474,7 @@ class ProxyDataDescriptor(object):
             #stripper = self._stripAttribute
 
         if item['sequence']:
-            self.__sequence_set__(stripper, obj, val)
-
+            val = self.__sequence_set__(stripper, obj, val)
         else:
             if stripper is not None:
                 val = stripper(val)
@@ -530,7 +556,6 @@ def GPIProxyClassFactory(name, pluginclass):
         #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
 
         instance = pluginclass()
-        #instance.__init__()
         for this_attrib in [proxyRef, proxyClass]:
             if hasattr(instance, this_attrib):
                 try:
@@ -571,7 +596,7 @@ def GPIProxyClassFactory(name, pluginclass):
                     if this_arg == 'application':
                         ProxyDataDescriptor.__app_set__(getattr(self, k), self, this_arg)
                     if this_arg == 'is_prepared':
-                        ProxyDataDescriptor.__prep__set__(getattr(self, k), self, this_arg)
+                        ProxyDataDescriptor.__prep_set__(getattr(self, k), self, this_arg)
                     setattr(this_arg, proxyObject, None)
                     stripProxy(this_arg)._setParent(getattr(self, proxyRef))
                 setattr(self, k, addProxy(this_arg))
