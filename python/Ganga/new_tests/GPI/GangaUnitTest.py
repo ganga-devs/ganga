@@ -59,6 +59,7 @@ def startGanga():
     this_argv.append('-o[Configuration]user=testframework')
     this_argv.append('-o[Configuration]gangadir=$HOME/gangadir_testing')
     this_argv.append('-o[Configuration]repositorytype=LocalXML')
+    this_argv.append('-o[PollThread]autostart_monThreads=False')
     this_argv.append('-o[TestingFramework]ReleaseTesting=True')
 
     # FIXME Should we need to add the ability to load from a custom .ini file
@@ -92,15 +93,19 @@ def startGanga():
             # Start internal services
             logger.info("InternalServices restarting")
 
-            def testing_cb(t_total, critical_thread_ids, non_critical_thread_ids):
-                return True
-            from Ganga.Core.GangaThread import GangaThreadPool
-            thread_pool = GangaThreadPool.getInstance()
-            thread_pool.shutdown(should_wait_cb=testing_cb)
             from Ganga.GPI import reactivate
             reactivate()
+
+            from Ganga.Core import start_jobregistry_monitor
+            from Ganga.Core.GangaRepository import getRegistry
+            start_jobregistry_monitor(getRegistry('jobs'))
         else:
             logger.info("InternalServices still running")
+
+    # [PollThread]autostart_monThreads=False has turned this off being done automatically.
+    # The thread pool is emptied by _ganga_run_exitfuncs
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool
+    _makeThreadPool()
 
     # Adapted from the Coordinator class, check for the required credentials and stop if not found
     # Hopefully stops us falling over due to no AFS access of something similar
