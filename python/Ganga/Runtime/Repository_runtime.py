@@ -5,7 +5,7 @@ Internal initialization of the repositories.
 import Ganga.Utility.Config
 from Ganga.Utility.logging import getLogger
 import os.path
-from Ganga.Utility.files import expandfilename
+from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Core.GangaRepository import getRegistries
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.exceptions import GangaException
@@ -15,8 +15,7 @@ logger = getLogger()
 
 
 def requiresAfsToken():
-    from Ganga.Utility.files import fullpath
-    return fullpath(getLocalRoot()).find('/afs') == 0
+    return fullpath(getLocalRoot(), True).find('/afs') == 0
 
 
 def requiresGridProxy():
@@ -25,13 +24,13 @@ def requiresGridProxy():
 
 def getLocalRoot():
     if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
-        return os.path.join(expandfilename(config['gangadir']), 'repository', config['user'], config['repositorytype'])
+        return os.path.join(expandfilename(config['gangadir'], True), 'repository', config['user'], config['repositorytype'])
     else:
         return ''
 
 def getLocalWorkspace():
     if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
-        return os.path.join(expandfilename(config['gangadir']), 'workspace', config['user'], config['repositorytype'])
+        return os.path.join(expandfilename(config['gangadir'], True), 'workspace', config['user'], config['repositorytype'])
     else:
         return ''
 
@@ -44,7 +43,6 @@ partition_critical = 99
 def checkDiskQuota():
 
     import subprocess
-    from Ganga.Utility.files import fullpath
 
     repo_partition = getLocalRoot()
     repo_partition = os.path.realpath(repo_partition)
@@ -67,7 +65,7 @@ def checkDiskQuota():
 
     for data_partition in folders_to_check:
 
-        if fullpath(data_partition).find('/afs') == 0:
+        if fullpath(data_partition, True).find('/afs') == 0:
             quota = subprocess.Popen(['fs', 'quota', '%s' % data_partition], stdout=subprocess.PIPE)
             output = quota.communicate()[0]
             logger.debug("fs quota %s:\t%s" % (str(data_partition), str(output)))
