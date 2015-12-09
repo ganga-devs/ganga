@@ -585,8 +585,6 @@ class SimpleItem(Item):
                 typelist = []
             else:
                 typelist = [type(defvalue)]
-        elif typelist is None:
-            typelist = []
         kwds['defvalue'] = defvalue
         kwds['typelist'] = typelist
         self._update(kwds)
@@ -603,8 +601,6 @@ class SharedItem(Item):
                 typelist = []
             else:
                 typelist = [type(defvalue)]
-        elif typelist is None:
-            typelist = []
         kwds['defvalue'] = defvalue
         kwds['typelist'] = typelist
         self._update(kwds)
