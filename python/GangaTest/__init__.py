@@ -5,9 +5,8 @@ def getEnvironment(c = None):
     return {}
 
 def loadPlugins( config = None ):
-    import Lib.TestSplitter
     import Lib.TestApplication
-    import Lib.TestSubmitter
+    import Lib.TestSubmitter # TestSubmitter, TestSplitter here
     import Lib.TestRobot
     import Lib.TestObjects
     import Framework.runner

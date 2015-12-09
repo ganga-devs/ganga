@@ -1,5 +1,5 @@
 import StoreTestFramework
 import CrashTest
-import TestSubmitter
-import TestSplitter
-import TestApplication
+import TestSubmitter.TestSubmitter
+import TestSubmitter.TestSplitter
+import TestApplication.TestApplication
