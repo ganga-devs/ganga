@@ -171,7 +171,7 @@ class Job(GangaObject):
     _schema = Schema(Version(1, 6), {'inputsandbox': FileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
                                      'outputsandbox': SimpleItem(defvalue=[], typelist=['str'], sequence=1, copyable=_outputfieldCopyable(), doc="list of filenames or patterns shipped from the worker node"),
                                      'info': ComponentItem('jobinfos', defvalue=None, doc='JobInfo '),
-                                     'comment': SimpleItem('', protected=0, doc='comment of the job'),
+                                     'comment': SimpleItem('', protected=0, changable_at_resubmit=1, doc='comment of the job'),
                                      'time': ComponentItem('jobtime', defvalue=JobTime(), protected=1, comparable=0, doc='provides timestamps for status transitions'),
                                      'application': ComponentItem('applications', doc='specification of the application to be executed'),
                                      'backend': ComponentItem('backends', doc='specification of the resources to be used (e.g. batch system)'),
@@ -881,7 +881,7 @@ class Job(GangaObject):
         Workspace = getattr(Ganga.Core.FileWorkspace, what)
         w = Workspace()
         w.jobid = self.getFQID(os.sep)
-        if create:
+        if create and w.jobid is not None:
             w.create(w.jobid)
         return w
 
@@ -939,8 +939,7 @@ class Job(GangaObject):
         """
 
         logger.debug("Creating InputSandbox")
-        files = [f for f in files if hasattr(
-            f, 'name') and not f.name.startswith('.nfs')]
+        files = [f for f in files if hasattr(f, 'name') and not f.name.startswith('.nfs')]
 
         if self.master is not None and master:
             return Sandbox.createInputSandbox(files, self.master.getInputWorkspace())
@@ -977,7 +976,7 @@ class Job(GangaObject):
         """
         ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
         ## This prevents exceptions during initialization
-        if stripProxy(self)._getRegistry() is not None and hasattr(self, 'id'):
+        if hasattr(self, 'id'):
             fqid = [self.id]
         else:
             return None
