@@ -807,7 +807,7 @@ class Registry(object):
                 should_load = True
                 try:
                     if this_id in self.dirty_objs.keys() and self.checkShouldFlush():
-                        self.repository.flush([self._objects[this_id]])
+                        self._flush([self._objects[this_id]])
                         self.repository.load([this_id])
                     if this_id not in self._loaded_ids:
                         self.repository.load([this_id])
@@ -889,7 +889,7 @@ class Registry(object):
                     should_load = True
                     try:
                         if this_id in self.dirty_objs.keys() and self.checkShouldFlush():
-                            self.repository.flush([self._objects[this_id]])
+                            self._flush([self._objects[this_id]])
                             self.repository.load([this_id])
                         if this_id not in self._loaded_ids:
                             self.repository.load([this_id])
