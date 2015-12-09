@@ -551,6 +551,9 @@ def GPIProxyClassFactory(name, pluginclass):
     # the new class
 
     def _init(self, *args, **kwds):
+
+        logger.debug("Proxy Object _init")
+
         global proxyRef
         # if len(args) > 1:
         #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
