@@ -387,8 +387,8 @@ class Descriptor(object):
         if 'filter' in item._meta:
             self._filter_name = item['filter']
 
-
-    def _bind_method(self, obj, name):
+    @staticmethod
+    def _bind_method(obj, name):
         if name is None:
             return None
         return getattr(obj, name)
@@ -849,11 +849,13 @@ class GangaObject(Node):
 
         if self._schema is not None and hasattr(self._schema, 'allItems'):
             for attr, item in self._schema.allItems():
-                defVal = self._schema.getDefaultValue(attr)
-                setattr(self, attr, defVal)
-                new_attr = getattr(self, attr)
-                if isType(new_attr, Node):
-                    new_attr._setParent(self)
+                ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
+                if item.getProperties()['getter'] is None:
+                    defVal = self._schema.getDefaultValue(attr)
+                    setattr(self, attr, defVal)
+                    new_attr = getattr(self, attr)
+                    if isType(new_attr, Node):
+                        new_attr._setParent(self)
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
