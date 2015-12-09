@@ -8,16 +8,22 @@ class Savannah13979(GangaUnitTest):
         from Ganga.GPI import Job, Executable, export, load
 
         import os
-        fname = 'test_savannah_13979.ganga'
+        self.fname = 'test_savannah_13979.ganga'
         j = Job(application=Executable())
         # One-line parameter
         j.application.args = ['a']
-        export(j, fname)
-        self.assertTrue(load(fname))
+        export(j, self.fname)
+        self.assertTrue(load(self.fname))
         # Two-line parameter
         j.application.args = ['''a
         b''']
-        export(j, fname)
-        self.assertTrue(load(fname))
+        export(j, self.fname)
+        self.assertTrue(load(self.fname))
 
-        os.remove(fname)
+        os.remove(self.fname)
+
+    def tearDown(self):
+        import os
+        os.remove(self.fname)
+
+        super(Savannah13979, self).tearDown()
