@@ -12,14 +12,32 @@ import os.path
 import stat
 import Ganga
 
-def expandfilename(filename):
+def expandfilename(filename, force=False):
     "expand a path or filename in a standard way so that it may contain ~ and ${VAR} strings"
-    return os.path.expandvars(os.path.expanduser(filename))
+    expanded_path = os.path.expandvars(os.path.expanduser(filename))
+    if os.path.exists(expanded_path) or force:
+        return expanded_path
+    else:
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
+        logger.warning("Filename: %s doesn't exist using it anyway" % filename)
+        import traceback
+        traceback.print_stack()
+        return filename
+    #return os.path.expandvars(os.path.expanduser(filename))
 
 
-def fullpath(path):
+def fullpath(path, force=False):
     "expandfilename() and additionally: strip leading and trailing whitespaces and expand symbolic links"
-    return os.path.realpath(expandfilename(path.strip()))
+    full_path = os.path.realpath(expandfilename(path.strip()))
+    if os.path.exists(full_path) or force:
+        return full_path
+    else:
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
+        logger.warning("path: %s doesn't exist using it anyway" % path)
+        return path
+    #return os.path.realpath(expandfilename(path.strip()))
 
 
 def previous_dir(path, cnt):
