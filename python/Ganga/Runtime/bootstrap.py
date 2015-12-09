@@ -577,7 +577,9 @@ under certain conditions; type license() for details.
 
         import Ganga.Utility.files
         import Ganga.Utility.util
-        self.options.config_path = Ganga.Utility.files.expandfilename(self.options.config_path)
+        import inspect
+        GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
+        self.options.config_path = Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath, self.options.config_path))
 
         try:
             hostname = Ganga.Utility.util.hostname()
@@ -869,8 +871,11 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             #    import warnings
             #    warnings.filterwarnings(action="ignore", category=RuntimeWarning)
 
+            
+            import inspect
+            GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
             def transform(x):
-                return os.path.normpath(Ganga.Utility.files.expandfilename(x))
+                return os.path.normpath(Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath,x)))
 
             paths = map(transform, filter(lambda x: x, config['RUNTIME_PATH'].split(':')))
 
