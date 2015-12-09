@@ -122,6 +122,9 @@ class IncompleteObject(GangaObject):
         try:
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Being slightly more intelligent with the way that we load objects from Repository
             if self.id in self.registry.dirty_objs.keys() and self.registry.checkShouldFlush():
                 self.registry.repository.flush([self.registry._objects[self.id]])
                 self.registry.repository.load([self.id])
@@ -131,6 +134,7 @@ class IncompleteObject(GangaObject):
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
             for d in self.registry.changed_ids.itervalues():
                 d.add(self.id)
+<<<<<<< HEAD
 =======
             if self.id in self.registry_dirty_objs.keys() or self.id in self.registry._changed_ibs.keys():
                 if self.registry.checkShouldFlush():
@@ -140,6 +144,8 @@ class IncompleteObject(GangaObject):
                 for d in self.registry.changed_ids.itervalues():
                     d.add(self.id)
 >>>>>>> Adding some flush commands ahead of loading an object from disk to avoid causing the object to be reverted to an earlier version of itself from disk
+=======
+>>>>>>> Being slightly more intelligent with the way that we load objects from Repository
         finally:
             self.registry._lock.release()
 
