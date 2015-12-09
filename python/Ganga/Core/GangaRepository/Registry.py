@@ -120,11 +120,14 @@ class IncompleteObject(GangaObject):
     def reload(self):
         self.registry._lock.acquire()
         try:
-            self.registry.repository.load([self.id])
-            logger.debug("Successfully reloaded '%s' object #%i!" %
-                         (self.registry.name, self.id))
-            for d in self.registry.changed_ids.itervalues():
-                d.add(self.id)
+
+            if self.id in self.registry_dirty_objs.keys() or self.id in self.registry._changed_ibs.keys():
+                if self.registry.checkShouldFlush():
+                    self.registry._flush([self.registry._objects[self.id]])
+                    self.registry.repository.load([self.id])
+                    logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
+                for d in self.registry.changed_ids.itervalues():
+                    d.add(self.id)
         finally:
             self.registry._lock.release()
 
@@ -774,7 +777,6 @@ class Registry(object):
             #logger.info("RELEASE_ACCESS END: %s" % str(self.find(_obj)))
             self._lock.release()
 
-
     def __safe_read_access(self,  _obj, sub_obj):
 
         if self.find(stripProxy(_obj)) in self._inprogressDict.keys():
@@ -796,15 +798,20 @@ class Registry(object):
             #self._lock.acquire()
             try:
                 this_id = self.find(obj)
+                should_load = (this_id in self.changed_ids.keys() or this_id in self.dirty_objs.keys()) and self.checkShouldFlush()
+                should_load = should_load and (this_id not in self._objects)
                 try:
-                    self.repository.load([this_id])
+                    if should_load:
+                        self._flush([self._objects[this_id]])
+                        self.repository.load([this_id])
                 except KeyError as err:
                     logger.debug("_read_access KeyError %s" % str(err))
                     raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (this_id, self.name))
                 except InaccessibleObjectError as err:
                     raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, str(err)))
-                for this_d in self.changed_ids.itervalues():
-                    this_d.add(this_id)
+                if should_load:
+                    for this_d in self.changed_ids.itervalues():
+                        this_d.add(this_id)
             except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
                 raise err
             except Exception as err:
@@ -870,17 +877,22 @@ class Registry(object):
                     logger.debug("Unknown write access Error: %s" % str(err))
                     raise err
                 finally:  # try to load even if lock fails
+                    should_load = (this_id in self.changed_ids.keys() or this_id in self.dirty_objs.keys()) and self.checkShouldFlush()
+                    should_load = should_load and (this_id not in self._objects)
                     try:
-                        self.repository.load([this_id])
-                        if hasattr(obj, "_registry_refresh"):
-                            delattr(obj, "_registry_refresh")
+                        if should_load:
+                            self._flush([self._objects[this_id]])
+                            self.repository.load([this_id])
+                            if hasattr(obj, "_registry_refresh"):
+                                delattr(obj, "_registry_refresh")
                     except KeyError, err:
                         logger.debug("_write_access KeyError %s" % str(err))
                         raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (this_id, self.name))
                     except InaccessibleObjectError as err:
                         raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, str(err)))
-                    for this_d in self.changed_ids.itervalues():
-                        this_d.add(this_id)
+                    if should_load:
+                        for this_d in self.changed_ids.itervalues():
+                            this_d.add(this_id)
                 obj._registry_locked = True
 
         return True
