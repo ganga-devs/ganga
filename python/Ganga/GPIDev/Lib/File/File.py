@@ -70,7 +70,10 @@ class File(GangaObject):
             expanded = expandfilename(v)
             # if it is not already an absolute filename
             if not urlprefix.match(expanded):
-                self.name = os.path.abspath(expanded)
+                if os.path.exists(os.path.abspath(expanded)):
+                    self.name = os.path.abspath(expanded)
+                else:
+                    self.name = v
             else:  # bugfix #20545
                 self.name = expanded
         else:
