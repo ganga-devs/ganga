@@ -435,7 +435,7 @@ class JobTree(GangaObject):
             pp = self.__get_path(path)
             fc = self.__folder_cd(pp)
 
-            print("self._getRegistry(): %s" % str(stripProxy(self)._getRegistry()))
+            #print("self._getRegistry(): %s" % str(stripProxy(self)._getRegistry()))
 
             for i in fc.keys():
                 if isType(fc[i], type({})):
