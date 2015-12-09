@@ -227,11 +227,12 @@ class Job(GangaObject):
 
     def __construct__(self, args):
 
+        stripProxy(self)._getWriteAccess()
+
         self.status = "new"
         logger.debug("Intercepting __construct__")
 
-        super(Job, self).__construct__(args)
-
+        #super(Job, self).__construct__(args)
 
         # Not correctly calling Copy Constructor as in
         # Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
@@ -246,6 +247,8 @@ class Job(GangaObject):
                 self._unsetSubmitTransients()
 
                 original_job = args[0]
+
+                self.copyFrom(original_job)
 
                 if original_job.master is not None:
 
@@ -269,9 +272,11 @@ class Job(GangaObject):
                 # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
                 #super(Job, self).__construct__( args )
                 raise ValueError("Object %s is NOT of type Job" % str(args[0]))
-        #else:
-        #    # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
-        #    super(Job, self).__construct__(args)
+        else:
+            # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
+            super(Job, self).__construct__(args)
+
+        stripProxy(self)._setDirty()
 
     def _readonly(self):
         return self.status != 'new'
