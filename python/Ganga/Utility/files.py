@@ -19,6 +19,7 @@ def expandfilename(filename, force=False):
         return expanded_path
     else:
         from Ganga.Utility.logging import getLogger
+        import logging
         logger = getLogger()
         if logger.isEnabledFor(logging.DEBUG):
             logger.warning("Filename: %s doesn't exist using it anyway" % filename)
@@ -35,6 +36,7 @@ def fullpath(path, force=False):
         return full_path
     else:
         from Ganga.Utility.logging import getLogger
+        import logging
         logger = getLogger()
         if logger.isEnabledFor(logging.DEBUG):
             logger.warning("path: %s doesn't exist using it anyway" % path)
