@@ -240,8 +240,10 @@ def release_when_done(rlock):
     Attributes:
         rlock: A lock object which can have ``release()`` called on it,
     """
-    yield rlock
-    rlock.release()
+    try:
+        yield rlock
+    finally:
+        rlock.release()
 
 
 class UpdateDict(object):
