@@ -223,7 +223,7 @@ class _DictEntry(object):
 
 @contextmanager
 def release_when_done(rlock):
-    '''
+    """
     A ``threading.Lock`` (or ``RLock`` etc.) object cannot be used in a context
     manager if the lock acquisition is non-blocking because the acquisition can
     fail and so the contents of the ``with`` block should not be run.
@@ -239,7 +239,7 @@ def release_when_done(rlock):
 
     Attributes:
         rlock: A lock object which can have ``release()`` called on it,
-    '''
+    """
     yield rlock
     rlock.release()
 
