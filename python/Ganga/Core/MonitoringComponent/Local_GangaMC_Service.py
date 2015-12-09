@@ -129,7 +129,7 @@ class MonitoringWorkerThread(GangaThread):
             try:
                 result = action.function(*action.args, **action.kwargs)
             except Exception as err:
-                logger.debug("_execUpdateAction: %s" % str(err))
+                log.debug("_execUpdateAction: %s" % str(err))
                 action.callback_Failure()
             else:
                 if result in action.success:
@@ -223,7 +223,7 @@ class _DictEntry(object):
 
 @contextmanager
 def release_when_done(rlock):
-    '''
+    """
     A ``threading.Lock`` (or ``RLock`` etc.) object cannot be used in a context
     manager if the lock acquisition is non-blocking because the acquisition can
     fail and so the contents of the ``with`` block should not be run.
@@ -239,7 +239,7 @@ def release_when_done(rlock):
 
     Attributes:
         rlock: A lock object which can have ``release()`` called on it,
-    '''
+    """
     yield rlock
     rlock.release()
 
@@ -1114,7 +1114,7 @@ class JobRegistry_Monitor(GangaThread):
             try:
                 Qin.put(_action)
             except Exception as err:
-                logger.debug("makeCred Err: %s" % str(err))
+                log.debug("makeCred Err: %s" % str(err))
                 cb_Failure("Put _action failure: %s" % str(_action), "unknown", True )
         return credCheckJobInsertor
 
@@ -1149,7 +1149,7 @@ class JobRegistry_Monitor(GangaThread):
         try:
             Qin.put(_action)
         except Exception as err:
-            logger.debug("diskSp Err: %s" % str(err))
+            log.debug("diskSp Err: %s" % str(err))
             cb_Failure()
 
     def updateJobs(self):
