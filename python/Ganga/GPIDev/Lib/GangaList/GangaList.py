@@ -27,7 +27,7 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
     if mapfunction is not None:
         _list = map(mapfunction, _list)
 
-    logger.debug("Making a GangaList of size: %s" % str(len(_list)))
+    #logger.debug("Making a GangaList of size: %s" % str(len(_list)))
     result = makeGangaListByRef(_list)
 
     result._is_preparable = preparable
