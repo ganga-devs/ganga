@@ -20,7 +20,8 @@ class TestApplication(IPrepareApp):
                                     'env' : SimpleItem(defvalue={},doc='Environment'),# introduced for RTHandler compatibility
                                     'fail': SimpleItem(defvalue='',doc='Define the artificial runtime failures: "config", "prepare"'),
                                     'postprocess_mark_as_failed': SimpleItem(defvalue=False,doc='Update teh status of the job as failed in the postprocess step'),
-                                    'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
+                                    'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+                                    'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1)
                                     } )
     _name = 'TestApplication'
 
