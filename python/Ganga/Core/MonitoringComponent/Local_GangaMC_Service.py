@@ -2,6 +2,7 @@ import Queue
 import threading
 import time
 import copy
+from contextlib import contextmanager
 
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
@@ -220,6 +221,29 @@ class _DictEntry(object):
         return self.backendObj, self.jobSet, self.entryLock
 
 
+@contextmanager
+def release_when_done(rlock):
+    '''
+    A ``threading.Lock`` (or ``RLock`` etc.) object cannot be used in a context
+    manager if the lock acquisition is non-blocking because the acquisition can
+    fail and so the contents of the ``with`` block should not be run.
+
+    To allow sensible ``release()`` behaviour in these cases, acquire the lock
+    as usual with ``lock.acquire(False)`` and then wrap the required code with
+    this context manager::
+
+        if lock.acquire(blocking=False):
+            with release_when_done(lock):
+                #some code
+                pass
+
+    Attributes:
+        rlock: A lock object which can have ``release()`` called on it,
+    '''
+    yield rlock
+    rlock.release()
+
+
 class UpdateDict(object):
 
     """
@@ -292,24 +316,20 @@ class UpdateDict(object):
             # Initial value and subsequent resets by timeoutCheck() will set the timeoutCounter
             # to a value just short of the max value to ensure that it the timeoutCounter is
             # not decremented simply because there are no updates occuring.
-            if not entry.entryLock._RLock__count and \
-               entry.timeoutCounter == entry.timeoutCounterMax and \
-               entry.entryLock.acquire(False):
-                log.debug("%s has been reset. Acquired lock to begin countdown." % backend)
-                entry.timeLastUpdate = time.time()
-            # decrease timeout counter
-            if entry.entryLock._is_owned():
-                if entry.timeoutCounter <= 0.0:
-                    entry.timeoutCounter = entry.timeoutCounterMax - 0.01
+            if entry.timeoutCounter == entry.timeoutCounterMax and entry.entryLock.acquire(False):
+                with release_when_done(entry.entryLock):
+                    log.debug("%s has been reset. Acquired lock to begin countdown." % backend)
                     entry.timeLastUpdate = time.time()
-                    entry.entryLock.release()
-                    log.debug("%s backend counter timeout. Resetting to %s." % (backend, entry.timeoutCounter))
-                else:
-                    _l = time.time()
-                    entry.timeoutCounter -= _l - entry.timeLastUpdate
-                    entry.timeLastUpdate = _l
-                    entry.entryLock.release()
-#               log.debug( "%s backend counter is %s." % ( backend, entry.timeoutCounter ) )
+
+                    # decrease timeout counter
+                    if entry.timeoutCounter <= 0.0:
+                        entry.timeoutCounter = entry.timeoutCounterMax - 0.01
+                        entry.timeLastUpdate = time.time()
+                        log.debug("%s backend counter timeout. Resetting to %s." % (backend, entry.timeoutCounter))
+                    else:
+                        _l = time.time()
+                        entry.timeoutCounter -= _l - entry.timeLastUpdate
+                        entry.timeLastUpdate = _l
 
     def isBackendLocked(self, backend):
         if backend in self.table:
