@@ -6,7 +6,7 @@ import fnmatch
 import collections
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 import Ganga.Utility.Config
-from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -394,12 +394,12 @@ class RegistrySlice(object):
             vals = []
             for item in self._display_columns:
                 width = self._display_columns_width.get(item, default_width)
-                if obj.getNodeData():
+                if stripProxy(obj).getNodeData():
                     try:
                         if item == "fqid":
-                            vals.append(str(obj.getNodeData()["display:" + item]))
+                            vals.append(str(stripProxy(obj).getNodeData()["display:" + item]))
                         else:
-                            vals.append(str(obj.getNodeData()["display:" + item])[0:width])
+                            vals.append(str(stripProxy(obj).getNodeData()["display:" + item])[0:width])
                         continue
                     except KeyError as err:
                         logger.debug("_display KeyError: %s" % str(err))
