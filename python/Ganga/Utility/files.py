@@ -36,7 +36,7 @@ def fullpath(path, force=False):
     else:
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
-        if self.logger.isEnabledFor(logging.DEBUG):
+        if logger.isEnabledFor(logging.DEBUG):
             logger.warning("path: %s doesn't exist using it anyway" % path)
             import traceback
             traceback.print_stack()
