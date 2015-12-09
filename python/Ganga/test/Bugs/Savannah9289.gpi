@@ -1,9 +1,0 @@
-for repeat in range(5):
-
-    for start in range(50):
-        j = Job()
-
-    ids1 = jobs.ids()
-    ids2 = sorted(jobs.ids())
-    assert(ids1==ids2)
-    jobs.remove()
