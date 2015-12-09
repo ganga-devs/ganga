@@ -89,6 +89,10 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
             dirname = os.path.dirname(fn)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
+            if not os.path.isfile(fn):
+                new_file = open(fn, 'a')
+                new_file.close()
+
             with open(fn, "w") as this_file:
                 to_file(obj, this_file, ignore_subs)
             global write_all_history
@@ -102,7 +106,16 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         except XMLFileError as err:
             raise err
     try:
-        with open(fn + ".new", "w") as tmpfile:
+        if not os.path.exists(fn):
+            if not os.path.isdir(os.path.dirname(fn)):
+                os.makedirs(os.path.dirname(fn))
+                new_file = open(fn, 'a')
+                new_file.close()
+        new_name = fn + '.new'
+        if not os.path.exists(new_name):
+            new_file = open(new_name, 'a')
+            new_file.close()
+        with open(new_name, "w") as tmpfile:
             to_file(obj, tmpfile, ignore_subs)
             # Important: Flush, then sync file before renaming!
             # tmpfile.flush()
@@ -113,15 +126,18 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         raise err
     # Try to make backup copy...
     try:
-        rmrf(fn + "~")
+        if os.path.exists(fn+'~'):
+            rmrf(fn + "~")
     except OSError as e:
         logger.debug("Error on removing old backup file %s~ (%s) " % (fn, e))
     try:
-        os.rename(fn, fn + "~")
+        if os.path.isfile(fn):
+            os.rename(fn, fn + "~")
     except OSError as e:
         logger.debug("Error on file backup %s (%s) " % (fn, e))
     try:
-        os.rename(fn + ".new", fn)
+        if os.path.isfile(fn+'.new'):
+            os.rename(fn + ".new", fn)
     except OSError as e:
         raise IOError("Error on moving file %s.new (%s) " % (fn, e))
 
@@ -391,7 +407,7 @@ class GangaRepositoryLocal(GangaRepository):
                     if obj is not None:
                         new_index = self.registry.getIndexCache(obj)
                     if new_index is not None and new_index != obj.getNodeIndexCache():
-                        logger.debug("k: %s" % str(k))
+                        #logger.debug("k: %s" % str(k))
                         arr_k = [k]
                         if len(self.lock(arr_k)) != 0:
                             self.index_write(k)
