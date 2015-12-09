@@ -257,7 +257,7 @@ class Node(object):
             #logger.debug("Copying: %s : %s" % (str(name), str(item)))
             if name == 'application' and hasattr(_srcobj.application, 'is_prepared'):
                 _app = _srcobj.application
-                if _app.is_prepared is not None and not _app.is_prepared is True:
+                if _app.is_prepared not in [None, True]:
                     _app.incrementShareCounter(_app.is_prepared.name)
 
             if not self._schema.hasAttribute(name):
@@ -596,8 +596,9 @@ class Descriptor(object):
 
         if isType(set_obj, Node):
             stripProxy(set_obj)._setParent(stripProxy(_obj))
-
-
+            stripProxy(set_obj)._setDirty()
+        if isType(_val, Node):
+            stripProxy(_val)._setDirty()
 
         if val_reg is not None:
             if val_prevState is True and hasattr(val_reg, 'turnOnAutoFlushing'):
