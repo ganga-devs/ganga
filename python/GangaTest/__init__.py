@@ -5,6 +5,7 @@ def getEnvironment(c = None):
     return {}
 
 def loadPlugins( config = None ):
+    import Lib.TestSplitter
     import Lib.TestApplication
     import Lib.TestSubmitter
     import Lib.TestRobot

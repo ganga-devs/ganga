@@ -1,2 +1,5 @@
 import StoreTestFramework
 import CrashTest
+import TestSubmitter
+import TestSplitter
+import TestApplication
