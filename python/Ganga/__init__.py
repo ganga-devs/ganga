@@ -681,3 +681,7 @@ outputconfig.addOption('MassStorageFile',
                         'uploadOptions': massStorageUploadOptions,
                         'defaultProtocol': defaultMassStorageProto},
                        massStorageFileExt)
+
+# ------------------------------------------------
+# Display
+config = makeConfig('Display', 'control the printing style of the different registries ("jobs","box","tasks"...)')

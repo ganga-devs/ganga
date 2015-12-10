@@ -10,8 +10,7 @@ from Ganga.GPIDev.Base.Proxy import isType
 
 logger = Ganga.Utility.logging.getLogger()
 
-config = Ganga.Utility.Config.makeConfig(
-    'Display', 'control the printing style of the different registries ("jobs","box","tasks"...)')
+config = Ganga.Utility.Config.getConfig('Display')
 
 
 class RegistrySlice(object):
