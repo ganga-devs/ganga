@@ -391,3 +391,10 @@ config.addOption('job_finish_time', 'random.uniform(10,20)',
                  'python expression which returns the time when the job enters the Done success or Failed state')
 config.addOption(
     'job_failure_rate', 0.0, 'probability of the job to enter the Failed state')
+
+# ------------------------------------------------
+# Condor
+config = makeConfig('Condor', 'Settings for Condor Batch system')
+
+config.addOption('query_global_queues', True,
+                 "Query global condor queues, i.e. use '-global' flag")
