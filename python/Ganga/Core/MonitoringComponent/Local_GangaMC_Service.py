@@ -968,8 +968,8 @@ class JobRegistry_Monitor(GangaThread):
 
                         name = stripProxy(j).getNodeIndexCache()['display:backend']
                         if name is not None:
-                            import __main__
-                            new_backend = eval(str(name)+'()', __main__.__dict__)
+                            import Ganga.GPI
+                            new_backend = eval(str(name)+'()', Ganga.GPI.__dict__)
                             if hasattr(new_backend, 'setup'):
                                 j.backend.setup()
                         else:

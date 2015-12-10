@@ -61,8 +61,8 @@ def runtimeEvalString(this_obj, attr_name, val):
                         ## This type is written as a string so need to work out what it is
                         if type(this_type) == str:
                             try:
-                                import __main__
-                                eval_type = eval(this_type, __main__.__dict__)
+                                import Ganga.GPI
+                                eval_type = eval(this_type, Ganga.GPI.__dict__)
                                 if eval_type == str:
                                     ## This type was written as "str" ... slightly annoying but OK...
                                     shouldEval = False
@@ -98,8 +98,8 @@ def runtimeEvalString(this_obj, attr_name, val):
 
     if shouldEval is True:
         try:
-            import __main__
-            new_val = eval(val, __main__.__dict__)
+            import Ganga.GPI
+            new_val = eval(val, Ganga.GPI.__dict__)
             if isclass(new_val):
                 new_val = new_val()
         except Exception as err:
@@ -552,9 +552,12 @@ def GPIProxyClassFactory(name, pluginclass):
 
     def _init(self, *args, **kwds):
 
-        logger.debug("Proxy Object _init")
+        ## THE ORDER IN HOW AN OBJECT IS INITIALIZED IS IMPORTANT AND HAS BEEN DOUBLE CHECKED - rcurrie
 
-        global proxyRef
+        ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
+
+        logger.debug("Proxy Object _init")
+        global proxyRef, proxyClass
         # if len(args) > 1:
         #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
 
@@ -566,6 +569,8 @@ def GPIProxyClassFactory(name, pluginclass):
                 except AttributeError:
                     pass
 
+        ## SECOND WE NEED TO MAKE SURE THAT OBJECT ID IS CORRECT AND THIS DOES THINGS LIKE REGISTER A JOB WITH THE REPO
+
         # at the object level _impl is a ganga plugin object
         instance.__dict__[proxyObject] = self
         assert(id(getattr(instance, proxyObject)) == id(self))
@@ -575,13 +580,6 @@ def GPIProxyClassFactory(name, pluginclass):
         setattr(getattr(self, proxyRef), proxyObject, self)
         getattr(self, proxyRef)._auto__init__()
 
-        clean_args = [stripProxy(arg) for arg in args]
-
-        getattr(self, proxyRef).__construct__(tuple(clean_args))
-
-        clean_args = [stripProxy(arg) for arg in args]
-
-
         from Ganga.GPIDev.Base.Objects import Node
         for key, val in getattr(self, proxyClass)._schema.allItems():
             if not val['protected'] and not val['hidden'] and isType(val, Schema.ComponentItem) and key not in Node._ref_list:
@@ -590,6 +588,19 @@ def GPIProxyClassFactory(name, pluginclass):
                     stripProxy(val)._setParent(getattr(self, proxyRef))
                 p_val = addProxy(val)
                 setattr(getattr(self, proxyRef), key, p_val)
+
+        ## THIRD CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
+        ## e.g. Job(application=exe, name='myJob', ...) or myJob2 = Job(myJob1)
+        ## THIS IS PRIMARILY FOR THE 2ND EXAMPLE ABOVE
+
+        ## DOESN'T MAKE SENSE TO KEEP PROXIES HERE AS WE MAY BE PERFORMING A PSEUDO-COPY OP
+        clean_args = [stripProxy(arg) for arg in args]
+        getattr(self, proxyRef).__construct__(tuple(clean_args))
+
+        ## FOURTH ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN
+        ## THIS IS MAINLY FOR THE FIRST EXAMPLE ABOVE
+
+        ## THIS CORRECTLY APPLIES A PROXY TO ALL OBJECT ATTRIBUTES OF AN OBJECT CREATED WITHIN THE GPI
 
         # initialize all properties from keywords of the constructor
         for k in kwds:

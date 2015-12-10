@@ -238,7 +238,7 @@ class Job(GangaObject):
         # Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
         #super(Job, self).__construct__( args )
 
-        logger.debug("Job args: %s" % str(args))
+        logger.info("Job args: %s" % str(args))
 
         if len(args) == 1:
 
@@ -270,12 +270,13 @@ class Job(GangaObject):
                     self.unprepare()
             else:
                 # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
-                #super(Job, self).__construct__( args )
-                raise ValueError("Object %s is NOT of type Job" % str(args[0]))
+                super(Job, self).__construct__( args )
+                #raise ValueError("Object %s is NOT of type Job" % str(args[0]))
         else:
             # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
             super(Job, self).__construct__(args)
 
+        logger.info("exe: %s" % str(self.application.exe))
         stripProxy(self)._setDirty()
 
     def _readonly(self):
@@ -1774,8 +1775,8 @@ class Job(GangaObject):
             if stripProxy(self).getNodeIndexCache() is not None and 'display:backend' in stripProxy(self).getNodeIndexCache().keys():
                 name = stripProxy(self).getNodeIndexCache()['display:backend']
                 if name is not None:
-                    import __main__
-                    new_backend = eval(str(name)+'()', __main__.__dict__)
+                    import Ganga.GPI
+                    new_backend = eval(str(name)+'()', Ganga.GPI.__dict__)
                     if hasattr(new_backend, 'remove'):
                         self.backend.remove()
                     del new_backend
@@ -1789,8 +1790,8 @@ class Job(GangaObject):
             if stripProxy(self).getNodeIndexCache() is not None and 'display:application' in stripProxy(self).getNodeIndexCache().keys():
                 name = stripProxy(self).getNodeIndexCache()['display:application']
                 if name is not None:
-                    import __main__
-                    new_app = eval(str(name)+'()', __main__.__dict__)
+                    import Ganga.GPI
+                    new_app = eval(str(name)+'()', Ganga.GPI.__dict__)
                     if hasattr(new_app, 'transition_update'):
                         self.application.transition_update("removed")
                         for sj in self.subjobs:
