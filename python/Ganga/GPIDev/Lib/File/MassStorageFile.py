@@ -359,7 +359,7 @@ class MassStorageFile(IGangaFile):
 
                 isJob = True
 
-                if (self.getJobObject().splitter != None):
+                if stripProxy(self.getJobObject())._master is not None:
 
                     isSplitJob = True
                     searchFor.append('{sjid}')
@@ -383,8 +383,7 @@ class MassStorageFile(IGangaFile):
                 return (False, 'Error in MassStorageFile.outputfilenameformat field :  no parent job, but {\'jid\'} keyword found')
 
             invalidUnixChars = ['"', ' ']
-            test = self.outputfilenameformat.replace('{jid}', 'a').replace(
-                '{sjid}', 'b').replace('{fname}', 'c')
+            test = self.outputfilenameformat.replace('{jid}', 'a').replace('{sjid}', 'b').replace('{fname}', 'c')
 
             for invalidUnixChar in invalidUnixChars:
                 if test.find(invalidUnixChar) > -1:
