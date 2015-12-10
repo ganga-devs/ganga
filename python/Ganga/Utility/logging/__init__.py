@@ -96,6 +96,11 @@ config.addOption('_interactive_cache', True,
                  'if True then the cache used for interactive sessions, False disables caching')
 config.addOption('_customFormat', "", "custom formatting string for Ganga logging\n e.g. '%(name)-35s: %(levelname)-8s %(message)s'")
 
+INFO = logging.INFO
+WARNING = logging.WARNING
+ERROR = logging.ERROR
+CRITICAL = logging.CRITICAL
+DEBUG = logging.DEBUG
 
 class ColourFormatter(logging.Formatter, object):
 
