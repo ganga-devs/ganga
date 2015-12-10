@@ -259,3 +259,9 @@ config.addOption('path', '', 'Set to a specific ROOT version. Will override othe
 config.addOption('pythonhome', '%s/Python/2.7.9.p1/x86_64-slc6-gcc48-opt' % getLCGRootPath(), 'Location of the python used for execution of PyROOT script')
 config.addOption('pythonversion', '2.7.9.p1', "Version number of python used for execution python ROOT script")
 config.addOption('version', '6.04.02', 'Version of ROOT')
+
+# ------------------------------------------------
+# Local
+config = makeConfig('Local', 'parameters of the local backend (jobs in the background on localhost)')
+config.addOption('remove_workdir', True, 'remove automatically the local working directory when the job completed')
+config.addOption('location', None, 'The location where the workdir will be created. If None it defaults to the value of $TMPDIR')
