@@ -1036,9 +1036,6 @@ under certain conditions; type license() for details.
         from Ganga.Runtime import Repository_runtime
         import Ganga.Core
 
-        from Ganga.Runtime.associations import load_associations
-        load_associations()
-
         # bootstrap user-defined runtime modules and enable transient named
         # template registries
 
