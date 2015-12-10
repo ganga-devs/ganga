@@ -27,17 +27,6 @@ import sys
 import time
 import re
 
-# store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.1.13 $'
-
-# [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
-r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
-if r:
-    _gangaVersion = r.group('version')
-else:
-    _gangaVersion = "SVN_TRUNK"
-
-
 def new_version_format_to_old(version):
     """
     Convert from 'x.y.z'-style format to 'Ganga-x-y-z'
@@ -48,9 +37,7 @@ def new_version_format_to_old(version):
     """
     return 'Ganga-'+version.replace('.', '-')
 
-# store a path to Ganga libraries
-import Ganga
-_gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
+
 
 from Ganga.Utility.files import fullpath
 
@@ -579,13 +566,10 @@ under certain conditions; type license() for details.
         import Ganga.Utility.util
         self.options.config_path = Ganga.Utility.files.expandfilename(self.options.config_path)
 
-        try:
-            hostname = Ganga.Utility.util.hostname()
-        except Exception as x:  # fixme: use OSError instead?
-            hostname = 'localhost'
-
         from Ganga.Utility.Config import getConfig
         syscfg = getConfig("System")
+        syscfg['GANGA_CONFIG_PATH'] = self.options.config_path
+        syscfg['GANGA_CONFIG_FILE'] = self.options.config_file
 
         def deny_modification(name, x):
             raise Ganga.Utility.Config.ConfigError(
