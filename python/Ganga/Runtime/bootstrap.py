@@ -584,75 +584,16 @@ under certain conditions; type license() for details.
         except Exception as x:  # fixme: use OSError instead?
             hostname = 'localhost'
 
-        # the system variables (such as VERSION) are put to DEFAULTS section of the config module
-        # so you can refer to them in the config file
-        # additionally they will be visible in the (write protected) [System]
-        # config module
-        syscfg = Ganga.Utility.Config.makeConfig('System', "parameters of this ganga session (read-only)", cfile=False)
-        syscfg.addOption('GANGA_VERSION', _gangaVersion, '')
-        syscfg.addOption('GANGA_PYTHONPATH', _gangaPythonPath, 'location of the ganga core packages')
-        syscfg.addOption('GANGA_CONFIG_PATH', self.options.config_path,'site/group specific configuration files as specified by --config-path or GANGA_CONFIG_PATH variable')
-        syscfg.addOption('GANGA_CONFIG_FILE', self.options.config_file, 'current user config file used')
-        syscfg.addOption('GANGA_HOSTNAME', hostname, 'local hostname where ganga is running')
+        from Ganga.Utility.Config import getConfig
+        syscfg = getConfig("System")
 
         def deny_modification(name, x):
             raise Ganga.Utility.Config.ConfigError(
                 'Cannot modify [System] settings (attempted %s=%s)' % (name, x))
         syscfg.attachUserHandler(deny_modification, None)
         syscfg.attachSessionHandler(deny_modification, None)
-        import Ganga.Utility.Config
 
-        # the SCRIPTS_PATH must be initialized before the config files are loaded
-        # for the path to be correctly prepended
-
-        from Ganga.Utility.Config import makeConfig
-        config = makeConfig("Configuration", "global configuration parameters.\nthis is a catch all section.")
-        config.addOption('SCRIPTS_PATH', 'Ganga/scripts', """the search path to scripts directory.
-When running a script from the system shell (e.g. ganga script) this path is used to search for script""")
-
-        config.addOption('LOAD_PATH', '', "the search path for the load() function")
-        config.addOption('RUNTIME_PATH', '',
-        """path to runtime plugin packages where custom handlers may be added.
-Normally you should not worry about it.
-If an element of the path is just a name (like in the example below)
-then the plugins will be loaded using current python path. This means that
-some packages such as GangaTest may be taken from the release area.""",
-                examples="RUNTIME_PATH = GangaGUIRUNTIME_PATH = /my/SpecialExtensions:GangaTest ")
-
-        config.addOption('TextShell', 'IPython', """ The type of the interactive shell: IPython (cooler) or Console (limited)""")
-        config.addOption('StartupGPI', '', 'block of GPI commands executed at startup')
-        config.addOption('ReleaseNotes', True, 'Flag to print out the relevent subsection of release notes for each experiment at start up')
-        config.addOption('gangadir', Ganga.Utility.Config.expandvars(
-            None, '~/gangadir'), 'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=Ganga.Utility.Config.expandvars)
-        config.addOption(
-            'repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
-        config.addOption('workspacetype', 'LocalFilesystem',
-                         'Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
-
-        config.addOption('user', '',
-            'User name. The same person may have different roles (user names) and still use the same gangadir. Unless explicitly set this option defaults to the real user name.')
-        config.addOption('resubmitOnlyFailedSubjobs', True,
-                         'If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs. Note that the auto_resubmit mechanism will only ever resubmit FAILED subjobs.')
-        config.addOption('SMTPHost', 'localhost', 'The SMTP server for notification emails to be sent, default is localhost')
-        config.addOption('deleteUnusedShareDir', 'always',
-                         'If set to ask the user is presented with a prompt asking whether Shared directories not associated with a persisted Ganga object should be deleted upon Ganga exit. If set to never, shared directories will not be deleted upon exit, even if they are not associated with a persisted Ganga object. If set to always (the default), then shared directories will always be deleted if not associated with a persisted Ganga object.')
-
-        config.addOption('autoGenerateJobWorkspace', False, 'Autogenerate workspace dirs for new jobs')
-
-        # add named template options
-        config.addOption('namedTemplates_ext', 'tpl',
-                         'The default file extension for the named template system. If a package sets up their own by calling "establishNamedTemplates" from python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override this without needing the config option')
-        config.addOption('namedTemplates_pickle', False,
-                         'Determines if named template system stores templates in pickle file format (True) or in the Ganga streamed object format (False). By default streamed object format which is human readable is used. If a package sets up their own by calling "establishNamedTemplates" from python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override this without needing the config option')
-
-        # add server options
-        config.addOption('ServerPort', 434343, 'Port for the Ganga server to listen on')
-        config.addOption('ServerTimeout', 60, 'Timeout in minutes for auto-server shutdown')
-        config.addOption('ServerUserScript', "", "Full path to user script to call periodically. The script will be executed as if called within Ganga by 'execfile'.")
-        config.addOption('ServerUserScriptWaitTime', 300, "Time in seconds between executions of the user script")
-
-        config.addOption('confirm_exit', 1, 'Ask the user on exit if we should exit, (this is passed along to IPython)')
-        config.addOption('force_start', False, 'Ignore disk checking on startup')
+        config = getConfig("Configuration")
 
         # detect default user (equal to unix user name)
         import getpass
@@ -663,43 +604,10 @@ some packages such as GangaTest may be taken from the release area.""",
 
         config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
 
-        ipconfig = Ganga.Utility.Config.makeConfig('TextShell_IPython', '''IPython shell configuration
-See IPython manual for more details:
-http://ipython.scipy.org/doc/manual''')
-
-
-        ipconfig.addOption('args', "['-colors','LightBG', '-autocall','0', '-pprint']", 'Options to be passed to ipython for initialization')
-
         # import configuration from spyware
         from Ganga.Runtime import spyware
 
-        import Ganga.Utility.ColourText
-
-        makeConfig('Display', """control the content and appearence of printing ganga objects: attributes,colours,etc.
-If ANSI text colours are enabled, then individual colours may be specified like this:
- fg.xxx - Foreground: %s
- bg.xxx - Background: %s
- fx.xxx - Effects: %s
-        """ % (Ganga.Utility.ColourText.Foreground.__doc__, Ganga.Utility.ColourText.Background.__doc__, Ganga.Utility.ColourText.Effects.__doc__))
-
-        # [Shell] section
-        makeConfig("Shell", "configuration parameters for internal Shell utility.")
-
-        # [Queues] section
-        queuesconfig = makeConfig("Queues", "configuration section for the queues")
-        queuesconfig.addOption('Timeout', None, 'default timeout for queue generated processes')
-        queuesconfig.addOption('NumWorkerThreads', 3, 'default number of worker threads in the queues system')
-
-
-        # [MSGMS] section create configuration
-        monConfig = makeConfig('MSGMS', 'Settings for the MSGMS monitoring plugin. Cannot be changed ruding the interactive Ganga session.')
-        monConfig.addOption('server', 'dashb-mb.cern.ch', 'The server to connect to')
-        monConfig.addOption('port', 61113, 'The port to connect to')
-        monConfig.addOption('username', 'ganga', '')
-        monConfig.addOption('password', 'analysis', '')
-        monConfig.addOption('message_destination', '/queue/ganga.status', '')
-        monConfig.addOption('usage_message_destination', "/queue/ganga.usage", '')
-        monConfig.addOption('job_submission_message_destination', "/queue/ganga.jobsubmission", '')
+        monConfig = getConfig("MSGMS")
 
         # prevent modification during the interactive ganga session
         def deny_modification(name, x):
@@ -955,13 +863,8 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                     exportToGPI(n, cls._proxyClass, 'Classes')
 
         # set the default value for the plugins
-
-        default_plugins_cfg = Ganga.Utility.Config.makeConfig('Plugins', '''General control of plugin mechanism.
-Set the default plugin in a given category.
-For example:
-default_applications = DaVinci
-default_backends = LCG
-''')
+        from Ganga.Utility.Config import getConfig
+        default_plugins_cfg = getConfig("Plugins")
 
         for opt in default_plugins_cfg:
             try:

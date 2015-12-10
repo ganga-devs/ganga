@@ -9,15 +9,11 @@ logger = Ganga.Utility.logging.getLogger()
 def _initconfigFeed():
     """Initialize Feedback configuration."""
     try:
-        from Ganga.Utility import Config
-        # create configuration
-        config = Config.makeConfig(
-            'Feedback', 'Settings for the Feedback plugin. Cannot be changed ruding the interactive Ganga session.')
-        config.addOption(
-            'uploadServer', 'http://gangamon.cern.ch/django/errorreports', 'The server to connect to')
+        from Ganga.Utility.Config import getConfig, ConfigError
+        config = getConfig("Feedback")
 
         def deny_modification(name, x):
-            raise Config.ConfigError(
+            raise ConfigError(
                 'Cannot modify [Feedback] settings (attempted %s=%s)' % (name, x))
         config.attachUserHandler(deny_modification, None)
     except ImportError as err:

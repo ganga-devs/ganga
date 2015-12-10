@@ -17,41 +17,11 @@ from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 import Ganga.Utility.logging
 
 from Ganga.Core import BackendError
-import Ganga.Utility.Config
+from Ganga.Utility.Config import getConfig
 
 log = Ganga.Utility.logging.getLogger()
 
-config = Ganga.Utility.Config.makeConfig('PollThread', 'background job status monitoring and output retrieval')
-
-# some defaults
-config.addOption('repeat_messages', False, 'if 0 then log only once the errors for a given backend and do not repeat them anymore')
-config.addOption('autostart', True, 'enable monitoring automatically at startup, in script mode monitoring is disabled by default, in interactive mode it is enabled', type=type(True))  # enable monitoring on startup
-config.addOption('autostart_monThreads', True, 'enable populating of the monitoring worker threads')
-config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
-config.addOption('MaxNumResubmits', 5, 'Maximum number of automatic job resubmits to do before giving')
-config.addOption('MaxFracForResubmit', 0.25, 'Maximum fraction of failed jobs before stopping automatic resubmission')
-config.addOption('update_thread_pool_size', 5, 'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
-config.addOption('default_backend_poll_rate', 30, 'Default rate for polling job status in the thread pool. This is the default value for all backends.')
-config.addOption('Local', 10, 'Poll rate for Local backend.')
-config.addOption('LCG', 30, 'Poll rate for LCG backend.')
-config.addOption('Condor', 30, 'Poll rate for Condor backend.')
-config.addOption('gLite', 30, 'Poll rate for gLite backend.')
-config.addOption('LSF', 20, 'Poll rate for LSF backend.')
-config.addOption('PBS', 20, 'Poll rate for PBS backend.')
-config.addOption('Dirac', 50, 'Poll rate for Dirac backend.')
-config.addOption('Panda', 50, 'Poll rate for Panda backend.')
-
-# Note: the rate of this callback is actually
-# MAX(base_poll_rate,callbacks_poll_rate)
-config.addOption('creds_poll_rate', 30, "The frequency in seconds for credentials checker")
-config.addOption('diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
-config.addOption('DiskSpaceChecker', "", "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
-
-
-config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
-
-config.addOption('numParallelJobs', 5, 'Number of Jobs to update the status for in parallel')
-
+config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
 Qin = Queue.Queue()
 ThreadPool = []
