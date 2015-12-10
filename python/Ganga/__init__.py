@@ -1,11 +1,29 @@
+# System Imports
+import os
+import re
+import inspect
+
+# Global Functions
 def getEnvironment(config = None):
     return {}
 
+def getLCGRootPath():
+
+    lcg_release_areas = {'afs' : '/afs/cern.ch/sw/lcg/releases/LCG_79',
+    'cvmfs' : '/cvmfs/lhcb.cern.ch/lib/lcg/releases/LCG_79'}
+
+    ## CAUTION This could be sensitive to mixed AFS/CVMFS running but I doubt this setup is common or likely
+    myCurrentPath = os.path.abspath(inspect.getfile(inspect.currentframe()))
+
+    if myCurrentPath[:4].upper() == '/AFS':
+        return lcg_release_areas['afs']
+    elif myCurrentPath[:6].upper() == '/CVMFS':
+        return lcg_release_areas['cvmfs']
+    else:
+        return ''
+
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-import os
-import re
-
 _gangaVersion = '$Name: 6.1.13 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
@@ -225,3 +243,19 @@ config.addOption('html', 'firefox &', 'Command for viewing html files.')
 config.addOption('root', 'root.exe &&', 'Command for opening ROOT files.')
 config.addOption('tar', 'file-roller &', 'Command for opening tar files.')
 config.addOption('tgz', 'file-roller &', 'Command for opening tar files.')
+
+# ------------------------------------------------
+# Root
+config = makeConfig('ROOT', "Options for Root backend")
+## Not needed when we can't do option substitution internally but support it at the .gangarc level!!!!! 27-09-2015 rcurrie
+#config.addOption('lcgpath', getLCGRootPath(), 'Path of the LCG release that the ROOT project and it\'s externals are taken from')
+config.addOption('arch', 'x86_64-slc6-gcc48-opt', 'Architecture of ROOT')
+## Auto-Interporatation doesn't appear to work when setting the default value
+#config.addOption('location', '${lcgpath}/ROOT/${version}/${arch}/', 'Location of ROOT')
+config.addOption('location', '%s/ROOT/6.04.02/x86_64-slc6-gcc48-opt' % getLCGRootPath(), 'Location of ROOT')
+config.addOption('path', '', 'Set to a specific ROOT version. Will override other options.')
+## Doesn't appear to work see above ^^^
+#config.addOption('pythonhome', '${lcgpath}/Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
+config.addOption('pythonhome', '%s/Python/2.7.9.p1/x86_64-slc6-gcc48-opt' % getLCGRootPath(), 'Location of the python used for execution of PyROOT script')
+config.addOption('pythonversion', '2.7.9.p1', "Version number of python used for execution python ROOT script")
+config.addOption('version', '6.04.02', 'Version of ROOT')
