@@ -17,7 +17,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 
-from Ganga.Utility.Config import makeConfig, getConfig
+from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
 
 config = getConfig("Preparable")

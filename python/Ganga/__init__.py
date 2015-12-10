@@ -538,3 +538,11 @@ config.addOption('std_merge', 'TextMerger', 'Standard (default) merger')
 # Preparable
 config = makeConfig('Preparable', 'Parameters for preparable applications')
 config.addOption('unprepare_on_copy', False, 'Unprepare a prepared application when it is copied')
+
+# ------------------------------------------------
+# GPIComponentFilters
+config = makeConfig('GPIComponentFilters', """Customization of GPI component object assignment
+for each category there may be multiple filters registered, the one used being defined
+in the configuration file in [GPIComponentFilters]
+e.g: {'datasets':{'lhcbdatasets':lhcbFilter, 'testdatasets':testFilter}...}
+""", is_open=False)
