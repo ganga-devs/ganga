@@ -961,25 +961,7 @@ class JobRegistry_Monitor(GangaThread):
             try:
                 log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
                 for j in jobList_fromset:
-
-            	    if hasattr(stripProxy(j), 'getNodeIndexCache') and\
-                        stripProxy(j).getNodeIndexCache() is not None and\
-                        'display:backend' in stripProxy(j).getNodeIndexCache().keys():
-
-                        name = stripProxy(j).getNodeIndexCache()['display:backend']
-                        if name is not None:
-                            import Ganga.GPI
-                            new_backend = eval(str(name)+'()', Ganga.GPI.__dict__)
-                            if hasattr(new_backend, 'setup'):
-                                j.backend.setup()
-                        else:
-                            if hasattr(j, 'backend'):
-                                if hasattr(j.backend, 'setup'):
-                                    j.backend.setup()
-                    else:
-                        if hasattr(j, 'backend'):
-                            if hasattr(j.backend, 'setup'):
-                                j.backend.setup()
+                    j.backend.setup()
 
                 if self.enabled is False and self.alive is False:
                     log.debug("NOT enabled, leaving")

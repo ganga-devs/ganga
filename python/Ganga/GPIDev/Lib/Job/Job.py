@@ -1772,50 +1772,11 @@ class Job(GangaObject):
             # this is used by Remote backend to remove the jobs remotely
             # bug #44256: Job in state "incomplete" is impossible to remove
 
-            if stripProxy(self).getNodeIndexCache() is not None and 'display:backend' in stripProxy(self).getNodeIndexCache().keys():
-                name = stripProxy(self).getNodeIndexCache()['display:backend']
-                if name is not None:
-                    import Ganga.GPI
-                    new_backend = eval(str(name)+'()', Ganga.GPI.__dict__)
-                    if hasattr(new_backend, 'remove'):
-                        self.backend.remove()
-                    del new_backend
-                else:
-                    if hasattr(stripProxy(self.backend), 'remove'):
-                        stripProxy(self.backend.remove())
-            else:
-                if hasattr(stripProxy(self.backend), 'remove'):
-                    stripProxy(self.backend).remove()
+            stripProxy(self.backend).remove()
 
-            if stripProxy(self).getNodeIndexCache() is not None and 'display:application' in stripProxy(self).getNodeIndexCache().keys():
-                name = stripProxy(self).getNodeIndexCache()['display:application']
-                if name is not None:
-                    import Ganga.GPI
-                    new_app = eval(str(name)+'()', Ganga.GPI.__dict__)
-                    if hasattr(new_app, 'transition_update'):
-                        self.application.transition_update("removed")
-                        for sj in self.subjobs:
-                            sj.application.transition_update("removed")
-                    del new_app
-                else:
-                    try:
-                        self.application.transition_update("removed")
-                        for sj in self.subjobs:
-                            sj.application.transition_update("removed")
-                    except AttributeError as err:
-                        logger.debug("AttributeError: %s" % str(err))
-                        # Some applications do not have transition_update
-                        pass
-            else:
-                # tell the application that the job was removed
-                try:
-                    self.application.transition_update("removed")
-                    for sj in self.subjobs:
-                        sj.application.transition_update("removed")
-                except AttributeError as err:
-                    logger.debug("AttributeError: %s" % str(err))
-                    # Some applications do not have transition_update
-                    pass
+            self.application.transition_update("removed")
+            for sj in self.subjobs:
+                sj.application.transition_update("removed")
 
         if self._registry:
             self._registry._remove(self, auto_removed=1)
