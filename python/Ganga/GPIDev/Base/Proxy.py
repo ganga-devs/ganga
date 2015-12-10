@@ -221,9 +221,10 @@ def stripComponentObject(v, cfilter, item):
     def getImpl(v):
         if v is None:
             if not item['optional']:
-                raise TypeMismatchError(
-                        None, 'component is mandatory and None may not be used')
+                raise TypeMismatchError(None, 'component is mandatory and None may not be used')
                 return v
+            else:
+                return None
         if isType(v, GangaObject):
             return v
         if not isinstance(v, GPIProxyObject):
