@@ -533,3 +533,8 @@ gangadir = getConfig('Configuration')['gangadir']
 config.addOption('merge_output_dir', gangadir +
                  '/merge_results', "location of the merger's outputdir")
 config.addOption('std_merge', 'TextMerger', 'Standard (default) merger')
+
+# ------------------------------------------------
+# Preparable
+config = makeConfig('Preparable', 'Parameters for preparable applications')
+config.addOption('unprepare_on_copy', False, 'Unprepare a prepared application when it is copied')

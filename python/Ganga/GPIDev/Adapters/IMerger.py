@@ -4,7 +4,7 @@
 # $Id: IMerger.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 import Ganga.Utility.logging
