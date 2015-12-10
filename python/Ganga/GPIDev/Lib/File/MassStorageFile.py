@@ -359,7 +359,7 @@ class MassStorageFile(IGangaFile):
 
                 isJob = True
 
-                if (self.getJobObject().splitter != None):
+                if self.getJobObject().fqid.find('.') > -1:
 
                     isSplitJob = True
                     searchFor.append('{sjid}')
