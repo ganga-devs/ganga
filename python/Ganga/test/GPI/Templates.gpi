@@ -5,6 +5,8 @@ assert(job.application.exe == File('x'))
 assert(len(jobs) == 1)
 
 job2 = Job(job)
+print job2.application.exe
+print File('x')
 assert(job2.application.exe == File('x'))
 assert(len(jobs) == 2)
 
