@@ -29,14 +29,7 @@ def relpath(path, start=curdir):
     return join(*rel_list)
 
 # set the mergers config up
-config = makeConfig('Mergers', 'parameters for mergers')
-config.addOption('associate', {'log': 'TextMerger', 'root': 'RootMerger',
-                               'text': 'TextMerger', 'txt': 'TextMerger'}, 'Dictionary of file associations')
-gangadir = getConfig('Configuration')['gangadir']
-config.addOption('merge_output_dir', gangadir +
-                 '/merge_results', "location of the merger's outputdir")
-config.addOption('std_merge', 'TextMerger', 'Standard (default) merger')
-
+config = getConfig("Mergers")
 
 def getDefaultMergeDir():
     """Gets the default location of the mergers outputdir from the config"""

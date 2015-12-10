@@ -45,7 +45,7 @@ except Exception as x:  # fixme: use OSError instead?
 
 # ------------------------------------------------
 # Setup all configs for this module
-from Ganga.Utility.Config import makeConfig, expandvars
+from Ganga.Utility.Config import makeConfig, getConfig, expandvars
 
 # ------------------------------------------------
 # System
@@ -517,8 +517,19 @@ config.addOption('kill_res_pattern', '(has registered the job +\d+ +for deletion
 #   The absolute path to the job's temporary working directory.
 #=============================
 
+
 config.addOption('preexecute', 'os.chdir(os.environ["TMPDIR"])\nos.environ["PATH"]+=":."',
                  "String contains commands executing before submiting job to queue")
 config.addOption('postexecute', '', "String contains commands executing before submiting job to queue")
 config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
 config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+
+# ------------------------------------------------
+# Mergers
+config = makeConfig('Mergers', 'parameters for mergers')
+config.addOption('associate', {'log': 'TextMerger', 'root': 'RootMerger',
+                               'text': 'TextMerger', 'txt': 'TextMerger'}, 'Dictionary of file associations')
+gangadir = getConfig('Configuration')['gangadir']
+config.addOption('merge_output_dir', gangadir +
+                 '/merge_results', "location of the merger's outputdir")
+config.addOption('std_merge', 'TextMerger', 'Standard (default) merger')
