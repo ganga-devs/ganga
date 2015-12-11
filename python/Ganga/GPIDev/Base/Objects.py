@@ -441,6 +441,7 @@ class Descriptor(object):
                     if ((_obj.getNodeData() is not None) or (_obj.getNodeIndexCache() is not None)) and (lookup_exception is not None):
                         result = lookup_result
                     else:
+                        #_obj._getReadAccess()
                         if getName(self) in _obj.getNodeData().keys():
                             result = _obj.getNodeAttribute(getName(self))
                         else:
@@ -453,26 +454,34 @@ class Descriptor(object):
                                     _obj._getReadAccess()
                                     #import traceback
                                     #traceback.print_stack()
-                                    logger.debug("1) Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                    GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
+                                    logger.debug("1) Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
+                                    GangaException("Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
                                     result = _obj.getNodeAttribute(getName(self))
                             else:
                                 ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
+                                root = stripProxy(_obj)._getRoot()
+                                reg = root._getRegistry()
+                                logger.info("loaded reg: %s" % str(reg._loaded_ids))
                                 _obj._getReadAccess()
+                                logger.info("loaded reg: %s" % str(reg._loaded_ids))
                                 #import traceback
                                 #traceback.print_stack()
-                                logger.debug("2) Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
+                                #logger.debug("Object: %s" % str(getName(obj)))
+                                #logger.debug("Index: %s" % str(stripProxy(obj).getNodeIndexCache()))
+                                #logger.debug("NodeD: %s" % str(stripProxy(obj).getNodeData()))
+                                #logger.debug("dict: %s" % str(stripProxy(obj).__class__.__dict__))
+                                logger.info("2) Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
+                                GangaException("Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
                                 result = _obj.getNodeAttribute(getName(self))
                 else:
                     if lookup_exception is not None:
                         err = lookup_exception
                     else:
-                        logger.debug("Object: %s" % str(getName(obj)))
-                        logger.debug("Index: %s" % str(stripProxy(obj).getNodeIndexCache()))
-                        logger.debug("NodeD: %s" % str(stripProxy(obj).getNodeData()))
-                        logger.debug("dict: %s" % str(stripProxy(obj).__class__.__dict__))
-                        err = GangaException("Error finding parameter %s in object %s" % (getName(self), getName(obj)))
+                        #logger.debug("Object: %s" % str(getName(obj)))
+                        #logger.debug("Index: %s" % str(stripProxy(obj).getNodeIndexCache()))
+                        #logger.debug("NodeD: %s" % str(stripProxy(obj).getNodeData()))
+                        #logger.debug("dict: %s" % str(stripProxy(obj).__class__.__dict__))
+                        err = GangaException("Error finding parameter '%s' in object: %s" % (getName(self), getName(obj)))
                     raise err
 
             return result
