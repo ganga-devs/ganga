@@ -22,7 +22,7 @@ from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
-from Ganga.GPIDev.Base.Proxy import isType, getName, GPIProxyObjectFactory, addProxy, stripProxy, runProxyMethod, runtimeEvalString
+from Ganga.GPIDev.Base.Proxy import isType, getName, GPIProxyObjectFactory, addProxy, stripProxy, runProxyMethod, runtimeEvalString, getRuntimeGPIObject
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
 from Ganga.Lib.Splitters import DefaultSplitter
@@ -1775,8 +1775,7 @@ class Job(GangaObject):
             if stripProxy(self).getNodeIndexCache() is not None and 'display:backend' in stripProxy(self).getNodeIndexCache().keys():
                 name = stripProxy(self).getNodeIndexCache()['display:backend']
                 if name is not None:
-                    import Ganga.GPI
-                    new_backend = eval(str(name)+'()', Ganga.GPI.__dict__)
+                    new_backend = getRuntimeGPIObject(name)
                     if hasattr(new_backend, 'remove'):
                         self.backend.remove()
                     del new_backend
@@ -1790,8 +1789,7 @@ class Job(GangaObject):
             if stripProxy(self).getNodeIndexCache() is not None and 'display:application' in stripProxy(self).getNodeIndexCache().keys():
                 name = stripProxy(self).getNodeIndexCache()['display:application']
                 if name is not None:
-                    import Ganga.GPI
-                    new_app = eval(str(name)+'()', Ganga.GPI.__dict__)
+                    new_app = getRuntimeGPIObject(name)
                     if hasattr(new_app, 'transition_update'):
                         self.application.transition_update("removed")
                         for sj in self.subjobs:
