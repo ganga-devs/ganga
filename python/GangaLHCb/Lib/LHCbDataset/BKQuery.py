@@ -2,9 +2,12 @@
 import datetime
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 from LHCbDataset import LHCbDataset
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Backends.DiracUtils import get_result
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
@@ -80,8 +83,7 @@ RecoToDST-07/90000000/DST" ,
     docstr = 'End date string yyyy-mm-dd (only works for type="RunsByDate")'
     schema['endDate'] = SimpleItem(defvalue='', doc=docstr)
     docstr = 'Data quality flag (string or list of strings).'
-    schema['dqflag'] = SimpleItem(
-        defvalue='OK', typelist=['str', 'list'], doc=docstr)
+    schema['dqflag'] = SimpleItem(defvalue='OK', typelist=['str', 'list'], doc=docstr)
     docstr = 'Type of query (Path, RunsByDate, Run, Production)'
     schema['type'] = SimpleItem(defvalue='Path', doc=docstr)
     docstr = 'Selection criteria: Runs, ProcessedRuns, NotProcessed (only works for type="RunsByDate")'
@@ -96,7 +98,7 @@ RecoToDST-07/90000000/DST" ,
         self.path = path
 
     def __construct__(self, args):
-        if (len(args) != 1) or (type(args[0]) is not type('')):
+        if (len(args) != 1) or (not isType(args[0], str)):
             super(BKQuery, self).__construct__(args)
         else:
             self.path = args[0]
@@ -118,7 +120,9 @@ RecoToDST-07/90000000/DST" ,
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg)
         cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
-        if type(self.dqflag) == type([]):
+        from Ganga.GPI import GangaList
+        knownLists = [tuple, list, GangaList]
+        if isType(self.dqflag, knownLists):
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
 
         result = get_result(cmd, 'BK query error.', 'BK query error.')
@@ -152,12 +156,16 @@ RecoToDST-07/90000000/DST" ,
             if self.selection:
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg)
-        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate,
-                                                             self.selection)
-        if type(self.dqflag) == type([]):
+        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
+        from Ganga.GPI import GangaList
+        knownLists = [tuple, list, GangaList]
+        if isType(self.dqflag, knownLists):
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate,
                                                                self.endDate, self.selection)
         result = get_result(cmd, 'BK query error.', 'BK query error.')
+
+        logger.debug("Finished Running Command")
+
         files = []
         value = result['Value']
         if 'LFNs' in value:
@@ -166,14 +174,27 @@ RecoToDST-07/90000000/DST" ,
             # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
             files = files.keys()
 
+        logger.debug("Creating DiracFile objects")
+
+        ## Doesn't work not clear why
         from Ganga.GPI import DiracFile
-        #ds = LHCbDataset()
+        #new_files = []
+        #def _createDiracLFN(this_file):
+        #    return DiracFile(lfn = this_file)
+        #GangaObject.__createNewList(new_files, files, _createDiracLFN)
+
         new_files = [DiracFile(lfn=_file) for _file in files]
+
+        #new_files = [DiracFile(lfn=_file) for _file in files]
         #for f in files:
         #    new_files.append(DiracFile(lfn=f))
             #ds.extend([DiracFile(lfn = f)])
 
+        logger.debug("Creating Dataset")
+
         ds = LHCbDataset(new_files)
+
+        logger.debug("Returning Dataset")
 
         return GPIProxyObjectFactory(ds)
 
@@ -223,7 +244,7 @@ class BKQueryDict(GangaObject):
         super(BKQueryDict, self).__init__()
 
     def __construct__(self, args):
-        if (len(args) != 1) or (type(args[0]) is not type({})):
+        if (len(args) != 1) or type(args[0]) is not dict:
             super(BKQueryDict, self).__construct__(args)
         else:
             self.dict = args[0]
@@ -261,11 +282,15 @@ class BKQueryDict(GangaObject):
             if 'LFNs' in files:  # i.e. a dict of LFN:Metadata
                 files = files['LFNs'].keys()
 
+        ## Doesn't work, not clear why
         from Ganga.GPI import DiracFile
-        #ds = LHCbDataset()
+        #new_files = []
+        #def _createDiracLFN(this_file):
+        #    return DiracFile(lfn = this_file)
+        #GangaObject.__createNewList(new_files, files, _createDiracLFN)
+        new_files = [DiracFile(lfn=_file) for _file in files]
 
-        this_list = [DiracFile(lfn=_file) for _file in files]
-        ds = LHCbDataSet(this_list)
+        ds = LHCbDataSet(new_files)
         #new_files = []
         #for f in files:
         #    #new_files.append('LFN:' + str(f))

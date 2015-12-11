@@ -39,8 +39,7 @@ class LHCbDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    schema['files'] = GangaFileItem(defvalue=[], typelist=[
-                                    'str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
+    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0, doc=docstr)
     docstr = 'Use contents of file rather than generating catalog.'
@@ -73,23 +72,28 @@ class LHCbDataset(GangaDataset):
         elif isType(files, (list, tuple, GangaList)):
             new_list = []
             for this_file in files:
-                if type(this_file) == str:
+                if type(this_file) is str:
                     new_list.append(string_datafile_shortcut_lhcb(this_file, None))
                 elif isType(this_file, IGangaFile):
                     new_list.append(this_file)
                 else:
                     newlist.append(strToDataFile(this_file))
             stripProxy(new_files)._list = new_list
-        elif type(files) == type(''):
+        elif type(files) is str:
             new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
         else:
             from Ganga.Core.exceptions import GangaException
             raise GangaException("Unknown object passed to LHCbDataset constructor!")
         new_files._setParent(self)
 
+        logger.debug("Processed inputs, assigning files")
+
         # Feel free to turn this on again for debugging but it's potentially quite expensive
         #logger.debug( "Creating dataset with:\n%s" % files )
         self.files = new_files
+        
+        logger.debug("Assigned files")
+
         self.persistency = persistency
         self.depth = depth
         logger.debug("Dataset Created")
@@ -118,12 +122,12 @@ class LHCbDataset(GangaDataset):
             return
 
         self.files = []
-        if type(args[0]) == type(''):
+        if type(args[0]) is str:
             this_file = string_datafile_shortcut_lhcb(args[0], None)
             self.files.append(file_arg)
         else:
             for file_arg in args[0]:
-                if type(file_arg) is type(''):
+                if type(file_arg) is str:
                     this_file = string_datafile_shortcut_lhcb(file_arg, None)
                 else:
                     this_file = file_arg
@@ -226,9 +230,9 @@ class LHCbDataset(GangaDataset):
 
         _external_files = []
 
-        if type(files) == type('') or isType(files, IGangaFile):
+        if type(files) is str or isType(files, IGangaFile):
             _external_files = [files]
-        elif type(files) == type([]):
+        elif type(files) in [list, tuple]:
             _external_files = files
         elif isType(files, LHCbDataset):
             _external_files = files.files
@@ -243,7 +247,7 @@ class LHCbDataset(GangaDataset):
                 if len(this_file.subfiles) > 0:
                     _external_files = makeGangaListByRef(this_file.subfiles)
                     _to_remove.append(this_file)
-            if type(this_file) == type(''):
+            if type(this_file) is str:
                 _external_files.append(string_datafile_shortcut_lhcb(this_file, None))
                 _to_remove.append(this_file)
 
@@ -480,7 +484,7 @@ class LHCbDataset(GangaDataset):
         return b
 
     # def pop(self,file):
-    #    if type(file) is type(''): file = strToDataFile(file,False)
+    #    if type(file) is str: file = strToDataFile(file,False)
     #    try: job = self.getJobObject()
     #    except: job = None
     #    if job:
@@ -519,10 +523,10 @@ def string_datafile_shortcut_lhcb(name, item):
     #   We can do some 'magic' with strings so lets do that here
     if (mainFileOutput is not None):
         #logger.debug( "Core Found: %s" % str( mainFileOutput ) )
-        if (type(name) is not type('')):
+        if (type(name) is not str):
             return mainFileOutput
 
-    if type(name) is not type(''):
+    if type(name) is not str:
         return None
     if item is None and name is None:
         return None  # used to be c'tor, but shouldn't happen now
@@ -560,7 +564,7 @@ def string_dataset_shortcut(files, item):
                      if isinstance(stripProxy(i), ObjectMetaclass)
                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))
                      and 'inputdata' in stripProxy(i)._schema.datadict]
-    if type(files) is not type([]):
+    if type(files) not in [list, tuple]:
         return None
     if item in inputdataList:
         ds = LHCbDataset()
