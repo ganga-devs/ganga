@@ -3,6 +3,7 @@
 from copy import deepcopy
 import tempfile
 import fnmatch
+from Ganga.Core import GangaException
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
 from Ganga.GPIDev.Base import GangaObject
@@ -82,7 +83,6 @@ class LHCbDataset(GangaDataset):
         elif type(files) is str:
             new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
         else:
-            from Ganga.Core.exceptions import GangaException
             raise GangaException("Unknown object passed to LHCbDataset constructor!")
         new_files._setParent(self)
 
