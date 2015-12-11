@@ -12,11 +12,13 @@ found_types = {}
 def _valueTypeAllowed(val, valTypeList, logger=None):
     for _t in valTypeList:
 
+        ## Type Checking ""Should"" be proxy agnoistic but this may have problems loading before certain classes
         try:
             from Ganga.GPIDev.Base.Proxy import isType
         except ImportError:
             isType = isinstance
 
+        ## Return None when None
         if _t is None:
             if val is None:
                 return True
@@ -54,12 +56,21 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
                     continue
                 _val = val
 
+        try:
+            from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+            knownLists = [list, tuple, GangaList]
+        except Exception as err:
+            knownLists = [list, tuple]
+
         # Deal with the case where type is None.
         if _type is None:
             if _val is None:
                 return True
             else:
                 continue
+        elif _type in knownLists:
+            if isType(_val, knownLists):
+                return True
         elif isType(_val, _type):
             return True
     return False
