@@ -8,6 +8,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
 from .IGangaFile import IGangaFile
@@ -359,7 +360,7 @@ class MassStorageFile(IGangaFile):
 
                 isJob = True
 
-                if stripProxy(self.getJobObject())._master is not None:
+                if stripProxy(self.getJobObject()).master is not None:
 
                     isSplitJob = True
                     searchFor.append('{sjid}')
