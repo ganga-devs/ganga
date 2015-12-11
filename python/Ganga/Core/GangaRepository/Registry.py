@@ -788,39 +788,43 @@ class Registry(object):
 
         #logger.debug("Reg %s _read_access(%s)" % (self.name, str(_obj)))
         obj = stripProxy(_obj)
-        if (obj.getNodeData()) or hasattr(obj, "_registry_refresh"):
-            logger.debug("Triggering Load: %s %s" %(str(self.name),  str(self.find(_obj))))
-            #import traceback
-            #traceback.print_stack()
-            if self.hasStarted() is not True:
-                raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
 
-            if hasattr(obj, "_registry_refresh"):
-                delattr(obj, "_registry_refresh")
-            assert not hasattr(obj, "_registry_refresh")
+        ## This used to test the objects passed to it on a per-call basis. Now we keep track of the objects 'load'-ed since startup
+        ## FIXME this can probably be removed and forgotten after 6.1.14 is released
+        #if obj.getNodeData() in [None, {}] or hasattr(obj, "_registry_refresh"):
 
-            #self._lock.acquire()
+        logger.debug("Triggering Load: %s %s" %(str(self.name),  str(self.find(_obj))))
+        #import traceback
+        #traceback.print_stack()
+        if self.hasStarted() is not True:
+            raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
+
+        if hasattr(obj, "_registry_refresh"):
+            delattr(obj, "_registry_refresh")
+        assert not hasattr(obj, "_registry_refresh")
+
+        #self._lock.acquire()
+        try:
+            this_id = self.find(obj)
             try:
-                this_id = self.find(obj)
-                try:
-                    if this_id in self.dirty_objs.keys() and self.checkShouldFlush():
-                        self._flush([self._objects[this_id]])
-                        self.repository.load([this_id])
-                    if this_id not in self._loaded_ids:
-                        self.repository.load([this_id])
-                        self._loaded_ids.append(this_id)
-                except KeyError as err:
-                    logger.debug("_read_access KeyError %s" % str(err))
-                    raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (this_id, self.name))
-                except InaccessibleObjectError as err:
-                    raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, str(err)))
-                for this_d in self.changed_ids.itervalues():
-                    this_d.add(this_id)
-            except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-                raise err
-            except Exception as err:
-                logger.debug("Unknown read access Error: %s" % str(err))
-                raise err
+                if this_id in self.dirty_objs.keys() and self.checkShouldFlush():
+                    self._flush([self._objects[this_id]])
+                    self.repository.load([this_id])
+                if this_id not in self._loaded_ids:
+                    self.repository.load([this_id])
+                    self._loaded_ids.append(this_id)
+            except KeyError as err:
+                logger.debug("_read_access KeyError %s" % str(err))
+                raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (this_id, self.name))
+            except InaccessibleObjectError as err:
+                raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, str(err)))
+            for this_d in self.changed_ids.itervalues():
+                this_d.add(this_id)
+        except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
+            raise err
+        except Exception as err:
+            logger.debug("Unknown read access Error: %s" % str(err))
+            raise err
 
     def _write_access(self, _obj):
         """Obtain write access on a given object.
@@ -862,7 +866,8 @@ class Registry(object):
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot get write access to a disconnected repository!")
         if not hasattr(obj, '_registry_locked') or not obj._registry_locked:
-           with self._lock:
+            self._lock.acquire()
+            try:
                 this_id = self.find(obj)
                 try:
                     if len(self.repository.lock([this_id])) == 0:
@@ -898,6 +903,10 @@ class Registry(object):
                     for this_d in self.changed_ids.itervalues():
                         this_d.add(this_id)
                 obj._registry_locked = True
+            except Exception as err:
+                raise err
+            finally:
+                self._lock.release()
 
         return True
 
@@ -1032,6 +1041,9 @@ class Registry(object):
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
             self.repository.shutdown()
+
+            self._loaded_ids = []
+
         finally:
             self._hasStarted = False
             self._lock.release()
