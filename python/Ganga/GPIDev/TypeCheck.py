@@ -36,10 +36,17 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
                 try:
                     if type(_t) == str:
                         global found_types
+                        ran_eval = False
+                        try:
+                            from Ganga.Base.Proxy import getRuntimeGPIObject
+                        except ImportError:
+                            getRuntimeGPIObject = eval
                         if not _t in found_types.keys():
-                            found_types[_t] = eval(_t)
+                            ran_eval = True
+                            found_types[_t] = getRuntimeGPIObject(_t)
                         _type = found_types[_t]
-                        _type = eval(_t)  # '_type' is actually the class name
+                        if ran_eval is False:
+                            _type = getRuntimeGPIObject(_t)  # '_type' is actually the class name
                     else:
                         _type = _t
                 except NameError:
