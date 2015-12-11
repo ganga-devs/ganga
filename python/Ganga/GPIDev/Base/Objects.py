@@ -530,7 +530,7 @@ class Descriptor(object):
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
                 raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' % (getName(self), v, item['category']))
 
- 
+
         v_copy = stripProxy(v).clone()
 
         #logger.info("Cloned Object Parent: %s" % v_copy._getParent())
@@ -679,7 +679,7 @@ class Descriptor(object):
             else:
                 new_val = val
                 pass
-                #val = deepcopy(val)
+            #val = deepcopy(val)
 
         if isType(new_val, Node):
             new_val._setParent(obj)
@@ -710,14 +710,13 @@ class Descriptor(object):
         except ImportError:
             linearize = True
 
-
         try:
             import threading
         except ImportError:
             linearize = True
 
         if linearize is True or len(input_elements) < 20 or\
-                not isinstance(threading.current_thread(), threading._MainThread):
+            not isinstance(threading.current_thread(), threading._MainThread):
             addToList(input_elements, final_list, action)
             return
 
@@ -1118,6 +1117,47 @@ class GangaObject(Node):
         if hasattr(v, '_on_attribute__set__'):
             return v._on_attribute__set__(self, name)
         return v
+
+    @staticmethod
+    def __createNewList(final_list, input_elements, action=None):
+
+        def addToList(_input_elements, _final_list, action=None):
+            if action is not None:
+                for element in _input_elements:
+                    _final_list.append(action(element))
+            else:
+                for element in _input_elements:
+                    _final_list.append(element)
+            return
+
+        try:
+            from Ganga.GPI import queues
+            linearize = False
+        except ImportError:
+            linearize = True
+
+        try:
+            import threading
+        except ImportError:
+            linearize = True
+
+        if linearize is True or len(input_elements) < 20 or\
+            not isinstance(threading.current_thread(), threading._MainThread):
+            addToList(input_elements, final_list, action)
+            return
+
+        import math
+        tenth = math.ceil(float(len(input_elements))/10.)
+
+        for i in range(10):
+            these_elements = input_elements[int(i*tenth):int((i+1)*tenth)]
+            queues._monitoring_threadpool.add_function(addToList, (these_elements, final_list, action))
+
+        while(len(final_list) != len(input_elements)):
+            import time
+            time.sleep(0.5)
+
+        return
 
 # define the default component object filter:
 # obj.x = "Y"   <=> obj.x = Y()
