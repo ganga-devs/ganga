@@ -209,8 +209,11 @@ def release_when_done(rlock):
                 #some code
                 pass
 
-    Attributes:
-        rlock: A lock object which can have ``release()`` called on it,
+    Args:
+        rlock: A lock object which can have ``release()`` called on it.
+
+    Yields:
+        The lock object that was passed in.
     """
     try:
         yield rlock
