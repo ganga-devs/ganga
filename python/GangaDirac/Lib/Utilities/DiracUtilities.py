@@ -180,7 +180,7 @@ def execute(command,
     if hasattr(returnable, 'keys'):
         # Expand object(s) in dictionaries
         myObject = _expand_object(returnable)
-    elif type(returnable) == type([]):
+    elif type(returnable) in[list, tuple]:
         # Expand object(s) in lists
         myObject = _expand_list(returnable)
     else:
@@ -207,3 +207,4 @@ def _expand_list(mylist):
     for element in mylist:
         new_list.append(copy.deepcopy(element))
     return new_list
+

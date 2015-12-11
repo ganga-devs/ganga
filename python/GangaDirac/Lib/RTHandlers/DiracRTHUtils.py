@@ -194,7 +194,7 @@ def diracAPI_script_settings(app):
             _setting = str(setting)[3:]
         else:
             _setting = str(setting)
-        if type(setting_val) == type(''):
+        if type(setting_val) is str:
             setting_line = 'j.set###SETTING###("###VALUE###")\n'
         else:
             setting_line = 'j.set###SETTING###(###VALUE###)\n'

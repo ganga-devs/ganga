@@ -286,7 +286,7 @@ class DiracBase(IBackend):
                 _key = key[3:]
             else:
                 _key = key
-            if type(value) == type(''):
+            if type(value) is str:
                 template = '%s.set%s("%s")\n'
             else:
                 template = '%s.set%s(%s)\n'
