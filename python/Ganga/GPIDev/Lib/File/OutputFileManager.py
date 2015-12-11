@@ -4,6 +4,7 @@ import tempfile
 import copy
 
 from Ganga.Utility.Config import getConfig
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Lib.File import FileUtils
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
@@ -218,7 +219,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
                 # special case for LocalFile
                 if getName(job.backend) in ['Localhost', 'Batch', 'LSF', 'Condor', 'PBS']:
                     # create symlink
-                    shortScript += """
+                    shortScript = """
 # create symbolic links for LocalFiles
 for f in ###FILELIST###:
    os.symlink(f, os.path.basename(f)) 

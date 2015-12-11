@@ -1,4 +1,5 @@
 
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 

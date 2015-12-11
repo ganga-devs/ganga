@@ -1,8 +1,16 @@
+from copy import deepcopy
+
 from LHCbAnalysisTransform import LHCbAnalysisTransform
+from LHCbAnalysisTransform import job_colours
+from LHCbAnalysisTransform import markup
+from LHCbAnalysisTransform import partition_colours
 from Ganga.GPIDev.Lib.Tasks.Task import Task
 from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core.exceptions import GangaException
+from Ganga.Core.exceptions import GangaAttributeError
 from Ganga.Utility.logging import getLogger
+from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 logger = getLogger(modulename=True)
 
 # to do...

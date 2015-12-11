@@ -32,6 +32,7 @@
 #
 #     fullpath=shell.wrapper('lcg-cp')
 
+import errno
 import os
 import re
 import stat

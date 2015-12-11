@@ -316,7 +316,7 @@ class ShareRef(GangaObject):
                 try:
                     shortname = item.keys()[0].application.is_prepared.name
                 except AttributeError as err2:
-                    loggr.debug("Err2: %s" % str(err2))
+                    logger.debug("Err2: %s" % str(err2))
                     try:
                         shortname = item.keys()[0].analysis.application.is_prepared.name
                     except AttributeError as err3:
@@ -478,7 +478,7 @@ class ShareRef(GangaObject):
                 symbol = {0: '', 1: '/'}[os.path.isdir(file)]
                 if not print_files and symbol != '/':
                     continue
-                logging.info(padding * level + pieces[-1] + symbol)
+                logger.info(padding * level + pieces[-1] + symbol)
 
     def _display(self, interactive=0):
         """Prints content of the shareref metadata in a well formatted way.

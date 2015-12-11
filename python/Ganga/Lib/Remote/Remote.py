@@ -285,7 +285,7 @@ print("***_FINISHED_***")
                                           [self.username, self.host, self._transport, self._sftp]]
                 num_try = 1000
 
-            except Ecception as err:
+            except Exception as err:
                 logger.debug("Err: %s" %str(err))
                 logger.warning("Error when comunicating with remote host. Retrying...")
                 self._transport = None

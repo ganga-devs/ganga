@@ -15,6 +15,7 @@ from .IGangaFile import IGangaFile
 
 from Ganga.GPIDev.Lib.File import FileUtils
 
+import errno
 import re
 import os
 import copy
@@ -538,7 +539,7 @@ class MassStorageFile(IGangaFile):
                     try:
                         os.rename(_localFile, remove_filename)
                     except OSError as err:
-                        logger.warning("Error in first stage of removing file: %s" % this_file)
+                        logger.warning("Error in first stage of removing file: %s" % remove_filename)
                         remove_filename = _localFile
 
                     try:

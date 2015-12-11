@@ -1,8 +1,13 @@
+from copy import deepcopy
+
 from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.Core.exceptions import GangaException
+from Ganga.Core.exceptions import GangaAttributeError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 import time
+from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from Ganga.GPIDev.Lib.Tasks import ITask
 from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
 from Ganga.GPIDev.Lib.Tasks.common import logger
@@ -57,7 +62,7 @@ class LHCbTask(ITask):
         if type(bkQuery) is not list:
             bkQuery = [bkQuery]
         for bk in bkQuery:
-            if not isInstance(bk, BKQuery):
+            if not isType(bk, BKQuery):
                 raise GangaAttributeError(
                     None, 'LHCbTransform expects a BKQuery object or list of BKQuery objects passed to the addQuery method')
             if len(transform.queries) != 0:  # If template has no query itself

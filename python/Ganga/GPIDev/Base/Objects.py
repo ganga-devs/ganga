@@ -485,7 +485,7 @@ class Descriptor(object):
         elif isinstance(v, dict):
             new_dict = {}
             for key, item in new_dict.iteritems():
-                new_dict[key] = self.__cloneVal(val, obj)
+                new_dict[key] = self.__cloneVal(v, obj)
             return new_dict
         else:
             if not isType(v, Node) and isType(v, (list, tuple)):
@@ -595,7 +595,7 @@ class Descriptor(object):
                 obj_reg.turnOnAutoFlushing()
 
         if self_reg is not None:
-            if self_prevState is True and hasattr(self_ref, 'turnOnAutoFlushing'):
+            if self_prevState is True and hasattr(self_reg, 'turnOnAutoFlushing'):
                 self_reg.turnOnAutoFlushing()
 
     def __atomic_set__(self, _obj, _val):

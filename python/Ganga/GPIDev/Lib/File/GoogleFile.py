@@ -4,6 +4,7 @@ from fnmatch import fnmatch
 from .IGangaFile import IGangaFile
 import logging
 from Ganga.Utility.logging import getLogger
+from Ganga.GPI import Job
 from Ganga.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
 from Ganga.Utility.Config import getConfig
 import re
@@ -421,6 +422,8 @@ class GoogleFile(IGangaFile):
 
             example use: GoogleFile().restore()
         """
+        from apiclient import errors
+
         service = self._setup_service()
 
         # Wildcard procedure
@@ -450,6 +453,7 @@ class GoogleFile(IGangaFile):
         """
         Creates a Ganga folder on GoogleDrive if one is not already present
         """
+        from apiclient import errors
         service = self._setup_service()
 
         page_token = None

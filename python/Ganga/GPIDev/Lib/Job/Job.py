@@ -27,6 +27,7 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
 from Ganga.Lib.Splitters import DefaultSplitter
 
+import errno
 import copy
 import glob
 import os
@@ -697,7 +698,7 @@ class Job(GangaObject):
                             try:
                                 os.remove(f)
                             except OSError as err:
-                                if e.errno != errno.ENOENT:
+                                if err.errno != errno.ENOENT:
                                     logger.error('failed to remove temporary/intermediary file: %s' % f)
                                     logger.debug("Err: %s" % str(err))
                                     raise err
@@ -1190,7 +1191,7 @@ class Job(GangaObject):
         if self.master is None:
             try:
                 appmasterconfig = self._storedAppMasterConfig
-            except AttributeError as Err:
+            except AttributeError as err:
                 logger.debug("AttribErr: %s" % str(err))
                 pass
 

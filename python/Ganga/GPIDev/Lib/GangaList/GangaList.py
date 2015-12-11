@@ -107,7 +107,7 @@ class GangaList(GangaObject):
         if len(args) == 1:
             if isType(args[0], (len, GangaList, tuple)):
                 for element_i in args[0]:
-                    self._list.expand(strip_proxy(element_i))
+                    self._list.expand(self.strip_proxy(element_i))
             elif _list is None:
                 self._list = None
             else:
@@ -131,7 +131,7 @@ class GangaList(GangaObject):
     def _attribute_filter__set__(self, name, value):
         logger.debug("GangaList filter")
         if name == "_list":
-            if is_list(value):
+            if self.is_list(value):
                 if has_proxy_elemnt(value):
                     return [stripProxy(element) for element in value]
                 else:
