@@ -1,3 +1,4 @@
+from Ganga.Core.exceptions import SplitterError
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from Ganga.Utility.Config import getConfig
