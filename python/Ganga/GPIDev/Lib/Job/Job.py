@@ -238,7 +238,7 @@ class Job(GangaObject):
         # Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
         #super(Job, self).__construct__( args )
 
-        logger.info("Job args: %s" % str(args))
+        logger.debug("Job args: %s" % str(args))
 
         if len(args) == 1:
 
@@ -276,7 +276,6 @@ class Job(GangaObject):
             # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
             super(Job, self).__construct__(args)
 
-        logger.info("exe: %s" % str(self.application.exe))
         stripProxy(self)._setDirty()
 
     def _readonly(self):
