@@ -458,7 +458,7 @@ class DiracFile(IGangaFile):
                         raise err
                 else:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
-                    raise GangaError("Couldn't find replicas for: %s" % str(self.lfn))
+                    raise GangaException("Couldn't find replicas for: %s" % str(self.lfn))
                 logger.debug("getReplicas: %s" % str(self._storedReplicas))
 
                 self._updateRemoteURLs(self._storedReplicas)

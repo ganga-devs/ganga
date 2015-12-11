@@ -1,3 +1,4 @@
+from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError
@@ -111,7 +112,7 @@ class GangaList(GangaObject):
             elif _list is None:
                 self._list = None
             else:
-                raise GangaError("Construct: Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
+                raise GangaException("Construct: Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
         else:
             super(GangaList, self).__construct__(args)
 
@@ -139,7 +140,7 @@ class GangaList(GangaObject):
             elif _list is None:
                 return None
             else:
-                raise GangaError("Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
+                raise GangaException("Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
         else:
             return super(GangaList, self)._attribute_filter__set__(name, value)
 
