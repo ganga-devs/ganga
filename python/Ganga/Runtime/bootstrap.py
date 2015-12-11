@@ -1357,6 +1357,15 @@ default_backends = LCG
             path = Ganga.Utility.Runtime.getSearchPath()
             script = Ganga.Utility.Runtime.getScriptPath(self.args[0], path)
 
+            #if script:
+            #    script_file = open(script, 'r')
+            #    script_content = script_file.read()
+            #    script_file.close()
+            #
+            #    compiled_script = compile(script_content, '<string>', 'exec')
+            #
+            #exec compiled_script
+
             if script:
                 execfile(script, local_ns)
             else:
