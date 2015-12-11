@@ -6,6 +6,7 @@ import tempfile
 import fnmatch
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 from Ganga.GPIDev.Lib.File import FileBuffer
+from Ganga.GPIDev.Lib.File import LocalFile
 import Ganga.Utility.logging
 from Ganga.Utility.util import unique
 import Ganga.Utility.Config
