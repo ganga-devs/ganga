@@ -29,6 +29,7 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
 
     #logger.debug("Making a GangaList of size: %s" % str(len(_list)))
     result = makeGangaListByRef(_list)
+    result._is_a_ref = False
 
     result._is_preparable = preparable
 
@@ -57,6 +58,7 @@ def makeGangaListByRef(_list):
     result = GangaList()
     temp_list = [stripProxy(element) for element in _list]
     result._list = temp_list
+    result._is_a_ref = True
     return result
 
 
@@ -95,6 +97,7 @@ class GangaList(GangaObject):
     _data={}
 
     def __init__(self):
+        self._is_a_ref = False
         super(GangaList, self).__init__()
 
     def __construct__(self, args):
@@ -136,18 +139,20 @@ class GangaList(GangaObject):
             elif _list is None:
                 return None
             else:
-                raise GangaError("Attempting to assign a non list item: %$s to a GangaList._list!" % str(value))
+                raise GangaError("Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
         else:
             return super(GangaList, self)._attribute_filter__set__(name, value)
 
     def _on_attribute__set__(self, obj_type, attrib_name):
-        new_list = []
-        for i in self._list:
-            if hasattr(i, '_on_attribute__set__'):
-                new_list.append(i._on_attribute__set__(obj_type, attrib_name))
-                continue
-            new_list.append(i)
-        self._list = new_list
+        if self._is_a_ref is True:
+            new_list = []
+            for i in self._list:
+                if hasattr(i, '_on_attribute__set__'):
+                    new_list.append(i._on_attribute__set__(obj_type, attrib_name))
+                    continue
+                new_list.append(i)
+            self._list = new_list
+            self._is_a_ref = False
         return self
 
     def get(self, to_match):
@@ -245,9 +250,12 @@ class GangaList(GangaObject):
     def __contains__(self, obj):
         return self._list.__contains__(self.strip_proxy(obj))
 
+    def __clone__(self):
+        return makeGangaListByRef(_list=copy.copy(self._list))
+
     def __copy__(self):
         """Bypass any checking when making the copy"""
-        return makeGangaList(_list=copy.copy(self._list))
+        return makeGangaListByRef(_list=copy.copy(self._list))
 
     def __delitem__(self, obj):
         self._list.__delitem__(self.strip_proxy(obj))
