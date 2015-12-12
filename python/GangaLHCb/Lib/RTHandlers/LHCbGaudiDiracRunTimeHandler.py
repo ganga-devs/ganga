@@ -1,6 +1,7 @@
 import copy
 import os
 import pickle
+from Ganga.Core import BackendError
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler

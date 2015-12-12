@@ -7,6 +7,8 @@ from Ganga.Core import GangaException
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
 
 
 class Dirac(DiracBase):

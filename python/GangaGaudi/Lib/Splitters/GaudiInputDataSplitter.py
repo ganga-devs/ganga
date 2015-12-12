@@ -4,6 +4,8 @@ from SplitterUtils import DatasetSplitter
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 #import copy
 import Ganga.Utility.logging
+from GangaGaudi.Lib.Datasets import GaudiDataset
+
 logger = Ganga.Utility.logging.getLogger()
 
 

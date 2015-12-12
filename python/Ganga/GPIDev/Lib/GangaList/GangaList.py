@@ -109,10 +109,10 @@ class GangaList(GangaObject):
             if isType(args[0], (len, GangaList, tuple)):
                 for element_i in args[0]:
                     self._list.expand(self.strip_proxy(element_i))
-            elif _list is None:
+            elif args[0] is None:
                 self._list = None
             else:
-                raise GangaException("Construct: Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
+                raise GangaException("Construct: Attempting to assign a non list item: %s to a GangaList._list!" % str(args[0]))
         else:
             super(GangaList, self).__construct__(args)
 
@@ -133,11 +133,11 @@ class GangaList(GangaObject):
         logger.debug("GangaList filter")
         if name == "_list":
             if self.is_list(value):
-                if has_proxy_elemnt(value):
+                if self.has_proxy_element(value):
                     return [stripProxy(element) for element in value]
                 else:
                     return value
-            elif _list is None:
+            elif self._list is None:
                 return None
             else:
                 raise GangaException("Attempting to assign a non list item: %s to a GangaList._list!" % str(value))

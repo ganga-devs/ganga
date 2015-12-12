@@ -5,7 +5,7 @@ from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory
 
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
-import GangaLHCb.Lib.Applications.AppsBaseUtils
+from GangaLHCb.Lib.Applications import AppsBaseUtils
 from Ganga.Utility.logging import getLogger
 
 from GaudiPython import GaudiPython
