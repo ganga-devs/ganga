@@ -4,7 +4,6 @@ from fnmatch import fnmatch
 from .IGangaFile import IGangaFile
 import logging
 from Ganga.Utility.logging import getLogger
-from Ganga.GPI import Job
 from Ganga.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
 from Ganga.Utility.Config import getConfig
 import re
@@ -164,6 +163,7 @@ class GoogleFile(IGangaFile):
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
+        from Ganga.GPIDev.Lib.Job import Job
         if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
             r.localDir = None
             r.failureReason = ''
