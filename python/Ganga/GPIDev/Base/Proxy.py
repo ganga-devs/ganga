@@ -31,12 +31,13 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _knownLists = None
 
-def getRuntimeGPIObject(obj_name):
+def getRuntimeGPIObject(obj_name, silent=False):
     import Ganga.GPI
     if obj_name in Ganga.GPI.__dict__.keys():
         return Ganga.GPI.__dict__[obj_name]()
     else:
-        logger.error("Cannot find Object: '%s' in GPI. Returning None." % str(obj_name))
+        if silent is False:
+            logger.error("Cannot find Object: '%s' in GPI. Returning None." % str(obj_name))
         return None
 
 def runtimeEvalString(this_obj, attr_name, val):
@@ -597,13 +598,12 @@ def GPIProxyClassFactory(name, pluginclass):
         getattr(self, proxyRef)._auto__init__()
 
         from Ganga.GPIDev.Base.Objects import Node
-        for key, val in getattr(self, proxyClass)._schema.allItems():
-            if not val['protected'] and not val['hidden'] and isType(val, Schema.ComponentItem) and key not in Node._ref_list:
+        for key, _val in getattr(self, proxyClass)._schema.allItems():
+            if not _val['protected'] and not _val['hidden'] and isType(_val, Schema.ComponentItem) and key not in Node._ref_list:
                 val = getattr(self, key)
                 if isType(val, Node):
                     stripProxy(val)._setParent(getattr(self, proxyRef))
-                p_val = addProxy(val)
-                setattr(getattr(self, proxyRef), key, p_val)
+                setattr(getattr(self, proxyRef), key, addProxy(val))
 
         ## THIRD CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
         ## e.g. Job(application=exe, name='myJob', ...) or myJob2 = Job(myJob1)
