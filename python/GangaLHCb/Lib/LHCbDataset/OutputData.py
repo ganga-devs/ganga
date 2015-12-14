@@ -32,7 +32,7 @@ class OutputData(GangaObject):
         self.files = files
 
     def __construct__(self, args):
-        if (len(args) != 1) or (type(args[0]) is not type([])):
+        if (len(args) != 1) or (type(args[0]) not in [list, tuple]):
             super(OutputData, self).__construct__(args)
         else:
             self.files = args[0]

@@ -3,8 +3,10 @@ from Ganga.GPIDev.Lib.Tasks.common import status_colours, overview_colours, mark
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.GPIDev.Lib.Tasks.Transform import Transform
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
+from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from LHCbTaskDummySplitter import LHCbTaskDummySplitter
 from Ganga.Core import GangaException, GangaAttributeError
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
@@ -12,6 +14,7 @@ import Ganga.Utility.Config
 from copy import deepcopy
 import os
 from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
 config = Ganga.Utility.Config.getConfig('Configuration')
 
 

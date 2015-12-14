@@ -5,6 +5,7 @@ import time
 import traceback
 import sys
 import Ganga.GPIDev.Lib.Registry.RegistrySlice
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName, isType
 

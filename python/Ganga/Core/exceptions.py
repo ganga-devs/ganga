@@ -174,6 +174,17 @@ class GangaIOError(IOError, GangaException):
     pass
 
 
+class SplitterError(GangaException):
+    """Splitting errors."""
+
+    def __init__(self, message=''):
+        GangaException.__init__(self, message)
+        self.message = message
+
+    def __str__(self):
+        return "SplitterError: %s " % self.message
+
+
 class ProtectedAttributeError(GangaAttributeError):
 
     'Attribute is read-only and may not be modified by the user (for example job.id)'

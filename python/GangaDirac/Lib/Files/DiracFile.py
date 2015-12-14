@@ -115,31 +115,31 @@ class DiracFile(IGangaFile):
             return
 
         # LFN ONLY
-        if len(args) == 1 and type(args[0]) == type(''):
+        if len(args) == 1 and type(args[0]) is str:
             if str(str(args[0]).upper()[0:4]) == str("LFN:"):
                 self._setLFNnamePattern(_lfn=args[0][4:], _namePattern="")
             else:
                 self._setLFNnamePattern(_lfn="", _namePattern=args[0])
 
         # NAMEPATTERN AND LFN
-        elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
+        elif len(args) == 2 and type(args[0]) is str and type(args[1]) is str:
             self.namePattern = args[0]
             self._setLFNnamePattern(_lfn='', _namePattern=self.namePattern)
             self.localDir = expandfilename(args[1])
 
         # NAMEPATTERN AND LFN AND LOCALDIR
-        elif len(args) == 3 and type(args[0]) == type('') and type(args[1]) == type('') and type(args[2]) == type(''):
+        elif len(args) == 3 and type(args[0]) is str and type(args[1]) is str and type(args[2]) is str:
             self.namePattern = args[0]
             self.lfn = args[2]
             self._setLFNnamePattern(_lfn=self.lfn, _namePattern=self.namePattern)
             self.localDir = expandfilename(args[1])
 
         # NAMEPATTERN AND LFN AND LOCALDIR AND REMOTEDIR
-        elif len(args) == 4 and type(args[0]) == type('') and type(args[1]) == type('')\
-                and type(args[2]) == type('') and type(args[3]) == type(''):
+        elif len(args) == 4 and type(args[0]) is str and type(args[1]) is str\
+                and type(args[2]) is str and type(args[3]) is str:
             self.namePattern = args[0]
             self.lfn = args[2]
-            self._setLFNnamePattern(_lfn=lfn, _namePattern=namePattern)
+            self._setLFNnamePattern(_lfn=self.lfn, _namePattern=self.namePattern)
             self.localDir = expandfilename(args[1])
             self.remoteDir = args[3]
 
@@ -458,7 +458,7 @@ class DiracFile(IGangaFile):
                         raise err
                 else:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
-                    raise GangaError("Couldn't find replicas for: %s" % str(self.lfn))
+                    raise GangaException("Couldn't find replicas for: %s" % str(self.lfn))
                 logger.debug("getReplicas: %s" % str(self._storedReplicas))
 
                 self._updateRemoteURLs(self._storedReplicas)
@@ -502,7 +502,7 @@ class DiracFile(IGangaFile):
                 return [self.lfn]
         else:
             # 1 LFN per DiracFile
-            LFNS = []
+            LFNs = []
             for this_file in self.subfiles:
                 these_LFNs = this_file.location()
                 for this_url in these_LFNs:
@@ -539,7 +539,7 @@ class DiracFile(IGangaFile):
                 if these_sites_output.get('OK', False):
                     these_sites = these_sites_output.get('Value')
                     for this_site in these_sites:
-                        if type(default_site) == type([]):
+                        if type(default_site) in [list, tuple]:
                             hasMatched = False
                             for this_Site_in_SE in default_site:
                                 if this_site == this_Site_in_SE:
@@ -547,7 +547,7 @@ class DiracFile(IGangaFile):
                                     break
                             if hasMatched:
                                 break
-                        elif type(default_site) == type(''):
+                        elif type(default_site) is str:
                             if this_site == default_site:
                                 this_accessURL = this_URL
                                 break

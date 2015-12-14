@@ -12,7 +12,7 @@ from Ganga.Utility.threads import SynchronisedObject
 import Ganga.GPIDev.Credentials as Credentials
 from Ganga.Core.InternalServices import Coordinator
 
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, getRuntimeGPIObject
 
 # Setup logging ---------------
 import Ganga.Utility.logging
@@ -960,23 +960,35 @@ class JobRegistry_Monitor(GangaThread):
             updateDict_ts.clearEntry(getName(backendObj))
             try:
                 log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
+
+                tested_backends = []
+
                 for j in jobList_fromset:
+
+                    run_setup = False
 
             	    if hasattr(stripProxy(j), 'getNodeIndexCache') and\
                         stripProxy(j).getNodeIndexCache() is not None and\
                         'display:backend' in stripProxy(j).getNodeIndexCache().keys():
 
                         name = stripProxy(j).getNodeIndexCache()['display:backend']
+
                         if name is not None:
-                            import Ganga.GPI
-                            new_backend = eval(str(name)+'()', Ganga.GPI.__dict__)
-                            if hasattr(new_backend, 'setup'):
-                                j.backend.setup()
+                            if name in tested_backends:
+                                continue
+                            else:
+                                tested_backends.append(name)
+                            new_backend = getRuntimeGPIObject(name)
+                            if new_backend is not None and hasattr(new_backend, 'setup'):
+                                run_setup = True
+                            else:
+                                run_setup = False
                         else:
-                            if hasattr(j, 'backend'):
-                                if hasattr(j.backend, 'setup'):
-                                    j.backend.setup()
+                           run_setup = False
                     else:
+                        run_setup = True
+
+                    if run_setup is True:
                         if hasattr(j, 'backend'):
                             if hasattr(j.backend, 'setup'):
                                 j.backend.setup()

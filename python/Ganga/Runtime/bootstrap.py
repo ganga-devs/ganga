@@ -713,7 +713,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         # prevent modification during the interactive ganga session
         def deny_modification(name, x):
-            raise Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))
+            raise Ganga.Utility.Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))
         monConfig.attachUserHandler(deny_modification, None)
 
 
@@ -1356,6 +1356,15 @@ default_backends = LCG
             import Ganga.Utility.Runtime
             path = Ganga.Utility.Runtime.getSearchPath()
             script = Ganga.Utility.Runtime.getScriptPath(self.args[0], path)
+
+            #if script:
+            #    script_file = open(script, 'r')
+            #    script_content = script_file.read()
+            #    script_file.close()
+            #
+            #    compiled_script = compile(script_content, '<string>', 'exec')
+            #
+            #exec compiled_script
 
             if script:
                 execfile(script, local_ns)

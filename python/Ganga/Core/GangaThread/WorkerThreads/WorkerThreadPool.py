@@ -192,7 +192,7 @@ class WorkerThreadPool(object):
                                       fallback_func=FunctionInput(fallback_func, fallback_args, fallback_kwargs), name=name
                                       ))
 
-    def map(function, *iterables):
+    def map(self, function, *iterables):
         if not isinstance(function, collections.Callable):
             raise TypeError('must be a function')
         if self._locked is True:

@@ -29,7 +29,6 @@ from Ganga.Utility.Plugin import allPlugins
 
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
-
 class PreparedStateError(GangaException):
 
     def __init__(self, txt=''):
@@ -186,26 +185,23 @@ class Node(object):
     def __copy__(self):
         copied_obj = self.clone()
 
+    @staticmethod
+    def __resetParent(class_obj):
+        ## Fix some objects losing parent knowledge
+        src_dict = class_obj.__dict__
+        for key, val in src_dict.iteritems():
+            this_attr = getattr(class_obj, key)
+            if isType(this_attr, Node) and key not in Node._ref_list:
+                #logger.debug("k: %s  Parent: %s" % (str(key), (stripProxy(srcobj))))
+                stripProxy(this_attr)._setParent(stripProxy(class_obj))
+
     # clone self and return a properly initialized object
     def clone(self):
         new_obj = deepcopy(self)
         #new_obj.__setstate__(self.__getstate__())
 
-        ## Fix some objects losing parent knowledge
-        src_dict = new_obj.__dict__
-        for key, val in src_dict.iteritems():
-            this_attr = getattr(new_obj, key)
-            if isType(this_attr, Node) and key not in Node._ref_list:
-                #logger.debug("k: %s  Parent: %s" % (str(key), (stripProxy(srcobj))))
-                stripProxy(this_attr)._setParent(stripProxy(new_obj))
-
-        ## Fix some objects losing parent knowledge
-        src_dict = self.__dict__
-        for key, val in src_dict.iteritems():
-            this_attr = getattr(self, key)
-            if isType(this_attr, Node) and key not in Node._ref_list:
-                #logger.debug("k: %s  Parent: %s" % (str(key), (stripProxy(srcobj))))
-                stripProxy(this_attr)._setParent(stripProxy(self))
+        self.__resetParent(new_obj)
+        self.__resetParent(self)
 
         return new_obj
 
@@ -437,7 +433,6 @@ class Descriptor(object):
 
                 if stripProxy(obj).getNodeData() or stripProxy(obj).getNodeIndexCache():
                     _obj = stripProxy(obj)
-                    #_obj._getReadAccess()
                     if ((_obj.getNodeData() is not None) or (_obj.getNodeIndexCache() is not None)) and (lookup_exception is not None):
                         result = lookup_result
                     else:
@@ -451,28 +446,20 @@ class Descriptor(object):
                                 else:
                                     ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
                                     _obj._getReadAccess()
-                                    #import traceback
-                                    #traceback.print_stack()
-                                    logger.debug("1) Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                    GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
+                                    logger.debug("1) Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
+                                    GangaException("Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
                                     result = _obj.getNodeAttribute(getName(self))
                             else:
                                 ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
                                 _obj._getReadAccess()
-                                #import traceback
-                                #traceback.print_stack()
-                                logger.debug("2) Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
+                                logger.debug("2) Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
+                                GangaException("Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
                                 result = _obj.getNodeAttribute(getName(self))
                 else:
                     if lookup_exception is not None:
                         err = lookup_exception
                     else:
-                        logger.debug("Object: %s" % str(getName(obj)))
-                        logger.debug("Index: %s" % str(stripProxy(obj).getNodeIndexCache()))
-                        logger.debug("NodeD: %s" % str(stripProxy(obj).getNodeData()))
-                        logger.debug("dict: %s" % str(stripProxy(obj).__class__.__dict__))
-                        err = GangaException("Error finding parameter %s in object %s" % (getName(self), getName(obj)))
+                        err = GangaException("Error finding parameter '%s' in object: %s" % (getName(self), getName(obj)))
                     raise err
 
             return result
@@ -498,7 +485,7 @@ class Descriptor(object):
         elif isinstance(v, dict):
             new_dict = {}
             for key, item in new_dict.iteritems():
-                new_dict[key] = self.__cloneVal(val, obj)
+                new_dict[key] = self.__cloneVal(v, obj)
             return new_dict
         else:
             if not isType(v, Node) and isType(v, (list, tuple)):
@@ -509,8 +496,7 @@ class Descriptor(object):
                     new_v = []
                 for elem in v:
                     new_v.append(self.__cloneVal(elem, obj))
-                v = new_v
-                return v
+                #return new_v
             elif not isType(v, Node):
                 if inspect.isclass(v):
                     new_v = v()
@@ -518,14 +504,14 @@ class Descriptor(object):
                     logger.error("v: %s" % str(v))
                     raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (str(v), str(type(v))))
                 else:
-                    v = self.__copyNodeObject(new_v, obj)
+                    new_v = self.__copyNodeObject(new_v, obj)
             else:
-                v = self.__copyNodeObject(v, obj)
+                new_v = self.__copyNodeObject(v, obj)
 
-            if isType(v, Node):
+            if isType(new_v, Node):
                 #logger.debug("Seeting Parent: %s" % stripProxy(obj))
-                stripProxy(v)._setParent(stripProxy(obj))
-            return v
+                stripProxy(new_v)._setParent(stripProxy(obj))
+            return new_v
 
     def __copyNodeObject(self, v, obj):
 
@@ -544,7 +530,7 @@ class Descriptor(object):
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
                 raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' % (getName(self), v, item['category']))
 
- 
+
         v_copy = stripProxy(v).clone()
 
         #logger.info("Cloned Object Parent: %s" % v_copy._getParent())
@@ -588,16 +574,16 @@ class Descriptor(object):
                 if val_prevState is True and hasattr(val_reg, 'turnOffAutoFlushing'):
                     val_reg.turnOffAutoFlushing()
 
-        _val = runtimeEvalString(_obj, getName(self), _val)
+        new_val = runtimeEvalString(_obj, getName(self), _val)
 
-        self.__atomic_set__(_obj, _val)
+        self.__atomic_set__(_obj, new_val)
 
         set_obj = getattr(stripProxy(_obj), getName(self))
 
         if isType(set_obj, Node):
             stripProxy(set_obj)._setParent(stripProxy(_obj))
             stripProxy(set_obj)._setDirty()
-        if isType(_val, Node):
+        if isType(new_val, Node):
             stripProxy(_val)._setDirty()
 
         if val_reg is not None:
@@ -609,7 +595,7 @@ class Descriptor(object):
                 obj_reg.turnOnAutoFlushing()
 
         if self_reg is not None:
-            if self_prevState is True and hasattr(self_ref, 'turnOnAutoFlushing'):
+            if self_prevState is True and hasattr(self_reg, 'turnOnAutoFlushing'):
                 self_reg.turnOnAutoFlushing()
 
     def __atomic_set__(self, _obj, _val):
@@ -628,18 +614,22 @@ class Descriptor(object):
 #            return
 
         obj = stripProxy(_obj)
-        val = stripProxy(_val)
+        temp_val = stripProxy(_val)
 
         from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
         if hasattr(obj, '_checkset_name'):
             checkSet = self._bind_method(obj, self._checkset_name)
             if checkSet is not None:
-                checkSet(val)
+                checkSet(temp_val)
         if hasattr(obj, '_filter_name'):
             this_filter = self._bind_method(obj, self._filter_name)
             if this_filter:
-                val = this_filter(val)
+                val = this_filter(temp_val)
+            else:
+                val = temp_val
+        else:
+            val = temp_val
 
         # LOCKING
         obj._getWriteAccess()
@@ -663,42 +653,85 @@ class Descriptor(object):
             _preparable = True if item['preparable'] else False
             if len(val) == 0:
                 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-                val = GangaList()
+                new_val = GangaList()
             else:
                 if isType(item, Schema.ComponentItem):
-                    val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
+                    new_val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
                 else:
-                    val = makeGangaList(val, parent=obj, preparable=_preparable)
+                    new_val = makeGangaList(val, parent=obj, preparable=_preparable)
         else:
             ## Else we need to work out what we've got.
             if isType(item, Schema.ComponentItem):
                 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-                if isinstance(val, (list, tuple, GangaList)):
+                if isType(val, (list, tuple, GangaList)):
                     ## Can't have a GangaList inside a GangaList easily so lets not
                     if isType(_obj, GangaList):
                         newListObj = []
                     else:
                         newListObj = GangaList()
-                    for elem in val:
-                        newListObj.append(cloneVal(elem))
-                    val = newListObj
+
+                    self.__createNewList(newListObj, val, cloneVal)
+                    #for elem in val:
+                    #    newListObj.append(cloneVal(elem))
+                    new_val = newListObj
                 else:
-                    val = cloneVal(val)
+                    new_val = cloneVal(val)
             else:
+                new_val = val
                 pass
-                #val = deepcopy(val)
+            #val = deepcopy(val)
 
-        if isType(val, Node):
-            val._setParent(obj)
+        if isType(new_val, Node):
+            new_val._setParent(obj)
 
-        stripProxy(obj).setNodeAttribute(getName(self), val)
-        obj.__dict__[getName(self)] = val
+        stripProxy(obj).setNodeAttribute(getName(self), new_val)
+        obj.__dict__[getName(self)] = new_val
 
         obj._setDirty()
 
     def __delete__(self, obj):
         obj.removeNodeAttribute(getName(self))
 
+    @staticmethod
+    def __createNewList(final_list, input_elements, action=None):
+
+        def addToList(_input_elements, _final_list, action=None):
+            if action is not None:
+                for element in _input_elements:
+                    _final_list.append(action(element))
+            else:
+                for element in _input_elements:
+                    _final_list.append(element)
+            return
+
+        try:
+            from Ganga.GPI import queues
+            linearize = False
+        except ImportError:
+            linearize = True
+
+        try:
+            import threading
+        except ImportError:
+            linearize = True
+
+        if linearize is True or len(input_elements) < 20 or\
+            not isinstance(threading.current_thread(), threading._MainThread):
+            addToList(input_elements, final_list, action)
+            return
+
+        import math
+        tenth = math.ceil(float(len(input_elements))/10.)
+
+        for i in range(10):
+            these_elements = input_elements[int(i*tenth):int((i+1)*tenth)]
+            queues._monitoring_threadpool.add_function(addToList, (these_elements, final_list, action))
+
+        while(len(final_list) != len(input_elements)):
+            import time
+            time.sleep(0.5)
+
+        return
 
 def export(method):
     """
@@ -1084,6 +1117,47 @@ class GangaObject(Node):
         if hasattr(v, '_on_attribute__set__'):
             return v._on_attribute__set__(self, name)
         return v
+
+    @staticmethod
+    def __createNewList(final_list, input_elements, action=None):
+
+        def addToList(_input_elements, _final_list, action=None):
+            if action is not None:
+                for element in _input_elements:
+                    _final_list.append(action(element))
+            else:
+                for element in _input_elements:
+                    _final_list.append(element)
+            return
+
+        try:
+            from Ganga.GPI import queues
+            linearize = False
+        except ImportError:
+            linearize = True
+
+        try:
+            import threading
+        except ImportError:
+            linearize = True
+
+        if linearize is True or len(input_elements) < 20 or\
+            not isinstance(threading.current_thread(), threading._MainThread):
+            addToList(input_elements, final_list, action)
+            return
+
+        import math
+        tenth = math.ceil(float(len(input_elements))/10.)
+
+        for i in range(10):
+            these_elements = input_elements[int(i*tenth):int((i+1)*tenth)]
+            queues._monitoring_threadpool.add_function(addToList, (these_elements, final_list, action))
+
+        while(len(final_list) != len(input_elements)):
+            import time
+            time.sleep(0.5)
+
+        return
 
 # define the default component object filter:
 # obj.x = "Y"   <=> obj.x = Y()

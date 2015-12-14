@@ -12,11 +12,13 @@ found_types = {}
 def _valueTypeAllowed(val, valTypeList, logger=None):
     for _t in valTypeList:
 
+        ## Type Checking ""Should"" be proxy agnoistic but this may have problems loading before certain classes
         try:
             from Ganga.GPIDev.Base.Proxy import isType
         except ImportError:
             isType = isinstance
 
+        ## Return None when None
         if _t is None:
             if val is None:
                 return True
@@ -36,10 +38,17 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
                 try:
                     if type(_t) == str:
                         global found_types
+                        ran_eval = False
+                        try:
+                            from Ganga.Base.Proxy import getRuntimeGPIObject
+                        except ImportError:
+                            getRuntimeGPIObject = eval
                         if not _t in found_types.keys():
-                            found_types[_t] = eval(_t)
+                            ran_eval = True
+                            found_types[_t] = getRuntimeGPIObject(_t)
                         _type = found_types[_t]
-                        _type = eval(_t)  # '_type' is actually the class name
+                        if ran_eval is False:
+                            _type = getRuntimeGPIObject(_t)  # '_type' is actually the class name
                     else:
                         _type = _t
                 except NameError:
@@ -47,12 +56,21 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
                     continue
                 _val = val
 
+        try:
+            from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+            knownLists = [list, tuple, GangaList]
+        except Exception as err:
+            knownLists = [list, tuple]
+
         # Deal with the case where type is None.
         if _type is None:
             if _val is None:
                 return True
             else:
                 continue
+        elif _type in knownLists:
+            if isType(_val, knownLists):
+                return True
         elif isType(_val, _type):
             return True
     return False

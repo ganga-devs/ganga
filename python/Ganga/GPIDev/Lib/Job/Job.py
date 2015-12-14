@@ -22,11 +22,12 @@ from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
-from Ganga.GPIDev.Base.Proxy import isType, getName, GPIProxyObjectFactory, addProxy, stripProxy, runProxyMethod, runtimeEvalString
+from Ganga.GPIDev.Base.Proxy import isType, getName, GPIProxyObjectFactory, addProxy, stripProxy, runProxyMethod, runtimeEvalString, getRuntimeGPIObject
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
 from Ganga.Lib.Splitters import DefaultSplitter
 
+import errno
 import copy
 import glob
 import os
@@ -238,7 +239,7 @@ class Job(GangaObject):
         # Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
         #super(Job, self).__construct__( args )
 
-        logger.info("Job args: %s" % str(args))
+        logger.debug("Job args: %s" % str(args))
 
         if len(args) == 1:
 
@@ -276,7 +277,6 @@ class Job(GangaObject):
             # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
             super(Job, self).__construct__(args)
 
-        logger.info("exe: %s" % str(self.application.exe))
         stripProxy(self)._setDirty()
 
     def _readonly(self):
@@ -698,7 +698,7 @@ class Job(GangaObject):
                             try:
                                 os.remove(f)
                             except OSError as err:
-                                if e.errno != errno.ENOENT:
+                                if err.errno != errno.ENOENT:
                                     logger.error('failed to remove temporary/intermediary file: %s' % f)
                                     logger.debug("Err: %s" % str(err))
                                     raise err
@@ -1191,7 +1191,7 @@ class Job(GangaObject):
         if self.master is None:
             try:
                 appmasterconfig = self._storedAppMasterConfig
-            except AttributeError as Err:
+            except AttributeError as err:
                 logger.debug("AttribErr: %s" % str(err))
                 pass
 
@@ -1775,8 +1775,7 @@ class Job(GangaObject):
             if stripProxy(self).getNodeIndexCache() is not None and 'display:backend' in stripProxy(self).getNodeIndexCache().keys():
                 name = stripProxy(self).getNodeIndexCache()['display:backend']
                 if name is not None:
-                    import Ganga.GPI
-                    new_backend = eval(str(name)+'()', Ganga.GPI.__dict__)
+                    new_backend = getRuntimeGPIObject(name)
                     if hasattr(new_backend, 'remove'):
                         self.backend.remove()
                     del new_backend
@@ -1790,8 +1789,7 @@ class Job(GangaObject):
             if stripProxy(self).getNodeIndexCache() is not None and 'display:application' in stripProxy(self).getNodeIndexCache().keys():
                 name = stripProxy(self).getNodeIndexCache()['display:application']
                 if name is not None:
-                    import Ganga.GPI
-                    new_app = eval(str(name)+'()', Ganga.GPI.__dict__)
+                    new_app = getRuntimeGPIObject(name)
                     if hasattr(new_app, 'transition_update'):
                         self.application.transition_update("removed")
                         for sj in self.subjobs:

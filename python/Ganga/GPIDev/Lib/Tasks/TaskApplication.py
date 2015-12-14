@@ -1,8 +1,9 @@
-
+from Ganga import GPI
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from new import classobj
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Base.Proxy import stripProxy
-
+from .common import logger
 
 handler_map = []
 

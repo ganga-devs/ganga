@@ -31,7 +31,7 @@ def DiracSizeSplitter(inputs, filesPerJob, maxSize, ignoremissing):
         raise SplittingError(
             "Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
 
-    all_files = igroup(inputs.files[:maxFiles], getConfig('DIRAC')['splitFilesChunks'],
+    all_files = igroup(inputs.files[:filesPerJob], getConfig('DIRAC')['splitFilesChunks'],
                        leftovers=True)
 
     #logger.debug( "Looping over all_files" )
@@ -66,7 +66,7 @@ def DiracSizeSplitter(inputs, filesPerJob, maxSize, ignoremissing):
     big_list = []
     for l in split_files:
         big_list.extend(l)
-    diff = set(inputs.getFileNames()[:maxFiles]).difference(big_list)
+    diff = set(inputs.getFileNames()[:filesPerJob]).difference(big_list)
     if len(diff) > 0:
         for f in diff:
             logger.warning('Ignored file: %s' % f)

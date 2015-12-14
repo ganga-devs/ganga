@@ -131,7 +131,6 @@ def execute(command,
                     if not final_str.endswith(';'):
                         final_str += " ;"
                     final_str += " "
-                tmp_dict[k] = final_str
 
     p = subprocess.Popen(stream_command,
                          shell=True,

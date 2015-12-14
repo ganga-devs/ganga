@@ -8,12 +8,14 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
 from .IGangaFile import IGangaFile
 
 from Ganga.GPIDev.Lib.File import FileUtils
 
+import errno
 import re
 import os
 import copy
@@ -359,7 +361,7 @@ class MassStorageFile(IGangaFile):
 
                 isJob = True
 
-                if (self.getJobObject().splitter != None):
+                if stripProxy(self.getJobObject()).master is not None:
 
                     isSplitJob = True
                     searchFor.append('{sjid}')
@@ -383,8 +385,7 @@ class MassStorageFile(IGangaFile):
                 return (False, 'Error in MassStorageFile.outputfilenameformat field :  no parent job, but {\'jid\'} keyword found')
 
             invalidUnixChars = ['"', ' ']
-            test = self.outputfilenameformat.replace('{jid}', 'a').replace(
-                '{sjid}', 'b').replace('{fname}', 'c')
+            test = self.outputfilenameformat.replace('{jid}', 'a').replace('{sjid}', 'b').replace('{fname}', 'c')
 
             for invalidUnixChar in invalidUnixChars:
                 if test.find(invalidUnixChar) > -1:
@@ -538,7 +539,7 @@ class MassStorageFile(IGangaFile):
                     try:
                         os.rename(_localFile, remove_filename)
                     except OSError as err:
-                        logger.warning("Error in first stage of removing file: %s" % this_file)
+                        logger.warning("Error in first stage of removing file: %s" % remove_filename)
                         remove_filename = _localFile
 
                     try:

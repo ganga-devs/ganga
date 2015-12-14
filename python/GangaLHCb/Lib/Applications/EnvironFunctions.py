@@ -1,5 +1,4 @@
-
-import Ganga.Core.exceptions
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 import copy
 import tempfile
@@ -191,7 +190,6 @@ def _getshell_SP(self):
     if not app_ok or not ver_ok:
         msg = 'Command "%s" failed to properly setup environment.' % cmd
         logger.error(msg)
-        from Ganga.Core.exceptions import ApplicationConfigurationError
         raise ApplicationConfigurationError(None, msg)
 
     self.env = copy.deepcopy(self.shell.env)

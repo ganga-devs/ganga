@@ -12,7 +12,7 @@ from .exceptions import GangaException, ApplicationConfigurationError, \
     IncompleteJobSubmissionError, IncompleteKillError, JobManagerError, \
     GangaAttributeError, GangaValueError, ProtectedAttributeError, \
     ReadOnlyObjectError, TypeMismatchError, SchemaError, ApplicationPrepareError, \
-    GangaIOError
+    GangaIOError, SplitterError
 
 monitoring_component = None
 

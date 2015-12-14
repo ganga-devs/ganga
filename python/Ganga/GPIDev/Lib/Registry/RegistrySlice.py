@@ -84,12 +84,10 @@ class RegistrySlice(object):
         """Cleans the repository only if this slice represents the repository
         Returns True on success and False on failure"""
         if not hasattr(self.objects, "clean"):
-            logger.error(
-                "'clean' only works on whole registries, e.g. 'jobs.clean()'. Use remove() to delete job slices")
+            logger.error("'clean' only works on whole registries, e.g. 'jobs.clean()'. Use remove() to delete job slices")
             return False
         if not confirm:
-            logger.warning("You are about to irreversibly delete the WHOLE '%s' registry, without properly cleaning up individual jobs." % (
-                self.objects.name))
+            logger.warning("You are about to irreversibly delete the WHOLE '%s' registry, without properly cleaning up individual jobs." % (self.objects.name))
             if force:
                 logger.warning(
                     "You will also cause any other Ganga sessions accessing this repository to shut down their operations")
@@ -248,7 +246,7 @@ class RegistrySlice(object):
         return this_slice
 
     def __contains__(self, j):
-        return j.id in self.objects
+        return j.id in self.objects.keys()
 
     def __call__(self, this_id):
         """ Retrieve an object by id.
@@ -301,13 +299,14 @@ class RegistrySlice(object):
         """
         if isinstance(x, int):
             try:
-                return self.objects.values()[x]
+                return self.objects[x]
             except IndexError:
                 raise RegistryIndexError('list index out of range')
 
         if isinstance(x, str):
             ids = []
-            for j in self.objects.values():
+            for i in self.objects.keys():
+                j = self.objects[i]
                 if j.name == x:
                     ids.append(j.id)
             if len(ids) > 1:
@@ -388,7 +387,8 @@ class RegistrySlice(object):
             ds += this_format % self._display_columns
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
-        for obj in self.objects.values():
+        for obj_i in self.objects.keys():
+            obj = self.objects[obj_i]
             colour = self._getColour(obj)
 
             vals = []

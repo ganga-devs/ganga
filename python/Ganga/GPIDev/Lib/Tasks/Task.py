@@ -1,5 +1,8 @@
 from __future__ import absolute_import
+from Ganga import GPI
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Proxy import addProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from .common import logger, overview_colours, markup
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
