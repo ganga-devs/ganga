@@ -207,12 +207,16 @@ class SubJobXMLList(GangaObject):
 
         return subjob_count
 
+    def keys(self):
+        return [i for i in range(len(self))]
+
     def values(self):
         raw_self = stripProxy(self)
         return [raw_self[i] for i in range(0, len(raw_self))]
 
     def _loadSubJobFromDisk(self, subjob_data):
         # For debugging where this was called from to try and push it to as high a level as possible at runtime
+        #print("SJXML Load")
         #import traceback
         #traceback.print_stack()
         #import sys
