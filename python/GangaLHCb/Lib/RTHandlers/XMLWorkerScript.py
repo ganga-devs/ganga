@@ -1,5 +1,8 @@
 # XMLSummary parsing
 import os, sys
+
+from GangaLHCb.Lib.Applications.AppsBaseUtils import activeSummaryItems
+
 if 'XMLSUMMARYBASEROOT' not in os.environ:
     sys.stderr.write("'XMLSUMMARYBASEROOT' env var not defined so summary.xml not parsed")
 else:

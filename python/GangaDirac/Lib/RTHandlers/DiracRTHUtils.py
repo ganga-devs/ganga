@@ -1,4 +1,5 @@
 from Ganga.Core.exceptions import BackendError, ApplicationConfigurationError
+from Ganga.Core.exceptions import SplitterError
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.util import unique

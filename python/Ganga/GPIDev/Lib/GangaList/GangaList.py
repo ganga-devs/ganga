@@ -1,3 +1,4 @@
+from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError
@@ -107,11 +108,11 @@ class GangaList(GangaObject):
         if len(args) == 1:
             if isType(args[0], (len, GangaList, tuple)):
                 for element_i in args[0]:
-                    self._list.expand(strip_proxy(element_i))
-            elif _list is None:
+                    self._list.expand(self.strip_proxy(element_i))
+            elif args[0] is None:
                 self._list = None
             else:
-                raise GangaError("Construct: Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
+                raise GangaException("Construct: Attempting to assign a non list item: %s to a GangaList._list!" % str(args[0]))
         else:
             super(GangaList, self).__construct__(args)
 
@@ -131,15 +132,15 @@ class GangaList(GangaObject):
     def _attribute_filter__set__(self, name, value):
         logger.debug("GangaList filter")
         if name == "_list":
-            if is_list(value):
-                if has_proxy_elemnt(value):
+            if self.is_list(value):
+                if self.has_proxy_element(value):
                     return [stripProxy(element) for element in value]
                 else:
                     return value
-            elif _list is None:
+            elif self._list is None:
                 return None
             else:
-                raise GangaError("Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
+                raise GangaException("Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
         else:
             return super(GangaList, self)._attribute_filter__set__(name, value)
 

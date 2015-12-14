@@ -3,6 +3,7 @@
 from copy import deepcopy
 import tempfile
 import fnmatch
+from Ganga.Core import GangaException
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
 from Ganga.GPIDev.Base import GangaObject
@@ -66,9 +67,9 @@ class LHCbDataset(GangaDataset):
         new_files = GangaList()
         if isType(files, LHCbDataset):
             for this_file in files:
-                new_files.append(copy.deepcopy(this_file))
+                new_files.append(deepcopy(this_file))
         elif isType(files, IGangaFile):
-            new_files.append(copy.deepcopy(this_file))
+            new_files.append(deepcopy(this_file))
         elif isType(files, (list, tuple, GangaList)):
             new_list = []
             for this_file in files:
@@ -77,12 +78,11 @@ class LHCbDataset(GangaDataset):
                 elif isType(this_file, IGangaFile):
                     new_list.append(this_file)
                 else:
-                    newlist.append(strToDataFile(this_file))
+                    new_list.append(strToDataFile(this_file))
             stripProxy(new_files)._list = new_list
         elif type(files) is str:
             new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
         else:
-            from Ganga.Core.exceptions import GangaException
             raise GangaException("Unknown object passed to LHCbDataset constructor!")
         new_files._setParent(self)
 
@@ -124,7 +124,7 @@ class LHCbDataset(GangaDataset):
         self.files = []
         if type(args[0]) is str:
             this_file = string_datafile_shortcut_lhcb(args[0], None)
-            self.files.append(file_arg)
+            self.files.append(args[0])
         else:
             for file_arg in args[0]:
                 if type(file_arg) is str:
@@ -327,7 +327,7 @@ class LHCbDataset(GangaDataset):
                 try:
                     names.append('PFN:%s' % f.namePattern)
                 except:
-                    logger.warning("Cannot determine filename for: %s " % i)
+                    logger.warning("Cannot determine filename for: %s " % f)
                     raise GangaException("Cannot Get File Name")
         return names
 
@@ -535,7 +535,7 @@ def string_datafile_shortcut_lhcb(name, item):
             this_file = strToDataFile(name, True)
             if this_file is None:
                 if not mainFileOutput is None:
-                    return mailFileOutput
+                    return mainFileOutput
                 else:
                     raise GangaException("Failed to find filetype for: %s" % str(name))
             return this_file

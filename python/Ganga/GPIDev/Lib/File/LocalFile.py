@@ -16,6 +16,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer
 
 import Ganga.Utility.logging
 
+import errno
 import re
 import os
 import os.path

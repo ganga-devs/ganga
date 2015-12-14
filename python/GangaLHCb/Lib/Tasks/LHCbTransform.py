@@ -4,6 +4,7 @@ from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.Core.exceptions import GangaAttributeError
 from GangaLHCb.Lib.Tasks.LHCbUnit import LHCbUnit
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery

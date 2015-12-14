@@ -646,7 +646,7 @@ class PackageConfig(object):
         if name in self.options:
             return self.options[name].level
         else:
-            raise ConfigError('option "%s" does not exist in "%s"' % (x, self.name))
+            raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name))
 
     def attachUserHandler(self, pre, post):
         """ Attach a user handler:
@@ -938,7 +938,7 @@ def load_user_config(filename, system_vars):
                 v = new_cfg.get(name, o)
             except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
                 logger.debug("Parse Error!:\n  %s" % str(err))
-                logging.debug("Failed to expand %s:%s, loading it as raw" % (str(name), str(o)))
+                logger.debug("Failed to expand %s:%s, loading it as raw" % (str(name), str(o)))
                 v = new_cfg.get(name, o, raw=True)
             current_cfg_section.setUserValue(o, v)
 

@@ -8,6 +8,7 @@ from __future__ import absolute_import
 #from Ganga.Utility.external.ordereddict import oDict
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 
+from Ganga.Core.exceptions import GangaException
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
 
 from Ganga.GPIDev.Base.Proxy import stripProxy

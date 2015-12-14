@@ -4,6 +4,7 @@ from Ganga.GPIDev.Schema.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
+from Ganga.Core.GangaRepository.GangaRepository import RepositoryError
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base.Proxy import stripProxy
 import errno
@@ -270,9 +271,9 @@ class SubJobXMLList(GangaObject):
                 sj_file = raw_self._loadSubJobFromDisk(subjob_data)
             except IOError as x:
                 if x.errno == errno.ENOENT:
-                    raise IOError("Subobject %s not found: %s" % (fqid, x))
+                    raise IOError("Subobject %s not found: %s" % (index, x))
                 else:
-                    raise RepositoryError(raw_self,"IOError on loading subobject %s: %s" % (fqid, x))
+                    raise RepositoryError(raw_self,"IOError on loading subobject %s: %s" % (index, x))
 
             try:
                 raw_self._cachedJobs[index] = raw_self._from_file(sj_file)[0]

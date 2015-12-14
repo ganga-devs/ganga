@@ -90,6 +90,7 @@ def makeRepository(registry):
         from Ganga.Core.GangaRepository.GangaRepositorySQLite import GangaRepositorySQLite
         return GangaRepositorySQLite(registry)
     elif registry.type in ["Transient"]:
+        from Ganga.Core.GangaRepository.GangaRepository import GangaRepository
         return GangaRepository(registry)
     elif registry.type in ["ImmutableTransient"]:
         from Ganga.Core.GangaRepository.GangaRepositoryImmutableTransient import GangaRepositoryImmutableTransient

@@ -164,7 +164,7 @@ class GaudiBase(IPrepareApp):
     def make(self, argument=''):
         """Build the code in the release area the application object points to."""
         from GangaGaudi.Lib.Application.GaudiUtils import make
-        make(self, arguments)
+        make(self, argument)
 
     def projectCMD(self, command):
         """Eecute a given command at the top level of a requested project."""
@@ -172,7 +172,7 @@ class GaudiBase(IPrepareApp):
         execute('%s' % command,
                 shell=True,
                 timeout=None,
-                env=selfg.getenv(False),
+                env=self.getenv(False),
                 cwd=self.user_release_area)
 
     def cmt(self, command):

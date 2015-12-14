@@ -69,25 +69,25 @@ class GaudiDataset(Dataset):
 
     def __iadd__(self, other): return self.files.__iadd__(other)
 
-    def append(x): return self.files.append(x)
+    def append(self, x): return self.files.append(x)
 
-    def extend(L): return self.files.extend(L)
+    def extend(self, L): return self.files.extend(L)
 
-    def insert(i, x): return self.files.insert(i, x)
+    def insert(self, i, x): return self.files.insert(i, x)
 
-    def remove(x): return self.files.remove(x)
+    def remove(self, x): return self.files.remove(x)
 
-    def pop(*i): return self.files.pop(*i)
+    def pop(self, *i): return self.files.pop(*i)
 
-    def index(x): return self.files.index(x)
+    def index(self, x): return self.files.index(x)
 
-    def count(x): return self.files.count(x)
-
-    @staticmethod
-    def sort(): return self.files.sort()
+    def count(self, x): return self.files.count(x)
 
     @staticmethod
-    def reverse(): return self.files.reverse()
+    def sort(self): return self.files.sort()
+
+    @staticmethod
+    def reverse(self): return self.files.reverse()
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

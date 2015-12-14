@@ -1,5 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import datetime
+from Ganga.Core import GangaException
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy
@@ -282,15 +283,9 @@ class BKQueryDict(GangaObject):
             if 'LFNs' in files:  # i.e. a dict of LFN:Metadata
                 files = files['LFNs'].keys()
 
-        ## Doesn't work, not clear why
         from Ganga.GPI import DiracFile
-        #new_files = []
-        #def _createDiracLFN(this_file):
-        #    return DiracFile(lfn = this_file)
-        #GangaObject.__createNewList(new_files, files, _createDiracLFN)
-        new_files = [DiracFile(lfn=_file) for _file in files]
-
-        ds = LHCbDataSet(new_files)
+        this_list = [DiracFile(lfn=_file) for _file in files]
+        ds = LHCbDataset(this_list)
         #new_files = []
         #for f in files:
         #    #new_files.append('LFN:' + str(f))

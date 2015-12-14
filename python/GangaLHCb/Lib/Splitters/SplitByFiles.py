@@ -1,3 +1,4 @@
+from Ganga.Core.exceptions import SplitterError
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
@@ -7,6 +8,7 @@ from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.Job import Job
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 import os
 import copy
 import pickle

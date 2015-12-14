@@ -96,17 +96,17 @@ def _store_dirac_environment():
             'printenv > %s\"' % (setup_script, diracversion, fname)
         rc = subprocess.Popen([cmd], shell=True).wait()
         if rc != 0 or not os.path.exists(fname):
-            msg = '--dirac: Failed to setup Dirac version %s as obtained from project dependency.' % value
+            msg = '--dirac: Failed to setup Dirac version %s as obtained from project dependency.' % diracversion
             raise OptionValueError(msg)
         count = 0
-        for line in this_file.readlines():
+        for line in s_file.readlines():
             if line.find('DIRAC') >= 0:
                 count += 1
             varval = line.strip().split('=')
             env[varval[0]] = ''.join(varval[1:])
-        this_file.close()
+        s_file.close()
         if count == 0:
-            msg = 'Tried to setup Dirac version %s. For some reason this did not setup the DIRAC environment.' % value
+            msg = 'Tried to setup Dirac version %s. For some reason this did not setup the DIRAC environment.' % diracversion
             raise OptionValueError(msg)
     os.environ['GANGADIRACENVIRONMENT'] = fname
 

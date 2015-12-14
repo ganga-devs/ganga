@@ -316,7 +316,7 @@ class ShareRef(GangaObject):
                 try:
                     shortname = item.keys()[0].application.is_prepared.name
                 except AttributeError as err2:
-                    loggr.debug("Err2: %s" % str(err2))
+                    logger.debug("Err2: %s" % str(err2))
                     try:
                         shortname = item.keys()[0].analysis.application.is_prepared.name
                     except AttributeError as err3:
@@ -346,7 +346,7 @@ class ShareRef(GangaObject):
 
         # check to see that all sharedirs have an entry in the shareref. Otherwise, set their ref counter to 0
         # so the user is made aware of them at shutdown
-        for this_dir in os.listdir(getSharedDir()):
+        for this_dir in os.listdir(getSharedPath()):
             if this_dir not in self.__getName().keys() and rmdir is False:
                 logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository." % this_dir)
                 self.__getName()[this_dir] = 0
@@ -359,7 +359,7 @@ class ShareRef(GangaObject):
 
 
     @staticmethod
-    def yes_no(question, default='none'):
+    def yes_no(question, default='none', shareddir=''):
         """Check whether the user wants to delete sharedirs which are no longer referenced by any Ganga object"""
         valid = {"yes": "yes", "y": "yes", "no": "no",
                      "n": "no", "none": "none", "all": "all"}
@@ -405,8 +405,7 @@ class ShareRef(GangaObject):
 
         try:
             ## FIXME. this triggers maximum recusion depth bug on shutdown in some situations! rcurrie
-            _name = getattr(self, name)
-            all_dirs = _name.keys()
+            all_dirs = self.name.keys()
         except:
             all_dirs = {}
         for shareddir in all_dirs:
@@ -415,7 +414,7 @@ class ShareRef(GangaObject):
             # filesystem
             if self.__getName()[shareddir] == 0 and os.path.isdir(full_shareddir_path):
                 if ask_delete == 'Ask':
-                    ask_delete = self.yes_no('', default=default)
+                    ask_delete = self.yes_no('', default=default, shareddir=shareddir)
                 if ask_delete == 'yes':
                     shutil.rmtree(full_shareddir_path)
                     if shareddir not in cleanup_list:
@@ -452,7 +451,9 @@ class ShareRef(GangaObject):
             ## DISABLED BY RCURRIE
 
         self._getWriteAccess()
-        for element in cleanup_list and element in self.__getName():
+        for element in cleanup_list:
+            del self.name[element]
+        for element in self.__getName():
             del self.name[element]
         self._setDirty()
         #self._releaseWriteAccess()
@@ -478,7 +479,7 @@ class ShareRef(GangaObject):
                 symbol = {0: '', 1: '/'}[os.path.isdir(file)]
                 if not print_files and symbol != '/':
                     continue
-                logging.info(padding * level + pieces[-1] + symbol)
+                logger.info(padding * level + pieces[-1] + symbol)
 
     def _display(self, interactive=0):
         """Prints content of the shareref metadata in a well formatted way.

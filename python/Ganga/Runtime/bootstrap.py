@@ -713,7 +713,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         # prevent modification during the interactive ganga session
         def deny_modification(name, x):
-            raise Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))
+            raise Ganga.Utility.Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))
         monConfig.attachUserHandler(deny_modification, None)
 
 

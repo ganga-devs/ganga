@@ -128,7 +128,7 @@ class MonitoringWorkerThread(GangaThread):
             try:
                 result = action.function(*action.args, **action.kwargs)
             except Exception as err:
-                logger.debug("_execUpdateAction: %s" % str(err))
+                log.debug("_execUpdateAction: %s" % str(err))
                 action.callback_Failure()
             else:
                 if result in action.success:
@@ -1105,7 +1105,7 @@ class JobRegistry_Monitor(GangaThread):
             try:
                 Qin.put(_action)
             except Exception as err:
-                logger.debug("makeCred Err: %s" % str(err))
+                log.debug("makeCred Err: %s" % str(err))
                 cb_Failure("Put _action failure: %s" % str(_action), "unknown", True )
         return credCheckJobInsertor
 
@@ -1140,7 +1140,7 @@ class JobRegistry_Monitor(GangaThread):
         try:
             Qin.put(_action)
         except Exception as err:
-            logger.debug("diskSp Err: %s" % str(err))
+            log.debug("diskSp Err: %s" % str(err))
             cb_Failure()
 
     def updateJobs(self):

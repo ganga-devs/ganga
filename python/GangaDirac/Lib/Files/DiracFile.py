@@ -139,7 +139,7 @@ class DiracFile(IGangaFile):
                 and type(args[2]) is str and type(args[3]) is str:
             self.namePattern = args[0]
             self.lfn = args[2]
-            self._setLFNnamePattern(_lfn=lfn, _namePattern=namePattern)
+            self._setLFNnamePattern(_lfn=self.lfn, _namePattern=self.namePattern)
             self.localDir = expandfilename(args[1])
             self.remoteDir = args[3]
 
@@ -458,7 +458,7 @@ class DiracFile(IGangaFile):
                         raise err
                 else:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
-                    raise GangaError("Couldn't find replicas for: %s" % str(self.lfn))
+                    raise GangaException("Couldn't find replicas for: %s" % str(self.lfn))
                 logger.debug("getReplicas: %s" % str(self._storedReplicas))
 
                 self._updateRemoteURLs(self._storedReplicas)
@@ -502,7 +502,7 @@ class DiracFile(IGangaFile):
                 return [self.lfn]
         else:
             # 1 LFN per DiracFile
-            LFNS = []
+            LFNs = []
             for this_file in self.subfiles:
                 these_LFNs = this_file.location()
                 for this_url in these_LFNs:

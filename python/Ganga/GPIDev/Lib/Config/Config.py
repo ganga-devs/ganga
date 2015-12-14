@@ -205,6 +205,9 @@ config = MainConfigProxy()
 
 
 def print_config_file():
+    from cStringIO import StringIO
+    sio = StringIO()
+
     sections = sorted(stripProxy(config).keys())
 
     def print_doc_text(text):
