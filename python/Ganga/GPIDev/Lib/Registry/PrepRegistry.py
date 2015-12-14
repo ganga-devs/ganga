@@ -405,7 +405,7 @@ class ShareRef(GangaObject):
 
         try:
             ## FIXME. this triggers maximum recusion depth bug on shutdown in some situations! rcurrie
-            all_dirs = self.name.keys()
+            all_dirs = copy.deepcopy(self.name.keys())
         except:
             all_dirs = {}
         for shareddir in all_dirs:
@@ -453,7 +453,8 @@ class ShareRef(GangaObject):
         self._getWriteAccess()
         for element in cleanup_list:
             del self.name[element]
-        for element in self.__getName():
+        allnames = copy.deepcopy(self.__getName())
+        for element in allnames:
             del self.name[element]
         self._setDirty()
         #self._releaseWriteAccess()
