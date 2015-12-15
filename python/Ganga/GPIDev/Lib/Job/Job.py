@@ -35,6 +35,7 @@ import re
 import shutil
 import sys
 import time
+import errno
 
 import uuid
 from JobTime import JobTime
@@ -723,7 +724,7 @@ class Job(GangaObject):
     def validateOutputfilesOnSubmit(self):
 
         for outputfile in self.outputfiles:
-            from Ganga.GPI import MassStorageFile
+            from Ganga.GPIDev.Lib.File import MassStorageFile
             if isType(outputfile, MassStorageFile):
                 (validOutputFiles, errorMsg) = outputfile.validate()
 
