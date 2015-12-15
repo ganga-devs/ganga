@@ -125,6 +125,8 @@ class Remote(IBackend):
     _transportarray = None
     _key = {}
 
+    _exportmethods = ['setup']
+
     def __init__(self):
         super(Remote, self).__init__()
 
@@ -789,6 +791,7 @@ print("***_FINISHED_***")
         script = script.replace('###INPUTSANDBOX###', str_list)
         return job.getInputWorkspace().writefile(FileBuffer('__jobscript__.py', script), executable=0)
 
+    @staticmethod
     def updateMonitoringInformation(jobs):
 
         # Send a script over to the remote site that updates this jobs
@@ -929,5 +932,3 @@ print("***_FINISHED_***")
 
         return None
 
-    updateMonitoringInformation = \
-        staticmethod(updateMonitoringInformation)
