@@ -1,7 +1,7 @@
-from Ganga.Utility.Config import makeConfig
+from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 
-config = makeConfig('Tasks', 'Tasks configuration options')
+config = getConfig('Tasks')
 
 logger = getLogger()
 

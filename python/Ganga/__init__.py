@@ -685,3 +685,23 @@ outputconfig.addOption('MassStorageFile',
 # ------------------------------------------------
 # Display
 config = makeConfig('Display', 'control the printing style of the different registries ("jobs","box","tasks"...)')
+
+# ------------------------------------------------
+# Tasks
+config = makeConfig('Tasks', 'Tasks configuration options')
+
+# ------------------------------------------------
+# MonitoringServices
+c = makeConfig('MonitoringServices', """External monitoring systems are used
+to follow the submission and execution of jobs. Each entry in this section
+defines a monitoring plugin used for a particular combination of application
+and backend. Asterisks may be used to specify any application or any
+backend. The configuration entry syntax:
+
+ApplicationName/BackendName = dot.path.to.monitoring.plugin.class.
+
+Example: DummyMS plugin will be used to track executables run on all backends:
+
+Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
+
+""", is_open=True)

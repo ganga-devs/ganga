@@ -12,7 +12,6 @@ logger = Ganga.Utility.logging.getLogger()
 
 config = Ganga.Utility.Config.getConfig('Display')
 
-
 class RegistrySlice(object):
 
     def __init__(self, name, display_prefix):
