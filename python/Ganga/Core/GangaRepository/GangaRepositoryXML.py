@@ -921,3 +921,6 @@ class GangaRepositoryLocal(GangaRepository):
         rmrf(self.root)
         self.startup()
 
+    def updateIndexCache(self, obj):
+        stripProxy(obj).setNodeIndexCache(self.registry.getIndexCache(obj))
+

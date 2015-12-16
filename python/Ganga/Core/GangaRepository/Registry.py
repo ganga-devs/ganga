@@ -580,6 +580,8 @@ class Registry(object):
                 del self._inprogressDict[this_id]
             #logger.info("ADD END: %s as %s" % (str(id(obj)), self.find(obj)))
 
+        self.repository.updateIndexCache(obj)
+
         return returnable
 
     def _remove(self, obj, auto_removed=0):
@@ -677,6 +679,9 @@ class Registry(object):
         Raise RepositoryError
         Raise RegistryAccessError
         Raise RegistryLockError"""
+
+        self.repository.updateIndexCache(stripProxy(obj))
+
         #logger.debug("_dirty(%s)" % self.find(obj))
         if self.find(stripProxy(obj)) in self._inprogressDict.keys():
             self.dirty_objs[obj._registry_id] = obj
@@ -722,6 +727,7 @@ class Registry(object):
             objs = []
 
         for obj in objs:
+            self.repository.updateIndexCache(stripProxy(obj))
             while self.find(stripProxy(obj)) in self._inprogressDict.keys():
                 logger.debug("%s _flush sleep %s" % (str(self.name), str(self.find(obj))))
                 logger.debug("In state: %s" % str(self._inprogressDict[self.find(stripProxy(obj))]))
@@ -761,6 +767,7 @@ class Registry(object):
             self._lock.release()
 
             for obj in objs:
+                self.repository.updateIndexCache(stripProxy(obj))
                 self._inprogressDict[self.find(stripProxy(obj))] = False
                 del self._inprogressDict[self.find(stripProxy(obj))]
 
@@ -772,6 +779,7 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryKeyError"""
 
+        self.repository.updateIndexCache(stripProxy(_obj))
         self._lock.acquire()
         #logger.info("READ_ACCESS START: %s" % str(self.find(_obj)))
         try:
@@ -781,6 +789,7 @@ class Registry(object):
         finally:
             #logger.info("RELEASE_ACCESS END: %s" % str(self.find(_obj)))
             self._lock.release()
+            self.repository.updateIndexCache(stripProxy(_obj))
 
     def __safe_read_access(self,  _obj, sub_obj):
 
@@ -834,6 +843,7 @@ class Registry(object):
         Raise RegistryLockError
         Raise ObjectNotInRegistryError (via self.find())"""
 
+        self.repository.updateIndexCache(stripProxy(_obj))
         self._lock.acquire()
 
         #logger.info("WRITE_ACCESS START: %s" % str(self.find(_obj)))
@@ -845,6 +855,7 @@ class Registry(object):
         finally:
             #logger.info("WRITE_ACCESS END: %s" % str(self.find(_obj)))
             self._lock.release()
+            self.repository.updateIndexCache(stripProxy(_obj))
 
     def __write_access(self, _obj):
 
