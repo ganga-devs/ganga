@@ -26,6 +26,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
     def master_prepare(self, app, appmasterconfig):
 
+        logger.debug("Master Prepare")
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig, ['inputsandbox'])
 
         # add summary.xml
@@ -38,8 +39,9 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
 
-        inputsandbox, outputsandbox = sandbox_prepare(
-            app, appsubconfig, appmasterconfig, jobmasterconfig)
+        logger.debug("Prepare")
+
+        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
         job = app.getJobObject()
 
@@ -145,8 +147,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
             # As the RT Handler we already know we have a Dirac backend
             if type(job.backend.settings) is not dict:
-                raise ApplicationConfigurationError(
-                    None, 'backend.settings should be a dict')
+                raise ApplicationConfigurationError(None, 'backend.settings should be a dict')
 
             if 'AncestorDepth' in job.backend.settings:
                 ancestor_depth = job.backend.settings['AncestorDepth']
