@@ -64,13 +64,14 @@ class JobRegistry(Registry):
         return JobRegistrySliceProxy(this_slice)
 
     def getIndexCache(self, obj):
-        #if not obj.getNodeData():
-        #    return None
+
         cached_values = ['status', 'id', 'name']
         cache = {}
         for cv in cached_values:
-            if cv in obj.getNodeData():
-                cache[cv] = obj.getNodeAttribute(cv)
+            if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
+                cache[cv] = obj.getNodeIndexCache()[cv]
+            else:
+                cache[cv] = getattr(obj, cv)
         this_slice = JobRegistrySlice("jobs")
         for dpv in this_slice._display_columns:
             #logger.debug("Storing: %s" % str(dpv))
