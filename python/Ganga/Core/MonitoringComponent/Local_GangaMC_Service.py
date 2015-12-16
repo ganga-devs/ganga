@@ -875,15 +875,15 @@ class JobRegistry_Monitor(GangaThread):
                     if self.enabled is True and self.alive is True:
                         ## This causes a Loading of the subjobs from disk!!!
                         #stripProxy(j)._getReadAccess()
-                        if j.getNodeData():
+                        if j.getNodeIndexCache():
                             #log.info("data: %s" % str(j.getNodeData()))
                             #log.info("node %s" % str(j.getNodeIndexCache()))
                             #log.info("__dict: %s" % str(j.__class__.__dict__['backend']))
                             #bn = j.__class__.__dict__['backend'].__name__
                             #log.info("bn: %s" % str(bn))
                             lazy_load_backend_str = 'display:backend'
-                            if lazy_load_backend_str in j.getNodeData():
-                                bn = j.getNodeData()[lazy_load_backend_str]
+                            if lazy_load_backend_str in j.getNodeIndexCache():
+                                bn = j.getNodeIndexCache()[lazy_load_backend_str]
                             else:
                                 bn = getName(j.backend)
                         else:
