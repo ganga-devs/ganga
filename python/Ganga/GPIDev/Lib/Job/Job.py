@@ -1260,13 +1260,16 @@ class Job(GangaObject):
             if jobmasterconfig is None:
                 #   I am going to generate the config now
                 appmasterconfig = self._getMasterAppConfig()
+                logger.debug("appConf: %s" % str(appmasterconfig))
                 rtHandler = self._getRuntimeHandler()
-                logger.debug("Job %s Calling rtHandler.master_prepare" % str(self.getFQID('.')))
+                logger.debug("Job %s Calling rtHandler.master_prepare for RTH: %s" % (str(self.getFQID('.')), getName(rtHandler)))
                 jobmasterconfig = rtHandler.master_prepare(self.application, appmasterconfig)
                 self._storedJobMasterConfig = jobmasterconfig
         else:
             #   I am a sub-job, lets ask the master job what to do
             jobmasterconfig = self.master._getJobMasterConfig()
+
+        logger.debug("JobMasterConfig: %s" % jobmasterconfig)
 
         return jobmasterconfig
 
@@ -1326,6 +1329,8 @@ class Job(GangaObject):
             jobsubconfig = [rtHandler.prepare(self.application, appsubconfig[0], appmasterconfig, jobmasterconfig)]
 
         self._storedJobSubConfig = jobsubconfig
+
+        logger.debug("jobsubconfig: %s" % str(jobsubconfig))
 
         return jobsubconfig
 
@@ -1773,8 +1778,11 @@ class Job(GangaObject):
             # this is used by Remote backend to remove the jobs remotely
             # bug #44256: Job in state "incomplete" is impossible to remove
 
-            if stripProxy(self).getNodeIndexCache() is not None and 'display:backend' in stripProxy(self).getNodeIndexCache().keys():
-                name = stripProxy(self).getNodeIndexCache()['display:backend']
+            lzy_loading_backend_str = 'display:backend'
+            lzy_loading_application_str = 'display:application'
+
+            if stripProxy(self).getNodeIndexCache() is not None and lzy_loading_backend_str in stripProxy(self).getNodeIndexCache().keys():
+                name = stripProxy(self).getNodeIndexCache()[lzy_loading_backend_str]
                 if name is not None:
                     new_backend = getRuntimeGPIObject(name)
                     if hasattr(new_backend, 'remove'):
@@ -1787,8 +1795,8 @@ class Job(GangaObject):
                 if hasattr(stripProxy(self.backend), 'remove'):
                     stripProxy(self.backend).remove()
 
-            if stripProxy(self).getNodeIndexCache() is not None and 'display:application' in stripProxy(self).getNodeIndexCache().keys():
-                name = stripProxy(self).getNodeIndexCache()['display:application']
+            if stripProxy(self).getNodeIndexCache() is not None and lzy_loading_application_str in stripProxy(self).getNodeIndexCache().keys():
+                name = stripProxy(self).getNodeIndexCache()[lzy_loading_application_str]
                 if name is not None:
                     new_app = getRuntimeGPIObject(name)
                     if hasattr(new_app, 'transition_update'):
