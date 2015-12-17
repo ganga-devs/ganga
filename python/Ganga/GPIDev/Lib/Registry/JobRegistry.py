@@ -68,6 +68,7 @@ class JobRegistry(Registry):
         cached_values = ['status', 'id', 'name']
         cache = {}
         for cv in cached_values:
+            #print("cv: %s" % str(cv))
             if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
                 cache[cv] = obj.getNodeIndexCache()[cv]
             else:
@@ -135,7 +136,12 @@ class JobRegistrySlice(RegistrySlice):
         self._proxyClass = JobRegistrySliceProxy
 
     def _getColour(self, obj):
-        return self.status_colours.get(obj.status, self.fx.normal)
+        if stripProxy(obj).getNodeIndexCache():
+            status_attr = stripProxy(obj).getNodeIndexCache()['display:status']
+        else:
+            status_attr = obj.status
+        returnable = self.status_colours.get(status_attr, self.fx.normal)
+        return returnable
 
     def __call__(self, id):
         """ Retrieve a job by id.
