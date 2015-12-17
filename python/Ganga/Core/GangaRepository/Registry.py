@@ -213,9 +213,9 @@ class Registry(object):
             logger.debug("Getting Item: %s" % this_id)
             this_obj = self._objects[this_id]
             found_id = None
-            if hasattr(this_obj, 'id'):
-                logger.debug("Found ID: %s" % this_obj.id)
-                found_id = this_obj.id
+            #if hasattr(this_obj, 'id'):
+            #    logger.debug("Found ID: %s" % this_obj.id)
+            #    found_id = this_obj.id
             if hasattr(this_obj, '_registry_id'):
                 logger.debug("Found RegID: %s" % this_obj._registry_id)
                 found_id = this_obj._registry_id
@@ -459,8 +459,9 @@ class Registry(object):
         try:
             if hasattr(obj, '_registry_id'):
                 #assert obj == self._objects[obj._registry_id]
-                if hasattr(obj, 'id') and hasattr(self._objects[obj._registry_id], 'id'):
-                    assert obj.id == self._objects[obj._registry_id].id
+                #if hasattr(obj, 'id'):
+                #    if hasattr(self._objects[obj._registry_id], 'id'):
+                #        assert obj.id == self._objects[obj._registry_id].id
                 assert obj._registry_id == self._objects[obj._registry_id]._registry_id
                 return obj._registry_id
             else:
@@ -533,8 +534,8 @@ class Registry(object):
         for _id in ids:
             if hasattr(self._objects[_id], '_registry_id'):
                 assert(self._objects[_id]._registry_id == _id)
-            if hasattr(self._objects[_id], 'id'):
-                assert(self._objects[_id].id == _id)
+            #if hasattr(self._objects[_id], 'id'):
+            #    assert(self._objects[_id].id == _id)
 
         #logger.info("_add-ed as: %s" % str(ids))
         return ids[0]
@@ -779,7 +780,7 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryKeyError"""
 
-        self.repository.updateIndexCache(stripProxy(_obj))
+        #self.repository.updateIndexCache(stripProxy(_obj))
         self._lock.acquire()
         #logger.info("READ_ACCESS START: %s" % str(self.find(_obj)))
         try:
@@ -789,7 +790,7 @@ class Registry(object):
         finally:
             #logger.info("RELEASE_ACCESS END: %s" % str(self.find(_obj)))
             self._lock.release()
-            self.repository.updateIndexCache(stripProxy(_obj))
+        #    self.repository.updateIndexCache(stripProxy(_obj))
 
     def __safe_read_access(self,  _obj, sub_obj):
 
@@ -820,9 +821,11 @@ class Registry(object):
                 if this_id in self.dirty_objs.keys() and self.checkShouldFlush():
                     self._flush([self._objects[this_id]])
                     self.repository.load([this_id])
+                    #self.repository.updateIndexCache(self._objects[this_id])
                 if this_id not in self._loaded_ids:
                     self.repository.load([this_id])
                     self._loaded_ids.append(this_id)
+                    #self.repository.updateIndexCache(self._objects[this_id])
             except KeyError as err:
                 logger.debug("_read_access KeyError %s" % str(err))
                 raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (this_id, self.name))
@@ -843,7 +846,7 @@ class Registry(object):
         Raise RegistryLockError
         Raise ObjectNotInRegistryError (via self.find())"""
 
-        self.repository.updateIndexCache(stripProxy(_obj))
+        #self.repository.updateIndexCache(stripProxy(_obj))
         self._lock.acquire()
 
         #logger.info("WRITE_ACCESS START: %s" % str(self.find(_obj)))
@@ -855,7 +858,7 @@ class Registry(object):
         finally:
             #logger.info("WRITE_ACCESS END: %s" % str(self.find(_obj)))
             self._lock.release()
-            self.repository.updateIndexCache(stripProxy(_obj))
+        #    self.repository.updateIndexCache(stripProxy(_obj))
 
     def __write_access(self, _obj):
 
