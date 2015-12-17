@@ -297,10 +297,11 @@ class GangaRepositoryLocal(GangaRepository):
                     obj = self._make_empty_object_(this_id, cat, cls)
                 except Exception as err:
                     raise IOError('Failed to Parse information in Index file: %s. Err: %s' % (str(fn), str(err)))
-            this_data = obj.getNodeData()
+            this_cache = obj.getNodeIndexCache()
+            this_data = this_cache if this_cache else {}
             for k, v in cache.iteritems():
                 this_data[k] = v
-            obj.setNodeData(this_data)
+            #obj.setNodeData(this_data)
             obj.setNodeIndexCache(cache)
             self._cache_load_timestamp[this_id] = os.stat(fn).st_ctime
             self._cached_cat[this_id] = cat
@@ -309,7 +310,7 @@ class GangaRepositoryLocal(GangaRepository):
             return True
         elif this_id not in self.objects:
             self.objects[this_id] = self._make_empty_object_(this_id, self._cached_cat[this_id], self._cached_cls[this_id])
-            self.objects[this_id].setNodeData( self._cached_obj[this_id] )
+            self.objects[this_id].setNodeIndexCache( self._cached_obj[this_id] )
             setattr(self.objects[this_id], '_registry_refresh', True)
             return True
         return False
@@ -646,7 +647,7 @@ class GangaRepositoryLocal(GangaRepository):
                     if idn.isdigit():
                         rmrf(os.path.join(os.path.dirname(fn), idn))
             self.index_write(this_id)
-            obj.setNodeIndexCache(None)
+            #obj.setNodeIndexCache(None)
             obj._setFlushed()
         else:
             raise RepositoryError(self, "Cannot flush an Empty object for ID: %s" % str(this_id))
@@ -749,14 +750,14 @@ class GangaRepositoryLocal(GangaRepository):
                             # if we cannot lock this, the inconsistency is
                             # most likely the result of another ganga
                             # process modifying the repo
-                            obj.setNodeIndexCache(None)
-                obj.setNodeIndexCache(None)
+                            #obj.setNodeIndexCache(None)
+                #obj.setNodeIndexCache(None)
 
                 if this_id not in self._fully_loaded.keys():
                     self._fully_loaded[this_id] = obj
 
             else:
-                tmpobj.setNodeIndexCache(None)
+                #tmpobj.setNodeIndexCache(None)
                 self._internal_setitem__(this_id, tmpobj)
 
             if hasattr(self.objects[this_id], self.sub_split):
@@ -807,9 +808,10 @@ class GangaRepositoryLocal(GangaRepository):
 
     def load(self, ids, load_backup=False):
 
-        # print("load: %s " % str(ids))
+        #print("load: %s " % str(ids))
         #import traceback
         #traceback.print_stack()
+        #print("\n")
 
         logger.debug("Loading Repo object(s): %s" % str(ids))
 
