@@ -1688,6 +1688,8 @@ class Job(GangaObject):
             ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", str(submitted_count))
 
 
+        stripProxy(self)._setDirty()
+
         return 1
 
 
@@ -1723,19 +1725,26 @@ class Job(GangaObject):
         If force=True then remove job without killing it.
         '''
 
-        template = self.status == 'template'
+        if stripProxy(self).getNodeIndexCache():
+            this_job_status = stripProxy(self).getNodeIndexCache()['display:status']
+            this_job_id = stripProxy(self).getNodeIndexCache()['display:fqid']
+        else:
+            this_job_status == self.status
+            this_job_id = self.id
+
+        template =  this_job_status == 'template'
 
         if template:
-            logger.info('removing template %s', str(self.id))
+            logger.info('removing template %s', this_job_id)
         else:
-            logger.info('removing job %s', str(self.id))
+            logger.info('removing job %s', this_job_id)
 
-        if self.status == 'removed':
-            msg = 'job %s already removed' % str(self.id)
+        if this_job_status == 'removed':
+            msg = 'job %s already removed' % this_job_id
             logger.error(msg)
             raise JobError(msg)
 
-        if self.status == 'completing':
+        if this_job_status == 'completing':
             msg = 'job %s is completing (may be downloading output), do force_status("failed") and then remove() again' % self.getFQID('.')
             logger.error(msg)
             raise JobError(msg)
@@ -1761,7 +1770,7 @@ class Job(GangaObject):
                 map(removeFiles, sj.outputfiles)
             map(removeFiles, self.outputfiles)
 
-        if self.status in ['submitted', 'running']:
+        if this_job_status in ['submitted', 'running']:
             try:
                 if not force:
                     self._kill(transition_update=False)
@@ -1773,7 +1782,7 @@ class Job(GangaObject):
 
         # incomplete or unknown jobs may not have valid application or backend
         # objects
-        if self.status not in ['incomplete', 'unknown']:
+        if this_job_status not in ['incomplete', 'unknown']:
             # tell the backend that the job was removed
             # this is used by Remote backend to remove the jobs remotely
             # bug #44256: Job in state "incomplete" is impossible to remove
@@ -1860,17 +1869,17 @@ class Job(GangaObject):
                     logger.warning('cannot remove file workspace associated with the job %s : %s', str(self.id), str(err))
 
             wsp_input = self.getInputWorkspace(create=False)
-            wsp_input.jobid = self.id
+            wsp_input.jobid = this_job_id
             doit(wsp_input.remove)
             wsp_output = self.getOutputWorkspace(create=False)
-            wsp_output.jobid = self.id
+            wsp_output.jobid = this_job_id
             doit(wsp_output.remove)
             wsp_debug = self.getDebugWorkspace(create=False)
             wsp_debug.remove(preserve_top=False)
 
             wsp = self.getInputWorkspace(create=False)
             wsp.subpath = ''
-            wsp.jobid = self.id
+            wsp.jobid = this_job_id
             doit(wsp.remove)
 
             try:
