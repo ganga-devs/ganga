@@ -300,8 +300,6 @@ class Job(GangaObject):
         c.time.newjob()
         c.backend = copy.deepcopy(self.backend)
         c.backend._setParent(c)
-        import traceback
-        traceback.print_stack()
         c.application = copy.deepcopy(self.application)
         c.application._setParent(c)
         c.inputdata = copy.deepcopy(self.inputdata)
@@ -401,6 +399,8 @@ class Job(GangaObject):
         # Attempt to spend too long loading un-needed objects into memory in
         # order to read job status
         if name == 'status':
+            if stripProxy(self).getNodeIndexCache():
+                return stripProxy(self).getNodeIndexCache()['display:status']
             return object.__getattribute__(self, 'status')
 
         # FIXME Add some method of checking what objects are known in advance of calling the __getattribute__ method
@@ -594,8 +594,8 @@ class Job(GangaObject):
             if newstatus == self.status:
                 state = Job.State(newstatus)
             else:
-                import traceback
-                traceback.print_stack()
+                #import traceback
+                #traceback.print_stack()
                 raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"' % (fqid, self.status, newstatus))
 
         self._getWriteAccess()
