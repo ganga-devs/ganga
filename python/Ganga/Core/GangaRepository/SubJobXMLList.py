@@ -87,8 +87,8 @@ class SubJobXMLList(GangaObject):
         for dict_key, dict_value in self.__dict__.iteritems():
 
             ## Copy objects where it's sane to
-            if dict_key not in ['_cachedJobs', '_definedParent', '_to_file', '_from_file', '_registry']:
-                new_dict[dict_key] = copy.deepcopy(dict_value)
+            if dict_key not in ['_cachedJobs', '_definedParent', '_to_file', '_from_file', '_registry', '_parent']:
+                new_dict[dict_key] = dict_value
 
             ## Assign by reference objects where it's sane to
             elif dict_key in ['_to_file', '_from_file', '_registry']:
