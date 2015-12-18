@@ -552,6 +552,7 @@ class JobRegistry_Monitor(GangaThread):
 
             if cbHookEntry.enabled and (time.time() - cbHookEntry._lastRun) >= cbHookEntry.timeout:
                 log.debug("Running monitoring callback hook function %s(**%s)" %(cbHookFunc, cbHookEntry.argDict))
+                #self.callbackHookDict[cbHookFunc][0](**cbHookEntry.argDict)
                 try:
                     self.callbackHookDict[cbHookFunc][0](**cbHookEntry.argDict)
                 except Exception as err:
@@ -871,8 +872,14 @@ class JobRegistry_Monitor(GangaThread):
         for i in fixed_ids:
             try:
                 j = stripProxy(self.registry(i))
-                #log.debug("Job #%s status: %s" % (str(i), str(j.status)))
-                if j.status in ['submitted', 'running'] or (j.master and (j.status in ['submitting'])):
+
+                lzy_loading_status_str = 'display:status'
+                if j.getNodeIndexCache() and lzy_loading_status_str in j.getNodeIndexCache():
+                    job_status = j.getNodeIndexCache()[lzy_loading_status_str]
+                else:
+                    job_status = j.status
+
+                if job_status in ['submitted', 'running'] or (j.master and (job_status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
                         ## This causes a Loading of the subjobs from disk!!!
                         #stripProxy(j)._getReadAccess()
@@ -903,7 +910,8 @@ class JobRegistry_Monitor(GangaThread):
         for backend, these_jobs in active_backends.iteritems():
             summary += '"' + str(backend) + '" : ['
             for this_job in these_jobs:
-                summary += stripProxy(this_job).getFQID('.') + ', '
+                stripProxy(this_job)._getWriteAccess()
+                summary += str(stripProxy(this_job).getFQID('.')) + ', '
             summary += '], '
         summary += '}'
         log.debug("Returning active_backends: %s" % summary)
@@ -1051,7 +1059,7 @@ class JobRegistry_Monitor(GangaThread):
         for this_backend, these_jobs in activeBackends.iteritems():
             summary += '"' + this_backend + '" : ['
             for this_job in these_jobs:
-                summary += stripProxy(this_job).getFQID('.') + ', '
+                summary += str(stripProxy(this_job).getFQID('.')) + ', '
             summary += '], '
         summary += '}'
         log.debug("Active Backends: %s" % summary)
@@ -1059,7 +1067,7 @@ class JobRegistry_Monitor(GangaThread):
         for jList in activeBackends.values():
 
             #log.debug("backend: %s" % str(jList))
-            backendObj = copy.deepcopy(jList[0].backend)
+            backendObj = jList[0].backend
             b_name = getName(backendObj)
             if b_name in config:
                 pRate = config[b_name]
