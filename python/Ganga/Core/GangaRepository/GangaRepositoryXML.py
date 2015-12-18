@@ -257,7 +257,7 @@ class GangaRepositoryLocal(GangaRepository):
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
-        self._write_master_cache()
+        self._write_master_cache(True)
         self.sessionlock.shutdown()
 
     def get_fn(self, this_id):
@@ -324,8 +324,13 @@ class GangaRepositoryLocal(GangaRepository):
             new_idx_cache = self.registry.getIndexCache(obj)
             if new_idx_cache != obj.getNodeIndexCache() or not os.path.exists(ifn):
                 obj.setNodeIndexCache(new_idx_cache)
+                new_cache = obj.getNodeIndexCache()
                 with open(ifn, "w") as this_file:
-                    pickle_to_file((obj._category, getName(obj), obj.getNodeIndexCache()), this_file)
+                    pickle_to_file((obj._category, getName(obj), new_cache), this_file)
+                self._cached_obj[this_id] = new_cache
+                all_cache = new_cache.keys()
+                for attr in all_cache:
+                    obj.removeNodeIndexCacheAttribute(attr)
         except IOError as err:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn, getName(err), str(err)))
 
@@ -392,7 +397,7 @@ class GangaRepositoryLocal(GangaRepository):
             self._cached_obj.pop(k)
 
     def _write_master_cache(self, shutdown=False):
-        logger.debug("Updating master index")
+        #logger.info("Updating master index: %s" % self.registry.name)
         try:
             _master_idx = os.path.join(self.root, 'master.idx')
             this_master_cache = []
@@ -400,25 +405,29 @@ class GangaRepositoryLocal(GangaRepository):
                 if abs(self._master_index_timestamp - os.stat(_master_idx).st_ctime) < 300:
                     return
             items_to_save = self.objects.iteritems()
+            #logger.info("Updating Items: %s" % str(self.objects.keys()))
             for k, v in items_to_save:
                 try:
-                    # Check and write index first
-                    obj = self.objects[k]
-                    new_index = None
-                    if obj is not None:
-                        new_index = self.registry.getIndexCache(obj)
-                    if new_index is not None and new_index != obj.getNodeIndexCache():
-                        #logger.debug("k: %s" % str(k))
-                        arr_k = [k]
-                        if len(self.lock(arr_k)) != 0:
-                            self.index_write(k)
-                            self.unlock(arr_k)
+                    #logger.info("Examining: %s" % k)
+                    if k in self._fully_loaded.keys():
+                        # Check and write index first
+                        obj = v#self.objects[k]
+                        new_index = None
+                        if obj is not None:
+                            new_index = self.registry.getIndexCache(obj)
+                        if new_index is not None:
+                            #logger.debug("k: %s" % str(k))
+                            arr_k = [k]
+                            if len(self.lock(arr_k)) != 0:
+                                self.index_write(k)
+                                self.unlock(arr_k)
                 except Exception as err:
                     logger.debug("Failed to update index: %s on startup/shutdown" % str(k))
                     logger.debug("Reason: %s" % str(err))
-            cached_list = []
+            #cached_list = []
             iterables = self._cache_load_timestamp.iteritems()
             for k, v in iterables:
+                cached_list = []
                 cached_list.append(k)
                 try:
                     fn = self.get_idxfn(k)
@@ -657,12 +666,26 @@ class GangaRepositoryLocal(GangaRepository):
 
     def flush(self, ids):
         logger.debug("Flushing: %s" % ids)
+
         #import traceback
         #traceback.print_stack()
         for this_id in ids:
             try:
                 logger.debug("safe_flush")
                 self._safe_flush_xml(this_id)
+                try:
+                    self.index_write(this_id)
+                except:
+                    logger.debug("Index write failed")
+                    pass
+
+                if this_id not in self._fully_loaded.keys():
+                    self._fully_loaded[this_id] = self.objects[this_id]
+
+                self._cache_load_timestamp[this_id] = time.time()
+                self._cached_cls[this_id] = getName(self.objects[this_id])
+                self._cached_cat[this_id] = self.objects[this_id]._category
+                self._cached_obj[this_id] = self.objects[this_id].getNodeIndexCache()
 
             except (OSError, IOError, XMLFileError) as x:
                 raise RepositoryError(self, "Error of type: %s on flushing id '%s': %s" % (type(x), str(this_id), str(x)))
@@ -691,39 +714,69 @@ class GangaRepositoryLocal(GangaRepository):
 
     def _actually_load_xml(self, fobj, fn, this_id, load_backup):
 
+        #print("ACTUALLY LOAD")
+
         must_load = (not this_id in self.objects) or (self.objects[this_id].getNodeData() is None)
         tmpobj = None
 
         if must_load or (self._load_timestamp.get(this_id, 0) != os.fstat(fobj.fileno()).st_ctime):
+            
             tmpobj, errs = self.from_file(fobj)
 
             has_children = (self.sub_split is not None) and (self.sub_split in tmpobj.getNodeData()) and len(tmpobj.getNodeAttribute(self.sub_split)) == 0
 
-            if has_children:
-                logger.debug("Initializing SubJobXMLList")
-                tmpobj.setNodeAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup))
-                logger.debug("Constructed SubJobXMLList")
+            #if has_children:
+                #logger.debug("Initializing SubJobXMLList")
+                #tmpobj.setNodeAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup))
+                #logger.debug("Constructed SubJobXMLList")
 
             if this_id in self.objects:
                 obj = self.objects[this_id]
                 #logger.info("Loading")
                 #logger.info("tmpobj: %s" % str(tmpobj))
                 #logger.info("\n\nobj: %s\n\n" % str(type(obj)))
-                obj.setNodeData(copy.deepcopy(tmpobj.getNodeData()))
+                #obj.setNodeData(copy.deepcopy(tmpobj.getNodeData()))
                 #obj.__dict__ = tmpobj.__dict__
+                for key, val in tmpobj.getNodeData().iteritems():
+                    #logger.info("key: %s" % str(key))
+                    #logger.info("Replacing: %s::%s with %s" % (getName(obj), key, str(val)))
+                    #if key == "backend":
+                    #    for k, v in val.__dict__.iteritems():
+                    #        logger.info("k:v = %s:%s" % (str(k), str(v)))
+                    #obj.__dict__[key] = val
+                    #setattr(obj, key, val)
+                    obj.__dict__[key] = val
+                for attr_name, attr_val in obj._schema.allItems():
+                    if attr_name not in tmpobj.getNodeData().keys():
+                        obj.__dict__[attr_name] = obj._schema.getDefaultValue(attr_name)
                 #for attr_name, attr_val in tmpobj.getNodeData().iteritems():
-                #    obj.setAttribute(attr_name, copy.deepcopy(attr_val))
+                #    logger.info("Setting: %s::%s" % (getName(obj), attr_name))
+                #    setattr(obj, attr_name, copy.deepcopy(attr_val))
                 #obj.setNodeData(tmpobj.getNodeData())
                 # Fix parent for objects in _data (necessary!)
+
+                #logger.info("Configured Object")
+
+                if has_children:
+                #    logger.info("Adding children")
+                    obj.__dict__[self.sub_split] = SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup)
+                else:
+                    obj.__dict__[self.sub_split] = None
 
                 for node_key, node_val in obj.getNodeData().iteritems():
                     if isType(getattr(stripProxy(obj), node_key), Node):
                         if node_key not in Node._ref_list:
                             getattr(stripProxy(obj), node_key)._setParent(obj)
 
+                #logger.info("Inherited")
+
+                #logger.info("obj.status = %s" % str(obj.status))
+                #logger.info("obj.__class__: %s" % str(obj.__class__))
+                #logger.info("obj.__dict__.keys(): %s" % str(obj.__dict__.keys()))
+                #logger.info("Node: %s" % str(obj.getNodeIndexCache()))
 
                 # Check if index cache; if loaded; was valid:
-                if obj.getNodeIndexCache() is not None:
+                if obj.getNodeIndexCache() not in [None, {}]:
                     new_idx_cache = self.registry.getIndexCache(obj)
                     if new_idx_cache != obj.getNodeIndexCache():
                         logger.debug("NEW: %s" % str(new_idx_cache))
@@ -753,6 +806,13 @@ class GangaRepositoryLocal(GangaRepository):
                             #obj.setNodeIndexCache(None)
                 #obj.setNodeIndexCache(None)
 
+                all_cached = obj.getNodeIndexCache().keys()
+
+                for attr in all_cached:
+                    obj.removeNodeIndexCacheAttrbute(attr)
+
+                #logger.info("Here")
+
                 if this_id not in self._fully_loaded.keys():
                     self._fully_loaded[this_id] = obj
 
@@ -761,9 +821,18 @@ class GangaRepositoryLocal(GangaRepository):
                 self._internal_setitem__(this_id, tmpobj)
 
             if hasattr(self.objects[this_id], self.sub_split):
-                self.objects[this_id].getNodeAttribute(self.sub_split)._setParent(self.objects[this_id])
+                sub_attr = getattr(self.objects[this_id], self.sub_split)
+                if sub_attr is not None:
+                    sub_attr._setParent(self.objects[this_id])
 
             self._load_timestamp[this_id] = os.fstat(fobj.fileno()).st_ctime
+
+            #logger.info("HERE2")
+
+            #if hasattr(obj, 'backend'):
+            #    logger.info("Job Backend: %s" % str(obj.backend))
+            #    import traceback
+            #    traceback.print_stack()
         else:
             logger.debug("Didn't Load Job ID: %s" % str(this_id))
 
@@ -815,8 +884,8 @@ class GangaRepositoryLocal(GangaRepository):
 
         logger.debug("Loading Repo object(s): %s" % str(ids))
 
-
         for this_id in ids:
+
             fn = self.get_fn(this_id)
             if load_backup:
                 fn = fn + "~"
@@ -832,6 +901,9 @@ class GangaRepositoryLocal(GangaRepository):
 
             try:
                 self._actually_load_xml(fobj, fn, this_id, load_backup)
+            #self._actually_load_xml(fobj, fn, this_id, load_backup)
+            #try:
+            #    pass
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % str(err))
                 raise err
@@ -924,5 +996,6 @@ class GangaRepositoryLocal(GangaRepository):
         self.startup()
 
     def updateIndexCache(self, obj):
-        stripProxy(obj).setNodeIndexCache(self.registry.getIndexCache(obj))
+        #stripProxy(obj).setNodeIndexCache(self.registry.getIndexCache(obj))
+        pass
 
