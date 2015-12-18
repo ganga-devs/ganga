@@ -809,7 +809,7 @@ class GangaRepositoryLocal(GangaRepository):
                 all_cached = obj.getNodeIndexCache().keys()
 
                 for attr in all_cached:
-                    obj.removeNodeIndexCacheAttrbute(attr)
+                    obj.removeNodeIndexCacheAttribute(attr)
 
                 #logger.info("Here")
 

@@ -405,7 +405,16 @@ class GangaList(GangaObject):
         #return self.toString()
         #import traceback
         #traceback.print_stack()
-        return str("<GangaList at: %s>" % str(hex(abs(id(self)))))
+        containsObj = False
+        for elem in self._list:
+            if isType(elem, GangaObject):
+                containsObj = True
+                break
+        if containsObj is False:
+            return self.toString()
+        else:
+            return str("<GangaList at: %s>" % str(hex(abs(id(self)))))
+        #return str("<GangaList at: %s>" % str(hex(abs(id(self)))))
 
     def __str__(self):
         #logger.info("__str__")

@@ -1649,6 +1649,9 @@ class Job(GangaObject):
 
         except IncompleteJobSubmissionError as x:
             logger.warning('Not all subjobs have been sucessfully submitted: %s', x)
+            for i in range(len(rjobs)):
+                if self.subjobs[i].status == 'submitting':
+                    self.subjobs[i].updateStatus('new')
 
         except Exception as err:
             if isType(err, GangaException):
@@ -1669,8 +1672,8 @@ class Job(GangaObject):
         # in the case of a master job however we need to still perform this
         if len(rjobs) != 1:
             self.info.increment()
-        if self.master is not None:
-            self.updateStatus('submitted')
+        #if self.master is not None:
+        self.updateStatus('submitted')
 
         # make sure that the status change goes to the repository, NOTE:
         # this commit is redundant if updateStatus() is used on the line
