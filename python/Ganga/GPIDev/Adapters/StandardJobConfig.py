@@ -56,6 +56,14 @@ class StandardJobConfig(object):
 
         self.processValues()
 
+    def __str__(self):
+        config_str = "Config:"
+        config_str += " Exe str: '%s'" % str(self.getExeString())
+        config_str += " Arg: '%s'" % str(self.getArgStrings())
+        config_str += " Input Sandbox files: '%s'" % str(self.getSandboxFiles())
+        config_str += " Output files: '%s'" % str(self.getOutputSandboxFiles())
+        return config_str
+
     def getSandboxFiles(self):
         '''Get all input sandbox files'''
         return self.__all_inputbox

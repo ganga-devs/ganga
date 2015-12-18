@@ -6,7 +6,7 @@ import threading
 from Ganga.Core.GangaRepository.Registry import Registry
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 import Ganga.Utility.Config
 from Ganga.GPIDev.Lib.File import getSharedPath
 logger = Ganga.Utility.logging.getLogger()
@@ -26,8 +26,9 @@ class PrepRegistry(Registry):
     def startup(self):
         self._needs_metadata = True
         super(PrepRegistry, self).startup()
+        this_ShareRef = ShareRef()
         if len(self.metadata.ids()) == 0:
-            self.metadata._add(ShareRef())
+            self.metadata._add(this_ShareRef)
         self.shareref = self.metadata[self.metadata.ids()[-1]]
 
     def getShareRef(self):
@@ -44,7 +45,9 @@ class PrepRegistry(Registry):
         ## Aparently this shuts down the metadata repo before we want to shut it down...
         #super(PrepRegistry, self).shutdown()
         logger = getLogger()
-        self.shareref = self.metadata[self.metadata.ids()[-1]]
+        #logger.info("Geting id: %s" %  self.metadata.ids()[-1])
+        self.shareref = self.metadata._objects[self.metadata.ids()[-1]]
+        #logger.info("ShareRef: %s" % getName(self.shareref))
         self._lock.acquire()
         ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
         ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
@@ -99,17 +102,17 @@ class ShareRef(GangaObject):
     def __init__(self):
         super(ShareRef, self).__init__()
         self.name = {}
-        self._setRegistry(None)
+        #self._setRegistry(None)
 
     def __construct__(self):
         super(ShareRef, self).__construct__()
         if self.name is None:
             self.name = {}
-        self._setRegistry(None)
+        #self._setRegistry(None)
 
     def __getstate__(self):
         this_dict = super(ShareRef, self).__getstate__()
-        this_dict['_registry'] = None
+        #this_dict['_registry'] = None
         this_dict['_counter'] = 0
         return this_dict
 
@@ -117,7 +120,7 @@ class ShareRef(GangaObject):
         #self._getWriteAccess()
         try:
             super(ShareRef, self).__setstate__(this_dict)
-            self._setRegistry(None)
+        #    self._setRegistry(None)
             self._setDirty()
         except Exception as err:
             logger.debug("setstate Error: %s" % str(err))
@@ -385,7 +388,7 @@ class ShareRef(GangaObject):
     def closedown(self):
         """Cleans up the Shared Directory registry upon shutdown of the registry, ie. when exiting a Ganga session."""
 
-        stripProxy(self)._getRegistry()._hasStarted = True
+        #stripProxy(self)._getRegistry()._hasStarted = True
         from Ganga.GPIDev.Lib.File import getSharedPath
 
         delete_share_config = Ganga.Utility.Config.getConfig('Configuration')['deleteUnusedShareDir']
@@ -405,7 +408,7 @@ class ShareRef(GangaObject):
 
         try:
             ## FIXME. this triggers maximum recusion depth bug on shutdown in some situations! rcurrie
-            all_dirs = copy.deepcopy(self.name.keys())
+            all_dirs = copy.deepcopy(self.__getName().keys())
         except:
             all_dirs = {}
         for shareddir in all_dirs:
@@ -459,7 +462,7 @@ class ShareRef(GangaObject):
         self._setDirty()
         #self._releaseWriteAccess()
 
-        stripProxy(self)._getRegistry()._hasStarted = False
+        #stripProxy(self)._getRegistry()._hasStarted = False
 
     def ls(self, shareddir, print_files=True):
         """

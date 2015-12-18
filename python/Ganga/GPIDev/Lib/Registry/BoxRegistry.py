@@ -83,8 +83,10 @@ class BoxRegistry(Registry):
         cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:
-            if cv in obj.getNodeData():
-                c[cv] = obj.getNodeAttribute(cv)
+            if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
+                c[cv] = obj.getNodeIndexCache()[cv]
+            else:
+                c[cv] = getattr(obj, cv)
         slice = BoxRegistrySlice("tmp")
         for dpv in slice._display_columns:
             c["display:" + dpv] = slice._get_display_value(obj, dpv)
