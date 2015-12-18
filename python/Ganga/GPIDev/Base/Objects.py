@@ -345,8 +345,12 @@ class Node(object):
         self.getNodeData()[attrib_name] = attrib_value
 
     def removeNodeAttribute(self, attrib_name):
-        if attrib_name in self._data:
+        if attrib_name in self._data.keys():
             del self._data[attrib_name]
+
+    def removeNodeIndexCacheAttribute(self, attrib_name):
+        if attrib_name in self._index_cache.keys():
+            del self._index_cache[attrib_name]
 
     def setNodeIndexCache(self, new_index_cache):
         setattr(self, '_index_cache', new_index_cache)
@@ -403,16 +407,15 @@ class Descriptor(object):
                 result = getter()
             else:
 
-                # LAZYLOADING
-                lookup_result = None
-
                 lookup_exception = None
+
+                #logger.info("Looking for: %s in Cache" % getName(self))
 
                 try:
                     if stripProxy(obj).getNodeIndexCache() is not None:
                         obj_index = stripProxy(obj).getNodeIndexCache()
                         if getName(self) in obj_index.keys():
-                            lookup_result = obj_index[getName(self)]
+                            return obj_index[getName(self)]
                 except Exception as err:
                     #import traceback
                     #traceback.print_stack()
@@ -420,47 +423,48 @@ class Descriptor(object):
                     lookup_exception = err
                     #raise err
 
+                #logger.info("Not found")
+                #logger.info("Looking for: %s in Data" % getName(self))
+
                 ## ._data takes priority ALWAYS over ._index_cache
                 try:
                     if stripProxy(obj).getNodeData() is not None:
                         obj_data = stripProxy(obj).getNodeData()
                         if getName(self) in obj_data.keys():
-                            lookup_result = obj_data[getName(self)]
+                            return obj_data[getName(self)]
                 except Exception as err:
                     logger.debug("Object Data Exception: %s" % str(err))
                     lookup_exception = err
 
+                #logger.info("Not found")
 
-                if stripProxy(obj).getNodeData() or stripProxy(obj).getNodeIndexCache():
-                    _obj = stripProxy(obj)
-                    if ((_obj.getNodeData() is not None) or (_obj.getNodeIndexCache() is not None)) and (lookup_exception is not None):
-                        result = lookup_result
-                    else:
-                        if getName(self) in _obj.getNodeData().keys():
-                            result = _obj.getNodeAttribute(getName(self))
-                        else:
-                            from Ganga.GPIDev.Base.Proxy import isProxy
-                            if isProxy(_obj.getNodeData()):
-                                if getName(self) in stripProxy(self.getData()):
-                                    result = stripProxy(_obj.getData())[getName(self)]
-                                else:
-                                    ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
-                                    _obj._getReadAccess()
-                                    logger.debug("1) Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
-                                    GangaException("Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
-                                    result = _obj.getNodeAttribute(getName(self))
-                            else:
-                                ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
-                                _obj._getReadAccess()
-                                logger.debug("2) Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
-                                GangaException("Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
-                                result = _obj.getNodeAttribute(getName(self))
+                _obj = stripProxy(obj)
+                if getName(self) in _obj.getNodeData().keys():
+                    result = _obj.getNodeAttribute(getName(self))
                 else:
-                    if lookup_exception is not None:
-                        err = lookup_exception
+                    _obj._getReadAccess()
+                    if getName(self) in _obj.__dict__.keys():
+                        return _obj.__dict__[getName(self)]
+
+
+                    ##rcurrie not sure why this is needed (if at all) will be replaced/fixed/removed in 6.1.15 with any luck
+
+                    from Ganga.GPIDev.Base.Proxy import isProxy
+                    if _obj.getNodeData():
+                        ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
+                        _obj._getReadAccess()
+                        logger.debug("1) Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
+                        #GangaException("Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
+                        result = _obj.getNodeAttribute(getName(self))
                     else:
-                        err = GangaException("Error finding parameter '%s' in object: %s" % (getName(self), getName(obj)))
-                    raise err
+                        ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
+                        _obj._getReadAccess()
+                        #logger.info("obj.__dict__: %s" % str(obj.__dict__))
+                        #logger.info("obj.getNodeData(): %s" % str(obj.getNodeData()))
+                        #logger.info("obj.getNodeIndexCace(): %s" % str(obj.getNodeIndexCache()))
+                        logger.debug("2) Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
+                        #GangaException("Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
+                        result = _obj.getNodeIndexCache()[getName(self)]
 
             return result
 
@@ -526,9 +530,9 @@ class Descriptor(object):
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
                 raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (getName(self), v, item['category']))
         else:
-            if stripProxy(v)._category != item['category'] and item['category'] != 'internal':
+            if stripProxy(v)._category not in [item['category'], 'internal'] and item['category'] != 'internal':
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
-                raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' % (getName(self), v, item['category']))
+                raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s found cat: %s"' % (getName(self), v, item['category'], stripProxy(v)._category))
 
 
         v_copy = stripProxy(v).clone()
@@ -989,6 +993,7 @@ class GangaObject(Node):
             while not _haveLocked:
                 err = None
                 from Ganga.Core.GangaRepository.Registry import RegistryLockError, RegistryAccessError
+                reg._write_access(root)
                 try:
                     reg._write_access(root)
                     _haveLocked = True
