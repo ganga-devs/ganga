@@ -1152,8 +1152,6 @@ class Job(GangaObject):
         2) Sharing applications (and their associated files) between jobs will 
            optimise disk usage of the Ganga client.
 
-        Exactly what happens during the transition to becoming prepared
-        is determined by the application associated with the job. 
         See help(j.application.prepare) for application-specific comments.
 
         Prepared applications are always associated with a Shared Directory object
@@ -1735,7 +1733,7 @@ class Job(GangaObject):
             this_job_status = stripProxy(self).getNodeIndexCache()['display:status']
             this_job_id = stripProxy(self).getNodeIndexCache()['display:fqid']
         else:
-            this_job_status == self.status
+            this_job_status = self.status
             this_job_id = self.id
 
         template =  this_job_status == 'template'
