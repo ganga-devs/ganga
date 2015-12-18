@@ -300,6 +300,8 @@ class Job(GangaObject):
         c.time.newjob()
         c.backend = copy.deepcopy(self.backend)
         c.backend._setParent(c)
+        import traceback
+        traceback.print_stack()
         c.application = copy.deepcopy(self.application)
         c.application._setParent(c)
         c.inputdata = copy.deepcopy(self.inputdata)
@@ -585,12 +587,15 @@ class Job(GangaObject):
         logger.debug('attempt to change job %s status from "%s" to "%s"', fqid, self.status, newstatus)
 
         try:
-            state = self.status_graph[self.status][newstatus]
-        except KeyError:
+            myStatus = self.status
+            state = self.status_graph[myStatus][newstatus]
+        except KeyError as err:
             # allow default transitions: s->s, no hook
             if newstatus == self.status:
                 state = Job.State(newstatus)
             else:
+                import traceback
+                traceback.print_stack()
                 raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"' % (fqid, self.status, newstatus))
 
         self._getWriteAccess()
@@ -613,7 +618,7 @@ class Job(GangaObject):
                         self.updateStatus('failed')
                         return
 
-            stripProxy(self.backend)._setParent(self)
+            #stripProxy(self.backend)._setParent(self)
 
             if self.status != newstatus:
                 self.time.timenow(str(newstatus))
@@ -1689,6 +1694,7 @@ class Job(GangaObject):
 
 
         stripProxy(self)._setDirty()
+        stripProxy(self)._getRegistry()._flush([stripProxy(self)])
 
         return 1
 
@@ -1949,10 +1955,9 @@ class Job(GangaObject):
                     x.what += "Use force_status('%s',force=True) to ignore kill errors." % status
                     raise x
         try:
-            logger.info(
-                'Forcing job %s to status "%s"', self.getFQID('.'), status)
+            logger.info('Forcing job %s to status "%s"', self.getFQID('.'), status)
             self.updateStatus(status, ignore_failures=True)
-        except JobStatusError, x:
+        except JobStatusError as x:
             logger.error(x)
             raise x
 
