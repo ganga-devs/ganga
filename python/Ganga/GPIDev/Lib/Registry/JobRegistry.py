@@ -69,10 +69,11 @@ class JobRegistry(Registry):
         cache = {}
         for cv in cached_values:
             #print("cv: %s" % str(cv))
-            if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
-                cache[cv] = obj.getNodeIndexCache()[cv]
-            else:
-                cache[cv] = getattr(obj, cv)
+            #if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
+            #    cache[cv] = obj.getNodeIndexCache()[cv]
+            #else:
+            cache[cv] = getattr(obj, cv)
+            #logger.info("Setting: %s = %s" % (str(cv), str(cache[cv])))
         this_slice = JobRegistrySlice("jobs")
         for dpv in this_slice._display_columns:
             #logger.debug("Storing: %s" % str(dpv))
