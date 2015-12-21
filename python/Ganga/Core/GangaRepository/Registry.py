@@ -210,10 +210,27 @@ class Registry(object):
             Raise RegistryKeyError"""
         self._lock.acquire()
         try:
+            while this_id in self._inprogressDict.keys():
+                import time
+                logger.deubg("Getting item being operated on: %s" % this_id)
+                time.sleep(0.1)
             self._inprogressDict[this_id] = "_getitem"
             from Ganga.GPIDev.Base.Proxy import addProxy
             #logger.info("Getting Item: %s" % this_id)
-            this_obj = self._objects[this_id]
+            #logger.info("Looking in: %s" % self._objects.keys())
+            real_id = None
+            if type(this_id) is int:
+                if this_id >= 0:
+                    ## +ve integer, should be in dictionary
+                    real_id = this_id
+                    this_obj = self._objects[this_id]
+                else:
+                    ## -ve integer should be a relative object in dictionary
+                    real_id = self._objects.keys()[this_id]
+                    this_obj = self._objects[real_id]
+            else:
+                ## NOT an integer, maybe it's a slice or other?
+                this_obj = self._objects[this_id]
             found_id = None
             if hasattr(this_obj, 'id'):
                 logger.debug("Found ID: %s" % this_obj.id)
@@ -221,8 +238,8 @@ class Registry(object):
             if hasattr(this_obj, '_registry_id'):
                 logger.debug("Found RegID: %s" % this_obj._registry_id)
                 found_id = this_obj._registry_id
-            if found_id is not None:
-                assert( found_id == this_id )
+            if found_id is not None and real_id is not None:
+                assert( found_id == real_id )
             return addProxy(this_obj)
         except KeyError as err:
             logger.debug("Repo KeyError: %s" % str(err))
