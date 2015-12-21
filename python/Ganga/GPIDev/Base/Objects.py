@@ -349,7 +349,7 @@ class Node(object):
             del self._data[attrib_name]
 
     def removeNodeIndexCacheAttribute(self, attrib_name):
-        if attrib_name in self._index_cache.keys():
+        if self._index_cache and attrib_name in self._index_cache.keys():
             del self._index_cache[attrib_name]
 
     def setNodeIndexCache(self, new_index_cache):
