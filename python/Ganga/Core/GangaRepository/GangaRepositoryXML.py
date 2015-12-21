@@ -321,7 +321,7 @@ class GangaRepositoryLocal(GangaRepository):
         obj = self.objects[this_id]
         try:
             ifn = self.get_idxfn(this_id)
-            new_idx_cache = self.registry.getIndexCache(obj)
+            new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
             if new_idx_cache != obj.getNodeIndexCache() or not os.path.exists(ifn):
                 new_cache = new_idx_cache
                 with open(ifn, "w") as this_file:
@@ -414,7 +414,7 @@ class GangaRepositoryLocal(GangaRepository):
                         obj = v#self.objects[k]
                         new_index = None
                         if obj is not None:
-                            new_index = self.registry.getIndexCache(obj)
+                            new_index = self.registry.getIndexCache(stipProxy(obj))
                         if new_index is not None:
                             #logger.debug("k: %s" % str(k))
                             arr_k = [k]
@@ -780,7 +780,7 @@ class GangaRepositoryLocal(GangaRepository):
 
                 # Check if index cache; if loaded; was valid:
                 if obj.getNodeIndexCache() not in [None, {}]:
-                    new_idx_cache = self.registry.getIndexCache(obj)
+                    new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
                     if new_idx_cache != obj.getNodeIndexCache():
                         logger.debug("NEW: %s" % str(new_idx_cache))
                         logger.debug("OLD: %s" % str(obj.getNodeIndexCache()))
@@ -999,6 +999,6 @@ class GangaRepositoryLocal(GangaRepository):
         self.startup()
 
     def updateIndexCache(self, obj):
-        #stripProxy(obj).setNodeIndexCache(self.registry.getIndexCache(obj))
+        #stripProxy(obj).setNodeIndexCache(self.registry.getIndexCache(stripProxy(obj)))
         pass
 
