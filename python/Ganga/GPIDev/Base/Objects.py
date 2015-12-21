@@ -45,7 +45,7 @@ class Node(object):
     def __init__(self, parent):
         self._data = {}
         self._parent = parent
-        self._index_cache = None
+        self._index_cache = {}
         self._proxyObject = None
         super(Node, self).__init__()
         #logger.info("Node __init__")
@@ -60,7 +60,7 @@ class Node(object):
         if not hasattr(self, '_proxyObject'):
             self._proxyObject = None
         if not hasattr(self, '_index_cache'):
-            self._index_cache = None
+            self._index_cache = {}
 
     def __getstate__(self):
         d = self.__dict__
@@ -94,7 +94,7 @@ class Node(object):
                 this_dict[elem] = None
         #obj.__setstate__(this_dict)
         obj.getParent(self._getParent())
-        setattr(obj, '_index_cache', None)
+        setattr(obj, '_index_cache', {})
         setattr(obj, '_registry', self._registry)
         return obj
 
@@ -112,7 +112,7 @@ class Node(object):
 
         if self._getParent() is not None:
             obj._setParent(self._getParent())
-        setattr(obj, '_index_cache', None)
+        setattr(obj, '_index_cache', {})
         setattr(obj, '_registry', self._registry)
         return obj
 
@@ -349,7 +349,7 @@ class Node(object):
             del self._data[attrib_name]
 
     def removeNodeIndexCacheAttribute(self, attrib_name):
-        if attrib_name in self._index_cache.keys():
+        if self._index_cache and attrib_name in self._index_cache.keys():
             del self._index_cache[attrib_name]
 
     def setNodeIndexCache(self, new_index_cache):

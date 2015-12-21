@@ -160,7 +160,7 @@ class SubJobXMLList(GangaObject):
 
         all_caches = {}
         for i in range(len(raw_self)):
-            this_cache = raw_self._registry.getIndexCache( raw_self.__getitem__(i) )
+            this_cache = raw_self._registry.getIndexCache( stripProxy(raw_self.__getitem__(i)) )
             all_caches[i] = this_cache
             disk_location = raw_self.__get_dataFile(i)
             import os
@@ -340,7 +340,7 @@ class SubJobXMLList(GangaObject):
                 cached_data.append( raw_self._subjobIndexData[i] )
         else:
             for i in range(len(raw_self)):
-                cached_data.append( raw_self._registry.getIndexCache( raw_self.__getitem__(i) ) )
+                cached_data.append( raw_self._registry.getIndexCache( stripProxy(raw_self.__getitem__(i)) ) )
 
         return cached_data
 

@@ -89,13 +89,10 @@ class RegistrySlice(object):
         if not confirm:
             logger.warning("You are about to irreversibly delete the WHOLE '%s' registry, without properly cleaning up individual jobs." % (self.objects.name))
             if force:
-                logger.warning(
-                    "You will also cause any other Ganga sessions accessing this repository to shut down their operations")
-                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True,force=True)" % (
-                    self.objects.name, self.objects.name))
+                logger.warning("You will also cause any other Ganga sessions accessing this repository to shut down their operations")
+                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True,force=True)" % (self.objects.name, self.objects.name))
             else:
-                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True)" % (
-                    self.objects.name, self.objects.name))
+                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True)" % (self.objects.name, self.objects.name))
             return False
         return self.objects.clean(force)
 
@@ -389,7 +386,7 @@ class RegistrySlice(object):
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
         for obj_i in self.objects.keys():
-            obj = self.objects[obj_i]
+            obj = stripProxy(self.objects[obj_i])
             colour = self._getColour(obj)
 
             vals = []

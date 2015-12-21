@@ -321,16 +321,16 @@ class GangaRepositoryLocal(GangaRepository):
         obj = self.objects[this_id]
         try:
             ifn = self.get_idxfn(this_id)
-            new_idx_cache = self.registry.getIndexCache(obj)
+            new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
             if new_idx_cache != obj.getNodeIndexCache() or not os.path.exists(ifn):
-                obj.setNodeIndexCache(new_idx_cache)
-                new_cache = obj.getNodeIndexCache()
+                new_cache = new_idx_cache
                 with open(ifn, "w") as this_file:
                     pickle_to_file((obj._category, getName(obj), new_cache), this_file)
                 self._cached_obj[this_id] = new_cache
                 all_cache = new_cache.keys()
                 for attr in all_cache:
                     obj.removeNodeIndexCacheAttribute(attr)
+            self._cached_obj[this_id] = new_idx_cache
         except IOError as err:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn, getName(err), str(err)))
 
@@ -414,13 +414,15 @@ class GangaRepositoryLocal(GangaRepository):
                         obj = v#self.objects[k]
                         new_index = None
                         if obj is not None:
-                            new_index = self.registry.getIndexCache(obj)
+                            new_index = self.registry.getIndexCache(stipProxy(obj))
                         if new_index is not None:
                             #logger.debug("k: %s" % str(k))
                             arr_k = [k]
                             if len(self.lock(arr_k)) != 0:
                                 self.index_write(k)
                                 self.unlock(arr_k)
+                                #stripProxy(obj).setNodeIndexCache(new_index)
+                                self._cached_obj[k] = new_index
                 except Exception as err:
                     logger.debug("Failed to update index: %s on startup/shutdown" % str(k))
                     logger.debug("Reason: %s" % str(err))
@@ -673,6 +675,12 @@ class GangaRepositoryLocal(GangaRepository):
             try:
                 logger.debug("safe_flush")
                 self._safe_flush_xml(this_id)
+
+                self._cache_load_timestamp[this_id] = time.time()
+                self._cached_cls[this_id] = getName(self.objects[this_id])
+                self._cached_cat[this_id] = self.objects[this_id]._category
+                self._cached_obj[this_id] = self.objects[this_id].getNodeIndexCache()
+
                 try:
                     self.index_write(this_id)
                 except:
@@ -681,11 +689,6 @@ class GangaRepositoryLocal(GangaRepository):
 
                 if this_id not in self._fully_loaded.keys():
                     self._fully_loaded[this_id] = self.objects[this_id]
-
-                self._cache_load_timestamp[this_id] = time.time()
-                self._cached_cls[this_id] = getName(self.objects[this_id])
-                self._cached_cat[this_id] = self.objects[this_id]._category
-                self._cached_obj[this_id] = self.objects[this_id].getNodeIndexCache()
 
             except (OSError, IOError, XMLFileError) as x:
                 raise RepositoryError(self, "Error of type: %s on flushing id '%s': %s" % (type(x), str(this_id), str(x)))
@@ -777,7 +780,7 @@ class GangaRepositoryLocal(GangaRepository):
 
                 # Check if index cache; if loaded; was valid:
                 if obj.getNodeIndexCache() not in [None, {}]:
-                    new_idx_cache = self.registry.getIndexCache(obj)
+                    new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
                     if new_idx_cache != obj.getNodeIndexCache():
                         logger.debug("NEW: %s" % str(new_idx_cache))
                         logger.debug("OLD: %s" % str(obj.getNodeIndexCache()))
@@ -996,6 +999,6 @@ class GangaRepositoryLocal(GangaRepository):
         self.startup()
 
     def updateIndexCache(self, obj):
-        #stripProxy(obj).setNodeIndexCache(self.registry.getIndexCache(obj))
+        #stripProxy(obj).setNodeIndexCache(self.registry.getIndexCache(stripProxy(obj)))
         pass
 
