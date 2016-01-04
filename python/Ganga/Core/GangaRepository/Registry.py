@@ -876,7 +876,7 @@ class Registry(object):
         ## FIXME this can probably be removed and forgotten after 6.1.14 is released
         #if obj.getNodeData() in [None, {}] or hasattr(obj, "_registry_refresh"):
 
-        logger.debug("Triggering Load: %s %s" %(str(self.name),  str(self.find(_obj))))
+        #logger.debug("Triggering Load: %s %s" %(str(self.name),  str(self.find(_obj))))
         #import traceback
         #traceback.print_stack()
         if self.hasStarted() is not True:
@@ -1107,8 +1107,8 @@ class Registry(object):
             logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
         except Exception as err:
             logger.debug("Logging Repo startup Error: %s" % str(err))
-            raise err
             self._hasStarted = False
+            raise err
         finally:
             self._lock.release()
 

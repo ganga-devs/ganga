@@ -952,7 +952,10 @@ class GangaObject(Node):
                     if isType(this_attr, Node):
                         this_attr._setParent(self_copy)
                 else:
-                    setattr(self_copy, name, deepcopy(getattr(self, name)))
+                    if hasattr(self, name):
+                        setattr(self_copy, name, deepcopy(getattr(self, name)))
+                    else:
+                        setattr(self_copy, name, self._schema.getDefaultValue(name))
 
 
                 if item.isA(Schema.SharedItem):
