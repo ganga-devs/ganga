@@ -296,6 +296,8 @@ class Job(GangaObject):
         cls = type(self)
         c = Job.__new__(cls)
         c.__init__()
+        c._auto__init__()
+        c.setNodeAttribute('id', c.id)
 
         c.time.newjob()
         c.backend = copy.deepcopy(self.backend)

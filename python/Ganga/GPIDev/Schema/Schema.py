@@ -242,10 +242,13 @@ class Schema(object):
         from Ganga.Utility.Config import getConfig
         is_finalized = Config._after_bootstrap
 
-        if is_finalized and stored_attr_key in _found_attrs.keys():
+        config = Ganga.Utility.Config.getConfig(def_name)
+
+        if is_finalized and stored_attr_key in _found_attrs.keys() and not config.hasModified():
             defvalue = _found_attrs[stored_attr_key]
         else:
-            config = Ganga.Utility.Config.getConfig(def_name)
+
+            config.setModified(False)
 
             # hidden, protected and sequence values are not represented in config
             if attr in config:
