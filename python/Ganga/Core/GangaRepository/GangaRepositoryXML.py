@@ -414,7 +414,7 @@ class GangaRepositoryLocal(GangaRepository):
                         obj = v#self.objects[k]
                         new_index = None
                         if obj is not None:
-                            new_index = self.registry.getIndexCache(stipProxy(obj))
+                            new_index = self.registry.getIndexCache(stripProxy(obj))
                         if new_index is not None:
                             #logger.debug("k: %s" % str(k))
                             arr_k = [k]
