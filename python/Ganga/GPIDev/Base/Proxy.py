@@ -594,16 +594,17 @@ def GPIProxyClassFactory(name, pluginclass):
         setattr(self, proxyRef, instance)
         self.__dict__[proxyObject] = self
         assert(id(getattr(self, proxyObject)) == id(self))
-        setattr(getattr(self, proxyRef), proxyObject, self)
-        getattr(self, proxyRef)._auto__init__()
+        raw_obj = getattr(self, proxyRef)
+        setattr(raw_obj, proxyObject, self)
+        raw_obj._auto__init__()
 
         from Ganga.GPIDev.Base.Objects import Node
         for key, _val in getattr(self, proxyClass)._schema.allItems():
             if not _val['protected'] and not _val['hidden'] and isType(_val, Schema.ComponentItem) and key not in Node._ref_list:
                 val = getattr(self, key)
                 if isType(val, Node):
-                    stripProxy(val)._setParent(getattr(self, proxyRef))
-                setattr(getattr(self, proxyRef), key, addProxy(val))
+                    stripProxy(val)._setParent(raw_obj)
+                setattr(raw_obj, key, addProxy(val))
 
         ## THIRD CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
         ## e.g. Job(application=exe, name='myJob', ...) or myJob2 = Job(myJob1)
@@ -633,6 +634,12 @@ def GPIProxyClassFactory(name, pluginclass):
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
+
+        raw_obj = getattr(self, proxyRef)
+
+        if hasattr( raw_obj, '_getRegistry'):
+            raw_obj.setNodeData( {} )#raw_obj._getRegistry().getIndexCache() )
+            raw_obj.setNodeIndexCache( {} )
 
 
     from Ganga.Utility.strings import ItemizedTextParagraph
