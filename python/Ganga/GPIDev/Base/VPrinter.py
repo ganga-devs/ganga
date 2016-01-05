@@ -199,7 +199,10 @@ class VSummaryPrinter(VPrinter):
     def _CallPrintSummaryTree(self, obj):
         import cStringIO
         sio = cStringIO.StringIO()
-        runProxyMethod(obj, 'printSummaryTree', self.level, self.verbosity_level, self.indent(), sio, self.selection)
+        if not hasattr(stripProxy(obj), 'printSummaryTree'):
+            print("%s" % str(obj), file=self.out)
+        else:
+            runProxyMethod(obj, 'printSummaryTree', self.level, self.verbosity_level, self.indent(), sio, self.selection)
         result = sio.getvalue()
         if result.endswith('\n'):
             result = result[0:-1]

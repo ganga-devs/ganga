@@ -334,7 +334,7 @@ class SubJobXMLList(GangaObject):
 
         raw_self = stripProxy(self)
         cached_data = []
-        logger.debug( "Cache: %s" % str(raw_self._subjobIndexData.keys()) )
+        #logger.debug( "Cache: %s" % str(raw_self._subjobIndexData.keys()) )
         if len(raw_self._subjobIndexData.keys()) == len(raw_self):
             for i in range(len(raw_self)):
                 cached_data.append( raw_self._subjobIndexData[i] )

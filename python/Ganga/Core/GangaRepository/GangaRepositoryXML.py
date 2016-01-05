@@ -606,7 +606,7 @@ class GangaRepositoryLocal(GangaRepository):
         if not isType(obj, EmptyGangaObject):
             split_cache = None
 
-            has_children = (not self.sub_split is None) and (self.sub_split in obj.getNodeData()) and len(obj.getNodeAttribute(self.sub_split)) > 0
+            has_children = (not self.sub_split is None) and (self.sub_split in obj.getNodeData()) and obj.getNodeAttribute(self.sub_split) and len(obj.getNodeAttribute(self.sub_split)) > 0
 
             if has_children:
 
@@ -728,55 +728,24 @@ class GangaRepositoryLocal(GangaRepository):
 
             has_children = (self.sub_split is not None) and (self.sub_split in tmpobj.getNodeData()) and len(tmpobj.getNodeAttribute(self.sub_split)) == 0
 
-            #if has_children:
-                #logger.debug("Initializing SubJobXMLList")
-                #tmpobj.setNodeAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup))
-                #logger.debug("Constructed SubJobXMLList")
-
             if this_id in self.objects:
                 obj = self.objects[this_id]
-                #logger.info("Loading")
-                #logger.info("tmpobj: %s" % str(tmpobj))
-                #logger.info("\n\nobj: %s\n\n" % str(type(obj)))
-                #obj.setNodeData(copy.deepcopy(tmpobj.getNodeData()))
-                #obj.__dict__ = tmpobj.__dict__
                 for key, val in tmpobj.getNodeData().iteritems():
-                    #logger.info("key: %s" % str(key))
-                    #logger.info("Replacing: %s::%s with %s" % (getName(obj), key, str(val)))
-                    #if key == "backend":
-                    #    for k, v in val.__dict__.iteritems():
-                    #        logger.info("k:v = %s:%s" % (str(k), str(v)))
-                    #obj.__dict__[key] = val
-                    #setattr(obj, key, val)
-                    obj.__dict__[key] = val
+                    obj.setNodeAttribute(key, val)
                 for attr_name, attr_val in obj._schema.allItems():
                     if attr_name not in tmpobj.getNodeData().keys():
-                        obj.__dict__[attr_name] = obj._schema.getDefaultValue(attr_name)
-                #for attr_name, attr_val in tmpobj.getNodeData().iteritems():
-                #    logger.info("Setting: %s::%s" % (getName(obj), attr_name))
-                #    setattr(obj, attr_name, copy.deepcopy(attr_val))
-                #obj.setNodeData(tmpobj.getNodeData())
-                # Fix parent for objects in _data (necessary!)
-
-                #logger.info("Configured Object")
+                        obj.setNodeAttribute(attr_name, obj._schema.getDefaultValue(attr_name))
 
                 if has_children:
                 #    logger.info("Adding children")
-                    obj.__dict__[self.sub_split] = SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup)
+                    obj.setNodeAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup))
                 else:
-                    obj.__dict__[self.sub_split] = None
+                    obj.setNodeAttribute(self.sub_split, None)
 
                 for node_key, node_val in obj.getNodeData().iteritems():
-                    if isType(getattr(stripProxy(obj), node_key), Node):
+                    if isType(node_val, Node):
                         if node_key not in Node._ref_list:
-                            getattr(stripProxy(obj), node_key)._setParent(obj)
-
-                #logger.info("Inherited")
-
-                #logger.info("obj.status = %s" % str(obj.status))
-                #logger.info("obj.__class__: %s" % str(obj.__class__))
-                #logger.info("obj.__dict__.keys(): %s" % str(obj.__dict__.keys()))
-                #logger.info("Node: %s" % str(obj.getNodeIndexCache()))
+                            node_val._setParent(obj)
 
                 # Check if index cache; if loaded; was valid:
                 if obj.getNodeIndexCache() not in [None, {}]:
@@ -825,24 +794,18 @@ class GangaRepositoryLocal(GangaRepository):
 
             if hasattr(self.objects[this_id], self.sub_split):
                 sub_attr = getattr(self.objects[this_id], self.sub_split)
-                if sub_attr is not None:
+                if sub_attr is not None and hasattr(sub_attr, '_setParent'):
                     sub_attr._setParent(self.objects[this_id])
 
             self._load_timestamp[this_id] = os.fstat(fobj.fileno()).st_ctime
 
-            #logger.info("HERE2")
-
-            #if hasattr(obj, 'backend'):
-            #    logger.info("Job Backend: %s" % str(obj.backend))
-            #    import traceback
-            #    traceback.print_stack()
         else:
             logger.debug("Didn't Load Job ID: %s" % str(this_id))
 
         for attr_name, attr_val in self.objects[this_id].getNodeData().iteritems():
-            if isType(getattr(self.objects[this_id], attr_name), Node):
+            if isType(attr_val, Node):
                 if attr_name not in Node._ref_list:
-                    getattr(self.objects[this_id], attr_name)._setParent(self.objects[this_id])
+                    attr_val._setParent(self.objects[this_id])
 
         logger.debug("Finished Loading XML")
 
@@ -904,15 +867,12 @@ class GangaRepositoryLocal(GangaRepository):
 
             try:
                 self._actually_load_xml(fobj, fn, this_id, load_backup)
-            #self._actually_load_xml(fobj, fn, this_id, load_backup)
-            #try:
-            #    pass
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % str(err))
                 raise err
 
             except Exception as err:
-                raise err
+                #raise err
 
                 if isType(err, XMLFileError):
                     logger.error("XML File failed to load for Job id: %s" % str(this_id))

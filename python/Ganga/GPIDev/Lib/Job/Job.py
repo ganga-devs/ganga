@@ -220,8 +220,8 @@ class Job(GangaObject):
         ## These NEED to be defined before The Schema is initialized due to the getter methods for some object cauing a LOT of code to be run!
         setattr(self, '_parent', None)
         setattr(self, 'status', 'new')
-        self.id = ''
-        setattr(stripProxy(self), 'id', '')
+        #self.id = ''
+        #setattr(stripProxy(self), 'id', '')
         # Finished initializing 'special' objects which are used in getter methods and alike
         super(Job, self).__init__()
         self.time.newjob()  # <-----------NEW: timestamp method
@@ -247,6 +247,7 @@ class Job(GangaObject):
             if isType(args[0], Job):
 
                 self._unsetSubmitTransients()
+                super(Job, self).__construct__( args )
 
                 original_job = args[0]
 
@@ -270,6 +271,7 @@ class Job(GangaObject):
                         self.inputfiles = []
                 if getConfig('Preparable')['unprepare_on_copy'] is True:
                     self.unprepare()
+
             else:
                 # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
                 super(Job, self).__construct__( args )
@@ -296,8 +298,6 @@ class Job(GangaObject):
         cls = type(self)
         c = Job.__new__(cls)
         c.__init__()
-        c._auto__init__()
-        c.setNodeAttribute('id', c.id)
 
         c.time.newjob()
         c.backend = copy.deepcopy(self.backend)
@@ -968,8 +968,8 @@ class Job(GangaObject):
         # 'removed').getPath()
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
-            ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
-            return self.getInputWorkspace(create=self.__dict__['status'] != 'removed').getPath()
+            ## This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
+            return self.getInputWorkspace(create=stripProxy(self).getNodeAttribute('status') != 'removed').getPath()
         else:
             return self.getInputWorkspace(create=False).getPath()
 
@@ -978,8 +978,8 @@ class Job(GangaObject):
         # 'removed').getPath()
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
-            ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
-            return self.getOutputWorkspace(create=self.__dict__['status'] != 'removed').getPath()
+            ## This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
+            return self.getOutputWorkspace(create=stripProxy(self).getNodeAttribute('status') != 'removed').getPath()
         else:
             return self.getOutputWorkspace(create=False).getPath()
 
@@ -988,7 +988,6 @@ class Job(GangaObject):
         If optional sep is specified FQID string is returned, ids are separated by sep.
         For example: getFQID('.') will return 'masterjob_id.subjob_id....'
         """
-        ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
         ## This prevents exceptions during initialization
         if hasattr(self, 'id'):
             fqid = [self.id]

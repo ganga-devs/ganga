@@ -390,7 +390,7 @@ class Loader(object):
                             #setattr(obj, attr, obj._schema.getDefaultValue(attr))
 
                 #print("Constructed: %s" % obj.__class__.__name__)
-                obj.__setstate__(obj.__dict__)  # this sets the parent
+                #obj.__setstate__(obj.__dict__)  # this sets the parent
 
         def char_data(data):
             # char_data may be called many times in one CDATA section so we need to build up

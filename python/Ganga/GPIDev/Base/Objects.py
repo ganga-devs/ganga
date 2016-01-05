@@ -417,14 +417,10 @@ class Descriptor(object):
                         if getName(self) in obj_index.keys():
                             return obj_index[getName(self)]
                 except Exception as err:
-                    #import traceback
-                    #traceback.print_stack()
                     logger.debug("Lazy Loading Exception: %s" % str(err))
                     lookup_exception = err
                     #raise err
 
-                #logger.info("Not found")
-                #logger.info("Looking for: %s in Data" % getName(self))
 
                 ## ._data takes priority ALWAYS over ._index_cache
                 try:
@@ -438,37 +434,29 @@ class Descriptor(object):
 
                 #logger.info("Not found")
 
+                ## Guarantee that the object is now loaded from disk
                 _obj = stripProxy(obj)
                 _obj._getReadAccess()
 
+                ## First try to load the object from the attributes on disk
                 if getName(self) in _obj.getNodeData().keys():
                     result = _obj.getNodeAttribute(getName(self))
                 else:
-                    _obj._getReadAccess()
-                    #return object.__getattribute__(self, getName(self))
 
-                    #if getName(self) in _obj.__dict__.keys():
-                    return _obj.__dict__[getName(self)]
+                    ## If this object doesn't exist and the object has been loaded then let's look around
 
+                    if getName(self) in _obj.__dict__.keys():
 
-                #    ##rcurrie not sure why this is needed (if at all) will be replaced/fixed/removed in 6.1.15 with any luck
+                        #if getName(self) in _obj.__dict__.keys():
+                        return _obj.__dict__[getName(self)]
 
-                #    from Ganga.GPIDev.Base.Proxy import isProxy
-                #    if _obj.getNodeData():
-                #        ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
-                #        _obj._getReadAccess()
-                #        logger.debug("1) Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
-                #        #GangaException("Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
-                #        result = _obj.getNodeAttribute(getName(self))
-                #    else:
-                #        ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
-                #        _obj._getReadAccess()
-                #        #logger.info("obj.__dict__: %s" % str(obj.__dict__))
-                #        #logger.info("obj.getNodeData(): %s" % str(obj.getNodeData()))
-                #        #logger.info("obj.getNodeIndexCace(): %s" % str(obj.getNodeIndexCache()))
-                #        logger.debug("2) Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
-                #        #GangaException("Error, cannot find '%s' parameter in: %s" % (getName(self), getName(obj)))
-                #        result = _obj.getNodeIndexCache()[getName(self)]
+                    else:
+
+                        if _obj._schema.hasItem(getName(self)):
+                            return _obj._schema.getDefaultValue(getName(self))
+                        else:
+                            return _obj.__dict__[getName(self)]
+
 
             return result
 
@@ -693,7 +681,6 @@ class Descriptor(object):
             new_val._setParent(obj)
 
         stripProxy(obj).setNodeAttribute(getName(self), new_val)
-        #obj.__dict__[getName(self)] = new_val
 
         obj._setDirty()
 
@@ -894,7 +881,7 @@ class GangaObject(Node):
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
                     defVal = self._schema.getDefaultValue(attr)
-                    setattr(self, attr, defVal)
+                    self.setNodeAttribute(attr, defVal)
                     new_attr = getattr(self, attr)
                     if isType(new_attr, Node):
                         new_attr._setParent(self)
