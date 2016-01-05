@@ -630,16 +630,11 @@ def GPIProxyClassFactory(name, pluginclass):
                         ProxyDataDescriptor.__prep_set__(getattr(self, k), self, this_arg)
                     setattr(this_arg, proxyObject, None)
                     stripProxy(this_arg)._setParent(getattr(self, proxyRef))
-                setattr(self, k, addProxy(this_arg))
+                setattr(getattr(self, proxyRef), k, addProxy(this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
-
         raw_obj = getattr(self, proxyRef)
-
-        if hasattr( raw_obj, '_getRegistry'):
-            raw_obj.setNodeData( {} )#raw_obj._getRegistry().getIndexCache() )
-            raw_obj.setNodeIndexCache( {} )
 
 
     from Ganga.Utility.strings import ItemizedTextParagraph
