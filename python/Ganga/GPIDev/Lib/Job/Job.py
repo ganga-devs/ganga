@@ -220,8 +220,8 @@ class Job(GangaObject):
         ## These NEED to be defined before The Schema is initialized due to the getter methods for some object cauing a LOT of code to be run!
         setattr(self, '_parent', None)
         setattr(self, 'status', 'new')
-        self.id = ''
-        setattr(stripProxy(self), 'id', '')
+        #self.id = ''
+        #setattr(stripProxy(self), 'id', '')
         # Finished initializing 'special' objects which are used in getter methods and alike
         super(Job, self).__init__()
         self.time.newjob()  # <-----------NEW: timestamp method
@@ -247,6 +247,7 @@ class Job(GangaObject):
             if isType(args[0], Job):
 
                 self._unsetSubmitTransients()
+                super(Job, self).__construct__( args )
 
                 original_job = args[0]
 
@@ -270,6 +271,7 @@ class Job(GangaObject):
                         self.inputfiles = []
                 if getConfig('Preparable')['unprepare_on_copy'] is True:
                     self.unprepare()
+
             else:
                 # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
                 super(Job, self).__construct__( args )
