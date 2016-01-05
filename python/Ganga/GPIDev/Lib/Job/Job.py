@@ -296,8 +296,6 @@ class Job(GangaObject):
         cls = type(self)
         c = Job.__new__(cls)
         c.__init__()
-        c._auto__init__()
-        c.setNodeAttribute('id', c.id)
 
         c.time.newjob()
         c.backend = copy.deepcopy(self.backend)
@@ -968,8 +966,8 @@ class Job(GangaObject):
         # 'removed').getPath()
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
-            ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
-            return self.getInputWorkspace(create=self.__dict__['status'] != 'removed').getPath()
+            ## This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
+            return self.getInputWorkspace(create=stripProxy(self).getNodeAttribute('status') != 'removed').getPath()
         else:
             return self.getInputWorkspace(create=False).getPath()
 
@@ -978,8 +976,8 @@ class Job(GangaObject):
         # 'removed').getPath()
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
-            ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
-            return self.getOutputWorkspace(create=self.__dict__['status'] != 'removed').getPath()
+            ## This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
+            return self.getOutputWorkspace(create=stripProxy(self).getNodeAttribute('status') != 'removed').getPath()
         else:
             return self.getOutputWorkspace(create=False).getPath()
 
@@ -988,7 +986,6 @@ class Job(GangaObject):
         If optional sep is specified FQID string is returned, ids are separated by sep.
         For example: getFQID('.') will return 'masterjob_id.subjob_id....'
         """
-        ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
         ## This prevents exceptions during initialization
         if hasattr(self, 'id'):
             fqid = [self.id]
