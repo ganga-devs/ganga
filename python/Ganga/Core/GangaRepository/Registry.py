@@ -788,7 +788,7 @@ class Registry(object):
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
             raise err
         except Exception as err:
-            logger.debug("_flush Error: %s" % str(err))
+            logger.error("_flush Error: %s" % str(err))
             raise err
         finally:
             self._lock.release()
@@ -1134,7 +1134,8 @@ class Registry(object):
             try:
                 self._flush()
             except Exception as err:
-                logger.debug("Exception on flushing '%s' registry: %s", self.name, str(err))
+                logger.error("Exception on flushing '%s' registry: %s", self.name, str(err))
+                #raise err
             for obj in self._objects.values():
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
