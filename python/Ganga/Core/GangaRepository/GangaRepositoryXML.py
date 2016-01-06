@@ -596,6 +596,7 @@ class GangaRepositoryLocal(GangaRepository):
                             objs[i].getNodeAttribute(self.sub_split)[j]._dirty = True
                 except AttributeError as err:
                     logger.debug("RepoXML add Exception: %s" % str(err))
+
         return ids
 
     def _safe_flush_xml(self, this_id):
