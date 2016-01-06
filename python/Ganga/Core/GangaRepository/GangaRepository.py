@@ -221,6 +221,7 @@ class GangaRepository(object):
         obj.setNodeAttribute('id', this_id)
         obj._setRegistry(self.registry)
 
+
     def _internal_del__(self, id):
         """ Internal function for repository classes to (logically) delete items to the repository."""
         if id in self.incomplete_objects:
