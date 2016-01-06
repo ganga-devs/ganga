@@ -623,6 +623,7 @@ class Job(GangaObject):
             #stripProxy(self.backend)._setParent(self)
 
             if self.status != newstatus:
+                stripProxy(self.time)._setParent(self)
                 self.time.timenow(str(newstatus))
                 logger.debug("timenow('%s') called.", self.status)
             else:
@@ -819,8 +820,7 @@ class Job(GangaObject):
         self.getMonitoringService().submit()
 
     def runPostProcessors(self):
-        logger.info("Job %s Manually Running PostProcessors" %
-                    str(self.getFQID('.')))
+        logger.info("Job %s Manually Running PostProcessors" % str(self.getFQID('.')))
         try:
             self.application.postprocess()
         except Exception as x:
@@ -835,8 +835,8 @@ class Job(GangaObject):
         logger.debug("Job %s Finished" % str(self.getFQID('.')))
 
     def postprocess_hook(self):
-        logger.info("Job %s Running PostProcessor hook" %
-                    str(self.getFQID('.')))
+        logger.info("Job %s Running PostProcessor hook" % str(self.getFQID('.')))
+        stripProxy(self.application)._setParent(self)
         self.application.postprocess()
         self.getMonitoringService().complete()
         self.postprocessoutput(self.outputfiles, self.outputdir)
