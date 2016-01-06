@@ -258,12 +258,14 @@ class Node(object):
 
             if not self._schema.hasAttribute(name):
                 #raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(getName(_srcobj),getName(self)))
-                setattr(self, name, self._schema.getDefaultValue(name))
+                if not hasattr(self, name):
+                    setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
                 if isType(this_attr, Node) and name not in Node._ref_list:
                     this_attr._setParent(self)
             elif not item['copyable']: ## Default of '1' instead of True...
-                setattr(self, name, self._schema.getDefaultValue(name))
+                if not hasattr(self, name):
+                    setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
                 if isType(this_attr, Node) and name not in Node._ref_list:
                     this_attr._setParent(self)
@@ -900,6 +902,8 @@ class GangaObject(Node):
         if len(args) == 0:
             return
         elif len(args) == 1:
+            if not isType(args[0], type(stripProxy(self))):
+                logger.warning("Performing a copyFrom from: %s to: %s" % (type(args[0]), type(self)))
             self.copyFrom(args[0])
         else:
             from Ganga.GPIDev.Base.Proxy import TypeMismatchError
