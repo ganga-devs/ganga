@@ -31,6 +31,15 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _knownLists = None
 
+def getRuntimeGPIObject(obj_name, silent=False):
+    import Ganga.GPI
+    if obj_name in Ganga.GPI.__dict__.keys():
+        return Ganga.GPI.__dict__[obj_name]()
+    else:
+        if silent is False:
+            logger.error("Cannot find Object: '%s' in GPI. Returning None." % str(obj_name))
+        return None
+
 def runtimeEvalString(this_obj, attr_name, val):
 
     ## Don't check or try to auto-eval non-string objects
@@ -61,8 +70,8 @@ def runtimeEvalString(this_obj, attr_name, val):
                         ## This type is written as a string so need to work out what it is
                         if type(this_type) == str:
                             try:
-                                import __main__
-                                eval_type = eval(this_type, __main__.__dict__)
+                                import Ganga.GPI
+                                eval_type = eval(this_type, Ganga.GPI.__dict__)
                                 if eval_type == str:
                                     ## This type was written as "str" ... slightly annoying but OK...
                                     shouldEval = False
@@ -98,8 +107,8 @@ def runtimeEvalString(this_obj, attr_name, val):
 
     if shouldEval is True:
         try:
-            import __main__
-            new_val = eval(val, __main__.__dict__)
+            import Ganga.GPI
+            new_val = eval(val, Ganga.GPI.__dict__)
             if isclass(new_val):
                 new_val = new_val()
         except Exception as err:
@@ -221,9 +230,10 @@ def stripComponentObject(v, cfilter, item):
     def getImpl(v):
         if v is None:
             if not item['optional']:
-                raise TypeMismatchError(
-                        None, 'component is mandatory and None may not be used')
+                raise TypeMismatchError(None, 'component is mandatory and None may not be used')
                 return v
+            else:
+                return None
         if isType(v, GangaObject):
             return v
         if not isinstance(v, GPIProxyObject):
@@ -252,7 +262,7 @@ class ProxyDataDescriptor(object):
         def getProxy(v):
             from Ganga.GPIDev.Base import GangaObject
             if not isType(v, GangaObject):
-                raise GangaAttributeError("invalid type: cannot assign '%s' to attribute '%s'" % (repr(v), self._name))
+                raise GangaAttributeError("invalid type: cannot assign '%s' to attribute '%s'" % (repr(v), getName(self)))
             return GPIProxyObjectFactory(v)
 
         # convert implementation object to GPI value according to the
@@ -284,13 +294,19 @@ class ProxyDataDescriptor(object):
         global proxyRef
         # at class level return a helper object (for textual description)
         if obj is None:
-            # return Schema.make_helper(getattr(getattr(cls, proxyRef),self._name))
-            return getattr( getattr(cls, proxyRef), self._name)
+            # return Schema.make_helper(getattr(getattr(cls, proxyRef), getName(self)))
+            return getattr( getattr(cls, proxyRef), getNeme(self))
 
-        val = getattr( getattr(obj, proxyRef), self._name)
+        try:
+            val = getattr( getattr(obj, proxyRef), getName(self))
+        except Exception as err:
+            if getName(self) in getattr(obj, proxyRef).__dict__.keys():
+                val = getattr(obj, proxyRef).__dict__[getName(self)]
+            else:
+                val = getattr(getattr(obj, proxyRef), getName(self))
 
         # wrap proxy
-        item = getattr(obj, proxyClass)._schema[self._name]
+        item = getattr(obj, proxyClass)._schema[getName(self)]
 
         if item['proxy_get']:
             return getattr(getattr(obj, proxyRef), item['proxy_get'])()
@@ -300,6 +316,7 @@ class ProxyDataDescriptor(object):
         else:
             disguiser = self.disguiseAttribute
 
+        ## FIXME Add GangaList?
         if item['sequence'] and isType(val, list):
             from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
             val = makeGangaList(val, disguiser)
@@ -309,8 +326,8 @@ class ProxyDataDescriptor(object):
 
     def _check_type(self, obj, val):
         global proxyRef
-        item = getattr(obj, proxyClass)._schema[self._name]
-        return item._check_type(val, self._name)
+        item = getattr(obj, proxyClass)._schema[getName(self)]
+        return item._check_type(val, getName(self))
 
     # apply attribute conversion
     def _stripAttribute(self, obj, v):
@@ -326,8 +343,8 @@ class ProxyDataDescriptor(object):
         global proxyRef
         if isinstance(v, GPIProxyObject) or hasattr(v, proxyRef):
             v = getattr(v, proxyRef)
-            logger.debug('%s property: assigned a component object (%s used)' % (self._name, proxyRef))
-        return getattr(obj, proxyRef)._attribute_filter__set__(self._name, v)
+            logger.debug('%s property: assigned a component object (%s used)' % (getName(self), proxyRef))
+        return getattr(obj, proxyRef)._attribute_filter__set__(getName(self), v)
 
     def __app_set__(self, obj, val):
 
@@ -383,7 +400,7 @@ class ProxyDataDescriptor(object):
 
     def __sequence_set__(self, stripper, obj, val):
 
-        item = getattr(obj, proxyClass)._schema[self._name]
+        item = getattr(obj, proxyClass)._schema[getName(self)]
         # we need to explicitly check for the list type, because simple
         # values (such as strings) may be iterable
         from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
@@ -396,7 +413,7 @@ class ProxyDataDescriptor(object):
         else:
             # val is not iterable
             if item['strict_sequence']:
-                raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), getattr(obj, proxyClass)._schema.name, self._name))
+                raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), getattr(obj, proxyClass)._schema.name, getName(self)))
             if stripper is not None:
                 val = makeGangaList(stripper(val))
             else:
@@ -455,18 +472,18 @@ class ProxyDataDescriptor(object):
 
         # if we set is_prepared to None in the GPI, that should effectively
         # unprepare the application
-        if self._name == 'is_prepared':
+        if getName(self) == 'is_prepared':
             # Replace is_prepared on an application for another ShareDir object
             self.__prep_set__(obj, val)
 
         # catch assignment of 'something'  to a preparable application
-        if self._name == 'application':
+        if getName(self) == 'application':
             self.__app_set__(obj, val)
 
         # unwrap proxy
         if item.isA(Schema.ComponentItem):
             from .Filters import allComponentFilters
-            item = getattr(obj, proxyClass)._schema.getItem(self._name)
+            item = getattr(obj, proxyClass)._schema.getItem(getName(self))
             cfilter = allComponentFilters[item['category']]
             stripper = lambda v: stripComponentObject(v, cfilter, item)
         else:
@@ -486,7 +503,7 @@ class ProxyDataDescriptor(object):
             val = self._stripAttribute(obj, val)
 
         self._check_type(obj, val)
-        setattr(stripProxy(obj), self._name, val)
+        setattr(stripProxy(obj), getName(self), val)
 
 
 class ProxyMethodDescriptor(object):
@@ -551,7 +568,13 @@ def GPIProxyClassFactory(name, pluginclass):
     # the new class
 
     def _init(self, *args, **kwds):
-        global proxyRef
+
+        ## THE ORDER IN HOW AN OBJECT IS INITIALIZED IS IMPORTANT AND HAS BEEN DOUBLE CHECKED - rcurrie
+
+        ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
+
+        #logger.debug("Proxy Object _init")
+        global proxyRef, proxyClass
         # if len(args) > 1:
         #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
 
@@ -563,30 +586,38 @@ def GPIProxyClassFactory(name, pluginclass):
                 except AttributeError:
                     pass
 
+        ## SECOND WE NEED TO MAKE SURE THAT OBJECT ID IS CORRECT AND THIS DOES THINGS LIKE REGISTER A JOB WITH THE REPO
+
         # at the object level _impl is a ganga plugin object
         instance.__dict__[proxyObject] = self
         assert(id(getattr(instance, proxyObject)) == id(self))
         setattr(self, proxyRef, instance)
         self.__dict__[proxyObject] = self
         assert(id(getattr(self, proxyObject)) == id(self))
-        setattr(getattr(self, proxyRef), proxyObject, self)
-        getattr(self, proxyRef)._auto__init__()
-
-        clean_args = [stripProxy(arg) for arg in args]
-
-        getattr(self, proxyRef).__construct__(tuple(clean_args))
-
-        clean_args = [stripProxy(arg) for arg in args]
-
+        raw_obj = getattr(self, proxyRef)
+        setattr(raw_obj, proxyObject, self)
+        raw_obj._auto__init__()
 
         from Ganga.GPIDev.Base.Objects import Node
-        for key, val in getattr(self, proxyClass)._schema.allItems():
-            if not val['protected'] and not val['hidden'] and isType(val, Schema.ComponentItem) and key not in Node._ref_list:
+        for key, _val in getattr(self, proxyClass)._schema.allItems():
+            if not _val['protected'] and not _val['hidden'] and isType(_val, Schema.ComponentItem) and key not in Node._ref_list:
                 val = getattr(self, key)
                 if isType(val, Node):
-                    stripProxy(val)._setParent(getattr(self, proxyRef))
-                p_val = addProxy(val)
-                setattr(getattr(self, proxyRef), key, p_val)
+                    stripProxy(val)._setParent(raw_obj)
+                setattr(raw_obj, key, addProxy(val))
+
+        ## THIRD CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
+        ## e.g. Job(application=exe, name='myJob', ...) or myJob2 = Job(myJob1)
+        ## THIS IS PRIMARILY FOR THE 2ND EXAMPLE ABOVE
+
+        ## DOESN'T MAKE SENSE TO KEEP PROXIES HERE AS WE MAY BE PERFORMING A PSEUDO-COPY OP
+        clean_args = [stripProxy(arg) for arg in args]
+        getattr(self, proxyRef).__construct__(tuple(clean_args))
+
+        ## FOURTH ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN
+        ## THIS IS MAINLY FOR THE FIRST EXAMPLE ABOVE
+
+        ## THIS CORRECTLY APPLIES A PROXY TO ALL OBJECT ATTRIBUTES OF AN OBJECT CREATED WITHIN THE GPI
 
         # initialize all properties from keywords of the constructor
         for k in kwds:
@@ -599,10 +630,11 @@ def GPIProxyClassFactory(name, pluginclass):
                         ProxyDataDescriptor.__prep_set__(getattr(self, k), self, this_arg)
                     setattr(this_arg, proxyObject, None)
                     stripProxy(this_arg)._setParent(getattr(self, proxyRef))
-                setattr(self, k, addProxy(this_arg))
+                setattr(getattr(self, proxyRef), k, addProxy(this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
+        raw_obj = getattr(self, proxyRef)
 
 
     from Ganga.Utility.strings import ItemizedTextParagraph
@@ -731,7 +763,7 @@ def GPIProxyClassFactory(name, pluginclass):
                         shared_path = _getSharedPath()
                         if not os.path.isdir(os.path.join(shared_path, self.is_prepared.name)):
                             logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
-                            logger.error('Unpreparing %s application' % getattr(self, proxyRef)._name)
+                            logger.error('Unpreparing %s application' % getName(getattr(self, proxyRef)))
                             self.unprepare()
 
             c = getattr(self, proxyRef).clone()
@@ -764,7 +796,7 @@ def GPIProxyClassFactory(name, pluginclass):
                     raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)
 
             if x not in [proxyRef, proxyObject]:
-                raise GangaAttributeError("'%s' has no attribute '%s'" % (getattr(self, proxyClass)._name, x))
+                raise GangaAttributeError("'%s' has no attribute '%s'" % (getName(getattr(self, proxyClass)), x))
 
         new_v = runtimeEvalString(self, x, v)
 

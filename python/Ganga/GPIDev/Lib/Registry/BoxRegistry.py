@@ -83,8 +83,13 @@ class BoxRegistry(Registry):
         cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:
-            if cv in obj.getNodeData():
-                c[cv] = obj.getNodeAttribute(cv)
+            #if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
+            #    c[cv] = obj.getNodeIndexCache()[cv]
+            #else:
+            try:
+                c[cv] = getattr(obj, cv)
+            except AttributeError as err:
+                c[cv] = None
         slice = BoxRegistrySlice("tmp")
         for dpv in slice._display_columns:
             c["display:" + dpv] = slice._get_display_value(obj, dpv)
@@ -186,11 +191,9 @@ class BoxRegistrySlice(RegistrySlice):
 
     def __init__(self, name):
         super(BoxRegistrySlice, self).__init__(name, display_prefix="box")
-        self._display_columns_functions[
-            "id"] = lambda obj: obj._getRegistry().find(obj)
+        self._display_columns_functions["id"] = lambda obj: obj._getRegistry().find(obj)
         self._display_columns_functions["type"] = lambda obj: obj._name
-        self._display_columns_functions[
-            "name"] = lambda obj: obj._getRegistry()._getName(obj)
+        self._display_columns_functions["name"] = lambda obj: obj._getRegistry()._getName(obj)
         from Ganga.Utility.ColourText import Foreground, Background, Effects
         fg = Foreground()
         fx = Effects()
@@ -202,8 +205,12 @@ class BoxRegistrySlice(RegistrySlice):
                                'jobs': fg.blue}
         self._proxyClass = BoxRegistrySliceProxy
 
-    def _getColour(self, obj):
-        return self.status_colours.get(obj._category, self.fx.normal)
+    def _getColour(self, _obj):
+        obj = stripProxy(_obj)
+        try:
+            return self.status_colours.get(obj._category, self.fx.normal)
+        except AttributeError as err:
+            return self.status_colours['default']
 
     def __getitem__(self, id):
         if isinstance(id, str):

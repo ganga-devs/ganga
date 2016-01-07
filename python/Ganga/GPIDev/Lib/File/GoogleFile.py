@@ -163,6 +163,7 @@ class GoogleFile(IGangaFile):
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
+        from Ganga.GPIDev.Lib.Job import Job
         if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
             r.localDir = None
             r.failureReason = ''
@@ -421,6 +422,8 @@ class GoogleFile(IGangaFile):
 
             example use: GoogleFile().restore()
         """
+        from apiclient import errors
+
         service = self._setup_service()
 
         # Wildcard procedure
@@ -450,6 +453,7 @@ class GoogleFile(IGangaFile):
         """
         Creates a Ganga folder on GoogleDrive if one is not already present
         """
+        from apiclient import errors
         service = self._setup_service()
 
         page_token = None

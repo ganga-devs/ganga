@@ -241,6 +241,7 @@ class ConfigOption(object):
         self.examples = None
         self.filter = None
         self.typelist = None
+        self._hasModified = False
 
     def defineOption(self, default_value, docstring, **meta):
 
@@ -258,7 +259,16 @@ class ConfigOption(object):
         self.convert_type('session_value')
         self.convert_type('user_value')
 
+    def setModified(self, val):
+        self._hasModified = val
+
+    def hasModified(self):
+        return self._hasModified
+
     def setSessionValue(self, session_value):
+
+        self.setModified(True)
+
         # try:
         if self.filter:
             session_value = self.filter(self, session_value)
@@ -282,6 +292,7 @@ class ConfigOption(object):
 
     def setUserValue(self, user_value):
 
+        self.setModified(True)
         try:
             if self.filter:
                 user_value = self.filter(self, user_value)
@@ -311,6 +322,7 @@ class ConfigOption(object):
             raise x
 
     def overrideDefaultValue(self, default_value):
+        self.setModified(True)
         if hasattr(self, 'default_value'):
             default_value = self.transform_PATH_option(default_value, self.default_value)
         else:
@@ -348,6 +360,7 @@ class ConfigOption(object):
             raise AttributeError('Cannot set "%s" attribute of the option object' % name)
         else:
             self.__dict__[name] = value
+            self.__dict__['_hasModified'] = True
 
     def check_defined(self):
         return hasattr(self, 'default_value')
@@ -479,6 +492,14 @@ class PackageConfig(object):
             logger = getLogger()
             logger.error('cannot define open configuration section %s after configure() step', self.name)
 
+        self._hasModified = False
+
+    def setModified(self, val):
+        self._hasModified = val
+                               
+    def hasModified(self):
+        return self._hasModified
+
     def _addOpenOption(self, name, value):
         self.addOption(name, value, "", override=True)
 
@@ -550,6 +571,8 @@ class PackageConfig(object):
         default).  The special treatment  applies to the session level
         values only (and not the default one!).  """
 
+        self.setModified(True)
+
         logger = getLogger()
 
         logger.debug('trying to set session option [%s]%s = %s', self.name, name, value)
@@ -579,6 +602,8 @@ class PackageConfig(object):
         the  default  type  of  the  option  is  not  string,  then  the
         expression will be evaluated. """
 
+        self.setModified(True)
+
         logger = getLogger()
 
         logger.debug('trying to set user option [%s]%s = %s', self.name, name, value)
@@ -594,9 +619,11 @@ class PackageConfig(object):
             handler[1](name, value)
 
     def overrideDefaultValue(self, name, val):
+        self.setModified(True)
         self.options[name].overrideDefaultValue(val)
 
     def revertToSession(self, name):
+        self.setModified(True)
         if name in self.options:
             if hasattr(self.options[name], 'user_value'):
                 del self.options[name].user_value
@@ -606,6 +633,7 @@ class PackageConfig(object):
             pass
 
     def revertToDefault(self, name):
+        self.setModified(True)
         self.revertToSession(name)
         if name in self.options:
             if hasattr(self.options[name], 'session_value'):
@@ -616,10 +644,12 @@ class PackageConfig(object):
             pass
 
     def revertToSessionOptions(self):
+        self.setModified(True)
         for name in self.options:
             self.revertToSession(name)
 
     def revertToDefaultOptions(self):
+        self.setModified(True)
         self.revertToSessionOptions()
         for name in self.options:
             self.revertToDefault(name)
@@ -647,7 +677,7 @@ class PackageConfig(object):
         if name in self.options:
             return self.options[name].level
         else:
-            raise ConfigError('option "%s" does not exist in "%s"' % (x, self.name))
+            raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name))
 
     def attachUserHandler(self, pre, post):
         """ Attach a user handler:
@@ -941,7 +971,7 @@ def load_user_config(filename, system_vars):
                 v = new_cfg.get(name, o)
             except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
                 logger.debug("Parse Error!:\n  %s" % str(err))
-                logging.debug("Failed to expand %s:%s, loading it as raw" % (str(name), str(o)))
+                logger.debug("Failed to expand %s:%s, loading it as raw" % (str(name), str(o)))
                 v = new_cfg.get(name, o, raw=True)
             current_cfg_section.setUserValue(o, v)
 

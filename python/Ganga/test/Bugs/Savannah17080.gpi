@@ -6,10 +6,11 @@ b = j.splitter.backs[1]
 b.fail = 'submit'
 
 assert(j.status=='new')
-j.submit()
+j.submit(keep_going=False)
 print("%s" % str(j.status))
 assert(j.status in ['submitted', 'running'])
 assert(j.subjobs[0].status in ['submitted','running'])
+print("%s" % str(j.subjobs[1].status))
 assert(j.subjobs[1].status=='new')
 
 assert(j.subjobs[2].status=='new')

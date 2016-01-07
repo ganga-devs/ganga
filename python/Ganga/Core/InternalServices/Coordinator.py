@@ -59,7 +59,7 @@ def isCredentialRequired(credObj):
         for j in jobs:
             ji = stripProxy(j)
             if ji.status in ['submitted', 'running', 'completing']:
-                if 'display:backend' in ji.getNodeIndexCache().keys():
+                if ji.getNodeIndexCache() is not None and 'display:backend' in ji.getNodeIndexCache().keys():
                     if ji.getNodeIndexCache()['display:backend'] == 'LCG':
                         return True
                 else:

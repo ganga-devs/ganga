@@ -90,9 +90,9 @@ class FileWorkspace(object):
                 subpath = ''
 
         if self.splittree:
-            return expandfilename(os.path.join(self.top, subpath, jobdir, filename))
+            return expandfilename(os.path.join(self.top, subpath, jobdir, filename), True)
         else:
-            return expandfilename(os.path.join(self.top, jobdir, subpath, filename))
+            return expandfilename(os.path.join(self.top, jobdir, subpath, filename), True)
 
     # write a file (represent as file object) to the workspace
     # file object may be:
@@ -132,7 +132,7 @@ class FileWorkspace(object):
         else:
             logger.debug('already exists: %s', self.getPath())
 
-        outname = expandfilename(self.getPath(fileobj.getPathInSandbox()))
+        outname = expandfilename(self.getPath(fileobj.getPathInSandbox()), True)
 
         fileobj.create(outname)
 

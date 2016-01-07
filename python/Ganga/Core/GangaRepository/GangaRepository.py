@@ -199,10 +199,10 @@ class GangaRepository(object):
         cls = self._found_classes[(category, classname)]
         obj = super(cls, cls).__new__(cls)
         setattr(obj, '_parent', None)
-        setattr(obj, 'id', '')
         obj.__init__()
         obj._proxyObject = None
         obj.setNodeData({})
+        obj.setNodeAttribute('id', this_id)
 
         self._internal_setitem__(this_id, obj)
         return obj
@@ -217,9 +217,10 @@ class GangaRepository(object):
         setattr(obj, "_registry_id", this_id)
         setattr(obj, "_registry_locked", False)
         setattr(obj, "_id", this_id)
-        if obj.getNodeData() and "id" in obj.getNodeData().keys():  # MAGIC id
-            obj.setNodeAttribute('id', this_id)
+        #if obj.getNodeData() and "id" in obj.getNodeData().keys():  # MAGIC id
+        obj.setNodeAttribute('id', this_id)
         obj._setRegistry(self.registry)
+
 
     def _internal_del__(self, id):
         """ Internal function for repository classes to (logically) delete items to the repository."""

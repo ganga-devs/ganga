@@ -4,6 +4,7 @@
 # $Id: File.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ##########################################################################
 
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import isType
@@ -70,7 +71,10 @@ class File(GangaObject):
             expanded = expandfilename(v)
             # if it is not already an absolute filename
             if not urlprefix.match(expanded):
-                self.name = os.path.abspath(expanded)
+                if os.path.exists(os.path.abspath(expanded)):
+                    self.name = os.path.abspath(expanded)
+                else:
+                    self.name = v
             else:  # bugfix #20545
                 self.name = expanded
         else:

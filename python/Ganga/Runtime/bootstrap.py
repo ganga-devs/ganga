@@ -564,7 +564,9 @@ under certain conditions; type license() for details.
 
         import Ganga.Utility.files
         import Ganga.Utility.util
-        self.options.config_path = Ganga.Utility.files.expandfilename(self.options.config_path)
+        import inspect
+        GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
+        self.options.config_path = Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath, self.options.config_path))
 
         from Ganga.Utility.Config import getConfig
         syscfg = getConfig("System")
@@ -595,7 +597,7 @@ under certain conditions; type license() for details.
 
         # prevent modification during the interactive ganga session
         def deny_modification(name, x):
-            raise Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))
+            raise Ganga.Utility.Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))
         monConfig.attachUserHandler(deny_modification, None)
 
 
@@ -753,8 +755,11 @@ under certain conditions; type license() for details.
             #    import warnings
             #    warnings.filterwarnings(action="ignore", category=RuntimeWarning)
 
+            
+            import inspect
+            GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
             def transform(x):
-                return os.path.normpath(Ganga.Utility.files.expandfilename(x))
+                return os.path.normpath(Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath,x)))
 
             paths = map(transform, filter(lambda x: x, config['RUNTIME_PATH'].split(':')))
 
@@ -1227,6 +1232,15 @@ under certain conditions; type license() for details.
             import Ganga.Utility.Runtime
             path = Ganga.Utility.Runtime.getSearchPath()
             script = Ganga.Utility.Runtime.getScriptPath(self.args[0], path)
+
+            #if script:
+            #    script_file = open(script, 'r')
+            #    script_content = script_file.read()
+            #    script_file.close()
+            #
+            #    compiled_script = compile(script_content, '<string>', 'exec')
+            #
+            #exec compiled_script
 
             if script:
                 execfile(script, local_ns)

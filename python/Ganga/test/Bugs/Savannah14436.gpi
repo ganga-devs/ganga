@@ -1,3 +1,9 @@
 j = Job()
 assert(j.application.exe == 'echo2')
 assert(j.application.args == ['Hello World2'])
+from Ganga.Utility.Config import setConfigOption
+setConfigOption('defaults_Executable', 'exe', '/bin/echo')
+k = Job()
+assert(k.application.exe == '/bin/echo')
+assert(k.application.args == ['Hello World2'])
+

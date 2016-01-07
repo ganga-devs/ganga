@@ -95,7 +95,7 @@ class GridSandboxCache(GangaObject):
             elif f.__class__.__name__ == 'str':
                 paths.append('file://%s' % f)
             else:
-                logger.warning('unknown file expression: %s' % repr(f))
+                self.logger.warning('unknown file expression: %s' % repr(f))
 
         uploaded_files = self.impl_upload(files=paths, opts=opts)
 
@@ -138,7 +138,7 @@ class GridSandboxCache(GangaObject):
         if len(downloadedFiles) == len(myFiles):
             status = True
         else:
-            logger.warning('some files not successfully downloaded')
+            self.logger.warning('some files not successfully downloaded')
 
         return status
 
@@ -159,7 +159,7 @@ class GridSandboxCache(GangaObject):
         if len(deletedFiles) == len(myFiles):
             status = True
         else:
-            logger.warning('some files not successfully deleted')
+            self.logger.warning('some files not successfully deleted')
 
         return status
 

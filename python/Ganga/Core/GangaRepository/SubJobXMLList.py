@@ -4,6 +4,7 @@ from Ganga.GPIDev.Schema.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
+from Ganga.Core.GangaRepository.GangaRepository import RepositoryError
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base.Proxy import stripProxy
 import errno
@@ -86,8 +87,8 @@ class SubJobXMLList(GangaObject):
         for dict_key, dict_value in self.__dict__.iteritems():
 
             ## Copy objects where it's sane to
-            if dict_key not in ['_cachedJobs', '_definedParent', '_to_file', '_from_file', '_registry']:
-                new_dict[dict_key] = copy.deepcopy(dict_value)
+            if dict_key not in ['_cachedJobs', '_definedParent', '_to_file', '_from_file', '_registry', '_parent']:
+                new_dict[dict_key] = dict_value
 
             ## Assign by reference objects where it's sane to
             elif dict_key in ['_to_file', '_from_file', '_registry']:
@@ -159,7 +160,7 @@ class SubJobXMLList(GangaObject):
 
         all_caches = {}
         for i in range(len(raw_self)):
-            this_cache = raw_self._registry.getIndexCache( raw_self.__getitem__(i) )
+            this_cache = raw_self._registry.getIndexCache( stripProxy(raw_self.__getitem__(i)) )
             all_caches[i] = this_cache
             disk_location = raw_self.__get_dataFile(i)
             import os
@@ -206,12 +207,16 @@ class SubJobXMLList(GangaObject):
 
         return subjob_count
 
+    def keys(self):
+        return [i for i in range(len(self))]
+
     def values(self):
         raw_self = stripProxy(self)
         return [raw_self[i] for i in range(0, len(raw_self))]
 
     def _loadSubJobFromDisk(self, subjob_data):
         # For debugging where this was called from to try and push it to as high a level as possible at runtime
+        #print("SJXML Load")
         #import traceback
         #traceback.print_stack()
         #import sys
@@ -270,9 +275,9 @@ class SubJobXMLList(GangaObject):
                 sj_file = raw_self._loadSubJobFromDisk(subjob_data)
             except IOError as x:
                 if x.errno == errno.ENOENT:
-                    raise IOError("Subobject %s not found: %s" % (fqid, x))
+                    raise IOError("Subobject %s not found: %s" % (index, x))
                 else:
-                    raise RepositoryError(raw_self,"IOError on loading subobject %s: %s" % (fqid, x))
+                    raise RepositoryError(raw_self,"IOError on loading subobject %s: %s" % (index, x))
 
             try:
                 raw_self._cachedJobs[index] = raw_self._from_file(sj_file)[0]
@@ -329,13 +334,13 @@ class SubJobXMLList(GangaObject):
 
         raw_self = stripProxy(self)
         cached_data = []
-        logger.debug( "Cache: %s" % str(raw_self._subjobIndexData.keys()) )
+        #logger.debug( "Cache: %s" % str(raw_self._subjobIndexData.keys()) )
         if len(raw_self._subjobIndexData.keys()) == len(raw_self):
             for i in range(len(raw_self)):
                 cached_data.append( raw_self._subjobIndexData[i] )
         else:
             for i in range(len(raw_self)):
-                cached_data.append( raw_self._registry.getIndexCache( raw_self.__getitem__(i) ) )
+                cached_data.append( raw_self._registry.getIndexCache( stripProxy(raw_self.__getitem__(i)) ) )
 
         return cached_data
 

@@ -79,10 +79,12 @@ def to_file(j, fobj=None, ignore_subs=''):
 def _raw_from_file(f):
     # logger.debug('----------------------------')
     ###logger.debug('Parsing file: %s',f.name)
-    obj, errors = Loader().parse(f.read())
+    xml_content = f.read()
+    obj, errors = Loader().parse(xml_content)
     return obj, errors
 
 def from_file(f):
+    #return _raw_from_file(f)
     try:
         return _raw_from_file(f)
     except Exception as err:
@@ -309,10 +311,8 @@ class Loader(object):
                 else:
                     version = Version(*[int(v) for v in attrs['version'].split('.')])
                     if not cls._schema.version.isCompatible(version):
-                        attrs['currversion'] = '%s.%s' % (
-                            cls._schema.version.major, cls._schema.version.minor)
-                        self.errors.append(SchemaVersionError(
-                            'Incompatible schema of %(name)s, repository is %(version)s currently in use is %(currversion)s' % attrs))
+                        attrs['currversion'] = '%s.%s' % (cls._schema.version.major, cls._schema.version.minor)
+                        self.errors.append(SchemaVersionError('Incompatible schema of %(name)s, repository is %(version)s currently in use is %(currversion)s' % attrs))
                         obj = EmptyGangaObject()
                         # ignore all elemenents until the corresponding ending
                         # element (</class>) is reached
@@ -352,6 +352,7 @@ class Loader(object):
                 obj = self.stack[-1]
                 # update the object's attribute
                 obj.setNodeAttribute(aname, value)
+                #logger.info("Setting: %s = %s" % (str(aname), str(value)))
 
             # when </value> is seen the value_construct buffer (CDATA) should
             # be a python expression (e.g. quoted string)
@@ -380,12 +381,16 @@ class Loader(object):
                 obj = self.stack[-1]
                 for attr, item in obj._schema.allItems():
                     if not attr in obj.getNodeData():
+                        #logger.info("Opening: %s" % attr)
                         if item._meta["sequence"] == 1:
                             obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
+                            #setattr(obj, attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
                         else:
                             obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr))
+                            #setattr(obj, attr, obj._schema.getDefaultValue(attr))
 
-                obj.__setstate__(obj.__dict__)  # this sets the parent
+                #print("Constructed: %s" % obj.__class__.__name__)
+                #obj.__setstate__(obj.__dict__)  # this sets the parent
 
         def char_data(data):
             # char_data may be called many times in one CDATA section so we need to build up
@@ -405,10 +410,12 @@ class Loader(object):
         p.Parse(s)
 
         if len(self.stack) != 1:
-            self.errors.append(
-                AssertionError('multiple objects inside <root> element'))
+            self.errors.append(AssertionError('multiple objects inside <root> element'))
 
         obj = self.stack[-1]
+
+        #logger.info("obj.__dict__: %s" % str(obj.__dict__))
+
         # Raise Exception if object is incomplete
         for attr, item in obj._schema.allItems():
             if not attr in obj.getNodeData():

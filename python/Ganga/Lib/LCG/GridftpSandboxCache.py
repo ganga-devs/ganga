@@ -1,5 +1,6 @@
 import os
 import os.path
+import re
 from urlparse import urlparse
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem

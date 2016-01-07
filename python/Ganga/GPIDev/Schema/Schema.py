@@ -242,10 +242,13 @@ class Schema(object):
         from Ganga.Utility.Config import getConfig
         is_finalized = Config._after_bootstrap
 
-        if is_finalized and stored_attr_key in _found_attrs.keys():
+        config = Ganga.Utility.Config.getConfig(def_name)
+
+        if is_finalized and stored_attr_key in _found_attrs.keys() and not config.hasModified():
             defvalue = _found_attrs[stored_attr_key]
         else:
-            config = Ganga.Utility.Config.getConfig(def_name)
+
+            config.setModified(False)
 
             # hidden, protected and sequence values are not represented in config
             if attr in config:
@@ -277,7 +280,15 @@ class Schema(object):
 
         # make a copy of the default value (to avoid strange effects if the
         # original modified)
-        return copy.deepcopy(defvalue)
+        try:
+            from Ganga.GPIDev.Base.Proxy import isType, getRuntimeGPIObject, stripProxy, getName
+            from Ganga.GPIDev.Base.Objects import Node
+            if isType(defvalue, Node):
+                return stripProxy(getRuntimeGPIObject(getName(defvalue)))
+            else:
+                return copy.deepcopy(defvalue)
+        except ImportError:
+            return copy.deepcopy(defvalue)
 
 
 # Items in schema may be either Components,Simples, Files or BindingItems.
@@ -381,7 +392,7 @@ class Item(object):
     # item.isA(SimpleItem)
     def isA(self, _what):
 
-        from Ganga.GPIDev.Base.Proxy import stripProxy
+        from Ganga.GPIDev.Base.Proxy import stripProxy, isType
 
         what = stripProxy(_what)
 
@@ -397,7 +408,7 @@ class Item(object):
                     what = getattr(Schema, what)
                 else:
                     return False
-            elif isinstance(stripProxy(what), types.InstanceType):
+            elif isType(what, types.InstanceType):
                 if hasattr(what, '__class__'):
                     what = what.__class__
                 else:
@@ -467,7 +478,9 @@ class Item(object):
     @staticmethod
     def __check(isAllowedType, name, validTypes, input_val):
         if not isAllowedType:
-            raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: %s' % (name, validTypes, str(input_val)))
+            import traceback
+            traceback.print_stack()
+            raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (name, validTypes, str(input_val), type(input_val)))
 
     def _check_type(self, val, name, enableGangaList=True):
 
@@ -492,10 +505,11 @@ class Item(object):
             return
 
         if item._meta['sequence']:
-            if not isinstance(item._meta['defvalue'], (list, GangaList)):
+            from Ganga.GPIDev.Base.Proxy import isType
+            if not isType(item._meta['defvalue'], (list, tuple, GangaList)):
                 raise SchemaError('Attribute "%s" defined as a sequence but defvalue is not a list.' % name)
 
-            if not isinstance(val, (GangaList, list)):
+            if not isType(val, (GangaList, tuple, list)):
                 raise TypeMismatchError('Attribute "%s" expects a list.' % name)
 
         if validTypes:
@@ -532,7 +546,7 @@ class Item(object):
 
 
     @staticmethod
-    def __actualCheck( val, defVal ):
+    def __actualCheck(val, defVal):
 
         try:
             from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
@@ -540,11 +554,13 @@ class Item(object):
         except Exception as err:
             knownLists = (list, tuple)
         from Ganga.GPIDev.Base.Proxy import isType
-        if isType(defVal, knownLists):
-            if isType(val, knownLists):
+        if isType(defVal, knownLists) and isType(val, knownLists):
                 return True
         else:
-            return isinstance(val, type(defVal))
+            if type(defVal) == type:
+                return isType(val, type)
+            else:
+                return isType(val, type(defVal))
 
 
 class ComponentItem(Item):

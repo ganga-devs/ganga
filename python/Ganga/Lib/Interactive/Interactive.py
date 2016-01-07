@@ -26,6 +26,7 @@ __version__ = "1.4"
 
 from Ganga.Core import Sandbox
 from Ganga.GPIDev.Adapters.IBackend import IBackend
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.Utility import logging, util

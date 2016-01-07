@@ -8,6 +8,7 @@ from __future__ import absolute_import
 #from Ganga.Utility.external.ordereddict import oDict
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 
+from Ganga.Core.exceptions import GangaException
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
 
 from Ganga.GPIDev.Base.Proxy import stripProxy
@@ -63,13 +64,16 @@ class JobRegistry(Registry):
         return JobRegistrySliceProxy(this_slice)
 
     def getIndexCache(self, obj):
-        #if not obj.getNodeData():
-        #    return None
+
         cached_values = ['status', 'id', 'name']
         cache = {}
         for cv in cached_values:
-            if cv in obj.getNodeData():
-                cache[cv] = obj.getNodeAttribute(cv)
+            #print("cv: %s" % str(cv))
+            #if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
+            #    cache[cv] = obj.getNodeIndexCache()[cv]
+            #else:
+            cache[cv] = getattr(obj, cv)
+            #logger.info("Setting: %s = %s" % (str(cv), str(cache[cv])))
         this_slice = JobRegistrySlice("jobs")
         for dpv in this_slice._display_columns:
             #logger.debug("Storing: %s" % str(dpv))
@@ -133,7 +137,12 @@ class JobRegistrySlice(RegistrySlice):
         self._proxyClass = JobRegistrySliceProxy
 
     def _getColour(self, obj):
-        return self.status_colours.get(obj.status, self.fx.normal)
+        if stripProxy(obj).getNodeIndexCache():
+            status_attr = stripProxy(obj).getNodeIndexCache()['display:status']
+        else:
+            status_attr = obj.status
+        returnable = self.status_colours.get(status_attr, self.fx.normal)
+        return returnable
 
     def __call__(self, id):
         """ Retrieve a job by id.

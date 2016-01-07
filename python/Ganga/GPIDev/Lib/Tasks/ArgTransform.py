@@ -1,5 +1,9 @@
 from __future__ import absolute_import
 from .Transform import Transform
+from Ganga.Core import ApplicationConfigurationError
+from Ganga.GPIDev.Schema import Schema
+from Ganga.GPIDev.Schema import SimpleItem
+from Ganga.GPIDev.Schema import Version
 from Ganga.Utility.util import containsGangaObjects
 from .TaskApplication import ArgSplitterTask
 

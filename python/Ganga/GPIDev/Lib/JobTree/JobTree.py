@@ -44,7 +44,7 @@ class JobTree(GangaObject):
     The jobtree is persisted in between Ganga sessions.
     """
     _schema = Schema(Version(1, 2), {'name': SimpleItem(''),
-                                     'folders': SimpleItem({os.sep: {}}, protected=1, copyable=1, hidden=1),
+                                     'folders': SimpleItem({os.sep: {}}, protected=1, copyable=1),
                                      })
 
     _category = 'jobtrees'
@@ -435,7 +435,7 @@ class JobTree(GangaObject):
             pp = self.__get_path(path)
             fc = self.__folder_cd(pp)
 
-            print("self._getRegistry(): %s" % str(stripProxy(self)._getRegistry()))
+            #print("self._getRegistry(): %s" % str(stripProxy(self)._getRegistry()))
 
             for i in fc.keys():
                 if isType(fc[i], type({})):

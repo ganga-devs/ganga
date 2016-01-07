@@ -239,15 +239,14 @@ class Localhost(IBackend):
             # group, we can use this to kill all processes in the group
             os.kill(-self.wrapper_pid, signal.SIGKILL)
         except OSError as x:
-            logger.warning(
-                'while killing wrapper script for job %d: pid=%d, %s', job.id, self.wrapper_pid, str(x))
+            logger.warning('while killing wrapper script for job %s: pid=%d, %s', job.getFQID('.'), self.wrapper_pid, str(x))
             ok = False
 
         # waitpid to avoid zombies
         try:
             ws = os.waitpid(self.wrapper_pid, 0)
         except OSError as x:
-            logger.warning('problem while waitpid %d: %s', job.id, x)
+            logger.warning('problem while waitpid %s: %s', job.getFQID('.'), x)
 
         from Ganga.Utility.files import recursive_copy
 
@@ -267,8 +266,7 @@ class Localhost(IBackend):
             try:
                 shutil.rmtree(self.workdir)
             except OSError as x:
-                logger.warning(
-                    'problem removing the workdir %s: %s', str(self.id), str(x))
+                logger.warning('problem removing the workdir %s: %s', str(self.id), str(x))
 
     @staticmethod
     def updateMonitoringInformation(jobs):
@@ -308,7 +306,7 @@ class Localhost(IBackend):
                     pid = get_pid(statusfile)
                     if pid:
                         j.backend.id = pid
-                        #logger.info('Local job %d status changed to running, pid=%d',j.id,pid)
+                        #logger.info('Local job %s status changed to running, pid=%d',j.getFQID('.'),pid)
                         j.updateStatus('running')  # bugfix: 12194
                 exitcode = get_exit_code(statusfile)
                 with open(statusfile) as status_file:
@@ -332,7 +330,7 @@ class Localhost(IBackend):
                     # FIXME: for some strange reason the logger DOES NOT LOG (checked in python 2.3 and 2.5)
                     # print 'logger problem', logger.name
                     # print 'logger',logger.getEffectiveLevel()
-                    logger.critical('wrapper script for job %s exit with code %d', str(j.id), ws[1])
+                    logger.critical('wrapper script for job %s exit with code %d', str(j.getFQID('.')), ws[1])
                     logger.critical('report this as a bug at https://github.com/ganga-devs/ganga/issues/')
                     j.updateStatus('failed')
             except OSError as x:
@@ -352,7 +350,7 @@ class Localhost(IBackend):
                 else:
                     j.updateStatus('failed')
 
-                #logger.info('Local job %d finished with exitcode %d',j.id,exitcode)
+                #logger.info('Local job %s finished with exitcode %d',j.getFQID('.'),exitcode)
 
                 # if j.outputdata:
                 # j.outputdata.fill()

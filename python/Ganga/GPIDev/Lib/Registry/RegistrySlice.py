@@ -6,7 +6,7 @@ import fnmatch
 import collections
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 import Ganga.Utility.Config
-from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -82,20 +82,15 @@ class RegistrySlice(object):
         """Cleans the repository only if this slice represents the repository
         Returns True on success and False on failure"""
         if not hasattr(self.objects, "clean"):
-            logger.error(
-                "'clean' only works on whole registries, e.g. 'jobs.clean()'. Use remove() to delete job slices")
+            logger.error("'clean' only works on whole registries, e.g. 'jobs.clean()'. Use remove() to delete job slices")
             return False
         if not confirm:
-            logger.warning("You are about to irreversibly delete the WHOLE '%s' registry, without properly cleaning up individual jobs." % (
-                self.objects.name))
+            logger.warning("You are about to irreversibly delete the WHOLE '%s' registry, without properly cleaning up individual jobs." % (self.objects.name))
             if force:
-                logger.warning(
-                    "You will also cause any other Ganga sessions accessing this repository to shut down their operations")
-                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True,force=True)" % (
-                    self.objects.name, self.objects.name))
+                logger.warning("You will also cause any other Ganga sessions accessing this repository to shut down their operations")
+                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True,force=True)" % (self.objects.name, self.objects.name))
             else:
-                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True)" % (
-                    self.objects.name, self.objects.name))
+                logger.warning("If you just want to remove all jobs, type '%s.remove()'. If you really want to do this, type '%s.clean(confirm=True)" % (self.objects.name, self.objects.name))
             return False
         return self.objects.clean(force)
 
@@ -246,7 +241,7 @@ class RegistrySlice(object):
         return this_slice
 
     def __contains__(self, j):
-        return j.id in self.objects
+        return j.id in self.objects.keys()
 
     def __call__(self, this_id):
         """ Retrieve an object by id.
@@ -299,13 +294,14 @@ class RegistrySlice(object):
         """
         if isinstance(x, int):
             try:
-                return self.objects.values()[x]
+                return self.objects[x]
             except IndexError:
                 raise RegistryIndexError('list index out of range')
 
         if isinstance(x, str):
             ids = []
-            for j in self.objects.values():
+            for i in self.objects.keys():
+                j = self.objects[i]
                 if j.name == x:
                     ids.append(j.id)
             if len(ids) > 1:
@@ -338,8 +334,9 @@ class RegistrySlice(object):
         else:
             return str(val)
 
-    def _get_display_value(self, obj, item):
+    def _get_display_value(self, _obj, item):
         try:
+            obj = stripProxy(_obj)
             try:
                 if item in self._display_columns_functions:
                     display_func = self._display_columns_functions[item]
@@ -386,18 +383,21 @@ class RegistrySlice(object):
             ds += this_format % self._display_columns
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
-        for obj in self.objects.values():
+        for obj_i in self.objects.keys():
+            obj = stripProxy(self.objects[obj_i])
             colour = self._getColour(obj)
 
             vals = []
             for item in self._display_columns:
+                display_str = "display:" + str(item)
+                #logger.info("Looking for : %s" % display_str)
                 width = self._display_columns_width.get(item, default_width)
-                if obj.getNodeData():
+                if stripProxy(obj).getNodeIndexCache():
                     try:
                         if item == "fqid":
-                            vals.append(str(obj.getNodeData()["display:" + item]))
+                            vals.append(str(stripProxy(obj).getNodeIndexCache()[display_str]))
                         else:
-                            vals.append(str(obj.getNodeData()["display:" + item])[0:width])
+                            vals.append(str(stripProxy(obj).getNodeIndexCache()[display_str])[0:width])
                         continue
                     except KeyError as err:
                         logger.debug("_display KeyError: %s" % str(err))

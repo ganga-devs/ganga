@@ -101,9 +101,13 @@ class HammerThread(threading.Thread):
         id = self.rng.sample(ids,1)[0]
         logger.info(str(self.id) + " load(%s)"%id)
         try:
-            stripProxy(self.owned_objs[id]._getReadAccess())
+            logger.info("Getting ReadAccess: %s from %s" % (str(id), str(self.reg.ids())))
+            stripProxy(self.reg[id])._getReadAccess()
             #logger.info("Looking at: %s" % str(self.owned_objs[id]))
             #logger.info("stripped: %s" % str(stripProxy(self.owned_objs[id])))
+            logger.info("name: %s" % str(self.reg[id].name))
+            logger.info("Wanting: %s" % str(id))
+            logger.info("Loaded: %s" % str(self.reg._loaded_ids))
             assert self.reg[id].name.startswith("HT")
             if id in self.owned_ids:
                 assert self.reg[id].name == "HT%i"%(self.id), "{0} == {1}".format(self.reg[id].name, "HT%i"%(self.id))
@@ -119,8 +123,11 @@ class HammerThread(threading.Thread):
         id = self.rng.sample(ids,1)[0]
         logger.info(str(self.id) + " lock(%s)"%id)
         try:
-            stripProxy(self.owned_objs[id])._getReadAccess()
-            stripProxy(self.owned_objs[id])._getWriteAccess()
+            logger.info("Getting Read, Write access: %s" % str(id))
+            stripProxy(self.reg[id])._getReadAccess()
+            stripProxy(self.reg[id])._getWriteAccess()
+            logger.info("Got Access: %s" %str(id))
+            logger.info("Name: %s" % str(self.reg[id].name))
             assert self.reg[id].name.startswith("HT")
             self.reg[id].name = "HT%i"%(self.id)
             if not id in self.owned_ids:
@@ -137,7 +144,7 @@ class HammerThread(threading.Thread):
             return
         id = self.rng.sample(self.owned_ids,1)[0]
         logger.info(str(self.id) + " unlock(%s)"%id)
-        obj_to_unlock = self.owned_objs[id]
+        obj_to_unlock = self.reg[id]
         assert obj_to_unlock.name.startswith("HT")
         #self.reg[id].name = "HT-unlocked"
         #self.owned_ids.remove(id)
