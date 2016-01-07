@@ -193,8 +193,9 @@ class SessionLockRefresher(GangaThread):
 
         return self.FileCheckTimes[this_index_file]
 
-    def _reallyUpdateLocks(self, index):
+    def _reallyUpdateLocks(self, index, failCount=0):
         this_index_file = self.fns[index]
+        now = None
         try:
             oldnow = self.delayread(this_index_file)
             os.system('touch %s' % str(this_index_file))
@@ -202,6 +203,20 @@ class SessionLockRefresher(GangaThread):
         except OSError as x:
             if x.errno != errno.ENOENT:
                 logger.debug("Session file timestamp could not be updated! Locks could be lost!")
+                if now is None and failCount < 4:
+                    try:
+                        logger.debug("Attempting to lock file again, unknown error:\n'%s'" % str(x))
+                        import time
+                        time.sleep(0.5)
+                        failcount=failCount+1
+                        now = self._reallyUpdateLocks(index, failcount)
+                    except Exception as err:
+                        now = -999.
+                        logger.debug("Received another type of exception, failing to update lockfile: %s" % str(this_index_file))
+                else:
+                    logger.warning("Failed to update lock file: %s 5 times." % str(this_index_file))
+                    logger.warning("This could be due to a filesystem problem, or multiple versions of ganga trying to access the same file")
+                    now = -999.
             else:
                 if self.repos[index] != None:
                     raise RepositoryError(self.repos[index],
@@ -223,6 +238,8 @@ class SessionLockRefresher(GangaThread):
             # lock_files = [ s for s in all_lock_files and not in
             # metadata_lock_files ]
             lock_files = [f for f in ls_sdir if f.endswith(".locks") and f.find(str(os.getpid())) == -1]
+
+            ## Loop over locks which aren't belonging to this session!
             for sf in session_files:
                 joined_path = os.path.join(self.sdir, sf)
                 #print("join: %s" % str(joined_path))
@@ -232,12 +249,13 @@ class SessionLockRefresher(GangaThread):
                 # print "%s: session %s delta is %s seconds" % (time.time(),
                 # sf, now - mtm)
                 global session_expiration_timeout
-                if (now - mtm) > session_expiration_timeout:
+                if abs(float(now) - float(mtm)) > session_expiration_timeout:
                     logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
                     os.unlink(joined_path)
                     session_files.remove(sf)
                 # elif now - mtm  > session_expiration_timeout/2:
                 #    logger.warning("%s: Session %s is inactive (no update since %s seconds, removal after %s seconds)" % (time.time(), sf, now - mtm, session_expiration_timeout))
+
             # remove all lock files that do not belong to sessions that are
             # alive
             for f in lock_files:
