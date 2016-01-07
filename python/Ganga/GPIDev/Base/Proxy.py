@@ -667,6 +667,8 @@ def GPIProxyClassFactory(name, pluginclass):
                     from .Filters import allComponentFilters
                     cfilter = allComponentFilters[item['category']]
                     stripper = lambda v: stripComponentObject(v, cfilter, item)
+                else:
+                    stripper = None
 
                 if item['sequence']:
                     this_arg = ProxyDataDescriptor.__sequence_set__(stripper, raw_self, this_arg, k)
