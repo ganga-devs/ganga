@@ -185,6 +185,10 @@ def stripProxy(obj):
     global proxyRef
     try:
         if hasattr(obj, proxyRef):
+            if getattr(obj, proxyRef) is None:
+                ## Makes no sense to send back a None proxy Reference!!!
+                ## FIXME 6.1.15 rcurrie
+                return obj
             return getattr(obj, proxyRef)
         else:
             return obj
@@ -529,8 +533,17 @@ def GPIProxyObjectFactory(_obj):
     global proxyClass
 
     obj = stripProxy(_obj)
-    if not hasattr(_obj, proxyObject):
-        raise GangaAttributeError("Object {0} does not have attribute _proxyObject".format(type(_obj)))
+    if not hasattr(obj, proxyObject):
+        from Ganga.GPIDev.Base.Objects import GangaObject
+        if isType(obj, GangaObject):
+            ## FIXME 6.1.15 rcurrie
+            ## Should this be a straight forward pass here?
+            setattr(obj, proxyObject, None)
+            raw_class = obj.__class__
+            setattr(obj, proxyClass, raw_class)
+            setattr(obj, proxyRef, None)
+        else:
+            raise GangaAttributeError("Object {0} does not have attribute _proxyObject".format(type(obj)))
 
     if getattr(obj, proxyObject) is None:
         cls = getattr(obj, proxyClass)
