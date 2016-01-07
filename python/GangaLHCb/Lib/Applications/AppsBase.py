@@ -190,7 +190,13 @@ class AppName(Gaudi):
         return env
 
     def _get_parser(self):
-        optsfiles = [fileitem.name for fileitem in self.optsfile]
+        optsfiles = []
+        for fileitem in self.optsfile:
+            if type(fileitem) is str:
+                optsfiles.append(fileitem)
+            else:
+                optsfiles.append(fileitem.name)
+        #optsfiles = [fileitem.name for fileitem in self.optsfile]
         # add on XML summary
 
         extraopts = ''
