@@ -314,8 +314,8 @@ class DiracFile(IGangaFile):
 
         logger.debug("DiracFile: setLocation")
 
-        if not isType(stripProxy(self)._parent, Job):
-            logger.debug("No job assocaited with DiracFile: %s" % str(self))
+        if not stripProxy(self).getJobObject():
+            logger.error("No job assocaited with DiracFile: %s" % str(self))
             return
 
         job = self.getJobObject()
