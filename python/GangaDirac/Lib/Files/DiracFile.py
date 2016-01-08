@@ -314,6 +314,10 @@ class DiracFile(IGangaFile):
 
         logger.debug("DiracFile: setLocation")
 
+        if not isType(stripProxy(self)._parent, Job):
+            logger.debug("No job assocaited with DiracFile: %s" % str(self))
+            return
+
         job = self.getJobObject()
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
 
@@ -909,7 +913,7 @@ for f in glob.glob('###NAME_PATTERN###'):
                 script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(isCompressed))
 
 
-        if stripProxy(self)._parent and getName(stripProxy(self)._parent.backend) != 'Dirac':
+        if stripProxy(self)._parent is not None and stripProxy(self).getJobObject() and getName(stripProxy(self).getJobObject().backend) != 'Dirac':
             script_env = self._getDiracEnvStr()
         else:
             script_env = str(None)
