@@ -345,6 +345,8 @@ class Node(object):
 
     def setNodeAttribute(self, attrib_name, attrib_value):
         self.getNodeData()[attrib_name] = attrib_value
+        if isType(attrib_value, GangaObject):
+            stripProxy(self.getNodeData()[attrib_name])._setParent(self)
 
     def removeNodeAttribute(self, attrib_name):
         if attrib_name in self._data.keys():
