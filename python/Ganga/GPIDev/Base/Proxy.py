@@ -652,7 +652,6 @@ def GPIProxyClassFactory(name, pluginclass):
                 if this_arg == 'is_prepared':
                     ProxyDataDescriptor.__prep_set__(self, this_arg)
 
-                item = pluginclass._schema.getItem(k)
 
                 raw_self = getattr(self, proxyRef)
 
@@ -660,29 +659,32 @@ def GPIProxyClassFactory(name, pluginclass):
                     this_arg = runtimeEvalString(raw_self, k, this_arg)
 
                 if type(this_arg) is str:
+                    setattr(raw_self, k, this_arg)
                     continue
-
-                # unwrap proxy
-                if item.isA(Schema.ComponentItem):
-                    from .Filters import allComponentFilters
-                    cfilter = allComponentFilters[item['category']]
-                    stripper = lambda v: stripComponentObject(v, cfilter, item)
                 else:
-                    stripper = None
+                    item = pluginclass._schema.getItem(k)
 
-                if item['sequence']:
-                    this_arg = ProxyDataDescriptor.__sequence_set__(stripper, raw_self, this_arg, k)
-                else:
-                    if stripper is not None:
-                        this_arg = stripper(this_arg)
-                # apply attribute filter to component items
-                if item.isA(Schema.ComponentItem):
-                    this_arg = ProxyDataDescriptor._stripAttribute(raw_self, this_arg, k)
+                    # unwrap proxy
+                    if item.isA(Schema.ComponentItem):
+                        from .Filters import allComponentFilters
+                        cfilter = allComponentFilters[item['category']]
+                        stripper = lambda v: stripComponentObject(v, cfilter, item)
+                    else:
+                        stripper = None
 
-                if isType(this_arg, Node):
-                    setattr(this_arg, proxyObject, None)
-                    stripProxy(this_arg)._setParent(raw_self)
-                setattr(raw_self, k, addProxy(this_arg))
+                    if item['sequence']:
+                        this_arg = ProxyDataDescriptor.__sequence_set__(stripper, raw_self, this_arg, k)
+                    else:
+                        if stripper is not None:
+                            this_arg = stripper(this_arg)
+                    # apply attribute filter to component items
+                    if item.isA(Schema.ComponentItem):
+                        this_arg = ProxyDataDescriptor._stripAttribute(raw_self, this_arg, k)
+
+                    if isType(this_arg, Node):
+                        setattr(this_arg, proxyObject, None)
+                        stripProxy(this_arg)._setParent(raw_self)
+                    setattr(raw_self, k, addProxy(this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
