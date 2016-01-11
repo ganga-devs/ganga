@@ -23,33 +23,7 @@ from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 
 # display default values for job list
 from .RegistrySlice import config
-config.addOption('jobs_columns',
-                 ("fqid", "status", "name", "subjobs", "application",
-                  "backend", "backend.actualCE", "comment"),
-                 'list of job attributes to be printed in separate columns')
 
-config.addOption('jobs_columns_width',
-                 {'fqid': 8, 'status': 10, 'name': 10, 'subjobs': 8, 'application':
-                     15, 'backend': 15, 'backend.actualCE': 45, 'comment': 30},
-                 'width of each column')
-
-config.addOption('jobs_columns_functions',
-                 {'subjobs': "lambda j: len(j.subjobs)", 'application': "lambda j: j.application._name",
-                  'backend': "lambda j:j.backend._name", 'comment': "lambda j: j.comment"},
-                 'optional converter functions')
-
-config.addOption('jobs_columns_show_empty',
-                 ['fqid'],
-                 'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
-
-config.addOption('jobs_status_colours',
-                 {'new': 'fx.normal',
-                  'submitted': 'fg.orange',
-                  'running': 'fg.green',
-                  'completed': 'fg.blue',
-                  'failed': 'fg.red'
-                  },
-                 'colours for jobs status')
 logger = Ganga.Utility.logging.getLogger()
 
 

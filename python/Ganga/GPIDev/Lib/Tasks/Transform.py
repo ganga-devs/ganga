@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 
-from .common import logger, status_colours, overview_colours
-from .common import markup
+from .common import logger
+from Ganga.Utility.ColourText import status_colours, overview_colours, ANSIMarkup
+markup = ANSIMarkup()
 
 from .TaskApplication import taskApp
 from Ganga.GPIDev.Base import GangaObject

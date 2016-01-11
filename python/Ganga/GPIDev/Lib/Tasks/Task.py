@@ -3,10 +3,13 @@ from Ganga import GPI
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Base.Proxy import stripProxy
-from .common import logger, overview_colours, markup
+from .common import logger
+from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 import time
+
+markup = ANSIMarkup()
 
 ########################################################################
 

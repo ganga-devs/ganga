@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
-from .common import overview_colours, status_colours, config, logger, markup, fgcol
+from .common import config, logger
 import time
 import traceback
 import sys
@@ -8,41 +8,13 @@ import Ganga.GPIDev.Lib.Registry.RegistrySlice
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName, isType
+from Ganga.Utility.ColourText import ANSIMarkup, overview_colours, status_colours, fgcol
 
-str_done = markup("done", overview_colours["completed"])
+markup = ANSIMarkup()
 str_run = markup("run", overview_colours["running"])
 str_fail = markup("fail", overview_colours["failed"])
 str_hold = markup("hold", overview_colours["hold"])
 str_bad = markup("bad", overview_colours["bad"])
-
-# display default values for task list
-Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns',
-                                                         ("id", "Type", "Name", "State",
-                                                          "Comment", "Jobs", str_done),
-                                                         'list of job attributes to be printed in separate columns')
-
-Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns_width',
-                                                         {"id": 5, "Type": 13, "Name": 22, "State": 9,
-                                                             "Comment": 30, "Jobs": 33, str_done: 5},
-                                                         'width of each column')
-
-Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns_functions',
-                                                         {'Name': "lambda t : t.name",
-                                                          'Type': "lambda task : task._name",
-                                                          'State ': "lambda task : task.status",
-                                                          'Comment ': "lambda task : task.comment",
-                                                          'Jobs': "lambda task : task.n_all()",
-                                                          str_done: "lambda task : task.n_status('completed')",
-                                                          },
-                                                         'optional converter functions')
-
-Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns_show_empty',
-                                                         ['id', 'Jobs',
-                                                             str_done],
-                                                         'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
-
-Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption(
-    'tasks_show_help', True, 'change this to False if you do not want to see the help screen if you first type "tasks" in a session')
 
 # add monitoring loop option
 config.addOption('TaskLoopFrequency', 60., "Frequency of Task Monitoring loop in seconds")

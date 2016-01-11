@@ -3,7 +3,7 @@ import os
 import re
 import inspect
 
-import Ganga.Utility.ColourText
+from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 
 # Global Functions
 def getEnvironment(config = None):
@@ -704,6 +704,81 @@ disp_config.addOption(
     'config_docstring_colour', 'fg.green', 'colour print of the docstrings and examples')
 disp_config.addOption(
     'config_value_colour', 'fx.bold', 'colour print of the configuration values')
+disp_config.addOption('jobs_columns',
+                 ("fqid", "status", "name", "subjobs", "application",
+                  "backend", "backend.actualCE", "comment"),
+                 'list of job attributes to be printed in separate columns')
+
+disp_config.addOption('jobs_columns_width',
+                 {'fqid': 8, 'status': 10, 'name': 10, 'subjobs': 8, 'application':
+                     15, 'backend': 15, 'backend.actualCE': 45, 'comment': 30},
+                 'width of each column')
+
+disp_config.addOption('jobs_columns_functions',
+                 {'subjobs': "lambda j: len(j.subjobs)", 'application': "lambda j: j.application._name",
+                  'backend': "lambda j:j.backend._name", 'comment': "lambda j: j.comment"},
+                 'optional converter functions')
+
+disp_config.addOption('jobs_columns_show_empty',
+                 ['fqid'],
+                 'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
+
+disp_config.addOption('jobs_status_colours',
+                 {'new': 'fx.normal',
+                  'submitted': 'fg.orange',
+                  'running': 'fg.green',
+                  'completed': 'fg.blue',
+                  'failed': 'fg.red'
+                  },
+                 'colours for jobs status')
+
+# add display default values for the box
+disp_config.addOption('box_columns',
+                 ("id", "type", "name", "application"),
+                 'list of job attributes to be printed in separate columns')
+
+disp_config.addOption('box_columns_width',
+                 {'id': 5, 'type': 20, 'name': 40, 'application': 15},
+                 'width of each column')
+
+disp_config.addOption('box_columns_functions',
+                 {'application': "lambda obj: obj.application._name"},
+                 'optional converter functions')
+
+disp_config.addOption('box_columns_show_empty',
+                 ['id'],
+                 'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
+
+# display default values for task list
+markup = ANSIMarkup()
+str_done = markup("done", overview_colours["completed"])
+disp_config.addOption('tasks_columns',
+                     ("id", "Type", "Name", "State",
+                      "Comment", "Jobs", str_done),
+                     'list of job attributes to be printed in separate columns')
+
+disp_config.addOption('tasks_columns_width',
+                     {"id": 5, "Type": 13, "Name": 22, "State": 9,
+                         "Comment": 30, "Jobs": 33, str_done: 5},
+                     'width of each column')
+
+disp_config.addOption('tasks_columns_functions',
+                     {'Name': "lambda t : t.name",
+                      'Type': "lambda task : task._name",
+                      'State ': "lambda task : task.status",
+                      'Comment ': "lambda task : task.comment",
+                      'Jobs': "lambda task : task.n_all()",
+                      str_done: "lambda task : task.n_status('completed')",
+                      },
+                     'optional converter functions')
+
+disp_config.addOption('tasks_columns_show_empty',
+                     ['id', 'Jobs',
+                         str_done],
+                     'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
+
+disp_config.addOption(
+    'tasks_show_help', True, 'change this to False if you do not want to see the help screen if you first type "tasks" in a session')
 
 # ------------------------------------------------
 # Tasks
