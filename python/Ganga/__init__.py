@@ -155,6 +155,7 @@ conf_config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued b
 
 conf_config.addOption('UsageMonitoringMSG', True,
                  "enable usage monitoring through MSG server defined in MSGMS configuration")
+conf_config.addOption('Batch', 'LSF', 'default batch system')
 
 # ------------------------------------------------
 # IPython
