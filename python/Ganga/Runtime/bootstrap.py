@@ -306,7 +306,7 @@ under certain conditions; type license() for details.
             if not os.path.exists(os.path.join(old_dir, "profile_default")):
                 os.makedirs(os.path.join(old_dir, "profile_default"))
 
-            IPython_history = HistoryManager(hist_file=new_sqlite_history, shell = InteractiveShell.instance())
+            IPython_history = HistoryManager(hist_file=new_sqlite_history)#, shell = InteractiveShell.instance())
 
             with open(old_text_history) as hist_file:
                 for linenum, line in enumerate(hist_file):
