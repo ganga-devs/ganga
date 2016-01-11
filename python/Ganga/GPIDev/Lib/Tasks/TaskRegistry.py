@@ -16,11 +16,6 @@ str_fail = markup("fail", overview_colours["failed"])
 str_hold = markup("hold", overview_colours["hold"])
 str_bad = markup("bad", overview_colours["bad"])
 
-# add monitoring loop option
-config.addOption('TaskLoopFrequency', 60., "Frequency of Task Monitoring loop in seconds")
-config.addOption('ForceTaskMonitoring', False, "Monitor tasks even if the monitoring loop isn't enabled")
-
-
 class TaskRegistry(Registry):
 
     def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30):

@@ -73,6 +73,13 @@ log_config.addOption('_interactive_cache', True,
                  'if True then the cache used for interactive sessions, False disables caching')
 log_config.addOption('_customFormat', "", "custom formatting string for Ganga logging\n e.g. '%(name)-35s: %(levelname)-8s %(message)s'")
 
+# test if stomp.py logging is already set
+if 'stomp.py' in log_config:
+    pass  # config['stomp.py']
+else:
+    # add stomp.py option to Logging configuration
+    log_config.addOption('stomp.py', 'CRITICAL', 'logger for stomp.py external package')
+
 # ------------------------------------------------
 # System
 # the system variables (such as VERSION) are put to DEFAULTS section of the config module
@@ -146,7 +153,7 @@ conf_config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga sessi
 # runtime warnings issued by the interpreter may be suppresed
 conf_config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued by the interpreter may be suppresed")
 
-config.addOption('UsageMonitoringMSG', True,
+conf_config.addOption('UsageMonitoringMSG', True,
                  "enable usage monitoring through MSG server defined in MSGMS configuration")
 
 # ------------------------------------------------
@@ -811,6 +818,8 @@ disp_config.addOption(
 # ------------------------------------------------
 # Tasks
 tasks_config = makeConfig('Tasks', 'Tasks configuration options')
+tasks_config.addOption('TaskLoopFrequency', 60., "Frequency of Task Monitoring loop in seconds")
+tasks_config.addOption('ForceTaskMonitoring', False, "Monitor tasks even if the monitoring loop isn't enabled")
 
 # ------------------------------------------------
 # MonitoringServices
