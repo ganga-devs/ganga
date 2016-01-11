@@ -146,6 +146,9 @@ conf_config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga sessi
 # runtime warnings issued by the interpreter may be suppresed
 conf_config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued by the interpreter may be suppresed")
 
+config.addOption('UsageMonitoringMSG', True,
+                 "enable usage monitoring through MSG server defined in MSGMS configuration")
+
 # ------------------------------------------------
 # IPython
 ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration
