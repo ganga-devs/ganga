@@ -370,24 +370,24 @@ lcg_config.addOption('IgnoreGliteScriptHeader', False,
                  'sets to True will load script-based glite-wms-* commands forcely with current python, a trick for 32/64 bit compatibility issues.')
 
 # add ARC specific configuration options
-#config.addOption('ArcInputSandboxBaseURI', '', 'sets the baseURI for getting the input sandboxes for the job')
-#config.addOption('ArcOutputSandboxBaseURI', '', 'sets the baseURI for putting the output sandboxes for the job')
-config.addOption('ArcWaitTimeBeforeStartingMonitoring', 240,
+#lcg_config.addOption('ArcInputSandboxBaseURI', '', 'sets the baseURI for getting the input sandboxes for the job')
+#lcg_config.addOption('ArcOutputSandboxBaseURI', '', 'sets the baseURI for putting the output sandboxes for the job')
+lcg_config.addOption('ArcWaitTimeBeforeStartingMonitoring', 240,
                  'Time in seconds to wait after submission before starting to monitor ARC jobs to ensure they are in the system')
-config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml",
+lcg_config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml",
                  'File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.')
-config.addOption('ArcConfigFile', "",
+lcg_config.addOption('ArcConfigFile', "",
                  'Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config file is specified and the default (~/arc/client.conf) is used')
-#config.addOption('ArcPrologue','','sets the prologue script')
-#config.addOption('ArcEpilogue','','sets the epilogue script')
+#lcg_config.addOption('ArcPrologue','','sets the prologue script')
+#lcg_config.addOption('ArcEpilogue','','sets the epilogue script')
 
 # add CREAM specific configuration options
-config.addOption('CreamInputSandboxBaseURI', '',
+lcg_config.addOption('CreamInputSandboxBaseURI', '',
                  'sets the baseURI for getting the input sandboxes for the job')
-config.addOption('CreamOutputSandboxBaseURI', '',
+lcg_config.addOption('CreamOutputSandboxBaseURI', '',
                  'sets the baseURI for putting the output sandboxes for the job')
-#config.addOption('CreamPrologue','','sets the prologue script')
-#config.addOption('CreamEpilogue','','sets the epilogue script')
+#lcg_config.addOption('CreamPrologue','','sets the prologue script')
+#lcg_config.addOption('CreamEpilogue','','sets the epilogue script')
 
 # ------------------------------------------------
 # GridSimulator
