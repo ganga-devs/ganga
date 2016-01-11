@@ -757,12 +757,13 @@ class DiracFile(IGangaFile):
                     if not os.path.exists(name):
                         raise GangaException('File "%s" must exist!' % name)
 
-            lfn = self.lfn
             if lfn == "":
                 lfn = os.path.join(lfn_base, os.path.basename(name))
 
             if selfConstructedLFN is True:
                 self.lfn = os.path.join(self.lfn, os.path.basename(name))
+
+            lfn = self.lfn
 
             d = DiracFile()
             d.namePattern = os.path.basename(name)

@@ -286,9 +286,9 @@ under certain conditions; type license() for details.
         single_pass_file = os.path.join(old_dir, '.have_migrated')
         logger.debug("testing: %s" % single_pass_file)
 
-        if hasLoaded_newer and not os.path.exists(single_pass_file):
+        if not os.path.exists(single_pass_file) and os.path.exists(os.path.join(old_dir, 'history')):
 
-            logger.info("This is your first time Running Ganga >=6.1.14")
+            logger.info("This is your first time running Ganga >=6.1.14")
             logger.info("Now attempting to migrate your IPython history file")
 
             try:
@@ -302,6 +302,9 @@ under certain conditions; type license() for details.
 
             old_text_history = os.path.join(old_dir, 'history')
             new_sqlite_history = os.path.join(old_dir, "profile_default/history.sqlite")
+
+            if not os.path.exists(os.path.join(old_dir, "profile_default")):
+                os.makedirs(os.path.join(old_dir, "profile_default"))
 
             IPython_history = HistoryManager(hist_file=new_sqlite_history, shell = InteractiveShell.instance())
 
@@ -455,6 +458,7 @@ under certain conditions; type license() for details.
                 raw_input('Press <Enter> to continue.\n')
         elif self.new_version(not self.options.config_file_set_explicitly):
             self.print_release_notes()
+            self.rollHistoryForward()
             # if config explicitly set we dont want to update the versions file
             # this is so that next time ganga used with the default .gangarc
             # it will still be classed as new so the default config is updated.
@@ -467,8 +471,6 @@ under certain conditions; type license() for details.
                 logger.info('re-reading in old config for updating...')
                 load_user_config(specified_config, {})
                 self.generate_config_file(specified_config)
-
-                self.rollHistoryForward()
 
                 # config file generation overwrites user values so we need to reapply the cmd line options to these user settings
                 # e.g. set -o[Configuration]gangadir=/home/mws/mygangadir and the user value gets reset to the .gangarc value
