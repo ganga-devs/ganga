@@ -1294,12 +1294,3 @@ sys.exit(0)
 
 logger = getLogger()
 
-config = getConfig('LCG')
-
-# add CREAM specific configuration options
-config.addOption('CreamInputSandboxBaseURI', '',
-                 'sets the baseURI for getting the input sandboxes for the job')
-config.addOption('CreamOutputSandboxBaseURI', '',
-                 'sets the baseURI for putting the output sandboxes for the job')
-#config.addOption('CreamPrologue','','sets the prologue script')
-#config.addOption('CreamEpilogue','','sets the epilogue script')

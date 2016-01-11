@@ -381,6 +381,14 @@ config.addOption('ArcConfigFile', "",
 #config.addOption('ArcPrologue','','sets the prologue script')
 #config.addOption('ArcEpilogue','','sets the epilogue script')
 
+# add CREAM specific configuration options
+config.addOption('CreamInputSandboxBaseURI', '',
+                 'sets the baseURI for getting the input sandboxes for the job')
+config.addOption('CreamOutputSandboxBaseURI', '',
+                 'sets the baseURI for putting the output sandboxes for the job')
+#config.addOption('CreamPrologue','','sets the prologue script')
+#config.addOption('CreamEpilogue','','sets the epilogue script')
+
 # ------------------------------------------------
 # GridSimulator
 gridsim_config = makeConfig('GridSimulator', 'Grid Simulator configuration parameters')
