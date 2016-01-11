@@ -23,7 +23,7 @@ class SandboxError(GangaException):
 def getDefaultModules():
     """ Return list of ganga modules which are needed for WNSandbox. """
     import Ganga.Utility.files
-    return [Ganga, Ganga.Utility, Ganga.Utility.files]
+    return [Ganga.Utility, Ganga.Utility.files]
 
 
 def getGangaModulesAsSandboxFiles(modules):
