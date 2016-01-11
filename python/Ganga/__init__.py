@@ -224,6 +224,15 @@ poll_config.addOption('DiskSpaceChecker', "", "disk space checking callback. Thi
 poll_config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
 poll_config.addOption('numParallelJobs', 5, 'Number of Jobs to update the status for in parallel')
 
+poll_config.addOption('forced_shutdown_policy', 'session_type',
+                 'If there are remaining background activities at exit such as monitoring, output download Ganga will attempt to wait for the activities to complete. You may select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the system waits on a timeout without questions ("timeout"). The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')
+poll_config.addOption('forced_shutdown_timeout', 60,
+                 "Timeout in seconds for forced Ganga shutdown in batch mode.")
+poll_config.addOption('forced_shutdown_prompt_time', 10,
+                 "User will get the prompt every N seconds, as specified by this parameter.")
+poll_config.addOption('forced_shutdown_first_prompt_time', 5,
+                 "User will get the FIRST prompt after N seconds, as specified by this parameter. This parameter also defines the time that Ganga will wait before shutting down, if there are only non-critical threads alive, in both interactive and batch mode.")
+
 # ------------------------------------------------
 # Feedback
 feedback_config = makeConfig('Feedback', 'Settings for the Feedback plugin. Cannot be changed ruding the interactive Ganga session.')
@@ -689,6 +698,12 @@ output_config.addOption('MassStorageFile',
 # ------------------------------------------------
 # Display
 disp_config = makeConfig('Display', 'control the printing style of the different registries ("jobs","box","tasks"...)')
+disp_config.addOption('config_name_colour', 'fx.bold',
+                         'colour print of the names of configuration sections and options')
+disp_config.addOption(
+    'config_docstring_colour', 'fg.green', 'colour print of the docstrings and examples')
+disp_config.addOption(
+    'config_value_colour', 'fx.bold', 'colour print of the configuration values')
 
 # ------------------------------------------------
 # Tasks
