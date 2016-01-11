@@ -420,10 +420,11 @@ class IBackend(GangaObject):
         ## Only process 10 files from the backend at once
         #blocks_of_size = 10
         try:
-            from Ganga.Utilities.Config import getConfig
+            from Ganga.Utility.Config import getConfig
             blocks_of_size = getConfig('PollThread')['numParallelJobs']
         except Exception as err:
             logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
+            logger.debug("Error: %s" % str(err))
             blocks_of_size = 5
         ## Separate different backends implicitly
         simple_jobs = {}

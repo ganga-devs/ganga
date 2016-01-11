@@ -2,9 +2,9 @@ import tempfile
 ura = tempfile.mkdtemp()
 # Write blank optsfile...needed now since default removed
 path = os.path.join(ura,'test.opts')
-file=open(path,'w')
-file.write('import os')
-file.close()
+this_file=open(path,'w')
+this_file.write('import os')
+this_file.close()
 
 from Ganga.Core import ApplicationConfigurationError
 j1=Job(name='testing',application=DaVinci(),backend=Local())

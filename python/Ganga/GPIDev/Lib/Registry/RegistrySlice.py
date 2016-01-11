@@ -7,8 +7,10 @@ import collections
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 import Ganga.Utility.Config
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Config import makeConfig
 
-logger = Ganga.Utility.logging.getLogger()
+logger = getLogger()
 
 config = Ganga.Utility.Config.getConfig('Display')
 
@@ -59,8 +61,7 @@ class RegistrySlice(object):
                 if not keep_going:
                     raise
             except Exception as x:
-                logger.exception(
-                    '%s %s %s: %s %s', doc, self.name, id, x.__class__.__name__, str(x))
+                logger.exception('%s %s %s: %s %s', doc, self.name, id, x.__class__.__name__, str(x))
                 if not keep_going:
                     raise
         return result
@@ -112,11 +113,37 @@ class RegistrySlice(object):
             else:
                 maxid = maxid.id
 
+        logger = getLogger()
 
         this_repr = repr.Repr()
-        attrs_str = "".join([',%s=%s' % (a, this_repr.repr(attrs[a])) for a in attrs])
-        logger.debug("Constructing slice: %s" % str("%s.select(minid='%s', maxid='%s%s')" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str)))
-        this_slice = self.__class__("%s.select(minid='%s', maxid='%s%s')" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str))
+        from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+        attrs_str = ""
+        ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
+        ## Reuired to flatten the additional arguments into a flat string in attrs_str
+        for a in attrs:
+            from inspect import isclass
+            if isclass(attrs[a]):
+                this_attr = GPIProxyObjectFactory(attrs[a]())
+            else:
+                from Ganga.GPIDev.Base.Objects import GangaObject
+                if isType(attrs[a], GangaObject):
+                    this_attr = GPIProxyObjectFactory(attrs[a])
+                else:
+                    if type(attrs[a]) is str:
+                        from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
+                        this_attr = getRuntimeGPIObject(attrs[a])
+                    else:
+                        this_attr = attrs[a]
+            full_str = str(this_attr)
+            split_str = full_str.split('\n')
+            for line in split_str:
+                line = line.strip()
+            flat_str = ''.join(split_str)
+            attrs_str += ", %s=\"%s\"" % (str(a), flat_str)
+
+        logger.debug("Attrs_Str: %s" % str(attrs_str))
+        logger.debug("Constructing slice: %s" % str("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str)))
+        this_slice = self.__class__("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str))
 
         def append(id, obj):
             this_slice.objects[id] = obj
@@ -131,6 +158,26 @@ class RegistrySlice(object):
         import sys
         import fnmatch
         import re
+
+        logger = getLogger()
+
+        from inspect import isclass
+        ## Loop through attrs to parse possible inputs into instances of a class where appropriate
+        ## Unlike the select method we need to populate this dictionary with instance objects, not str or class
+        for k, v in attrs.iteritems():
+            if isclass(v):
+                attrs[k] = v()
+            elif type(attrs[k]) is str:
+                from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
+                new_val = getRuntimeGPIObject(attrs[k], True)
+                if new_val is None:
+                    continue
+                if isclass(new_val):
+                    attrs[k] = new_val()
+                else:
+                    attrs[k] = new_val
+
+        logger.debug("do_select: attrs: %s" % str(attrs))
 
         def select_by_list(this_id):
             return this_id in ids
@@ -199,12 +246,13 @@ class RegistrySlice(object):
 
                                     cfilter = allComponentFilters[item['category']]
                                     filtered_value = cfilter(attrs[a], item)
+                                    from Ganga.GPIDev.Base.Proxy import getName
                                     if not filtered_value is None:
-                                        attrvalue = filtered_value._name
+                                        attrvalue = getName(filtered_value)
                                     else:
-                                        attrvalue = attrvalue._name
+                                        attrvalue = getName(attrvalue)
 
-                                    if not getattr(obj, a)._name == attrvalue:
+                                    if getName(getattr(obj, a)) != attrvalue:
                                         selected = False
                                         break
                                 else:
@@ -216,7 +264,11 @@ class RegistrySlice(object):
                                         if not reobj.match(str(getattr(obj, a))):
                                             selected = False
                                     else:
-                                        if getattr(obj, a) != attrvalue:
+                                        ## We will want to use this if we ever want to select by:
+                                        # jobs.select(application=Executable(exe='myExe')) rather than by jobs.select(application=Exectuable())
+                                        #if getattr(obj, a) != attrvalue:
+                                        ## Changed for 6.1.14 rcurrie
+                                        if not isType(getattr(obj, a), type(attrvalue)):
                                             selected = False
                                             break
                 if selected:

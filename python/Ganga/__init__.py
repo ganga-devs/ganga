@@ -186,15 +186,6 @@ msgms_config.addOption('usage_message_destination', "/queue/ganga.usage", '')
 msgms_config.addOption('job_submission_message_destination', "/queue/ganga.jobsubmission", '')
 
 # ------------------------------------------------
-# Display
-makeConfig('Display', """control the content and appearence of printing ganga objects: attributes,colours,etc.
-If ANSI text colours are enabled, then individual colours may be specified like this:
-fg.xxx - Foreground: %s
-bg.xxx - Background: %s
-fx.xxx - Effects: %s
-""" % (Ganga.Utility.ColourText.Foreground.__doc__, Ganga.Utility.ColourText.Background.__doc__, Ganga.Utility.ColourText.Effects.__doc__))
-
-# ------------------------------------------------
 # Plugins
 default_plugins_cfg = makeConfig('Plugins', '''General control of plugin mechanism.
 Set the default plugin in a given category.

@@ -314,6 +314,10 @@ class DiracFile(IGangaFile):
 
         logger.debug("DiracFile: setLocation")
 
+        if not stripProxy(self).getJobObject():
+            logger.error("No job assocaited with DiracFile: %s" % str(self))
+            return
+
         job = self.getJobObject()
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
 
@@ -753,12 +757,13 @@ class DiracFile(IGangaFile):
                     if not os.path.exists(name):
                         raise GangaException('File "%s" must exist!' % name)
 
-            lfn = self.lfn
             if lfn == "":
                 lfn = os.path.join(lfn_base, os.path.basename(name))
 
             if selfConstructedLFN is True:
                 self.lfn = os.path.join(self.lfn, os.path.basename(name))
+
+            lfn = self.lfn
 
             d = DiracFile()
             d.namePattern = os.path.basename(name)
@@ -909,7 +914,7 @@ for f in glob.glob('###NAME_PATTERN###'):
                 script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(isCompressed))
 
 
-        if stripProxy(self)._parent and getName(stripProxy(self)._parent.backend) != 'Dirac':
+        if stripProxy(self)._parent is not None and stripProxy(self).getJobObject() and getName(stripProxy(self).getJobObject().backend) != 'Dirac':
             script_env = self._getDiracEnvStr()
         else:
             script_env = str(None)

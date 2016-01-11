@@ -185,6 +185,10 @@ def stripProxy(obj):
     global proxyRef
     try:
         if hasattr(obj, proxyRef):
+            if getattr(obj, proxyRef) is None:
+                ## Makes no sense to send back a None proxy Reference!!!
+                ## FIXME 6.1.15 rcurrie
+                return obj
             return getattr(obj, proxyRef)
         else:
             return obj
@@ -230,7 +234,7 @@ def stripComponentObject(v, cfilter, item):
     def getImpl(v):
         if v is None:
             if not item['optional']:
-                raise TypeMismatchError(None, 'component is mandatory and None may not be used')
+                raise TypeMismatchError(None, 'component(%s) is mandatory and None may not be used' % str(getName(item)))
                 return v
             else:
                 return None
@@ -330,7 +334,8 @@ class ProxyDataDescriptor(object):
         return item._check_type(val, getName(self))
 
     # apply attribute conversion
-    def _stripAttribute(self, obj, v):
+    @staticmethod
+    def _stripAttribute(obj, v, name):
         # just warn
         # print '**** checking',v,v.__class__,
         # isinstance(val,GPIProxyObject)
@@ -343,10 +348,11 @@ class ProxyDataDescriptor(object):
         global proxyRef
         if isinstance(v, GPIProxyObject) or hasattr(v, proxyRef):
             v = getattr(v, proxyRef)
-            logger.debug('%s property: assigned a component object (%s used)' % (getName(self), proxyRef))
-        return getattr(obj, proxyRef)._attribute_filter__set__(getName(self), v)
+            logger.debug('%s property: assigned a component object (%s used)' % (name, proxyRef))
+        return stripProxy(obj)._attribute_filter__set__(name, v)
 
-    def __app_set__(self, obj, val):
+    @staticmethod
+    def __app_set__(obj, val):
 
         if hasattr(obj.application, '_is_prepared'):
 
@@ -378,7 +384,8 @@ class ProxyDataDescriptor(object):
                         if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
                             logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
 
-    def __prep_set__(self, obj, val):
+    @staticmethod
+    def __prep_set__(obj, val):
 
         # if we set is_prepared to None in the GPI, that should effectively
         # unprepare the application
@@ -398,9 +405,15 @@ class ProxyDataDescriptor(object):
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                 shareref.increase(val.name)
 
-    def __sequence_set__(self, stripper, obj, val):
+        if type(val) is str:
+            logger.error("Setting string type to 'is_prepared'")
+            import traceback
+            traceback.print_stack()
 
-        item = getattr(obj, proxyClass)._schema[getName(self)]
+    @staticmethod
+    def __sequence_set__(stripper, obj, val, name):
+
+        item = stripProxy(getattr(obj, proxyClass))._schema[name]
         # we need to explicitly check for the list type, because simple
         # values (such as strings) may be iterable
         from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
@@ -409,22 +422,23 @@ class ProxyDataDescriptor(object):
             if stripper is not None:
                 val = makeGangaList(val, stripper)
             else:
-                val = makeGangaList(self._stripAttribute(obj, val))
+                val = makeGangaList(ProxyDataDescriptor._stripAttribute(obj, val, name))
         else:
             # val is not iterable
             if item['strict_sequence']:
-                raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), getattr(obj, proxyClass)._schema.name, getName(self)))
+                raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), getattr(obj, proxyClass)._schema.name, name))
             if stripper is not None:
                 val = makeGangaList(stripper(val))
             else:
-                val = makeGangaList(self._stripAttribute(obj, val))
+                val = makeGangaList(ProxyDataDescriptor._stripAttribute(obj, val, name))
         return val
 
-    def __preparable_set__(self, obj, val):
+    @staticmethod
+    def __preparable_set__(obj, val, name):
         if obj.is_prepared is not None:
             if obj.is_prepared is not True:
                 raise ProtectedAttributeError('AttributeError: "%s" attribute belongs to a prepared application and so cannot be modified.\
-                                                unprepare() the application or copy the job/application (using j.copy(unprepare=True)) and modify that new instance.' % (getName(self),))
+                                                unprepare() the application or copy the job/application (using j.copy(unprepare=True)) and modify that new instance.' % (name,))
 
     ## Inspect this given item to determine if it has editable attributes if it has been set as read-only
     @staticmethod
@@ -468,7 +482,7 @@ class ProxyDataDescriptor(object):
 
         # mechanism for locking of preparable attributes
         if item['preparable']:
-            self.__preparable_set__(obj, val)
+            self.__preparable_set__(obj, val, getName(self))
 
         # if we set is_prepared to None in the GPI, that should effectively
         # unprepare the application
@@ -483,24 +497,22 @@ class ProxyDataDescriptor(object):
         # unwrap proxy
         if item.isA(Schema.ComponentItem):
             from .Filters import allComponentFilters
-            item = getattr(obj, proxyClass)._schema.getItem(getName(self))
             cfilter = allComponentFilters[item['category']]
             stripper = lambda v: stripComponentObject(v, cfilter, item)
         else:
             stripper = None
-            #stripper = self._stripAttribute
 
         if item['sequence']:
-            val = self.__sequence_set__(stripper, obj, val)
+            val = self.__sequence_set__(stripper, obj, val, getName(self))
         else:
             if stripper is not None:
                 val = stripper(val)
             else:
-                val = self._stripAttribute(obj, val)
+                val = self._stripAttribute(obj, val, getName(self))
 
         # apply attribute filter to component items
         if item.isA(Schema.ComponentItem):
-            val = self._stripAttribute(obj, val)
+            val = self._stripAttribute(obj, val, getName(self))
 
         self._check_type(obj, val)
         setattr(stripProxy(obj), getName(self), val)
@@ -529,8 +541,17 @@ def GPIProxyObjectFactory(_obj):
     global proxyClass
 
     obj = stripProxy(_obj)
-    if not hasattr(_obj, proxyObject):
-        raise GangaAttributeError("Object {0} does not have attribute _proxyObject".format(type(_obj)))
+    if not hasattr(obj, proxyObject):
+        from Ganga.GPIDev.Base.Objects import GangaObject
+        if isType(obj, GangaObject):
+            ## FIXME 6.1.15 rcurrie
+            ## Should this be a straight forward pass here?
+            setattr(obj, proxyObject, None)
+            raw_class = obj.__class__
+            setattr(obj, proxyClass, raw_class)
+            setattr(obj, proxyRef, None)
+        else:
+            raise GangaAttributeError("Object {0} does not have attribute _proxyObject".format(type(obj)))
 
     if getattr(obj, proxyObject) is None:
         cls = getattr(obj, proxyClass)
@@ -623,14 +644,47 @@ def GPIProxyClassFactory(name, pluginclass):
         for k in kwds:
             if getattr(self, proxyClass)._schema.hasAttribute(k):
                 this_arg = kwds[k]
-                if isType(this_arg, Node):
-                    if this_arg == 'application':
-                        ProxyDataDescriptor.__app_set__(getattr(self, k), self, this_arg)
-                    if this_arg == 'is_prepared':
-                        ProxyDataDescriptor.__prep_set__(getattr(self, k), self, this_arg)
-                    setattr(this_arg, proxyObject, None)
-                    stripProxy(this_arg)._setParent(getattr(self, proxyRef))
-                setattr(getattr(self, proxyRef), k, addProxy(this_arg))
+
+                ## Copying this from the __set__ method in the Proxy descriptor
+
+                if this_arg == 'application':
+                    ProxyDataDescriptor.__app_set__(self, this_arg)
+                if this_arg == 'is_prepared':
+                    ProxyDataDescriptor.__prep_set__(self, this_arg)
+
+
+                raw_self = getattr(self, proxyRef)
+
+                if type(this_arg) is str:
+                    this_arg = runtimeEvalString(raw_self, k, this_arg)
+
+                if type(this_arg) is str:
+                    setattr(raw_self, k, this_arg)
+                    continue
+                else:
+                    item = pluginclass._schema.getItem(k)
+
+                    # unwrap proxy
+                    if item.isA(Schema.ComponentItem):
+                        from .Filters import allComponentFilters
+                        cfilter = allComponentFilters[item['category']]
+                        stripper = lambda v: stripComponentObject(v, cfilter, item)
+                    else:
+                        stripper = None
+
+                    if item['sequence']:
+                        this_arg = ProxyDataDescriptor.__sequence_set__(stripper, raw_self, this_arg, k)
+                    else:
+                        if stripper is not None:
+                            this_arg = stripper(this_arg)
+                    # apply attribute filter to component items
+                    if item.isA(Schema.ComponentItem):
+                        this_arg = ProxyDataDescriptor._stripAttribute(raw_self, this_arg, k)
+
+                    if isType(this_arg, Node):
+                        setattr(this_arg, proxyObject, None)
+                        stripProxy(this_arg)._setParent(raw_self)
+                    setattr(raw_self, k, addProxy(this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 

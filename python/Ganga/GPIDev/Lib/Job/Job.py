@@ -623,9 +623,9 @@ class Job(GangaObject):
                         self.updateStatus('failed')
                         return
 
-            #stripProxy(self.backend)._setParent(self)
-
             if self.status != newstatus:
+                ## FIXME 6.1.15 rcurrie
+                stripProxy(self.time)._setParent(self)
                 self.time.timenow(str(newstatus))
                 logger.debug("timenow('%s') called.", self.status)
             else:
@@ -822,8 +822,7 @@ class Job(GangaObject):
         self.getMonitoringService().submit()
 
     def runPostProcessors(self):
-        logger.info("Job %s Manually Running PostProcessors" %
-                    str(self.getFQID('.')))
+        logger.info("Job %s Manually Running PostProcessors" % str(self.getFQID('.')))
         try:
             self.application.postprocess()
         except Exception as x:
@@ -838,8 +837,9 @@ class Job(GangaObject):
         logger.debug("Job %s Finished" % str(self.getFQID('.')))
 
     def postprocess_hook(self):
-        logger.info("Job %s Running PostProcessor hook" %
-                    str(self.getFQID('.')))
+        logger.info("Job %s Running PostProcessor hook" % str(self.getFQID('.')))
+        ## FIXME 6.1.15 rcurrie
+        stripProxy(self.application)._setParent(self)
         self.application.postprocess()
         self.getMonitoringService().complete()
         self.postprocessoutput(self.outputfiles, self.outputdir)
@@ -2371,16 +2371,12 @@ class Job(GangaObject):
             else:
                 new_value = runtimeEvalString(self, attr, value)
                 #from Ganga.GPIDev.Base.Objects import Node
-                #if isType(new_value, Node):
-                #    stripProxy(new_value)._setParent(self)
                 super(Job, self).__setattr__('backend', new_value)
         #elif attr == 'postprocessors':
         #    super(Job, self).__setattr__('postprocessors', GangaList())
         else:
             new_value = runtimeEvalString(self, attr, value)
             #from Ganga.GPIDev.Base.Objects import Node
-            #if isType(new_value, Node):
-            #    stripProxy(new_value)._setParent(self)
             super(Job, self).__setattr__(attr, new_value)
 
         #if hasattr(getattr(self, attr), '_getParent'):

@@ -105,6 +105,7 @@ class DiracBase(IBackend):
 
         from Ganga.GPIDev.Lib.Job.Job import Job
         master_job = self.getJobObject()
+        master_job.subjobs = []
         for i in range(len(dirac_ids)):
             j = Job()
             j.copyFrom(master_job)

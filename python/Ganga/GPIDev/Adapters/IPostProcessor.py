@@ -81,7 +81,10 @@ class MultiPostProcessor(IPostProcessor):
             super(MultiPostProcessor, self).__construct__(value)
 
     def __str__(self):
-        return str(GPIProxyObjectFactory(self.process_objects))
+        if not isType(self.process_objects, GangaObject):
+            return str(self.process_objects)
+        else:
+            return str(GPIProxyObjectFactory(self.process_objects))
 
     def append(self, value):
         self.addProcess(value)
