@@ -141,6 +141,11 @@ conf_config.addOption('ServerUserScriptWaitTime', 300, "Time in seconds between 
 conf_config.addOption('confirm_exit', 1, 'Ask the user on exit if we should exit, (this is passed along to IPython)')
 conf_config.addOption('force_start', False, 'Ignore disk checking on startup')
 
+conf_config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
+
+# runtime warnings issued by the interpreter may be suppresed
+conf_config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued by the interpreter may be suppresed")
+
 # ------------------------------------------------
 # IPython
 ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration

@@ -597,8 +597,6 @@ under certain conditions; type license() for details.
         except Exception as x:
             raise Ganga.Utility.Config.ConfigError('Cannot get default user name' + str(x))
 
-        config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
-
         # import configuration from spyware
         from Ganga.Runtime import spyware
 
@@ -758,8 +756,6 @@ under certain conditions; type license() for details.
             from Ganga.Utility.Config.Config import getConfig
             config = getConfig('Configuration')
 
-            # runtime warnings issued by the interpreter may be suppresed
-            config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued by the interpreter may be suppresed")
             #if config['IgnoreRuntimeWarnings']:
             #    import warnings
             #    warnings.filterwarnings(action="ignore", category=RuntimeWarning)
