@@ -27,6 +27,10 @@ import sys
 import time
 import re
 
+from Ganga import _gangaVersion, _gangaPythonPath
+from Ganga.Utility.Config.Config import getConfig
+import Ganga.Runtime
+
 def new_version_format_to_old(version):
     """
     Convert from 'x.y.z'-style format to 'Ganga-x-y-z'
@@ -234,7 +238,7 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def new_version(update=True):
-        versions_filename = os.path.join(Ganga.Utility.Config.getConfig('Configuration')['gangadir'], '.used_versions')
+        versions_filename = os.path.join(getConfig('Configuration')['gangadir'], '.used_versions')
         if not os.path.exists(versions_filename):
             if update:
                 with open(versions_filename, 'w') as versions_file:
@@ -250,7 +254,7 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def rollHistoryForward():
-        versions_filename = os.path.join(Ganga.Utility.Config.getConfig('Configuration')['gangadir'], '.used_versions')
+        versions_filename = os.path.join(getConfig('Configuration')['gangadir'], '.used_versions')
         hasLoaded_newer = False
         with open(versions_filename, 'r') as versions_file:
             this_version = versions_file.read()
@@ -569,9 +573,14 @@ under certain conditions; type license() for details.
         self.options.config_path = Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath, self.options.config_path))
 
         from Ganga.Utility.Config import getConfig
+
+        # check if the specified config options are different from the defaults
+        # and set session values appropriately
         syscfg = getConfig("System")
-        syscfg['GANGA_CONFIG_PATH'] = self.options.config_path
-        syscfg['GANGA_CONFIG_FILE'] = self.options.config_file
+        if self.options.config_path != syscfg['GANGA_CONFIG_PATH']:
+            syscfg.setSessionValue('GANGA_CONFIG_PATH', self.options.config_path)
+        if self.options.config_file != syscfg['GANGA_CONFIG_FILE']:
+            syscfg.setSessionValue('GANGA_CONFIG_FILE', self.options.config_file)
 
         def deny_modification(name, x):
             raise Ganga.Utility.Config.ConfigError(
