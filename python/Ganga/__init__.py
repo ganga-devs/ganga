@@ -369,6 +369,18 @@ lcg_config.addOption('MatchBeforeSubmit', False,
 lcg_config.addOption('IgnoreGliteScriptHeader', False,
                  'sets to True will load script-based glite-wms-* commands forcely with current python, a trick for 32/64 bit compatibility issues.')
 
+# add ARC specific configuration options
+#config.addOption('ArcInputSandboxBaseURI', '', 'sets the baseURI for getting the input sandboxes for the job')
+#config.addOption('ArcOutputSandboxBaseURI', '', 'sets the baseURI for putting the output sandboxes for the job')
+config.addOption('ArcWaitTimeBeforeStartingMonitoring', 240,
+                 'Time in seconds to wait after submission before starting to monitor ARC jobs to ensure they are in the system')
+config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml",
+                 'File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.')
+config.addOption('ArcConfigFile', "",
+                 'Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config file is specified and the default (~/arc/client.conf) is used')
+#config.addOption('ArcPrologue','','sets the prologue script')
+#config.addOption('ArcEpilogue','','sets the epilogue script')
+
 # ------------------------------------------------
 # GridSimulator
 gridsim_config = makeConfig('GridSimulator', 'Grid Simulator configuration parameters')
