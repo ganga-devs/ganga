@@ -5,6 +5,7 @@ from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Lib.File.File import ShareDir
 import sys
 
 import Ganga.Utility.logging
@@ -24,7 +25,8 @@ class CrashType(GangaObject):
                 exec(self.expr)
     
 class CrashTestApplication(IApplication):
-    _schema = Schema(Version(1,0), {'application_error':ComponentItem("testerrortype"),'rthandler_error':ComponentItem("testerrortype")})
+    _schema = Schema(Version(1,0), {'application_error':ComponentItem("testerrortype"),'rthandler_error':ComponentItem("testerrortype"),
+        })# 'is_prepared':SimpleItem(defvalue=None, typelist=[None,ShareDir,bool]) })
 
     _category = 'applications'
     _name = 'CrashTestApplication'

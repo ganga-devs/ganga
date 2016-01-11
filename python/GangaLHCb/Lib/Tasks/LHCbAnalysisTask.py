@@ -1,8 +1,16 @@
+from copy import deepcopy
+
 from LHCbAnalysisTransform import LHCbAnalysisTransform
+from LHCbAnalysisTransform import job_colours
+from LHCbAnalysisTransform import markup
+from LHCbAnalysisTransform import partition_colours
 from Ganga.GPIDev.Lib.Tasks.Task import Task
 from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core.exceptions import GangaException
+from Ganga.Core.exceptions import GangaAttributeError
 from Ganga.Utility.logging import getLogger
+from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 logger = getLogger(modulename=True)
 
 # to do...
@@ -107,12 +115,12 @@ class LHCbAnalysisTask(Task):
         the transform once successfully appended."""
         r = super(LHCbAnalysisTask, self).appendTransform(transform)
         if hasattr(transform, 'task_id'):
-            transform._impl.task_id = self.id
+            stripProxy(transform).task_id = self.id
         else:
             raise GangaException(None, 'Couldnt set the task id')
         if hasattr(transform, 'transform_id'):
             try:
-                transform._impl.transform_id = self.transforms.index(transform)
+                stripProxy(transform).transform_id = self.transforms.index(transform)
             except:
                 raise GangaException(
                     None, 'transform not added to task properly')

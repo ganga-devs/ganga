@@ -23,6 +23,7 @@ proxy = getCredential('GridProxy', '')
 DIRAC_ENV = {}
 DIRAC_INCLUDE = ''
 Dirac_Env_Lock = threading.Lock()
+Dirac_Proxy_Lock = threading.Lock()
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
@@ -96,11 +97,13 @@ last_modified_valid = False
 ############################
 
 
-def _dirac_check_proxy( renew = True ):
+def _dirac_check_proxy( renew = True):
     global last_modified_valid
-    if not proxy.isValid():
+    global proxy
+    _isValid = proxy.isValid()
+    if not _isValid:
         if renew is True:
-            proxy.create()
+            proxy.renew()
             if not proxy.isValid():
                 last_modified_valid = False
                 raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
@@ -119,18 +122,23 @@ def _proxyValid():
     return last_modified_valid
 
 def _checkProxy( delay=60, renew = True ):
+    ## Handling mutable globals in a multi-threaded system to remember to LOCK
+    global Dirac_Proxy_Lock
+    Dirac_Proxy_Lock.acquire()
     ## Function to check for a valid proxy once every 60( or n) seconds
     global last_modified_time
     if last_modified_time is None:
         # This will move/change when new credential system in place
         ############################
-        _dirac_check_proxy( renew )
+        _dirac_check_proxy( True )
         ############################
         last_modified_time = time.time()
 
     if abs(last_modified_time - time.time()) > int(delay):
         _dirac_check_proxy( renew )
         last_modified_time = time.time()
+
+    Dirac_Proxy_Lock.release()
 
 def execute(command,
             timeout=getConfig('DIRAC')['Timeout'],
@@ -172,7 +180,7 @@ def execute(command,
     if hasattr(returnable, 'keys'):
         # Expand object(s) in dictionaries
         myObject = _expand_object(returnable)
-    elif type(returnable) == type([]):
+    elif type(returnable) in[list, tuple]:
         # Expand object(s) in lists
         myObject = _expand_list(returnable)
     else:
@@ -199,3 +207,4 @@ def _expand_list(mylist):
     for element in mylist:
         new_list.append(copy.deepcopy(element))
     return new_list
+

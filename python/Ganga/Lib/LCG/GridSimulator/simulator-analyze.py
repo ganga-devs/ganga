@@ -6,6 +6,9 @@ from __future__ import print_function
 #finished_jobs_filename = g.finished_jobs_filename
 
 import sys
+import os.path
+import shelve
+
 
 try:
     basedir = sys.argv[1]
@@ -15,9 +18,6 @@ except IndexError:
 gridmap_filename = "%s/lcg_simulator_gridmap" % basedir
 finished_jobs_filename = "%s/lcg_simulator_finished_jobs" % basedir
 
-import os.path
-import sys
-import shelve
 
 gridmap = shelve.open(gridmap_filename)
 finished_jobs = shelve.open(finished_jobs_filename)

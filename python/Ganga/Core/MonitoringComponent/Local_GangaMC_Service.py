@@ -1,6 +1,8 @@
 import Queue
 import threading
 import time
+import copy
+from contextlib import contextmanager
 
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
@@ -10,7 +12,7 @@ from Ganga.Utility.threads import SynchronisedObject
 import Ganga.GPIDev.Credentials as Credentials
 from Ganga.Core.InternalServices import Coordinator
 
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, getRuntimeGPIObject
 
 # Setup logging ---------------
 import Ganga.Utility.logging
@@ -49,6 +51,7 @@ config.addOption('DiskSpaceChecker', "", "disk space checking callback. This fun
 
 config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
 
+config.addOption('numParallelJobs', 5, 'Number of Jobs to update the status for in parallel')
 
 THREAD_POOL_SIZE = config['update_thread_pool_size']
 Qin = Queue.Queue()
@@ -126,7 +129,7 @@ class MonitoringWorkerThread(GangaThread):
             try:
                 result = action.function(*action.args, **action.kwargs)
             except Exception as err:
-                logger.debug("_execUpdateAction: %s" % str(err))
+                log.debug("_execUpdateAction: %s" % str(err))
                 action.callback_Failure()
             else:
                 if result in action.success:
@@ -218,6 +221,31 @@ class _DictEntry(object):
         return self.backendObj, self.jobSet, self.entryLock
 
 
+@contextmanager
+def release_when_done(rlock):
+    """
+    A ``threading.Lock`` (or ``RLock`` etc.) object cannot be used in a context
+    manager if the lock acquisition is non-blocking because the acquisition can
+    fail and so the contents of the ``with`` block should not be run.
+
+    To allow sensible ``release()`` behaviour in these cases, acquire the lock
+    as usual with ``lock.acquire(False)`` and then wrap the required code with
+    this context manager::
+
+        if lock.acquire(blocking=False):
+            with release_when_done(lock):
+                #some code
+                pass
+
+    Attributes:
+        rlock: A lock object which can have ``release()`` called on it,
+    """
+    try:
+        yield rlock
+    finally:
+        rlock.release()
+
+
 class UpdateDict(object):
 
     """
@@ -290,23 +318,20 @@ class UpdateDict(object):
             # Initial value and subsequent resets by timeoutCheck() will set the timeoutCounter
             # to a value just short of the max value to ensure that it the timeoutCounter is
             # not decremented simply because there are no updates occuring.
-            if not entry.entryLock._RLock__count and \
-               entry.timeoutCounter == entry.timeoutCounterMax and \
-               entry.entryLock.acquire(False):
-                log.debug("%s has been reset. Acquired lock to begin countdown." % backend)
-                entry.timeLastUpdate = time.time()
-            # decrease timeout counter
-            if entry.entryLock._is_owned():
-                if entry.timeoutCounter <= 0.0:
-                    entry.timeoutCounter = entry.timeoutCounterMax - 0.01
+            if entry.timeoutCounter == entry.timeoutCounterMax and entry.entryLock.acquire(False):
+                with release_when_done(entry.entryLock):
+                    log.debug("%s has been reset. Acquired lock to begin countdown." % backend)
                     entry.timeLastUpdate = time.time()
-                    entry.entryLock.release()
-                    log.debug("%s backend counter timeout. Resetting to %s." % (backend, entry.timeoutCounter))
-                else:
-                    _l = time.time()
-                    entry.timeoutCounter -= _l - entry.timeLastUpdate
-                    entry.timeLastUpdate = _l
-#               log.debug( "%s backend counter is %s." % ( backend, entry.timeoutCounter ) )
+
+                    # decrease timeout counter
+                    if entry.timeoutCounter <= 0.0:
+                        entry.timeoutCounter = entry.timeoutCounterMax - 0.01
+                        entry.timeLastUpdate = time.time()
+                        log.debug("%s backend counter timeout. Resetting to %s." % (backend, entry.timeoutCounter))
+                    else:
+                        _l = time.time()
+                        entry.timeoutCounter -= _l - entry.timeLastUpdate
+                        entry.timeLastUpdate = _l
 
     def isBackendLocked(self, backend):
         if backend in self.table:
@@ -367,7 +392,7 @@ def resubmit_if_required(jobList_fromset):
     return
 
 
-def get_jobs_in_bunches(jobList_fromset, blocks_of_size=10, stripProxies=True):
+def get_jobs_in_bunches(jobList_fromset, blocks_of_size=5, stripProxies=True):
     """
     Return a list of lists of subjobs where each list contains
     a total number of jobs close to 'blocks_of_size' as possible
@@ -549,12 +574,12 @@ class JobRegistry_Monitor(GangaThread):
 
             if cbHookEntry.enabled and (time.time() - cbHookEntry._lastRun) >= cbHookEntry.timeout:
                 log.debug("Running monitoring callback hook function %s(**%s)" %(cbHookFunc, cbHookEntry.argDict))
+                #self.callbackHookDict[cbHookFunc][0](**cbHookEntry.argDict)
                 try:
                     self.callbackHookDict[cbHookFunc][0](**cbHookEntry.argDict)
                 except Exception as err:
                     log.debug("Caught Unknown Callback Exception")
                     log.debug("Callback %s" % str(err))
-                    pass
                 cbHookEntry._lastRun = time.time()
 
         log.debug("\n\nRunning runClientCallbacks")
@@ -868,29 +893,47 @@ class JobRegistry_Monitor(GangaThread):
         log.debug("Running over fixed_ids: %s" % str(fixed_ids))
         for i in fixed_ids:
             try:
-                j = self.registry(i)
-                #log.debug("Job #%s status: %s" % (str(i), str(j.status)))
-                if j.status in ['submitted', 'running'] or (j.master and (j.status in ['submitting'])):
+                j = stripProxy(self.registry(i))
+
+                lzy_loading_status_str = 'display:status'
+                if j.getNodeIndexCache() and lzy_loading_status_str in j.getNodeIndexCache():
+                    job_status = j.getNodeIndexCache()[lzy_loading_status_str]
+                else:
+                    job_status = j.status
+
+                if job_status in ['submitted', 'running'] or (j.master and (job_status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
-                        stripProxy(j)._getReadAccess()
-                        bn = getName(j.backend)
+                        ## This causes a Loading of the subjobs from disk!!!
+                        #stripProxy(j)._getReadAccess()
+                        if j.getNodeIndexCache():
+                            #log.info("data: %s" % str(j.getNodeData()))
+                            #log.info("node %s" % str(j.getNodeIndexCache()))
+                            #log.info("__dict: %s" % str(j.__class__.__dict__['backend']))
+                            #bn = j.__class__.__dict__['backend'].__name__
+                            #log.info("bn: %s" % str(bn))
+                            lazy_load_backend_str = 'display:backend'
+                            if lazy_load_backend_str in j.getNodeIndexCache():
+                                bn = j.getNodeIndexCache()[lazy_load_backend_str]
+                            else:
+                                bn = getName(j.backend)
+                        else:
+                            bn = getName(j.backend)
                         #log.debug("active_backends.setdefault: %s" % str(bn))
                         active_backends.setdefault(bn, [])
                         active_backends[bn].append(j)
             except RegistryKeyError as err:
                 log.debug("RegistryKeyError: The job was most likely removed")
                 log.debug("RegError %s" % str(err))
-                pass  # the job was removed
             except RegistryLockError as err:
                 log.debug("RegistryLockError: The job was most likely removed")
                 log.debug("Reg LockError%s" % str(err))
-                pass  # the job was removed
 
         summary = '{'
         for backend, these_jobs in active_backends.iteritems():
             summary += '"' + str(backend) + '" : ['
             for this_job in these_jobs:
-                summary += stripProxy(this_job).getFQID('.') + ', '
+                stripProxy(this_job)._getWriteAccess()
+                summary += str(stripProxy(this_job).getFQID('.')) + ', '
             summary += '], '
         summary += '}'
         log.debug("Returning active_backends: %s" % summary)
@@ -925,16 +968,45 @@ class JobRegistry_Monitor(GangaThread):
             updateDict_ts.clearEntry(getName(backendObj))
             try:
                 log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
+
+                tested_backends = []
+
                 for j in jobList_fromset:
-                    if hasattr(j, 'backend'):
-                        if hasattr(j.backend, 'setup'):
-                            j.backend.setup()
+
+                    run_setup = False
+
+            	    if hasattr(stripProxy(j), 'getNodeIndexCache') and\
+                        stripProxy(j).getNodeIndexCache() is not None and\
+                        'display:backend' in stripProxy(j).getNodeIndexCache().keys():
+
+                        name = stripProxy(j).getNodeIndexCache()['display:backend']
+
+                        if name is not None:
+                            if name in tested_backends:
+                                continue
+                            else:
+                                tested_backends.append(name)
+                            new_backend = getRuntimeGPIObject(name)
+                            if new_backend is not None and hasattr(new_backend, 'setup'):
+                                run_setup = True
+                            else:
+                                run_setup = False
+                        else:
+                           run_setup = False
+                    else:
+                        run_setup = True
+
+                    if run_setup is True:
+                        if hasattr(j, 'backend'):
+                            if hasattr(j.backend, 'setup'):
+                                j.backend.setup()
 
                 if self.enabled is False and self.alive is False:
                     log.debug("NOT enabled, leaving")
                     return
 
-                all_job_bunches = get_jobs_in_bunches(jobList_fromset)
+                block_size = config['numParallelJobs']
+                all_job_bunches = get_jobs_in_bunches(jobList_fromset, blocks_of_size = block_size )
 
                 bunch_size = 0
                 for bunch in all_job_bunches:
@@ -952,13 +1024,14 @@ class JobRegistry_Monitor(GangaThread):
                     ### This tries to loop over ALL jobs in 'this_job_list' with the maximum amount of redundancy to keep
                     ### going and attempting to update all (sub)jobs if some fail
                     ### ALL ERRORS AND EXCEPTIONS ARE REPORTED VIA log.error SO NO INFORMATION IS LOST/IGNORED HERE!
+                    job_ids = ''
+                    for this_job in this_job_list:
+                        job_ids += ' %s' % str(this_job.id) 
+                    log.debug("Updating Jobs: %s" % job_ids)
                     try:
-                        job_ids = ''
-                        for this_job in this_job_list:
-                            job_ids += ' %s' % str(this_job.id) 
-                        log.debug("Updating Jobs: %s" % job_ids)
                         stripProxy(backendObj).master_updateMonitoringInformation(this_job_list)
                     except Exception as err:
+                        #raise err
                         log.debug("Err: %s" % str(err))
                         ## We want to catch ALL of the exceptions
                         ## This would allow us to continue in the case of errors due to bad job/backend combinations
@@ -985,9 +1058,9 @@ class JobRegistry_Monitor(GangaThread):
             # this concerns me - rcurrie
             #self.registry._flush(jobList_fromset)  # Optimisation required!
 
-            for this_job in jobList_fromset:
-                stripped_job = stripProxy(this_job)
-                stripped_job._getRegistry()._flush([stripped_job])
+            #for this_job in jobList_fromset:
+            #    stripped_job = stripProxy(this_job)
+            #    stripped_job._getRegistry()._flush([stripped_job])
 
         except Exception as err:
             log.debug("Monitoring Loop Error: %s" % str(err))
@@ -1008,7 +1081,7 @@ class JobRegistry_Monitor(GangaThread):
         for this_backend, these_jobs in activeBackends.iteritems():
             summary += '"' + this_backend + '" : ['
             for this_job in these_jobs:
-                summary += stripProxy(this_job).getFQID('.') + ', '
+                summary += str(stripProxy(this_job).getFQID('.')) + ', '
             summary += '], '
         summary += '}'
         log.debug("Active Backends: %s" % summary)
@@ -1063,7 +1136,7 @@ class JobRegistry_Monitor(GangaThread):
             try:
                 Qin.put(_action)
             except Exception as err:
-                logger.debug("makeCred Err: %s" % str(err))
+                log.debug("makeCred Err: %s" % str(err))
                 cb_Failure("Put _action failure: %s" % str(_action), "unknown", True )
         return credCheckJobInsertor
 
@@ -1098,7 +1171,7 @@ class JobRegistry_Monitor(GangaThread):
         try:
             Qin.put(_action)
         except Exception as err:
-            logger.debug("diskSp Err: %s" % str(err))
+            log.debug("diskSp Err: %s" % str(err))
             cb_Failure()
 
     def updateJobs(self):

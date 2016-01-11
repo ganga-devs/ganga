@@ -6,7 +6,6 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistryS
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
-from Ganga.GPIDev.Base.Proxy import addProxy
 import Ganga.GPI as GPI
 from Ganga.GPIDev.Lib.Tasks.common import logger
 
@@ -23,12 +22,12 @@ class LHCbUnit(IUnit):
         """Create any jobs required for this unit"""
         import copy
         j = GPI.Job()
-        j._impl.backend = self._getParent().backend.clone()
-        j._impl.application = self._getParent().application.clone()
+        stripProxy(j).backend = self._getParent().backend.clone()
+        stripProxy(j).application = self._getParent().application.clone()
         if self.inputdata:
             j.inputdata = self.inputdata.clone()
 
-        j._impl.inputfiles = copy.deepcopy(self._getParent().inputfiles)
+        stripProxy(j).inputfiles = copy.deepcopy(self._getParent().inputfiles)
 
         trf = self._getParent()
         task = trf._getParent()

@@ -1,3 +1,4 @@
+from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 import copy

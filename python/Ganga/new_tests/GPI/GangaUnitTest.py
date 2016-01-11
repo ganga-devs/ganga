@@ -53,9 +53,8 @@ def startGanga():
     logger.info("Parsing Command Line options")
     import Ganga.Runtime
     import sys
-    this_argv = sys.argv[1:]
+    this_argv = []
     this_argv.append('-o[Configuration]RUNTIME_PATH=GangaTest')
-    this_argv.append('-o[Configuration]UsageMonitoringURL=""')
     this_argv.append('-o[Configuration]user=testframework')
     this_argv.append('-o[Configuration]gangadir=$HOME/gangadir_testing')
     this_argv.append('-o[Configuration]repositorytype=LocalXML')
@@ -83,9 +82,9 @@ def startGanga():
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('PollThread', 'forced_shutdown_policy', 'batch')
         logger.info("Initializing")
-        Ganga.Runtime._prog.initEnvironment()
+        Ganga.Runtime._prog.initEnvironment(False)
         logger.info("Bootstrapping")
-        Ganga.Runtime._prog.bootstrap()
+        Ganga.Runtime._prog.bootstrap('Batch')
     else:
         # No need to perform the bootstrap but we need to test if the internal
         # services need to be reinitialized

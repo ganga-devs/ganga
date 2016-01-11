@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
 from .common import logger, status_colours, overview_colours
+from .common import markup
 
 from .TaskApplication import taskApp
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
@@ -74,23 +76,22 @@ class Transform(GangaObject):
         id = "%i:%i" % (
             self._getParent().id, self._getParent().transforms.index(self))
         for j in GPI.jobs:
-            if "tasks_id" in j.application._impl._data:
+            if "tasks_id" in stripProxy(j.application).getNodeData():
                 # print "tasks_id of jobid ", j.fqid,
-                # j.application._impl._data["tasks_id"], id
-                if j.application._impl._data["tasks_id"].endswith(id):
+                # stripProxy(j.application).getNodeAttribute("tasks_id"), id
+                if stripProxy(j.application).getNodeAttribute("tasks_id").endswith(id):
                     try:
                         if j.subjobs:
                             for sj in j.subjobs:
-                                app = sj.application._impl
-                                app.getTransform()._impl.setAppStatus(
+                                app = stripProxy(sj.application)
+                                stripProxy(app.getTransform()).setAppStatus(
                                     app, app._getParent().status)
                         else:
-                            app = j.application._impl
-                            app.getTransform()._impl.setAppStatus(
+                            app = stripProxy(j.application)
+                            stripProxy(app.getTransform()).setAppStatus(
                                 app, app._getParent().status)
                     except AttributeError as e:
                         logger.error("%s", e)
-        pass
 
     def getPartitionApps(self):
         if self._partition_apps is None:
@@ -119,17 +120,17 @@ class Transform(GangaObject):
         id = "%i:%i" % (
             self._getParent().id, self._getParent().transforms.index(self))
         for j in GPI.jobs:
-            if "tasks_id" in j.application._impl._data:
-                if j.application._impl._data["tasks_id"] == id:
+            if "tasks_id" in stripProxy(j.application).getNodeData():
+                if stripProxy(j.application).getNodeAttribute("tasks_id") == id:
                     try:
                         if j.subjobs:
                             for sj in j.subjobs:
-                                app = sj.application._impl
-                                app.getTransform()._impl.setAppStatus(
+                                app = stripProxy(sj.application)
+                                stripProxy(app.getTransform()).setAppStatus(
                                     app, app._getParent().status)
                         else:
-                            app = j.application._impl
-                            app.getTransform()._impl.setAppStatus(
+                            app = stripProxy(j.application)
+                            stripProxy(app.getTransform()).setAppStatus(
                                 app, app._getParent().status)
                     except AttributeError as e:
                         logger.error("%s", e)
@@ -215,8 +216,8 @@ class Transform(GangaObject):
                             addjob(sj)
                     else:
                         addjob(j)
-            except Exception as x:
-                # print x
+            except Exception as err:
+                logger.debug("getPartitionJobs Exception:\n%s" % str(err))
                 pass
         return JobRegistrySliceProxy(jobslice)
 
@@ -251,7 +252,7 @@ class Transform(GangaObject):
             return 0
         numjobs = 0
         for j in self.getJobsForPartitions(next):
-            j.application._impl.transition_update("submitting")
+            stripProxy(j.application).transition_update("submitting")
             try:
                 j.submit()
             except JobError:
@@ -265,9 +266,9 @@ class Transform(GangaObject):
 
     def checkTaskApplication(self, app):
         """warns the user if the application is not compatible """
-        if app == None:
+        if app is None:
             return None
-        if not "tasks_id" in stripProxy(app)._data:
+        if not "tasks_id" in stripProxy(app).getNodeData():
             return taskApp(app)
         return app
 
@@ -424,10 +425,10 @@ class Transform(GangaObject):
         )  # this works because createNewJob is only called by a task
         id = task.transforms.index(self)
         j = GPI.Job()
-        j._impl.backend = self.backend.clone()
-        j._impl.application = self.application.clone()
-        j._impl.application.tasks_id = "%i:%i" % (task.id, id)
-        j._impl.application.id = self.getNewAppID(partition)
+        stripProxy(j).backend = self.backend.clone()
+        stripProxy(j).application = self.application.clone()
+        stripProxy(j).application.tasks_id = "%i:%i" % (task.id, id)
+        stripProxy(j).application.id = self.getNewAppID(partition)
         j.inputdata = self.inputdata
         j.outputdata = self.outputdata
         j.inputsandbox = self.inputsandbox
@@ -470,8 +471,7 @@ class Transform(GangaObject):
             id = str(task.transforms.index(self))
         else:
             id = "?"
-        o = markup("#%s: %s '%s'\n" % (
-            id, self.__class__.__name__, self.name), status_colours[self.status])
+        o = markup("#%s: %s '%s'\n" % (id, getName(self), self.name), status_colours[self.status])
         i = 0
         partitions = sorted(self._partition_status.keys())
         for c in partitions:
@@ -487,9 +487,8 @@ class Transform(GangaObject):
         logger.info(o)
 
     def info(self):
-        logger.info(markup(
-            "%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status]))
-        logger.info("* backend: %s" % self.backend.__class__.__name__)
+        logger.info(markup("%s '%s'" % (getName(self), self.name), status_colours[self.status]))
+        logger.info("* backend: %s" % getName(self.backend))
         logger.info("Application:")
         self.application.printTree()
 

@@ -177,7 +177,7 @@ class LCGSEFile(IGangaFile):
         sourceDir = ''
 
         # if used as a stand alone object
-        if self._parent == None:
+        if self._getParent() is None:
             if self.localDir == '':
                 logger.warning(
                     'localDir attribute is empty, don\'t know from which dir to take the file')
@@ -218,14 +218,14 @@ class LCGSEFile(IGangaFile):
 
                     # Alex removed this as more general approach in job.py after put() is called
                     # remove file from output dir if this object is attached to a job
-                    # if self._parent != None:
+                    # if self._getParent() is not None:
                     #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
                 else:
                     d.failureReason = output
-                    if self._parent != None:
+                    if self._getParent() is not None:
                         logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (
-                            str(self._parent.fqid), self.failureReason))
+                            str(self._getParent().fqid), self.failureReason))
                     else:
                         logger.error(
                             "The file can't be uploaded because of %s" % (self.failureReason))
@@ -258,14 +258,14 @@ class LCGSEFile(IGangaFile):
 
                 # Alex removed this as more general approach in job.py after put() is called
                 # remove file from output dir if this object is attached to a job
-                # if self._parent != None:
+                # if self._getParent() is not None:
                 #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
             else:
                 self.failureReason = output
-                if self._parent != None:
+                if self._getParent() is not None:
                     logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (
-                        str(self._parent.fqid), self.failureReason))
+                        str(self._getParent().fqid), self.failureReason))
                 else:
                     logger.error(
                         "The file can't be uploaded because of %s" % (self.failureReason))
@@ -303,7 +303,7 @@ class LCGSEFile(IGangaFile):
         to_location = self.localDir
 
         if not os.path.isdir(self.localDir):
-            if self._parent is not None:
+            if self._getParent() is not None:
                 to_location = self.getJobObject().outputdir
             else:
                 logger.info("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)

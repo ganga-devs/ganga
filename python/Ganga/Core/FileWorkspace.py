@@ -17,6 +17,7 @@ import os
 import time
 
 from Ganga.Utility.files import expandfilename, chmod_executable
+from Ganga.GPIDev.Base.Proxy import isType
 
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
@@ -51,8 +52,7 @@ class FileWorkspace(object):
 
         # LEGACY:
         if splittree:
-            logger.warning(
-                'FileWorkspace splittree option is obsolete and has no-effect')
+            logger.warning('FileWorkspace splittree option is obsolete and has no-effect')
 
     def create(self, jobid=None):
         """ create a workspace, an optional jobid parameter specifies the job directory
@@ -90,9 +90,9 @@ class FileWorkspace(object):
                 subpath = ''
 
         if self.splittree:
-            return expandfilename(os.path.join(self.top, subpath, jobdir, filename))
+            return expandfilename(os.path.join(self.top, subpath, jobdir, filename), True)
         else:
-            return expandfilename(os.path.join(self.top, jobdir, subpath, filename))
+            return expandfilename(os.path.join(self.top, jobdir, subpath, filename), True)
 
     # write a file (represent as file object) to the workspace
     # file object may be:
@@ -107,31 +107,32 @@ class FileWorkspace(object):
 
         from Ganga.GPIDev.Lib.File import FileBuffer
 
-        try:
-            name, contents = fileobj
-        except TypeError:
-            pass
-        else:
-            fileobj = FileBuffer(name, contents)
-            logger.warning(
-                'file "%s": usage of tuples is deprecated, use FileBuffer instead', name)
+        if not isType(fileobj, FileBuffer):
+
+            try:
+                name, contents = fileobj
+            except TypeError as err:
+                import traceback
+                traceback.print_stack()
+                logger.debug("TypeError: %s" % str(err))
+                pass
+            else:
+                fileobj = FileBuffer(name, contents)
+                logger.warning('file "%s": usage of tuples is deprecated, use FileBuffer instead', name)
 
         # output file name
         # Added a subdir to files, (see Ganga/GPIDev/Lib/File/File.py) This allows
         # to copy files into the a subdirectory of the workspace
 
         # FIXME: make a helper method for os.makedirs
-        try:
-            os.makedirs(self.getPath() + fileobj.subdir)
+        path_to_build = os.path.join(self.getPath(), fileobj.subdir)
+        if not os.path.isdir(path_to_build):
+            os.makedirs(path_to_build)
             logger.debug('created %s', self.getPath())
-        except OSError as x:
-            import errno
-            if x.errno == errno.EEXIST:
-                logger.debug('EEXIT: %s', self.getPath())
-            else:
-                raise
+        else:
+            logger.debug('already exists: %s', self.getPath())
 
-        outname = expandfilename(self.getPath(fileobj.getPathInSandbox()))
+        outname = expandfilename(self.getPath(fileobj.getPathInSandbox()), True)
 
         fileobj.create(outname)
 
@@ -152,7 +153,7 @@ class FileWorkspace(object):
 
                 try:
                     import time
-                    remove_path = os.path.dirname(self.getPath()) + '__to_be_deleted_' + str(time.time())
+                    remove_path = os.path.dirname(self.getPath()) + "_" + str(time.time()) + '__to_be_deleted_'
                     logger.debug("Moving Path: %s to: %s ahead of delete operation" % (self.getPath(), remove_path))
                     os.rename(self.getPath(), remove_path)
                     logger.debug("Move completed")
@@ -197,7 +198,8 @@ class FileWorkspace(object):
 
 
 def gettop():
-    c = Ganga.Utility.Config.getConfig('Configuration')
+    from Ganga.Utility.Config import getConfig
+    c = getConfig('Configuration')
     return os.path.join(c['gangadir'], 'workspace', c['user'], c['repositorytype'])
 
 
@@ -207,7 +209,8 @@ class InputWorkspace(FileWorkspace):
     """
 
     def __init__(self):
-        FileWorkspace.__init__(self, gettop(), subpath='input', splittree=False)
+        workspace_top = gettop()
+        super(InputWorkspace, self).__init__(workspace_top, subpath='input', splittree=False)
 
 
 class OutputWorkspace(FileWorkspace):
@@ -216,7 +219,8 @@ class OutputWorkspace(FileWorkspace):
     """
 
     def __init__(self):
-        FileWorkspace.__init__(self, gettop(), subpath='output', splittree=False)
+        workspace_top = gettop()
+        super(OutputWorkspace, self).__init__(workspace_top, subpath='output', splittree=False)
 
 
 class DebugWorkspace(FileWorkspace):
@@ -225,7 +229,8 @@ class DebugWorkspace(FileWorkspace):
     """
 
     def __init__(self):
-        FileWorkspace.__init__(self, gettop(), subpath='debug', splittree=False)
+        workspace_top = gettop()
+        super(DebugWorkspace, self).__init__(workspace_top, subpath='debug', splittree=False)
 
 
 #

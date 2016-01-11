@@ -8,12 +8,14 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
 from .IGangaFile import IGangaFile
 
 from Ganga.GPIDev.Lib.File import FileUtils
 
+import errno
 import re
 import os
 import copy
@@ -152,7 +154,7 @@ class MassStorageFile(IGangaFile):
         to_location = self.localDir
 
         if not os.path.isdir(self.localDir):
-            if self._parent is not None:
+            if self._getParent() is not None:
                 to_location = self.getJobObject().outputdir
             else:
                 logger.error(
@@ -195,7 +197,7 @@ class MassStorageFile(IGangaFile):
         sourceDir = ''
 
         # if used as a stand alone object
-        if self._parent == None:
+        if self._getParent() is None:
             if self.localDir == '':
                 import os
                 _CWD = os.getcwd()
@@ -256,7 +258,7 @@ class MassStorageFile(IGangaFile):
         # the file name part of self.outputfilenameformat
         filenameStructure = ''
 
-        if self._parent != None:
+        if self._getParent() != None:
             jobfqid = self.getJobObject().fqid
 
             jobid = jobfqid
@@ -266,7 +268,7 @@ class MassStorageFile(IGangaFile):
                 jobid = jobfqid.split('.')[0]
                 subjobid = jobfqid.split('.')[1]
 
-            if self.outputfilenameformat == None:
+            if self.outputfilenameformat is None:
                 filenameStructure = '{fname}'
                 # create jid/sjid directories
                 folderStructure = jobid
@@ -323,7 +325,7 @@ class MassStorageFile(IGangaFile):
 
                     # Alex removed this as more general approach in job.py after put() is called
                     # remove file from output dir if this object is attached to a job
-                    # if self._parent != None:
+                    # if self._getParent() != None:
                     #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
                 self.subfiles.append(GPIProxyObjectFactory(d))
@@ -341,7 +343,7 @@ class MassStorageFile(IGangaFile):
 
                 # Alex removed this as more general approach in job.py after put() is called
                 # remove file from output dir if this object is attached to a job
-                # if self._parent != None:
+                # if self._getParent() != None:
                 #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
     def validate(self):
@@ -355,11 +357,11 @@ class MassStorageFile(IGangaFile):
             isJob = False
             isSplitJob = False
 
-            if self._parent != None:
+            if self._getParent() != None:
 
                 isJob = True
 
-                if (self.getJobObject().splitter != None):
+                if stripProxy(self.getJobObject()).master is not None:
 
                     isSplitJob = True
                     searchFor.append('{sjid}')
@@ -383,8 +385,7 @@ class MassStorageFile(IGangaFile):
                 return (False, 'Error in MassStorageFile.outputfilenameformat field :  no parent job, but {\'jid\'} keyword found')
 
             invalidUnixChars = ['"', ' ']
-            test = self.outputfilenameformat.replace('{jid}', 'a').replace(
-                '{sjid}', 'b').replace('{fname}', 'c')
+            test = self.outputfilenameformat.replace('{jid}', 'a').replace('{sjid}', 'b').replace('{fname}', 'c')
 
             for invalidUnixChar in invalidUnixChars:
                 if test.find(invalidUnixChar) > -1:
@@ -395,9 +396,9 @@ class MassStorageFile(IGangaFile):
     def handleUploadFailure(self, error):
 
         self.failureReason = error
-        if self._parent != None:
+        if self._getParent() != None:
             logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (
-                str(self._parent.fqid), self.failureReason))
+                str(self._getParent().fqid), self.failureReason))
         else:
             logger.error("The file can't be uploaded because of %s" % (self.failureReason))
 
@@ -483,7 +484,7 @@ class MassStorageFile(IGangaFile):
 
                 keyin = None
 
-                while keyin == None:
+                while keyin is None:
                     keyin = raw_input("Do you want to delete file %s at Location: %s ? [y/n] " % (str(self.namePattern), str(i)))
                     if keyin == 'y':
                         _delete_this = True
@@ -520,7 +521,7 @@ class MassStorageFile(IGangaFile):
                 else:
 
                     keyin = None
-                    while keyin == None:
+                    while keyin is None:
                         keyin = raw_input(
                             "Do you want to remove the local File: %s ? ([y]/n) " % str(_localFile))
                         if keyin in ['y', '']:
@@ -533,12 +534,12 @@ class MassStorageFile(IGangaFile):
 
                 if _actual_delete:
                     import time
-                    remove_filename = _localFile + '__to_be_deleted_' + str(time.time())
+                    remove_filename = _localFile + "_" + str(time.time()) + '__to_be_deleted_'
 
                     try:
                         os.rename(_localFile, remove_filename)
                     except OSError as err:
-                        logger.warning("Error in first stage of removing file: %s" % this_file)
+                        logger.warning("Error in first stage of removing file: %s" % remove_filename)
                         remove_filename = _localFile
 
                     try:

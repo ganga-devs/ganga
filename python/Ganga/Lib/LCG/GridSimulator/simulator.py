@@ -14,7 +14,9 @@
 # cd simu
 # cp path/to/simulation.py .
 # run simulation.py as described above
-
+from Ganga.GPI import Job
+from Ganga.Lib.LCG import LCG
+from Ganga.Lib.Splitters import GenericSplitter
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 

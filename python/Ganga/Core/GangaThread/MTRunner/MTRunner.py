@@ -58,6 +58,7 @@ class GangaWorkAgent(GangaThread):
                 except AlgorithmError:
                     break
                 except Empty:
+                    logger.debug("Empty Error!")
                     pass
                 # General case to print unexpected exceptions
                 except Exception:
@@ -135,7 +136,6 @@ class MTRunner(object):
             self.data.addItem(item)
         except DuplicateDataItemError as e:
             self.logger.debug('skip adding new item: %s' % e.message)
-            pass
 
     def start(self):
         """

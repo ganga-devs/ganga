@@ -22,13 +22,12 @@ class ExeDiracRTHandler(IRuntimeHandler):
     """The runtime handler to run plain executables on the Dirac backend"""
 
     def master_prepare(self, app, appmasterconfig):
-        inputsandbox, outputsandbox = master_sandbox_prepare(
-            app, appmasterconfig)
+        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
         if type(app.exe) == File:
-            exefile = os.path.join(get_share_path(app),
-                                   os.path.basename(app.exe.name))
+            input_dir = app.getJobObject().getInputWorkspace().getPath()
+            exefile = os.path.join(input_dir, os.path.basename(app.exe.name))
             if not os.path.exists(exefile):
-                msg = 'Executable must exist!'
+                msg = 'Executable: "%s" must exist!' % str(exefile)
                 raise ApplicationConfigurationError(None, msg)
 
             os.system('chmod +x %s' % exefile)
@@ -36,8 +35,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                  outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
-        inputsandbox, outputsandbox = sandbox_prepare(
-            app, appsubconfig, appmasterconfig, jobmasterconfig)
+        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app)
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
@@ -45,9 +43,12 @@ class ExeDiracRTHandler(IRuntimeHandler):
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
         commandline = app.exe
-        if type(app.exe) == File:
-            inputsandbox.append(File(name=os.path.join(get_share_path(app),
-                                                       os.path.basename(app.exe.name))))
+        if isType(app.exe, File):
+            #logger.info("app: %s" % str(app.exe.name))
+            #fileName = os.path.join(get_share_path(app), os.path.basename(app.exe.name))
+            #logger.info("EXE: %s" % str(fileName))
+            #inputsandbox.append(File(name=fileName))
+            inputsandbox.append(app.exe)
             commandline = os.path.basename(app.exe.name)
         commandline += ' '
         commandline += ' '.join([str(arg) for arg in app.args])
@@ -57,12 +58,12 @@ class ExeDiracRTHandler(IRuntimeHandler):
         exe_script_name = 'exe-script.py'
 
         inputsandbox.append(FileBuffer(name=exe_script_name,
-                                       contents=script_generator(exe_script_template(),
-                                                                 #remove_unreplaced = False,
-                                                                 # ,
-                                                                 COMMAND=commandline,
-                                                                 OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
-                                                                 ),
+                            contents=script_generator(exe_script_template(),
+                                                    #remove_unreplaced = False,
+                                                    # ,
+                                                    COMMAND=commandline,
+                                                    OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
+                                                    ),
                                        executable=True))
 
         dirac_outputfiles = dirac_outputfile_jdl(outputfiles)
@@ -95,6 +96,10 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         # Note only using 2 #s as auto-remove 3
                                         INPUT_SANDBOX='##INPUT_SANDBOX##'
                                         )
+
+
+        #logger.info("inbox: %s" % str(unique(inputsandbox)))
+        #logger.info("outbox: %s" % str(unique(outputsandbox)))
 
         return StandardJobConfig(dirac_script,
                                  inputbox=unique(inputsandbox),

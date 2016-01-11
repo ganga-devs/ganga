@@ -5,9 +5,11 @@
 ##########################################################################
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
+
 
 
 class GangaDatasetSplitter(ISplitter):

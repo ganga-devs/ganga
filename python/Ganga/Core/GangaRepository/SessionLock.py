@@ -59,6 +59,19 @@ except ConfigError, err:
 
 session_lock_refresher = None
 
+def getGlobalLockRef(session_name, sdir, gfn, _on_afs):
+    global session_lock_refresher
+    if session_lock_refresher is None:
+        try:
+            os.close(SessionLockManager.delay_init_open(gfn))
+            registerGlobalSessionFile(gfn)
+        except OSError as err:
+            logger.debug("Startup Lock Refresher Exception: %s" % str(err))
+            raise RepositoryError(None, "Error on session file '%s' creation: %s" % (gfn, err))
+        session_lock_refresher = SessionLockRefresher(session_name, sdir, gfn, None, _on_afs)
+        session_lock_refresher.start()
+    return session_lock_refresher
+
 sessionFiles = []
 sessionFileHandlers = []
 
@@ -180,8 +193,9 @@ class SessionLockRefresher(GangaThread):
 
         return self.FileCheckTimes[this_index_file]
 
-    def _reallyUpdateLocks(self, index):
+    def _reallyUpdateLocks(self, index, failCount=0):
         this_index_file = self.fns[index]
+        now = None
         try:
             oldnow = self.delayread(this_index_file)
             os.system('touch %s' % str(this_index_file))
@@ -189,6 +203,20 @@ class SessionLockRefresher(GangaThread):
         except OSError as x:
             if x.errno != errno.ENOENT:
                 logger.debug("Session file timestamp could not be updated! Locks could be lost!")
+                if now is None and failCount < 4:
+                    try:
+                        logger.debug("Attempting to lock file again, unknown error:\n'%s'" % str(x))
+                        import time
+                        time.sleep(0.5)
+                        failcount=failCount+1
+                        now = self._reallyUpdateLocks(index, failcount)
+                    except Exception as err:
+                        now = -999.
+                        logger.debug("Received another type of exception, failing to update lockfile: %s" % str(this_index_file))
+                else:
+                    logger.warning("Failed to update lock file: %s 5 times." % str(this_index_file))
+                    logger.warning("This could be due to a filesystem problem, or multiple versions of ganga trying to access the same file")
+                    now = -999.
             else:
                 if self.repos[index] != None:
                     raise RepositoryError(self.repos[index],
@@ -210,6 +238,8 @@ class SessionLockRefresher(GangaThread):
             # lock_files = [ s for s in all_lock_files and not in
             # metadata_lock_files ]
             lock_files = [f for f in ls_sdir if f.endswith(".locks") and f.find(str(os.getpid())) == -1]
+
+            ## Loop over locks which aren't belonging to this session!
             for sf in session_files:
                 joined_path = os.path.join(self.sdir, sf)
                 #print("join: %s" % str(joined_path))
@@ -219,12 +249,13 @@ class SessionLockRefresher(GangaThread):
                 # print "%s: session %s delta is %s seconds" % (time.time(),
                 # sf, now - mtm)
                 global session_expiration_timeout
-                if (now - mtm) > session_expiration_timeout:
+                if abs(float(now) - float(mtm)) > session_expiration_timeout:
                     logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
                     os.unlink(joined_path)
                     session_files.remove(sf)
                 # elif now - mtm  > session_expiration_timeout/2:
                 #    logger.warning("%s: Session %s is inactive (no update since %s seconds, removal after %s seconds)" % (time.time(), sf, now - mtm, session_expiration_timeout))
+
             # remove all lock files that do not belong to sessions that are
             # alive
             for f in lock_files:
@@ -317,7 +348,8 @@ class SessionLockManager(object):
         self.realpath = realpath
         #logger.debug( "Initializing SessionLockManager: " + self.fn )
 
-    def delay_init_open(self, filename):
+    @staticmethod
+    def delay_init_open(filename):
         value = None
         i = 0
         while value is None:
@@ -370,16 +402,8 @@ class SessionLockManager(object):
             except OSError as err:
                 logger.debug("Startup Session Exception: %s" % str(err))
                 raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.fn, err))
-            global session_lock_refresher
-            if session_lock_refresher is None:
-                try:
-                    os.close(self.delay_init_open(self.gfn))
-                    registerGlobalSessionFile(self.gfn)
-                except OSError as err:
-                    logger.debug("Startup Lock Refresher Exception: %s" % str(err))
-                    raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.gfn, err))
-                session_lock_refresher = SessionLockRefresher(self.session_name, self.sdir, self.gfn, None, self.afs)
-                session_lock_refresher.start()
+
+            session_lock_refresher = getGlobalLockRef(self.session_name, self.sdir, self.gfn, self.afs)
 
             session_lock_refresher.addRepo(self.fn, self.repo)
             self.session_write()
@@ -412,12 +436,13 @@ class SessionLockManager(object):
         except OSError as x:
             logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (self.fn, self.gfn, str(x)))
 
-    def delayopen_global(self):
+    @staticmethod
+    def delayopen_global(lockfn):
         value = None
         i = 0
         while value is None:
             try:
-                value = os.open(self.lockfn, os.O_RDWR)
+                value = os.open(lockfn, os.O_RDWR)
             except OSError as x:
                  # print "fail"
                 value = None
@@ -444,7 +469,6 @@ class SessionLockManager(object):
                     lock_file_hand.close()
             except Exception as err:
                 logger.debug("Global Lock Setup Error: %s" % str(err))
-                pass
         else:
             try:
                 self.lockfn = os.path.join(self.sdir, "global_lock")
@@ -452,7 +476,7 @@ class SessionLockManager(object):
                     lock = open(self.lockfn, "w")
                     # create file (does not interfere with existing sessions)
                     lock.close()
-                self.lockfd = self.delayopen_global()
+                self.lockfd = self.delayopen_global(self.lockfn)
                 registerGlobalSessionFile(self.lockfn)
                 registerGlobalSessionFileHandler(self.lockfd)
             except IOError as x:
@@ -460,12 +484,13 @@ class SessionLockManager(object):
             except OSError as x:
                 raise RepositoryError(self.repo, "Could not open lock file '%s': %s" % (self.lockfn, x))
 
-    def delay_lock_mod(self, lock_mod):
+    @staticmethod
+    def delay_lock_mod(lockfd, lock_mod):
         i = 0
         num_tries = 35
         while i <= num_tries:
             try:
-                fcntl.lockf(self.lockfd, lock_mod)
+                fcntl.lockf(lockfd, lock_mod)
             except IOError as x:
                 time.sleep(0.1)
                 i += 1
@@ -509,7 +534,7 @@ class SessionLockManager(object):
                     time.sleep(0.01)
 
             else:
-                self.delay_lock_mod(fcntl.LOCK_EX)
+                self.delay_lock_mod(self.lockfd, fcntl.LOCK_EX)
 
             #logger.debug("global capture")
         except IOError as x:
@@ -521,7 +546,7 @@ class SessionLockManager(object):
                 lock_path = str(self.lockfn) + '.afs'
                 os.system("fs setacl %s %s rlidwka" % (lock_path, getpass.getuser()))
             else:
-                self.delay_lock_mod(fcntl.LOCK_UN)
+                self.delay_lock_mod(self.lockfd, fcntl.LOCK_UN)
 
             #logger.debug("global release")
         except IOError as x:
@@ -834,8 +859,7 @@ class SessionLockManager(object):
 
         self.global_lock_acquire()
         try:
-            sessions = [
-                s for s in os.listdir(self.sdir) if s.endswith(self.name + ".locks")]
+            sessions = [s for s in os.listdir(self.sdir) if s.endswith(self.name + ".locks")]
             for session in sessions:
                 try:
                     sf = os.path.join(self.sdir, session)

@@ -39,8 +39,6 @@ logger.debug("Loading Batch")
 import Ganga.Lib.Batch
 logger.debug("Loading Remote")
 import Ganga.Lib.Remote
-logger.debug("Loading MSGMS")
-import Ganga.Lib.MonitoringServices.MSGMS
 
 logger.debug("Loading Tasks")
 import Ganga.GPIDev.Lib.Tasks

@@ -1,0 +1,134 @@
+/*!
+\page jobsAndTasks How to use tasks
+
+The official documentation for <i>tasks</i> in Ganga is unfortunately unclear at best but
+mostly inexistant.
+So the following is probably the best you'll find. Please contribute to it to improve it.
+
+\section JobTaskDiff What is the difference between jobs and tasks in Ganga ?
+In ganga, <i>jobs</i> (or <i>subjobs</i>) are the fundamental elements that is given to the
+backend to be processed on the localhost, or a PBS queue for example.
+A task on the other hand is an group of processings with different data sets
+and/or different applications.
+For anything very simple (running one application on one set of data) the <i>tasks</i>
+can be overkill (although we'll see that they provide nice tools in case of problems).
+When one wants to do more complicated processings and in particular chain processes
+with different applications and pass the results of one to the next, the <i>tasks</i> are
+mandatory.
+
+\section WhatIsTask What is a task exactly ?
+The best way to explain what a task is, is to just take an concrete example and
+see how it would be processed by a task.
+This example is particularly complicated because its purpose is to show how tasks
+can handle very complicated processes all at once.
+The validation of the trexRecon package requires to process different types of
+particle guns and even beam MC files.
+In this case the <i>task</i> is to run the validation.
+In Ganga <i>tasks</i> contain <i>transform</i>, and each <i>transform</i> correspond
+to a set of input data and an application.
+For example to run the reconstruction on the 12 particles guns and the one set of
+beam MC files we will need 13 transforms.
+Each particle gun has 10 files, so the particle gun <i>transforms</i> will create
+10 <i>units</i>, and each <i>unit</i> will take care of submitting (and resubmitting in case
+of problem) one <i>job</i>.
+The set of beam MC contains 400 files, so the beam MC <i>transform</i> will create
+400 <i>units</i> and a total of 400 <i>jobs</i> will be submitted to the backend.
+
+This additional layer of objects and containers may seem overly complicated but it has its
+advantages.
+For example if the power goes off and all the <i>jobs</i> are lost, one just has to reset
+the status of the <i>units</i> that were not complete before the shutdown and they will
+take care of resubmitting the <i>jobs</i>. 
+
+Going back to our example, the reconstruction processing is just the first step that
+produces flat trees. These flat trees must now be processed with a set of python scripts
+in order to create plots.
+The solution is to <B>chain</B> the reconstruction <i>transforms</i> with their corresponding
+python script <i>transforms</i>.
+We will need again 13 <i>transforms</i> and whenever a reconstruction <i>transform</i> is created,
+its output will be passed to a new python script <i>transform</i> as an input.
+In that case, each python script <i>transform</i> will create one <i>unit</i> because each python
+script will process 10 (400) flat tree files for the particle guns (beam MC).
+
+\section HowToCreateTask How do I create transforms and chain them ?
+To demonstrate a simple task with two transforms and chan them, we will use a simpler
+yet useful example in which one wants to rerun the reconstruction and oaAnalysis
+on one set of files and pass the oaAnalysis files to highland.
+
+Go over the example script <i>RecoAna+Highland.py</i> in nd280Ganga/examples
+which contains comments to explain the various steps.
+In this example the tasks has 2 <i>transforms</i> trf1 and trf2.
+Each transform requires an application and an set of input files.
+For trf1, these input files are given through a standard ND280LocalDataset.
+However for trf2, a TaskChainInput is used to use the output from trf1 as input for trf2.
+
+In order to speed up the submission of the jobs by the transforms, it is important to
+use this command:
+\code
+trf1.abort_loop_on_submit = False
+\endcode
+The task and transforms will run without it, but many seconds (to a few minutes) of delay
+will occur between the submission of 2 jobs.
+
+Another useful command in the example (commented out) is the possibility to define how many
+input files should be used for each <i>unit</i>/<i>job</i> in the transform:
+\code
+trf1.nbinputfiles = 20
+\endcode
+The default is actually nbinputfiles = 1. But for example for control samples, we often 
+want 20 input file for each output file.
+
+It is possible to extend this example with a loop over multiple sets of input files
+and add all the pairs of transforms to one task. The transforms that are not connected
+with a TaskChainInput will be running in parallel.
+
+\section HowToRunTask How do I run a task ?
+This is the simple part !
+First you create your task using your script:
+\code
+execfile('RecoAna+Highland.py')
+\endcode
+Now you can verify that your task was properly created and get its id number, let's say 14:
+\code
+tasks
+tasks(14).run()
+\endcode
+
+<B>IMPORTANT:</B> in order for the monitoring of the task to continue to manage the jobs
+and submit (or resubmit) them, Ganga must be running. So you should start your Ganga
+session in a <i>screen</i> session.
+
+At anytime you can pause the task, in particular if something goes wrong:
+\code
+tasks(14).pause()
+\endcode
+
+You can access the transforms and even the units in particular to check that everything
+is correct prior to starting the task:
+\code
+trf = tasks(14).transforms[0]
+unt = trf.units[0]
+\endcode
+
+\section WhyUseTasks Why should I use tasks for a simple processing with one transform ?
+Tasks are very powerful and should be used as often as possible because they provide
+many tools similar to a smart queue management of the jobs.
+The first and most useful tool of tasks is the possibility to control how many
+jobs will run at once on the backend using:
+\code
+tasks(14).float = 400
+\endcode
+In this particular case no more than 400 jobs will be submitted and therefore potentially
+run at the same time on the backend. This creates and effective queuing system that
+can be use to run locally on a simple computer without a PBS queue for example.
+
+As previously mentioned in case of problems, the tasks will allow for an easy and efficient
+recovery of the processing.
+This is possible by resetting the unit status using for example after a reboot of the system
+the units that were running may have a "hold" status. Reset them with:
+\code
+trf = tasks(14).transforms[0]
+trf.resetUnitsByStatus('hold')
+\endcode
+
+*/

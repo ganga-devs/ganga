@@ -82,5 +82,9 @@ def _initconfig():
                      'Number of concurrent threads to use when using the ThreadedSubmitter')
 
 def loadPlugins(config={}):
-    _initconfig()
+    from Ganga.Utility.Config.Config import _after_bootstrap
+
+    if not _after_bootstrap:
+
+        _initconfig()
 # SVN 

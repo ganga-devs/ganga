@@ -6,13 +6,12 @@ from .common import logger, markup, overview_colours, status_colours
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from .IUnit import IUnit
 import Ganga.GPI as GPI
 import time
 import os
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
-from Ganga.GPIDev.Base.Proxy import isType
 
 class ITransform(GangaObject):
     _schema = Schema(Version(1, 0), {
@@ -45,6 +44,7 @@ OutputFile objects to be copied to all jobs"),
         'submit_with_threads': SimpleItem(defvalue=False, doc='Use Ganga Threads for submission'),
         'max_active_threads': SimpleItem(defvalue=10, doc='Maximum number of Ganga Threads to use. Note that the number of simultaneous threads is controlled by the queue system (default is 5)'),
         'info' : SimpleItem(defvalue=[],typelist=['str'],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
+        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Transform', typelist=["int"]),
         #'force_single_unit' : SimpleItem(defvalue=False, doc='Force all input data into one Unit'),
     })
 
@@ -52,7 +52,7 @@ OutputFile objects to be copied to all jobs"),
     _name = 'ITransform'
     _exportmethods = ['addInputData', 'resetUnit', 'setRunLimit', 'getJobs', 'setMinorRunLimit',
                       'setMajorRunLimit', 'getID', 'overview', 'resetUnitsByStatus', 'removeUnusedJobs',
-                      'showInfo', 'showUnitInfo', 'pause' ]
+                      'showInfo', 'showUnitInfo', 'pause', 'n_all', 'n_status' ]
     _hidden = 0
 
     def showInfo(self):
@@ -173,11 +173,16 @@ OutputFile objects to be copied to all jobs"),
 
     def getID(self):
         """Return the index of this trf in the parent task"""
-        task = self._getParent()
-        if not task:
-            raise ApplicationConfigurationError(
-                None, "This transform has not been associated with a task and so there is no ID available")
-        return task.transforms.index(self)
+
+        # if the id isn't already set, use the index from the parent Task
+        if self.id < 0:
+            task = self._getParent()
+            if not task:
+                raise ApplicationConfigurationError(
+                    None, "This transform has not been associated with a task and so there is no ID available")
+            self.id = task.transforms.index(self)
+        
+        return self.id
 
     def run(self, check=True):
         """Sets this transform to running status"""
@@ -364,12 +369,12 @@ OutputFile objects to be copied to all jobs"),
 
         from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
         # make sure a path has been selected for any local downloads
-        if self.unit_copy_output != None and isType(self.unit_copy_output, TaskLocalCopy):
+        if self.unit_copy_output is not None and isType(self.unit_copy_output, TaskLocalCopy):
             if self.unit_copy_output.local_location == '':
                 logger.error("No path selected for Local Output Copy")
                 return False
 
-        if self.copy_output != None and isType(self.copy_output, TaskLocalCopy):
+        if self.copy_output is not None and isType(self.copy_output, TaskLocalCopy):
             if self.copy_output.local_location == '':
                 logger.error("No path selected for Local Output Copy")
                 return False
@@ -391,6 +396,7 @@ OutputFile objects to be copied to all jobs"),
             self.units[prev_unit.getID()] = unit
         else:
             self.units.append(unit)
+            stripProxy(unit).id = len(self.units) - 1
 
 # Information methods
     def fqn(self):
@@ -410,8 +416,8 @@ OutputFile objects to be copied to all jobs"),
         return sum([u.n_status(status) for u in self.units])
 
     def info(self):
-        logger.info(markup("%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status]))
-        logger.info("* backend: %s" % self.backend.__class__.__name__)
+        logger.info(markup("%s '%s'" % (getName(self), self.name), status_colours[self.status]))
+        logger.info("* backend: %s" % getName(self.backend))
         logger.info("Application:")
         self.application.printTree()
 
@@ -452,11 +458,11 @@ OutputFile objects to be copied to all jobs"),
             uniqueValues = []
 
             for val in value:
-                key = '%s%s' % (val.__class__.__name__, val.namePattern)
+                key = '%s%s' % (getName(val), val.namePattern)
                 if key not in uniqueValuesDict:
                     uniqueValuesDict.append(key)
                     uniqueValues.append(val)
-                elif val.__class__.__name__ == 'LCGSEFile':
+                elif getName(val) == 'LCGSEFile':
                     uniqueValues.append(val)
 
             super(ITransform, self).__setattr__(attr, uniqueValues)
@@ -505,7 +511,7 @@ OutputFile objects to be copied to all jobs"),
 
         elif attr == 'outputdata':
 
-            if value != None:
+            if value is not None:
 
                 if getConfig('Output')['ForbidLegacyOutput']:
                     logger.error(

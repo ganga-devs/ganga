@@ -70,6 +70,12 @@ class IApplication(GangaObject):
     _category = 'applications'
     _hidden = 1
 
+    def __init__(self):
+        super(IApplication, self).__init__()
+
+    def __construct__(self, args):
+        super(IApplication, self).__construct__(args)
+
     def master_configure(self):
         """ Configure the shared/master  aspect of the application.
         Return a tuple (modified_flag,  appconfig).

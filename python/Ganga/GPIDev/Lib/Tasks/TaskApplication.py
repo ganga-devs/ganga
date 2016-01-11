@@ -1,8 +1,9 @@
-
+from Ganga import GPI
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from new import classobj
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Base.Proxy import stripProxy
-
+from .common import logger
 
 handler_map = []
 
@@ -79,19 +80,19 @@ class TaskApplication(object):
                         sj.application.transition_update(new_status)
 
                 if transform:
-                    transform._impl.setMasterJobStatus(
+                    stripProxy(transform).setMasterJobStatus(
                         self._getParent(), new_status)
 
             else:
                 if transform:
-                    transform._impl.setAppStatus(self, new_status)
+                    stripProxy(transform).setAppStatus(self, new_status)
 
         except Exception as x:
             import traceback
             import sys
             logger.error(
                 "Exception in call to transform[%s].setAppStatus(%i, %s)", self.tasks_id, self.id, new_status)
-            logger.error(x.__class__.__name__ + " : " + x)
+            logger.error( getName(x) + " : " + x)
             tb = sys.exc_info()[2]
             if tb:
                 traceback.print_tb(tb)
@@ -144,8 +145,8 @@ def taskApp(app):
     else:
         logger.error("The application '%s' cannot be used with the tasks package yet!" % a._name)
         raise AttributeError()
-    for k in a._data:
-        b._data[k] = a._data[k]
+    for k in a.getNodeData():
+        b.setNodeAttribute(k, a.getNodeAttribute(k))
 
     # We need to recalculate the application's preparable hash here, since the text string representation
     # of the application has changed (e.g. Executable -> ExecutableTask).

@@ -21,6 +21,7 @@ from Ganga.Utility.Runtime import getScriptPath, getSearchPath
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType
 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 from Ganga.GPIDev.Lib.Registry.RegistrySliceProxy import RegistrySliceProxy
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 import Ganga.Utility.logging
 import os
 import sys
@@ -93,6 +94,8 @@ def stripped_export(item=None, filename="", mode="w"):
         objectList = [stripProxy(element) for element in item]
     elif isType(item, RegistrySliceProxy) or isType(item, RegistrySlice):
         objectList = [stripProxy(element) for element in item]
+    elif isType(item, GangaList):
+        objectList = [stripProxy(element) for element in item]
     else:
         objectList = [item]
 
@@ -108,20 +111,19 @@ def stripped_export(item=None, filename="", mode="w"):
         outFile.writelines(lineList)
 
     nObject = 0
-    for object in objectList:
+    for this_object in objectList:
         try:
-            name = object._name
-            category = object._category
-            outFile.write("#Ganga# %s object (category: %s)\n"
-                          % (name, category))
-            object.printTree(outFile, "copyable")
+            name = this_object._name
+            category = this_object._category
+            outFile.write("#Ganga# %s object (category: %s)\n" % (name, category))
+            this_object.printTree(outFile, "copyable")
             nObject = nObject + 1
-        except AttributeError, err:
+        except AttributeError as err:
             logger.info("Unable to save item - not a GangaObject")
             logger.info("Problem item: %s" % (repr(object)))
             logger.warning("Error: %s" % str(err))
             raise err
-        except Exception, err:
+        except Exception as err:
             logger.error("Unknown export error!")
             raise err
 

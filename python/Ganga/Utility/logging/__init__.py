@@ -96,6 +96,11 @@ config.addOption('_interactive_cache', True,
                  'if True then the cache used for interactive sessions, False disables caching')
 config.addOption('_customFormat', "", "custom formatting string for Ganga logging\n e.g. '%(name)-35s: %(levelname)-8s %(message)s'")
 
+INFO = logging.INFO
+WARNING = logging.WARNING
+ERROR = logging.ERROR
+CRITICAL = logging.CRITICAL
+DEBUG = logging.DEBUG
 
 class ColourFormatter(logging.Formatter, object):
 
@@ -137,7 +142,6 @@ def _set_formatter(handler):
     formatter.setColour(config['_colour'])
     handler.setFormatter(formatter)
 
-
 def _make_file_handler(logfile, logfile_size):
     import os.path
     logfile = os.path.expanduser(logfile)
@@ -175,14 +179,18 @@ def _make_file_handler(logfile, logfile_size):
 # reflect all user changes immediately
 def post_config_handler(opt, value):
 
-    if '_customFormat' in config:
+    if '_customFormat' in config and config['_customFormat'] != "":
         for k in _formats.keys():
             _formats[k] = config['_customFormat']
 
     _format, colour = config['_format'], config['_colour']
 
-    if opt == '_format':
+    #print("")# rcurrie - This strangely seems to trick the logging into working when the _customFormat is used on first start
+
+    if opt in ['_format', '_customFormat']:
         badConfig = False
+        if opt == "_customFormat":
+            value = config['_format']
         if value in _formats:
             _format = _formats[value]
         else:
@@ -459,7 +467,7 @@ def bootstrap(internal=False, handler=None):
     private_logger.debug('end of bootstrap')
 
 
-def shutdown():
+def final_shutdown():
     private_logger.debug('shutting down logsystem')
     logging.shutdown()
 

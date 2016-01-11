@@ -314,6 +314,10 @@ class DiracFile(IGangaFile):
 
         logger.debug("DiracFile: setLocation")
 
+        if not stripProxy(self).getJobObject():
+            logger.error("No job assocaited with DiracFile: %s" % str(self))
+            return
+
         job = self.getJobObject()
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
 
@@ -461,9 +465,12 @@ class DiracFile(IGangaFile):
                     raise GangaError("Couldn't find replicas for: %s" % str(self.lfn))
                 logger.debug("getReplicas: %s" % str(self._storedReplicas))
 
-                self._updateRemoteURLs(self._storedReplicas)
+                if self.lfn in self._storedReplicas.keys():
+                    self._updateRemoteURLs(self._storedReplicas)
 
-                these_replicas = [self._storedReplicas[self.lfn]]
+                    these_replicas = [self._storedReplicas[self.lfn]]
+                else:
+                    these_replicas = {}
             elif self._storedReplicas != {}:
                 these_replicas = [self._storedReplicas[self.lfn]]
 
@@ -711,6 +718,7 @@ class DiracFile(IGangaFile):
                 logger.warning("LFN will be generated automatically")
                 self.lfn = ""
 
+        selfConstructedLFN = False
 
         import glob
         if self.remoteDir == '' and self.lfn == '':
@@ -718,8 +726,9 @@ class DiracFile(IGangaFile):
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
             self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
-        if self.remoteDir == '' and self.lfn != '':
-            self.remoteDir = configDirac['DiracLFNBase']
+            selfConstructedLFN = True
+        #if self.remoteDir == '' and self.lfn != '':
+        #    self.remoteDir = configDirac['DiracLFNBase']
 
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
@@ -748,9 +757,13 @@ class DiracFile(IGangaFile):
                     if not os.path.exists(name):
                         raise GangaException('File "%s" must exist!' % name)
 
-            lfn = self.lfn
             if lfn == "":
                 lfn = os.path.join(lfn_base, os.path.basename(name))
+
+            if selfConstructedLFN is True:
+                self.lfn = os.path.join(self.lfn, os.path.basename(name))
+
+            lfn = self.lfn
 
             d = DiracFile()
             d.namePattern = os.path.basename(name)
@@ -873,11 +886,14 @@ for f in glob.glob('###NAME_PATTERN###'):
         WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
         script = FileUtils.loadScript(WNscript_location, '###INDENT###')
 
+        selfConstructedLFNs = False
+
         if self.remoteDir == '' and self.lfn == '':
             import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
             self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+            selfConstructedLFNs = True
 
         if self.remoteDir == '' and self.lfn != '':
             self.remoteDir = configDirac['DiracLFNBase']
@@ -890,14 +906,15 @@ for f in glob.glob('###NAME_PATTERN###'):
 
         for this_file in outputFiles:
             isCompressed = this_file.namePattern in patternsToZip
+
             if not regex.search(this_file.namePattern) is None:
                 script += self._WN_wildcard_script(this_file.namePattern, lfn_base, str(isCompressed))
             else:
-                script += '###INDENT###print("Uploading: %s")\n' % this_file.namePattern
+                script += '###INDENT###print("Uploading: %s as: %s")\n' % (this_file.namePattern, str(os.path.join(lfn_base, this_file.namePattern)))
                 script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(isCompressed))
 
 
-        if stripProxy(self)._parent and getName(stripProxy(self)._parent.backend) != 'Dirac':
+        if stripProxy(self)._parent is not None and stripProxy(self).getJobObject() and getName(stripProxy(self).getJobObject().backend) != 'Dirac':
             script_env = self._getDiracEnvStr()
         else:
             script_env = str(None)

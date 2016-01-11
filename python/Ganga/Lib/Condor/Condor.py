@@ -62,6 +62,7 @@ __version__ = "2.5"
 
 from Ganga.Core import Sandbox
 from Ganga.GPIDev.Adapters.IBackend import IBackend
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 from Ganga.Utility.ColourText import Foreground, Effects
@@ -488,6 +489,7 @@ class Condor(IBackend):
                 cputime = allDict[globalId]["cputime"]
                 if status != jobDict[id].backend.status:
                     printStatus = True
+                    stripProxy(jobDict[id])._getWriteAccess()
                     jobDict[id].backend.status = status
                     if jobDict[id].backend.status == "Running":
                         jobDict[id].updateStatus("running")

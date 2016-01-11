@@ -16,6 +16,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer
 
 import Ganga.Utility.logging
 
+import errno
 import re
 import os
 import os.path
@@ -185,7 +186,7 @@ class LocalFile(IGangaFile):
                 return False
 
         # check if single file exists (no locations field to try)
-        job = self._getParent()
+        job = self.getJobObject()
         if job:
             fname = self.namePattern
             if self.compressed:
@@ -201,7 +202,7 @@ class LocalFile(IGangaFile):
         for this_file in self.getFilenameList():
             _actual_delete = False
             keyin = None
-            while keyin == None:
+            while keyin is None:
                 keyin = raw_input("Do you want to remove the LocalFile: %s ? ([y]/n) " % str(this_file))
                 if keyin in ['y', '']:
                     _actual_delete = True
@@ -218,7 +219,7 @@ class LocalFile(IGangaFile):
                     logger.info("Deleting: %s" % this_file)
 
                     import time
-                    remove_filename = this_file + '__to_be_deleted_' + str(time.time())
+                    remove_filename = this_file + "_" + str(time.time()) + '__to_be_deleted_'
                     try:
                         os.rename(this_file, remove_filename)
                     except Exception as err:

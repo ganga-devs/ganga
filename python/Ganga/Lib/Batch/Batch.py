@@ -1,6 +1,8 @@
 import datetime
 import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Core import BackendError
 import os.path
@@ -104,7 +106,9 @@ class Batch(IBackend):
     def __init__(self):
         super(Batch, self).__init__()
 
-    def command(klass, cmd, soutfile=None, allowed_exit=[0]):
+    def command(klass, cmd, soutfile=None, allowed_exit=None):
+        if allowed_exit is None:
+            allowed_exit = [0]
         rc, soutfile, ef = shell_cmd(cmd, soutfile, allowed_exit)
         if not ef:
             logger.error(
@@ -311,7 +315,7 @@ class Batch(IBackend):
             m = re.compile(self.config['kill_res_pattern'], re.M).search(sout)
             logger.warning('while killing job %s: %s', self.getJobObject().getFQID('.'), sout)
 
-            return not m == None
+            return m is not None
 
     def getStateTime(self, status):
         """Obtains the timestamps for the 'running', 'completed', and 'failed' states.
@@ -383,14 +387,11 @@ class Batch(IBackend):
         job = self.getJobObject()
         mon = job.getMonitoringService()
         import Ganga.Core.Sandbox as Sandbox
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles()
-                                                            +
-                                                            Sandbox.getGangaModulesAsSandboxFiles(
-                                                                Sandbox.getDefaultModules())
-                                                            + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules()))
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()))
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         sharedoutputpath = job.getOutputWorkspace().getPath()
+        ## FIXME Check this isn't a GangaList
         outputpatterns = jobconfig.outputbox
         environment = jobconfig.env if not jobconfig.env is None else {}
 
@@ -433,8 +434,6 @@ class Batch(IBackend):
         '###QUEUENAME###' : self.config['queue_name'],
         '###HEARTBEATFREQUENCE###' : self.config['heartbeat_frequency'],
         '###INPUT_DIR###' : repr(job.getStringInputDir()),
-
-        '###MONITORING_SERVICE###' : job.getMonitoringService().getWrapperScriptConstructorText(),
 
         '###GANGADIR###' : repr(getConfig('System')['GANGA_PYTHONPATH'])
         }
@@ -507,6 +506,7 @@ class Batch(IBackend):
 
         from Ganga.Utility.Config import getConfig
         for j in jobs:
+            stripProxy(j)._getWriteAccess()
             outw = j.getOutputWorkspace()
 
             statusfile = os.path.join(outw.getPath(), '__jobstatus__')
@@ -527,7 +527,7 @@ class Batch(IBackend):
                         j.backend.actualCE = actualCE
 
             if j.status == 'running':
-                if exitcode != None:
+                if exitcode is not None:
                     # Job has finished
                     j.backend.exitcode = exitcode
                     if exitcode == 0:

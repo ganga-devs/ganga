@@ -1,4 +1,5 @@
 j = Job()
+j.application.exe = File('/hello')
 print j.application.exe
 print File('/hello')
 assert(j.application.exe == File('/hello'))

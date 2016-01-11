@@ -280,7 +280,7 @@ def proxy(obj, *specials):
 def importName(modulename, name):
     try:
         module = __import__(modulename, globals(), locals(), [name])
-    except ImportError, err:
+    except ImportError as err:
         import sys
         sys.stderr.write("importName, ImportError: %s\n" % str(err))
         return None

@@ -3,6 +3,9 @@ from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig, setConfigOption
 from Ganga.Core.GangaRepository import getRegistry
+## trying to make sure these are in the GPI rcurrie
+from GangaTest.Lib.TestSubmitter import TestSplitter, TestSubmitter
+from GangaTest.Lib.TestApplication import TestApplication
 from xml.dom import minidom
 
 logger = getLogger()

@@ -6,10 +6,11 @@ import tempfile
 import fnmatch
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 from Ganga.GPIDev.Lib.File import FileBuffer
+from Ganga.GPIDev.Lib.File import LocalFile
 import Ganga.Utility.logging
 from Ganga.Utility.util import unique
 import Ganga.Utility.Config
-from GangaLHCb.Lib.LHCbDataset import *
+from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd

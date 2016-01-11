@@ -1,16 +1,23 @@
 import os
 import Ganga.Utility.logging
 import Ganga.Utility.Config
-configGaudi = Ganga.Utility.Config.makeConfig(
+
+from Ganga.Utility.Config.Config import _after_bootstrap
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
+if not _after_bootstrap:
+
+    configGaudi = Ganga.Utility.Config.makeConfig(
     'GAUDI', 'Generic GAUDI based parameters')
 
-dscrpt = 'The command used to make a CMT application.'
-configGaudi.addOption('make_cmd', 'make', dscrpt)
+    dscrpt = 'The command used to make a CMT application.'
+    configGaudi.addOption('make_cmd', 'make', dscrpt)
 
-dscrpt = 'Levels below InstallArea/[<platform>]/python to decend when looking for .py files to include'
-configGaudi.addOption('pyFileCollectionDepth', 2, dscrpt)
+    dscrpt = 'Levels below InstallArea/[<platform>]/python to decend when looking for .py files to include'
+    configGaudi.addOption('pyFileCollectionDepth', 2, dscrpt)
 
-def getEnvironment(config={}):
+def getEnvironment(config=None):
     import sys
     import os.path
     import PACKAGE
@@ -19,7 +26,7 @@ def getEnvironment(config={}):
     return
 
 
-def loadPlugins(config={}):
+def loadPlugins(config=None):
     #import Lib.Backends
     #import Lib.Checkers
     pass

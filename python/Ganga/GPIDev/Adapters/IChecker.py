@@ -60,10 +60,8 @@ class IFileChecker(IChecker):
     Abstract class which all checkers inherit from.
     """
     _schema = IChecker._schema.inherit_copy()
-    _schema.datadict['files'] = SimpleItem(
-        defvalue=[], doc='File to search in')
-    _schema.datadict['filesMustExist'] = SimpleItem(
-        True, doc='Toggle whether to fail job if a file isnt found.')
+    _schema.datadict['files'] = SimpleItem(defvalue=[], doc='File to search in')
+    _schema.datadict['filesMustExist'] = SimpleItem(True, doc='Toggle whether to fail job if a file isn\'t found.')
     _category = 'postprocessor'
     _name = 'IFileChecker'
     _hidden = 1
@@ -90,3 +88,4 @@ class IFileChecker(IChecker):
                     logger.warning(
                         'Ignoring file %s as it does not exist.', filepath)
         return filepaths
+

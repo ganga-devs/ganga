@@ -58,8 +58,13 @@ def isCredentialRequired(credObj):
         from Ganga.GPIDev.Base.Proxy import stripProxy
         for j in jobs:
             ji = stripProxy(j)
-            if ji.status in ['submitted', 'running', 'completing'] and typename(ji.backend) == 'LCG':
-                return True
+            if ji.status in ['submitted', 'running', 'completing']:
+                if ji.getNodeIndexCache() is not None and 'display:backend' in ji.getNodeIndexCache().keys():
+                    if ji.getNodeIndexCache()['display:backend'] == 'LCG':
+                        return True
+                else:
+                    if getName(ji.backend) == 'LCG':
+                        return True
         return False
 
     log.warning("Unknown credential object : %s" % credObj)

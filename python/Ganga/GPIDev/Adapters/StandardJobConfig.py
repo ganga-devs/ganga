@@ -24,7 +24,7 @@ class StandardJobConfig(object):
 
     """
 
-    def __init__(self, exe='', inputbox=[], args=[], outputbox=[], env=None):
+    def __init__(self, exe=None, inputbox=None, args=None, outputbox=None, env=None):
         """
         exe - executable string to be run on the worker node or a File object to be shipped as executable script to the worker node
         args - list of strings which are passed as arguments to the executable string or File objects which are automatically added to the sandbox
@@ -36,6 +36,14 @@ class StandardJobConfig(object):
           - this constructor should be called at the end of the derived constructor.
           - you may freely add new attributes as long as you they do not start with _
         """
+        if exe is None:
+            exe = ''
+        if inputbox is None:
+            inputbox = []
+        if args is None:
+            args = []
+        if outputbox is None:
+            outputbox = []
         self.exe = exe
         self.inputbox = inputbox[:]
         self.args = args
@@ -47,6 +55,14 @@ class StandardJobConfig(object):
         self.__sandbox_check = {}
 
         self.processValues()
+
+    def __str__(self):
+        config_str = "Config:"
+        config_str += " Exe str: '%s'" % str(self.getExeString())
+        config_str += " Arg: '%s'" % str(self.getArgStrings())
+        config_str += " Input Sandbox files: '%s'" % str(self.getSandboxFiles())
+        config_str += " Output files: '%s'" % str(self.getOutputSandboxFiles())
+        return config_str
 
     def getSandboxFiles(self):
         '''Get all input sandbox files'''
@@ -101,8 +117,7 @@ class StandardJobConfig(object):
 
             fn = f.getPathInSandbox()
             if fn in self.__sandbox_check:
-                logger.warning(
-                    'File %s already in the sandbox (source=%s). Overriding from source=%s', fn, self.__sandbox_check[fn], f.name)
+                logger.warning('File %s already in the sandbox (source=%s). Overriding from source=%s', fn, self.__sandbox_check[fn], f.name)
             self.__sandbox_check[fn] = f.name
             return fn
 

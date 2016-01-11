@@ -205,6 +205,9 @@ config = MainConfigProxy()
 
 
 def print_config_file():
+    from cStringIO import StringIO
+    sio = StringIO()
+
     sections = sorted(stripProxy(config).keys())
 
     def print_doc_text(text):
@@ -273,7 +276,8 @@ def config_file_as_text():
                         if len(lines) > 1:
                             value = "\n# ".join(lines)
                             def_value = "\n# ".join(def_lines)
-                    except AttributeError:
+                    except AttributeError as err:
+                        print("Attrib Err: %s" % str(err))
                         pass
                     text += '#%s = %s\n' % (o, def_value)
                     text += '%s = %s\n\n' % (o, value)

@@ -1,9 +1,15 @@
 from __future__ import absolute_import
 
 
-def execInThread(target, args=(), kwargs={}, timeout=None,
+def execInThread(target, args=None, kwargs=None, timeout=None,
                  waitFlag=False, lock=(None, None),
                  callBackFunc=None):
+
+    if args is None:
+        args = ()
+    if kwargs is None:
+        kwargs = {}
+
     def _child(target, args, kwargs):
         try:
             if lock[0]:
@@ -33,7 +39,9 @@ from .util import GenericWrapper
 
 class SynchronisedObject(GenericWrapper):
 
-    def __init__(self, obj, ignore=(), lock=None):
+    def __init__(self, obj, ignore=None, lock=None):
+        if ignore is None:
+            ignore = ()
         if lock is None:
             import threading
             lock = threading.RLock()

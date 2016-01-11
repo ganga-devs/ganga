@@ -4,7 +4,7 @@ _mon_classes = {}
 
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
-from Ganga.Lib.MonitoringServices.Composite import CompositeMonitoringService
+from Ganga.GPIDev.MonitoringServices.Composite import CompositeMonitoringService
 
 from Ganga.Utility.Config import makeConfig
 
@@ -30,8 +30,6 @@ class MonitoringServiceError(GangaException):
 
     def __init__(self):
         super(MonitoringServiceError, self).__init__()
-
-    pass
 
 
 def getMonitoringClass(mclassname):
@@ -68,7 +66,7 @@ def getMonitoringClass(mclassname):
             logger.debug("ImportError: %s" % str(err))
             raise MonitoringServiceError('%s while loading %s' % (str(err), mclassname))
         except KeyError as err:
-            logging.debug("KeyError %s" % str(err))
+            logger.debug("KeyError %s" % str(err))
             raise MonitoringServiceError('class %s not found while loading %s' % (classname, mclassname))
 
 
@@ -136,7 +134,7 @@ def getMonitoringObject(job):
         except MonitoringServiceError as err:
             logger.debug("Error with: %s" % str(err))
             this_class = None
-        if thisclass is not None:
+        if this_class is not None:
             monClasses.append(this_class)
     jobs = [job] * len(monClasses)
     configs = [monClass.getConfig() for monClass in monClasses]

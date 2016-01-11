@@ -33,7 +33,9 @@ class GaudiDataset(Dataset):
                       'extend', 'insert', 'remove', 'pop', 'index', 'count', 'sort',
                       'reverse']
 
-    def __init__(self, files=[]):
+    def __init__(self, files=None):
+        if files is None:
+            files = []
         super(GaudiDataset, self).__init__()
         self.files = files
 
@@ -67,23 +69,25 @@ class GaudiDataset(Dataset):
 
     def __iadd__(self, other): return self.files.__iadd__(other)
 
-    def append(x): return self.files.append(x)
+    def append(self, x): return self.files.append(x)
 
-    def extend(L): return self.files.extend(L)
+    def extend(self, L): return self.files.extend(L)
 
-    def insert(i, x): return self.files.insert(i, x)
+    def insert(self, i, x): return self.files.insert(i, x)
 
-    def remove(x): return self.files.remove(x)
+    def remove(self, x): return self.files.remove(x)
 
-    def pop(*i): return self.files.pop(*i)
+    def pop(self, *i): return self.files.pop(*i)
 
-    def index(x): return self.files.index(x)
+    def index(self, x): return self.files.index(x)
 
-    def count(x): return self.files.count(x)
+    def count(self, x): return self.files.count(x)
 
-    def sort(): return self.files.sort()
+    @staticmethod
+    def sort(self): return self.files.sort()
 
-    def reverse(): return self.files.reverse()
+    @staticmethod
+    def reverse(self): return self.files.reverse()
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

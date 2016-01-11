@@ -44,7 +44,7 @@ class JobTree(GangaObject):
     The jobtree is persisted in between Ganga sessions.
     """
     _schema = Schema(Version(1, 2), {'name': SimpleItem(''),
-                                     'folders': SimpleItem({os.sep: {}}, protected=1, copyable=1, hidden=1),
+                                     'folders': SimpleItem({os.sep: {}}, protected=1, copyable=1),
                                      })
 
     _category = 'jobtrees'
@@ -69,23 +69,8 @@ class JobTree(GangaObject):
             return JobTree._cwd.get(id(self), [os.sep])
         JobTree._cwd[id(self)] = val
 
-    def __getstate__(self):
-        dict = super(JobTree, self).__getstate__()
-        dict['_registry'] = None
-        dict['_counter'] = 0
-        return dict
-
-    def __setstate__(self, dict):
-        self._getWriteAccess()
-        try:
-            super(JobTree, self).__setstate__(dict)
-            self._setRegistry(None)
-            self._setDirty()
-        finally:
-            self._releaseWriteAccess()
-
     def __get_path(self, path=None):
-        if path == None:
+        if path is None:
             return self.cwd()[:]
         else:
             pp = []
@@ -152,6 +137,8 @@ class JobTree(GangaObject):
 
         ##  Perform some anity checking before returning the local folder structure
     def __get_folders(self):
+        if not hasattr(self, 'folders'):
+            setattr(self, 'folders', {os.sep: {}})
         f = self.folders
         if os.sep not in f.keys():
             f[os.sep] = {}
@@ -179,18 +166,31 @@ class JobTree(GangaObject):
                 del self.__get_folders()[path][dir]
         return
 
+
+    ## Explicitly DO NOT copy self as we want one object per jobs repo through the GPI! - rcurrie
+
+    def clone(self, ignora_atts=[]):
+        return self
+
+    def __deepcopy__(self, memo):
+        return self
+
     def _copy(self):
-        reg = self._getRegistry()
-        c = self.clone()
-        c.folders = {}
-        if len(self.__get_folders().keys()) > 1:
-            for k,v in self.__get_folders().itervalues():
-                c.folders[k] = copy.deepcopy(self.__get_folders().get(k))
-        else:
-            for k in self.__get_folders().keys():
-                c.folders[k] = copy.deepcopy(self.__get_folders().get(k))
-        c._setRegistry(reg)
-        return GPIProxyObjectFactory(c)
+        return self
+        #reg = self._getRegistry()
+        #c = self.clone()
+        #c.folders = {}
+        #if len(self.__get_folders().keys()) > 1:
+        #    for k,v in self.__get_folders().itervalues():
+        #        c.folders[k] = copy.deepcopy(self.__get_folders().get(k))
+        #else:
+        #    for k in self.__get_folders().keys():
+        #        c.folders[k] = copy.deepcopy(self.__get_folders().get(k))
+        #c._setRegistry(reg)
+        #c._setParent(self._getParent())
+        #
+        #c._registry_id = self._registry_id
+        #return GPIProxyObjectFactory(c)
 
     def _display(self, interactive=0):
         from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup
@@ -435,6 +435,8 @@ class JobTree(GangaObject):
             pp = self.__get_path(path)
             fc = self.__folder_cd(pp)
 
+            #print("self._getRegistry(): %s" % str(stripProxy(self)._getRegistry()))
+
             for i in fc.keys():
                 if isType(fc[i], type({})):
                     pass
@@ -442,22 +444,26 @@ class JobTree(GangaObject):
                 else:
                     try:
                         try:
-                            id = int(fc[i])
-                            j = registry[id]
+                            _id = int(fc[i])
+                            j = registry[_id]
                         except ValueError:
                             jid = fc[i].split('.')
                             j = registry[int(jid[0])].subjobs[int(jid[1])]
                     except RegistryKeyError, ObjectNotInRegistryError:
+                        #try:
+                        self._getWriteAccess()
+                        self.__remove_dir(path=path, dir=i)
+                        self._setDirty()
+                        #except ObjectNotInRegistryError as err:
+                        #    logger.debug("Object: %s Not in Reg: %s" % (str(_id), str(err)))
+                        #    pass
                         try:
-                            self._getWriteAccess()
-                            self.__remove_dir(path=path, dir=i)
-                            self._setDirty()
-                        except ObjectNotInRegistryError:
                             pass
                         finally:
                             try:
                                 self._releaseWriteAccess()
-                            except ObjectNotInRegistryError:
+                            except ObjectNotInRegistryError as err:
+                                logger.debug("Object: %s Not in Reg: %s" % (str(_id), str(err)))
                                 pass
 
     def printtree(self, path=None):

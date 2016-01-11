@@ -1,6 +1,7 @@
 import copy
 import os
 import pickle
+from Ganga.Core import BackendError
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
@@ -25,8 +26,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
     def master_prepare(self, app, appmasterconfig):
 
-        inputsandbox, outputsandbox = master_sandbox_prepare(
-            app, appmasterconfig, ['inputsandbox'])
+        logger.debug("Master Prepare")
+        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig, ['inputsandbox'])
 
         # add summary.xml
         outputsandbox += ['summary.xml', '__parsedxmlsummary__']
@@ -38,8 +39,9 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
 
-        inputsandbox, outputsandbox = sandbox_prepare(
-            app, appsubconfig, appmasterconfig, jobmasterconfig)
+        logger.debug("Prepare")
+
+        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
         job = app.getJobObject()
 
@@ -145,8 +147,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
             # As the RT Handler we already know we have a Dirac backend
             if type(job.backend.settings) is not dict:
-                raise ApplicationConfigurationError(
-                    None, 'backend.settings should be a dict')
+                raise ApplicationConfigurationError(None, 'backend.settings should be a dict')
 
             if 'AncestorDepth' in job.backend.settings:
                 ancestor_depth = job.backend.settings['AncestorDepth']

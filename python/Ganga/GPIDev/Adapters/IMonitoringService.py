@@ -76,32 +76,6 @@ class IMonitoringService(object):
         Called by: ganga client. """
         return self.event('rollback', {'job': self.job_info})
 
-    def getSandboxModules(self):
-        """ Get the list of module dependencies of this monitoring module.
-        Called by: ganga client.
-
-        Returns a list of modules which are imported by this module and
-        therefore must be shipped automatically to the worker node. The list
-        should include the module where this class is defined plus all modules
-        which represent the parent packages. The module containing the
-        IMonitoringService class is added automatically by the call to the
-        base class sandBoxModule() method. An example for a class defined in
-        the module Ganga/Lib/MonitoringServices/DummyMS/DummyMS.py which does
-        not have any further dependencies:
-
-        import Ganga.Lib.MonitoringServices.DummyMS
-        return IMonitoringService.getSandboxModules(self) + [
-                 Ganga,
-                 Ganga.Lib,
-                 Ganga.Lib.MonitoringServices,
-                 Ganga.Lib.MonitoringServices.DummyMS,
-                 Ganga.Lib.MonitoringServices.DummyMS.DummyMS
-                ]
-        Note, that it should be possible to import all parent modules without side effects (so without importing automatically their other children).
-        """
-        import Ganga.GPIDev.Adapters
-        return [Ganga, Ganga.GPIDev, Ganga.GPIDev.Adapters, Ganga.GPIDev.Adapters.IMonitoringService]
-
     def getJobInfo(self):
         """ Return a static info object which static information about the job
         at submission time. Called by: ganga client.
@@ -131,21 +105,4 @@ class IMonitoringService(object):
         """
         return None
 
-    def getWrapperScriptConstructorText(self):
-        """ Return a line of python source code which creates the instance of the monitoring service object to be used in the job wrapper script. This method should not be overriden.
-        """
-        config = self.__class__.getConfig()
-        if config is None:
-            text = "def createMonitoringObject(): from %s import %s; return %s(%s)\n" % (
-                self._mod_name, self.__class__.__name__, self.__class__.__name__, self.getJobInfo())
-        else:
-            text = "def createMonitoringObject(): from %s import %s; return %s(%s, %s)\n" % (self._mod_name,
-                                                                                             self.__class__.__name__, self.__class__.__name__, self.getJobInfo(), config.getEffectiveOptions())
 
-        return text
-
-    # COMPATIBILITY INTERFACE - INTERNAL AND OBSOLETE
-
-    def event(self, what='', values={}):
-        """Obsolete method. """
-        pass

@@ -26,6 +26,7 @@ __version__ = "1.4"
 
 from Ganga.Core import Sandbox
 from Ganga.GPIDev.Adapters.IBackend import IBackend
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.Utility import logging, util
@@ -83,7 +84,8 @@ class Interactive(IBackend):
                     match = regexp.search(statString)
                     if match:
                         value = int(match.group("value"))
-            except IOError:
+            except IOError as err:
+                logger.debug("IOError: %s" % str(err))
                 pass
         return value
 
@@ -119,7 +121,6 @@ class Interactive(IBackend):
             self.status = "completed"
         except KeyboardInterrupt:
             self.status = "killed"
-            pass
 
         return True
 
@@ -266,6 +267,7 @@ class Interactive(IBackend):
     def updateMonitoringInformation(jobs):
 
         for j in jobs:
+            stripProxy(j)._getWriteAccess()
 
             if not j.backend.id:
                 id = j.backend._getIntFromOutfile("PID:", "__id__")

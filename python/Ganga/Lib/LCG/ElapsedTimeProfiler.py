@@ -23,7 +23,6 @@ class ElapsedTimeProfiler(object):
             logger = getLogger(name='Ganga.Lib.LCG.ElapsedTimeProfiler')
 
         self.logger = logger
-        pass
 
     def start(self):
         self.beg = time.time()

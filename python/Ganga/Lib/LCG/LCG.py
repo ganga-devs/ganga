@@ -150,7 +150,6 @@ class LCG(IBackend):
             logger.debug('load %s as LCGRequirements' % reqName)
         except:
             logger.debug('load default LCGRequirements')
-            pass
 
         # dynamic sandbox cache object loading
         try:
@@ -162,7 +161,6 @@ class LCG(IBackend):
             logger.debug('load %s as SandboxCache' % scName)
         except:
             logger.debug('load default LCGSandboxCAche')
-            pass
 
     def __checkset_middleware__(self, value):
         if value and not value.upper() in ['GLITE', 'EDG']:
@@ -1111,10 +1109,9 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
             else:
                 outfile.flush()
                 errorfile.flush()
-                monitor.progress()
                 time.sleep(0.3)
     finally:
-        monitor.progress()
+        pass
 
     outfile.flush()
     errorfile.flush()
@@ -1174,9 +1171,7 @@ def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
         err_thread.start()
         while not out_thread.finished and not err_thread.finished:
             stopcb(True)
-            monitor.progress()
             time.sleep(0.3)
-        monitor.progress()
 
         sys.stdout.flush()
         sys.stderr.flush()
@@ -1296,10 +1291,6 @@ try:
     for lib_path in sys.path:
         printInfo(' ** sys.path: %s' % lib_path)
 
-    ###MONITORING_SERVICE###
-    monitor = createMonitoringObject()
-    monitor.start()
-
 #   execute application
 
     ## convern appenvs into environment setup script to be 'sourced' before executing the user executable
@@ -1363,7 +1354,6 @@ try:
 #        printInfo(line)
 
     printInfo('Pack outputsandbox passed.')
-    monitor.stop(exitcode)
     
     # Clean up after us - All log files and packed outputsandbox should be in "wdir"
     if scratchdir:
@@ -1478,12 +1468,9 @@ sys.exit(0)
         except:
             pass
 
-        script = script.replace(
-            '###MONITORING_SERVICE###', mon.getWrapperScriptConstructorText())
 
 #       prepare input/output sandboxes
-        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(
-            Sandbox.getDefaultModules()) + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
+        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules())
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox
@@ -2302,7 +2289,7 @@ def __updateGridObjects__(opt, val):
 
     # when user changes the 'DefaultLFC', change the env. variable, LFC_HOST,
     # of the cached grid shells
-    if opt == 'DefaultLFC' and val != None:
+    if opt == 'DefaultLFC' and val is not None:
         for mt in grids.keys():
             try:
                 grids[mt].shell.env['LFC_HOST'] = val

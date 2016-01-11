@@ -21,7 +21,9 @@ class Data(object):
 
     _attributes = ('collection', 'queue')
 
-    def __init__(self, collection=[]):
+    def __init__(self, collection=None):
+        if collection is None:
+            collection = []
 
         self.collection = collection
         self.queue = Queue(maxsize=-1)

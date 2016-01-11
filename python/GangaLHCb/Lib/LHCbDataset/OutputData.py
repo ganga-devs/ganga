@@ -25,12 +25,14 @@ class OutputData(GangaObject):
     _name = "OutputData"
     _exportmethods = ['__len__', '__getitem__']
 
-    def __init__(self, files=[]):
+    def __init__(self, files=None):
+        if files is None:
+            files = []
         super(OutputData, self).__init__()
         self.files = files
 
     def __construct__(self, args):
-        if (len(args) != 1) or (type(args[0]) is not type([])):
+        if (len(args) != 1) or (type(args[0]) not in [list, tuple]):
             super(OutputData, self).__construct__(args)
         else:
             self.files = args[0]

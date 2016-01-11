@@ -1,0 +1,2 @@
+j=Job(); j.submit(); runMonitoring(jobs.select(j.id,j.id))
+assert j.status in ['running', 'completed']

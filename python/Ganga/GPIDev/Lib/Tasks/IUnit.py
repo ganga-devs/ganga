@@ -37,6 +37,7 @@ class IUnit(GangaObject):
         'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
         'outputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
         'info' : SimpleItem(defvalue=[],typelist=['str'],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
+        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Unit', typelist=["int"]),
     })
 
     _category = 'units'
@@ -62,11 +63,16 @@ class IUnit(GangaObject):
 
     def getID(self):
         """Get the ID of this unit within the transform"""
-        trf = self._getParent()
-        if not trf:
-            raise ApplicationConfigurationError(
-                None, "This unit has not been associated with a transform and so there is no ID available")
-        return trf.units.index(self)
+
+        # if the id isn't already set, use the index from the parent Task
+        if self.id < 0:
+           trf = self._getParent()
+           if not trf:
+              raise ApplicationConfigurationError(
+                 None, "This unit has not been associated with a transform and so there is no ID available")
+           self.id = trf.units.index(self)
+           
+        return self.id
 
     def updateStatus(self, status):
         """Update status hook"""
@@ -145,7 +151,17 @@ class IUnit(GangaObject):
 
     def minorResubmit(self, job):
         """perform just a minor resubmit"""
-        job.resubmit()
+        try:
+            trf = self._getParent()
+        except Exception as err:
+            logger.debug("GetParent exception!\n%s" % str(err))
+            trf = None
+        if trf is not None and trf.submit_with_threads:
+            addInfoString( self, "Attempting job re-submission with queues..." )
+            GPI.queues.add(job.resubmit)
+        else:
+            addInfoString( self, "Attempting job re-submission..." )
+            job.resubmit()
 
     def update(self):
         """Update the unit and (re)submit jobs as required"""
@@ -342,13 +358,13 @@ class IUnit(GangaObject):
             j = stripProxy(job)
 
             # try to preserve lazy loading
-            if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
-                if len(j._index_cache['subjobs:status']) > 0:
-                    for sj_stat in j._index_cache['subjobs:status']:
+            if hasattr(j, 'getNodeIndexCache') and j.getNodeIndexCache() and 'subjobs:status' in j.getNodeIndexCache():
+                if len(j.getNodeIndexCache()['subjobs:status']) > 0:
+                    for sj_stat in j.getNodeIndexCache()['subjobs:status']:
                         if sj_stat in active_states:
                             tot_active += 1
                 else:
-                    if j._index_cache['status'] in active_states:
+                    if j.getNodeIndexCache()['status'] in active_states:
                         tot_active += 1
             else:
                 #logger.warning("WARNING: (active check) No index cache for job object %d" % jid)
@@ -379,13 +395,13 @@ class IUnit(GangaObject):
             j = stripProxy(job)
 
             # try to preserve lazy loading
-            if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
-                if len(j._index_cache['subjobs:status']) > 0:
-                    for sj_stat in j._index_cache['subjobs:status']:
+            if hasattr(j, 'getNodeIndexCache') and j.getNodeIndexCache() and 'subjobs:status' in j.getNodeIndexCache():
+                if len(j.getNodeIndexCache()['subjobs:status']) > 0:
+                    for sj_stat in j.getNodeIndexCache()['subjobs:status']:
                         if sj_stat == status:
                             tot_active += 1
                 else:
-                    if j._index_cache['status'] == status:
+                    if j.getNodeIndexCache()['status'] == status:
                         tot_active += 1
 
             else:
@@ -417,9 +433,9 @@ class IUnit(GangaObject):
             j = stripProxy(job)
 
             # try to preserve lazy loading
-            if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
-                if len(j._index_cache['subjobs:status']) != 0:
-                    total += len(j._index_cache['subjobs:status'])
+            if hasattr(j, 'getNodeIndexCache') and j.getNodeIndexCache() and 'subjobs:status' in j.getNodeIndexCache():
+                if len(j.getNodeIndexCache()['subjobs:status']) != 0:
+                    total += len(j.getNodeIndexCache()['subjobs:status'])
                 else:
                     total += 1
             else:

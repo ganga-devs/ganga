@@ -24,7 +24,7 @@ class TestApplication(IPrepareApp):
                                     } )
     _name = 'TestApplication'
 
-    _exportmethods = ['modify']
+    _exportmethods = ['modify', 'prepare']
     
     def _auto__init__(self):
         self.derived_value = 'This is an example of the derived property: ' + self.exe

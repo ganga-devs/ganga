@@ -4,8 +4,11 @@
 # $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
 ##########################################################################
 
+from Ganga.Core.exceptions import IncompleteJobSubmissionError
+from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import Schema, Version
 
 import Ganga.Utility.logging
@@ -74,6 +77,7 @@ class IBackend(GangaObject):
             #    #log_user_exception(logger, debug=True)
             #else:
             #    #log_user_exception(logger, debug=False)
+            logger.error("Parallel Job Submission Failed: %s" % str(err))
         finally:
             pass
 
@@ -116,7 +120,7 @@ class IBackend(GangaObject):
         from Ganga.Core import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
 
-        job = self.getJobObject()
+
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
         assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
@@ -186,7 +190,7 @@ class IBackend(GangaObject):
                         return 0
             except Exception as x:
                 #sj.updateStatus('new')
-                if isinstance(x, GangaException):
+                if isType(x, GangaException):
                     logger.error(str(x))
                     log_user_exception(logger, debug=True)
                 else:
@@ -235,13 +239,10 @@ class IBackend(GangaObject):
             create_sandbox = job.createPackedInputSandbox
 
         if masterjobconfig:
-            if hasattr(job.application, 'is_prepared') and isinstance(job.application.is_prepared, ShareDir):
-                sharedir_pred = lambda f: f.name.find(
-                    job.application.is_prepared.name) > -1
-                sharedir_files = itertools.ifilter(
-                    sharedir_pred, masterjobconfig.getSandboxFiles())
-                nonsharedir_files = itertools.ifilterfalse(
-                    sharedir_pred, masterjobconfig.getSandboxFiles())
+            if hasattr(job.application, 'is_prepared') and isType(job.application.is_prepared, ShareDir):
+                sharedir_pred = lambda f: f.name.find(job.application.is_prepared.name) > -1
+                sharedir_files = itertools.ifilter(sharedir_pred, masterjobconfig.getSandboxFiles())
+                nonsharedir_files = itertools.ifilterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
             # ATLAS use bool to bypass the prepare mechanism and some ATLAS
             # apps have no is_prepared
             else:
@@ -264,7 +265,7 @@ class IBackend(GangaObject):
             files = job.inputsandbox
 
         result = create_sandbox(files, master=True)
-        if tmpDir != None:
+        if tmpDir is not None:
             import shutil
             # remove temp dir
             if os.path.exists(tmpDir):
@@ -319,7 +320,7 @@ class IBackend(GangaObject):
                         return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
                     log_user_exception(
-                        logger, debug=isinstance(x, GangaException))
+                        logger, debug=isType(x, GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
@@ -417,7 +418,14 @@ class IBackend(GangaObject):
         logger.debug("Running Monitoring for Jobs: %s" % str([j.getFQID('.') for j in jobs]))
 
         ## Only process 10 files from the backend at once
-        blocks_of_size = 10
+        #blocks_of_size = 10
+        try:
+            from Ganga.Utility.Config import getConfig
+            blocks_of_size = getConfig('PollThread')['numParallelJobs']
+        except Exception as err:
+            logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
+            logger.debug("Error: %s" % str(err))
+            blocks_of_size = 5
         ## Separate different backends implicitly
         simple_jobs = {}
 
@@ -427,14 +435,33 @@ class IBackend(GangaObject):
         for j in jobs:
             ## All subjobs should have same backend
             if len(j.subjobs) > 0:
-                monitorable_subjobs = [sj for sj in j.subjobs if sj.status in ['submitted', 'running']]
+                #logger.info("Looking for sj")
+                monitorable_subjobs = []
 
-                logger.debug('Monitoring subjobs: %s', repr([sj._repr() for sj in monitorable_subjobs]))
+                if isType(j.subjobs, SubJobXMLList):
+                    cache = j.subjobs.getAllCachedData()
+                    for sj_id in range(0,len(j.subjobs)):
+                        if cache[sj_id]['status'] in ['submitted', 'running']:
+                            if j.subjobs.isLoaded(sj_id):
+                                ## SJ may have changed from cache in memory
+                                this_sj = j.subjobs(sj_id)
+                                if this_sj.status in ['submitted', 'running']:
+                                    monitorable_subjobs.append(this_sj)
+                            else:
+                                monitorable_subjobs.append(j.subjobs(sj_id))
+                else:
+                    for sj in j.subjobs:
+                        if sj.status in ['submitted', 'running']:
+                            monitorable_subjobs.append( sj )
+
+                #logger.info('Monitoring subjobs: %s', str([sj._repr() for sj in monitorable_subjobs]))
 
                 if not monitorable_subjobs:
                     continue
 
                 stripProxy(j)._getWriteAccess()
+
+                #logger.info("Dividing")
 
                 monitorable_blocks = []
                 temp_block = []
@@ -460,6 +487,7 @@ class IBackend(GangaObject):
                         logger.error("Monitoring Error: %s" % str(err))
                     j.updateMasterJobStatus()
 
+                ## NB ONLY THE MASTER JOB IS KNOWN TO THE JOB REPO!!!
                 stripProxy(j)._setDirty()
             else:
                 backend_name = j.backend.__class__.__name__

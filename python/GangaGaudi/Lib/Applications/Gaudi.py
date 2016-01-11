@@ -11,7 +11,7 @@ from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.Utility.util import unique
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
@@ -97,6 +97,19 @@ class Gaudi(GaudiBase):
         raise NotImplementedError
 
     def prepare(self, force=False):
+
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        from Ganga.GPIDev.Lib.File.File import File
+        if isType(self.optsfile, (list, tuple, GangaList)):
+            for this_file in self.optsfile:
+                if type(this_file) is str:
+                    this_file = File(this_file)
+                else:
+                    continue
+
+        elif type(self.optsfile) is str:
+            self.optsfile = [File(self.optsfile)]
+
         try:
             super(Gaudi, self).prepare(force)
         except Exception, err:
@@ -105,10 +118,14 @@ class Gaudi(GaudiBase):
 
         logger.debug("Prepare")
 
+        _is_prepared = self.is_prepared
+
+        #logger.info("_is_prepared: %s" % _is_prepared)
+
         share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                  'shared',
                                  getConfig('Configuration')['user'],
-                                 self.is_prepared.name)
+                                 _is_prepared.name)
 
         # We will return a list of files 'send_to_share' which will be copied into the jobs
         # inputsandbox when prepare called from job object. NOTE that these files will not go
@@ -129,16 +146,17 @@ class Gaudi(GaudiBase):
         share_path = os.path.join(share_dir, 'debug')
         if not os.path.isdir(share_path):
             os.makedirs(share_path)
-        file = gzip.GzipFile(os.path.join(share_path, 'gaudi-env.py.gz'), 'wb')
-        file.write('gaudi_env = %s' % str(self.getenv(True)))
-        file.close()
+        this_file = gzip.GzipFile(os.path.join(share_path, 'gaudi-env.py.gz'), 'wb')
+        this_file.write('gaudi_env = %s' % str(self.getenv(True)))
+        this_file.close()
 
-        try:
-            self._parse_options()
-        except Exception, err:
-            logger.debug("_parse_options Error:\n%s" % str(err))
-            self.unprepare()
-            raise err
+        self._parse_options()
+        #try:
+        #    self._parse_options()
+        #except Exception, err:
+        #    logger.debug("_parse_options Error:\n%s" % str(err))
+        #    self.unprepare()
+        #    raise err
 
         gzipFile(os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name),
                  os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tgz' % self.is_prepared.name),
@@ -158,14 +176,19 @@ class Gaudi(GaudiBase):
             # Check for non-exting optsfiles defined
             nonexistentOptFiles = []
             for f in self.optsfile:
-                f.name = fullpath(f.name)
-                if not os.path.isfile(f.name):
-                    nonexistentOptFiles.append(f)
+                from Ganga.GPIDev.Lib.File.File import File
+                if type(f) is str:
+                    myFile = File(f)
+                else:
+                    myFile = f
+                myFile.name = fullpath(myFile.name)
+                if not os.path.isfile(myFile.name):
+                    nonexistentOptFiles.append(myFile)
 
             if len(nonexistentOptFiles):
                 tmpmsg = "The 'optsfile' attribute contains non-existent file/s: ["
-                for f in nonexistentOptFiles:
-                    tmpmsg += "'%s', " % f.name
+                for _f in nonexistentOptFiles:
+                    tmpmsg += "'%s', " % _f.name
                 msg = tmpmsg[:-2] + ']'
                 raise ApplicationConfigurationError(None, msg)
 

@@ -6,6 +6,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga import GPI
 import time
 
@@ -41,7 +42,7 @@ class ITask(GangaObject):
     _category = 'tasks'
     _name = 'ITask'
     _exportmethods = ['run', 'appendTransform', 'overview', 'getJobs', 'remove', 'clone', 'pause', 'check', 'setBackend', 'setParameter',
-                      'insertTransform', 'removeTransform', 'table', 'resetUnitsByStatus', 'removeUnusedJobs']
+                      'insertTransform', 'removeTransform', 'table', 'resetUnitsByStatus', 'removeUnusedJobs', 'n_all', 'n_status', 'n_all']
 
     _tasktype = "ITask"
 
@@ -62,7 +63,6 @@ class ITask(GangaObject):
 
     def initialize(self):
         self.transforms = []
-        pass
 
     def startup(self):
         """Startup function on Ganga startup"""
@@ -229,7 +229,7 @@ class ITask(GangaObject):
            Warns if applications are not affected because they lack the parameter"""
         for name, parm in args.iteritems():
             for tf in [t for t in self.transforms if t.application]:
-                if name in tf.application._data:
+                if name in tf.application.getNodeData():
                     addProxy(tf.application).__setattr__(name, parm)
                 else:
                     logger.warning("Transform %i was not affected!", tf.name)
@@ -245,6 +245,7 @@ class ITask(GangaObject):
         # this means that t.insertTransform(0,t2.transforms[0]) will cause
         # Great Breakage
         self.transforms.insert(id, tf)
+        stripProxy(tf).id = id
 
     def appendTransform(self, tf):
         """Append transform"""
@@ -311,7 +312,7 @@ class ITask(GangaObject):
 
     def table(self):
         from Ganga.GPI import tasks
-        print(tasks[self.id:self.id + 1].table())
+        t = tasks.table(id=self.id)
 
     def overview(self, status=''):
         """ Show an overview of the Task """
@@ -320,15 +321,12 @@ class ITask(GangaObject):
                 "Not a valid status for unitOverview. Possible options are: 'bad', 'hold', 'running', 'completed', 'new'.")
             return
 
-        print(
-            "Lists the units in each transform and give the state of the subjobs")
+        print("Lists the units in each transform and give the state of the subjobs")
         print('')
         print(" " * 41 + "Active\tSub\tRun\tComp\tFail\tMinor\tMajor")
         for trfid in range(0, len(self.transforms)):
-            print(
-                "----------------------------------------------------------------------------------------------------------------------")
-            print("----   Transform %d:  %s" %
-                        (trfid, self.transforms[trfid].name))
+            print("----------------------------------------------------------------------------------------------------------------------")
+            print("----   Transform %d:  %s" % (trfid, self.transforms[trfid].name))
             print('')
             self.transforms[trfid].overview(status)
             print('')
@@ -349,3 +347,4 @@ class ITask(GangaObject):
         """Remove any unused jobs"""
         for trf in self.transforms:
             trf.removeUnusedJobs()
+

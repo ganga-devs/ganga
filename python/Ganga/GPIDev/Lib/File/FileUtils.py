@@ -1,4 +1,5 @@
 
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 
@@ -33,7 +34,8 @@ def indentScript(script, indenting):
 
 def __populate():
     if len(transformDictionary) == 0:
-        transformDictionary[type(File())] = LocalFile
+        file_obj = File()
+        transformDictionary[type(file_obj)] = LocalFile
         # transformDictionary[ ] =
 __populate()
 
@@ -47,7 +49,12 @@ def safeTransformFile(input_file):
 
     return None
 
-def doesFileExist( input_file='some.file', input_list = [] ):
+def doesFileExist( input_file=None, input_list = None ):
+
+    if input_file is None:
+        input_file = 'some.file'
+    if input_list is None:
+        input_list = []
 
     test_fileName = ''
     if type(input_file) == type(''):

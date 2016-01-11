@@ -43,10 +43,15 @@ class IPrepareApp(IApplication):
 #            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
 #            return 1
 
+    def __init__(self):
+        super(IPrepareApp, self).__init__()
+
+    def __construct__(self, args):
+        super(IPrepareApp, self).__construct__(args)
+
     def _auto__init__(self, unprepare=None):
         if unprepare is True:
-            logger.debug(
-                "Calling unprepare() from IPrepareApp's _auto__init__()")
+            logger.debug("Calling unprepare() from IPrepareApp's _auto__init__()")
             self.unprepare()
 
     def prepare(self, force=False):
@@ -87,40 +92,36 @@ class IPrepareApp(IApplication):
         for name, item in self._schema.allItems():
             if item['preparable']:
                 logger.debug('Found preparable %s' % (name))
-                logger.debug('adding to sharedir %s' %
-                             (self.__getattribute__(name)))
+                logger.debug('adding to sharedir %s' % (self.__getattribute__(name)))
                 send_to_sharedir.append(self.__getattribute__(name))
-        shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
-                                   'shared', getConfig('Configuration')['user'])
+        shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
         for prepitem in send_to_sharedir:
             logger.debug('working on %s' % (prepitem))
             # we may have a list of files/strings
-            if isinstance(prepitem, (list, GangaList)):
+            if isType(prepitem, (list, GangaList)):
                 logger.debug('found a list')
                 for subitem in prepitem:
                     if isType(subitem, str):
                         # we have a file. if it's an absolute path, copy it to
                         # the shared dir
                         if os.path.abspath(subitem) == subitem:
-                            logger.info(
-                                'Sending file %s to shared directory.' % (subitem))
+                            logger.debug('Sending file %s to shared directory.' % (subitem))
                             try:
-                                shr_dir = os.path.join(
-                                    shared_path, self.is_prepared.name)
+                                shr_dir = os.path.join(shared_path, self.is_prepared.name)
                                 if not os.path.isidr(shr_dir):
                                     os.makedirs(shr_dir)
                                 shutil.copy2(subitem, shr_dir)
+                                logger.debug("Copying into: %s" % str(shr_dir))
                             except IOError as e:
                                 logger.error(e)
                                 return 0
-                    elif isinstance(subitem, File) and subitem.name is not '':
-                        logger.info(
-                            'Sending file object %s to shared directory' % subitem.name)
+                    elif isType(subitem, File) and subitem.name is not '':
+                        logger.debug('Sending file object %s to shared directory' % subitem.name)
                         try:
-                            shr_dir = os.path.join(
-                                shared_path, self.is_prepared.name)
+                            shr_dir = os.path.join(shared_path, self.is_prepared.name)
                             if not os.path.isdir(shr_dir):
                                 os.makedirs(shr_dir)
+                                logger.debug("Copying into: %s" % str(shr_dir))
                             shutil.copy2(subitem.name, shr_dir)
                         except IOError as e:
                             logger.error(e)
@@ -130,25 +131,24 @@ class IPrepareApp(IApplication):
                 # we have a file. if it's an absolute path, copy it to the
                 # shared dir
                 if os.path.abspath(prepitem) == prepitem:
-                    logger.info(
-                        'Sending file %s to shared directory.' % (prepitem))
+                    logger.debug('Sending string file %s to shared directory.' % (prepitem))
                     try:
-                        shr_dir = os.path.join(
-                            shared_path, self.is_prepared.name)
+                        shr_dir = os.path.join(shared_path, self.is_prepared.name)
                         if not os.path.isdir(shr_dir):
                             os.makedirs(shr_dir)
+                        logger.debug("Copying into: %s" % str(shr_dir))
                         shutil.copy2(prepitem, shr_dir)
                     except IOError as e:
                         logger.error(e)
                         return 0
-            elif isinstance(prepitem, File) and prepitem.name is not '':
+            elif isType(prepitem, File) and prepitem.name is not '':
                 logger.debug('found a file')
-                logger.info(
-                    'Sending file object %s to shared directory' % prepitem.name)
+                logger.debug('Sending "File" object %s to shared directory' % prepitem.name)
                 try:
                     shr_dir = os.path.join(shared_path, self.is_prepared.name)
                     if not os.path.isdir(shr_dir):
                         os.makedirs(shr_dir)
+                    logger.debug("Copying into: %s" % str(shr_dir))
                     shutil.copy2(prepitem.name, shr_dir)
                 except IOError as e:
                     logger.error(e)
@@ -210,13 +210,10 @@ class IPrepareApp(IApplication):
         if prepared_object._getRegistry() is None:
             self.incrementShareCounter(prepared_object.is_prepared.name)
             self.decrementShareCounter(prepared_object.is_prepared.name)
-            logger.info(
-                'Application is not currently associated with a persisted Ganga object')
-            logger.debug(
-                '(e.g. box, job, task). Both the prepared application and the contents of')
-            logger.debug('its shared directory will be lost when Ganga exits.')
-            logger.debug('Shared directory location: %s' %
-                         (self.is_prepared.name))
+            logger.info('Application is not currently associated with a persisted Ganga object')
+            logger.info('(e.g. box, job, task). Both the prepared application and the contents of')
+            logger.info('its shared directory will be lost when Ganga exits.')
+            logger.info('Shared directory location: %s' % (self.is_prepared.name))
             # logger.error(self.listShareDirContents(prepared_object.is_prepared.name))
         else:
             self.incrementShareCounter(prepared_object.is_prepared.name)

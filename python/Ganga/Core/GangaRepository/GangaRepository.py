@@ -94,8 +94,8 @@ class GangaRepository(object):
     def update_index(self, id=None):
         """update_index(id = None) --> iterable of ids
         Read the index containing the given ID (or all indices if id is None).
-        Create objects as needed , and set the _index_cache for all objects 
-        that are not fully loaded.
+        Create objects as needed , and set the _index_cache through setNodeIndexCache
+        for all objects that are not fully loaded.
         Returns a list of ids of jobs that changed/removed/added
         Raise RepositoryError
         """
@@ -188,8 +188,8 @@ class GangaRepository(object):
         Returns True on success, False on error."""
         return False
 
-# Internal helper functions for derived classes
-    def _make_empty_object_(self, id, category, classname):
+    # Internal helper functions for derived classes
+    def _make_empty_object_(self, this_id, category, classname):
         """Internal helper: adds an empty GangaObject of the given class to the repository.
         Raise RepositoryError
         Raise PluginManagerError if the class name is not found"""
@@ -198,24 +198,29 @@ class GangaRepository(object):
             self._found_classes[(category, classname)] = cls
         cls = self._found_classes[(category, classname)]
         obj = super(cls, cls).__new__(cls)
+        setattr(obj, '_parent', None)
+        obj.__init__()
         obj._proxyObject = None
-        obj._data = None
+        obj.setNodeData({})
+        obj.setNodeAttribute('id', this_id)
 
-        self._internal_setitem__(id, obj)
+        self._internal_setitem__(this_id, obj)
         return obj
 
-    def _internal_setitem__(self, id, obj):
+    def _internal_setitem__(self, this_id, obj):
         """ Internal function for repository classes to add items to the repository.
         Should not raise any Exceptions
         """
-        if id in self.incomplete_objects:
-            self.incomplete_objects.remove(id)
-        self.objects[id] = obj
-        obj.__dict__["_registry_id"] = id
-        obj.__dict__["_registry_locked"] = False
-        if obj._data and "id" in obj._data.keys():  # MAGIC id
-            obj.id = id
+        if this_id in self.incomplete_objects:
+            self.incomplete_objects.remove(this_id)
+        self.objects[this_id] = obj
+        setattr(obj, "_registry_id", this_id)
+        setattr(obj, "_registry_locked", False)
+        setattr(obj, "_id", this_id)
+        #if obj.getNodeData() and "id" in obj.getNodeData().keys():  # MAGIC id
+        obj.setNodeAttribute('id', this_id)
         obj._setRegistry(self.registry)
+
 
     def _internal_del__(self, id):
         """ Internal function for repository classes to (logically) delete items to the repository."""
@@ -223,8 +228,6 @@ class GangaRepository(object):
             self.incomplete_objects.remove(id)
         else:
             self.objects[id]._setRegistry(None)
-            del self.objects[id].__dict__["_registry_id"]
-            del self.objects[id].__dict__["_registry_locked"]
             del self.objects[id]
 
 

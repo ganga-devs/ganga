@@ -194,13 +194,3 @@ def getColour(name):
     """
     x, y = name.split('.')
     return getattr(colour_objects[x], y)
-
-    try:
-        x, y = name.split('.')
-    except Exception:
-        raise ValueError('unknown colour code %s' % str(name))
-
-    try:
-        return getattr(colour_objects[x], y)
-    except Exception:
-        raise ValueError('unknown colour code %s' % str(name))

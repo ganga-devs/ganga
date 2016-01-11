@@ -56,15 +56,9 @@ class GenericSplitter(ISplitter):
     _name = "GenericSplitter"
     _schema = Schema(Version(1, 0), {
         'attribute': SimpleItem(defvalue='', doc='The attribute on which the job is splitted'),
-        'values': SimpleItem(defvalue=[], typelist=None, checkset="_checkset_values", sequence=1, doc='A list of the values corresponding to the attribute of the subjobs'),
+        'values': SimpleItem(defvalue=[], typelist=None, sequence=1, doc='A list of the values corresponding to the attribute of the subjobs'),
         'multi_attrs': SimpleItem(defvalue={}, doc='Dictionary to specify multiple attributes to split over'),
     })
-
-    def _checkset_values(self, value):
-        self._checksetNestedLists(value)
-        # TODO: here we may implement advanced validation of type against the
-        # type of selected attribute
-        pass
 
     def split(self, job):
 

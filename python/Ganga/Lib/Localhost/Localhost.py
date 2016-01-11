@@ -16,8 +16,6 @@ import subprocess
 import datetime
 import time
 
-import re
-
 import Ganga.Utility.logging
 
 import Ganga.Utility.Config
@@ -36,7 +34,7 @@ class Localhost(IBackend):
     The job is run in the workdir (usually in /tmp).
     """
     _schema = Schema(Version(1, 2), {'id': SimpleItem(defvalue=-1, protected=1, copyable=0, doc='Process id.'),
-                                     'status': SimpleItem(defvalue=None, typelist=None, protected=1, copyable=0, hidden=1, doc='*NOT USED*'),
+                                     'status': SimpleItem(defvalue=None, typelist=[None, str], protected=1, copyable=0, hidden=1, doc='*NOT USED*'),
                                      'exitcode': SimpleItem(defvalue=None, typelist=['int', 'type(None)'], protected=1, copyable=0, doc='Process exit code.'),
                                      'workdir': SimpleItem(defvalue='', protected=1, copyable=0, doc='Working directory.'),
                                      'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Hostname where the job was submitted.'),
@@ -48,6 +46,9 @@ class Localhost(IBackend):
 
     def __init__(self):
         super(Localhost, self).__init__()
+
+    def __construct__(self, args):
+        super(Localhost, self).__construct__(args)
 
     def submit(self, jobconfig, master_input_sandbox):
         prepared = self.preparejob(jobconfig, master_input_sandbox)
@@ -175,11 +176,7 @@ class Localhost(IBackend):
         # print str(job.backend_output_postprocess)
         mon = job.getMonitoringService()
         import Ganga.Core.Sandbox as Sandbox
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles()
-                                                            +
-                                                            Sandbox.getGangaModulesAsSandboxFiles(
-                                                                Sandbox.getDefaultModules())
-                                                            + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules()))
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()))
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         if self.nice:
@@ -188,6 +185,7 @@ class Localhost(IBackend):
             logger.warning('increasing process priority is often not allowed, your job may fail due to this')
 
         sharedoutputpath = job.getOutputWorkspace().getPath()
+        ## FIXME DON'T just use the blind list here, request the list of files to be in the output from a method.
         outputpatterns = jobconfig.outputbox
         environment = dict() if jobconfig.env is None else jobconfig.env
 
@@ -217,21 +215,18 @@ class Localhost(IBackend):
         script = script.replace('###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox))
         script = script.replace('###SHAREDOUTPUTPATH###', repr(sharedoutputpath))
         script = script.replace('###APPSCRIPTPATH###', repr(appscriptpath))
-        script = script.replace('###OUTPUTPATTERNS###', repr(outputpatterns))
+        script = script.replace('###OUTPUTPATTERNS###', str(outputpatterns))
         script = script.replace('###JOBID###', jobidRepr)
         script = script.replace('###ENVIRONMENT###', repr(environment))
         script = script.replace('###WORKDIR###', repr(workdir))
         script = script.replace('###INPUT_DIR###', repr(job.getStringInputDir()))
-
-        script = script.replace('###MONITORING_SERVICE###', job.getMonitoringService().getWrapperScriptConstructorText())
 
         self.workdir = workdir
 
         script = script.replace('###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
 
         wrkspace = job.getInputWorkspace()
-        scriptPath = wrkspace.writefile(
-            FileBuffer('__jobscript__', script), executable=1)
+        scriptPath = wrkspace.writefile(FileBuffer('__jobscript__', script), executable=1)
 
         return scriptPath
 
@@ -248,15 +243,14 @@ class Localhost(IBackend):
             # group, we can use this to kill all processes in the group
             os.kill(-self.wrapper_pid, signal.SIGKILL)
         except OSError as x:
-            logger.warning(
-                'while killing wrapper script for job %d: pid=%d, %s', job.id, self.wrapper_pid, str(x))
+            logger.warning('while killing wrapper script for job %s: pid=%d, %s', job.getFQID('.'), self.wrapper_pid, str(x))
             ok = False
 
         # waitpid to avoid zombies
         try:
             ws = os.waitpid(self.wrapper_pid, 0)
         except OSError as x:
-            logger.warning('problem while waitpid %d: %s', job.id, x)
+            logger.warning('problem while waitpid %s: %s', job.getFQID('.'), x)
 
         from Ganga.Utility.files import recursive_copy
 
@@ -276,8 +270,7 @@ class Localhost(IBackend):
             try:
                 shutil.rmtree(self.workdir)
             except OSError as x:
-                logger.warning(
-                    'problem removing the workdir %s: %s', str(self.id), str(x))
+                logger.warning('problem removing the workdir %s: %s', str(self.id), str(x))
 
     @staticmethod
     def updateMonitoringInformation(jobs):
@@ -317,7 +310,7 @@ class Localhost(IBackend):
                     pid = get_pid(statusfile)
                     if pid:
                         j.backend.id = pid
-                        #logger.info('Local job %d status changed to running, pid=%d',j.id,pid)
+                        #logger.info('Local job %s status changed to running, pid=%d',j.getFQID('.'),pid)
                         j.updateStatus('running')  # bugfix: 12194
                 exitcode = get_exit_code(statusfile)
                 with open(statusfile) as status_file:
@@ -341,10 +334,8 @@ class Localhost(IBackend):
                     # FIXME: for some strange reason the logger DOES NOT LOG (checked in python 2.3 and 2.5)
                     # print 'logger problem', logger.name
                     # print 'logger',logger.getEffectiveLevel()
-                    logger.critical(
-                        'wrapper script for job %s exit with code %d', str(j.id), ws[1])
-                    logger.critical(
-                        'report this as a bug at https://its.cern.ch/jira/browse/GANGA')
+                    logger.critical('wrapper script for job %s exit with code %d', str(j.getFQID('.')), ws[1])
+                    logger.critical('report this as a bug at https://github.com/ganga-devs/ganga/issues/')
                     j.updateStatus('failed')
             except OSError as x:
                 if x.errno != errno.ECHILD:
@@ -363,7 +354,7 @@ class Localhost(IBackend):
                 else:
                     j.updateStatus('failed')
 
-                #logger.info('Local job %d finished with exitcode %d',j.id,exitcode)
+                #logger.info('Local job %s finished with exitcode %d',j.getFQID('.'),exitcode)
 
                 # if j.outputdata:
                 # j.outputdata.fill()

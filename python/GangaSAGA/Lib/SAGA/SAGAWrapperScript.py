@@ -41,11 +41,6 @@ class SAGAWrapperScript:
       
     ##########################################################################
     ##
-    def setMonitoringService(self, mons):
-        self.mons = mons
-        
-    ##########################################################################
-    ##
     def getScript(self):
         script = self.wrapper_script_template
         script = script.replace('###INLINEMODULES###', self.imods)
@@ -53,7 +48,6 @@ class SAGAWrapperScript:
         script = script.replace('###ARGUEMTNS_AS_LIST###', repr(self.args))
         #script = script.replace('###ENVIRONMENT_AS_DICT###', repr(self.envi))
         script = script.replace('###INPUTSANDBOXFILE###', repr(self.sandbox))
-        script = script.replace('###MONITORING_SERVICE###', self.mons)
         script = script.replace('###OUTPUTPATTERNS###', repr(self.out))
     
         return script
@@ -111,9 +105,6 @@ except ImportError as x:
 #sys.stderr.flush()
 
 sys.path.insert(0, PYTHON_DIR)
-###MONITORING_SERVICE###
-monitor = createMonitoringObject()
-monitor.start()
 
 
 result = 255
@@ -133,7 +124,6 @@ try:
     result = child.poll()
     if result is not None:
         break
-    monitor.progress()
     #heartbeatfile.write('.')
     #flush_file(heartbeatfile)
     time.sleep(30)
@@ -144,7 +134,6 @@ except Exception as x:
   sys.stdout = sys.__stdout__
   sys.stderr = sys.__stderr__
   
-monitor.stop(result)
 
 outfile.close()
 errfile.close()

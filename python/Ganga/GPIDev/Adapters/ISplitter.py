@@ -7,7 +7,7 @@
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import TypeMismatchError, isType, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version
-from Ganga.Utility.util import containsGangaObjects, isNestedList
+from Ganga.Utility.util import containsGangaObjects
 
 class SplittingError(Exception):
 
@@ -22,25 +22,22 @@ class ISplitter(GangaObject):
     _category = 'splitters'
     _hidden = 1
 
-    def _checksetNestedLists(self, value):
-        """The rule is that if there are nested lists then they 
-        must not contain GangaObjects, as this corrupts the repository"""
-        #if isNestedList(value) and containsGangaObjects(value):
-        #    raise TypeMismatchError(
-        #        'Assigning nested lists which contain Ganga GPI Objects is not supported.')
-        return
-
-    def createSubjob(self, job):
+    def createSubjob(self, job, additional_skip_args=None):
         """ Create a new subjob by copying the master job and setting all fields correctly.
         """
         from Ganga.GPIDev.Lib.Job import Job
+        if additional_skip_args is None:
+            additional_skip_args = []
 
         j = Job()
-        j.copyFrom(job)
+        skipping_args = ['splitter', 'inputsandbox', 'inputfiles', 'inputdata', 'subjobs']
+        for arg in additional_skip_args:
+            skipping_args.append(arg)
+        j.copyFrom(job, skipping_args)
         j.splitter = None
-        # FIXME:
         j.inputsandbox = []
         j.inputfiles = []
+        j.inputdata = []
         return j
 
     def split(self, job):

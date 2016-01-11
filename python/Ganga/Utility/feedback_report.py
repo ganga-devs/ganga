@@ -20,9 +20,10 @@ def _initconfigFeed():
             raise Config.ConfigError(
                 'Cannot modify [Feedback] settings (attempted %s=%s)' % (name, x))
         config.attachUserHandler(deny_modification, None)
-    except ImportError:
+    except ImportError as err:
         # on worker node so Config is not needed since it is copied to Feedback
         # constructor
+        logger.debug("Import Error: %s" % str(err))
         pass
 _initconfigFeed()
 

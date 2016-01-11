@@ -32,6 +32,7 @@
 #
 #     fullpath=shell.wrapper('lcg-cp')
 
+import errno
 import os
 import re
 import stat
@@ -88,14 +89,14 @@ class Shell(object):
 
         """
 
-        if setup:
+        if setup is not None:
 
             env = dict(os.environ)
             env = expand_vars(env)
 
             logger.debug("Initializing Shell")
-            logger.debug("%s" % setup)
-            logger.debug("%s" % " ".join(setup_args))
+            logger.debug("command:\n%s" % setup)
+            logger.debug("args:\n%s" % " ".join(setup_args))
 
             this_cwd = os.path.abspath(os.getcwd())
             if not os.path.exists(this_cwd):
@@ -139,15 +140,20 @@ class Shell(object):
 
         self.dirname = None
 
-    def pythonCmd(self, cmd, soutfile=None, allowed_exit=[0],
+    def pythonCmd(self, cmd, soutfile=None, allowed_exit=None,
                   capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
         "Execute a python command and captures the stderr and stdout which are returned in a file"
 
+        if allowed_exit is None:
+            allowed_exit = [0]
         return self.cmd(cmd, soutfile, allowed_exit, capture_stderr, timeout, mention_outputfile_on_errors, python=True)
 
-    def cmd(self, cmd, soutfile=None, allowed_exit=[0],
+    def cmd(self, cmd, soutfile=None, allowed_exit=None,
             capture_stderr=False, timeout=None, mention_outputfile_on_errors=True, python=False):
         "Execute an OS command and captures the stderr and stdout which are returned in a file"
+
+        if allowed_exit is None:
+            allowed_exit = [0]
 
         if not soutfile:
             soutfile = tempfile.NamedTemporaryFile(mode='w+t', suffix='.out', delete=False).name
@@ -224,8 +230,11 @@ class Shell(object):
 
         return rc, soutfile, m is None
 
-    def cmd1(self, cmd, allowed_exit=[0], capture_stderr=False, timeout=None, python=False):
+    def cmd1(self, cmd, allowed_exit=None, capture_stderr=False, timeout=None, python=False):
         "Executes an OS command and captures the stderr and stdout which are returned as a string"
+
+        if allowed_exit is None:
+            allowed_exit = [0]
 
         rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr,
                                   timeout, mention_outputfile_on_errors=False, python=python)
@@ -243,12 +252,14 @@ class Shell(object):
 
         return rc, output, m
 
-    def system(self, cmd, allowed_exit=[0], stderr_file=None):
+    def system(self, cmd, allowed_exit=None, stderr_file=None):
         """Execute on OS command. Useful for interactive commands. Stdout and Stderr are not
         caputured and are passed on the caller.
 
         stderr_capture may specify a name of a file to which stderr is redirected.
         """
+        if allowed_exit is None:
+            allowed_exit = [0]
 
         logger.debug('Calling shell command: %s' % cmd)
 

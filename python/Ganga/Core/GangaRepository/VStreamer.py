@@ -1,5 +1,25 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from Ganga.Core.exceptions import GangaException
+from Ganga.Utility.logging import getLogger
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
+
+# config_scope is namespace used for evaluating simple objects (e.g. File)
+from Ganga.Utility.Config import config_scope
+
+from Ganga.Utility.Plugin import PluginManagerError, allPlugins
+
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Schema import Schema, Version
+
+from .GangaRepository import SchemaVersionError
+
+import xml.sax.saxutils
+
+logger = getLogger()
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -10,11 +30,35 @@ from __future__ import absolute_import
 # 'ignore_subs'
 
 
-def to_file(j, f=None, ignore_subs=''):
-    vstreamer = VStreamer(out=f, selection=ignore_subs)
+class XMLFileError(GangaException):
+
+    def __init__(self, excpt, message):
+        GangaException.__init__(self, excpt, message)
+        self.message = message
+        self.excpt = excpt
+
+    def __str__(self):
+        if self.excpt:
+            err = '(%s:%s)' % (str(type(self.excpt)), str(self.excpt))
+        else:
+            err = ''
+        return "XMLFileError: %s %s" % (self.message, err)
+
+def _raw_to_file(j, fobj=None, ignore_subs=''):
+    vstreamer = VStreamer(out=fobj, selection=ignore_subs)
     vstreamer.begin_root()
     stripProxy(j).accept(vstreamer)
     vstreamer.end_root()
+
+def to_file(j, fobj=None, ignore_subs=''):
+    #used to debug write problems - rcurrie
+    #_raw_to_file(j, fobj, ignore_subs)
+    #return
+    try:
+        _raw_to_file(j, fobj, ignore_subs)
+    except Exception as err:
+        logger.error("XML to-file error for file:\n%s" % (str(err)))
+        raise XMLFileError(err, "to-file error")
 
 # Faster, but experimental version of to_file without accept()
 # def to_file(j,f=None,ignore_subs=''):
@@ -32,18 +76,23 @@ def to_file(j, f=None, ignore_subs=''):
 # * AssertionError (corruption: multiple objects in <root>...</root>
 # * Exception (probably corrupted data problem)
 
-
-def from_file(f):
+def _raw_from_file(f):
     # logger.debug('----------------------------')
     ###logger.debug('Parsing file: %s',f.name)
-    obj, errors = Loader().parse(f.read())
+    xml_content = f.read()
+    obj, errors = Loader().parse(xml_content)
     return obj, errors
+
+def from_file(f):
+    #return _raw_from_file(f)
+    try:
+        return _raw_from_file(f)
+    except Exception as err:
+        logger.error("XML from-file error for file:\n%s" % str(err))
+        raise XMLFileError(err, "from-file error")
 
 ##########################################################################
 # utilities
-
-import xml.sax.saxutils
-#import escape, unescape
 
 
 def escape(s):
@@ -53,13 +102,6 @@ def escape(s):
 
 def unescape(s):
     return xml.sax.saxutils.unescape(s)
-
-from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
-
-# config_scope is namespace used for evaluating simple objects (e.g. File)
-from Ganga.Utility.Config import config_scope
-
-from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 
 # An experimental, fast way to print a tree of Ganga Objects to file
 # Unused at the moment
@@ -77,7 +119,7 @@ def fastXML(obj, indent='', ignore_subs=''):
     elif hasattr(obj, '_data'):
         v = obj._schema.version
         sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (getName(obj), v.major, v.minor, obj._category)]
-        for k, o in obj._data.iteritems():
+        for k, o in obj.getNodeData().iteritems():
             if k != ignore_subs:
                 try:
                     if not obj._schema[k]._meta["transient"]:
@@ -85,7 +127,8 @@ def fastXML(obj, indent='', ignore_subs=''):
                         sl.append('<attribute name="%s">' % k)
                         sl.extend(fastXML(o, indent + '  ', ignore_subs))
                         sl.append('</attribute>\n')
-                except KeyError:
+                except KeyError as err:
+                    logger.debug("KeyError: %s" % str(err))
                     pass
         sl.append(indent)
         sl.append('</class>')
@@ -133,8 +176,7 @@ class VStreamer(object):
         return
 
     def print_value(self, x):
-        # FIXME: also quote % characters (to allow % operator later)
-        print('<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
+        print('\n', self.indent(), '<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
 
     def showAttribute(self, node, name):
         return not node._schema.getItem(name)['transient'] and (self.level > 1 or name != self.selection)
@@ -149,11 +191,7 @@ class VStreamer(object):
                 print(file=self.out)
                 print(self.indent(), '<sequence>', file=self.out)
                 for v in value:
-                    self.level += 1
-                    print(self.indent(), end=' ', file=self.out)
-                    self.print_value(v)
-                    print(file=self.out)
-                    self.level -= 1
+                    self.acceptOptional(v)
                 print(self.indent(), '</sequence>', file=self.out)
                 self.level -= 1
                 print(self.indent(), '</attribute>', file=self.out)
@@ -161,6 +199,7 @@ class VStreamer(object):
                 self.level += 1
                 self.print_value(value)
                 self.level -= 1
+                print(self.indent(), end=' ', file=self.out)
                 print('</attribute>', file=self.out)
             self.level -= 1
 
@@ -172,10 +211,17 @@ class VStreamer(object):
         if s is None:
             print(self.indent(), '<value>None</value>', file=self.out)
         else:
-            if type(s) == type(''):
-                print(self.indent(), '<value>%s</value>' % s, file=self.out)
-            else:
+            if isType(s, str):
+                print(self.indent(), '<value>%s</value>' % escape(repr(s)), file=self.out)
+            elif hasattr(stripProxy(s), 'accept'):
                 stripProxy(s).accept(self)
+            elif isType(s, list) or isType(s, GangaList):
+                print(self.indent(), '<sequence>', file=self.out)
+                for sub_s in s:
+                    self.acceptOptional(sub_s)
+                print(self.indent(), '</sequence>', file=self.out)
+            else:
+                self.print_value(stripProxy(s))
         self.level -= 1
 
     def componentAttribute(self, node, name, subnode, sequence):
@@ -198,15 +244,6 @@ class VStreamer(object):
 ##########################################################################
 # XML Parser.
 
-from Ganga.Utility.Plugin import PluginManagerError, allPlugins
-from Ganga.GPIDev.Schema import Version
-
-from Ganga.Utility.logging import getLogger
-logger = getLogger()
-
-from Ganga.GPIDev.Base.Objects import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version
-
 # Empty Ganga Object
 
 
@@ -218,7 +255,8 @@ class EmptyGangaObject(GangaObject):
     _category = "internal"
     _hidden = 1
 
-from .GangaRepository import SchemaVersionError
+    def __init__(self):
+        super(EmptyGangaObject, self).__init__()
 
 
 class Loader(object):
@@ -243,7 +281,7 @@ class Loader(object):
 
         # 3 handler functions
         def start_element(name, attrs):
-            # logger.debug('Start element: name=%s attrs=%s', name, attrs) #FIXME: for 2.4 use CurrentColumnNumber and CurrentLineNumber
+            #logger.debug('Start element: name=%s attrs=%s', name, attrs) #FIXME: for 2.4 use CurrentColumnNumber and CurrentLineNumber
             # if higher level element had error, ignore the corresponding part
             # of the XML tree as we go down
             if self.ignore_count:
@@ -271,13 +309,10 @@ class Loader(object):
                     # element (</class>) is reached
                     self.ignore_count = 1
                 else:
-                    version = Version(*[int(v)
-                                        for v in attrs['version'].split('.')])
+                    version = Version(*[int(v) for v in attrs['version'].split('.')])
                     if not cls._schema.version.isCompatible(version):
-                        attrs['currversion'] = '%s.%s' % (
-                            cls._schema.version.major, cls._schema.version.minor)
-                        self.errors.append(SchemaVersionError(
-                            'Incompatible schema of %(name)s, repository is %(version)s currently in use is %(currversion)s' % attrs))
+                        attrs['currversion'] = '%s.%s' % (cls._schema.version.major, cls._schema.version.minor)
+                        self.errors.append(SchemaVersionError('Incompatible schema of %(name)s, repository is %(version)s currently in use is %(currversion)s' % attrs))
                         obj = EmptyGangaObject()
                         # ignore all elemenents until the corresponding ending
                         # element (</class>) is reached
@@ -285,7 +320,7 @@ class Loader(object):
                     else:
                         # make a new ganga object
                         obj = super(cls, cls).__new__(cls)
-                        obj._data = {}
+                        obj.setNodeData({})
                 self.stack.append(obj)
 
             # push the attribute name on the stack
@@ -301,7 +336,7 @@ class Loader(object):
                 self.sequence_start.append(len(self.stack))
 
         def end_element(name):
-            ###logger.debug('End element: name=%s', name)
+            #logger.debug('End element: name=%s', name)
 
             # if higher level element had error, ignore the corresponding part
             # of the XML tree as we go up
@@ -316,16 +351,17 @@ class Loader(object):
                 aname = self.stack.pop()
                 obj = self.stack[-1]
                 # update the object's attribute
-                obj._data[aname] = value
+                obj.setNodeAttribute(aname, value)
+                #logger.info("Setting: %s = %s" % (str(aname), str(value)))
 
             # when </value> is seen the value_construct buffer (CDATA) should
             # be a python expression (e.g. quoted string)
             if name == 'value':
                 # unescape the special characters
                 s = unescape(self.value_construct)
-                ###logger.debug('string value: %s',s)
+                #logger.debug('string value: %s',s)
                 val = eval(s, config_scope)
-                ###logger.debug('evaled value: %s type=%s',repr(val),type(val))
+                #logger.debug('evaled value: %s type=%s',repr(val),type(val))
                 self.stack.append(val)
                 self.value_construct = None
 
@@ -344,14 +380,17 @@ class Loader(object):
             if name == 'class':
                 obj = self.stack[-1]
                 for attr, item in obj._schema.allItems():
-                    if not attr in obj._data:
+                    if not attr in obj.getNodeData():
+                        #logger.info("Opening: %s" % attr)
                         if item._meta["sequence"] == 1:
-                            obj._data[attr] = makeGangaListByRef(
-                                obj._schema.getDefaultValue(attr))
+                            obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
+                            #setattr(obj, attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
                         else:
-                            obj._data[attr] = obj._schema.getDefaultValue(attr)
+                            obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr))
+                            #setattr(obj, attr, obj._schema.getDefaultValue(attr))
 
-                obj.__setstate__(obj.__dict__)  # this sets the parent
+                #print("Constructed: %s" % obj.__class__.__name__)
+                #obj.__setstate__(obj.__dict__)  # this sets the parent
 
         def char_data(data):
             # char_data may be called many times in one CDATA section so we need to build up
@@ -371,12 +410,15 @@ class Loader(object):
         p.Parse(s)
 
         if len(self.stack) != 1:
-            self.errors.append(
-                AssertionError('multiple objects inside <root> element'))
+            self.errors.append(AssertionError('multiple objects inside <root> element'))
 
         obj = self.stack[-1]
+
+        #logger.info("obj.__dict__: %s" % str(obj.__dict__))
+
         # Raise Exception if object is incomplete
         for attr, item in obj._schema.allItems():
-            if not attr in obj._data:
+            if not attr in obj.getNodeData():
                 raise AssertionError("incomplete XML file")
         return obj, self.errors
+

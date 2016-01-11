@@ -33,6 +33,8 @@ finally:
 timeString = time.strftime( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )
 statfile.write( 'START: ' + timeString + os.linesep )
 
+if not os.path.exists( '###WORKDIR###'):
+    os.makedirs('###WORKDIR###')
 os.chdir( '###WORKDIR###' )
 for inFile in ###IN_BOX###:
     getPackedInputSandbox( inFile )

@@ -11,6 +11,9 @@ import Ganga.Utility.Config
 from Ganga.Core import GangaException
 import CMTUtils
 import cmakeUtils
+import subprocess
+import time
+import collections
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -71,10 +74,6 @@ def pyFileCollector(dir, file_list, subdir_dict, depth_cut, depth=0, zerodepth_p
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-import os
-import subprocess
-import time
-
 
 def shellEnv_cmd(cmd, environ=None, cwdir=None):
     pipe = subprocess.Popen(cmd,
@@ -124,11 +123,6 @@ def shellEnvUpdate_cmd(cmd, environ=os.environ, cwdir=None):
 
     #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
     # NEW, better version?
-import subprocess
-import tempfile
-import os
-import time
-import collections
 
 CommandOutput = collections.namedtuple(
     'CommandOutput', ['returncode', 'stdout', 'stderr'])

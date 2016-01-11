@@ -35,12 +35,11 @@ class GangaRepositoryImmutableTransient(GangaRepository):
                 return allRegistries['prep']
             return self.registry
         old = getattr(sys.modules['Ganga.Core.GangaRepository'], 'getRegistry')
-        setattr(sys.modules['Ganga.Core.GangaRepository'],
-                'getRegistry', getRegistry)
+        setattr(sys.modules['Ganga.Core.GangaRepository'], 'getRegistry', getRegistry)
 
         # by setting the registry started now the auto_init from the jobTemplate class
         # call call getRegistry(self.default_registry)._add
-        self.registry._started = True
+        self.registry._hasStarted = True
 
         for f in glob.glob(os.path.join(self.filebase, '*.%s' % self.file_ext)):
             current_id = self._next_id
