@@ -149,6 +149,10 @@ def stopGanga():
         if hasattr(templates, 'clean'):
             templates.clean(confirm=True, force=True)
 
+        from Ganga.Core.GangaRepository import getRegistry
+        getRegistry('jobs').metadata.clean(force=True)
+        getRegistry('jobs').clean(force=True)
+
     logger.info("Shutting Down Internal Services")
 
     # Disable internal services such as monitoring and other tasks
