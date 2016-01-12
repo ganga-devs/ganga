@@ -15,7 +15,7 @@ from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory, g
 from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
-from Ganga.GPIDev.Lib.File import IGangaFile
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 ## Can't do due to circular problems
 #from Ganga.GPI import DiracFile
 logger = Ganga.Utility.logging.getLogger()
@@ -40,7 +40,7 @@ class LHCbDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
+    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0, doc=docstr)
     docstr = 'Use contents of file rather than generating catalog.'

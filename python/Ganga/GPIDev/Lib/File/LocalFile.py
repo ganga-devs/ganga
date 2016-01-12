@@ -7,7 +7,7 @@ from __future__ import absolute_import
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
-from .IGangaFile import IGangaFile
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 

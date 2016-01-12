@@ -25,9 +25,6 @@ from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Base.Proxy import isType, getName, GPIProxyObjectFactory, addProxy, stripProxy, runProxyMethod, runtimeEvalString, getRuntimeGPIObject
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
-from Ganga.Lib.Executable.Executable import Executable
-from Ganga.Lib.Localhost.Localhost import Localhost
-
 from Ganga.Lib.Splitters import DefaultSplitter
 
 import errno
@@ -176,13 +173,13 @@ class Job(GangaObject):
     _schema = Schema(Version(1, 6), {'inputsandbox': FileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
                                      'outputsandbox': SimpleItem(defvalue=[], typelist=['str'], sequence=1, copyable=_outputfieldCopyable(), doc="list of filenames or patterns shipped from the worker node"),
                                      'info': ComponentItem('jobinfos', defvalue=None, doc='JobInfo '),
-                                     'comment': SimpleItem('', protected=0, doc='comment of the job'),
+                                     'comment': SimpleItem('', protected=0, changable_at_resubmit=1, doc='comment of the job'),
                                      'time': ComponentItem('jobtime', defvalue=JobTime(), protected=1, comparable=0, doc='provides timestamps for status transitions'),
-                                     'application': ComponentItem('applications', defvalue=Executable(), doc='specification of the application to be executed'),
-                                     'backend': ComponentItem('backends', defvalue=Localhost(), doc='specification of the resources to be used (e.g. batch system)'),
-                                     'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
-                                     'outputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects decorating what have to be done with the output files after job is completed "),
-                                     'non_copyable_outputfiles': GangaFileItem(defvalue=[], hidden=1, typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
+                                     'application': ComponentItem('applications', doc='specification of the application to be executed'),
+                                     'backend': ComponentItem('backends', doc='specification of the resources to be used (e.g. batch system)'),
+                                     'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
+                                     'outputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects decorating what have to be done with the output files after job is completed "),
+                                     'non_copyable_outputfiles': GangaFileItem(defvalue=[], hidden=1, typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
                                      'id': SimpleItem('', protected=1, comparable=0, doc='unique Ganga job identifier generated automatically'),
                                      'status': SimpleItem('new', protected=1, checkset='_checkset_status', doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"'),
                                      'name': SimpleItem('', doc='optional label which may be any combination of ASCII characters', typelist=['str']),
