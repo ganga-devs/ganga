@@ -98,17 +98,18 @@ class LHCbDataset(GangaDataset):
         self.depth = depth
         logger.debug("Dataset Created")
 
-    def __deepcopy__(self, memo):
-        cls = type(stripProxy(self))
-        obj = super(cls, cls).__new__(cls)
-        this_dict = stripProxy(self).__getstate__()
-        for n in this_dict:
-            this_dict[n] = deepcopy(this_dict[n], memo)
-            if n == 'files':
-                for this_file in this_dict['files']:
-                    stripProxy(this_file)._setParent(obj)
-        obj.__setstate__(this_dict)
-        return obj
+    #def __deepcopy__(self, memo):
+        #stripProxy(self)._getReadAccess()
+        #cls = type(stripProxy(self))
+        #obj = super(cls, cls).__new__(cls)
+        #this_dict = stripProxy(self).__getstate__()
+        #for n in this_dict.keys():
+        #    this_dict[n] = deepcopy(this_dict[n], memo)
+        #    #if n == 'files':
+        #    #    for this_file in this_dict['files']:
+        #    #        stripProxy(this_file)._setParent(obj)
+        #obj.__setstate__(this_dict)
+        #return obj
 
     def __construct__(self, args):
         logger.debug("__construct__")
