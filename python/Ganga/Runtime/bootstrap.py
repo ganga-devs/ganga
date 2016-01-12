@@ -574,8 +574,6 @@ under certain conditions; type license() for details.
         GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
         self.options.config_path = Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath, self.options.config_path))
 
-        from Ganga.Utility.Config import getConfig
-
         # check if the specified config options are different from the defaults
         # and set session values appropriately
         syscfg = getConfig("System")
