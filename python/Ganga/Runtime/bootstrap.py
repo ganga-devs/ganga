@@ -879,7 +879,10 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             def transform(x):
                 return os.path.normpath(Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath,x)))
 
-            paths = map(transform, filter(lambda x: x, config['RUNTIME_PATH'].split(':')))
+            from os.path import expandvars, expanduser
+
+            paths = map(transform, filter(lambda x: expandvars(expanduser(x)), config['RUNTIME_PATH'].split(':')))
+
 
             for path in paths:
                 r = RuntimePackage(path)
