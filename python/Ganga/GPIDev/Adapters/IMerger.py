@@ -4,7 +4,7 @@
 # $Id: IMerger.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 import Ganga.Utility.logging
@@ -29,14 +29,7 @@ def relpath(path, start=curdir):
     return join(*rel_list)
 
 # set the mergers config up
-config = makeConfig('Mergers', 'parameters for mergers')
-config.addOption('associate', {'log': 'TextMerger', 'root': 'RootMerger',
-                               'text': 'TextMerger', 'txt': 'TextMerger'}, 'Dictionary of file associations')
-gangadir = getConfig('Configuration')['gangadir']
-config.addOption('merge_output_dir', gangadir +
-                 '/merge_results', "location of the merger's outputdir")
-config.addOption('std_merge', 'TextMerger', 'Standard (default) merger')
-
+config = getConfig("Mergers")
 
 def getDefaultMergeDir():
     """Gets the default location of the mergers outputdir from the config"""

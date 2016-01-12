@@ -11,7 +11,7 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, FileItem
 from Ganga.GPIDev.Lib.File import File, ShareDir
 
-from Ganga.Utility.Config import makeConfig, getConfig, ConfigError
+from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.root import getrootsys, getpythonhome
 
 from Ganga.Core import ApplicationPrepareError
@@ -24,35 +24,7 @@ import tempfile
 from Ganga.Utility.files import expandfilename
 
 logger = Ganga.Utility.logging.getLogger()
-
-def getLCGRootPath():
-
-    lcg_release_areas = {'afs' : '/afs/cern.ch/sw/lcg/releases/LCG_79',
-    'cvmfs' : '/cvmfs/lhcb.cern.ch/lib/lcg/releases/LCG_79'}
-
-    ## CAUTION This could be sensitive to mixed AFS/CVMFS running but I doubt this setup is common or likely
-    myCurrentPath = os.path.abspath(inspect.getfile(inspect.currentframe()))
-
-    if myCurrentPath[:4].upper() == '/AFS':
-        return lcg_release_areas['afs']
-    elif myCurrentPath[:6].upper() == '/CVMFS':
-        return lcg_release_areas['cvmfs']
-    else:
-        return ''
-
-config = makeConfig('ROOT', "Options for Root backend")
-## Not needed when we can't do option substitution internally but support it at the .gangarc level!!!!! 27-09-2015 rcurrie
-#config.addOption('lcgpath', getLCGRootPath(), 'Path of the LCG release that the ROOT project and it\'s externals are taken from')
-config.addOption('arch', 'x86_64-slc6-gcc48-opt', 'Architecture of ROOT')
-## Auto-Interporatation doesn't appear to work when setting the default value
-#config.addOption('location', '${lcgpath}/ROOT/${version}/${arch}/', 'Location of ROOT')
-config.addOption('location', '%s/ROOT/6.04.02/x86_64-slc6-gcc48-opt' % getLCGRootPath(), 'Location of ROOT')
-config.addOption('path', '', 'Set to a specific ROOT version. Will override other options.')
-## Doesn't appear to work see above ^^^
-#config.addOption('pythonhome', '${lcgpath}/Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
-config.addOption('pythonhome', '%s/Python/2.7.9.p1/x86_64-slc6-gcc48-opt' % getLCGRootPath(), 'Location of the python used for execution of PyROOT script')
-config.addOption('pythonversion', '2.7.9.p1', "Version number of python used for execution python ROOT script")
-config.addOption('version', '6.04.02', 'Version of ROOT')
+config = getConfig('ROOT')
 
 def getDefaultScript():
     name = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'defaultRootScript.C')

@@ -2,7 +2,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
-from .common import logger, markup, overview_colours, status_colours
+from .common import logger
+from Ganga.Utility.ColourText import status_colours, overview_colours, ANSIMarkup
+markup = ANSIMarkup()
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.Utility.Config import getConfig

@@ -25,16 +25,6 @@ class ConfigDescriptor(object):
     def __set__(self, obj, val):
         stripProxy(obj).setUserValue(self._name, val)
 
-display_config = getConfig('Display')
-
-display_config.addOption('config_name_colour', 'fx.bold',
-                         'colour print of the names of configuration sections and options')
-display_config.addOption(
-    'config_docstring_colour', 'fg.green', 'colour print of the docstrings and examples')
-display_config.addOption(
-    'config_value_colour', 'fx.bold', 'colour print of the configuration values')
-
-
 class ConfigProxy(object):
 
     """ A proxy for a single configuration unit.
