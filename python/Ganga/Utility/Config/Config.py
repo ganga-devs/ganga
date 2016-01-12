@@ -113,10 +113,11 @@ class ConfigError(GangaException):
 
 logger = None
 
-import Ganga.Utility.logging
+
 
 
 def getLogger():
+    import Ganga.Utility.logging
     global logger
     if logger is not None:
         return logger
@@ -791,6 +792,8 @@ def read_ini_files(filenames, system_vars):
 
     import re
     import os
+    import Ganga.Utility.logging
+
     logger = getLogger()
 
     logger.debug('reading ini files: %s', str(filenames))

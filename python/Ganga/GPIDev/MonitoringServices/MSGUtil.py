@@ -13,8 +13,6 @@ if 'stomp.py' in config:
 else:
     # set stomp.py logger to CRITICAL
     logging.getLogger('stomp.py').setLevel(logging.CRITICAL)
-    # add stomp.py option to Logging configuration
-    config.addOption('stomp.py', 'CRITICAL', 'logger for stomp.py external package')
 
 
 def createPublisher(server, port, user='ganga', password='analysis', idle_timeout=None, exit_timeout=None):

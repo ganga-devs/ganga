@@ -12,8 +12,7 @@ from Ganga.Utility.Config import makeConfig
 
 logger = getLogger()
 
-config = makeConfig('Display', 'control the printing style of the different registries ("jobs","box","tasks"...)')
-
+config = Ganga.Utility.Config.getConfig('Display')
 
 class RegistrySlice(object):
 

@@ -38,17 +38,6 @@ def bootstrap(reg, interactive_session):
     The autostart value may be overriden in the config file, so warn if it differs from the default.
     """
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor, config
-
-    config.addOption('forced_shutdown_policy', 'session_type',
-                     'If there are remaining background activities at exit such as monitoring, output download Ganga will attempt to wait for the activities to complete. You may select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the system waits on a timeout without questions ("timeout"). The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')
-
-    config.addOption('forced_shutdown_timeout', 60,
-                     "Timeout in seconds for forced Ganga shutdown in batch mode.")
-    config.addOption('forced_shutdown_prompt_time', 10,
-                     "User will get the prompt every N seconds, as specified by this parameter.")
-    config.addOption('forced_shutdown_first_prompt_time', 5,
-                     "User will get the FIRST prompt after N seconds, as specified by this parameter. This parameter also defines the time that Ganga will wait before shutting down, if there are only non-critical threads alive, in both interactive and batch mode.")
-
     from Ganga.Utility.logging import getLogger
 
     logger = getLogger()

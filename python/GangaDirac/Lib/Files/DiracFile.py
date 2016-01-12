@@ -7,7 +7,7 @@ import os.path
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory, isType, getName
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from Ganga.GPIDev.Lib.File.IGangaFile import IGangaFile
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.files import expandfilename

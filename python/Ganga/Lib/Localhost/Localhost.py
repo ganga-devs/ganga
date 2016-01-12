@@ -21,11 +21,7 @@ import Ganga.Utility.logging
 import Ganga.Utility.Config
 
 logger = Ganga.Utility.logging.getLogger()
-
-config = Ganga.Utility.Config.makeConfig('Local', 'parameters of the local backend (jobs in the background on localhost)')
-config.addOption('remove_workdir', True, 'remove automatically the local working directory when the job completed')
-config.addOption('location', None, 'The location where the workdir will be created. If None it defaults to the value of $TMPDIR')
-
+config = Ganga.Utility.Config.getConfig('Local')
 
 class Localhost(IBackend):
 

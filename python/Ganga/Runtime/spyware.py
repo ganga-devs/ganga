@@ -4,8 +4,7 @@ from Ganga.Utility.Config import getConfig
 config = getConfig('Configuration')
 #config.addOption('UsageMonitoringURL', "http://gangamon.cern.ch:8888/apmon/ganga.conf",
 #                 'MonALISA configuration file used to setup the destination of usage messages')
-config.addOption('UsageMonitoringMSG', True,
-                 "enable usage monitoring through MSG server defined in MSGMS configuration")
+
 
 monitor = None
 

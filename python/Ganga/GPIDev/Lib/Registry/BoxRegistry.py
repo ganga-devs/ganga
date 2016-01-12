@@ -17,24 +17,6 @@ from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-# add display default values for the box
-config.addOption('box_columns',
-                 ("id", "type", "name", "application"),
-                 'list of job attributes to be printed in separate columns')
-
-config.addOption('box_columns_width',
-                 {'id': 5, 'type': 20, 'name': 40, 'application': 15},
-                 'width of each column')
-
-config.addOption('box_columns_functions',
-                 {'application': "lambda obj: obj.application._name"},
-                 'optional converter functions')
-
-config.addOption('box_columns_show_empty',
-                 ['id'],
-                 'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
-
-
 class BoxTypeError(GangaException, TypeError):
 
     def __init__(self, what=''):

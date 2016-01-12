@@ -13,7 +13,7 @@ import os
 import copy
 import pickle
 
-from Ganga.GPIDev.Lib.File import IGangaFile
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 

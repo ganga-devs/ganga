@@ -567,8 +567,4 @@ class Condor(IBackend):
 
 #_________________________________________________________________________
 
-from Ganga.Utility.Config import makeConfig
-config = makeConfig('Condor', 'Settings for Condor Batch system')
 
-config.addOption('query_global_queues', True,
-                 "Query global condor queues, i.e. use '-global' flag")

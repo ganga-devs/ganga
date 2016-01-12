@@ -30,16 +30,11 @@
 # has been defined.
 
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Utility.Config import makeConfig
+from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Config.Config import ConfigError
 
 # test configuration properties
-config = makeConfig('GPIComponentFilters', """Customization of GPI component object assignment
-for each category there may be multiple filters registered, the one used being defined 
-in the configuration file in [GPIComponentFilters]
-e.g: {'datasets':{'lhcbdatasets':lhcbFilter, 'testdatasets':testFilter}...}
-""", is_open=False)
-
+config = getConfig('GPIComponentFilters')
 
 def void_filter(val, item):
     return None

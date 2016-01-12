@@ -1,11 +1,9 @@
-from Ganga.GPIDev.Lib.File import Configure
 from Ganga.GPIDev.Lib.File.Configure import getSharedPath
 
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.File import ShareDir
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 
-from Ganga.GPIDev.Lib.File.IGangaFile import IGangaFile
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile
 from Ganga.GPIDev.Lib.File.LCGSEFile import LCGSEFile
