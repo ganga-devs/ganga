@@ -638,7 +638,7 @@ class Job(GangaObject):
             raise JobStatusError(x)
 
         if self.status != saved_status and self.master is None:
-            logger.info('job %s status changed to "%s"', fqid, self.status)
+            logger.info('job %s status changed to "%s"', self.getFQID('.'), self.status)
             if stripProxy(self)._getRegistry() is not None:
                 stripProxy(self)._getRegistry()._dirty(stripProxy(self)._getRoot())
         if update_master and self.master is not None:
@@ -993,10 +993,24 @@ class Job(GangaObject):
             fqid = [self.id]
         else:
             return None
-        cur = stripProxy(self)._getParent()  # FIXME: or use master attribute?
-        while cur:
+
+
+        try:
+            if stripProxy(self).master is not None:
+                cur = stripProxy(self).master  # FIXME: or use master attribute?
+            else:
+                cur = None
+        except AssertionError:
+            cur = None
+        while cur is not None:
             fqid.append(cur.id)
-            cur = cur._getParent()
+            try:
+                if stripProxy(cur).master is not None:
+                    cur = stripProxy(cur).master
+                else:
+                    cur = None
+            except AssertionError:
+                cur = None
         fqid.reverse()
 
         if sep:
@@ -1216,7 +1230,7 @@ class Job(GangaObject):
     def _getAppSubConfig(self, subjobs=None):
 
         if subjobs is None:
-            subjobs = []
+            subjobs = GangaList()
 
         appsubconfig = []
         if self.master is None:
@@ -1441,7 +1455,7 @@ class Job(GangaObject):
             if subjobs:
                 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
                 if not isType(self.subjobs, (list, GangaList)):
-                    self.subjobs = []
+                    self.subjobs = GangaList()
                 # print "*"*80
                 # subjobs[0].printTree(sys.stdout)
 
@@ -1721,7 +1735,7 @@ class Job(GangaObject):
         for sj in self.subjobs:
             sj.application.transition_update("removed")
         # delete subjobs
-        self.subjobs = []
+        self.subjobs = GangaList()
         self._commit()
 
     def remove(self, force=False):
@@ -1982,8 +1996,7 @@ class Job(GangaObject):
             logger.info('killing job %s', fqid)
             if self.status not in ['submitted', 'running']:
                 if self.status in ['completed', 'failed']:
-                    logger.warning("Job %s has already reached it's final state: %s and cannot be killed" % (
-                        fqid, self.status))
+                    logger.warning("Job %s has already reached it's final state: %s and cannot be killed" % (job.getFQID('.'), self.status))
                     return True
                 else:
                     msg = "cannot kill job which is in '%s' state. " % self.status
@@ -2012,7 +2025,7 @@ class Job(GangaObject):
                     msg = "backend.master_kill() returned False"
                     raise JobError(msg)
             except GangaException, x:
-                msg = "failed to kill job %s: %s" % (fqid, str(x))
+                msg = "failed to kill job %s: %s" % (self.getFQID('.'), str(x))
                 logger.error(msg)
                 raise JobError(msg)
         finally:
@@ -2053,7 +2066,7 @@ class Job(GangaObject):
         logger.info('resubmitting job %s', fqid)
 
         if backend and auto_resubmit:
-            msg = "job %s: cannot change backend when auto_resubmit=True. This is most likely an internal implementation problem." % fqid
+            msg = "job %s: cannot change backend when auto_resubmit=True. This is most likely an internal implementation problem." % self.getFQID('.')
             logger.error(msg)
             raise JobError(msg)
 
@@ -2062,13 +2075,13 @@ class Job(GangaObject):
             raise JobError(errorMsg)
 
         if self.status in ['new']:
-            msg = "cannot resubmit a new job %s, please use submit()" % (fqid)
+            msg = "cannot resubmit a new job %s, please use submit()" % (self.getFQID('.'))
             logger.error(msg)
             raise JobError(msg)
 
         # the status check is disabled when auto_resubmit
         if self.status not in ['completed', 'failed', 'killed'] and not auto_resubmit:
-            msg = "cannot resubmit job %s which is in '%s' state" % (fqid, self.status)
+            msg = "cannot resubmit job %s which is in '%s' state" % (self.getFQID('.'), self.status)
             logger.error(msg)
             raise JobError(msg)
 
@@ -2077,7 +2090,7 @@ class Job(GangaObject):
 
         # do not allow to change the backend type
         if backend and not isType(self.backend, type(backend)):
-            msg = "cannot resubmit job %s: change of the backend type is not allowed" % fqid
+            msg = "cannot resubmit job %s: change of the backend type is not allowed" % self.getFQID('.')
             logger.error(msg)
             raise JobError(msg)
 
@@ -2116,7 +2129,7 @@ class Job(GangaObject):
         try:
             self._commit()
         except Exception, x:
-            msg = 'cannot commit the job %s, resubmission aborted' % fqid
+            msg = 'cannot commit the job %s, resubmission aborted' % self.getFQID('.')
             logger.error(msg)
             self.status = oldstatus
             raise JobError(msg)
@@ -2155,7 +2168,7 @@ class Job(GangaObject):
                 if not result:
                     raise JobManagerError('error during submit')
             except IncompleteJobSubmissionError, x:
-                logger.warning('Not all subjobs of job %s have been sucessfully re-submitted: %s', fqid, x)
+                logger.warning('Not all subjobs of job %s have been sucessfully re-submitted: %s', self.getFQID('.'), x)
 
             # fix for bug 77962 plus for making auto_resubmit test work
             if auto_resubmit:
@@ -2176,7 +2189,7 @@ class Job(GangaObject):
             # send job submission message
             from Ganga.Runtime.spyware import ganga_job_submitted
             # if resubmit on subjob
-            if fqid.find('.') > 0:
+            if self.getFQID('.').find('.') > 0:
                 ganga_job_submitted(getName(self.application), getName(self.backend), "0", "0", "1")
             # if resubmit on plain job
             elif len(self.subjobs) == 0:
