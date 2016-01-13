@@ -156,7 +156,7 @@ def rmrf(name, count=0):
         try:
             remove_name = name + "_" + str(time.time()) + '__to_be_deleted_'
             os.rename(name, remove_name)
-            logger.debug("Move completed")
+            #logger.debug("Move completed")
         except OSError as err:
             if err.errno != errno.ENOENT:
                 logger.debug("rmrf Err: %s" % str(err))

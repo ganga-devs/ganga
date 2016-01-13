@@ -212,7 +212,7 @@ class Registry(object):
         try:
             while this_id in self._inprogressDict.keys():
                 import time
-                logger.deubg("Getting item being operated on: %s" % this_id)
+                logger.debug("Getting item being operated on: %s" % this_id)
                 time.sleep(0.1)
             self._inprogressDict[this_id] = "_getitem"
             from Ganga.GPIDev.Base.Proxy import addProxy
