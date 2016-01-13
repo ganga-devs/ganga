@@ -2,6 +2,7 @@ from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks import Task
 from MultiTransform import MultiTransform
+from Ganga.Utility.ColourText import overview_colours, fgcol
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
