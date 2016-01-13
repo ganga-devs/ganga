@@ -79,19 +79,25 @@ class SubJobXMLList(GangaObject):
         self._load_backup = None
         self._cachedJobs = {}
 
+    ## THIS CLASS MAKES USE OF THE INTERNAL CLASS DICTIONARY ONLY!!!
+    ## THIS CLASS DOES NOT MAKE USE OF THE SCHEMA TO STORE INFORMATION AS TRANSIENT OR UNCOPYABLE
+    ## THIS CLASS CONTAINS A LOT OF OBJECT REFERENCES WHICH SHOULD NOT BE DEEPCOPIED!!!
     def __deepcopy__(self, memo=None):
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
-        #this_dict = copy.deepcopy(self.__dict__, memo)
+        obj.__init__()
         new_dict = {}
         for dict_key, dict_value in self.__dict__.iteritems():
 
             ## Copy objects where it's sane to
             if dict_key not in ['_cachedJobs', '_definedParent', '_to_file', '_from_file', '_registry', '_parent']:
-                new_dict[dict_key] = dict_value
+                new_dict[dict_key] = deepcopy(dict_value)
 
             ## Assign by reference objects where it's sane to
             elif dict_key in ['_to_file', '_from_file', '_registry']:
+                new_dict[dict_key] = dict_value
+
+            else:
                 new_dict[dict_key] = dict_value
 
         ## Manually define unsafe/uncopyable objects
