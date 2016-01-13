@@ -114,7 +114,7 @@ def getGlobalSessionFiles():
 class SessionLockRefresher(GangaThread):
 
     def __init__(self, session_name, sdir, fn, repo, afs):
-        GangaThread.__init__(self, name='SessionLockRefresher', critical=False)
+        GangaThread.__init__(self, name='SessionLockRefresher', critical=True)
         self.session_name = session_name
         self.sdir = sdir
         self.fns = [fn]
