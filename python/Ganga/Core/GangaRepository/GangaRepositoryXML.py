@@ -283,6 +283,7 @@ class GangaRepositoryLocal(GangaRepository):
         fn = self.get_idxfn(this_id)
         # index timestamp changed
         if self._cache_load_timestamp.get(this_id, 0) != os.stat(fn).st_ctime:
+            logger.debug("%s != %s" % (str(self._cache_load_timestamp.get(this_id, 0)), str(os.stat(fn).st_ctime)))
             try:
                 with open(fn, 'r') as fobj:
                     cat, cls, cache = pickle_from_file(fobj)[0]
@@ -313,6 +314,9 @@ class GangaRepositoryLocal(GangaRepository):
             self.objects[this_id].setNodeIndexCache( self._cached_obj[this_id] )
             setattr(self.objects[this_id], '_registry_refresh', True)
             return True
+        else:
+            logger.debug("Error, doubly loading of object with ID: %s" % this_id)
+            logger.debug("Just silently continuing")
         return False
 
     def index_write(self, this_id):
@@ -477,14 +481,19 @@ class GangaRepositoryLocal(GangaRepository):
         summary = []
         if firstRun:
             self._read_master_cache()
-        for this_id, idx in objs.iteritems():
+        logger.debug("Iterating over Items")
+
+        locked_ids = self.sessionlock.locked
+
+        for this_id in objs.keys():
+        #for this_id, idx in objs.iteritems():
             deleted_ids.discard(this_id)
             # Make sure we do not overwrite older jobs if someone deleted the
             # count file
             if this_id > self.sessionlock.count:
                 self.sessionlock.count = this_id + 1
             # Locked IDs can be ignored
-            if this_id in self.sessionlock.locked:
+            if this_id in locked_ids:
                 continue
             # Now we treat unlocked IDs
             try:
@@ -530,6 +539,8 @@ class GangaRepositoryLocal(GangaRepository):
                     ## we can't reasonably write all possible exceptions here!
                     logger.debug("update_index: Failed to load id %i: %s" % (this_id, str(x)))
                     summary.append((this_id, str(x)))
+
+        logger.debug("Iterated over Items")
 
         # Check deleted files:
         for this_id in deleted_ids:
