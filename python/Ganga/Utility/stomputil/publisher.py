@@ -131,6 +131,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
             self.backoff_max = 60
             # queue to hold (message, headers, keyword_headers) tuples
             self._message_queue = Queue()
+            self.__finalized = False
 
         def send(self, destination=None, message='', headers=None, **keyword_headers):
             """Add message to local queue for sending to MSG server.
@@ -301,6 +302,8 @@ def createPublisher(T, server, port, user='', password='', logger=None,
             @param timeout: Maximum seconds to clear message queue on exit.
                     Negative value indicates clear queue without timeout.
             """
+            if self.__finalized is True:
+                return
             self._log(logging.DEBUG, 'Finalizing.')
             finalize_time = 0
             while not self._message_queue.empty() or self.__sending:
@@ -310,6 +313,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
                 finalize_time += BEAT_TIME
             self._disconnect()
             self._log(logging.DEBUG, 'Finalized after %s second(s). Local message queue size is %s.', finalize_time, self._message_queue.qsize())
+            self.__finalized = True
 
         def _log(self, level, msg, *args, **kwargs):
             """Log message if logger is defined."""
