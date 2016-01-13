@@ -299,7 +299,7 @@ class ProxyDataDescriptor(object):
         # at class level return a helper object (for textual description)
         if obj is None:
             # return Schema.make_helper(getattr(getattr(cls, proxyRef), getName(self)))
-            return getattr( getattr(cls, proxyRef), getNeme(self))
+            return getattr( getattr(cls, proxyRef), getName(self))
 
         try:
             val = getattr( getattr(obj, proxyRef), getName(self))
