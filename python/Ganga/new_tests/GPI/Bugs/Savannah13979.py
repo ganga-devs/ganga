@@ -10,16 +10,23 @@ class Savannah13979(GangaUnitTest):
         self.fname = 'test_savannah_13979.ganga'
         j = Job(application=Executable())
 
-        # One-line parameter
-        j.application.args = ['a']
-        export(j, self.fname)
-        self.assertTrue(load(self.fname))
+        args_set = [
+            ['a'],
 
-        # Two-line parameter
-        j.application.args = ['''a
-        b''']
-        export(j, self.fname)
-        self.assertTrue(load(self.fname))
+            ['''a
+                b'''],
+
+            ['''a
+                b''', 'simple', 'normal\nnewline', """another
+
+                multiline"""]
+        ]
+
+        for args in args_set:
+            j.application.args = args
+            export(j, self.fname)
+            j2 = load(self.fname)[0]
+            self.assertEqual(j2.application.args, args)
 
     def tearDown(self):
         import os
