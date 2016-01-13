@@ -83,11 +83,8 @@ def startGanga():
         Ganga.Runtime._prog.configure()
         logger.info("Initializing")
         Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
-        logger.info("Bootstrapping")
-        Ganga.Runtime._prog.bootstrap(interactive=False)
     else:
-        # No need to perform the bootstrap but we need to test if the internal
-        # services need to be reinitialized
+        # We need to test if the internal services need to be reinitialized
         from Ganga.Core.InternalServices import Coordinator
         if not Coordinator.servicesEnabled:
             # Start internal services
@@ -95,12 +92,11 @@ def startGanga():
 
             from Ganga.GPI import reactivate
             reactivate()
-
-            from Ganga.Core import start_jobregistry_monitor
-            from Ganga.Core.GangaRepository import getRegistry
-            start_jobregistry_monitor(getRegistry('jobs'))
         else:
             logger.info("InternalServices still running")
+
+    logger.info("Bootstrapping")
+    Ganga.Runtime._prog.bootstrap(interactive=False)
 
     # [PollThread]autostart_monThreads=False has turned this off being done automatically.
     # The thread pool is emptied by _ganga_run_exitfuncs
@@ -148,10 +144,6 @@ def stopGanga():
             jobs.clean(confirm=True, force=True)
         if hasattr(templates, 'clean'):
             templates.clean(confirm=True, force=True)
-
-        from Ganga.Core.GangaRepository import getRegistry
-        getRegistry('jobs').metadata.clean(force=True)
-        getRegistry('jobs').clean(force=True)
 
     logger.info("Shutting Down Internal Services")
 
