@@ -315,7 +315,7 @@ class GangaRepositoryLocal(GangaRepository):
             setattr(self.objects[this_id], '_registry_refresh', True)
             return True
         else:
-            logger.debug("Error, doubly loading of object with ID: %s" % this_id)
+            logger.debug("Doubly loading of object with ID: %s" % this_id)
             logger.debug("Just silently continuing")
         return False
 
@@ -486,7 +486,6 @@ class GangaRepositoryLocal(GangaRepository):
         locked_ids = self.sessionlock.locked
 
         for this_id in objs.keys():
-        #for this_id, idx in objs.iteritems():
             deleted_ids.discard(this_id)
             # Make sure we do not overwrite older jobs if someone deleted the
             # count file
@@ -512,9 +511,6 @@ class GangaRepositoryLocal(GangaRepository):
                 # will fail as well
                 summary.append((this_id, err))
                 continue
-
-            # print this_id
-            # print self.objects
 
             # this is bad - no or corrupted index but object not loaded yet!
             # Try to load it!

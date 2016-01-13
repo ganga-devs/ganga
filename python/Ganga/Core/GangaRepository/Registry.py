@@ -395,8 +395,8 @@ class Registry(object):
                 self._update_index_timer = time.time()
 
             return sorted(self._objects.keys())
-        except Exception as err:
-            pass
+        #except Exception as err:
+        #    pass
         finally:
             self._lock.release()
 
@@ -421,8 +421,8 @@ class Registry(object):
                 self._update_index_timer = time.time()
 
             return sorted(self._objects.items())
-        except Exception as err:
-            pass
+        #except Exception as err:
+        #    pass
         finally:
             self._lock.release()
 
