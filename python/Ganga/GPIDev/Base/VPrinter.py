@@ -9,29 +9,20 @@ from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod, stripProxy
 
 from inspect import isclass
 
-def quoteValue(value, selection, indent=''):
+
+def quoteValue(value):
     """A quoting function. Used to get consistent formatting"""
-    # print "Quoting",repr(value),selection
-    if isType(value, type('')):
-        if selection == 'copyable':
-
-            value = value.replace('"', R'\"')
-            value = value.replace("'", R"\'")
-
-# DISABLED
-##             valueList = list( value )
-# for i in range( len( value ) ):
-##                 c = value[ i ]
-# if c in [ "'", '"' ]:
-##                     valueList[ i ] = "\\" + c
-##                     value = "".join( valueList )
-            if 1 + value.find("\n"):
-                # print 'Quote result',"'''" + value + "'''"
-                return "'''" + value + "'''"
-        # print 'Quote result',"'"+value+"'"
-        return indent + "'" + value + "'"
-    # print 'Quote result',value
-    return value
+    if isType(value, str):
+        # If it's a string then use `repr` for the quoting
+        return repr(value)
+    try:
+        # If it's an iterable like a list or a GangaList then quote each element
+        quoted_list = [quoteValue(s) for s in value]
+        string_of_list = '[' + ', '.join(quoted_list) + ']'
+        return string_of_list
+    except TypeError:
+        # If it's not a string or iterable then just return it plain
+        return value
 
 
 def indent(level):
@@ -165,7 +156,7 @@ class VPrinter(object):
             #self.level-=1
 
     def quote(self, x):
-        return quoteValue(x, self.selection, '   ')
+        return quoteValue(x)
 
 
 class VSummaryPrinter(VPrinter):
