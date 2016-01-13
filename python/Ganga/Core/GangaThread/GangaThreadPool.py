@@ -169,9 +169,9 @@ class GangaThreadPool(object):
 
         logger.debug("ExternalTasks still running: %s" % queues.threadStatus())
 
-        logger.debug('Service threads to shutdown: %s' % list(_all_threads))
+        logger.debug('Service threads to shutdown: %s' % ([i for i in reversed(list(_all_threads))]))
 
-        logger.debug('Service threads to shutdown: %s' % list(_all_threads))
+        logger.debug('Service threads to shutdown: %s' % ([i for i in reversed(list(_all_threads))]))
 
         # shutdown each individual threads in the pool
         nonCritThreads = []
