@@ -51,7 +51,10 @@ def ganga_started(session_type, **extended_attributes):
         p.send(msg_config['usage_message_destination'], repr(usage_message), {'persistent': 'true'})
         # ask publisher thread to stop. it will send queued message anyway.
         p.stop()
-
+        p._finalize(10.)
+        if hasattr(p, 'unregister'):
+            p.unregister()
+        del p
 
 def ganga_job_submitted(application_name, backend_name, plain_job, master_job, sub_jobs):
     host = getConfig('System')['GANGA_HOSTNAME']
@@ -78,4 +81,8 @@ def ganga_job_submitted(application_name, backend_name, plain_job, master_job, s
         # p.send('/queue/test.ganga.jobsubmission',repr(job_submitted_message),{'persistent':'true'})
         # ask publisher thread to stop. it will send queued message anyway.
         p.stop()
+        p._finalize(10.)
+        if hasattr(p, 'unregister'):
+            p.unregister()
+        del p
 
