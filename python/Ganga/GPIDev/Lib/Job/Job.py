@@ -1002,22 +1002,16 @@ class Job(GangaObject):
         else:
             return None
 
-        try:
-            if stripProxy(self).master is not None:
-                cur = stripProxy(self).master  # FIXME: or use master attribute?
-            else:
-                cur = None
-        except AssertionError:
+        if stripProxy(self).master is not None:
+            cur = stripProxy(self).master  # FIXME: or use master attribute?
+        else:
             cur = None
 
         while cur is not None:
             fqid.append(cur.id)
-            try:
-                if stripProxy(cur).master is not None:
-                    cur = stripProxy(cur).master
-                else:
-                    cur = None
-            except AssertionError:
+            if stripProxy(cur).master is not None:
+                cur = stripProxy(cur).master
+            else:
                 cur = None
         fqid.reverse()
 
