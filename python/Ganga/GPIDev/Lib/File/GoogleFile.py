@@ -79,9 +79,10 @@ class GoogleFile(IGangaFile):
             from oauth2client.client import OAuth2WebServerFlow
 
             # Copy your credentials from the APIs Console
-            CLIENT_ID = "54459939297.apps.googleusercontent.com"
-            CLIENT_SECRET = "mAToHx5RpXtwkeYR6nOIe_Yw"
-
+#            CLIENT_ID = "54459939297.apps.googleusercontent.com"
+#            CLIENT_SECRET = "mAToHx5RpXtwkeYR6nOIe_Yw"
+            CLIENT_ID = '776655306197-dirtoquqsm7cpqgepvamofg5t2b5f637.apps.googleusercontent.com'
+            CLIENT_SECRET = 'GpdEP-OBZZQLB3k-xxOpzFQG'
             # Check https://developers.google.com/drive/scopes for all
             # available scopes
             OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.file'
