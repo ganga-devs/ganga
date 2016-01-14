@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 from setuptools import find_packages
 import subprocess
 from distutils.sysconfig import get_python_lib
