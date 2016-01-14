@@ -17,8 +17,14 @@ class install(_install):
         self.execute(_post_install, (self.install_lib,), msg="Running post install task")
 
 
+def readme():
+    with open('README.rst') as f:
+        return f.read()
+
+
 setup(name='ganga',
       description='Job management tool',
+      long_description=readme(),
       url='https://github.com/ganga-devs/ganga',
       version='6.1.14',
       author='Ganga Developers',
