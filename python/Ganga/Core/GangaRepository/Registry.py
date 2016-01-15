@@ -233,10 +233,10 @@ class Registry(object):
                 this_obj = self._objects[this_id]
             found_id = None
             if hasattr(this_obj, 'id'):
-                logger.debug("Found ID: %s" % this_obj.id)
+                #logger.debug("Found ID: %s" % this_obj.id)
                 found_id = this_obj.id
             if hasattr(this_obj, '_registry_id'):
-                logger.debug("Found RegID: %s" % this_obj._registry_id)
+                #logger.debug("Found RegID: %s" % this_obj._registry_id)
                 found_id = this_obj._registry_id
             if found_id is not None and real_id is not None:
                 assert( found_id == real_id )
@@ -316,7 +316,7 @@ class Registry(object):
 
                  self.dirty_objs = {}
     
-            time.sleep(3.)
+            time.sleep(0.5)
 
     def turnOffAutoFlushing(self):
         self._autoFlush = False
