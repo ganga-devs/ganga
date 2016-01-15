@@ -1,6 +1,7 @@
 from setuptools import setup
 from setuptools import find_packages
 
+
 def readme():
     with open('README.rst') as f:
         return f.read()
@@ -29,4 +30,5 @@ setup(name='ganga',
           'Programming Language :: Python :: 2.6',
           'Programming Language :: Python :: 2.7',
       ],
+      package_data={'Ganga': ['Runtime/HEAD_CONFIG.INI']},
       )
