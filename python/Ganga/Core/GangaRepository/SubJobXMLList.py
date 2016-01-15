@@ -1,9 +1,6 @@
-# This, although inheriting from GangaList should be here as the class has to know about on-disk structure of the XML repo
-
 from Ganga.GPIDev.Schema.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
-from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
 from Ganga.Core.GangaRepository.GangaRepository import RepositoryError
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base.Proxy import stripProxy
@@ -32,7 +29,6 @@ class SJXLIterator(object):
 class SubJobXMLList(GangaObject):
     """
         jobDirectory: Directory of parent job containing subjobs
-        from_file: Helper function to read object from disk
     """
 
     _category = 'internal'
@@ -50,8 +46,6 @@ class SubJobXMLList(GangaObject):
         self._registry = registry
         self._cachedJobs = {}
 
-        self._to_file = to_file
-        self._from_file = from_file
         self._dataFileName = dataFileName
         self._load_backup = load_backup
 
@@ -73,8 +67,6 @@ class SubJobXMLList(GangaObject):
         self._subjob_master_index_name = "subjobs.idx"
         self._jobDirectory = None
         self._registry = None
-        self._to_file = None
-        self._from_file = None
         self._dataFileName = None
         self._load_backup = None
         self._cachedJobs = {}
@@ -90,11 +82,11 @@ class SubJobXMLList(GangaObject):
         for dict_key, dict_value in self.__dict__.iteritems():
 
             ## Copy objects where it's sane to
-            if dict_key not in ['_cachedJobs', '_definedParent', '_to_file', '_from_file', '_registry', '_parent']:
+            if dict_key not in ['_cachedJobs', '_definedParent', '_registry', '_parent']:
                 new_dict[dict_key] = deepcopy(dict_value)
 
             ## Assign by reference objects where it's sane to
-            elif dict_key in ['_to_file', '_from_file', '_registry']:
+            elif dict_key in ['_registry']:
                 new_dict[dict_key] = dict_value
 
             else:
@@ -139,12 +131,12 @@ class SubJobXMLList(GangaObject):
                             disk_time = os.stat(disk_location).st_ctime
                             if mod_time != disk_time:
                                 logger.warning("SubJob: %s has been modified, re-loading" % (subjob_id))
-                                new_data = raw_self._registry.getIndexCache( stripProxy(raw_self.__getitem__(i)) )
+                                new_data = raw_self._registry.getIndexCache( stripProxy(raw_self.__getitem__(subjob_id)) )
                                 raw_self._subjobIndexData[subjob_id] = new_data
                                 break
                         else:
                             logger.warning("Cannot find subjob index %s, rebuilding" % str(subjob_id))
-                            new_data = raw_self._registry.getIndexCache( stripProxy(raw_self.__getitem__(i)) )
+                            new_data = raw_self._registry.getIndexCache( stripProxy(raw_self.__getitem__(subjob_id)) )
                             raw_self._subjobIndexData[subjob_id] = new_data
                             continue
                             #raw_self._subjobIndexData = {}
@@ -300,29 +292,19 @@ class SubJobXMLList(GangaObject):
                 else:
                     raise RepositoryError(raw_self,"IOError on loading subobject %s: %s" % (index, x))
 
+            from Ganga.Core.GangaRepository.VStreamer import from_file
+
             try:
-                raw_self._cachedJobs[index] = raw_self._from_file(sj_file)[0]
+                raw_self._cachedJobs[index] = from_file(sj_file)[0]
             except Exception as err:
 
                 try:
                     subjob_data = raw_self.__get_dataFile(str(index), True)
-                    raw_self._cachedJobs[index] = raw_self._from_file(sj_file)[0]
-                    raw_self._cachedJobs[index] = raw_self._from_file(sj_file)[0]
+                    raw_self._cachedJobs[index] = from_file(sj_file)[0]
                 except Exception as err:
                     logger.debug("Failed to Load XML for job: %s using: %s" % (str(index), str(subjob_data)))
                     logger.debug("Err:\n%s" % str(err))
                     raise err
-
-        #if raw_self._definedParent is not None:
-        #    if hasattr(raw_self._definedParent, 'getFQID'):
-        #        parent_name = "Job: %s" % raw_self._definedParent.getFQID('.')
-        #    elif hasattr(raw_self._definedParent, 'id'):
-        #        parent_name = "Job: %s" % raw_self._definedParent.id
-        #    else:
-        #        parent_name = "Job: unknown"
-        #else:
-        #    parent_name = "None"
-        #logger.debug('Setting Parent [%s]: %s' % (str(index), (parent_name)))
 
         if raw_self._definedParent is not None:
             raw_self._cachedJobs[index]._setParent( raw_self._definedParent )
@@ -357,7 +339,7 @@ class SubJobXMLList(GangaObject):
         if index in self._subjobIndexData.keys():
             return self._subjobIndexData[index]
         else:
-            return raw_self._registry.getIndexCache( stripProxy(raw_self.__getitem__(i)) )
+            return raw_self._registry.getIndexCache( stripProxy(raw_self.__getitem__(index)) )
 
         return None
 
@@ -378,13 +360,15 @@ class SubJobXMLList(GangaObject):
     def flush(self):
         from Ganga.Core.GangaRepository.GangaRepositoryXML import safe_save
 
+        from Ganga.Core.GangaRepository.VStreamer import to_file
+
         raw_self = stripProxy(self)
         for index in range(len(raw_self)):
             if index in raw_self._cachedJobs.keys():
                 subjob_data = raw_self.__get_dataFile(str(index))
                 subjob_obj = raw_self._cachedJobs[index]
 
-                safe_save( subjob_data, subjob_obj, raw_self._to_file )
+                safe_save( subjob_data, subjob_obj, to_file )
 
         raw_self.write_subJobIndex()
         return
