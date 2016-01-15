@@ -188,9 +188,8 @@ class BoxRegistrySlice(RegistrySlice):
         self._proxyClass = BoxRegistrySliceProxy
 
     def _getColour(self, _obj):
-        obj = stripProxy(_obj)
         try:
-            return self.status_colours.get(obj._category, self.fx.normal)
+            return self.status_colours.get(stripProxy(_obj)._category, self.fx.normal)
         except AttributeError as err:
             return self.status_colours['default']
 
