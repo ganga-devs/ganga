@@ -555,9 +555,9 @@ def GPIProxyObjectFactory(_obj):
 
     if getattr(obj, proxyObject) is None:
         cls = getattr(obj, proxyClass)
-        proxy = super(cls, cls).__new__(cls)
-        # FIXME: NEW STYLE CLASS CAN DO __DICT__??
-        setattr(proxy, proxyRef, obj)
+        proxy = cls()
+        if getattr(proxy, proxyRef) is None:
+            setattr(proxy, proxyRef, obj)
         setattr(obj, proxyObject, proxy)
         #logger.debug('generated the proxy ' + repr(proxy))
     else:
@@ -623,8 +623,6 @@ def GPIProxyClassFactory(name, pluginclass):
         for key, _val in getattr(self, proxyClass)._schema.allItems():
             if not _val['protected'] and not _val['hidden'] and isType(_val, Schema.ComponentItem) and key not in Node._ref_list:
                 val = getattr(self, key)
-                if isType(val, Node):
-                    stripProxy(val)._setParent(raw_obj)
                 setattr(raw_obj, key, addProxy(val))
 
         ## THIRD CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
@@ -633,7 +631,10 @@ def GPIProxyClassFactory(name, pluginclass):
 
         ## DOESN'T MAKE SENSE TO KEEP PROXIES HERE AS WE MAY BE PERFORMING A PSEUDO-COPY OP
         clean_args = [stripProxy(arg) for arg in args]
-        getattr(self, proxyRef).__construct__(tuple(clean_args))
+        try:
+            getattr(self, proxyRef).__construct__(tuple(clean_args))
+        except TypeError:
+            getattr(self, proxyRef).__construct__()
 
         ## FOURTH ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN
         ## THIS IS MAINLY FOR THE FIRST EXAMPLE ABOVE
@@ -643,7 +644,7 @@ def GPIProxyClassFactory(name, pluginclass):
         # initialize all properties from keywords of the constructor
         for k in kwds:
             if getattr(self, proxyClass)._schema.hasAttribute(k):
-                this_arg = kwds[k]
+                this_arg = stripProxy(kwds[k])
 
                 ## Copying this from the __set__ method in the Proxy descriptor
 
@@ -656,7 +657,7 @@ def GPIProxyClassFactory(name, pluginclass):
                 raw_self = getattr(self, proxyRef)
 
                 if type(this_arg) is str:
-                    this_arg = runtimeEvalString(raw_self, k, this_arg)
+                    this_arg = stripProxy(runtimeEvalString(raw_self, k, this_arg))
 
                 if type(this_arg) is str:
                     setattr(raw_self, k, this_arg)
@@ -681,9 +682,8 @@ def GPIProxyClassFactory(name, pluginclass):
                     if item.isA(Schema.ComponentItem):
                         this_arg = ProxyDataDescriptor._stripAttribute(raw_self, this_arg, k)
 
-                    if isType(this_arg, Node):
+                    if isType(this_arg, Node) and not hasattr(this_arg, proxyObject):
                         setattr(this_arg, proxyObject, None)
-                        stripProxy(this_arg)._setParent(raw_self)
                     setattr(raw_self, k, addProxy(this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
@@ -839,7 +839,16 @@ def GPIProxyClassFactory(name, pluginclass):
         global proxyRef
         # need to know about the types that require metadata attribute checking
         # this allows derived types to get same behaviour for free.
-        if x == proxyRef and not isinstance(v, getattr(self, proxyRef)):
+        p_Ref = getattr(self, proxyRef)
+        if p_Ref is not None:
+            if not isclass(p_Ref):
+                class_type = type(p_Ref)
+            else:
+                class_type = p_Ref
+        else:
+            class_type = p_Ref
+
+        if x == proxyRef and not isinstance(v, class_type):
             raise AttributeError("Internal implementation object '%s' cannot be reassigned" % proxyRef )
 
         if not getattr(self, proxyClass)._schema.hasAttribute(x):
@@ -855,10 +864,6 @@ def GPIProxyClassFactory(name, pluginclass):
         new_v = runtimeEvalString(self, x, v)
 
         object.__setattr__(self, x, new_v)
-
-        #new_obj = getattr(self, x)
-        #if hasattr(new_obj, '_setParent'):
-        #    new_obj._setParent(self)
 
 
     helptext(_setattr, """Set a property of %(classname)s with consistency and safety checks.
