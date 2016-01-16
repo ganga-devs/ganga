@@ -87,7 +87,7 @@ def _raw_from_file(f, obj):
     obj, errors = Loader(obj).parse(xml_content)
     return obj, errors
 
-def from_file(f, obj):
+def from_file(f, obj=None):
     #return _raw_from_file(f)
     try:
         return _raw_from_file(f, obj)
