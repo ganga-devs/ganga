@@ -29,6 +29,18 @@ from Ganga.Utility.Plugin import allPlugins
 
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
+_imported_GangaList = None
+
+do_not_copy = ['_proxyObject', '_proxyClass', '_data', '_index_cache', '_parent', '_registry', '_impl']
+
+def _getGangaList():
+    global _imported_GangaList
+    if _imported_GangaList is None:
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        _imported_GangaList = GangaList
+    return _imported_GangaList
+
+
 class PreparedStateError(GangaException):
 
     def __init__(self, txt=''):
@@ -82,14 +94,14 @@ class Node(object):
             setattr(self, key, val)
 
     def __copy__(self, memo=None):
-        cls = type(stripProxy(self))
-        obj = super(cls, cls).__new__(cls)
-        obj.__init__()
+        cls = self.__class__
+        obj = cls()
         # FIXME: this is different than for deepcopy... is this really correct?
         this_dict = self.__dict__.copy()
+        global do_not_copy
         for elem in this_dict.keys():
-            if elem not in self._ref_list:
-                this_dict[elem] = deepcopy(stripProxy(this_dict[elem]), memo)
+            if elem not in do_not_copy:
+                this_dict[elem] = copy(stripProxy(this_dict[elem]))
             else:
                 this_dict[elem] = None
         #obj.__setstate__(this_dict)
@@ -99,16 +111,15 @@ class Node(object):
         return obj
 
     def __deepcopy__(self, memo=None):
-        cls = type(self)
-        obj = super(cls, cls).__new__(cls)
-        obj.__init__()
+        cls = self.__class__
+        obj = cls()
         this_dict = stripProxy(self).__getstate__()
+        global do_not_copy
         for elem in this_dict.keys():
-            if elem not in self._ref_list:
+            if elem not in do_not_copy:
                 this_dict[elem] = deepcopy(stripProxy(this_dict[elem]), memo)  # FIXED
             else:
                 this_dict[elem] = None
-        #obj.__setstate__(this_dict)
 
         if self._getParent() is not None:
             obj._setParent(self._getParent())
@@ -254,7 +265,7 @@ class Node(object):
             if name == 'application' and hasattr(_srcobj.application, 'is_prepared'):
                 _app = _srcobj.application
                 if _app.is_prepared not in [None, True]:
-                    _app.incrementShareCounter(_app.is_prepared.name)
+                    stripProxy(_app).incrementShareCounter(_app.is_prepared.name)
 
             if not self._schema.hasAttribute(name):
                 #raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(getName(_srcobj),getName(self)))
@@ -345,7 +356,7 @@ class Node(object):
 
     def setNodeAttribute(self, attrib_name, attrib_value):
         self.getNodeData()[attrib_name] = attrib_value
-        if isType(attrib_value, GangaObject):
+        if isType(attrib_value, Node):
             stripProxy(self.getNodeData()[attrib_name])._setParent(self)
 
     def removeNodeAttribute(self, attrib_name):
@@ -490,7 +501,7 @@ class Descriptor(object):
         else:
             if not isType(v, Node) and isType(v, (list, tuple)):
                 try:
-                    from Ganga.GPI import GangaList
+                    GangaList = _getGangaList()
                     new_v = GangaList()
                 except ImportError:
                     new_v = []
@@ -508,16 +519,13 @@ class Descriptor(object):
             else:
                 new_v = self.__copyNodeObject(v, obj)
 
-            if isType(new_v, Node):
-                #logger.debug("Seeting Parent: %s" % stripProxy(obj))
-                stripProxy(new_v)._setParent(stripProxy(obj))
             return new_v
 
     def __copyNodeObject(self, v, obj):
 
         item = obj._schema[getName(self)]
 
-        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        GangaList = _getGangaList()
         if isType(v, GangaList):
             categories = v.getCategory()
             len_cat = len(categories)
@@ -531,7 +539,7 @@ class Descriptor(object):
                 raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s found cat: %s"' % (getName(self), v, item['category'], stripProxy(v)._category))
 
 
-        v_copy = stripProxy(v).clone()
+        v_copy = deepcopy(stripProxy(v))
 
         #logger.info("Cloned Object Parent: %s" % v_copy._getParent())
         #logger.info("Original: %s" % v_copy._getParent())
@@ -581,9 +589,9 @@ class Descriptor(object):
         set_obj = getattr(stripProxy(_obj), getName(self))
 
         if isType(set_obj, Node):
-            stripProxy(set_obj)._setParent(stripProxy(_obj))
             stripProxy(set_obj)._setDirty()
         if isType(new_val, Node):
+            stripProxy(_val)._setParent(stripProxy(_obj))
             stripProxy(_val)._setDirty()
 
         if val_reg is not None:
@@ -639,7 +647,7 @@ class Descriptor(object):
         item = stripProxy(obj._schema[getName(self)])
 
         def cloneVal(v):
-            from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+            GangaList = _getGangaList()
             if isType(v, (list, tuple, GangaList)):
                 new_v = GangaList()
                 for elem in v:
@@ -652,7 +660,7 @@ class Descriptor(object):
         if item['sequence']:
             _preparable = True if item['preparable'] else False
             if len(val) == 0:
-                from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+                GangaList = _getGangaList()
                 new_val = GangaList()
             else:
                 if isType(item, Schema.ComponentItem):
@@ -662,7 +670,7 @@ class Descriptor(object):
         else:
             ## Else we need to work out what we've got.
             if isType(item, Schema.ComponentItem):
-                from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+                GangaList = _getGangaList()
                 if isType(val, (list, tuple, GangaList)):
                     ## Can't have a GangaList inside a GangaList easily so lets not
                     if isType(_obj, GangaList):
@@ -680,9 +688,6 @@ class Descriptor(object):
                 new_val = val
                 pass
             #val = deepcopy(val)
-
-        if isType(new_val, Node):
-            new_val._setParent(obj)
 
         stripProxy(obj).setNodeAttribute(getName(self), new_val)
 
@@ -702,6 +707,10 @@ class Descriptor(object):
                 for element in _input_elements:
                     _final_list.append(element)
             return
+
+        ## This makes it stick to 1 thread, useful for debugging problems
+        #addToList(input_elements, final_list, action)
+        #return
 
         try:
             from Ganga.GPI import queues
@@ -886,16 +895,13 @@ class GangaObject(Node):
                 if item.getProperties()['getter'] is None:
                     defVal = self._schema.getDefaultValue(attr)
                     self.setNodeAttribute(attr, defVal)
-                    new_attr = getattr(self, attr)
-                    if isType(new_attr, Node):
-                        new_attr._setParent(self)
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
 
     # construct an object of this type from the arguments. Defaults to copy
     # constructor.
-    def __construct__(self, args):
+    def __construct__(self, args={}):
         # act as a copy constructor applying the object conversion at the same
         # time (if applicable)
 
@@ -928,43 +934,59 @@ class GangaObject(Node):
         #self._proxyObject = None
         self._dirty = False
 
+    @staticmethod
+    def __incrementShareRef(object, attr_name):
+        shared_dir = getattr(self_copy, name)
+
+        if hasattr(shared_dir, 'name'):
+
+            from Ganga.Core.GangaRepository import getRegistry
+            from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+
+            logger.debug("Increasing shareref")
+            shareref.increase(shared_dir.name)
+
     # on the deepcopy reset all non-copyable properties as defined in the
     # schema
     def __deepcopy__(self, memo=None):
         true_parent = self._getParent()
-        self = stripProxy(self)
+        raw_self = stripProxy(self)
         ## This triggers a read of the job from disk
-        self._getReadAccess()
-        self_copy = super(GangaObject, self).__deepcopy__(memo)
+        raw_self._getReadAccess()
+        classname = getName(self)
+        category = raw_self._category
+        cls = allPlugins.find(category, classname)
 
-        if self._schema is not None:
-            for name, item in self._schema.allItems():
+        self_copy = cls()
+
+        if raw_self._schema is not None:
+            for name, item in raw_self._schema.allItems():
                 if not item['copyable']:
-                    setattr(self_copy, name, self._schema.getDefaultValue(name))
-                    this_attr = getattr(self_copy, name)
-                    if isType(this_attr, Node):
-                        this_attr._setParent(self_copy)
+                    setattr(self_copy, name, raw_self._schema.getDefaultValue(name))
                 else:
-                    if hasattr(self, name):
-                        setattr(self_copy, name, deepcopy(getattr(self, name)))
+                    if hasattr(raw_self, name):
+                        setattr(self_copy, name, deepcopy(getattr(raw_self, name)))
                     else:
-                        setattr(self_copy, name, self._schema.getDefaultValue(name))
+                        setattr(self_copy, name, raw_self._schema.getDefaultValue(name))
 
+                this_attr = getattr(self_copy, name)
+                if isType(this_attr, Node):
+                    this_attr._setParent(self_copy)
 
                 if item.isA(Schema.SharedItem):
+                    self.__incrementShareRef(self_copy, name)
 
-                    shared_dir = getattr(self_copy, name)
+        global do_not_copy
+        for k, v in raw_self.__dict__.iteritems():
+            if k not in do_not_copy:
+                try:
+                    setattr(self_copy, k, deepcopy(v))
+                except Exception:
+                    setatttr(self_copy, k, v)
 
-                    if hasattr(shared_dir, 'name'):
-
-                        from Ganga.Core.GangaRepository import getRegistry
-                        from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-                        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-
-                        logger.debug("Increasing shareref")
-                        shareref.increase(shared_dir.name)
         if true_parent is not None:
-            self._setParent(true_parent)
+            raw_self._setParent(true_parent)
             self_copy._setParent(true_parent)
         return self_copy
 
@@ -1134,6 +1156,9 @@ class GangaObject(Node):
                 for element in _input_elements:
                     _final_list.append(element)
             return
+        ## This makes it stick to 1 thread, useful for debugging problems
+        #addToList(input_elements, final_list, action)
+        #return
 
         try:
             from Ganga.GPI import queues
