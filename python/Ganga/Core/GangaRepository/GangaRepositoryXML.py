@@ -646,7 +646,8 @@ class GangaRepositoryLocal(GangaRepository):
                     for sj in obj.getNodeAttribute(self.sub_split):
                         job_dict[sj.id] = stripProxy(sj)
                     tempSubJList._reset_cachedJobs(job_dict)
-                    tempSubJList._setParent(obj)
+                    ## rcurrie NOT TOO SURE ABOUT THIS ONE!
+                    #tempSubJList._setParent(obj)
                     tempSubJList.write_subJobIndex()
                     del tempSubJList
 
@@ -728,92 +729,66 @@ class GangaRepositoryLocal(GangaRepository):
         #print("ACTUALLY LOAD")
 
         must_load = (not this_id in self.objects) or (self.objects[this_id].getNodeData() is None)
-        tmpobj = None
 
         if must_load or (self._load_timestamp.get(this_id, 0) != os.fstat(fobj.fileno()).st_ctime):
-            
-            tmpobj, errs = self.from_file(fobj)
 
-            has_children = (self.sub_split is not None) and (self.sub_split in tmpobj.getNodeData()) and len(tmpobj.getNodeAttribute(self.sub_split)) == 0
+            ##Load and make sure job is stored in self.objects
+            this_obj = self.objects.get(this_id, None)
+            obj, errs = self.from_file(fobj, this_obj)
+            if this_obj is None:
+                self._internal_setitem__(this_id, obj)
 
-            if this_id in self.objects:
-                obj = self.objects[this_id]
-                for key, val in tmpobj.getNodeData().iteritems():
-                    obj.setNodeAttribute(key, val)
-                for attr_name, attr_val in obj._schema.allItems():
-                    if attr_name not in tmpobj.getNodeData().keys():
-                        obj.setNodeAttribute(attr_name, obj._schema.getDefaultValue(attr_name))
+            has_children = (self.sub_split is not None) and (self.sub_split in obj.getNodeData()) and len(obj.getNodeAttribute(self.sub_split)) == 0
 
-                if has_children:
-                #    logger.info("Adding children")
-                    obj.setNodeAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup))
-                else:
-                    obj.setNodeAttribute(self.sub_split, None)
-
-                for node_key, node_val in obj.getNodeData().iteritems():
-                    if isType(node_val, Node):
-                        if node_key not in Node._ref_list:
-                            node_val._setParent(obj)
-
-                # Check if index cache; if loaded; was valid:
-                if obj.getNodeIndexCache() not in [None, {}]:
-                    new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
-                    if new_idx_cache != obj.getNodeIndexCache():
-                        logger.debug("NEW: %s" % str(new_idx_cache))
-                        logger.debug("OLD: %s" % str(obj.getNodeIndexCache()))
-                        # index is wrong! Try to get read access - then we can fix this
-                        if len(self.lock([this_id])) != 0:
-                            self.index_write(this_id)
-                            # self.unlock([this_id])
-
-                            old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj.getNodeIndexCache().iteritems())
-                            if not old_idx_subset:
-                                # Old index cache isn't subset of new index cache
-                                new_idx_subset = all((k in obj.getNodeIndexCache() and obj.getNodeIndexCache()[k] == v) for k, v in new_idx_cache.iteritems())
-                            else:
-                                # Old index cache is subset of new index cache so no need to check
-                                new_idx_subset = True
-
-                            if not old_idx_subset and not new_idx_subset:
-                                logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, this_id))
-                                logger.debug("old cache: %s\t\tnew cache: %s" % (str(obj.getNodeIndexCache()), str(new_idx_cache)))
-                                self.unlock([this_id])
-                        else:
-                            pass
-                            # if we cannot lock this, the inconsistency is
-                            # most likely the result of another ganga
-                            # process modifying the repo
-                            #obj.setNodeIndexCache(None)
-                #obj.setNodeIndexCache(None)
-
-                all_cached = obj.getNodeIndexCache().keys()
-
-                for attr in all_cached:
-                    obj.removeNodeIndexCacheAttribute(attr)
-
-                #logger.info("Here")
-
-                if this_id not in self._fully_loaded.keys():
-                    self._fully_loaded[this_id] = obj
-
+            if has_children:
+                obj.setNodeAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup))
             else:
-                #tmpobj.setNodeIndexCache(None)
-                self._internal_setitem__(this_id, tmpobj)
+                obj.setNodeAttribute(self.sub_split, None)
 
-            if hasattr(self.objects[this_id], self.sub_split):
-                sub_attr = getattr(self.objects[this_id], self.sub_split)
-                if sub_attr is not None and hasattr(sub_attr, '_setParent'):
-                    sub_attr._setParent(self.objects[this_id])
+            # Check if index cache; if loaded; was valid:
+            if obj.getNodeIndexCache() not in [None, {}]:
+                new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
+                if new_idx_cache != obj.getNodeIndexCache():
+                    logger.debug("NEW: %s" % str(new_idx_cache))
+                    logger.debug("OLD: %s" % str(obj.getNodeIndexCache()))
+                    # index is wrong! Try to get read access - then we can fix this
+                    if len(self.lock([this_id])) != 0:
+                        self.index_write(this_id)
+                        # self.unlock([this_id])
+
+                        old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj.getNodeIndexCache().iteritems())
+                        if not old_idx_subset:
+                            # Old index cache isn't subset of new index cache
+                            new_idx_subset = all((k in obj.getNodeIndexCache() and obj.getNodeIndexCache()[k] == v) for k, v in new_idx_cache.iteritems())
+                        else:
+                            # Old index cache is subset of new index cache so no need to check
+                            new_idx_subset = True
+
+                        if not old_idx_subset and not new_idx_subset:
+                            logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, this_id))
+                            logger.debug("old cache: %s\t\tnew cache: %s" % (str(obj.getNodeIndexCache()), str(new_idx_cache)))
+                            self.unlock([this_id])
+                    else:
+                        pass
+                        # if we cannot lock this, the inconsistency is
+                        # most likely the result of another ganga
+                        # process modifying the repo
+                        #obj.setNodeIndexCache(None)
+            #obj.setNodeIndexCache(None)
+
+            all_cached = obj.getNodeIndexCache().keys()
+
+            for attr in all_cached:
+                obj.removeNodeIndexCacheAttribute(attr)
+
+
+            if this_id not in self._fully_loaded.keys():
+                self._fully_loaded[this_id] = obj
 
             self._load_timestamp[this_id] = os.fstat(fobj.fileno()).st_ctime
 
         else:
             logger.debug("Didn't Load Job ID: %s" % str(this_id))
-
-        for attr_name, attr_val in self.objects[this_id].getNodeData().iteritems():
-            if isType(attr_val, Node):
-                if attr_name not in Node._ref_list:
-                    attr_val._setParent(self.objects[this_id])
 
         logger.debug("Finished Loading XML")
 
