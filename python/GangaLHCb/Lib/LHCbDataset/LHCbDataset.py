@@ -117,7 +117,7 @@ class LHCbDataset(GangaDataset):
         if (len(args) != 1):
             super(LHCbDataset, self).__construct__(args[1:])
 
-        logger.debug("__construct__: %s" % str(args))
+        #logger.debug("__construct__: %s" % str(args))
 
         if len(args) == 0:
             return
