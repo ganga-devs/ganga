@@ -558,6 +558,9 @@ def GPIProxyObjectFactory(_obj):
         proxy = cls()
         if getattr(proxy, proxyRef) is None:
             setattr(proxy, proxyRef, obj)
+        else:
+            for key, val in stripProxy(obj).getNodeData().iteritems():
+                stripProxy(getattr(proxy, proxyRef)).setNodeAttribute(key, val)
         setattr(obj, proxyObject, proxy)
         #logger.debug('generated the proxy ' + repr(proxy))
     else:
@@ -623,7 +626,7 @@ def GPIProxyClassFactory(name, pluginclass):
         for key, _val in getattr(self, proxyClass)._schema.allItems():
             if not _val['protected'] and not _val['hidden'] and isType(_val, Schema.ComponentItem) and key not in Node._ref_list:
                 val = getattr(self, key)
-                setattr(raw_obj, key, addProxy(val))
+                raw_obj.setNodeAttribute(key, addProxy(val))
 
         ## THIRD CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
         ## e.g. Job(application=exe, name='myJob', ...) or myJob2 = Job(myJob1)
@@ -660,7 +663,7 @@ def GPIProxyClassFactory(name, pluginclass):
                     this_arg = stripProxy(runtimeEvalString(raw_self, k, this_arg))
 
                 if type(this_arg) is str:
-                    setattr(raw_self, k, this_arg)
+                    raw_self.setNodeAttribute(k, this_arg)
                     continue
                 else:
                     item = pluginclass._schema.getItem(k)
@@ -684,7 +687,7 @@ def GPIProxyClassFactory(name, pluginclass):
 
                     if isType(this_arg, Node) and not hasattr(this_arg, proxyObject):
                         setattr(this_arg, proxyObject, None)
-                    setattr(raw_self, k, addProxy(this_arg))
+                    raw_self.setNodeAttribute(k, addProxy(this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
