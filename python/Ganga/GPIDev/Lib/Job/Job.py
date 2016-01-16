@@ -326,8 +326,8 @@ class Job(GangaObject):
         # Due to problems on Hammercloud due to uncopyable object lets
         # explicitly stop these objects going anywhere near the __deepcopy__
 
-        c = Job.__class__()
-        c.__init__()
+        from Ganga.GPI import Job as GPI_Job
+        c = GPI_Job()
 
         c.time.newjob()
         c.backend = copy.deepcopy(self.backend)
@@ -676,7 +676,7 @@ class Job(GangaObject):
 
         # Propagate transition updates to applications
         if self.application:
-            self.application.transition_update(new_status)
+            stripProxy(self.application).transition_update(new_status)
         return new_status
 
     def getBackendOutputPostprocessDict(self):
@@ -1231,7 +1231,7 @@ class Job(GangaObject):
                 logger.debug("Job %s Calling application.master_configure" % str(self.getFQID('.')))
                 #import traceback
                 # traceback.print_stack()
-                appmasterconfig = self.application.master_configure()[1]
+                appmasterconfig = stripProxy(self.application).master_configure()[1]
                 self._storedAppMasterConfig = appmasterconfig
         else:
             # I am a sub-job, lets ask the master job what to do
