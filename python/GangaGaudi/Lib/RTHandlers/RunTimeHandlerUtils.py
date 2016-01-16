@@ -75,7 +75,7 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=None):
     # Note EITHER the master inputsandbox OR the job.inputsandbox is added to
     # the subjob inputsandbox depending if the jobmasterconfig object is present
     # or not... Therefore combine the job.inputsandbox with appmasterconfig.
-    job = app.getJobObject()
+    job = stripProxy(app).getJobObject()
 
     # user added items from the interactive GPI
     from Ganga.Utility.Config import getConfig
