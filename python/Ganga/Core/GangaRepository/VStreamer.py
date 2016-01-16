@@ -76,17 +76,21 @@ def to_file(j, fobj=None, ignore_subs=''):
 # * AssertionError (corruption: multiple objects in <root>...</root>
 # * Exception (probably corrupted data problem)
 
-def _raw_from_file(f):
+def _raw_from_file(f, obj):
     # logger.debug('----------------------------')
     ###logger.debug('Parsing file: %s',f.name)
     xml_content = f.read()
-    obj, errors = Loader().parse(xml_content)
+    xml_lines = xml_content.splitlines()
+    for line in xml_lines:
+        line = line.lstrip()
+    xml_content = '\n'.join(xml_lines)
+    obj, errors = Loader(obj).parse(xml_content)
     return obj, errors
 
-def from_file(f):
+def from_file(f, obj):
     #return _raw_from_file(f)
     try:
-        return _raw_from_file(f)
+        return _raw_from_file(f, obj)
     except Exception as err:
         logger.error("XML from-file error for file:\n%s" % str(err))
         raise XMLFileError(err, "from-file error")
@@ -264,7 +268,9 @@ class Loader(object):
     """ Job object tree loader.
     """
 
-    def __init__(self):
+    def __init__(self, obj=None):
+        """ obj = optional parameter of the top level GangaObject derrived class the XML should be read into
+        """
         self.stack = None  # we construct object tree using this stack
         # ignore nested XML elements in case of data errors at a higher level
         self.ignore_count = 0
@@ -273,6 +279,7 @@ class Loader(object):
         self.value_construct = None
         # buffer for building sequences (FIXME: what about nested sequences?)
         self.sequence_start = []
+        self.global_obj = obj
 
     def parse(self, s):
         """ Parse and load object from string s using internal XML parser (expat).
@@ -288,6 +295,8 @@ class Loader(object):
                 self.ignore_count += 1
                 return
 
+            firstRun = False
+
             # initialize object stack
             if name == 'root':
                 assert self.stack is None, "duplicated <root> element"
@@ -299,28 +308,40 @@ class Loader(object):
             # load a class, make empty object and push it as the current object
             # on the stack
             if name == 'class':
-                try:
-                    cls = allPlugins.find(attrs['category'], attrs['name'])
-                except PluginManagerError as e:
-                    self.errors.append(e)
-                    #self.errors.append('Unknown class: %(name)s'%attrs)
-                    obj = EmptyGangaObject()
-                    # ignore all elemenents until the corresponding ending
-                    # element (</class>) is reached
-                    self.ignore_count = 1
+                if len(self.stack) == 0:
+                    if self.global_obj is not None:
+                        obj = self.global_obj
+                        should_eval = False
+                    else:
+                        should_eval = True
                 else:
-                    version = Version(*[int(v) for v in attrs['version'].split('.')])
-                    if not cls._schema.version.isCompatible(version):
-                        attrs['currversion'] = '%s.%s' % (cls._schema.version.major, cls._schema.version.minor)
-                        self.errors.append(SchemaVersionError('Incompatible schema of %(name)s, repository is %(version)s currently in use is %(currversion)s' % attrs))
+                    should_eval = True
+
+                if should_eval:
+                    try:
+                        cls = allPlugins.find(attrs['category'], attrs['name'])
+                    except PluginManagerError as e:
+                        self.errors.append(e)
+                        #self.errors.append('Unknown class: %(name)s'%attrs)
                         obj = EmptyGangaObject()
                         # ignore all elemenents until the corresponding ending
                         # element (</class>) is reached
                         self.ignore_count = 1
                     else:
-                        # make a new ganga object
-                        obj = super(cls, cls).__new__(cls)
-                        obj.setNodeData({})
+                        version = Version(*[int(v) for v in attrs['version'].split('.')])
+                        if not cls._schema.version.isCompatible(version):
+                            attrs['currversion'] = '%s.%s' % (cls._schema.version.major, cls._schema.version.minor)
+                            self.errors.append(SchemaVersionError('Incompatible schema of %(name)s, repository is %(version)s currently in use is %(currversion)s' % attrs))
+                            obj = EmptyGangaObject()
+                            # ignore all elemenents until the corresponding ending
+                            # element (</class>) is reached
+                            self.ignore_count = 1
+                        else:
+                            # make a new ganga object
+                            obj = cls()
+                            ## NOT NEEDED!!!
+                            #obj.setNodeData({})
+
                 self.stack.append(obj)
 
             # push the attribute name on the stack
@@ -380,14 +401,14 @@ class Loader(object):
             if name == 'class':
                 obj = self.stack[-1]
                 for attr, item in obj._schema.allItems():
-                    if not attr in obj.getNodeData():
-                        #logger.info("Opening: %s" % attr)
-                        if item._meta["sequence"] == 1:
-                            obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
-                            #setattr(obj, attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
-                        else:
-                            obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr))
-                            #setattr(obj, attr, obj._schema.getDefaultValue(attr))
+                    #if not attr in obj.getNodeData():
+                    #logger.info("Opening: %s" % attr)
+                    if item._meta["sequence"] == 1:
+                        obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
+                        #setattr(obj, attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
+                    else:
+                        obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr))
+                        #setattr(obj, attr, obj._schema.getDefaultValue(attr))
 
                 #print("Constructed: %s" % obj.__class__.__name__)
                 #obj.__setstate__(obj.__dict__)  # this sets the parent
