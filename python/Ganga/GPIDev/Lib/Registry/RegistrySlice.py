@@ -30,7 +30,7 @@ class RegistrySlice(object):
             for this_col_func in col_funcs:
                 self._display_columns_functions[this_col_func] = eval(col_funcs[this_col_func])
         except Exception as x:
-            logger.error("Error on evaluating display column functions from config file: %s: %s" % (x.__class__.__name__, x))
+            logger.error("Error on evaluating display column functions from config file: %s: %s" % (getName(x), x))
 
         from Ganga.Utility.ColourText import Effects
         self._colour_normal = Effects().normal
@@ -62,7 +62,7 @@ class RegistrySlice(object):
                 if not keep_going:
                     raise
             except Exception as x:
-                logger.exception('%s %s %s: %s %s', doc, self.name, id, x.__class__.__name__, str(x))
+                logger.exception('%s %s %s: %s %s', doc, self.name, id, getName(x), str(x))
                 if not keep_going:
                     raise
         return result
@@ -212,14 +212,14 @@ class RegistrySlice(object):
                                 break
                         elif a == 'application':
                             if hasattr(obj, 'application'):
-                                if not obj.application._name == attrvalue:
+                                if not getName(obj.application) == attrvalue:
                                     selected = False
                                     break
                             else:
                                 selected = False
                                 break
                         elif a == 'type':
-                            if not obj._name == attrvalue:
+                            if not getName(obj) == attrvalue:
                                 selected = False
                                 break
                         else:
@@ -407,6 +407,8 @@ class RegistrySlice(object):
         except AttributeError as err:
             logger.debug("AttibErr: %s" % str(err))
             val = ""
+        finally:
+            pass
         return str(val)
 
     def _display(self, interactive=0):
