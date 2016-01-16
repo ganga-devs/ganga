@@ -215,7 +215,7 @@ class VStreamer(object):
                 print(self.indent(), '<value>%s</value>' % escape(repr(s)), file=self.out)
             elif hasattr(stripProxy(s), 'accept'):
                 stripProxy(s).accept(self)
-            elif isType(s, list) or isType(s, GangaList):
+            elif isType(s, (list, tuple, GangaList)):
                 print(self.indent(), '<sequence>', file=self.out)
                 for sub_s in s:
                     self.acceptOptional(sub_s)

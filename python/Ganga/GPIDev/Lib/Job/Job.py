@@ -47,6 +47,32 @@ import Ganga.Core.Sandbox as Sandbox
 logger = Ganga.Utility.logging.getLogger()
 config = Ganga.Utility.Config.getConfig('Configuration')
 
+def lazyLoadJobStatus(this_job):
+    return lazyLoadJobObject(this_job, 'status')
+
+def lazyLoadJobBackend(this_job):
+    return lazyLoadJobObject(this_job, 'backend')
+
+def lazyLoadJobApplication(this_job):
+    return lazyLoadJobObject(this_job, 'application')
+
+def lazyLoadJobObject(this_job, this_attr):
+
+    lzy_loading_str = 'display:'+ this_attr
+    job_index_cache = stripProxy(this_job).getNodeIndexCache()
+    if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache.keys():
+        obj_name = job_index_cache[lzy_loading_str]
+        if obj_name is not None:
+            job_obj = getRuntimeGPIObject(obj_name, True)
+            if job_obj is None:
+                job_obj = getattr(this_job, this_attr)
+        else:
+            job_obj = getattr(this_job, this_attr)
+
+    else:
+        job_obj = getattr(this_job, this_attr)
+
+    return job_obj
 
 class JobStatusError(GangaException):
 
@@ -1811,51 +1837,26 @@ class Job(GangaObject):
             # this is used by Remote backend to remove the jobs remotely
             # bug #44256: Job in state "incomplete" is impossible to remove
 
-            lzy_loading_backend_str = 'display:backend'
-            lzy_loading_application_str = 'display:application'
+            backend_obj = lazyLoadJobBackend(self)
+            application_obj = lazyLoadJobApplication(self)
 
-            if stripProxy(self).getNodeIndexCache() is not None and lzy_loading_backend_str in stripProxy(self).getNodeIndexCache().keys():
-                name = stripProxy(self).getNodeIndexCache()[lzy_loading_backend_str]
-                if name is not None:
-                    new_backend = getRuntimeGPIObject(name)
-                    if hasattr(new_backend, 'remove'):
-                        self.backend.remove()
-                    del new_backend
-                else:
-                    if hasattr(stripProxy(self.backend), 'remove'):
-                        stripProxy(self.backend.remove())
+            if backend_obj is not None:
+                if hasattr(backend_obj, 'remove'):
+                    stripProxy(self.backend).remove()
             else:
-                if hasattr(stripProxy(self.backend), 'remove'):
+                if hasattr(self.backend, 'remove'):
                     stripProxy(self.backend).remove()
 
-            if stripProxy(self).getNodeIndexCache() is not None and lzy_loading_application_str in stripProxy(self).getNodeIndexCache().keys():
-                name = stripProxy(self).getNodeIndexCache()[lzy_loading_application_str]
-                if name is not None:
-                    new_app = getRuntimeGPIObject(name)
-                    if hasattr(new_app, 'transition_update'):
-                        self.application.transition_update("removed")
-                        for sj in self.subjobs:
-                            sj.application.transition_update("removed")
-                    del new_app
-                else:
-                    try:
-                        self.application.transition_update("removed")
-                        for sj in self.subjobs:
-                            sj.application.transition_update("removed")
-                    except AttributeError as err:
-                        logger.debug("AttributeError: %s" % str(err))
-                        # Some applications do not have transition_update
-                        pass
-            else:
-                # tell the application that the job was removed
-                try:
-                    self.application.transition_update("removed")
+            if application_obj is not None:
+                if hasattr(application_obj, 'transition_update'):
+                    stripProxy(self.application).transition_update('removed')
                     for sj in self.subjobs:
-                        sj.application.transition_update("removed")
-                except AttributeError as err:
-                    logger.debug("AttributeError: %s" % str(err))
-                    # Some applications do not have transition_update
-                    pass
+                        stripProxy(sj.application).transition_update('removed')
+            else:
+                stripProxy(self.application).transition_update('removed')
+                for sj in self.subjobs:
+                    stripProxy(sj.application).transition_update('removed')
+
 
         if self._registry:
             self._registry._remove(self, auto_removed=1)

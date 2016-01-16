@@ -14,6 +14,8 @@ from Ganga.Core.InternalServices import Coordinator
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, getRuntimeGPIObject
 
+from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus, lazyLoadJobBackend
+
 # Setup logging ---------------
 import Ganga.Utility.logging
 
@@ -865,32 +867,14 @@ class JobRegistry_Monitor(GangaThread):
             try:
                 j = stripProxy(self.registry(i))
 
-                lzy_loading_status_str = 'display:status'
-                if j.getNodeIndexCache() and lzy_loading_status_str in j.getNodeIndexCache():
-                    job_status = j.getNodeIndexCache()[lzy_loading_status_str]
-                else:
-                    job_status = j.status
+                job_status = lazyLoadJobStatus(j)
+                backend_obj = lazyLoadJobBackend(j)
+                backend_name = getName(backend_obj)
 
                 if job_status in ['submitted', 'running'] or (j.master and (job_status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
-                        ## This causes a Loading of the subjobs from disk!!!
-                        #stripProxy(j)._getReadAccess()
-                        if j.getNodeIndexCache():
-                            #log.info("data: %s" % str(j.getNodeData()))
-                            #log.info("node %s" % str(j.getNodeIndexCache()))
-                            #log.info("__dict: %s" % str(j.__class__.__dict__['backend']))
-                            #bn = j.__class__.__dict__['backend'].__name__
-                            #log.info("bn: %s" % str(bn))
-                            lazy_load_backend_str = 'display:backend'
-                            if lazy_load_backend_str in j.getNodeIndexCache():
-                                bn = j.getNodeIndexCache()[lazy_load_backend_str]
-                            else:
-                                bn = getName(j.backend)
-                        else:
-                            bn = getName(j.backend)
-                        #log.debug("active_backends.setdefault: %s" % str(bn))
-                        active_backends.setdefault(bn, [])
-                        active_backends[bn].append(j)
+                        active_backends.setdefault(backend_name, [])
+                        active_backends[backend_name].append(j)
             except RegistryKeyError as err:
                 log.debug("RegistryKeyError: The job was most likely removed")
                 log.debug("RegError %s" % str(err))
@@ -902,8 +886,8 @@ class JobRegistry_Monitor(GangaThread):
         for backend, these_jobs in active_backends.iteritems():
             summary += '"' + str(backend) + '" : ['
             for this_job in these_jobs:
-                stripProxy(this_job)._getWriteAccess()
-                summary += str(stripProxy(this_job).getFQID('.')) + ', '
+                #stripProxy(this_job)._getWriteAccess()
+                summary += str(stripProxy(this_job).id) + ', '#getFQID('.')) + ', '
             summary += '], '
         summary += '}'
         log.debug("Returning active_backends: %s" % summary)
@@ -945,31 +929,12 @@ class JobRegistry_Monitor(GangaThread):
 
                     run_setup = False
 
-            	    if hasattr(stripProxy(j), 'getNodeIndexCache') and\
-                        stripProxy(j).getNodeIndexCache() is not None and\
-                        'display:backend' in stripProxy(j).getNodeIndexCache().keys():
-
-                        name = stripProxy(j).getNodeIndexCache()['display:backend']
-
-                        if name is not None:
-                            if name in tested_backends:
-                                continue
-                            else:
-                                tested_backends.append(name)
-                            new_backend = getRuntimeGPIObject(name)
-                            if new_backend is not None and hasattr(new_backend, 'setup'):
-                                run_setup = True
-                            else:
-                                run_setup = False
-                        else:
-                           run_setup = False
+                    if backendObj is not None:
+                        if hasattr(backendObj, 'setup'):
+                            j.backend.setup()
                     else:
-                        run_setup = True
-
-                    if run_setup is True:
-                        if hasattr(j, 'backend'):
-                            if hasattr(j.backend, 'setup'):
-                                j.backend.setup()
+                        if hasattr(j.backend, 'setup'):
+                            j.backend.setup()
 
                 if self.enabled is False and self.alive is False:
                     log.debug("NOT enabled, leaving")

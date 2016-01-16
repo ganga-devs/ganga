@@ -38,11 +38,6 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
     if parent is not None:
         result._setParent(parent)
 
-        for r in result:
-            bare_r = stripProxy(r)
-            if isType(bare_r, GangaObject) and bare_r._getParent() is None:
-                bare_r._setParent(parent)
-
     return result
 
 
@@ -57,6 +52,8 @@ def stripGangaList(_list):
 def makeGangaListByRef(_list):
     """Faster version of makeGangaList. Does not make a copy of _list but use it by reference."""
     result = GangaList()
+    if len(_list) == 0:
+        return result
     temp_list = [stripProxy(element) for element in _list]
     result._list = temp_list
     result._is_a_ref = True

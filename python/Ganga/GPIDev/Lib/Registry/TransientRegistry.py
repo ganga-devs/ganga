@@ -72,7 +72,10 @@ class TransientRegistrySlice(RegistrySlice):
         self._proxyClass = TransientRegistrySliceProxy
 
     def _getColour(self, obj):
-        return self.status_colours.get(obj._name, self.fx.normal)
+        try:
+            return self.status_colours.get(getName(obj), self.fx.normal)
+        except Exception as err:
+            return self.status_colours['default']
 
     def __call__(self, id):
         """
