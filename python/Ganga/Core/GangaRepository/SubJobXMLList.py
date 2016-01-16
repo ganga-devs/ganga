@@ -75,8 +75,11 @@ class SubJobXMLList(GangaObject):
     ## THIS CLASS DOES NOT MAKE USE OF THE SCHEMA TO STORE INFORMATION AS TRANSIENT OR UNCOPYABLE
     ## THIS CLASS CONTAINS A LOT OF OBJECT REFERENCES WHICH SHOULD NOT BE DEEPCOPIED!!!
     def __deepcopy__(self, memo=None):
-        cls = type(self)
-        obj = super(cls, cls).__new__(cls)
+        if not isType(self, SubJobXMLList):
+            logger.error("CANNOT COPY A SUBJOBXMLLIST FROM ANOTHER CLASS TYPE!!!")
+            return
+        cls = self.__class__
+        obj = cls()
         obj.__init__()
         new_dict = {}
         for dict_key, dict_value in self.__dict__.iteritems():
