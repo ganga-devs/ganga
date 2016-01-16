@@ -292,9 +292,9 @@ class Job(GangaObject):
                     if getConfig('Output')['ForbidLegacyInput']:
 
                         if original_job.inputfiles == []:
-                            self.inputfiles = copy.deepcopy(original_job.master.inputfiles)
+                            self.inputfiles = copy.copy(original_job.master.inputfiles)
                         else:
-                            self.inputfiles = copy.deepcopy(original_job.inputfiles)
+                            self.inputfiles = copy.copy(original_job.inputfiles)
                         self.inputsandbox = []
                     else:
 
@@ -319,9 +319,6 @@ class Job(GangaObject):
     def _readonly(self):
         return self.status != 'new'
 
-    def __new__(cls):
-        return super(Job, cls).__new__(cls)
-
     # on the deepcopy reattach the outputfiles to call their
     # _on_attribute__set__
     def __deepcopy__(self, memo=None):
@@ -329,26 +326,17 @@ class Job(GangaObject):
         # Due to problems on Hammercloud due to uncopyable object lets
         # explicitly stop these objects going anywhere near the __deepcopy__
 
-        cls = type(self)
-        c = Job.__new__(cls)
+        c = Job.__class__()
         c.__init__()
 
         c.time.newjob()
         c.backend = copy.deepcopy(self.backend)
-        c.backend._setParent(c)
         c.application = copy.deepcopy(self.application)
-        c.application._setParent(c)
-        c.inputdata = copy.deepcopy(self.inputdata)
-        if isType(c.inputdata, GangaObject):
-            c.inputdata._setParent(c)
+        c.inputdata = copy.copy(self.inputdata)
         c.name = self.name
         c.comment = self.comment
         c.postprocessors = copy.deepcopy(self.postprocessors)
-        if isType(c.postprocessors, GangaObject):
-            c.postprocessors._setParent(c)
         c.splitter = copy.deepcopy(self.splitter)
-        if isType(c.splitter, GangaObject):
-            c.splitter._setParent(c)
         c.parallel_submit = self.parallel_submit
 
         # Continue as before
@@ -655,8 +643,6 @@ class Job(GangaObject):
                         return
 
             if self.status != newstatus:
-                ## FIXME 6.1.15 rcurrie
-                stripProxy(self.time)._setParent(self)
                 self.time.timenow(str(newstatus))
                 logger.debug("timenow('%s') called.", self.status)
             else:
@@ -869,8 +855,6 @@ class Job(GangaObject):
 
     def postprocess_hook(self):
         logger.info("Job %s Running PostProcessor hook" % str(self.getFQID('.')))
-        ## FIXME 6.1.15 rcurrie
-        stripProxy(self.application)._setParent(self)
         self.application.postprocess()
         self.getMonitoringService().complete()
         self.postprocessoutput(self.outputfiles, self.outputdir)
