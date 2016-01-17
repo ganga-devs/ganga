@@ -591,9 +591,14 @@ class PackageConfig(object):
             try:
                 h[1](name, value)
             except Exception as err:
+                import traceback
+                traceback.print_stack()
+                logger.error("h[1]: %s" % str(h[1]))
                 logger.error("Error in Setting Session Value!")
                 logger.error("Name: %s Value: '%s'" % (str(name), str(value)))
                 logger.error("Err:\n%s" % str(err))
+                raise err
+            finally:
                 pass
 
     def setUserValue(self, name, value):

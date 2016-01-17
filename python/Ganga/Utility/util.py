@@ -4,6 +4,8 @@
 # $Id: util.py,v 1.1 2008-07-17 16:41:01 moscicki Exp $
 ##########################################################################
 
+from Ganga.GPIDev.Base.Proxy import getName
+
 """
  This file contains general-purpose utilities, mainly Python Cookbook recipes.
 """
@@ -241,7 +243,7 @@ def proxy(obj, *specials):
     key = obj_cls, specials
     cls = known_proxy_classes.get(key)
     if cls is None:
-        cls = type("%sProxy" % obj_cls.__name__, (Proxy, ), {})
+        cls = type("%sProxy" % getName(obj_cls), (Proxy, ), {})
         for name in specials:
             name = '__%s__' % name
             unbounded_method = getattr(obj_cls, name)
