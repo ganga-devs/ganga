@@ -14,6 +14,7 @@ logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility import GridShell
 
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
+from Ganga.GPIDev.Base.Proxy import getName
 
 import re
 import os
@@ -78,7 +79,7 @@ class LCGSEFile(IGangaFile):
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
-        if obj_type.__class__.__name__ == 'Job' and attrib_name == 'outputfiles':
+        if getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
             r.locations = []
             r.localDir = ''
             r.failureReason = ''
