@@ -86,3 +86,4 @@ def ganga_job_submitted(application_name, backend_name, plain_job, master_job, s
             p.unregister()
         del p
 
+
