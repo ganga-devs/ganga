@@ -3,6 +3,7 @@ from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPo
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.ColourText import getColour
+from Ganga.GPIDev.Base.Proxy import getName
 logger = getLogger()
 
 _user_threadpool = None
@@ -53,7 +54,7 @@ class ThreadPoolQueueMonitor(object):
         if hasattr(item, 'name') and item.name != None:
             return item.name
         elif type(item.command_input[0]) != str:
-            return item.command_input[0].__name__
+            return getName(item.command_input[0])
         else:
             return item.command_input[0]
 
