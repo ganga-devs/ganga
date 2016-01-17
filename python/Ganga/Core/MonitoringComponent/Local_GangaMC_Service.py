@@ -34,14 +34,6 @@ tpFreeThreads = 0
 # The JobAction class encapsulates a function, its arguments and its post result action
 # based on what is defined as a successful run of the function.
 
-def getFuncName(func):
-    if hasattr(func, '__name__'):
-        func_name = func.__name__
-    else:
-        func_name = str(func)
-    return func_name
-
-
 class JobAction(object):
 
     def __init__(self, function, args=(), kwargs={},
@@ -805,7 +797,7 @@ class JobRegistry_Monitor(GangaThread):
         return True
 
     def setCallbackHook(self, func, argDict, enabled, timeout=0):
-        func_name = getFuncName(func)
+        func_name = getName(func)
         log.debug('Setting Callback hook function %s.' % func_name)
         log.debug('arg dict: %s' % str(argDict))
         if func_name in self.callbackHookDict:
@@ -813,7 +805,7 @@ class JobRegistry_Monitor(GangaThread):
         self.callbackHookDict[func_name] = [func, CallbackHookEntry(argDict=argDict, enabled=enabled, timeout=timeout)]
 
     def removeCallbackHook(self, func):
-        func_name = getFuncName(func)
+        func_name = getName(func)
         log.debug('Removing Callback hook function %s.' % func_name)
         if func_name in self.callbackHookDict:
             del self.callbackHookDict[func_name]
@@ -821,7 +813,7 @@ class JobRegistry_Monitor(GangaThread):
             log.error('Callback hook function does not exist.')
 
     def enableCallbackHook(self, func):
-        func_name = getFuncName(func)
+        func_name = getName(func)
         log.debug('Enabling Callback hook function %s.' % func_name)
         if func_name in self.callbackHookDict:
             self.callbackHookDict[func_name][1].enabled = True
@@ -829,7 +821,7 @@ class JobRegistry_Monitor(GangaThread):
             log.error('Callback hook function does not exist.')
 
     def disableCallbackHook(self, func):
-        func_name = getFuncName(func)
+        func_name = getName(func)
         log.debug('Disabling Callback hook function %s.' % func_name)
         if func_name in self.callbackHookDict:
             self.callbackHookDict[func_name][1].enabled = False
@@ -853,7 +845,7 @@ class JobRegistry_Monitor(GangaThread):
         if clientFunc in self.clientCallbackDict:
             del self.clientCallbackDict[clientFunc]
         else:
-            log.error("%s not found in client callback dictionary." % clientFunc.__name__)
+            log.error("%s not found in client callback dictionary." % getName(clientFunc))
 
     def __defaultActiveBackendsFunc(self):
         log.debug("__defaultActiveBackendsFunc")
@@ -983,8 +975,10 @@ class JobRegistry_Monitor(GangaThread):
 
             except BackendError as x:
                 self._handleError(x, x.backend_name, 0)
-            except Exception as err:
-                self._handleError(err, getName(backendObj), 1)
+            #except Exception as err:
+            #    #self._handleError(err, getName(backendObj), 1)
+            #    logger.debug("Lets not crash here and embarass ourselves!")
+            #    return
 
             # FIXME THIS METHOD DOES NOT EXIST
             #log.debug("[Update Thread %s] Flushing registry %s." % (currentThread, [x.id for x in jobList_fromset]))
