@@ -6,7 +6,7 @@ from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.CoreUnit import CoreUnit
 from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
 from Ganga.GPIDev.Lib.Job.Job import Job
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 import copy
 import re
 
@@ -99,8 +99,7 @@ class CoreTransform(ITransform):
                                 # no wildcards so just add the file
                                 filelist.append(f)
                     else:
-                        logger.warning(
-                            "Dataset '%s' doesn't support files" % ds._name)
+                        logger.warning("Dataset '%s' doesn't support files" % getName(ds))
 
                 # create DSs and units for this list of files
                 fid = 0
