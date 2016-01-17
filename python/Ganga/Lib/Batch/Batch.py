@@ -1,8 +1,7 @@
 import datetime
 import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import isType, getName, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Core import BackendError
 import os.path
@@ -537,7 +536,7 @@ class Batch(IBackend):
                 else:
                     # Job is still running. Check if alive
                     time = get_last_alive(heartbeatfile)
-                    config = getConfig(j.backend._name)
+                    config = getConfig(getName(j.backend))
                     if time > config['timeout']:
                         logger.warning(
                             'Job %s has disappeared from the batch system.', str(j.getFQID('.')))

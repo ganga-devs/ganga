@@ -20,6 +20,8 @@ import Ganga.Utility.logging
 
 import Ganga.Utility.Config
 
+from Ganga.GPIDev.Base.Proxy import getName
+
 logger = Ganga.Utility.logging.getLogger()
 config = Ganga.Utility.Config.getConfig('Local')
 
@@ -207,7 +209,7 @@ class Localhost(IBackend):
         script = script.replace('###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, ''))
         script = script.replace('###CREATEINPUTDATALIST###', getWNCodeForInputdataListCreation(job, ''))
 
-        script = script.replace('###APPLICATION_NAME###', repr(job.application._name))
+        script = script.replace('###APPLICATION_NAME###', repr(getName(job.application)))
         script = script.replace('###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox))
         script = script.replace('###SHAREDOUTPUTPATH###', repr(sharedoutputpath))
         script = script.replace('###APPSCRIPTPATH###', repr(appscriptpath))
