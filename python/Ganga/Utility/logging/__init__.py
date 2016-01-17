@@ -20,8 +20,16 @@ from __future__ import print_function
 #  - special functions:
 #       - log_user_exception() allows to format nicely exception messages
 
-import logging
-import logging.handlers as handlers
+logging = None
+handlers = None
+
+if logging is None:
+    import logging as _logging
+    import logging.handlers as _handlers
+
+    logging = _logging
+    handlers = _handlers
+
 import sys
 
 # logger configuration
@@ -39,7 +47,12 @@ config = getConfig("Logging")
 # initialize the root logger for the logger created directly in python
 # executable scripts which have no name starting by "Ganga."
 # By default everything goes to stdout
-logging.basicConfig(stream=sys.stdout)
+
+_hasInit = False
+
+if not _hasInit:
+    logging.basicConfig(stream=sys.stdout)
+    _hasIinit = True
 
 _formats = {
     'DEBUG': '%(asctime)s "%(filename)s":%(funcName)-10s at %(lineno)d, %(threadName)s: %(levelname)-8s %(message)s',
@@ -135,7 +148,6 @@ def _make_file_handler(logfile, logfile_size):
             new_file_handler = handlers.RotatingFileHandler(
                 logfile, maxBytes=logfile_size, backupCount=1)
         except IOError as x:
-            global private_logger
             private_logger.error('Cannot open the log file: %s', str(x))
             return
         # remove old handler if exists
@@ -209,7 +221,6 @@ def post_config_handler(opt, value):
         if _formats is not None and value in _formats:
             _format = _formats[value]
         else:
-            global private_logger
             if private_logger is not None:
                 private_logger.error('illegal name of format string (%s), possible values: %s' % (str(value), _formats.keys()))
             return
@@ -236,7 +247,6 @@ def post_config_handler(opt, value):
         return
 
     # set the logger level
-    global private_logger
     if private_logger is not None:
         private_logger.info('setting loglevel: %s %s', opt, value)
 
@@ -271,7 +281,6 @@ def _guess_module_logger_name(modulename, frame=None):
     # print " _guess_module_logger_name",name
     del frame
 
-    # global private_logger
     # if private_logger:
     #    private_logger.debug('searching for package matching calling module co_filename= %s',str(name))
 
@@ -334,7 +343,6 @@ def enableCaching():
     if not config['_interactive_cache']:
         return
 
-    global private_logger
     private_logger.debug('CACHING ENABLED')
     global default_handler, cached_screen_handler
     main_logger.removeHandler(default_handler)
@@ -357,7 +365,6 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
         name = 'Ganga.' + name
 
     ## Reduce verbosity on startup
-    #global private_logger
     #if private_logger:
     #    private_logger.debug('getLogger: effective_name=%s original_name=%s', name, requested_name)
 
@@ -375,7 +382,6 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
             _set_log_level(logger, thisConfig)
 
         ## Reduce verbosity on startup
-        #global private_logger
         #if private_logger:
         #    private_logger.debug('created logger %s in %s mode', name, logging.getLevelName(logger.getEffectiveLevel()))
         #    private_logger.debug('applied %s format string to %s', config['_format'], name)
@@ -461,7 +467,6 @@ def bootstrap(internal=False, handler=None):
 
 
 def final_shutdown():
-    global private_logger
     private_logger.debug('shutting down logsystem')
     logging.shutdown()
 
