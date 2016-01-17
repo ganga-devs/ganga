@@ -1,7 +1,7 @@
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Filters import allComponentFilters
-from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError
+from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError, getName
 from Ganga.GPIDev.Base.VPrinter import full_print, summary_print
 from Ganga.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
 from Ganga.Utility.util import containsGangaObjects
@@ -234,7 +234,7 @@ class GangaList(GangaObject):
         """Puts a hook in to stop mutable access to readonly jobs."""
         if self._readonly():
             raise ReadOnlyObjectError(
-                'object %s is readonly and attribute "%s" cannot be modified now' % (repr(self), self._name))
+                'object %s is readonly and attribute "%s" cannot be modified now' % (repr(self), getName(self)))
         else:
             self._getWriteAccess()
             # TODO: BUG: This should only be set _after_ the change has been
@@ -522,7 +522,7 @@ class GangaList(GangaObject):
                 return
 
             if (maxLen != -1) and (self_len > maxLen):
-                out.write(decorateListEntries(self_len, type(self[0]).__name__))
+                out.write(decorateListEntries(self_len, getName(type(self[0]))))
                 return
             else:
                 summary_print(self, out)
