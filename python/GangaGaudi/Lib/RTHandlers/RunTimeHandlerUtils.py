@@ -110,7 +110,7 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=None):
 def sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig):
 
     logger.debug("RTUTils sandbox_prepare")
-    job = app.getJobObject()
+    job = stripProxy(app).getJobObject()
 
     # Add the job.in/outputsandbox as splitters create subjobs that are
     # seperate Job objects and therefore have their own job.in/outputsandbox
