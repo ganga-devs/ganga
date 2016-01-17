@@ -87,7 +87,7 @@ from Ganga.GPIDev.Base.Proxy import isType
 
 def _wrap(obj):
     if isType(obj, GangaObject):
-        return GPIProxyObjectFactory(obj)
+        return obj
     if isType(obj, RegistrySlice):
         return obj._proxyClass(obj)
     if isType(obj, list):
