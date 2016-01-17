@@ -333,9 +333,9 @@ class Node(object):
         ## logging code useful for debugging
         for (name, item) in self._schema.allItems():
             if item['comparable'] == True:
-                #logger.info("testing: %s::%s" % (str(self.__class__.__name__), str(name)))
+                #logger.info("testing: %s::%s" % (str(getName(self)), str(name)))
                 if getattr(self, name) != getattr(node, name):
-                    #logger.info( "diff: %s::%s" % (str(self.__class__.__name__), str(name)))
+                    #logger.info( "diff: %s::%s" % (str(getName(self)), str(name)))
                     return 0
 
         return 1

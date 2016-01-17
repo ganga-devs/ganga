@@ -8,7 +8,7 @@ from __future__ import absolute_import
 import Ganga.Utility.logging
 from Ganga.Utility.Config import getConfig
 
-import Ganga.GPIDev.Schema as Schema
+from Ganga.GPIDev.Schema import Schema as Schema
 from Ganga.GPIDev.Schema import ComponentItem
 
 from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
@@ -168,7 +168,8 @@ def isType(_obj, type_or_seq):
     else:
         return isinstance(obj, bare_type_or_seq)
 
-def getName(obj):
+def getName(_obj):
+    obj = stripProxy(_obj)
     if hasattr(obj, '_name'):
         return obj._name
     elif hasattr(obj, '__name__'):
@@ -315,7 +316,7 @@ class ProxyDataDescriptor(object):
         if item['proxy_get']:
             return getattr(getattr(obj, proxyRef), item['proxy_get'])()
 
-        if isType(item, Schema.ComponentItem):
+        if isType(item, ComponentItem):
             disguiser = self.disguiseComponentObject
         else:
             disguiser = self.disguiseAttribute
@@ -495,7 +496,7 @@ class ProxyDataDescriptor(object):
             self.__app_set__(obj, val)
 
         # unwrap proxy
-        if item.isA(Schema.ComponentItem):
+        if item.isA(ComponentItem):
             from .Filters import allComponentFilters
             cfilter = allComponentFilters[item['category']]
             stripper = lambda v: stripComponentObject(v, cfilter, item)
@@ -511,7 +512,7 @@ class ProxyDataDescriptor(object):
                 val = self._stripAttribute(obj, val, getName(self))
 
         # apply attribute filter to component items
-        if item.isA(Schema.ComponentItem):
+        if item.isA(ComponentItem):
             val = self._stripAttribute(obj, val, getName(self))
 
         self._check_type(obj, val)
@@ -624,7 +625,7 @@ def GPIProxyClassFactory(name, pluginclass):
 
         from Ganga.GPIDev.Base.Objects import Node
         for key, _val in getattr(self, proxyClass)._schema.allItems():
-            if not _val['protected'] and not _val['hidden'] and isType(_val, Schema.ComponentItem) and key not in Node._ref_list:
+            if not _val['protected'] and not _val['hidden'] and isType(_val, ComponentItem) and key not in Node._ref_list:
                 val = getattr(self, key)
                 raw_obj.setNodeAttribute(key, addProxy(val))
 
@@ -669,7 +670,7 @@ def GPIProxyClassFactory(name, pluginclass):
                     item = pluginclass._schema.getItem(k)
 
                     # unwrap proxy
-                    if item.isA(Schema.ComponentItem):
+                    if item.isA(ComponentItem):
                         from .Filters import allComponentFilters
                         cfilter = allComponentFilters[item['category']]
                         stripper = lambda v: stripComponentObject(v, cfilter, item)
@@ -682,7 +683,7 @@ def GPIProxyClassFactory(name, pluginclass):
                         if stripper is not None:
                             this_arg = stripper(this_arg)
                     # apply attribute filter to component items
-                    if item.isA(Schema.ComponentItem):
+                    if item.isA(ComponentItem):
                         this_arg = ProxyDataDescriptor._stripAttribute(raw_self, this_arg, k)
 
                     if isType(this_arg, Node) and not hasattr(this_arg, proxyObject):
@@ -899,8 +900,11 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
             return object.__getattribute__(self, name)
 
         proxyInstance = object.__getattribute__(self, proxyRef)
+
+        obj_meta = _getMetaClass()
+
         if '_attribute_filter__get__' in dir(proxyInstance) and \
-                proxyInstance.__class__.__name__ != 'ObjectMetaclass' and \
+                not isType(proxyInstance, obj_meta) and \
                 proxyInstance._schema.hasItem(name) and \
                 not proxyInstance._schema.getItem(name)['hidden']:
                     return addProxy(proxyInstance._attribute_filter__get__(name))
@@ -931,6 +935,15 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
     # return type(name, (GPIProxyObject,list), d)
 
     return type(name, (GPIProxyObject,), d)
+
+_metaClassHolder = None
+def _getMetaClass():
+    global _metaClassHolder
+    if _metaClassHolder is None:
+        from Ganga.GPIDev.Base.Objects import ObjectMetaclass
+        _metaClassHolder = ObjectMetaclass
+    return _metaClassHolder
+
 
 #
 #
