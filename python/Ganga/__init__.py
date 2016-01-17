@@ -742,8 +742,8 @@ disp_config.addOption('jobs_columns_width',
                  'width of each column')
 
 disp_config.addOption('jobs_columns_functions',
-                 {'subjobs': "lambda j: len(j.subjobs)", 'application': "lambda j: j.application._name",
-                  'backend': "lambda j:j.backend._name", 'comment': "lambda j: j.comment"},
+                 {'subjobs': "lambda j: len(j.subjobs)", 'application': "lambda j: j.application.__class__.__name__",
+                  'backend': "lambda j:j.backend.__class__.__name__", 'comment': "lambda j: j.comment"},
                  'optional converter functions')
 
 disp_config.addOption('jobs_columns_show_empty',
