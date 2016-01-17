@@ -49,9 +49,9 @@ def check_app_hash(obj):
                     isVerifiableAna = True
 
     if isVerifiableApp is True:
-        hashable_app = obj.application
+        hashable_app = stripProxy(obj.application)
     elif isVerifiableAna is True:
-        hashable_app = obj.analysis.application
+        hashable_app = stripProxy(obj.analysis.application)
     else:
         hashable_app = None
 

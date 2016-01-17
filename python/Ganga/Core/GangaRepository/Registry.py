@@ -215,7 +215,6 @@ class Registry(object):
                 logger.debug("Getting item being operated on: %s" % this_id)
                 time.sleep(0.1)
             self._inprogressDict[this_id] = "_getitem"
-            from Ganga.GPIDev.Base.Proxy import addProxy
             #logger.info("Getting Item: %s" % this_id)
             #logger.info("Looking in: %s" % self._objects.keys())
             real_id = None
@@ -240,7 +239,7 @@ class Registry(object):
                 found_id = this_obj._registry_id
             if found_id is not None and real_id is not None:
                 assert( found_id == real_id )
-            return addProxy(this_obj)
+            return this_obj
         except KeyError as err:
             logger.debug("Repo KeyError: %s" % str(err))
             logger.debug("Keys: %s id: %s" % (str(self._objects.keys()), str(this_id)))
