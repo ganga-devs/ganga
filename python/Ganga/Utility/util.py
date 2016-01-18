@@ -4,8 +4,6 @@
 # $Id: util.py,v 1.1 2008-07-17 16:41:01 moscicki Exp $
 ##########################################################################
 
-from Ganga.GPIDev.Base.Proxy import getName
-
 """
  This file contains general-purpose utilities, mainly Python Cookbook recipes.
 """
@@ -150,7 +148,10 @@ def execute_once():
 
 def hostname():
     """ Try to get the hostname in the most possible reliable way as described in the Python LibRef."""
-    import socket
+    try:
+        import socket
+    except ImportError:
+        return 'localhost'
     try:
         return socket.gethostbyaddr(socket.gethostname())[0]
     # [bugfix #20333]:
@@ -243,6 +244,7 @@ def proxy(obj, *specials):
     key = obj_cls, specials
     cls = known_proxy_classes.get(key)
     if cls is None:
+        from Ganga.GPIDev.Base.Proxy import getName
         cls = type("%sProxy" % getName(obj_cls), (Proxy, ), {})
         for name in specials:
             name = '__%s__' % name
