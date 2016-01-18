@@ -42,7 +42,7 @@ def start_ganga():
     logger.info("Parsing Command Line options")
     import Ganga.Runtime
     this_argv = [
-        '',  # This is needed for some reason. Otherwise first entry in list is not parsed.
+        'ganga',  # `argv[0]` is usually the name of the program so fake that here
         '-o[Configuration]RUNTIME_PATH=GangaTest',
         '-o[Configuration]user=testframework',
         '-o[Configuration]gangadir=$HOME/gangadir_testing',
