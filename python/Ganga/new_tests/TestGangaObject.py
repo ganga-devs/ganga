@@ -3,6 +3,7 @@ from unittest import TestCase
 
 from Ganga.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass
 
+
 class TestGangaObject(TestCase):
 
     def setUp(self):
@@ -79,6 +80,7 @@ class TestGangaObject(TestCase):
     def tearDown(self):
         pass
 
+
 class TestNode(TestCase):
 
     def setUp(self):
@@ -112,8 +114,10 @@ class TestNode(TestCase):
     def tearDown(self):
         pass
 
+
 class TestObjectMetaclass(TestCase):
 
     def testObjectMetaclass(self):
-        ObjectMetaclass(name='', bases=(), dict={'_schema': None})
-
+        class GangaObject(Node):
+            __metaclass__ = ObjectMetaclass
+            _schema = None
