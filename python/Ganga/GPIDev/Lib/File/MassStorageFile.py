@@ -321,7 +321,7 @@ class MassStorageFile(IGangaFile):
                 if exitcode != 0:
                     self.handleUploadFailure(mystderr)
                 else:
-                    logger.info('%s successfully uploaded to mass storage' % currentFile)
+                    logger.info('%s successfully uploaded to mass storage as %s' % (currentFile, os.path.join(massStoragePath, finalFilename)))
                     d.locations = os.path.join(massStoragePath, os.path.basename(finalFilename))
 
                     # Alex removed this as more general approach in job.py after put() is called
@@ -337,7 +337,7 @@ class MassStorageFile(IGangaFile):
             if exitcode != 0:
                 self.handleUploadFailure(mystderr)
             else:
-                logger.info('%s successfully uploaded to mass storage' % currentFile)
+                logger.info('%s successfully uploaded to mass storage as %s' % (currentFile, os.path.join(massStoragePath, finalFilename)))
                 location = os.path.join(massStoragePath, os.path.basename(finalFilename))
                 if location not in self.locations:
                     self.locations.append(location)
