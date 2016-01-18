@@ -1,4 +1,4 @@
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger
 
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository import InaccessibleObjectError, RepositoryError
@@ -11,7 +11,7 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
-logger = Ganga.Utility.logging.getLogger()
+logger = getLogger()
 
 class RegistryError(GangaException):
 

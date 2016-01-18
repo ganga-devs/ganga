@@ -12,13 +12,13 @@
 # if a root object has a status field and some load error occurs, it will
 # be set to "incomplete"
 
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Proxy import getName
 
-logger = Ganga.Utility.logging.getLogger()
+logger = getLogger()
 
 # Error raised on schema version error
 
