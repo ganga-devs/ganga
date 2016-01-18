@@ -556,8 +556,8 @@ def GPIProxyObjectFactory(_obj):
 
     if getattr(obj, proxyObject) is None:
         cls = getattr(obj, proxyClass)
-        proxy = cls()
-        if getattr(proxy, proxyRef) is None:
+        proxy = stripProxy(cls)()
+        if not hasattr(proxy, proxyRef) or getattr(proxy, proxyRef) is None:
             setattr(proxy, proxyRef, obj)
         else:
             for key, val in stripProxy(obj).getNodeData().iteritems():
@@ -744,6 +744,7 @@ def GPIProxyClassFactory(name, pluginclass):
                 p.text(self.__str__())
         else:
             p.text(self.__str__())
+
     helptext(_repr_pretty_, """Return a nice string to be printed in the IPython termial""")
 
     def _repr(self):
@@ -917,6 +918,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
             '__str__': _str,
             '__repr__': _repr,
             '_repr_pretty_': _repr_pretty_,
+            '_display': _repr_pretty_,
             '__eq__': _eq,
             '__ne__': _ne,
             'copy': _copy,
