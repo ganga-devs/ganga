@@ -37,7 +37,7 @@ class TestGangaObject(TestCase):
         try:
             self.obj.getJobObject()
             raise Exception("didn't expect to have a Job")
-        except AssertionError, err:
+        except AssertionError:
             pass
         except:
             raise
