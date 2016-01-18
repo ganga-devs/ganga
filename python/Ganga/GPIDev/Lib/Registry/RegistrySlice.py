@@ -5,6 +5,8 @@ from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexE
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 import fnmatch
 import collections
+
+from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 import Ganga.Utility.Config
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
@@ -242,7 +244,7 @@ class RegistrySlice(object):
                             else:
                                 attrvalue = attrs[a]
 
-                                if item.isA('ComponentItem'):
+                                if item.isA(ComponentItem):
                                     from Ganga.GPIDev.Base.Filters import allComponentFilters
 
                                     cfilter = allComponentFilters[item['category']]

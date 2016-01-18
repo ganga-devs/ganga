@@ -388,35 +388,15 @@ class Item(object):
 
     # compare the kind of item:
     # all calls are equivalent:
-    # item.isA('SimpleItem')
     # item.isA(SimpleItem)
     def isA(self, _what):
 
-        from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+        from Ganga.GPIDev.Base.Proxy import stripProxy
 
         what = stripProxy(_what)
 
-        this_type = type(what)
-
-        try:
-            # for backwards compatibility with Ganga3 CLIP: if a string --
-            # first convert to the class name
-            if isinstance(what, str):
-                # get access to all Item classes defined in this module
-                # (schema)
-                if hasattr(Schema, what):
-                    what = getattr(Schema, what)
-                else:
-                    return False
-            elif isType(what, types.InstanceType):
-                if hasattr(what, '__class__'):
-                    what = what.__class__
-                else:
-                    return False
-
-        except AttributeError:
-            # class not found
-            return False
+        if isinstance(what, types.InstanceType):
+            what = what.__class__
 
         return issubclass(self.__class__, what)
 
