@@ -18,6 +18,9 @@
 # Perform setup needed for using Ganga Public Interface (GPI)
 # This is a Copy/Paste logic which must stay in THIS file
 
+from __future__ import print_function
+
+
 def standardSetup():
     """Function to perform standard setup for Ganga.
     """   
@@ -25,11 +28,13 @@ def standardSetup():
 
     # insert the path to Ganga itself
     exeDir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
+
     gangaDir = os.path.join(os.path.dirname(exeDir), 'python' )
+
     sys.path.insert(0, gangaDir)
 
-    import Ganga.PACKAGE
-    Ganga.PACKAGE.standardSetup()
+    from Ganga.PACKAGE import standardSetup
+    standardSetup()
 
 standardSetup()
 del standardSetup
