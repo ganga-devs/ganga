@@ -239,7 +239,8 @@ class Registry(object):
                 found_id = this_obj._registry_id
             if found_id is not None and real_id is not None:
                 assert( found_id == real_id )
-            return this_obj
+            from Ganga.GPIDev.Base.Proxy import addProxy
+            return addProxy(this_obj)
         except KeyError as err:
             logger.debug("Repo KeyError: %s" % str(err))
             logger.debug("Keys: %s id: %s" % (str(self._objects.keys()), str(this_id)))
@@ -1164,4 +1165,16 @@ class Registry(object):
         other_sessions = self.repository.get_other_sessions()
         if len(other_sessions) > 0:
             logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
+
+    def has_loaded(self, obj):
+
+        try:
+            index = self.find(obj)
+        except:
+            return False
+
+        if index in self._loaded_ids:
+            return True
+        else:
+            return False
 
