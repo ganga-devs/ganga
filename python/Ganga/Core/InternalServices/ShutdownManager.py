@@ -173,9 +173,9 @@ def _ganga_run_exitfuncs():
     removeGlobalSessionFileHandlers()
     removeGlobalSessionFiles()
 
-    import Ganga.Utility.logging
-    if Ganga.Utility.logging.requires_shutdown is True:
-        Ganga.Utility.logging.final_shutdown()
+    from Ganga.Utility.logging import requires_shutdown, final_shutdown
+    if requires_shutdown is True:
+        final_shutdown()
 
     from Ganga.Runtime import bootstrap
     if bootstrap.DEBUGFILES or bootstrap.MONITOR_FILES:
