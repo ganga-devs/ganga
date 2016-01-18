@@ -293,17 +293,15 @@ class Node(object):
         if not isType(node, type(self)):
             return 0
 
+        # Compare the schemas against each other
         if (hasattr(self, '_schema') and self._schema is None) and (hasattr(node, '_schema') and node._schema is None):
-            return 1
-        elif (hasattr(self, '_schema') and self._schema is not None) and (hasattr(node, '_schema') and node._schema is None):
-            return 0
-        elif (hasattr(self, '_schema') and self._schema is None) and (hasattr(node, '_schema') and node._schema is not None):
-            return 0
-        else:
-            if (hasattr(self, '_schema') and hasattr(node, '_schema')) and (not self._schema.isEqual(node._schema)):
-                return 0
+            return 1  # If they're both `None`
+        elif (hasattr(self, '_schema') and self._schema is None) or (hasattr(node, '_schema') and node._schema is None):
+            return 0  # If just one of them is `None`
+        elif not self._schema.isEqual(node._schema):
+            return 0  # Both have _schema but do not match
 
-        ## logging code useful for debugging
+        # Check each schema item in turn and check for equality
         for (name, item) in self._schema.allItems():
             if item['comparable'] == True:
                 #logger.info("testing: %s::%s" % (str(self.__class__.__name__), str(name)))
