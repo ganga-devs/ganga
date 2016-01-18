@@ -82,7 +82,7 @@ class Node(object):
             setattr(self, key, val)
 
     def __copy__(self, memo=None):
-        cls = type(stripProxy(self))
+        cls = type(self)
         obj = super(cls, cls).__new__(cls)
         obj.__init__()
         # FIXME: this is different than for deepcopy... is this really correct?
@@ -102,7 +102,7 @@ class Node(object):
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
         obj.__init__()
-        this_dict = stripProxy(self).__getstate__()
+        this_dict = self.__getstate__()
         for elem in this_dict.keys():
             if elem not in self._ref_list:
                 this_dict[elem] = deepcopy(stripProxy(this_dict[elem]), memo)  # FIXED
@@ -246,7 +246,7 @@ class Node(object):
 
     def _actually_copyFrom(self, _srcobj, _ignore_atts):
 
-        for name, item in stripProxy(self)._schema.allItems():
+        for name, item in self._schema.allItems():
             if name in _ignore_atts:
                 continue
 
@@ -684,7 +684,7 @@ class Descriptor(object):
         if isType(new_val, Node):
             new_val._setParent(obj)
 
-        stripProxy(obj).setNodeAttribute(getName(self), new_val)
+        obj.setNodeAttribute(getName(self), new_val)
 
         obj._setDirty()
 
@@ -904,7 +904,7 @@ class GangaObject(Node):
         if len(args) == 0:
             return
         elif len(args) == 1:
-            if not isType(args[0], type(stripProxy(self))):
+            if not isType(args[0], type(self)):
                 logger.warning("Performing a copyFrom from: %s to: %s" % (type(args[0]), type(self)))
             self.copyFrom(args[0])
         else:
@@ -932,7 +932,6 @@ class GangaObject(Node):
     # schema
     def __deepcopy__(self, memo=None):
         true_parent = self._getParent()
-        self = stripProxy(self)
         ## This triggers a read of the job from disk
         self._getReadAccess()
         self_copy = super(GangaObject, self).__deepcopy__(memo)
@@ -983,7 +982,7 @@ class GangaObject(Node):
     def _getWriteAccess(self):
         """ tries to get write access to the object.
         Raise LockingError (or so) on fail """
-        root = stripProxy(self)._getRoot()
+        root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
             _haveLocked = False
@@ -1016,7 +1015,7 @@ class GangaObject(Node):
         """ releases write access to the object.
         Raise LockingError (or so) on fail
         Please use only if the object is expected to be used by other sessions"""
-        root = stripProxy(self)._getRoot()
+        root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
             logger.debug("Releasing: %s" % (reg.name))
@@ -1025,7 +1024,7 @@ class GangaObject(Node):
     def _getReadAccess(self):
         """ makes sure the objects _data is there and the object itself has a recent state.
         Raise RepositoryError"""
-        root = stripProxy(self)._getRoot()
+        root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
             reg._read_access(root, self)
@@ -1033,7 +1032,7 @@ class GangaObject(Node):
     # define when the object is read-only (for example a job is read-only in
     # the states other than new)
     def _readonly(self):
-        r = stripProxy(self)._getRoot()
+        r = self._getRoot()
         # is object a root for itself? check needed otherwise infinite
         # recursion
         if r is None or r is self:
@@ -1094,7 +1093,7 @@ class GangaObject(Node):
     # this method is for convenience and may well be moved to some subclass
     def getJobObject(self):
         from Ganga.GPIDev.Lib.Job import Job
-        r = stripProxy(self)._getRoot(cond=lambda o: isType(o, Job))
+        r = self._getRoot(cond=lambda o: isType(o, Job))
         if not isType(r, Job):
             raise AssertionError('no job associated with object ' + repr(self))
         return r
