@@ -867,6 +867,7 @@ class GangaObject(Node):
     # the constructor is directly used by the GPI proxy so the GangaObject
     # must be fully initialized
     def __init__(self):
+        super(GangaObject, self).__init__(None)
 
 
         # IMPORTANT: if you add instance attributes like in the line below
@@ -877,7 +878,6 @@ class GangaObject(Node):
         # contents is out-of-sync with its repository
         self._dirty = False
 
-        super(GangaObject, self).__init__(None)
         #Node.__init__(self, None)
 
         if self._schema is not None and hasattr(self._schema, 'allItems'):
