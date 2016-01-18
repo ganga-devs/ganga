@@ -54,7 +54,7 @@ class PreparedStateError(GangaException):
 class Node(object):
     _ref_list = ['_parent', '_registry', '_index_cache', '_proxyObject']
 
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         self._data = {}
         self._parent = parent
         self._index_cache = {}
@@ -854,6 +854,7 @@ class ObjectMetaclass(type):
 class GangaObject(Node):
     __metaclass__ = ObjectMetaclass
     _schema = None  # obligatory, specified in the derived classes
+    _category = None  # obligatory, specified in the derived classes
     _proxyClass = None  # created automatically
     _registry = None  # automatically set for Root objects
     _exportmethods = []  # optional, specified in the derived classes
