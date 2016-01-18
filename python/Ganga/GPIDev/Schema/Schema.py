@@ -261,7 +261,7 @@ class Schema(object):
         if check:
             defvalue = val
 
-        if item.isA(ComponentItem):
+        if isinstance(item, ComponentItem):
 
             # FIXME: limited support for initializing non-empty sequences (i.e.
             # apps => ['DaVinci','Executable'] is NOT correctly initialized)
@@ -283,7 +283,7 @@ class Schema(object):
         try:
             from Ganga.GPIDev.Base.Proxy import isType, getRuntimeGPIObject, stripProxy, getName
             from Ganga.GPIDev.Base.Objects import Node
-            if isType(defvalue, Node):
+            if isinstance(defvalue, Node):
                 return stripProxy(getRuntimeGPIObject(getName(defvalue)))
             else:
                 return copy.deepcopy(defvalue)

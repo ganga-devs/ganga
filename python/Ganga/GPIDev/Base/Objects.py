@@ -345,7 +345,7 @@ class Node(object):
 
     def setNodeAttribute(self, attrib_name, attrib_value):
         self.getNodeData()[attrib_name] = attrib_value
-        if isType(attrib_value, GangaObject):
+        if isinstance(attrib_value, GangaObject):
             stripProxy(self.getNodeData()[attrib_name])._setParent(self)
 
     def removeNodeAttribute(self, attrib_name):
@@ -583,8 +583,8 @@ class Descriptor(object):
         if isType(set_obj, Node):
             stripProxy(set_obj)._setParent(stripProxy(_obj))
             stripProxy(set_obj)._setDirty()
-        if isType(new_val, Node):
-            stripProxy(_val)._setDirty()
+        if isinstance(new_val, Node):
+            val._setDirty()
 
         if val_reg is not None:
             if val_prevState is True and hasattr(val_reg, 'turnOnAutoFlushing'):
@@ -640,7 +640,7 @@ class Descriptor(object):
 
         def cloneVal(v):
             from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-            if isType(v, (list, tuple, GangaList)):
+            if isinstance(v, (list, tuple, GangaList)):
                 new_v = GangaList()
                 for elem in v:
                     new_v.append(self.__cloneVal(elem, obj))
@@ -655,17 +655,17 @@ class Descriptor(object):
                 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
                 new_val = GangaList()
             else:
-                if isType(item, Schema.ComponentItem):
+                if isinstance(item, Schema.ComponentItem):
                     new_val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
                 else:
                     new_val = makeGangaList(val, parent=obj, preparable=_preparable)
         else:
             ## Else we need to work out what we've got.
-            if isType(item, Schema.ComponentItem):
+            if isinstance(item, Schema.ComponentItem):
                 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-                if isType(val, (list, tuple, GangaList)):
+                if isinstance(val, (list, tuple, GangaList)):
                     ## Can't have a GangaList inside a GangaList easily so lets not
-                    if isType(_obj, GangaList):
+                    if isinstance(_obj, GangaList):
                         newListObj = []
                     else:
                         newListObj = GangaList()
@@ -681,7 +681,7 @@ class Descriptor(object):
                 pass
             #val = deepcopy(val)
 
-        if isType(new_val, Node):
+        if isinstance(new_val, Node):
             new_val._setParent(obj)
 
         obj.setNodeAttribute(getName(self), new_val)
@@ -887,7 +887,7 @@ class GangaObject(Node):
                     defVal = self._schema.getDefaultValue(attr)
                     self.setNodeAttribute(attr, defVal)
                     new_attr = getattr(self, attr)
-                    if isType(new_attr, Node):
+                    if isinstance(new_attr, Node):
                         new_attr._setParent(self)
 
         # Overwrite default values with any config values specified
