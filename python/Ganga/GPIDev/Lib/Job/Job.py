@@ -646,6 +646,7 @@ class Job(GangaObject):
             self.status = newstatus
             if self.status != saved_status:
                 self._commit()
+                logger.debug("Status changed from '%s' to '%s'" % (saved_status, self.status))
 
         except Exception as x:
             self.status = saved_status
@@ -1897,9 +1898,9 @@ class Job(GangaObject):
                 # decrement the reference counter.
                 if hasattr(self.application, 'is_prepared') and self.application.__getattribute__('is_prepared'):
                     if self.application.is_prepared is not True:
-                        self.application.decrementShareCounter(self.application.is_prepared.name)
+                        stripProxy(self.application).decrementShareCounter(stripProxy(self.application).is_prepared.name)
                         for sj in self.subjobs:
-                            self.application.decrementShareCounter(self.application.is_prepared.name)
+                            stripProxy(self.application).decrementShareCounter(stripProxy(self.application).is_prepared.name)
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
