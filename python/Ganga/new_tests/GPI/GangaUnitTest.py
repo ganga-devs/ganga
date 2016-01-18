@@ -4,41 +4,29 @@ except ImportError:
     import unittest
 
 
-def startGanga():
+def start_ganga():
 
-    # Taken from  the ganga 'binary'
-    def standardSetup():
-        """Function to perform standard setup for Ganga.
-        """
-        import sys
-        import os.path
+    import sys
+    import os.path
 
-        try:
-            from os import environ
-            GangaSysRoot = os.environ.get('GANGASYSROOT')
-        except Exception, err:
-            print "Exception Raised finding GANGASYSROOT,\n\tPLEASE DEFINE THIS IN YOUR ENVIRONMENT TO RUN THE TESTS\n"
-            raise err
+    try:
+        from os import environ
+        ganga_sys_root = os.environ.get('GANGASYSROOT')
+    except Exception, err:
+        print "Exception Raised finding GANGASYSROOT,\n\tPLEASE DEFINE THIS IN YOUR ENVIRONMENT TO RUN THE TESTS\n"
+        raise err
 
-        if GangaSysRoot == None:
-            raise Exception(
-                "GANGASYSROOT evaluated to None, please check Ganga setup")
+    if ganga_sys_root is None:
+        raise Exception(
+            "GANGASYSROOT evaluated to None, please check Ganga setup")
 
-        exe_relPath = "../install/ganga/bin"
-        python_relPath = "../install/ganga/python"
+    python_rel_path = "../install/ganga/python"
 
-        # insert the path to Ganga itself
-        exeDir = os.path.abspath(
-            os.path.join(GangaSysRoot, exe_relPath))  # which ganga
+    ganga_dir = os.path.abspath(os.path.join(ganga_sys_root, python_rel_path))
+    sys.path.insert(0, ganga_dir)
 
-        gangaDir = os.path.abspath(os.path.join(GangaSysRoot, python_relPath))
-        sys.path.insert(0, gangaDir)
-
-        import Ganga.PACKAGE
-        Ganga.PACKAGE.standardSetup()
-
-    standardSetup()
-    del standardSetup
+    import Ganga.PACKAGE
+    Ganga.PACKAGE.standardSetup()
 
     # End taken from the ganga binary
 
@@ -53,14 +41,15 @@ def startGanga():
 
     logger.info("Parsing Command Line options")
     import Ganga.Runtime
-    this_argv = []
-    this_argv.append('')  # This is needed for some reason. Otherwise first entry in list is not parsed.
-    this_argv.append('-o[Configuration]RUNTIME_PATH=GangaTest')
-    this_argv.append('-o[Configuration]user=testframework')
-    this_argv.append('-o[Configuration]gangadir=$HOME/gangadir_testing')
-    this_argv.append('-o[Configuration]repositorytype=LocalXML')
-    this_argv.append('-o[PollThread]autostart_monThreads=False')
-    this_argv.append('-o[TestingFramework]ReleaseTesting=True')
+    this_argv = [
+        '',  # This is needed for some reason. Otherwise first entry in list is not parsed.
+        '-o[Configuration]RUNTIME_PATH=GangaTest',
+        '-o[Configuration]user=testframework',
+        '-o[Configuration]gangadir=$HOME/gangadir_testing',
+        '-o[Configuration]repositorytype=LocalXML',
+        '-o[PollThread]autostart_monThreads=False',
+        '-o[TestingFramework]ReleaseTesting=True',
+    ]
 
     # FIXME Should we need to add the ability to load from a custom .ini file
     # to configure tests without editting this?
@@ -73,11 +62,11 @@ def startGanga():
     # This is here to protect against the startGanga being called on an
     # initialized ganga environment
     try:
-        doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+        do_config = not Ganga.Utility.Config.Config._after_bootstrap
     except:
-        doConfig = True
+        do_config = True
 
-    if doConfig:
+    if do_config:
         # Perform the configuration and bootstrap steps in ganga
         logger.info("Parsing Configuration Options")
         Ganga.Runtime._prog.configure()
@@ -117,7 +106,7 @@ def startGanga():
     logger.info("Passing to Unittest")
 
 
-def stopGanga():
+def stop_ganga():
 
     import Ganga.Utility.logging
     logger = Ganga.Utility.logging.getLogger()
@@ -127,11 +116,11 @@ def stopGanga():
     # Do we want to empty the repository on shutdown?
     from Ganga.Utility.Config import getConfig
     if 'AutoCleanup' in getConfig('TestingFramework'):
-        wholeCleanup = getConfig('TestingFramework')['AutoCleanup']
+        whole_cleanup = getConfig('TestingFramework')['AutoCleanup']
     else:
-        wholeCleanup = True
+        whole_cleanup = True
 
-    if wholeCleanup:
+    if whole_cleanup:
         # empty repository so we start again at job 0 when we restart
         logger.info("Clearing the Job and Template repositories")
 
@@ -171,16 +160,9 @@ class GangaUnitTest(unittest.TestCase):
         unittest.TestCase.setUp(self)
         # Start ganga and internal services
         # This is called before each unittest
-        startGanga()
+        start_ganga()
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         # Stop ganga and mimick an exit to shutdown all internal processes
-        stopGanga()
-
-# Not sure if required but I think it is
-if __name__ == "__main__":
-    try:
-        unittest.main()
-    except:
-        pass
+        stop_ganga()
