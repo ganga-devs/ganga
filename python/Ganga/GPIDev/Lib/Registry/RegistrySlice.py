@@ -404,9 +404,9 @@ class RegistrySlice(object):
                 val = ""
             if not val and not item in self._display_columns_show_empty:
                 val = ""
-        #except AttributeError as err:
-        #    logger.debug("AttibErr: %s" % str(err))
-        #    val = ""
+        except AttributeError as err:
+            logger.debug("AttibErr: %s" % str(err))
+            val = ""
         finally:
             pass
         return str(val)
