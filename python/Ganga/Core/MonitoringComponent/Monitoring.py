@@ -1,6 +1,6 @@
 # Setup logging ---------------
-import Ganga.Utility.logging
-log = Ganga.Utility.logging.getLogger()
+from Ganga.Utility.logging import getLogger
+log = getLogger()
 
 
 class MonitoringClient(object):

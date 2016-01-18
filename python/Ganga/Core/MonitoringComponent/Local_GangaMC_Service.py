@@ -17,12 +17,12 @@ from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, getRuntimeGPIOb
 from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus, lazyLoadJobBackend
 
 # Setup logging ---------------
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger, log_unknown_exception
 
 from Ganga.Core import BackendError
 from Ganga.Utility.Config import getConfig
 
-log = Ganga.Utility.logging.getLogger()
+log = getLogger()
 
 config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
@@ -452,7 +452,8 @@ class JobRegistry_Monitor(GangaThread):
         Main monitoring loop
         """
         import thread
-        Ganga.Core.MonitoringComponent.monitoring_thread_id = thread.get_ident()
+        from Ganga.Core.MonitoringComponent import monitoring_thread_id
+        monitoring_thread_id = thread.get_ident()
         del thread
 
         log.debug("Starting run method")
@@ -923,10 +924,10 @@ class JobRegistry_Monitor(GangaThread):
 
                     if backendObj is not None:
                         if hasattr(backendObj, 'setup'):
-                            j.backend.setup()
+                            stripProxy(j.backend).setup()
                     else:
                         if hasattr(j.backend, 'setup'):
-                            j.backend.setup()
+                            stripProxy(j.backend).setup()
 
                 if self.enabled is False and self.alive is False:
                     log.debug("NOT enabled, leaving")
@@ -975,10 +976,11 @@ class JobRegistry_Monitor(GangaThread):
 
             except BackendError as x:
                 self._handleError(x, x.backend_name, 0)
-            #except Exception as err:
-            #    #self._handleError(err, getName(backendObj), 1)
-            #    logger.debug("Lets not crash here and embarass ourselves!")
-            #    return
+            except Exception as err:
+                #self._handleError(err, getName(backendObj), 1)
+                log.error("Monitoring Error: %s" % str(err))
+                log.debug("Lets not crash here!")
+                return
 
             # FIXME THIS METHOD DOES NOT EXIST
             #log.debug("[Update Thread %s] Flushing registry %s." % (currentThread, [x.id for x in jobList_fromset]))
@@ -1117,11 +1119,11 @@ class JobRegistry_Monitor(GangaThread):
             log.error('Problem in the monitoring loop: %s', str(x))
             #if show_traceback:
             #    log.error("exception: ", exc_info=1)
-            #    #Ganga.Utility.logging.log_unknown_exception()
+            #    #log_unknown_exception()
             #    import traceback
             #    traceback.print_stack()
             if show_traceback:
-                Ganga.Utility.logging.log_user_exception(log)
+                log_user_exception(log)
         bn = backend_name
         self.errors.setdefault(bn, 0)
         if self.errors[bn] == 0:
