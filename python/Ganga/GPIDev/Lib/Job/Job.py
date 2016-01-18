@@ -2119,7 +2119,7 @@ class Job(GangaObject):
                 if not item['changable_at_resubmit'] and item['copyable']:
                     if v1 != v2:
                         raise JobError('%s.%s attribute cannot be changed at resubmit' % (getName(obj1), name))
-                if item.isA('ComponentItem'):
+                if item.isA(ComponentItem):
                     check_changability(v1, v2)
 
         if backend:
