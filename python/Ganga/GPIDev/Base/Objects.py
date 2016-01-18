@@ -117,8 +117,6 @@ class Node(object):
         return obj
 
     def _getParent(self):
-        if not hasattr(self, '_parent'):
-            self._setParent(None)
         return self._parent
 
     def _setParent(self, parent):
@@ -185,23 +183,9 @@ class Node(object):
     def __copy__(self):
         copied_obj = self.clone()
 
-    @staticmethod
-    def __resetParent(class_obj):
-        ## Fix some objects losing parent knowledge
-        src_dict = class_obj.__dict__
-        for key, val in src_dict.iteritems():
-            this_attr = getattr(class_obj, key)
-            if isType(this_attr, Node) and key not in Node._ref_list:
-                #logger.debug("k: %s  Parent: %s" % (str(key), (stripProxy(srcobj))))
-                stripProxy(this_attr)._setParent(stripProxy(class_obj))
-
     # clone self and return a properly initialized object
     def clone(self):
         new_obj = deepcopy(self)
-        #new_obj.__setstate__(self.__getstate__())
-
-        self.__resetParent(new_obj)
-        self.__resetParent(self)
 
         return new_obj
 
@@ -333,8 +317,6 @@ class Node(object):
         return not self.__eq__(node)
 
     def getNodeData(self):
-        if not hasattr(self, '_data') or self._data is None:
-            setattr(self, '_data', {})
         return self._data
 
     def setNodeData(self, new_data):
@@ -360,12 +342,7 @@ class Node(object):
         setattr(self, '_index_cache', new_index_cache)
 
     def getNodeIndexCache(self):
-        if hasattr(self, '_index_cache'):
-            return self._index_cache
-        else:
-            #logger.debug("Assigning dummy '_index_cache'!")
-            self.setNodeIndexCache({})
-            return self._index_cache
+        return self._index_cache
 
 ##########################################################################
 
@@ -414,10 +391,11 @@ class Descriptor(object):
                 lookup_exception = None
 
                 #logger.info("Looking for: %s in Cache" % getName(self))
+                _obj = stripProxy(obj)
 
                 try:
-                    if stripProxy(obj).getNodeIndexCache() is not None:
-                        obj_index = stripProxy(obj).getNodeIndexCache()
+                    obj_index = _obj.getNodeIndexCache()
+                    if obj_index is not None:
                         if getName(self) in obj_index.keys():
                             return obj_index[getName(self)]
                 except Exception as err:
@@ -428,8 +406,8 @@ class Descriptor(object):
 
                 ## ._data takes priority ALWAYS over ._index_cache
                 try:
-                    if stripProxy(obj).getNodeData() is not None:
-                        obj_data = stripProxy(obj).getNodeData()
+                    obj_data = _obj.getNodeData()
+                    if obj_data is not None:
                         if getName(self) in obj_data.keys():
                             return obj_data[getName(self)]
                 except Exception as err:
@@ -439,7 +417,6 @@ class Descriptor(object):
                 #logger.info("Not found")
 
                 ## Guarantee that the object is now loaded from disk
-                _obj = stripProxy(obj)
                 _obj._getReadAccess()
 
                 ## First try to load the object from the attributes on disk
@@ -543,23 +520,11 @@ class Descriptor(object):
         ## _obj: parent class which 'owns' the attribute
         ## _val: value of the attribute which we're about to set
 
-        if getName(self) in ['_parent', '_proxyObject', '_impl', '_proxyClass']:
-            object.__setattr__(_obj, getName(self), _val)
-            return
-
-        self_reg = None
-        self_prevState = None
-        if hasattr(stripProxy(self), '_getRegistry'):
-            self_reg = stripProxy(stripProxy(self)._getRegistry())
-            if self_reg is not None and hasattr(self_reg, 'isAutoFlushEnabled'):
-                self_prevState = self_reg.isAutoFlushEnabled()
-                if self_prevState is True and hasattr(self_reg, 'turnOffAutoFlushing'):
-                    self_reg.turnOffAutoFlushing()
-
         obj_reg = None
         obj_prevState = None
-        if isType(stripProxy(_obj), GangaObject) and hasattr(stripProxy(_obj), '_getRegistry'):
-            obj_reg = stripProxy(stripProxy(_obj)._getRegistry())
+        obj = stripProxy(_obj)
+        if isinstance(obj, GangaObject):
+            obj_reg = stripProxy(obj._getRegistry())
             if obj_reg is not None and hasattr(obj_reg, 'isAutoFlushEnabled'):
                 obj_prevState = obj_reg.isAutoFlushEnabled()
                 if obj_prevState is True and hasattr(obj_reg, 'turnOffAutoFlushing'):
@@ -567,8 +532,9 @@ class Descriptor(object):
 
         val_reg = None
         val_prevState = None
-        if isType(stripProxy(_val), GangaObject) and hasattr(stripProxy(_val), '_getRegistry'):
-            val_reg = stripProxy(stripProxy(_val)._getRegistry())
+        val = stripProxy(_val)
+        if isinstance(val, GangaObject):
+            val_reg = stripProxy(val._getRegistry())
             if val_reg is not None and hasattr(val_reg, 'isAutoFlushEnabled'):
                 val_prevState = val_reg.isAutoFlushEnabled()
                 if val_prevState is True and hasattr(val_reg, 'turnOffAutoFlushing'):
@@ -578,11 +544,6 @@ class Descriptor(object):
 
         self.__atomic_set__(_obj, new_val)
 
-        set_obj = getattr(stripProxy(_obj), getName(self))
-
-        if isType(set_obj, Node):
-            stripProxy(set_obj)._setParent(stripProxy(_obj))
-            stripProxy(set_obj)._setDirty()
         if isinstance(new_val, Node):
             val._setDirty()
 
@@ -593,10 +554,6 @@ class Descriptor(object):
         if obj_reg is not None:
             if obj_prevState is True and hasattr(obj_reg, 'turnOnAutoFlushing'):
                 obj_reg.turnOnAutoFlushing()
-
-        if self_reg is not None:
-            if self_prevState is True and hasattr(self_reg, 'turnOnAutoFlushing'):
-                self_reg.turnOnAutoFlushing()
 
     def __atomic_set__(self, _obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case getName(self) gives the name of the attribute being changed
@@ -1048,12 +1005,8 @@ class GangaObject(Node):
     # get the registry for the object by getting the registry associated with
     # the root object (if any)
     def _getRegistry(self):
-        r = stripProxy(self)._getRoot()
-        if hasattr(r, '_registry'):
-            return r._registry
-        else:
-            logger.debug("_getRegistry Exception: '_registry not found for object: %s" % str(r))
-            return None
+        r = self._getRoot()
+        return r._registry
 
     def _getRegistryID(self):
         try:
