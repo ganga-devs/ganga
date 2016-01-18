@@ -319,8 +319,7 @@ class Loader(object):
                         self.ignore_count = 1
                     else:
                         # make a new ganga object
-                        obj = super(cls, cls).__new__(cls)
-                        obj.setNodeData({})
+                        obj = cls()
                 self.stack.append(obj)
 
             # push the attribute name on the stack

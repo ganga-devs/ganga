@@ -82,7 +82,7 @@ class Node(object):
             setattr(self, key, val)
 
     def __copy__(self, memo=None):
-        cls = type(stripProxy(self))
+        cls = type(self)
         obj = super(cls, cls).__new__(cls)
         obj.__init__()
         # FIXME: this is different than for deepcopy... is this really correct?
@@ -102,7 +102,7 @@ class Node(object):
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
         obj.__init__()
-        this_dict = stripProxy(self).__getstate__()
+        this_dict = self.__getstate__()
         for elem in this_dict.keys():
             if elem not in self._ref_list:
                 this_dict[elem] = deepcopy(stripProxy(this_dict[elem]), memo)  # FIXED
@@ -117,8 +117,6 @@ class Node(object):
         return obj
 
     def _getParent(self):
-        if not hasattr(self, '_parent'):
-            self._setParent(None)
         return self._parent
 
     def _setParent(self, parent):
@@ -185,23 +183,9 @@ class Node(object):
     def __copy__(self):
         copied_obj = self.clone()
 
-    @staticmethod
-    def __resetParent(class_obj):
-        ## Fix some objects losing parent knowledge
-        src_dict = class_obj.__dict__
-        for key, val in src_dict.iteritems():
-            this_attr = getattr(class_obj, key)
-            if isType(this_attr, Node) and key not in Node._ref_list:
-                #logger.debug("k: %s  Parent: %s" % (str(key), (stripProxy(srcobj))))
-                stripProxy(this_attr)._setParent(stripProxy(class_obj))
-
     # clone self and return a properly initialized object
     def clone(self):
         new_obj = deepcopy(self)
-        #new_obj.__setstate__(self.__getstate__())
-
-        self.__resetParent(new_obj)
-        self.__resetParent(self)
 
         return new_obj
 
@@ -246,7 +230,7 @@ class Node(object):
 
     def _actually_copyFrom(self, _srcobj, _ignore_atts):
 
-        for name, item in stripProxy(self)._schema.allItems():
+        for name, item in self._schema.allItems():
             if name in _ignore_atts:
                 continue
 
@@ -309,17 +293,15 @@ class Node(object):
         if not isType(node, type(self)):
             return 0
 
+        # Compare the schemas against each other
         if (hasattr(self, '_schema') and self._schema is None) and (hasattr(node, '_schema') and node._schema is None):
-            return 1
-        elif (hasattr(self, '_schema') and self._schema is not None) and (hasattr(node, '_schema') and node._schema is None):
-            return 0
-        elif (hasattr(self, '_schema') and self._schema is None) and (hasattr(node, '_schema') and node._schema is not None):
-            return 0
-        else:
-            if (hasattr(self, '_schema') and hasattr(node, '_schema')) and (not self._schema.isEqual(node._schema)):
-                return 0
+            return 1  # If they're both `None`
+        elif (hasattr(self, '_schema') and self._schema is None) or (hasattr(node, '_schema') and node._schema is None):
+            return 0  # If just one of them is `None`
+        elif not self._schema.isEqual(node._schema):
+            return 0  # Both have _schema but do not match
 
-        ## logging code useful for debugging
+        # Check each schema item in turn and check for equality
         for (name, item) in self._schema.allItems():
             if item['comparable'] == True:
                 #logger.info("testing: %s::%s" % (str(self.__class__.__name__), str(name)))
@@ -333,8 +315,6 @@ class Node(object):
         return not self.__eq__(node)
 
     def getNodeData(self):
-        if not hasattr(self, '_data') or self._data is None:
-            setattr(self, '_data', {})
         return self._data
 
     def setNodeData(self, new_data):
@@ -345,7 +325,7 @@ class Node(object):
 
     def setNodeAttribute(self, attrib_name, attrib_value):
         self.getNodeData()[attrib_name] = attrib_value
-        if isType(attrib_value, GangaObject):
+        if isinstance(attrib_value, GangaObject):
             stripProxy(self.getNodeData()[attrib_name])._setParent(self)
 
     def removeNodeAttribute(self, attrib_name):
@@ -360,12 +340,7 @@ class Node(object):
         setattr(self, '_index_cache', new_index_cache)
 
     def getNodeIndexCache(self):
-        if hasattr(self, '_index_cache'):
-            return self._index_cache
-        else:
-            #logger.debug("Assigning dummy '_index_cache'!")
-            self.setNodeIndexCache({})
-            return self._index_cache
+        return self._index_cache
 
 ##########################################################################
 
@@ -414,10 +389,11 @@ class Descriptor(object):
                 lookup_exception = None
 
                 #logger.info("Looking for: %s in Cache" % getName(self))
+                _obj = stripProxy(obj)
 
                 try:
-                    if stripProxy(obj).getNodeIndexCache() is not None:
-                        obj_index = stripProxy(obj).getNodeIndexCache()
+                    obj_index = _obj.getNodeIndexCache()
+                    if obj_index is not None:
                         if getName(self) in obj_index.keys():
                             return obj_index[getName(self)]
                 except Exception as err:
@@ -428,8 +404,8 @@ class Descriptor(object):
 
                 ## ._data takes priority ALWAYS over ._index_cache
                 try:
-                    if stripProxy(obj).getNodeData() is not None:
-                        obj_data = stripProxy(obj).getNodeData()
+                    obj_data = _obj.getNodeData()
+                    if obj_data is not None:
                         if getName(self) in obj_data.keys():
                             return obj_data[getName(self)]
                 except Exception as err:
@@ -439,7 +415,6 @@ class Descriptor(object):
                 #logger.info("Not found")
 
                 ## Guarantee that the object is now loaded from disk
-                _obj = stripProxy(obj)
                 _obj._getReadAccess()
 
                 ## First try to load the object from the attributes on disk
@@ -543,23 +518,11 @@ class Descriptor(object):
         ## _obj: parent class which 'owns' the attribute
         ## _val: value of the attribute which we're about to set
 
-        if getName(self) in ['_parent', '_proxyObject', '_impl', '_proxyClass']:
-            object.__setattr__(_obj, getName(self), _val)
-            return
-
-        self_reg = None
-        self_prevState = None
-        if hasattr(stripProxy(self), '_getRegistry'):
-            self_reg = stripProxy(stripProxy(self)._getRegistry())
-            if self_reg is not None and hasattr(self_reg, 'isAutoFlushEnabled'):
-                self_prevState = self_reg.isAutoFlushEnabled()
-                if self_prevState is True and hasattr(self_reg, 'turnOffAutoFlushing'):
-                    self_reg.turnOffAutoFlushing()
-
         obj_reg = None
         obj_prevState = None
-        if isType(stripProxy(_obj), GangaObject) and hasattr(stripProxy(_obj), '_getRegistry'):
-            obj_reg = stripProxy(stripProxy(_obj)._getRegistry())
+        obj = stripProxy(_obj)
+        if isinstance(obj, GangaObject):
+            obj_reg = stripProxy(obj._getRegistry())
             if obj_reg is not None and hasattr(obj_reg, 'isAutoFlushEnabled'):
                 obj_prevState = obj_reg.isAutoFlushEnabled()
                 if obj_prevState is True and hasattr(obj_reg, 'turnOffAutoFlushing'):
@@ -567,8 +530,9 @@ class Descriptor(object):
 
         val_reg = None
         val_prevState = None
-        if isType(stripProxy(_val), GangaObject) and hasattr(stripProxy(_val), '_getRegistry'):
-            val_reg = stripProxy(stripProxy(_val)._getRegistry())
+        val = stripProxy(_val)
+        if isinstance(val, GangaObject):
+            val_reg = stripProxy(val._getRegistry())
             if val_reg is not None and hasattr(val_reg, 'isAutoFlushEnabled'):
                 val_prevState = val_reg.isAutoFlushEnabled()
                 if val_prevState is True and hasattr(val_reg, 'turnOffAutoFlushing'):
@@ -578,13 +542,8 @@ class Descriptor(object):
 
         self.__atomic_set__(_obj, new_val)
 
-        set_obj = getattr(stripProxy(_obj), getName(self))
-
-        if isType(set_obj, Node):
-            stripProxy(set_obj)._setParent(stripProxy(_obj))
-            stripProxy(set_obj)._setDirty()
-        if isType(new_val, Node):
-            stripProxy(_val)._setDirty()
+        if isinstance(new_val, Node):
+            val._setDirty()
 
         if val_reg is not None:
             if val_prevState is True and hasattr(val_reg, 'turnOnAutoFlushing'):
@@ -593,10 +552,6 @@ class Descriptor(object):
         if obj_reg is not None:
             if obj_prevState is True and hasattr(obj_reg, 'turnOnAutoFlushing'):
                 obj_reg.turnOnAutoFlushing()
-
-        if self_reg is not None:
-            if self_prevState is True and hasattr(self_reg, 'turnOnAutoFlushing'):
-                self_reg.turnOnAutoFlushing()
 
     def __atomic_set__(self, _obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case getName(self) gives the name of the attribute being changed
@@ -640,7 +595,7 @@ class Descriptor(object):
 
         def cloneVal(v):
             from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-            if isType(v, (list, tuple, GangaList)):
+            if isinstance(v, (list, tuple, GangaList)):
                 new_v = GangaList()
                 for elem in v:
                     new_v.append(self.__cloneVal(elem, obj))
@@ -655,17 +610,17 @@ class Descriptor(object):
                 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
                 new_val = GangaList()
             else:
-                if isType(item, Schema.ComponentItem):
+                if isinstance(item, Schema.ComponentItem):
                     new_val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
                 else:
                     new_val = makeGangaList(val, parent=obj, preparable=_preparable)
         else:
             ## Else we need to work out what we've got.
-            if isType(item, Schema.ComponentItem):
+            if isinstance(item, Schema.ComponentItem):
                 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-                if isType(val, (list, tuple, GangaList)):
+                if isinstance(val, (list, tuple, GangaList)):
                     ## Can't have a GangaList inside a GangaList easily so lets not
-                    if isType(_obj, GangaList):
+                    if isinstance(_obj, GangaList):
                         newListObj = []
                     else:
                         newListObj = GangaList()
@@ -681,10 +636,10 @@ class Descriptor(object):
                 pass
             #val = deepcopy(val)
 
-        if isType(new_val, Node):
+        if isinstance(new_val, Node):
             new_val._setParent(obj)
 
-        stripProxy(obj).setNodeAttribute(getName(self), new_val)
+        obj.setNodeAttribute(getName(self), new_val)
 
         obj._setDirty()
 
@@ -868,6 +823,7 @@ class GangaObject(Node):
     # the constructor is directly used by the GPI proxy so the GangaObject
     # must be fully initialized
     def __init__(self):
+        super(GangaObject, self).__init__(None)
 
 
         # IMPORTANT: if you add instance attributes like in the line below
@@ -878,7 +834,6 @@ class GangaObject(Node):
         # contents is out-of-sync with its repository
         self._dirty = False
 
-        super(GangaObject, self).__init__(None)
         #Node.__init__(self, None)
 
         if self._schema is not None and hasattr(self._schema, 'allItems'):
@@ -888,7 +843,7 @@ class GangaObject(Node):
                     defVal = self._schema.getDefaultValue(attr)
                     self.setNodeAttribute(attr, defVal)
                     new_attr = getattr(self, attr)
-                    if isType(new_attr, Node):
+                    if isinstance(new_attr, Node):
                         new_attr._setParent(self)
 
         # Overwrite default values with any config values specified
@@ -905,7 +860,7 @@ class GangaObject(Node):
         if len(args) == 0:
             return
         elif len(args) == 1:
-            if not isType(args[0], type(stripProxy(self))):
+            if not isType(args[0], type(self)):
                 logger.warning("Performing a copyFrom from: %s to: %s" % (type(args[0]), type(self)))
             self.copyFrom(args[0])
         else:
@@ -933,7 +888,6 @@ class GangaObject(Node):
     # schema
     def __deepcopy__(self, memo=None):
         true_parent = self._getParent()
-        self = stripProxy(self)
         ## This triggers a read of the job from disk
         self._getReadAccess()
         self_copy = super(GangaObject, self).__deepcopy__(memo)
@@ -984,7 +938,7 @@ class GangaObject(Node):
     def _getWriteAccess(self):
         """ tries to get write access to the object.
         Raise LockingError (or so) on fail """
-        root = stripProxy(self)._getRoot()
+        root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
             _haveLocked = False
@@ -1017,7 +971,7 @@ class GangaObject(Node):
         """ releases write access to the object.
         Raise LockingError (or so) on fail
         Please use only if the object is expected to be used by other sessions"""
-        root = stripProxy(self)._getRoot()
+        root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
             logger.debug("Releasing: %s" % (reg.name))
@@ -1026,7 +980,7 @@ class GangaObject(Node):
     def _getReadAccess(self):
         """ makes sure the objects _data is there and the object itself has a recent state.
         Raise RepositoryError"""
-        root = stripProxy(self)._getRoot()
+        root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
             reg._read_access(root, self)
@@ -1034,7 +988,7 @@ class GangaObject(Node):
     # define when the object is read-only (for example a job is read-only in
     # the states other than new)
     def _readonly(self):
-        r = stripProxy(self)._getRoot()
+        r = self._getRoot()
         # is object a root for itself? check needed otherwise infinite
         # recursion
         if r is None or r is self:
@@ -1050,12 +1004,8 @@ class GangaObject(Node):
     # get the registry for the object by getting the registry associated with
     # the root object (if any)
     def _getRegistry(self):
-        r = stripProxy(self)._getRoot()
-        if hasattr(r, '_registry'):
-            return r._registry
-        else:
-            logger.debug("_getRegistry Exception: '_registry not found for object: %s" % str(r))
-            return None
+        r = self._getRoot()
+        return r._registry
 
     def _getRegistryID(self):
         try:
@@ -1095,7 +1045,7 @@ class GangaObject(Node):
     # this method is for convenience and may well be moved to some subclass
     def getJobObject(self):
         from Ganga.GPIDev.Lib.Job import Job
-        r = stripProxy(self)._getRoot(cond=lambda o: isType(o, Job))
+        r = self._getRoot(cond=lambda o: isType(o, Job))
         if not isType(r, Job):
             raise AssertionError('no job associated with object ' + repr(self))
         return r
