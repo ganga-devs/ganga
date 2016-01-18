@@ -8,10 +8,8 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Version, Schema, FileItem, ComponentItem, SimpleItem, GangaFileItem
 from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
 
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, MultiPostProcessor
-
-from Ganga.Utility.logging import log_user_exception
 
 from Ganga.Utility.Config import getConfig, ConfigError
 
@@ -44,7 +42,7 @@ import Ganga.GPIDev.Lib.File.FileUtils
 from Ganga.GPIDev.Lib.File import getFileConfigKeys
 import Ganga.Core.Sandbox as Sandbox
 
-logger = Ganga.Utility.logging.getLogger()
+logger = getLogger()
 config = Ganga.Utility.Config.getConfig('Configuration')
 
 def lazyLoadJobStatus(this_job):
@@ -646,12 +644,15 @@ class Job(GangaObject):
 
             # move to the new state AFTER hooks are called
             self.status = newstatus
-            self._commit()
+            if self.status != saved_status:
+                self._commit()
 
         except Exception as x:
             self.status = saved_status
             log_user_exception()
             raise JobStatusError(x)
+        finally:
+            pass
 
         if self.status != saved_status and self.master is None:
             logger.info('job %s status changed to "%s"', self.getFQID('.'), self.status)
@@ -851,7 +852,7 @@ class Job(GangaObject):
 
     def postprocess_hook(self):
         logger.info("Job %s Running PostProcessor hook" % str(self.getFQID('.')))
-        self.application.postprocess()
+        stripProxy(self.application).postprocess()
         self.getMonitoringService().complete()
         self.postprocessoutput(self.outputfiles, self.outputdir)
 
@@ -1697,7 +1698,7 @@ class Job(GangaObject):
         # This appears to be done by the backend now in a way that handles sub-jobs,
         # in the case of a master job however we need to still perform this
         if len(rjobs) != 1:
-            self.info.increment()
+            stripProxy(self.info).increment()
         #if self.master is not None:
         self.updateStatus('submitted')
 
@@ -2208,10 +2209,10 @@ class Job(GangaObject):
             stripProxy(obj)._setDirty()
 
         # EBKE changes
-        #objects = [self._getRoot()]
-        #reg = self._getRegistry()
-        #if reg is not None:
-        #    reg._flush(objects)
+        objects = [self._getRoot()]
+        reg = self._getRegistry()
+        if reg is not None:
+            reg._flush(objects)
 
 
 #    def _attribute_filter__set__(self,n,v):
