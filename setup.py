@@ -3,7 +3,13 @@ from setuptools import find_packages
 
 
 def readme():
-    with open('README.rst') as f:
+    import os.path
+    filename = 'README.rst'
+    if not os.path.exists(filename):
+        import inspect
+        script_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+        filename = os.path.join(script_path, filename)
+    with open(filename) as f:
         return f.read()
 
 
