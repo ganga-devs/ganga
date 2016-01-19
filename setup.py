@@ -18,10 +18,14 @@ class RunTestsCommand(Command):
     all_types = ['unit', 'integration', 'all']
     user_options = [
         ('type=', 't', 'the type of tests: [{0}]'.format(', '.join(all_types))),
+        ('coverage', None, 'should coverage be generated'),
+        ('xunit', None, 'should xunit-compatible files be produced'),
     ]
 
     def initialize_options(self):
         self.type = 'unit'
+        self.coverage = False
+        self.xunit = False
 
     def finalize_options(self):
         if not self.type in self.all_types:
@@ -29,15 +33,22 @@ class RunTestsCommand(Command):
 
     def run(self):
         os.environ['GANGASYSROOT'] = os.path.dirname(os.path.realpath(__file__))
-        if self.type == 'unit':
-            print('Running unit tests')
-            subprocess.check_call('nosetests Ganga/new_tests/*.py', cwd='python', shell=True)
-        elif self.type == 'integration':
-            print('Running integration tests')
-            subprocess.check_call('nosetests Ganga/new_tests/GPI --testmatch="(?:\\b|_)([Tt]est|Savannah|JIRA)"', cwd='python', shell=True)
-        elif self.type == 'all':
-            print('Running all tests')
-            subprocess.check_call('nosetests Ganga/new_tests/*.py Ganga/new_tests/GPI --testmatch="(?:\\b|_)([Tt]est|Savannah|JIRA)"', cwd='python', shell=True)
+
+        cmd = ['nosetests']
+
+        if self.type in ['unit', 'all']:
+            cmd.append('Ganga/new_tests/*.py')
+        elif self.type in ['integration', 'all']:
+            cmd.append('Ganga/new_tests/GPI --testmatch="(?:\\b|_)([Tt]est|Savannah|JIRA)"')
+        else:
+            return
+
+        if self.coverage:
+            cmd.append('--with-coverage --cover-erase --cover-xml --cover-package=.')
+        if self.xunit:
+            cmd.append('--with-xunit')
+
+        subprocess.check_call(' '.join(cmd), cwd='python', shell=True)
 
 
 setup(name='ganga',
@@ -52,7 +63,7 @@ setup(name='ganga',
       package_dir={'': 'python'},
       packages=find_packages('python'),
       install_requires=[
-          'ipython>=1.2.1',
+          'ipython==1.2.1',
           'httplib2>=0.8',
           'python-gflags>=2.0',
           'google-api-python-client>=1.1',
