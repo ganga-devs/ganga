@@ -367,17 +367,9 @@ class Descriptor(object):
         self._checkset_name = None
         self._filter_name = None
 
-        if not hasattr( item, '_meta'):
-            return
-
-        if 'getter' in item._meta:
-            self._getter_name = item['getter']
-
-        if 'checkset' in item._meta:
-            self._checkset_name = item['checkset']
-
-        if 'filter' in item._meta:
-            self._filter_name = item['filter']
+        self._getter_name = item['getter']
+        self._checkset_name = item['checkset']
+        self._filter_name = item['filter']
 
     @staticmethod
     def _bind_method(obj, name):
