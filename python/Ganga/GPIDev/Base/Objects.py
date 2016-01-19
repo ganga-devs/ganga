@@ -354,8 +354,6 @@ class Node(object):
         self.getNodeData()[attrib_name] = attrib_value
         if isType(attrib_value, Node):
             stripProxy(self.getNodeData()[attrib_name])._setParent(self)
-        if hasattr(self, '_setDirty'):
-            self._setDirty()
 
     def removeNodeAttribute(self, attrib_name):
         if attrib_name in self._data.keys():
