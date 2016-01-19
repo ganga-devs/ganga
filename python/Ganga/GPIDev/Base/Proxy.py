@@ -118,6 +118,9 @@ def runtimeEvalString(this_obj, attr_name, val):
     else:
         new_val = val
 
+    if hasattr(stripProxy(new_val), '_auto__init__'):
+        stripProxy(new_val)._auto__init__()
+
     return new_val
 
 def getKnownLists():
@@ -595,7 +598,7 @@ def GPIProxyClassFactory(name, pluginclass):
     # construct the class on-the-fly using the functions below as methods for
     # the new class
 
-    def _init(self, _call_auto_init = True, *args, **kwds):
+    def _init(self, *args, **kwds):
 
         ## THE ORDER IN HOW AN OBJECT IS INITIALIZED IS IMPORTANT AND HAS BEEN DOUBLE CHECKED - rcurrie
 
@@ -627,6 +630,13 @@ def GPIProxyClassFactory(name, pluginclass):
         raw_obj = getattr(self, proxyRef)
         setattr(raw_obj, proxyObject, self)
 
+        auto_init_str = '_call_auto_init'
+        if auto_init_str in kwds.keys():
+            _call_auto_init = kwds[auto_init_str]
+            del kwds[auto_init_str]
+        else:
+            _call_auto_init = True
+
         if _call_auto_init is True:
             raw_obj._auto__init__()
 
@@ -634,7 +644,13 @@ def GPIProxyClassFactory(name, pluginclass):
         for key, _val in getattr(self, proxyClass)._schema.allItems():
             if not _val['protected'] and not _val['hidden'] and isType(_val, ComponentItem) and key not in Node._ref_list:
                 val = getattr(self, key)
-                raw_obj.setNodeAttribute(key, addProxy(val))
+                if isType(val, Node):
+                    p_val = addProxy(val)
+                    if hasattr(stripProxy(p_val), '_auto__init__'):
+                        stripProxy(p_val)._auto__init__()
+                    raw_obj.setNodeAttribute(key, addProxy(val))
+                else:
+                    raw_obj.setNodeAttribute(key, val)
 
         ## THIRD CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
         ## e.g. Job(application=exe, name='myJob', ...) or myJob2 = Job(myJob1)
@@ -656,12 +672,14 @@ def GPIProxyClassFactory(name, pluginclass):
         for k in kwds:
             if getattr(self, proxyClass)._schema.hasAttribute(k):
                 this_arg = stripProxy(kwds[k])
+                if hasattr(this_arg, '_auto__init__'):
+                    this_arg._auto__init__()
 
                 ## Copying this from the __set__ method in the Proxy descriptor
 
-                if this_arg == 'application':
+                if k == 'application':
                     ProxyDataDescriptor.__app_set__(self, this_arg)
-                if this_arg == 'is_prepared':
+                if k == 'is_prepared':
                     ProxyDataDescriptor.__prep_set__(self, this_arg)
 
 
@@ -669,6 +687,8 @@ def GPIProxyClassFactory(name, pluginclass):
 
                 if type(this_arg) is str:
                     this_arg = stripProxy(runtimeEvalString(raw_self, k, this_arg))
+                    if hasattr(stripProxy(this_arg), '_auto__init__'):
+                        stripProxy(this_arg)._auto__init__()
 
                 if type(this_arg) is str:
                     raw_self.setNodeAttribute(k, this_arg)
@@ -695,6 +715,10 @@ def GPIProxyClassFactory(name, pluginclass):
 
                     if isType(this_arg, Node) and not hasattr(this_arg, proxyObject):
                         setattr(this_arg, proxyObject, None)
+
+                    if hasattr(stripProxy(this_arg), '_auto__init__'):
+                        stripProxy(this_arg)._auto__init__()
+
                     raw_self.setNodeAttribute(k, addProxy(this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
@@ -837,10 +861,10 @@ def GPIProxyClassFactory(name, pluginclass):
                 from Ganga.Core.GangaRepository import getRegistry
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                 shareref.increase(self.is_prepared.name)
-            c._auto__init__(unprepare=True)
+            stripProxy(c)._auto__init__(unprepare=True)
         else:
             c = getattr(self, proxyRef).clone()
-            c._auto__init__()
+            stripProxy(c)._auto__init__()
         return GPIProxyObjectFactory(c)
 
     helptext(_copy, "Make an identical copy of self.")
