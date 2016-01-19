@@ -357,7 +357,7 @@ class RootRTHandler(IRuntimeHandler):
                 arglist.append(self.quoteCintArgString(arg))
             else:
                 arglist.append(arg)
-        rootarg = '\("""' + string.join([str(s) for s in arglist], ',') + '"""\)'
+        rootarg = '\(' + string.join([repr(s) for s in arglist], ',') + '\)'
 
         script = app.script
         if script == File():
