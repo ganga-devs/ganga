@@ -827,8 +827,12 @@ class GangaRepositoryLocal(GangaRepository):
         try:
             if not os.path.isfile(fn) and _copy_backup:
                 if os.path.isfile(fn + '~'):
-                    from shutil import copyfile
-                    copyfile(fn+'~', fn)
+                    logger.warning("XML File: %s missing, recovering from backup, some changes may have been lost!" % fn)
+                    try:
+                        from shutil import copyfile
+                        copyfile(fn+'~', fn)
+                    except:
+                        logger.warning("Error Recovering the backup file! loading of Job may Fail!")
             fobj = open(fn, "r")
         except IOError as x:
             if x.errno == errno.ENOENT:
