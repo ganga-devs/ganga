@@ -820,11 +820,15 @@ class GangaRepositoryLocal(GangaRepository):
 
         logger.debug("Finished Loading XML")
 
-    def _open_xml_file(self, fn, this_id):
+    def _open_xml_file(self, fn, this_id, _copy_backup=False):
 
         fobj = None
 
         try:
+            if not os.path.isfile(fn) and _copy_backup:
+                if os.path.isfile(fn + '~'):
+                    from shutil import copyfile
+                    copyfile(fn+'~', fn)
             fobj = open(fn, "r")
         except IOError as x:
             if x.errno == errno.ENOENT:
@@ -870,7 +874,7 @@ class GangaRepositoryLocal(GangaRepository):
             fobj = None
 
             try:
-                fobj = self._open_xml_file(fn, this_id)
+                fobj = self._open_xml_file(fn, this_id, _copy_backup=True)
             except Exception as err:
                 logger.debug("XML load: Failed to load XML file: %s" % str(fn))
                 logger.debug("Error was:\n%s" % str(err))
@@ -883,7 +887,6 @@ class GangaRepositoryLocal(GangaRepository):
                 raise err
 
             except Exception as err:
-                #raise err
 
                 if isType(err, XMLFileError):
                     logger.error("XML File failed to load for Job id: %s" % str(this_id))
