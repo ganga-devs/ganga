@@ -10,7 +10,6 @@ def start_ganga():
     import os.path
 
     try:
-        from os import environ
         ganga_sys_root = os.environ.get('GANGASYSROOT')
     except Exception, err:
         print "Exception Raised finding GANGASYSROOT,\n\tPLEASE DEFINE THIS IN YOUR ENVIRONMENT TO RUN THE TESTS\n"
@@ -20,7 +19,7 @@ def start_ganga():
         raise Exception(
             "GANGASYSROOT evaluated to None, please check Ganga setup")
 
-    python_rel_path = "../install/ganga/python"
+    python_rel_path = 'python'
 
     ganga_dir = os.path.abspath(os.path.join(ganga_sys_root, python_rel_path))
     sys.path.insert(0, ganga_dir)

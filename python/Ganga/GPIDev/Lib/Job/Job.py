@@ -244,13 +244,13 @@ class Job(GangaObject):
     # TODO: usage of **kwds may be envisaged at this level to optimize the
     # overriding of values, this must be reviewed
     def __init__(self):
+        super(Job, self).__init__()
         ## These NEED to be defined before The Schema is initialized due to the getter methods for some object cauing a LOT of code to be run!
         setattr(self, '_parent', None)
         setattr(self, 'status', 'new')
         #self.id = ''
         #setattr(stripProxy(self), 'id', '')
         # Finished initializing 'special' objects which are used in getter methods and alike
-        super(Job, self).__init__()
         self.time.newjob()  # <-----------NEW: timestamp method
         logger.debug("__init__")
 
@@ -2103,7 +2103,7 @@ class Job(GangaObject):
                 if not item['changable_at_resubmit'] and item['copyable']:
                     if v1 != v2:
                         raise JobError('%s.%s attribute cannot be changed at resubmit' % (getName(obj1), name))
-                if item.isA('ComponentItem'):
+                if item.isA(ComponentItem):
                     check_changability(v1, v2)
 
         if backend:

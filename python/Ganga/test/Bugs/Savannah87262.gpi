@@ -1,8 +1,0 @@
-a=Executable()
-a.prepare()
-b=Job(application=a)
-s=shareref._impl.name
-print s
-print a.is_prepared.name
-print b.application
-assert s[a.is_prepared.name] == 1, "TEST FAILED"

@@ -547,7 +547,7 @@ class PackageConfig(object):
             try:
                 option.setSessionValue(session_value)
                 del conf_value[option.name]
-            except Exception, err:
+            except Exception as err:
                 msg = "Error Setting Session Value: %s" % str(err)
                 if 'logger' in locals().keys() and logger is not None:
                     logger.debug("dbg: %s"%msg)
@@ -838,7 +838,7 @@ def read_ini_files(filenames, system_vars):
                     localvarstripped = re.sub(r'[^\w]', '', localvar.group(0))
                     try:
                         value = value.replace(localvar.group(0), cc.get(sec, localvarstripped))
-                    except Exception, err:
+                    except Exception as err:
                         Ganga.Utility.logging.log_unknown_exception()
                         logger.debug('The variable \"' + localvarstripped + '\" is referenced but not defined in the ')
                         logger.debug('[' + sec + '] configuration section of ' + f)
@@ -895,7 +895,7 @@ def read_ini_files(filenames, system_vars):
                     logger.debug("Error Setting %s" % str(err))
                     try:
                         main.set(sec, name, value)
-                    except Exception, err2:
+                    except Exception as err2:
                         logger.debug("Error setting #2: %s" % str(err2))
                         raise err
 
