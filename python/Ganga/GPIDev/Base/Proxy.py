@@ -207,10 +207,7 @@ def addProxy(obj):
     """Adds a proxy to a GangaObject"""
     from Ganga.GPIDev.Base.Objects import GangaObject
     if isType(obj, GangaObject) and not isProxy(obj):
-        _obj = stripProxy(obj)
-        if not hasattr(_obj, proxyObject):
-            setattr(_obj, proxyObject, None)
-        return GPIProxyObjectFactory(_obj)
+        return GPIProxyObjectFactory(obj)
     return obj
 
 
@@ -537,37 +534,43 @@ class ProxyMethodDescriptor(object):
 
 
 def GPIProxyObjectFactory(_obj):
+    from Ganga.GPIDev.Base.Objects import GangaObject
+    if not isType(_obj, GangaObject):
+        from Ganga.Core.exceptions import GangaException
+        raise GangaException("%s is NOT a Proxyable object" % type(_obj))
+
     global proxyRef
     global proxyObject
     global proxyClass
 
-    obj = stripProxy(_obj)
-    if not hasattr(obj, proxyObject):
-        from Ganga.GPIDev.Base.Objects import GangaObject
-        if isType(obj, GangaObject):
-            ## FIXME 6.1.15 rcurrie
-            ## Should this be a straight forward pass here?
-            setattr(obj, proxyObject, None)
-            raw_class = obj.__class__
-            setattr(obj, proxyClass, raw_class)
-            setattr(obj, proxyRef, None)
-        else:
-            raise GangaAttributeError("Object {0} does not have attribute _proxyObject".format(type(obj)))
+    ## This is defined within Objects.py, we could probably store this elsehere
+    ## (We probably do) but as this is guaranteed to be accessible for GangaObjects I will use this
+    this_class = getattr(_obj.__class__, proxyClass)
 
-    if getattr(obj, proxyObject) is None:
-        cls = getattr(obj, proxyClass)
-        proxy = stripProxy(cls)()
-        if not hasattr(proxy, proxyRef) or getattr(proxy, proxyRef) is None:
-            setattr(proxy, proxyRef, obj)
-        else:
-            for key, val in stripProxy(obj).getNodeData().iteritems():
-                stripProxy(getattr(proxy, proxyRef)).setNodeAttribute(key, val)
-        setattr(obj, proxyObject, proxy)
-        #logger.debug('generated the proxy ' + repr(proxy))
+    ## Would LOVE to avoid having to perform all of these checks to get or wrap a class in a proxy here but
+    ## multiple different BAD states are currently passed to this function
+    ## In future I would like to see this fixed elsewhere and reduce the logic in this section of code
+    ## As of Ganga 6.1.15 this is needed to put objects into a semi-coherent state
+
+    if isType( _obj, this_class):
+        if not hasattr(_obj, proxyObject) or getattr(_obj, proxyObject) is None and isProxy(_obj):
+            setattr(_obj, proxyObject, _obj)
+        elif not hasattr(_obj, proxyObject) or getattr(_obj, proxyObject) is None and not isProxy(_obj):
+            proxy_class = this_class(_call_auto_init=False)
+            setattr(_obj, proxyObject, proxy_class)
+            setattr(proxy_class, proxyRef, _obj)
+        if not hasattr(_obj, proxyRef) or getattr(_obj, proxyRef) is None:
+            setattr(_obj, proxyRef, stripProxy(_obj))
+        return getattr(_obj, proxyObject)
     else:
-        #logger.debug('reusing the proxy ' + repr(obj._proxyObject))
         pass
-    return getattr(obj, proxyObject)  # FIXED
+
+    proxy_class = this_class(_call_auto_init=False)
+
+    setattr(proxy_class, proxyRef, _obj)
+    setattr(proxy_class, proxyObject, proxy_class)
+
+    return proxy_class
 
 # this class serves only as a 'tag' for all generated GPI proxy classes
 # so we can test with isinstance rather then relying on more generic but
@@ -592,7 +595,7 @@ def GPIProxyClassFactory(name, pluginclass):
     # construct the class on-the-fly using the functions below as methods for
     # the new class
 
-    def _init(self, *args, **kwds):
+    def _init(self, _call_auto_init = True, *args, **kwds):
 
         ## THE ORDER IN HOW AN OBJECT IS INITIALIZED IS IMPORTANT AND HAS BEEN DOUBLE CHECKED - rcurrie
 
@@ -604,12 +607,14 @@ def GPIProxyClassFactory(name, pluginclass):
         #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
 
         instance = pluginclass()
-        for this_attrib in [proxyRef, proxyClass]:
-            if hasattr(instance, this_attrib):
-                try:
-                    delattr(instance, this_attrib)
-                except AttributeError:
-                    pass
+        #for this_attrib in [proxyRef, proxyClass]:
+            #if hasattr(instance, this_attrib):
+            #    try:
+            #        delattr(instance, this_attrib)
+            #    except AttributeError:
+            #        pass
+
+        setattr(instance, proxyClass, type(name, (GPIProxyObject,), d))
 
         ## SECOND WE NEED TO MAKE SURE THAT OBJECT ID IS CORRECT AND THIS DOES THINGS LIKE REGISTER A JOB WITH THE REPO
 
@@ -621,7 +626,9 @@ def GPIProxyClassFactory(name, pluginclass):
         assert(id(getattr(self, proxyObject)) == id(self))
         raw_obj = getattr(self, proxyRef)
         setattr(raw_obj, proxyObject, self)
-        raw_obj._auto__init__()
+
+        if _call_auto_init is True:
+            raw_obj._auto__init__()
 
         from Ganga.GPIDev.Base.Objects import Node
         for key, _val in getattr(self, proxyClass)._schema.allItems():
@@ -918,7 +925,6 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
             '__str__': _str,
             '__repr__': _repr,
             '_repr_pretty_': _repr_pretty_,
-            '_display': _repr_pretty_,
             '__eq__': _eq,
             '__ne__': _ne,
             'copy': _copy,
