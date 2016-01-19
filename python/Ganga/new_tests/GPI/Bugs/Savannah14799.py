@@ -4,7 +4,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah14799(GangaUnitTest):
-    def Savannah14799(self):
+    def test_Savannah14799(self):
         from Ganga.GPI import Job, jobtree, jobs
 
         from Ganga.GPIDev.Base.Proxy import stripProxy

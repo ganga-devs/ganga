@@ -5,7 +5,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 class Savannah10064(GangaUnitTest):
 
-    def Savannah10064(self):
+    def test_Savannah10064(self):
         from Ganga.GPI import Job, templates
         j = Job()
         j.submit()

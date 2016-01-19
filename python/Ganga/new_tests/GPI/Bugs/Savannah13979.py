@@ -4,7 +4,8 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah13979(GangaUnitTest):
-    def Savannah13979(self):
+
+    def test_Savannah13979(self):
         from Ganga.GPI import Job, Executable, export, load
 
         self.fname = 'test_savannah_13979.ganga'

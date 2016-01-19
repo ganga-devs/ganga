@@ -5,11 +5,12 @@ from Ganga.GPIDev.Lib.Job.Job import JobError
 
 
 class Savannah13685(GangaUnitTest):
-    def Savannah13685(self):
+    def test_Savannah13685(self):
         from Ganga.GPI import Job
 
         j = Job()
-        j.application.exe = 'sleep 6'
+        j.application.exe = 'sleep'
+        j.application.args = '6'
 
         self.assertRaises(JobError, j.submit)
 

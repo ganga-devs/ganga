@@ -4,7 +4,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah19059(GangaUnitTest):
-    def Savannah19059(self):
+    def test_Savannah19059(self):
         from Ganga.GPI import Executable, Job, Interactive, LocalFile
 
         import os.path
@@ -18,6 +18,6 @@ class Savannah19059(GangaUnitTest):
         self.j = Job(backend=Interactive(), application=app, outputfiles=[LocalFile(self.fname)])
         self.j.submit()
 
-        self.assertTrue(sleep_until_completed(self.j), 'Timeout on registering Interactive job as completed')
+        self.assertTrue(sleep_until_completed(self.j, 60), 'Timeout on registering Interactive job as completed')
 
         self.assertTrue(os.path.exists(os.path.join(self.j.outputdir, self.fname)))

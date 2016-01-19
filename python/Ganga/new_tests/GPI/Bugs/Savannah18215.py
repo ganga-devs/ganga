@@ -17,7 +17,7 @@ def goto_state(j, destination):
 
 
 class Savannah18215(GangaUnitTest):
-    def Savannah18215(self):
+    def test_Savannah18215(self):
         from Ganga.GPI import Job
 
         # test manual failing and removal of jobs stuck in submitting or completing states
