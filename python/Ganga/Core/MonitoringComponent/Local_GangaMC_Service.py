@@ -553,7 +553,7 @@ class JobRegistry_Monitor(GangaThread):
         self.__updateTimeStamp = time.time()
         self.__sleepCounter = config['base_poll_rate']
 
-    def runMonitoring(self, jobs=None, steps=1, timeout=60):
+    def runMonitoring(self, jobs=None, steps=1, timeout=60, _loadCredentials=False):
         """
         Enable/Run the monitoring loop and wait for the monitoring steps completion.
         Parameters:
@@ -588,7 +588,10 @@ class JobRegistry_Monitor(GangaThread):
         if not self.enabled:
             # and there are some required cred which are missing
             # (the monitoring loop does not monitor the credentials so we need to check 'by hand' here)
-            _missingCreds = Coordinator.getMissingCredentials()
+            if _loadCredentials is True:
+                _missingCreds = Coordinator.getMissingCredentials()
+            else:
+                _missingCreds = False
             if _missingCreds:
                 log.error("Cannot run the monitoring loop. The following credentials are required: %s" % _missingCreds)
                 return False
