@@ -133,10 +133,6 @@ class Node(object):
         return self._parent
 
     def _setParent(self, parent):
-        #if parent is None:
-        #    import traceback
-        #    traceback.print_stack()
-        #    logger.error("Setting NONE Parent!!!")
         setattr(self, '_parent', parent)
 
     # get the root of the object tree
@@ -358,6 +354,8 @@ class Node(object):
         self.getNodeData()[attrib_name] = attrib_value
         if isType(attrib_value, Node):
             stripProxy(self.getNodeData()[attrib_name])._setParent(self)
+        if hasattr(self, '_setDirty'):
+            self._setDirty()
 
     def removeNodeAttribute(self, attrib_name):
         if attrib_name in self._data.keys():
@@ -551,7 +549,7 @@ class Descriptor(object):
         ## _obj: parent class which 'owns' the attribute
         ## _val: value of the attribute which we're about to set
 
-        if getName(self) in ['_parent', '_proxyObject', '_impl', '_proxyClass']:
+        if getName(self) in do_not_copy:#['_parent', '_proxyObject', '_impl', '_proxyClass']:
             object.__setattr__(_obj, getName(self), _val)
             return
 
@@ -749,7 +747,7 @@ def export(method):
     return method
 
 
-class ObjectMetaclass(type):
+class ObjectMetaclass(type):#, object):
     _descriptor = Descriptor
 
     def __init__(cls, name, bases, this_dict):
@@ -837,7 +835,7 @@ class ObjectMetaclass(type):
         this_schema._pluginclass = cls
 
         # store generated proxy class
-        cls._proxyClass = proxyClass
+        setattr(cls, '_proxyClass', proxyClass)
 
         # register plugin class
         if hasattr(cls, '_declared_property'):
@@ -877,7 +875,6 @@ class GangaObject(Node):
     # the constructor is directly used by the GPI proxy so the GangaObject
     # must be fully initialized
     def __init__(self):
-
 
         # IMPORTANT: if you add instance attributes like in the line below
         # make sure to update the __getstate__ method as well
