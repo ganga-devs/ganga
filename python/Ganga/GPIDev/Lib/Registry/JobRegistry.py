@@ -142,7 +142,7 @@ class JobRegistrySlice(RegistrySlice):
         t = type(this_id)
         if t is int:
             try:
-                return self.objects[this_id]
+                return _wrap(self.objects[this_id])
             except KeyError:
                 if self.name == 'templates':
                     raise RegistryKeyError('Template %d not found' % this_id)
@@ -153,7 +153,7 @@ class JobRegistrySlice(RegistrySlice):
         elif t is str:
             if this_id.isdigit():
                 try:
-                    return self.objects[int(this_id)]
+                    return _wrap(self.objects[int(this_id)])
                 except KeyError:
                     if self.name == 'templates':
                         raise RegistryKeyError('Template %d not found' % this_id)
