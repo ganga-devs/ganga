@@ -45,6 +45,9 @@ import Ganga.Core.Sandbox as Sandbox
 logger = getLogger()
 config = Ganga.Utility.Config.getConfig('Configuration')
 
+def lazyLoadJobFQID(this_job):
+    return lazyLoadJobObject(this_job, 'fqid')
+
 def lazyLoadJobStatus(this_job):
     return lazyLoadJobObject(this_job, 'status')
 
@@ -327,7 +330,7 @@ class Job(GangaObject):
         from Ganga.GPI import Job as GPI_Job
         c = GPI_Job()
 
-        c.time.newjob()
+        stripProxy(c.time).newjob()
         c.backend = copy.deepcopy(self.backend)
         c.application = copy.deepcopy(self.application)
         c.inputdata = copy.copy(self.inputdata)
@@ -859,7 +862,7 @@ class Job(GangaObject):
 
     def postprocess_hook_failed(self):
         logger.info("Job %s PostProcessor Failed" % str(self.getFQID('.')))
-        self.application.postprocess_failed()
+        stripProxy(self.application).postprocess_failed()
         self.getMonitoringService().fail()
 
     def monitorFailed_hook(self):
@@ -901,7 +904,7 @@ class Job(GangaObject):
         logger.debug("Intercepting the _auto__init__ function")
 
         super(Job, self)._auto__init__()
-        self.info.uuid = str(uuid.uuid4())
+        stripProxy(self.info).uuid = str(uuid.uuid4())
 
     def _init_workspace(self):
         logger.debug("Job %s Calling _init_workspace", str(self.getFQID('.')))
@@ -1329,7 +1332,7 @@ class Job(GangaObject):
                 jobsubconfig = []
 
                 if self.parallel_submit is False:
-                    jobsubconfig = [rtHandler.prepare(sub_job.application, sub_conf, appmasterconfig, jobmasterconfig) for (sub_job, sub_conf) in zip(subjobs, appsubconfig)]
+                    jobsubconfig = [rtHandler.prepare(stripProxy(sub_job.application), sub_conf, appmasterconfig, jobmasterconfig) for (sub_job, sub_conf) in zip(subjobs, appsubconfig)]
                 else:
 
                     finished = {}
@@ -1337,7 +1340,7 @@ class Job(GangaObject):
                     from Ganga.GPI import queues
                     index=0
                     for sub_j, sub_conf in zip(subjobs, appsubconfig):
-                        queues._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, sub_j.application, sub_conf, appmasterconfig, jobmasterconfig, finished))
+                        queues._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, stripProxy(sub_j.application), sub_conf, appmasterconfig, jobmasterconfig, finished))
                         index += 1
 
                     while len(finished) != len(subjobs):
@@ -1760,14 +1763,10 @@ class Job(GangaObject):
         If force=True then remove job without killing it.
         '''
 
-        if stripProxy(self).getNodeIndexCache():
-            this_job_status = stripProxy(self).getNodeIndexCache()['display:status']
-            this_job_id = stripProxy(self).getNodeIndexCache()['display:fqid']
-        else:
-            this_job_status = self.status
-            this_job_id = self.id
+        this_job_status = lazyLoadJobStatus(self)
+        this_job_id = lazyLoadJobFQID(self)
 
-        template =  this_job_status == 'template'
+        template = this_job_status == 'template'
 
         if template:
             logger.info('removing template %s', this_job_id)
@@ -2283,6 +2282,7 @@ class Job(GangaObject):
                     uniqueValues.append(val)
                 elif getName(val) == 'LCGSEFile':
                     uniqueValues.append(val)
+
 
             super(Job, self).__setattr__(attr, uniqueValues)
 
