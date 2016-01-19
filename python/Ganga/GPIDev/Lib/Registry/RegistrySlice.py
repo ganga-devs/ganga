@@ -7,7 +7,7 @@ import fnmatch
 import collections
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 import Ganga.Utility.Config
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, addProxy
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import makeConfig
 
@@ -311,9 +311,9 @@ class RegistrySlice(object):
                     raise RegistryKeyError("Multiple matches for id='%s':%s" % (this_id, str(map(lambda x: x._getRegistry()._getName(x), matches))))
                 if len(matches) < 1:
                     return
-                return matches[0]
+                return addProxy(matches[0])
         try:
-            return self.objects[this_id]
+            return addProxy(self.objects[this_id])
         except KeyError as err:
             logger.debug('Object id=%d not found' % this_id)
             logger.deubg("%s" % str(err))
