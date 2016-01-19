@@ -571,7 +571,8 @@ under certain conditions; type license() for details.
         except IOError as x:
             # ignore all I/O errors (e.g. file does not exist), this is just an
             # advisory check
-            logger.debug("Config File Exception: %s" % str(x))
+            this_logger = getLogger("Configure")
+            this_logger.debug("Config File Exception: %s" % str(x))
 
         if self.options.config_path is None:
             try:
