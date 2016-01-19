@@ -378,6 +378,12 @@ class Registry(object):
 
         return decision
 
+    def _getObjects(self):
+        self._lock.acquire()
+        returnable = self._objects
+        self._lock.release()
+        return returnable
+
     def ids(self):
         """ Returns the list of ids of this registry """
         self._lock.acquire()
