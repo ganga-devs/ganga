@@ -1087,8 +1087,7 @@ under certain conditions; type license() for details.
         # JobTree
         from Ganga.Core.GangaRepository import getRegistry
         jobtree = GPIProxyObjectFactory(getRegistry("jobs").getJobTree())
-        exportToGPI(
-            'jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
+        exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
         exportToGPI('TreeError', TreeError, 'Exceptions')
 
         # ShareRef
