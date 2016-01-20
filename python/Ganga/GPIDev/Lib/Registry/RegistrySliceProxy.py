@@ -65,7 +65,7 @@ class RegistrySliceProxy(object):
             unwrap_attrs[a] = _unwrap(attrs[a])
         logger = getLogger()
         logger.debug("Calling: %s" % str(stripProxy(self).select))
-        return _wrap(self.__class__(stripProxy(self).select(minid, maxid, **unwrap_attrs)))
+        return self.__class__(stripProxy(self).select(minid, maxid, **unwrap_attrs))
 
     def _display(self, interactive=True):
         return stripProxy(self)._display(interactive)
