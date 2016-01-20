@@ -690,8 +690,6 @@ def GPIProxyClassFactory(name, pluginclass):
 
     publicdoc = pluginclass.__doc__ + itbuf.getString()
 
-    helptext(pluginclass, 'This is a Ganga.GPI.%(classname)s implementation class. Refer to Ganga.GPI.%(classname)s.__doc__ for documentation.')
-
     helptext(_init, """GPI %(classname)s object constructor:
     %(classname)s() : create %(objname)s with default settings;
     %(classname)s(%(shortvarname)s) : make a copy of %(shortvarname)s;
