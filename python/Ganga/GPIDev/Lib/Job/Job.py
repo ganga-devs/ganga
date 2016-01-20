@@ -327,8 +327,7 @@ class Job(GangaObject):
         # Due to problems on Hammercloud due to uncopyable object lets
         # explicitly stop these objects going anywhere near the __deepcopy__
 
-        from Ganga.GPI import Job as GPI_Job
-        c = GPI_Job()
+        c = Job()
 
         stripProxy(c.time).newjob()
         c.backend = copy.deepcopy(self.backend)
