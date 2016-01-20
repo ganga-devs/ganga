@@ -641,14 +641,14 @@ class GangaRepositoryLocal(GangaRepository):
                             split_cache[i]._setFlushed()
                     from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
                     # Now generate an index file to take advantage of future non-loading goodness
-                    tempSubJList = SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False)
+                    tempSubJList = SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False, parent=obj)
                     ## equivalent to for sj in job.subjobs
+                    tempSubJList._setParent(obj)
                     job_dict = {}
                     for sj in obj.getNodeAttribute(self.sub_split):
                         job_dict[sj.id] = stripProxy(sj)
                     tempSubJList._reset_cachedJobs(job_dict)
-                    tempSubJList._setParent(obj)
-                    tempSubJList.write_subJobIndex()
+                    tempSubJList.flush()
                     del tempSubJList
 
                 safe_save(fn, obj, self.to_file, self.sub_split)
@@ -747,7 +747,7 @@ class GangaRepositoryLocal(GangaRepository):
 
                 if has_children:
                 #    logger.info("Adding children")
-                    obj.setNodeAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup))
+                    obj.setNodeAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
                 else:
                     obj.setNodeAttribute(self.sub_split, None)
 
