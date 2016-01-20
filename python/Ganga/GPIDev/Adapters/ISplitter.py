@@ -67,7 +67,7 @@ class ISplitter(GangaObject):
         classes. """
 
         # try:
-        subjobs = self.split(job)
+        subjobs = self.split(stripProxy(job))
         # except Exception,x:
         #raise SplittingError(x)
         #raise x
