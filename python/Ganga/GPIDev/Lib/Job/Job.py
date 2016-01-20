@@ -647,9 +647,8 @@ class Job(GangaObject):
 
             # move to the new state AFTER hooks are called
             self.status = newstatus
-            #if self.status != saved_status and self.master is None:
-            #    self._commit()
-            #    logger.debug("Status changed from '%s' to '%s'" % (saved_status, self.status))
+            self._commit()
+            logger.debug("Status changed from '%s' to '%s'" % (saved_status, self.status))
 
         except Exception as x:
             self.status = saved_status
@@ -2202,17 +2201,7 @@ class Job(GangaObject):
         """ Helper method to unconditionally commit to the repository. The 'objects' list specifies objects
         to be commited (for example the subjobs). If objects are not specified then just the self is commited """
 
-        if objects is None:
-            objects = [self]
-
-        for obj in objects:
-            stripProxy(obj)._setDirty()
-
-        # EBKE changes
-        objects = [self._getRoot()]
-        reg = self._getRegistry()
-        if reg is not None:
-            reg._flush(objects)
+        self._getRoot()._setDirty()
 
 
 #    def _attribute_filter__set__(self,n,v):
