@@ -915,7 +915,7 @@ class GangaObject(Node):
         self._getReadAccess()
         classname = getName(self)
         category = self._category
-        cls = allPlugins.find(category, classname)
+        cls = self.__class__#allPlugins.find(category, classname)
 
         self_copy = cls()
 
