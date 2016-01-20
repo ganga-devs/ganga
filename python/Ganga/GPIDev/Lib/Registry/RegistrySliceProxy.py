@@ -48,6 +48,9 @@ class RegistrySliceProxy(object):
     def __len__(self):
         return stripProxy(self).__len__()
 
+    def __call__(self, arg):
+        return _wrap(stripProxy(self).__call__(arg))
+
     def select(self, minid=None, maxid=None, **attrs):
         """ Select a subset of objects. Examples for jobs:
         jobs.select(10): select jobs with ids higher or equal to 10;
@@ -62,7 +65,7 @@ class RegistrySliceProxy(object):
             unwrap_attrs[a] = _unwrap(attrs[a])
         logger = getLogger()
         logger.debug("Calling: %s" % str(stripProxy(self).select))
-        return self.__class__(stripProxy(self).select(minid, maxid, **unwrap_attrs))
+        return _wrap(self.__class__(stripProxy(self).select(minid, maxid, **unwrap_attrs)))
 
     def _display(self, interactive=True):
         return stripProxy(self)._display(interactive)
@@ -79,7 +82,7 @@ class RegistrySliceProxy(object):
 
 # wrap Proxy around a ganga object (or a list of ganga objects)
 # leave all others unchanged
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Base.Objects import GangaObject
 from .RegistrySlice import RegistrySlice
 
@@ -87,11 +90,11 @@ from Ganga.GPIDev.Base.Proxy import isType
 
 def _wrap(obj):
     if isType(obj, GangaObject):
-        return GPIProxyObjectFactory(obj)
+        return addProxy(obj)
     if isType(obj, RegistrySlice):
         return obj._proxyClass(obj)
     if isType(obj, list):
-        return map(GPIProxyObjectFactory, obj)
+        return map(addProxy, obj)
     return obj
 
 # strip Proxy and get into the ganga object implementation

@@ -11,7 +11,7 @@ from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 from Ganga.Core.exceptions import GangaException
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
 
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, addProxy
 
 import Ganga.Utility.logging
 
@@ -165,8 +165,8 @@ class JobRegistrySlice(RegistrySlice):
                 import fnmatch
                 jlist = [j for j in self.objects if fnmatch.fnmatch(j.name, this_id)]
                 if len(jlist) == 1:
-                    return jlist[0]
-                return jobSlice(jlist)
+                    return _wrap(jlist[0])
+                return _wrap(jobSlice(jlist))
         else:
             raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
 
@@ -190,11 +190,11 @@ class JobRegistrySlice(RegistrySlice):
 
         if len(ids) > 1:
             try:
-                return j.subjobs[ids[1]]
+                return _wrap(j.subjobs[ids[1]])
             except IndexError:
                 raise RegistryKeyError('Subjob %s not found' % ('.'.join([str(_id) for _id in ids])))
         else:
-            return j
+            return _wrap(j)
 
     def submit(self, keep_going):
         self.do_collective_operation(keep_going, 'submit')

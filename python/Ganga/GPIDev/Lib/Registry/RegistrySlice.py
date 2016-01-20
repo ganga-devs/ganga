@@ -349,7 +349,7 @@ class RegistrySlice(object):
         """
         if isinstance(x, int):
             try:
-                return self.objects[x]
+                return addProxy(self.objects[x])
             except IndexError:
                 raise RegistryIndexError('list index out of range')
 
@@ -363,7 +363,7 @@ class RegistrySlice(object):
                 raise RegistryKeyError('object "%s" not unique' % x)
             if len(ids) == 0:
                 raise RegistryKeyError('object "%s" not found' % x)
-            return self.objects[ids[0]]
+            return addProxy(self.objects[ids[0]])
 
         raise RegistryAccessError('Expected int or string (job name).')
 
