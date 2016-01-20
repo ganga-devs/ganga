@@ -21,9 +21,6 @@ class Savannah8009(GangaUnitTest):
 
         t = j.copy()
 
-        for i in jobs:
-            print i.id
-
         # make sure that copy creates a new job (and not the template)
         self.assertEqual(len(jobs), 2)
         self.assertEqual(len(templates), 0)
