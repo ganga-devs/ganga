@@ -12,7 +12,7 @@ import os.path
 import Ganga
 try:
     from Ganga.Utility.logging import getLogger
-except IOError as e:
+except ImportError as e:
     # Running on a backend
     getLogger = None
 
