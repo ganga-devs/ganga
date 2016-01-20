@@ -29,6 +29,14 @@ def set_autostart_policy(interactive_session):
 t_last = None
 
 
+def start_jobregistry_monitor(reg):
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor
+    # start the monitoring loop
+    global monitoring_component
+    monitoring_component = JobRegistry_Monitor(reg)
+    monitoring_component.start()
+
+
 def bootstrap(reg, interactive_session):
     """
     Create local subsystems. In the future this procedure should be enhanced to connect to remote subsystems.
@@ -55,10 +63,7 @@ def bootstrap(reg, interactive_session):
     #            if hasattr(j.backend,'setup'): # protect: EmptyGangaObject does not have setup() method
     #                j.backend.setup()
 
-    # start the monitoring loop
-    global monitoring_component
-    monitoring_component = JobRegistry_Monitor(reg)
-    monitoring_component.start()
+    start_jobregistry_monitor(reg)
 
     # register the MC shutdown hook
 

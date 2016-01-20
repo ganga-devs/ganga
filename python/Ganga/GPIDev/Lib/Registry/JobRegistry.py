@@ -11,11 +11,13 @@ from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 from Ganga.Core.exceptions import GangaException
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
 
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType
 
 import Ganga.Utility.logging
 
 from Ganga.Runtime.GPIexport import exportToGPI
+
+from Ganga.GPIDev.Lib.Job.Job import Job
 
 from .RegistrySlice import RegistrySlice
 
@@ -111,11 +113,26 @@ class JobRegistrySlice(RegistrySlice):
         self._proxyClass = JobRegistrySliceProxy
 
     def _getColour(self, obj):
-        if stripProxy(obj).getNodeIndexCache():
-            status_attr = stripProxy(obj).getNodeIndexCache()['display:status']
+        if isType(obj, Job):
+            if stripProxy(obj).getNodeIndexCache():
+                status_attr = stripProxy(obj).getNodeIndexCache()['display:status']
+            else:
+                status_attr = obj.status
+        elif isType(obj, str):
+            status_attr = obj
+        elif isType(obj, dict):
+            if 'display:status' in obj.keys():
+                status_attr = obj['display:status']
+            elif 'status' in obj.keys():
+                status_attr = obj['status']
+            else:
+                status_attr = None
         else:
-            status_attr = obj.status
-        returnable = self.status_colours.get(status_attr, self.fx.normal)
+            status_attr = obj
+        try:
+            returnable = self.status_colours.get(status_attr, self.fx.normal)
+        except Exception:
+            returnable = self.status_colours.get(self.fx.normal)
         return returnable
 
     def __call__(self, id):

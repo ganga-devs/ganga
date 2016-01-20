@@ -2,6 +2,10 @@ from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks import Task
 from AnaTransform import AnaTransform
 from Ganga.GPIDev.Schema import *
+from Ganga.Utility.ColourText import ANSIMarkup, fgcol, Effects
+markup = ANSIMarkup()
+fx = Effects()
+
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 

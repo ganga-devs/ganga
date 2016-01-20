@@ -159,31 +159,6 @@ def hostname():
 # ------------------------
 
 
-class Borg(object):
-
-    """
-    *Python Cookbook recipe 6.16*
-    Borg implementation
-    """
-    _shared_state = {}
-
-    def __new__(cls, *args, **kw):
-        obj = object.__new__(cls, *args, **kw)
-        obj.__dict__ = cls._shared_state
-        return obj
-
-    def __eq__(self, other):
-        try:
-            return self.__dict__ is other.__dict__
-        except AttributeError:
-            return False
-
-    def __hash__(self):
-        return 0
-
-# ------------------------
-
-
 def setAttributesFromDict(d, prefix=None):
     """
     *Python Cookbook recipe 6.18*

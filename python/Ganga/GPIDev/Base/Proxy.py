@@ -182,24 +182,7 @@ def getName(obj):
 
 def stripProxy(obj):
     """Removes the proxy if there is one"""
-    global proxyRef
-    try:
-        if hasattr(obj, proxyRef):
-            if getattr(obj, proxyRef) is None:
-                ## Makes no sense to send back a None proxy Reference!!!
-                ## FIXME 6.1.15 rcurrie
-                return obj
-            return getattr(obj, proxyRef)
-        else:
-            return obj
-    except Exception as err:
-        ## This is a MASSIVE performance hog in normal use rcurrie
-        ## Decided that the few excpetions which may be thrown at initialization is not worth the performance hit elsewhere
-        logger.debug("Exception err: %s" % str(err))
-        if proxyRef in dir(obj):  # Use 'in dir()' rather than hasattr() to avoid recursion problems
-            return getattr(obj, proxyRef)
-        else:
-            return obj
+    return getattr(obj, proxyRef, obj)
 
 
 def addProxy(obj):
@@ -299,7 +282,7 @@ class ProxyDataDescriptor(object):
         # at class level return a helper object (for textual description)
         if obj is None:
             # return Schema.make_helper(getattr(getattr(cls, proxyRef), getName(self)))
-            return getattr( getattr(cls, proxyRef), getNeme(self))
+            return getattr( getattr(cls, proxyRef), getName(self))
 
         try:
             val = getattr( getattr(obj, proxyRef), getName(self))

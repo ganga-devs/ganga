@@ -7,7 +7,7 @@
 from Ganga.Core.exceptions import IncompleteJobSubmissionError
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import Schema, Version
 
@@ -436,7 +436,7 @@ class IBackend(GangaObject):
             ## All subjobs should have same backend
             if len(j.subjobs) > 0:
                 #logger.info("Looking for sj")
-                monitorable_subjobs = []
+                monitorable_subjob_ids = []
 
                 if isType(j.subjobs, SubJobXMLList):
                     cache = j.subjobs.getAllCachedData()
@@ -446,17 +446,17 @@ class IBackend(GangaObject):
                                 ## SJ may have changed from cache in memory
                                 this_sj = j.subjobs(sj_id)
                                 if this_sj.status in ['submitted', 'running']:
-                                    monitorable_subjobs.append(this_sj)
+                                    monitorable_subjob_ids.append(sj_id)
                             else:
-                                monitorable_subjobs.append(j.subjobs(sj_id))
+                                monitorable_subjob_ids.append(sj_id)
                 else:
                     for sj in j.subjobs:
                         if sj.status in ['submitted', 'running']:
-                            monitorable_subjobs.append( sj )
+                            monitorable_subjob_ids.append(sj_id)
 
-                #logger.info('Monitoring subjobs: %s', str([sj._repr() for sj in monitorable_subjobs]))
+                #logger.info('Monitoring subjobs: %s', str(monitorable_subjob_ids)
 
-                if not monitorable_subjobs:
+                if not monitorable_subjob_ids:
                     continue
 
                 stripProxy(j)._getWriteAccess()
@@ -466,8 +466,8 @@ class IBackend(GangaObject):
                 monitorable_blocks = []
                 temp_block = []
 
-                for this_sj in monitorable_subjobs:
-                    temp_block.append(this_sj)
+                for this_sj_id in monitorable_subjob_ids:
+                    temp_block.append(this_sj_id)
                     if len(temp_block) == blocks_of_size:
                         monitorable_blocks.append(temp_block)
                         temp_block = []
@@ -482,7 +482,10 @@ class IBackend(GangaObject):
                         break
 
                     try:
-                        j.backend.updateMonitoringInformation(this_block)
+                        subjobs_to_monitor = []
+                        for sj_id in this_block:
+                            subjobs_to_monitor.append(j.subjobs(sj_id))
+                        j.backend.updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
                         logger.error("Monitoring Error: %s" % str(err))
                     j.updateMasterJobStatus()
@@ -490,7 +493,7 @@ class IBackend(GangaObject):
                 ## NB ONLY THE MASTER JOB IS KNOWN TO THE JOB REPO!!!
                 stripProxy(j)._setDirty()
             else:
-                backend_name = j.backend.__class__.__name__
+                backend_name = getName(j.backend)
                 if backend_name not in simple_jobs.keys():
                     simple_jobs[backend_name] = []
                 simple_jobs[backend_name].append(j)

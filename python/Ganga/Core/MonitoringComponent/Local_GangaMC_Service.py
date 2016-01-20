@@ -14,6 +14,8 @@ from Ganga.Core.InternalServices import Coordinator
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, getRuntimeGPIObject
 
+from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus, lazyLoadJobBackend
+
 # Setup logging ---------------
 import Ganga.Utility.logging
 
@@ -207,8 +209,11 @@ def release_when_done(rlock):
                 #some code
                 pass
 
-    Attributes:
-        rlock: A lock object which can have ``release()`` called on it,
+    Args:
+        rlock: A lock object which can have ``release()`` called on it.
+
+    Yields:
+        The lock object that was passed in.
     """
     try:
         yield rlock
@@ -734,25 +739,23 @@ class JobRegistry_Monitor(GangaThread):
         else:
             self.alive = False
 
-        self.__mainLoopCond.acquire()
-        if self.enabled:
-            log.info('Stopping the monitoring component...')
-            self.alive = False
-            self.enabled = False
+        with self.__mainLoopCond:
+            if self.enabled:
+                log.info('Stopping the monitoring component...')
+                self.alive = False
+                self.enabled = False
 
-        try:
-            # signal the main thread to finish
-            self.steps = 0
-            self.stopIter.set()
-        except Exception as err:
-            log.error("stopIter error: %s" % str(err))
-        try:
-            # wake up the monitoring loop
-            self.__mainLoopCond.notifyAll()
-        except Exception as err:
-            log.error("Monitoring Stop Error: %s" % str(err))
-        finally:
-            self.__mainLoopCond.release()
+            try:
+                # signal the main thread to finish
+                self.steps = 0
+                self.stopIter.set()
+            except Exception as err:
+                log.error("stopIter error: %s" % str(err))
+            try:
+                # wake up the monitoring loop
+                self.__mainLoopCond.notifyAll()
+            except Exception as err:
+                log.error("Monitoring Stop Error: %s" % str(err))
         # wait for cleanup
         self.__cleanUpEvent.wait()
         self.__cleanUpEvent.clear()
@@ -865,32 +868,14 @@ class JobRegistry_Monitor(GangaThread):
             try:
                 j = stripProxy(self.registry(i))
 
-                lzy_loading_status_str = 'display:status'
-                if j.getNodeIndexCache() and lzy_loading_status_str in j.getNodeIndexCache():
-                    job_status = j.getNodeIndexCache()[lzy_loading_status_str]
-                else:
-                    job_status = j.status
+                job_status = lazyLoadJobStatus(j)
+                backend_obj = lazyLoadJobBackend(j)
+                backend_name = getName(backend_obj)
 
                 if job_status in ['submitted', 'running'] or (j.master and (job_status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
-                        ## This causes a Loading of the subjobs from disk!!!
-                        #stripProxy(j)._getReadAccess()
-                        if j.getNodeIndexCache():
-                            #log.info("data: %s" % str(j.getNodeData()))
-                            #log.info("node %s" % str(j.getNodeIndexCache()))
-                            #log.info("__dict: %s" % str(j.__class__.__dict__['backend']))
-                            #bn = j.__class__.__dict__['backend'].__name__
-                            #log.info("bn: %s" % str(bn))
-                            lazy_load_backend_str = 'display:backend'
-                            if lazy_load_backend_str in j.getNodeIndexCache():
-                                bn = j.getNodeIndexCache()[lazy_load_backend_str]
-                            else:
-                                bn = getName(j.backend)
-                        else:
-                            bn = getName(j.backend)
-                        #log.debug("active_backends.setdefault: %s" % str(bn))
-                        active_backends.setdefault(bn, [])
-                        active_backends[bn].append(j)
+                        active_backends.setdefault(backend_name, [])
+                        active_backends[backend_name].append(j)
             except RegistryKeyError as err:
                 log.debug("RegistryKeyError: The job was most likely removed")
                 log.debug("RegError %s" % str(err))
@@ -902,8 +887,8 @@ class JobRegistry_Monitor(GangaThread):
         for backend, these_jobs in active_backends.iteritems():
             summary += '"' + str(backend) + '" : ['
             for this_job in these_jobs:
-                stripProxy(this_job)._getWriteAccess()
-                summary += str(stripProxy(this_job).getFQID('.')) + ', '
+                #stripProxy(this_job)._getWriteAccess()
+                summary += str(stripProxy(this_job).id) + ', '#getFQID('.')) + ', '
             summary += '], '
         summary += '}'
         log.debug("Returning active_backends: %s" % summary)
@@ -916,128 +901,127 @@ class JobRegistry_Monitor(GangaThread):
 
         currentThread = threading.currentThread()
         # timeout mechanism may have acquired the lock to impose delay.
-        lock.acquire()
-        self._runningNow = True
+        with lock:
+            self._runningNow = True
 
-        try:
-            log.debug("[Update Thread %s] Lock acquired for %s" % (currentThread, getName(backendObj)))
-            #alljobList_fromset = IList(filter(lambda x: x.status in ['submitted', 'running'], jobListSet), self.stopIter)
-            # print alljobList_fromset
-            #masterJobList_fromset = IList(filter(lambda x: (x.master is not None) and (x.status in ['submitting']), jobListSet), self.stopIter)
-
-            #FIXME We've lost IList and the above method for adding a job which is in a submitted state looks like one that didn't work
-            # Come back and fix this once 6.1.3 is out. We can drop features for functionalist here as the lazy loading is fixed in this release
-            # rcurrie
-            alljobList_fromset = list(filter(lambda x: x.status in ['submitting', 'submitted', 'running'], jobListSet))
-            masterJobList_fromset = list()
-
-            # print masterJobList_fromset
-            jobList_fromset = alljobList_fromset
-            jobList_fromset.extend(masterJobList_fromset)
-            # print jobList_fromset
-            updateDict_ts.clearEntry(getName(backendObj))
             try:
-                log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
+                log.debug("[Update Thread %s] Lock acquired for %s" % (currentThread, getName(backendObj)))
+                #alljobList_fromset = IList(filter(lambda x: x.status in ['submitted', 'running'], jobListSet), self.stopIter)
+                # print alljobList_fromset
+                #masterJobList_fromset = IList(filter(lambda x: (x.master is not None) and (x.status in ['submitting']), jobListSet), self.stopIter)
 
-                tested_backends = []
+                #FIXME We've lost IList and the above method for adding a job which is in a submitted state looks like one that didn't work
+                # Come back and fix this once 6.1.3 is out. We can drop features for functionalist here as the lazy loading is fixed in this release
+                # rcurrie
+                alljobList_fromset = list(filter(lambda x: x.status in ['submitting', 'submitted', 'running'], jobListSet))
+                masterJobList_fromset = list()
 
-                for j in jobList_fromset:
+                # print masterJobList_fromset
+                jobList_fromset = alljobList_fromset
+                jobList_fromset.extend(masterJobList_fromset)
+                # print jobList_fromset
+                updateDict_ts.clearEntry(getName(backendObj))
+                try:
+                    log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
 
-                    run_setup = False
+                    tested_backends = []
 
-            	    if hasattr(stripProxy(j), 'getNodeIndexCache') and\
-                        stripProxy(j).getNodeIndexCache() is not None and\
-                        'display:backend' in stripProxy(j).getNodeIndexCache().keys():
+                    for j in jobList_fromset:
 
-                        name = stripProxy(j).getNodeIndexCache()['display:backend']
+                        run_setup = False
 
-                        if name is not None:
-                            if name in tested_backends:
-                                continue
+                        if hasattr(stripProxy(j), 'getNodeIndexCache') and\
+                             stripProxy(j).getNodeIndexCache() is not None and\
+                             'display:backend' in stripProxy(j).getNodeIndexCache().keys():
+
+                            name = stripProxy(j).getNodeIndexCache()['display:backend']
+
+                            if name is not None:
+                                if name in tested_backends:
+                                    continue
+                                else:
+                                    tested_backends.append(name)
+                                new_backend = getRuntimeGPIObject(name)
+                                if new_backend is not None and hasattr(new_backend, 'setup'):
+                                    run_setup = True
+                                else:
+                                    run_setup = False
                             else:
-                                tested_backends.append(name)
-                            new_backend = getRuntimeGPIObject(name)
-                            if new_backend is not None and hasattr(new_backend, 'setup'):
-                                run_setup = True
-                            else:
-                                run_setup = False
+                               run_setup = False
                         else:
-                           run_setup = False
-                    else:
-                        run_setup = True
+                            run_setup = True
 
-                    if run_setup is True:
-                        if hasattr(j, 'backend'):
-                            if hasattr(j.backend, 'setup'):
-                                j.backend.setup()
-
-                if self.enabled is False and self.alive is False:
-                    log.debug("NOT enabled, leaving")
-                    return
-
-                block_size = config['numParallelJobs']
-                all_job_bunches = get_jobs_in_bunches(jobList_fromset, blocks_of_size = block_size )
-
-                bunch_size = 0
-                for bunch in all_job_bunches:
-                    bunch_size += len(bunch)
-                assert(bunch_size == len(jobList_fromset))
-
-                all_exceptions = []
-
-                for this_job_list in all_job_bunches:
+                        if run_setup is True:
+                            if hasattr(j, 'backend'):
+                                if hasattr(j.backend, 'setup'):
+                                    j.backend.setup()
 
                     if self.enabled is False and self.alive is False:
-                        log.debug("NOT enabled, breaking loop")
-                        break
+                        log.debug("NOT enabled, leaving")
+                        return
 
-                    ### This tries to loop over ALL jobs in 'this_job_list' with the maximum amount of redundancy to keep
-                    ### going and attempting to update all (sub)jobs if some fail
-                    ### ALL ERRORS AND EXCEPTIONS ARE REPORTED VIA log.error SO NO INFORMATION IS LOST/IGNORED HERE!
-                    job_ids = ''
-                    for this_job in this_job_list:
-                        job_ids += ' %s' % str(this_job.id) 
-                    log.debug("Updating Jobs: %s" % job_ids)
-                    try:
-                        stripProxy(backendObj).master_updateMonitoringInformation(this_job_list)
-                    except Exception as err:
-                        #raise err
-                        log.debug("Err: %s" % str(err))
-                        ## We want to catch ALL of the exceptions
-                        ## This would allow us to continue in the case of errors due to bad job/backend combinations
-                        if err not in all_exceptions:
-                            all_exceptions.append(err)
+                    block_size = config['numParallelJobs']
+                    all_job_bunches = get_jobs_in_bunches(jobList_fromset, blocks_of_size = block_size )
 
-                if all_exceptions != []:
-                    for err in all_exceptions:
-                        log.error("Monitoring Error: %s" % str(err))
-                    ## We should be raising exceptions no matter what
-                    raise all_exceptions[0]
+                    bunch_size = 0
+                    for bunch in all_job_bunches:
+                        bunch_size += len(bunch)
+                    assert(bunch_size == len(jobList_fromset))
 
-                resubmit_if_required(jobList_fromset)
+                    all_exceptions = []
 
-            except BackendError as x:
-                self._handleError(x, x.backend_name, 0)
+                    for this_job_list in all_job_bunches:
+
+                        if self.enabled is False and self.alive is False:
+                            log.debug("NOT enabled, breaking loop")
+                            break
+
+                        ### This tries to loop over ALL jobs in 'this_job_list' with the maximum amount of redundancy to keep
+                        ### going and attempting to update all (sub)jobs if some fail
+                        ### ALL ERRORS AND EXCEPTIONS ARE REPORTED VIA log.error SO NO INFORMATION IS LOST/IGNORED HERE!
+                        job_ids = ''
+                        for this_job in this_job_list:
+                            job_ids += ' %s' % str(this_job.id)
+                        log.debug("Updating Jobs: %s" % job_ids)
+                        try:
+                            stripProxy(backendObj).master_updateMonitoringInformation(this_job_list)
+                        except Exception as err:
+                            #raise err
+                            log.debug("Err: %s" % str(err))
+                            ## We want to catch ALL of the exceptions
+                            ## This would allow us to continue in the case of errors due to bad job/backend combinations
+                            if err not in all_exceptions:
+                                all_exceptions.append(err)
+
+                    if all_exceptions != []:
+                        for err in all_exceptions:
+                            log.error("Monitoring Error: %s" % str(err))
+                        ## We should be raising exceptions no matter what
+                        raise all_exceptions[0]
+
+                    resubmit_if_required(jobList_fromset)
+
+                except BackendError as x:
+                    self._handleError(x, x.backend_name, 0)
+                except Exception as err:
+                    self._handleError(err, getName(backendObj), 1)
+
+                # FIXME THIS METHOD DOES NOT EXIST
+                #log.debug("[Update Thread %s] Flushing registry %s." % (currentThread, [x.id for x in jobList_fromset]))
+                # FIXME THIS RETURNS A REGISTRYSLICE OBJECT NOT A REGISTRY, IS THIS CORRECT? SHOULD WE FLUSH
+                # COMMENTING OUT AS IT SIMPLY WILL NOT RUN/RESOLVE!
+                # this concerns me - rcurrie
+                #self.registry._flush(jobList_fromset)  # Optimisation required!
+
+                #for this_job in jobList_fromset:
+                #    stripped_job = stripProxy(this_job)
+                #    stripped_job._getRegistry()._flush([stripped_job])
+
             except Exception as err:
-                self._handleError(err, getName(backendObj), 1)
-
-            # FIXME THIS METHOD DOES NOT EXIST
-            #log.debug("[Update Thread %s] Flushing registry %s." % (currentThread, [x.id for x in jobList_fromset]))
-            # FIXME THIS RETURNS A REGISTRYSLICE OBJECT NOT A REGISTRY, IS THIS CORRECT? SHOULD WE FLUSH
-            # COMMENTING OUT AS IT SIMPLY WILL NOT RUN/RESOLVE!
-            # this concerns me - rcurrie
-            #self.registry._flush(jobList_fromset)  # Optimisation required!
-
-            #for this_job in jobList_fromset:
-            #    stripped_job = stripProxy(this_job)
-            #    stripped_job._getRegistry()._flush([stripped_job])
-
-        except Exception as err:
-            log.debug("Monitoring Loop Error: %s" % str(err))
-        finally:
-            lock.release()
-            log.debug("[Update Thread %s] Lock released for %s." % (currentThread, getName(backendObj)))
-            self._runningNow = False
+                log.debug("Monitoring Loop Error: %s" % str(err))
+            finally:
+                log.debug("[Update Thread %s] Lock released for %s." % (currentThread, getName(backendObj)))
+                self._runningNow = False
 
         log.debug("Finishing _checkBackend")
         return

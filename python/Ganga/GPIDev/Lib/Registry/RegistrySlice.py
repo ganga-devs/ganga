@@ -2,8 +2,11 @@ import sys
 import Ganga.Utility.logging
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError
+from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 import fnmatch
 import collections
+
+from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 import Ganga.Utility.Config
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
@@ -241,7 +244,7 @@ class RegistrySlice(object):
                             else:
                                 attrvalue = attrs[a]
 
-                                if item.isA('ComponentItem'):
+                                if item.isA(ComponentItem):
                                     from Ganga.GPIDev.Base.Filters import allComponentFilters
 
                                     cfilter = allComponentFilters[item['category']]
@@ -435,25 +438,36 @@ class RegistrySlice(object):
             ds += this_format % self._display_columns
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
+
         for obj_i in self.objects.keys():
-            obj = stripProxy(self.objects[obj_i])
-            colour = self._getColour(obj)
+
+            if isType(self.objects, SubJobXMLList):
+                colour = self._getColour( self.objects.getCachedData(obj_i) )
+            else:
+                obj = stripProxy(self.objects[obj_i])
+                colour = self._getColour(obj)
 
             vals = []
             for item in self._display_columns:
                 display_str = "display:" + str(item)
                 #logger.info("Looking for : %s" % display_str)
                 width = self._display_columns_width.get(item, default_width)
-                if stripProxy(obj).getNodeIndexCache():
-                    try:
+                try:
+                    if not isType(self.objects, SubJobXMLList):
+                        obj = stripProxy(self.objects[obj_i])
                         if item == "fqid":
                             vals.append(str(stripProxy(obj).getNodeIndexCache()[display_str]))
                         else:
                             vals.append(str(stripProxy(obj).getNodeIndexCache()[display_str])[0:width])
-                        continue
-                    except KeyError as err:
-                        logger.debug("_display KeyError: %s" % str(err))
-                        pass
+                    else:
+                        if item == 'fqid':
+                            vals.append(str(self.objects.getCachedData(obj_i)[display_str]))
+                        else:
+                            vals.append(str(self.objects.getCachedData(obj_i)[display_str])[0:width])
+                    continue
+                except KeyError as err:
+                    logger.debug("_display KeyError: %s" % str(err))
+                    pass
                 if item == "fqid":
                     vals.append(self._get_display_value(obj, item))
                 else:

@@ -67,7 +67,11 @@ def expand_vars(env):
 class Shell(object):
 
     def __init__(self, setup=None, setup_args=[]):
-        """The setup script is sourced (with possible arguments) and the
+        """
+
+        THIS EXPECTS THE BASH SHELL TO AT LEAST BE AVAILABLE TO RUN THESE COMMANDS!
+
+        The setup script is sourced (with possible arguments) and the
         environment is captured. The environment variables are expanded
         automatically (this is a fix for bug #44259: GangaLHCb tests fail due to
         gridProxy check).
@@ -104,20 +108,18 @@ class Shell(object):
             logger.debug("Using CWD: %s" % this_cwd)
             command = 'source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup, " ".join(setup_args))
             logger.debug('Running:   %s' % command )
-            pipe = subprocess.Popen(command, env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-            output = pipe.communicate()
+            pipe = subprocess.Popen('bash', env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            output = pipe.communicate(command)
             rc = pipe.poll()
             if rc:
                 logger.warning('Unexpected rc %d from setup command %s', rc, setup)
 
-            # print output
-            # print eval(str(output)[0])
             try:
                 env2 = expand_vars(eval(eval(str(output))[0]))
             except Exception as err:
                 logger.debug("Err: %s" % str(err))
                 env2 = None
-                logger.error("Cannot construct environ:\n%s" % str(output)[0])
+                logger.error("Cannot construct environ:\n%s" % str(output))
                 try:
                     logger.error("eval: %s" % str(eval(str(output)[0])))
                 except Exception as err2:
