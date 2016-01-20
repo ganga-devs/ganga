@@ -208,7 +208,7 @@ class Job(GangaObject):
                                      'outputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects decorating what have to be done with the output files after job is completed "),
                                      'non_copyable_outputfiles': GangaFileItem(defvalue=[], hidden=1, typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
                                      'id': SimpleItem('', protected=1, comparable=0, doc='unique Ganga job identifier generated automatically'),
-                                     'status': SimpleItem('new', protected=1, checkset='_checkset_status', doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"'),
+                                     'status': SimpleItem('new', protected=1, checkset='_checkset_status', doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"', copyable=False),
                                      'name': SimpleItem('', doc='optional label which may be any combination of ASCII characters', typelist=['str']),
                                      'inputdir': SimpleItem(getter="getStringInputDir", defvalue=None, transient=1, protected=1, comparable=0, load_default=0, optional=1, copyable=0, typelist=['str'], doc='location of input directory (file workspace)'),
 
@@ -647,9 +647,9 @@ class Job(GangaObject):
 
             # move to the new state AFTER hooks are called
             self.status = newstatus
-            if self.status != saved_status:
-                self._commit()
-                logger.debug("Status changed from '%s' to '%s'" % (saved_status, self.status))
+            #if self.status != saved_status and self.master is None:
+            #    self._commit()
+            #    logger.debug("Status changed from '%s' to '%s'" % (saved_status, self.status))
 
         except Exception as x:
             self.status = saved_status
@@ -2254,7 +2254,7 @@ class Job(GangaObject):
         #print('return slice: %s' % str(subjobs))
         return _wrap(subjobs)
 
-    def _subjobs_summary_print(self, value, verbosity_level):
+    def _subjobs_summary_print(self, value, verbosity_level, interactive=False):
         rslice = self._subjobs_proxy()
         return rslice._display(1)
 
@@ -2367,13 +2367,13 @@ class Job(GangaObject):
 
                 super(Job, self).__setattr__('backend', new_value)
             else:
-                new_value = runtimeEvalString(self, attr, value)
+                new_value = stripProxy(runtimeEvalString(self, attr, value))
                 #from Ganga.GPIDev.Base.Objects import Node
                 super(Job, self).__setattr__('backend', new_value)
         #elif attr == 'postprocessors':
         #    super(Job, self).__setattr__('postprocessors', GangaList())
         else:
-            new_value = runtimeEvalString(self, attr, value)
+            new_value = stripProxy(runtimeEvalString(self, attr, value))
             #from Ganga.GPIDev.Base.Objects import Node
             super(Job, self).__setattr__(attr, new_value)
 

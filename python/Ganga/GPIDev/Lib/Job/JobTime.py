@@ -199,11 +199,11 @@ class JobTime(GangaObject):
                 "IndexError: ID: %d, Status: '%s', length of list: %d", j.id, status, len(list))
 
     def display(self, format="%Y/%m/%d %H:%M:%S"):
-        return self._diaply(format)
+        return self._display(format)
 
     # Justin 10.9.09: I think 'ljust' might be just as good if not better than
     # 'rjust' here:
-    def _display(self, format="%Y/%m/%d %H:%M:%S"):
+    def _display(self, format="%Y/%m/%d %H:%M:%S", interactive=False):
         """Displays existing timestamps in a table.
 
            Format can be specified by typing a string of the appropriate strftime() behaviour codes as the arguement.
@@ -237,10 +237,10 @@ class JobTime(GangaObject):
             retstr = retstr + times[i] + '\n'
         return retstr
 
-    def _timestamps_summary_print(self, value, verbosity_level):
+    def _timestamps_summary_print(self, value, verbosity_level, interactive=False):
         """Used to display timestamps when JobTime object is displayed.
         """
-        return self._display()
+        return self._display(interactive=interactive)
 
     # This didn't work:
     #
