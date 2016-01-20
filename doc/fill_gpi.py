@@ -1,15 +1,23 @@
 #! /usr/bin/env python
 
-from __future__ import print_function
+"""
+This script generates ReST files based on the contents of the GPI.
+These files are then parsed by Sphinx to create the GPI documentation.
+"""
+
+from __future__ import print_function, absolute_import
 
 import sys
 import os
 import inspect
 from itertools import izip_longest
+import shutil
 
 doc_dir = os.path.dirname(os.path.realpath(__file__))
 python_dir = doc_dir + '/../python'
 sys.path.insert(0, os.path.abspath(os.path.join(doc_dir, '..', 'python')))
+
+from Ganga.GPIDev.Base.Proxy import GPIProxyObject, stripProxy, getName
 
 print('Generating GPI documentation')
 
@@ -17,12 +25,12 @@ print('Generating GPI documentation')
 import Ganga.PACKAGE
 Ganga.PACKAGE.standardSetup()
 
-# Start ganga by passing some options for unittesting
 import Ganga.Runtime
+gangadir = os.path.expandvars('$HOME/gangadir_sphinx_dummy')
 this_argv = [
     'ganga',  # `argv[0]` is usually the name of the program so fake that here
-    '-o[Configuration]RUNTIME_PATH=GangaTest',
-    '-o[Configuration]gangadir=$HOME/gangadir_dummy',
+    '-o[Configuration]RUNTIME_PATH=Ganga:GangaDirac:',
+    '-o[Configuration]gangadir={gangadir}'.format(gangadir=gangadir),
 ]
 
 # Actually parse the options
@@ -36,61 +44,25 @@ Ganga.Runtime._prog.bootstrap(interactive=False)
 ## FINISHED LOADING GANGA ##
 
 
-def trim(docstring):
-    """
-    From PEP 257
-    """
-    if not docstring:
-        return ''
-    # Convert tabs to spaces (following the normal Python rules)
-    # and split into a list of lines:
-    lines = docstring.expandtabs().splitlines()
-    # Determine minimum indentation (first line doesn't count):
-    indent = sys.maxint
-    for line in lines[1:]:
-        stripped = line.lstrip()
-        if stripped:
-            indent = min(indent, len(line) - len(stripped))
-    # Remove indentation (first line is special):
-    trimmed = [lines[0].strip()]
-    if indent < sys.maxint:
-        for line in lines[1:]:
-            trimmed.append(line[indent:].rstrip())
-    # Strip off trailing and leading blank lines:
-    while trimmed and not trimmed[-1]:
-        trimmed.pop()
-    while trimmed and not trimmed[0]:
-        trimmed.pop(0)
-    # Return a single string:
-    return '\n'.join(trimmed)
-
-
 def indent(s, depth=''):
+    # type: (str, str) -> str
     """
     Adds `indent` to the beginning of every line
     """
     return '\n'.join(depth+l for l in s.splitlines())
 
 
-def reindent(doctring, depth=''):
-    return indent(trim(doctring), depth)
+def reindent(docstring, depth=''):
+    # type: (str, str) -> str
+    """
+    Returns ``docstring`` trimmed and then each line prepended with ``depth``
+    """
+    return indent(inspect.cleandoc(docstring), depth)
 
-
-def format_entry(template, depth='', *args, **kwargs):
-    args = (reindent(a, depth).lstrip() for a in args)
-    kwargs = dict((k,reindent(str(v), depth).lstrip()) for k,v in kwargs.items())
-    t = trim(template)
-    t = t.format(*args, **kwargs)
-    t = indent(t, depth)
-    return t
-
-from Ganga.GPIDev.Base.Proxy import GPIProxyObject, stripProxy, getName
-
-all_gpi_classes = set()  # Track all the class names we find in the GPI
+# First we get all objects that are in Ganga.GPI and filter out any non-GangaObjects
+gpi_classes = (stripProxy(o) for name, o in Ganga.GPI.__dict__.items() if isinstance(o, type) and issubclass(o, GPIProxyObject))
 
 with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
-    # First we get all objects that are in Ganga.GPI and filter out any non-GangaObjects
-    gpi_classes = (stripProxy(o) for name, o in Ganga.GPI.__dict__.items() if isinstance(o, type) and issubclass(o, GPIProxyObject))
 
     print('GPI classes', file=cf)
     print('===========', file=cf)
@@ -98,53 +70,70 @@ with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
 
     # For each class we generate a set of ReST using '.. class::' etc.
     for c in gpi_classes:
-        all_gpi_classes.add(getName(c))
         print('.. class:: {module_name}'.format(module_name=getName(c)), file=cf)
 
         if c.__doc__:
             print('', file=cf)
             print(reindent(c.__doc__, '    '), file=cf)
 
-        items = ((name, item) for name, item in c._schema.allItems() if not item['hidden'])
+        print('', file=cf)
+
+        print(reindent('Plugin category: ' + c._category, '    '), file=cf)
 
         print('', file=cf)
-        for name, item in items:
-            properties_we_care_about = ['protected', 'defvalue', 'changable_at_resubmit']
-            props = dict((k,v) for k,v in item._meta.items() if k in properties_we_care_about)
-            s = '''
-            .. attribute:: {name}
 
-                {doc}
-                {props}
-            '''
-            print(format_entry(s, depth='    ', name=name, doc=item['doc'], props=props), file=cf)
+        # Go through each schema item and document it if it's not hidden
+        visible_items = ((name, item) for name, item in c._schema.allItems() if not item['hidden'])
+        for name, item in visible_items:
+            # These are the only ones we want to show in the docs
+            properties_we_care_about = ['protected', 'defvalue', 'changable_at_resubmit']
+            props = dict((k, v) for k, v in item._meta.items() if k in properties_we_care_about)
+
+            print('    .. attribute:: {name}'.format(name=name), file=cf)
+            print('', file=cf)
+            print(reindent(item['doc'], depth='        '), file=cf)
+            print(reindent(str(props), depth='        '), file=cf)
             print('', file=cf)
 
+        # Add documentation for each exported method
         for method_name in c._exportmethods:
             try:
                 f = getattr(c, method_name).__func__
             except AttributeError as e:
-                print('WARNING:', end=' ', file=sys.stderr)
+                # Some classes have erroneous export lists so we catch them here and print a warning
+                print('WARNING on class', getName(c), ':', end=' ', file=sys.stderr)
                 print(e, file=sys.stderr)
                 continue
 
             args, varargs, varkw, defaults = inspect.getargspec(f)
-            defaults = defaults or []
-            defaults = [repr(d) for d in defaults]
+            defaults = defaults or []  # If there are no defaults, set it to an empty list
+            defaults = [repr(d) for d in defaults]  # Type to get a useful string representing the default
+
+            # Based on a signature like foo(a, b, c=None, d=4, *args, **kwargs)
+            # we get args=['a', 'b', 'c', 'd'] and defaults=['None', '4']
+            # We must match them backwards from the end and pad the beginning with None
+            # to get arg_pairs=[('a', None), ('b', None), ('c', 'None'), ('d', '4')]
             arg_pairs = reversed([(a, d) for a, d in izip_longest(reversed(args), reversed(defaults), fillvalue=None)])
+            # Based on arg_pairs we convert it into
+            # arg_strings=['a', 'b', 'a=None', 'd=4']
             arg_strings = []
             for arg, default in arg_pairs:
                 full_arg = arg
                 if default is not None:
                     full_arg += '='+default
                 arg_strings.append(full_arg)
+            # and append args and kwargs if necessary to get
+            # arg_strings=['a', 'b', 'a=None', 'd=4', '*args', '**kwargs']
             if varargs is not None:
                 arg_strings.append('*'+varargs)
             if varkw is not None:
                 arg_strings.append('**'+varkw)
+
+            # Signature is then 'foo(a, b, c=None, d=4, *args, **kwargs)'
             signature = '{name}({args})'.format(name=method_name, args=', '.join(arg_strings))
+
             print('    .. method:: {signature}'.format(signature=signature), file=cf)
-            if c.__doc__:
+            if f.__doc__:
                 print('', file=cf)
                 print(reindent(f.__doc__, '        '), file=cf)
                 print('', file=cf)
@@ -152,7 +141,8 @@ with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
         print('', file=cf)
         print('', file=cf)
 
-all_plugin_classes = set()  # Track all the class names we find registered as plugins
+
+# Looking through the plugin list helps categorise the GPI objects
 
 with open(doc_dir+'/GPI/plugins.rst', 'w') as pf:
     from Ganga.Utility.Plugin.GangaPlugin import allPlugins
@@ -169,13 +159,10 @@ with open(doc_dir+'/GPI/plugins.rst', 'w') as pf:
         for name, c in ps.items():
             if c._declared_property('hidden'):
                 continue
-            all_plugin_classes.add(name)
             print('* :class:`{name}`'.format(name=name), file=pf)
         print('', file=pf)
 
-print()
-print('Classes in GPI but not in plugins: ', ', '.join(all_gpi_classes - all_plugin_classes))
-print('Classes in plugins but not in GPI: ', ', '.join(all_plugin_classes - all_gpi_classes))
+print('')
 
 ## EXITING GANGA ##
 from Ganga.Core.InternalServices import ShutdownManager
@@ -184,4 +171,6 @@ import Ganga.Core
 Ganga.Core.change_atexitPolicy(interactive_session=False, new_policy='batch')
 # This should now be safe
 ShutdownManager._ganga_run_exitfuncs()
+
+shutil.rmtree(gangadir)
 ## FINISHED EXITING GANGA ##
