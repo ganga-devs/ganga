@@ -3,6 +3,11 @@ from setuptools import find_packages
 from setuptools import Command
 import subprocess
 import os
+import sys
+
+ganga_python_dir = os.path.abspath('python')
+sys.path.insert(0, ganga_python_dir)
+from Ganga import _gangaVersion
 
 
 def readme():
@@ -53,7 +58,7 @@ setup(name='ganga',
       description='Job management tool',
       long_description=readme(),
       url='https://github.com/ganga-devs/ganga',
-      version='6.1.14',
+      version=_gangaVersion,
       author='Ganga Developers',
       author_email='project-ganga-developers@cern.ch',
       license='GPL v2',
