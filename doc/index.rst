@@ -3,29 +3,22 @@ Ganga
 
 Ganga is a tool to make it easy to run data analysis jobs along with managing associated data files.
 
+.. toctree::
+    :caption: For users
+    :maxdepth: 2
 
-Documentation
-=============
+    UserGuide/index
+    GPI/index
 
-+-------------------------------+--------------------------------+
-|                               |                                |
-| :doc:`UserGuide/index`        | :doc:`SysAdmin/index`          |
-|                               |                                |
-| Everything users need to know | Installing Ganga on you system |
-|                               |                                |
-+-------------------------------+--------------------------------+
-|                               |                                |
-| :doc:`GPI/index`              | :doc:`API/index`               |
-|                               |                                |
-| Full documentation of the     | Internal documentation of the  |
-| Ganga Public Interface        | Python implementation          |
-|                               |                                |
-+-------------------------------+--------------------------------+
+.. toctree::
+    :caption: For system administrators
+    :maxdepth: 2
 
+    sysadmin/index
 
-Indices and tables
-==================
+.. toctree::
+    :caption: For developers
+    :maxdepth: 2
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+    dev/index
+    API/index
