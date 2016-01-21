@@ -237,12 +237,11 @@ under certain conditions; type license() for details.
 #           file_opens(self.args[0],'reading script')
 
     @staticmethod
-    def new_version(update=True):
+    def new_version():
         versions_filename = os.path.join(getConfig('Configuration')['gangadir'], '.used_versions')
         if not os.path.exists(versions_filename):
-            if update:
-                with open(versions_filename, 'w') as versions_file:
-                    versions_file.write(_gangaVersion + '\n')
+            with open(versions_filename, 'w') as versions_file:
+                versions_file.write(_gangaVersion + '\n')
             return True
 
         with open(versions_filename, 'r+') as versions_file:
@@ -447,7 +446,7 @@ under certain conditions; type license() for details.
             if yes == '' or yes[0:1].upper() == 'Y':
                 self.generate_config_file(default_config)
                 raw_input('Press <Enter> to continue.\n')
-        elif self.new_version(not self.options.config_file_set_explicitly):
+        elif self.new_version():
             self.print_release_notes()
             self.rollHistoryForward()
             # if config explicitly set we dont want to update the versions file
