@@ -172,5 +172,5 @@ Ganga.Core.change_atexitPolicy(interactive_session=False, new_policy='batch')
 # This should now be safe
 ShutdownManager._ganga_run_exitfuncs()
 
-shutil.rmtree(gangadir)
+shutil.rmtree(gangadir, ignore_errors=True)
 ## FINISHED EXITING GANGA ##
