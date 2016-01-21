@@ -1911,10 +1911,6 @@ class Job(GangaObject):
             logger.debug("Remove Err: %s" % str(err))
             pass
 
-    def fail(self, force=False):
-        """Deprecated. Use force_status('failed') instead."""
-        raise JobError('fail() method is deprecated, use force_status("failed") instead.')
-
     allowed_force_states = {'completed': ['completing', 'failed'],
                             'failed': ["submitting", "completing", "completed", "submitted", "running", "killed"]}
 
