@@ -762,14 +762,13 @@ under certain conditions; type license() for details.
 
             
             import inspect
+            from os.path import expandvars, expanduser
+
             GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
             def transform(x):
                 return os.path.normpath(Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath,x)))
 
-            from os.path import expandvars, expanduser
-
-            paths = map(transform, filter(lambda x: expandvars(expanduser(x)), config['RUNTIME_PATH'].split(':')))
-
+            paths = map(transform, filter(None, map(lambda x: expandvars(expanduser(x)), config['RUNTIME_PATH'].split(':'))))
 
             for path in paths:
                 r = RuntimePackage(path)
