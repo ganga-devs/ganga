@@ -415,10 +415,6 @@ class Descriptor(object):
         if name in obj.getNodeData():
             return obj.getNodeAttribute(name)
 
-        # If this object doesn't exist and the object has been loaded then let's look around
-        if name in obj.__dict__:
-            return obj.__dict__[name]
-
         # Finally, get the default value from the schema
         if obj._schema.hasItem(name):
             return obj._schema.getDefaultValue(name)
