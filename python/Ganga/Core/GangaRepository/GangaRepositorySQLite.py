@@ -83,7 +83,7 @@ class GangaRepositorySQLite(GangaRepository):
                     self, "Internal Error: add with different number of objects and force_ids!")
             ids = force_ids
         for i in range(0, len(objs)):
-            cls = objs[i]._name
+            cls = getName(objs[i])
             cat = objs[i]._category
             objs[i].setNodeIndexCache(self.registry.getIndexCache(objs[i]))
             data = pickle.dumps(objs[i].getNodeData()).replace("'", "''")
@@ -102,13 +102,13 @@ class GangaRepositorySQLite(GangaRepository):
     def flush(self, ids):
         for id in ids:
             obj = self.objects[id]
-            if obj._name != "EmptyGangaObject":
+            if getName(obj) != "EmptyGangaObject":
                 obj.setNodeIndexCache(self.registry.getIndexCache(obj))
                 data = pickle.dumps(obj.getNodeData()).replace("'", "''")
                 idx = pickle.dumps(obj.getNodeIndexCache()).replace("'", "''")
                 self.cur.execute(
                     "UPDATE objects SET idx='%s',data='%s' WHERE id=%s" % (idx, data, id))
-                # print "flushing id ", id, " backend ", obj.backend._name
+                # print "flushing id ", id, " backend ", getName(obj.backend)
         self.con.commit()
 
     def load(self, ids):
