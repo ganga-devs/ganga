@@ -12,6 +12,7 @@ from __future__ import print_function
 
 import sys
 import os
+import os.path
 import argparse
 
 parser = argparse.ArgumentParser(description="Install Ganga's externals")
@@ -39,8 +40,13 @@ def error(what=None):
 
 def untar(tar_file_name, target_dir):
     print('Extracting {tar} to {dest}'.format(tar=tar_file_name, dest=target_dir))
-    tar_file_name = os.path.join(CONFIG['tarball_dir'], tar_file_name)
-    cmd = 'cd %s; tar xfz %s' % (target_dir, tar_file_name)
+    tar_file_path = os.path.join(CONFIG['tarball_dir'], tar_file_name)
+    if os.path.isfile(tar_file_path):
+        cmd = 'cd %s; tar xfz %s' % (target_dir, tar_file_path)
+    else:
+        remote_file = 'http://ganga.web.cern.ch/ganga/download/' + tar_file_name
+        print('Could not find tarball, downloading from %s' % remote_file)
+        cmd = 'cd %s; curl %s | tar xz' % (target_dir, remote_file)
 
     if os.system(cmd) != 0:
         error('Error untarring file: %s in directory %s' % (tar_file_name, target_dir))

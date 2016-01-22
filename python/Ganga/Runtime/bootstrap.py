@@ -96,6 +96,12 @@ if DEBUGFILES or MONITOR_FILES:
             if f not in safeFiles:
                 openfiles[f].close()
 
+if sys.hexversion < 0x020700F0:
+    version = '{0}.{1}'.format(sys.version_info[0], sys.version_info[1])
+    logger.warning('Ganga will soon be depending on Python 2.7. '
+                   'You have Python {version} installed. '
+                   'See https://github.com/ganga-devs/ganga/wiki/Python-2.7'.format(version=version))
+
 
 class GangaProgram(object):
 
