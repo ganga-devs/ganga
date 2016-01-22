@@ -231,7 +231,7 @@ class Job(GangaObject):
     _category = 'jobs'
     _name = 'Job'
     _exportmethods = ['prepare', 'unprepare', 'submit', 'remove', 'kill',
-                      'resubmit', 'peek', 'fail', 'force_status', 'runPostProcessors']
+                      'resubmit', 'peek', 'force_status', 'runPostProcessors']
 
     default_registry = 'jobs'
 
