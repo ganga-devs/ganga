@@ -16,8 +16,6 @@ from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-## Can't do due to circular problems
-#from Ganga.GPI import DiracFile
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -74,11 +72,12 @@ class LHCbDataset(GangaDataset):
             new_list = []
             for this_file in files:
                 if type(this_file) is str:
-                    new_list.append(string_datafile_shortcut_lhcb(this_file, None))
+                    new_file = string_datafile_shortcut_lhcb(this_file, None)
                 elif isType(this_file, IGangaFile):
-                    new_list.append(this_file)
+                    new_file = this_file
                 else:
-                    new_list.append(strToDataFile(this_file))
+                    new_file = strToDataFile(this_file)
+                new_list.append(stripProxy(new_file))
             stripProxy(new_files)._list = new_list
         elif type(files) is str:
             new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
@@ -159,9 +158,9 @@ class LHCbDataset(GangaDataset):
             ds = LHCbDataset(files=self.files[i])
             ds.depth = self.depth
             #ds.XMLCatalogueSlice = self.XMLCatalogueSlice
-            return GPIProxyObjectFactory(ds)
+            return ds
         else:
-            return GPIProxyObjectFactory(self.files[i])
+            return self.files[i]
 
     def isEmpty(self): return not bool(self.files)
 
@@ -175,14 +174,14 @@ class LHCbDataset(GangaDataset):
     def hasLFNs(self):
         'Returns True is the dataset has LFNs and False otherwise.'
         for f in self.files:
-            if isDiracFile(GPIProxyObjectFactory(f)):
+            if isDiracFile(f):
                 return True
         return False
 
     def hasPFNs(self):
         'Returns True is the dataset has PFNs and False otherwise.'
         for f in self.files:
-            if not isDiracFile(GPIProxyObjectFactory(f)):
+            if not isDiracFile(f):
                 return True
         return False
 
@@ -191,7 +190,7 @@ class LHCbDataset(GangaDataset):
         ds.replicate().'''
 
         if not destSE:
-            from Ganga.GPI import DiracFile
+            from GangaDirac.Lib.Files.DiracFile import DiracFile
             DiracFile().replicate('')
             return
         if not self.hasLFNs():
@@ -200,7 +199,7 @@ class LHCbDataset(GangaDataset):
         retry_files = []
 
         for f in self.files:
-            if not isDiracFile(GPIProxyObjectFactory(f)):
+            if not isDiracFile(f):
                 continue
             try:
                 result = f.replicate( destSE=destSE )
@@ -260,18 +259,18 @@ class LHCbDataset(GangaDataset):
             if _file is None:
                 _file = this_f
             myName = _file.namePattern
-            from Ganga.GPI import DiracFile
+            from GangaDirac.Lib.Files.DiracFile import DiracFile
             if isType(_file, DiracFile):
                 myName = _file.lfn
             if unique and myName in self.getFileNames():
                 continue
-            self.files.append(_file)
+            self.files.append(stripProxy(_file))
 
-    def removeFile(self, file):
+    def removeFile(self, input_file):
         try:
-            self.files.remove(file)
+            self.files.remove(input_file)
         except:
-            raise GangaException('Dataset has no file named %s' % file.name)
+            raise GangaException('Dataset has no file named %s' % input_file.namePattern)
 
     def getLFNs(self):
         'Returns a list of all LFNs (by name) stored in the dataset.'
@@ -279,7 +278,7 @@ class LHCbDataset(GangaDataset):
         if not self:
             return lfns
         for f in self.files:
-            if isDiracFile(GPIProxyObjectFactory(f)):
+            if isDiracFile(f):
                 subfiles = f.getSubFiles()
                 if len(subfiles) == 0:
                     lfns.append(f.lfn)
@@ -304,7 +303,7 @@ class LHCbDataset(GangaDataset):
     def getFileNames(self):
         'Returns a list of the names of all files stored in the dataset.'
         names = []
-        from Ganga.GPI import DiracFile
+        from GangaDirac.Lib.Files.DiracFile import DiracFile
         for i in self.files:
             if isType(i, DiracFile):
                 names.append(i.lfn)
@@ -320,7 +319,7 @@ class LHCbDataset(GangaDataset):
     def getFullFileNames(self):
         'Returns all file names w/ PFN or LFN prepended.'
         names = []
-        from Ganga.GPI import DiracFile
+        from GangaDirac.Lib.Files.DiracFile import DiracFile
         for f in self.files:
             if isType(f, DiracFile):
                 names.append('LFN:%s' % f.lfn)

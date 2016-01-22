@@ -2,7 +2,6 @@ from Ganga.Core.exceptions import SplitterError
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
@@ -75,6 +74,8 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         logger.debug("dataset size: %s" % str(len(dataset)))
         #logger.debug( "dataset: %s" % str(dataset) )
+
+        from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 
         if isinstance(dataset, LHCbDataset):
             for i in dataset:
