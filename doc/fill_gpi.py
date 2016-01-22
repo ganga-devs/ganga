@@ -29,7 +29,7 @@ import Ganga.Runtime
 gangadir = os.path.expandvars('$HOME/gangadir_sphinx_dummy')
 this_argv = [
     'ganga',  # `argv[0]` is usually the name of the program so fake that here
-    '-o[Configuration]RUNTIME_PATH=Ganga:GangaDirac:',
+    '-o[Configuration]RUNTIME_PATH=Ganga',
     '-o[Configuration]gangadir={gangadir}'.format(gangadir=gangadir),
 ]
 
@@ -98,7 +98,7 @@ def signature(func, name=None):
 
 
 # First we get all objects that are in Ganga.GPI and filter out any non-GangaObjects
-gpi_classes = (stripProxy(o) for name, o in Ganga.GPI.__dict__.items() if isinstance(o, type) and issubclass(o, GPIProxyObject))
+gpi_classes = [stripProxy(o) for name, o in Ganga.GPI.__dict__.items() if isinstance(o, type) and issubclass(o, GPIProxyObject)]
 
 with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
 
@@ -152,7 +152,6 @@ with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
         print('', file=cf)
         print('', file=cf)
 
-
 # Looking through the plugin list helps categorise the GPI objects
 
 with open(doc_dir+'/GPI/plugins.rst', 'w') as pf:
@@ -174,6 +173,32 @@ with open(doc_dir+'/GPI/plugins.rst', 'w') as pf:
         print('', file=pf)
 
 print('')
+
+# All objects that are not proxied GangaObjects
+gpi_objects = dict((name, stripProxy(o)) for name, o in Ganga.GPI.__dict__.items() if stripProxy(o) not in gpi_classes and not name.startswith('__'))
+
+# Any objects which are not exposed as proxies (mostly exceptions)
+non_proxy_classes = dict((k, v) for k, v in gpi_objects.items() if inspect.isclass(v))
+
+# Anything which is callable
+callables = dict((k, v) for k, v in gpi_objects.items() if callable(v) and v not in non_proxy_classes.values())
+
+# Things which were declared as actual functions
+functions = dict((k, v) for k, v in callables.items() if inspect.isfunction(v) or inspect.ismethod(v))
+
+with open(doc_dir+'/GPI/functions.rst', 'w') as ff:
+
+    print('Functions', file=ff)
+    print('=========', file=ff)
+    print('', file=ff)
+
+    for name, func in functions.items():
+
+        print('.. function:: {signature}'.format(signature=signature(func, name)), file=ff)
+        print('', file=ff)
+        print(reindent(func.__doc__ or '', '    '), file=ff)
+
+        print('', file=ff)
 
 ## EXITING GANGA ##
 from Ganga.Core.InternalServices import ShutdownManager
