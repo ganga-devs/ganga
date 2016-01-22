@@ -53,6 +53,8 @@ def _ganga_run_exitfuncs():
     the registered handlers are executed
     """
 
+    from Ganga.GPIDev.Base.Proxy import getName
+
     #print("Shutting Down Ganga Repositories")
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.flush_all()
@@ -139,11 +141,11 @@ def _ganga_run_exitfuncs():
         try:
             if hasattr(func, 'im_class'):
                 for cls in inspect.getmro(func.__self__.__class__):
-                    if func.__name__ in cls.__dict__:
-                        logger.debug(cls.__name__ + " : " + func.__name__)
+                    if getName(func) in cls.__dict__:
+                        logger.debug(getName(cls) + " : " + getName(func))
                 func(*targs, **kargs)
             else:
-                logger.debug("noclass : " + func.__name__)
+                logger.debug("noclass : " + getName(func))
                 #print("%s" % str(func))
                 #print("%s" % str(inspect.getsourcefile(func)))
                 #func(*targs, **kargs)
@@ -151,7 +153,7 @@ def _ganga_run_exitfuncs():
                 if str(inspect.getsourcefile(func)).find('Ganga') != -1:
                     func(*targs, **kargs)
         except Exception as err:
-            s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__, str(err))
+            s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (getName(func), str(err))
             logger.debug(s)
             try:
                 import os
@@ -171,9 +173,9 @@ def _ganga_run_exitfuncs():
     removeGlobalSessionFileHandlers()
     removeGlobalSessionFiles()
 
-    import Ganga.Utility.logging
-    if Ganga.Utility.logging.requires_shutdown is True:
-        Ganga.Utility.logging.final_shutdown()
+    from Ganga.Utility.logging import requires_shutdown, final_shutdown
+    if requires_shutdown is True:
+        final_shutdown()
 
     from Ganga.Runtime import bootstrap
     if bootstrap.DEBUGFILES or bootstrap.MONITOR_FILES:

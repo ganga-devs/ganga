@@ -1,6 +1,5 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """Write a script containing CMT command which can subsequence be executed."""
-#from Ganga.GPI import *
 import Ganga.Utility.logging
 import os
 import sys

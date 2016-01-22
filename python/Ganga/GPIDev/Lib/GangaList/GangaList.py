@@ -1,7 +1,7 @@
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Filters import allComponentFilters
-from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError
+from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError, getName
 from Ganga.GPIDev.Base.VPrinter import full_print, summary_print
 from Ganga.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
 from Ganga.Utility.util import containsGangaObjects
@@ -170,7 +170,7 @@ class GangaList(GangaObject):
             if '_list_get__match__' in dir(item):
                 return item._list_get__match__(to_match)
             return to_match == item
-        return makeGangaListByRef(filter(matching_filter, self._list), self._is_preparable)
+        return makeGangaListByRef(filter(matching_filter, self._list), preparable=self._is_preparable)
 
     def _export_get(self, to_match):
         return addProxy(self.get(stripProxy(to_match)))
@@ -234,7 +234,7 @@ class GangaList(GangaObject):
         """Puts a hook in to stop mutable access to readonly jobs."""
         if self._readonly():
             raise ReadOnlyObjectError(
-                'object %s is readonly and attribute "%s" cannot be modified now' % (repr(self), self._name))
+                'object %s is readonly and attribute "%s" cannot be modified now' % (repr(self), getName(self)))
         else:
             self._getWriteAccess()
             # TODO: BUG: This should only be set _after_ the change has been
@@ -251,7 +251,7 @@ class GangaList(GangaObject):
         if not self.is_list(obj_list):
             raise TypeError('Type %s can not be concatinated to a GangaList' % type(obj_list))
 
-        return makeGangaList(self._list.__add__(self.strip_proxy_list(obj_list, True)), self._is_preparable)
+        return makeGangaList(self._list.__add__(self.strip_proxy_list(obj_list, True)), preparable=self._is_preparable)
 
     def _export___add__(self, obj_list):
         self.checkReadOnly()
@@ -359,7 +359,7 @@ class GangaList(GangaObject):
         return self._list.__lt__(self.strip_proxy_list(obj_list))
 
     def __mul__(self, number):
-        return makeGangaList(self._list.__mul__(number), self._is_preparable)
+        return makeGangaList(self._list.__mul__(number), preparable=self._is_preparable)
 
     def _export___mul__(self, number):
         return addProxy(self.__mul__(number))
@@ -390,7 +390,7 @@ class GangaList(GangaObject):
         return obj + cp
 
     def __rmul__(self, number):
-        return makeGangaList(self._list.__rmul__(number), self._is_preparable)
+        return makeGangaList(self._list.__rmul__(number), preparable=self._is_preparable)
 
     def _export___rmul__(self, number):
         return addProxy(self.__rmul__(number))
@@ -502,7 +502,7 @@ class GangaList(GangaObject):
                     break
         return result
 
-    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=sys.stdout, selection=''):
+    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=sys.stdout, selection='', interactive=False):
         parent = self._getParent()
         schema_entry = self.findSchemaParentSchemaEntry(parent)
 
@@ -522,7 +522,7 @@ class GangaList(GangaObject):
                 return
 
             if (maxLen != -1) and (self_len > maxLen):
-                out.write(decorateListEntries(self_len, type(self[0]).__name__))
+                out.write(decorateListEntries(self_len, getName(type(self[0]))))
                 return
             else:
                 summary_print(self, out)

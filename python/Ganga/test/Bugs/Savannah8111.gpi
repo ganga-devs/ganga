@@ -1,3 +1,0 @@
-j1 = Job()
-j1.name="Gauss Job"
-jj=j1.copy() 

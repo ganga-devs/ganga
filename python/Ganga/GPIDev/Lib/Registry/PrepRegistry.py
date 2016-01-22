@@ -143,6 +143,7 @@ class ShareRef(GangaObject):
         logger.debug("running increase() in prepregistry")
         self._getWriteAccess()
 
+
         from Ganga.GPIDev.Lib.File import getSharedPath
         shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
         basedir = os.path.basename(shareddir)
@@ -162,7 +163,7 @@ class ShareRef(GangaObject):
             logger.error('Directory %s does not exist' % shareddir)
 
         self._setDirty()
-        #self._releaseWriteAccess()
+        self._releaseWriteAccess()
 
     def decrease(self, shareddir, remove=0):
         """Reduce the reference counter for a given shared directory by 1. If the current value
@@ -189,7 +190,7 @@ class ShareRef(GangaObject):
             self.__getName()[basedir] = 0
 
         self._setDirty()
-        #self._releaseWriteAccess()
+        self._releaseWriteAccess()
 
     def lookup(self, sharedir, unprepare=False):
         """

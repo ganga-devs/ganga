@@ -1,7 +1,6 @@
 from __future__ import print_function
 
 from Ganga.Utility.ColourText import getColour
-import logging
 import readline
 import inspect
 import re
@@ -9,7 +8,8 @@ import itertools
 import subprocess
 import types
 import operator
-logger = logging.getLogger('CompletionErrorChecker')
+from Ganga.Utility.logging import getLogger
+logger = getLogger('CompletionErrorChecker')
 
 
 complete_bracket_matcher = re.compile('(\([^()]*?\))')

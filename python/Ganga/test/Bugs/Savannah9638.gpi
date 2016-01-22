@@ -1,7 +1,0 @@
-import os.path
-
-topdir = os.path.abspath(config['Configuration']['gangadir'])
-j = Job()
-assert(j.inputdir.find(topdir)!=-1)
-assert(j.outputdir.find(topdir)!=-1)
-

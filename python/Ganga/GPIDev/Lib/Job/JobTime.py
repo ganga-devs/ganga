@@ -51,7 +51,7 @@ class JobTime(GangaObject):
        extracted in the way as in would be for a standard, non-application
        specific python dictionary.
 
-       For a table display of the Job's timestamps use .time._display(). For
+       For a table display of the Job's timestamps use .time.display(). For
        timestamps details from the backend use .time.details()
 
 
@@ -66,7 +66,6 @@ class JobTime(GangaObject):
     _category = 'jobtime'
     _name = 'JobTime'
     _exportmethods = ['display',
-                      '_display',
                       'new',
                       'submitting',
                       'submitted',
@@ -124,7 +123,7 @@ class JobTime(GangaObject):
             # backend stamps
             if status in b_list:
                 for childstatus in b_list:
-                    be_statetime = j.backend.getStateTime(childstatus)
+                    be_statetime = stripProxy(j.backend).getStateTime(childstatus)
                     if be_statetime is not None:
                         if childstatus in backend_final:
                             self.timestamps["backend_final"] = be_statetime
@@ -199,11 +198,11 @@ class JobTime(GangaObject):
                 "IndexError: ID: %d, Status: '%s', length of list: %d", j.id, status, len(list))
 
     def display(self, format="%Y/%m/%d %H:%M:%S"):
-        return self._diaply(format)
+        return self._display(format)
 
     # Justin 10.9.09: I think 'ljust' might be just as good if not better than
     # 'rjust' here:
-    def _display(self, format="%Y/%m/%d %H:%M:%S"):
+    def _display(self, format="%Y/%m/%d %H:%M:%S", interactive=False):
         """Displays existing timestamps in a table.
 
            Format can be specified by typing a string of the appropriate strftime() behaviour codes as the arguement.
@@ -237,10 +236,10 @@ class JobTime(GangaObject):
             retstr = retstr + times[i] + '\n'
         return retstr
 
-    def _timestamps_summary_print(self, value, verbosity_level):
+    def _timestamps_summary_print(self, value, verbosity_level, interactive=False):
         """Used to display timestamps when JobTime object is displayed.
         """
-        return self._display()
+        return self._display(interactive=interactive)
 
     # This didn't work:
     #

@@ -79,6 +79,9 @@ def defaultConfigSectionName(name):
 # possible  however   the  _pluginclass  objects   are  shared  unless
 # overriden explicitly.
 
+def _getName(object):
+    from Ganga.GPIDev.Base.Proxy import getName
+    return getName(object)
 
 class Schema(object):
     # Schema constructor is used by Ganga plugin developers.
@@ -102,7 +105,7 @@ class Schema(object):
             raise GangaAttributeError(err_str)
 
     category = property(lambda self: self._pluginclass._category)
-    name = property(lambda self: self._pluginclass._name)
+    name = property(lambda self: _getName(self._pluginclass))
 
     def allItems(self):
         if self.datadict is None: return zip()
@@ -261,7 +264,7 @@ class Schema(object):
         if check:
             defvalue = val
 
-        if item.isA(ComponentItem):
+        if isinstance(item, ComponentItem):
 
             # FIXME: limited support for initializing non-empty sequences (i.e.
             # apps => ['DaVinci','Executable'] is NOT correctly initialized)
@@ -283,7 +286,7 @@ class Schema(object):
         try:
             from Ganga.GPIDev.Base.Proxy import isType, getRuntimeGPIObject, stripProxy, getName
             from Ganga.GPIDev.Base.Objects import Node
-            if isType(defvalue, Node):
+            if isinstance(defvalue, Node):
                 return stripProxy(getRuntimeGPIObject(getName(defvalue)))
             else:
                 return copy.deepcopy(defvalue)
@@ -388,35 +391,15 @@ class Item(object):
 
     # compare the kind of item:
     # all calls are equivalent:
-    # item.isA('SimpleItem')
     # item.isA(SimpleItem)
     def isA(self, _what):
 
-        from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+        from Ganga.GPIDev.Base.Proxy import stripProxy
 
         what = stripProxy(_what)
 
-        this_type = type(what)
-
-        try:
-            # for backwards compatibility with Ganga3 CLIP: if a string --
-            # first convert to the class name
-            if isinstance(what, str):
-                # get access to all Item classes defined in this module
-                # (schema)
-                if hasattr(Schema, what):
-                    what = getattr(Schema, what)
-                else:
-                    return False
-            elif isType(what, types.InstanceType):
-                if hasattr(what, '__class__'):
-                    what = what.__class__
-                else:
-                    return False
-
-        except AttributeError:
-            # class not found
-            return False
+        if isinstance(what, types.InstanceType):
+            what = what.__class__
 
         return issubclass(self.__class__, what)
 
@@ -478,8 +461,8 @@ class Item(object):
     @staticmethod
     def __check(isAllowedType, name, validTypes, input_val):
         if not isAllowedType:
-            import traceback
-            traceback.print_stack()
+            #import traceback
+            #traceback.print_stack()
             raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (name, validTypes, str(input_val), type(input_val)))
 
     def _check_type(self, val, name, enableGangaList=True):

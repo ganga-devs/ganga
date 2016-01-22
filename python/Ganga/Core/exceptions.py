@@ -22,12 +22,11 @@ class GangaException(Exception):
         # This makes debugging what's going on much easier whilst hiding mess
         # from users
         if self.logger is None:
-            import Ganga.Utility.logging
-            self.logger = Ganga.Utility.logging.getLogger()
-        try:
-            import logging
-        except ImportError:
-            import Ganga.Utility.external.logging as logging
+            from Ganga.Utility.logging import getLogger
+            self.logger = getLogger()
+
+        from Ganga.Utility.logging import _get_logging
+        logging = _get_logging()
 
         if self.logger.isEnabledFor(logging.DEBUG):
             import traceback
@@ -151,12 +150,11 @@ class GangaAttributeError(AttributeError, GangaException):
         # This makes debugging what's going on much easier whilst hiding mess
         # from users
         if self.logger is None:
-            import Ganga.Utility.logging
+            from Ganga.Utility.logging import getLogger
             self.logger = Ganga.Utility.logging.getLogger()
-            try:
-                import logging
-            except ImportError:
-                import Ganga.Utility.external.logging as logging
+
+            from Gangs.Utility.logging import _get_logging
+            logging = _get_logging()
 
             if self.logger.isEnabledFor(logging.DEBUG):
                 import traceback

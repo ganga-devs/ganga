@@ -20,8 +20,30 @@ from __future__ import print_function
 #  - special functions:
 #       - log_user_exception() allows to format nicely exception messages
 
-import logging
-import logging.handlers as handlers
+logging = None
+handlers = None
+
+def _get_logging():
+
+    global logging
+
+    if logging is None:
+        import logging as _logging
+        logging = _logging
+
+    return logging
+
+def _get_handlers():
+
+    global handlers
+
+    if handlers is None:
+        import logging.handlers as _handlers
+
+        handlers = _handlers
+
+    return handlers
+
 import sys
 
 # logger configuration
@@ -33,10 +55,18 @@ import Ganga.Utility.ColourText as ColourText
 
 import threading
 
+from Ganga.Utility.Config import getConfig
+config = getConfig("Logging")
+
 # initialize the root logger for the logger created directly in python
 # executable scripts which have no name starting by "Ganga."
 # By default everything goes to stdout
-logging.basicConfig(stream=sys.stdout)
+
+_hasInit = False
+
+if not _hasInit:
+    _get_logging().basicConfig(stream=sys.stdout)
+    _hasIinit = True
 
 _formats = {
     'DEBUG': '%(asctime)s "%(filename)s":%(funcName)-10s at %(lineno)d, %(threadName)s: %(levelname)-8s %(message)s',
@@ -50,7 +80,7 @@ requires_shutdown = False
 private_logger = None  # private logger of this module
 
 # main logger corresponds to the root of the hierarchy
-main_logger = logging.getLogger()
+main_logger = _get_logging().getLogger()
 
 # this is the handler used to print on screen directly
 direct_screen_handler = main_logger.handlers[0]  # get default StreamHandler
@@ -74,17 +104,26 @@ _global_level = None
 # all loggers which are used by all modules
 _allLoggers = {}
 
-class ColourFormatter(logging.Formatter, object):
+# use this function to get new loggers into your packages
+# if you do not provide the name then logger will detect your package name
+# if you specify the modulename as a string then it will be appended to the package name
+# if you specify the modulename==1 then your module name will be guessed and appended to the package name
+# the guessing algorithm may be modified by passing the frame object (to emulate a different physical location of the logger)
+# this is only useful for special usage such as IBackend base class
+def getLogger(name=None, modulename=None, frame=None):
+    return _getLogger(name, modulename, frame=frame)
+
+class ColourFormatter(_get_logging().Formatter, object):
 
     def __init__(self, *args, **kwds):
-        logging.Formatter.__init__(self, *args, **kwds)
+        _get_logging().Formatter.__init__(self, *args, **kwds)
         fg = ColourText.Foreground()
         fx = ColourText.Effects()
-        self.colours = {logging.INFO: fx.normal,
-                        logging.WARNING: fg.orange,
-                        logging.ERROR: fg.red,
-                        logging.CRITICAL: fg.red,
-                        logging.DEBUG: fx.normal}
+        self.colours = {_get_logging().INFO: fx.normal,
+                        _get_logging().WARNING: fg.orange,
+                        _get_logging().ERROR: fg.red,
+                        _get_logging().CRITICAL: fg.red,
+                        _get_logging().DEBUG: fx.normal}
         self.markup = ColourText.ANSIMarkup()
 
     def format(self, record):
@@ -120,7 +159,7 @@ def _make_file_handler(logfile, logfile_size):
     global file_handler
     if logfile:
         try:
-            new_file_handler = handlers.RotatingFileHandler(
+            new_file_handler = _get_handlers().RotatingFileHandler(
                 logfile, maxBytes=logfile_size, backupCount=1)
         except IOError as x:
             private_logger.error('Cannot open the log file: %s', str(x))
@@ -137,70 +176,20 @@ def _make_file_handler(logfile, logfile_size):
             try:
                 # WARNING: this relies on the implementation details of the
                 # logging module
-                del logging._handlers[file_handler]
+                del _get_logging()._handlers[file_handler]
             except KeyError:
                 # don't complain if the handler was correctly unregistered by
                 # the logging system
                 pass
 
-        new_file_handler.setFormatter(logging.Formatter(_formats['VERBOSE']))
+        new_file_handler.setFormatter(_get_logging().Formatter(_formats['VERBOSE']))
         main_logger.addHandler(new_file_handler)
         file_handler = new_file_handler
 
-
-# reflect all user changes immediately
-def post_config_handler(opt, value):
-
-    if '_customFormat' in config and config['_customFormat'] != "":
-        for k in _formats.keys():
-            _formats[k] = config['_customFormat']
-
-    _format, colour = config['_format'], config['_colour']
-
-    #print("")# rcurrie - This strangely seems to trick the logging into working when the _customFormat is used on first start
-
-    if opt in ['_format', '_customFormat']:
-        badConfig = False
-        if opt == "_customFormat":
-            value = config['_format']
-        if value in _formats:
-            _format = _formats[value]
-        else:
-            private_logger.error('illegal name of format string (%s), possible values: %s' % (str(value), _formats.keys()))
-            return
-
-    if opt == '_colour':
-        colour = value
-
-    if opt in ['_format', '_colour', '_customFormat']:
-        fmt = ColourFormatter(_format)
-        fmt.setColour(colour)
-        direct_screen_handler.setFormatter(fmt)
-        return
-
-    logfile, logfile_size = config['_logfile'], config['_logfile_size']
-
-    if opt in ['_logfile', '_logfile_size']:
-        global file_handler
-        _make_file_handler(logfile, logfile_size)
-        return
-
-    # FIXME: has no effect at runtime, should raise a ConfigError
-    if opt == '_interactive_cache':
-        return
-
-    # set the logger level
-    private_logger.info('setting loglevel: %s %s', opt, value)
-    _set_log_level(getLogger(opt), value)
-
-from Ganga.Utility.Config import getConfig
-config = getConfig("Logging")
-config.attachUserHandler(None, post_config_handler)
-config.attachSessionHandler(None, post_config_handler)
-
-
 # set the loglevel for a logger to a given string value (example: "DEBUG")
 def _set_log_level(logger, value):
+
+    global _global_level
 
     if _global_level is not None:
         value = _global_level
@@ -222,6 +211,65 @@ def _set_log_level(logger, value):
         logger.error('Attribute Error: %s', str(err))
         logger.warning('possible configuration error: invalid level value (%s), using default level', value)
         return None
+
+
+# reflect all user changes immediately
+def post_config_handler(opt, value):
+
+    if config is not None and '_customFormat' in config and config['_customFormat'] != "":
+        for k in _formats.keys():
+            _formats[k] = config['_customFormat']
+
+    if config is not None:
+        _format, colour = config['_format'], config['_colour']
+
+    #print("")# rcurrie - This strangely seems to trick the logging into working when the _customFormat is used on first start
+
+    if opt in ['_format', '_customFormat']:
+        badConfig = False
+        if opt == "_customFormat":
+            if config is not None:
+                value = config['_format']
+            else:
+                value = None
+        if _formats is not None and value in _formats:
+            _format = _formats[value]
+        else:
+            if private_logger is not None:
+                private_logger.error('illegal name of format string (%s), possible values: %s' % (str(value), _formats.keys()))
+            return
+
+    if opt == '_colour':
+        colour = value
+
+    if opt in ['_format', '_colour', '_customFormat']:
+        fmt = ColourFormatter(_format)
+        fmt.setColour(colour)
+        direct_screen_handler.setFormatter(fmt)
+        return
+
+    if config is not None:
+        logfile, logfile_size = config['_logfile'], config['_logfile_size']
+
+    if opt in ['_logfile', '_logfile_size']:
+        global file_handler
+        _make_file_handler(logfile, logfile_size)
+        return
+
+    # FIXME: has no effect at runtime, should raise a ConfigError
+    if opt == '_interactive_cache':
+        return
+
+    # set the logger level
+    if private_logger is not None:
+        private_logger.info('setting loglevel: %s %s', opt, value)
+
+    if _set_log_level is not None and getLogger is not None:
+        _set_log_level(getLogger(opt), value)
+
+
+config.attachUserHandler(None, post_config_handler)
+config.attachSessionHandler(None, post_config_handler)
 
 
 def _guess_module_logger_name(modulename, frame=None):
@@ -287,27 +335,19 @@ def _guess_module_logger_name(modulename, frame=None):
     # return custom module name
     return name + '.' + modulename
 
-
-# use this function to get new loggers into your packages
-# if you do not provide the name then logger will detect your package name
-# if you specify the modulename as a string then it will be appended to the package name
-# if you specify the modulename==1 then your module name will be guessed and appended to the package name
-# the guessing algorithm may be modified by passing the frame object (to emulate a different physical location of the logger)
-# this is only useful for special usage such as IBackend base class
-def getLogger(name=None, modulename=None, frame=None):
-    return _getLogger(name, modulename, frame=frame)
+_MemHandler = _get_handlers().MemoryHandler
 
 # Caching will not be done for messages which are generated by the main thread.
-class FlushedMemoryHandler(logging.handlers.MemoryHandler):
+class FlushedMemoryHandler(_MemHandler):
 
     def __init__(self, *args, **kwds):
-        logging.handlers.MemoryHandler.__init__(self, *args, **kwds)
+       _MemHandler.__init__(self, *args, **kwds)
 
     def shouldFlush(self, record):
         return threading.currentThread().getName().find("GANGA_Update_Thread") == -1 or \
-                logging.handlers.MemoryHandler.shouldFlush(self, record)
+                _MemHandler.shouldFlush(self, record)
         #        #threading.currentThread().getName().find("Main") == -1
-        #return False#logging.handlers.MemoryHandler.shouldFlush(self, record)
+        #return False
 
 def enableCaching():
     """
@@ -348,9 +388,9 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
         # print 'reusing existing logger: ',name
     else:
 
-        logger = logging.getLogger(name)
+        logger = _get_logging().getLogger(name)
         _allLoggers[name] = logger
-        #logger.setLevel( logging.CRITICAL )
+        #logger.setLevel( _get_logging().CRITICAL )
 
         if name in config:
             thisConfig = config[name]
@@ -358,7 +398,7 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
 
         ## Reduce verbosity on startup
         #if private_logger:
-        #    private_logger.debug('created logger %s in %s mode', name, logging.getLevelName(logger.getEffectiveLevel()))
+        #    private_logger.debug('created logger %s in %s mode', name, _get_logging().getLevelName(logger.getEffectiveLevel()))
         #    private_logger.debug('applied %s format string to %s', config['_format'], name)
 
         # print '------------>',logger
@@ -382,7 +422,7 @@ def bootstrap(internal=False, handler=None):
         return
 
     private_logger = getLogger('Ganga.Utility.logging')
-    _set_log_level(private_logger, 'CRITICAL')
+    #_set_log_level(private_logger, 'CRITICAL')
     #main_logger = _getLogger('Ganga',_roothandler=1,handler=handler)
 
     private_logger.debug('bootstrap')
@@ -409,7 +449,7 @@ def bootstrap(internal=False, handler=None):
         # should reconfigure Ganga and private logger according to the config
         # file contents
 
-        # logging.getLevelName(getLogger(opt).getEffectiveLevel()))
+        # _get_logging().getLevelName(getLogger(opt).getEffectiveLevel()))
         msg = 'logging %s in %s mode' % (opt, config[opt])
         if internal:
             private_logger.debug(msg)
@@ -419,7 +459,7 @@ def bootstrap(internal=False, handler=None):
         _set_log_level(getLogger(opt), config[opt])
 
     if not internal:
-        class NoErrorFilter(logging.Filter):
+        class NoErrorFilter(_get_logging().Filter):
             """
             A filter which only allow messages which are WARNING or lower to be logged
             """
@@ -430,8 +470,8 @@ def bootstrap(internal=False, handler=None):
         direct_screen_handler.addFilter(NoErrorFilter())
 
         # Add a new handler for ERROR and CRITICAL which prints to stderr
-        error_logger = logging.StreamHandler(sys.stderr)
-        error_logger.setLevel(logging.ERROR)
+        error_logger = _get_logging().StreamHandler(sys.stderr)
+        error_logger.setLevel(_get_logging().ERROR)
         _set_formatter(error_logger)
         main_logger.addHandler(error_logger)
 
@@ -443,7 +483,7 @@ def bootstrap(internal=False, handler=None):
 
 def final_shutdown():
     private_logger.debug('shutting down logsystem')
-    logging.shutdown()
+    _get_logging().shutdown()
 
 
 # do the initial bootstrap automatically at import -> this will bootstrap
@@ -496,15 +536,15 @@ def log_unknown_exception():
 
 
 # extra imports for more convenient work with the logging module
-getLevelName = logging.getLevelName
+getLevelName = _get_logging().getLevelName
 
 if __name__ == "__main__":
     print('Little test')
 
-    private_logger = logging.getLogger("TESTLOGGER.CHILD.GRANDCHILD")
-    formatter = logging.Formatter(_formats['DEBUG'])
-    console = logging.StreamHandler()
+    private_logger = _get_logging().getLogger("TESTLOGGER.CHILD.GRANDCHILD")
+    formatter = _get_logging().Formatter(_formats['DEBUG'])
+    console = _get_logging().StreamHandler()
     console.setFormatter(formatter)
-    private_logger.setLevel(logging.DEBUG)
+    private_logger.setLevel(_get_logging().DEBUG)
     private_logger.addHandler(console)
     private_logger.critical('hello')

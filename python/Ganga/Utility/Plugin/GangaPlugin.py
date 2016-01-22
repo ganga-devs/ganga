@@ -1,6 +1,6 @@
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import GangaValueError
-logger = Ganga.Utility.logging.getLogger()
+logger = getLogger()
 
 
 class PluginManagerError(GangaValueError):

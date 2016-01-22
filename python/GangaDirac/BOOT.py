@@ -85,7 +85,7 @@ exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
 
 def getDiracFiles():
     import os
-    from Ganga.GPI import DiracFile
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
     from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
     filename = getConfig('DIRAC')['DiracLFNBase'].replace('/', '-') + '.lfns'
     logger.info('Creating list, this can take a while if you have a large number of SE files, please wait...')

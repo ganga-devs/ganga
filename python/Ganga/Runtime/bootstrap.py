@@ -45,9 +45,6 @@ def new_version_format_to_old(version):
 
 from Ganga.Utility.files import fullpath
 
-from Ganga.Utility.logging import getLogger
-logger = getLogger(modulename=True)
-
 # This code can help debugging when files aren't closed correctly and
 # managing I/O
 
@@ -64,6 +61,8 @@ if DEBUGFILES or MONITOR_FILES:
         def __init__(self, *args):
             self.x = args[0]
             if DEBUGFILES:
+                from Ganga.Utility.logging import getLogger
+                logger = getLogger(modulename=True)
                 logger.debug("init")
                 logger.debug("### OPENING %s ###" % str(self.x))
             oldfile.__init__(self, *args)
@@ -71,6 +70,8 @@ if DEBUGFILES or MONITOR_FILES:
 
         def close(self):
             if DEBUGFILES:
+                from Ganga.Utility.logging import getLogger
+                logger = getLogger(modulename=True)
                 logger.debug("### CLOSING %s ###" % str(self.x))
             oldfile.close(self)
             #openfiles[ self.x ] = None
@@ -80,12 +81,16 @@ if DEBUGFILES or MONITOR_FILES:
 
     def newopen(*args):
         if DEBUGFILES:
+            from Ganga.Utility.logging import getLogger
+            logger = getLogger()
             logger.debug("NewOpen")
         return newfile(*args)
     __builtin__.file = newfile
     __builtin__.open = newopen
 
     def printOpenFiles():
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
         logger.debug("### %d OPEN FILES: [%s]" % (len(openfiles), ", ".join(
             str(f) for f in openfiles.keys() if openfiles[f] is not None)))
 
@@ -132,11 +137,15 @@ under certain conditions; type license() for details.
 
         if sys.hexversion < 0x020700F0:
             version = '{0}.{1}'.format(sys.version_info[0], sys.version_info[1])
+            from Ganga.Utility.logging import getLogger
+            logger = getLogger()
             logger.warning('Ganga will soon be depending on Python 2.7. '
                            'You have Python {version} installed. '
                            'See https://github.com/ganga-devs/ganga/wiki/Python-2.7'.format(version=version))
 
     def exit(self, *msg):
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
         logger.info(self.hello_string)
         for m in msg:
             logger.error(m)
@@ -275,6 +284,8 @@ under certain conditions; type license() for details.
             old_dir = os.path.abspath(os.path.expanduser(os.environ['IPYTHONDIR']))
 
         single_pass_file = os.path.join(old_dir, '.have_migrated')
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
         logger.debug("testing: %s" % single_pass_file)
 
         if not os.path.exists(single_pass_file) and os.path.exists(os.path.join(old_dir, 'history')):
@@ -313,6 +324,8 @@ under certain conditions; type license() for details.
     @staticmethod
     def generate_config_file(config_file):
         from Ganga.GPIDev.Lib.Config.Config import config_file_as_text
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
 
         # Old backup routine
         if os.path.exists(config_file):
@@ -536,15 +549,15 @@ under certain conditions; type license() for details.
         # initialize logging for the initial phase of the bootstrap
         # will use the default, hardcoded log level in the module until
         # pre-configuration procedure is complete
-        import Ganga.Utility.logging
+        from Ganga.Utility.logging import force_global_level, getLogger
 
-        Ganga.Utility.logging.force_global_level(self.options.force_loglevel)
+        force_global_level(self.options.force_loglevel)
 
         try:
             with open(self.options.config_file) as cf:
                 first_line = cf.readline()
                 r = re.compile('# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
-                this_logger = Ganga.Utility.logging.getLogger("Configure")
+                this_logger = getLogger("Configure")
                 if not r:
                     this_logger.error('file %s does not seem to be a Ganga config file', self.options.config_file)
                     this_logger.error('try -g option to create valid ~/.gangarc')
@@ -558,7 +571,8 @@ under certain conditions; type license() for details.
         except IOError as x:
             # ignore all I/O errors (e.g. file does not exist), this is just an
             # advisory check
-            logger.debug("Config File Exception: %s" % str(x))
+            this_logger = getLogger("Configure")
+            this_logger.debug("Config File Exception: %s" % str(x))
 
         if self.options.config_path is None:
             try:
@@ -665,10 +679,15 @@ under certain conditions; type license() for details.
 
         # activate the logging subsystem
         # user defined log level takes effect NOW
-        Ganga.Utility.logging.bootstrap()
+        from Ganga.Utility.logging import bootstrap
+        bootstrap()
 
         if not self.options.monitoring:
             self.options.cmdline_options.append('[PollThread]autostart=False')
+
+        from Ganga.Utility.logging import getLogger
+
+        logger = getLogger()
 
         logger.debug('default user name is %s', config['user'])
         logger.debug('user specified cmdline_options: %s', str(self.options.cmdline_options))
@@ -732,6 +751,9 @@ under certain conditions; type license() for details.
     @staticmethod
     def initEnvironment(opt_rexec):
 
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
+
         logger.debug("Installing Shutdown Manager")
         from Ganga.Core.InternalServices import ShutdownManager
         ShutdownManager.install()
@@ -762,14 +784,13 @@ under certain conditions; type license() for details.
 
             
             import inspect
+            from os.path import expandvars, expanduser
+
             GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
             def transform(x):
                 return os.path.normpath(Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath,x)))
 
-            from os.path import expandvars, expanduser
-
-            paths = map(transform, filter(lambda x: expandvars(expanduser(x)), config['RUNTIME_PATH'].split(':')))
-
+            paths = map(transform, filter(None, map(lambda x: expandvars(expanduser(x)), config['RUNTIME_PATH'].split(':'))))
 
             for path in paths:
                 r = RuntimePackage(path)
@@ -824,7 +845,8 @@ under certain conditions; type license() for details.
 
         from Ganga.Core import GangaException
         from Ganga.Utility.Runtime import allRuntimes
-        import Ganga.Utility.logging
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
 
         for n, r in zip(allRuntimes.keys(), allRuntimes.values()):
             try:
@@ -931,6 +953,8 @@ under certain conditions; type license() for details.
         exportToGPI('load', load, 'Functions')
         exportToGPI('export', export, 'Functions')
 
+        from Ganga.Utility.logging import getLogger
+
         def typename(obj):
             """Return a name of Ganga object as a string, example: typename(j.application) -> 'DaVinci'"""
             from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, proxyRef
@@ -938,7 +962,7 @@ under certain conditions; type license() for details.
                 if hasattr(stripProxy(obj), '_name'):
                     return stripProxy(obj)._name
                 else:
-                    logger = Ganga.Utility.logging.getLogger()
+                    logger = getLogger()
                     logger.error("Object %s DOES NOT have the _name parameter set" % (str(obj)))
                     #import traceback
                     #traceback.print_stack()
@@ -947,7 +971,7 @@ under certain conditions; type license() for details.
                 if hasattr(obj, '_name'):
                     return obj._name
                 else:
-                    logger = Ganga.Utility.logging.getLogger()
+                    logger = getLogger()
                     logger.error("Object %s DOES NOT have the %s or _name parameter set" % (str(obj), str(proxyRef)))
                     #import traceback
                     #traceback.print_stack()
@@ -960,7 +984,7 @@ under certain conditions; type license() for details.
                 if hasattr(stripProxy(obj), '_category'):
                     return stripProxy(obj)._category
                 else:
-                    logger = Ganga.Utility.logging.getLogger()
+                    logger = getLogger()
                     logger.error("Object %s DOES NOT have the _category parameter set" % (str(obj)))
                     #import traceback
                     #traceback.print_stack()
@@ -969,7 +993,7 @@ under certain conditions; type license() for details.
                 if hasattr(obj, '_category'):
                     return obj._category
                 else:
-                    logger = Ganga.Utility.logging.getLogger()
+                    logger = getLogger()
                     logger.error("Object %s DOES NOT have the %s or _category parameter set" % (str(obj), str(proxyRef)))
                     #import traceback
                     #traceback.print_stack()
@@ -1063,8 +1087,7 @@ under certain conditions; type license() for details.
         # JobTree
         from Ganga.Core.GangaRepository import getRegistry
         jobtree = GPIProxyObjectFactory(getRegistry("jobs").getJobTree())
-        exportToGPI(
-            'jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
+        exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
         exportToGPI('TreeError', TreeError, 'Exceptions')
 
         # ShareRef
@@ -1284,8 +1307,8 @@ under certain conditions; type license() for details.
             # buffering of log messages from all threads called "GANGA_Update_Thread"
             # the logs are displayed at the next IPython prompt
 
-            import Ganga.Utility.logging
-            Ganga.Utility.logging.enableCaching()
+            from Ganga.Utility.logging import enableCaching
+            enableCaching()
 
             ipver = IPython.__version__
 
@@ -1314,6 +1337,9 @@ under certain conditions; type license() for details.
         """
         Check that the .ipython folder exists as expected as defined by IPYTHONDIR
         """
+
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
 
         not_exist = False
 
@@ -1407,8 +1433,8 @@ under certain conditions; type license() for details.
 
         # buffering of log messages from all threads called "GANGA_Update_Thread"
         # the logs are displayed at the next IPython prompt
-        import Ganga.Utility.logging
-        Ganga.Utility.logging.enableCaching()
+        from Ganga.Utility.logging import enableCaching
+        enableCaching()
 
         ipshell.set_hook("pre_prompt_hook", ganga_prompt)
 
@@ -1425,8 +1451,9 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def ganga_prompt(dummy=None):
-        if Ganga.Utility.logging.cached_screen_handler:
-            Ganga.Utility.logging.cached_screen_handler.flush()
+        from Ganga.Utility.logging import cached_screen_handler
+        if cached_screen_handler:
+            cached_screen_handler.flush()
 
         credentialsWarningPrompt = ''
         # alter the prompt only when the internal services are disabled
