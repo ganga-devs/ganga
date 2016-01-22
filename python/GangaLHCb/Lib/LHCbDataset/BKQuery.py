@@ -3,8 +3,7 @@ import datetime
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, addProxy
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -192,7 +191,7 @@ RecoToDST-07/90000000/DST" ,
 
         logger.debug("Creating Dataset")
 
-        from Ganga.GPI import LHCbDataset
+        from GangaLHCb.Lib.LHCbDataset import LHCbDataset
         ds = LHCbDataset(new_files)
 
         logger.debug("Returning Dataset")
@@ -286,7 +285,7 @@ class BKQueryDict(GangaObject):
         from GangaDirac.Lib.Files.DiracFile import DiracFile
         this_list = [DiracFile(lfn=_file) for _file in files]
 
-        from Ganga.GPI import LHCbDataset
+        from GangaLHCb.Lib.LHCbDataset import LHCbDataset
         ds = LHCbDataset(this_list)
 
         return addProxy(ds)
