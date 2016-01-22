@@ -148,10 +148,7 @@ def execute_once():
 
 def hostname():
     """ Try to get the hostname in the most possible reliable way as described in the Python LibRef."""
-    try:
-        import socket
-    except ImportError:
-        return 'localhost'
+    import socket
     try:
         return socket.gethostbyaddr(socket.gethostname())[0]
     # [bugfix #20333]:
