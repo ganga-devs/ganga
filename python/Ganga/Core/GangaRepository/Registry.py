@@ -1173,10 +1173,13 @@ class Registry(object):
             logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
 
     def has_loaded(self, obj):
-
+        """Returns True/False for if a given object has been fully loaded by the Registry.
+        Returns False on the object not being in the Registry!
+        This ONLY applies to master jobs as the Registry has no apriori knowledge of the subjob structure.
+        Consult SubJobXMLList for a more fine grained loaded/not-loaded info/test."""
         try:
             index = self.find(obj)
-        except:
+        except ObjectNotInRegistryError:
             return False
 
         if index in self._loaded_ids:
