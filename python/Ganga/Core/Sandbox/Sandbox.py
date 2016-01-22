@@ -33,9 +33,11 @@ def getGangaModulesAsSandboxFiles(modules):
     import inspect
     import sys
     from Ganga.Utility.files import remove_prefix
-    from Ganga.GPIDev.Lib.File import File
+    from Ganga.GPIDev.Lib.File import File, FileBuffer
 
     files = []
+    # HACK: append an empty __init__.py file for the Ganga base directory
+    files.append(FileBuffer("__init__.py", "", subdir=os.path.join(PYTHON_DIR, 'Ganga')))
     for m in modules:
         fullpath = os.path.realpath(inspect.getsourcefile(m))
         dir, fn = os.path.split(remove_prefix(fullpath, sys.path))
