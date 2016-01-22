@@ -367,17 +367,9 @@ class Descriptor(object):
         self._checkset_name = None
         self._filter_name = None
 
-        if not hasattr( item, '_meta'):
-            return
-
-        if 'getter' in item._meta:
-            self._getter_name = item['getter']
-
-        if 'checkset' in item._meta:
-            self._checkset_name = item['checkset']
-
-        if 'filter' in item._meta:
-            self._filter_name = item['filter']
+        self._getter_name = item['getter']
+        self._checkset_name = item['checkset']
+        self._filter_name = item['filter']
 
     @staticmethod
     def _bind_method(obj, name):
@@ -390,67 +382,44 @@ class Descriptor(object):
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % getName(self))
 
     def __get__(self, obj, cls):
+        name = getName(self)
+
+        # If obj is None then the getter was called on the class so return the Item
         if obj is None:
-            return cls._schema[getName(self)]
-        else:
-            result = None
-            getter = self._bind_method(obj, self._getter_name)
-            if getter:
-                result = getter()
-            else:
+            return cls._schema[name]
 
-                lookup_exception = None
+        if self._getter_name:
+            return self._bind_method(obj, self._getter_name)()
 
-                #logger.info("Looking for: %s in Cache" % getName(self))
-                _obj = obj
+        # First we want to try to get the information without prompting a load from disk
 
-                try:
-                    obj_index = _obj.getNodeIndexCache()
-                    if obj_index is not None:
-                        if getName(self) in obj_index.keys():
-                            return obj_index[getName(self)]
-                except Exception as err:
-                    logger.debug("Lazy Loading Exception: %s" % str(err))
-                    lookup_exception = err
-                    #raise err
+        # ._data takes priority ALWAYS over ._index_cache
+        # This access should not cause the object to be loaded
+        obj_data = obj.getNodeData()
+        if obj_data is not None:
+            if name in obj_data:
+                return obj_data[name]
 
+        # Then try to get it from the index cache
+        obj_index = obj.getNodeIndexCache()
+        if obj_index is not None:
+            if name in obj_index:
+                return obj_index[name]
 
-                ## ._data takes priority ALWAYS over ._index_cache
-                try:
-                    obj_data = _obj.getNodeData()
-                    if obj_data is not None:
-                        if getName(self) in obj_data.keys():
-                            return obj_data[getName(self)]
-                except Exception as err:
-                    logger.debug("Object Data Exception: %s" % str(err))
-                    lookup_exception = err
+        # Since we couldn't find the information in the cache, we will need to fully load the object
 
-                #logger.info("Not found")
+        # Guarantee that the object is now loaded from disk
+        obj._getReadAccess()
 
-                ## Guarantee that the object is now loaded from disk
-                _obj._getReadAccess()
+        # First try to load the object from the attributes on disk
+        if name in obj.getNodeData():
+            return obj.getNodeAttribute(name)
 
-                ## First try to load the object from the attributes on disk
-                if getName(self) in _obj.getNodeData().keys():
-                    result = _obj.getNodeAttribute(getName(self))
-                else:
+        # Finally, get the default value from the schema
+        if obj._schema.hasItem(name):
+            return obj._schema.getDefaultValue(name)
 
-                    ## If this object doesn't exist and the object has been loaded then let's look around
-
-                    if getName(self) in _obj.__dict__.keys():
-
-                        #if getName(self) in _obj.__dict__.keys():
-                        return _obj.__dict__[getName(self)]
-
-                    else:
-
-                        if _obj._schema.hasItem(getName(self)):
-                            return _obj._schema.getDefaultValue(getName(self))
-                        else:
-                            return _obj.__dict__[getName(self)]
-
-
-            return result
+        raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
 
     def __cloneVal(self, v, obj):
 
