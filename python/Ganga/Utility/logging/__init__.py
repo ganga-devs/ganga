@@ -215,7 +215,7 @@ def _set_log_level(logger, value):
 
 # reflect all user changes immediately
 def post_config_handler(opt, value):
-    global config, _formats
+
     if config is not None and '_customFormat' in config and config['_customFormat'] != "":
         for k in _formats.keys():
             _formats[k] = config['_customFormat']
