@@ -456,9 +456,11 @@ class ProxyDataDescriptor(object):
     @staticmethod
     def __recursive_strip(_val):
         ## Strip the proxies recursively for things like nested lists
-        if isType(_val, getKnownLists()) or (hasattr(stripProxy(_val), '__len__') and hasattr(stripProxy(_val), '__getitem__')):
+        if not isinstance(_val, str) and (isType(_val, getKnownLists()) or\
+                (hasattr(stripProxy(_val), '__len__') and hasattr(stripProxy(_val), '__getitem__'))):
             val = stripProxy(_val).__class__()
             for elem in _val:
+                GangaObject = _getGangaObject()
                 if isType(elem, GangaObject):
                     val.append(ProxyDataDescriptor.__recursive_strip(stripProxy(elem)))
                 else:

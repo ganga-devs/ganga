@@ -1,12 +1,11 @@
 from __future__ import absolute_import
 
 from ..GangaUnitTest import GangaUnitTest
-from Ganga.GPIDev.Lib.Job.Job import JobError
 
 
 class Savannah13685(GangaUnitTest):
     def test_Savannah13685(self):
-        from Ganga.GPI import Job
+        from Ganga.GPI import Job, JobError
 
         j = Job()
         j.application.exe = 'sleep 6'
