@@ -19,7 +19,7 @@ try:
 except ImportError:
     import pickle
 
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.Config.Config import getConfig, ConfigError
 from Ganga.GPIDev.Base.Proxy import getName
@@ -47,7 +47,7 @@ except ImportError:
         pass
 
 
-logger = Ganga.Utility.logging.getLogger()
+logger = getLogger()
 
 
 session_lock_last = 0

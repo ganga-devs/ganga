@@ -12,6 +12,7 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
+from Ganga.GPIDev.Base.Proxy import getName
 
 from Ganga.GPIDev.Lib.File import FileUtils
 
@@ -75,7 +76,7 @@ class MassStorageFile(IGangaFile):
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
-        if obj_type.__class__.__name__ == 'Job' and attrib_name == 'outputfiles':
+        if getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
             r.locations = []
             r.localDir = ''
             r.failureReason = ''
@@ -320,7 +321,7 @@ class MassStorageFile(IGangaFile):
                 if exitcode != 0:
                     self.handleUploadFailure(mystderr)
                 else:
-                    logger.info('%s successfully uploaded to mass storage' % currentFile)
+                    logger.info('%s successfully uploaded to mass storage as %s' % (currentFile, os.path.join(massStoragePath, finalFilename)))
                     d.locations = os.path.join(massStoragePath, os.path.basename(finalFilename))
 
                     # Alex removed this as more general approach in job.py after put() is called
@@ -336,7 +337,7 @@ class MassStorageFile(IGangaFile):
             if exitcode != 0:
                 self.handleUploadFailure(mystderr)
             else:
-                logger.info('%s successfully uploaded to mass storage' % currentFile)
+                logger.info('%s successfully uploaded to mass storage as %s' % (currentFile, os.path.join(massStoragePath, finalFilename)))
                 location = os.path.join(massStoragePath, os.path.basename(finalFilename))
                 if location not in self.locations:
                     self.locations.append(location)

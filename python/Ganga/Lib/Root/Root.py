@@ -23,6 +23,8 @@ import sys
 import tempfile
 from Ganga.Utility.files import expandfilename
 
+from Ganga.GPIDev.Base.Proxy import getName
+
 logger = Ganga.Utility.logging.getLogger()
 config = getConfig('ROOT')
 
@@ -237,7 +239,7 @@ class Root(IPrepareApp):
         """
         if (self.is_prepared is not None) and (force is not True):
             raise ApplicationPrepareError(
-                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % (self._name))
+                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
@@ -355,7 +357,7 @@ class RootRTHandler(IRuntimeHandler):
                 arglist.append(self.quoteCintArgString(arg))
             else:
                 arglist.append(arg)
-        rootarg = '\("""' + string.join([str(s) for s in arglist], ',') + '"""\)'
+        rootarg = '\(' + string.join([repr(s) for s in arglist], ',') + '\)'
 
         script = app.script
         if script == File():

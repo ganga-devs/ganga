@@ -3,7 +3,7 @@ import Ganga.Utility.logging
 
 from Ganga.Utility.Config import ConfigError
 
-from Ganga.GPIDev.Base.Proxy import stripProxy, proxyRef
+from Ganga.GPIDev.Base.Proxy import stripProxy, proxyRef, getName
 
 from Ganga.Utility.Config import getConfig
 
@@ -20,7 +20,7 @@ class ConfigDescriptor(object):
 
     def __get__(self, obj, cls):
         assert(obj)
-        return stripProxy(obj).getEffectiveOption(self._name)
+        return stripProxy(obj).getEffectiveOption(getName(self))
 
     def __set__(self, obj, val):
         stripProxy(obj).setUserValue(self._name, val)

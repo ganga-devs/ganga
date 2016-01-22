@@ -4,7 +4,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah87262(GangaUnitTest):
-    def Savannah87262(self):
+    def test_Savannah87262(self):
         from Ganga.GPI import Executable, Job, shareref
 
         e = Executable()
@@ -14,4 +14,4 @@ class Savannah87262(GangaUnitTest):
         print s
         print e.is_prepared.name
         print j.application
-        self.assertEqual(s[e.is_prepared.name], 0)
+        self.assertEqual(s[e.is_prepared.name], 1)

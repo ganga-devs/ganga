@@ -34,14 +34,6 @@ class IPrepareApp(IApplication):
     _name = 'PrepareApp'
     _hidden = 1
 
-#    def _readonly(self):
-#        """An application is read-only once it has been prepared."""
-#        if self.is_prepared is None:
-#            return 0
-#        else:
-#            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
-#            return 1
-
     def __init__(self):
         super(IPrepareApp, self).__init__()
 

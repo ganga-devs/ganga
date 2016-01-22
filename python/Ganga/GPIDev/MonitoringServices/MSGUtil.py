@@ -3,7 +3,6 @@
 
 # default stomp.py logging to CRITICAL
 
-import logging
 import Ganga.Utility.Config as Config
 
 config = Config.getConfig('Logging')
@@ -11,8 +10,9 @@ config = Config.getConfig('Logging')
 if 'stomp.py' in config:
     pass  # config['stomp.py']
 else:
+    from Ganga.Utility.logging import getLogger, _get_logging
     # set stomp.py logger to CRITICAL
-    logging.getLogger('stomp.py').setLevel(logging.CRITICAL)
+    getLogger('stomp.py').setLevel(_get_logging().CRITICAL)
 
 
 def createPublisher(server, port, user='ganga', password='analysis', idle_timeout=None, exit_timeout=None):
@@ -56,8 +56,8 @@ def createPublisher(server, port, user='ganga', password='analysis', idle_timeou
         managed_thread = False
     # use Ganga logger class on client or None otherwise
     try:
-        import Ganga.Utility.logging
-        logger = Ganga.Utility.logging.getLogger()
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
     except ImportError:
         logger = None
     # create and start _publisher

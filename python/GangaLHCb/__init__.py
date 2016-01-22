@@ -91,6 +91,9 @@ def _store_dirac_environment():
         os.makedirs(fdir)
     fname = os.path.join(fdir, diracversion)
     if not os.path.exists(fname) or not os.path.getsize(fname):
+        from Ganga.Utility.logging import getLogger
+        log = getLogger()
+        log.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
         s_file = open(fname, 'w+')
         cmd = '/usr/bin/env bash -c \"source %s LHCBDIRAC %s ROOT>& /dev/null && '\
             'printenv > %s\"' % (setup_script, diracversion, fname)

@@ -7,7 +7,7 @@ import os
 
 class Savannah13404(GangaUnitTest):
 
-    def Savannah13404(self):
+    def test_Savannah13404(self):
         from Ganga.GPI import Job
         j = Job()
         j.submit()  # Needed in order to create the workspace

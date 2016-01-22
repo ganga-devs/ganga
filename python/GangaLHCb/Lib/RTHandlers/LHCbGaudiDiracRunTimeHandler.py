@@ -13,7 +13,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.GPIDev.Lib.File import FileBuffer, LocalFile
-from Ganga.GPIDev.Base.Proxy import addProxy, isType
+from Ganga.GPIDev.Base.Proxy import addProxy, isType, stripProxy
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
@@ -43,7 +43,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
-        job = app.getJobObject()
+        job = stripProxy(app).getJobObject()
 
         if job.inputdata:
             if not job.splitter:
@@ -170,10 +170,10 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         DIRAC_OBJECT='DiracLHCb()',
                                         JOB_OBJECT='LHCbJob()',
                                         NAME=mangle_job_name(app),
-                                        APP_NAME=app.appname,
+                                        APP_NAME=stripProxy(app).appname,
                                         APP_VERSION=app.version,
                                         APP_SCRIPT=gaudi_script_path,
-                                        APP_LOG_FILE='Ganga_%s_%s.log' % (app.appname, app.version),
+                                        APP_LOG_FILE='Ganga_%s_%s.log' % (stripProxy(app).appname, app.version),
                                         INPUTDATA=input_data,
                                         PARAMETRIC_INPUTDATA=parametricinput_data,
                                         OUTPUT_SANDBOX=API_nullifier(outputsandbox),

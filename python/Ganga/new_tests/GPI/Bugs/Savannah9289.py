@@ -4,7 +4,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah9289(GangaUnitTest):
-    def Savannah9289(self):
+    def test_Savannah9289(self):
         from Ganga.GPI import Job, jobs
 
         for repeat in range(5):

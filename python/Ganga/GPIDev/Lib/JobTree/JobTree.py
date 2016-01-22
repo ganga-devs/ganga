@@ -177,20 +177,6 @@ class JobTree(GangaObject):
 
     def _copy(self):
         return self
-        #reg = self._getRegistry()
-        #c = self.clone()
-        #c.folders = {}
-        #if len(self.__get_folders().keys()) > 1:
-        #    for k,v in self.__get_folders().itervalues():
-        #        c.folders[k] = copy.deepcopy(self.__get_folders().get(k))
-        #else:
-        #    for k in self.__get_folders().keys():
-        #        c.folders[k] = copy.deepcopy(self.__get_folders().get(k))
-        #c._setRegistry(reg)
-        #c._setParent(self._getParent())
-        #
-        #c._registry_id = self._registry_id
-        #return GPIProxyObjectFactory(c)
 
     def _display(self, interactive=0):
         from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup

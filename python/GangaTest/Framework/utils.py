@@ -44,7 +44,7 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
     current_status = None
     while j.status != state and timeout > 0:
         if not monitoring_component.isEnabled():
-            monitoring_component.runMonitoring( jobs.select(j.id,j.id) )
+            monitoring_component.runMonitoring( jobs=jobs.select(j.id,j.id), _loadCredentials=False )
         else:
             monitoring_component.alive = True
             monitoring_component.enabled = True

@@ -9,7 +9,7 @@ import collections
 from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 import Ganga.Utility.Config
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, addProxy
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import makeConfig
 
@@ -32,7 +32,7 @@ class RegistrySlice(object):
             for this_col_func in col_funcs:
                 self._display_columns_functions[this_col_func] = eval(col_funcs[this_col_func])
         except Exception as x:
-            logger.error("Error on evaluating display column functions from config file: %s: %s" % (x.__class__.__name__, x))
+            logger.error("Error on evaluating display column functions from config file: %s: %s" % (getName(x), x))
 
         from Ganga.Utility.ColourText import Effects
         self._colour_normal = Effects().normal
@@ -64,7 +64,7 @@ class RegistrySlice(object):
                 if not keep_going:
                     raise
             except Exception as x:
-                logger.exception('%s %s %s: %s %s', doc, self.name, id, x.__class__.__name__, str(x))
+                logger.exception('%s %s %s: %s %s', doc, self.name, id, getName(x), str(x))
                 if not keep_going:
                     raise
         return result
@@ -214,14 +214,14 @@ class RegistrySlice(object):
                                 break
                         elif a == 'application':
                             if hasattr(obj, 'application'):
-                                if not obj.application._name == attrvalue:
+                                if not getName(obj.application) == attrvalue:
                                     selected = False
                                     break
                             else:
                                 selected = False
                                 break
                         elif a == 'type':
-                            if not obj._name == attrvalue:
+                            if not getName(obj) == attrvalue:
                                 selected = False
                                 break
                         else:
@@ -313,9 +313,9 @@ class RegistrySlice(object):
                     raise RegistryKeyError("Multiple matches for id='%s':%s" % (this_id, str(map(lambda x: x._getRegistry()._getName(x), matches))))
                 if len(matches) < 1:
                     return
-                return matches[0]
+                return addProxy(matches[0])
         try:
-            return self.objects[this_id]
+            return addProxy(self.objects[this_id])
         except KeyError as err:
             logger.debug('Object id=%d not found' % this_id)
             logger.deubg("%s" % str(err))
@@ -349,7 +349,7 @@ class RegistrySlice(object):
         """
         if isinstance(x, int):
             try:
-                return self.objects[x]
+                return addProxy(self.objects[x])
             except IndexError:
                 raise RegistryIndexError('list index out of range')
 
@@ -363,7 +363,7 @@ class RegistrySlice(object):
                 raise RegistryKeyError('object "%s" not unique' % x)
             if len(ids) == 0:
                 raise RegistryKeyError('object "%s" not found' % x)
-            return self.objects[ids[0]]
+            return addProxy(self.objects[ids[0]])
 
         raise RegistryAccessError('Expected int or string (job name).')
 
@@ -409,6 +409,8 @@ class RegistrySlice(object):
         except AttributeError as err:
             logger.debug("AttibErr: %s" % str(err))
             val = ""
+        finally:
+            pass
         return str(val)
 
     def _display(self, interactive=0):

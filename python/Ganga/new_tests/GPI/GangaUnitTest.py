@@ -22,6 +22,12 @@ def start_ganga():
     python_rel_path = 'python'
 
     ganga_dir = os.path.abspath(os.path.join(ganga_sys_root, python_rel_path))
+
+    if not os.path.isdir(ganga_dir):
+        python_rel_path = '../install/ganga/python'
+        ganga_dir = os.path.abspath(os.path.join(ganga_sys_root, python_rel_path))
+
+    print "Adding: %s to Python Path" % ganga_dir
     sys.path.insert(0, ganga_dir)
 
     import Ganga.PACKAGE
@@ -125,9 +131,15 @@ def stop_ganga():
 
         from Ganga.GPI import jobs, templates
         for j in jobs:
-            j.remove()
+            try:
+                j.remove()
+            except:
+                pass
         for t in templates:
-            t.remove()
+            try:
+                t.remove()
+            except:
+                pass
         if hasattr(jobs, 'clean'):
             jobs.clean(confirm=True, force=True)
         if hasattr(templates, 'clean'):

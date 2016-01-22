@@ -10,7 +10,6 @@ Helper functions for operations on files.
 
 import os.path
 import Ganga
-from Ganga.Utility.logging import getLogger
 
 def expandfilename(filename, force=False):
     """expand a path or filename in a standard way so that it may contain ~ and ${VAR} strings"""
@@ -18,6 +17,7 @@ def expandfilename(filename, force=False):
     if os.path.exists(expanded_path) or force:
         return expanded_path
 
+    from Ganga.Utility.logging import getLogger
     getLogger().debug("Filename: %s doesn't exist using it anyway" % filename)
     return filename
 
@@ -28,6 +28,7 @@ def fullpath(path, force=False):
     if os.path.exists(full_path) or force:
         return full_path
 
+    from Ganga.Utility.logging import getLogger
     getLogger().debug("path: %s doesn't exist using it anyway" % path)
     return path
 

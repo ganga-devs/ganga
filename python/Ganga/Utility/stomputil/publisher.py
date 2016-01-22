@@ -1,9 +1,9 @@
 """Wrapper around the publish features of stomp.py."""
 
-import logging
 import time
 from Queue import Queue
-
+from Ganga.Utility.logging import _get_logging
+logging_DEBUG = _get_logging().DEBUG
 
 BEAT_TIME = 0.3 # Seconds between publisher thread heart beats.
 IDLE_TIMEOUT = 30 # Maximum seconds to idle before closing connection.
@@ -61,7 +61,7 @@ class LoggerListener(stomp_listener):
         self._log_frame('ERROR', headers, body)
 
     def _log_frame(self, frame_type, headers, body):
-        if self._logger.isEnabledFor(logging.DEBUG):
+        if self._logger.isEnabledFor(logging_DEBUG):
             self._logger.debug('STOMP %s frame received headers=%s body=%s.' % (frame_type, headers, body))
 
 # counter to give unique thread names
@@ -148,7 +148,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
             N.B. keyword_headers take precedence over headers.
             """
             if self.should_stop():
-                self._log(logging.DEBUG, 'Request to queue message during or after thread shutdown denied.')
+                self._log(logging_DEBUG, 'Request to queue message during or after thread shutdown denied.')
                 return
             if headers is None:
                 headers = {}
@@ -157,16 +157,16 @@ def createPublisher(T, server, port, user='', password='', logger=None,
             if not PUBLISHER_TIMESTAMP_HEADER in keyword_headers:
                 keyword_headers[PUBLISHER_TIMESTAMP_HEADER] = time.time()
             m = (message, headers, keyword_headers)
-            self._log(logging.DEBUG, 'Queuing message. body=%r headers=%r keyword_headers=%r.', *m)
+            self._log(logging_DEBUG, 'Queuing message. body=%r headers=%r keyword_headers=%r.', *m)
             self._message_queue.put(m)
-            self._log(logging.DEBUG, 'Message queued. %s queued message(s).', self._message_queue.qsize())
+            self._log(logging_DEBUG, 'Message queued. %s queued message(s).', self._message_queue.qsize())
 
         def _send(self, (message, headers, keyword_headers)):
             """Send given message to MSG server."""
             if self._cx is None:
-                self._log(logging.DEBUG, 'NOT Sending message:\n%s' % str(message))
+                self._log(logging_DEBUG, 'NOT Sending message:\n%s' % str(message))
                 return
-            self._log(logging.DEBUG, 'Sending message. body=%r headers=%r keyword_headers=%r.', message, headers, keyword_headers)
+            self._log(logging_DEBUG, 'Sending message. body=%r headers=%r keyword_headers=%r.', message, headers, keyword_headers)
             global stomp_major_version
             if stomp_major_version > 2:
                 import copy
@@ -176,13 +176,13 @@ def createPublisher(T, server, port, user='', password='', logger=None,
                 self._cx.send(my_destination, message, None, headers, **keyword_headers2)
             else:
                 self._cx.send(message, headers, **keyword_headers)
-            self._log(logging.DEBUG, 'Sent message.')
+            self._log(logging_DEBUG, 'Sent message.')
 
         def _connect(self):
             """Connects to MSG server if not already connected."""
             cx = self._cx
             if cx is None or not cx.is_connected():
-                self._log(logging.DEBUG, 'Connecting.')
+                self._log(logging_DEBUG, 'Connecting.')
                 # create connection
                 global stomp_major_version
                 if stomp_major_version > 2:
@@ -198,20 +198,20 @@ def createPublisher(T, server, port, user='', password='', logger=None,
                 else:
                     cx.connect()
                 self._cx = cx
-                self._log(logging.DEBUG, 'Connected.')
+                self._log(logging_DEBUG, 'Connected.')
 
         def _disconnect(self):
             """Disconnects (quietly) from MSG server if not already disconnected."""
             cx = self._cx
             if cx is not None:
-                self._log(logging.DEBUG, 'Disconnecting')
+                self._log(logging_DEBUG, 'Disconnecting')
                 self._cx = None
                 if cx.is_connected():
                     try:
                         cx.disconnect()
                     except Exception:
-                        self._log(logging.DEBUG, 'Exception on disconnect.', exc_info=True)
-                self._log(logging.DEBUG, 'Disconnected')
+                        self._log(logging_DEBUG, 'Exception on disconnect.', exc_info=True)
+                self._log(logging_DEBUG, 'Disconnected')
 
         def run(self):
             """Send messages, connecting as necessary and disconnecting after idle_timeout
@@ -228,7 +228,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
                     # send unless queue empty
                     while not self._message_queue.empty():
                         try:
-                            self._log(logging.DEBUG, 'Before attempt to connect/send. %s queued message(s).', self._message_queue.qsize())
+                            self._log(logging_DEBUG, 'Before attempt to connect/send. %s queued message(s).', self._message_queue.qsize())
                             self.__sending = True
                             idle_time = 0
                             m = None
@@ -239,21 +239,21 @@ def createPublisher(T, server, port, user='', password='', logger=None,
                                 # reset backoff_time
                                 backoff_time = 0
                             except Exception:
-                                self._log(logging.DEBUG, 'Exception on connect/send.', exc_info=True)
+                                self._log(logging_DEBUG, 'Exception on connect/send.', exc_info=True)
                                 # increment backoff_time
                                 if backoff_time == 0:
                                     backoff_time = self.backoff_initial
                                 else:
                                     backoff_time = min(backoff_time * self.backoff_multiplier, self.backoff_max)
-                                self._log(logging.DEBUG, 'Back-off time set to %s seconds.', backoff_time)
+                                self._log(logging_DEBUG, 'Back-off time set to %s seconds.', backoff_time)
                                 # re-queue message
                                 if m is not None:
-                                    self._log(logging.DEBUG, 'Re-queuing failed message. body=%r headers=%r keyword_headers=%r.', *m)
+                                    self._log(logging_DEBUG, 'Re-queuing failed message. body=%r headers=%r keyword_headers=%r.', *m)
                                     self._message_queue.put(m)
                                 break # break out to wait for BEAT_TIME
                         finally:
                             self.__sending = False
-                            self._log(logging.DEBUG, 'After attempt to connect/send. %s queued message(s).', self._message_queue.qsize())
+                            self._log(logging_DEBUG, 'After attempt to connect/send. %s queued message(s).', self._message_queue.qsize())
                 # heart beat pause
                 time.sleep(BEAT_TIME)
                 # fix for bug #62543 https://savannah.cern.ch/bugs/?62543
@@ -267,8 +267,8 @@ def createPublisher(T, server, port, user='', password='', logger=None,
                     self._disconnect()
             # disconnect (quietly)
             self._disconnect()
-            self._log(logging.DEBUG, 'Exit publisher. Local message queue size is %s.', self._message_queue.qsize())
-            self._log(logging.DEBUG, "Stopped: %s" % self.getName())
+            self._log(logging_DEBUG, 'Exit publisher. Local message queue size is %s.', self._message_queue.qsize())
+            self._log(logging_DEBUG, "Stopped: %s" % self.getName())
 
         def should_stop(self):
             """Indicates whether stop() has been called."""
@@ -280,7 +280,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
             Typically called on a managed thread such as GangaThread.
             """
             if not self.__should_stop:
-                self._log(logging.DEBUG, "Stopping: %s.", self.getName())
+                self._log(logging_DEBUG, "Stopping: %s.", self.getName())
                 self.__should_stop = True
 
         def addExitHandler(self, timeout=EXIT_TIMEOUT):
@@ -304,7 +304,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
             """
             if self.__finalized is True:
                 return
-            self._log(logging.DEBUG, 'Finalizing.')
+            self._log(logging_DEBUG, 'Finalizing.')
             finalize_time = 0
             while not self._message_queue.empty() or self.__sending:
                 if finalize_time >= timeout > -1:
@@ -312,7 +312,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
                 time.sleep(BEAT_TIME)
                 finalize_time += BEAT_TIME
             self._disconnect()
-            self._log(logging.DEBUG, 'Finalized after %s second(s). Local message queue size is %s.', finalize_time, self._message_queue.qsize())
+            self._log(logging_DEBUG, 'Finalized after %s second(s). Local message queue size is %s.', finalize_time, self._message_queue.qsize())
             self.__finalized = True
 
         def _log(self, level, msg, *args, **kwargs):
@@ -325,7 +325,8 @@ def createPublisher(T, server, port, user='', password='', logger=None,
 
 # for testing purposes
 if __name__ == '__main__':
-    l = logging.getLogger()
+    from Ganga.Utility.logging import getLogger
+    l = getLogger()
     from threading import Thread
     p = createPublisher(Thread, 'gridmsg001.cern.ch', 6163, logger=l, idle_timeout=5)
     p.start()

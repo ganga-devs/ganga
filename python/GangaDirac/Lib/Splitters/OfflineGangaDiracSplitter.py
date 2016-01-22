@@ -201,7 +201,8 @@ def lookUpLFNReplicas(inputs, allLFNData):
 
 
 def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData, inputs):
-    from Ganga.GPIDev.Base.Proxy import stripProxy
+    from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+    from Ganga.GPIDev.Base.Objects import GangaObject
 
     myRegistry = {}
     for this_LFN in inputs:
@@ -217,7 +218,7 @@ def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData, input
         raise err
     finally:
         for this_LFN in myRegistry.keys():
-            if this_LFN is not None:
+            if myRegistry[this_LFN] is not None:
                 myRegistry[this_LFN].turnOnAutoFlushing()
 
 def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
@@ -315,7 +316,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
     else:
         inputs = _inputs
 
-    from Ganga.GPI import DiracFile
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
     from Ganga.GPIDev.Adapters.ISplitter import SplittingError
     # First FIND ALL LFN REPLICAS AND SE<->SITE MAPPINGS AND STORE THIS IN MEMORY
     # THIS IS DONE IN PARALLEL TO AVOID OVERLOADING DIRAC WITH THOUSANDS OF
