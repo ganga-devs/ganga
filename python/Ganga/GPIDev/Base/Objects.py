@@ -391,6 +391,8 @@ class Descriptor(object):
         if self._getter_name:
             return self._bind_method(obj, self._getter_name)()
 
+        # First we want to try to get the information without prompting a load from disk
+
         # ._data takes priority ALWAYS over ._index_cache
         # This access should not cause the object to be loaded
         obj_data = obj.getNodeData()
@@ -403,6 +405,8 @@ class Descriptor(object):
         if obj_index is not None:
             if name in obj_index:
                 return obj_index[name]
+
+        # Since we couldn't find the information in the cache, we will need to fully load the object
 
         # Guarantee that the object is now loaded from disk
         obj._getReadAccess()
