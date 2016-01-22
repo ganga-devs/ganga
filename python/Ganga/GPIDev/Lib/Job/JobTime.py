@@ -51,7 +51,7 @@ class JobTime(GangaObject):
        extracted in the way as in would be for a standard, non-application
        specific python dictionary.
 
-       For a table display of the Job's timestamps use .time._display(). For
+       For a table display of the Job's timestamps use .time.display(). For
        timestamps details from the backend use .time.details()
 
 
@@ -66,7 +66,6 @@ class JobTime(GangaObject):
     _category = 'jobtime'
     _name = 'JobTime'
     _exportmethods = ['display',
-                      '_display',
                       'new',
                       'submitting',
                       'submitted',
