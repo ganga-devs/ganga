@@ -29,7 +29,7 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader
 from Ganga.Lib.LCG.Utility import get_uuid, get_md5sum
 from Ganga.Utility.logic import implies
-from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import isType, getName
 
 try:
     simulator_enabled = os.environ['GANGA_GRID_SIMULATOR']
@@ -1428,7 +1428,7 @@ sys.exit(0)
             jobconfig.outputbox + getOutputSandboxPatterns(job)))
 
         script = script.replace(
-            '###APPLICATION_NAME###', job.application._name)
+            '###APPLICATION_NAME###', getName(job.application))
         script = script.replace(
             '###APPLICATIONEXEC###', repr(jobconfig.getExeString()))
         script = script.replace(

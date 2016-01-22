@@ -4,7 +4,6 @@
 # this module must be importable without any side-effect, especially without
 # creation of loggers by surrounding packages...
 
-from Ganga.Utility.util import importName
 from inspect import isclass
 
 found_types = {}
@@ -32,6 +31,7 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
                 if not hasattr(val, '_proxyClass'):
                     # val is probably a normal Python object.
                     continue
+                from Ganga.Utility.util import importName
                 _type = importName('.'.join(_dotMod[0:-1]), _dotMod[-1])
                 _val = val
             else:  # Native Python type

@@ -1,3 +1,4 @@
+from Ganga.GPIDev.Base.Proxy import getName
 
 # As described in https://docs.python.org/2/library/collections.html
 # This has been grabbed from http://code.activestate.com/recipes/576693/ on 20-07-2015 rcurrie
@@ -208,8 +209,8 @@ class OrderedDict(dict):
         _repr_running[call_key] = 1
         try:
             if not self:
-                return '%s()' % (self.__class__.__name__,)
-            return '%s(%r)' % (self.__class__.__name__, self.items())
+                return '%s()' % (getName(self),)
+            return '%s(%r)' % (getName(self), self.items())
         finally:
             del _repr_running[call_key]
 

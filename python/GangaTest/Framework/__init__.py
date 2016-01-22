@@ -1,3 +1,3 @@
-#import utils, runTest, tests
-import utils, tests
+import tests
+import utils
 import runner

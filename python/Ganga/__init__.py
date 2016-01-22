@@ -3,7 +3,9 @@ import os
 import re
 import inspect
 
+
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
+
 
 # Global Functions
 def getEnvironment(config = None):
@@ -38,16 +40,19 @@ else:
 # store a path to Ganga libraries
 _gangaPythonPath = os.path.dirname(os.path.dirname(__file__))
 
+
 # grab the hostname
 try:
-    import Ganga.Utility.util
-    hostname = Ganga.Utility.util.hostname()
+    from Ganga.Utility.util import hostname
+    hostname = hostname()
 except Exception as x:  # fixme: use OSError instead?
     hostname = 'localhost'
+
 
 # ------------------------------------------------
 # Setup all configs for this module
 from Ganga.Utility.Config import makeConfig, getConfig, expandvars
+
 
 # ------------------------------------------------
 # Logging
@@ -742,8 +747,8 @@ disp_config.addOption('jobs_columns_width',
                  'width of each column')
 
 disp_config.addOption('jobs_columns_functions',
-                 {'subjobs': "lambda j: len(j.subjobs)", 'application': "lambda j: j.application._name",
-                  'backend': "lambda j:j.backend._name", 'comment': "lambda j: j.comment"},
+                 {'subjobs': "lambda j: len(j.subjobs)", 'application': "lambda j: j.application.__class__.__name__",
+                  'backend': "lambda j:j.backend.__class__.__name__", 'comment': "lambda j: j.comment"},
                  'optional converter functions')
 
 disp_config.addOption('jobs_columns_show_empty',
@@ -828,3 +833,4 @@ Example: DummyMS plugin will be used to track executables run on all backends:
 Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 
 """, is_open=True)
+

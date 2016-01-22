@@ -1,4 +1,4 @@
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger
 
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository import InaccessibleObjectError, RepositoryError
@@ -11,7 +11,7 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
-logger = Ganga.Utility.logging.getLogger()
+logger = getLogger()
 
 class RegistryError(GangaException):
 
@@ -215,7 +215,6 @@ class Registry(object):
                 logger.debug("Getting item being operated on: %s" % this_id)
                 time.sleep(0.1)
             self._inprogressDict[this_id] = "_getitem"
-            from Ganga.GPIDev.Base.Proxy import addProxy
             #logger.info("Getting Item: %s" % this_id)
             #logger.info("Looking in: %s" % self._objects.keys())
             real_id = None
@@ -240,6 +239,7 @@ class Registry(object):
                 found_id = this_obj._registry_id
             if found_id is not None and real_id is not None:
                 assert( found_id == real_id )
+            from Ganga.GPIDev.Base.Proxy import addProxy
             return addProxy(this_obj)
         except KeyError as err:
             logger.debug("Repo KeyError: %s" % str(err))
@@ -377,6 +377,12 @@ class Registry(object):
         self._lock.release()
 
         return decision
+
+    def _getObjects(self):
+        self._lock.acquire()
+        returnable = self._objects
+        self._lock.release()
+        return returnable
 
     def ids(self):
         """ Returns the list of ids of this registry """
@@ -1165,4 +1171,19 @@ class Registry(object):
         other_sessions = self.repository.get_other_sessions()
         if len(other_sessions) > 0:
             logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
+
+    def has_loaded(self, obj):
+        """Returns True/False for if a given object has been fully loaded by the Registry.
+        Returns False on the object not being in the Registry!
+        This ONLY applies to master jobs as the Registry has no apriori knowledge of the subjob structure.
+        Consult SubJobXMLList for a more fine grained loaded/not-loaded info/test."""
+        try:
+            index = self.find(obj)
+        except ObjectNotInRegistryError:
+            return False
+
+        if index in self._loaded_ids:
+            return True
+        else:
+            return False
 

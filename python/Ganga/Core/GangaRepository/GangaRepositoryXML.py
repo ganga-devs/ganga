@@ -49,9 +49,9 @@ def check_app_hash(obj):
                     isVerifiableAna = True
 
     if isVerifiableApp is True:
-        hashable_app = obj.application
+        hashable_app = stripProxy(obj.application)
     elif isVerifiableAna is True:
-        hashable_app = obj.analysis.application
+        hashable_app = stripProxy(obj.analysis.application)
     else:
         hashable_app = None
 
@@ -331,9 +331,10 @@ class GangaRepositoryLocal(GangaRepository):
                 with open(ifn, "w") as this_file:
                     pickle_to_file((obj._category, getName(obj), new_cache), this_file)
                 self._cached_obj[this_id] = new_cache
-                all_cache = new_cache.keys()
-                for attr in all_cache:
-                    obj.removeNodeIndexCacheAttribute(attr)
+                obj.setNodeIndexCache({})
+                #all_cache = new_cache.keys()
+                #for attr in all_cache:
+                #    obj.removeNodeIndexCacheAttribute(attr)
             self._cached_obj[this_id] = new_idx_cache
         except IOError as err:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn, getName(err), str(err)))
@@ -640,14 +641,14 @@ class GangaRepositoryLocal(GangaRepository):
                             split_cache[i]._setFlushed()
                     from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
                     # Now generate an index file to take advantage of future non-loading goodness
-                    tempSubJList = SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False)
+                    tempSubJList = SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False, parent=obj)
                     ## equivalent to for sj in job.subjobs
+                    tempSubJList._setParent(obj)
                     job_dict = {}
                     for sj in obj.getNodeAttribute(self.sub_split):
                         job_dict[sj.id] = stripProxy(sj)
                     tempSubJList._reset_cachedJobs(job_dict)
-                    tempSubJList._setParent(obj)
-                    tempSubJList.write_subJobIndex()
+                    tempSubJList.flush()
                     del tempSubJList
 
                 safe_save(fn, obj, self.to_file, self.sub_split)
@@ -746,7 +747,7 @@ class GangaRepositoryLocal(GangaRepository):
 
                 if has_children:
                 #    logger.info("Adding children")
-                    obj.setNodeAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup))
+                    obj.setNodeAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
                 else:
                     obj.setNodeAttribute(self.sub_split, None)
 
@@ -786,10 +787,12 @@ class GangaRepositoryLocal(GangaRepository):
                             #obj.setNodeIndexCache(None)
                 #obj.setNodeIndexCache(None)
 
-                all_cached = obj.getNodeIndexCache().keys()
+                obj.setNodeIndexCache({})
 
-                for attr in all_cached:
-                    obj.removeNodeIndexCacheAttribute(attr)
+                #all_cached = obj.getNodeIndexCache().keys()
+
+                #for attr in all_cached:
+                #    obj.removeNodeIndexCacheAttribute(attr)
 
                 #logger.info("Here")
 
@@ -817,11 +820,19 @@ class GangaRepositoryLocal(GangaRepository):
 
         logger.debug("Finished Loading XML")
 
-    def _open_xml_file(self, fn, this_id):
+    def _open_xml_file(self, fn, this_id, _copy_backup=False):
 
         fobj = None
 
         try:
+            if not os.path.isfile(fn) and _copy_backup:
+                if os.path.isfile(fn + '~'):
+                    logger.warning("XML File: %s missing, recovering from backup, some changes may have been lost!" % fn)
+                    try:
+                        from shutil import copyfile
+                        copyfile(fn+'~', fn)
+                    except:
+                        logger.warning("Error Recovering the backup file! loading of Job may Fail!")
             fobj = open(fn, "r")
         except IOError as x:
             if x.errno == errno.ENOENT:
@@ -867,7 +878,7 @@ class GangaRepositoryLocal(GangaRepository):
             fobj = None
 
             try:
-                fobj = self._open_xml_file(fn, this_id)
+                fobj = self._open_xml_file(fn, this_id, _copy_backup=True)
             except Exception as err:
                 logger.debug("XML load: Failed to load XML file: %s" % str(fn))
                 logger.debug("Error was:\n%s" % str(err))
@@ -880,7 +891,6 @@ class GangaRepositoryLocal(GangaRepository):
                 raise err
 
             except Exception as err:
-                #raise err
 
                 if isType(err, XMLFileError):
                     logger.error("XML File failed to load for Job id: %s" % str(this_id))

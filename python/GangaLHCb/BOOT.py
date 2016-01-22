@@ -28,7 +28,7 @@ def browseBK(gui=True):
     logger = Ganga.Utility.logging.getLogger()
     try:
         from GangaLHCb.Lib.Backends.Bookkeeping import Bookkeeping
-        from Ganga.GPI import LHCbDataset
+        from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
     except ImportError:
         logger.warning('Could not start Bookkeeping Browser')
         return None

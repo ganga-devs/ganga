@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 
-from GangaUnitTest import GangaUnitTest
+from ..GangaUnitTest import GangaUnitTest
 
 
 class JIRA1961(GangaUnitTest):

@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import Ganga.Utility.logging
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -441,8 +441,8 @@ def report(job=None):
             global JOB_REPORT, APPLICATION_NAME, BACKEND_NAME
 
             JOB_REPORT = True
-            APPLICATION_NAME = job.application.__class__.__name__
-            BACKEND_NAME = job.backend.__class__.__name__
+            APPLICATION_NAME = getName(job.application)
+            BACKEND_NAME = getName(job.backend)
 
             # create job folder
             jobFolder = 'job_%s' % str(job.fqid)

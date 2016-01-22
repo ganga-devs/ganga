@@ -1,6 +1,0 @@
-j = Job()
-import Ganga.Utility.Config
-if not getConfig('Output')['ForbidLegacyInput']:
-    j.inputsandbox = ['x']
-else:
-    j.inputfiles = ['x']

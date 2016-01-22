@@ -11,7 +11,7 @@ input  and  output sandboxes.  This  allows  to  handle files  in  the
 FileWorkspace in a location-independent way.
 """
 
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger
 
 import os
 import time
@@ -19,7 +19,7 @@ import time
 from Ganga.Utility.files import expandfilename, chmod_executable
 from Ganga.GPIDev.Base.Proxy import isType
 
-logger = Ganga.Utility.logging.getLogger(modulename=1)
+logger = getLogger(modulename=1)
 
 class FileWorkspace(object):
 

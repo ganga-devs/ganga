@@ -5,9 +5,11 @@ from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexE
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 import fnmatch
 import collections
+
+from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 import Ganga.Utility.Config
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, addProxy
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import makeConfig
 
@@ -242,7 +244,7 @@ class RegistrySlice(object):
                             else:
                                 attrvalue = attrs[a]
 
-                                if item.isA('ComponentItem'):
+                                if item.isA(ComponentItem):
                                     from Ganga.GPIDev.Base.Filters import allComponentFilters
 
                                     cfilter = allComponentFilters[item['category']]
@@ -311,9 +313,9 @@ class RegistrySlice(object):
                     raise RegistryKeyError("Multiple matches for id='%s':%s" % (this_id, str(map(lambda x: x._getRegistry()._getName(x), matches))))
                 if len(matches) < 1:
                     return
-                return matches[0]
+                return addProxy(matches[0])
         try:
-            return self.objects[this_id]
+            return addProxy(self.objects[this_id])
         except KeyError as err:
             logger.debug('Object id=%d not found' % this_id)
             logger.deubg("%s" % str(err))
@@ -347,7 +349,7 @@ class RegistrySlice(object):
         """
         if isinstance(x, int):
             try:
-                return self.objects[x]
+                return addProxy(self.objects[x])
             except IndexError:
                 raise RegistryIndexError('list index out of range')
 
@@ -361,7 +363,7 @@ class RegistrySlice(object):
                 raise RegistryKeyError('object "%s" not unique' % x)
             if len(ids) == 0:
                 raise RegistryKeyError('object "%s" not found' % x)
-            return self.objects[ids[0]]
+            return addProxy(self.objects[ids[0]])
 
         raise RegistryAccessError('Expected int or string (job name).')
 

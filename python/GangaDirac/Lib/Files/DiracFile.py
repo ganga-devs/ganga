@@ -496,7 +496,7 @@ class DiracFile(IGangaFile):
             for site in self.locations:
                 #logger.debug( "site: %s" % str( site ) )
                 self._remoteURLs[site] = reps[self.lfn][site]
-                logger.debug("Adding _remoteURLs[site]: %s" % str(self._remoteURLs[site]))
+                #logger.debug("Adding _remoteURLs[site]: %s" % str(self._remoteURLs[site]))
 
     def location(self):
         """

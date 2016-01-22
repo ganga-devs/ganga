@@ -21,6 +21,8 @@ from Ganga.Lib.LCG.Grid import Grid
 from Ganga.Lib.LCG.LCG import grids
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
+from Ganga.GPIDev.Base.Proxy import getName
+
 class ARC(IBackend):
 
     '''ARC backend - direct job submission to an ARC CE'''
@@ -696,7 +698,7 @@ sys.exit(0)
             '###OUTPUTSANDBOX###', repr(jobconfig.outputbox))
 
         script = script.replace(
-            '###APPLICATION_NAME###', job.application._name)
+            '###APPLICATION_NAME###', getName(job.application))
         script = script.replace(
             '###APPLICATIONEXEC###', repr(jobconfig.getExeString()))
         script = script.replace(
