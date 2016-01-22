@@ -21,7 +21,7 @@ import inspect
 
 import Ganga.GPIDev.Schema as Schema
 
-from Ganga.GPIDev.Base.Proxy import stripProxy, getName, runtimeEvalString
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.Core.exceptions import GangaValueError, GangaException
 
 from Ganga.Utility.Plugin import allPlugins
@@ -488,6 +488,8 @@ class Descriptor(object):
             elif not isinstance(v, Node):
                 if inspect.isclass(v):
                     new_v = v()
+                else:
+                    new_v = v
                 if not isinstance(new_v, Node):
                     logger.error("v: %s" % str(v))
                     raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (str(v), str(type(v))))
@@ -499,9 +501,9 @@ class Descriptor(object):
             return new_v
 
     def __copyNodeObject(self, v, obj):
+        """This deals with the actual deepcopy of an object which has inherited from Node class"""
 
         item = obj._schema[getName(self)]
-
         GangaList = _getGangaList()
         if isinstance(v, GangaList):
             categories = v.getCategory()
@@ -548,7 +550,11 @@ class Descriptor(object):
                 if val_prevState is True and hasattr(val_reg, 'turnOffAutoFlushing'):
                     val_reg.turnOffAutoFlushing()
 
-        new_val = runtimeEvalString(_obj, getName(self), _val)
+        if type(_val) is str:
+            from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
+            new_val = stripProxy(runtimeEvalString(_obj, getName(self), _val))
+        else:
+            new_val = _val
 
         self.__atomic_set__(_obj, new_val)
 
@@ -709,7 +715,7 @@ def export(method):
     return method
 
 
-class ObjectMetaclass(type):#, object):
+class ObjectMetaclass(type):
     _descriptor = Descriptor
 
     def __init__(cls, name, bases, this_dict):
@@ -939,10 +945,7 @@ class GangaObject(Node):
         global do_not_copy
         for k, v in self.__dict__.iteritems():
             if k not in do_not_copy:
-                try:
-                    setattr(self_copy, k, deepcopy(v))
-                except Exception:
-                    setatttr(self_copy, k, v)
+                setattr(self_copy, k, deepcopy(v))
 
         if true_parent is not None:
             self._setParent(true_parent)
