@@ -453,13 +453,28 @@ class ProxyDataDescriptor(object):
 
         return can_modify
 
+    @staticmethod
+    def __recursive_strip(_val):
+        ## Strip the proxies recursively for things like nested lists
+        if isType(_val, getKnownLists()) or (hasattr(stripProxy(_val), '__len__') and hasattr(stripProxy(_val), '__getitem__')):
+            val = stripProxy(_val).__class__()
+            for elem in _val:
+                if isType(elem, GangaObject):
+                    val.append(ProxyDataDescriptor.__recursive_strip(stripProxy(elem)))
+                else:
+                    val.append(stripProxy(elem))
+        else:
+            val = stripProxy(_val)
+        return val
+
     def __set__(self, obj, _val):
         # self is the attribute we're about to change
         # obj is the object we're about to make the change in
         # val is the value we're setting the attribute to.
         # item is the schema entry of the attribute we're about to change
 
-        val = stripProxy(_val)
+        ## Try to remove all proxies
+        val = ProxyDataDescriptor.__recursive_strip(_val)
 
         #logger.debug("__set__")
         global proxyRef
@@ -962,6 +977,22 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
             proxyObject: None
             }
 
+    def __getitem(self, arg):
+
+        if not hasattr(getattr(self, proxyRef), '__getitem__'):
+            raise AttributeError('I (%s) do not have a __getitem__ attribute' % str(getName(self)))
+
+        output = getattr(self, proxyRef).__getitem__(args)
+
+        if isType(output, _getGangaObject()):
+            return addProxy(output)
+        else:
+            return output
+
+    ## NOT ENABLED YET rcurrie
+    #if hasattr(pluginclass, '__getitem__'):
+    #    d['__getitem__'] = __getitem
+    #d['__getitem__'] = __getitem
 
     # TODO: this makes GangaList inherit from the list
     # this is not tested and specifically the TestGangaList/testAllListMethodsExported should be verified
