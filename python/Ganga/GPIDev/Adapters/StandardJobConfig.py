@@ -82,23 +82,6 @@ class StandardJobConfig(object):
         '''Get a list of strings which correspond to the arguments to the executable on the worker node.'''
         return self.__args_strings
 
-    def getExeCmdString(self):
-        '''Get a command string including the quoted arguments which may be passed to os.system().
-        This method is provided for the convenience'''
-
-        logger.warning(
-            'INTERNAL METHOD JobConfig.getExeCmdString() IS OBSOLETED, backend should be updated to use getExeString() and shell=False in a call to subprocess.Popen()')
-        # reduce the args list into the quoted string: "arg1" "arg2" "arg3"
-        # FIXME: quoting should rather be moved to utility functions
-
-        def quote_arguments(args):
-            quoted = ""
-            for a in args:
-                quoted += '"' + a + '" '
-            return quoted
-
-        return self.__exe_string + ' ' + quote_arguments(self.__args_strings)
-
     def processValues(self):
         '''Process original exe,args and inputbox values and extract strings suitable for the further processing.
         If the exe property is a File then this method will check if it has executable attributes.
