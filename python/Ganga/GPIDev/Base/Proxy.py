@@ -207,6 +207,14 @@ def runProxyMethod(obj, method_name, *args):
     fp = getProxyAttr(obj, method_name)
     return fp(*args)
 
+
+def export(method):
+    """
+    Decorate a GangaObject method to be exported to the GPI
+    """
+    method.exported = True
+    return method
+
 # apply object conversion or if it fails, strip the proxy and extract the
 # object implementation
 

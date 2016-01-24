@@ -676,13 +676,6 @@ class Descriptor(object):
 
         return
 
-def export(method):
-    """
-    Decorate a GangaObject method to be exported to the GPI
-    """
-    method.exported_method = True
-    return method
-
 
 class ObjectMetaclass(type):
     _descriptor = Descriptor
