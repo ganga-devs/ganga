@@ -686,15 +686,8 @@ class ObjectMetaclass(type):
 
         super(ObjectMetaclass, cls).__init__(name, bases, this_dict)
 
-        # ignore the 'abstract' base class
-        # FIXME: this mechanism should be based on explicit getName(cls) or alike
-        #if name == 'GangaObject':
-        #    return
-
-        #logger.debug("Metaclass.__init__: class %s name %s bases %s", cls, name, bases)
-
         # all Ganga classes must have (even empty) schema
-        if not hasattr(cls, '_schema') or cls._schema is None:
+        if cls._schema is None:
             cls._schema = Schema.Schema(None, None)
 
         this_schema = cls._schema
@@ -732,9 +725,6 @@ class ObjectMetaclass(type):
         # create reference in schema to the pluginclass
         this_schema._pluginclass = cls
 
-        # store generated proxy class
-        setattr(cls, '_proxyClass', proxyClass)
-
         # register plugin class
         if hasattr(cls, '_declared_property'):
             # if we've not even declared this we don't want to use it!
@@ -744,6 +734,9 @@ class ObjectMetaclass(type):
             # create a configuration unit for default values of object properties
             if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
                 this_schema.createDefaultConfig()
+
+        # store generated proxy class
+        setattr(cls, '_proxyClass', GPIProxyClassFactory(name, cls))
 
 
 
