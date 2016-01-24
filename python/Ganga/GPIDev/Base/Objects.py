@@ -694,6 +694,7 @@ class ObjectMetaclass(type):
 
         # Add all class members of type `Schema.Item` to the _schema object
         # TODO: We _could_ add base class's Items here by going through `bases` as well.
+        # We can't just yet because at this point the base class' Item has been overwritten with a Descriptor
         for member_name, member in this_dict.items():
             if isinstance(member, Schema.Item):
                 this_schema.datadict[member_name] = member
@@ -725,19 +726,16 @@ class ObjectMetaclass(type):
         # create reference in schema to the pluginclass
         this_schema._pluginclass = cls
 
-        # register plugin class
-        if hasattr(cls, '_declared_property'):
-            # if we've not even declared this we don't want to use it!
-            if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
-                allPlugins.add(cls, cls._category, getName(cls))
+        # if we've not even declared this we don't want to use it!
+        if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
+            allPlugins.add(cls, cls._category, getName(cls))
 
-            # create a configuration unit for default values of object properties
-            if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
-                this_schema.createDefaultConfig()
+        # create a configuration unit for default values of object properties
+        if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
+            this_schema.createDefaultConfig()
 
         # store generated proxy class
         setattr(cls, '_proxyClass', GPIProxyClassFactory(name, cls))
-
 
 
 class GangaObject(Node):
@@ -987,10 +985,9 @@ class GangaObject(Node):
     # this means that implicit (inherited) _name attribute has no effect in the derived class
     # example: cls._declared_property('hidden') => True if there is class
     # attribute _hidden explicitly declared
-    def _declared_property(self, name):
-        return '_' + name in self.__dict__
-
-    _declared_property = classmethod(_declared_property)
+    @classmethod
+    def _declared_property(cls, name):
+        return '_' + name in cls.__dict__
 
     # get the job object associated with self or raise an assertion error
     # the FIRST PARENT Job is returned...
