@@ -689,7 +689,7 @@ class ObjectMetaclass(type):
 
     def __init__(cls, name, bases, this_dict):
 
-        from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor
+        from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory
 
         super(ObjectMetaclass, cls).__init__(name, bases, this_dict)
 
@@ -712,36 +712,6 @@ class ObjectMetaclass(type):
             if isinstance(member, Schema.Item):
                 this_schema.datadict[member_name] = member
 
-        # produce a GPI class (proxy)
-        proxyClass = GPIProxyClassFactory(name, cls)
-
-        if not hasattr(cls, '_exportmethods'):
-            cls._exportmethods = []
-
-        this_export = cls._exportmethods
-
-        # export public methods of this class and also of all the bases
-        # this class is scanned last to extract the most up-to-date docstring
-        dicts = (b.__dict__ for b in reversed(cls.__mro__))
-        for d in dicts:
-            for k in d:
-                if k in this_export or getattr(d[k], 'exported_mes_thod', False):
-
-                    internal_name = "_export_" + k
-                    if internal_name not in d.keys():
-                        internal_name = k
-                    try:
-                        method = d[internal_name]
-                    except Exception, err:
-                        logger.debug("ObjectMetaClass Error internal_name: %s,\t d: %s" % (str(internal_name), str(d)))
-                        logger.debug("ObjectMetaClass Error: %s" % str(err))
-
-                    if not isinstance(method, types.FunctionType):
-                        continue
-                    f = ProxyMethodDescriptor(k, internal_name)
-                    f.__doc__ = method.__doc__
-                    setattr(proxyClass, k, f)
-
         # sanity checks for schema...
         if '_schema' not in this_dict.keys():
             s = "Class %s must _schema (it cannot be silently inherited)" % (name,)
@@ -758,8 +728,6 @@ class ObjectMetaclass(type):
         # export visible properties... do not export hidden properties
         for attr, item in this_schema.allItems():
             setattr(cls, attr, cls._descriptor(attr, item))
-            if not item['hidden']:
-                setattr(proxyClass, attr, ProxyDataDescriptor(attr))
 
         # additional check of type
         # bugfix #40220: Ensure that default values satisfy the declared types
