@@ -15,7 +15,6 @@
 
 import Ganga.Utility.logging
 
-import types
 from copy import deepcopy
 import inspect
 
@@ -39,16 +38,6 @@ def _getGangaList():
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         _imported_GangaList = GangaList
     return _imported_GangaList
-
-
-class PreparedStateError(GangaException):
-
-    def __init__(self, txt=''):
-        GangaException.__init__(self, txt)
-        self.txt = txt
-
-    def __str__(self):
-        return "PreparedStateError: %s" % str(self.txt)
 
 
 class Node(object):

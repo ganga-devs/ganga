@@ -91,16 +91,6 @@ class JobError(GangaException):
         return "JobError: %s" % str(self.what)
 
 
-class PreparedStateError(GangaException):
-
-    def __init__(self, txt=''):
-        GangaException.__init__(self, txt)
-        self.txt = txt
-
-    def __str__(self):
-        return "PreparedStateError: %s" % str(self.txt)
-
-
 class FakeError(GangaException):
 
     def __init__(self):
