@@ -221,7 +221,7 @@ class Job(GangaObject):
     _category = 'jobs'
     _name = 'Job'
     _exportmethods = ['prepare', 'unprepare', 'submit', 'remove', 'kill',
-                      'resubmit', 'peek', 'fail', 'force_status', 'runPostProcessors']
+                      'resubmit', 'peek', 'force_status', 'runPostProcessors']
 
     default_registry = 'jobs'
 
@@ -1900,10 +1900,6 @@ class Job(GangaObject):
         except Exception as err:
             logger.debug("Remove Err: %s" % str(err))
             pass
-
-    def fail(self, force=False):
-        """Deprecated. Use force_status('failed') instead."""
-        raise JobError('fail() method is deprecated, use force_status("failed") instead.')
 
     allowed_force_states = {'completed': ['completing', 'failed'],
                             'failed': ["submitting", "completing", "completed", "submitted", "running", "killed"]}
