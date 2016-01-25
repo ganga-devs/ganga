@@ -3,7 +3,7 @@ import Ganga.Utility.logging
 
 from Ganga.Utility.Config import ConfigError
 
-from Ganga.GPIDev.Base.Proxy import stripProxy, proxyRef, getName
+from Ganga.GPIDev.Base.Proxy import stripProxy, implRef, getName
 
 from Ganga.Utility.Config import getConfig
 
@@ -34,7 +34,7 @@ class ConfigProxy(object):
     """
 
     def __init__(self, impl):
-        self.__dict__[proxyRef] = impl
+        self.__dict__[implRef] = impl
 
     def __getitem__(self, o):
         try:
@@ -136,7 +136,7 @@ class MainConfigProxy(object):
 
     def __init__(self):
         import Ganga.Utility.Config
-        self.__dict__[proxyRef] = Ganga.Utility.Config.allConfigs
+        self.__dict__[implRef] = Ganga.Utility.Config.allConfigs
 
     def __getitem__(self, p):
         try:
