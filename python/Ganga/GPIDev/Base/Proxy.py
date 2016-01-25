@@ -17,7 +17,7 @@ import os
 
 from inspect import isclass
 
-import copy
+import types
 
 proxyRef = '_impl'
 proxyClass = '_proxyClass'
@@ -206,6 +206,14 @@ def runProxyMethod(obj, method_name, *args):
     """Calls a method on the object, removing the proxy if needed"""
     fp = getProxyAttr(obj, method_name)
     return fp(*args)
+
+
+def export(method):
+    """
+    Decorate a GangaObject method to be exported to the GPI
+    """
+    method.exported = True
+    return method
 
 # apply object conversion or if it fails, strip the proxy and extract the
 # object implementation
@@ -978,6 +986,40 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
             proxyClass: pluginclass,
             proxyObject: None
             }
+
+    if not hasattr(pluginclass, '_exportmethods'):
+        pluginclass._exportmethods = []
+
+    exported_methods = pluginclass._exportmethods
+
+    # export public methods of this class and also of all the bases
+    # this class is scanned last to extract the most up-to-date docstring
+    dicts = (b.__dict__ for b in reversed(pluginclass.__mro__))
+    for dct in dicts:
+        for k in dct:
+            if getattr(dct[k], 'exported', False):
+                exported_methods.append(k)  # Add all @export'd methods
+            if k in exported_methods:
+                internal_name = "_export_" + k
+                if internal_name not in dct.keys():
+                    internal_name = k
+                try:
+                    method = dct[internal_name]
+                except KeyError as err:
+                    logger.debug("ObjectMetaClass Error internal_name: %s,\t d: %s" % (internal_name, d))
+                    logger.debug("ObjectMetaClass Error: %s" % err)
+                    raise err
+
+                if not isinstance(method, types.FunctionType):
+                    continue
+                f = ProxyMethodDescriptor(k, internal_name)
+                f.__doc__ = method.__doc__
+                d[k] = f
+
+    # export visible properties... do not export hidden properties
+    for attr, item in pluginclass._schema.allItems():
+        if not item['hidden']:
+            d[attr] = ProxyDataDescriptor(attr)
 
     def __getitem(self, arg):
 
