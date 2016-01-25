@@ -609,17 +609,7 @@ def GPIProxyClassFactory(name, pluginclass):
 
         ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
 
-        #logger.debug("Proxy Object _init")
-        # if len(args) > 1:
-        #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
-
         instance = pluginclass()
-        #for this_attrib in [proxyRef, proxyClass]:
-            #if hasattr(instance, this_attrib):
-            #    try:
-            #        delattr(instance, this_attrib)
-            #    except AttributeError:
-            #        pass
 
         setattr(instance, proxyClass, type(name, (GPIProxyObject,), d))
 

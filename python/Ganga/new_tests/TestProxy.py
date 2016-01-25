@@ -18,6 +18,15 @@ class TestGangaObject(GangaObject):
         return 'example_string'
 
 
+class NonProxiedGangaObject(GangaObject):
+    """
+    This is a class which should not be present in the GPI and should not be wrapped with a proxy
+    """
+    _schema = Schema(Version(1, 0))
+    _category = 'TestGangaObject'
+    _name = 'TestGangaObject'
+
+
 import Ganga.GPIDev.Base.Proxy
 import Ganga.Core.exceptions
 
@@ -34,6 +43,43 @@ class TestProxy(unittest.TestCase):
         """
         new_object = TestGangaObject()
         self.p = Ganga.GPIDev.Base.Proxy.addProxy(new_object)
+
+    def test_dict_attributes(self):
+        # Non-proxied GangaObject class
+        # self.assertFalse(hasattr(NonProxiedGangaObject, '_proxyClass'))  # This is currently know to fail. Should be fixed when class decorators are used for export
+        self.assertFalse(hasattr(NonProxiedGangaObject, '_proxyObject'))
+        self.assertFalse(hasattr(NonProxiedGangaObject, '_impl'))
+
+        # Proxied GangaObject class
+        self.assertTrue(hasattr(TestGangaObject, '_proxyClass'))
+        self.assertFalse(hasattr(TestGangaObject, '_proxyObject'))
+        self.assertFalse(hasattr(TestGangaObject, '_impl'))
+
+        # Non-proxied GangaObject instance
+        non_proxied_instance = TestGangaObject()
+        self.assertTrue(hasattr(non_proxied_instance, '_proxyClass'))
+        self.assertFalse(hasattr(non_proxied_instance, '_proxyObject'))
+        self.assertFalse(hasattr(non_proxied_instance, '_impl'))
+
+        # Proxy class
+        proxy_class = TestGangaObject._proxyClass
+        self.assertFalse(hasattr(proxy_class, '_proxyClass'))
+        self.assertFalse(hasattr(proxy_class, '_proxyObject'))
+        self.assertTrue(hasattr(proxy_class, '_impl'))
+
+        # Proxy class instance
+        self.assertFalse(hasattr(self.p, '_proxyClass'))
+        self.assertFalse(hasattr(self.p, '_proxyObject'))
+        self.assertTrue(hasattr(self.p, '_impl'))
+
+        # Proxied GangaObject instance
+        proxied = self.p._impl
+        self.assertTrue(hasattr(proxied, '_proxyClass'))
+        self.assertTrue(hasattr(proxied, '_proxyObject'))
+        self.assertFalse(hasattr(proxied, '_impl'))
+
+        # A proxy instance should only have _impl in its dict
+        self.assertEqual(self.p.__dict__.keys(), ['_impl'])
 
     def test_default(self):
         """
