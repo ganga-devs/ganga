@@ -201,7 +201,6 @@ class GangaRepository(object):
         obj = cls()
         #setattr(obj, '_parent', None)
         #obj.__init__()
-        obj._proxyObject = None
         obj.setNodeData({})
         obj.setNodeAttribute('id', this_id)
 
