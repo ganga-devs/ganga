@@ -18,3 +18,21 @@ for k in allPlugins.allCategories():
 for n, k, d in bootstrap():
     setattr(ganga, n, k)
     setattr(Ganga.GPI, n, k)
+
+# bootstrap the workspace
+from Ganga.Runtime import Workspace_runtime
+Workspace_runtime.bootstrap()
+
+# bootstrap core modules
+from Ganga.GPIDev.Base.Proxy import proxyRef
+Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, proxyRef), True)
+
+# start queues
+from Ganga.Runtime.GPIexport import exportToGPI
+from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
+setattr(ganga, "queues", ThreadPoolQueueMonitor() )
+setattr(Ganga.GPI, "queues", ThreadPoolQueueMonitor() )
+
+# Setup shutdown manager
+from Ganga.Core.InternalServices import ShutdownManager
+ShutdownManager.install()
