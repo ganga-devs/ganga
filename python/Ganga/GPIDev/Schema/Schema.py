@@ -104,8 +104,13 @@ class Schema(object):
             logger.error(err_str)
             raise GangaAttributeError(err_str)
 
-    category = property(lambda self: self._pluginclass._category)
-    name = property(lambda self: _getName(self._pluginclass))
+    @property
+    def category(self):
+        return self._pluginclass._category
+
+    @property
+    def name(self):
+        return _getName(self._pluginclass)
 
     def allItems(self):
         if self.datadict is None: return zip()
