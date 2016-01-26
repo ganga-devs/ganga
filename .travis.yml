@@ -5,4 +5,8 @@ python:
 #  - "3.4"
 #  - "3.5"
 install: pip install -r requirements.txt
-script: python setup.py tests --type=unit
+script: python setup.py tests --type=unit --coverage
+before_install:
+  - pip install codecov
+after_success:
+  - codecov --root python

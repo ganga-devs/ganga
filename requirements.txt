@@ -3,3 +3,4 @@
 
 nose
 unittest2
+coverage
