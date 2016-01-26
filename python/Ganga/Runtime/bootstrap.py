@@ -1021,17 +1021,15 @@ under certain conditions; type license() for details.
         # FIXME: DEPRECATED
         def list_plugins(category):
             """List all plugins in a given category, OBSOLETE: use plugins(category)"""
-            logger.warning('This function is deprecated, use plugins("%s") instead', category)
-            from Ganga.Utility.Plugin import allPlugins
-            return allPlugins.allClasses(category).keys()
+            raise DeprecationWarning("use plugins('%s')" % category)
 
         def applications():
             """return a list of all available applications, OBSOLETE: use plugins('applications')"""
-            return list_plugins('applications')
+            raise DeprecationWarning("use plugins('applications')")
 
         def backends():
             """return a list of all available backends, OBSOLETE: use plugins('backends')"""
-            return list_plugins('backends')
+            raise DeprecationWarning("use plugins('backends')")
         from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 
         def convert_merger_to_postprocessor(j):
@@ -1055,19 +1053,6 @@ under certain conditions; type license() for details.
         exportToGPI('plugins', plugins, 'Functions')
         exportToGPI('convert_merger_to_postprocessor',
                     convert_merger_to_postprocessor, 'Functions')
-
-        def force_job_completed(j):
-            "obsoleted, use j.force_status('completed') instead"
-            raise GangaException(
-                "obsoleted, use j.force_status('completed') instead")
-
-        def force_job_failed(j):
-            "obsoleted, use j.force_status('failed') instead"
-            raise GangaException(
-                "obsoleted, use j.force_status('failed') instead")
-
-        exportToGPI('force_job_completed', force_job_completed, 'Functions')
-        exportToGPI('force_job_failed', force_job_failed, 'Functions')
 
         # import default runtime modules
         from Ganga.Runtime import Repository_runtime
