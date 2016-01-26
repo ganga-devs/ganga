@@ -281,7 +281,7 @@ def full_print(obj, out=None, interactive=False):
             for x in obj:
                 if isType(x, GangaObject):
                     sio = cStringIO.StringIO()
-                    x.printTree(sio, ineractive)
+                    x.printTree(sio, interactive)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
                     outString += result.rstrip()
