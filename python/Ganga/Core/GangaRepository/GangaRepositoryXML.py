@@ -933,6 +933,8 @@ class GangaRepositoryLocal(GangaRepository):
             rmrf(os.path.dirname(fn))
             if this_id in self._fully_loaded.keys():
                 del self._fully_loaded[this_id]
+            if this_id in self.objects:
+                del self.objects[this_id]
 
     def lock(self, ids):
         return self.sessionlock.lock_ids(ids)
