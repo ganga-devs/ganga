@@ -233,22 +233,20 @@ class Schema(object):
         stored_attr_key = def_name + ':' + str(attr)
 
         from Ganga.Utility.Config import Config
-        from Ganga.Utility.Config import getConfig
         is_finalized = Config._after_bootstrap
 
-        config = Ganga.Utility.Config.getConfig(def_name)
+        try:
+            # Attempt to get the relevant config section
+            config = Config.getConfig(def_name, create=False)
 
-        if is_finalized and stored_attr_key in _found_attrs.keys() and not config.hasModified():
-            defvalue = _found_attrs[stored_attr_key]
-        else:
-
-            config.setModified(False)
-
-            # hidden, protected and sequence values are not represented in config
-            if attr in config:
-                defvalue = config[attr]
+            if is_finalized and stored_attr_key in _found_attrs and not config.hasModified():
+                defvalue = _found_attrs[stored_attr_key]
             else:
-                defvalue = item['defvalue']
+                defvalue = config[attr]
+                _found_attrs[stored_attr_key] = defvalue
+        except (KeyError, Config.ConfigError):
+            # hidden, protected and sequence values are not represented in config
+            defvalue = item['defvalue']
             _found_attrs[stored_attr_key] = defvalue
 
         # in the checking mode, use the provided value instead
