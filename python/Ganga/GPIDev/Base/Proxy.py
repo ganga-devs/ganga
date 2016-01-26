@@ -569,18 +569,11 @@ def GPIProxyObjectFactory(_obj):
         if isProxy(_obj):
             return _obj
         elif not isProxy(_obj):
-            proxy_class = this_class(_call_auto_init=False)
-            setattr(proxy_class, proxyRef, _obj)
-            setattr(proxy_class, proxyObject, proxy_class)
-            return proxy_class
+            pass
     else:
         pass
 
-    proxy_class = this_class(_call_auto_init=False)
-
-    setattr(proxy_class, proxyRef, _obj)
-    setattr(proxy_class, proxyObject, proxy_class)
-
+    proxy_class = this_class(_proxy_ref_obj_to_wrap=_obj)
     return proxy_class
 
 # this class serves only as a 'tag' for all generated GPI proxy classes
@@ -608,6 +601,9 @@ def GPIProxyClassFactory(name, pluginclass):
 
     def _init(self, *args, **kwds):
 
+        ## Zero-th fully initialize self before moving on
+        super(type(self), self).__init__()
+
         ## THE ORDER IN HOW AN OBJECT IS INITIALIZED IS IMPORTANT AND HAS BEEN DOUBLE CHECKED - rcurrie
 
         ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
@@ -617,36 +613,38 @@ def GPIProxyClassFactory(name, pluginclass):
         # if len(args) > 1:
         #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
 
+
+        ## If we're only constructing a raw Proxy to wrap an existing object lets do that
+        proxy_obj_str = '_proxy_ref_obj_to_wrap'
+
+        if proxy_obj_str in kwds.keys():
+            proxy_obj = kwds[proxy_obj_str]
+            del kwds[proxy_obj_str]
+
+            proxy_obj.__dict__[proxyObject] = proxy_obj
+            setattr(self, proxyObject, self)
+            setattr(self, proxyRef, proxy_obj)
+            setattr(proxy_obj, proxyClass, type(name, (GPIProxyObject,), d))
+            return
+
+        ## Object was not passed by construction so need to construct new object for internal use
         instance = pluginclass()
-        #for this_attrib in [proxyRef, proxyClass]:
-            #if hasattr(instance, this_attrib):
-            #    try:
-            #        delattr(instance, this_attrib)
-            #    except AttributeError:
-            #        pass
 
         setattr(instance, proxyClass, type(name, (GPIProxyObject,), d))
 
         ## SECOND WE NEED TO MAKE SURE THAT OBJECT ID IS CORRECT AND THIS DOES THINGS LIKE REGISTER A JOB WITH THE REPO
 
         # at the object level _impl is a ganga plugin object
-        instance.__dict__[proxyObject] = self
-        assert(id(getattr(instance, proxyObject)) == id(self))
+        ## Want to subvert any setter methods here so edit class directly
         setattr(self, proxyRef, instance)
-        self.__dict__[proxyObject] = self
-        assert(id(getattr(self, proxyObject)) == id(self))
-        raw_obj = getattr(self, proxyRef)
-        setattr(raw_obj, proxyObject, self)
+        setattr(self, proxyObject, self)
 
-        auto_init_str = '_call_auto_init'
-        if auto_init_str in kwds.keys():
-            _call_auto_init = kwds[auto_init_str]
-            del kwds[auto_init_str]
-        else:
-            _call_auto_init = True
+        instance.__dict__[proxyObject] = self
 
-        if _call_auto_init is True:
-            raw_obj._auto__init__()
+        ##raw_obj is the GangaObject derrivative instance but has been written this way so might as well keep it
+        raw_obj = instance
+
+        raw_obj._auto__init__()
 
         from Ganga.GPIDev.Base.Objects import Node
         for key, _val in getattr(self, proxyClass)._schema.allItems():
@@ -730,8 +728,8 @@ def GPIProxyClassFactory(name, pluginclass):
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
-        raw_obj = getattr(self, proxyRef)
-
+        ## end of _init
+        return
 
     from Ganga.Utility.strings import ItemizedTextParagraph
 
