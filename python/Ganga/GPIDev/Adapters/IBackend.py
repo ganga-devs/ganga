@@ -452,7 +452,7 @@ class IBackend(GangaObject):
                 else:
                     for sj in j.subjobs:
                         if sj.status in ['submitted', 'running']:
-                            monitorable_subjob_ids.append(sj_id)
+                            monitorable_subjob_ids.append(sj.id)
 
                 #logger.info('Monitoring subjobs: %s', str(monitorable_subjob_ids)
 
