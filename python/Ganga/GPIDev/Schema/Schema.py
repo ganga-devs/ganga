@@ -464,31 +464,29 @@ class Item(object):
         else:
             GangaList = list
 
-        item = self
-
         # type checking does not make too much sense for Component Items because component items are
         # always checked at the object (_impl) level for category compatibility.
 
-        if item.isA(ComponentItem):
+        if self.isA(ComponentItem):
             return
 
-        validTypes = item._meta['typelist']
+        validTypes = self._meta['typelist']
 
         # setting typelist explicitly to None results in disabling the type
         # checking completely
         if validTypes is None:
             return
 
-        if item._meta['sequence']:
+        if self._meta['sequence']:
             from Ganga.GPIDev.Base.Proxy import isType
-            if not isType(item._meta['defvalue'], (list, tuple, GangaList)):
+            if not isType(self._meta['defvalue'], (list, tuple, GangaList)):
                 raise SchemaError('Attribute "%s" defined as a sequence but defvalue is not a list.' % name)
 
             if not isType(val, (GangaList, tuple, list)):
                 raise TypeMismatchError('Attribute "%s" expects a list.' % name)
 
         if validTypes:
-            if item._meta['sequence']:
+            if self._meta['sequence']:
 
                 for valItem in val:
                     if not valueTypeAllowed(valItem, validTypes):
@@ -496,7 +494,7 @@ class Item(object):
 
                 return
             else:  # Non-sequence
-                if isinstance(item._meta['defvalue'], dict):
+                if isinstance(self._meta['defvalue'], dict):
                     if isinstance(val, dict):
                         for dKey, dVal in val.iteritems():
                             if not valueTypeAllowed(dKey, validTypes) or not valueTypeAllowed(dVal, validTypes):
@@ -509,15 +507,15 @@ class Item(object):
                     return
 
         # typelist is not defined, use the type of the default value
-        if item._meta['defvalue'] is None:
+        if self._meta['defvalue'] is None:
             logger.warning('type-checking disabled: type information not provided for %s, contact plugin developer', name)
         else:
-            if item._meta['sequence']:
+            if self._meta['sequence']:
                 logger.warning('type-checking is incomplete: type information not provided for a sequence %s, contact plugin developer', name)
             else:
 
-                logger.debug("valType: %s defValueType: %s name: %s" % (type(val), type(item._meta['defvalue']), name))
-                self.__check(self.__actualCheck(val, item._meta['defvalue']), name, type(item._meta['defvalue']), val)
+                logger.debug("valType: %s defValueType: %s name: %s" % (type(val), type(self._meta['defvalue']), name))
+                self.__check(self.__actualCheck(val, self._meta['defvalue']), name, type(self._meta['defvalue']), val)
 
 
     @staticmethod
