@@ -551,12 +551,6 @@ class ComponentItem(Item):
 
         assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self['protected'] and not self['sequence'] and not self['copyable']))
 
-    def __construct__(self, args):
-        super(ComponentItem, self).__construct__(args)
-        kwds = {}
-        kwds['category'] = args[0]
-        self._update(kwds, forced=ComponentItem._forced)
-
     def _describe(self):
         return "'" + self['category'] + "' object," + Item._describe(self)
 
@@ -607,9 +601,6 @@ class FileItem(ComponentItem):
     def __init__(self, **kwds):
         super(FileItem, self).__init__('files')
         self._update(kwds)
-
-    def __construct__(self, args):
-        super(FileItem, self).__construct__('files')
 
     def _describe(self):
         return "'files' object," + Item._describe(self)
