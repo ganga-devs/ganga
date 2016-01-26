@@ -23,7 +23,7 @@ from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
 
 logger = Ganga.Utility.logging.getLogger()
 
-## Dictionary for storing data from the Config system which takes a while to lookup
+# Dictionary for storing data from the Config system which takes a while to lookup
 _found_configs = {}
 _found_attrs = {}
 
@@ -147,16 +147,6 @@ class Schema(object):
     def isEqual(self, schema):
         return self.name == schema.name and self.category == schema.category
 
-# NOT TESTED
-# def isCompatible(self,schema):
-# if len(self.datadict.keys()) != len(schema.datadict.keys()):
-# return 0
-
-# for k in self.datadict.keys():
-# if not self[k].isA(schema[k])
-# return 0
-# return 1
-
     def getPluginClass(self):
         return self._pluginclass
 
@@ -165,14 +155,13 @@ class Schema(object):
         new_dict = {}
         for key, val in self.datadict.iteritems():
             new_dict[key] = copy.deepcopy(val)
-        return Schema(version=copy.deepcopy(self.version), datadict = new_dict)
+        return Schema(version=copy.deepcopy(self.version), datadict=new_dict)
 
     def createDefaultConfig(self):
         # create a configuration unit for default values of object properties
         # take the defaults from schema defaults
-        config = Ganga.Utility.Config.makeConfig(defaultConfigSectionName(self.name),\
-                                                "default attribute values for %s objects" % self.name)
-                                                # self._pluginclass._proxyClass.__doc__ )
+        config = Ganga.Utility.Config.makeConfig(defaultConfigSectionName(self.name),
+                                                 "default attribute values for %s objects" % self.name)
 
         for name, item in self.allItems():
             # and not item['sequence']: #FIXME: do we need it or not??
@@ -211,7 +200,7 @@ class Schema(object):
                 try:
                     self._getDefaultValueInternal(name, x, check=True)
                 except Exception as err:
-                    logger.info("Unexpected error: %s" % str(err))
+                    logger.info("Unexpected error: %s", err)
                     raise
                     #Ganga.Utility.logging.log_unknown_exception()
                     #raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
@@ -373,7 +362,6 @@ class Item(object):
                         'doc': '', 'visitable': 1, 'checkset': None, 'filter': None, 'strict_sequence': 1, 'summary_print': None,
                         'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0,
                         'optional': 0, 'category': 'internal', 'typelist': None, 'load_default': 1}
-                        ##rcurrie Adding optional, category, typelist, load_default as they appear to be missing!
 
     def __init__(self):
         super(Item, self).__init__()
@@ -417,8 +405,7 @@ class Item(object):
             # find intersection
             forbidden = [k for k in forced if k in kwds]
             if len(forbidden) > 0:
-                raise TypeError('%s received forbidden (forced) keyword arguments %s' % (
-                    str(self.__class__), str(forbidden)))
+                raise TypeError('%s received forbidden (forced) keyword arguments %s' % (self.__class__, forbidden))
             self._meta.update(forced)
 
         self._meta.update(kwds)
@@ -468,7 +455,7 @@ class Item(object):
         if not isAllowedType:
             #import traceback
             #traceback.print_stack()
-            raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (name, validTypes, str(input_val), type(input_val)))
+            raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (name, validTypes, input_val, type(input_val)))
 
     def _check_type(self, val, name, enableGangaList=True):
 
@@ -580,6 +567,7 @@ valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(val, valTypeList, 
 
 defaultValue='_NOT_A_VALUE_'
 
+
 class SimpleItem(Item):
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
@@ -596,6 +584,7 @@ class SimpleItem(Item):
     def _describe(self):
         return 'simple property,' + Item._describe(self)
 
+
 class SharedItem(Item):
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
@@ -611,25 +600,6 @@ class SharedItem(Item):
 
     def _describe(self):
         return 'shared property,' + Item._describe(self)
-
-#    def _increment(self):
-#        return Item
-
-
-#    def type_match(self,v):
-#        return (self['sequence'] and v == []) or \
-#               (not self['typelist'] or valueTypeAllowed( v, self['typelist']))
-
-# class BindingItem(Item):
-##     _forced = {'transient' : 1, 'sequence' : 0, 'defvalue' : None, 'copyable' : 0}
-
-# def __init__(self,getter,**kwds):
-# Item.__init__(self)
-##         assert(not getter is None)
-##         kwds['getter'] = getter
-# kwds['setter'] = setter
-# assert(not setter is None)
-# self._update(kwds,forced=BindingItem._forced)
 
 
 # Files are important and common enough to merit a special support for
@@ -715,8 +685,7 @@ if __name__ == '__main__':
     assert(not schema['id']['comparable'])
     assert(schema['id']['type'] == 'string')
 
-    logger.info(schema['application']['category'] +
-                ' ' + schema['application']['defvalue'])
+    logger.info(schema['application']['category'] + ' ' + schema['application']['defvalue'])
 
     schema2 = copy.deepcopy(schema)
 
