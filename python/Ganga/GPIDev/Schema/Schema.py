@@ -147,9 +147,6 @@ class Schema(object):
     def isEqual(self, schema):
         return self.name == schema.name and self.category == schema.category
 
-    def getPluginClass(self):
-        return self._pluginclass
-
     # make a schema copy for a derived class, does not copy the pluginclass
     def inherit_copy(self):
         new_dict = {}
@@ -166,7 +163,7 @@ class Schema(object):
         for name, item in self.allItems():
             # and not item['sequence']: #FIXME: do we need it or not??
             if not item['protected'] and not item['hidden']:
-                if 'typelist' in item._meta:
+                if item.hasProperty('typelist'):
                     types = item['typelist']
                     if types == []:
                         types = None
@@ -615,15 +612,6 @@ class GangaFileItem(ComponentItem):
     def _describe(self):
         return "'gangafiles' object," + Item._describe(self)
 
-
-# a helper class which gives a human readible representation of schema items
-# for example suitable for python interactive help()
-def make_helper(item):
-    class SchemaItemHelper(object):
-
-        def __repr__(self):
-            return item.describe()
-    return SchemaItemHelper()
 
 if __name__ == '__main__':
 
