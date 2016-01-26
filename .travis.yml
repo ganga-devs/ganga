@@ -9,4 +9,4 @@ script: python setup.py tests --type=unit --coverage
 before_install:
   - pip install codecov
 after_success:
-  - codecov --root python
+  - cd python && codecov
