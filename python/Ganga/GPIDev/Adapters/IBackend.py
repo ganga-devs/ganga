@@ -484,7 +484,7 @@ class IBackend(GangaObject):
                     try:
                         subjobs_to_monitor = []
                         for sj_id in this_block:
-                            subjobs_to_monitor.append(j.subjobs(sj_id))
+                            subjobs_to_monitor.append(j.subjobs[sj_id])
                         stripProxy(j.backend).updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
                         logger.error("Monitoring Error: %s" % str(err))
