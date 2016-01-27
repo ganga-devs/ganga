@@ -271,6 +271,7 @@ def post_config_handler(opt, value):
 config.attachUserHandler(None, post_config_handler)
 config.attachSessionHandler(None, post_config_handler)
 
+lookup_frame_names = {}
 
 def _guess_module_logger_name(modulename, frame=None):
     # print " _guess_module_logger_name",modulename
@@ -283,10 +284,24 @@ def _guess_module_logger_name(modulename, frame=None):
     else:
         print('using frame from the caller')
 
+    global lookup_frame_names
+
+
+    this__file__ = None
+    if '__file__' in frame.f_globals.keys():
+        this__file__ = frame.f_globals['__file__']
+        if this__file__ in lookup_frame_names:
+            del frame
+            return lookup_frame_names[this_file]
+        else:
+            should_store = True
+    else:
+        should_store = False
+
     # accessing __file__ from globals() is much more reliable than
     # f_code.co_filename (name = os.path.normcase(frame.f_code.co_filename))
-    if '__file__' in frame.f_globals.keys():
-        name = os.path.realpath(os.path.abspath(frame.f_globals['__file__']))
+    if this__file__ is not None:
+        name = os.path.realpath(os.path.abspath(this__file__))
     else:
         # no file associated with the frame (e.g. interactive prompt, exec
         # statement)
@@ -332,8 +347,13 @@ def _guess_module_logger_name(modulename, frame=None):
     if not modulename:
         return name
 
+    return_name = name + '.' + modulename
+
+    if should_store is True:
+        lookup_frame_names[this__file__] = return_name
+
     # return custom module name
-    return name + '.' + modulename
+    return return_name
 
 _MemHandler = _get_handlers().MemoryHandler
 
