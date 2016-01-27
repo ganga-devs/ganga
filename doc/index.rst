@@ -12,13 +12,13 @@ Ganga is a tool to make it easy to run data analysis jobs along with managing as
 
 .. toctree::
     :caption: For system administrators
-    :maxdepth: 2
+    :maxdepth: 1
 
     sysadmin/index
 
 .. toctree::
     :caption: For developers
-    :maxdepth: 2
+    :maxdepth: 1
 
     dev/index
     API/index

@@ -15,7 +15,6 @@
 
 import Ganga.Utility.logging
 
-import types
 from copy import deepcopy
 import inspect
 
@@ -39,16 +38,6 @@ def _getGangaList():
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         _imported_GangaList = GangaList
     return _imported_GangaList
-
-
-class PreparedStateError(GangaException):
-
-    def __init__(self, txt=''):
-        GangaException.__init__(self, txt)
-        self.txt = txt
-
-    def __str__(self):
-        return "PreparedStateError: %s" % str(self.txt)
 
 
 class Node(object):
@@ -676,71 +665,28 @@ class Descriptor(object):
 
         return
 
-def export(method):
-    """
-    Decorate a GangaObject method to be exported to the GPI
-    """
-    method.exported_method = True
-    return method
-
 
 class ObjectMetaclass(type):
     _descriptor = Descriptor
 
     def __init__(cls, name, bases, this_dict):
 
-        from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor
+        from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory
 
         super(ObjectMetaclass, cls).__init__(name, bases, this_dict)
 
-        # ignore the 'abstract' base class
-        # FIXME: this mechanism should be based on explicit getName(cls) or alike
-        #if name == 'GangaObject':
-        #    return
-
-        #logger.debug("Metaclass.__init__: class %s name %s bases %s", cls, name, bases)
-
         # all Ganga classes must have (even empty) schema
-        if not hasattr(cls, '_schema') or cls._schema is None:
+        if cls._schema is None:
             cls._schema = Schema.Schema(None, None)
 
         this_schema = cls._schema
 
         # Add all class members of type `Schema.Item` to the _schema object
         # TODO: We _could_ add base class's Items here by going through `bases` as well.
+        # We can't just yet because at this point the base class' Item has been overwritten with a Descriptor
         for member_name, member in this_dict.items():
             if isinstance(member, Schema.Item):
                 this_schema.datadict[member_name] = member
-
-        # produce a GPI class (proxy)
-        proxyClass = GPIProxyClassFactory(name, cls)
-
-        if not hasattr(cls, '_exportmethods'):
-            cls._exportmethods = []
-
-        this_export = cls._exportmethods
-
-        # export public methods of this class and also of all the bases
-        # this class is scanned last to extract the most up-to-date docstring
-        dicts = (b.__dict__ for b in reversed(cls.__mro__))
-        for d in dicts:
-            for k in d:
-                if k in this_export or getattr(d[k], 'exported_mes_thod', False):
-
-                    internal_name = "_export_" + k
-                    if internal_name not in d.keys():
-                        internal_name = k
-                    try:
-                        method = d[internal_name]
-                    except Exception, err:
-                        logger.debug("ObjectMetaClass Error internal_name: %s,\t d: %s" % (str(internal_name), str(d)))
-                        logger.debug("ObjectMetaClass Error: %s" % str(err))
-
-                    if not isinstance(method, types.FunctionType):
-                        continue
-                    f = ProxyMethodDescriptor(k, internal_name)
-                    f.__doc__ = method.__doc__
-                    setattr(proxyClass, k, f)
 
         # sanity checks for schema...
         if '_schema' not in this_dict.keys():
@@ -758,8 +704,6 @@ class ObjectMetaclass(type):
         # export visible properties... do not export hidden properties
         for attr, item in this_schema.allItems():
             setattr(cls, attr, cls._descriptor(attr, item))
-            if not item['hidden']:
-                setattr(proxyClass, attr, ProxyDataDescriptor(attr))
 
         # additional check of type
         # bugfix #40220: Ensure that default values satisfy the declared types
@@ -771,19 +715,16 @@ class ObjectMetaclass(type):
         # create reference in schema to the pluginclass
         this_schema._pluginclass = cls
 
+        # if we've not even declared this we don't want to use it!
+        if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
+            allPlugins.add(cls, cls._category, getName(cls))
+
+        # create a configuration unit for default values of object properties
+        if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
+            this_schema.createDefaultConfig()
+
         # store generated proxy class
-        setattr(cls, '_proxyClass', proxyClass)
-
-        # register plugin class
-        if hasattr(cls, '_declared_property'):
-            # if we've not even declared this we don't want to use it!
-            if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
-                allPlugins.add(cls, cls._category, getName(cls))
-
-            # create a configuration unit for default values of object properties
-            if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
-                this_schema.createDefaultConfig()
-
+        setattr(cls, '_proxyClass', GPIProxyClassFactory(name, cls))
 
 
 class GangaObject(Node):
@@ -1033,10 +974,9 @@ class GangaObject(Node):
     # this means that implicit (inherited) _name attribute has no effect in the derived class
     # example: cls._declared_property('hidden') => True if there is class
     # attribute _hidden explicitly declared
-    def _declared_property(self, name):
-        return '_' + name in self.__dict__
-
-    _declared_property = classmethod(_declared_property)
+    @classmethod
+    def _declared_property(cls, name):
+        return '_' + name in cls.__dict__
 
     # get the job object associated with self or raise an assertion error
     # the FIRST PARENT Job is returned...

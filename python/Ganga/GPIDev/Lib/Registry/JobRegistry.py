@@ -205,10 +205,6 @@ class JobRegistrySlice(RegistrySlice):
     def resubmit(self, keep_going):
         self.do_collective_operation(keep_going, 'resubmit')
 
-    def fail(self, keep_going, force):
-        raise GangaException(
-            'fail() is deprecated, use force_status("failed") instead')
-
     def force_status(self, status, keep_going, force):
         self.do_collective_operation(
             keep_going, 'force_status', status, force=force)
