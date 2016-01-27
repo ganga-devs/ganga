@@ -20,6 +20,7 @@ config = Ganga.Utility.Config.getConfig('Display')
 class RegistrySlice(object):
 
     def __init__(self, name, display_prefix):
+        super(RegistrySlice, self).__init__()
         self.objects = oDict()
         self.name = name
         self._display_prefix = display_prefix
