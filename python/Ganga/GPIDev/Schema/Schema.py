@@ -24,8 +24,10 @@ from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
 logger = Ganga.Utility.logging.getLogger()
 
 # Dictionary for storing data from the Config system which takes a while to lookup
+_found_components = {}
 _found_configs = {}
 _found_attrs = {}
+_stored_defaults = {}
 
 #
 # Ganga Public Interface Schema
@@ -51,7 +53,10 @@ class Version(object):
 
 
 def defaultConfigSectionName(name):
-    return 'defaults_' + name  # _Properties
+    global _stored_defaults
+    if name not in _stored_defaults:
+       _stored_defaults[name] = 'defaults_' + name  # _Properties
+    return _stored_defaults[name]
 
 # Schema defines the logical model of the Ganga Public Interface (GPI)
 # for  jobs and  pluggable  job components  such  as applications  and
@@ -79,9 +84,9 @@ def defaultConfigSectionName(name):
 # possible  however   the  _pluginclass  objects   are  shared  unless
 # overriden explicitly.
 
-def _getName(object):
+def _getName(_object):
     from Ganga.GPIDev.Base.Proxy import getName
-    return getName(object)
+    return getName(_object)
 
 class Schema(object):
     # Schema constructor is used by Ganga plugin developers.
@@ -243,14 +248,18 @@ class Schema(object):
                 defvalue = _found_attrs[stored_attr_key]
             else:
                 defvalue = config[attr]
-                _found_attrs[stored_attr_key] = defvalue
+                from Ganga.GPIDev.Base.Proxy import stripProxy
+                ## Just in case a developer puts the proxied object into the default value!
+                _found_attrs[stored_attr_key] = stripProxy(defvalue)
         except (KeyError, Config.ConfigError):
             # hidden, protected and sequence values are not represented in config
             defvalue = item['defvalue']
-            _found_attrs[stored_attr_key] = defvalue
+            from Ganga.GPIDev.Base.Proxy import stripProxy
+            ## Just in case a developer puts the proxied object into the default value!
+            _found_attrs[stored_attr_key] = stripProxy(defvalue)
 
         # in the checking mode, use the provided value instead
-        if check:
+        if check is True:
             defvalue = val
 
         if isinstance(item, ComponentItem):
@@ -267,8 +276,13 @@ class Schema(object):
                 # if a defvalue of a component item is an object (not string) just process it as for SimpleItems (useful for FileItems)
                 # otherwise do a lookup via plugin registry
 
+                category = item['category']
+
+                global _found_category
                 if isinstance(defvalue, str) or defvalue is None:
-                    return allPlugins.find(item['category'], defvalue)()
+                    if category not in _found_components or config.hasModified():
+                        _found_components[category] = allPlugins.find(category, defvalue)
+                    return _found_components[category]()
 
         # make a copy of the default value (to avoid strange effects if the
         # original modified)
@@ -450,7 +464,7 @@ class Item(object):
         if not isAllowedType:
             #import traceback
             #traceback.print_stack()
-            raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (name, validTypes, input_val, type(input_val)))
+            raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (name, validTypes, input_val, str(type(input_val))))
 
     def _check_type(self, val, name, enableGangaList=True):
 
