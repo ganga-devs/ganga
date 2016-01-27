@@ -2313,6 +2313,9 @@ class Job(GangaObject):
                 super(Job, self).__setattr__('backend', new_value)
         #elif attr == 'postprocessors':
         #    super(Job, self).__setattr__('postprocessors', GangaList())
+        elif attr.startswith('_'):
+            # If it's an internal attribute then just pass it on
+            super(Job, self).__setattr__(attr, value)
         else:
             new_value = stripProxy(runtimeEvalString(self, attr, value))
             #from Ganga.GPIDev.Base.Objects import Node

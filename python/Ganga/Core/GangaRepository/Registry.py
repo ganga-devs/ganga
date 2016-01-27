@@ -255,8 +255,8 @@ class Registry(object):
 
             logger.debug("Checked ID")
 
-            from Ganga.GPIDev.Base.Proxy import addProxy
-            return addProxy(this_obj)
+            return this_obj
+
         except KeyError as err:
             logger.debug("Repo KeyError: %s" % str(err))
             logger.debug("Keys: %s id: %s" % (str(self._objects.keys()), str(this_id)))

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from Ganga.GPIDev.Base.Proxy import stripProxy, proxyRef
+from Ganga.GPIDev.Base.Proxy import stripProxy, implRef
 from Ganga.Utility.logging import getLogger
 
 class RegistrySliceProxy(object):
@@ -8,7 +8,7 @@ class RegistrySliceProxy(object):
     """This object is an access list to registry slices"""
 
     def __init__(self, impl):
-        self.__dict__[proxyRef] = impl
+        setattr(self, implRef, impl)
 
     def ids(self, minid=None, maxid=None):
         """ Return a list of ids of all objects.
