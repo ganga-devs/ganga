@@ -43,6 +43,7 @@ class TestProxy(unittest.TestCase):
         """
         new_object = TestGangaObject()
         self.p = Ganga.GPIDev.Base.Proxy.addProxy(new_object)
+        self.p_class = Ganga.GPIDev.Base.Proxy.addProxy(TestGangaObject)
 
     def test_dict_attributes(self):
         # Non-proxied GangaObject class
@@ -69,8 +70,13 @@ class TestProxy(unittest.TestCase):
 
         # Proxy class instance
         self.assertFalse(hasattr(self.p, '_proxyClass'))
-        self.assertFalse(hasattr(self.p, '_proxyObject'))
+        self.assertTrue(hasattr(self.p, '_proxyObject'))
         self.assertTrue(hasattr(self.p, '_impl'))
+
+        # Proxied class
+        self.assertTrue(hasattr(self.p_class, '_proxyClass'))
+        self.assertFalse(hasattr(self.p_class, '_proxyObject'))
+        self.assertFalse(hasattr(self.p_class, '_impl'))
 
         # Proxied GangaObject instance
         proxied = self.p._impl
@@ -79,7 +85,7 @@ class TestProxy(unittest.TestCase):
         self.assertFalse(hasattr(proxied, '_impl'))
 
         # A proxy instance should only have _impl in its dict
-        self.assertEqual(self.p.__dict__.keys(), ['_impl'])
+        self.assertEqual(self.p.__dict__.keys(), ['_impl', '_proxyObject'])
 
     def test_default(self):
         """
