@@ -30,7 +30,7 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_proxyObject', '_proxyClass', '_data', '_index_cache', '_parent', '_registry', '_impl']
+do_not_copy = ['_proxyObject', '_data', '_index_cache', '_parent', '_registry']
 
 def _getGangaList():
     global _imported_GangaList
@@ -41,13 +41,12 @@ def _getGangaList():
 
 
 class Node(object):
-    _ref_list = ['_parent', '_registry', '_index_cache', '_proxyObject']
+    _ref_list = ['_parent', '_registry', '_index_cache']
 
     def __init__(self, parent=None):
         self._data = {}
         self._parent = parent
         self._index_cache = {}
-        self._proxyObject = None
         super(Node, self).__init__()
         #logger.info("Node __init__")
 
@@ -719,7 +718,6 @@ class GangaObject(Node):
     __metaclass__ = ObjectMetaclass
     _schema = None  # obligatory, specified in the derived classes
     _category = None  # obligatory, specified in the derived classes
-    _proxyClass = None  # created automatically
     _registry = None  # automatically set for Root objects
     _exportmethods = []  # optional, specified in the derived classes
 
@@ -746,7 +744,6 @@ class GangaObject(Node):
         # IMPORTANT: if you add instance attributes like in the line below
         # make sure to update the __getstate__ method as well
         # use cache to help preserve proxy objects identity in GPI
-        self._proxyObject = None
         # dirty flag is true if the object has been modified locally and its
         # contents is out-of-sync with its repository
         self._dirty = False
@@ -794,7 +791,6 @@ class GangaObject(Node):
         # IMPORTANT: keep this in sync with the __init__
         #self._getReadAccess()
         this_dict = super(GangaObject, self).__getstate__()
-        #this_dict['_proxyObject'] = None
         #this_dict['_dirty'] = False
         return this_dict
 
@@ -804,7 +800,6 @@ class GangaObject(Node):
         #if '_parent' in this_dict:
         #    self._setParent(this_dict['_parent'])
         #self._setParent(None)
-        #self._proxyObject = None
         self._dirty = False
 
     @staticmethod
