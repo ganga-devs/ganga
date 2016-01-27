@@ -29,7 +29,7 @@ import Ganga.Runtime
 gangadir = os.path.expandvars('$HOME/gangadir_sphinx_dummy')
 this_argv = [
     'ganga',  # `argv[0]` is usually the name of the program so fake that here
-    '-o[Configuration]RUNTIME_PATH=Ganga:GangaDirac:',
+    '-o[Configuration]RUNTIME_PATH=Ganga',
     '-o[Configuration]gangadir={gangadir}'.format(gangadir=gangadir),
 ]
 
@@ -59,8 +59,46 @@ def reindent(docstring, depth=''):
     """
     return indent(inspect.cleandoc(docstring), depth)
 
+
+def signature(func, name=None):
+    """
+    Args:
+        func: a function object
+        name: an optional name for the function in case the function has been aliased
+
+    Returns: a string representing its signature as would be written in code
+
+    """
+    args, varargs, varkw, defaults = inspect.getargspec(func)
+    defaults = defaults or []  # If there are no defaults, set it to an empty list
+    defaults = [repr(d) for d in defaults]  # Type to get a useful string representing the default
+
+    # Based on a signature like foo(a, b, c=None, d=4, *args, **kwargs)
+    # we get args=['a', 'b', 'c', 'd'] and defaults=['None', '4']
+    # We must match them backwards from the end and pad the beginning with None
+    # to get arg_pairs=[('a', None), ('b', None), ('c', 'None'), ('d', '4')]
+    arg_pairs = reversed([(a, d) for a, d in izip_longest(reversed(args), reversed(defaults), fillvalue=None)])
+    # Based on arg_pairs we convert it into
+    # arg_strings=['a', 'b', 'a=None', 'd=4']
+    arg_strings = []
+    for arg, default in arg_pairs:
+        full_arg = arg
+        if default is not None:
+            full_arg += '='+default
+        arg_strings.append(full_arg)
+    # and append args and kwargs if necessary to get
+    # arg_strings=['a', 'b', 'a=None', 'd=4', '*args', '**kwargs']
+    if varargs is not None:
+        arg_strings.append('*'+varargs)
+    if varkw is not None:
+        arg_strings.append('**'+varkw)
+
+    # Signature is then 'foo(a, b, c=None, d=4, *args, **kwargs)'
+    return '{name}({args})'.format(name=name or func.__name__, args=', '.join(arg_strings))
+
+
 # First we get all objects that are in Ganga.GPI and filter out any non-GangaObjects
-gpi_classes = (stripProxy(o) for name, o in Ganga.GPI.__dict__.items() if isinstance(o, type) and issubclass(o, GPIProxyObject))
+gpi_classes = [stripProxy(o) for name, o in Ganga.GPI.__dict__.items() if isinstance(o, type) and issubclass(o, GPIProxyObject)]
 
 with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
 
@@ -105,34 +143,7 @@ with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
                 print(e, file=sys.stderr)
                 continue
 
-            args, varargs, varkw, defaults = inspect.getargspec(f)
-            defaults = defaults or []  # If there are no defaults, set it to an empty list
-            defaults = [repr(d) for d in defaults]  # Type to get a useful string representing the default
-
-            # Based on a signature like foo(a, b, c=None, d=4, *args, **kwargs)
-            # we get args=['a', 'b', 'c', 'd'] and defaults=['None', '4']
-            # We must match them backwards from the end and pad the beginning with None
-            # to get arg_pairs=[('a', None), ('b', None), ('c', 'None'), ('d', '4')]
-            arg_pairs = reversed([(a, d) for a, d in izip_longest(reversed(args), reversed(defaults), fillvalue=None)])
-            # Based on arg_pairs we convert it into
-            # arg_strings=['a', 'b', 'a=None', 'd=4']
-            arg_strings = []
-            for arg, default in arg_pairs:
-                full_arg = arg
-                if default is not None:
-                    full_arg += '='+default
-                arg_strings.append(full_arg)
-            # and append args and kwargs if necessary to get
-            # arg_strings=['a', 'b', 'a=None', 'd=4', '*args', '**kwargs']
-            if varargs is not None:
-                arg_strings.append('*'+varargs)
-            if varkw is not None:
-                arg_strings.append('**'+varkw)
-
-            # Signature is then 'foo(a, b, c=None, d=4, *args, **kwargs)'
-            signature = '{name}({args})'.format(name=method_name, args=', '.join(arg_strings))
-
-            print('    .. method:: {signature}'.format(signature=signature), file=cf)
+            print('    .. method:: {signature}'.format(signature=signature(f)), file=cf)
             if f.__doc__:
                 print('', file=cf)
                 print(reindent(f.__doc__, '        '), file=cf)
@@ -140,7 +151,6 @@ with open(doc_dir+'/GPI/classes.rst', 'w') as cf:
 
         print('', file=cf)
         print('', file=cf)
-
 
 # Looking through the plugin list helps categorise the GPI objects
 
@@ -163,6 +173,32 @@ with open(doc_dir+'/GPI/plugins.rst', 'w') as pf:
         print('', file=pf)
 
 print('')
+
+# All objects that are not proxied GangaObjects
+gpi_objects = dict((name, stripProxy(o)) for name, o in Ganga.GPI.__dict__.items() if stripProxy(o) not in gpi_classes and not name.startswith('__'))
+
+# Any objects which are not exposed as proxies (mostly exceptions)
+non_proxy_classes = dict((k, v) for k, v in gpi_objects.items() if inspect.isclass(v))
+
+# Anything which is callable
+callables = dict((k, v) for k, v in gpi_objects.items() if callable(v) and v not in non_proxy_classes.values())
+
+# Things which were declared as actual functions
+functions = dict((k, v) for k, v in callables.items() if inspect.isfunction(v) or inspect.ismethod(v))
+
+with open(doc_dir+'/GPI/functions.rst', 'w') as ff:
+
+    print('Functions', file=ff)
+    print('=========', file=ff)
+    print('', file=ff)
+
+    for name, func in functions.items():
+
+        print('.. function:: {signature}'.format(signature=signature(func, name)), file=ff)
+        print('', file=ff)
+        print(reindent(func.__doc__ or '', '    '), file=ff)
+
+        print('', file=ff)
 
 ## EXITING GANGA ##
 from Ganga.Core.InternalServices import ShutdownManager

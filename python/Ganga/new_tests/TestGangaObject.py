@@ -121,3 +121,8 @@ class TestObjectMetaclass(TestCase):
         class GangaObject(Node):
             __metaclass__ = ObjectMetaclass
             _schema = None
+            _category = None
+
+            @classmethod
+            def _declared_property(cls, name):
+                pass

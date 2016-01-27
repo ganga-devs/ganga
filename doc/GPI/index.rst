@@ -6,4 +6,6 @@ to increase ease-of-use.
 
 :doc:`classes`
 
+:doc:`functions`
+
 :doc:`plugins`
