@@ -182,13 +182,6 @@ class ShareDir(GangaObject):
     def __deepcopy__(self, memo):
         return super(ShareDir, self).__deepcopy__(memo)
 
-# this constructor enables the ability to add files to a ShareDir at initiation by calling
-# ShareDir('filetoadd')
-#    def __construct__(self,addfile):
-#        self.addfile = addfile
-#        if self.addfile:
-#            self.add(self.addfile)
-
     def add(self, input):
         from Ganga.Core.GangaRepository import getRegistry
         if not isType(input, list):

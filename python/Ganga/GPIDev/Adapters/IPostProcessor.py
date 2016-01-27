@@ -35,9 +35,6 @@ class IPostProcessor(GangaObject):
     def __init__(self):
         super(IPostProcessor, self).__init__()
 
-    def __construct__(self, args):
-        super(IPostProcessor, self).__construct__(args)
-
     def execute(self, job, **options):
         """
         To be overidden by inherited class
