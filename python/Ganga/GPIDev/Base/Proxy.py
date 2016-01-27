@@ -674,9 +674,9 @@ def GPIProxyClassFactory(name, pluginclass):
         ## DOESN'T MAKE SENSE TO KEEP PROXIES HERE AS WE MAY BE PERFORMING A PSEUDO-COPY OP
         clean_args = [stripProxy(arg) for arg in args]
         try:
-            getattr(self, proxyRef).__construct__(tuple(clean_args))
+            getattr(self, proxyRef).__construct__(clean_args)
         except TypeError:
-            getattr(self, proxyRef).__construct__()
+            getattr(self, proxyRef).__construct__([])
 
         ## FOURTH ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN
         ## THIS IS MAINLY FOR THE FIRST EXAMPLE ABOVE

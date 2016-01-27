@@ -115,8 +115,8 @@ class IncompleteObject(GangaObject):
         self.registry = registry
         self.id = this_id
 
-    def __construct__(self):
-        super(IncompleteObject, self).__construct__()
+    def __construct__(self, args):
+        super(IncompleteObject, self).__construct__(args)
 
     def reload(self):
         self.registry._lock.acquire()

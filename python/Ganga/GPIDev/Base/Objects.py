@@ -52,6 +52,14 @@ class Node(object):
         #logger.info("Node __init__")
 
     def __construct__(self, args):
+        # type: (list) -> None
+        """
+        This acts like a proxy constructor.
+        Any positional (non-keyword) arguments are passed to this function to construct the object.
+
+        Args:
+            args: a list of objects
+        """
         ## Don't obliterate the data stored in the node here
         ## Objects are initialized then '__construct__'-ed in the Proxy
         if not hasattr(self, '_data'):
@@ -777,7 +785,7 @@ class GangaObject(Node):
 
     # construct an object of this type from the arguments. Defaults to copy
     # constructor.
-    def __construct__(self, args={}):
+    def __construct__(self, args):
         # act as a copy constructor applying the object conversion at the same
         # time (if applicable)
 

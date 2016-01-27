@@ -104,8 +104,8 @@ class ShareRef(GangaObject):
         self.name = {}
         #self._setRegistry(None)
 
-    def __construct__(self):
-        super(ShareRef, self).__construct__()
+    def __construct__(self, args):
+        super(ShareRef, self).__construct__(args)
         if self.name is None:
             self.name = {}
         #self._setRegistry(None)
