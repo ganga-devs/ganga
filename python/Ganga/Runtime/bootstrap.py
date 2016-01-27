@@ -956,7 +956,7 @@ under certain conditions; type license() for details.
 
         def typename(obj):
             """Return a name of Ganga object as a string, example: typename(j.application) -> 'DaVinci'"""
-            from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, proxyRef
+            from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, implRef
             if isProxy(obj):
                 if hasattr(stripProxy(obj), '_name'):
                     return stripProxy(obj)._name
@@ -971,14 +971,14 @@ under certain conditions; type license() for details.
                     return obj._name
                 else:
                     logger = getLogger()
-                    logger.error("Object %s DOES NOT have the %s or _name parameter set" % (str(obj), str(proxyRef)))
+                    logger.error("Object %s DOES NOT have the %s or _name parameter set" % (str(obj), str(implRef)))
                     #import traceback
                     #traceback.print_stack()
                     return ""
 
         def categoryname(obj):
             """Return a category of Ganga object as a string, example: categoryname(j.application) -> 'applications'"""
-            from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, proxyRef
+            from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, implRef
             if isProxy(obj):
                 if hasattr(stripProxy(obj), '_category'):
                     return stripProxy(obj)._category
@@ -993,7 +993,7 @@ under certain conditions; type license() for details.
                     return obj._category
                 else:
                     logger = getLogger()
-                    logger.error("Object %s DOES NOT have the %s or _category parameter set" % (str(obj), str(proxyRef)))
+                    logger.error("Object %s DOES NOT have the %s or _category parameter set" % (str(obj), str(implRef)))
                     #import traceback
                     #traceback.print_stack()
                     return ""
@@ -1090,8 +1090,8 @@ under certain conditions; type license() for details.
 
         logger.debug("Bootstrap Core Modules")
         # bootstrap core modules
-        from Ganga.GPIDev.Base.Proxy import proxyRef
-        Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, proxyRef), interactive)
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+        Ganga.Core.bootstrap(stripProxy(Ganga.GPI.jobs), interactive)
 
         import Ganga.GPIDev.Lib.Config
         exportToGPI('config', Ganga.GPIDev.Lib.Config.config,
