@@ -1,3 +1,4 @@
+import textwrap
 
 import Ganga.Utility.logging
 
@@ -64,7 +65,6 @@ class ConfigProxy(object):
 
     def _display(self, colour):
         from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, getColour, Foreground, Effects
-        import Ganga.Utility.external.textwrap as textwrap
 
         if colour:
             markup = ANSIMarkup()
