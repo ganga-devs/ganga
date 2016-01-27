@@ -650,7 +650,7 @@ class Registry(object):
         logger.debug("_reg_remove")
         u_id = self.find(obj)
 
-        obj_id = self.find(obj)
+        obj_id = id(self.find(obj))
 
         self.lock_transaction(obj_id, "_remove")
 
@@ -749,8 +749,8 @@ class Registry(object):
 
         obj_ids = []
         for obj in objs:
-            this_id = self.find(obj)
-            obj_id.append(this_id)
+            this_id = id(self.find(obj))
+            obj_ids.append(this_id)
             self.lock_transaction(this_id, '_flush')
 
         if self.hasStarted() is not True:
@@ -779,8 +779,8 @@ class Registry(object):
             raise err
         finally:
 
-            for obj in obj_ids:
-                self.unlock_transaction(obj)
+            for obj_id in obj_ids:
+                self.unlock_transaction(obj_id)
 
             self._lock.release()
 
@@ -819,8 +819,11 @@ class Registry(object):
 
     def _load(self, obj_ids):
         logger.debug("_load")
+        these_ids = []
         for obj_id in obj_ids:
-            self.lock_transaction(obj_id, "_load")
+            this_id = id(self[obj_id])
+            these_ids.append(this_id)
+            self.lock_transaction(this_id, "_load")
 
         self._lock.acquire()
         try:
@@ -830,7 +833,7 @@ class Registry(object):
             logger.error("Error Loading Jobs!")
             raise err
         finally:
-            for obj_id in obj_ids:
+            for obj_id in these_ids:
                 self.unlock_transaction(obj_id)
             self._lock.release()
 
@@ -929,7 +932,6 @@ class Registry(object):
                     try:
                         if this_id in self.dirty_objs.keys() and self.checkShouldFlush():
                             self._flush([self._objects[this_id]])
-                            #self._load([this_id])
                         if this_id not in self._loaded_ids:
                             self._load([this_id])
                             self._loaded_ids.append(this_id)
