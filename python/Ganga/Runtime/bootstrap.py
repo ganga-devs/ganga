@@ -1091,8 +1091,8 @@ under certain conditions; type license() for details.
 
         logger.debug("Bootstrap Core Modules")
         # bootstrap core modules
-        from Ganga.GPIDev.Base.Proxy import implRef
-        Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, implRef), interactive)
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+        Ganga.Core.bootstrap(stripProxy(Ganga.GPI.jobs), interactive)
 
         import Ganga.GPIDev.Lib.Config
         exportToGPI('config', Ganga.GPIDev.Lib.Config.config,
