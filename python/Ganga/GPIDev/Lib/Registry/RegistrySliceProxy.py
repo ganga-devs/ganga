@@ -8,7 +8,7 @@ class RegistrySliceProxy(object):
     """This object is an access list to registry slices"""
 
     def __init__(self, impl):
-        self.__dict__[implRef] = impl
+        setattr(self, implRef, impl)
 
     def ids(self, minid=None, maxid=None):
         """ Return a list of ids of all objects.
