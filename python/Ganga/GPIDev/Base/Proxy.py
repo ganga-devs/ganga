@@ -637,7 +637,7 @@ def GPIProxyClassFactory(name, pluginclass):
         instance = pluginclass()
 
         # at the object level _impl is a ganga plugin object
-        setattr(self, proxyRef, instance)
+        setattr(self, implRef, instance)
         setattr(self, proxyObject, self)
 
         ## Need to avoid any setter methods for GangaObjects
