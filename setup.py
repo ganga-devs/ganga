@@ -5,17 +5,8 @@ import subprocess
 import os
 import sys
 
-ganga_python_dir = os.path.abspath('python')
-sys.path.insert(0, ganga_python_dir)
-if not os.path.isdir(ganga_python_dir):
-    ganga_sys_root = os.environ.get('GANGASYSROOT', None)
-    if ganga_sys_root is not None:
-        python_rel_path = 'python'
-        ganga_python_dir = os.path.abspath(os.path.join(ganga_sys_root, python_rel_path))
-        if not os.path.isdir(ganga_python_dir):
-            python_rel_path = '../install/ganga/python'
-            ganga_python_dir = os.path.abspath(os.path.join(ganga_sys_root, python_rel_path))
-
+file_path = os.path.dirname(os.path.realpath(__file__))
+ganga_python_dir = os.path.join(file_path, 'python')
 sys.path.insert(0, ganga_python_dir)
 from Ganga import _gangaVersion
 
