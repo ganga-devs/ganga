@@ -2,7 +2,7 @@ from __future__ import print_function
 
 'Utilities for string manipulation'
 
-import Ganga.Utility.external.textwrap as textwrap
+import textwrap
 
 import re
 _ident_expr = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')
