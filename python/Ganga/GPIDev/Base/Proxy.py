@@ -35,9 +35,15 @@ def getRuntimeGPIObject(obj_name, silent=False):
     if obj_name in Ganga.GPI.__dict__.keys():
         return Ganga.GPI.__dict__[obj_name]()
     else:
-        if silent is False:
-            logger.error("Cannot find Object: '%s' in GPI. Returning None." % str(obj_name))
-        return None
+        returnable = raw_eval(obj_name)
+        if returnable == obj_name:
+            if silent is False:
+                logger.error("Cannot find Object: '%s' in GPI. Returning None." % str(obj_name))
+                #logger.error("dict: %s" % Ganga.GPI.__dict__)
+                #import traceback
+                #traceback.print_stack()
+            return None
+        return returnable
 
 def runtimeEvalString(this_obj, attr_name, val):
 
@@ -105,16 +111,23 @@ def runtimeEvalString(this_obj, attr_name, val):
     assert(shouldEval is not None)
 
     if shouldEval is True:
-        try:
-            import Ganga.GPI
-            new_val = eval(val, Ganga.GPI.__dict__)
-            if isclass(new_val):
-                new_val = new_val()
-        except Exception as err:
-            logger.debug("Proxy Cannot evaluate v=: '%s'" % str(val))
-            logger.debug("Using raw value instead")
-            new_val = val
+        new_val = raw_eval(val)
     else:
+        new_val = val
+
+    return new_val
+
+
+
+def raw_eval(val):
+    try:
+        import Ganga.GPI
+        new_val = eval(val, Ganga.GPI.__dict__)
+        if isclass(new_val):
+            new_val = new_val()
+    except Exception as err:
+        logger.debug("Proxy Cannot evaluate v=: '%s'" % str(val))
+        logger.debug("Using raw value instead")
         new_val = val
 
     if hasattr(stripProxy(new_val), '_auto__init__'):
@@ -621,20 +634,11 @@ def GPIProxyClassFactory(name, pluginclass):
         proxy_obj_str = '_proxy_impl_obj_to_wrap'
 
         if proxy_obj_str in kwds.keys():
-            proxy_obj = kwds[proxy_obj_str]
-            del kwds[proxy_obj_str]
-
-            ## Need to avoid setter methods when assigning the proxy to existing object
-            proxy_obj.__dict__[proxyObject] = proxy_obj
-            setattr(self, proxyObject, self)
-            setattr(self, implRef, proxy_obj)
-            setattr(proxy_obj, proxyClass, type(name, (GPIProxyObject,), d))
-            return
-
-
-        ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
-        ## Object was not passed by construction so need to construct new object for internal use
-        instance = pluginclass()
+            instance = kwds[proxy_obj_str]
+        else:
+            ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
+            ## Object was not passed by construction so need to construct new object for internal use
+            instance = pluginclass()
 
         # at the object level _impl is a ganga plugin object
         setattr(self, implRef, instance)
@@ -645,15 +649,22 @@ def GPIProxyClassFactory(name, pluginclass):
         instance.__dict__[proxyObject] = self
         instance.__dict__[proxyClass] = type(name, (GPIProxyObject,), d)
 
+        if proxy_obj_str in kwds.keys():
+            return
 
         ## SECOND WE NEED TO MAKE SURE THAT OBJECT ID IS CORRECT AND THIS DOES THINGS LIKE REGISTER A JOB WITH THE REPO
+
+        auto_init_str = '_auto__init__'
+        if hasattr(instance, auto_init_str):
+            instance._auto__init__()
+
         ## All objects with an _auto__init__ method need to have that method called and we set the various node attributes here based upon the schema
         from Ganga.GPIDev.Base.Objects import Node
         for key, _val in stripProxy(self)._schema.allItems():
             if not _val['protected'] and not _val['hidden'] and isType(_val, ComponentItem) and key not in Node._ref_list:
                 val = getattr(self, key)
                 if isType(val, Node):
-                    if hasattr(val, '_auto__init__'):
+                    if hasattr(val, auto_init_str):
                         val._auto__init__()
                     instance.setNodeAttribute(key, stripProxy(val))
                 else:
@@ -696,11 +707,11 @@ def GPIProxyClassFactory(name, pluginclass):
 
                 if type(this_arg) is str:
                     this_arg = stripProxy(runtimeEvalString(raw_self, k, this_arg))
-                    if hasattr(stripProxy(this_arg), '_auto__init__'):
-                        stripProxy(this_arg)._auto__init__()
+                    if hasattr(this_arg, '_auto__init__'):
+                        this_arg._auto__init__()
 
                 if type(this_arg) is str:
-                    raw_self.setNodeAttribute(k, stripProxy(this_arg))
+                    raw_self.setNodeAttribute(k, this_arg)
                     continue
                 else:
                     item = pluginclass._schema.getItem(k)
@@ -722,10 +733,10 @@ def GPIProxyClassFactory(name, pluginclass):
                     if item.isA(ComponentItem):
                         this_arg = ProxyDataDescriptor._stripAttribute(raw_self, this_arg, k)
 
-                    if hasattr(stripProxy(this_arg), '_auto__init__'):
-                        stripProxy(this_arg)._auto__init__()
+                    if hasattr(this_arg, '_auto__init__'):
+                        this_arg._auto__init__()
 
-                    raw_self.setNodeAttribute(k, stripProxy(this_arg))
+                    raw_self.setNodeAttribute(k, this_arg)
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
