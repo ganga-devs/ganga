@@ -570,22 +570,12 @@ def GPIProxyObjectFactory(_obj):
         from Ganga.Core.exceptions import GangaException
         raise GangaException("%s is NOT a Proxyable object" % type(_obj))
 
+    if hasattr(_obj, proxyObject):
+        return getattr(_obj, proxyObject)
+
     ## This is defined within Objects.py, we could probably store this elsehere
     ## (We probably do) but as this is guaranteed to be accessible for GangaObjects I will use this
-    this_class = getattr(stripProxy(_obj).__class__, proxyClass)
-
-    ## Would LOVE to avoid having to perform all of these checks to get or wrap a class in a proxy here but
-    ## multiple different BAD states are currently passed to this function
-    ## In future I would like to see this fixed elsewhere and reduce the logic in this section of code
-    ## As of Ganga 6.1.15 this is needed to put objects into a semi-coherent state
-
-    if isType(_obj, this_class):
-        if isProxy(_obj):
-            return _obj
-        elif not isProxy(_obj):
-            pass
-    else:
-        pass
+    getattr(type(_obj), proxyClass)
 
     proxy_class = this_class(_proxy_impl_obj_to_wrap=_obj)
     return proxy_class
@@ -625,7 +615,7 @@ def GPIProxyClassFactory(name, pluginclass):
     def _init(self, *args, **kwds):
 
         ## Zero-th fully initialize self before moving on
-        super(type(self), self).__init__()
+        GPIProxyObject.__init__(self)
 
         ## THE ORDER IN HOW AN OBJECT IS INITIALIZED IS IMPORTANT AND HAS BEEN DOUBLE CHECKED - rcurrie
 
@@ -640,8 +630,6 @@ def GPIProxyClassFactory(name, pluginclass):
             ## Object was not passed by construction so need to construct new object for internal use
             instance = pluginclass()
 
-        # at the object level _impl is a ganga plugin object
-        setattr(self, proxyObject, self)
         ## Avoid intercepting any of the setter methos associated with the implRef as they could trigger loading from disk
         setattr(self, implRef, instance)
 
@@ -656,17 +644,15 @@ def GPIProxyClassFactory(name, pluginclass):
         ## SECOND WE NEED TO MAKE SURE THAT OBJECT ID IS CORRECT AND THIS DOES THINGS LIKE REGISTER A JOB WITH THE REPO
 
         auto_init_str = '_auto__init__'
-        if hasattr(instance, auto_init_str):
-            instance._auto__init__()
+        instance._auto__init__()
 
         ## All objects with an _auto__init__ method need to have that method called and we set the various node attributes here based upon the schema
-        from Ganga.GPIDev.Base.Objects import Node
+        from Ganga.GPIDev.Base.Objects import GangaObject, Node
         for key, _val in stripProxy(self)._schema.allItems():
             if not _val['protected'] and not _val['hidden'] and isType(_val, ComponentItem) and key not in Node._ref_list:
                 val = getattr(self, key)
-                if isType(val, Node):
-                    if hasattr(val, auto_init_str):
-                        val._auto__init__()
+                if isType(val, GangaObject):
+                    val._auto__init__()
                     instance.setNodeAttribute(key, stripProxy(val))
                 else:
                     instance.setNodeAttribute(key, stripProxy(val))
@@ -767,14 +753,10 @@ def GPIProxyClassFactory(name, pluginclass):
     """)
 
     def _str(self, interactive=False):
-        #import time
-        #b4=time.time()
         import cStringIO
         sio = cStringIO.StringIO()
         stripProxy(self).printSummaryTree(0, 0, '', out=sio, interactive=interactive)
         returnable = str(sio.getvalue()).rstrip()
-        #a4=time.time()
-        #logger.info("Time Taken to generate printSummaryTree: %s" % str(a4-b4))
         return returnable
     helptext(_str, """Return a printable string representing %(classname)s object as a tree of properties.""")
 
