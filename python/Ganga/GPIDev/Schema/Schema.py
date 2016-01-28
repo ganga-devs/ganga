@@ -248,15 +248,19 @@ class Schema(object):
                 defvalue = _found_attrs[stored_attr_key]
             else:
                 defvalue = config[attr]
-                from Ganga.GPIDev.Base.Proxy import stripProxy
+                from Ganga.GPIDev.Base.Proxy import isProxy
+                if isProxy(defvalue):
+                    raise GangaException("(1)Proxy found where it shouldn't be in the Config: %s" % stored_attr_key)
                 ## Just in case a developer puts the proxied object into the default value!
-                _found_attrs[stored_attr_key] = stripProxy(defvalue)
+                _found_attrs[stored_attr_key] = defvalue
         except (KeyError, Config.ConfigError):
             # hidden, protected and sequence values are not represented in config
             defvalue = item['defvalue']
-            from Ganga.GPIDev.Base.Proxy import stripProxy
+            from Ganga.GPIDev.Base.Proxy import isProxy
+            if isProxy(defvalue):
+                raise GangaException("(2)Proxy found where is shouldn't be in the Config" % stored_attr_key)
             ## Just in case a developer puts the proxied object into the default value!
-            _found_attrs[stored_attr_key] = stripProxy(defvalue)
+            _found_attrs[stored_attr_key] = defvalue
 
         # in the checking mode, use the provided value instead
         if check is True:
@@ -278,7 +282,6 @@ class Schema(object):
 
                 category = item['category']
 
-                global _found_category
                 if isinstance(defvalue, str) or defvalue is None:
                     if category not in _found_components or config.hasModified():
                         _found_components[category] = allPlugins.find(category, defvalue)
@@ -464,7 +467,7 @@ class Item(object):
         if not isAllowedType:
             #import traceback
             #traceback.print_stack()
-            raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (name, validTypes, input_val, str(type(input_val))))
+            raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (name, validTypes, input_val, type(input_val)))
 
     def _check_type(self, val, name, enableGangaList=True):
 
