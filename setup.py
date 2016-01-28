@@ -14,7 +14,7 @@ def readme():
     import os.path
     filename = 'README.rst'
     if not os.path.exists(filename):
-        filename = os.path.abspath(os.path.join(ganga_python_dir, '..', filename))
+        filename = os.path.abspath(os.path.join(file_path, filename))
     with open(filename) as f:
         return f.read()
 
@@ -43,9 +43,7 @@ class RunTestsCommand(Command):
     @staticmethod
     def _getTestEnv():
 
-        ## Make sure GANAGSYSROOT is defined for tests to find python path
         test_env = os.environ.copy()
-        test_env['GANGASYSROOT'] = ganga_python_dir
         ## Make sure that the PYTHONPATH is correct for the tests to pick up 'import Ganga'
         test_sys_path = ''
         for _dir in sys.path:

@@ -35,6 +35,19 @@ only those attributes in the schema and those methods which are explicitly expor
 When working on internal Ganga code, you shuold never have to deal with any proxy objects at all.
 Proxies should be added to objects as they are passed to the GPI and should be removed as they are passed back.
 
+Attributes on proxy objects
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Proxy classes and the object that they are proxying have a set number of attributes which should be present.
+
+If a ``GangaObject`` class has been registered as being proxyable then it will have the property ``_proxyclass`` set on it which will point to the relevant :class:`~.GPIProxyObject` subclass.
+The proxy class (which is a subclass of ``GPIProxyObject`` and created using :func:`~.GPIProxyClassFactory`) will have the attribute `_impl` set to be the relevant ``GangaObject`` subclass.
+
+When an instance of a proxy class is created, the `_impl` attribute of the instance will point to the instance of the ``GangaObject`` that is being proxied.
+This ``GangaObject`` instance will have an attribute ``_proxyObject`` which points back to the proxy.
+
+Simply making an instance of a proxyable ``GangaObject`` class will not automatically create a proxy object though and so will not have ``_proxyObject`` present.
+
 Repository
 ----------
 
