@@ -103,24 +103,6 @@ def plugins(category=None):
             d[c] = allPlugins.allCategories()[c].keys()
         return d
 
-
-def list_plugins(category):
-    """List all plugins in a given category, OBSOLETE: use plugins(category)"""
-    logger.warning('This function is deprecated, use plugins("%s") instead', category)
-    from Ganga.Utility.Plugin import allPlugins
-    return allPlugins.allClasses(category).keys()
-
-
-def applications():
-    """return a list of all available applications, OBSOLETE: use plugins('applications')"""
-    return list_plugins('applications')
-
-
-def backends():
-    """return a list of all available backends, OBSOLETE: use plugins('backends')"""
-    return list_plugins('backends')
-
-
 def convert_merger_to_postprocessor(j):
     from Ganga.GPIDev.Base.Proxy import stripProxy
     if len(stripProxy(j.postprocessors).process_objects):
@@ -132,18 +114,6 @@ def convert_merger_to_postprocessor(j):
         mp = MultiPostProcessor()
         mp.process_objects.append(stripProxy(j).merger)
         stripProxy(j).postprocessors = mp
-
-
-def force_job_completed(j):
-    "obsoleted, use j.force_status('completed') instead"
-    raise GangaException(
-        "obsoleted, use j.force_status('completed') instead")
-
-
-def force_job_failed(j):
-    "obsoleted, use j.force_status('failed') instead"
-    raise GangaException(
-        "obsoleted, use j.force_status('failed') instead")
 
 # ------------------------------------------------------------------------------------
 # Setup the shutdown manager
