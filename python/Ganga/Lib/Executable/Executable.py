@@ -64,9 +64,6 @@ class Executable(IPrepareApp):
     def __init__(self):
         super(Executable, self).__init__()
 
-    def __construct__(self, args):
-        super(Executable, self).__construct__(args)
-
     def __deepcopy__(self, memo):
         return super(Executable, self).__deepcopy__(memo)
 

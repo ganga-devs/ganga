@@ -37,9 +37,6 @@ class IPrepareApp(IApplication):
     def __init__(self):
         super(IPrepareApp, self).__init__()
 
-    def __construct__(self, args):
-        super(IPrepareApp, self).__construct__(args)
-
     def _auto__init__(self, unprepare=None):
         if unprepare is True:
             logger.debug("Calling unprepare() from IPrepareApp's _auto__init__()")

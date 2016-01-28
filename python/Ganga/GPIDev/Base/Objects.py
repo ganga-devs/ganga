@@ -50,16 +50,6 @@ class Node(object):
         super(Node, self).__init__()
         #logger.info("Node __init__")
 
-    def __construct__(self, args):
-        ## Don't obliterate the data stored in the node here
-        ## Objects are initialized then '__construct__'-ed in the Proxy
-        if not hasattr(self, '_data'):
-            self._data = {}
-        if not hasattr(self, '_parent'):
-            self._setParent(None)
-        if not hasattr(self, '_index_cache'):
-            self._index_cache = {}
-
     def __getstate__(self):
         d = self.__dict__
         d['_data'] = d['_data'].copy()
@@ -770,13 +760,22 @@ class GangaObject(Node):
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
 
-    # construct an object of this type from the arguments. Defaults to copy
-    # constructor.
-    def __construct__(self, args={}):
-        # act as a copy constructor applying the object conversion at the same
-        # time (if applicable)
+    def __construct__(self, args):
+        # type: (Sequence) -> None
+        """
+        This acts like a secondary constructor for proxy objects.
+        Any positional (non-keyword) arguments are passed to this function to construct the object.
 
-        super(GangaObject, self).__construct__(args)
+        This default implementation performs a copy if there was only one item in the list
+        and raises an exception if there is more than one.
+
+        Args:
+            args: a list of objects
+
+        Raises:
+            TypeMismatchError: if there is more than one item in the list
+        """
+        # FIXME: This should probably be move to Proxy.py
 
         if len(args) == 0:
             return

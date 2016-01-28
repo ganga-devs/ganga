@@ -45,9 +45,6 @@ class Localhost(IBackend):
     def __init__(self):
         super(Localhost, self).__init__()
 
-    def __construct__(self, args):
-        super(Localhost, self).__construct__(args)
-
     def submit(self, jobconfig, master_input_sandbox):
         prepared = self.preparejob(jobconfig, master_input_sandbox)
         self.run(prepared)
