@@ -444,8 +444,11 @@ class RegistrySlice(object):
 
         for obj_i in self.objects.keys():
 
+            cached_data = None
+
             if isType(self.objects, SubJobXMLList):
-                colour = self._getColour( self.objects.getCachedData(obj_i) )
+                cached_data = self.objects.getCachedData(obj_i)
+                colour = self._getColour( cached_data )
             else:
                 obj = stripProxy(self.objects[obj_i])
                 colour = self._getColour(obj)
@@ -464,9 +467,9 @@ class RegistrySlice(object):
                             vals.append(str(stripProxy(obj).getNodeIndexCache()[display_str])[0:width])
                     else:
                         if item == 'fqid':
-                            vals.append(str(self.objects.getCachedData(obj_i)[display_str]))
+                            vals.append(str(cached_data[display_str]))
                         else:
-                            vals.append(str(self.objects.getCachedData(obj_i)[display_str])[0:width])
+                            vals.append(str(cached_data[display_str])[0:width])
                     continue
                 except KeyError as err:
                     logger.debug("_display KeyError: %s" % str(err))
