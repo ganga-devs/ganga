@@ -207,17 +207,17 @@ class SubJobXMLList(GangaObject):
 
         backup_decision = self._load_backup is True or force_backup is True
 
-        if index in self._cached_filenames.keys():
-            if backup_decision in self._cached_filenames[index].keys():
-                return self._cached_filenames[index][backup_decision]
+        index_str = str(index)+"_"+str(backup_decision)
+
+        if index_str in self._cached_filenames:
+            return self._cached_filenames[index_str]
 
         import os.path
         subjob_data = os.path.join(self._jobDirectory, str(index), self._dataFileName)
         if backup_decision is True:
             subjob_data = subjob_data + '~'
 
-        stored_filename = {backup_decision : subjob_data}
-        self._cached_filenames[index] = stored_filename
+        self._cached_filenames[index_str] = subjob_data
         return subjob_data
 
     def __len__(self):
@@ -230,7 +230,6 @@ class SubJobXMLList(GangaObject):
             if this_time == last_time:
                 return self._stored_len[1]
 
-
         subjob_count = 0
         from os import listdir, path
         if not path.isdir( self._jobDirectory ):
@@ -238,17 +237,31 @@ class SubJobXMLList(GangaObject):
 
         jobDirectoryList = listdir( self._jobDirectory )
 
-        i=0
-        while str(i) in jobDirectoryList:
-            subjob_data = self.__get_dataFile(str(i))
-            import os.path
-            if os.path.isfile( subjob_data ):
-                subjob_count = subjob_count + 1
-            i += 1
+        import os.path
+        subjob_count=0
+        while True:
+            if str(subjob_count) in jobDirectoryList:
+                expected_folder = os.path.join(self._jobDirectory, str(subjob_count))
+                if os.path.isdir(expected_folder):
+                    subjob_count=subjob_count+1
+                    continue
+                else:
+                    break
+            else:
+                break
+            #subjob_data = self.__get_dataFile(str(i))
+            #import os.path
+            #if os.path.isfile(subjob_data)):
+            #    subjob_count = subjob_count + 1
+            #i += 1
 
-        self._stored_len = []
-        self._stored_len.append(this_time)
-        self._stored_len.append(subjob_count)
+        if len(self._stored_len) != 2:
+            self._stored_len = []
+            self._stored_len.append(this_time)
+            self._stored_len.append(subjob_count)
+        else:
+            self._stored_len[0] = this_time
+            self._stored_len[1] = subjob_count
 
         return subjob_count
 
