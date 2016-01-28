@@ -61,6 +61,9 @@ class SubJobXMLList(GangaObject):
             self._setParent(parent)
         self.load_subJobIndex()
 
+        self._cached_filenames = {}
+        self._stored_len = []
+
     def __construct__(self, args):
         super(SubJobXMLList, self).__construct__(args)
         self._definedParent = None
@@ -72,6 +75,8 @@ class SubJobXMLList(GangaObject):
         self._dataFileName = None
         self._load_backup = None
         self._cachedJobs = {}
+        self._cached_filenames = {}
+        self._stored_len =[]
 
     ## THIS CLASS MAKES USE OF THE INTERNAL CLASS DICTIONARY ONLY!!!
     ## THIS CLASS DOES NOT MAKE USE OF THE SCHEMA TO STORE INFORMATION AS TRANSIENT OR UNCOPYABLE
@@ -199,13 +204,33 @@ class SubJobXMLList(GangaObject):
         return SJXLIterator(self)
 
     def __get_dataFile(self, index, force_backup=False):
+
+        backup_decision = self._load_backup is True or force_backup is True
+
+        if index in self._cached_filenames.keys():
+            if backup_decision in self._cached_filenames[index].keys():
+                return self._cached_filenames[index][backup_decision]
+
         import os.path
         subjob_data = os.path.join(self._jobDirectory, str(index), self._dataFileName)
-        if self._load_backup is True or force_backup is True:
+        if backup_decision is True:
             subjob_data = subjob_data + '~'
+
+        stored_filename = {backup_decision : subjob_data}
+        self._cached_filenames[index] = stored_filename
         return subjob_data
 
     def __len__(self):
+
+        import os
+        this_time = os.stat(self._jobDirectory).st_ctime
+
+        if len(self._stored_len) == 2:
+            last_time = self._stored_len[0]
+            if this_time == last_time:
+                return self._stored_len[1]
+
+
         subjob_count = 0
         from os import listdir, path
         if not path.isdir( self._jobDirectory ):
@@ -220,6 +245,10 @@ class SubJobXMLList(GangaObject):
             if os.path.isfile( subjob_data ):
                 subjob_count = subjob_count + 1
             i += 1
+
+        self._stored_len = []
+        self._stored_len.append(this_time)
+        self._stored_len.append(subjob_count)
 
         return subjob_count
 
@@ -277,7 +306,7 @@ class SubJobXMLList(GangaObject):
 
     def _getItem(self, index):
 
-        #logger.debug("Requesting: %s" % str(index))
+        logger.debug("Requesting: %s" % str(index))
 
         #if index == 0:
         #import traceback
