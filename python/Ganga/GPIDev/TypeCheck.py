@@ -15,9 +15,9 @@ def dummy_func( _input ):
 def safer_eval( _input ):
     try:
         from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
-        temp_output = getRuntimeGPIObject( _input, True)
+        temp_output = getRuntimeGPIObject(_input, True)
         if temp_output is None:
-            if len(_input) > 0 and _input != ".":
+            if len(_input) > 0:
                 try:
                     _output = eval(str(_input))
                 except:
@@ -29,7 +29,7 @@ def safer_eval( _input ):
         else:
             _output = temp_output
     except ImportError:
-        if len(_input) > 0 and _input != ".":
+        if len(_input) > 0:
             try:
                 _output = eval(str(_input))
             except:
@@ -47,7 +47,7 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
             if val is None:
                 return True
 
-        if type(_t) is str:
+        if isinstance(_t, str):
             global found_types
 
             if _t not in found_types.keys():
@@ -56,10 +56,21 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
                     temp = type(temp)
                 found_types[_t] = temp
             _type = found_types[_t]
+
+            if _type == str:
+                GangaSplit = str(_t).split('.')
+                if len(GangaSplit) > 1:
+                    from Ganga.Utility.util import importName
+
+                    imported_Class = importName( '.'.join(GangaSplit[:-1]), GangaSplit[-1])
+
+                    if imported_Class is not None:
+                        _type = imported_Class
+
         else:
             _type = _t
         
-        if type(val) is str:
+        if isinstance(val, str):
             global found_values
 
             if val not in found_values.keys():
@@ -87,8 +98,17 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
         except ImportError:
             stripProxy = dummy_func
 
+        try:
+            from Ganga.GPIDev.Base import GangaObject
+        except:
+            GangaObject = None
+
         raw_type = stripProxy(_type)
         raw_val = stripProxy(val)
+
+        if isinstance(raw_type, GangaObject):
+            return isinstance(raw_val, raw_type)
+
         try:
             if raw_type in knownLists:
                 if isinstance(raw_val, knownLists):

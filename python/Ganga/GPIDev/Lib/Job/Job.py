@@ -108,7 +108,6 @@ class JobInfo(GangaObject):
 
     def __init__(self):
         super(JobInfo, self).__init__()
-        #self.submit_counter = 0
 
     def increment(self):
         self.submit_counter += 1
@@ -229,11 +228,6 @@ class Job(GangaObject):
     # overriding of values, this must be reviewed
     def __init__(self):
         super(Job, self).__init__()
-        ## These NEED to be defined before The Schema is initialized due to the getter methods for some object cauing a LOT of code to be run!
-        setattr(self, '_parent', None)
-        setattr(self, 'status', 'new')
-        #self.id = ''
-        #setattr(stripProxy(self), 'id', '')
         # Finished initializing 'special' objects which are used in getter methods and alike
         self.time.newjob()  # <-----------NEW: timestamp method
         logger.debug("__init__")
@@ -624,7 +618,6 @@ class Job(GangaObject):
 
             if self.status != newstatus:
                 self.time.timenow(str(newstatus))
-                logger.debug("timenow('%s') called.", self.status)
             else:
                 logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", self.status, newstatus)
 
@@ -857,6 +850,8 @@ class Job(GangaObject):
 
     def _auto__init__(self, registry=None, unprepare=None):
 
+        logger.debug("Intercepting the _auto__init__ function")
+
         if registry is None:
             registry = getRegistry(self.default_registry)
 
@@ -882,7 +877,6 @@ class Job(GangaObject):
             self._init_workspace()
 
         self._setDirty()
-        logger.debug("Intercepting the _auto__init__ function")
 
         super(Job, self)._auto__init__()
         stripProxy(self.info).uuid = str(uuid.uuid4())
