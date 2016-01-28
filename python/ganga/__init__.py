@@ -287,7 +287,7 @@ exportToPublicInterface('full_print', full_print, 'Functions')
 
 # ------------------------------------------------------------------------------------
 #  bootstrap core modules
-interactive = True
+interactive = False
 Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, proxyRef), interactive)
 Ganga.GPIDev.Lib.Config.bootstrap()
 
