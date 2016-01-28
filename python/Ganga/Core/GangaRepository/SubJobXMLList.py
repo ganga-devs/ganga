@@ -10,7 +10,7 @@ logger = getLogger()
 
 ##FIXME There has to be a better way of doing this?
 class SJXLIterator(object):
-
+    """Class for iterating over SJXMLList, potentially very unstable, dangerous and only supports looping forwards ever"""
     def __init__(self, theseSubJobs):
 
         self._mySubJobs = theseSubJobs
@@ -28,7 +28,7 @@ class SJXLIterator(object):
 
 class SubJobXMLList(GangaObject):
     """
-        jobDirectory: Directory of parent job containing subjobs
+        SUBJOBXMLLIST class for managing the subjobs so they're loaded only when needed
     """
 
     _category = 'internal'
@@ -39,7 +39,11 @@ class SubJobXMLList(GangaObject):
     _schema = Schema(Version(1, 0), {}) 
 
     def __init__(self, jobDirectory='', registry=None, dataFileName='data', load_backup=False, parent=None ):
-
+        """jobDirectory: dir on disk which contains subjob folders
+        registry: the registry managing me,
+        dataFileName: incase it ever changes,
+        load_backup: are we using the backpus only/first? This used to be set like this btw
+        paret: parent of self after constuction"""
         super(SubJobXMLList, self).__init__()
 
         self._jobDirectory = jobDirectory
@@ -109,13 +113,15 @@ class SubJobXMLList(GangaObject):
         return obj
 
     def _reset_cachedJobs(self, obj):
+        """Hard reset function. Not really to be used externally without great care"""
         self._cachedJobs = obj
 
     def isLoaded(self, subjob_id):
+        """Has the subjob been loaded? True/False"""
         return subjob_id in self._cachedJobs.keys()
 
     def load_subJobIndex(self):
-
+        """Load the index from all sujobs ynto _subjobIndexData or empty it is an error occurs"""
         import os
         index_file = os.path.join(self._jobDirectory, self._subjob_master_index_name )
         if os.path.isfile( index_file ):
@@ -165,6 +171,7 @@ class SubJobXMLList(GangaObject):
         return
 
     def write_subJobIndex(self):
+        """interface for writing the index which captures errors and alerts the user vs throwing uncaught exception"""
         try:
             self.__really_writeIndex()
         except Exception as err:
@@ -172,7 +179,7 @@ class SubJobXMLList(GangaObject):
             logger.debug("Error: %s" % str(err))
 
     def __really_writeIndex(self):
-
+        """Do the actual work of writing the index for all subjobs"""
         import os
 
         all_caches = {}
@@ -201,9 +208,11 @@ class SubJobXMLList(GangaObject):
             logger.debug( "cache write error: %s" % str(err) )
 
     def __iter__(self):
+        """Return iterator for this class"""
         return SJXLIterator(self)
 
     def __get_dataFile(self, index, force_backup=False):
+        """Get the filename for this file (with out without backup '~'. Store already determine combinations in _cached_filenames for speed"""
 
         backup_decision = self._load_backup is True or force_backup is True
 
@@ -221,7 +230,7 @@ class SubJobXMLList(GangaObject):
         return subjob_data
 
     def __len__(self):
-
+        """ return length or lookup the last modified time compare against self._stored_len[0] and if nothings changed return self._stored_len[1]"""
         import os
         this_time = os.stat(self._jobDirectory).st_ctime
 
@@ -266,12 +275,15 @@ class SubJobXMLList(GangaObject):
         return subjob_count
 
     def keys(self):
+        """Return keys to access subjobs"""
         return [i for i in range(len(self))]
 
     def values(self):
+        """Return the actual subjobs"""
         return [self[i] for i in range(0, len(self))]
 
     def _loadSubJobFromDisk(self, subjob_data):
+        """Load the subjob file 'subjob_data' from disk. No Parsing"""
         # For debugging where this was called from to try and push it to as high a level as possible at runtime
         #print("SJXML Load")
         #import traceback
@@ -306,10 +318,11 @@ class SubJobXMLList(GangaObject):
         return sj_file
 
     def __call__(self, index):
+        """Same as getitem"""
         return self.__getitem__(index)
 
     def __getitem__(self, index):
-
+        """Return a subjob based upon index"""
         return self._getItem(index)
         try:
             return self._getItem(index)
@@ -318,7 +331,7 @@ class SubJobXMLList(GangaObject):
             return None
 
     def _getItem(self, index):
-
+        """Actual meat of loading the subjob from disk is required, parsing and storing a copy in memory (_cached_subjobs) for future use"""
         logger.debug("Requesting: %s" % str(index))
 
         #if index == 0:
@@ -357,7 +370,8 @@ class SubJobXMLList(GangaObject):
         return self._cachedJobs[index]
 
     def _setParent(self, parentObj):
-        
+        """Set the parent of self and any objects in memory we control"""
+
         if parentObj is not None and hasattr(parentObj, 'getFQID'):
             parent_name = "Job: %s" % parentObj.getFQID('.')
         elif parentObj is not None and hasattr(parentObj, 'id'):
@@ -376,7 +390,7 @@ class SubJobXMLList(GangaObject):
             self._cachedJobs[k]._setParent( parentObj )
 
     def getCachedData(self, index):
-
+        """Get the cached data from the index for one of the subjobs"""
         if index > len(self) or index < 0:
             return None
 
@@ -388,7 +402,7 @@ class SubJobXMLList(GangaObject):
         return None
 
     def getAllCachedData(self):
-
+        """Get the cached data from the index for all subjobs"""
         cached_data = []
         #logger.debug( "Cache: %s" % str(self._subjobIndexData.keys()) )
         if len(self._subjobIndexData.keys()) == len(self):
@@ -401,6 +415,7 @@ class SubJobXMLList(GangaObject):
         return cached_data
 
     def flush(self):
+        """Flush all subjobs to disk using XML methods"""
         from Ganga.Core.GangaRepository.GangaRepositoryXML import safe_save
 
         from Ganga.Core.GangaRepository.VStreamer import to_file
