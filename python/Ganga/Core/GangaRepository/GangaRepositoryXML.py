@@ -579,12 +579,16 @@ class GangaRepositoryLocal(GangaRepository):
         """ Add the given objects to the repository, forcing the IDs if told to.
         Raise RepositoryError"""
 
+        logger.debug("add")
+
         if force_ids not in [None, []]:  # assume the ids are already locked by Registry
             if not len(objs) == len(force_ids):
                 raise RepositoryError(self, "Internal Error: add with different number of objects and force_ids!")
             ids = force_ids
         else:
             ids = self.sessionlock.make_new_ids(len(objs))
+
+        logger.debug("made ids")
 
         for i in range(0, len(objs)):
             fn = self.get_fn(ids[i])
@@ -604,6 +608,8 @@ class GangaRepositoryLocal(GangaRepository):
                             objs[i].getNodeAttribute(self.sub_split)[j]._dirty = True
                 except AttributeError as err:
                     logger.debug("RepoXML add Exception: %s" % str(err))
+
+        logger.debug("Added")
 
         return ids
 
@@ -791,7 +797,11 @@ class GangaRepositoryLocal(GangaRepository):
 
         if (self._load_timestamp.get(this_id, 0) != os.fstat(fobj.fileno()).st_ctime):
 
+            import time
+            b4=time.time()
             tmpobj, errs = self.from_file(fobj)
+            a4=time.time()
+            logger.debug("Loading XML file for ID: %s took %s sec" % (this_id, str(a4-b4)))
 
             has_children = (self.sub_split is not None) and (self.sub_split in tmpobj.getNodeData()) and len(tmpobj.getNodeAttribute(self.sub_split)) == 0
 
