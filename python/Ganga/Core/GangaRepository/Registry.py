@@ -239,8 +239,7 @@ class Registry(object):
                 found_id = this_obj._registry_id
             if found_id is not None and real_id is not None:
                 assert( found_id == real_id )
-            from Ganga.GPIDev.Base.Proxy import addProxy
-            return addProxy(this_obj)
+            return this_obj
         except KeyError as err:
             logger.debug("Repo KeyError: %s" % str(err))
             logger.debug("Keys: %s id: %s" % (str(self._objects.keys()), str(this_id)))
