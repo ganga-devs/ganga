@@ -14,7 +14,7 @@ def readme():
     import os.path
     filename = 'README.rst'
     if not os.path.exists(filename):
-        filename = os.path.abspath(os.path.join(ganga_python_dir, '..', filename))
+        filename = os.path.abspath(os.path.join(file_path, filename))
     with open(filename) as f:
         return f.read()
 
