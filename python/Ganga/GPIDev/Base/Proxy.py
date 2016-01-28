@@ -575,7 +575,7 @@ def GPIProxyObjectFactory(_obj):
 
     ## This is defined within Objects.py, we could probably store this elsehere
     ## (We probably do) but as this is guaranteed to be accessible for GangaObjects I will use this
-    getattr(type(_obj), proxyClass)
+    this_class = getattr(type(_obj), proxyClass)
 
     proxy_class = this_class(_proxy_impl_obj_to_wrap=_obj)
     return proxy_class
