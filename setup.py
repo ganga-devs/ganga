@@ -43,9 +43,7 @@ class RunTestsCommand(Command):
     @staticmethod
     def _getTestEnv():
 
-        ## Make sure GANAGSYSROOT is defined for tests to find python path
         test_env = os.environ.copy()
-        test_env['GANGASYSROOT'] = ganga_python_dir
         ## Make sure that the PYTHONPATH is correct for the tests to pick up 'import Ganga'
         test_sys_path = ''
         for _dir in sys.path:
