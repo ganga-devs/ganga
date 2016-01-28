@@ -638,7 +638,8 @@ def GPIProxyClassFactory(name, pluginclass):
         ## Need to avoid any setter methods for GangaObjects
         ## Would be very nice to remove this entirely as I'm not sure a GangaObject should worry about it's proxy (if any)
         instance.__dict__[proxyObject] = self
-        instance.__dict__[proxyClass] = type(name, (GPIProxyObject,), d)
+        ## THIS SHOLD BE DONE HERE BUT IS DONE IN GANAGOBJECT, PLEASE ADDRESS
+        #instance.__dict__[proxyClass] = type(name, (GPIProxyObject,), d)
 
         if proxy_obj_str in kwds.keys():
             # wrapping not constructing so can exit after determining that the proxy attributes are setup correctly
