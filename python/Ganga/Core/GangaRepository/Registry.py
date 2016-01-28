@@ -13,6 +13,9 @@ from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
 logger = getLogger()
 
+_reg_id_str = '_registry_id'
+_id_str = 'id'
+
 class RegistryError(GangaException):
 
     def __init__(self, what=''):
@@ -225,7 +228,7 @@ class Registry(object):
         """ Returns the Ganga Object with the given id.
             Raise RegistryKeyError"""
         logger.debug("__getitem__")
-        self._lock.acquire()
+        #self._lock.acquire()
         try:
             self.lock_transaction( this_id, "_getitem")
 
@@ -246,10 +249,10 @@ class Registry(object):
             logger.debug("found_object")
 
             found_id = None
-            if hasattr(this_obj, 'id'):
-                found_id = this_obj.id
-            if hasattr(this_obj, '_registry_id'):
-                found_id = this_obj._registry_id
+            if hasattr(this_obj, _id_str):
+                found_id = getattr(this_obj, _id_str)
+            if hasattr(this_obj, _reg_id_str):
+                found_id = getattr(this_obj, _reg_id_str)
             if found_id is not None and real_id is not None:
                 assert( found_id == real_id )
 
@@ -265,40 +268,37 @@ class Registry(object):
             raise RegistryKeyError("Could not find object #%s" % this_id)
         finally:
             self.unlock_transaction(this_id)
-            self._lock.release()
+        #    self._lock.release()
 
     def __len__(self):
         """ Returns the current number of root objects """
         logger.debug("__len__")
-        self._lock.acquire()
+        #self._lock.acquire()
         try:
             return len(self._objects)
-        except Exception as err:
-            pass
         finally:
-            self._lock.release()
+            pass
+        #    self._lock.release()
 
     def __contains__(self, this_id):
         """ Returns True if the given ID is in the registry """
         logger.debug("__contains__")
-        self._lock.acquire()
+        #self._lock.acquire()
         try:
             return this_id in self._objects
-        except Exception as err:
-            pass
         finally:
-            self._lock.release()
+            pass
+        #    self._lock.release()
 
     def updateLocksNow(self):
         loger.debug("updateLocksNow")
-        self._lock.acquire()
+        #self._lock.acquire()
         try:
             self.repository.updateLocksNow()
             return
-        except Exception as err:
-            pass
         finally:
-            self._lock.release()
+            pass
+        #    self._lock.release()
 
     def trackandRelease(self):
 
@@ -398,15 +398,15 @@ class Registry(object):
 
     def _getObjects(self):
         logger.debug("_getObjects")
-        self._lock.acquire()
+        #self._lock.acquire()
         returnable = self._objects
-        self._lock.release()
+        #self._lock.release()
         return returnable
 
     def ids(self):
         """ Returns the list of ids of this registry """
         logger.debug("ids")
-        self._lock.acquire()
+        #self._lock.acquire()
         try:
             if self.hasStarted() is True and\
                     (time.time() > self._update_index_timer + self.update_index_time):
@@ -422,7 +422,8 @@ class Registry(object):
 
             return sorted(self._objects.keys())
         finally:
-            self._lock.release()
+            pass
+        #    self._lock.release()
 
     def items(self):
         """ Return the items (ID,obj) in this registry. 
@@ -450,21 +451,21 @@ class Registry(object):
     def iteritems(self):
         """ Return the items (ID,obj) in this registry."""
         logger.debug("iteritems")
-        self._lock.acquire()
+        #self._lock.acquire()
         returnable = self.items()
-        self._lock.release()
+        #self._lock.release()
         return returnable
 
     def _checkObjects(self):
         for key, _obj in self._objects.iteritems():
             summary = "found: "
             try:
-                if hasattr(_obj, 'id'):
-                    summary = summary + "'id' = '%s'" % _obj.id
-                    assert(_obj.id == key)
-                if hasattr(_obj, '_registry_id'):
-                    summary = summary + " '_registry_id' = '%s'" % _obj._registry_id
-                    assert(_obj._registry_id == key)
+                if hasattr(_obj, _id_str):
+                    summary = summary + "%s = '%s'" % (_id_str, getattr(_obj, _id_str))
+                    assert(getattr(_obj, _id_str) == key)
+                if hasattr(_obj, _reg_id_str):
+                    summary = summary + " %s = '%s'" % (_reg_id_str, getattr(_obj, _reg_id_str))
+                    assert(getattr(_obj, _reg_id_str) == key)
             except:
                 logger.error(summary)
                 raise
@@ -473,25 +474,25 @@ class Registry(object):
     def keys(self):
         """ Returns the list of ids of this registry """
         logger.debug("keys")
-        self._lock.acquire()
+        #self._lock.acquire()
         returnable = self.ids()
-        self._lock.release()
+        #self._lock.release()
         return returnable
 
     def values(self):
         """ Return the objects in this registry, in order of ID.
         Besides items() this is also recommended for iteration."""
         logger.debug("values")
-        self._lock.acquire()
+        #self._lock.acquire()
         returnable = [it[1] for it in self.items()]
-        self._lock.release()
+        #self._lock.release()
         return returnable
 
     def __iter__(self):
         logger.debug("__iter__")
-        self._lock.acquire()
+        #self._lock.acquire()
         returnable = iter(self.values())
-        self._lock.release()
+        #self._lock.release()
         return returnable
 
     def find(self, _obj):
@@ -500,18 +501,22 @@ class Registry(object):
 
         obj = stripProxy(_obj)
         try:
-            if hasattr(obj, '_registry_id'):
-                assert obj == self._objects[obj._registry_id]
-                if hasattr(obj, 'id'):
-                    if hasattr(self._objects[obj._registry_id], 'id'):
-                        assert obj.id == self._objects[obj._registry_id].id
-                assert obj._registry_id == self._objects[obj._registry_id]._registry_id
-                return obj._registry_id
-            elif hasattr(obj, 'id'):
-                if hasattr(self._objects[obj.id], '_registry_id'):
-                    assert obj.id == self._objects[obj.id]._registry_id
-                assert obj.id == self._objects[obj.id].id
-                return self._objects[obj.id]
+            if hasattr(obj, _reg_id_str):
+                obj_reg_id = getattr(obj, _reg_id_str)
+                objects_obj = self._objects[obj_reg_id]
+                assert obj == objects_obj
+                if hasattr(obj, _id_str):
+                    if hasattr(objects_obj, _id_str):
+                        assert getattr(obj, _id_str) == getattr(objects_obj, _id_str)
+                assert obj_reg_id == getattr(objects_obj, _reg_id_str)
+                return obj_reg_id
+            elif hasattr(obj, _id_str):
+                obj_id = getattr(obj, _id_str)
+                objects_obj = self._objects[obj_id]
+                if hasattr(objects_obj, _reg_id_str):
+                    assert obj_id == getattr(objects_obj, _reg_id_str)
+                assert obj_id == getattr(objects_obj, _id_str)
+                return obj_id
             else:
                 raise ObjectNotInRegistryError("Repo find: Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
         except AttributeError as err:
@@ -555,12 +560,12 @@ class Registry(object):
             self._lock.release()
 
     def __safe_add(self, obj, force_index=None):
+        logger.debug("__safe_add")
         if force_index is None:
             ids = self.repository.add([obj])
         else:
             if len(self.repository.lock([force_index])) == 0:
                 raise RegistryLockError("Could not lock '%s' id #%i for a new object!" % (self.name, force_index))
-                # raises exception if len(ids) < 1
             ids = self.repository.add([obj], [force_index])
 
         obj._setRegistry(self)
@@ -574,10 +579,10 @@ class Registry(object):
             this_v.update(ids)
 
         for _id in ids:
-            if hasattr(self._objects[_id], '_registry_id'):
-                assert(self._objects[_id]._registry_id == _id)
-            if hasattr(self._objects[_id], 'id'):
-                assert(self._objects[_id].id == _id)
+            if hasattr(self._objects[_id], _reg_id_str):
+                assert(getattr(self._objects[_id], _reg_id_str) == _id)
+            if hasattr(self._objects[_id], _id_str):
+                assert(getattr(self._objects[_id], _id_str) == _id)
 
         logger.debug("_add-ed as: %s" % str(ids))
         self.unlock_transaction(this_id)
@@ -635,8 +640,8 @@ class Registry(object):
         except ObjectNotInRegistryError as err:
             try:
                 ## Actually  make sure we've removed the object from the repo 
-                if hasattr(obj, '_registry_id'):
-                    del self._objects[obj._registry_id]
+                if hasattr(obj, _reg_id_str):
+                    del self._objects[getattr(obj, _reg_id_str)]
             except Exception as err:
                 pass
             pass
@@ -669,8 +674,8 @@ class Registry(object):
                 return
             logger.debug('deleting the object %d from the registry %s', this_id, self.name)
             try:
-                if obj._registry_id in self.dirty_objs.keys():
-                    del self.dirty_objs[obj._registry_id]
+                if getattr(obj, _reg_id_str) in self.dirty_objs.keys():
+                    del self.dirty_objs[getattr(obj, _reg_id_str)]
                 self.repository.delete([this_id])
                 del obj
                 for this_v in self.changed_ids.itervalues():
@@ -709,14 +714,14 @@ class Registry(object):
         self._updateIndexCache(obj)
 
         if self.find(obj) in self._inprogressDict.keys():
-            self.dirty_objs[obj._registry_id] = obj
+            self.dirty_objs[getattr(obj, _reg_id_str)] = obj
             self.dirty_hits += 1
             return
 
         self._write_access(obj)
         self._lock.acquire()
         try:
-            self.dirty_objs[obj._registry_id] = obj
+            self.dirty_objs[getattr(obj, _reg_id_str)] = obj
             self.dirty_hits += 1
             if self.checkShouldFlush():
                 self._backgroundFlush([obj])
@@ -760,7 +765,7 @@ class Registry(object):
 
         try:
             for obj in objs:
-                self.dirty_objs[obj._registry_id] = obj
+                self.dirty_objs[getattr(obj, _reg_id_str)] = obj
             ids = []
             for reg_id, obj in self.dirty_objs.iteritems():
                 try:
@@ -863,6 +868,8 @@ class Registry(object):
                 raise RegistryKeyError("Read: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
             except InaccessibleObjectError as err:
                 raise RegistryKeyError("Read: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, str(err)))
+            #finally:
+            #    pass
             for this_d in self.changed_ids.itervalues():
                 this_d.add(this_id)
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
@@ -870,6 +877,8 @@ class Registry(object):
         except Exception as err:
             logger.debug("Unknown read access Error: %s" % str(err))
             raise err
+        #finally:
+        #    pass
 
     def _write_access(self, _obj):
         """Obtain write access on a given object.
@@ -942,13 +951,15 @@ class Registry(object):
                         raise RegistryKeyError("Write: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
                     except InaccessibleObjectError as err:
                         raise RegistryKeyError("Write: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, str(err)))
+                    #finally:
+                    #    pass
                     for this_d in self.changed_ids.itervalues():
                         this_d.add(this_id)
                 obj._registry_locked = True
             except Exception as err:
                 raise err
-            finally:
-                pass
+            #finally:
+            #    pass
 
         return True
 
@@ -980,9 +991,9 @@ class Registry(object):
         try:
             if hasattr(obj, '_registry_locked') and obj._registry_locked:
                 oid = self.find(obj)
-                if obj._registry_id in self.dirty_objs.keys():
+                if getattr(obj, _reg_id_str) in self.dirty_objs.keys():
                     self.repository.flush([oid])
-                    del self.dirty_objs[obj._registry_id]
+                    del self.dirty_objs[getattr(obj, _reg_id_str)]
                 obj._registry_locked = False
                 self.repository.unlock([oid])
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
@@ -1075,11 +1086,15 @@ class Registry(object):
                     self.metadata.shutdown()
             except Exception as err:
                 logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, str(err))
+            #finally:
+            #    pass
             try:
                 self._flush()
             except Exception as err:
                 logger.error("Exception on flushing '%s' registry: %s", self.name, str(err))
                 #raise err
+            #finally:
+            #    pass
             for obj in self._objects.values():
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
@@ -1094,7 +1109,7 @@ class Registry(object):
     def info(self, full=False):
         """Returns an informative string onFlush and disconnect the repository. Called from Repository_runtime.py """
         logger.debug("info")
-        self._lock.acquire()
+        #self._lock.acquire()
         try:
             s = "registry '%s': %i objects" % (self.name, len(self._objects))
             if full:
@@ -1103,7 +1118,8 @@ class Registry(object):
                     s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
             return s
         finally:
-            self._lock.release()
+            pass
+            #self._lock.release()
 
     def print_other_sessions(self):
         other_sessions = self.repository.get_other_sessions()
