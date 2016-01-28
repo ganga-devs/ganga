@@ -47,7 +47,7 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
             if val is None:
                 return True
 
-        if type(_t) is str:
+        if isinstance(_t, str):
             global found_types
 
             if _t not in found_types.keys():
@@ -70,7 +70,7 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
         else:
             _type = _t
         
-        if type(val) is str:
+        if isinstance(val, str):
             global found_values
 
             if val not in found_values.keys():
