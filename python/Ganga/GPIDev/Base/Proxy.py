@@ -625,12 +625,14 @@ def GPIProxyClassFactory(name, pluginclass):
 
         if proxy_obj_str in kwds.keys():
             instance = kwds[proxy_obj_str]
+            ## Even if we're wrapping something such as here make sure we set all of the proxy related attributes correctly.
+            ## Setting of these attributes shold be done here within this class and should probably be properly be done on proxy construction. aka. here
         else:
             ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
             ## Object was not passed by construction so need to construct new object for internal use
             instance = pluginclass()
 
-        ## Avoid intercepting any of the setter methos associated with the implRef as they could trigger loading from disk
+        ## Avoid intercepting any of the setter method associated with the implRef as they could trigger loading from disk
         setattr(self, implRef, instance)
 
         ## Need to avoid any setter methods for GangaObjects
@@ -639,11 +641,11 @@ def GPIProxyClassFactory(name, pluginclass):
         instance.__dict__[proxyClass] = type(name, (GPIProxyObject,), d)
 
         if proxy_obj_str in kwds.keys():
+            # wrapping not constructing so can exit after determining that the proxy attributes are setup correctly
             return
 
         ## SECOND WE NEED TO MAKE SURE THAT OBJECT ID IS CORRECT AND THIS DOES THINGS LIKE REGISTER A JOB WITH THE REPO
 
-        auto_init_str = '_auto__init__'
         instance._auto__init__()
 
         ## All objects with an _auto__init__ method need to have that method called and we set the various node attributes here based upon the schema
