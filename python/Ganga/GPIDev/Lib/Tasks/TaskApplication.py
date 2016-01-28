@@ -1,8 +1,7 @@
 from Ganga import GPI
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from new import classobj
-from Ganga.GPIDev.Base.Proxy import getName
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import getName, stripProxy
 from .common import logger
 
 handler_map = []
@@ -48,7 +47,7 @@ def taskify(baseclass, name):
 
     global handler_map
     # Use the same handlers as for the base class
-    handler_map.append((baseclass.__name__, name))
+    handler_map.append((getName(baseclass), name))
 
     return cls
 
@@ -143,7 +142,7 @@ def taskApp(app):
         b = task_map[a._name]()
 
     else:
-        logger.error("The application '%s' cannot be used with the tasks package yet!" % a._name)
+        logger.error("The application '%s' cannot be used with the tasks package yet!" % getName(a))
         raise AttributeError()
     for k in a.getNodeData():
         b.setNodeAttribute(k, a.getNodeAttribute(k))

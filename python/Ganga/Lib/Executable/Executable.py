@@ -15,7 +15,7 @@ from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
 
 from Ganga.Utility.logging import getLogger
 
-from Ganga.GPIDev.Base.Proxy import getName, isType
+from Ganga.GPIDev.Base.Proxy import getName, isType, stripProxy
 
 import os
 import shutil
@@ -104,7 +104,7 @@ class Executable(IPrepareApp):
         """
 
         if (self.is_prepared is not None) and (force is not True):
-            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % (self._name))
+            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
 
         # lets use the same criteria as the configure() method for checking file existence & sanity
         # this will bail us out of prepare if there's somthing odd with the job config - like the executable
@@ -240,8 +240,7 @@ class RTHandler(IRuntimeHandler):
                 prepared_exe = File(os.path.join(
                     os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
 
-        c = StandardJobConfig(prepared_exe, app._getParent().inputsandbox, convertIntToStringArgs(
-            app.args), app._getParent().outputsandbox)
+        c = StandardJobConfig(prepared_exe, stripProxy(app).getJobObject().inputsandbox, convertIntToStringArgs(app.args), stripProxy(app).getJobObject().outputsandbox)
         return c
 
 

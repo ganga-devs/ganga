@@ -176,15 +176,15 @@ class IBackend(GangaObject):
         for sc, sj in zip(subjobconfigs, rjobs):
 
             fqid = sj.getFQID('.')
-            logger.info("submitting job %s to %s backend", fqid, sj.backend._name)
+            logger.info("submitting job %s to %s backend", fqid, getName(sj.backend))
             try:
-                b = sj.backend
+                b = stripProxy(sj.backend)
                 sj.updateStatus('submitting')
                 if b.submit(sc, master_input_sandbox):
                     sj.updateStatus('submitted')
                     # sj._commit() # PENDING: TEMPORARY DISABLED
                     incomplete = 1
-                    sj.info.increment()
+                    stripProxy(sj.info).increment()
                 else:
                     if handleError(IncompleteJobSubmissionError(fqid, 'submission failed')):
                         return 0
@@ -304,7 +304,7 @@ class IBackend(GangaObject):
         try:
             for sj in rjobs:
                 fqid = sj.getFQID('.')
-                logger.info("resubmitting job %s to %s backend", fqid, sj.backend._name)
+                logger.info("resubmitting job %s to %s backend", fqid, getName(sj.backend))
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
@@ -452,7 +452,7 @@ class IBackend(GangaObject):
                 else:
                     for sj in j.subjobs:
                         if sj.status in ['submitted', 'running']:
-                            monitorable_subjob_ids.append(sj_id)
+                            monitorable_subjob_ids.append(sj.id)
 
                 #logger.info('Monitoring subjobs: %s', str(monitorable_subjob_ids)
 
@@ -484,8 +484,8 @@ class IBackend(GangaObject):
                     try:
                         subjobs_to_monitor = []
                         for sj_id in this_block:
-                            subjobs_to_monitor.append(j.subjobs(sj_id))
-                        j.backend.updateMonitoringInformation(subjobs_to_monitor)
+                            subjobs_to_monitor.append(j.subjobs[sj_id])
+                        stripProxy(j.backend).updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
                         logger.error("Monitoring Error: %s" % str(err))
                     j.updateMasterJobStatus()
@@ -504,7 +504,7 @@ class IBackend(GangaObject):
 
                 for this_job in simple_jobs[this_backend]:
                     stripProxy(this_job)._getWriteAccess()
-                simple_jobs[this_backend][0].backend.updateMonitoringInformation(simple_jobs[this_backend])
+                stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
 
                 for this_job in simple_jobs[this_backend]:
                     stripProxy(this_job)._setDirty()

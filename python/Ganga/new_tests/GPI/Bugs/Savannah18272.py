@@ -4,7 +4,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah18272(GangaUnitTest):
-    def Savannah18272(self):
+    def test_Savannah18272(self):
         from Ganga.GPI import Job, File
 
         j = Job()

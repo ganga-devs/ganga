@@ -2,8 +2,7 @@ from __future__ import absolute_import
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from fnmatch import fnmatch
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-import logging
-from Ganga.Utility.logging import getLogger
+from Ganga.Utility.logging import getLogger, _get_logging
 from Ganga.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
 from Ganga.Utility.Config import getConfig
 import re
@@ -16,8 +15,8 @@ import Ganga.Utility.Config
 
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
-badlogger = logging.getLogger('oauth2client.util')
-badlogger.setLevel(logging.ERROR)
+badlogger = getLogger('oauth2client.util')
+badlogger.setLevel(_get_logging().ERROR)
 
 
 class GoogleFile(IGangaFile):
@@ -79,9 +78,10 @@ class GoogleFile(IGangaFile):
             from oauth2client.client import OAuth2WebServerFlow
 
             # Copy your credentials from the APIs Console
-            CLIENT_ID = "54459939297.apps.googleusercontent.com"
-            CLIENT_SECRET = "mAToHx5RpXtwkeYR6nOIe_Yw"
-
+#            CLIENT_ID = "54459939297.apps.googleusercontent.com"
+#            CLIENT_SECRET = "mAToHx5RpXtwkeYR6nOIe_Yw"
+            CLIENT_ID = '776655306197-dirtoquqsm7cpqgepvamofg5t2b5f637.apps.googleusercontent.com'
+            CLIENT_SECRET = 'GpdEP-OBZZQLB3k-xxOpzFQG'
             # Check https://developers.google.com/drive/scopes for all
             # available scopes
             OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.file'

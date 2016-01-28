@@ -158,6 +158,7 @@ def getWNCodeForOutputSandbox(job, files, jobid):
     insertScript = """\n
 from Ganga.Utility.files import recursive_copy
 import glob
+import os
 
 f_to_copy = ###FILES###
 
@@ -182,6 +183,8 @@ for f in f_to_copy:
 
 for fn in final_list_to_copy:
     try:
+        if not os.path.exists(sharedoutputpath):
+            os.makedirs(sharedoutputpath)
         recursive_copy(fn,sharedoutputpath)
     except Exception as x:
         print('ERROR: (job'+###JOBID###+')',x)

@@ -20,11 +20,6 @@ logger.info('#################### Creating repo at: ' + this_repo)
 logger.error('#################### Exclude: ' + str(excludelist))
 
 
-#        cls = allPlugins.find(category, classname)
-#        obj  = super(cls, cls).__new__(cls)
-#        obj._proxyObject = None
-#        obj._data = Non
-
 totnumobs = 0
 numerrors = 0
 
@@ -42,8 +37,6 @@ for category in allPlugins.all_dict:
                 logger.info('##########################################')
                 cls = allPlugins.find(category, clsname)
                 logger.info("Class: " +str(cls))
-    #            obj = super(cls, cls).__new__(cls)
-    #            logger.info(obj)
 
                 new_name = str(this_version + "_" + category + "_" + clsname)
                 logger.info("Ganga Box name: " + str(new_name))

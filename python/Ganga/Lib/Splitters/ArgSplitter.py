@@ -54,7 +54,7 @@ class ArgSplitter(ISplitter):
         subjobs = []
 
         for arg in self.args:
-            j = addProxy(self.createSubjob(job,['application']))
+            j = self.createSubjob(job,['application'])
             # Add new arguments to subjob
             app = copy.deepcopy(job.application)
             app.args = arg

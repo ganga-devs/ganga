@@ -19,7 +19,7 @@ class Savannah9638(GangaUnitTest):
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('Configuration', 'gangadir', '/tmp/ganga_topdir-$USER')
 
-    def Savannah9638(self):
+    def test_Savannah9638(self):
         from Ganga.GPI import config, Job
 
         import os.path

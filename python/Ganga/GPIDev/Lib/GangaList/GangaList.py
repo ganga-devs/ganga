@@ -1,7 +1,7 @@
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Filters import allComponentFilters
-from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError
+from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError, getName
 from Ganga.GPIDev.Base.VPrinter import full_print, summary_print
 from Ganga.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
 from Ganga.Utility.util import containsGangaObjects
@@ -29,10 +29,8 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
         _list = map(mapfunction, _list)
 
     #logger.debug("Making a GangaList of size: %s" % str(len(_list)))
-    result = makeGangaListByRef(_list)
+    result = makeGangaListByRef(_list, preparable)
     result._is_a_ref = False
-
-    result._is_preparable = preparable
 
     # set the parent if possible
     if parent is not None:
@@ -49,7 +47,7 @@ def stripGangaList(_list):
     return result
 
 
-def makeGangaListByRef(_list):
+def makeGangaListByRef(_list, preparable=False):
     """Faster version of makeGangaList. Does not make a copy of _list but use it by reference."""
     result = GangaList()
     if len(_list) == 0:
@@ -57,6 +55,7 @@ def makeGangaListByRef(_list):
     temp_list = [stripProxy(element) for element in _list]
     result._list = temp_list
     result._is_a_ref = True
+    result._is_preparable = preparable
     return result
 
 
@@ -171,7 +170,7 @@ class GangaList(GangaObject):
             if '_list_get__match__' in dir(item):
                 return item._list_get__match__(to_match)
             return to_match == item
-        return makeGangaListByRef(filter(matching_filter, self._list))
+        return makeGangaListByRef(filter(matching_filter, self._list), preparable=self._is_preparable)
 
     def _export_get(self, to_match):
         return addProxy(self.get(stripProxy(to_match)))
@@ -235,7 +234,7 @@ class GangaList(GangaObject):
         """Puts a hook in to stop mutable access to readonly jobs."""
         if self._readonly():
             raise ReadOnlyObjectError(
-                'object %s is readonly and attribute "%s" cannot be modified now' % (repr(self), self._name))
+                'object %s is readonly and attribute "%s" cannot be modified now' % (repr(self), getName(self)))
         else:
             self._getWriteAccess()
             # TODO: BUG: This should only be set _after_ the change has been
@@ -252,7 +251,7 @@ class GangaList(GangaObject):
         if not self.is_list(obj_list):
             raise TypeError('Type %s can not be concatinated to a GangaList' % type(obj_list))
 
-        return makeGangaList(self._list.__add__(self.strip_proxy_list(obj_list, True)))
+        return makeGangaList(self._list.__add__(self.strip_proxy_list(obj_list, True)), preparable=self._is_preparable)
 
     def _export___add__(self, obj_list):
         self.checkReadOnly()
@@ -262,11 +261,11 @@ class GangaList(GangaObject):
         return self._list.__contains__(self.strip_proxy(obj))
 
     def __clone__(self):
-        return makeGangaListByRef(_list=copy.copy(self._list))
+        return makeGangaListByRef(_list=copy.copy(self._list), preparable=self._is_preparable)
 
     def __copy__(self):
         """Bypass any checking when making the copy"""
-        return makeGangaListByRef(_list=copy.copy(self._list))
+        return makeGangaListByRef(_list=copy.copy(self._list), preparable=self._is_preparable)
 
     def __delitem__(self, obj):
         self._list.__delitem__(self.strip_proxy(obj))
@@ -287,7 +286,7 @@ class GangaList(GangaObject):
         #logger.info("memo: %s" % str(memo))
         #logger.info("self.len: %s" % str(len(self._list)))
         if self._list != []:
-            return makeGangaList(_list=copy.deepcopy(self._list, memo), preparable=self._is_preparable)
+            return makeGangaListByRef(_list=copy.deepcopy(self._list), preparable=self._is_preparable)
         else:
             new_list = GangaList()
             new_list._is_preparable = self._is_preparable
@@ -312,7 +311,7 @@ class GangaList(GangaObject):
         return addProxy(self.__getitem__(index))
 
     def __getslice__(self, start, end):
-        return makeGangaList(_list=self._list.__getslice__(start, end))
+        return makeGangaList(_list=self._list.__getslice__(start, end), preparable=self._is_preparable)
 
     def _export___getslice__(self, start, end):
         return addProxy(self.__getslice__(start, end))
@@ -360,7 +359,7 @@ class GangaList(GangaObject):
         return self._list.__lt__(self.strip_proxy_list(obj_list))
 
     def __mul__(self, number):
-        return makeGangaList(self._list.__mul__(number))
+        return makeGangaList(self._list.__mul__(number), preparable=self._is_preparable)
 
     def _export___mul__(self, number):
         return addProxy(self.__mul__(number))
@@ -391,7 +390,7 @@ class GangaList(GangaObject):
         return obj + cp
 
     def __rmul__(self, number):
-        return makeGangaList(self._list.__rmul__(number))
+        return makeGangaList(self._list.__rmul__(number), preparable=self._is_preparable)
 
     def _export___rmul__(self, number):
         return addProxy(self.__rmul__(number))
@@ -503,7 +502,7 @@ class GangaList(GangaObject):
                     break
         return result
 
-    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=sys.stdout, selection=''):
+    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=sys.stdout, selection='', interactive=False):
         parent = self._getParent()
         schema_entry = self.findSchemaParentSchemaEntry(parent)
 
@@ -523,7 +522,7 @@ class GangaList(GangaObject):
                 return
 
             if (maxLen != -1) and (self_len > maxLen):
-                out.write(decorateListEntries(self_len, type(self[0]).__name__))
+                out.write(decorateListEntries(self_len, getName(type(self[0]))))
                 return
             else:
                 summary_print(self, out)

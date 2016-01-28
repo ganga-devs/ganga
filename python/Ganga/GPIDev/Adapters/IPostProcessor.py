@@ -125,7 +125,7 @@ class MultiPostProcessor(IPostProcessor):
     def __len__(self):
         return len(self.process_objects)
 
-    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection=''):
+    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection='', interactive=False):
         """If this method is overridden, the following should be noted:
 
         level: the hierachy level we are currently at in the object tree.

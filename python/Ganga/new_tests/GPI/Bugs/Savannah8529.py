@@ -5,7 +5,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 class Savannah8529(GangaUnitTest):
 
-    def Savannah8529(self):
+    def test_Savannah8529(self):
         from Ganga.GPI import Job, TestApplication
 
         # make sure that _auto__init__ is called correctly in all cases

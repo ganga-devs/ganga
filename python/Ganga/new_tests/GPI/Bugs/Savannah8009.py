@@ -5,7 +5,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 class Savannah8009(GangaUnitTest):
 
-    def Savannah8009(self):
+    def test_Savannah8009(self):
         from Ganga.GPI import Executable, Job, jobs, templates
 
         from GangaTest.Framework.utils import sleep_until_completed

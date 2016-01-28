@@ -3,9 +3,7 @@ import datetime
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy
-from LHCbDataset import LHCbDataset
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, addProxy
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -121,7 +119,7 @@ RecoToDST-07/90000000/DST" ,
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg)
         cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
-        from Ganga.GPI import GangaList
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         knownLists = [tuple, list, GangaList]
         if isType(self.dqflag, knownLists):
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
@@ -158,7 +156,7 @@ RecoToDST-07/90000000/DST" ,
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg)
         cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
-        from Ganga.GPI import GangaList
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         knownLists = [tuple, list, GangaList]
         if isType(self.dqflag, knownLists):
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate,
@@ -178,7 +176,7 @@ RecoToDST-07/90000000/DST" ,
         logger.debug("Creating DiracFile objects")
 
         ## Doesn't work not clear why
-        from Ganga.GPI import DiracFile
+        from GangaDirac.Lib.Files.DiracFile import DiracFile
         #new_files = []
         #def _createDiracLFN(this_file):
         #    return DiracFile(lfn = this_file)
@@ -193,11 +191,12 @@ RecoToDST-07/90000000/DST" ,
 
         logger.debug("Creating Dataset")
 
+        from GangaLHCb.Lib.LHCbDataset import LHCbDataset
         ds = LHCbDataset(new_files)
 
         logger.debug("Returning Dataset")
 
-        return GPIProxyObjectFactory(ds)
+        return addProxy(ds)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -283,16 +282,12 @@ class BKQueryDict(GangaObject):
             if 'LFNs' in files:  # i.e. a dict of LFN:Metadata
                 files = files['LFNs'].keys()
 
-        from Ganga.GPI import DiracFile
+        from GangaDirac.Lib.Files.DiracFile import DiracFile
         this_list = [DiracFile(lfn=_file) for _file in files]
+
+        from GangaLHCb.Lib.LHCbDataset import LHCbDataset
         ds = LHCbDataset(this_list)
-        #new_files = []
-        #for f in files:
-        #    #new_files.append('LFN:' + str(f))
-        #    ds.append([DiracFile(lfn = f)])
 
-        #ds = LHCbDataset(new_files)
-
-        return GPIProxyObjectFactory(ds)
+        return addProxy(ds)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

@@ -4,7 +4,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah9120(GangaUnitTest):
-    def Savannah9120(self):
+    def test_Savannah9120(self):
         from Ganga.GPI import TestApplication
 
         t = TestApplication()

@@ -388,7 +388,7 @@ class Loader(object):
                             obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr))
                             #setattr(obj, attr, obj._schema.getDefaultValue(attr))
 
-                #print("Constructed: %s" % obj.__class__.__name__)
+                #print("Constructed: %s" % getName(obj))
                 #obj.__setstate__(obj.__dict__)  # this sets the parent
 
         def char_data(data):

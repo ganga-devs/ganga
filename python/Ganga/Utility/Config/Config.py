@@ -175,18 +175,35 @@ def _migrate_name(name):
     return translated_names[name]
 
 
-def getConfig(name):
-    """ Get an exisiting PackageConfig or create a new one if needed.
+def getConfig(name, create=True):
+    """
+    Get an exisiting PackageConfig or create a new one if needed.
     Temporary name migration conversion applies -- see _migrate_name().
     Principle is the same as for getLogger() -- the config instances may
-    be easily shared between different parts of the program."""
+    be easily shared between different parts of the program.
+
+    Args:
+        name: the name of the config section
+        create (bool): should the section be created if it does not yet exist
+
+    Returns:
+        PackageConfig:
+
+    Raises:
+        KeyError: if the config is not found and ``create`` was False
+    """
+    # FIXME: In future ``create`` should always be False and the function should be simplified to return ``return allConfigs[name]``
 
     name = _migrate_name(name)
     if name in allConfigs:
         return allConfigs[name]
     else:
-        allConfigs[name] = PackageConfig(name, 'Documentation not available')
-        return allConfigs[name]
+        if create:
+            logger.debug('Creating "%s" config in getConfig', name)
+            allConfigs[name] = PackageConfig(name, 'Documentation not available')
+            return allConfigs[name]
+        else:
+            raise KeyError('Config section "{0}" not found'.format(name))
 
 
 def makeConfig(name, docstring, **kwds):
@@ -591,9 +608,14 @@ class PackageConfig(object):
             try:
                 h[1](name, value)
             except Exception as err:
+                import traceback
+                traceback.print_stack()
+                logger.error("h[1]: %s" % str(h[1]))
                 logger.error("Error in Setting Session Value!")
                 logger.error("Name: %s Value: '%s'" % (str(name), str(value)))
                 logger.error("Err:\n%s" % str(err))
+                raise err
+            finally:
                 pass
 
     def setUserValue(self, name, value):

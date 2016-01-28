@@ -70,6 +70,8 @@ def createOutputSandbox(output_patterns, filter, dest_dir):
 
     for f in multi_glob(output_patterns, filter):
         try:
+            if not os.path.exists(dest_dir):
+                os.makedirs(dest_dir)
             recursive_copy(f, dest_dir)
         except Exception as x:
             print("ERROR: (job ###JOBID### createOutput )", x)

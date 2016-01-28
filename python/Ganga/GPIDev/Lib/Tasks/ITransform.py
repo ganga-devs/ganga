@@ -432,7 +432,7 @@ OutputFile objects to be copied to all jobs"),
 
         from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
         if isType(self.unit_copy_output, TaskLocalCopy):
-            logger.warning("Default implementation of createUnitCopyOutputDS can't handle datasets of type '%s'" % self.unit_copy_output._name)
+            logger.warning("Default implementation of createUnitCopyOutputDS can't handle datasets of type '%s'" % getName(self.unit_copy_output))
             return
 
         # create copies of the Copy Output DS and add Unit name to path

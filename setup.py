@@ -3,10 +3,21 @@ from setuptools import find_packages
 from setuptools import Command
 import subprocess
 import os
+import sys
+
+ganga_python_dir = os.path.abspath('python')
+sys.path.insert(0, ganga_python_dir)
+from Ganga import _gangaVersion
 
 
 def readme():
-    with open('README.rst') as f:
+    import os.path
+    filename = 'README.rst'
+    if not os.path.exists(filename):
+        import inspect
+        script_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+        filename = os.path.join(script_path, filename)
+    with open(filename) as f:
         return f.read()
 
 
@@ -53,7 +64,7 @@ setup(name='ganga',
       description='Job management tool',
       long_description=readme(),
       url='https://github.com/ganga-devs/ganga',
-      version='6.1.14',
+      version=_gangaVersion,
       author='Ganga Developers',
       author_email='project-ganga-developers@cern.ch',
       license='GPL v2',

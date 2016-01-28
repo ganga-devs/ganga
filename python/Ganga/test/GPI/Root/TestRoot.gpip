@@ -1,6 +1,6 @@
 #!/bin/env python
 from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
-
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
@@ -446,7 +446,7 @@ def addTests(test_container, testinstance, testname):
     # introspect the testclass to find methods to pass on
     for test in getmembers(testinstance):  # the test methods used
         if ismethod(test[1]):
-            instanceMethodName = test[1].__name__
+            instanceMethodName = getName(test[1])
             # look at the method name before appending
             if instanceMethodName[0:4].lower() == 'test':
                 method = getattr(testinstance, instanceMethodName)
