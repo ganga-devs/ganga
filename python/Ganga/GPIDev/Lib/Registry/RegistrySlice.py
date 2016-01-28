@@ -135,7 +135,7 @@ class RegistrySlice(object):
                 else:
                     if type(attrs[a]) is str:
                         from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
-                        this_attr = getRuntimeGPIObject(attrs[a])
+                        this_attr = getRuntimeGPIObject(attrs[a], True)
                     else:
                         this_attr = attrs[a]
             full_str = str(this_attr)
