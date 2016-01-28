@@ -59,6 +59,8 @@ except ConfigError, err:
 
 session_lock_refresher = None
 
+last_count_access = []
+
 def getGlobalLockRef(session_name, sdir, gfn, _on_afs):
     global session_lock_refresher
     if session_lock_refresher is None:
@@ -675,16 +677,35 @@ class SessionLockManager(object):
             Raises RepositoryError (fatal)
             """
         try:
+            global last_count_access
+            if len(last_count_access) == 2:
+                last_count_time = last_count_access[0]
+                last_count_val = last_count_access[1]
+                last_time = os.stat(self.cntfn).st_ctime
+                if last_time == last_count_time:
+                    last_count_val
+            _output = None
             fd = os.open(self.cntfn, os.O_RDONLY)
             try:
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_SH)
                 # 100 bytes should be enough for any ID. Can raise ValueErrorr
-                return int(os.read(fd, 100).split("\n")[0])
+                _output = int(os.read(fd, 100).split("\n")[0])
             finally:
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_UN)
                 os.close(fd)
+
+                if _output != None:
+                    if len(last_count_access) != 2:
+                        last_count_access = []
+                        last_count_access.append(os.stat(self.cntfn).st_ctime)
+                        last_count_access.append(_output)
+                    else:
+                        last_count_access[0] = os.stat(self.cntfn).st_ctime
+                        last_count_access[1] = _output
+                    return _output
+
         except OSError as x:
             if x.errno != errno.ENOENT:
                 raise RepositoryError(
@@ -700,6 +721,7 @@ class SessionLockManager(object):
         """ Writes the counter to the counter file. 
             The global lock MUST be held for this function to work correctly
             Raises OSError if count file is inaccessible """
+        finished = False
         try:
             # If this fails, we want to shutdown the repository (corruption
             # possible)
@@ -710,16 +732,24 @@ class SessionLockManager(object):
             if not self.afs:
                 fcntl.lockf(fd, fcntl.LOCK_UN)
             os.close(fd)
+            finished = True
         except OSError as x:
             if x.errno != errno.ENOENT:
-                raise RepositoryError(
-                    self.repo, "OSError on count file '%s' write: %s" % (self.cntfn, x))
+                raise RepositoryError(self.repo, "OSError on count file '%s' write: %s" % (self.cntfn, x))
             else:
-                raise RepositoryError(
-                    self.repo, "Count file '%s' not found! Repository was modified externally!" % (self.cntfn))
+                raise RepositoryError(self.repo, "Count file '%s' not found! Repository was modified externally!" % (self.cntfn))
         except IOError as x:
-            raise RepositoryError(
-                self.repo, "Locking error on count file '%s' write: %s" % (self.cntfn, x))
+            raise RepositoryError(self.repo, "Locking error on count file '%s' write: %s" % (self.cntfn, x))
+        finally:
+            if finished is True:
+                global last_count_access
+                if len(last_count_access) != 2:
+                    last_count_access = []
+                    last_count_access.append(os.stat(self.cntfn).st_ctime)
+                    last_count_access.append(self.count)
+                else:
+                    last_count_access[0] = os.stat(self.cntfn).st_ctime
+                    last_count_access[1] = self.count
 
     # "User" functions
     def make_new_ids(self, n):
@@ -731,16 +761,13 @@ class SessionLockManager(object):
             try:
                 newcount = self.cnt_read()
             except ValueError:
-                logger.warning(
-                    "Corrupt job counter (possibly due to crash of another session)! Trying to recover...")
+                logger.warning("Corrupt job counter (possibly due to crash of another session)! Trying to recover...")
                 newcount = self.count
             except OSError:
-                raise RepositoryError(
-                    self.repo, "Job counter deleted! External modification to repository!")
+                raise RepositoryError(self.repo, "Job counter deleted! External modification to repository!")
             if not newcount >= self.count:
                 #raise RepositoryError(self.repo, "Counter value decreased - logic error!")
-                logger.warning(
-                    "Internal counter increased - probably the count file was deleted.")
+                logger.warning("Internal counter increased - probably the count file was deleted.")
                 newcount = self.count
             # someone used force_ids (for example old repository imports)
             if self.locked and max(self.locked) >= newcount:
@@ -840,8 +867,7 @@ class SessionLockManager(object):
                     logger.warning("CHECKER: session file %s corrupted: %s %s" % (session, getName(x), str(x)))
                     continue
                 if not len(names & prevnames) == 0:
-                    logger.error(
-                        "Double-locked stuff: " + str(names & prevnames))
+                    logger.error("Double-locked stuff: " + str(names & prevnames))
                     assert False
                 # prevnames.union_update(names) Should be alias to update but
                 # not in some versions of python

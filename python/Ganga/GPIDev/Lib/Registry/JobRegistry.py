@@ -166,7 +166,7 @@ class JobRegistrySlice(RegistrySlice):
                 jlist = [j for j in self.objects if fnmatch.fnmatch(j.name, this_id)]
                 if len(jlist) == 1:
                     return _wrap(jlist[0])
-                return _wrap(jobSlice(jlist))
+                return jobSlice(jlist)
         else:
             raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
 
@@ -271,7 +271,7 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         jobs((10,2)) : get subjobs number 2 of job 10 if exist or raise exception.
         jobs('10.2')) : same as above
         """
-        return _wrap(stripProxy(self).__call__(x))
+        return stripProxy(self).__call__(x)
 
     def __getslice__(self, i1, i2):
         """ Get a slice. Examples:

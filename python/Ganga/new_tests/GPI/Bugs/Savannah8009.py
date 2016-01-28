@@ -16,7 +16,7 @@ class Savannah8009(GangaUnitTest):
         self.assertEqual(len(jobs), 1)
         self.assertEqual(len(templates), 0)
 
-        if not sleep_until_completed(j, timeout=10):
+        if not sleep_until_completed(j, timeout=120):
             assert(not "Timeout on job submission: job is still not finished")
 
         t = j.copy()

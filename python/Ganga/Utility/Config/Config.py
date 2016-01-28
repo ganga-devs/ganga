@@ -686,11 +686,11 @@ class PackageConfig(object):
         if name in self.options:
             return self.options[name].value
         else:
-            logger = getLogger()
-            logger.debug("Effective Option %s NOT FOUND, Effective Options are:" % (name))
+            #logger = getLogger()
+            #logger.debug("Effective Option %s NOT FOUND, Effective Options are:" % (name))
             opts = self.getEffectiveOptions()
-            for k, v in opts.iteritems():
-                logger.debug("\n\t%s:%s" % (str(k), str(v)))
+            #for k, v in opts.iteritems():
+            #    logger.debug("\n\t%s:%s" % (str(k), str(v)))
             raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name))
 
     def getEffectiveLevel(self, name):
