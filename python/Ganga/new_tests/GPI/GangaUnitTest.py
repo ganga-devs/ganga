@@ -1,3 +1,4 @@
+from __future__ import print_function
 try:
     import unittest2 as unittest
 except ImportError:
@@ -9,26 +10,14 @@ def start_ganga():
     import sys
     import os.path
 
-    try:
-        ganga_sys_root = os.environ.get('GANGASYSROOT')
-    except Exception, err:
-        print "Exception Raised finding GANGASYSROOT,\n\tPLEASE DEFINE THIS IN YOUR ENVIRONMENT TO RUN THE TESTS\n"
-        raise err
 
-    if ganga_sys_root is None:
-        raise Exception(
-            "GANGASYSROOT evaluated to None, please check Ganga setup")
+    file_path = os.path.dirname(os.path.realpath(__file__))
+    ganga_python_dir = os.path.join(file_path, '..', '..', '..')
+    ganga_python_dir = os.path.realpath(ganga_python_dir)
+    sys.path.insert(0, ganga_python_dir)
 
-    python_rel_path = 'python'
-
-    ganga_dir = os.path.abspath(os.path.join(ganga_sys_root, python_rel_path))
-
-    if not os.path.isdir(ganga_dir):
-        python_rel_path = '../install/ganga/python'
-        ganga_dir = os.path.abspath(os.path.join(ganga_sys_root, python_rel_path))
-
-    print "Adding: %s to Python Path" % ganga_dir
-    sys.path.insert(0, ganga_dir)
+    print("Adding: %s to Python Path\n" % ganga_python_dir)
+    sys.path.insert(0, ganga_python_dir)
 
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()
@@ -41,7 +30,6 @@ def start_ganga():
 
     # Start ganga by passing some options for unittesting
 
-    print "\n"
     logger.info("Starting ganga")
 
     logger.info("Parsing Command Line options")

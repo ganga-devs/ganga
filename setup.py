@@ -5,18 +5,16 @@ import subprocess
 import os
 import sys
 
-ganga_python_dir = os.path.abspath('python')
+file_path = os.path.dirname(os.path.realpath(__file__))
+ganga_python_dir = os.path.join(file_path, 'python')
 sys.path.insert(0, ganga_python_dir)
 from Ganga import _gangaVersion
-
 
 def readme():
     import os.path
     filename = 'README.rst'
     if not os.path.exists(filename):
-        import inspect
-        script_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-        filename = os.path.join(script_path, filename)
+        filename = os.path.abspath(os.path.join(ganga_python_dir, '..', filename))
     with open(filename) as f:
         return f.read()
 
@@ -42,8 +40,19 @@ class RunTestsCommand(Command):
         if not self.type in self.all_types:
             raise Exception('Test type must be [{0}]'.format(', '.join(self.all_types)))
 
+    @staticmethod
+    def _getTestEnv():
+
+        test_env = os.environ.copy()
+        ## Make sure that the PYTHONPATH is correct for the tests to pick up 'import Ganga'
+        test_sys_path = ''
+        for _dir in sys.path:
+            test_sys_path = test_sys_path + _dir + ':'
+        test_env['PYTHONPATH'] = test_sys_path
+
+        return test_env
+
     def run(self):
-        os.environ['GANGASYSROOT'] = os.path.dirname(os.path.realpath(__file__))
 
         cmd = ['nosetests']
 
@@ -57,7 +66,7 @@ class RunTestsCommand(Command):
         if self.xunit:
             cmd.append('--with-xunit')
 
-        subprocess.check_call(' '.join(cmd), cwd='python', shell=True)
+        subprocess.check_call(' '.join(cmd), cwd=ganga_python_dir, shell=True, env=self._getTestEnv())
 
 
 setup(name='ganga',
