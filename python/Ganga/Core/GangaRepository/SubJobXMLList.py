@@ -232,7 +232,10 @@ class SubJobXMLList(GangaObject):
     def __len__(self):
         """ return length or lookup the last modified time compare against self._stored_len[0] and if nothings changed return self._stored_len[1]"""
         import os
-        this_time = os.stat(self._jobDirectory).st_ctime
+        try:
+            this_time = os.stat(self._jobDirectory).st_ctime
+        except OSError:
+            return 0
 
         if len(self._stored_len) == 2:
             last_time = self._stored_len[0]
