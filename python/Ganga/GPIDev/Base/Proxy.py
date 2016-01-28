@@ -641,8 +641,9 @@ def GPIProxyClassFactory(name, pluginclass):
             instance = pluginclass()
 
         # at the object level _impl is a ganga plugin object
-        setattr(self, implRef, instance)
         setattr(self, proxyObject, self)
+        ## Avoid intercepting any of the setter methos associated with the implRef as they could trigger loading from disk
+        setattr(self, implRef, instance)
 
         ## Need to avoid any setter methods for GangaObjects
         ## Would be very nice to remove this entirely as I'm not sure a GangaObject should worry about it's proxy (if any)
@@ -766,10 +767,15 @@ def GPIProxyClassFactory(name, pluginclass):
     """)
 
     def _str(self, interactive=False):
+        #import time
+        #b4=time.time()
         import cStringIO
         sio = cStringIO.StringIO()
         stripProxy(self).printSummaryTree(0, 0, '', out=sio, interactive=interactive)
-        return str(sio.getvalue()).rstrip()
+        returnable = str(sio.getvalue()).rstrip()
+        #a4=time.time()
+        #logger.info("Time Taken to generate printSummaryTree: %s" % str(a4-b4))
+        return returnable
     helptext(_str, """Return a printable string representing %(classname)s object as a tree of properties.""")
 
     def _repr_pretty_(self, p, cycle):
