@@ -16,7 +16,7 @@ from Ganga.GPIDev.Lib.JobTree import TreeError
 from Ganga.Runtime import Workspace_runtime
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.VPrinter import full_print
-from Ganga.GPIDev.Base.Proxy import proxyRef
+from Ganga.GPIDev.Base.Proxy import implRef
 import Ganga.GPIDev.Lib.Config
 from Ganga.Utility.feedback_report import report
 from Ganga.Runtime.gangadoc import adddoc
@@ -48,7 +48,7 @@ def ganga_license():
 
 def typename(obj):
     """Return a name of Ganga object as a string, example: typename(j.application) -> 'DaVinci'"""
-    from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, proxyRef
+    from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, implRef
     if isProxy(obj):
         if hasattr(stripProxy(obj), '_name'):
             return stripProxy(obj)._name
@@ -61,13 +61,13 @@ def typename(obj):
             return obj._name
         else:
             logger = Ganga.Utility.logging.getLogger()
-            logger.error("Object %s DOES NOT have the %s or _name parameter set" % (str(obj), str(proxyRef)))
+            logger.error("Object %s DOES NOT have the %s or _name parameter set" % (str(obj), str(implRef)))
             return ""
 
 
 def categoryname(obj):
     """Return a category of Ganga object as a string, example: categoryname(j.application) -> 'applications'"""
-    from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, proxyRef
+    from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, implRef
     if isProxy(obj):
         if hasattr(stripProxy(obj), '_category'):
             return stripProxy(obj)._category
@@ -80,7 +80,7 @@ def categoryname(obj):
             return obj._category
         else:
             logger = Ganga.Utility.logging.getLogger()
-            logger.error("Object %s DOES NOT have the %s or _category parameter set" % (str(obj), str(proxyRef)))
+            logger.error("Object %s DOES NOT have the %s or _category parameter set" % (str(obj), str(implRef)))
             return ""
 
 
@@ -103,6 +103,24 @@ def plugins(category=None):
             d[c] = allPlugins.allCategories()[c].keys()
         return d
 
+
+def list_plugins(category):
+    """List all plugins in a given category, OBSOLETE: use plugins(category)"""
+    logger.warning('This function is deprecated, use plugins("%s") instead', category)
+    from Ganga.Utility.Plugin import allPlugins
+    return allPlugins.allClasses(category).keys()
+
+
+def applications():
+    """return a list of all available applications, OBSOLETE: use plugins('applications')"""
+    return list_plugins('applications')
+
+
+def backends():
+    """return a list of all available backends, OBSOLETE: use plugins('backends')"""
+    return list_plugins('backends')
+
+
 def convert_merger_to_postprocessor(j):
     from Ganga.GPIDev.Base.Proxy import stripProxy
     if len(stripProxy(j.postprocessors).process_objects):
@@ -114,6 +132,18 @@ def convert_merger_to_postprocessor(j):
         mp = MultiPostProcessor()
         mp.process_objects.append(stripProxy(j).merger)
         stripProxy(j).postprocessors = mp
+
+
+def force_job_completed(j):
+    "obsoleted, use j.force_status('completed') instead"
+    raise GangaException(
+        "obsoleted, use j.force_status('completed') instead")
+
+
+def force_job_failed(j):
+    "obsoleted, use j.force_status('failed') instead"
+    raise GangaException(
+        "obsoleted, use j.force_status('failed') instead")
 
 # ------------------------------------------------------------------------------------
 # Setup the shutdown manager
@@ -258,7 +288,7 @@ exportToPublicInterface('full_print', full_print, 'Functions')
 # ------------------------------------------------------------------------------------
 #  bootstrap core modules
 interactive = False
-Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, proxyRef), interactive)
+Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, implRef), interactive)
 Ganga.GPIDev.Lib.Config.bootstrap()
 
 # ------------------------------------------------------------------------------------
