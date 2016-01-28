@@ -652,8 +652,8 @@ def GPIProxyClassFactory(name, pluginclass):
         from Ganga.GPIDev.Base.Objects import GangaObject, Node
         for key, _val in stripProxy(self)._schema.allItems():
             if not _val['protected'] and not _val['hidden'] and isType(_val, ComponentItem) and key not in Node._ref_list:
-                val = getattr(self, key)
-                if isType(val, GangaObject):
+                val = stripProxy(getattr(self, key))
+                if isinstance(val, GangaObject):
                     val._auto__init__()
                     instance.setNodeAttribute(key, stripProxy(val))
                 else:
