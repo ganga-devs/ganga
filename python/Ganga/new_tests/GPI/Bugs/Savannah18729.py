@@ -33,7 +33,7 @@ class Savannah18729(GangaUnitTest):
         j = Job(backend=Local(), application=app)
         j.submit()
 
-        self.assertTrue(sleep_until_completed(j,60), 'Timeout on registering Interactive job as completed')
+        self.assertTrue(sleep_until_completed(j,120), 'Timeout on registering Interactive job as completed')
 
         self.assertEqual(j.status, 'completed')
 

@@ -226,8 +226,6 @@ def print_config_file():
 
 def config_file_as_text():
 
-    import Ganga.Utility.external.textwrap as textwrap
-
     text = ''
 
     sections = sorted(stripProxy(config).keys())
