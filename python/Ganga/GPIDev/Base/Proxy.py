@@ -10,7 +10,7 @@ from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Schema import ComponentItem
 
-from Ganga.GPIDev.Base.Objects import GangaObject, ObjectMetaclass, _getName
+from Ganga.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass, _getName
 from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
 import os
@@ -196,7 +196,6 @@ def stripProxy(obj):
 
 def addProxy(obj):
     """Adds a proxy to a GangaObject"""
-    from Ganga.GPIDev.Base.Objects import GangaObject
     if isType(obj, GangaObject) and not isProxy(obj):
         return GPIProxyObjectFactory(obj)
     return obj
@@ -225,8 +224,6 @@ def export(method):
 
 
 def stripComponentObject(v, cfilter, item):
-
-    from Ganga.GPIDev.Base import GangaObject
 
     def getImpl(v):
         if v is None:
@@ -260,7 +257,6 @@ class ProxyDataDescriptor(object):
     def disguiseComponentObject(self, v):
         # get the proxy for implementation object
         def getProxy(v):
-            from Ganga.GPIDev.Base import GangaObject
             if not isType(v, GangaObject):
                 raise GangaAttributeError("invalid type: cannot assign '%s' to attribute '%s'" % (repr(v), getName(self)))
             return GPIProxyObjectFactory(v)
@@ -338,7 +334,7 @@ class ProxyDataDescriptor(object):
         # print '**** checking',v,v.__class__,
         # isinstance(val,GPIProxyObject)
         if isinstance(v, list):
-            from Ganga.GPI import GangaList
+            from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
             v_new = GangaList()
             for elem in v:
                 v_new.append(elem)
@@ -404,8 +400,8 @@ class ProxyDataDescriptor(object):
 
         if type(val) is str:
             logger.error("Setting string type to 'is_prepared'")
-            import traceback
-            traceback.print_stack()
+            #import traceback
+            #traceback.print_stack()
 
     @staticmethod
     def __sequence_set__(stripper, obj, val, name):
@@ -576,7 +572,6 @@ def GPIProxyObjectFactory(_obj):
     Returns:
         a proxy object
     """
-    from Ganga.GPIDev.Base.Objects import GangaObject
     if not isType(_obj, GangaObject):
         from Ganga.Core.exceptions import GangaException
         raise GangaException("%s is NOT a Proxyable object" % type(_obj))
@@ -661,7 +656,6 @@ def GPIProxyClassFactory(name, pluginclass):
         instance._auto__init__()
 
         ## All objects with an _auto__init__ method need to have that method called and we set the various node attributes here based upon the schema
-        from Ganga.GPIDev.Base.Objects import GangaObject, Node
         for key, _val in stripProxy(self)._schema.allItems():
             if not _val['protected'] and not _val['hidden'] and isType(_val, ComponentItem) and key not in Node._ref_list:
                 val = stripProxy(getattr(self, key))
