@@ -872,13 +872,14 @@ under certain conditions; type license() for details.
 
         from Ganga.Runtime.GPIexport import exportToGPI
 
+        from Ganga.GPIDev.Base.Proxy import getProxyClass
         from Ganga.Utility.Plugin import allPlugins
         # make all plugins visible in GPI
         for k in allPlugins.allCategories():
             for n in allPlugins.allClasses(k):
                 cls = allPlugins.find(k, n)
                 if not cls._declared_property('hidden'):
-                    exportToGPI(n, cls._proxyClass, 'Classes')
+                    exportToGPI(n, getProxyClass(cls), 'Classes')
 
         # set the default value for the plugins
         from Ganga.Utility.Config import getConfig
