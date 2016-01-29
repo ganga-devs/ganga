@@ -10,6 +10,7 @@ from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Schema import ComponentItem
 
+from Ganga.GPIDev.Base.Objects import GangaObject, ObjectMetaclass
 from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
 import os
@@ -285,7 +286,6 @@ class ProxyDataDescriptor(object):
 
     # apply attribute conversion
     def disguiseAttribute(self, v):
-        GangaObject = _getGangaObject()
         if isType(v, GangaObject):
             return GPIProxyObjectFactory(v)
         return v
@@ -323,7 +323,6 @@ class ProxyDataDescriptor(object):
 
         returnable = disguiser(val)
         
-        GangaObject = _getGangaObject()
 
         if isType(returnable, GangaObject):
             return addProxy(returnable)
@@ -470,7 +469,6 @@ class ProxyDataDescriptor(object):
                 (hasattr(stripProxy(_val), '__len__') and hasattr(stripProxy(_val), '__getitem__'))):
             val = stripProxy(_val).__class__()
             for elem in _val:
-                GangaObject = _getGangaObject()
                 if isType(elem, GangaObject):
                     val.append(ProxyDataDescriptor.__recursive_strip(stripProxy(elem)))
                 else:
@@ -534,7 +532,6 @@ class ProxyDataDescriptor(object):
 
         self._check_type(obj, val)
         
-        GangaObject = _getGangaObject()
         GangaObject.__setattr__(stripProxy(obj), getName(self), val)
 
 
@@ -562,6 +559,9 @@ def getProxyClass(some_class):
     if not isclass(some_class):
         from Ganga.Core.exceptions import GangaException
         raise GangaException("Cannot perform getProxyClass on a non-class object: %s" % type(some_class))
+    if not issubclass(some_class, GangaObject):
+        from Ganga.Core.exceptions import GangaException
+        raise GangaException("Cannot perform getProxyClass on class which is not a subclass of GangaObject: %s" % type(some_class))
     proxy_class = getattr(some_class, proxyClass, None)
     if proxy_class is None:
         addProxyClass(some_class)
@@ -943,17 +943,13 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 
         #logger.debug("_getattribute: %s" % str(name))
 
-        GangaObject = _getGangaObject()
-
         if name.startswith('__') or name == implRef:
             return GPIProxyObject.__getattribute__(self, name)
         else:
             implInstance = stripProxy(self)
 
-            obj_meta = _getMetaClass()
-
             if '_attribute_filter__get__' in dir(implInstance) and \
-                    not isType(implInstance, obj_meta) and \
+                    not isType(implInstance, ObjectMetaclass) and \
                     implInstance._schema.hasItem(name) and \
                     not implInstance._schema.getItem(name)['hidden']:
                         returnable = addProxy(implInstance._attribute_filter__get__(name))
@@ -1021,7 +1017,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 
         output = stripProxy(self).__getitem__(args)
 
-        if isType(output, _getGangaObject()):
+        if isType(output, GangaObject):
             return addProxy(output)
         else:
             return output
@@ -1037,22 +1033,6 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
     # return type(name, (GPIProxyObject,list), d)
 
     return type(name, (GPIProxyObject,), d)
-
-_gangaObjectHolder = None
-def _getGangaObject():
-    global _gangaObjectHolder
-    if _gangaObjectHolder is None:
-        from Ganga.GPIDev.Base.Objects import GangaObject
-        _gangaObjectHolder = GangaObject
-    return _gangaObjectHolder
-
-_metaClassHolder = None
-def _getMetaClass():
-    global _metaClassHolder
-    if _metaClassHolder is None:
-        from Ganga.GPIDev.Base.Objects import ObjectMetaclass
-        _metaClassHolder = ObjectMetaclass
-    return _metaClassHolder
 
 
 #
