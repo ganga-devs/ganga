@@ -10,7 +10,7 @@ from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Schema import ComponentItem
 
-from Ganga.GPIDev.Base.Objects import GangaObject, ObjectMetaclass
+from Ganga.GPIDev.Base.Objects import GangaObject, ObjectMetaclass, _getName
 from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
 import os
@@ -184,12 +184,9 @@ def isType(_obj, type_or_seq):
         return isinstance(obj, bare_type_or_seq)
 
 def getName(_obj):
+    """Strip any proxy and then return an objects name"""
     obj = stripProxy(_obj)
-    returnable = getattr(obj, '_name', getattr(obj, '__name__', None))
-    if returnable is None:
-        returnable = getattr(getattr(obj, '__class__', None), '__name__', None)
-        if returnable is None:
-            returnable = str(obj)
+    returnable = _getName(obj)
     return returnable
 
 def stripProxy(obj):

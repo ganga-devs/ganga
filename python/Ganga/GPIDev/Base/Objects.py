@@ -25,6 +25,7 @@ from Ganga.Core.exceptions import GangaValueError, GangaException
 from Ganga.Utility.Plugin import allPlugins
 
 def _getName(obj):
+    """ Return the name of an object based on what we prioritise"""
     returnable = getattr(obj, '_name', getattr(obj, '__name__', None))
     if returnable is None:
         returnable = getattr(getattr(obj, '__class__', None), '__name__', None)
