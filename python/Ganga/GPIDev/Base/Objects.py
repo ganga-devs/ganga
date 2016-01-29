@@ -30,7 +30,7 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_proxyObject', '_data', '_index_cache', '_parent', '_registry']
+do_not_copy = ['_index_cache', '_parent', '_registry']
 
 def _getGangaList():
     global _imported_GangaList
@@ -710,9 +710,6 @@ class ObjectMetaclass(type):
         if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
             this_schema.createDefaultConfig()
 
-        # store generated proxy class
-        setattr(cls, '_proxyClass', GPIProxyClassFactory(name, cls))
-
 
 class GangaObject(Node):
     __metaclass__ = ObjectMetaclass
@@ -736,14 +733,12 @@ class GangaObject(Node):
     # _enable_config = 1 -> allow generation of [default_X] configuration
     # section with schema properties
 
-    # the constructor is directly used by the GPI proxy so the GangaObject
     # must be fully initialized
     def __init__(self):
         super(GangaObject, self).__init__(None)
 
         # IMPORTANT: if you add instance attributes like in the line below
         # make sure to update the __getstate__ method as well
-        # use cache to help preserve proxy objects identity in GPI
         # dirty flag is true if the object has been modified locally and its
         # contents is out-of-sync with its repository
         self._dirty = False
