@@ -553,6 +553,19 @@ class ProxyMethodDescriptor(object):
 
 # helper to create a wrapper for an existing ganga object
 
+def addProxyClass(some_class):
+    class_name = getName(some_class)
+    setattr(some_class, proxyClass, GPIProxyClassFactory(class_name, some_class))
+
+def getProxyClass(some_class):
+    if not isclass(some_class):
+        from Ganga.Core.exceptions import GangaException
+        raise GangaException("Cannot perform getProxyClass on a non-class object: %s" % type(some_class))
+    proxy_class = getattr(some_class, proxyClass, None)
+    if proxy_class is None:
+        addProxyClass(some_class)
+        proxy_class = getattr(some_class, proxyClass)
+    return proxy_class
 
 def GPIProxyObjectFactory(_obj):
     # type: (GangaObject) -> GPIProxyObject
@@ -572,13 +585,13 @@ def GPIProxyObjectFactory(_obj):
 
     if hasattr(_obj, proxyObject):
         return getattr(_obj, proxyObject)
+    
+    obj_class = _obj.__class__
 
-    ## This is defined within Objects.py, we could probably store this elsehere
-    ## (We probably do) but as this is guaranteed to be accessible for GangaObjects I will use this
-    this_class = getattr(type(_obj), proxyClass)
+    proxy_class = getProxyClass(obj_class)
 
-    proxy_class = this_class(_proxy_impl_obj_to_wrap=_obj)
-    return proxy_class
+    proxy_object = proxy_class(_proxy_impl_obj_to_wrap=_obj)
+    return proxy_object
 
 # this class serves only as a 'tag' for all generated GPI proxy classes
 # so we can test with isinstance rather then relying on more generic but
@@ -637,7 +650,7 @@ def GPIProxyClassFactory(name, pluginclass):
 
         ## Need to avoid any setter methods for GangaObjects
         ## Would be very nice to remove this entirely as I'm not sure a GangaObject should worry about it's proxy (if any)
-        instance.__dict__[proxyObject] = self
+        #instance.__dict__[proxyObject] = self
         ## THIS SHOLD BE DONE HERE BUT IS DONE IN GANAGOBJECT, PLEASE ADDRESS
         #instance.__dict__[proxyClass] = type(name, (GPIProxyObject,), d)
 
@@ -897,8 +910,8 @@ def GPIProxyClassFactory(name, pluginclass):
                 if x in stripProxy(self).metadata.data.keys():
                     raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)
 
-            if x not in [implRef, proxyObject, proxyClass]:
-                raise GangaAttributeError("'%s' has no attribute '%s'" % (getName(stripProxy(self)), x))
+            #if x not in [implRef, proxyObject, proxyClass]:
+            #    raise GangaAttributeError("'%s' has no attribute '%s'" % (getName(stripProxy(self)), x))
 
         new_v = stripProxy(runtimeEvalString(self, x, v))
         GPIProxyObject.__setattr__(self, x, stripProxy(new_v))
