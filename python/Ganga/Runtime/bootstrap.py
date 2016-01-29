@@ -878,8 +878,7 @@ under certain conditions; type license() for details.
             for n in allPlugins.allClasses(k):
                 cls = allPlugins.find(k, n)
                 if not cls._declared_property('hidden'):
-                    ## exportToGPI as ._name and hence the 'n' or 'getName' value is bad
-                    exportToGPI(cls.__name__, cls, 'Classes')
+                    exportToGPI(n, cls, 'Classes')
 
         # set the default value for the plugins
         from Ganga.Utility.Config import getConfig
@@ -1097,8 +1096,7 @@ under certain conditions; type license() for details.
         import Ganga.GPIDev.Lib.Config
         exportToGPI('config', Ganga.GPIDev.Lib.Config.config,
                     'Objects', 'access to Ganga configuration')
-        exportToGPI(
-            'ConfigError', Ganga.GPIDev.Lib.Config.ConfigError, 'Exceptions')
+        exportToGPI('ConfigError', Ganga.GPIDev.Lib.Config.ConfigError, 'Exceptions')
 
         from Ganga.Utility.feedback_report import report
 
