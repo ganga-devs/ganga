@@ -260,12 +260,12 @@ class GangaList(GangaObject):
     def __contains__(self, obj):
         return self._list.__contains__(self.strip_proxy(obj))
 
-    def __clone__(self):
-        return makeGangaListByRef(_list=copy.copy(self._list), preparable=self._is_preparable)
+    #def __clone__(self):
+    #    return makeGangaListByRef(_list=copy.copy(self._list), preparable=self._is_preparable)
 
-    def __copy__(self):
-        """Bypass any checking when making the copy"""
-        return makeGangaListByRef(_list=copy.copy(self._list), preparable=self._is_preparable)
+    #def __copy__(self):
+    #    """Bypass any checking when making the copy"""
+    #    return makeGangaListByRef(_list=copy.copy(self._list), preparable=self._is_preparable)
 
     def __delitem__(self, obj):
         self._list.__delitem__(self.strip_proxy(obj))
@@ -281,17 +281,17 @@ class GangaList(GangaObject):
         self.checkReadOnly()
         self.__delslice__(start, end)
 
-    def __deepcopy__(self, memo):
-        """Bypass any checking when making the copy"""
-        #logger.info("memo: %s" % str(memo))
-        #logger.info("self.len: %s" % str(len(self._list)))
-        if self._list != []:
-            return makeGangaListByRef(_list=copy.deepcopy(self._list), preparable=self._is_preparable)
-        else:
-            new_list = GangaList()
-            new_list._is_preparable = self._is_preparable
-            return new_list
-        #super(GangaList, self).__deepcopy__(memo)
+    #def __deepcopy__(self, memo):
+    #    """Bypass any checking when making the copy"""
+    #    #logger.info("memo: %s" % str(memo))
+    #    #logger.info("self.len: %s" % str(len(self._list)))
+    #    if self._list != []:
+    #        return makeGangaListByRef(_list=copy.deepcopy(self._list), preparable=self._is_preparable)
+    #    else:
+    #        new_list = GangaList()
+    #        new_list._is_preparable = self._is_preparable
+    #        return new_list
+    #    #super(GangaList, self).__deepcopy__(memo)
 
     def __eq__(self, obj_list):
         if obj_list is self:  # identity check
