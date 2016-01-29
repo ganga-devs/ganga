@@ -1,11 +1,16 @@
 import unittest
 
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Lib.File import LocalFile
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
 
 
 class TestGangaObject(GangaObject):
-    _schema = Schema(Version(1, 0), {'a': SimpleItem(42, typelist=['int'])})
+    _schema = Schema(Version(1, 0), {
+        'a': SimpleItem(42, typelist=['int']),
+        # 'b' is skipped on purpose
+        'c': ComponentItem('gangafiles'),
+    })
     _category = 'TestGangaObject'
     _name = 'TestGangaObject'
 
