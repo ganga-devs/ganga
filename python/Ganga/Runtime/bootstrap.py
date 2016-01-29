@@ -879,7 +879,8 @@ under certain conditions; type license() for details.
             for n in allPlugins.allClasses(k):
                 cls = allPlugins.find(k, n)
                 if not cls._declared_property('hidden'):
-                    exportToGPI(n, getProxyClass(cls), 'Classes')
+                    ## exportToGPI as ._name and hence the 'n' or 'getName' value is bad
+                    exportToGPI(cls.__name__, getProxyClass(cls), 'Classes')
 
         # set the default value for the plugins
         from Ganga.Utility.Config import getConfig

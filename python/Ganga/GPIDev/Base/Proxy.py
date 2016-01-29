@@ -554,7 +554,8 @@ class ProxyMethodDescriptor(object):
 # helper to create a wrapper for an existing ganga object
 
 def addProxyClass(some_class):
-    class_name = getName(some_class)
+    ## CANNOT USE THE ._name (hence getName) HERE DUE TO REQUIREMENTS OF THE OBJECT IN GPI BEING SANE!!!
+    class_name = some_class.__name__
     setattr(some_class, proxyClass, GPIProxyClassFactory(class_name, some_class))
 
 def getProxyClass(some_class):
