@@ -238,9 +238,11 @@ class ICredential(GangaObject):
                 # Since self.inputPW_Widget is called, current arguments are
                 # ignored since renew() and create() in GUI mode will not be
                 # called with any arguments.
-                if self.inputPW_Widget.ask(self._proxyObject):
+                #proxy_obj = self._proxyObject ## This is removed to get rid of ref to _proxyObject
+                proxy_obj = self
+                if self.inputPW_Widget.ask(proxy_obj):
                     logger.dg("Proceeding to retrieve password from inputPW_Widget.")
-                    __pw = self.inputPW_Widget.getPassword(self._proxyObject)
+                    __pw = self.inputPW_Widget.getPassword(proxy_obj)
                     if not __pw:
                         logger.warning("Password/passphrase expected!")
                         return False
@@ -269,7 +271,7 @@ class ICredential(GangaObject):
                 tFile.close()
                 # self.inputPW_Widget dialog postprocessing.
                 # E.g. disable autorenew mechanism if status != 0.
-                self.inputPW_Widget.renewalStatus(self._proxyObject, status)
+                self.inputPW_Widget.renewalStatus(proxy_obj, status)
                 if status == 0:
                     logger.info("%s creation/renewal successful." % self._name)
                     return True
