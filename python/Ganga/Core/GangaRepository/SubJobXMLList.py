@@ -398,7 +398,10 @@ class SubJobXMLList(GangaObject):
             return None
 
         if index in self._subjobIndexData.keys():
-            return self._subjobIndexData[index]
+            if self.isLoaded(index):
+                return self._registry.getIndexCache( self.__getitem__(index) )
+            else:
+                return self._subjobIndexData[index]
         else:
             return self._registry.getIndexCache( self.__getitem__(index) )
 
@@ -410,10 +413,13 @@ class SubJobXMLList(GangaObject):
         #logger.debug( "Cache: %s" % str(self._subjobIndexData.keys()) )
         if len(self._subjobIndexData.keys()) == len(self):
             for i in range(len(self)):
-                cached_data.append( self._subjobIndexData[i] )
+                if self.isLoaded(i):
+                    cached_data.append( self._registry.getIndexCache( self.__getitem__(i) ) )
+                else:
+                    cached_data.append( self._subjobIndexData[i] )
         else:
             for i in range(len(self)):
-                cached_data.append( self._registry.getIndexCache( self.__getitem__(i) ) )
+                cached_data.append(self._registry.getIndexCache( self.__getitem__(i) ) )
 
         return cached_data
 
