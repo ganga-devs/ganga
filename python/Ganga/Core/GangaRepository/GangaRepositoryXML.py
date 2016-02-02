@@ -962,8 +962,7 @@ class GangaRepositoryLocal(GangaRepository):
     def unlock(self, ids):
         released_ids = self.sessionlock.release_ids(ids)
         if len(released_ids) < len(ids):
-            logger.error(
-                "The write locks of some objects could not be released!")
+            logger.error("The write locks of some objects could not be released!")
 
     def get_lock_session(self, this_id):
         """get_lock_session(id)
