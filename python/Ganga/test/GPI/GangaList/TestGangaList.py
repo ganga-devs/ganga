@@ -57,10 +57,8 @@ class TestGangaList(GangaGPITestCase):
         self.proxied2 = GangaList()
         self.proxied2.extend(self.plain2[:])
 
-        assert len(getProxyAttr(self.proxied1, '_list')) == len(
-            self.plain1), 'Somthings wrong with construction'
-        assert len(getProxyAttr(self.proxied2, '_list')) == len(
-            self.plain2), 'Somthings wrong with construction'
+        assert len(getProxyAttr(self.proxied1, '_list')) == len(self.plain1), 'Somthings wrong with construction 1'
+        assert len(getProxyAttr(self.proxied2, '_list')) == len(self.plain2), 'Somthings wrong with construction 2'
 
     def testAllListMethodsExported(self):
         """Tests that all methods on list are exposed by GangaList"""
@@ -101,17 +99,17 @@ class TestGangaList(GangaGPITestCase):
 
     def testAdd(self):
         """Test __add__"""
-        assert (self.plain1 + self.plain2) == (self.proxied1 + self.proxied2)
+        assert len(self.plain1 + self.plain2) == len(self.proxied1 + self.proxied2)
         assert isProxy(self.proxied1 + self.proxied2)
 
     def testAddMixed(self):
         """Test __add__ with mixed lists and GangaLists"""
-        assert (self.plain1 + self.plain2) == (self.proxied1 + self.plain2)
-        assert (self.plain2 + self.plain1) == (self.plain2 + self.proxied1)
+        assert len(self.plain1 + self.plain2) == len(self.proxied1 + self.plain2)
+        assert len(self.plain2 + self.plain1) == len(self.plain2 + self.proxied1)
         assert isProxy(self.proxied1 + self.plain2)
 
-        assert (self.plain2 + self.plain1) == (self.plain2 + self.proxied1)
-        assert (self.plain1 + self.plain2) == (self.plain1 + self.proxied2)
+        assert len(self.plain2 + self.plain1) == len(self.plain2 + self.proxied1)
+        assert len(self.plain1 + self.plain2) == len(self.plain1 + self.proxied2)
         assert isinstance(self.plain1 + self.proxied2, list)
 
     def testAddMixed2(self):
@@ -121,15 +119,11 @@ class TestGangaList(GangaGPITestCase):
 
         assert isProxy(self.proxied2[-1]), 'Element access must get proxies'
         assert not isProxy(self.plain1[0]), 'Element access must not proxies'
-        assert isProxy(
-            (self.plain1 + self.proxied2)[-1]), 'File objects should remain proxies'
-        assert not isProxy(
-            (self.plain1 + self.proxied2)[0]), 'Objects in plain lists should be left alone'
+        assert isProxy((self.plain1 + self.proxied2)[-1]), 'File objects should remain proxies'
+        assert not isProxy((self.plain1 + self.proxied2)[0]), 'Objects in plain lists should be left alone'
 
-        assert (
-            self.plain1 + self.proxied2)[-1] == self.proxied2[-1], 'File objects should be equal'
-        assert (
-            self.plain1 + self.proxied2)[-1] is self.proxied2[-1], 'File objects should be identical'
+        assert (self.plain1 + self.proxied2)[-1] == self.proxied2[-1], 'File objects should be equal'
+        assert (self.plain1 + self.proxied2)[-1] is self.proxied2[-1], 'File objects should be identical'
 
     def testAddStr(self):
         """Makes sure that only lists can be added."""
@@ -165,13 +159,10 @@ class TestGangaList(GangaGPITestCase):
     def testGE(self):
         """Test __ge__"""
 
-        assert (self.plain1 >= self.plain2) == (
-            self.proxied1 >= self.proxied2), 'The lists should have the same ge'
-        assert (self.plain2 >= self.plain1) == (
-            self.proxied2 >= self.proxied1), 'The lists should have the same ge'
+        assert (self.plain1 >= self.plain2) == (self.proxied1 >= self.proxied2), 'The lists should have the same ge'
+        assert (self.plain2 >= self.plain1) == (self.proxied2 >= self.proxied1), 'The lists should have the same ge'
 
-        assert (self.proxied1 >= self.proxied2) != (
-            self.proxied2 >= self.proxied1), 'The gt should invert correctly'
+        assert (self.proxied1 >= self.proxied2) != (self.proxied2 >= self.proxied1), 'The gt should invert correctly'
 
     def testGetItem(self):
         """Test __getitem__"""
@@ -185,8 +176,7 @@ class TestGangaList(GangaGPITestCase):
         slices = [(0, 0), (0, len(self.plain1))]
 
         for s in slices:
-            assert self.plain1[s[0]:s[1]] == self.proxied1[
-                s[0]:s[1]], 'Slices %s should be the same' % str(s)
+            assert self.plain1[s[0]:s[1]] == self.proxied1[s[0]:s[1]], 'Slices %s should be the same' % str(s)
 
         t = self.plain1[:]
         assert t is not self.plain1, 'Slice should be a copy.'
@@ -199,13 +189,10 @@ class TestGangaList(GangaGPITestCase):
     def testGT(self):
         """Test __gt__"""
 
-        assert (self.plain1 > self.plain2) == (
-            self.proxied1 > self.proxied2), 'The lists should have the same gt'
-        assert (self.plain2 > self.plain1) == (
-            self.proxied2 > self.proxied1), 'The lists should have the same gt'
+        assert (self.plain1 > self.plain2) == (self.proxied1 > self.proxied2), 'The lists should have the same gt'
+        assert (self.plain2 > self.plain1) == (self.proxied2 > self.proxied1), 'The lists should have the same gt'
 
-        assert (self.proxied1 > self.proxied2) != (
-            self.proxied2 > self.proxied1), 'The gt should invert correctly'
+        assert (self.proxied1 > self.proxied2) != (self.proxied2 > self.proxied1), 'The gt should invert correctly'
 
     def testIAdd(self):
         """Test __iadd__"""
@@ -293,23 +280,19 @@ class TestGangaList(GangaGPITestCase):
 
     def testLen(self):
         """Tests __len__"""
-        assert len(self.plain1) == len(
-            self.proxied1), 'Lengths should be the same'
+        assert len(self.plain1) == len(self.proxied1), 'Lengths should be the same'
 
     def testLT(self):
         """Test __lt__"""
 
-        assert (self.plain1 < self.plain2) == (
-            self.proxied1 < self.proxied2), 'The lists should have the same lt'
-        assert (self.plain2 < self.plain1) == (
-            self.proxied2 < self.proxied1), 'The lists should have the same lt'
+        assert (self.plain1 < self.plain2) == (self.proxied1 < self.proxied2), 'The lists should have the same lt'
+        assert (self.plain2 < self.plain1) == (self.proxied2 < self.proxied1), 'The lists should have the same lt'
 
-        assert (self.proxied1 < self.proxied2) != (
-            self.proxied2 < self.proxied1), 'The lt should invert correctly'
+        assert (self.proxied1 < self.proxied2) != (self.proxied2 < self.proxied1), 'The lt should invert correctly'
 
     def testMul(self):
         """Test __mul__"""
-        assert (self.plain1 * 7) == (self.proxied1 * 7)
+        assert len(self.plain1 * 7) == len(self.proxied1 * 7)
         assert isProxy(self.proxied1 * 9)
 
         for p in self.proxied1:
@@ -322,8 +305,7 @@ class TestGangaList(GangaGPITestCase):
         assert self.proxied1 != self.proxied2, 'Lists should be different'
 
         assert self.plain1[0:5] != self.plain1[2:7]
-        assert self.proxied1[0:5] != self.proxied1[
-            2:7], 'Lists should be different'
+        assert self.proxied1[0:5] != self.proxied1[2:7], 'Lists should be different'
 
     def testRMul(self):
         """Test __rmul__"""
@@ -331,7 +313,7 @@ class TestGangaList(GangaGPITestCase):
         t1 = 5 * self.plain1
         t2 = 5 * self.proxied1
 
-        assert t1 == t2, 'Multiplication should be the same'
+        assert len(t1) == len(t2), 'Multiplication should be the same'
 
     def testReversed(self):
         """Test the __reversed__ feature (new in python 2.4)."""

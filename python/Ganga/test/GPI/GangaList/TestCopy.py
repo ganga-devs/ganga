@@ -41,7 +41,7 @@ class TestCopy(GangaGPITestCase):
         assert len(gl) == numberOfFiles, 'Right number of files must be made'
 
         gl2 = copy.copy(gl)
-        assert gl2 == gl, 'lists must be equal'
+        assert len(gl2) == len(gl), 'lists must be equal'
         assert gl2 is not gl, 'list must be copies'
         #assert gl[0] is gl2[0], 'the references must be copied' ## rcurrie 09/12/15 Not sure this is valid given we have to cope with GangaObjects here which may not be copyable!
 
@@ -58,6 +58,6 @@ class TestCopy(GangaGPITestCase):
         assert len(gl) == numberOfFiles, 'Right number of files must be made'
 
         gl2 = copy.deepcopy(gl)
-        assert gl2 == gl, 'lists must be equal'
+        assert len(gl2) == len(gl), 'lists must be equal'
         assert gl2 is not gl, 'list must be copies'
         assert gl[0] is not gl2[0], 'the references must be copied'
