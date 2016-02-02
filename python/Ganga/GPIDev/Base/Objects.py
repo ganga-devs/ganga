@@ -15,7 +15,7 @@
 
 import Ganga.Utility.logging
 
-from copy import deepcopy
+from copy import deepcopy, copy
 import inspect
 
 import Ganga.GPIDev.Schema as Schema
@@ -803,8 +803,8 @@ class GangaObject(Node):
         self._dirty = False
 
     @staticmethod
-    def __incrementShareRef(object, attr_name):
-        shared_dir = getattr(self_copy, name)
+    def __incrementShareRef(obj, attr_name):
+        shared_dir = getattr(obj, attr_name)
 
         if hasattr(shared_dir, 'name'):
 
