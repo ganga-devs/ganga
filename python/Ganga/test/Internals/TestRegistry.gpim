@@ -1,4 +1,5 @@
 import os, getpass, random, threading, time
+from Ganga.Core.GangaThread.GangaThread import GangaThread
 from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest, MultipassTest
 from Ganga.Core.GangaRepository.GangaRepositoryXML import GangaRepositoryLocal
 from GangaTest.Lib.TestObjects import TestGangaObject
@@ -16,7 +17,7 @@ type = config['repositorytype']
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
-class HammerThread(threading.Thread):
+class HammerThread(GangaThread):
     def __init__(self,id,reg):
         self.id = id
         self.reg = reg
