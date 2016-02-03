@@ -878,6 +878,8 @@ under certain conditions; type license() for details.
             for n in allPlugins.allClasses(k):
                 cls = allPlugins.find(k, n)
                 if not cls._declared_property('hidden'):
+                    if n != cls.__name__:
+                        exportToGPI(cls.__name__, cls, 'Classes')
                     exportToGPI(n, cls, 'Classes')
 
         # set the default value for the plugins
