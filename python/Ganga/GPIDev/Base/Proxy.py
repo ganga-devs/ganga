@@ -355,6 +355,9 @@ class ProxyDataDescriptor(object):
     @staticmethod
     def __app_set__(obj, val):
 
+        if not hasattr(obj, 'application') or obj.application is None:
+            return
+
         if hasattr(obj.application, '_is_prepared'):
 
             #a=Job(); a.prepare(); a.application=Executable()
