@@ -59,7 +59,10 @@ def runtimeEvalString(this_obj, attr_name, val):
     ## If the object is NOT a ComponentItem but is still in the schema, check to see if the object is allowed to be a string or not
     ## If an object is NOT allowed to be a string then it should be 'eval'-ed
     if hasattr(raw_obj, '_schema'):
-        if raw_obj._schema.hasAttribute(attr_name):
+
+        if not raw_obj._schema.hasAttribute(attr_name):
+            shouldEval = True
+        else:
             this_attr = raw_obj._schema.getItem(attr_name)
             if isType(this_attr, ComponentItem):
                 ## This is a component Item and isn't equivalent to a string
@@ -490,19 +493,27 @@ class ProxyDataDescriptor(object):
         ## Try to remove all proxies
         val = ProxyDataDescriptor.__recursive_strip(_val)
 
+        attr_name = getName(self)
+        logger.info("name: %s" % attr_name)
+
+        raw_obj = stripProxy(obj)
+
+        if not raw_obj._schema.hasAttribute(attr_name):
+            raise GangaAttributeError("Cannot assign %s, as it is NOT an attribute in the schema for class: %s" % (attr_name, getName(obj))) 
+
         #logger.debug("__set__")
-        item = stripProxy(obj)._schema[getName(self)]
+        item = raw_obj._schema[attr_name]
         if item['protected']:
-            raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified' % (getName(self),))
+            raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified' % (attr_name,))
         if stripProxy(obj)._readonly():
 
             if not item.getProperties()['changable_at_resubmit']:
-                raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now' % (repr(obj), getName(self)))
+                raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now' % (repr(obj), attr_name))
             
 
         # mechanism for locking of preparable attributes
         if item['preparable']:
-            self.__preparable_set__(obj, val, getName(self))
+            self.__preparable_set__(obj, val, attr_name)
 
         # if we set is_prepared to None in the GPI, that should effectively
         # unprepare the application
@@ -523,20 +534,20 @@ class ProxyDataDescriptor(object):
             stripper = None
 
         if item['sequence']:
-            val = self.__sequence_set__(stripper, obj, val, getName(self))
+            val = self.__sequence_set__(stripper, obj, val, attr_name)
         else:
             if stripper is not None:
                 val = stripper(val)
             else:
-                val = self._stripAttribute(obj, val, getName(self))
+                val = self._stripAttribute(obj, val, attr_name)
 
         # apply attribute filter to component items
         if item.isA(ComponentItem):
-            val = self._stripAttribute(obj, val, getName(self))
+            val = self._stripAttribute(obj, val, attr_name)
 
         self._check_type(obj, val)
-        
-        GangaObject.__setattr__(stripProxy(obj), getName(self), val)
+
+        GangaObject.__setattr__(raw_obj, attr_name, val)
 
 
 class ProxyMethodDescriptor(object):
@@ -885,7 +896,7 @@ def GPIProxyClassFactory(name, pluginclass):
     helptext(_copy, "Make an identical copy of self.")
 
     def _setattr(self, x, v):
-        'something'
+        'This is the setter method in the Proxied Objects'
         #logger.debug("_setattr")
         # need to know about the types that require metadata attribute checking
         # this allows derived types to get same behaviour for free.
@@ -901,11 +912,14 @@ def GPIProxyClassFactory(name, pluginclass):
         if x == implRef and not isinstance(v, class_type):
             raise AttributeError("Internal implementation object '%s' cannot be reassigned" % implRef)
 
-        if not stripProxy(self)._schema.hasAttribute(x):
+        elif not stripProxy(self)._schema.hasAttribute(x):
             from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
             if hasattr(stripProxy(self), 'metadata') and isType(stripProxy(self).metadata, MetadataDict):
                 if x in stripProxy(self).metadata.data.keys():
                     raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)
+
+            if x != implRef:
+                raise GangaAttributeError("Can't assign '%s' as it does NOT appear in the object schema for class '%s'" % (x, getName(self)))
 
         new_v = stripProxy(runtimeEvalString(self, x, v))
         GPIProxyObject.__setattr__(self, x, stripProxy(new_v))
