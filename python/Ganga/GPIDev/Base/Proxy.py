@@ -494,7 +494,6 @@ class ProxyDataDescriptor(object):
         val = ProxyDataDescriptor.__recursive_strip(_val)
 
         attr_name = getName(self)
-        logger.info("name: %s" % attr_name)
 
         raw_obj = stripProxy(obj)
 
