@@ -6,6 +6,7 @@ from TaskApplication import AthenaTask, AnaTaskSplitterJob
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import ATLASLocalDataset,ATLASOutputDataset
 from GangaAtlas.Lib.Athena.Athena import AthenaSplitterJob
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from Ganga.Utility.ColourText import overview_colours
 
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset

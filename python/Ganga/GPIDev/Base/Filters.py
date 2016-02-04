@@ -29,17 +29,12 @@
 # Void filter does nothing. This is the default filter if no other default
 # has been defined.
 
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Utility.Config import makeConfig
+from Ganga.GPIDev.Base.Proxy import isType, getName
+from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Config.Config import ConfigError
 
 # test configuration properties
-config = makeConfig('GPIComponentFilters', """Customization of GPI component object assignment
-for each category there may be multiple filters registered, the one used being defined 
-in the configuration file in [GPIComponentFilters]
-e.g: {'datasets':{'lhcbdatasets':lhcbFilter, 'testdatasets':testFilter}...}
-""", is_open=False)
-
+config = getConfig('GPIComponentFilters')
 
 def void_filter(val, item):
     return None
@@ -55,7 +50,7 @@ class _ComponentFilterManager(object):
         self._dict = {}
         self.default = None
 
-    def __setitem__(self, category, filter):
+    def __setitem__(self, category, _filter):
 
         if category not in self._dict:
             self._dict[category] = {}
@@ -63,31 +58,30 @@ class _ComponentFilterManager(object):
         # the filter can be registered as a tuple: ('filtername',filterfunction)
         # or just as a function in which case the function name is used as an
         # alias
-        if isType(filter, tuple) and len(filter) >= 2:
-            filtername = filter[0]
-            filterfunc = filter[1]
+        if isType(_filter, tuple) and len(_filter) >= 2:
+            filtername = _filter[0]
+            filterfunc = _filter[1]
         else:
             try:
-                filtername = filter.__name__
-                filterfunc = filter
+                filtername = getName(_filter)
+                filterfunc = _filter
             except AttributeError as e:
                 raise ValueError(
-                    'FilterManager: Invalid component filter %s.' % filter)
+                    'FilterManager: Invalid component filter %s.' % _filter)
 
         if filtername in self._dict[category]:
-            raise ValueError('FilterManager: %s component filter already exists for %s category ' % (
-                filtername, category))
+            raise ValueError('FilterManager: %s component filter already exists for %s category ' % (filtername, category))
 
         if category not in config.options:
             config.addOption(category, "", "")
         config.overrideDefaultValue(category, filtername)
         self._dict[category][filtername] = filterfunc
 
-    def setDefault(self, filter):
+    def setDefault(self, _filter):
         if self.default:
             raise ValueError('FilterManager: default filter already exists')
 
-        self.default = filter
+        self.default = _filter
 
     def __getitem__(self, category):
         try:

@@ -264,7 +264,11 @@ class GaudiBase(IPrepareApp):
         if (self.is_prepared is not None) and (force is not True):
             raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.' % (getName(self)))
 
-        logger.info('Job %s: Preparing %s application.' % (stripProxy(self).getJobObject().getFQID('.'), getName(self)))
+        try:
+            logger.info('Job %s: Preparing %s application.' % (stripProxy(self).getJobObject().getFQID('.'), getName(self)))
+        except AssertionError, err:
+            ## No Job associated with Object!!
+            logger.info("Preparing %s application." % getName(self))
         self.is_prepared = ShareDir()
 
     def master_configure(self):

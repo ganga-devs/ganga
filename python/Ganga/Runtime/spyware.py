@@ -4,8 +4,7 @@ from Ganga.Utility.Config import getConfig
 config = getConfig('Configuration')
 #config.addOption('UsageMonitoringURL', "http://gangamon.cern.ch:8888/apmon/ganga.conf",
 #                 'MonALISA configuration file used to setup the destination of usage messages')
-config.addOption('UsageMonitoringMSG', True,
-                 "enable usage monitoring through MSG server defined in MSGMS configuration")
+
 
 monitor = None
 
@@ -52,7 +51,10 @@ def ganga_started(session_type, **extended_attributes):
         p.send(msg_config['usage_message_destination'], repr(usage_message), {'persistent': 'true'})
         # ask publisher thread to stop. it will send queued message anyway.
         p.stop()
-
+        p._finalize(10.)
+        if hasattr(p, 'unregister'):
+            p.unregister()
+        del p
 
 def ganga_job_submitted(application_name, backend_name, plain_job, master_job, sub_jobs):
     host = getConfig('System')['GANGA_HOSTNAME']
@@ -79,4 +81,9 @@ def ganga_job_submitted(application_name, backend_name, plain_job, master_job, s
         # p.send('/queue/test.ganga.jobsubmission',repr(job_submitted_message),{'persistent':'true'})
         # ask publisher thread to stop. it will send queued message anyway.
         p.stop()
+        p._finalize(10.)
+        if hasattr(p, 'unregister'):
+            p.unregister()
+        del p
+
 

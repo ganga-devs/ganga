@@ -21,17 +21,16 @@ class GangaException(Exception):
         # This code will give a stack trace from a GangaException only when debugging is enabled
         # This makes debugging what's going on much easier whilst hiding mess
         # from users
-        if self.logger is None:
-            import Ganga.Utility.logging
-            self.logger = Ganga.Utility.logging.getLogger()
-        try:
-            import logging
-        except ImportError:
-            import Ganga.Utility.external.logging as logging
+        #if self.logger is None:
+        #    from Ganga.Utility.logging import getLogger
+        #    self.logger = getLogger()
 
-        if self.logger.isEnabledFor(logging.DEBUG):
-            import traceback
-            traceback.print_stack()
+        #from Ganga.Utility.logging import _get_logging
+        #logging = _get_logging()
+
+        #if self.logger.isEnabledFor(logging.DEBUG):
+        #    import traceback
+        #    traceback.print_stack()
 
     def __str__(self):
         """
@@ -150,17 +149,16 @@ class GangaAttributeError(AttributeError, GangaException):
         # This code will give a stack trace from a GangaException only when debugging is enabled
         # This makes debugging what's going on much easier whilst hiding mess
         # from users
-        if self.logger is None:
-            import Ganga.Utility.logging
-            self.logger = Ganga.Utility.logging.getLogger()
-            try:
-                import logging
-            except ImportError:
-                import Ganga.Utility.external.logging as logging
+        #if self.logger is None:
+        #    from Ganga.Utility.logging import getLogger
+        #    self.logger = Ganga.Utility.logging.getLogger()
 
-            if self.logger.isEnabledFor(logging.DEBUG):
-                import traceback
-                traceback.print_stack()
+        #    from Gangs.Utility.logging import _get_logging
+        #    logging = _get_logging()
+
+        #    if self.logger.isEnabledFor(logging.DEBUG):
+        #        import traceback
+        #        traceback.print_stack()
 
 
 class GangaValueError(ValueError, GangaException):

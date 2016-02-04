@@ -1,8 +1,7 @@
 import datetime
 import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import isType, getName, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Core import BackendError
 import os.path
@@ -537,52 +536,13 @@ class Batch(IBackend):
                 else:
                     # Job is still running. Check if alive
                     time = get_last_alive(heartbeatfile)
-                    config = getConfig(j.backend._name)
+                    config = getConfig(getName(j.backend))
                     if time > config['timeout']:
                         logger.warning(
                             'Job %s has disappeared from the batch system.', str(j.getFQID('.')))
                         j.updateStatus('failed')
 
 #_________________________________________________________________________
-
-config = Ganga.Utility.Config.makeConfig('LSF', 'internal LSF command line interface')
-
-# fix bug #21687
-config.addOption('shared_python_executable', False, "Shared PYTHON")
-
-config.addOption('jobid_name', 'LSB_BATCH_JID', "Name of environment with ID of the job")
-config.addOption('queue_name', 'LSB_QUEUE', "Name of environment with queue name of the job")
-config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
-
-config.addOption('submit_str', 'cd %s; bsub %s %s %s %s', "String used to submit job to queue")
-config.addOption('submit_res_pattern', '^Job <(?P<id>\d*)> is submitted to .*queue <(?P<queue>\S*)>',
-                 "String pattern for replay from the submit command")
-
-config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
-config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
-
-config.addOption('kill_str', 'bkill %s', "String used to kill job")
-config.addOption('kill_res_pattern',
-                 '(^Job <\d+> is being terminated)|(Job <\d+>: Job has already finished)|(Job <\d+>: No matching job found)',
-                 "String pattern for replay from the kill command")
-
-tempstr = '''
-'''
-config.addOption('preexecute', tempstr,
-                 "String contains commands executing before submiting job to queue")
-
-tempstr = '''
-def filefilter(fn):
-  # FILTER OUT Batch INTERNAL INPUT/OUTPUT FILES: 
-  # 10 digits . any number of digits . err or out
-  import re
-  internals = re.compile(r'\d{10}\.\d+.(out|err)')
-  return internals.match(fn) or fn == '.Batch.start'
-'''
-config.addOption('postexecute', tempstr, "String contains commands executing before submiting job to queue")
-config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
-config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
-
 
 class LSF(Batch):
 
@@ -599,48 +559,6 @@ class LSF(Batch):
 
 #_________________________________________________________________________
 
-config = Ganga.Utility.Config.makeConfig('PBS', 'internal PBS command line interface')
-
-config.addOption('shared_python_executable', False, "Shared PYTHON")
-
-config.addOption('jobid_name', 'PBS_JOBID', "Name of environment with ID of the job")
-config.addOption('queue_name', 'PBS_QUEUE', "Name of environment with queue name of the job")
-config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
-
-config.addOption('submit_str', 'cd %s; qsub %s %s %s %s', "String used to submit job to queue")
-config.addOption('submit_res_pattern', '^(?P<id>\d*)\.pbs\s*',
-                 "String pattern for replay from the submit command")
-
-config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
-config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
-
-config.addOption('kill_str', 'qdel %s', "String used to kill job")
-config.addOption('kill_res_pattern', '(^$)|(qdel: Unknown Job Id)',
-                 "String pattern for replay from the kill command")
-
-tempstr = '''
-env = os.environ
-jobnumid = env["PBS_JOBID"]
-os.system("mkdir /tmp/%s/" %jobnumid)
-os.chdir("/tmp/%s/" %jobnumid)
-os.environ["PATH"]+=":."
-'''
-config.addOption('preexecute', tempstr,
-                 "String contains commands executing before submiting job to queue")
-
-tempstr = '''
-env = os.environ
-jobnumid = env["PBS_JOBID"]
-os.chdir("/tmp/")
-os.system("rm -rf /tmp/%s/" %jobnumid) 
-'''
-config.addOption('postexecute', tempstr,
-                 "String contains commands executing before submiting job to queue")
-config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
-config.addOption('timeout', 600,
-                 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
-
-
 class PBS(Batch):
 
     ''' PBS backend - submit jobs to Portable Batch System.
@@ -656,46 +574,6 @@ class PBS(Batch):
 
 
 #_________________________________________________________________________
-
-config = Ganga.Utility.Config.makeConfig('SGE', 'internal SGE command line interface')
-
-config.addOption('shared_python_executable', False, "Shared PYTHON")
-
-config.addOption('jobid_name', 'JOB_ID', "Name of environment with ID of the job")
-config.addOption('queue_name', 'QUEUE', "Name of environment with queue name of the job")
-config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
-
-# the -V options means that all environment variables are transferred to
-# the batch job (ie the same as the default behaviour on LSF at CERN)
-config.addOption('submit_str', 'cd %s; qsub -cwd -V %s %s %s %s',
-                 "String used to submit job to queue")
-config.addOption('submit_res_pattern', 'Your job (?P<id>\d+) (.+)',
-                 "String pattern for replay from the submit command")
-
-config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
-config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
-
-config.addOption('kill_str', 'qdel %s', "String used to kill job")
-config.addOption('kill_res_pattern', '(has registered the job +\d+ +for deletion)|(denied: job +"\d+" +does not exist)',
-                 "String pattern for replay from the kill command")
-
-# From the SGE man page on qsub
-#
-#===========================
-# Furthermore, Grid Engine sets additional variables into the job's
-# environment, as listed below.
-#:
-#:
-# TMPDIR
-#   The absolute path to the job's temporary working directory.
-#=============================
-
-config.addOption('preexecute', 'os.chdir(os.environ["TMPDIR"])\nos.environ["PATH"]+=":."',
-                 "String contains commands executing before submiting job to queue")
-config.addOption('postexecute', '', "String contains commands executing before submiting job to queue")
-config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
-config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
-
 
 class SGE(Batch):
 

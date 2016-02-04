@@ -35,7 +35,7 @@ class GangaThreadPool(object):
         self.__threads = []
 
     def addServiceThread(self, t):
-        logger.debug('service thread "%s" added to the GangaThreadPool', t.getName())
+        #logger.debug('service thread "%s" added to the GangaThreadPool', t.getName())
         ##   HERE TO AVOID AN IMPORT ERROR!
         from Ganga.Core.GangaThread.MTRunner import DuplicateDataItemError
         try:
@@ -44,7 +44,7 @@ class GangaThreadPool(object):
             self.logger.debug(str(e))
 
     def delServiceThread(self, t):
-        logger.debug('service thread "%s" deleted from the GangaThreadPool', t.getName())
+        #logger.debug('service thread "%s" deleted from the GangaThreadPool', t.getName())
         try:
             if t in self.__threads:
                 self.__threads.remove(t)
@@ -169,9 +169,9 @@ class GangaThreadPool(object):
 
         logger.debug("ExternalTasks still running: %s" % queues.threadStatus())
 
-        logger.debug('Service threads to shutdown: %s' % list(_all_threads))
+        logger.debug('Service threads to shutdown: %s' % ([i for i in reversed(list(_all_threads))]))
 
-        logger.debug('Service threads to shutdown: %s' % list(_all_threads))
+        logger.debug('Service threads to shutdown: %s' % ([i for i in reversed(list(_all_threads))]))
 
         # shutdown each individual threads in the pool
         nonCritThreads = []

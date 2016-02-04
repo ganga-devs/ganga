@@ -8,42 +8,29 @@
 Helper functions for operations on files.
 """
 
-## BE AWARE THIS IS LOADING Ganga.Utility.logging NOT python logging!! - rcurrie
-import logging
 import os.path
-import stat
 import Ganga
 
 def expandfilename(filename, force=False):
-    "expand a path or filename in a standard way so that it may contain ~ and ${VAR} strings"
+    """expand a path or filename in a standard way so that it may contain ~ and ${VAR} strings"""
     expanded_path = os.path.expandvars(os.path.expanduser(filename))
     if os.path.exists(expanded_path) or force:
         return expanded_path
-    else:
-        from Ganga.Utility.logging import getLogger
-        logger = getLogger()
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.warning("Filename: %s doesn't exist using it anyway" % filename)
-            import traceback
-            traceback.print_stack()
-        return filename
-    #return os.path.expandvars(os.path.expanduser(filename))
+
+    from Ganga.Utility.logging import getLogger
+    getLogger().debug("Filename: %s doesn't exist using it anyway" % filename)
+    return filename
 
 
 def fullpath(path, force=False):
-    "expandfilename() and additionally: strip leading and trailing whitespaces and expand symbolic links"
+    """expandfilename() and additionally: strip leading and trailing whitespaces and expand symbolic links"""
     full_path = os.path.realpath(expandfilename(path.strip(), True))
     if os.path.exists(full_path) or force:
         return full_path
-    else:
-        from Ganga.Utility.logging import getLogger
-        logger = getLogger()
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.warning("path: %s doesn't exist using it anyway" % path)
-            import traceback
-            traceback.print_stack()
-        return path
-    #return os.path.realpath(expandfilename(path.strip()))
+
+    from Ganga.Utility.logging import getLogger
+    getLogger().debug("path: %s doesn't exist using it anyway" % path)
+    return path
 
 
 def previous_dir(path, cnt):

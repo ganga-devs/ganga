@@ -18,6 +18,15 @@ class TestGangaObject(GangaObject):
         return 'example_string'
 
 
+class NonProxiedGangaObject(GangaObject):
+    """
+    This is a class which should not be present in the GPI and should not be wrapped with a proxy
+    """
+    _schema = Schema(Version(1, 0))
+    _category = 'TestGangaObject'
+    _name = 'TestGangaObject'
+
+
 import Ganga.GPIDev.Base.Proxy
 import Ganga.Core.exceptions
 
@@ -34,6 +43,43 @@ class TestProxy(unittest.TestCase):
         """
         new_object = TestGangaObject()
         self.p = Ganga.GPIDev.Base.Proxy.addProxy(new_object)
+
+    def test_dict_attributes(self):
+        # Non-proxied GangaObject class
+        # self.assertFalse(hasattr(NonProxiedGangaObject, '_proxyClass'))  # This is currently know to fail. Should be fixed when class decorators are used for export
+        self.assertFalse(hasattr(NonProxiedGangaObject, '_proxyObject'))
+        self.assertFalse(hasattr(NonProxiedGangaObject, '_impl'))
+
+        # Proxied GangaObject class
+        self.assertTrue(hasattr(TestGangaObject, '_proxyClass'))
+        self.assertFalse(hasattr(TestGangaObject, '_proxyObject'))
+        self.assertFalse(hasattr(TestGangaObject, '_impl'))
+
+        # Non-proxied GangaObject instance
+        non_proxied_instance = TestGangaObject()
+        self.assertTrue(hasattr(non_proxied_instance, '_proxyClass'))
+        self.assertFalse(hasattr(non_proxied_instance, '_proxyObject'))
+        self.assertFalse(hasattr(non_proxied_instance, '_impl'))
+
+        # Proxy class
+        proxy_class = TestGangaObject._proxyClass
+        self.assertFalse(hasattr(proxy_class, '_proxyClass'))
+        self.assertFalse(hasattr(proxy_class, '_proxyObject'))
+        self.assertTrue(hasattr(proxy_class, '_impl'))
+
+        # Proxy class instance
+        self.assertFalse(hasattr(self.p, '_proxyClass'))
+        self.assertFalse(hasattr(self.p, '_proxyObject'))
+        self.assertTrue(hasattr(self.p, '_impl'))
+
+        # Proxied GangaObject instance
+        proxied = self.p._impl
+        self.assertTrue(hasattr(proxied, '_proxyClass'))
+        self.assertTrue(hasattr(proxied, '_proxyObject'))
+        self.assertFalse(hasattr(proxied, '_impl'))
+
+        # A proxy instance should only have _impl in its dict
+        self.assertEqual(self.p.__dict__.keys(), ['_impl'])
 
     def test_default(self):
         """
@@ -102,55 +148,3 @@ class TestProxy(unittest.TestCase):
             self.p.not_proxied()
 
         self.assertRaises(AttributeError, _call)
-
-
-class TestVersion(unittest.TestCase):
-    """
-    Make sure that the version checks are working
-    """
-    def test_equal(self):
-        v1 = Version(1, 0)
-        v2 = Version(1, 0)
-        self.assertEqual(v1, v2)
-        self.assertTrue(v1.isCompatible(v2))
-
-    def test_different(self):
-        v1 = Version(1, 0)
-        v2 = Version(1, 2)
-        self.assertNotEqual(v1, v2)
-        self.assertTrue(v2.isCompatible(v1))
-        self.assertFalse(v1.isCompatible(v2))
-
-
-class TestSchema(unittest.TestCase):
-    def test_create(self):
-        """
-        Create a complex schema and make sure all the items are added
-        """
-        dd = {
-            'application': ComponentItem(category='applications'),
-            'backend': ComponentItem(category='backends'),
-            'name': SimpleItem('', comparable=0),
-            'workdir': SimpleItem(defvalue=None, type='string', transient=1, protected=1, comparable=0),
-            'status': SimpleItem(defvalue='new', protected=1, comparable=0),
-            'id': SimpleItem(defvalue=None, type='string', protected=1, comparable=0),
-            'inputbox': FileItem(defvalue=[], sequence=1),
-            'outputbox': FileItem(defvalue=[], sequence=1),
-            'overriden_copyable': SimpleItem(defvalue=None, protected=1, copyable=1),
-            'plain_copyable': SimpleItem(defvalue=None, copyable=0)
-        }
-        s = Schema(Version(1, 0), dd)
-        self.assertEqual(s.allItems(), dd.items())
-        self.assertEqual(sorted(s.componentItems()+s.simpleItems()), sorted(dd.items()))
-
-    def test_get_non_existant(self):
-        """
-        Make sure that fetching a non-existant member raises the correct exception.
-        """
-        new_object = TestGangaObject()
-        p = Ganga.GPIDev.Base.Proxy.addProxy(new_object)
-
-        def _get():
-            temp = p._schema['b']
-
-        self.assertRaises(AttributeError, _get)

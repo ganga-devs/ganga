@@ -90,8 +90,6 @@ class JobTime(GangaObject):
 
     def __deepcopy__(self, memo):
         obj = super(JobTime, self).__deepcopy__(memo)
-        if self._getParent() is not None:
-            obj._setParent(self._getParent())
         # Lets not re-initialize the object as we lose history from previous submissions
         # obj.newjob()
         return obj
@@ -125,7 +123,7 @@ class JobTime(GangaObject):
             # backend stamps
             if status in b_list:
                 for childstatus in b_list:
-                    be_statetime = j.backend.getStateTime(childstatus)
+                    be_statetime = stripProxy(j.backend).getStateTime(childstatus)
                     if be_statetime is not None:
                         if childstatus in backend_final:
                             self.timestamps["backend_final"] = be_statetime
@@ -199,9 +197,12 @@ class JobTime(GangaObject):
             logger.debug(
                 "IndexError: ID: %d, Status: '%s', length of list: %d", j.id, status, len(list))
 
+    def display(self, format="%Y/%m/%d %H:%M:%S"):
+        return self._display(format)
+
     # Justin 10.9.09: I think 'ljust' might be just as good if not better than
     # 'rjust' here:
-    def display(self, format="%Y/%m/%d %H:%M:%S"):
+    def _display(self, format="%Y/%m/%d %H:%M:%S", interactive=False):
         """Displays existing timestamps in a table.
 
            Format can be specified by typing a string of the appropriate strftime() behaviour codes as the arguement.
@@ -235,16 +236,16 @@ class JobTime(GangaObject):
             retstr = retstr + times[i] + '\n'
         return retstr
 
-    def _timestamps_summary_print(self, value, verbosity_level):
+    def _timestamps_summary_print(self, value, verbosity_level, interactive=False):
         """Used to display timestamps when JobTime object is displayed.
         """
-        return self.display()
+        return self._display(interactive=interactive)
 
     # This didn't work:
     #
     # def __str__(self):
     #    """ string cast """
-    #    return self.display()
+    #    return self._display()
 
     def details(self, subjob=None):
         """Obtains all timestamps available from the job's specific backend.

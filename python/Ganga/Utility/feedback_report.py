@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import Ganga.Utility.logging
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -9,15 +9,11 @@ logger = Ganga.Utility.logging.getLogger()
 def _initconfigFeed():
     """Initialize Feedback configuration."""
     try:
-        from Ganga.Utility import Config
-        # create configuration
-        config = Config.makeConfig(
-            'Feedback', 'Settings for the Feedback plugin. Cannot be changed ruding the interactive Ganga session.')
-        config.addOption(
-            'uploadServer', 'http://gangamon.cern.ch/django/errorreports', 'The server to connect to')
+        from Ganga.Utility.Config import getConfig, ConfigError
+        config = getConfig("Feedback")
 
         def deny_modification(name, x):
-            raise Config.ConfigError(
+            raise ConfigError(
                 'Cannot modify [Feedback] settings (attempted %s=%s)' % (name, x))
         config.attachUserHandler(deny_modification, None)
     except ImportError as err:
@@ -445,8 +441,8 @@ def report(job=None):
             global JOB_REPORT, APPLICATION_NAME, BACKEND_NAME
 
             JOB_REPORT = True
-            APPLICATION_NAME = job.application.__class__.__name__
-            BACKEND_NAME = job.backend.__class__.__name__
+            APPLICATION_NAME = getName(job.application)
+            BACKEND_NAME = getName(job.backend)
 
             # create job folder
             jobFolder = 'job_%s' % str(job.fqid)

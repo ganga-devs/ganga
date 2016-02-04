@@ -14,45 +14,17 @@ from Ganga.Core.InternalServices import Coordinator
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, getRuntimeGPIObject
 
+from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus, lazyLoadJobBackend
+
 # Setup logging ---------------
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger, log_unknown_exception
 
 from Ganga.Core import BackendError
-import Ganga.Utility.Config
+from Ganga.Utility.Config import getConfig
 
-log = Ganga.Utility.logging.getLogger()
+log = getLogger()
 
-config = Ganga.Utility.Config.makeConfig('PollThread', 'background job status monitoring and output retrieval')
-
-# some defaults
-config.addOption('repeat_messages', False, 'if 0 then log only once the errors for a given backend and do not repeat them anymore')
-config.addOption('autostart', True, 'enable monitoring automatically at startup, in script mode monitoring is disabled by default, in interactive mode it is enabled', type=type(True))  # enable monitoring on startup
-config.addOption('autostart_monThreads', True, 'enable populating of the monitoring worker threads')
-config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
-config.addOption('MaxNumResubmits', 5, 'Maximum number of automatic job resubmits to do before giving')
-config.addOption('MaxFracForResubmit', 0.25, 'Maximum fraction of failed jobs before stopping automatic resubmission')
-config.addOption('update_thread_pool_size', 5, 'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
-config.addOption('default_backend_poll_rate', 30, 'Default rate for polling job status in the thread pool. This is the default value for all backends.')
-config.addOption('Local', 10, 'Poll rate for Local backend.')
-config.addOption('LCG', 30, 'Poll rate for LCG backend.')
-config.addOption('Condor', 30, 'Poll rate for Condor backend.')
-config.addOption('gLite', 30, 'Poll rate for gLite backend.')
-config.addOption('LSF', 20, 'Poll rate for LSF backend.')
-config.addOption('PBS', 20, 'Poll rate for PBS backend.')
-config.addOption('Dirac', 50, 'Poll rate for Dirac backend.')
-config.addOption('Panda', 50, 'Poll rate for Panda backend.')
-
-# Note: the rate of this callback is actually
-# MAX(base_poll_rate,callbacks_poll_rate)
-config.addOption('creds_poll_rate', 30, "The frequency in seconds for credentials checker")
-config.addOption('diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
-config.addOption('DiskSpaceChecker', "", "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
-
-
-config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
-
-config.addOption('numParallelJobs', 5, 'Number of Jobs to update the status for in parallel')
-
+config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
 Qin = Queue.Queue()
 ThreadPool = []
@@ -61,14 +33,6 @@ tpFreeThreads = 0
 
 # The JobAction class encapsulates a function, its arguments and its post result action
 # based on what is defined as a successful run of the function.
-
-def getFuncName(func):
-    if hasattr(func, '__name__'):
-        func_name = func.__name__
-    else:
-        func_name = str(func)
-    return func_name
-
 
 class JobAction(object):
 
@@ -488,7 +452,8 @@ class JobRegistry_Monitor(GangaThread):
         Main monitoring loop
         """
         import thread
-        Ganga.Core.MonitoringComponent.monitoring_thread_id = thread.get_ident()
+        from Ganga.Core.MonitoringComponent import monitoring_thread_id
+        monitoring_thread_id = thread.get_ident()
         del thread
 
         log.debug("Starting run method")
@@ -588,7 +553,7 @@ class JobRegistry_Monitor(GangaThread):
         self.__updateTimeStamp = time.time()
         self.__sleepCounter = config['base_poll_rate']
 
-    def runMonitoring(self, jobs=None, steps=1, timeout=60):
+    def runMonitoring(self, jobs=None, steps=1, timeout=60, _loadCredentials=False):
         """
         Enable/Run the monitoring loop and wait for the monitoring steps completion.
         Parameters:
@@ -623,7 +588,10 @@ class JobRegistry_Monitor(GangaThread):
         if not self.enabled:
             # and there are some required cred which are missing
             # (the monitoring loop does not monitor the credentials so we need to check 'by hand' here)
-            _missingCreds = Coordinator.getMissingCredentials()
+            if _loadCredentials is True:
+                _missingCreds = Coordinator.getMissingCredentials()
+            else:
+                _missingCreds = False
             if _missingCreds:
                 log.error("Cannot run the monitoring loop. The following credentials are required: %s" % _missingCreds)
                 return False
@@ -833,7 +801,7 @@ class JobRegistry_Monitor(GangaThread):
         return True
 
     def setCallbackHook(self, func, argDict, enabled, timeout=0):
-        func_name = getFuncName(func)
+        func_name = getName(func)
         log.debug('Setting Callback hook function %s.' % func_name)
         log.debug('arg dict: %s' % str(argDict))
         if func_name in self.callbackHookDict:
@@ -841,7 +809,7 @@ class JobRegistry_Monitor(GangaThread):
         self.callbackHookDict[func_name] = [func, CallbackHookEntry(argDict=argDict, enabled=enabled, timeout=timeout)]
 
     def removeCallbackHook(self, func):
-        func_name = getFuncName(func)
+        func_name = getName(func)
         log.debug('Removing Callback hook function %s.' % func_name)
         if func_name in self.callbackHookDict:
             del self.callbackHookDict[func_name]
@@ -849,7 +817,7 @@ class JobRegistry_Monitor(GangaThread):
             log.error('Callback hook function does not exist.')
 
     def enableCallbackHook(self, func):
-        func_name = getFuncName(func)
+        func_name = getName(func)
         log.debug('Enabling Callback hook function %s.' % func_name)
         if func_name in self.callbackHookDict:
             self.callbackHookDict[func_name][1].enabled = True
@@ -857,7 +825,7 @@ class JobRegistry_Monitor(GangaThread):
             log.error('Callback hook function does not exist.')
 
     def disableCallbackHook(self, func):
-        func_name = getFuncName(func)
+        func_name = getName(func)
         log.debug('Disabling Callback hook function %s.' % func_name)
         if func_name in self.callbackHookDict:
             self.callbackHookDict[func_name][1].enabled = False
@@ -881,7 +849,7 @@ class JobRegistry_Monitor(GangaThread):
         if clientFunc in self.clientCallbackDict:
             del self.clientCallbackDict[clientFunc]
         else:
-            log.error("%s not found in client callback dictionary." % clientFunc.__name__)
+            log.error("%s not found in client callback dictionary." % getName(clientFunc))
 
     def __defaultActiveBackendsFunc(self):
         log.debug("__defaultActiveBackendsFunc")
@@ -895,32 +863,14 @@ class JobRegistry_Monitor(GangaThread):
             try:
                 j = stripProxy(self.registry(i))
 
-                lzy_loading_status_str = 'display:status'
-                if j.getNodeIndexCache() and lzy_loading_status_str in j.getNodeIndexCache():
-                    job_status = j.getNodeIndexCache()[lzy_loading_status_str]
-                else:
-                    job_status = j.status
+                job_status = lazyLoadJobStatus(j)
+                backend_obj = lazyLoadJobBackend(j)
+                backend_name = getName(backend_obj)
 
                 if job_status in ['submitted', 'running'] or (j.master and (job_status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
-                        ## This causes a Loading of the subjobs from disk!!!
-                        #stripProxy(j)._getReadAccess()
-                        if j.getNodeIndexCache():
-                            #log.info("data: %s" % str(j.getNodeData()))
-                            #log.info("node %s" % str(j.getNodeIndexCache()))
-                            #log.info("__dict: %s" % str(j.__class__.__dict__['backend']))
-                            #bn = j.__class__.__dict__['backend'].__name__
-                            #log.info("bn: %s" % str(bn))
-                            lazy_load_backend_str = 'display:backend'
-                            if lazy_load_backend_str in j.getNodeIndexCache():
-                                bn = j.getNodeIndexCache()[lazy_load_backend_str]
-                            else:
-                                bn = getName(j.backend)
-                        else:
-                            bn = getName(j.backend)
-                        #log.debug("active_backends.setdefault: %s" % str(bn))
-                        active_backends.setdefault(bn, [])
-                        active_backends[bn].append(j)
+                        active_backends.setdefault(backend_name, [])
+                        active_backends[backend_name].append(j)
             except RegistryKeyError as err:
                 log.debug("RegistryKeyError: The job was most likely removed")
                 log.debug("RegError %s" % str(err))
@@ -932,8 +882,8 @@ class JobRegistry_Monitor(GangaThread):
         for backend, these_jobs in active_backends.iteritems():
             summary += '"' + str(backend) + '" : ['
             for this_job in these_jobs:
-                stripProxy(this_job)._getWriteAccess()
-                summary += str(stripProxy(this_job).getFQID('.')) + ', '
+                #stripProxy(this_job)._getWriteAccess()
+                summary += str(stripProxy(this_job).id) + ', '#getFQID('.')) + ', '
             summary += '], '
         summary += '}'
         log.debug("Returning active_backends: %s" % summary)
@@ -975,31 +925,12 @@ class JobRegistry_Monitor(GangaThread):
 
                     run_setup = False
 
-            	    if hasattr(stripProxy(j), 'getNodeIndexCache') and\
-                        stripProxy(j).getNodeIndexCache() is not None and\
-                        'display:backend' in stripProxy(j).getNodeIndexCache().keys():
-
-                        name = stripProxy(j).getNodeIndexCache()['display:backend']
-
-                        if name is not None:
-                            if name in tested_backends:
-                                continue
-                            else:
-                                tested_backends.append(name)
-                            new_backend = getRuntimeGPIObject(name)
-                            if new_backend is not None and hasattr(new_backend, 'setup'):
-                                run_setup = True
-                            else:
-                                run_setup = False
-                        else:
-                           run_setup = False
+                    if backendObj is not None:
+                        if hasattr(backendObj, 'setup'):
+                            stripProxy(j.backend).setup()
                     else:
-                        run_setup = True
-
-                    if run_setup is True:
-                        if hasattr(j, 'backend'):
-                            if hasattr(j.backend, 'setup'):
-                                j.backend.setup()
+                        if hasattr(j.backend, 'setup'):
+                            stripProxy(j.backend).setup()
 
                 if self.enabled is False and self.alive is False:
                     log.debug("NOT enabled, leaving")
@@ -1049,7 +980,10 @@ class JobRegistry_Monitor(GangaThread):
             except BackendError as x:
                 self._handleError(x, x.backend_name, 0)
             except Exception as err:
-                self._handleError(err, getName(backendObj), 1)
+                #self._handleError(err, getName(backendObj), 1)
+                log.error("Monitoring Error: %s" % str(err))
+                log.debug("Lets not crash here!")
+                return
 
             # FIXME THIS METHOD DOES NOT EXIST
             #log.debug("[Update Thread %s] Flushing registry %s." % (currentThread, [x.id for x in jobList_fromset]))
@@ -1188,11 +1122,11 @@ class JobRegistry_Monitor(GangaThread):
             log.error('Problem in the monitoring loop: %s', str(x))
             #if show_traceback:
             #    log.error("exception: ", exc_info=1)
-            #    #Ganga.Utility.logging.log_unknown_exception()
+            #    #log_unknown_exception()
             #    import traceback
             #    traceback.print_stack()
             if show_traceback:
-                Ganga.Utility.logging.log_user_exception(log)
+                log_user_exception(log)
         bn = backend_name
         self.errors.setdefault(bn, 0)
         if self.errors[bn] == 0:

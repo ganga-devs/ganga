@@ -1,4 +1,4 @@
-from Ganga.Utility.Config import makeConfig
+from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.GridShell import getShell
@@ -13,40 +13,7 @@ logger.critical('LCG Grid Simulator ENABLED')
 # GRID SIMULATOR
 ##########################################################################
 
-config = makeConfig('GridSimulator', 'Grid Simulator configuration parameters')
-
-config.addOption('submit_time', 'random.uniform(1,10)',
-                 'python expression which returns the time it takes (in seconds) to complete the Grid.submit() command (also for subjob in bulk emulation)')
-config.addOption(
-    'submit_failure_rate', 0.0, 'probability that the Grid.submit() method fails')
-
-config.addOption('cancel_time', 'random.uniform(1,5)',
-                 'python expression which returns the time it takes (in seconds) to complete the Grid.cancel() command (also for subjob in bulk emulation)')
-config.addOption(
-    'cancel_failure_rate', 0.0, 'probability that the Grid.cancel() method fails')
-
-config.addOption('status_time', 'random.uniform(1,5)',
-                 'python expression which returns the time it takes (in seconds) to complete the status command (also for subjob in bulk emulation)')
-
-config.addOption('get_output_time', 'random.uniform(1,5)',
-                 'python expression which returns the time it takes (in seconds) to complete the get_output command (also for subjob in bulk emulation)')
-
-#config.addOption('bulk_submit_time','random.uniform(1,2)','python expression which returns the time it takes (in seconds) to complete the submission of a single job within the Grid.native_master_submit() command')
-#config.addOption('bulk_submit_failure_rate',0.0,'probabilty that the Grid.native_master_submit() fails')
-
-#config.addOption('bulk_cancel_time','random.uniform(1,2)','python expression which returns the time it takes (in seconds) to complete the cancellation of a single job within the Grid.native_master_cancel() command')
-#config.addOption('bulk_cancel_failure_rate',0.0,'probabilty that the Grid.native_master_cancel() fails')
-
-config.addOption('job_id_resolved_time', 'random.uniform(1,2)',
-                 'python expression which returns the time it takes (in seconds) to complete the resolution of all the id of a subjob (when submitted in bulk) this is the time the NODE_ID becomes available from the monitoring)')
-
-#config.addOption('job_scheduled_time','random.uniform(10,20)', 'python expression which returns the time the job stays in the scheduled state')
-#config.addOption('job_running_time','random.uniform(10,20)', 'python expression which returns the time the job stays in the running state')
-config.addOption('job_finish_time', 'random.uniform(10,20)',
-                 'python expression which returns the time when the job enters the Done success or Failed state')
-config.addOption(
-    'job_failure_rate', 0.0, 'probability of the job to enter the Failed state')
-
+config = getConfig("GridSimulator")
 
 def sleep(val):
     import time

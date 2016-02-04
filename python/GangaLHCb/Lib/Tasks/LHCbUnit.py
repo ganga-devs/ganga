@@ -22,12 +22,12 @@ class LHCbUnit(IUnit):
         """Create any jobs required for this unit"""
         import copy
         j = GPI.Job()
-        stripProxy(j).backend = self._getParent().backend.clone()
-        stripProxy(j).application = self._getParent().application.clone()
+        j.backend = self._getParent().backend.clone()
+        j.application = self._getParent().application.clone()
         if self.inputdata:
             j.inputdata = self.inputdata.clone()
 
-        stripProxy(j).inputfiles = copy.deepcopy(self._getParent().inputfiles)
+        j.inputfiles = copy.deepcopy(self._getParent().inputfiles)
 
         trf = self._getParent()
         task = trf._getParent()
@@ -42,7 +42,7 @@ class LHCbUnit(IUnit):
             j.splitter = trf.splitter.clone()
 
             # change the first event for GaussSplitter
-            from Ganga.GPI import GaussSplitter
+            from GangaLHCb.Lib.Splitters.GaussSplitter import GaussSplitter
             if isType(trf.splitter, GaussSplitter):
                 events_per_unit = j.splitter.eventsPerJob * \
                     j.splitter.numberOfJobs

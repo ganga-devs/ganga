@@ -1,5 +1,6 @@
 from Ganga import GPI
-from Ganga.GPIDev.Lib.Tasks.common import status_colours, overview_colours, markup, fgcol, col
+from Ganga.Utility.ColourText import ANSIMarkup
+from Ganga.Utility.ColourText import status_colours, overview_colours, fgcol, col
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.GPIDev.Lib.Tasks.Transform import Transform
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
@@ -14,6 +15,7 @@ import Ganga.Utility.Config
 from copy import deepcopy
 import os
 from Ganga.Utility.logging import getLogger
+markup = ANSIMarkup()
 logger = getLogger(modulename=True)
 config = Ganga.Utility.Config.getConfig('Configuration')
 

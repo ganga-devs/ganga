@@ -200,17 +200,16 @@ def lookUpLFNReplicas(inputs, allLFNData):
     return allLFNs, LFNdict
 
 
-def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
-    from Ganga.GPIDev.Base.Proxy import stripProxy
+def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData, inputs):
+    from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+    from Ganga.GPIDev.Base.Objects import GangaObject
 
     myRegistry = {}
-    try:
-        for this_LFN in LFN_dict:
-            myRegistry[this_LFN] = stripProxy(this_LFN)._getRegistry()
-            myRegistry[this_LFN].turnOffAutoFlushing()
-    except Exception as err:
-        logger.debug("Exception: %s" % str(err))
-        pass
+    for this_LFN in inputs:
+        if isType(this_LFN, GangaObject):
+            myRegistry[this_LFN.lfn] = stripProxy(this_LFN)._getRegistry()
+            if myRegistry[this_LFN.lfn] is not None:
+                myRegistry[this_LFN.lfn].turnOffAutoFlushing()
 
     try:
         return _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData)
@@ -219,7 +218,8 @@ def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
         raise err
     finally:
         for this_LFN in myRegistry.keys():
-            myRegistry[this_LFN].turnOnAutoFlushing()
+            if myRegistry[this_LFN] is not None:
+                myRegistry[this_LFN].turnOnAutoFlushing()
 
 def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
 
@@ -279,12 +279,12 @@ def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
         logger.debug("Updating LFN Physical Locations: [%s:%s] of %s" % (str(i * LFN_parallel_limit), str(upper_limit), str(len(allLFNs))))
 
         for this_lfn in values.keys():
-            logger.debug("LFN: %s" % str(this_lfn))
+            #logger.debug("LFN: %s" % str(this_lfn))
             this_dict = {}
             this_dict[this_lfn] = values.get(this_lfn)
 
             if this_lfn in LFNdict:
-                logger.debug("Updating RemoteURLs")
+                #logger.debug("Updating RemoteURLs")
                 LFNdict[this_lfn]._updateRemoteURLs(this_dict)
                 #logger.debug("This_dict: %s" % str(this_dict))
             else:
@@ -316,7 +316,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
     else:
         inputs = _inputs
 
-    from Ganga.GPI import DiracFile
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
     from Ganga.GPIDev.Adapters.ISplitter import SplittingError
     # First FIND ALL LFN REPLICAS AND SE<->SITE MAPPINGS AND STORE THIS IN MEMORY
     # THIS IS DONE IN PARALLEL TO AVOID OVERLOADING DIRAC WITH THOUSANDS OF
@@ -352,7 +352,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
     bad_lfns = []
 
     # Sort this information and store is in the relevant Ganga objects
-    errors = sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData)
+    errors = sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData, inputs)
 
     if len(bad_lfns) != 0:
         if ignoremissing is False:
@@ -420,7 +420,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
                 if req_sitez.issubset(site_dict[this_LFN]):
                     if len(_this_subset) >= filesPerJob:
                         break
-                    _this_subset.append(DiracFile(lfn=str(this_LFN)))
+                    _this_subset.append(this_LFN)
 
             limit = int(math.floor(float(filesPerJob) * good_fraction))
 
@@ -429,20 +429,20 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
             # If subset is too small throw it away
             if len(_this_subset) < limit:
                 #logger.debug("%s < %s" % (str(len(_this_subset)), str(limit)))
-                allChosenSets[iterating_LFN] = generate_site_selection(
-                    site_dict[iterating_LFN], wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping)
+                allChosenSets[iterating_LFN] = generate_site_selection(site_dict[iterating_LFN], wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping)
                 continue
             else:
                 logger.debug("found common LFN for: " + str(allChosenSets[iterating_LFN]))
                 logger.debug("%s > %s" % (str(len(_this_subset)), str(limit)))
                 # else Dataset was large enough to be considered useful
                 logger.debug("Generating Dataset of size: %s" % str(len(_this_subset)))
-                allSubSets.append(_this_subset)
+                ## Construct DiracFile here as we want to keep the above combination
+                allSubSets.append([DiracFile(lfn=str(this_LFN)) for this_LFN in _this_subset])
 
                 for lfn in _this_subset:
-                    site_dict.pop(lfn.lfn)
-                    allChosenSets.pop(lfn.lfn)
-                    chosen_lfns.append(lfn.lfn)
+                    site_dict.pop(lfn)
+                    allChosenSets.pop(lfn)
+                    chosen_lfns.append(lfn)
 
         # Lets keep track of how many times we've tried this
         iterations = iterations + 1

@@ -5,14 +5,14 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.util import unique
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Base.Proxy import isType, getName
+from Ganga.GPIDev.Base.Proxy import isType, getName, stripProxy
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def mangle_job_name(app):
-    job = app.getJobObject()
+    job = stripProxy(app).getJobObject()
 
     jobName = job.name
     jobIndex = job.getStringFQID()
@@ -78,7 +78,7 @@ j.setOutputData(###OUTPUTDATA###, outputPath='###OUTPUT_PATH###', outputSE=###OU
 
 
 def dirac_inputdata(app):
-    job = app.getJobObject()
+    job = stripProxy(app).getJobObject()
     input_data = None
     parametricinput_data = None
 
@@ -185,7 +185,7 @@ def diracAPI_script_template():
 
 
 def diracAPI_script_settings(app):
-    job = app.getJobObject()
+    job = stripProxy(app).getJobObject()
     diracAPI_line = ''
     if type(job.backend.settings) is not dict:
         raise ApplicationConfigurationError(

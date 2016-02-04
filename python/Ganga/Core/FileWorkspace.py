@@ -11,7 +11,7 @@ input  and  output sandboxes.  This  allows  to  handle files  in  the
 FileWorkspace in a location-independent way.
 """
 
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger
 
 import os
 import time
@@ -19,7 +19,7 @@ import time
 from Ganga.Utility.files import expandfilename, chmod_executable
 from Ganga.GPIDev.Base.Proxy import isType
 
-logger = Ganga.Utility.logging.getLogger(modulename=1)
+logger = getLogger(modulename=1)
 
 class FileWorkspace(object):
 
@@ -37,22 +37,14 @@ class FileWorkspace(object):
     The general directory layout :
      getPath() resolves to 'top/jobid/subpath/*'
 
-    Old 'splittree' option has been disabled and always defaults to 0.
-    It should not be modified because it will not work with sbjobs in the future.
-
     If  jobid  is  None  then  FileWorkspace  represents  the  topmost
     directory (with a given subpath  which may be an empty string ''),
     i.e.: getPath() resolves to 'top/subpath/*' or 'top/*' """
 
-    def __init__(self, top, subpath='', splittree=0):
+    def __init__(self, top, subpath=''):
         self.jobid = None
         self.top = top
         self.subpath = subpath
-        self.splittree = 0
-
-        # LEGACY:
-        if splittree:
-            logger.warning('FileWorkspace splittree option is obsolete and has no-effect')
 
     def create(self, jobid=None):
         """ create a workspace, an optional jobid parameter specifies the job directory
@@ -85,14 +77,9 @@ class FileWorkspace(object):
             jobdir = str(self.jobid)
         else:
             jobdir = ''
-            # do not use subpath if no tree splitting applies
-            if not self.splittree:
-                subpath = ''
+            subpath = ''
 
-        if self.splittree:
-            return expandfilename(os.path.join(self.top, subpath, jobdir, filename), True)
-        else:
-            return expandfilename(os.path.join(self.top, jobdir, subpath, filename), True)
+        return expandfilename(os.path.join(self.top, jobdir, subpath, filename), True)
 
     # write a file (represent as file object) to the workspace
     # file object may be:
@@ -108,17 +95,7 @@ class FileWorkspace(object):
         from Ganga.GPIDev.Lib.File import FileBuffer
 
         if not isType(fileobj, FileBuffer):
-
-            try:
-                name, contents = fileobj
-            except TypeError as err:
-                import traceback
-                traceback.print_stack()
-                logger.debug("TypeError: %s" % str(err))
-                pass
-            else:
-                fileobj = FileBuffer(name, contents)
-                logger.warning('file "%s": usage of tuples is deprecated, use FileBuffer instead', name)
+            raise TypeError('Usage of tuples is not allowed, use FileBuffer instead')
 
         # output file name
         # Added a subdir to files, (see Ganga/GPIDev/Lib/File/File.py) This allows
@@ -210,7 +187,7 @@ class InputWorkspace(FileWorkspace):
 
     def __init__(self):
         workspace_top = gettop()
-        super(InputWorkspace, self).__init__(workspace_top, subpath='input', splittree=False)
+        super(InputWorkspace, self).__init__(workspace_top, subpath='input')
 
 
 class OutputWorkspace(FileWorkspace):
@@ -220,7 +197,7 @@ class OutputWorkspace(FileWorkspace):
 
     def __init__(self):
         workspace_top = gettop()
-        super(OutputWorkspace, self).__init__(workspace_top, subpath='output', splittree=False)
+        super(OutputWorkspace, self).__init__(workspace_top, subpath='output')
 
 
 class DebugWorkspace(FileWorkspace):
@@ -230,7 +207,7 @@ class DebugWorkspace(FileWorkspace):
 
     def __init__(self):
         workspace_top = gettop()
-        super(DebugWorkspace, self).__init__(workspace_top, subpath='debug', splittree=False)
+        super(DebugWorkspace, self).__init__(workspace_top, subpath='debug')
 
 
 #

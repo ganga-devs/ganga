@@ -1,8 +1,0 @@
-dv1 = TestApplication()
-dv1.optsfile = File('x')
-
-dv2 = TestApplication()
-dv2.optsfile = "x"
-
-assert(dv1.optsfile.name == dv2.optsfile.name)
-assert(dv1==dv2)

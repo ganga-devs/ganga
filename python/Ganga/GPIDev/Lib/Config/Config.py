@@ -1,9 +1,10 @@
+import textwrap
 
 import Ganga.Utility.logging
 
 from Ganga.Utility.Config import ConfigError
 
-from Ganga.GPIDev.Base.Proxy import stripProxy, proxyRef
+from Ganga.GPIDev.Base.Proxy import stripProxy, implRef, getName
 
 from Ganga.Utility.Config import getConfig
 
@@ -20,20 +21,10 @@ class ConfigDescriptor(object):
 
     def __get__(self, obj, cls):
         assert(obj)
-        return stripProxy(obj).getEffectiveOption(self._name)
+        return stripProxy(obj).getEffectiveOption(getName(self))
 
     def __set__(self, obj, val):
         stripProxy(obj).setUserValue(self._name, val)
-
-display_config = getConfig('Display')
-
-display_config.addOption('config_name_colour', 'fx.bold',
-                         'colour print of the names of configuration sections and options')
-display_config.addOption(
-    'config_docstring_colour', 'fg.green', 'colour print of the docstrings and examples')
-display_config.addOption(
-    'config_value_colour', 'fx.bold', 'colour print of the configuration values')
-
 
 class ConfigProxy(object):
 
@@ -44,7 +35,7 @@ class ConfigProxy(object):
     """
 
     def __init__(self, impl):
-        self.__dict__[proxyRef] = impl
+        self.__dict__[implRef] = impl
 
     def __getitem__(self, o):
         try:
@@ -74,7 +65,6 @@ class ConfigProxy(object):
 
     def _display(self, colour):
         from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, getColour, Foreground, Effects
-        import Ganga.Utility.external.textwrap as textwrap
 
         if colour:
             markup = ANSIMarkup()
@@ -146,7 +136,7 @@ class MainConfigProxy(object):
 
     def __init__(self):
         import Ganga.Utility.Config
-        self.__dict__[proxyRef] = Ganga.Utility.Config.allConfigs
+        self.__dict__[implRef] = Ganga.Utility.Config.allConfigs
 
     def __getitem__(self, p):
         try:
@@ -235,8 +225,6 @@ def print_config_file():
 
 
 def config_file_as_text():
-
-    import Ganga.Utility.external.textwrap as textwrap
 
     text = ''
 

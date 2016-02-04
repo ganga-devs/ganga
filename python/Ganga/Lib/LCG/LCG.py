@@ -22,14 +22,14 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Utility.Config import makeConfig, getConfig
+from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.Utility.util import isStringLike
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader
 from Ganga.Lib.LCG.Utility import get_uuid, get_md5sum
 from Ganga.Utility.logic import implies
-from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import isType, getName
 
 try:
     simulator_enabled = os.environ['GANGA_GRID_SIMULATOR']
@@ -1428,7 +1428,7 @@ sys.exit(0)
             jobconfig.outputbox + getOutputSandboxPatterns(job)))
 
         script = script.replace(
-            '###APPLICATION_NAME###', job.application._name)
+            '###APPLICATION_NAME###', getName(job.application))
         script = script.replace(
             '###APPLICATIONEXEC###', repr(jobconfig.getExeString()))
         script = script.replace(
@@ -2322,97 +2322,12 @@ logger.debug('LCG module initialization: begin')
 
 import Ganga.Utility.Config
 
-config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
-#gproxy_config = getConfig('GridProxy_Properties')
 
-# set default values for the configuration parameters
-config.addOption(
-    'EDG_ENABLE', False, 'enables/disables the support of the EDG middleware')
-
-config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                 'sets the LCG-UI environment setup script for the EDG middleware',
-                 filter=Ganga.Utility.Config.expandvars)
-
-config.addOption(
-    'GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
-
-config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                 'sets the LCG-UI environment setup script for the GLITE middleware',
-                 filter=Ganga.Utility.Config.expandvars)
-
-config.addOption('VirtualOrganisation', 'dteam',
-                 'sets the name of the grid virtual organisation')
-
-config.addOption('ConfigVO', '', 'sets the VO-specific LCG-UI configuration script for the EDG resource broker',
-                 filter=Ganga.Utility.Config.expandvars)
-
-config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
-                 filter=Ganga.Utility.Config.expandvars)
-
-config.addOption(
-    'AllowedCEs', '', 'sets allowed computing elements by a regular expression')
-config.addOption(
-    'ExcludedCEs', '', 'sets excluded computing elements by a regular expression')
-
-config.addOption(
-    'GLITE_WMS_WMPROXY_ENDPOINT', '', 'sets the WMProxy service to be contacted')
-config.addOption('GLITE_ALLOWED_WMS_LIST', [], '')
-
-config.addOption('MyProxyServer', 'myproxy.cern.ch', 'sets the myproxy server')
-config.addOption('RetryCount', 3, 'sets maximum number of job retry')
-config.addOption(
-    'ShallowRetryCount', 10, 'sets maximum number of job shallow retry')
-
-config.addOption(
-    'Rank', '', 'sets the ranking rule for picking up computing element')
-config.addOption('ReplicaCatalog', '', 'sets the replica catalogue server')
-config.addOption('StorageIndex', '', 'sets the storage index')
-
-config.addOption(
-    'DefaultSE', 'srm.cern.ch', 'sets the default storage element')
-config.addOption('DefaultSRMToken', '',
-                 'sets the space token for storing temporary files (e.g. oversized input sandbox)')
-config.addOption(
-    'DefaultLFC', 'prod-lfc-shared-central.cern.ch', 'sets the file catalogue server')
-config.addOption('BoundSandboxLimit', 10 * 1024 * 1024,
-                 'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to the storage element specified by \'DefaultSE\' in the area specified by \'DefaultSRMToken\'')
-
-config.addOption('Requirements', 'Ganga.Lib.LCG.LCGRequirements',
-                 'sets the full qualified class name for other specific LCG job requirements')
-
-config.addOption('SandboxCache', 'Ganga.Lib.LCG.LCGSandboxCache',
-                 'sets the full qualified class name for handling the oversized input sandbox')
-
-config.addOption('GliteBulkJobSize', 50,
-                 'sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job')
-
-config.addOption('SubmissionThread', 10,
-                 'sets the number of concurrent threads for job submission to gLite WMS')
-
-config.addOption(
-    'SubmissionTimeout', 300, 'sets the gLite job submission timeout in seconds')
-
-config.addOption('StatusPollingTimeout', 300,
-                 'sets the gLite job status polling timeout in seconds')
-
-config.addOption('OutputDownloaderThread', 10,
-                 'sets the number of concurrent threads for downloading job\'s output sandbox from gLite WMS')
-
-config.addOption('SandboxTransferTimeout', 60,
-                 'sets the transfer timeout of the oversized input sandbox')
-
-config.addOption(
-    'JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
-
-config.addOption('MatchBeforeSubmit', False,
-                 'sets to True will do resource matching before submitting jobs, jobs without any matched resources will fail the submission')
-
-config.addOption('IgnoreGliteScriptHeader', False,
-                 'sets to True will load script-based glite-wms-* commands forcely with current python, a trick for 32/64 bit compatibility issues.')
 
 #config.addOption('JobExpiryTime', 30 * 60, 'sets the job\'s expiry time')
 
 # apply preconfig and postconfig handlers
+config = getConfig('LCG')
 config.attachUserHandler(__preConfigHandler__, __postConfigHandler__)
 
 # startup two independent middleware environments for LCG

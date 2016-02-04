@@ -1,3 +1,7 @@
+"""
+This is a unit test, not an integration test.
+"""
+
 from Ganga.GPIDev.Base.Proxy import addProxy,getProxyAttr,isProxy,isType
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList

@@ -2,7 +2,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
-from .common import logger, markup, overview_colours, status_colours
+from .common import logger
+from Ganga.Utility.ColourText import status_colours, overview_colours, ANSIMarkup
+markup = ANSIMarkup()
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.Utility.Config import getConfig
@@ -33,8 +35,8 @@ class ITransform(GangaObject):
         'units': ComponentItem('units', defvalue=[], sequence=1, copyable=1, doc='list of units'),
         'inputdata': ComponentItem('datasets', defvalue=[], sequence=1, protected=1, optional=1, load_default=False, doc='Input datasets to run over'),
         'outputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Output dataset template'),
-        'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
-        'outputfiles' : GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of \
+        'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
+        'outputfiles' : GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of \
 OutputFile objects to be copied to all jobs"),
         'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1),
         'rebroker_on_job_fail': SimpleItem(defvalue=True, doc='Rebroker if too many minor resubs'),
@@ -430,7 +432,7 @@ OutputFile objects to be copied to all jobs"),
 
         from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
         if isType(self.unit_copy_output, TaskLocalCopy):
-            logger.warning("Default implementation of createUnitCopyOutputDS can't handle datasets of type '%s'" % self.unit_copy_output._name)
+            logger.warning("Default implementation of createUnitCopyOutputDS can't handle datasets of type '%s'" % getName(self.unit_copy_output))
             return
 
         # create copies of the Copy Output DS and add Unit name to path

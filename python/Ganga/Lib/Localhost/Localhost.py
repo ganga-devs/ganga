@@ -20,12 +20,10 @@ import Ganga.Utility.logging
 
 import Ganga.Utility.Config
 
+from Ganga.GPIDev.Base.Proxy import getName, stripProxy
+
 logger = Ganga.Utility.logging.getLogger()
-
-config = Ganga.Utility.Config.makeConfig('Local', 'parameters of the local backend (jobs in the background on localhost)')
-config.addOption('remove_workdir', True, 'remove automatically the local working directory when the job completed')
-config.addOption('location', None, 'The location where the workdir will be created. If None it defaults to the value of $TMPDIR')
-
+config = Ganga.Utility.Config.getConfig('Local')
 
 class Localhost(IBackend):
 
@@ -46,9 +44,6 @@ class Localhost(IBackend):
 
     def __init__(self):
         super(Localhost, self).__init__()
-
-    def __construct__(self, args):
-        super(Localhost, self).__construct__(args)
 
     def submit(self, jobconfig, master_input_sandbox):
         prepared = self.preparejob(jobconfig, master_input_sandbox)
@@ -211,7 +206,7 @@ class Localhost(IBackend):
         script = script.replace('###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, ''))
         script = script.replace('###CREATEINPUTDATALIST###', getWNCodeForInputdataListCreation(job, ''))
 
-        script = script.replace('###APPLICATION_NAME###', repr(job.application._name))
+        script = script.replace('###APPLICATION_NAME###', repr(getName(job.application)))
         script = script.replace('###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox))
         script = script.replace('###SHAREDOUTPUTPATH###', repr(sharedoutputpath))
         script = script.replace('###APPSCRIPTPATH###', repr(appscriptpath))
@@ -309,7 +304,7 @@ class Localhost(IBackend):
                 if j.status == 'submitted':
                     pid = get_pid(statusfile)
                     if pid:
-                        j.backend.id = pid
+                        stripProxy(j.backend).id = pid
                         #logger.info('Local job %s status changed to running, pid=%d',j.getFQID('.'),pid)
                         j.updateStatus('running')  # bugfix: 12194
                 exitcode = get_exit_code(statusfile)
@@ -329,7 +324,7 @@ class Localhost(IBackend):
             # check if the exit code of the wrapper script is available (non-blocking check)
             # if the wrapper script exited with non zero this is an error
             try:
-                ws = os.waitpid(j.backend.wrapper_pid, os.WNOHANG)
+                ws = os.waitpid(stripProxy(j.backend).wrapper_pid, os.WNOHANG)
                 if not Ganga.Utility.logic.implies(ws[0] != 0, ws[1] == 0):
                     # FIXME: for some strange reason the logger DOES NOT LOG (checked in python 2.3 and 2.5)
                     # print 'logger problem', logger.name
@@ -340,14 +335,14 @@ class Localhost(IBackend):
             except OSError as x:
                 if x.errno != errno.ECHILD:
                     logger.warning(
-                        'cannot do waitpid for %d: %s', j.backend.wrapper_pid, str(x))
+                        'cannot do waitpid for %d: %s', stripProxy(j.backend).wrapper_pid, str(x))
 
             # if the exit code was collected for the application get the exit
             # code back
 
             if not exitcode is None:
                 # status file indicates that the application finished
-                j.backend.exitcode = exitcode
+                stripProxy(j.backend).exitcode = exitcode
 
                 if exitcode == 0:
                     j.updateStatus('completed')
@@ -359,5 +354,5 @@ class Localhost(IBackend):
                 # if j.outputdata:
                 # j.outputdata.fill()
 
-                j.backend.remove_workdir()
+                stripProxy(j.backend).remove_workdir()
 

@@ -3,7 +3,7 @@ from Ganga.GPIDev.Base.Proxy import isProxy, isType, TypeMismatchError
 from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
 from Ganga.GPIDev.Lib.GangaList.GangaList import decorateListEntries
-from Ganga.GPIDev.Lib.File.IGangaFile import IGangaFile
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 

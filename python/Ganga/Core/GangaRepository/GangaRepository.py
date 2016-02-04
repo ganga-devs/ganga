@@ -12,13 +12,13 @@
 # if a root object has a status field and some load error occurs, it will
 # be set to "incomplete"
 
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Proxy import getName
 
-logger = Ganga.Utility.logging.getLogger()
+logger = getLogger()
 
 # Error raised on schema version error
 
@@ -193,14 +193,14 @@ class GangaRepository(object):
         """Internal helper: adds an empty GangaObject of the given class to the repository.
         Raise RepositoryError
         Raise PluginManagerError if the class name is not found"""
-        if (category, classname) not in self._found_classes:
+        compound_name = str(category+"_"+classname)
+        if compound_name not in self._found_classes:
             cls = allPlugins.find(category, classname)
-            self._found_classes[(category, classname)] = cls
-        cls = self._found_classes[(category, classname)]
-        obj = super(cls, cls).__new__(cls)
-        setattr(obj, '_parent', None)
-        obj.__init__()
-        obj._proxyObject = None
+            self._found_classes[compound_name] = cls
+        cls = self._found_classes[compound_name]
+        obj = cls()
+        #setattr(obj, '_parent', None)
+        #obj.__init__()
         obj.setNodeData({})
         obj.setNodeAttribute('id', this_id)
 

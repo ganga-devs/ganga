@@ -159,31 +159,6 @@ def hostname():
 # ------------------------
 
 
-class Borg(object):
-
-    """
-    *Python Cookbook recipe 6.16*
-    Borg implementation
-    """
-    _shared_state = {}
-
-    def __new__(cls, *args, **kw):
-        obj = object.__new__(cls, *args, **kw)
-        obj.__dict__ = cls._shared_state
-        return obj
-
-    def __eq__(self, other):
-        try:
-            return self.__dict__ is other.__dict__
-        except AttributeError:
-            return False
-
-    def __hash__(self):
-        return 0
-
-# ------------------------
-
-
 def setAttributesFromDict(d, prefix=None):
     """
     *Python Cookbook recipe 6.18*
@@ -266,7 +241,8 @@ def proxy(obj, *specials):
     key = obj_cls, specials
     cls = known_proxy_classes.get(key)
     if cls is None:
-        cls = type("%sProxy" % obj_cls.__name__, (Proxy, ), {})
+        from Ganga.GPIDev.Base.Proxy import getName
+        cls = type("%sProxy" % getName(obj_cls), (Proxy, ), {})
         for name in specials:
             name = '__%s__' % name
             unbounded_method = getattr(obj_cls, name)

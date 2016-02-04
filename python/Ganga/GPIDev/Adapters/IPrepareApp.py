@@ -17,11 +17,10 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 
-from Ganga.Utility.Config import makeConfig, getConfig
+from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
-config = makeConfig('Preparable', 'Parameters for preparable applications')
-config.addOption('unprepare_on_copy', False, 'Unprepare a prepared application when it is copied')
 
+config = getConfig("Preparable")
 
 class IPrepareApp(IApplication):
 
@@ -35,19 +34,8 @@ class IPrepareApp(IApplication):
     _name = 'PrepareApp'
     _hidden = 1
 
-#    def _readonly(self):
-#        """An application is read-only once it has been prepared."""
-#        if self.is_prepared is None:
-#            return 0
-#        else:
-#            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
-#            return 1
-
     def __init__(self):
         super(IPrepareApp, self).__init__()
-
-    def __construct__(self, args):
-        super(IPrepareApp, self).__construct__(args)
 
     def _auto__init__(self, unprepare=None):
         if unprepare is True:

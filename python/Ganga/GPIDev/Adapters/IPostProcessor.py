@@ -35,9 +35,6 @@ class IPostProcessor(GangaObject):
     def __init__(self):
         super(IPostProcessor, self).__init__()
 
-    def __construct__(self, value):
-        super(IPostProcessor, self).__construct__(value)
-
     def execute(self, job, **options):
         """
         To be overidden by inherited class
@@ -64,21 +61,21 @@ class MultiPostProcessor(IPostProcessor):
     def __init__(self):
         super(MultiPostProcessor, self).__init__()
 
-    def __construct__(self, value):
-        if len(value) == 1 or len(value) > 1 and isType(value, (GangaList,list)):
-            if isinstance(value, list) or isType(value, GangaList):
-                for process in value:
+    def __construct__(self, args):
+        if len(args) == 1 or len(args) > 1 and isType(args, (GangaList, list)):
+            if isinstance(args, list) or isType(args, GangaList):
+                for process in args:
                     self.addProcess(process)
-            elif isType(value, MultiPostProcessor):
-                for process in stripProxy(value).process_objects:
+            elif isType(args, MultiPostProcessor):
+                for process in stripProxy(args).process_objects:
                     self.addProcess(process)
             else:
-                self.addProcess(value)
+                self.addProcess(args)
 
             if hasattr(self.process_objects, 'order'):
                 self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
         else:
-            super(MultiPostProcessor, self).__construct__(value)
+            super(MultiPostProcessor, self).__construct__(args)
 
     def __str__(self):
         if not isType(self.process_objects, GangaObject):
@@ -125,7 +122,7 @@ class MultiPostProcessor(IPostProcessor):
     def __len__(self):
         return len(self.process_objects)
 
-    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection=''):
+    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection='', interactive=False):
         """If this method is overridden, the following should be noted:
 
         level: the hierachy level we are currently at in the object tree.
@@ -157,7 +154,7 @@ def postprocessor_filter(value, item):
 #    if item is Job._schema['postprocessors']:
     if item in valid_jobtypes:
         ds = MultiPostProcessor()
-        ds.__construct__(value)
+        ds.__construct__([value])
         return ds
     else:
         raise PostProcessException(

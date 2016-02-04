@@ -3,6 +3,7 @@
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
+from Ganga.GPIDev.Base.Proxy import getName
 import Ganga.Utility.logging
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 logger = Ganga.Utility.logging.getLogger()
@@ -17,7 +18,7 @@ class GangaDataset(Dataset):
     schema = {}
     docstr = 'List of File objects'
     schema['files'] = GangaFileItem(defvalue=[], typelist=[
-                                    'str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will be the inputdata for the job")
+                                    'str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will be the inputdata for the job")
     schema['treat_as_inputfiles'] = SimpleItem(
         defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
     _schema = Schema(Version(3, 0), schema)
@@ -30,16 +31,6 @@ class GangaDataset(Dataset):
             files = []
         super(GangaDataset, self).__init__()
         self.files = files
-
-#    def __construct__(self, args):
-#
-#        if len(args) == 1:
-#            if type(args[0]) == type(self.files):
-#                self.files = args[0]
-#        else:
-#            logger.error( "Don't know how to construct GangaDataset this way!" )
-#
-#        return
 
     def __len__(self):
         """The number of files in the dataset."""
@@ -70,7 +61,7 @@ class GangaDataset(Dataset):
             raise GangaException('Argument "files" must be a iterable.')
         if self._getParent() is not None and self._getParent()._readonly():
             raise ReadOnlyObjectError(
-                'object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._getParent().id, self._name))
+                'object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._getParent().id, getName(self)))
         names = self.getFileNames()
         files = [f for f in files]  # just in case they extend w/ self
         for f in files:
@@ -91,7 +82,7 @@ class GangaDataset(Dataset):
                 filelist += f.getFilenameList()
             else:
                 logger.warning(
-                    "accessURL or getFilenameList not implemented for File '%s'" % f._name)
+                    "accessURL or getFilenameList not implemented for File '%s'" % getName(f))
 
         return filelist
 
