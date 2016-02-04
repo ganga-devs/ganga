@@ -576,10 +576,10 @@ def addProxyClass(some_class):
 def getProxyClass(some_class):
     if not isclass(some_class):
         from Ganga.Core.exceptions import GangaException
-        raise GangaException("Cannot perform getProxyClass on a non-class object: %s" % type(some_class))
+        raise GangaException("Cannot perform getProxyClass on a non-class object: %s:: %s" % (getName(some_class), some_class))
     if not issubclass(some_class, GangaObject):
         from Ganga.Core.exceptions import GangaException
-        raise GangaException("Cannot perform getProxyClass on class which is not a subclass of GangaObject: %s" % type(some_class))
+        raise GangaException("Cannot perform getProxyClass on class which is not a subclass of GangaObject: %s:: %s" % (getName(some_class), some_class))
     proxy_class = getattr(some_class, proxyClass, None)
     if proxy_class is None:
         addProxyClass(some_class)
