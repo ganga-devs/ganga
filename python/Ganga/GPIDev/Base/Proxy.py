@@ -461,11 +461,22 @@ class ProxyDataDescriptor(object):
         if not isinstance(_val, str) and (isType(_val, getKnownLists()) or\
                 (hasattr(stripProxy(_val), '__len__') and hasattr(stripProxy(_val), '__getitem__'))):
             val = stripProxy(_val).__class__()
-            for elem in _val:
-                if isType(elem, GangaObject):
-                    val.append(ProxyDataDescriptor.__recursive_strip(stripProxy(elem)))
-                else:
-                    val.append(stripProxy(elem))
+            if type(val) is dict:
+                for _key, elem in _val.iteritems():
+                    if isType(_key, GangaObject):
+                        key = stripProxy(_key)
+                    else:
+                        key = _key
+                    if isType(elem, GangaObject):
+                        val[key] = ProxyDataDescriptor.__recursive_strip(stripProxy(elem))
+                    else:
+                        val[key] = elem
+            else:
+                for elem in _val:
+                    if isType(elem, GangaObject):
+                        val.append(ProxyDataDescriptor.__recursive_strip(stripProxy(elem)))
+                    else:
+                        val.append(elem)
         else:
             val = stripProxy(_val)
         return val

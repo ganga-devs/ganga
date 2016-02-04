@@ -1124,6 +1124,9 @@ under certain conditions; type license() for details.
         run the testing framework
         """
 
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
+
         try:
             # Important to avoid a lot of arguments over who has locked what object,
             # the tests are quite intensive and often trip on the background

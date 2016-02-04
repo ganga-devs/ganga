@@ -995,7 +995,8 @@ class Registry(object):
                 oid = self.find(obj)
                 if getattr(obj, _reg_id_str) in self.dirty_objs.keys():
                     self.repository.flush([oid])
-                    del self.dirty_objs[getattr(obj, _reg_id_str)]
+                    if getattr(obj, _reg_id_str) in self.dirty_objs:
+                        del self.dirty_objs[getattr(obj, _reg_id_str)]
                 obj._registry_locked = False
                 self.repository.unlock([oid])
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
