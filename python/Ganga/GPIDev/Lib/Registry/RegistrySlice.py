@@ -47,8 +47,7 @@ class RegistrySlice(object):
         """
         """
         if not isinstance(keep_going, bool):
-            raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
-                self.name, keep_going, method))
+            raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (self.name, keep_going, method))
         result = []
         for id, obj in self.objects.iteritems():
             try:
