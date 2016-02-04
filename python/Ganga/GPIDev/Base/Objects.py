@@ -365,11 +365,7 @@ class Descriptor(object):
             return cls._schema[name]
 
         if self._getter_name:
-            returnable = self._bind_method(obj, self._getter_name)()
-            if isinstance(returnable, GangaObject):
-                returnable._setParent(self)
-            return returnable
-
+            return self._bind_method(obj, self._getter_name)()
 
         # First we want to try to get the information without prompting a load from disk
 
