@@ -25,8 +25,8 @@ def start_ganga():
     # End taken from the ganga binary
 
     import Ganga.Runtime
-    import Ganga.Utility.logging
-    logger = Ganga.Utility.logging.getLogger()
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
 
     # Start ganga by passing some options for unittesting
 
@@ -101,8 +101,8 @@ def start_ganga():
 
 def stop_ganga():
 
-    import Ganga.Utility.logging
-    logger = Ganga.Utility.logging.getLogger()
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
 
     logger.info("Deciding how to shutdown")
 
@@ -113,7 +113,9 @@ def stop_ganga():
     else:
         whole_cleanup = True
 
-    if whole_cleanup:
+    logger.info("AutoCleanup: %s" % whole_cleanup)
+
+    if whole_cleanup is True:
         # empty repository so we start again at job 0 when we restart
         logger.info("Clearing the Job and Template repositories")
 
@@ -165,3 +167,5 @@ class GangaUnitTest(unittest.TestCase):
         unittest.TestCase.tearDown(self)
         # Stop ganga and mimick an exit to shutdown all internal processes
         stop_ganga()
+        import sys
+        sys.stdout.flush()
