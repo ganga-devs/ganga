@@ -37,7 +37,7 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache', '_parent', '_registry']
+do_not_copy = ['_index_cache', '_parent', '_registry', '_data']
 
 def _getGangaList():
     global _imported_GangaList
@@ -829,9 +829,10 @@ class GangaObject(Node):
 
         self_copy = cls()
 
+        global do_not_copy
         if self._schema is not None:
             for name, item in self._schema.allItems():
-                if not item['copyable']:
+                if not item['copyable'] or name in do_not_copy:
                     setattr(self_copy, name, self._schema.getDefaultValue(name))
                 else:
                     if hasattr(self, name):
@@ -846,10 +847,12 @@ class GangaObject(Node):
                 if item.isA(Schema.SharedItem):
                     self.__incrementShareRef(self_copy, name)
 
-        global do_not_copy
         for k, v in self.__dict__.iteritems():
             if k not in do_not_copy:
-                setattr(self_copy, k, deepcopy(v))
+                try:
+                    self_copy.__dict__[k] = deepcopy(v)
+                except:
+                    self_copy.__dict__[k] = v
 
         if true_parent is not None:
             self._setParent(true_parent)
