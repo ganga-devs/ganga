@@ -1,8 +1,7 @@
 from __future__ import absolute_import
 from Ganga import GPI
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import addProxy
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy, getName
 from .common import logger
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
@@ -91,13 +90,20 @@ class Task(GangaObject):
         if remove_jobs:
             for j in GPI.jobs:
                 try:
-                    stid = j.application.tasks_id.split(":")
-                    if int(stid[-2]) == self.id:
-                        j.remove()
+                    if hasattr(j.application, 'tasks_id'):
+                        stid = j.application.tasks_id.split(":")
+                        if int(stid[-2]) == self.id:
+                            j.remove()
+                    else:
+                        continue
                 except Exception as err:
                     logger.debug("Task remove_jobs task split Error!")
                     logger.debug("Error:\n%s" % str(err))
                     pass
+                #finally:
+                #    pass
+        logger.info("Reg Name: %s" % getName(self._getRegistry()))
+        logger.info("Reg ID: %s" % self._getRegistry().find(self))
         self._getRegistry()._remove(self)
         logger.info("Task #%s deleted" % self.id)
 

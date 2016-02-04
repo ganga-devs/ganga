@@ -173,6 +173,9 @@ class TaskRegistry(Registry):
         if self._main_thread is not None:
             self._main_thread.stop()
 
+    def _remove(self, obj):
+        super(TaskRegistry, self)._remove(obj, auto_removed=1)
+
 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 
 
@@ -242,8 +245,10 @@ class TaskRegistrySlice(RegistrySlice):
         else:
             return j
 
-    def remove(self, keep_going):
-        self.do_collective_operation(keep_going, 'remove')
+    def remove(self, keep_going, remove_jobs):
+        for _task in self.objects:
+            _task.remove(remove_jobs=remove_jobs)
+        #self.do_collective_operation(keep_going, 'remove')
 
     def run(self, keep_going):
         self.do_collective_operation(keep_going, 'run')
@@ -273,9 +278,9 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
     operation will bail out with an Exception on a first encountered error.
     """
 
-    def remove(self, keep_going=True):
+    def remove(self, keep_going=True, remove_jobs=None):
         """ Remove all tasks."""
-        return stripProxy(self).remove(keep_going=keep_going)
+        return stripProxy(self).remove(keep_going=keep_going, remove_tasks=remove_jobs)
 
     def run(self, keep_going=True):
         """ Run all tasks."""
