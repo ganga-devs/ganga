@@ -150,8 +150,8 @@ class LHCbTransform(ITransform):
 
             if len(self.units) == 0:
                 # check for appropriate splitter
-                from GPI import GaussSplitter
-                if not self.splitter or isType(self.splitter, GaussSplitter):
+                from Ganga.GPI import GaussSplitter
+                if not self.splitter or not isType(self.splitter, GaussSplitter):
                     logger.warning("No GaussSplitter specified - first event info ignored")
 
                 # create units for MC generation
