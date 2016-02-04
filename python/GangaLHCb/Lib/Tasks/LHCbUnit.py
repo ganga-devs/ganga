@@ -1,4 +1,4 @@
-from GangaDirac.Lib.Files.DiracFile.DiracFile import DiracFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
