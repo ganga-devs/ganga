@@ -205,6 +205,10 @@ class Registry(object):
     def hasStarted(self):
         return self._hasStarted
 
+    def _start_check(self, message):
+        if self.hasStarted() is not True:
+            raise RegistryAccessError(message)
+
     def lock_transaction(self, this_id, action):
         while this_id in self._inprogressDict.keys():
             logger.debug("Getting item being operated on: %s" % this_id)
@@ -533,8 +537,7 @@ class Registry(object):
         if force == True it removes them regardless of other sessions.
         Returns True on success, False on failure."""
         logger.debug("clean")
-        if self.hasStarted() is not True:
-            raise RegistryAccessError("Cannot clean a disconnected repository!")
+        self._start_check("Cannot clean a disconnected repository!")
         self._lock.acquire()
         try:
             if not force:
@@ -596,8 +599,7 @@ class Registry(object):
         logger.debug("_add")
         obj = stripProxy(_obj)
 
-        if self.hasStarted() is not True:
-            raise RepositoryError("Cannot add objects to a disconnected repository!")
+        self._start_check("Cannot add objects to a disconnected repository!")
 
         self._lock.acquire()
         this_id = None
@@ -644,11 +646,12 @@ class Registry(object):
             pass
         except Exception as err:
             raise err
-        finally:
-            self._lock.release()
+        #finally:
+        #    self._lock.release()
 
     def __reg_remove(self, obj, auto_removed=0):
 
+        self._start_check("Cannot remove objects from a disconnected repository!")
         logger.debug("_reg_remove")
         u_id = self.find(obj)
 
@@ -656,11 +659,11 @@ class Registry(object):
 
         self.lock_transaction(obj_id, "_remove")
 
-
-        if self.hasStarted() is not True:
-            raise RegistryAccessError("Cannot remove objects from a disconnected repository!")
         if not auto_removed and hasattr(obj, "remove"):
-            obj.remove()
+            try:
+                obj.remove()
+            finally:
+                self.unlock_transaction(obj_id)
         else:
             this_id = self.find(obj)
             try:
@@ -669,6 +672,8 @@ class Registry(object):
                 logger.debug("Registry KeyError: %s" % str(err))
                 logger.warning("double delete: Object #%i is not present in registry '%s'!" % (this_id, self.name))
                 return
+            #finally:
+            #    pass
             logger.debug('deleting the object %d from the registry %s', this_id, self.name)
             try:
                 if getattr(obj, _reg_id_str) in self.dirty_objs.keys():
@@ -740,6 +745,7 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryLockError"""
         logger.debug("_flush")
+        self._start_check("Cannot flush to a disconnected repository!")
         self._lock.acquire()
 
         if _objs is not None and isType(_objs, (list, tuple, GangaList)):
@@ -755,8 +761,6 @@ class Registry(object):
             obj_ids.append(this_id)
             self.lock_transaction(this_id, '_flush')
 
-        if self.hasStarted() is not True:
-            raise RegistryAccessError("Cannot flush to a disconnected repository!")
         for obj in objs:
             self._write_access(obj)
 
@@ -842,11 +846,9 @@ class Registry(object):
     def __safe_read_access(self,  _obj, sub_obj):
         logger.debug("_safe_read_access")
         obj = stripProxy(_obj)
+        self._start_check("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name)
         if self.find(obj) in self._inprogressDict.keys():
             return
-
-        if self.hasStarted() is not True:
-            raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
 
         if hasattr(obj, "_registry_refresh"):
             delattr(obj, "_registry_refresh")
@@ -907,14 +909,14 @@ class Registry(object):
         logger.debug("__write_acess")
         obj = stripProxy(_obj)
 
+        self._start_check("Cannot get write access to a disconnected repository!")
+
         if self.find(obj) in self._inprogressDict.keys():
             this_id = self.find(obj)
             for this_d in self.changed_ids.itervalues():
                 this_d.add(this_id)
             return
 
-        if self.hasStarted() is not True:
-            raise RegistryAccessError("Cannot get write access to a disconnected repository!")
         if not hasattr(obj, '_registry_locked') or not obj._registry_locked:
             try:
                 this_id = self.find(obj)
@@ -978,11 +980,11 @@ class Registry(object):
         logger.debug("_release_lock")
         obj = stripProxy(_obj)
 
+        self._start_check("Cannot manipulate locks of a disconnected repository!")
+
         if self.find(obj) in self._inprogressDict.keys():
             return
 
-        if self.hasStarted() is not True:
-            raise RegistryAccessError("Cannot manipulate locks of a disconnected repository!")
         logger.debug("Reg: %s _release_lock(%s)" % (self.name, str(self.find(obj))))
         self._lock.acquire()
         try:
@@ -1050,7 +1052,6 @@ class Registry(object):
                 logger.debug("Startup of %s.metadata took %s sec" % (str(self.name), str(t3-t2)))
 
             logger.debug("repo startup")
-            #self.hasStarted() = True
             self.repository.startup()
             # All Ids could have changed
             self.changed_ids = {}
