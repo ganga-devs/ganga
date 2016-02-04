@@ -213,7 +213,11 @@ class Registry(object):
         while this_id in self._inprogressDict.keys():
             logger.debug("Getting item being operated on: %s" % this_id)
             logger.debug("Currently in state: %s" % self._inprogressDict[this_id])
-            time.sleep(0.05)
+            #import traceback
+            #traceback.print_stack()
+            #import sys
+            #sys.exit(-1)
+            #time.sleep(0.05)
         self._inprogressDict[this_id] = action
         if this_id not in self.hard_lock.keys():
             self.hard_lock[this_id] = threading.Lock()
@@ -655,7 +659,7 @@ class Registry(object):
         logger.debug("_reg_remove")
         u_id = self.find(obj)
 
-        obj_id = id(self.find(obj))
+        obj_id = id(obj)
 
         self.lock_transaction(obj_id, "_remove")
 
@@ -796,7 +800,8 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryKeyError"""
         logger.debug("_read_access")
-        if id(_obj) in self._accessLockDict.keys():
+        obj_id = id(stripProxy(_obj))
+        if obj_id in self._inprogressDict.keys() or obj_id in self._accessLockDict.keys():
             return
         else:
             self._accessLockDict[id(_obj)] = _obj
@@ -888,7 +893,7 @@ class Registry(object):
         logger.debug("_write_access")
         obj = stripProxy(_obj)
         obj_id = id(_obj)
-        if obj_id in self._accessLockDict.keys():
+        if obj_id in self._inprogressDict.keys() or obj_id in self._accessLockDict.keys():
             return
         else:
             self._accessLockDict[obj_id] = obj
@@ -911,7 +916,7 @@ class Registry(object):
 
         self._start_check("Cannot get write access to a disconnected repository!")
 
-        if self.find(obj) in self._inprogressDict.keys():
+        if id(obj) in self._inprogressDict.keys():
             this_id = self.find(obj)
             for this_d in self.changed_ids.itervalues():
                 this_d.add(this_id)

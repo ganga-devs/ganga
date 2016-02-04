@@ -878,7 +878,9 @@ under certain conditions; type license() for details.
             for n in allPlugins.allClasses(k):
                 cls = allPlugins.find(k, n)
                 if not cls._declared_property('hidden'):
-                    exportToGPI(n, cls._proxyClass, 'Classes')
+                    if n != cls.__name__:
+                        exportToGPI(cls.__name__, cls, 'Classes')
+                    exportToGPI(n, cls, 'Classes')
 
         # set the default value for the plugins
         from Ganga.Utility.Config import getConfig
@@ -909,7 +911,7 @@ under certain conditions; type license() for details.
             raise Ganga.Utility.Config.ConfigError('Check configuration. Unable to set default Batch backend alias (%s)' % str(x))
         else:
             allPlugins.add(batch_default, 'backends', 'Batch')
-            exportToGPI('Batch', batch_default._proxyClass, 'Classes')
+            exportToGPI('Batch', batch_default, 'Classes')
 
         from Ganga.GPIDev.Base import ProtectedAttributeError, ReadOnlyObjectError, GangaAttributeError
         from Ganga.GPIDev.Lib.Job.Job import JobError
@@ -1096,8 +1098,7 @@ under certain conditions; type license() for details.
         import Ganga.GPIDev.Lib.Config
         exportToGPI('config', Ganga.GPIDev.Lib.Config.config,
                     'Objects', 'access to Ganga configuration')
-        exportToGPI(
-            'ConfigError', Ganga.GPIDev.Lib.Config.ConfigError, 'Exceptions')
+        exportToGPI('ConfigError', Ganga.GPIDev.Lib.Config.ConfigError, 'Exceptions')
 
         from Ganga.Utility.feedback_report import report
 

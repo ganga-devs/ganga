@@ -84,10 +84,6 @@ def defaultConfigSectionName(name):
 # possible  however   the  _pluginclass  objects   are  shared  unless
 # overriden explicitly.
 
-def _getName(_object):
-    from Ganga.GPIDev.Base.Proxy import getName
-    return getName(_object)
-
 class Schema(object):
     # Schema constructor is used by Ganga plugin developers.
     # Ganga will automatically set a reference to the plugin class which corresponds to this schema, hence
@@ -115,7 +111,8 @@ class Schema(object):
 
     @property
     def name(self):
-        return _getName(self._pluginclass)
+        from Ganga.GPIDev.Base.Proxy import getName
+        return getName(self._pluginclass)
 
     def allItems(self):
         if self.datadict is None: return zip()
