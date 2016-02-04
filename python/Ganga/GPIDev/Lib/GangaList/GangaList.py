@@ -260,8 +260,8 @@ class GangaList(GangaObject):
     def __contains__(self, obj):
         return self._list.__contains__(self.strip_proxy(obj))
 
-#    def __clone__(self):
-#        return makeGangaListByRef(_list=copy.copy(self._list), preparable=self._is_preparable)
+    def __clone__(self):
+        return makeGangaListByRef(_list=copy.copy(self._list), preparable=self._is_preparable)
 
     def __copy__(self):
         """Bypass any checking when making the copy"""
@@ -291,7 +291,6 @@ class GangaList(GangaObject):
             new_list = GangaList()
             new_list._is_preparable = self._is_preparable
             return new_list
-        #super(GangaList, self).__deepcopy__(memo)
 
     @staticmethod
     def __getListToCompare(input_list):

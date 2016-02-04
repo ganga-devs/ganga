@@ -489,7 +489,4 @@ class _copy(object):
 
 
 JobTree.__str__ = JobTree._display
-JobTree._proxyClass._display = _proxy_display()
-JobTree._proxyClass.__str__ = _proxy_display()
-JobTree._proxyClass.copy = _copy()
 
