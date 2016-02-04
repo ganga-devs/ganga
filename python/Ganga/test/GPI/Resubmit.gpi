@@ -1,6 +1,6 @@
 from GangaTest.Framework.utils import sleep_until_completed
 
-j = Job()
+j = Job(application=Executable(exe='sleep', args=['3']))
 j.submit()
 assert(sleep_until_completed(j,60))
 
