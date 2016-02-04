@@ -891,7 +891,8 @@ def GPIProxyClassFactory(name, pluginclass):
         else:
             c = stripProxy(self).clone()
             stripProxy(c)._auto__init__()
-        return GPIProxyObjectFactory(c)
+
+        return addProxy(c)
 
     helptext(_copy, "Make an identical copy of self.")
 
