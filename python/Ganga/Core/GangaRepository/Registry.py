@@ -292,7 +292,7 @@ class Registry(object):
         #    self._lock.release()
 
     def updateLocksNow(self):
-        loger.debug("updateLocksNow")
+        logger.debug("updateLocksNow")
         #self._lock.acquire()
         try:
             self.repository.updateLocksNow()
@@ -846,7 +846,7 @@ class Registry(object):
     def __safe_read_access(self,  _obj, sub_obj):
         logger.debug("_safe_read_access")
         obj = stripProxy(_obj)
-        self._start_check("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name)
+        self._start_check("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
         if self.find(obj) in self._inprogressDict.keys():
             return
 

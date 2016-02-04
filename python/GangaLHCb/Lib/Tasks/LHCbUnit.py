@@ -46,7 +46,7 @@ class LHCbUnit(IUnit):
             if isType(trf.splitter, GaussSplitter):
                 events_per_unit = j.splitter.eventsPerJob * \
                     j.splitter.numberOfJobs
-                j.splitter.firstEventNumber = self.getID() * events_per_unit
+                j.splitter.firstEventNumber += self.getID() * events_per_unit
 
         else:
             j.splitter = SplitByFiles()
