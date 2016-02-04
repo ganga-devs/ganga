@@ -1,10 +1,10 @@
-from Ganga.GPIDev.Base.Proxy import isType
+from GangaDirac.Lib.Files.DiracFile.DiracFile import DiracFile
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy, isType
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 import Ganga.GPI as GPI
 from Ganga.GPIDev.Lib.Tasks.common import logger
@@ -101,8 +101,11 @@ class LHCbUnit(IUnit):
 
             job = GPI.jobs(self.active_job_ids[0])
             for f in job.inputdata.files:
-                logger.warning(
-                    "Removing chain inputdata file '%s'..." % f.name)
+                if isType(f, DiracFile):
+                    name = f.lfn
+                else:
+                    name = f.namePattern
+                logger.warning("Removing chain inputdata file '%s'..." % name)
                 f.remove()
 
         super(LHCbUnit, self).updateStatus(status)
