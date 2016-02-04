@@ -85,8 +85,8 @@ class MultiPostProcessor(IPostProcessor):
 
     def append(self, value):
         self.addProcess(value)
-        self.process_objects = sorted(
-            self.process_objects, key=lambda process: process.order)
+        if hasattr(self.process_objects, 'order'):
+            self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
 
     def remove(self, value):
         for process in self.process_objects:
