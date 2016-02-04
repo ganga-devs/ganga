@@ -15,7 +15,7 @@
 
 import Ganga.Utility.logging
 
-from copy import deepcopy
+from copy import deepcopy, copy
 import inspect
 
 import Ganga.GPIDev.Schema as Schema
@@ -365,22 +365,24 @@ class Descriptor(object):
             return cls._schema[name]
 
         if self._getter_name:
-            return self._bind_method(obj, self._getter_name)()
+            returnable = self._bind_method(obj, self._getter_name)()
+            if isinstance(returnable, GangaObject):
+                returnable._setParent(self)
+            return returnable
+
 
         # First we want to try to get the information without prompting a load from disk
 
         # ._data takes priority ALWAYS over ._index_cache
         # This access should not cause the object to be loaded
         obj_data = obj.getNodeData()
-        if obj_data is not None:
-            if name in obj_data:
-                return obj_data[name]
+        if name in obj_data:
+            return obj_data[name]
 
         # Then try to get it from the index cache
         obj_index = obj.getNodeIndexCache()
-        if obj_index is not None:
-            if name in obj_index:
-                return obj_index[name]
+        if name in obj_index:
+            return obj_index[name]
 
         # Since we couldn't find the information in the cache, we will need to fully load the object
 
@@ -803,8 +805,8 @@ class GangaObject(Node):
         self._dirty = False
 
     @staticmethod
-    def __incrementShareRef(object, attr_name):
-        shared_dir = getattr(self_copy, name)
+    def __incrementShareRef(obj, attr_name):
+        shared_dir = getattr(obj, attr_name)
 
         if hasattr(shared_dir, 'name'):
 
