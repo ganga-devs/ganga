@@ -251,6 +251,7 @@ class TaskRegistrySlice(RegistrySlice):
         #self.do_collective_operation(keep_going, 'remove')
 
     def run(self, keep_going):
+        logging.debug("Registry run")
         self.do_collective_operation(keep_going, 'run')
 
     def pause(self, keep_going):

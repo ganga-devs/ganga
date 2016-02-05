@@ -8,7 +8,9 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistryS
 from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Base.Proxy import addProxy
+from Ganga.Utility.logging import getLogger
 import time
+logger = getLogger()
 
 ########################################################################
 def addInfoString( task_obj, info_str ):
@@ -189,6 +191,7 @@ class ITask(GangaObject):
 
     def run(self):
         """Confirms that this task is fully configured and ready to be run."""
+        logger.debug("ITask run")
         if self.status == "new":
             self.check()
 

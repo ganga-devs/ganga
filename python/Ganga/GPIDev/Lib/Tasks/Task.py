@@ -132,6 +132,7 @@ class Task(GangaObject):
 
     def run(self):
         """Confirms that this task is fully configured and ready to be run."""
+        logger.debug("Task run")
         if self.status == "new":
             self.check()
 
@@ -178,19 +179,21 @@ class Task(GangaObject):
                 else:
                     logger.warning("Transform %i was not affected!", tf.name)
 
-    def insertTransform(self, id, tf):
+    def insertTransform(self, id, _tf):
         """Insert transfrm tf before index id (counting from 0)"""
         if self.status != "new" and id < len(self.transforms):
             logger.error("You can only insert transforms at the end of the list. Only if a task is new it can be freely modified!")
             return
+        tf = stripProxy(_tf)
         # self.transforms.insert(id,tf.copy()) # this would be safer, but
         # breaks user exspectations
         # this means that t.insertTransform(0,t2.transforms[0]) will cause
         # Great Breakage
         self.transforms.insert(id, tf)
 
-    def appendTransform(self, tf):
+    def appendTransform(self, _tf):
         """Append transform"""
+        tf = stripProxy(_tf)
         return self.insertTransform(len(self.transforms), tf)
 
     def removeTransform(self, id):

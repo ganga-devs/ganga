@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from .common import logger
 from Ganga.Utility.ColourText import status_colours, overview_colours, ANSIMarkup
 markup = ANSIMarkup()
@@ -19,7 +20,7 @@ class ITransform(GangaObject):
         'status': SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=["str"]),
         'name': SimpleItem(defvalue='Simple Transform', doc='Name of the transform (cosmetic)', typelist=["str"]),
         'application': ComponentItem('applications', defvalue=None, optional=1, load_default=False, doc='Application of the Transform.'),
-        'inputsandbox': FileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
+        'inputsandbox': FileItem(defvalue=GangaList(), typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
         'outputsandbox': SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc="list of filenames or patterns shipped from the worker node"),
         'backend': ComponentItem('backends', defvalue=None, optional=1, load_default=False, doc='Backend of the Transform.'),
         'splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter used on each unit of the Transform.'),
@@ -31,11 +32,11 @@ class ITransform(GangaObject):
         'run_limit': SimpleItem(defvalue=8, doc='Number of times a partition is tried to be processed.', protected=1, typelist=["int"]),
         'minor_run_limit': SimpleItem(defvalue=3, doc='Number of times a unit can be resubmitted', protected=1, typelist=["int"]),
         'major_run_limit': SimpleItem(defvalue=3, doc='Number of times a junit can be rebrokered', protected=1, typelist=["int"]),
-        'units': ComponentItem('units', defvalue=[], sequence=1, copyable=1, doc='list of units'),
-        'inputdata': ComponentItem('datasets', defvalue=[], sequence=1, protected=1, optional=1, load_default=False, doc='Input datasets to run over'),
+        'units': ComponentItem('units', defvalue=GangaList(), sequence=1, copyable=1, doc='list of units'),
+        'inputdata': ComponentItem('datasets', defvalue=GangaList(), sequence=1, protected=1, optional=1, load_default=False, doc='Input datasets to run over'),
         'outputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Output dataset template'),
-        'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
-        'outputfiles' : GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of \
+        'inputfiles': GangaFileItem(defvalue=GangaList(), typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
+        'outputfiles' : GangaFileItem(defvalue=GangaList(), typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of \
 OutputFile objects to be copied to all jobs"),
         'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1),
         'rebroker_on_job_fail': SimpleItem(defvalue=True, doc='Rebroker if too many minor resubs'),
@@ -187,6 +188,7 @@ OutputFile objects to be copied to all jobs"),
 
     def run(self, check=True):
         """Sets this transform to running status"""
+        logger.debug("ITransform: run")
         if self.status == "new" and check:
             self.check()
         if self.status != "completed":
@@ -439,16 +441,24 @@ OutputFile objects to be copied to all jobs"),
         self.units[unit_id].copy_output.local_location = os.path.join(
             self.unit_copy_output.local_location, self.units[unit_id].name.replace(":", "_").replace(" ", "").replace(",", "_"))
 
+    @staticmethod
+    def _isList(obj):
+        return isType(obj, (list, GangaList))
+
+    @staticmethod
+    def not_empty_list(obj):
+        return ITransform._isList(obj) and len(obj) != 0
+
     def __setattr__(self, attr, value):
 
         if attr == 'outputfiles':
 
-            if value != []:
+            if self.not_empty_list(value):
                 if self.outputdata is not None:
                     logger.error(
                         'ITransform.outputdata is set, you can\'t set ITransform.outputfiles')
                     return
-                elif self.outputsandbox != []:
+                elif self.not_empty_list(self.outputsandbox):
                     logger.error(
                         'ITransform.outputsandbox is set, you can\'t set ITransform.outputfiles')
                     return
@@ -470,8 +480,8 @@ OutputFile objects to be copied to all jobs"),
 
         elif attr == 'inputfiles':
 
-            if value != []:
-                if self.inputsandbox != []:
+            if self.not_empty_list(value):
+                if self.not_empty_list(self.inputsandbox):
                     logger.error(
                         'ITransform.inputsandbox is set, you can\'t set ITransform.inputfiles')
                     return
@@ -480,14 +490,14 @@ OutputFile objects to be copied to all jobs"),
 
         elif attr == 'outputsandbox':
 
-            if value != []:
+            if self.not_empty_list(value):
 
                 if getConfig('Output')['ForbidLegacyOutput']:
                     logger.error(
                         'Use of ITransform.outputsandbox is forbidden, please use ITransform.outputfiles')
                     return
 
-                if self.outputfiles != []:
+                if self.not_empty_list(self.outputfiles):
                     logger.error(
                         'ITransform.outputfiles is set, you can\'t set ITransform.outputsandbox')
                     return
@@ -496,14 +506,14 @@ OutputFile objects to be copied to all jobs"),
 
         elif attr == 'inputsandbox':
 
-            if value != []:
+            if self.not_empty_list(value):
 
                 if getConfig('Output')['ForbidLegacyInput']:
                     logger.error(
                         'Use of ITransform.inputsandbox is forbidden, please use ITransform.inputfiles')
                     return
 
-                if self.inputfiles != []:
+                if self.not_empty_list(self.inputfiles):
                     logger.error(
                         'ITransform.inputfiles is set, you can\'t set ITransform.inputsandbox')
                     return
@@ -519,7 +529,7 @@ OutputFile objects to be copied to all jobs"),
                         'Use of ITransform.outputdata is forbidden, please use ITransform.outputfiles')
                     return
 
-                if self.outputfiles != []:
+                if self.not_empty_list(self.outputfiles):
                     logger.error(
                         'ITransform.outputfiles is set, you can\'t set ITransform.outputdata')
                     return
