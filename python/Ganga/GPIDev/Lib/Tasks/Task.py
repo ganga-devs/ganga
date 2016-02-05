@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from Ganga import GPI
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy, getName
 from .common import logger
@@ -17,7 +17,7 @@ class Task(GangaObject):
 
     """This is a Task without special properties"""
     _schema = Schema(Version(1, 0), {
-        'transforms': ComponentItem('transforms', defvalue=[], sequence=1, copyable=1, doc='list of transforms'),
+        'transforms': ComponentItem('transforms', defvalue=GangaList(), sequence=1, copyable=1, doc='list of transforms'),
         'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Task', typelist=["int"]),
         'name': SimpleItem(defvalue='NewTask', copyable=1, doc='Name of the Task', typelist=["str"]),
         'comment': SimpleItem('', protected=0, doc='comment of the task', typelist=["str"]),
@@ -88,7 +88,8 @@ class Task(GangaObject):
             logger.info(" * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id))
             return
         if remove_jobs:
-            for j in GPI.jobs:
+            from Ganga.GPI import jobs
+            for j in jobs:
                 try:
                     if hasattr(j.application, 'tasks_id'):
                         stid = j.application.tasks_id.split(":")
@@ -210,7 +211,8 @@ class Task(GangaObject):
             if transform is None or partition is None or self.transforms[int(transform)]._app_partition[j.application.id] == partition:
                 jobslice.objects[j.fqid] = stripProxy(j)
 
-        for j in GPI.jobs:
+        from Ganga.GPI import jobs
+        for j in jobs:
             try:
                 stid = j.application.tasks_id.split(":")
                 if int(stid[-2]) == self.id and (transform is None or stid[-1] == str(transform)):

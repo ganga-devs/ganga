@@ -10,7 +10,6 @@ from Ganga.GPIDev.Base.Proxy import isType
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-import Ganga.GPI as GPI
 from Ganga.GPIDev.Lib.Tasks.common import logger
 
 
@@ -67,11 +66,12 @@ class LHCbTransform(ITransform):
 
     def removeUnusedData(self):
         """Remove any output data from orphaned jobs"""
+        from Ganga.GPI import jobs
         for unit in self.units:
             for jid in unit.prev_job_ids:
                 try:
                     logger.warning("Removing data from job '%d'..." % jid)
-                    job = GPI.jobs(jid)
+                    job = jobs(jid)
 
                     jlist = []
                     if len(job.subjobs) > 0:
@@ -184,8 +184,9 @@ class LHCbTransform(ITransform):
         # files
         flist = []
         import re
+        from Ganga.GPI import jobs
         for parent in parent_units:
-            job = GPI.jobs(parent.active_job_ids[0])
+            job = jobs(parent.active_job_ids[0])
             if job.subjobs:
                 job_list = job.subjobs
             else:
@@ -234,6 +235,7 @@ class LHCbTransform(ITransform):
         while len(self.queries) > len(self.inputdata):
             self.inputdata.append(LHCbDataset())
 
+        from Ganga.GPI import jobs
         # loop over the queries and add fill file lists
         for id, query in enumerate(self.queries):
 
@@ -269,7 +271,7 @@ class LHCbTransform(ITransform):
                     if f in unit.inputdata.files:
 
                         # kill the job
-                        job = GPI.jobs(unit.active_job_ids[0])
+                        job = jobs(unit.active_job_ids[0])
                         if job.status in ['submitted', 'running']:
                             job.kill()
 

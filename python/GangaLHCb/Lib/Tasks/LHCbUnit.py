@@ -21,7 +21,8 @@ class LHCbUnit(IUnit):
     def createNewJob(self):
         """Create any jobs required for this unit"""
         import copy
-        j = GPI.Job()
+        from Ganga.GPI import Job
+        j = Job()
         j.backend = self._getParent().backend.clone()
         j.application = self._getParent().application.clone()
         if self.inputdata:
@@ -35,8 +36,7 @@ class LHCbUnit(IUnit):
 
         j.outputfiles = copy.deepcopy(self._getParent().outputfiles)
         if len(self._getParent().postprocessors.process_objects) > 0:
-            j.postprocessors = copy.deepcopy(
-                addProxy(self._getParent()).postprocessors)
+            j.postprocessors = copy.deepcopy(addProxy(self._getParent()).postprocessors)
 
         if trf.splitter:
             j.splitter = trf.splitter.clone()
@@ -78,6 +78,7 @@ class LHCbUnit(IUnit):
             # check that the parent replicas have been copied by checking
             # backend status == Done
             job_list = []
+            from Ganga.GPI import jobs
             for req_unit in self.req_units:
                 trf = self._getParent()._getParent().transforms[
                     int(req_unit.split(":")[0])]
@@ -85,10 +86,10 @@ class LHCbUnit(IUnit):
 
                 if req_unit_id != "ALL":
                     unit = trf.units[int(req_unit_id)]
-                    job_list.append(GPI.jobs(unit.active_job_ids[0]))
+                    job_list.append(jobs(unit.active_job_ids[0]))
                 else:
                     for unit in trf.units:
-                        job_list.append(GPI.jobs(unit.active_job_ids[0]))
+                        job_list.append(jobs(unit.active_job_ids[0]))
 
             for j in job_list:
                 if j.subjobs:
@@ -99,7 +100,7 @@ class LHCbUnit(IUnit):
                     if j.backend.status != "Done":
                         return
 
-            job = GPI.jobs(self.active_job_ids[0])
+            job = jobs(self.active_job_ids[0])
             for f in job.inputdata.files:
                 if isType(f, DiracFile):
                     name = f.lfn

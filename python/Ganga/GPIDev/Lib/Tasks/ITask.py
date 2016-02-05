@@ -1,13 +1,13 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from .common import logger
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Base.Proxy import addProxy
-from Ganga import GPI
 import time
 
 ########################################################################
@@ -28,7 +28,7 @@ class ITask(GangaObject):
 
     """This is the framework of a task without special properties"""
     _schema = Schema(Version(1, 0), {
-        'transforms': ComponentItem('transforms', defvalue=[], sequence=1, copyable=1, doc='list of transforms'),
+        'transforms': ComponentItem('transforms', defvalue=GangaList(), sequence=1, copyable=1, doc='list of transforms'),
         'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Task', typelist=["int"]),
         'name': SimpleItem(defvalue='NewTask', copyable=1, doc='Name of the Task', typelist=["str"]),
         'comment': SimpleItem('', protected=0, doc='comment of the task', typelist=["str"]),
@@ -148,7 +148,8 @@ class ITask(GangaObject):
                 for unit in trf.units:
                     for jid in unit.active_job_ids:
                         try:
-                            j = GPI.jobs(jid)
+                            from Ganga.GPI import jobs
+                            j = jobs(jid)
                             j.remove()
                         except Exception as err:
                             logger.debug("Remove Err: %s" % str(err))
@@ -156,7 +157,8 @@ class ITask(GangaObject):
 
                     for jid in unit.prev_job_ids:
                         try:
-                            j = GPI.jobs(jid)
+                            from Ganga.GPI import jobs
+                            j = jobs(jid)
                             j.remove()
                         except Exception as err2:
                             logger.debug("Remove Err2: %s" % str(err2))
@@ -261,10 +263,10 @@ class ITask(GangaObject):
     def getJobs(self):
         """ Get the job slice of all jobs that process this task """
         jobslice = JobRegistrySlice("tasks(%i).getJobs()" % (self.id))
+        from Ganga.GPI import jobs
         for trf in self.transforms:
             for jid in trf.getJobs():
-                jobslice.objects[GPI.jobs(jid).fqid] = stripProxy(
-                    GPI.jobs(jid))
+                jobslice.objects[jobs(jid).fqid] = stripProxy(jobs(jid))
 
         return JobRegistrySliceProxy(jobslice)
 

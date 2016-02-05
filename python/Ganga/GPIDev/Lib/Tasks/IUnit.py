@@ -104,7 +104,8 @@ class IUnit(GangaObject):
             return False
 
         # if we're using threads, check the max number
-        if self._getParent().submit_with_threads and GPI.queues.totalNumUserThreads() > self._getParent().max_active_threads:
+        from Ganga.GPI import queues
+        if self._getParent().submit_with_threads and queues.totalNumUserThreads() > self._getParent().max_active_threads:
             return False
 
         return True
@@ -116,7 +117,8 @@ class IUnit(GangaObject):
         if len(self.active_job_ids) == 0:
             return False
         else:
-            job = GPI.jobs(self.active_job_ids[0])
+            from Ganga.GPI import jobs
+            job = jobs(self.active_job_ids[0])
             if job.status in ["failed", "killed"]:
                 return True
 
@@ -160,7 +162,8 @@ class IUnit(GangaObject):
             trf = None
         if trf is not None and trf.submit_with_threads:
             addInfoString( self, "Attempting job re-submission with queues..." )
-            GPI.queues.add(job.resubmit)
+            from Ganga.GPI import queues
+            queues.add(job.resubmit)
         else:
             addInfoString( self, "Attempting job re-submission..." )
             job.resubmit()
@@ -196,7 +199,8 @@ class IUnit(GangaObject):
             try:
                 if trf.submit_with_threads:
                     addInfoString( self, "Attempting job submission with queues..." )
-                    GPI.queues.add(j.submit)
+                    from Ganga.GPI import queues
+                    queues.add(j.submit)
                 else:
                     addInfoString( self, "Attempting job submission..." )
                     j.submit()
@@ -226,7 +230,8 @@ class IUnit(GangaObject):
             # we have an active job so see if this job is OK and resubmit if
             # not
             try:
-                job = GPI.jobs(jid)
+                from Ganga.GPI import jobs
+                job = jobs(jid)
             except Exception as err:
                 logger.debug("Update2 Err: %s" % str(err))
                 logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %
@@ -345,10 +350,11 @@ class IUnit(GangaObject):
         tot_active = 0
         active_states = ['submitted', 'running']
 
+        from Ganga.GPI import jobs
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = jobs(jid)
             except Exception as err:
                 logger.debug("n_active Err: %s" % str(err))
                 task = self._getParent()._getParent()
@@ -382,10 +388,11 @@ class IUnit(GangaObject):
 
     def n_status(self, status):
         tot_active = 0
+        from Ganga.GPI import jobs
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = jobs(jid)
             except Exception as err:
                 logger.debug("n_status Err: %s" % str(err))
                 task = self._getParent()._getParent()
@@ -420,10 +427,11 @@ class IUnit(GangaObject):
 
     def n_all(self):
         total = 0
+        from Ganga.GPI import jobs
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = jobs(jid)
             except Exception as err:
                 logger.debug("n_all Err: %s" % str(err))
                 task = self._getParent()._getParent()

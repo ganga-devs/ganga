@@ -1,4 +1,3 @@
-from Ganga import GPI
 from Ganga.Utility.ColourText import ANSIMarkup
 from Ganga.Utility.ColourText import status_colours, overview_colours, fgcol, col
 from Ganga.GPIDev.Lib.Job.Job import Job
@@ -282,7 +281,8 @@ class LHCbAnalysisTransform(Transform):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def createNewJob(self, partition):
         """ Returns a new job initialized with the transforms application, backend and name """
-        j = GPI.Job()
+        from Ganga import Job
+        j = Job()
         stripProxy(j).backend = self.backend.clone()
         stripProxy(j).application = self.application.clone()
         stripProxy(j).application.tasks_id = "%i:%i" % (
@@ -424,7 +424,8 @@ class LHCbAnalysisTransform(Transform):
         # Need registry access here might be better to get registry directly
         # as in prepared stuff, see Executable for example or even
         # tasksregistry.py!
-        return GPI.jobs(partition_jobs[0].fqid.split('.')[0])
+        from Ganga.GPI import jobs
+        return jobs(partition_jobs[0].fqid.split('.')[0])
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def _mergeTransformOutput(self):
