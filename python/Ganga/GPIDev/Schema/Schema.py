@@ -466,9 +466,9 @@ class Item(object):
             #traceback.print_stack()
             raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (name, validTypes, input_val, type(input_val)))
 
-    def _check_type(self, val, name, enableGangaList=True):
+    def _check_type(self, val, name):
 
-        if enableGangaList:
+        if not str(name).startswith('GangaList'):
             from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         else:
             GangaList = list
@@ -489,7 +489,7 @@ class Item(object):
         if self._meta['sequence']:
             from Ganga.GPIDev.Base.Proxy import isType
             if not isType(self._meta['defvalue'], (list, tuple, GangaList)):
-                raise SchemaError('Attribute "%s" defined as a sequence but defvalue is not a list.' % name)
+                raise SchemaError('Attribute "%s" defined as a sequence but defvalue is not a list. It is: %s' % (name, self._meta['defvalue']))
 
             if not isType(val, (GangaList, tuple, list)):
                 raise TypeMismatchError('Attribute "%s" expects a list.' % name)
