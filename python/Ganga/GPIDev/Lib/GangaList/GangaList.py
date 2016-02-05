@@ -186,7 +186,15 @@ class GangaList(GangaObject):
                 raise TypeMismatchError('%s is not of type %s.' % (str(obj), category))
             return filter_obj
 
-        raw_obj = stripProxy(obj)
+        _raw_obj = stripProxy(obj)
+
+        if isinstance(_raw_obj, (list, tuple)):
+            raw_obj = []
+            for elem in _raw_obj:
+                raw_obj.append(stripProxy(elem))
+        else:
+            raw_obj = _raw_obj
+
         # apply a filter if possible
         if filter is True:
             parent = self._getParent()
