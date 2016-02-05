@@ -10,7 +10,7 @@ from .TaskApplication import ArgSplitterTask
 
 class ArgTransform(Transform):
     _schema = Schema(Version(1, 0), dict(Transform._schema.datadict.items() + {
-        'args': SimpleItem(defvalue=[], typelist=['list', 'Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'], sequence=1, doc='A list of lists of arguments to pass to script'),
+        'args': SimpleItem(defvalue=GangaList(), typelist=['list', 'Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'], sequence=1, doc='A list of lists of arguments to pass to script'),
     }.items()))
     _category = 'transforms'
     _name = 'ArgTransform'

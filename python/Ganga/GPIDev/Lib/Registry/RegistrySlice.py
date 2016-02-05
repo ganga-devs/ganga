@@ -318,7 +318,7 @@ class RegistrySlice(object):
             return addProxy(self.objects[this_id])
         except KeyError as err:
             logger.debug('Object id=%d not found' % this_id)
-            logger.deubg("%s" % str(err))
+            logger.debug("%s" % str(err))
             raise RegistryKeyError('Object id=%d not found' % this_id)
 
     def __iter__(self):
@@ -407,7 +407,7 @@ class RegistrySlice(object):
             if not val and not item in self._display_columns_show_empty:
                 val = ""
         except AttributeError as err:
-            logger.debug("AttibErr: %s" % str(err))
+            logger.debug("AttribErr: %s" % str(err))
             val = ""
         finally:
             pass
