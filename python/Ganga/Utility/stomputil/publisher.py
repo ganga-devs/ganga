@@ -185,7 +185,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
                 self._log(logging_DEBUG, 'Connecting.')
                 # create connection
                 global stomp_major_version
-                if stomp_major_version >= 2:
+                if stomp_major_version > 2:
                     cx = stomp.Connection(self._cx_hostname_ports)
                 else:
                     cx = stomp.Connection(*self._cx_params)
