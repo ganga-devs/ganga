@@ -86,25 +86,6 @@ class LHCbAnalysisTransform(Transform):
         self.toProcess_dataset = LHCbDataset()
         self.removed_data = LHCbDataset()
 
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    def __deepcopy__(self, memo=None):
-        l = LHCbAnalysisTransform()
-        l.application = deepcopy(self.application, memo)
-        l.backend = deepcopy(self.backend, memo)
-        l.splitter = deepcopy(self.splitter, memo)
-        l.merger = deepcopy(self.merger, memo)
-        l.query = deepcopy(self.query, memo)
-        l.run_limit = deepcopy(self.run_limit, memo)
-        l.inputsandbox = deepcopy(self.inputsandbox)
-        l.outputsandbox = deepcopy(self.outputsandbox)
-        if self.inputdata:
-            l.inputdata = LHCbDataset()
-            l.inputdata.files = self.inputdata.files[:]
-        if self.outputdata:
-            l.outputdata = OutputData()
-            l.outputdata.files = self.outputdata.files[:]
-        l.name = self.name
-        return l
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def _attribute_filter__set__(self, name, value):

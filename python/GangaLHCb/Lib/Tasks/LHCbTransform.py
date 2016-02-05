@@ -11,13 +11,13 @@ from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Lib.Tasks.common import logger
-
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 class LHCbTransform(ITransform):
     _schema = Schema(Version(1, 0), dict(ITransform._schema.datadict.items() + {
         'files_per_unit': SimpleItem(defvalue=-1, doc='Maximum number of files to assign to each unit from a given input dataset. If < 1, use all files.', typelist=["int"]),
         'splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter to be used for units'),
-        'queries': ComponentItem('query', defvalue=[], sequence=1, protected=1, optional=1, load_default=False, doc='Queries managed by this Transform'),
+        'queries': ComponentItem('query', defvalue=GangaList(), sequence=1, protected=1, optional=1, load_default=False, doc='Queries managed by this Transform'),
         'delete_chain_input': SimpleItem(defvalue=False, doc='Delete the Dirac input files/data after completion of each unit', typelist=["bool"]),
         'mc_num_units': SimpleItem(defvalue=0, doc="No. of units to create for MC generation"),
 
