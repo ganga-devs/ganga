@@ -346,8 +346,9 @@ OutputFile objects to be copied to all jobs"),
 
         self.addUnitToTRF(unit, prev_unit)
 
-    def addInputData(self, inDS):
+    def addInputData(self, _inDS):
         """Add the given input dataset to the list"""
+        inDS = stripProxy(_inDS)
         self.inputdata.append(inDS)
 
     def pause(self):
