@@ -349,6 +349,9 @@ class ProxyDataDescriptor(object):
     @staticmethod
     def __app_set__(obj, val):
 
+        if not hasattr(obj, 'application') or obj.application is None:
+            return
+
         if hasattr(obj.application, '_is_prepared'):
 
             #a=Job(); a.prepare(); a.application=Executable()
@@ -564,20 +567,27 @@ class ProxyMethodDescriptor(object):
 
 # helper to create a wrapper for an existing ganga object
 
+_proxyClassDict={}
+
 def addProxyClass(some_class):
     ## CANNOT USE THE ._name (hence getName) HERE DUE TO REQUIREMENTS OF THE OBJECT IN GPI BEING SANE!!!
     class_name = some_class.__name__
-    setattr(some_class, proxyClass, GPIProxyClassFactory(class_name, some_class))
+    if class_name not in _proxyClassDict.keys():
+        _proxyClassDict[class_name] = GPIProxyClassFactory(class_name, some_class)    
+    setattr(some_class, proxyClass, _proxyClassDict[class_name])
 
 def getProxyClass(some_class):
+    class_name = some_class.__name__
     if not isclass(some_class):
         from Ganga.Core.exceptions import GangaException
-        raise GangaException("Cannot perform getProxyClass on a non-class object: %s" % type(some_class))
+        raise GangaException("Cannot perform getProxyClass on a non-class object: %s:: %s" % (class_name, some_class))
     if not issubclass(some_class, GangaObject):
         from Ganga.Core.exceptions import GangaException
-        raise GangaException("Cannot perform getProxyClass on class which is not a subclass of GangaObject: %s" % type(some_class))
+        raise GangaException("Cannot perform getProxyClass on class which is not a subclass of GangaObject: %s:: %s" % (class_name, some_class))
     proxy_class = getattr(some_class, proxyClass, None)
-    if proxy_class is None:
+    ## It's possible we ourselves have added a proxy to the base class which we're now inheriting here.
+    ## To avoid giving a proxy from Dataset to LHCbDataset and equivalent we'll check against our list of already-found class names.
+    if proxy_class is None or class_name not in _proxyClassDict.keys():
         addProxyClass(some_class)
         proxy_class = getattr(some_class, proxyClass)
     return proxy_class
