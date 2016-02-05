@@ -241,6 +241,14 @@ class Schema(object):
             # Attempt to get the relevant config section
             config = Config.getConfig(def_name, create=False)
 
+            if config.hasModified():
+                to_remove = []
+                for k in _found_attrs.keys():
+                    if str(k).startswith(def_name):
+                        to_remove.append(k)
+                for k in to_remove:
+                    del _found_attrs[k]
+
             if is_finalized and stored_attr_key in _found_attrs and not config.hasModified():
                 defvalue = _found_attrs[stored_attr_key]
             else:
@@ -286,15 +294,7 @@ class Schema(object):
 
         # make a copy of the default value (to avoid strange effects if the
         # original modified)
-        try:
-            from Ganga.GPIDev.Base.Proxy import isType, getRuntimeGPIObject, stripProxy, getName
-            from Ganga.GPIDev.Base.Objects import Node
-            if isinstance(defvalue, Node):
-                return stripProxy(getRuntimeGPIObject(getName(defvalue)))
-            else:
-                return copy.deepcopy(defvalue)
-        except ImportError:
-            return copy.deepcopy(defvalue)
+        return copy.deepcopy(defvalue)
 
 
 # Items in schema may be either Components,Simples, Files or BindingItems.
