@@ -1,16 +1,20 @@
-##########################################################################
-# Ganga Project. http://cern.ch/ganga
-#
-# $Id: TestMergeFailures.py,v 1.1.4.1 2009-07-24 13:39:40 ebke Exp $
-##########################################################################
-from GangaTest.Framework.tests import GangaGPITestCase
+from __future__ import absolute_import
+
+from ..GangaUnitTest import GangaUnitTest
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
 import os
 
+from Ganga.GPIDev.Base.Proxy import getProxyClass
+from .MergerTester import MergerTester
+from .CopySplitter import CopySplitter
+CopySplitter = getProxyClass(CopySplitter)
+MergerTester = getProxyClass(MergerTester)
 
-class TestMergeFailures(GangaGPITestCase):
+
+class TestMergeFailures(GangaUnitTest):
 
     def testMergeThatAlwaysFails(self):
+        from Ganga.GPI import Job, Executable, Local, LocalFile
 
         j = Job()
         j.application = Executable(exe='sh', args=['-c', 'echo foo > out.txt'])
@@ -21,12 +25,12 @@ class TestMergeFailures(GangaGPITestCase):
 
         j.submit()
 
-        sleep_until_completed(j, 120)
-        assert j.status == 'failed'
-        assert os.path.exists(os.path.join(
-            j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
+        sleep_until_completed(j, 60)
+        self.assertEqual(j.status, 'failed')
+        self.assertTrue(os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created')
 
     def testMergeThatAlwaysFailsIgnoreFailed(self):
+        from Ganga.GPI import Job, Executable, Local, LocalFile
 
         j = Job()
         j.application = Executable(exe='sh', args=['-c', 'echo foo > out.txt'])
@@ -37,12 +41,12 @@ class TestMergeFailures(GangaGPITestCase):
 
         j.submit()
 
-        sleep_until_completed(j, 120)
-        assert j.status == 'failed'
-        assert os.path.exists(os.path.join(
-            j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
+        sleep_until_completed(j, 60)
+        self.assertEqual(j.status, 'failed')
+        self.assertTrue(os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created')
 
     def testMergeThatAlwaysFailsOverwrite(self):
+        from Ganga.GPI import Job, Executable, Local, LocalFile
 
         j = Job()
         j.application = Executable(exe='sh', args=['-c', 'echo foo > out.txt'])
@@ -53,12 +57,12 @@ class TestMergeFailures(GangaGPITestCase):
 
         j.submit()
 
-        sleep_until_completed(j, 120)
-        assert j.status == 'failed'
-        assert os.path.exists(os.path.join(
-            j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
+        sleep_until_completed(j, 60)
+        self.assertEqual(j.status, 'failed')
+        self.assertTrue(os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created')
 
     def testMergeThatAlwaysFailsFlagsSet(self):
+        from Ganga.GPI import Job, Executable, Local, LocalFile
 
         j = Job()
         j.application = Executable(exe='sh', args=['-c', 'echo foo > out.txt'])
@@ -70,12 +74,12 @@ class TestMergeFailures(GangaGPITestCase):
 
         j.submit()
 
-        sleep_until_completed(j, 120)
-        assert j.status == 'failed'
-        assert os.path.exists(os.path.join(
-            j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
+        sleep_until_completed(j, 60)
+        self.assertEqual(j.status, 'failed')
+        self.assertTrue(os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created')
 
     def testMergeRemoval(self):
+        from Ganga.GPI import Job, Executable, Local, LocalFile, jobs
 
         # see Savannah 33710
         j = Job()
@@ -96,8 +100,4 @@ class TestMergeFailures(GangaGPITestCase):
         sleep_until_state(j, state='running')
         j.remove()
 
-        try:
-            jobs(jobID)
-            assert False, 'Job should not be found'
-        except KeyError:
-            pass
+        self.assertRaises(KeyError, jobs, jobID)

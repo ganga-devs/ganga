@@ -1,19 +1,24 @@
-from GangaTest.Framework.tests import GangaGPITestCase
+from __future__ import absolute_import
+
+from ..GangaUnitTest import GangaUnitTest
 from GangaTest.Framework.utils import sleep_until_completed, write_file
 import os
 import tempfile
 
+from Ganga.GPIDev.Base.Proxy import getProxyClass
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
+from .CopySplitter import CopySplitter
+CopySplitter = getProxyClass(CopySplitter)
 
 
-class TestCustomMerger(GangaGPITestCase):
+class TestCustomMerger(GangaUnitTest):
 
-    def __init__(self):
+    def setUp(self):
+        super(TestCustomMerger, self).setUp()
+        from Ganga.GPI import Job, Executable, Local, File, LocalFile
 
         self.jobslice = []
         self.file_name = 'id_echo.sh'
-
-    def setUp(self):
 
         for i in range(2):
 
@@ -42,9 +47,7 @@ class TestCustomMerger(GangaGPITestCase):
         for j in self.jobslice:
             j.submit()
 
-            if not sleep_until_completed(j):
-                assert False, 'Test timed out'
-            assert j.status == 'completed'
+            self.assertTrue(sleep_until_completed(j), 'Timeout on job submission: job is still not finished')
 
     def tearDown(self):
 
@@ -52,14 +55,15 @@ class TestCustomMerger(GangaGPITestCase):
             j.remove()
 
     def testSimpleCustomMerge(self):
+        from Ganga.GPI import CustomMerger
 
         self.runJobSlice()
         tmpdir = tempfile.mktemp()
         os.mkdir(tmpdir)
 
         file_name = os.path.join(tmpdir, 'merge.py')
-        module_file = file(file_name, 'w')
-        module_file.write("""from __future__ import print_function
+        with open(file_name, 'w') as module_file:
+            module_file.write("""from __future__ import print_function
 def mergefiles(file_list, output_file):
     '''Free script for merging files'''
     
@@ -69,37 +73,30 @@ def mergefiles(file_list, output_file):
     
     return True
         """)
-        module_file.close()
 
         cm = CustomMerger(module=file_name)
         cm.files = ['out.txt', 'out2.txt']
-        assert cm.merge(self.jobslice, tmpdir), 'Merge should complete'
-        assert os.path.exists(
-            os.path.join(tmpdir, 'out.txt')), 'out.txt must exist'
-        assert os.path.exists(
-            os.path.join(tmpdir, 'out2.txt')), 'out2.txt must exist'
+        self.assertTrue(cm.merge(self.jobslice, tmpdir), 'Merge should complete')
+        self.assertTrue(os.path.exists(os.path.join(tmpdir, 'out.txt')), 'out.txt must exist')
+        self.assertTrue(os.path.exists(os.path.join(tmpdir, 'out2.txt')), 'out2.txt must exist')
 
     def testFailJobOnMerge(self):
+        from Ganga.GPI import CustomMerger
 
         self.runJobSlice()
         tmpdir = tempfile.mktemp()
         os.mkdir(tmpdir)
 
         file_name = os.path.join(tmpdir, 'merge.py')
-        module_file = file(file_name, 'w')
-        module_file.write("""def mergefiles(file_list, output_file):
+        with open(file_name, 'w') as module_file:
+            module_file.write("""def mergefiles(file_list, output_file):
     '''Free script for merging files'''
     return False
         """)
-        module_file.close()
 
         cm = CustomMerger(module=file_name)
         cm.files = ['out.txt', 'out2.txt']
-        try:
-            cm.merge(self.jobslice, tmpdir)
-            assert False, 'Merge should fail'
-        except PostProcessException:
-            pass
+        self.assertRaises(PostProcessException, cm.merge, self.jobslice, tmpdir)
 
         j = self.jobslice[0].copy()
         j.splitter = CopySplitter()
@@ -107,4 +104,4 @@ def mergefiles(file_list, output_file):
         j.submit()
 
         sleep_until_completed(j)
-        assert j.status == 'failed'
+        self.assertEqual(j.status, 'failed')
