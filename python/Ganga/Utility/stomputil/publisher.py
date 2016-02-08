@@ -28,12 +28,12 @@ except (Exception, ImportError) as err:
             pass
 
         @staticmethod
-        def Connection(self, _server_and_port, user, password):
+        def Connection(self, _server_and_port={}, user='', password=''):
             ## DO NOTHING
             pass
 
     stomp_listener = object
-    stomp_major_version = 2
+    stomp_major_version = -999
 
 
 class LoggerListener(stomp_listener):
@@ -189,6 +189,10 @@ def createPublisher(T, server, port, user='', password='', logger=None,
                     cx = stomp.Connection(self._cx_hostname_ports)
                 else:
                     cx = stomp.Connection(*self._cx_params)
+
+                if cx is None:
+                    self._cx = None
+                    return
                 # add logger listener to connection
                 if self._logger is not None:
                     cx.set_listener('logger', LoggerListener(self._logger))

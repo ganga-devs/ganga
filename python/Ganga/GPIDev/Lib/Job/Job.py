@@ -401,8 +401,6 @@ class Job(GangaObject):
         # Attempt to spend too long loading un-needed objects into memory in
         # order to read job status
         if name == 'status':
-            if stripProxy(self).getNodeIndexCache():
-                return stripProxy(self).getNodeIndexCache()['display:status']
             return object.__getattribute__(self, 'status')
 
         # FIXME Add some method of checking what objects are known in advance of calling the __getattribute__ method

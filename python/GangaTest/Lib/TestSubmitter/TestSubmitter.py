@@ -26,7 +26,7 @@ from Ganga.GPIDev.Adapters.IBackend import IBackend
 
 class TestSubmitter(IBackend):
     _schema = Schema(Version(1,0), {'time' : SimpleItem(defvalue=5,changable_at_resubmit=1),
-                                    'start_time' : SimpleItem(defvalue=0,protected=1,comparable=0),
+                                    'start_time' : SimpleItem(defvalue=0,protected=1,comparable=0,copyable=0),
                                     'update_delay' : SimpleItem(defvalue=0,doc="The time it takes to updateMonitoringInformation"),
                                     'fail' : SimpleItem(defvalue='',doc='Define the artificial runtime failures: "submit", "kill","monitor","resubmit"', changeable_at_resubmit=1 )
                                     

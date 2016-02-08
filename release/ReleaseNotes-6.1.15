@@ -1,0 +1,18 @@
+**************************************************************************************************************
+6.1.15 (2016/01/28)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fixed lots of problems with repository syncing
+* More consistent setting of objects parents across the codebase to avoid objects being lost
+* Sped up loading of large jobs from XML, PR #121 and others
+* The code to load the configuration was moved centrally in PR #90
+* Added a setup.py file to allow installing with pip etc.
+* Fixed JobTree wiping its contents under certain conditions (issue #96) in PR #102
+* Fixed help() function, issue #106
+* Fixed exporting of multi-line strings in VPrinter, PR #107
+* Added Sphinx-generated documentation
+
+**************************************************************************************************************

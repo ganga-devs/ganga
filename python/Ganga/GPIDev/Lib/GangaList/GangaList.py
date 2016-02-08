@@ -291,18 +291,23 @@ class GangaList(GangaObject):
             new_list = GangaList()
             new_list._is_preparable = self._is_preparable
             return new_list
-        #super(GangaList, self).__deepcopy__(memo)
+
+    @staticmethod
+    def __getListToCompare(input_list):
+        if isType(input_list, GangaList):
+            return stripProxy(input_list)._list
+        elif isinstance(input_list, tuple):
+            return list(input_list)
+        else:
+            return input_list
 
     def __eq__(self, obj_list):
         if obj_list is self:  # identity check
             return True
-        result = False
-        if self.is_list(self.strip_proxy(obj_list)):
-            result = self._list.__eq__(self.strip_proxy_list(obj_list))
-        return result
+        return self._list == self.__getListToCompare(obj_list)
 
     def __ge__(self, obj_list):
-        return self._list.__ge__(self.strip_proxy_list(obj_list))
+        return self._list.__ge__(self.__getListToCompare(obj_list))
 
     def __getitem__(self, index):
         return self._list.__getitem__(index)
@@ -430,10 +435,25 @@ class GangaList(GangaObject):
         return self.toString()
 
     def append(self, obj, my_filter=True):
+        if isType(obj, GangaList):
+            self._list.append(obj._list)
+            return
         elem = self.strip_proxy(obj, my_filter)
+        list_objs = (list, tuple)
         if isType(elem, GangaObject):
-            stripProxy(elem)._setParent(stripProxy(self)._getParent())
-        self._list.append(elem)
+            stripProxy(elem)._setParent(self._getParent())
+            self._list.append(elem)
+        elif isinstance(elem, list_objs):
+            new_list = []
+            for _obj in elem:
+                if isType(_obj, GangaObject):
+                    new_list.append(stripProxy(_obj))
+                    stripProxy(_obj)._setParent(self._getParent())
+                else:
+                    new_list.append(_obj)
+            self._list.append(new_list)
+        else:
+            self._list.append(elem)
 
     def _export_append(self, obj):
         self.checkReadOnly()
