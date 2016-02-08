@@ -5,7 +5,7 @@ except ImportError:
     import unittest
 
 
-def start_ganga():
+def start_ganga(gangadir_for_test='$HOME/gangadir_testing'):
 
     import sys
     import os.path
@@ -38,8 +38,9 @@ def start_ganga():
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
         '-o[Configuration]RUNTIME_PATH=GangaTest',
         '-o[Configuration]user=testframework',
-        '-o[Configuration]gangadir=$HOME/gangadir_testing',
+        '-o[Configuration]gangadir='+str(gangadir_for_test),
         '-o[Configuration]repositorytype=LocalXML',
+        #'-o[PollThread]autostart=False',
         '-o[PollThread]autostart_monThreads=False',
         '-o[TestingFramework]ReleaseTesting=True',
     ]
@@ -82,8 +83,12 @@ def start_ganga():
 
     # [PollThread]autostart_monThreads=False has turned this off being done automatically.
     # The thread pool is emptied by _ganga_run_exitfuncs
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool
-    _makeThreadPool()
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import ThreadPool, _makeThreadPool
+    if len(ThreadPool) > 0:
+        del ThreadPool[:]
+        ThreadPool = []
+    if len(ThreadPool) == 0:
+        _makeThreadPool()
 
     # Adapted from the Coordinator class, check for the required credentials and stop if not found
     # Hopefully stops us falling over due to no AFS access of something similar
@@ -93,8 +98,7 @@ def start_ganga():
     logger.info("Checking Credentials")
 
     if missing_cred:
-        raise Exception("Failed due to missing credentials %s" %
-                        str(missing_cred))
+        raise Exception("Failed due to missing credentials %s" % str(missing_cred))
 
     logger.info("Passing to Unittest")
 
@@ -157,11 +161,24 @@ def stop_ganga():
 
 class GangaUnitTest(unittest.TestCase):
 
-    def setUp(self):
+    wipe_repo = None
+    gangadir = None
+
+    def setUp(self, gangadir=None, wipe_repo=None):
         unittest.TestCase.setUp(self)
         # Start ganga and internal services
         # This is called before each unittest
-        start_ganga()
+        if gangadir is None:
+            import os
+            gangadir = os.path.join('$HOME/gangadir_testing', self.__class__.__name__)
+            if not os.path.isdir(gangadir):
+                os.makedirs(gangadir)
+        if wipe_repo is None:
+            self.wipe_repo=True
+        else:
+            self.wipe_repo=wipe_repo
+        self.gangadir = gangadir
+        start_ganga(gangadir_for_test=gangadir)
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
@@ -169,3 +186,13 @@ class GangaUnitTest(unittest.TestCase):
         stop_ganga()
         import sys
         sys.stdout.flush()
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.wipe_repo is True:
+            import shutil
+            try:
+                shutil.rmtree(self.gangadir)
+            except:
+                pass
+
