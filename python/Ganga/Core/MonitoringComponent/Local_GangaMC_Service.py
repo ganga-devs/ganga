@@ -28,8 +28,6 @@ config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
 Qin = Queue.Queue()
 ThreadPool = []
-# number of threads waiting for actions in Qin
-tpFreeThreads = 0
 
 # The JobAction class encapsulates a function, its arguments and its post result action
 # based on what is defined as a successful run of the function.
@@ -50,11 +48,19 @@ class JobAction(object):
         self.thread = None
         self.description = ''
 
+def getNumAliveThreads():
+    num_alive = 0
+    for this_thread in ThreadPool:
+        if this_thread._alive:
+            num_alive += 1
+    return num_alive
 
 class MonitoringWorkerThread(GangaThread):
 
     def __init__(self, name):
         GangaThread.__init__(self, name)
+        self._alive = False
+        self._running_cmd = None
 
     def run(self):
         self._execUpdateAction()
@@ -62,14 +68,13 @@ class MonitoringWorkerThread(GangaThread):
     # This function takes a JobAction object from the Qin queue,
     # executes the embedded function and runs post result actions.
     def _execUpdateAction(self):
-        global tpFreeThreads
         # DEBUGGING THREADS
         # import sys
         # sys.settrace(_trace)
         while not self.should_stop():
             log.debug("%s waiting..." % threading.currentThread())
             #setattr(threading.currentThread(), 'action', None)
-            tpFreeThreads += 1
+
 
             while not self.should_stop():
                 try:
@@ -81,16 +86,16 @@ class MonitoringWorkerThread(GangaThread):
             if self.should_stop():
                 break
 
-            tpFreeThreads -= 1
             #setattr(threading.currentThread(), 'action', action)
             log.debug("Qin's size is currently: %d" % Qin.qsize())
             log.debug("%s running..." % threading.currentThread())
-
+            self._alive = True
             if not isType(action, JobAction):
                 continue
             if action.function == 'stop':
                 break
             try:
+                self._running_cmd = action.function.__name__
                 result = action.function(*action.args, **action.kwargs)
             except Exception as err:
                 log.debug("_execUpdateAction: %s" % str(err))
@@ -101,12 +106,17 @@ class MonitoringWorkerThread(GangaThread):
                 else:
                     action.callback_Failure()
 
+            self._alive = False
+
 # Create the thread pool
 
 
 def _makeThreadPool(threadPoolSize=THREAD_POOL_SIZE, daemonic=True):
+    if ThreadPool and len(ThreadPool) != 0:
+        from Ganga.Core.exceptions import GangaException
+        raise GangaException("Cannot doubbly init the ThreadPool! ThreadPool already populated with threads")
     for i in range(THREAD_POOL_SIZE):
-        t = MonitoringWorkerThread(name="MonitoringWorker_%s" % i)
+        t = MonitoringWorkerThread(name="MonitoringWorker_%s_%s" % (str(i), str(int(time.time()*1000))))
         ThreadPool.append(t)
         t.start()
 
@@ -785,7 +795,10 @@ class JobRegistry_Monitor(GangaThread):
         self.__cleanUpEvent.set()
 
     def __isInProgress(self):
-        return self.steps > 0 or Qin.qsize() > 0 or tpFreeThreads < len(ThreadPool)
+        if getNumAliveThreads() > 0:
+            for this_thread in ThreadPool:
+                log.debug("Thread currently running: %s" % str(this_thread._running_cmd))
+        return self.steps > 0 or Qin.qsize() > 0 or getNumAliveThreads() > 0
 
     def __awaitTermination(self, timeout=5):
         """
