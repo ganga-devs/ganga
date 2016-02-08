@@ -48,7 +48,6 @@ class PrepRegistry(Registry):
         #logger.info("Geting id: %s" %  self.metadata.ids()[-1])
         self.shareref = self.metadata._objects[self.metadata.ids()[-1]]
         #logger.info("ShareRef: %s" % getName(self.shareref))
-        self._lock.acquire()
         ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
         ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
         try:
@@ -63,7 +62,6 @@ class PrepRegistry(Registry):
             logger.debug("Shutdown Error: %s" % str(err))
         finally:
             self._hasStarted = False
-            self._lock.release()
 
     def _safe_shutdown(self):
         try:
