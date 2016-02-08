@@ -4,7 +4,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah77962(GangaUnitTest):
-    def Savannah77962(self):
+    def test_Savannah77962(self):
         from Ganga.GPI import Job
 
         # The submit_counter was being incremented by 2 when j.resubmit was called.

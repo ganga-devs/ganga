@@ -4,7 +4,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah28511(GangaUnitTest):
-    def Savannah28511(self):
+    def test_Savannah28511(self):
         from Ganga.GPI import Job, TestSubmitter
 
         from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state

@@ -4,7 +4,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah96158(GangaUnitTest):
-    def Savannah96158(self):
+    def test_Savannah96158(self):
         from Ganga.GPI import Job, jobs
 
         #The first two tests check the new functionality, the remainder just check that we didn't break existing functionality with this bug-fix
