@@ -116,9 +116,7 @@ def _makeThreadPool(threadPoolSize=THREAD_POOL_SIZE, daemonic=True):
     if ThreadPool and len(ThreadPool) != 0:
         #from Ganga.Core.exceptions import GangaException
         #raise GangaException("Cannot doubbly init the ThreadPool! ThreadPool already populated with threads")
-        log.debug("Found a thread pool already in existance, wiping it and startig again!")
-        for i in ThreadPool:
-            del i
+        log.error("Found a thread pool already in existance, wiping it and startig again!")
         del ThreadPool[:]
         ThreadPool = []
     for i in range(THREAD_POOL_SIZE):
@@ -137,6 +135,8 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
              resp = raw_input("The cleanup procedures did not complete yet. Do you want to wait more?[y/N]")
              return resp.lower()=='y'
     """
+
+    global ThreadPool
 
     def join_worker_threads(threads, timeout=3):
         for t in threads:
@@ -161,9 +161,8 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
         else:
             break
 
-    for i in ThreadPool:
-        del i
     del ThreadPool[:]
+    ThreadPool = []
 
 # purge Qin
 
