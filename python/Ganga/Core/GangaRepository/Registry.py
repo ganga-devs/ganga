@@ -267,6 +267,7 @@ class Registry(object):
             raise RegistryKeyError("Could not find object #%s" % this_id)
         finally:
             #self.unlock_transaction(this_id)
+            pass
 
     def __len__(self):
         """ Returns the current number of root objects """
