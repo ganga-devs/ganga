@@ -187,5 +187,5 @@ class GangaUnitTest(unittest.TestCase):
     def tearDownClass(cls):
         if cls.wipe_repo is True:
             import shutil
-            shutil.rmtree(self.gangadir, ignore_errors=True)
+            shutil.rmtree(cls.gangadir, ignore_errors=True)
 
