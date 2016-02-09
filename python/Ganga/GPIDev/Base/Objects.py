@@ -800,19 +800,22 @@ class GangaObject(Node):
 
         if registry is not None:
             parent_id = registry.find(parent)
+            parent_str = _getName(registry) + "_" + str(parent_id)
         else:
             parent_id = id(parent)
+            parent_str = "UnknownReg_" + str(parent_id)
 
         if parent is None:
             from Ganga.Core.exceptions import GangaException
             raise GangaException("Cannot Lock an object without a parent!")
 
-        global parentLockDict
-        if parent_id not in parentLockDict:
-            import threading
-            parentLockDict[parent_id] = threading.Lock()
 
-        parentLockDict[parent_id].acquire()
+        global parentLockDict
+        if parent_str not in parentLockDict:
+            import threading
+            parentLockDict[parent_str] = threading.Lock()
+
+        parentLockDict[parent_str].acquire()
 
     def _releaseParentLock(self):
 
@@ -824,14 +827,16 @@ class GangaObject(Node):
         global parentLockDict
         if parent is not None and registry is not None:
             parent_id = registry.find(parent)
-            if parent_id in parentLockDict:
-                parentLockDict[parent_id].release()
+            parent_str = _getName(registry) + "_" + str(parent_id)
+            if parent_str in parentLockDict:
+                parentLockDict[parent_str].release()
                 return
 
         parent_id = id(parent)
-        if parent is not None and parent_id in parentLockDict:
+        parent_str = "UnknownReg_" + str(parent_id)
+        if parent is not None and parent_str in parentLockDict:
 
-            parentLockDict[parent_id].release()
+            parentLockDict[parent_str].release()
             return
 
         from Ganga.Core.exception import GangaException
