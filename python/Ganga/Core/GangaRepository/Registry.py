@@ -728,7 +728,7 @@ class Registry(object):
         obj_ids = []
 
         for obj in objs:
-            self._releaseParentLock()
+            obj._acquireParentLock()
 
         for obj in objs:
             this_id = id(self.find(obj))
