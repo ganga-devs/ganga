@@ -14,10 +14,10 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing'):
     file_path = os.path.dirname(os.path.realpath(__file__))
     ganga_python_dir = os.path.join(file_path, '..', '..', '..')
     ganga_python_dir = os.path.realpath(ganga_python_dir)
-    sys.path.insert(0, ganga_python_dir)
+    if len(sys.path) >= 1 and ganga_python_dir != sys.path[0]:
+        sys.path.insert(0, ganga_python_dir)
 
-    print("Adding: %s to Python Path\n" % ganga_python_dir)
-    sys.path.insert(0, ganga_python_dir)
+        print("Adding: %s to Python Path\n" % ganga_python_dir)
 
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()
@@ -174,6 +174,8 @@ class GangaUnitTest(unittest.TestCase):
         else:
             self.wipe_repo=wipe_repo
         self.gangadir = gangadir
+        self.__class__.gangadir = self.gangadir
+        self.__class__.wipe_repo = self.wipe_repo
         start_ganga(gangadir_for_test=gangadir)
 
     def tearDown(self):
