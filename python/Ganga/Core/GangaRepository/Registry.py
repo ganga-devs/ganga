@@ -229,7 +229,7 @@ class Registry(object):
             Raise RegistryKeyError"""
         logger.debug("__getitem__")
         try:
-            self.lock_transaction( this_id, "_getitem")
+            #self.lock_transaction( this_id, "_getitem")
 
             real_id = None
             if type(this_id) is int:
@@ -266,7 +266,7 @@ class Registry(object):
                 return IncompleteObject(self, this_id)
             raise RegistryKeyError("Could not find object #%s" % this_id)
         finally:
-            self.unlock_transaction(this_id)
+            #self.unlock_transaction(this_id)
 
     def __len__(self):
         """ Returns the current number of root objects """
@@ -285,7 +285,7 @@ class Registry(object):
             pass
 
     def updateLocksNow(self):
-        loger.debug("updateLocksNow")
+        logger.debug("updateLocksNow")
         try:
             self.repository.updateLocksNow()
             return
