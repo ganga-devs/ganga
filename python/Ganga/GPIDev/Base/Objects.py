@@ -24,6 +24,8 @@ from Ganga.Core.exceptions import GangaValueError, GangaException
 
 from Ganga.Utility.Plugin import allPlugins
 
+parentLockDict = {}
+
 def _getName(obj):
     """ Return the name of an object based on what we prioritise"""
     returnable = getattr(obj, '_name', getattr(obj, '__name__', None))
@@ -483,12 +485,14 @@ class Descriptor(object):
         obj_reg = None
         obj_prevState = None
         obj = _obj
-        if isinstance(obj, GangaObject):
-            obj_reg = obj._getRegistry()
-            if obj_reg is not None and hasattr(obj_reg, 'isAutoFlushEnabled'):
-                obj_prevState = obj_reg.isAutoFlushEnabled()
-                if obj_prevState is True and hasattr(obj_reg, 'turnOffAutoFlushing'):
-                    obj_reg.turnOffAutoFlushing()
+
+        _obj._acquireParentLock()
+
+        obj_reg = obj._getRegistry()
+        if obj_reg is not None and hasattr(obj_reg, 'isAutoFlushEnabled'):
+            obj_prevState = obj_reg.isAutoFlushEnabled()
+            if obj_prevState is True and hasattr(obj_reg, 'turnOffAutoFlushing'):
+                obj_reg.turnOffAutoFlushing()
 
         val_reg = None
         val_prevState = None
@@ -511,6 +515,8 @@ class Descriptor(object):
         if isinstance(new_val, Node):
             val._setDirty()
 
+        _obj._releaseParentLock()
+
         if val_reg is not None:
             if val_prevState is True and hasattr(val_reg, 'turnOnAutoFlushing'):
                 val_reg.turnOnAutoFlushing()
@@ -518,6 +524,7 @@ class Descriptor(object):
         if obj_reg is not None:
             if obj_prevState is True and hasattr(obj_reg, 'turnOnAutoFlushing'):
                 obj_reg.turnOnAutoFlushing()
+
 
     def __atomic_set__(self, _obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
@@ -784,6 +791,53 @@ class GangaObject(Node):
         else:
             from Ganga.GPIDev.Base.Proxy import TypeMismatchError
             raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
+
+    def _acquireParentLock(self):
+        ## Top level parent
+        registry = self._getRegistry()
+
+        parent = self._getRoot()
+
+        if registry is not None:
+            parent_id = registry.find(parent)
+        else:
+            parent_id = id(parent)
+
+        if parent is None:
+            from Ganga.Core.exceptions import GangaException
+            raise GangaException("Cannot Lock an object without a parent!")
+
+        global parentLockDict
+        if parent_id not in parentLockDict:
+            import threading
+            parentLockDict[parent_id] = threading.Lock()
+
+        parentLockDict[parent_id].acquire()
+
+    def _releaseParentLock(self):
+
+        ## Top level parent
+        registry = self._getRegistry()
+
+        parent = self._getRoot()
+
+        global parentLockDict
+        if parent is not None and registry is not None:
+            parent_id = registry.find(parent)
+            if parent_id in parentLockDict:
+                parentLockDict[parent_id].release()
+                return
+
+        parent_id = id(parent)
+        if parent is not None and parent_id in parentLockDict:
+
+            parentLockDict[parent_id].release()
+            return
+
+        from Ganga.Core.exception import GangaException
+
+        raise GangaException("Cannot release an object if it has no parent associated with it")
+
 
     def __getstate__(self):
         # IMPORTANT: keep this in sync with the __init__
