@@ -49,17 +49,17 @@ class JobAction(object):
         self.description = ''
 
 def getNumAliveThreads():
-    num_alive = 0
+    num_currently_running_command = 0
     for this_thread in ThreadPool:
-        if this_thread._alive:
-            num_alive += 1
-    return num_alive
+        if this_thread._currently_running_command:
+            num_currently_running_command += 1
+    return num_currently_running_command
 
 class MonitoringWorkerThread(GangaThread):
 
     def __init__(self, name):
         GangaThread.__init__(self, name)
-        self._alive = False
+        self._currently_running_command = False
         self._running_cmd = None
 
     def run(self):
@@ -89,7 +89,7 @@ class MonitoringWorkerThread(GangaThread):
             #setattr(threading.currentThread(), 'action', action)
             log.debug("Qin's size is currently: %d" % Qin.qsize())
             log.debug("%s running..." % threading.currentThread())
-            self._alive = True
+            self._currently_running_command = True
             if not isType(action, JobAction):
                 continue
             if action.function == 'stop':
@@ -106,15 +106,21 @@ class MonitoringWorkerThread(GangaThread):
                 else:
                     action.callback_Failure()
 
-            self._alive = False
+            self._currently_running_command = False
 
 # Create the thread pool
 
 
 def _makeThreadPool(threadPoolSize=THREAD_POOL_SIZE, daemonic=True):
+    global ThreadPool
     if ThreadPool and len(ThreadPool) != 0:
-        from Ganga.Core.exceptions import GangaException
-        raise GangaException("Cannot doubbly init the ThreadPool! ThreadPool already populated with threads")
+        #from Ganga.Core.exceptions import GangaException
+        #raise GangaException("Cannot doubbly init the ThreadPool! ThreadPool already populated with threads")
+        logger.error("Found a thread pool already in existance, wiping it and startig again!")
+        for i in ThreadPool:
+            del i
+        del ThreadPool[:]
+        ThreadPool = []
     for i in range(THREAD_POOL_SIZE):
         t = MonitoringWorkerThread(name="MonitoringWorker_%s_%s" % (str(i), str(int(time.time()*1000))))
         ThreadPool.append(t)
