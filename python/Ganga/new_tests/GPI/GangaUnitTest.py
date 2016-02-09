@@ -83,12 +83,8 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing'):
 
     # [PollThread]autostart_monThreads=False has turned this off being done automatically.
     # The thread pool is emptied by _ganga_run_exitfuncs
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import ThreadPool, _makeThreadPool
-    if len(ThreadPool) > 0:
-        del ThreadPool[:]
-        ThreadPool = []
-    if len(ThreadPool) == 0:
-        _makeThreadPool()
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool
+    _makeThreadPool()
 
     # Adapted from the Coordinator class, check for the required credentials and stop if not found
     # Hopefully stops us falling over due to no AFS access of something similar
@@ -191,8 +187,5 @@ class GangaUnitTest(unittest.TestCase):
     def tearDownClass(cls):
         if cls.wipe_repo is True:
             import shutil
-            try:
-                shutil.rmtree(self.gangadir)
-            except:
-                pass
+            shutil.rmtree(self.gangadir, ignore_errors=True)
 
