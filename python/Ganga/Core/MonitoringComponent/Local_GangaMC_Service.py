@@ -163,6 +163,8 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
              return resp.lower()=='y'
     """
 
+    global ThreadPool
+
     def join_worker_threads(threads, timeout=3):
         for t in threads:
             if t.isAlive():
@@ -187,6 +189,7 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
             break
 
     del ThreadPool[:]
+    ThreadPool = []
 
 # purge Qin
 
