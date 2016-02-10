@@ -725,10 +725,14 @@ class Registry(object):
         else:
             objs = []
 
-        obj_ids = []
-
         for obj in objs:
-            obj._acquireParentLock()
+            parent_lock = GangaObject._getParentLock(obj)
+            with parent_lock:
+                self._lockSafeFlush([obj])
+
+    def _lockSafeFlush(self, objs):
+
+        obj_ids = []
 
         for obj in objs:
             this_id = id(self.find(obj))

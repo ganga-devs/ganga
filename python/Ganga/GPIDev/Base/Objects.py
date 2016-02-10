@@ -17,15 +17,13 @@ import Ganga.Utility.logging
 
 from copy import deepcopy, copy
 import inspect
+import threading
 
 import Ganga.GPIDev.Schema as Schema
 
 from Ganga.Core.exceptions import GangaValueError, GangaException
 
 from Ganga.Utility.Plugin import allPlugins
-
-parentLockDict = {}
-childLockDict = {}
 
 def _getName(obj):
     """ Return the name of an object based on what we prioritise"""
@@ -59,6 +57,16 @@ class Node(object):
         self._index_cache = {}
         super(Node, self).__init__()
         #logger.info("Node __init__")
+        self._lock = None
+        self._child_locks = {}
+
+    def _getChildLocks(self):
+        return self._child_locks
+
+    def _getLock(self):
+        if self._lock is None:
+            self._lock = threading.Lock()
+        return self._lock
 
     def __getstate__(self):
         d = self.__dict__
@@ -369,17 +377,11 @@ class Descriptor(object):
 
     def __get__(self, obj, cls):
 
-        self_name = _getName(self)
-        GangaObject._acquireChildLock(self_name, obj)
+        child_lock = GangaObject._getChildLock(_getName(self), obj)
+        with child_lock:
+            return self.__threadingUnsafe__get__(obj, cls)
 
-        try:
-            returnable = self.__really_get(obj, cls)
-        finally:
-            GangaObject._releaseChildLock(self_name, obj)
-
-        return returnable
-
-    def __really_get(self, obj, cls):
+    def __threadingUnsafe__get__(self, obj, cls):
 
         name = _getName(self)
 
@@ -496,14 +498,19 @@ class Descriptor(object):
         ## _obj: parent class which 'owns' the attribute
         ## _val: value of the attribute which we're about to set
 
+        parent_lock = GangaObject._getParentLock(_obj)
+        with parent_lock:
+            child_lock = GangaObject._getChildLock(_getName(self), _obj)
+            with child_lock:
+                self.__threadingUnsafe__set__(_obj, _val)
+
+
+    def __threadingUnsafe__set__(self, obj, val):
+
         obj_reg = None
         obj_prevState = None
-        obj = _obj
 
         self_name = _getName(self)
-
-        GangaObject._acquireParentLock(obj)
-        GangaObject._acquireChildLock(self_name, obj)
 
         obj_reg = obj._getRegistry()
         if obj_reg is not None and hasattr(obj_reg, 'isAutoFlushEnabled'):
@@ -513,7 +520,6 @@ class Descriptor(object):
 
         val_reg = None
         val_prevState = None
-        val = _val
         if isinstance(val, GangaObject):
             val_reg = val._getRegistry()
             if val_reg is not None and hasattr(val_reg, 'isAutoFlushEnabled'):
@@ -521,19 +527,16 @@ class Descriptor(object):
                 if val_prevState is True and hasattr(val_reg, 'turnOffAutoFlushing'):
                     val_reg.turnOffAutoFlushing()
 
-        if type(_val) is str:
+        if type(val) is str:
             from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
-            new_val = stripProxy(runtimeEvalString(_obj, _getName(self), _val))
+            new_val = stripProxy(runtimeEvalString(obj, _getName(self), val))
         else:
-            new_val = _val
+            new_val = val
 
-        self.__atomic_set__(_obj, new_val)
+        self.__atomic_set__(obj, new_val)
 
         if isinstance(new_val, Node):
             val._setDirty()
-
-        GangaObject._releaseChildLock(self_name, obj)
-        GangaObject._releaseParentLock(obj)
 
         if val_reg is not None:
             if val_prevState is True and hasattr(val_reg, 'turnOnAutoFlushing'):
@@ -811,86 +814,44 @@ class GangaObject(Node):
             raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
 
     @staticmethod
-    def _parentString(parent):
-        registry = parent._getRegistry()
+    def _getChildLock(child_name, parent):
+        whole_path = GangaObject._full_childPath(child_name, parent)
 
-        if registry is not None:
-            parent_id = registry.find(parent)
-            parent_str = _getName(registry) + "_" + str(parent_id)
-        else:
-            parent_id = id(parent)
-            parent_str = "UnknownReg_" + str(parent_id)
+        top_parent = parent._getRoot()
 
-        return parent_str
+        top_parent_child_locks = top_parent._getChildLocks()
 
-    @staticmethod
-    def _acquireChildLock(child_name, parent):
-        child_path = GangaObject._getChildPathStr(parent)
+        if whole_path not in top_parent_child_locks:
+            top_parent_child_locks[whole_path] = threading.Lock()
 
-        whole_path = child_path + "_" + child_name
-
-        global childLockDict
-        if whole_path not in childLockDict:
-            import threading
-            childLockDict[whole_path] = threading.Lock()
-
-        childLockDict[whole_path].acquire()
+        return top_parent_child_locks[whole_path]
 
     @staticmethod
-    def _releaseChildLock(child_name, parent):
+    def _full_childPath(child_name, parent):
         child_path = GangaObject._getChildPathStr(parent)
-
-        whole_path = child_path + "_" + child_name
-
-        global childLockDict
-        if whole_path in childLockDict:
-            childLockDict[whole_path].release()
-            return
-
-        raise GangaException("Cannot release Lock: %s" % whole_path)
+        whole_path = child_path + "/" + child_name
+        return whole_path
 
     @staticmethod
     def _getChildPathStr(child):
-        child_str = _getName(child)
+        names = []
+        names.append(_getName(child))
         parent = child._getParent()
 
         while parent is not None:
-            child_str += "_" + _getName(parent)
+            names.append(_getName(parent))
             parent = parent._getParent()
+
+        child_str = "/".join(reversed(names))
 
         return child_str
 
     @staticmethod
-    def _acquireParentLock(child):
+    def _getParentLock(child):
         ## Top level parent
         parent = child._getRoot()
-
-        parent_str = GangaObject._parentString(parent)
-
-        if parent is None:
-            raise GangaException("Cannot Lock an object without a parent!")
-
-        global parentLockDict
-        if parent_str not in parentLockDict:
-            import threading
-            parentLockDict[parent_str] = threading.Lock()
-
-        parentLockDict[parent_str].acquire()
-
-    @staticmethod
-    def _releaseParentLock(child):
-        ## Top level parent
-        parent = child._getRoot()
-
-        parent_str = GangaObject._parentString(parent)
-
-        if parent is not None and parent_str in parentLockDict:
-
-            parentLockDict[parent_str].release()
-            return
-
-        raise GangaException("Cannot release an object if it has no parent associated with it: %s" % parent_str)
-
+        parent_lock = parent._getLock()
+        return parent_lock
 
     def __getstate__(self):
         # IMPORTANT: keep this in sync with the __init__
