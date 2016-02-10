@@ -25,6 +25,7 @@ from Ganga.Core.exceptions import GangaValueError, GangaException
 from Ganga.Utility.Plugin import allPlugins
 
 parentLockDict = {}
+childLockDict = {}
 
 def _getName(obj):
     """ Return the name of an object based on what we prioritise"""
@@ -367,6 +368,19 @@ class Descriptor(object):
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
     def __get__(self, obj, cls):
+
+        self_name = _getName(self)
+        GangaObject._acquireChildLock(self_name, obj)
+
+        try:
+            returnable = self.__really_get(obj, cls)
+        finally:
+            GangaObject._releaseChildLock(self_name, obj)
+
+        return returnable
+
+    def __really_get(self, obj, cls):
+
         name = _getName(self)
 
         # If obj is None then the getter was called on the class so return the Item
@@ -486,7 +500,10 @@ class Descriptor(object):
         obj_prevState = None
         obj = _obj
 
-        _obj._acquireParentLock()
+        self_name = _getName(self)
+
+        GangaObject._acquireParentLock(obj)
+        GangaObject._acquireChildLock(self_name, obj)
 
         obj_reg = obj._getRegistry()
         if obj_reg is not None and hasattr(obj_reg, 'isAutoFlushEnabled'):
@@ -515,7 +532,8 @@ class Descriptor(object):
         if isinstance(new_val, Node):
             val._setDirty()
 
-        _obj._releaseParentLock()
+        GangaObject._releaseChildLock(self_name, obj)
+        GangaObject._releaseParentLock(obj)
 
         if val_reg is not None:
             if val_prevState is True and hasattr(val_reg, 'turnOnAutoFlushing'):
@@ -792,11 +810,9 @@ class GangaObject(Node):
             from Ganga.GPIDev.Base.Proxy import TypeMismatchError
             raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
 
-    def _acquireParentLock(self):
-        ## Top level parent
-        registry = self._getRegistry()
-
-        parent = self._getRoot()
+    @staticmethod
+    def _parentString(parent):
+        registry = parent._getRegistry()
 
         if registry is not None:
             parent_id = registry.find(parent)
@@ -805,10 +821,54 @@ class GangaObject(Node):
             parent_id = id(parent)
             parent_str = "UnknownReg_" + str(parent_id)
 
-        if parent is None:
-            from Ganga.Core.exceptions import GangaException
-            raise GangaException("Cannot Lock an object without a parent!")
+        return parent_str
 
+    @staticmethod
+    def _acquireChildLock(child_name, parent):
+        child_path = GangaObject._getChildPathStr(parent)
+
+        whole_path = child_path + "_" + child_name
+
+        global childLockDict
+        if whole_path not in childLockDict:
+            import threading
+            childLockDict[whole_path] = threading.Lock()
+
+        childLockDict[whole_path].acquire()
+
+    @staticmethod
+    def _releaseChildLock(child_name, parent):
+        child_path = GangaObject._getChildPathStr(parent)
+
+        whole_path = child_path + "_" + child_name
+
+        global childLockDict
+        if whole_path in childLockDict:
+            childLockDict[whole_path].release()
+            return
+
+        raise GangaException("Cannot release Lock: %s" % whole_path)
+
+    @staticmethod
+    def _getChildPathStr(child):
+        child_str = _getName(child)
+        parent = child._getParent()
+
+        while parent is not None:
+            child_str += "_" + _getName(parent)
+            parent = parent._getParent()
+
+        return child_str
+
+    @staticmethod
+    def _acquireParentLock(child):
+        ## Top level parent
+        parent = child._getRoot()
+
+        parent_str = GangaObject._parentString(parent)
+
+        if parent is None:
+            raise GangaException("Cannot Lock an object without a parent!")
 
         global parentLockDict
         if parent_str not in parentLockDict:
@@ -817,31 +877,19 @@ class GangaObject(Node):
 
         parentLockDict[parent_str].acquire()
 
-    def _releaseParentLock(self):
-
+    @staticmethod
+    def _releaseParentLock(child):
         ## Top level parent
-        registry = self._getRegistry()
+        parent = child._getRoot()
 
-        parent = self._getRoot()
+        parent_str = GangaObject._parentString(parent)
 
-        global parentLockDict
-        if parent is not None and registry is not None:
-            parent_id = registry.find(parent)
-            parent_str = _getName(registry) + "_" + str(parent_id)
-            if parent_str in parentLockDict:
-                parentLockDict[parent_str].release()
-                return
-
-        parent_id = id(parent)
-        parent_str = "UnknownReg_" + str(parent_id)
         if parent is not None and parent_str in parentLockDict:
 
             parentLockDict[parent_str].release()
             return
 
-        from Ganga.Core.exception import GangaException
-
-        raise GangaException("Cannot release an object if it has no parent associated with it")
+        raise GangaException("Cannot release an object if it has no parent associated with it: %s" % parent_str)
 
 
     def __getstate__(self):
