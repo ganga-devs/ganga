@@ -1,9 +1,9 @@
-from ..GangaUnitTest import GangaUnitTest
+import unittest
 
-class Issue185(GangaUnitTest):
+class TestSafeSave(unittest.TestCase):
 
-    def test_Issue185(self):
-        "Test that XML files don't disappear"
+    def test_safe_save_threadcalls(self):
+        "Test that XML files don't disappear - See Github Issue #185"
         import threading
         import os
 
