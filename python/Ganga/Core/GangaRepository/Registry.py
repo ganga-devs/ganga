@@ -768,8 +768,6 @@ class Registry(object):
             for obj_id in obj_ids:
                 self.unlock_transaction(obj_id)
 
-            for obj in objs:
-                obj._releaseParentLock()
 
     def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.
