@@ -101,12 +101,10 @@ class Node(object):
         for elem in this_dict.keys():
             if elem not in do_not_copy:
                 this_dict[elem] = deepcopy(this_dict[elem], memo)  # FIXED
-            else:
-                this_dict[elem] = None
 
+        obj.__dict__ = this_dict
         if self._getParent() is not None:
             obj._setParent(self._getParent())
-        setattr(obj, '_index_cache', {})
         setattr(obj, '_registry', self._registry)
         return obj
 
