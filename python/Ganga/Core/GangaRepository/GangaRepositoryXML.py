@@ -10,6 +10,7 @@ import os.path
 import time
 import errno
 import copy
+import threading
 
 from Ganga.Core.GangaRepository.SessionLock import SessionLockManager
 
@@ -79,7 +80,9 @@ def get_backupFile(input_filename):
 
 def safe_save(fn, _obj, to_file, ignore_subs=''):
 
-    obj = stripProxy(_obj)
+    ## A global save works here but can cause things to slow down.
+    ## This function should be safe on a per Repo per object level,
+    ## otherwise we have multiple objects overwriting each others XML
 
     ## Want to make sure that the class is locked as don't want to be performing multiple
     ## sets of file ops on the same object at the same time
@@ -119,47 +122,49 @@ def unsafe_save(fn, obj, to_file, ignore_subs=''):
                 backup_file = get_backupFile(fn)
                 with open(backup_file, "w") as this_file:
                     to_file(obj, this_file, ignore_subs)
-            return
         except IOError as err:
             raise IOError("Could not write file '%s' (%s)" % (fn, err))
         except XMLFileError as err:
             raise err
-    try:
-        if not os.path.exists(fn):
-            if not os.path.isdir(os.path.dirname(fn)):
-                os.makedirs(os.path.dirname(fn))
-                new_file = open(fn, 'a')
+    else:
+        try:
+            if not os.path.exists(fn):
+                if not os.path.isdir(os.path.dirname(fn)):
+                    os.makedirs(os.path.dirname(fn))
+                    new_file = open(fn, 'a')
+                    new_file.close()
+            new_name = fn + '.new'
+            if not os.path.exists(new_name):
+                new_file = open(new_name, 'a')
                 new_file.close()
-        new_name = fn + '.new'
-        if not os.path.exists(new_name):
-            new_file = open(new_name, 'a')
-            new_file.close()
-        with open(new_name, "w") as tmpfile:
-            to_file(obj, tmpfile, ignore_subs)
-            # Important: Flush, then sync file before renaming!
-            # tmpfile.flush()
-            # os.fsync(tmpfile.fileno())
-    except IOError as e:
-        raise IOError("Could not write file %s.new (%s)" % (fn, e))
-    except XMLFileError as err:
-        raise err
-    # Try to make backup copy...
-    try:
-        if os.path.exists(fn+'~'):
-            rmrf(fn + "~")
-    except OSError as e:
-        logger.debug("Error on removing old backup file %s~ (%s) " % (fn, e))
-    try:
-        if os.path.isfile(fn):
-            os.rename(fn, fn + "~")
-    except OSError as e:
-        logger.debug("Error on file backup %s (%s) " % (fn, e))
-    try:
-        if os.path.isfile(fn+'.new'):
-            os.rename(fn + ".new", fn)
-    except OSError as e:
-        raise IOError("Error on moving file %s.new (%s) " % (fn, e))
+            with open(new_name, "w") as tmpfile:
+                to_file(obj, tmpfile, ignore_subs)
+                # Important: Flush, then sync file before renaming!
+                # tmpfile.flush()
+                # os.fsync(tmpfile.fileno())
+        except IOError as e:
+            raise IOError("Could not write file %s.new (%s)" % (fn, e))
+        except XMLFileError as err:
+            raise err
+        # Try to make backup copy...
+        try:
+            if os.path.exists(fn+'~'):
+                rmrf(fn + "~")
+        except OSError as e:
+            logger.debug("Error on removing old backup file %s~ (%s) " % (fn, e))
+        try:
+            if os.path.isfile(fn):
+                os.rename(fn, fn + "~")
+        except OSError as e:
+            logger.debug("Error on file backup %s (%s) " % (fn, e))
+        try:
+            if os.path.isfile(fn+'.new'):
+                os.rename(fn + ".new", fn)
+        except OSError as e:
+            raise IOError("Error on moving file %s.new (%s) " % (fn, e))
 
+## Global lock for above function - See issue #185
+#safe_save.lock = threading.Lock()
 
 def rmrf(name, count=0):
 
