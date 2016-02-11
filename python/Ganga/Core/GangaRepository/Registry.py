@@ -768,7 +768,7 @@ class Registry(object):
                 logger.info("Flushing %s objects to disk this may cause things to slow down" % len(ids))
 
             for _id in ids:
-                logger.info("Flushing: %s of %s" % (_id, str(ids)))
+                logger.debug("Flushing: %s of %s" % (_id, str(ids)))
                 obj = self._objects[_id]
                 ##NB Yes, context managers are neater, but no, at least for the Python version used by LHCb
                 ##   there are problems which send the equivalent line of 'while child_lock' into an infinite loop.

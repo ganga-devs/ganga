@@ -80,6 +80,8 @@ def get_backupFile(input_filename):
 
 def safe_save(fn, _obj, to_file, ignore_subs=''):
 
+    obj = stripProxy(_obj)
+
     ## A global save works here but can cause things to slow down.
     ## This function should be safe on a per Repo per object level,
     ## otherwise we have multiple objects overwriting each others XML
@@ -90,7 +92,7 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
 
     was_locked = False
     if not parent_lock.locked():
-        parent_lock.aquire()
+        parent_lock.acquire()
         was_locked = True
     try:
         unsafe_save(fn, obj, to_file, ignore_subs)
@@ -101,7 +103,7 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
 
 def unsafe_save(fn, obj, to_file, ignore_subs=''):
 
-    logger.info("Safe Save: %s" % str(obj))
+    logger.debug("Safe Save: %s" % str(obj))
 
     check_app_hash(obj)
 

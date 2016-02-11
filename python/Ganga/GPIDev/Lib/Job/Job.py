@@ -52,6 +52,9 @@ def lazyLoadJobApplication(this_job):
 
 def lazyLoadJobObject(this_job, this_attr):
 
+    if this_job._getRegistry().has_loaded(this_job):
+        return getattr(this_job, this_attr)
+
     lzy_loading_str = 'display:'+ this_attr
     job_index_cache = stripProxy(this_job).getNodeIndexCache()
     if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache.keys():
