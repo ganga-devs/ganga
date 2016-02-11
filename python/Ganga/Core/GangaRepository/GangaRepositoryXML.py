@@ -99,7 +99,7 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
     if not parent_lock.locked() and isinstance(obj, GangaObject):
         parent_lock.acquire()
         was_locked = True
-    else:
+    elif not isinstance(obj, GangaObject):
         parent_lock.acquire()
         was_locked = True
     try:
