@@ -14,11 +14,15 @@ config = Ganga.Utility.Config.getConfig('Configuration')
 
 logger = getLogger(modulename=True)
 
+global_test_lock = threading.Lock()
 
 class FakeRegistry(object):
     def __init__(self, name):
         self.name = name
         self.repo = None
+
+    def getRegLock(self, obj):
+        return global_test_lock
 
     def _read_access(self, root, obj):
         if not obj._data:

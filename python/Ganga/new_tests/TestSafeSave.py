@@ -29,3 +29,4 @@ class TestSafeSave(unittest.TestCase):
             th.join()
 
         self.assertTrue(os.path.isfile(testfn))
+

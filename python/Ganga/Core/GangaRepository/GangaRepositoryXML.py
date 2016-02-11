@@ -78,6 +78,8 @@ def get_backupFile(input_filename):
 
     return str(input_filename)+"_"+str(count)
 
+global_lock = threading.Lock()
+
 def safe_save(fn, _obj, to_file, ignore_subs=''):
 
     obj = stripProxy(_obj)
@@ -88,10 +90,16 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
 
     ## Want to make sure that the class is locked as don't want to be performing multiple
     ## sets of file ops on the same object at the same time
-    parent_lock = GangaObject._getParentLock(obj)
+    if isinstance(obj, GangaObject):
+        parent_lock = GangaObject._getParentLock(obj)
+    else:
+        parent_lock = global_lock
 
     was_locked = False
-    if not parent_lock.locked():
+    if not parent_lock.locked() and isinstance(obj, GangaObject):
+        parent_lock.acquire()
+        was_locked = True
+    else:
         parent_lock.acquire()
         was_locked = True
     try:
@@ -129,6 +137,7 @@ def unsafe_save(fn, obj, to_file, ignore_subs=''):
         except XMLFileError as err:
             raise err
     else:
+        new_name = None
         try:
             if not os.path.exists(fn):
                 if not os.path.isdir(os.path.dirname(fn)):
@@ -141,9 +150,9 @@ def unsafe_save(fn, obj, to_file, ignore_subs=''):
                 new_file.close()
             with open(new_name, "w") as tmpfile:
                 to_file(obj, tmpfile, ignore_subs)
-                # Important: Flush, then sync file before renaming!
-                # tmpfile.flush()
-                # os.fsync(tmpfile.fileno())
+            # Important: Flush, then sync file before renaming!
+            # tmpfile.flush()
+            # os.fsync(tmpfile.fileno())
         except IOError as e:
             raise IOError("Could not write file %s.new (%s)" % (fn, e))
         except XMLFileError as err:
