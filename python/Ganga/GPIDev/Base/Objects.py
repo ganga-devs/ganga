@@ -25,6 +25,8 @@ from Ganga.Core.exceptions import GangaValueError, GangaException
 
 from Ganga.Utility.Plugin import allPlugins
 
+from collections import defaultdict
+
 def _getName(obj):
     """ Return the name of an object based on what we prioritise"""
     returnable = getattr(obj, '_name', getattr(obj, '__name__', None))
@@ -58,15 +60,18 @@ class Node(object):
         super(Node, self).__init__()
         #logger.info("Node __init__")
         self._lock = None
-        self._child_locks = {}
+        self._child_locks = defaultdict( lambda: threading.RLock() )
 
     def _getChildLocks(self):
         return self._child_locks
 
     def _getLock(self):
-        if self._lock is None:
-            self._lock = threading.Lock()
-        return self._lock
+        if self._getRegistry() is not None:
+            return self._getRegistry().getRegLock(self)
+        else:
+            if self._lock is None:
+                self._lock = threading.Lock()
+            return self._lock
 
     def __getstate__(self):
         d = self.__dict__
@@ -377,9 +382,22 @@ class Descriptor(object):
 
     def __get__(self, obj, cls):
 
+        #logger.debug("Getting")
         child_lock = GangaObject._getChildLock(_getName(self), obj)
-        with child_lock:
-            return self.__threadingUnsafe__get__(obj, cls)
+
+        ##NB Yes, context managers are neater, but no, at least for the Python version used by LHCb
+        ##   there are problems which send the equivalent line of 'while child_lock' into an infinite loop.
+        ##   This is caused by what appears to be a bug in the heavily thread-dependant and nested use of these contexts
+
+        ## This is an RLock so it's 'safe' to just re-aquire the lock here if we have it as it should only be
+        ## set for any attributes currently being modified. I.e. it's safe to get an attribute in a modify method (only ill advised)
+        ## If the attribute isn't locked this is a relatively soft-lock that shouldn't cause too many collisions
+        child_lock.acquire()
+        try:
+            returnable = self.__threadingUnsafe__get__(obj, cls)
+        finally:
+            child_lock.release()
+        return returnable
 
     def __threadingUnsafe__get__(self, obj, cls):
 
@@ -498,12 +516,26 @@ class Descriptor(object):
         ## _obj: parent class which 'owns' the attribute
         ## _val: value of the attribute which we're about to set
 
-        parent_lock = GangaObject._getParentLock(_obj)
-        with parent_lock:
-            child_lock = GangaObject._getChildLock(_getName(self), _obj)
-            with child_lock:
-                self.__threadingUnsafe__set__(_obj, _val)
+        #logger.debug("Setting")
 
+        ##NB Yes, context managers are neater, but no, at least for the Python version used by LHCb
+        ##   there are problems which send the equivalent line of 'while child_lock' into an infinite loop.
+        ##   This is caused by what appears to be a bug in the heavily thread-dependant and nested use of these contexts
+
+        ## Want to doubbly lock here. Lock the parent class at the top and lock the attribute by path
+
+        parent_lock = GangaObject._getParentLock(_obj)
+        parent_lock.acquire()
+        try:
+            child_lock = GangaObject._getChildLock(_getName(self), _obj)
+            child_lock.acquire()
+            try:
+                self.__threadingUnsafe__set__(_obj, _val)
+            finally:
+                child_lock.release()
+        finally:
+            parent_lock.release()
+        #logger.debug("Set")
 
     def __threadingUnsafe__set__(self, obj, val):
 
@@ -821,15 +853,13 @@ class GangaObject(Node):
 
         top_parent_child_locks = top_parent._getChildLocks()
 
-        if whole_path not in top_parent_child_locks:
-            top_parent_child_locks[whole_path] = threading.Lock()
-
+        #logger.info("Getting child Lock: %s" % whole_path)
         return top_parent_child_locks[whole_path]
 
     @staticmethod
     def _full_childPath(child_name, parent):
         child_path = GangaObject._getChildPathStr(parent)
-        whole_path = child_path + "/" + child_name
+        whole_path = child_path + "\\" + child_name
         return whole_path
 
     @staticmethod
@@ -842,7 +872,7 @@ class GangaObject(Node):
             names.append(_getName(parent))
             parent = parent._getParent()
 
-        child_str = "/".join(reversed(names))
+        child_str = "\\".join(reversed(names))
 
         return child_str
 
@@ -851,6 +881,8 @@ class GangaObject(Node):
         ## Top level parent
         parent = child._getRoot()
         parent_lock = parent._getLock()
+        #if hasattr(parent, 'id'):
+        #    logger.info("Getting parent Lock: %s" % parent.id)
         return parent_lock
 
     def __getstate__(self):
@@ -900,9 +932,9 @@ class GangaObject(Node):
                     setattr(self_copy, name, self._schema.getDefaultValue(name))
                 else:
                     if hasattr(self, name):
-                        setattr(self_copy, name, deepcopy(getattr(self, name)))
+                        self_copy.setNodeAttribute(name, deepcopy(getattr(self, name)))
                     else:
-                        setattr(self_copy, name, self._schema.getDefaultValue(name))
+                        self_copy.setNodeAttribute(name, self._schema.getDefaultValue(name))
 
                 this_attr = getattr(self_copy, name)
                 if isinstance(this_attr, Node):

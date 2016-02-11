@@ -23,7 +23,7 @@ from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
-from Ganga.GPIDev.Base.Objects import Node
+from Ganga.GPIDev.Base.Objects import Node, GangaObject
 from Ganga.Core.GangaRepository import SubJobXMLList
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
@@ -80,6 +80,25 @@ def get_backupFile(input_filename):
 def safe_save(fn, _obj, to_file, ignore_subs=''):
 
     obj = stripProxy(_obj)
+
+    ## Want to make sure that the class is locked as don't want to be performing multiple
+    ## sets of file ops on the same object at the same time
+    parent_lock = GangaObject._getParentLock(obj)
+
+    was_locked = False
+    if not parent_lock.locked():
+        parent_lock.aquire()
+        was_locked = True
+    try:
+        unsafe_save(fn, obj, to_file, ignore_subs)
+    finally:
+        if was_locked:
+            parent_lock.release()
+
+
+def unsafe_save(fn, obj, to_file, ignore_subs=''):
+
+    logger.info("Safe Save: %s" % str(obj))
 
     check_app_hash(obj)
 
@@ -569,9 +588,9 @@ class GangaRepositoryLocal(GangaRepository):
                 self.printed_explanation = True
         logger.debug("updated index done")
 
-        if len(changed_ids) != 0:
-            isShutdown = not firstRun
-            self._write_master_cache(shutdown=isShutdown)
+        #if len(changed_ids) != 0:
+        #    isShutdown = not firstRun
+        #    self._write_master_cache(shutdown=isShutdown)
 
         return changed_ids
 

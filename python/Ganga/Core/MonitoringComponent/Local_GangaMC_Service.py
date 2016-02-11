@@ -22,6 +22,8 @@ from Ganga.Utility.logging import getLogger, log_unknown_exception
 from Ganga.Core import BackendError
 from Ganga.Utility.Config import getConfig
 
+from collections import defaultdict
+
 log = getLogger()
 
 config = getConfig("PollThread")
@@ -29,7 +31,7 @@ THREAD_POOL_SIZE = config['update_thread_pool_size']
 Qin = Queue.Queue()
 ThreadPool = []
 
-heartbeat_times = {}
+heartbeat_times = None
 global_start_time = None
 
 # The JobAction class encapsulates a function, its arguments and its post result action
@@ -64,14 +66,12 @@ def checkHeartBeat():
 
     for this_thread in ThreadPool:
         thread_name = this_thread._thread_name
-        if heartbeat_times[thread_name] > 0:
-            last_time = heartbeat_times[thread_name]
-        else:
-            last_time = global_start_time
+
+        last_time = heartbeat_times[thread_name]
 
         dead_time = 180.
 
-        if (latest_timeNow - last_time) > dead_time:
+        if (latest_timeNow - last_time) > dead_time and this_thread.isAlive() and this_thread._currently_running_command is True:
 
             log.warning("Thread: %s Has not updated the heartbeat in %ss!! It's possibly dead" %(thread_name, str(dead_time)))
             log.warning("Thread is attempting to execute: %s" % this_thread._running_cmd)
@@ -86,7 +86,6 @@ class MonitoringWorkerThread(GangaThread):
 
     def run(self):
         self._execUpdateAction()
-        heartbeat_times[self._thread_name] = time.time()
 
     # This function takes a JobAction object from the Qin queue,
     # executes the embedded function and runs post result actions.
@@ -98,6 +97,7 @@ class MonitoringWorkerThread(GangaThread):
             log.debug("%s waiting..." % threading.currentThread())
             #setattr(threading.currentThread(), 'action', None)
 
+            heartbeat_times[self._thread_name] = time.time()
 
             while not self.should_stop():
                 try:
@@ -138,21 +138,28 @@ class MonitoringWorkerThread(GangaThread):
 
 
 def _makeThreadPool(threadPoolSize=THREAD_POOL_SIZE, daemonic=True):
-    global ThreadPool, heartbeat_times, global_start_time
+    global ThreadPool, global_start_time, heartbeat_times
     global_start_time = time.time()
     if ThreadPool and len(ThreadPool) != 0:
+
+        for this_thread in ThreadPool:
+            log.error("%s running: %s" % (this_thread._thread_name, this_thread._running_cmd))
+
         #from Ganga.Core.exceptions import GangaException
         #raise GangaException("Cannot doubbly init the ThreadPool! ThreadPool already populated with threads")
         log.error("Found a thread pool already in existance, wiping it and startig again!")
         del ThreadPool[:]
-        del heartbeat_times[:]
         ThreadPool = []
-        heartbeat_times = []
+
+    if heartbeat_times is not None:
+        heartbeat_times = None
+
+    heartbeat_times = defaultdict( lambda: global_start_time )
+
     for i in range(THREAD_POOL_SIZE):
         thread_name = "MonitoringWorker_%s_%s" % (str(i), str(int(time.time()*1000)))
         t = MonitoringWorkerThread(name=thread_name)
         ThreadPool.append(t)
-        heartbeat_times[thread_name] = -1
         t.start()
 
 
@@ -173,6 +180,7 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
         for t in threads:
             if t.isAlive():
                 t.join(timeout)
+            t.stop()
 
     for i in range(len(ThreadPool)):
         Qin.put(JobAction('stop'))
@@ -213,7 +221,7 @@ def _purge_actions_queue():
         except Queue.Empty:
             break
 
-if config['autostart_monThreads']:
+if config['autostart_monThreads'] is True:
     _makeThreadPool()
 
 
@@ -764,6 +772,7 @@ class JobRegistry_Monitor(GangaThread):
         #if was_enabled:
         #    log.info("Monitoring Loop has stopped")
 
+        _purge_actions_queue()
         stop_and_free_thread_pool(fail_cb, max_retries)
 
         return True
@@ -808,6 +817,7 @@ class JobRegistry_Monitor(GangaThread):
         # wait for all worker threads to finish
         #self.__awaitTermination()
         # join the worker threads
+        _purge_actions_queue()
         stop_and_free_thread_pool(fail_cb, max_retries)
         ###log.info( 'Monitoring component stopped successfully!' )
 

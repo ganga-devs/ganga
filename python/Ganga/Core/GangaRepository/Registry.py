@@ -10,6 +10,7 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from collections import defaultdict
 
 logger = getLogger()
 
@@ -196,10 +197,21 @@ class Registry(object):
         self._accessLockDict = {}
 
 
-        self.shouldReleaseRun = True
+#        self.shouldReleaseRun = True
 #        self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
 #        self.releaseThread.daemon = True
 #        self.releaseThread.start()
+
+        self._regLocks = defaultdict( lambda: threading.Lock() )
+
+    def getRegLock(self, obj):
+
+        try:
+            obj_id = self.find(obj)
+        except ObjectNotInRegistryError:
+            obj_id = id(obj)
+
+        return self._regLocks[obj_id]
 
     def hasStarted(self):
         return self._hasStarted
@@ -383,7 +395,6 @@ class Registry(object):
         if decision is True:
             self._flushLastTime = timeNow
             self.dirty_hits = 0
-
 
         return decision
 
@@ -671,12 +682,12 @@ class Registry(object):
         else:
             objs = [obj for obj in self.dirty_objs.itervalues()]
 
-        if False:
-            thread = threading.Thread(target=self._flush, args=())
+        if self.checkShouldFlush():
+            thread = threading.Thread(target=self._flush, args=(objs))
             thread.daemon = True
             thread.run()
-        else:
-            self._flush(objs)
+            del thread
+            thread = None
 
     def _dirty(self, _obj):
         """ Mark an object as dirty.
@@ -725,10 +736,7 @@ class Registry(object):
         else:
             objs = []
 
-        for obj in objs:
-            parent_lock = GangaObject._getParentLock(obj)
-            with parent_lock:
-                self._lockSafeFlush([obj])
+        self._lockSafeFlush(objs)
 
     def _lockSafeFlush(self, objs):
 
@@ -748,15 +756,31 @@ class Registry(object):
             for obj in objs:
                 self.dirty_objs[getattr(obj, _reg_id_str)] = obj
             ids = []
-            for reg_id, obj in self.dirty_objs.iteritems():
+            for reg_id in self.dirty_objs.keys():
                 try:
                     ids.append(reg_id)
                 except ObjectNotInRegistryError as err:
-                    logger.error("flush: Object: %s not in Repository: %s" % (str(obj), str(err)))
+                    logger.error("flush: Object: %s not in Repository: %s" % (str(self._objects[reg_id]), str(err)))
                     raise err
             logger.debug("repository.flush(%s)" % ids)
-            self.repository.flush(ids)
-            self.repository.unlock(ids)
+
+            if len(ids) > 20:
+                logger.info("Flushing %s objects to disk this may cause things to slow down" % len(ids))
+
+            for _id in ids:
+                logger.info("Flushing: %s of %s" % (_id, str(ids)))
+                obj = self._objects[_id]
+                ##NB Yes, context managers are neater, but no, at least for the Python version used by LHCb
+                ##   there are problems which send the equivalent line of 'while child_lock' into an infinite loop.
+                ##   This is caused by what appears to be a bug in the heavily thread-dependant and nested use of these contexts
+                parent_lock = GangaObject._getParentLock(obj)
+                ## Want to block here always as only ever want to be calling this when __set__ isn't being called on class
+                parent_lock.acquire()
+                try:
+                    self.repository.flush([_id])
+                    self.repository.unlock([_id])
+                finally:
+                    parent_lock.release()
             self.dirty_objs = {}
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
             raise err
