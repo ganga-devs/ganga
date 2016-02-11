@@ -401,7 +401,9 @@ class Job(GangaObject):
         # Attempt to spend too long loading un-needed objects into memory in
         # order to read job status
         if name == 'status':
-            return object.__getattribute__(self, 'status')
+            ##NO
+            #return object.__getattribute__(self, 'status')
+            return lazyLoadJobStatus(self)
 
         # FIXME Add some method of checking what objects are known in advance of calling the __getattribute__ method
         # Pref one that doesn't involve loading the job object if not needed
