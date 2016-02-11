@@ -18,9 +18,9 @@ class PrepRegistry(Registry):
 
         super(PrepRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
 
-        self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
-        self.releaseThread.daemon = True
-        self.releaseThread.start()
+        #self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
+        #self.releaseThread.daemon = True
+        #self.releaseThread.start()
 
 
     def startup(self):
@@ -161,7 +161,7 @@ class ShareRef(GangaObject):
             logger.error('Directory %s does not exist' % shareddir)
 
         self._setDirty()
-        self._releaseWriteAccess()
+        #self._releaseWriteAccess()
 
     def decrease(self, shareddir, remove=0):
         """Reduce the reference counter for a given shared directory by 1. If the current value
@@ -188,7 +188,7 @@ class ShareRef(GangaObject):
             self.__getName()[basedir] = 0
 
         self._setDirty()
-        self._releaseWriteAccess()
+        #self._releaseWriteAccess()
 
     def lookup(self, sharedir, unprepare=False):
         """
