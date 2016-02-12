@@ -78,36 +78,18 @@ def get_backupFile(input_filename):
 
     return str(input_filename)+"_"+str(count)
 
-global_lock = threading.Lock()
-
 def safe_save(fn, _obj, to_file, ignore_subs=''):
 
     obj = stripProxy(_obj)
 
-    ## A global save works here but can cause things to slow down.
-    ## This function should be safe on a per Repo per object level,
-    ## otherwise we have multiple objects overwriting each others XML
+    ## A global lock here si safest as it prevents multiple threads attempting to write the same object at the same time
+    ## Not possible to use a per-GangaObject lock as this is locked at a much higher level to prevent
+    ## multiple flushes and changing an object whilst it's flushing
 
-    ## Want to make sure that the class is locked as don't want to be performing multiple
-    ## sets of file ops on the same object at the same time
-    if isinstance(obj, GangaObject):
-        parent_lock = GangaObject._getParentLock(obj)
-    else:
-        parent_lock = global_lock
-
-    was_locked = False
-    if not parent_lock.locked() and isinstance(obj, GangaObject):
-        parent_lock.acquire()
-        was_locked = True
-    elif not isinstance(obj, GangaObject):
-        parent_lock.acquire()
-        was_locked = True
-    try:
+    with safe_save.lock:
         unsafe_save(fn, obj, to_file, ignore_subs)
-    finally:
-        if was_locked:
-            parent_lock.release()
 
+safe_save.lock = threading.Lock()
 
 def unsafe_save(fn, obj, to_file, ignore_subs=''):
 
