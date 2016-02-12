@@ -2,11 +2,11 @@ from __future__ import absolute_import
 
 from ..GangaUnitTest import GangaUnitTest
 
-class testLazyLoading(GangaUnitTest):
+class TestLazyLoading(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(testLazyLoading, self).setUp()
+        super(TestLazyLoading, self).setUp()
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from ..GangaUnitTest import GangaUnitTest
 
-class testParser(GangaUnitTest):
+class TestParser(GangaUnitTest):
 
     def test_heavilyNested(self):
         from Ganga.GPI import Job, jobs
