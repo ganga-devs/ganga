@@ -1,0 +1,6 @@
+# This first line will grab the requirements from setup.py
+-e .
+
+nose
+unittest2
+coverage
