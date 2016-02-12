@@ -7,7 +7,7 @@ from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 class TestSafeSave(unittest.TestCase):
 
     def test_safe_save_threadcalls(self):
-        "Test that XML files don't disappear - See Github Issue #185"
+        """Test that XML files don't disappear - See Github Issue #185"""
         import threading
         import os
 
