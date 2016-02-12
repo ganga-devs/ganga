@@ -42,8 +42,7 @@ class WorkerThreadPool(object):
         if len(self.__worker_threads) > 0:
             logger.warning("Threads already started!")
             for i in self.__worker_threads:
-                logger.info(
-                    "Worker Thread: %s is already running!" % i.gangaName)
+                logger.info("Worker Thread: %s is already running!" % i.gangaName)
             return
 
         for i in range(num_worker_threads):
