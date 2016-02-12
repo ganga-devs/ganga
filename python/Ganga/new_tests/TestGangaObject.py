@@ -155,8 +155,8 @@ class _ExcThread(threading.Thread):
         finally:
             del self.target, self.args, self.kwargs
 
-    def join(self, timeout=None, balancing=True):
-        threading.Thread.join(self, timeout, balancing)
+    def join(self, *args, **kwargs):
+        threading.Thread.join(self, *args, **kwargs)
         if self.exc:
             raise self.exc[0], self.exc[1], self.exc[2]
 
