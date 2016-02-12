@@ -11,7 +11,7 @@ class testQueuedSubmit(GangaUnitTest):
 
     def setUp(self):
         extra_opts = [('Queues', 'NumWorkerThreads', global_num_threads)]
-        super(QueuedSubmitTest, self).setUp(extra_opts=extra_opts)
+        super(testQueuedSubmit, self).setUp(extra_opts=extra_opts)
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
