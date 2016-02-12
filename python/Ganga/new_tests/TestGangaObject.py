@@ -203,6 +203,7 @@ class MultiThreadedTestCase(TestCase):
         for i in range(num_threads):
             target = random.choice(functions)
             t = _ExcThread(target=target, args=[i])
+            t.name = t.name + '-' + target.__name__
             threads.append(t)
             t.start()
 
