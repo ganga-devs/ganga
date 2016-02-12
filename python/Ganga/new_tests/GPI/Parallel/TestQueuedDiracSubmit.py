@@ -57,7 +57,7 @@ class TestQueuedDiracSubmit(GangaUnitTest):
 
         for j in jobs:
             ## ala Ganga/GPIDev/Adapters/IBackend
-            queues.add(stripProx(Dirac).master_updateMonitoringInformation, ([stripProxy(j)],))
+            queues.add(stripProxy(Dirac).master_updateMonitoringInformation, ([stripProxy(j)],))
 
         while queues.totalNumUserThreads() > 0:
             time.sleep(1.)
