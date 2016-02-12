@@ -211,9 +211,8 @@ class MultiThreadedTestCase(TestCase):
         start = cur_time = time.time()
         while cur_time <= (start + timeout):
             for thread in threads:
-                if thread.is_alive():
-                    # If it's still running, try to finish it
-                    thread.join(timeout=0)
+                # If it's still running, try to finish it
+                thread.join(timeout=0)
             if all(not t.is_alive() for t in threads):
                 break  # If we're al done, finish the loop
             time.sleep(0.1)
