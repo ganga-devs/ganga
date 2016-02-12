@@ -35,3 +35,4 @@ class TestSafeSave(unittest.TestCase):
         os.remove(testfn)
         self.assertTrue(os.path.isfile(testfn+'~'))
         os.remove(testfn+'~')
+        self.assertFalse(os.path.isfile(testfn+'.new'))
