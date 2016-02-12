@@ -319,7 +319,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
         def change(thread_number):
             rand = random.Random()
             rand.seed(time.clock() + thread_number)
-            for _ in range(50):  # Run this thread many times to keep it running for long enough to see problems.
+            for _ in range(10):  # Run this thread many times to keep it running for long enough to see problems.
                 with o.lock:
                     num = rand.randint(0, 1000)
                     o.a = num
@@ -346,4 +346,4 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
                     time.sleep(rand.uniform(0, 1E-6))
                     self.assertEqual(o.b.a, num)
 
-        self.run_threads([change])
+        self.run_threads([change], num_threads=50)
