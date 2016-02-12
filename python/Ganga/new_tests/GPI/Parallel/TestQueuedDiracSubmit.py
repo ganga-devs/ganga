@@ -7,11 +7,11 @@ import time
 global_num_threads = 5
 global_num_jobs = global_num_threads*5
 
-class testQueuedDiracSubmit(GangaUnitTest):
+class TestQueuedDiracSubmit(GangaUnitTest):
 
     def setUp(self):
         extra_opts = [('Queues', 'NumWorkerThreads', global_num_threads)]
-        super(testQueuedDiracSubmit, self).setUp(extra_opts=extra_opts)
+        super(TestQueuedDiracSubmit, self).setUp(extra_opts=extra_opts)
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
