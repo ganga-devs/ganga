@@ -1,5 +1,8 @@
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
-from unittest import TestCase
 import threading
 import time
 import random
@@ -10,7 +13,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass
 
 
-class TestGangaObject(TestCase):
+class TestGangaObject(unittest.TestCase):
 
     def setUp(self):
         self.obj = GangaObject()
@@ -87,7 +90,7 @@ class TestGangaObject(TestCase):
         pass
 
 
-class TestNode(TestCase):
+class TestNode(unittest.TestCase):
 
     def setUp(self):
         self.obj = Node(None)
@@ -121,7 +124,7 @@ class TestNode(TestCase):
         pass
 
 
-class TestObjectMetaclass(TestCase):
+class TestObjectMetaclass(unittest.TestCase):
 
     def testObjectMetaclass(self):
         class GangaObject(Node):
@@ -161,7 +164,7 @@ class _ExcThread(threading.Thread):
             raise self.exc[0], self.exc[1], self.exc[2]
 
 
-class MultiThreadedTestCase(TestCase):
+class MultiThreadedTestCase(unittest.TestCase):
     """
     This is a specialisation of the ``unittest.TestCase`` to provide a function which can run multiple threads at once.
     These sorts of stress tests work best if each thread is relatively long-lived so make sure they either call a long-running function or loop many times within the function.
@@ -286,7 +289,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
         def write_read(thread_number):
             rand = random.Random()
             rand.seed(time.clock() + thread_number)
-            for _ in range(300):
+            for _ in range(100):
                 with child.lock:
                     num = rand.randint(0, 1000)
                     o.a = num
@@ -298,7 +301,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
                     self.assertIs(o.b, child)
 
         def write(thread_number):
-            for _ in range(300):
+            for _ in range(100):
                 o.a = -1  # Not in the range being set by other threads
                 o.b.a = -1
 
@@ -316,7 +319,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
         def change(thread_number):
             rand = random.Random()
             rand.seed(time.clock() + thread_number)
-            for _ in range(100):  # Run this thread many times to keep it running for long enough to see problems.
+            for _ in range(50):  # Run this thread many times to keep it running for long enough to see problems.
                 with o.lock:
                     num = rand.randint(0, 1000)
                     o.a = num
