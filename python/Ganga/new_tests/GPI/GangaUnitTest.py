@@ -173,6 +173,7 @@ class GangaUnitTest(unittest.TestCase):
         if gangadir is None:
             import os
             gangadir = os.path.join('$HOME/gangadir_testing', self.__class__.__name__)
+            gangadir = os.path.expanduser(os.path.expandvars(ganagdir))
             if not os.path.isdir(gangadir):
                 os.makedirs(gangadir)
         if wipe_repo is None:
