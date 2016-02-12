@@ -4,14 +4,14 @@ from ..GangaUnitTest import GangaUnitTest
 
 import time
 
-global_num_threads = 20
+global_num_threads = 5
 global_num_jobs = global_num_threads*5
 
-class QueuedSubmitTest(GangaUnitTest):
+class testQueuedDiracSubmit(GangaUnitTest):
 
     def setUp(self):
         extra_opts = [('Queues', 'NumWorkerThreads', global_num_threads)]
-        super(QueuedSubmitTest, self).setUp(extra_opts=extra_opts)
+        super(QueuedDiracSubmitTest, self).setUp(extra_opts=extra_opts)
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
@@ -22,7 +22,7 @@ class QueuedSubmitTest(GangaUnitTest):
         assert(num_threads == global_num_threads)
 
     def test_b_SetupJobs(self):
-        from Ganga.GPI import Job, jobs
+        from Ganga.GPI import Job, jobs, Dirac
 
         ## Just incase, I know this shouldn't be here, but if the repo gets polluted this is a sane fix
         for j in jobs:
@@ -32,7 +32,7 @@ class QueuedSubmitTest(GangaUnitTest):
                 pass
 
         for i in range(global_num_jobs):
-            j=Job()
+            j=Job(backend=Dirac())
 
         print("job len: %s" % str(len(jobs)))
 
@@ -51,17 +51,20 @@ class QueuedSubmitTest(GangaUnitTest):
         for j in jobs:
             assert(j.status != "new")
 
-    def test_d_Finished(self):
-        from Ganga.GPI import jobs, queues
-
-        time.sleep(3.)
-
-        while queues.totalNumIntThreads() > 0:
-            time.sleep(1.)
+    def test_d_update(self):
+        from Ganga.GPI import jobs, queues, Dirac
+        from Ganga.GPIDev.Base.Proxy import stripProxy
 
         for j in jobs:
-            assert(j.status == "completed")
+            ## ala Ganga/GPIDev/Adapters/IBackend
+            queues.add(stripProx(Dirac).master_updateMonitoringInformation, ([stripProxy(j)],))
 
+        while queues.totalNumUserThreads() > 0:
+            time.sleep(1.)
+
+        ## Dirac backend updates the statusInfo to always be something not '' when the monitoring has updated correctly
+        for j in jobs:
+            assert(j.backend.statusInfo != '')
 
     def test_e_Cleanup(self):
         from Ganga.GPI import jobs
