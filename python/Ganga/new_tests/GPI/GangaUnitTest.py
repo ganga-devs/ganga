@@ -5,7 +5,7 @@ except ImportError:
     import unittest
 
 
-def start_ganga(gangadir_for_test='$HOME/gangadir_testing'):
+def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
 
     import sys
     import os.path
@@ -64,6 +64,9 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing'):
         # Perform the configuration and bootstrap steps in ganga
         logger.info("Parsing Configuration Options")
         Ganga.Runtime._prog.configure()
+        from Ganga.Utility.Config import setConfigOption
+        for extra_opt in extra_opts:
+            setConfigOption(*extra_opt)
         logger.info("Initializing")
         Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
     else:
@@ -95,6 +98,9 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing'):
 
     if missing_cred:
         raise Exception("Failed due to missing credentials %s" % str(missing_cred))
+
+    from Ganga.GPI import queues
+    queues.unlock()
 
     logger.info("Passing to Unittest")
 
@@ -160,7 +166,7 @@ class GangaUnitTest(unittest.TestCase):
     wipe_repo = None
     gangadir = None
 
-    def setUp(self, gangadir=None, wipe_repo=None):
+    def setUp(self, gangadir=None, wipe_repo=None, extra_opts=[]):
         unittest.TestCase.setUp(self)
         # Start ganga and internal services
         # This is called before each unittest
@@ -176,7 +182,7 @@ class GangaUnitTest(unittest.TestCase):
         self.gangadir = gangadir
         self.__class__.gangadir = self.gangadir
         self.__class__.wipe_repo = self.wipe_repo
-        start_ganga(gangadir_for_test=gangadir)
+        start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
