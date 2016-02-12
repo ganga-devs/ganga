@@ -66,8 +66,20 @@ class TestQueuedDiracSubmit(GangaUnitTest):
         for j in jobs:
             assert(j.backend.statusInfo != '')
 
+        ## Flush any waiting/pending 'completing' tasks
+        queues._stop_all_threads(True)
+        queues.lock()
+        while queues.totalNumIntThreads() > 0:
+            time.sleep(1.)
+
     def test_e_Cleanup(self):
-        from Ganga.GPI import jobs
+        from Ganga.GPI import jobs, queues
+
+        ## Flush any waiting/pending 'completing' tasks
+        queues._stop_all_threads(True)
+        queues.lock()
+        while queues.totalNumIntThreads() > 0:
+            time.sleep(1.)
 
         for j in jobs:
             try:
