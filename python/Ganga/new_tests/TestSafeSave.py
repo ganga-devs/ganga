@@ -1,4 +1,6 @@
 import unittest
+from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
+
 
 class TestSafeSave(unittest.TestCase):
 
@@ -16,11 +18,12 @@ class TestSafeSave(unittest.TestCase):
         testfn = '/tmp/xmltest.tmp'
         ths = []
 
+        o = LocalFile()
         if os.path.isfile(testfn):
             os.remove(testfn)
 
         for i in range(0, 500):
-            ths.append( threading.Thread(target=safe_save, args=(testfn, [], my_to_file ) ) )
+            ths.append(threading.Thread(target=safe_save, args=(testfn, o, my_to_file)))
 
         for th in ths:
             th.start()
