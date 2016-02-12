@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from ..GangaUnitTest import GangaUnitTest
 
-class LazyLoadingTest(GangaUnitTest):
+class testLazyLoading(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
