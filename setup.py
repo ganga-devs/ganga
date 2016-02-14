@@ -57,16 +57,16 @@ class RunTestsCommand(Command):
         cmd = ['nosetests']
 
         if self.type in ['unit', 'all']:
-            cmd.append('Ganga/new_tests/*.py')
+            cmd.append('python/Ganga/new_tests/*.py')
         if self.type in ['integration', 'all']:
-            cmd.append('Ganga/new_tests/GPI --testmatch="(?:\\b|_)([tT]est|Savannah|JIRA)"')
+            cmd.append('python/Ganga/new_tests/GPI')
 
         if self.coverage:
             cmd.append('--with-coverage --cover-erase --cover-xml --cover-package=.')
         if self.xunit:
             cmd.append('--with-xunit')
 
-        subprocess.check_call(' '.join(cmd), cwd=ganga_python_dir, shell=True, env=self._getTestEnv())
+        subprocess.check_call(' '.join(cmd), cwd=file_path, shell=True, env=self._getTestEnv())
 
 
 setup(name='ganga',
