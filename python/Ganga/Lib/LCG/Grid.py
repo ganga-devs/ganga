@@ -685,7 +685,7 @@ class Grid(object):
         jid_hash = urlparse.urlparse(jobid)[2][1:]
 
         if outdir.count(jid_hash):
-            if self.shell.system('mv %s/* %s' % (outdir, directory)) == 0:
+            if self.shell.system('mv "%s"/* "%s"' % (outdir, directory)) == 0:
                 try:
                     os.rmdir(outdir)
                 except Exception as msg:
