@@ -11,10 +11,7 @@ sys.path.insert(0, ganga_python_dir)
 from Ganga import _gangaVersion
 
 def readme():
-    import os.path
-    filename = 'README.rst'
-    if not os.path.exists(filename):
-        filename = os.path.abspath(os.path.join(file_path, filename))
+    filename = os.path.abspath(os.path.join(file_path, 'README.rst'))
     with open(filename) as f:
         return f.read()
 
