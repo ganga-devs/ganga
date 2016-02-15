@@ -249,7 +249,7 @@ poll_config.addOption('HeartBeatTimeOut', 300, 'Time before the user gets the wa
 
 # ------------------------------------------------
 # Feedback
-feedback_config = makeConfig('Feedback', 'Settings for the Feedback plugin. Cannot be changed ruding the interactive Ganga session.')
+feedback_config = makeConfig('Feedback', 'Settings for the Feedback plugin. Cannot be changed during the interactive Ganga session.')
 feedback_config.addOption('uploadServer', 'http://gangamon.cern.ch/django/errorreports', 'The server to connect to')
 
 # ------------------------------------------------
