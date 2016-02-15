@@ -338,7 +338,7 @@ def _guess_module_logger_name(modulename, frame=None):
         return name
 
     # remove module name
-    name = remove_tail(name, '.')
+    #name = remove_tail(name, '.')
 
     if name == 'ganga':  # interactive IPython session
         name = "Ganga.GPI"

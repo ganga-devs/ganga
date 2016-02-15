@@ -17,12 +17,15 @@ import Ganga.Utility.logging
 
 from copy import deepcopy, copy
 import inspect
+import threading
 
 import Ganga.GPIDev.Schema as Schema
 
 from Ganga.Core.exceptions import GangaValueError, GangaException
 
 from Ganga.Utility.Plugin import allPlugins
+
+from collections import defaultdict
 
 def _getName(obj):
     """ Return the name of an object based on what we prioritise"""
@@ -56,6 +59,19 @@ class Node(object):
         self._index_cache = {}
         super(Node, self).__init__()
         #logger.info("Node __init__")
+        self._lock = None
+        self._child_locks = defaultdict( lambda: threading.RLock() )
+
+    def _getChildLocks(self):
+        return self._child_locks
+
+    def _getLock(self):
+        if self._getRegistry() is not None:
+            return self._getRegistry().getRegLock(self)
+        else:
+            if self._lock is None:
+                self._lock = threading.Lock()
+            return self._lock
 
     def __getstate__(self):
         d = self.__dict__
@@ -363,6 +379,26 @@ class Descriptor(object):
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
     def __get__(self, obj, cls):
+
+        #logger.debug("Getting")
+        child_lock = GangaObject._getChildLock(_getName(self), obj)
+
+        ##NB Yes, context managers are neater, but no, at least for the Python version used by LHCb
+        ##   there are problems which send the equivalent line of 'while child_lock' into an infinite loop.
+        ##   This is caused by what appears to be a bug in the heavily thread-dependant and nested use of these contexts
+
+        ## This is an RLock so it's 'safe' to just re-aquire the lock here if we have it as it should only be
+        ## set for any attributes currently being modified. I.e. it's safe to get an attribute in a modify method (only ill advised)
+        ## If the attribute isn't locked this is a relatively soft-lock that shouldn't cause too many collisions
+        child_lock.acquire()
+        try:
+            returnable = self.__threadingUnsafe__get__(obj, cls)
+        finally:
+            child_lock.release()
+        return returnable
+
+    def __threadingUnsafe__get__(self, obj, cls):
+
         name = _getName(self)
 
         # If obj is None then the getter was called on the class so return the Item
@@ -478,19 +514,42 @@ class Descriptor(object):
         ## _obj: parent class which 'owns' the attribute
         ## _val: value of the attribute which we're about to set
 
+        #logger.debug("Setting")
+
+        ##NB Yes, context managers are neater, but no, at least for the Python version used by LHCb
+        ##   there are problems which send the equivalent line of 'while child_lock' into an infinite loop.
+        ##   This is caused by what appears to be a bug in the heavily thread-dependant and nested use of these contexts
+
+        ## Want to doubbly lock here. Lock the parent class at the top and lock the attribute by path
+
+        parent_lock = GangaObject._getParentLock(_obj)
+        parent_lock.acquire()
+        try:
+            child_lock = GangaObject._getChildLock(_getName(self), _obj)
+            child_lock.acquire()
+            try:
+                self.__threadingUnsafe__set__(_obj, _val)
+            finally:
+                child_lock.release()
+        finally:
+            parent_lock.release()
+        #logger.debug("Set")
+
+    def __threadingUnsafe__set__(self, obj, val):
+
         obj_reg = None
         obj_prevState = None
-        obj = _obj
-        if isinstance(obj, GangaObject):
-            obj_reg = obj._getRegistry()
-            if obj_reg is not None and hasattr(obj_reg, 'isAutoFlushEnabled'):
-                obj_prevState = obj_reg.isAutoFlushEnabled()
-                if obj_prevState is True and hasattr(obj_reg, 'turnOffAutoFlushing'):
-                    obj_reg.turnOffAutoFlushing()
+
+        self_name = _getName(self)
+
+        obj_reg = obj._getRegistry()
+        if obj_reg is not None and hasattr(obj_reg, 'isAutoFlushEnabled'):
+            obj_prevState = obj_reg.isAutoFlushEnabled()
+            if obj_prevState is True and hasattr(obj_reg, 'turnOffAutoFlushing'):
+                obj_reg.turnOffAutoFlushing()
 
         val_reg = None
         val_prevState = None
-        val = _val
         if isinstance(val, GangaObject):
             val_reg = val._getRegistry()
             if val_reg is not None and hasattr(val_reg, 'isAutoFlushEnabled'):
@@ -498,13 +557,13 @@ class Descriptor(object):
                 if val_prevState is True and hasattr(val_reg, 'turnOffAutoFlushing'):
                     val_reg.turnOffAutoFlushing()
 
-        if type(_val) is str:
+        if type(val) is str:
             from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
-            new_val = stripProxy(runtimeEvalString(_obj, _getName(self), _val))
+            new_val = stripProxy(runtimeEvalString(obj, _getName(self), val))
         else:
-            new_val = _val
+            new_val = val
 
-        self.__atomic_set__(_obj, new_val)
+        self.__atomic_set__(obj, new_val)
 
         if isinstance(new_val, Node):
             val._setDirty()
@@ -516,6 +575,7 @@ class Descriptor(object):
         if obj_reg is not None:
             if obj_prevState is True and hasattr(obj_reg, 'turnOnAutoFlushing'):
                 obj_reg.turnOnAutoFlushing()
+
 
     def __atomic_set__(self, _obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
@@ -783,6 +843,46 @@ class GangaObject(Node):
             from Ganga.GPIDev.Base.Proxy import TypeMismatchError
             raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
 
+    @staticmethod
+    def _getChildLock(child_name, parent):
+        whole_path = GangaObject._full_childPath(child_name, parent)
+
+        top_parent = parent._getRoot()
+
+        top_parent_child_locks = top_parent._getChildLocks()
+
+        #logger.info("Getting child Lock: %s" % whole_path)
+        return top_parent_child_locks[whole_path]
+
+    @staticmethod
+    def _full_childPath(child_name, parent):
+        child_path = GangaObject._getChildPathStr(parent)
+        whole_path = child_path + "\\" + child_name
+        return whole_path
+
+    @staticmethod
+    def _getChildPathStr(child):
+        names = []
+        names.append(_getName(child))
+        parent = child._getParent()
+
+        while parent is not None:
+            names.append(_getName(parent))
+            parent = parent._getParent()
+
+        child_str = "\\".join(reversed(names))
+
+        return child_str
+
+    @staticmethod
+    def _getParentLock(child):
+        ## Top level parent
+        parent = child._getRoot()
+        parent_lock = parent._getLock()
+        #if hasattr(parent, 'id'):
+        #    logger.info("Getting parent Lock: %s" % parent.id)
+        return parent_lock
+
     def __getstate__(self):
         # IMPORTANT: keep this in sync with the __init__
         #self._getReadAccess()
@@ -830,9 +930,9 @@ class GangaObject(Node):
                     setattr(self_copy, name, self._schema.getDefaultValue(name))
                 else:
                     if hasattr(self, name):
-                        setattr(self_copy, name, deepcopy(getattr(self, name)))
+                        self_copy.setNodeAttribute(name, deepcopy(getattr(self, name)))
                     else:
-                        setattr(self_copy, name, self._schema.getDefaultValue(name))
+                        self_copy.setNodeAttribute(name, self._schema.getDefaultValue(name))
 
                 this_attr = getattr(self_copy, name)
                 if isinstance(this_attr, Node):

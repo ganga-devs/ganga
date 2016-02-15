@@ -4,7 +4,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah47814(GangaUnitTest):
-    def Savannah47814(self):
+    def test_Savannah47814(self):
         from Ganga.GPI import Job, Executable
 
         from GangaTest.Framework.utils import sleep_until_state, file_contains

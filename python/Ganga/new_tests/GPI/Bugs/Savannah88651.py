@@ -4,7 +4,7 @@ from ..GangaUnitTest import GangaUnitTest
 
 
 class Savannah88651(GangaUnitTest):
-    def Savannah88651(self):
+    def test_Savannah88651(self):
         from Ganga.GPI import Job, config
 
         # Feature request 88651 was to allow the behaviour of copying a prepared job to be configurable.

@@ -6,7 +6,7 @@ import os
 
 
 class Savannah31691(GangaUnitTest):
-    def Savannah31691(self):
+    def test_Savannah31691(self):
         from Ganga.GPI import config, Job, jobs
 
         config['Configuration']['autoGenerateJobWorkspace'] = True

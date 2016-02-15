@@ -52,6 +52,9 @@ def lazyLoadJobApplication(this_job):
 
 def lazyLoadJobObject(this_job, this_attr):
 
+    if this_job._getRegistry() and this_job._getRegistry().has_loaded(this_job):
+        return getattr(this_job, this_attr)
+
     lzy_loading_str = 'display:'+ this_attr
     job_index_cache = stripProxy(this_job).getNodeIndexCache()
     if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache.keys():
@@ -401,7 +404,9 @@ class Job(GangaObject):
         # Attempt to spend too long loading un-needed objects into memory in
         # order to read job status
         if name == 'status':
-            return object.__getattribute__(self, 'status')
+            ##NO
+            #return object.__getattribute__(self, 'status')
+            return lazyLoadJobStatus(self)
 
         # FIXME Add some method of checking what objects are known in advance of calling the __getattribute__ method
         # Pref one that doesn't involve loading the job object if not needed

@@ -6,7 +6,7 @@ import os
 
 
 class Savannah19123(GangaUnitTest):
-    def Savannah19123(self):
+    def test_Savannah19123(self):
         from Ganga.GPI import Job, Local
 
         from GangaTest.Framework.utils import sleep_until_state

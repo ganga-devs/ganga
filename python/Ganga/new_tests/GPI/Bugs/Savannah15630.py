@@ -13,7 +13,7 @@ class Savannah15630(GangaUnitTest):
         j.backend = Local()
         j.outputfiles = [LocalFile('out.dat')]
         j.submit()
-        self.assertTrue(sleep_until_completed(j, 60), 'Timeout on job submission: job is still not finished')
+        self.assertTrue(sleep_until_completed(j, 10, verbose=True), 'Timeout on job submission: job is still not finished')
 
         import os.path
         p = os.path.join(j.outputdir, j.application.args[0])

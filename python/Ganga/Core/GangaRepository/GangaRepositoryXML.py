@@ -24,7 +24,7 @@ from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
-from Ganga.GPIDev.Base.Objects import Node
+from Ganga.GPIDev.Base.Objects import Node, GangaObject
 from Ganga.Core.GangaRepository import SubJobXMLList
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
@@ -80,74 +80,84 @@ def get_backupFile(input_filename):
 
 def safe_save(fn, _obj, to_file, ignore_subs=''):
 
-    # Add a global lock to make absolutely sure we don't have multiple threads writing files
-    # See Issue 185
+    obj = stripProxy(_obj)
+
+    ## A global lock here si safest as it prevents multiple threads attempting to write the same object at the same time
+    ## Not possible to use a per-GangaObject lock as this is locked at a much higher level to prevent
+    ## multiple flushes and changing an object whilst it's flushing
+
     with safe_save.lock:
+        unsafe_save(fn, obj, to_file, ignore_subs)
 
-        obj = stripProxy(_obj)
+safe_save.lock = threading.Lock()
 
-        check_app_hash(obj)
+def unsafe_save(fn, obj, to_file, ignore_subs=''):
 
-        if not os.path.exists(fn):
-            # file does not exist, so make it fast!
-            try:
-                dirname = os.path.dirname(fn)
-                if not os.path.exists(dirname):
-                    os.makedirs(dirname)
-                if not os.path.isfile(fn):
+    logger.debug("Safe Save: %s" % str(obj))
+
+    check_app_hash(obj)
+
+    if not os.path.exists(fn):
+        # file does not exist, so make it fast!
+        try:
+            dirname = os.path.dirname(fn)
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+            if not os.path.isfile(fn):
+                new_file = open(fn, 'a')
+                new_file.close()
+
+            with open(fn, "w") as this_file:
+                to_file(obj, this_file, ignore_subs)
+            global write_all_history
+            if save_all_history is True:
+                backup_file = get_backupFile(fn)
+                with open(backup_file, "w") as this_file:
+                    to_file(obj, this_file, ignore_subs)
+        except IOError as err:
+            raise IOError("Could not write file '%s' (%s)" % (fn, err))
+        except XMLFileError as err:
+            raise err
+    else:
+        new_name = None
+        try:
+            if not os.path.exists(fn):
+                if not os.path.isdir(os.path.dirname(fn)):
+                    os.makedirs(os.path.dirname(fn))
                     new_file = open(fn, 'a')
                     new_file.close()
+            new_name = fn + '.new'
+            if not os.path.exists(new_name):
+                new_file = open(new_name, 'a')
+                new_file.close()
+            with open(new_name, "w") as tmpfile:
+                to_file(obj, tmpfile, ignore_subs)
+            # Important: Flush, then sync file before renaming!
+            # tmpfile.flush()
+            # os.fsync(tmpfile.fileno())
+        except IOError as e:
+            raise IOError("Could not write file %s.new (%s)" % (fn, e))
+        except XMLFileError as err:
+            raise err
+        # Try to make backup copy...
+        try:
+            if os.path.exists(fn+'~'):
+                rmrf(fn + "~")
+        except OSError as e:
+            logger.debug("Error on removing old backup file %s~ (%s) " % (fn, e))
+        try:
+            if os.path.isfile(fn):
+                os.rename(fn, fn + "~")
+        except OSError as e:
+            logger.debug("Error on file backup %s (%s) " % (fn, e))
+        try:
+            if os.path.isfile(fn+'.new'):
+                os.rename(fn + ".new", fn)
+        except OSError as e:
+            raise IOError("Error on moving file %s.new (%s) " % (fn, e))
 
-                with open(fn, "w") as this_file:
-                    to_file(obj, this_file, ignore_subs)
-                global write_all_history
-                if save_all_history is True:
-                    backup_file = get_backupFile(fn)
-                    with open(backup_file, "w") as this_file:
-                        to_file(obj, this_file, ignore_subs)
-            except IOError as err:
-                raise IOError("Could not write file '%s' (%s)" % (fn, err))
-            except XMLFileError as err:
-                raise err
-        else:
-            try:
-                if not os.path.exists(fn):
-                    if not os.path.isdir(os.path.dirname(fn)):
-                        os.makedirs(os.path.dirname(fn))
-                        new_file = open(fn, 'a')
-                        new_file.close()
-                new_name = fn + '.new'
-                if not os.path.exists(new_name):
-                    new_file = open(new_name, 'a')
-                    new_file.close()
-                with open(new_name, "w") as tmpfile:
-                    to_file(obj, tmpfile, ignore_subs)
-                    # Important: Flush, then sync file before renaming!
-                    # tmpfile.flush()
-                    # os.fsync(tmpfile.fileno())
-            except IOError as e:
-                raise IOError("Could not write file %s.new (%s)" % (fn, e))
-            except XMLFileError as err:
-                raise err
-            # Try to make backup copy...
-            try:
-                if os.path.exists(fn+'~'):
-                    rmrf(fn + "~")
-            except OSError as e:
-                logger.debug("Error on removing old backup file %s~ (%s) " % (fn, e))
-            try:
-                if os.path.isfile(fn):
-                    os.rename(fn, fn + "~")
-            except OSError as e:
-                logger.debug("Error on file backup %s (%s) " % (fn, e))
-            try:
-                if os.path.isfile(fn+'.new'):
-                    os.rename(fn + ".new", fn)
-            except OSError as e:
-                raise IOError("Error on moving file %s.new (%s) " % (fn, e))
-
-# Global lock for above function - See issue #185
-safe_save.lock = threading.Lock()
+## Global lock for above function - See issue #185
+#safe_save.lock = threading.Lock()
 
 def rmrf(name, count=0):
 
@@ -576,9 +586,9 @@ class GangaRepositoryLocal(GangaRepository):
                 self.printed_explanation = True
         logger.debug("updated index done")
 
-        if len(changed_ids) != 0:
-            isShutdown = not firstRun
-            self._write_master_cache(shutdown=isShutdown)
+        #if len(changed_ids) != 0:
+        #    isShutdown = not firstRun
+        #    self._write_master_cache(shutdown=isShutdown)
 
         return changed_ids
 

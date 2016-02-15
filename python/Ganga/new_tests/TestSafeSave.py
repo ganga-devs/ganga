@@ -20,9 +20,8 @@ class TestSafeSave(unittest.TestCase):
         testfn = '/tmp/xmltest.tmp' + str(uuid.uuid4())
         ths = []
 
-        o = LocalFile()
-
         for i in range(0, 500):
+            o = LocalFile()
             ths.append(threading.Thread(target=safe_save, args=(testfn, o, my_to_file)))
 
         for th in ths:

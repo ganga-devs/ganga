@@ -18,9 +18,9 @@ class PrepRegistry(Registry):
 
         super(PrepRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
 
-        self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
-        self.releaseThread.daemon = True
-        self.releaseThread.start()
+        #self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
+        #self.releaseThread.daemon = True
+        #self.releaseThread.start()
 
 
     def startup(self):
@@ -48,7 +48,6 @@ class PrepRegistry(Registry):
         #logger.info("Geting id: %s" %  self.metadata.ids()[-1])
         self.shareref = self.metadata._objects[self.metadata.ids()[-1]]
         #logger.info("ShareRef: %s" % getName(self.shareref))
-        self._lock.acquire()
         ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
         ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
         try:
@@ -63,7 +62,6 @@ class PrepRegistry(Registry):
             logger.debug("Shutdown Error: %s" % str(err))
         finally:
             self._hasStarted = False
-            self._lock.release()
 
     def _safe_shutdown(self):
         try:
@@ -163,7 +161,7 @@ class ShareRef(GangaObject):
             logger.error('Directory %s does not exist' % shareddir)
 
         self._setDirty()
-        self._releaseWriteAccess()
+        #self._releaseWriteAccess()
 
     def decrease(self, shareddir, remove=0):
         """Reduce the reference counter for a given shared directory by 1. If the current value
@@ -190,7 +188,7 @@ class ShareRef(GangaObject):
             self.__getName()[basedir] = 0
 
         self._setDirty()
-        self._releaseWriteAccess()
+        #self._releaseWriteAccess()
 
     def lookup(self, sharedir, unprepare=False):
         """
