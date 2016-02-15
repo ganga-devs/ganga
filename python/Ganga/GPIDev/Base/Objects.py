@@ -72,7 +72,6 @@ class Node(object):
             #    this_dict[elem] = None
         obj.getParent(self._getParent())
         setattr(obj, '_index_cache', {})
-        setattr(obj, '_registry', self._registry)
         return obj
 
     def __deepcopy__(self, memo=None):
@@ -90,7 +89,6 @@ class Node(object):
 
         if self._getParent() is not None:
             obj._setParent(self._getParent())
-        setattr(obj, '_registry', self._registry)
         return obj
 
     def _getParent(self):
