@@ -908,7 +908,7 @@ class GangaRepositoryLocal(GangaRepository):
         logger.debug("Finished 'load'-ing of: %s" % str(ids))
 
 
-    def _handle_load_exception(self, err, fn, this_id):
+    def _handle_load_exception(self, err, fn, this_id, load_backup):
         if isType(err, XMLFileError):
              logger.error("XML File failed to load for Job id: %s" % str(this_id))
              logger.error("Actual Error was:\n%s" % str(err))
