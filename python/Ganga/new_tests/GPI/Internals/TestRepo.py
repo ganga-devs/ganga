@@ -34,7 +34,7 @@ class FakeRegistry(object):
         self.repo.flush([obj._registry_id])
 
     def has_loaded(self, obj):
-        return self.repo.has_loaded(obj)
+        return True
 
 # def _dirty(self,obj):
 #        pass
