@@ -52,9 +52,6 @@ class TestGangaObject(TestCase):
     def test_readonly(self):
         self.obj._readonly()
 
-    def test__getstate__(self):
-        self.obj.__getstate__()
-
     def testClone(self):
         temp = self.obj.clone()
 

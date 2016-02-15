@@ -57,25 +57,6 @@ class Node(object):
         super(Node, self).__init__()
         #logger.info("Node __init__")
 
-    def __getstate__(self):
-        d = self.__dict__
-        d['_data'] = d['_data'].copy()
-        for r in self._ref_list:
-            d[r] = None
-        return d
-
-    def __setstate__(self, this_dict):
-        for key, val in this_dict['_data'].iteritems():
-            if isinstance(val, Node) and key not in self._ref_list:
-                val._setParent(self)
-
-        for attr in self._ref_list:
-            if not hasattr(self, attr):
-                setattr(self, attr, None)
-
-        for key, val in this_dict.iteritems():
-            setattr(self, key, val)
-
     def __copy__(self, memo=None):
         cls = self.__class__
         obj = cls()
@@ -87,7 +68,6 @@ class Node(object):
                 this_dict[elem] = copy(this_dict[elem])
             else:
                 this_dict[elem] = None
-        #obj.__setstate__(this_dict)
         obj.getParent(self._getParent())
         setattr(obj, '_index_cache', {})
         setattr(obj, '_registry', self._registry)
@@ -96,7 +76,7 @@ class Node(object):
     def __deepcopy__(self, memo=None):
         cls = self.__class__
         obj = cls()
-        this_dict = self.__getstate__()
+        this_dict = self.__dict__
         global do_not_copy
         for elem in this_dict.keys():
             if elem not in do_not_copy:
@@ -782,21 +762,6 @@ class GangaObject(Node):
         else:
             from Ganga.GPIDev.Base.Proxy import TypeMismatchError
             raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
-
-    def __getstate__(self):
-        # IMPORTANT: keep this in sync with the __init__
-        #self._getReadAccess()
-        this_dict = super(GangaObject, self).__getstate__()
-        #this_dict['_dirty'] = False
-        return this_dict
-
-    def __setstate__(self, this_dict):
-        #self._getWriteAccess()
-        super(GangaObject, self).__setstate__(this_dict)
-        #if '_parent' in this_dict:
-        #    self._setParent(this_dict['_parent'])
-        #self._setParent(None)
-        self._dirty = False
 
     @staticmethod
     def __incrementShareRef(obj, attr_name):
