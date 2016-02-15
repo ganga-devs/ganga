@@ -40,8 +40,6 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
         '-o[Configuration]user=testframework',
         '-o[Configuration]gangadir='+str(gangadir_for_test),
         '-o[Configuration]repositorytype=LocalXML',
-        #'-o[PollThread]autostart=False',
-        '-o[PollThread]autostart_monThreads=False',
         '-o[TestingFramework]ReleaseTesting=True',
     ]
 
@@ -84,11 +82,6 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
     logger.info("Bootstrapping")
     Ganga.Runtime._prog.bootstrap(interactive=False)
 
-    # [PollThread]autostart_monThreads=False has turned this off being done automatically.
-    # The thread pool is emptied by _ganga_run_exitfuncs
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool
-    _makeThreadPool()
-
     # Adapted from the Coordinator class, check for the required credentials and stop if not found
     # Hopefully stops us falling over due to no AFS access of something similar
     from Ganga.Core.InternalServices import Coordinator
@@ -98,9 +91,6 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
 
     if missing_cred:
         raise Exception("Failed due to missing credentials %s" % str(missing_cred))
-
-    from Ganga.GPI import queues
-    queues.unlock()
 
     logger.info("Passing to Unittest")
 
