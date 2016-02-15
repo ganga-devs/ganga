@@ -618,8 +618,6 @@ class Registry(object):
         finally:
             self._lock.release()
 
-        self._updateIndexCache(obj)
-
         return returnable_id
 
     def _remove(self, _obj, auto_removed=0):
@@ -712,7 +710,6 @@ class Registry(object):
         Raise RegistryLockError"""
         logger.debug("_dirty")
         obj = stripProxy(_obj)
-        self._updateIndexCache(obj)
 
         if self.find(obj) in self._inprogressDict.keys():
             self.dirty_objs[getattr(obj, _reg_id_str)] = obj
@@ -810,18 +807,6 @@ class Registry(object):
         finally:
             if id(_obj) in self._accessLockDict.keys():
                 del self._accessLockDict[id(_obj)]
-            self._lock.release()
-
-    def _updateIndexCache(self, _obj):
-        logger.debug("_updateIndexCache")
-        obj = stripProxy(_obj)
-        if self.find(obj) in self._inprogressDict.keys():
-            return
-
-        self._lock.acquire()
-        try:
-            self.repository.updateIndexCache(obj)
-        finally:
             self._lock.release()
 
     def _load(self, obj_ids):
@@ -1030,6 +1015,7 @@ class Registry(object):
     def getIndexCache(self, obj):
         """Returns a dictionary to be put into obj._index_cache through setNodeIndexCache
         This can and should be overwritten by derived Registries to provide more index values."""
+        logger.debug("Default getIndexCache called. Should this be over-ridden!")
         return {}
 
     def startup(self):

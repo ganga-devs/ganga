@@ -309,7 +309,6 @@ class GangaRepositoryLocal(GangaRepository):
             this_data = this_cache if this_cache else {}
             for k, v in cache.iteritems():
                 this_data[k] = v
-            #obj.setNodeData(this_data)
             obj.setNodeIndexCache(cache)
             self._cache_load_timestamp[this_id] = os.stat(fn).st_ctime
             self._cached_cat[this_id] = cat
@@ -339,9 +338,6 @@ class GangaRepositoryLocal(GangaRepository):
                     pickle_to_file((obj._category, getName(obj), new_cache), this_file)
                 self._cached_obj[this_id] = new_cache
                 obj.setNodeIndexCache({})
-                #all_cache = new_cache.keys()
-                #for attr in all_cache:
-                #    obj.removeNodeIndexCacheAttribute(attr)
             self._cached_obj[this_id] = new_idx_cache
         except IOError as err:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn, getName(err), str(err)))
@@ -433,7 +429,6 @@ class GangaRepositoryLocal(GangaRepository):
                             if len(self.lock(arr_k)) != 0:
                                 self.index_write(k)
                                 self.unlock(arr_k)
-                                #stripProxy(obj).setNodeIndexCache(new_index)
                                 self._cached_obj[k] = new_index
                 except Exception as err:
                     logger.debug("Failed to update index: %s on startup/shutdown" % str(k))
@@ -680,7 +675,6 @@ class GangaRepositoryLocal(GangaRepository):
                     if idn.isdigit():
                         rmrf(os.path.join(os.path.dirname(fn), idn))
             self.index_write(this_id)
-            #obj.setNodeIndexCache(None)
             obj._setFlushed()
         else:
             raise RepositoryError(self, "Cannot flush an Empty object for ID: %s" % str(this_id))
@@ -765,7 +759,6 @@ class GangaRepositoryLocal(GangaRepository):
                 # if we cannot lock this, the inconsistency is
                 # most likely the result of another ganga
                 # process modifying the repo
-                #obj.setNodeIndexCache(None)
 
     def _must_actually_load_xml(self, fobj, fn, this_id, load_backup, has_children, tmpobj, errs):
 
@@ -791,6 +784,7 @@ class GangaRepositoryLocal(GangaRepository):
         if obj.getNodeIndexCache() not in [{}]:
             self._check_index_cache(obj, this_id)
 
+        ## Job has noe been fully loaded so lets remove the internal store of the index_cache here
         obj.setNodeIndexCache({})
 
         if this_id not in self._fully_loaded.keys():
@@ -817,7 +811,6 @@ class GangaRepositoryLocal(GangaRepository):
                 self._must_actually_load_xml(fobj, fn, this_id, load_backup, has_children, tmpobj, errs)
 
             else:
-                #tmpobj.setNodeIndexCache(None)
                 self._internal_setitem__(this_id, tmpobj)
 
             if hasattr(self.objects[this_id], self.sub_split):
@@ -998,8 +991,4 @@ class GangaRepositoryLocal(GangaRepository):
         self.shutdown()
         rmrf(self.root)
         self.startup()
-
-    def updateIndexCache(self, obj):
-        #stripProxy(obj).setNodeIndexCache(self.registry.getIndexCache(stripProxy(obj)))
-        pass
 

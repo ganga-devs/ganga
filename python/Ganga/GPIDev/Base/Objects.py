@@ -62,12 +62,14 @@ class Node(object):
         obj = cls()
         # FIXME: this is different than for deepcopy... is this really correct?
         this_dict = self.__dict__.copy()
+        obj.__dict__ = this_dict
         global do_not_copy
         for elem in this_dict.keys():
             if elem not in do_not_copy:
                 this_dict[elem] = copy(this_dict[elem])
-            else:
-                this_dict[elem] = None
+            ## Keep the reference?
+            #else:
+            #    this_dict[elem] = None
         obj.getParent(self._getParent())
         setattr(obj, '_index_cache', {})
         setattr(obj, '_registry', self._registry)
@@ -77,12 +79,15 @@ class Node(object):
         cls = self.__class__
         obj = cls()
         this_dict = self.__dict__
+        obj.__dict__ = this_dict
         global do_not_copy
         for elem in this_dict.keys():
             if elem not in do_not_copy:
                 this_dict[elem] = deepcopy(this_dict[elem], memo)  # FIXED
+            ## Keep the reference?
+            #else:
+            #    this_dict[elem] = None
 
-        obj.__dict__ = this_dict
         if self._getParent() is not None:
             obj._setParent(self._getParent())
         setattr(obj, '_registry', self._registry)
@@ -154,7 +159,6 @@ class Node(object):
     # clone self and return a properly initialized object
     def clone(self):
         new_obj = deepcopy(self)
-
         return new_obj
 
     # copy all the properties recursively from the srcobj
@@ -306,15 +310,23 @@ class Node(object):
         if attrib_name in self._data.keys():
             del self._data[attrib_name]
 
-    def removeNodeIndexCacheAttribute(self, attrib_name):
-        if self._index_cache and attrib_name in self._index_cache.keys():
-            del self._index_cache[attrib_name]
-
     def setNodeIndexCache(self, new_index_cache):
+        if self.fullyLoadedFromDisk():
+            logger.debug("Warning: Setting IndexCache data on live object, please avoid!")
         setattr(self, '_index_cache', new_index_cache)
 
     def getNodeIndexCache(self):
+        if self.fullyLoadedFromDisk():
+            ## Fully loaded so lets regenerate this on the fly to avoid losing data
+            return self._getRegistry().getIndexCache(self)
+        ## Not in registry or not loaded, so can't re-generate if requested
         return self._index_cache
+
+    def fullyLoadedFromDisk(self):
+        if self._getRegistry():
+            if self._getRegistry().has_loaded(self):
+                return True
+        return False
 
 ##########################################################################
 
@@ -782,10 +794,8 @@ class GangaObject(Node):
         true_parent = self._getParent()
         ## This triggers a read of the job from disk
         self._getReadAccess()
-        classname = _getName(self)
-        category = self._category
-        cls = self.__class__#allPlugins.find(category, classname)
 
+        cls = self.__class__
         self_copy = cls()
 
         global do_not_copy
