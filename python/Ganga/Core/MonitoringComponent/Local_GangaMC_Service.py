@@ -69,8 +69,8 @@ def checkHeartBeat():
 
         if (latest_timeNow - last_time) > dead_time:
 
-            logger.warning("Thread: %s Has not updated the heartbeat in %ss!! It's possibly dead" %(thread_name, str(dead_time)))
-            logger.warning("Thread is attempting to execute: %s" % this_thread._running_cmd)
+            log.warning("Thread: %s Has not updated the heartbeat in %ss!! It's possibly dead" %(thread_name, str(dead_time)))
+            log.warning("Thread is attempting to execute: %s" % this_thread._running_cmd)
 
 class MonitoringWorkerThread(GangaThread):
 
