@@ -48,7 +48,6 @@ def _getGangaList():
 
 
 class Node(object):
-    _ref_list = ['_parent', '_registry', '_index_cache']
 
     def __init__(self, parent=None):
         self._data = {}
@@ -194,7 +193,7 @@ class Node(object):
         src_dict = srcobj.__dict__
         for key, val in src_dict.iteritems():
             this_attr = getattr(srcobj, key)
-            if isinstance(this_attr, Node) and key not in Node._ref_list:
+            if isinstance(this_attr, Node) and key not in do_not_copy:
                 #logger.debug("k: %s  Parent: %s" % (str(key), (srcobj)))
                 this_attr._setParent(srcobj)
 
@@ -215,13 +214,13 @@ class Node(object):
                 if not hasattr(self, name):
                     setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
-                if isinstance(this_attr, Node) and name not in Node._ref_list:
+                if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
             elif not item['copyable']: ## Default of '1' instead of True...
                 if not hasattr(self, name):
                     setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
-                if isinstance(this_attr, Node) and name not in Node._ref_list:
+                if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
             else:
                 copy_obj = deepcopy(getattr(_srcobj, name))
