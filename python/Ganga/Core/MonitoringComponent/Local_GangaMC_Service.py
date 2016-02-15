@@ -22,14 +22,17 @@ from Ganga.Utility.logging import getLogger, log_unknown_exception
 from Ganga.Core import BackendError
 from Ganga.Utility.Config import getConfig
 
+from collections import defaultdict
+
 log = getLogger()
 
 config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
 Qin = Queue.Queue()
 ThreadPool = []
-# number of threads waiting for actions in Qin
-tpFreeThreads = 0
+
+heartbeat_times = None
+global_start_time = None
 
 # The JobAction class encapsulates a function, its arguments and its post result action
 # based on what is defined as a successful run of the function.
@@ -50,11 +53,40 @@ class JobAction(object):
         self.thread = None
         self.description = ''
 
+def getNumAliveThreads():
+    num_currently_running_command = 0
+    for this_thread in ThreadPool:
+        if this_thread._currently_running_command:
+            num_currently_running_command += 1
+    return num_currently_running_command
+
+def checkHeartBeat():
+
+    latest_timeNow = time.time()
+
+    for this_thread in ThreadPool:
+        thread_name = this_thread._thread_name
+
+        last_time = heartbeat_times[thread_name]
+
+        dead_time = config['HeartBeatTimeOut']
+
+        if (latest_timeNow - last_time) > dead_time and this_thread.isAlive() and this_thread._currently_running_command is True:
+
+            log.warning("Thread: %s Has not updated the heartbeat in %ss!! It's possibly dead" %(thread_name, str(dead_time)))
+            log.warning("Thread is attempting to execute: %s" % this_thread._running_cmd)
+
+            ## Add at least 5sec here to avoid spamming the user non-stop that a monitoring thread has locked up almost entirely
+            ## You'll get a message at most once per 5sec or less if the Monitoring is busy/asleep
+            heartbeat_times[thread_name] += 5.
 
 class MonitoringWorkerThread(GangaThread):
 
     def __init__(self, name):
         GangaThread.__init__(self, name)
+        self._currently_running_command = False
+        self._running_cmd = None
+        self._thread_name = name
 
     def run(self):
         self._execUpdateAction()
@@ -62,14 +94,14 @@ class MonitoringWorkerThread(GangaThread):
     # This function takes a JobAction object from the Qin queue,
     # executes the embedded function and runs post result actions.
     def _execUpdateAction(self):
-        global tpFreeThreads
         # DEBUGGING THREADS
         # import sys
         # sys.settrace(_trace)
         while not self.should_stop():
             log.debug("%s waiting..." % threading.currentThread())
             #setattr(threading.currentThread(), 'action', None)
-            tpFreeThreads += 1
+
+            heartbeat_times[self._thread_name] = time.time()
 
             while not self.should_stop():
                 try:
@@ -81,16 +113,19 @@ class MonitoringWorkerThread(GangaThread):
             if self.should_stop():
                 break
 
-            tpFreeThreads -= 1
             #setattr(threading.currentThread(), 'action', action)
             log.debug("Qin's size is currently: %d" % Qin.qsize())
             log.debug("%s running..." % threading.currentThread())
-
+            self._currently_running_command = True
             if not isType(action, JobAction):
                 continue
             if action.function == 'stop':
                 break
             try:
+                try:
+                    self._running_cmd = action.function.__name__
+                except:
+                    self._running_cmd = "unknown"
                 result = action.function(*action.args, **action.kwargs)
             except Exception as err:
                 log.debug("_execUpdateAction: %s" % str(err))
@@ -101,12 +136,33 @@ class MonitoringWorkerThread(GangaThread):
                 else:
                     action.callback_Failure()
 
+            self._currently_running_command = False
+
 # Create the thread pool
 
 
 def _makeThreadPool(threadPoolSize=THREAD_POOL_SIZE, daemonic=True):
+    global ThreadPool, global_start_time, heartbeat_times
+    global_start_time = time.time()
+    if ThreadPool and len(ThreadPool) != 0:
+
+        for this_thread in ThreadPool:
+            log.error("%s running: %s" % (this_thread._thread_name, this_thread._running_cmd))
+
+        #from Ganga.Core.exceptions import GangaException
+        #raise GangaException("Cannot doubbly init the ThreadPool! ThreadPool already populated with threads")
+        log.error("Found a thread pool already in existance, wiping it and startig again!")
+        del ThreadPool[:]
+        ThreadPool = []
+
+    if heartbeat_times is not None:
+        heartbeat_times = None
+
+    heartbeat_times = defaultdict( lambda: global_start_time )
+
     for i in range(THREAD_POOL_SIZE):
-        t = MonitoringWorkerThread(name="MonitoringWorker_%s" % i)
+        thread_name = "MonitoringWorker_%s_%s" % (str(i), str(int(time.time()*1000)))
+        t = MonitoringWorkerThread(name=thread_name)
         ThreadPool.append(t)
         t.start()
 
@@ -122,10 +178,13 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
              return resp.lower()=='y'
     """
 
+    global ThreadPool
+
     def join_worker_threads(threads, timeout=3):
         for t in threads:
             if t.isAlive():
                 t.join(timeout)
+            t.stop()
 
     for i in range(len(ThreadPool)):
         Qin.put(JobAction('stop'))
@@ -146,6 +205,7 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
             break
 
     del ThreadPool[:]
+    ThreadPool = []
 
 # purge Qin
 
@@ -165,7 +225,7 @@ def _purge_actions_queue():
         except Queue.Empty:
             break
 
-if config['autostart_monThreads']:
+if config['autostart_monThreads'] is True:
     _makeThreadPool()
 
 
@@ -459,6 +519,7 @@ class JobRegistry_Monitor(GangaThread):
         log.debug("Starting run method")
 
         while self.alive:
+            checkHeartBeat()
             log.debug("Monitoring Loop is alive")
             # synchronize the main loop since we can get disable requests
             with self.__mainLoopCond:
@@ -715,6 +776,7 @@ class JobRegistry_Monitor(GangaThread):
         #if was_enabled:
         #    log.info("Monitoring Loop has stopped")
 
+        _purge_actions_queue()
         stop_and_free_thread_pool(fail_cb, max_retries)
 
         return True
@@ -759,6 +821,7 @@ class JobRegistry_Monitor(GangaThread):
         # wait for all worker threads to finish
         #self.__awaitTermination()
         # join the worker threads
+        _purge_actions_queue()
         stop_and_free_thread_pool(fail_cb, max_retries)
         ###log.info( 'Monitoring component stopped successfully!' )
 
@@ -785,7 +848,10 @@ class JobRegistry_Monitor(GangaThread):
         self.__cleanUpEvent.set()
 
     def __isInProgress(self):
-        return self.steps > 0 or Qin.qsize() > 0 or tpFreeThreads < len(ThreadPool)
+        if getNumAliveThreads() > 0:
+            for this_thread in ThreadPool:
+                log.debug("Thread currently running: %s" % str(this_thread._running_cmd))
+        return self.steps > 0 or Qin.qsize() > 0 or getNumAliveThreads() > 0
 
     def __awaitTermination(self, timeout=5):
         """
