@@ -122,7 +122,8 @@ class TestObjectMetaclass(TestCase):
             __metaclass__ = ObjectMetaclass
             _schema = None
             _category = None
+            _hidden = True
 
             @classmethod
             def _declared_property(cls, name):
-                pass
+                return '_' + name in cls.__dict__

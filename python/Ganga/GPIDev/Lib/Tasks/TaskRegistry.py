@@ -166,12 +166,14 @@ class TaskRegistry(Registry):
         self._main_thread.start()
 
     def shutdown(self):
-
         super(TaskRegistry, self).shutdown()
 
     def stop(self):
         if self._main_thread is not None:
             self._main_thread.stop()
+            import time
+            while self._main_thread.isAlive():
+                time.sleep(0.5)
 
     def _remove(self, obj):
         super(TaskRegistry, self)._remove(obj, auto_removed=1)

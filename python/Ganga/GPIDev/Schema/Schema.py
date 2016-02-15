@@ -288,7 +288,13 @@ class Schema(object):
                 category = item['category']
 
                 if isinstance(defvalue, str) or defvalue is None:
-                    if category not in _found_components or config.hasModified():
+                    try:
+                        config = Config.getConfig(def_name, create=False)
+                        has_modified = config.hasModified()
+                    except KeyError:
+                        has_modified = False
+
+                    if category not in _found_components or has_modified:
                         _found_components[category] = allPlugins.find(category, defvalue)
                     return _found_components[category]()
 
