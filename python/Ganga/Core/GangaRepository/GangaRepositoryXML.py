@@ -775,9 +775,10 @@ class GangaRepositoryLocal(GangaRepository):
         else:
             obj.setNodeAttribute(self.sub_split, None)
 
+        from Ganga.GPIDev.Base.Objects import do_not_copy
         for node_key, node_val in obj.getNodeData().iteritems():
             if isType(node_val, Node):
-                if node_key not in Node._ref_list:
+                if node_key not in do_not_copy:
                     node_val._setParent(obj)
 
         # Check if index cache; if loaded; was valid:
