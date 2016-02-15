@@ -245,6 +245,8 @@ poll_config.addOption('forced_shutdown_prompt_time', 10,
 poll_config.addOption('forced_shutdown_first_prompt_time', 5,
                  "User will get the FIRST prompt after N seconds, as specified by this parameter. This parameter also defines the time that Ganga will wait before shutting down, if there are only non-critical threads alive, in both interactive and batch mode.")
 
+pol_config.addOption('HeartBeatTimeOut', 300, 'Time before the user gets the warning that a thread has locked up due to failing to update the heartbeat attribute')
+
 # ------------------------------------------------
 # Feedback
 feedback_config = makeConfig('Feedback', 'Settings for the Feedback plugin. Cannot be changed ruding the interactive Ganga session.')

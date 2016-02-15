@@ -28,6 +28,7 @@ log = getLogger()
 
 config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
+heartbeat_stall_time = config['HeartBeatTimeOut']
 Qin = Queue.Queue()
 ThreadPool = []
 
@@ -69,12 +70,16 @@ def checkHeartBeat():
 
         last_time = heartbeat_times[thread_name]
 
-        dead_time = 180.
+        dead_time = heartbeat_stall_time
 
         if (latest_timeNow - last_time) > dead_time and this_thread.isAlive() and this_thread._currently_running_command is True:
 
             log.warning("Thread: %s Has not updated the heartbeat in %ss!! It's possibly dead" %(thread_name, str(dead_time)))
             log.warning("Thread is attempting to execute: %s" % this_thread._running_cmd)
+
+            ## Add at least 5sec here to avoid spamming the user non-stop that a monitoring thread has locked up almost entirely
+            ## You'll get a message at most once per 5sec or less if the Monitoring is busy/asleep
+            heartbeat_times[thread_name] += 5.
 
 class MonitoringWorkerThread(GangaThread):
 
