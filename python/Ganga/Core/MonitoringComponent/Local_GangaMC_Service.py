@@ -28,8 +28,6 @@ config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
 Qin = Queue.Queue()
 ThreadPool = []
-# number of threads waiting for actions in Qin
-tpFreeThreads = 0
 
 heartbeat_times = {}
 global_start_time = None
@@ -53,6 +51,12 @@ class JobAction(object):
         self.thread = None
         self.description = ''
 
+def getNumAliveThreads():
+    num_alive = 0
+    for this_thread in ThreadPool:
+        if this_thread._alive:
+            num_alive += 1
+    return num_alive
 
 def checkHeartBeat():
 
@@ -87,14 +91,13 @@ class MonitoringWorkerThread(GangaThread):
     # This function takes a JobAction object from the Qin queue,
     # executes the embedded function and runs post result actions.
     def _execUpdateAction(self):
-        global tpFreeThreads
         # DEBUGGING THREADS
         # import sys
         # sys.settrace(_trace)
         while not self.should_stop():
             log.debug("%s waiting..." % threading.currentThread())
             #setattr(threading.currentThread(), 'action', None)
-            tpFreeThreads += 1
+
 
             while not self.should_stop():
                 try:
@@ -106,11 +109,10 @@ class MonitoringWorkerThread(GangaThread):
             if self.should_stop():
                 break
 
-            tpFreeThreads -= 1
             #setattr(threading.currentThread(), 'action', action)
             log.debug("Qin's size is currently: %d" % Qin.qsize())
             log.debug("%s running..." % threading.currentThread())
-
+            self._alive = True
             if not isType(action, JobAction):
                 continue
             if action.function == 'stop':
@@ -129,6 +131,8 @@ class MonitoringWorkerThread(GangaThread):
                     action.callback_Success()
                 else:
                     action.callback_Failure()
+
+            self._alive = False
 
 # Create the thread pool
 
@@ -830,7 +834,10 @@ class JobRegistry_Monitor(GangaThread):
         self.__cleanUpEvent.set()
 
     def __isInProgress(self):
-        return self.steps > 0 or Qin.qsize() > 0 or tpFreeThreads < len(ThreadPool)
+        if getNumAliveThreads() > 0:
+            for this_thread in ThreadPool:
+                log.debug("Thread currently running: %s" % str(this_thread._running_cmd))
+        return self.steps > 0 or Qin.qsize() > 0 or getNumAliveThreads() > 0
 
     def __awaitTermination(self, timeout=5):
         """
