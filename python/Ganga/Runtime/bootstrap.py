@@ -830,11 +830,8 @@ under certain conditions; type license() for details.
         if 'GANGA_INTERNAL_PROCREEXEC' in os.environ:
             del os.environ['GANGA_INTERNAL_PROCREEXEC']
 
-        logger.debug("Starting Queues")
-        # start queues
-        from Ganga.Runtime.GPIexport import exportToGPI
-        from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
-        exportToGPI('queues', ThreadPoolQueueMonitor(), 'Objects')
+        from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
+        startUpQueues()
 
     # bootstrap all system and user-defined runtime modules
     @staticmethod
