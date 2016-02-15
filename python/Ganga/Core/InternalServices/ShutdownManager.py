@@ -66,13 +66,6 @@ def _ganga_run_exitfuncs():
     from Ganga.Utility.Config import setConfigOption
     setConfigOption('Configuration', 'DiskIOTimeout', 1)
 
-    try:
-        from Ganga.GPI import queues
-        queues.lock()
-    except Exception as err:
-        logger.debug("This should only happen if Ganga filed to initialize correctly")
-        logger.debug("Err: %s" % str(err))
-
     ## Stop the Mon loop from iterating further!
     from Ganga.Core import monitoring_component
     if monitoring_component is not None:
@@ -97,13 +90,6 @@ def _ganga_run_exitfuncs():
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
     _purge_actions_queue()
     stop_and_free_thread_pool()
-
-    try:
-        from Ganga.GPI import queues
-        queues._purge_all()
-    except Exception as err:
-        logger.debug("This should only happen if Ganga filed to initialize correctly")
-        logger.debug("Err2: %s" % str(err))
 
     def priority_cmp(f1, f2):
         """
@@ -132,7 +118,7 @@ def _ganga_run_exitfuncs():
     atexit._exithandlers = map(add_priority, atexit._exithandlers)
     atexit._exithandlers.sort(priority_cmp)
 
-    logger.info("Stopping running tasks before shutting down Repositories")
+    logger.info("Stopping Job processing before shutting down Repositories")
 
     import inspect
     while atexit._exithandlers:
