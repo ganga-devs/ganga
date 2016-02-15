@@ -28,7 +28,6 @@ log = getLogger()
 
 config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
-heartbeat_stall_time = config['HeartBeatTimeOut']
 Qin = Queue.Queue()
 ThreadPool = []
 
@@ -70,7 +69,7 @@ def checkHeartBeat():
 
         last_time = heartbeat_times[thread_name]
 
-        dead_time = heartbeat_stall_time
+        dead_time = config['HeartBeatTimeOut']
 
         if (latest_timeNow - last_time) > dead_time and this_thread.isAlive() and this_thread._currently_running_command is True:
 
