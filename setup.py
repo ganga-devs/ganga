@@ -59,7 +59,7 @@ class RunTestsCommand(Command):
         if self.type in ['unit', 'all']:
             cmd.append('Ganga/new_tests/*.py')
         if self.type in ['integration', 'all']:
-            cmd.append('Ganga/new_tests/GPI --testmatch="(?:\\b|_)([tT]est|Savannah|JIRA)"')
+            cmd.append('Ganga/new_tests/GPI --testmatch="(?:\\b|_)([tT]est)"')
 
         if self.coverage:
             cmd.append('--with-coverage --cover-erase --cover-xml --cover-package=.')
