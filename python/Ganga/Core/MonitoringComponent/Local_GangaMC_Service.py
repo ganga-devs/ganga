@@ -31,6 +31,9 @@ ThreadPool = []
 # number of threads waiting for actions in Qin
 tpFreeThreads = 0
 
+heartbeat_times = {}
+global_start_time = None
+
 # The JobAction class encapsulates a function, its arguments and its post result action
 # based on what is defined as a successful run of the function.
 
@@ -51,13 +54,35 @@ class JobAction(object):
         self.description = ''
 
 
+def checkHeartBeat():
+
+    latest_timeNow = time.time()
+
+    for this_thread in ThreadPool:
+        thread_name = this_thread._thread_name
+        if heartbeat_times[thread_name] > 0:
+            last_time = heartbeat_times[thread_name]
+        else:
+            last_time = global_start_time
+
+        dead_time = 180.
+
+        if (latest_timeNow - last_time) > dead_time:
+
+            logger.warning("Thread: %s Has not updated the heartbeat in %ss!! It's possibly dead" %(thread_name, str(dead_time)))
+            logger.warning("Thread is attempting to execute: %s" % this_thread._running_cmd)
+
 class MonitoringWorkerThread(GangaThread):
 
     def __init__(self, name):
         GangaThread.__init__(self, name)
+        self._currently_running_command = False
+        self._running_cmd = None
+        self._thread_name = name
 
     def run(self):
         self._execUpdateAction()
+        heartbeat_times[self._thread_name] = time.time()
 
     # This function takes a JobAction object from the Qin queue,
     # executes the embedded function and runs post result actions.
@@ -91,6 +116,10 @@ class MonitoringWorkerThread(GangaThread):
             if action.function == 'stop':
                 break
             try:
+                try:
+                    self._running_cmd = action.function.__name__
+                except:
+                    self._running_cmd = "unknown"
                 result = action.function(*action.args, **action.kwargs)
             except Exception as err:
                 log.debug("_execUpdateAction: %s" % str(err))
@@ -105,9 +134,21 @@ class MonitoringWorkerThread(GangaThread):
 
 
 def _makeThreadPool(threadPoolSize=THREAD_POOL_SIZE, daemonic=True):
+    global ThreadPool, heartbeat_times, global_start_time
+    global_start_time = time.time()
+    if ThreadPool and len(ThreadPool) != 0:
+        #from Ganga.Core.exceptions import GangaException
+        #raise GangaException("Cannot doubbly init the ThreadPool! ThreadPool already populated with threads")
+        log.error("Found a thread pool already in existance, wiping it and startig again!")
+        del ThreadPool[:]
+        del heartbeat_times[:]
+        ThreadPool = []
+        heartbeat_times = []
     for i in range(THREAD_POOL_SIZE):
-        t = MonitoringWorkerThread(name="MonitoringWorker_%s" % i)
+        thread_name = "MonitoringWorker_%s_%s" % (str(i), str(int(time.time()*1000)))
+        t = MonitoringWorkerThread(name=thread_name)
         ThreadPool.append(t)
+        heartbeat_times[thread_name] = -1
         t.start()
 
 
@@ -459,6 +500,7 @@ class JobRegistry_Monitor(GangaThread):
         log.debug("Starting run method")
 
         while self.alive:
+            checkHeartBeat()
             log.debug("Monitoring Loop is alive")
             # synchronize the main loop since we can get disable requests
             with self.__mainLoopCond:
