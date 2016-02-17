@@ -147,10 +147,12 @@ class Node(object):
             p._lock.acquire()
             ancestors.append(p)
             p = p._parent
-        yield
-        for p in reversed(ancestors):
-            p._lock.release()
-        self._lock.release()
+        try:
+            yield
+        finally:
+            for p in reversed(ancestors):
+                p._lock.release()
+            self._lock.release()
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
