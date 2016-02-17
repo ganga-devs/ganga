@@ -5,7 +5,7 @@ from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
 from Ganga.Core import BackendError
 from Ganga.Core import GangaException
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import addProxy
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -60,7 +60,7 @@ class Dirac(DiracBase):
         ds = LHCbDataset()
         for f in lfns:
             ds.files.append(DiracFile(lfn=f))
-        return GPIProxyObjectFactory(ds)
+        return addProxy(ds)
 
     def getOutputData(self, outputDir=None, names=None, force=False):
         """Retrieve data stored on SE to outputDir (default=job output workspace).
@@ -71,4 +71,5 @@ class Dirac(DiracBase):
         ds = LHCbDataset()
         for f in downloaded_files:
             ds.files.append(DiracFile(lfn=f))
-        return GPIProxyObjectFactory(ds)
+        return addProxy(ds)
+
