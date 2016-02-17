@@ -3,7 +3,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from fnmatch import fnmatch
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.Utility.logging import getLogger, _get_logging
-from Ganga.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import isType, addProxy
 from Ganga.Utility.Config import getConfig
 import re
 import copy
@@ -311,7 +311,7 @@ class GoogleFile(IGangaFile):
                 g.downloadURL = file.get('downloadUrl', '')
                 g.id = file.get('id', '')
                 g.title = file.get('title', '')
-                self.subfiles.append(GPIProxyObjectFactory(g))
+                self.subfiles.append(addProxy(g))
 
         # For non-wildcard upload
         else:
@@ -348,7 +348,7 @@ class GoogleFile(IGangaFile):
             self.title = file.get('title', '')
 
             return
-        return GPIProxyObjectFactory(self.subfiles[:])
+        return addProxy(self.subfiles[:])
 
     def remove(self, permanent=False):
         """

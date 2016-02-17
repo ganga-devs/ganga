@@ -8,7 +8,7 @@ from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import stripProxy, addProxy
 import os
 import shutil
 import uuid
@@ -175,23 +175,24 @@ class ShareDir(GangaObject):
             # created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
             # filled with files, then assigned to an application.
             #a=Job(); s=ShareDir(); a.application.is_prepared=s
-        #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        #shareref = addProxy(getRegistry("prep").getShareRef())
         # shareref.increase(self.name)
         # shareref.decrease(self.name)
 
     def __deepcopy__(self, memo):
         return super(ShareDir, self).__deepcopy__(memo)
 
-    def add(self, input):
+    def add(self, this_input):
         from Ganga.Core.GangaRepository import getRegistry
-        if not isType(input, list):
-            input = [input]
-        for item in input:
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        if not isType(this_input, (list, GangaList)):
+            this_input = [this_input]
+        for item in this_input:
             if isType(item, str):
                 if os.path.isfile(expandfilename(item)):
                     logger.info('Copying file %s to shared directory %s' % (item, self.name))
                     shutil.copy2(expandfilename(item), os.path.join(getSharedPath(), self.name))
-                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    shareref = addProxy(getRegistry("prep").getShareRef())
                     shareref.increase(self.name)
                     shareref.decrease(self.name)
                 else:
@@ -199,7 +200,7 @@ class ShareDir(GangaObject):
             elif isType(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
                 logger.info('Copying file object %s to shared directory %s' % (item.name, self.name))
                 shutil.copy2(expandfilename(item.name), os.path.join(getSharedPath(), self.name))
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                shareref = addProxy(getRegistry("prep").getShareRef())
                 shareref.increase(self.name)
                 shareref.decrease(self.name)
             else:
@@ -215,11 +216,11 @@ class ShareDir(GangaObject):
             cmd = "find '%s'" % (full_shareddir_path)
             files = os.popen(cmd).read().strip().split('\n')
             padding = '|  '
-            for file in files:
-                level = file.count(os.sep)
+            for this_file in files:
+                level = this_file.count(os.sep)
                 level = level - 6
-                pieces = file.split(os.sep)
-                symbol = {0: '', 1: '/'}[os.path.isdir(file)]
+                pieces = this_file.split(os.sep)
+                symbol = {0: '', 1: '/'}[os.path.isdir(this_file)]
                 logger.info(padding * level + pieces[-1] + symbol)
         except IOError:
             logger.warn('ShareDir %s not found on storage' %

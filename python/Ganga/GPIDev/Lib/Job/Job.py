@@ -863,7 +863,7 @@ class Job(GangaObject):
         # Dont think it should matter as templates tend not to be prepared
         # try:
         # if hasattr(getRegistry("prep"), 'getShareRef'):
-        #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        #shareref = addProxy(getRegistry("prep").getShareRef())
         # except: pass
 
         # register the job (it will also commit it)

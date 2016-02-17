@@ -6,7 +6,7 @@
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.Core.GangaRepository import getRegistry
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
+from Ganga.GPIDev.Base.Proxy import addProxy, isType
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Lib.File import File
 import os
@@ -176,22 +176,22 @@ class IPrepareApp(IApplication):
 
     def incrementShareCounter(self, shared_directory_name):
         logger.debug('Incrementing shared directory reference counter')
-        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        shareref = addProxy(getRegistry("prep").getShareRef())
         logger.debug('within incrementShareCounter, calling increase')
         shareref.increase(shared_directory_name)
 
     def decrementShareCounter(self, shared_directory_name, remove=0):
         remove = remove
         logger.debug('Decrementing shared directory reference counter')
-        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        shareref = addProxy(getRegistry("prep").getShareRef())
         shareref.decrease(shared_directory_name, remove)
 
     def listShareDirs(self):
-        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        shareref = addProxy(getRegistry("prep").getShareRef())
         shareref
 
     def listShareDirContents(self, shared_directory_name):
-        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        shareref = addProxy(getRegistry("prep").getShareRef())
         shareref.ls(shared_directory_name)
 
     def checkPreparedHasParent(self, prepared_object):
