@@ -155,7 +155,7 @@ def isProxy(obj):
     # Alex changed for below as doesn't check class objects, only instances
     # e.g. isProxy(DiracFile) fails at the Ganga prompt
     if isclass(obj):
-        return issubclass(obj, GPIProxyObject) or hasattr(obj, implRef)
+        return issubclass(obj, GPIProxyObject) or hasattr(obj, proxyClass)
     else:
         obj_class = obj.__class__
         return issubclass(obj_class, GPIProxyObject) or hasattr(obj_class, implRef)

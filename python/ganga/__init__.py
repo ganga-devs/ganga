@@ -1,4 +1,5 @@
 # Bootstrap all of ganga, setup GPI, registries, etc.
+from __future__ import print_function
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Plugin import allPlugins
@@ -117,8 +118,10 @@ ShutdownManager.install()
 
 # ------------------------------------------------------------------------------------
 # start queues
-startUpQueues()
-
+def start_ganga_queues():
+    import ganga
+    startUpQueues(ganga)
+start_ganga_queues()
 
 # -------- Read in GANGA_CONFIG_PATH to get defaults for this ganga setup
 custom_config_path = None
@@ -375,4 +378,25 @@ for r in allRuntimes.values():
     except Exception as err:
         logger.error("problems with post bootstrap hook for %s" % r.name)
         logger.error("Reason: %s" % str(err))
+
+import pprint
+import sys
+
+orig_displayhook = sys.displayhook
+
+def myhook(value):
+    if value != None:
+        if isinstance(value, str):
+            pprint.pprint(value)
+        elif hasattr(value, '_display'):
+            print(value._display())
+        elif isProxy(value):
+            print(value.__str__(interactive=True))
+        else:
+            pprint.pprint(value)
+
+__builtins__['pprint_on'] = lambda: setattr(sys, 'displayhook', myhook)
+__builtins__['pprint_off'] = lambda: setattr(sys, 'displayhook', orig_displayhook)
+
+setattr(sys, 'displayhook', myhook)
 
