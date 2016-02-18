@@ -695,14 +695,6 @@ def GPIProxyClassFactory(name, pluginclass):
         ## e.g. Job(application=exe, name='myJob', ...) or myJob2 = Job(myJob1)
         ## THIS IS PRIMARILY FOR THE 2ND EXAMPLE ABOVE
 
-        ## DOESN'T MAKE SENSE TO KEEP PROXIES HERE AS WE MAY BE PERFORMING A PSEUDO-COPY OP
-        clean_args = [stripProxy(arg) for arg in args]
-        try:
-            stripProxy(self).__construct__(clean_args)
-        except TypeError:
-            stripProxy(self).__construct__([])
-
-
         ## FOURTH ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN
         ## THIS IS MAINLY FOR THE FIRST EXAMPLE ABOVE
 

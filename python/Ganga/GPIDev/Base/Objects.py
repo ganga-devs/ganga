@@ -811,33 +811,6 @@ class GangaObject(Node):
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
 
-    def __construct__(self, args):
-        # type: (Sequence) -> None
-        """
-        This acts like a secondary constructor for proxy objects.
-        Any positional (non-keyword) arguments are passed to this function to construct the object.
-
-        This default implementation performs a copy if there was only one item in the list
-        and raises an exception if there is more than one.
-
-        Args:
-            args: a list of objects
-
-        Raises:
-            TypeMismatchError: if there is more than one item in the list
-        """
-        # FIXME: This should probably be move to Proxy.py
-
-        if len(args) == 0:
-            return
-        elif len(args) == 1:
-            if not isinstance(args[0], type(self)):
-                logger.warning("Performing a copyFrom from: %s to: %s" % (type(args[0]), type(self)))
-            self.copyFrom(args[0])
-        else:
-            from Ganga.GPIDev.Base.Proxy import TypeMismatchError
-            raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
-
     def __getstate__(self):
         # IMPORTANT: keep this in sync with the __init__
         #self._getReadAccess()

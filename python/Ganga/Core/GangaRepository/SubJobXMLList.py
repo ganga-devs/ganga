@@ -68,20 +68,6 @@ class SubJobXMLList(GangaObject):
         self._cached_filenames = {}
         self._stored_len = []
 
-    def __construct__(self, args):
-        super(SubJobXMLList, self).__construct__(args)
-        self._definedParent = None
-
-        self._subjobIndexData = {}
-        self._subjob_master_index_name = "subjobs.idx"
-        self._jobDirectory = None
-        self._registry = None
-        self._dataFileName = None
-        self._load_backup = None
-        self._cachedJobs = {}
-        self._cached_filenames = {}
-        self._stored_len =[]
-
     ## THIS CLASS MAKES USE OF THE INTERNAL CLASS DICTIONARY ONLY!!!
     ## THIS CLASS DOES NOT MAKE USE OF THE SCHEMA TO STORE INFORMATION AS TRANSIENT OR UNCOPYABLE
     ## THIS CLASS CONTAINS A LOT OF OBJECT REFERENCES WHICH SHOULD NOT BE DEEPCOPIED!!!

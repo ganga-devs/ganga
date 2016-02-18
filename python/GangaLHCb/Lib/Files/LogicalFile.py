@@ -66,17 +66,6 @@ class LogicalFile(DiracFile):
         super(LogicalFile, self).__setstate__(dict)
         self._setLFNnamePattern(_lfn=self.name, _namePattern='')
 
-    def __construct__(self, args):
-
-        if len(args) >= 1:
-            self.name = args[0]
-            self._setLFNnamePattern(_lfn=self.name, _namePattern='')
-
-        if (len(args) != 1) or (type(args[0]) is not type('')):
-            super(LogicalFile, self).__construct__(args)
-        else:
-            self.name = strip_filename(args[0])
-
     def __setattr__(self, name, value):
 
         if name == "name":

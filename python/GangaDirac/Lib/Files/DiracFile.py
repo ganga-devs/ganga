@@ -99,59 +99,6 @@ class DiracFile(IGangaFile):
         if remoteDir is not None:
             self.remoteDir = remoteDir
 
-    def __construct__(self, args):
-
-        self.locations = []
-
-        if len(args) == 1 and isType(args[0], DiracFile):
-            self.lfn = args[0].lfn
-            self.namePattern = args[0].namePattern
-            self.remoteDir = args[0].remoteDir
-            self.localDir = args[0].localDir
-            self.guid = args[0].guid
-            self.compressed = args[0].compressed
-            self._storedReplicas = args[0]._storedReplicas
-            self._remoteURLs = args[0]._remoteURLs
-            self.failureReason = args[0].failureReason
-            self._have_copied = True
-            self.subfiles = copy.deepcopy(args[0].subfiles)
-            return
-
-        # LFN ONLY
-        if len(args) == 1 and type(args[0]) == type(''):
-            if str(str(args[0]).upper()[0:4]) == str("LFN:"):
-                self._setLFNnamePattern(_lfn=args[0][4:], _namePattern="")
-            else:
-                self._setLFNnamePattern(_lfn="", _namePattern=args[0])
-
-        # NAMEPATTERN AND LFN
-        elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
-            self.namePattern = args[0]
-            self._setLFNnamePattern(_lfn='', _namePattern=self.namePattern)
-            self.localDir = expandfilename(args[1])
-
-        # NAMEPATTERN AND LFN AND LOCALDIR
-        elif len(args) == 3 and type(args[0]) == type('') and type(args[1]) == type('') and type(args[2]) == type(''):
-            self.namePattern = args[0]
-            self.lfn = args[2]
-            self._setLFNnamePattern(_lfn=self.lfn, _namePattern=self.namePattern)
-            self.localDir = expandfilename(args[1])
-
-        # NAMEPATTERN AND LFN AND LOCALDIR AND REMOTEDIR
-        elif len(args) == 4 and type(args[0]) == type('') and type(args[1]) == type('')\
-                and type(args[2]) == type('') and type(args[3]) == type(''):
-            self.namePattern = args[0]
-            self.lfn = args[2]
-            self._setLFNnamePattern(_lfn=lfn, _namePattern=namePattern)
-            self.localDir = expandfilename(args[1])
-            self.remoteDir = args[3]
-
-        # OTHER
-        else:
-            super(DiracFile, self).__construct__(args)
-
-        return
-
     def __deepcopy__(self, memo):
 
         cls = type(stripProxy(self))

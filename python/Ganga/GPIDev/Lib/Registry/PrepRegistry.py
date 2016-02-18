@@ -104,12 +104,6 @@ class ShareRef(GangaObject):
         self.name = {}
         #self._setRegistry(None)
 
-    def __construct__(self, args):
-        super(ShareRef, self).__construct__(args)
-        if self.name is None:
-            self.name = {}
-        #self._setRegistry(None)
-
     def __getstate__(self):
         this_dict = super(ShareRef, self).__getstate__()
         #this_dict['_registry'] = None

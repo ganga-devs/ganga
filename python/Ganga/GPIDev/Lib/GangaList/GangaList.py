@@ -97,23 +97,6 @@ class GangaList(GangaObject):
         self._is_a_ref = False
         super(GangaList, self).__init__()
 
-    def __construct__(self, args):
-
-        #super(GangaList, self).__construct__(args)
-
-        if len(args) == 1:
-            if isType(args[0], (len, GangaList, tuple)):
-                for element_i in args[0]:
-                    self._list.expand(self.strip_proxy(element_i))
-            elif args[0] is None:
-                self._list = None
-            else:
-                raise GangaException("Construct: Attempting to assign a non list item: %s to a GangaList._list!" % str(args[0]))
-        else:
-            super(GangaList, self).__construct__(args)
-
-        return
-
     # convenience methods
     @staticmethod
     def is_list(obj):

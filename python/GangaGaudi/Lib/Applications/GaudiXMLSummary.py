@@ -48,16 +48,6 @@ class GaudiXMLSummary(GangaObject):
         super(GaudiXMLSummary, self).__init__()
         self.data = None
 
-    def __construct__(self, args):
-        from Ganga.GPIDev.Lib.Job.Job import Job
-        if (len(args) > 2) or (len(args) == 0) or (type(args[0]) is not Job):
-            super(GaudiXMLSummary, self).__construct__(args)
-        else:
-            if len(args) == 1:
-                self.create(args[0])
-            else:
-                self.create(args[0], args[1])
-
     def _attribute_filter__set__(self, n, v):
         if n == 'env_var':
             self.data = None

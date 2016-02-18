@@ -240,61 +240,6 @@ class Job(GangaObject):
             parent = self._getParent()
         return parent
 
-    def __construct__(self, args):
-
-        stripProxy(self)._getWriteAccess()
-
-        self.status = "new"
-        logger.debug("Intercepting __construct__")
-
-        #super(Job, self).__construct__(args)
-
-        # Not correctly calling Copy Constructor as in
-        # Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
-        #super(Job, self).__construct__( args )
-
-        logger.debug("Job args: %s" % str(args))
-
-        if len(args) == 1:
-
-            if isType(args[0], Job):
-
-                self._unsetSubmitTransients()
-                super(Job, self).__construct__( args )
-
-                original_job = args[0]
-
-                self.copyFrom(original_job)
-
-                if original_job.master is not None:
-
-                    if getConfig('Output')['ForbidLegacyInput']:
-
-                        if original_job.inputfiles == []:
-                            self.inputfiles = copy.copy(original_job.master.inputfiles)
-                        else:
-                            self.inputfiles = copy.copy(original_job.inputfiles)
-                        self.inputsandbox = []
-                    else:
-
-                        if original_job.inputsandbox == []:
-                            self.inputsandbox = original_job.master.inputsandbox
-                        else:
-                            self.inputsandbox = original_job.inputsandbox
-                        self.inputfiles = []
-                if getConfig('Preparable')['unprepare_on_copy'] is True:
-                    self.unprepare()
-
-            else:
-                # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
-                super(Job, self).__construct__( args )
-                #raise ValueError("Object %s is NOT of type Job" % str(args[0]))
-        else:
-            # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
-            super(Job, self).__construct__(args)
-
-        stripProxy(self)._setDirty()
-
     def _readonly(self):
         return self.status != 'new'
 
@@ -2351,10 +2296,6 @@ class JobTemplate(Job):
 
     def __init__(self):
         super(JobTemplate, self).__init__()
-        self.status = "template"
-
-    def __construct__(self, args):
-        super(JobTemplate, self).__construct__(args)
         self.status = "template"
 
     def _readonly(self):

@@ -67,16 +67,6 @@ class LCGSEFile(IGangaFile):
             raise AttributeError('invalid se_type: %s' % value)
         super(LCGSEFile, self).__setattr__(attr, value)
 
-    def __construct__(self, args):
-        self.localDir = ''
-        if len(args) == 1 and isinstance(args[0], str):
-            self.namePattern = args[0]
-        elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
-            self.namePattern = args[0]
-            self.localDir = args[1]
-        self.shell = GridShell.getShell()
-        self.locations = []
-
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
         if getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
