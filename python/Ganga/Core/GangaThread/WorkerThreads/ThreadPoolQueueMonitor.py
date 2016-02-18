@@ -19,10 +19,12 @@ class ThreadPoolQueueMonitor(object):
     the getConfig('Queues')['NumWorkerThreads'] config option.
     '''
 
-    def __init__(self,
-                 user_threadpool=WorkerThreadPool(
-                     worker_thread_prefix="User_Worker_"),
-                 monitoring_threadpool=WorkerThreadPool(worker_thread_prefix="Ganga_Worker_")):
+    def __init__(self, user_threadpool=None, monitoring_threadpool=None):
+
+        if user_threadpool is None:
+            user_threadpool = WorkerThreadPool(worker_thread_prefix="User_Worker_")
+        if monitoring_threadpool is None:
+            monitoring_threadpool = WorkerThreadPool(worker_thread_prefix="Ganga_Worker_")
 
         global _user_threadpool
         global _monitoring_threadpool
