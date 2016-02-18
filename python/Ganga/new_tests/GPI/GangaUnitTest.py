@@ -79,6 +79,10 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
         else:
             logger.info("InternalServices still running")
 
+        # The queues are shut down by the atexit handlers so we need to start them here
+        from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
+        startUpQueues()
+
     logger.info("Bootstrapping")
     Ganga.Runtime._prog.bootstrap(interactive=False)
 
