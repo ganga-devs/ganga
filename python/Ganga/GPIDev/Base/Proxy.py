@@ -695,6 +695,14 @@ def GPIProxyClassFactory(name, pluginclass):
         ## e.g. Job(application=exe, name='myJob', ...) or myJob2 = Job(myJob1)
         ## THIS IS PRIMARILY FOR THE 2ND EXAMPLE ABOVE
 
+        clean_args = [stripProxy(arg) for arg in args]
+        if len(clean_args) == 1:
+            instance.copyFrom(clean_args[0])
+        else:
+            if len(clean_args) > 0:
+                new_instance = pluginclass(args)
+                instance = new_instance
+
         ## FOURTH ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN
         ## THIS IS MAINLY FOR THE FIRST EXAMPLE ABOVE
 
