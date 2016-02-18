@@ -36,11 +36,17 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
     import Ganga.Runtime
     this_argv = [
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
-        '-o[Configuration]RUNTIME_PATH=GangaTest',
-        '-o[Configuration]user=testframework',
-        '-o[Configuration]gangadir='+str(gangadir_for_test),
-        '-o[Configuration]repositorytype=LocalXML',
-        '-o[TestingFramework]ReleaseTesting=True',
+    ]
+
+    # These are the default options for all test instances
+    # They can be overridden by extra_opts
+    default_opts = [
+        ('Configuration', 'RUNTIME_PATH', 'GangaTest'),
+        ('Configuration', 'gangadir', gangadir_for_test),
+        ('Configuration', 'user', 'testframework'),
+        ('Configuration', 'repositorytype', 'LocalXML'),
+        ('TestingFramework', 'ReleaseTesting', True),
+        ('Queues', 'NumWorkerThreads', 2),
     ]
 
     # FIXME Should we need to add the ability to load from a custom .ini file
@@ -58,13 +64,15 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
     except:
         do_config = True
 
+    # For all the default and extra options, we set the session value
+    from Ganga.Utility.Config import setConfigOption
+    for opt in default_opts + extra_opts:
+        setConfigOption(*opt)
+
     if do_config:
         # Perform the configuration and bootstrap steps in ganga
         logger.info("Parsing Configuration Options")
         Ganga.Runtime._prog.configure()
-        from Ganga.Utility.Config import setConfigOption
-        for extra_opt in extra_opts:
-            setConfigOption(*extra_opt)
         logger.info("Initializing")
         Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
     else:
@@ -151,6 +159,11 @@ def stop_ganga():
     # This should now be safe
     ShutdownManager._ganga_run_exitfuncs()
 
+    # Undo any manual editing of the config and revert to defaults
+    from Ganga.Utility.Config import allConfigs
+    for package in allConfigs.values():
+        package.revertToDefaultOptions()
+
     # Finished
     logger.info("Test Finished")
 
@@ -178,6 +191,9 @@ class GangaUnitTest(unittest.TestCase):
         self.__class__.gangadir = self.gangadir
         self.__class__.wipe_repo = self.wipe_repo
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
+
+        from Ganga.GPI import config
+        print('gangadir', config['Configuration'].gangadir)
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
