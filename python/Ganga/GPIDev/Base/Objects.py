@@ -13,6 +13,10 @@
 #   and followed by
 #    obj._setDirty()
 
+import threading
+from contextlib import contextmanager
+import functools
+
 import Ganga.Utility.logging
 
 from copy import deepcopy, copy
@@ -37,7 +41,7 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache', '_parent', '_registry', '_data']
+do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_lock']
 
 def _getGangaList():
     global _imported_GangaList
@@ -47,12 +51,25 @@ def _getGangaList():
     return _imported_GangaList
 
 
+def synchronised(f):
+    """
+    This decorator must be attached to a method on a ``Node`` subclass
+    It uses the object's lock to make sure that the object is held for the duration of the decorated function
+    """
+    @functools.wraps(f)
+    def decorated(self, *args, **kwargs):
+        with self.lock:
+            return f(self, *args, **kwargs)
+    return decorated
+
+
 class Node(object):
 
     def __init__(self, parent=None):
         self._data = {}
         self._parent = parent
         self._index_cache = {}
+        self._lock = threading.RLock()
         super(Node, self).__init__()
         #logger.info("Node __init__")
 
@@ -90,11 +107,34 @@ class Node(object):
             obj._setParent(self._getParent())
         return obj
 
+    @synchronised
     def _getParent(self):
         return self._parent
 
+    @synchronised
     def _setParent(self, parent):
         setattr(self, '_parent', parent)
+
+    @property
+    @contextmanager
+    def lock(self):
+        """
+        This is a context manager which acquires the lock on the object and all it's ancestors.
+        When the context manager exits, all the locks are released in the reverse order to that which they were acquired.
+        """
+        self._lock.acquire()
+        ancestors = []
+        p = self._parent
+        while p is not None:
+            p._lock.acquire()
+            ancestors.append(p)
+            p = p._parent
+        try:
+            yield
+        finally:
+            for p in reversed(ancestors):
+                p._lock.release()
+            self._lock.release()
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
@@ -328,6 +368,19 @@ class Node(object):
 ##########################################################################
 
 
+def synchronised_descriptor(get_or_set):
+    """
+    This decorator should only be used on ``__get__`` or ``__set__`` methods of a ``Descriptor``.
+    """
+    @functools.wraps(get_or_set)
+    def decorated(self, obj, type_or_value):
+        if obj is None:
+            return get_or_set(self, obj, type_or_value)
+        with obj.lock:
+            return get_or_set(self, obj, type_or_value)
+    return decorated
+
+
 class Descriptor(object):
 
     def __init__(self, name, item):
@@ -351,6 +404,7 @@ class Descriptor(object):
         if self._getter_name:
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
+    @synchronised_descriptor
     def __get__(self, obj, cls):
         name = _getName(self)
 
@@ -462,6 +516,7 @@ class Descriptor(object):
 
         return v_copy
 
+    @synchronised_descriptor
     def __set__(self, _obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
         ## _obj: parent class which 'owns' the attribute
