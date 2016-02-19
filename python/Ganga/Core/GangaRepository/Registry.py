@@ -207,7 +207,6 @@ class Registry(object):
 
 
         self._inprogressDict = {}
-        self._accessLockDict = {}
 
 
         self.shouldReleaseRun = True
@@ -723,20 +722,11 @@ class Registry(object):
         Raise RegistryKeyError"""
         logger.debug("_read_access")
         obj_id = id(stripProxy(_obj))
-        if obj_id in self._inprogressDict.keys() or obj_id in self._accessLockDict.keys():
+        if obj_id in self._inprogressDict.keys():
             return
-        else:
-            self._accessLockDict[id(_obj)] = _obj
 
-        self._lock.acquire()
-        try:
+        with _obj.lock:
             self.__safe_read_access(_obj, sub_obj)
-        except Exception as err:
-            raise err
-        finally:
-            if id(_obj) in self._accessLockDict.keys():
-                del self._accessLockDict[id(_obj)]
-            self._lock.release()
 
     @synchronised
     def _updateIndexCache(self, _obj):
@@ -813,22 +803,11 @@ class Registry(object):
         logger.debug("_write_access")
         obj = stripProxy(_obj)
         obj_id = id(_obj)
-        if obj_id in self._inprogressDict.keys() or obj_id in self._accessLockDict.keys():
+        if obj_id in self._inprogressDict.keys():
             return
-        else:
-            self._accessLockDict[obj_id] = obj
 
-        self._lock.acquire()
-
-        try:
+        with obj.lock:
             self.__write_access(obj)
-        except Exception as err:
-            raise err
-        finally:
-
-            if obj_id in self._accessLockDict.keys():
-                del self._accessLockDict[obj_id]
-            self._lock.release()
 
     def __write_access(self, _obj):
         logger.debug("__write_acess")
