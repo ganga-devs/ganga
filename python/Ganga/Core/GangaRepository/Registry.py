@@ -123,7 +123,7 @@ class IncompleteObject(GangaObject):
         self.registry._lock.acquire()
         try:
 
-            if self.id in self.registry.dirty_objs.keys() and self.registry.checkShouldFlush():
+            if self.registry.checkShouldFlush():
                 self.registry.repository.flush([self.registry._objects[self.id]])
                 self.registry._load([self.id])
             if self.id not in self.registry_loaded_ids:
@@ -179,7 +179,6 @@ class Registry(object):
         self.doc = doc
         self._hasStarted = False
         self.dirty_flush_counter = dirty_flush_counter
-        self.dirty_objs = {}
         self.dirty_hits = 0
         self.update_index_time = update_index_time
         self._update_index_timer = 0
@@ -289,17 +288,6 @@ class Registry(object):
 
                  flush_thread = threading.Thread(target=self._flush, args=())
                  flush_thread.run()
-
-                 for obj in self.dirty_objs.itervalues():
-
-                    if self.shouldReleaseRun is False:
-                        break
-
-                    _args = ([obj])
-                    release_thread = threading.Thread(target=self._release_lock, args=_args)
-                    release_thread.run()
-
-                 self.dirty_objs = {}
     
             time.sleep(0.5)
 
@@ -490,7 +478,6 @@ class Registry(object):
                     return False
             self.repository.reap_locks()
             self.repository.delete(self._objects.keys())
-            self.dirty_objs = {}
             self.dirty_hits = 0
             self.changed_ids = {}
             self.repository.clean()
@@ -610,8 +597,6 @@ class Registry(object):
                 try:
                     self._write_access(obj)
                 except RegistryKeyError as err:
-                    if getattr(obj, _reg_id_str) in self.dirty_objs.keys():
-                        del self.dirty_objs[getattr(obj, _reg_id_str)]
                     logger.debug("Registry KeyError: %s" % str(err))
                     logger.warning("double delete: Object #%i is not present in registry '%s'!" % (this_id, self.name))
                     return
@@ -772,8 +757,6 @@ class Registry(object):
         try:
             this_id = self.find(obj)
             try:
-                if this_id in self.dirty_objs.keys() and self.checkShouldFlush():
-                    self._flush([self._objects[this_id]])
                 if this_id not in self._loaded_ids:
                     self._load([this_id])
                     self._loaded_ids.append(this_id)
@@ -842,8 +825,6 @@ class Registry(object):
                     raise err
                 finally:  # try to load even if lock fails
                     try:
-                        if this_id in self.dirty_objs.keys() and self.checkShouldFlush():
-                            self._flush([self._objects[this_id]])
                         if this_id not in self._loaded_ids:
                             self._load([this_id])
                             self._loaded_ids.append(this_id)
@@ -893,10 +874,7 @@ class Registry(object):
         try:
             if hasattr(obj, '_registry_locked') and obj._registry_locked:
                 oid = self.find(obj)
-                if getattr(obj, _reg_id_str) in self.dirty_objs.keys():
-                    self.repository.flush([oid])
-                    if getattr(obj, _reg_id_str) in self.dirty_objs:
-                        del self.dirty_objs[getattr(obj, _reg_id_str)]
+                self.repository.flush([oid])
                 obj._registry_locked = False
                 self.repository.unlock([oid])
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
