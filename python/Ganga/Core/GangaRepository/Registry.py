@@ -612,20 +612,6 @@ class Registry(object):
 
             self.unlock_transaction(obj_id)
 
-    def _backgroundFlush(self, _objs=None):
-
-        if _objs is not None:
-            objs = [stripProxy(obj) for obj in _objs]
-        else:
-            objs = [obj for obj in self.dirty_objs.itervalues()]
-
-        if False:
-            thread = threading.Thread(target=self._flush, args=())
-            thread.daemon = True
-            thread.run()
-        else:
-            self._flush(objs)
-
     @synchronised
     def _flush(self, objs):
         """
