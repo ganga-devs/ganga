@@ -244,44 +244,13 @@ class Registry(object):
             Raise RegistryKeyError"""
         logger.debug("__getitem__")
         try:
-            self.lock_transaction( this_id, "_getitem")
-
-            real_id = None
-            if type(this_id) is int:
-                if this_id >= 0:
-                    ## +ve integer, should be in dictionary
-                    real_id = this_id
-                    this_obj = self._objects[this_id]
-                else:
-                    ## -ve integer should be a relative object in dictionary
-                    real_id = self._objects.keys()[this_id]
-                    this_obj = self._objects[real_id]
-            else:
-                ## NOT an integer, maybe it's a slice or other?
-                this_obj = self._objects[this_id]
-
-            logger.debug("found_object")
-
-            found_id = None
-            if hasattr(this_obj, _id_str):
-                found_id = getattr(this_obj, _id_str)
-            if hasattr(this_obj, _reg_id_str):
-                found_id = getattr(this_obj, _reg_id_str)
-            if found_id is not None and real_id is not None:
-                assert( found_id == real_id )
-
-            logger.debug("Checked ID")
-
-            return this_obj
-
+            return self._objects[this_id]
         except KeyError as err:
-            logger.debug("Repo KeyError: %s" % str(err))
-            logger.debug("Keys: %s id: %s" % (str(self._objects.keys()), str(this_id)))
+            logger.debug("Repo KeyError: %s" % err)
+            logger.debug("Keys: %s id: %s" % (self._objects.keys(), this_id))
             if this_id in self._incomplete_objects:
                 return IncompleteObject(self, this_id)
             raise RegistryKeyError("Could not find object #%s" % this_id)
-        finally:
-            self.unlock_transaction(this_id)
 
     @synchronised
     def __len__(self):
