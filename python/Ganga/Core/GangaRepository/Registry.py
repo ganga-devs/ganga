@@ -679,57 +679,34 @@ class Registry(object):
         finally:
             self._lock.release()
 
-    def _flush(self, _objs=None):
-        """Flush a set of objects to the persistency layer immediately
-        Raise RepositoryError
-        Raise RegistryAccessError
-        Raise RegistryLockError"""
+    @synchronised_nonblocking
+    def _flush(self, objs):
+        """
+        Flush a set of objects to the persistency layer immediately
+
+        Only those objects passed in will be flushed and only if they are dirty.
+
+        Args:
+            objs: a list of objects to flush
+        """
         logger.debug("_flush")
-        self._lock.acquire()
 
-        if _objs is not None and isType(_objs, (list, tuple, GangaList)):
-            objs = [stripProxy(_obj) for _obj in _objs]
-        elif _objs is not None:
-            objs = [stripProxy(_objs)]
+        if isType(objs, (list, tuple, GangaList)):
+            objs = [stripProxy(_obj) for _obj in objs]
         else:
-            objs = []
-
-        obj_ids = []
-        for obj in objs:
-            this_id = id(self.find(obj))
-            obj_ids.append(this_id)
-            self.lock_transaction(this_id, '_flush')
+            objs = [stripProxy(objs)]
 
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot flush to a disconnected repository!")
+
         for obj in objs:
-            self._write_access(obj)
+            with obj.lock:
+                obj_id = getattr(obj, _reg_id_str)
+                if not obj._dirty:
+                    continue
+                self.repository.flush([obj_id])
+                self.repository.unlock([obj_id])
 
-        try:
-            for obj in objs:
-                self.dirty_objs[getattr(obj, _reg_id_str)] = obj
-            ids = []
-            for reg_id, obj in self.dirty_objs.iteritems():
-                try:
-                    ids.append(reg_id)
-                except ObjectNotInRegistryError as err:
-                    logger.error("flush: Object: %s not in Repository: %s" % (str(obj), str(err)))
-                    raise err
-            logger.debug("repository.flush(%s)" % ids)
-            self.repository.flush(ids)
-            self.repository.unlock(ids)
-            self.dirty_objs = {}
-        except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-            raise err
-        except Exception as err:
-            logger.error("_flush Error: %s" % str(err))
-            raise err
-        finally:
-
-            for obj_id in obj_ids:
-                self.unlock_transaction(obj_id)
-
-            self._lock.release()
 
     def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.
