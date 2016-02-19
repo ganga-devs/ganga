@@ -24,9 +24,9 @@ class WorkerThreadPool(object):
     __slots__ = ['__queue', '__worker_threads',
                  '_saved_num_worker', '_saved_thread_prefix', '_locked', '_shutdown']
 
-    def __init__(self,
-                 num_worker_threads=getConfig('Queues')['NumWorkerThreads'],
-                 worker_thread_prefix='Worker_'):
+    def __init__(self, num_worker_threads=None, worker_thread_prefix='Worker_'):
+        if num_worker_threads is None:
+            num_worker_threads=getConfig('Queues')['NumWorkerThreads']
         self.__queue = Queue.PriorityQueue()
         self.__worker_threads = []
 
