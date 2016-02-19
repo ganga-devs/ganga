@@ -361,9 +361,7 @@ class SessionLockManager(object):
                 time.sleep(0.1)
                 if i >= 60:
                     raise x
-                else:
-                    continue
-            i = i + 1
+                i += 1
         return value
 
     def startup(self):
