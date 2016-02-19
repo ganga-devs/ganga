@@ -792,9 +792,8 @@ class Registry(object):
     def __write_access(self, _obj):
         logger.debug("__write_acess")
         obj = stripProxy(_obj)
-
-        if id(obj) in self._inprogressDict.keys():
-            this_id = self.find(obj)
+        this_id = self.find(obj)
+        if this_id in self._inprogressDict.keys():
             for this_d in self.changed_ids.itervalues():
                 this_d.add(this_id)
             return
