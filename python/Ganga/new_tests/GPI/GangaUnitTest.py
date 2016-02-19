@@ -179,7 +179,7 @@ class GangaUnitTest(unittest.TestCase):
         # This is called before each unittest
         if gangadir is None:
             import os
-            gangadir = os.path.join('$HOME/gangadir_testing', self.__class__.__name__)
+            gangadir = os.path.join('$HOME/gangadir_testing')  # TODO make separate dirs per test suite, `self.__class__.__name__`
             gangadir = os.path.expanduser(os.path.expandvars(gangadir))
             if not os.path.isdir(gangadir):
                 os.makedirs(gangadir)
@@ -204,7 +204,7 @@ class GangaUnitTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        if cls.wipe_repo is True:
+        if cls.wipe_repo:
             import shutil
             shutil.rmtree(cls.gangadir, ignore_errors=True)
 
