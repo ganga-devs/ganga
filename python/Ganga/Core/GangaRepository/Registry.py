@@ -678,7 +678,7 @@ class Registry(object):
         finally:
             self._lock.release()
 
-    @synchronised_nonblocking
+    @synchronised
     def _flush(self, objs):
         """
         Flush a set of objects to the persistency layer immediately
