@@ -192,9 +192,6 @@ class GangaUnitTest(unittest.TestCase):
         self.__class__.wipe_repo = self.wipe_repo
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
 
-        from Ganga.GPI import config
-        print('gangadir', config['Configuration'].gangadir)
-
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         # Stop ganga and mimick an exit to shutdown all internal processes
