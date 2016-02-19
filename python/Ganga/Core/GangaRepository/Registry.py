@@ -296,8 +296,6 @@ class Registry(object):
 
     def turnOnAutoFlushing(self):
         self._autoFlush = True
-        if self.checkShouldFlush():
-            self._backgroundFlush()
 
     def isAutoFlushEnabled(self):
         return self._autoFlush
@@ -354,7 +352,6 @@ class Registry(object):
         returnable = self._objects
         return returnable
 
-    @synchronised
     def ids(self):
         """ Returns the list of ids of this registry """
         logger.debug("ids")
