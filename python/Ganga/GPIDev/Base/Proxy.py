@@ -664,7 +664,18 @@ def GPIProxyClassFactory(name, pluginclass):
         else:
             ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
             ## Object was not passed by construction so need to construct new object for internal use
-            instance = pluginclass()
+            clean_args = [getRuntimeGPIObject(arg, True) if isinstace(arg, str) else arg for arg in args]
+            clean_args = [stripProxy(arg) for arg in args]
+            if len(clean_args) > 1:
+                instance = pluginclass( *tuple(clean_args) )
+            elif len(clean_args[0]) == 1:
+                if isinstance(clean_args[0], pluginclass):
+                    instance = pluginclass()
+                    instance.copyFrom(clean_args[0])
+                else:
+                    instance = pluginclass(clean_args[0])
+            else:
+                instance = pluginclass()
 
         ## Avoid intercepting any of the setter method associated with the implRef as they could trigger loading from disk
         setattr(self, implRef, instance)
@@ -690,18 +701,6 @@ def GPIProxyClassFactory(name, pluginclass):
                 else:
                     instance.setNodeAttribute(key, stripProxy(val))
 
-
-        ## THIRD(?) CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
-        ## e.g. Job(application=exe, name='myJob', ...) or myJob2 = Job(myJob1)
-        ## THIS IS PRIMARILY FOR THE 2ND EXAMPLE ABOVE
-
-        clean_args = [stripProxy(arg) for arg in args]
-        if len(clean_args) == 1:
-            instance.copyFrom(clean_args[0])
-        else:
-            if len(clean_args) > 0:
-                new_instance = pluginclass(args)
-                instance = new_instance
 
         ## FOURTH ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN
         ## THIS IS MAINLY FOR THE FIRST EXAMPLE ABOVE
