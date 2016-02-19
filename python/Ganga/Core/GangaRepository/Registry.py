@@ -707,6 +707,14 @@ class Registry(object):
                 self.repository.flush([obj_id])
                 self.repository.unlock([obj_id])
 
+    @synchronised
+    def flush_all(self):
+        """
+        This will attempt to flush all the jobs in the registry.
+        It does this via ``_flush`` so the same conditions apply.
+        """
+        if self.hasStarted():
+            self._flush(self.values())
 
     def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.
@@ -988,7 +996,7 @@ class Registry(object):
             try:
                 if not self.metadata is None:
                     try:
-                        self._flush()
+                        self.flush_all()
                     except Exception, err:
                         logger.debug("shutdown _flush Exception: %s" % str(err))
                     self.metadata.shutdown()
@@ -997,7 +1005,7 @@ class Registry(object):
             #finally:
             #    pass
             try:
-                self._flush()
+                self.flush_all()
             except Exception as err:
                 logger.error("Exception on flushing '%s' registry: %s", self.name, str(err))
                 #raise err
