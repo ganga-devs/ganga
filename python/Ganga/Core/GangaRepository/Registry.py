@@ -626,40 +626,6 @@ class Registry(object):
         else:
             self._flush(objs)
 
-    def _dirty(self, _obj):
-        """ Mark an object as dirty.
-        Trigger automatic flush after specified number of dirty hits
-        Raise RepositoryError
-        Raise RegistryAccessError
-        Raise RegistryLockError"""
-        logger.debug("_dirty")
-        obj = stripProxy(_obj)
-        self._updateIndexCache(obj)
-
-        if self.find(obj) in self._inprogressDict.keys():
-            self.dirty_objs[getattr(obj, _reg_id_str)] = obj
-            self.dirty_hits += 1
-            return
-
-        self._write_access(obj)
-        self._lock.acquire()
-        try:
-            self.dirty_objs[getattr(obj, _reg_id_str)] = obj
-            self.dirty_hits += 1
-            if self.checkShouldFlush():
-                self._backgroundFlush([obj])
-            # HACK for GangaList: there _dirty is called _before_ the object is
-            # modified
-            for this_d in self.changed_ids.itervalues():
-                this_d.add(self.find(obj))
-        except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-            raise err
-        except Exception as err:
-            logger.debug("Unknown Flush Exception: %s" % str(err))
-            raise err
-        finally:
-            self._lock.release()
-
     @synchronised
     def _flush(self, objs):
         """

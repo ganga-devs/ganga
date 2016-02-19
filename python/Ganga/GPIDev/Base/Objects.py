@@ -183,6 +183,7 @@ class Node(object):
                 return None
 
     # accept a visitor pattern
+    @synchronised
     def accept(self, visitor):
 
         if not hasattr(self, '_schema'):
@@ -908,10 +909,6 @@ class GangaObject(Node):
             self_copy._setParent(true_parent)
         return self_copy
 
-    def accept(self, visitor):
-        self._getReadAccess()
-        super(GangaObject, self).accept(visitor)
-
     def _getIOTimeOut(self):
         from Ganga.Utility.Config.Config import getConfig, ConfigError
         try:
@@ -1006,8 +1003,6 @@ class GangaObject(Node):
         parent = self._getParent()
         if parent is not None:
             parent._setDirty()
-        if self._registry is not None:
-            self._registry._dirty(self)
 
     def _setFlushed(self):
         self._dirty = False
