@@ -6,6 +6,9 @@
 
 from __future__ import print_function
 
+import functools
+import threading
+
 import os
 import time
 import errno
@@ -295,6 +298,14 @@ class SessionLockRefresher(GangaThread):
         assert(len(self.fns) == len(self.repos))
 
 
+def synchronised(f):
+    @functools.wraps(f)
+    def decorated(self, *args, **kwargs):
+        with self._lock:
+            return f(self, *args, **kwargs)
+    return decorated
+
+
 class SessionLockManager(object):
 
     """ Class with thread that keeps a global lock file that synchronizes
@@ -349,6 +360,7 @@ class SessionLockManager(object):
         self.name = name
         self.realpath = realpath
         #logger.debug( "Initializing SessionLockManager: " + self.fn )
+        self._lock = threading.RLock()
 
     @staticmethod
     def delay_init_open(filename):
@@ -361,11 +373,10 @@ class SessionLockManager(object):
                 time.sleep(0.1)
                 if i >= 60:
                     raise x
-                else:
-                    continue
-            i = i + 1
+                i += 1
         return value
 
+    @synchronised
     def startup(self):
         # Ensure directories exist
         self.mkdir(os.path.join(self.realpath, "sessions"))
@@ -416,6 +427,7 @@ class SessionLockManager(object):
         global session_lock_refresher
         session_lock_refresher.updateNow()
 
+    @synchronised
     def shutdown(self):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
         #logger.debug( "Shutting Down SessionLockManager, self.fn = %s" % (self.fn) )
@@ -457,6 +469,7 @@ class SessionLockManager(object):
         return value
 
     # Global lock function
+    @synchronised
     def global_lock_setup(self):
 
         if self.afs:
@@ -554,6 +567,7 @@ class SessionLockManager(object):
         except IOError as x:
             raise RepositoryError(self.repo, "IOError on unlock ('%s'): %s" % (self.lockfn, x))
 
+    @synchronised
     def delay_session_open(self, filename):
         value = None
         i = 0
@@ -570,6 +584,7 @@ class SessionLockManager(object):
         return value
 
     # Session read-write functions
+    @synchronised
     def session_read(self, fn):
         """ Reads a session file and returns a set of IDs locked by that session.
             The global lock MUST be held for this function to work, although on NFS additional
@@ -600,6 +615,7 @@ class SessionLockManager(object):
     # This function attempts to grab the ctime from a file which should exist
     # As we don't want this to fail outright it attempts to re-read every 1s
     # for 30sec before failing
+    @synchronised
     def delayopen(self, filename):
         value = None
         i = 0
@@ -621,6 +637,7 @@ class SessionLockManager(object):
     # This function attempts to grab the ctime from a file which should exist
     # As we don't want this to fail outright it attempts to re-read every 1s
     # for 30sec before failing
+    @synchronised
     def delaywrite(self, filename, data):
         value = None
         i = 0
@@ -639,6 +656,7 @@ class SessionLockManager(object):
 
         return value
 
+    @synchronised
     def session_write(self):
         """ Writes the locked set to the session file. 
             The global lock MUST be held for this function to work, although on NFS additional
@@ -717,6 +735,7 @@ class SessionLockManager(object):
             raise RepositoryError(
                 self.repo, "Locking error on count file '%s' write: %s" % (self.cntfn, x))
 
+    @synchronised
     def cnt_write(self):
         """ Writes the counter to the counter file. 
             The global lock MUST be held for this function to work correctly
@@ -752,6 +771,7 @@ class SessionLockManager(object):
                     last_count_access[1] = self.count
 
     # "User" functions
+    @synchronised
     def make_new_ids(self, n):
         """ Locks the next n available ids and returns them as a list 
             Raise RepositoryError on fatal error"""
@@ -797,6 +817,7 @@ class SessionLockManager(object):
                 # self.reap_locks()
                 pass
 
+    @synchronised
     def lock_ids(self, ids):
 
         self.safe_LockCheck()
@@ -828,6 +849,7 @@ class SessionLockManager(object):
         finally:
             self.global_lock_release()
 
+    @synchronised
     def release_ids(self, ids):
         #logger.debug( "releasing : %s" % str(ids) )
         self.global_lock_acquire()
@@ -839,6 +861,7 @@ class SessionLockManager(object):
         finally:
             self.global_lock_release()
 
+    @synchronised
     def check(self):
         self.global_lock_acquire()
         try:
@@ -876,6 +899,7 @@ class SessionLockManager(object):
         finally:
             self.global_lock_release()
 
+    @synchronised
     def get_lock_session(self, id):
         """get_lock_session(id)
         Tries to determine the session that holds the lock on id for information purposes, and return an informative string.
@@ -907,6 +931,7 @@ class SessionLockManager(object):
         finally:
             self.global_lock_release()
 
+    @synchronised
     def get_other_sessions(self):
         """get_session_list()
         Tries to determine the other sessions that are active and returns an informative string for each of them.
@@ -919,6 +944,7 @@ class SessionLockManager(object):
         finally:
             self.global_lock_release()
 
+    @synchronised
     def reap_locks(self):
         """reap_locks() --> True/False
         Remotely clear all foreign locks from the session.

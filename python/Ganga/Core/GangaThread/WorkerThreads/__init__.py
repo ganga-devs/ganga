@@ -14,7 +14,7 @@ def startUpQueues():
         exportToGPI('queues', _global_queues, 'Objects')
 
         import atexit
-        atexit.register((-10., shutDownQueues), ())
+        atexit.register((-10., shutDownQueues))
 
     else:
         logger.error("Cannot Start queues if they've already started")
