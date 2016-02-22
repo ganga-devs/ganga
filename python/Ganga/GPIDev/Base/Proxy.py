@@ -11,11 +11,11 @@ from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Schema import ComponentItem
 
 from Ganga.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass, _getName
-from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
+from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError, GangaValueError
 
 import os
 
-from inspect import isclass
+from inspect import isclass, getargspec
 
 import types
 
@@ -664,16 +664,27 @@ def GPIProxyClassFactory(name, pluginclass):
         else:
             ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
             ## Object was not passed by construction so need to construct new object for internal use
-            clean_args = [getRuntimeGPIObject(arg, True) if isinstace(arg, str) else arg for arg in args]
+            clean_args = [getRuntimeGPIObject(arg, True) if isinstance(arg, str) else arg for arg in args]
             clean_args = [stripProxy(arg) for arg in args]
+            num_args = len(getargspec(pluginclass.__init__)[0])-1
+            if num_args == 0 and len(clean_args) > 0:
+                raise GangaValueError("Cannot construct class %s using un-named arguments" % getName(pluginclass))
             if len(clean_args) > 1:
+                if len(clean_args) > num_args:
+                    raise GangaValueError("Got too many un-named options to Construct class: %s" % getName(pluginclass))
                 instance = pluginclass( *tuple(clean_args) )
-            elif len(clean_args[0]) == 1:
+            elif len(clean_args) == 1:
                 if isinstance(clean_args[0], pluginclass):
                     instance = pluginclass()
                     instance.copyFrom(clean_args[0])
                 else:
-                    instance = pluginclass(clean_args[0])
+                    if num_args >= 1:
+                        try:
+                            instance = pluginclass(clean_args[0])
+                        except:
+                            raise GangaValueError("Cannot Construct class: %s from Argument: %s" %(getName(pluginclass), str(clean_args[0])))
+                    else:
+                        raise GangaValueError("Got too many un-named options to Construct class: %s" % getName(pluginclass))
             else:
                 instance = pluginclass()
 
