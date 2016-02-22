@@ -236,7 +236,6 @@ class Registry(object):
         self.hard_lock[this_id].release()
 
     # Methods intended to be called from ''outside code''
-    @synchronised
     def __getitem__(self, this_id):
         """ Returns the Ganga Object with the given id.
             Raise RegistryKeyError"""
@@ -352,6 +351,7 @@ class Registry(object):
         returnable = self._objects
         return returnable
 
+    @synchronised
     def ids(self):
         """ Returns the list of ids of this registry """
         logger.debug("ids")
@@ -406,12 +406,14 @@ class Registry(object):
                 raise
         return
 
+    @synchronised
     def keys(self):
         """ Returns the list of ids of this registry """
         logger.debug("keys")
         returnable = self.ids()
         return returnable
 
+    @synchronised
     def values(self):
         """ Return the objects in this registry, in order of ID.
         Besides items() this is also recommended for iteration."""
@@ -424,7 +426,6 @@ class Registry(object):
         returnable = iter(self.values())
         return returnable
 
-    @synchronised
     def find(self, _obj):
         """Returns the id of the given object in this registry, or 
         Raise ObjectNotInRegistryError if the Object is not found"""
