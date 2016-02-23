@@ -538,7 +538,7 @@ class PackageConfig(object):
         return self.getEffectiveOption(o)
 
     def getOption(self, name):
-        return self.options[options.name]
+        return self.options[name]
 
     def addOption(self, name, default_value, docstring, override=False, **meta):
 
