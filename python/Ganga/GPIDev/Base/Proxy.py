@@ -608,7 +608,7 @@ def GPIProxyObjectFactory(_obj):
     Returns:
         a proxy object
     """
-    if hasattr(_obj, proxyObject)
+    if hasattr(_obj, proxyObject):
         return getattr(_obj, proxyObject)
     if not isType(_obj, GangaObject):
         from Ganga.Core.exceptions import GangaException
