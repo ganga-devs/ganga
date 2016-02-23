@@ -17,7 +17,7 @@ from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, getRuntimeGPIOb
 from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus, lazyLoadJobBackend
 
 # Setup logging ---------------
-from Ganga.Utility.logging import getLogger, log_unknown_exception
+from Ganga.Utility.logging import getLogger, log_unknown_exception, log_user_exception
 
 from Ganga.Core import BackendError
 from Ganga.Utility.Config import getConfig
@@ -368,8 +368,6 @@ class UpdateDict(object):
             if entry.entryLock._is_owned():
                 entry.entryLock.release()
 
-updateDict_ts = SynchronisedObject(UpdateDict())
-
 
 class CallbackHookEntry(object):
 
@@ -476,6 +474,9 @@ class JobRegistry_Monitor(GangaThread):
         self.activeBackends = {}
         self.updateJobStatus = None
         self.errors = {}
+
+        self.updateDict_ts = SynchronisedObject(UpdateDict())
+
         # Create the default backend update method and add to callback hook.
         self.makeUpdateJobStatusFunction()
 
@@ -689,7 +690,7 @@ class JobRegistry_Monitor(GangaThread):
             # enable job list iterators
             self.stopIter.clear()
             # Start backend update timeout checking.
-            self.setCallbackHook(updateDict_ts.timeoutCheck, {}, True)
+            self.setCallbackHook(self.updateDict_ts.timeoutCheck, {}, True)
 
             log.debug("Waking up Main Loop")
             # wake up the mon loop
@@ -727,7 +728,7 @@ class JobRegistry_Monitor(GangaThread):
             self.stopIter.clear()
             log.debug('Monitoring loop enabled')
             # Start backend update timeout checking.
-            self.setCallbackHook(updateDict_ts.timeoutCheck, {}, True)
+            self.setCallbackHook(self.updateDict_ts.timeoutCheck, {}, True)
             self.__mainLoopCond.notifyAll()
 
         return True
@@ -840,9 +841,9 @@ class JobRegistry_Monitor(GangaThread):
         # cleanup the global Qin
         _purge_actions_queue()
         # release timeout check locks
-        timeoutCheck = updateDict_ts.timeoutCheck
+        timeoutCheck = self.updateDict_ts.timeoutCheck
         if timeoutCheck in self.callbackHookDict:
-            updateDict_ts.releaseLocks()
+            self.updateDict_ts.releaseLocks()
             self.removeCallbackHook(timeoutCheck)
         # wake up the calls waiting for cleanup
         self.__cleanUpEvent.set()
@@ -981,7 +982,7 @@ class JobRegistry_Monitor(GangaThread):
             jobList_fromset = alljobList_fromset
             jobList_fromset.extend(masterJobList_fromset)
             # print jobList_fromset
-            updateDict_ts.clearEntry(getName(backendObj))
+            self.updateDict_ts.clearEntry(getName(backendObj))
             try:
                 log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
 
@@ -1102,7 +1103,7 @@ class JobRegistry_Monitor(GangaThread):
             #       This requires backends to hold relevant information on its
             #       credential requirements.
             #log.debug("addEntry: %s, %s, %s, %s" % (str(backendObj), str(self._checkBackend), str(jList), str(pRate)))
-            updateDict_ts.addEntry(backendObj, self._checkBackend, jList, pRate)
+            self.updateDict_ts.addEntry(backendObj, self._checkBackend, jList, pRate)
             summary = str([stripProxy(x).getFQID('.') for x in jList])
             log.debug("jList: %s" % str(summary))
 
