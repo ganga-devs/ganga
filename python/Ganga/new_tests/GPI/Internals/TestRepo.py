@@ -167,7 +167,7 @@ class TestRepo(GangaUnitTest):
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def tearDown(self):
-        from Ganga.Utility import setConfigOption
+        from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', default_CleanUp)
 
     def test_pass1(self):
