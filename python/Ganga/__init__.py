@@ -1,10 +1,11 @@
+from __future__ import  absolute_import
 # System Imports
 import os
 import re
 import inspect
 
 
-from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
+from .Utility.ColourText import ANSIMarkup, overview_colours
 
 
 # Global Functions
@@ -43,7 +44,7 @@ _gangaPythonPath = os.path.dirname(os.path.dirname(__file__))
 
 # grab the hostname
 try:
-    from Ganga.Utility.util import hostname
+    from .Utility.util import hostname
     hostname = hostname()
 except Exception as x:  # fixme: use OSError instead?
     hostname = 'localhost'
@@ -51,7 +52,7 @@ except Exception as x:  # fixme: use OSError instead?
 
 # ------------------------------------------------
 # Setup all configs for this module
-from Ganga.Utility.Config import makeConfig, getConfig, expandvars
+from .Utility.Config import makeConfig, getConfig, expandvars
 
 
 # ------------------------------------------------
@@ -62,6 +63,8 @@ applies by default to all Ganga.* packages unless overriden in sub-packages.
 You may define new loggers in this section.
 The log level may be one of: CRITICAL ERROR WARNING INFO DEBUG
 """, is_open=True)
+
+
 
 # FIXME: Ganga WARNING should be turned into INFO level when the messages
 # are reviewed in all the code
@@ -78,6 +81,7 @@ log_config.addOption('_interactive_cache', True,
                  'if True then the cache used for interactive sessions, False disables caching')
 log_config.addOption('_customFormat', "", "custom formatting string for Ganga logging\n e.g. '%(name)-35s: %(levelname)-8s %(message)s'")
 
+
 # test if stomp.py logging is already set
 if 'stomp.py' in log_config:
     pass  # config['stomp.py']
@@ -91,8 +95,8 @@ else:
 # so you can refer to them in the config file
 # additionally they will be visible in the (write protected) [System]
 # config module - write protection is done in bootstrap at present though this should be changed
-import Ganga.Utility.files
-config_path = Ganga.Utility.files.expandfilename(
+from .Utility import files
+config_path = files.expandfilename(
     os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '..')) )
 sys_config = makeConfig('System', "parameters of this ganga session (read-only)", cfile=False)
 sys_config.addOption('GANGA_VERSION', _gangaVersion, '')
@@ -122,7 +126,7 @@ conf_config.addOption('TextShell', 'IPython', """ The type of the interactive sh
 conf_config.addOption('StartupGPI', '', 'block of GPI commands executed at startup')
 conf_config.addOption('ReleaseNotes', True, 'Flag to print out the relevent subsection of release notes for each experiment at start up')
 conf_config.addOption('gangadir', expandvars(None, '~/gangadir'),
-                 'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=Ganga.Utility.Config.expandvars)
+                 'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=expandvars)
 conf_config.addOption(
     'repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
 conf_config.addOption('workspacetype', 'LocalFilesystem',
@@ -304,23 +308,23 @@ lcg_config.addOption(
 
 lcg_config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
                  'sets the LCG-UI environment setup script for the EDG middleware',
-                 filter=Ganga.Utility.Config.expandvars)
+                 filter=expandvars)
 
 lcg_config.addOption(
     'GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
 
 lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
                  'sets the LCG-UI environment setup script for the GLITE middleware',
-                 filter=Ganga.Utility.Config.expandvars)
+                 filter=expandvars)
 
 lcg_config.addOption('VirtualOrganisation', 'dteam',
                  'sets the name of the grid virtual organisation')
 
 lcg_config.addOption('ConfigVO', '', 'sets the VO-specific LCG-UI configuration script for the EDG resource broker',
-                 filter=Ganga.Utility.Config.expandvars)
+                 filter=expandvars)
 
 lcg_config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
-                 filter=Ganga.Utility.Config.expandvars)
+                 filter=expandvars)
 
 lcg_config.addOption(
     'AllowedCEs', '', 'sets allowed computing elements by a regular expression')
