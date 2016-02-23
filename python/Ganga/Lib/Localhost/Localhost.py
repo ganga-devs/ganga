@@ -296,6 +296,8 @@ class Localhost(IBackend):
         logger.debug('local ping: %s', str(jobs))
 
         for j in jobs:
+            if j.status not in ['submitted', 'running']:
+                continue
             outw = j.getOutputWorkspace()
 
             # try to get the application exit code from the status file
