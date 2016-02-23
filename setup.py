@@ -67,7 +67,7 @@ class RunTestsCommand(Command):
         if self.coverage:
             cmd.append('--cov-report xml --cov .')
         if self.xunit:
-            cmd.append('--junit-xml tests.xml')
+            cmd.append('--junitxml tests.xml')
 
         subprocess.check_call(' '.join(cmd), cwd=file_path, shell=True, env=self._get_test_env())
 
