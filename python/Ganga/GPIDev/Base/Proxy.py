@@ -21,6 +21,7 @@ import types
 
 implRef = '_impl'
 proxyClass = '_proxyClass'
+proxyObject = '_proxyObject'
 
 prepconfig = getConfig('Preparable')
 
@@ -198,8 +199,12 @@ def stripProxy(obj):
 
 def addProxy(obj):
     """Adds a proxy to a GangaObject"""
-    if isType(obj, GangaObject) and not isProxy(obj):
-        return GPIProxyObjectFactory(obj)
+    if isType(obj, GangaObject)
+        if not isProxy(obj):
+            if hasattr(obj, proxyObject):
+                return getattr(obj, proxyObject)
+            else:
+                return GPIProxyObjectFactory(obj)
     return obj
 
 
@@ -603,6 +608,8 @@ def GPIProxyObjectFactory(_obj):
     Returns:
         a proxy object
     """
+    if hasattr(_obj, proxyObject)
+        return getattr(_obj, proxyObject)
     if not isType(_obj, GangaObject):
         from Ganga.Core.exceptions import GangaException
         raise GangaException("%s is NOT a Proxyable object" % type(_obj))
@@ -612,6 +619,9 @@ def GPIProxyObjectFactory(_obj):
     proxy_class = getProxyClass(obj_class)
 
     proxy_object = proxy_class(_proxy_impl_obj_to_wrap=_obj)
+
+    setattr(_obj, proxyObject, proxy_object)
+
     return proxy_object
 
 # this class serves only as a 'tag' for all generated GPI proxy classes
