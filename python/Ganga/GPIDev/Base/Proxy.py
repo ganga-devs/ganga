@@ -678,6 +678,7 @@ def GPIProxyClassFactory(name, pluginclass):
 
         ## Avoid intercepting any of the setter method associated with the implRef as they could trigger loading from disk
         setattr(self, implRef, instance)
+        instance.__dict__[proxyObject] = self
 
         ## Need to avoid any setter methods for GangaObjects
         ## Would be very nice to remove this entirely as I'm not sure a GangaObject should worry about it's proxy (if any)
