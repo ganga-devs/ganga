@@ -7,13 +7,27 @@ import time
 global_num_threads = 5
 global_num_jobs = global_num_threads*5
 
+default_AutoCleanUp = None
+default_NumThreads = None
+
 class TestQueuedDiracSubmit(GangaUnitTest):
 
     def setUp(self):
+        global default_NumThreads, default_AutoCleanUp
+        from Ganga.Utility.Config import getConfig
+        default_NumThreads = getConfig('Queues')['NumWorkerThreads']
+        default_AutoCleanUp = getConfig('TestingFramework')['AutoCleanup']
+
         extra_opts = [('Queues', 'NumWorkerThreads', global_num_threads)]
         super(TestQueuedDiracSubmit, self).setUp(extra_opts=extra_opts)
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
+
+    def tearDown(self):
+        from Ganga.Utility.Config import setConfigOption
+        setConfigOption('TestingFramework', 'AutoCleanup', default_CleanUp)
+        setConfigOption('Queues', 'NumWorkerThreads', default_NumThreads)
+        super(TestQueuedDiracSubmit, self).tearDown()
 
     def test_a_TestNumThreads(self):
         from Ganga.GPI import queues
@@ -31,6 +45,7 @@ class TestQueuedDiracSubmit(GangaUnitTest):
             except:
                 pass
 
+        print("Creating: %s jobs with Dirac backend" % global_num_jobs)
         for i in range(global_num_jobs):
             j=Job(backend=Dirac())
 
@@ -41,9 +56,11 @@ class TestQueuedDiracSubmit(GangaUnitTest):
     def test_c_QueueSubmits(self):
         from Ganga.GPI import jobs, queues
 
+        print("Submitting all jobs via queues")
         for j in jobs:
             queues.add(j.submit)
 
+        print("Waiting for queue to finish processing submit")
         while queues.totalNumUserThreads() > 0:
             time.sleep(1.)
 
@@ -55,17 +72,22 @@ class TestQueuedDiracSubmit(GangaUnitTest):
         from Ganga.GPI import jobs, queues, Dirac
         from Ganga.GPIDev.Base.Proxy import stripProxy
 
+        print("Forcing a status update on all jobs regardless of their status via queues")
         for j in jobs:
             ## ala Ganga/GPIDev/Adapters/IBackend
             queues.add(stripProxy(Dirac).master_updateMonitoringInformation, ([stripProxy(j)],))
 
+        print("Waiting for all tasks to complete")
+        ## Wait for all queues to finish processing this step
         while queues.totalNumUserThreads() > 0:
             time.sleep(1.)
 
+        print("Asserting that all jobs should have had their status updated at least once")
         ## Dirac backend updates the statusInfo to always be something not '' when the monitoring has updated correctly
         for j in jobs:
             assert(j.backend.statusInfo != '')
 
+        print("Delaying shutdown until all running queues have finished")
         ## Flush any waiting/pending 'completing' tasks
         queues._stop_all_threads(True)
         queues.lock()
@@ -75,15 +97,18 @@ class TestQueuedDiracSubmit(GangaUnitTest):
     def test_e_Cleanup(self):
         from Ganga.GPI import jobs, queues
 
+        print("Stopping all running queues")
         ## Flush any waiting/pending 'completing' tasks
         queues._stop_all_threads(True)
         queues.lock()
         while queues.totalNumIntThreads() > 0:
             time.sleep(1.)
 
+        print("Removing all jobs in repo")
         for j in jobs:
             try:
                 j.remove()
             except:
                 pass
+        print("job len: %s " % str(len(jobs)))
 

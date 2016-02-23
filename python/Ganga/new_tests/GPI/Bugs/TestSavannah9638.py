@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from ..GangaUnitTest import GangaUnitTest
 
+default_gangadir = None
 
 def wipe_temp_dir():
     import os
@@ -16,7 +17,9 @@ class TestSavannah9638(GangaUnitTest):
 
         wipe_temp_dir()
 
-        from Ganga.Utility.Config import setConfigOption
+        from Ganga.Utility.Config import setConfigOption, getConfig
+        global default_gangadir
+        default_gangadir = getConfig('Configuration')['gangadir']
         setConfigOption('Configuration', 'gangadir', '/tmp/ganga_topdir-$USER')
 
     def test_Savannah9638(self):
@@ -32,7 +35,7 @@ class TestSavannah9638(GangaUnitTest):
     def tearDown(self):
         wipe_temp_dir()
 
-        from Ganga.Utility.Config import getConfig
-        getConfig('Configuration').revertToDefault('gangadir')
+        from Ganga.Utility.Config import setConfigOption
+        setConfigOption('Configuration', 'gangadir', default_gangadir)
 
         super(TestSavannah9638, self).tearDown()

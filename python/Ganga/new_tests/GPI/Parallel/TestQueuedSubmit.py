@@ -7,12 +7,16 @@ import time
 global_num_threads = 20
 global_num_jobs = global_num_threads*5
 
+default_CleanUp = None
 
 class TestQueuedSubmit(GangaUnitTest):
 
     def setUp(self):
         extra_opts = [('Queues', 'NumWorkerThreads', global_num_threads)]
         super(TestQueuedSubmit, self).setUp(extra_opts=extra_opts)
+        from Ganga.Utility.Config import getConfig
+        global default_CleanUp
+        default_CleanUp = getConfig('TestingFramework')['AutoCleanup']
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
@@ -79,4 +83,9 @@ class TestQueuedSubmit(GangaUnitTest):
                 j.remove()
             except:
                 pass
+
+        from Ganga.Utility.Confg import setConfigOption
+        setConfigOption('TestingFramework', 'AutoCleanup', default_CleanUp)
+        from Ganga.Utility.Config import getConfig
+        getConfig('Queues').getOption('NumWorkerThreads').revertToDefault()
 

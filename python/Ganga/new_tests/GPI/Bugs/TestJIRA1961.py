@@ -2,8 +2,20 @@ from __future__ import absolute_import
 
 from ..GangaUnitTest import GangaUnitTest
 
+default_Unprepare = None
 
 class TestJIRA1961(GangaUnitTest):
+
+    def setUp(self):
+        global default_Unprepare
+        from Ganga.Utility.Config import getConfig
+        default_Unprepare = getConfig('Preparable')['unprepare_on_copy']
+        super(TestJIRA1961, self).setUp()
+
+    def tearDown(self):
+        from Ganga.Utility.Config import setConfigOption
+        setConfigOption('Preparable', 'unprepare_on_copy', default_Unprepare)
+        super(TestJIRA1961, self).tearDown()
 
     def test_unprepareTrue(self):
 

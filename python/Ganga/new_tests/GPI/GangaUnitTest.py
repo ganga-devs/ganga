@@ -19,6 +19,8 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
 
         print("Adding: %s to Python Path\n" % ganga_python_dir)
 
+    import Ganga
+
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()
 
@@ -159,10 +161,14 @@ def stop_ganga():
     # This should now be safe
     ShutdownManager._ganga_run_exitfuncs()
 
+    ## NO NO NO
+    ## This is NOT the responsibility of the GangaUnitTest as it undoes the bootstrap!
+    ## DO NOT DO THIS HERE.
+    ## IT IS THE RESPONSIBILITY OF THE TEST TO RESET THE ENVIRONMENT BETWEEN TESTS IF IT CHANGES IT
     # Undo any manual editing of the config and revert to defaults
-    from Ganga.Utility.Config import allConfigs
-    for package in allConfigs.values():
-        package.revertToDefaultOptions()
+    #from Ganga.Utility.Config import allConfigs
+    #for package in allConfigs.values():
+    #    package.revertToDefaultOptions()
 
     # Finished
     logger.info("Test Finished")
