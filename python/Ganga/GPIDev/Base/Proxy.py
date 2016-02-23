@@ -199,7 +199,7 @@ def stripProxy(obj):
 
 def addProxy(obj):
     """Adds a proxy to a GangaObject"""
-    if isType(obj, GangaObject)
+    if isType(obj, GangaObject):
         if not isProxy(obj):
             if hasattr(obj, proxyObject):
                 return getattr(obj, proxyObject)
