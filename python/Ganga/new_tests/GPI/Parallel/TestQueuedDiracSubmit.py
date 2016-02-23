@@ -25,7 +25,7 @@ class TestQueuedDiracSubmit(GangaUnitTest):
 
     def tearDown(self):
         from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', default_CleanUp)
+        setConfigOption('TestingFramework', 'AutoCleanup', default_AutoCleanUp)
         setConfigOption('Queues', 'NumWorkerThreads', default_NumThreads)
         super(TestQueuedDiracSubmit, self).tearDown()
 
