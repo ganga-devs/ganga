@@ -48,6 +48,8 @@ class TestQueuedSubmit(GangaUnitTest):
     def test_c_QueueSubmits(self):
         from Ganga.GPI import jobs, queues
 
+        print("Adding: %s" % len(jobs))
+
         for j in jobs:
             print('adding job', j.id, 'to queue for submission')
             queues.add(j.submit)
