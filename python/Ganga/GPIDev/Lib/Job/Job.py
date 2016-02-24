@@ -634,8 +634,8 @@ class Job(GangaObject):
 
         if self.status != saved_status and self.master is None:
             logger.info('job %s status changed to "%s"', self.getFQID('.'), self.status)
-            if stripProxy(self)._getRegistry() is not None:
-                stripProxy(self)._getRegistry()._dirty(stripProxy(self)._getRoot())
+            self._setDirty()
+            # TODO try to force a flush here maybe?
         if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
