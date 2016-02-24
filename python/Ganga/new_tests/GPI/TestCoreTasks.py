@@ -84,28 +84,3 @@ class TestCoreTasks(GangaUnitTest):
 
         self.assertEqual(t.status, "running")
         self.assertEqual(t.transforms[0].status, "running")
-
-    def testTaskPause(self):
-        """Check the task can be paused"""
-        from Ganga.GPI import tasks
-
-        self.assertEqual(len(tasks), 1)
-
-        # Test Task has been persisted correctly
-        t = tasks(0)
-        t.pause()
-
-        self.assertEqual(t.status, "pause")
-        self.assertEqual(t.transforms[0].status, "pause")
-
-    def testTaskStillPaused(self):
-        """Check the task is still paused"""
-        from Ganga.GPI import tasks
-
-        self.assertEqual(len(tasks), 1)
-
-        # Test Task has been persisted correctly
-        t = tasks(0)
-
-        self.assertEqual(t.status, "pause")
-        self.assertEqual(t.transforms[0].status, "pause")
