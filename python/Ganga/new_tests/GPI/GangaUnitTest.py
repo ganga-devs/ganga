@@ -174,7 +174,7 @@ class GangaUnitTest(unittest.TestCase):
     def setUp(self, gangadir=None, wipe_repo=None, extra_opts=[]):
         unittest.TestCase.setUp(self)
         assert(type(gangadir) in [type(None), str])
-        assert(isintance(extra_opts, list))
+        assert(isinstance(extra_opts, list))
         for i in extra_opts:
             assert(isinstance(i, tuple))
         # Start ganga and internal services
