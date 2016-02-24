@@ -496,10 +496,7 @@ class Job(GangaObject):
         if hasattr(self, 'status'):
             oldstat = self.status
         else:
-        if hasattr(self, 'status'):
-            oldstat = self.status
-        else:
-           oldstat = None
+            oldstat = None
 
         logger.debug('job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
 
