@@ -225,6 +225,7 @@ class WorkerThreadPool(object):
         self._shutdown = shutdown
         for w in self.__worker_threads:
             w.stop()
+            w.join()
             # FIXME NEED TO CALL AN OPTIONAL CLEANUP FUCNTION HERE IF THREAD IS STOPPED
             # w.unregister()
             #del w
@@ -236,8 +237,7 @@ class WorkerThreadPool(object):
         if len(self.__worker_threads) > 0:
             self._stop_worker_threads()
 
-        self.__init_worker_threads(
-            self._saved_num_worker, self._saved_thread_prefix)
+        self.__init_worker_threads(self._saved_num_worker, self._saved_thread_prefix)
         return
 
 ###################################################################
