@@ -182,8 +182,6 @@ class HammerThread(GangaThread):
         self.done = True
 
 class TestRegistry(GangaUnitTest):
-    def setUp(self):
-        super(TestRegistry, self).setUp()
 
     def test_pass1(self):
         t = TestReg(1)
@@ -219,3 +217,4 @@ class TestReg(object):
         logger.info(str(self.id) + ' shutdown()')
         self.registry.shutdown()
         logger.info(str(self.id) + ' shutdown() done!')
+

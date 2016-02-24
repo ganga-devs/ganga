@@ -157,8 +157,6 @@ class HammerThread(threading.Thread):
         self.done = True
 
 class TestRepo(GangaUnitTest):
-    def setUp(self):
-        super(TestRepo, self).setUp()
 
     def test_pass1(self):
         t = TestRepository(1)
