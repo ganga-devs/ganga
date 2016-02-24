@@ -50,9 +50,10 @@ class TestCustomMerger(GangaUnitTest):
             self.assertTrue(sleep_until_completed(j), 'Timeout on job submission: job is still not finished')
 
     def tearDown(self):
-
         for j in self.jobslice:
             j.remove()
+
+        super(TestCustomMerger, self).tearDown()
 
     def testSimpleCustomMerge(self):
         from Ganga.GPI import CustomMerger
