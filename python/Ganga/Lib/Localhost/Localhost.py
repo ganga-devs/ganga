@@ -311,11 +311,9 @@ class Localhost(IBackend):
                         j.updateStatus('running')  # bugfix: 12194
                 exitcode = get_exit_code(statusfile)
                 with open(statusfile) as status_file:
-                    logger.debug(
-                        'status file: %s %s', statusfile, status_file.read())
+                    logger.debug('status file: %s %s', statusfile, status_file.read())
             except IOError as x:
-                logger.debug(
-                    'problem reading status file: %s (%s)', statusfile, str(x))
+                logger.debug('problem reading status file: %s (%s)', statusfile, str(x))
                 exitcode = None
             except Exception as x:
                 logger.critical('problem during monitoring: %s', str(x))
