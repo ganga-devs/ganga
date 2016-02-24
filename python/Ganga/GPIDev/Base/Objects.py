@@ -105,8 +105,7 @@ class Node(object):
             else:
                 this_dict[elem] = None
         #obj.__setstate__(this_dict)
-        if self._getParent() is not None:
-            obj._setParent(self._getParent())
+        obj._setParent(self._getParent())
         setattr(obj, '_index_cache', {})
         setattr(obj, '_registry', self._registry)
         return obj
