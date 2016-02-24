@@ -41,7 +41,7 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_lock']
+do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_lock', '_proxyObject']
 
 def _getGangaList():
     global _imported_GangaList
