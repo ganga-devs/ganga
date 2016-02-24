@@ -21,12 +21,6 @@ class TestQueuedDiracSubmit(GangaUnitTest):
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
-    def tearDown(self):
-        from Ganga.Utility.Config import getConfig, setConfigOption
-        super(TestQueuedDiracSubmit, self).tearDown()
-        setConfigOption('TestingFramework', 'AutoCleanup', default_AutoCleanUp)
-        getConfig('Queues').getOption('NumWorkerThreads').revertToDefault()
-
     def test_a_TestNumThreads(self):
         from Ganga.GPI import queues
         num_threads = len(queues._user_threadpool.worker_status())
@@ -109,4 +103,8 @@ class TestQueuedDiracSubmit(GangaUnitTest):
             except:
                 pass
         print("job len: %s " % str(len(jobs)))
+
+        from Ganga.Utility.Config import getConfig, setConfigOption
+        setConfigOption('TestingFramework', 'AutoCleanup', default_AutoCleanUp)
+        getConfig('Queues').getOption('NumWorkerThreads').revertToDefault()
 
