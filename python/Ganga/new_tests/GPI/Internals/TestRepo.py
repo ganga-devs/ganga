@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import random
 import threading
 
+## FIXME This is NOT safe against not having Ganga in the Python path!
 import Ganga.Utility.Config
 from Ganga.Core.GangaRepository.Registry import makeRepository
 from Ganga.Runtime.Repository_runtime import getLocalRoot
@@ -155,20 +156,9 @@ class HammerThread(threading.Thread):
                 assert id in self.repo.objects
         self.done = True
 
-default_CleanUp = None
-
 class TestRepo(GangaUnitTest):
     def setUp(self):
         super(TestRepo, self).setUp()
-        from Ganga.Utility.Config import getConfig
-        global default_CleanUp
-        default_CleanUp = getConfig('TestingFramework')['AutoCleanup']
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
-
-    def tearDown(self):
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', default_CleanUp)
 
     def test_pass1(self):
         t = TestRepository(1)
@@ -187,7 +177,6 @@ class TestRepo(GangaUnitTest):
         disableInternalServices()
         enableInternalServices()
         return returnable
-
 
 class TestRepository(object):
     def __init__(self, id):
@@ -213,3 +202,4 @@ class TestRepository(object):
         logger.info(str(self.id) + ' shutdown()')
         self.repo.shutdown()
         logger.info(str(self.id) + ' shutdown() done!')
+

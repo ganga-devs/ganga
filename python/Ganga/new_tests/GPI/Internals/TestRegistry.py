@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import random
 
+## FIXME This is NOT safe against not having Ganga in the Python path!
 import Ganga.Utility.Config
 from Ganga.Core.GangaRepository import RegistryLockError
 from Ganga.Core.GangaRepository.Registry import Registry
@@ -180,12 +181,9 @@ class HammerThread(GangaThread):
 
         self.done = True
 
-
 class TestRegistry(GangaUnitTest):
     def setUp(self):
         super(TestRegistry, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def test_pass1(self):
         t = TestReg(1)
@@ -198,7 +196,6 @@ class TestRegistry(GangaUnitTest):
         while not t.isReadyForCheck():
             pass
         return t.checkTest()
-
 
 class TestReg(object):
     def __init__(self, _id):
