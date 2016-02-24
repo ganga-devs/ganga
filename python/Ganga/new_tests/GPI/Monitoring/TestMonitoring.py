@@ -8,16 +8,17 @@ class TestMonitoring(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts=[('PollThread', 'autostart', 'False')]
+        extra_opts=[('PollThread', 'autostart', 'False'), ('PollThread', 'base_poll_rate', 100)]
         super(TestMonitoring, self).setUp(extra_opts=extra_opts)
 
     def tearDown(self):
         from Ganga.Utility.Config import getConfig
         getConfig('PollThread').getOption('autostart').revertToDefault()
+        getConfig('PollThread').getOption('base_poll_rate').revertToDefault()
         super(TestMonitoring, self).tearDown()
 
     def test_a_JobConstruction(self):
-        from Ganga.GPI import Job, jobs
+        from Ganga.GPI import Job, jobs, disableMonitoring
 
         j=Job()
 
