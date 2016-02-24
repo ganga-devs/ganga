@@ -72,7 +72,7 @@ class PrepRegistry(Registry):
         except Exception as x:
             logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
         try:
-            self._flush()
+            self.flush_all()
         except Exception as x:
             logger.error("Exception on flushing '%s' registry: %s", self.name, x)
         #self._hasStarted = False
