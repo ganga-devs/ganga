@@ -18,8 +18,19 @@ from Ganga.Utility.logic import implies
 import os
 import itertools
 import time
+import functools
+import threading
 
 logger = Ganga.Utility.logging.getLogger()
+
+backend_lock = threading.RLock()
+
+def synchronised(f):
+    @functools.wraps(f)
+    def decorated(self, *args, **kwargs):
+        with backend_lock:
+            return f(self, *args, **kwargs)
+    return decorated
 
 class IBackend(GangaObject):
 
@@ -402,6 +413,7 @@ class IBackend(GangaObject):
         pass
 
     @staticmethod
+    @synchronised
     def master_updateMonitoringInformation(jobs):
         """ Update monitoring information for  jobs: jobs is a list of
         jobs  in   this  backend  which   require  monitoring  (either
