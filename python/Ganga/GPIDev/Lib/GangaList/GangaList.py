@@ -53,7 +53,6 @@ def makeGangaListByRef(_list, preparable=False):
     if len(_list) == 0:
         return result
 
-    result._list = []
     result._list.extend([stripProxy(element) for element in _list])
     result._is_a_ref = True
     result._is_preparable = preparable
