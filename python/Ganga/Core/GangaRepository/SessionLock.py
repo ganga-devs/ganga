@@ -8,6 +8,7 @@ from __future__ import print_function
 
 import functools
 import threading
+from collections import namedtuple
 
 import os
 import time
@@ -61,8 +62,6 @@ except ConfigError, err:
     session_expiratrion_timeout = 5
 
 session_lock_refresher = None
-
-last_count_access = []
 
 def getGlobalLockRef(session_name, sdir, gfn, _on_afs):
     global session_lock_refresher
@@ -322,6 +321,8 @@ class SessionLockManager(object):
     Should ONLY raise RepositoryError (if possibly-corrupting errors are found)
     """
 
+    LastCountAccess = namedtuple('LastCountAccess', ['time', 'val'])
+
     def mkdir(self, dn):
         """Make sure the given directory exists"""
         try:
@@ -361,6 +362,7 @@ class SessionLockManager(object):
         self.realpath = realpath
         #logger.debug( "Initializing SessionLockManager: " + self.fn )
         self._lock = threading.RLock()
+        self.last_count_access = None
 
     @staticmethod
     def delay_init_open(filename):
@@ -378,6 +380,8 @@ class SessionLockManager(object):
 
     @synchronised
     def startup(self):
+        self.last_count_access = None
+
         # Ensure directories exist
         self.mkdir(os.path.join(self.realpath, "sessions"))
         self.mkdir(os.path.join(self.realpath, self.name))
@@ -695,10 +699,9 @@ class SessionLockManager(object):
             Raises RepositoryError (fatal)
             """
         try:
-            global last_count_access
-            if len(last_count_access) == 2:
-                last_count_time = last_count_access[0]
-                last_count_val = last_count_access[1]
+            if self.last_count_access is not None:
+                last_count_time = self.last_count_access.time
+                last_count_val = self.last_count_access.val
                 last_time = os.stat(self.cntfn).st_ctime
                 if last_time == last_count_time:
                     return last_count_val  # If the file hasn't changed since last check, return the cached value
@@ -715,13 +718,7 @@ class SessionLockManager(object):
                 os.close(fd)
 
                 if _output != None:
-                    if len(last_count_access) != 2:
-                        last_count_access = []
-                        last_count_access.append(os.stat(self.cntfn).st_ctime)
-                        last_count_access.append(_output)
-                    else:
-                        last_count_access[0] = os.stat(self.cntfn).st_ctime
-                        last_count_access[1] = _output
+                    self.last_count_access = SessionLockManager.LastCountAccess(os.stat(self.cntfn).st_ctime, _output)
                     return _output
 
         except OSError as x:
@@ -761,14 +758,7 @@ class SessionLockManager(object):
             raise RepositoryError(self.repo, "Locking error on count file '%s' write: %s" % (self.cntfn, x))
         finally:
             if finished is True:
-                global last_count_access
-                if len(last_count_access) != 2:
-                    last_count_access = []
-                    last_count_access.append(os.stat(self.cntfn).st_ctime)
-                    last_count_access.append(self.count)
-                else:
-                    last_count_access[0] = os.stat(self.cntfn).st_ctime
-                    last_count_access[1] = self.count
+                self.last_count_access = SessionLockManager.LastCountAccess(os.stat(self.cntfn).st_ctime, self.count)
 
     # "User" functions
     @synchronised
