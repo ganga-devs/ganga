@@ -54,6 +54,8 @@ class TestSmartMerger(GangaUnitTest):
         for j in self.jobslice:
             j.remove()
 
+        super(TestSmartMerger, self).tearDown()
+
     def testNoFilesSpecifiedAllSame(self):
         from Ganga.GPI import LocalFile, Job
 
