@@ -41,7 +41,7 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_lock']
+do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_lock', '_proxyObject']
 
 def _getGangaList():
     global _imported_GangaList
@@ -105,7 +105,7 @@ class Node(object):
             else:
                 this_dict[elem] = None
         #obj.__setstate__(this_dict)
-        obj.getParent(self._getParent())
+        obj._setParent(self._getParent())
         setattr(obj, '_index_cache', {})
         setattr(obj, '_registry', self._registry)
         return obj
@@ -183,6 +183,7 @@ class Node(object):
                 return None
 
     # accept a visitor pattern
+    @synchronised
     def accept(self, visitor):
 
         if not hasattr(self, '_schema'):
@@ -207,9 +208,6 @@ class Node(object):
                 visitor.componentAttribute(self, name, self._getdata(name), item['sequence'])
 
         visitor.nodeEnd(self)
-
-    def __copy__(self):
-        copied_obj = self.clone()
 
     # clone self and return a properly initialized object
     def clone(self):
@@ -881,10 +879,6 @@ class GangaObject(Node):
             self_copy._setParent(true_parent)
         return self_copy
 
-    def accept(self, visitor):
-        self._getReadAccess()
-        super(GangaObject, self).accept(visitor)
-
     def _getIOTimeOut(self):
         from Ganga.Utility.Config.Config import getConfig, ConfigError
         try:
@@ -979,8 +973,6 @@ class GangaObject(Node):
         parent = self._getParent()
         if parent is not None:
             parent._setDirty()
-        if self._registry is not None:
-            self._registry._dirty(self)
 
     def _setFlushed(self):
         self._dirty = False
