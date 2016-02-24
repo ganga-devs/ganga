@@ -228,7 +228,7 @@ class WorkerThreadPool(object):
             # FIXME NEED TO CALL AN OPTIONAL CLEANUP FUCNTION HERE IF THREAD IS STOPPED
             # w.unregister()
             #del w
-        #del self.__worker_threads[:]
+        del self.__worker_threads[:]
         self.__worker_threads = []
         return
 

@@ -25,7 +25,9 @@ def shutDownQueues():
     logger.debug("Shutting Down Queues system")
     global _global_queues
     _global_queues.lock()
+    _global_queues.purge()
     _global_queues._purge_all()
+    _global_queues._stop_all()
     del _global_queues
     _global_queues = None
 
