@@ -310,7 +310,7 @@ class Job(GangaObject):
         stripProxy(c.time).newjob()
         c.backend = copy.deepcopy(self.backend)
         c.application = copy.deepcopy(self.application)
-        c.inputdata = copy.copy(self.inputdata)
+        c.inputdata = copy.deepcopy(self.inputdata)
         c.name = self.name
         c.comment = self.comment
         c.postprocessors = copy.deepcopy(self.postprocessors)
