@@ -209,9 +209,6 @@ class Node(object):
 
         visitor.nodeEnd(self)
 
-    def __copy__(self):
-        copied_obj = self.clone()
-
     # clone self and return a properly initialized object
     def clone(self):
         new_obj = deepcopy(self)
