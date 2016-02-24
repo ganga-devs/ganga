@@ -105,7 +105,7 @@ class Node(object):
             else:
                 this_dict[elem] = None
         #obj.__setstate__(this_dict)
-        obj.getParent(self._getParent())
+        obj._setParent(self._getParent())
         setattr(obj, '_index_cache', {})
         setattr(obj, '_registry', self._registry)
         return obj
@@ -208,9 +208,6 @@ class Node(object):
                 visitor.componentAttribute(self, name, self._getdata(name), item['sequence'])
 
         visitor.nodeEnd(self)
-
-    def __copy__(self):
-        copied_obj = self.clone()
 
     # clone self and return a properly initialized object
     def clone(self):
