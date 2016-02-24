@@ -701,7 +701,7 @@ class SessionLockManager(object):
                 last_count_val = last_count_access[1]
                 last_time = os.stat(self.cntfn).st_ctime
                 if last_time == last_count_time:
-                    last_count_val
+                    return last_count_val  # If the file hasn't changed since last check, return the cached value
             _output = None
             fd = os.open(self.cntfn, os.O_RDONLY)
             try:
