@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 
-from ..GangaUnitTest import GangaUnitTest
-from GangaTest.Framework.utils import sleep_until_completed, file_contains, write_file
 import os
 import tempfile
 
+from GangaTest.Framework.utils import sleep_until_completed, file_contains, write_file
 from Ganga.Lib.Mergers.Merger import findFilesToMerge
+
+from ..GangaUnitTest import GangaUnitTest
 
 
 class TestSmartMerger(GangaUnitTest):

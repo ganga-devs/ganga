@@ -1,13 +1,15 @@
 from __future__ import absolute_import
 
-from ..GangaUnitTest import GangaUnitTest
-from GangaTest.Framework.utils import sleep_until_completed, write_file
 import os
 import tempfile
 
+from GangaTest.Framework.utils import sleep_until_completed, write_file
 from Ganga.GPIDev.Base.Proxy import getProxyClass
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
+
+from ..GangaUnitTest import GangaUnitTest
 from .CopySplitter import CopySplitter
+
 CopySplitter = getProxyClass(CopySplitter)
 
 

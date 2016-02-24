@@ -1,12 +1,14 @@
 from __future__ import absolute_import
 
-from ..GangaUnitTest import GangaUnitTest
-from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
 import os
 
+from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
 from Ganga.GPIDev.Base.Proxy import getProxyClass
+
+from ..GangaUnitTest import GangaUnitTest
 from .MergerTester import MergerTester
 from .CopySplitter import CopySplitter
+
 CopySplitter = getProxyClass(CopySplitter)
 MergerTester = getProxyClass(MergerTester)
 

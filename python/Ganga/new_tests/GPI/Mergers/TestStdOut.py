@@ -1,8 +1,9 @@
 from __future__ import division, absolute_import
 
-from ..GangaUnitTest import GangaUnitTest
 import os
 import tempfile
+
+from ..GangaUnitTest import GangaUnitTest
 
 
 class TestStdOut(GangaUnitTest):

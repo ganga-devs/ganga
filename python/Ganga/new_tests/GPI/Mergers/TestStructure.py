@@ -1,9 +1,10 @@
 from __future__ import division, absolute_import
 
-from ..GangaUnitTest import GangaUnitTest
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 import os
 import tempfile
+
+from ..GangaUnitTest import GangaUnitTest
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 
 
 class TestStructure(GangaUnitTest):
