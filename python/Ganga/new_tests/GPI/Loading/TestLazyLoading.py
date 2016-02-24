@@ -73,5 +73,6 @@ class TestLazyLoading(GangaUnitTest):
         self.assertEqual(len(jobs), 0)
 
         from Ganga.Utility.Config import setConfigOption
+        global default_CleanUp
         setConfigOption('TestingFramework', 'AutoCleanup', default_CleanUp)
 
