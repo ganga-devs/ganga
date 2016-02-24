@@ -28,7 +28,6 @@ class TestMonitoring(GangaUnitTest):
         self.assertEqual(j.status, 'submitted')
 
     def test_b_EnableMonitoring(self):
-        """ Fourth make sure that we get rid of the jobs safely"""
         from Ganga.GPI import enableMonitoring, Job, jobs
 
         enableMonitoring()
@@ -37,9 +36,9 @@ class TestMonitoring(GangaUnitTest):
         j.submit()
 
         import time
-        time.sleep(20.)
+        time.sleep(timeForComplete)
 
-        self.assertEqual(jobs(0).status, 'completed')
+        self.assertNotEqual(jobs(0).status, 'submitted')
 
     def test_c_disableMonitoring(self):
 
