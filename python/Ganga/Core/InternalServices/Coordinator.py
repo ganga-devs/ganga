@@ -235,8 +235,10 @@ def enableMonitoringService():
     from Ganga.Core import monitoring_component
     monitoring_component.alive = True
     monitoring_component.enableMonitoring()
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool
-    _makeThreadPool()
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool, ThreadPool
+    config = getConfig("PollThread")
+    if config['autostart_monThreads'] is True and len(ThreadPool) == 0:
+        _makeThreadPool()
     from Ganga.GPI import queues
     queues._start_all_threads()
     global servicesEnabled

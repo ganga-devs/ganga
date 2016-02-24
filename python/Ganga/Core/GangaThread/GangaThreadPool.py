@@ -81,9 +81,6 @@ class GangaThreadPool(object):
 
     def _really_shutdown(self, should_wait_cb=None):
 
-        #from Ganga.GPI import queues
-        #queues._stop_all_threads(shutdown=True)
-
         from Ganga.Utility.logging import getLogger
         logger = getLogger('GangaThread')
 
@@ -156,19 +153,16 @@ class GangaThreadPool(object):
         from Ganga.Utility.logging import getLogger
         logger = getLogger('GangaThread')
 
-        from Ganga.GPI import queues
+        try:
+            from Ganga.GPI import queues
+        except ImportError:
+            queues = None
 
-        queues._purge_all()
-        queues._stop_all_threads(shutdown=True)
-
-        # while queues.totalNumAllThreads() != 0:
-        #    queues._stop_all_threads()
-        #    logger.warning( "Tasks still running: %s" % queues.threadStatus() )
-        #    import time
-        #    time.sleep( 0.1 )
-
-        logger.debug("ExternalTasks still running: %s" % queues.threadStatus())
-
+        if queues is not None:
+            queues._purge_all()
+            queues._stop_all_threads(shutdown=True)
+            logger.debug("ExternalTasks still running: %s" % queues.threadStatus())
+    
         logger.debug('Service threads to shutdown: %s' % ([i for i in reversed(list(_all_threads))]))
 
         logger.debug('Service threads to shutdown: %s' % ([i for i in reversed(list(_all_threads))]))

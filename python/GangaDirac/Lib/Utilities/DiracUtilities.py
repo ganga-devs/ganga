@@ -46,8 +46,8 @@ def getDiracEnv(force=False):
                     del DIRAC_ENV[key]
 
         else:
-            logger.error(
-                "'DiracEnvFile' config variable empty or file not present")
+            logger.error("'DiracEnvFile' config variable empty or file not present")
+            logger.error("Looking for: %s" % getConfig('DIRAC')['DiracEnvFile'])
     lock.release()
     return DIRAC_ENV
 

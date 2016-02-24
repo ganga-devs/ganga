@@ -52,8 +52,12 @@ def lazyLoadJobApplication(this_job):
 
 def lazyLoadJobObject(this_job, this_attr):
 
+    raw_job = stripProxy(this_job)
+    if raw_job._getRegistry().has_loaded(raw_job):
+        job_index_cache = raw_job._getRegistry().getIndexCache(raw_job)
+    else:
+        job_index_cache = raw_job.getNodeIndexCache()
     lzy_loading_str = 'display:'+ this_attr
-    job_index_cache = stripProxy(this_job).getNodeIndexCache()
     if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache.keys():
         obj_name = job_index_cache[lzy_loading_str]
         if obj_name is not None:
@@ -107,6 +111,9 @@ class JobInfo(GangaObject):
     _name = 'JobInfo'
 
     def __init__(self):
+        super(JobInfo, self).__init__()
+
+    def increment(self):
         super(JobInfo, self).__init__()
 
     def increment(self):
@@ -385,9 +392,6 @@ class Job(GangaObject):
             # else:
             #    logger.debug( "There was an error copying the input data for this job" )
             #    logger.debug( "Please Check the inputsandbox and/or inputfiles are consistent" )
-            #    c.inputfiles = []
-            #    c.inputsandbox = []
-
         logger.debug("Intercepted __deepcopy__")
         return c
 
@@ -401,7 +405,7 @@ class Job(GangaObject):
         # Attempt to spend too long loading un-needed objects into memory in
         # order to read job status
         if name == 'status':
-            return object.__getattribute__(self, 'status')
+            return lazyLoadJobStatus(self)
 
         # FIXME Add some method of checking what objects are known in advance of calling the __getattribute__ method
         # Pref one that doesn't involve loading the job object if not needed
@@ -492,7 +496,7 @@ class Job(GangaObject):
         if hasattr(self, 'status'):
             oldstat = self.status
         else:
-           oldstat = None
+            oldstat = None
 
         logger.debug('job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
 

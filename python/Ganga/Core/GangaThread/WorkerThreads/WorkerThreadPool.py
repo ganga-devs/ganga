@@ -42,8 +42,7 @@ class WorkerThreadPool(object):
         if len(self.__worker_threads) > 0:
             logger.warning("Threads already started!")
             for i in self.__worker_threads:
-                logger.info(
-                    "Worker Thread: %s is already running!" % i.gangaName)
+                logger.info("Worker Thread: %s is already running!" % i.gangaName)
             return
 
         for i in range(num_worker_threads):
@@ -226,10 +225,11 @@ class WorkerThreadPool(object):
         self._shutdown = shutdown
         for w in self.__worker_threads:
             w.stop()
+            w.join()
             # FIXME NEED TO CALL AN OPTIONAL CLEANUP FUCNTION HERE IF THREAD IS STOPPED
             # w.unregister()
             #del w
-        #del self.__worker_threads[:]
+        del self.__worker_threads[:]
         self.__worker_threads = []
         return
 
@@ -237,8 +237,7 @@ class WorkerThreadPool(object):
         if len(self.__worker_threads) > 0:
             self._stop_worker_threads()
 
-        self.__init_worker_threads(
-            self._saved_num_worker, self._saved_thread_prefix)
+        self.__init_worker_threads(self._saved_num_worker, self._saved_thread_prefix)
         return
 
 ###################################################################

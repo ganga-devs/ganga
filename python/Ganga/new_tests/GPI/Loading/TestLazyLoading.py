@@ -2,11 +2,16 @@ from __future__ import absolute_import
 
 from ..GangaUnitTest import GangaUnitTest
 
+default_CleanUp = None
+
 class TestLazyLoading(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
         super(TestLazyLoading, self).setUp()
+        from Ganga.Utility.Config import getConfig
+        global default_CleanUp
+        default_CleanUp = getConfig('TestingFramework')['AutoCleanup']
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
@@ -60,10 +65,14 @@ class TestLazyLoading(GangaUnitTest):
 
         self.assertEqual(len(jobs), 1)
 
-        jobs(0).remove()
+        try:
+            jobs(0).remove()
+        except:
+            pass
 
         self.assertEqual(len(jobs), 0)
 
         from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'True')
+        global default_CleanUp
+        setConfigOption('TestingFramework', 'AutoCleanup', default_CleanUp)
 

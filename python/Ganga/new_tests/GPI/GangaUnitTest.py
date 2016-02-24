@@ -19,6 +19,8 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
 
         print("Adding: %s to Python Path\n" % ganga_python_dir)
 
+    import Ganga
+
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()
 
@@ -46,8 +48,9 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
         ('Configuration', 'user', 'testframework'),
         ('Configuration', 'repositorytype', 'LocalXML'),
         ('TestingFramework', 'ReleaseTesting', True),
-        ('Queues', 'NumWorkerThreads', 2),
     ]
+    for opt in extra_opts:
+        default_opts.append(opt)
 
     # FIXME Should we need to add the ability to load from a custom .ini file
     # to configure tests without editting this?
@@ -66,7 +69,7 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
 
     # For all the default and extra options, we set the session value
     from Ganga.Utility.Config import setConfigOption
-    for opt in default_opts + extra_opts:
+    for opt in default_opts:
         setConfigOption(*opt)
 
     if do_config:
@@ -76,6 +79,9 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
         logger.info("Initializing")
         Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
     else:
+        # The queues are shut down by the atexit handlers so we need to start them here
+        from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
+        startUpQueues()
         # We need to test if the internal services need to be reinitialized
         from Ganga.Core.InternalServices import Coordinator
         if not Coordinator.servicesEnabled:
@@ -86,10 +92,6 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
             reactivate()
         else:
             logger.info("InternalServices still running")
-
-        # The queues are shut down by the atexit handlers so we need to start them here
-        from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
-        startUpQueues()
 
     logger.info("Bootstrapping")
     Ganga.Runtime._prog.bootstrap(interactive=False)
@@ -159,11 +161,6 @@ def stop_ganga():
     # This should now be safe
     ShutdownManager._ganga_run_exitfuncs()
 
-    # Undo any manual editing of the config and revert to defaults
-    from Ganga.Utility.Config import allConfigs
-    for package in allConfigs.values():
-        package.revertToDefaultOptions()
-
     # Finished
     logger.info("Test Finished")
 
@@ -175,6 +172,10 @@ class GangaUnitTest(unittest.TestCase):
 
     def setUp(self, gangadir=None, wipe_repo=None, extra_opts=[]):
         unittest.TestCase.setUp(self)
+        assert(type(gangadir) in [type(None), str])
+        assert(isinstance(extra_opts, list))
+        for i in extra_opts:
+            assert(isinstance(i, tuple))
         # Start ganga and internal services
         # This is called before each unittest
         if gangadir is None:
@@ -190,6 +191,8 @@ class GangaUnitTest(unittest.TestCase):
         self.gangadir = gangadir
         self.__class__.gangadir = self.gangadir
         self.__class__.wipe_repo = self.wipe_repo
+        assert(isinstance(gangadir, str))
+        assert(isinstance(extra_opts, list))
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
 
     def tearDown(self):

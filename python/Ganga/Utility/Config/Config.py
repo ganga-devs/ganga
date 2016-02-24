@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 """
 A simple configuration interface for Ganga packages.
 
@@ -155,7 +156,7 @@ translated_names = {}
 
 
 def _migrate_name(name):
-    import Ganga.Utility.strings as strings
+    from .. import strings as strings
 
     if (name not in translated_names.keys()) and (not strings.is_identifier(name)):
         name2 = strings.drop_spaces(name)
@@ -259,6 +260,8 @@ class ConfigOption(object):
         self.filter = None
         self.typelist = None
         self._hasModified = False
+        self.default_value = None
+        self._isDefined = False
 
     def defineOption(self, default_value, docstring, **meta):
 
@@ -276,11 +279,16 @@ class ConfigOption(object):
         self.convert_type('session_value')
         self.convert_type('user_value')
 
+        self._isDefined = True
+
     def setModified(self, val):
         self._hasModified = val
 
     def hasModified(self):
         return self._hasModified
+
+    def revertToDefault(self):
+        self.setUserValue(self.default_value)
 
     def setSessionValue(self, session_value):
 
@@ -380,7 +388,7 @@ class ConfigOption(object):
             self.__dict__['_hasModified'] = True
 
     def check_defined(self):
-        return hasattr(self, 'default_value')
+        return self._isDefined
 
     def transform_PATH_option(self, new_value, current_value):
         return transform_PATH_option(self.name, new_value, current_value)
@@ -529,6 +537,9 @@ class PackageConfig(object):
         """ Get the effective value of option o. """
         return self.getEffectiveOption(o)
 
+    def getOption(self, name):
+        return self.options[name]
+
     def addOption(self, name, default_value, docstring, override=False, **meta):
 
         if _after_bootstrap and not self.is_open:
@@ -540,6 +551,8 @@ class PackageConfig(object):
             option = ConfigOption(name)
 
         if option.check_defined() and not override:
+            import traceback
+            traceback.print_stack()
             logger = getLogger()
             logger.warning('attempt to add again the option [%s]%s (ignored)', self.name, name)
             return

@@ -169,6 +169,10 @@ class ThreadPoolQueueMonitor(object):
         if _actually_purge:
             self._monitoring_threadpool.clear_queue()
 
+    def _stop_all(self):
+        self._monitoring_threadpool._stop_worker_threads()
+        self._user_threadpool._stop_worker_threads()
+
     def add(self, worker_code, args=(), kwargs={}, priority=5):
         """
         Run any python callable object asynchronously through the user thread pool

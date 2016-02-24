@@ -33,6 +33,7 @@ class TestSavannah19123(GangaUnitTest):
 
         sleep_until_state(j, 5, 'running')
 
-        j.kill()
+        if j.status not in ['failed', 'completed']:
+            j.kill()
 
         check(True)
