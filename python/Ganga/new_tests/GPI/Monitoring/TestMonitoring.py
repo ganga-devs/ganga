@@ -26,7 +26,7 @@ class TestMonitoring(GangaUnitTest):
 
         j.submit()
 
-        self.assertEqual(j.status, 'submitted')
+        self.assertNotEqual(j.status, 'new')
 
     def test_b_EnableMonitoring(self):
         from Ganga.GPI import enableMonitoring, Job, jobs
