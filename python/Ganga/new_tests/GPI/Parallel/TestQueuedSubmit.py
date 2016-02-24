@@ -84,7 +84,7 @@ class TestQueuedSubmit(GangaUnitTest):
             except:
                 pass
 
-        from Ganga.Utility.Confg import setConfigOption
+        from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', default_CleanUp)
         from Ganga.Utility.Config import getConfig
         getConfig('Queues').getOption('NumWorkerThreads').revertToDefault()
