@@ -79,6 +79,9 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
         logger.info("Initializing")
         Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
     else:
+        # The queues are shut down by the atexit handlers so we need to start them here
+        from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
+        startUpQueues()
         # We need to test if the internal services need to be reinitialized
         from Ganga.Core.InternalServices import Coordinator
         if not Coordinator.servicesEnabled:
@@ -89,10 +92,6 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
             reactivate()
         else:
             logger.info("InternalServices still running")
-
-        # The queues are shut down by the atexit handlers so we need to start them here
-        from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
-        startUpQueues()
 
     logger.info("Bootstrapping")
     Ganga.Runtime._prog.bootstrap(interactive=False)
