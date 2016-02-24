@@ -8,26 +8,24 @@ global_num_threads = 5
 global_num_jobs = global_num_threads*5
 
 default_AutoCleanUp = None
-default_NumThreads = None
 
 class TestQueuedDiracSubmit(GangaUnitTest):
 
     def setUp(self):
-        global default_NumThreads, default_AutoCleanUp
-        from Ganga.Utility.Config import getConfig
-        default_NumThreads = getConfig('Queues')['NumWorkerThreads']
-        default_AutoCleanUp = getConfig('TestingFramework')['AutoCleanup']
-
         extra_opts = [('Queues', 'NumWorkerThreads', global_num_threads)]
         super(TestQueuedDiracSubmit, self).setUp(extra_opts=extra_opts)
+        global default_AutoCleanUp
+        from Ganga.Utility.Config import getConfig
+        default_AutoCleanUp = getConfig('TestingFramework')['AutoCleanup']
+
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def tearDown(self):
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', default_AutoCleanUp)
-        setConfigOption('Queues', 'NumWorkerThreads', default_NumThreads)
+        from Ganga.Utility.Config import getConfig, setConfigOption
         super(TestQueuedDiracSubmit, self).tearDown()
+        setConfigOption('TestingFramework', 'AutoCleanup', default_AutoCleanUp)
+        getConfig('Queues').getOption('NumWorkerThreads').revertToDefault()
 
     def test_a_TestNumThreads(self):
         from Ganga.GPI import queues

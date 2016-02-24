@@ -48,8 +48,9 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
         ('Configuration', 'user', 'testframework'),
         ('Configuration', 'repositorytype', 'LocalXML'),
         ('TestingFramework', 'ReleaseTesting', True),
-        ('Queues', 'NumWorkerThreads', 2),
     ]
+    for opt in extra_opts:
+        default_opts.append(opt)
 
     # FIXME Should we need to add the ability to load from a custom .ini file
     # to configure tests without editting this?
@@ -68,7 +69,7 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
 
     # For all the default and extra options, we set the session value
     from Ganga.Utility.Config import setConfigOption
-    for opt in default_opts + extra_opts:
+    for opt in default_opts:
         setConfigOption(*opt)
 
     if do_config:
@@ -187,6 +188,8 @@ class GangaUnitTest(unittest.TestCase):
         self.gangadir = gangadir
         self.__class__.gangadir = self.gangadir
         self.__class__.wipe_repo = self.wipe_repo
+        assert(isinstance(gangadir, str))
+        assert(isinstance(extra_opts, list))
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
 
     def tearDown(self):
