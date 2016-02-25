@@ -426,6 +426,7 @@ class Registry(object):
         returnable = iter(self.values())
         return returnable
 
+    @synchronised
     def find(self, _obj):
         """Returns the id of the given object in this registry, or 
         Raise ObjectNotInRegistryError if the Object is not found"""
@@ -435,18 +436,10 @@ class Registry(object):
             if hasattr(obj, _reg_id_str):
                 obj_reg_id = getattr(obj, _reg_id_str)
                 objects_obj = self._objects[obj_reg_id]
-                assert obj == objects_obj
-                if hasattr(obj, _id_str):
-                    if hasattr(objects_obj, _id_str):
-                        assert getattr(obj, _id_str) == getattr(objects_obj, _id_str)
-                assert obj_reg_id == getattr(objects_obj, _reg_id_str)
                 return obj_reg_id
             elif hasattr(obj, _id_str):
                 obj_id = getattr(obj, _id_str)
                 objects_obj = self._objects[obj_id]
-                if hasattr(objects_obj, _reg_id_str):
-                    assert obj_id == getattr(objects_obj, _reg_id_str)
-                assert obj_id == getattr(objects_obj, _id_str)
                 return obj_id
             else:
                 raise ObjectNotInRegistryError("Repo find: Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
@@ -943,6 +936,7 @@ class Registry(object):
         if len(other_sessions) > 0:
             logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
 
+    @synchronised
     def has_loaded(self, obj):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!
