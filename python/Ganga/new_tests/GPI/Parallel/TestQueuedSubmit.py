@@ -35,9 +35,9 @@ class TestQueuedSubmit(GangaUnitTest):
         for i in range(global_num_jobs):
             print('creating job', end=' ')
             j = Job()
-            print(j.id)
+            print('%s' % j.id)
 
-        print('job len:', len(jobs))
+        print('job len: %s' % len(jobs))
 
         assert len(jobs) == global_num_jobs
 
@@ -45,18 +45,18 @@ class TestQueuedSubmit(GangaUnitTest):
         from Ganga.GPI import jobs, queues
 
         for j in jobs:
-            print('adding job', j.id, 'to queue for submission')
+            print('adding job %s to queue for submission' % j.id)
             queues.add(j.submit)
 
         while queues.totalNumUserThreads() > 0:
-            print('remaining threads:', queues.totalNumUserThreads())
+            print('remaining threads: %s' % queues.totalNumUserThreads())
             time.sleep(1)
 
         print('remaining threads:', queues.totalNumUserThreads())
 
         # All user threads should have terminated by now
         for j in jobs:
-            print('checking job', j.id)
+            print('checking job %s' % j.id)
             assert j.status != 'new'
 
     def test_d_Finished(self):
@@ -65,7 +65,7 @@ class TestQueuedSubmit(GangaUnitTest):
 
         print('waiting on job', end=' ')
         for j in jobs:
-            print(j.id, end=' ')
+            print('%s' % j.id, end=' ')
             import sys
             sys.stdout.flush()
             assert sleep_until_completed(j), 'Timeout on job submission: job is still not finished'
