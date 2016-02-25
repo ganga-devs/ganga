@@ -125,7 +125,6 @@ class GangaRepositorySQLite(GangaRepository):
                 obj = self.objects[id]
             if obj.getNodeData() is None:
                 obj.setNodeData( pickle.loads(e[3]) )
-                obj.__setstate__(obj.__dict__)
             ids.remove(id)
         if len(ids) > 0:
             raise KeyError(ids[0])

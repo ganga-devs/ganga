@@ -110,24 +110,6 @@ class ShareRef(GangaObject):
             self.name = {}
         #self._setRegistry(None)
 
-    def __getstate__(self):
-        this_dict = super(ShareRef, self).__getstate__()
-        #this_dict['_registry'] = None
-        this_dict['_counter'] = 0
-        return this_dict
-
-    def __setstate__(self, this_dict):
-        #self._getWriteAccess()
-        try:
-            super(ShareRef, self).__setstate__(this_dict)
-        #    self._setRegistry(None)
-            self._setDirty()
-        except Exception as err:
-            logger.debug("setstate Error: %s" % str(err))
-        finally:
-            #self._releaseWriteAccess()
-            self._setDirty()
-
     def __getName(self):
         if not hasattr(self, 'name') or self.name is None:
             self.name = {}

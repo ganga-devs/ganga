@@ -691,9 +691,10 @@ def GPIProxyClassFactory(name, pluginclass):
 
         instance._auto__init__()
 
+        from Ganga.GPIDev.Base.Objects import do_not_copy
         ## All objects with an _auto__init__ method need to have that method called and we set the various node attributes here based upon the schema
         for key, _val in stripProxy(self)._schema.allItems():
-            if not _val['protected'] and not _val['hidden'] and isType(_val, ComponentItem) and key not in Node._ref_list:
+            if not _val['protected'] and not _val['hidden'] and isType(_val, ComponentItem) and key not in do_not_copy:
                 val = stripProxy(getattr(self, key))
                 if isinstance(val, GangaObject):
                     val._auto__init__()
