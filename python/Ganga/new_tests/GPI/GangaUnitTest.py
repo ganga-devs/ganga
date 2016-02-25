@@ -76,6 +76,23 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
         logger.info("Initializing")
         Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
     else:
+        from Ganga.Runtime.GPIexport import exportToGPI
+
+        from Ganga.Runtime import Repository_runtime
+        # boostrap the repositories and connect to them
+        for n, k, d in Repository_runtime.bootstrap():
+            # make all repository proxies visible in GPI
+            exportToGPI(n, k, 'Objects', d)
+
+        # JobTree
+        from Ganga.Core.GangaRepository import getRegistry
+        jobtree = getRegistry("jobs").getJobTree()
+        exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
+
+        # ShareRef
+        shareref = getRegistry("prep").getShareRef()
+        exportToGPI('shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
+
         # The queues are shut down by the atexit handlers so we need to start them here
         from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
         startUpQueues()
@@ -167,6 +184,24 @@ def stop_ganga():
     # Finished
     logger.info("Test Finished")
 
+    ## Remove lingering Objects from the GPI
+
+    ## First start with repositories
+
+    import Ganga.GPI
+
+    from Ganga.Runtime import Repository_runtime
+
+    for name in Repository_runtime.bootstrap_reg_names():
+        delattr(Ganga.GPI, name)
+
+    ## Now remove the JobTree
+    delattr(Ganga.GPI, 'jobtree')
+    ## Now remove the sharedir
+    delattr(Ganga.GPI, 'shareref')
+
+
+    ## gridProxy and afsToken are assumed to be safe to persist beteen instances
 
 class GangaUnitTest(unittest.TestCase):
 
@@ -179,7 +214,7 @@ class GangaUnitTest(unittest.TestCase):
         # This is called before each unittest
         if gangadir is None:
             import os
-            gangadir = os.path.join('$HOME/gangadir_testing')  # TODO make separate dirs per test suite, `self.__class__.__name__`
+            gangadir = os.path.join('$HOME/gangadir_testing', self.__class__.__name__)
             gangadir = os.path.expanduser(os.path.expandvars(gangadir))
             if not os.path.isdir(gangadir):
                 os.makedirs(gangadir)
