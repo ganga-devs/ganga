@@ -364,15 +364,23 @@ class Node(object):
         if attrib_name in self._data.keys():
             del self._data[attrib_name]
 
-    def removeNodeIndexCacheAttribute(self, attrib_name):
-        if self._index_cache and attrib_name in self._index_cache.keys():
-            del self._index_cache[attrib_name]
-
     def setNodeIndexCache(self, new_index_cache):
+        if self.fullyLoadedFromDisk():
+            logger.debug("Warning: Setting IndexCache data on live object, please avoid!")
         setattr(self, '_index_cache', new_index_cache)
-
+                                       
     def getNodeIndexCache(self):
+        if self.fullyLoadedFromDisk():
+            ## Fully loaded so lets regenerate this on the fly to avoid losing data
+            return self._getRegistry().getIndexCache(self)
+        ## Not in registry or not loaded, so can't re-generate if requested
         return self._index_cache
+                                                                 
+    def fullyLoadedFromDisk(self):
+        if self._getRegistry():
+            if self._getRegistry().has_loaded(self):
+                return True
+        return False
 
 ##########################################################################
 
