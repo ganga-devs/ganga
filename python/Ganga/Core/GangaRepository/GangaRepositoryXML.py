@@ -84,10 +84,14 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         # global try...except to catch any OSErrors/IOErrors
         try:
 
-            # Make sure we have the dirs ready
+            # Create the dirs
             dirname = os.path.dirname(fn)
             if not os.path.exists(dirname):
                 os.makedirs(dirname)
+
+            # Create a blank file if it's not already there (append just in case)
+            if not os.path.exists(fn):
+                open(fn, 'a').close()
 
             # Prepare new data file
             new_name = fn + '.new'
@@ -97,7 +101,7 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
             # everything ready so create new data file and backup old one
             if os.path.exists(new_name):
                 os.rename(fn, fn + "~")
-                os.rename(fn + ".new", fn)
+                os.rename(new_name, fn)
 
         except (IOError, OSError) as err:
             raise IOError("Could not write file '%s' (%s)" % (fn, err))
