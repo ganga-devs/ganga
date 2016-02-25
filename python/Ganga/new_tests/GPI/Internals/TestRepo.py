@@ -205,3 +205,6 @@ class TestRepository(object):
         logger.info(str(self.id) + ' shutdown()')
         self.repo.shutdown()
         logger.info(str(self.id) + ' shutdown() done!')
+
+    def has_loaded(self, obj):
+        return True
