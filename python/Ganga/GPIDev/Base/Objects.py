@@ -70,6 +70,7 @@ class Node(object):
         self._parent = parent
         self._index_cache = {}
         self._lock = threading.RLock()
+        self._registry = None
         super(Node, self).__init__()
         #logger.info("Node __init__")
 
