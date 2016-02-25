@@ -435,14 +435,15 @@ class Registry(object):
         obj = stripProxy(_obj)
         try:
             obj_reg_id = getattr(obj, _reg_id_str)
-            objects_obj = self._objects[obj_reg_id]
-            return obj_reg_id
         except AttributeError as err:
             logger.debug("%s" % str(err))
             raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % getName(obj))
-        except AssertionError as err:
-            logger.warning("%s" % str(err))
-            raise ObjectNotInRegistryError("Object '%s' is a duplicated version of the one in this registry: %s !" % (getName(obj), self.name))
+
+        try:
+            if obj_reg_id in self._objects.keys():
+                return obj_reg_id
+            else:
+                raise KeyError("Not Found: %s" % obj_reg_id)
         except KeyError as err:
             logger.debug("%s", str(err))
             raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
