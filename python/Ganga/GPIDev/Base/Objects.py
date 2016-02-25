@@ -64,7 +64,6 @@ def synchronised(f):
 
 
 class Node(object):
-    _ref_list = ['_parent', '_registry', '_index_cache']
 
     def __init__(self, parent=None):
         self._data = {}
@@ -74,30 +73,12 @@ class Node(object):
         super(Node, self).__init__()
         #logger.info("Node __init__")
 
-    def __getstate__(self):
-        d = self.__dict__
-        d['_data'] = d['_data'].copy()
-        for r in self._ref_list:
-            d[r] = None
-        return d
-
-    def __setstate__(self, this_dict):
-        for key, val in this_dict['_data'].iteritems():
-            if isinstance(val, Node) and key not in self._ref_list:
-                val._setParent(self)
-
-        for attr in self._ref_list:
-            if not hasattr(self, attr):
-                setattr(self, attr, None)
-
-        for key, val in this_dict.iteritems():
-            setattr(self, key, val)
-
     def __copy__(self, memo=None):
         cls = self.__class__
         obj = cls()
         # FIXME: this is different than for deepcopy... is this really correct?
         this_dict = self.__dict__.copy()
+        obj.__dict__ = this_dict
         global do_not_copy
         for elem in this_dict.keys():
             if elem not in do_not_copy:
@@ -107,22 +88,23 @@ class Node(object):
         #obj.__setstate__(this_dict)
         obj._setParent(self._getParent())
         setattr(obj, '_index_cache', {})
-        setattr(obj, '_registry', self._registry)
         return obj
 
     def __deepcopy__(self, memo=None):
         cls = self.__class__
         obj = cls()
-        this_dict = self.__getstate__()
+        this_dict = self.__dict__
+        obj.__dict__ = this_dict
         global do_not_copy
         for elem in this_dict.keys():
             if elem not in do_not_copy:
                 this_dict[elem] = deepcopy(this_dict[elem], memo)  # FIXED
+            ## Keep the reference?
+            #else:
+            #    this_dict[elem] = None
 
-        obj.__dict__ = this_dict
         if self._getParent() is not None:
             obj._setParent(self._getParent())
-        setattr(obj, '_registry', self._registry)
         return obj
 
     @synchronised
@@ -212,7 +194,6 @@ class Node(object):
     # clone self and return a properly initialized object
     def clone(self):
         new_obj = deepcopy(self)
-
         return new_obj
 
     # copy all the properties recursively from the srcobj
@@ -250,7 +231,7 @@ class Node(object):
         src_dict = srcobj.__dict__
         for key, val in src_dict.iteritems():
             this_attr = getattr(srcobj, key)
-            if isinstance(this_attr, Node) and key not in Node._ref_list:
+            if isinstance(this_attr, Node) and key not in do_not_copy:
                 #logger.debug("k: %s  Parent: %s" % (str(key), (srcobj)))
                 this_attr._setParent(srcobj)
 
@@ -271,13 +252,13 @@ class Node(object):
                 if not hasattr(self, name):
                     setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
-                if isinstance(this_attr, Node) and name not in Node._ref_list:
+                if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
             elif not item['copyable']: ## Default of '1' instead of True...
                 if not hasattr(self, name):
                     setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
-                if isinstance(this_attr, Node) and name not in Node._ref_list:
+                if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
             else:
                 copy_obj = deepcopy(getattr(_srcobj, name))
@@ -364,15 +345,23 @@ class Node(object):
         if attrib_name in self._data.keys():
             del self._data[attrib_name]
 
-    def removeNodeIndexCacheAttribute(self, attrib_name):
-        if self._index_cache and attrib_name in self._index_cache.keys():
-            del self._index_cache[attrib_name]
-
     def setNodeIndexCache(self, new_index_cache):
+        if self.fullyLoadedFromDisk():
+            logger.debug("Warning: Setting IndexCache data on live object, please avoid!")
         setattr(self, '_index_cache', new_index_cache)
 
     def getNodeIndexCache(self):
+        if self.fullyLoadedFromDisk():
+            ## Fully loaded so lets regenerate this on the fly to avoid losing data
+            return self._getRegistry().getIndexCache(self)
+        ## Not in registry or not loaded, so can't re-generate if requested
         return self._index_cache
+
+    def fullyLoadedFromDisk(self):
+        if self._getRegistry():
+            if self._getRegistry().has_loaded(self):
+                return True
+        return False
 
 ##########################################################################
 
@@ -836,21 +825,6 @@ class GangaObject(Node):
             from Ganga.GPIDev.Base.Proxy import TypeMismatchError
             raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
 
-    def __getstate__(self):
-        # IMPORTANT: keep this in sync with the __init__
-        #self._getReadAccess()
-        this_dict = super(GangaObject, self).__getstate__()
-        #this_dict['_dirty'] = False
-        return this_dict
-
-    def __setstate__(self, this_dict):
-        #self._getWriteAccess()
-        super(GangaObject, self).__setstate__(this_dict)
-        #if '_parent' in this_dict:
-        #    self._setParent(this_dict['_parent'])
-        #self._setParent(None)
-        self._dirty = False
-
     @staticmethod
     def __incrementShareRef(obj, attr_name):
         shared_dir = getattr(obj, attr_name)
@@ -870,10 +844,8 @@ class GangaObject(Node):
         true_parent = self._getParent()
         ## This triggers a read of the job from disk
         self._getReadAccess()
-        classname = _getName(self)
-        category = self._category
-        cls = self.__class__#allPlugins.find(category, classname)
 
+        cls = self.__class__
         self_copy = cls()
 
         global do_not_copy

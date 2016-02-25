@@ -65,16 +65,14 @@ class BoxRegistry(Registry):
         cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:
-            #if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
-            #    c[cv] = obj.getNodeIndexCache()[cv]
-            #else:
             try:
                 c[cv] = getattr(obj, cv)
             except AttributeError as err:
                 c[cv] = None
-        slice = BoxRegistrySlice("tmp")
-        for dpv in slice._display_columns:
-            c["display:" + dpv] = slice._get_display_value(obj, dpv)
+        this_slice = BoxRegistrySlice("tmp")
+        for dpv in this_slice._display_columns:
+            c["display:" + dpv] = this_slice._get_display_value(obj, dpv)
+        del this_slice
         return c
 
 # Methods for the "box" proxy (but not for slice proxies)

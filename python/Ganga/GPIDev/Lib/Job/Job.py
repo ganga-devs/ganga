@@ -1012,14 +1012,6 @@ class Job(GangaObject):
     def getDebugWorkspace(self, create=True):
         return self.getWorkspace('DebugWorkspace', create=create)
 
-    #def __getstate__(self):
-        #this_dict = super(Job, self).__getstate__()
-        #if hasattr(this_dict, '_registry'):
-        #this_dict['_registry'] = None
-        #return this_dict
-#        # FIXME: dict['_data']['id'] = 0 # -> replaced by 'copyable' mechanism
-#        # in base class
-
     def peek(self, filename="", command=""):
         """
         Allow viewing of job output (and input) files

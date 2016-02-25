@@ -544,8 +544,6 @@ class Registry(object):
             logger.debug("Unknown Add Error: %s" % str(err))
             raise err
 
-        self._updateIndexCache(obj)
-
         return returnable_id
 
     @synchronised
@@ -853,6 +851,7 @@ class Registry(object):
     def getIndexCache(self, obj):
         """Returns a dictionary to be put into obj._index_cache through setNodeIndexCache
         This can and should be overwritten by derived Registries to provide more index values."""
+        logger.debug("Default getIndexCache called. Should this be over-ridden!")
         return {}
 
     @synchronised

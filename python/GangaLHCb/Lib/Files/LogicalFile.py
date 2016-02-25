@@ -62,10 +62,6 @@ class LogicalFile(DiracFile):
 
         self._setLFNnamePattern(_lfn=self.name, _namePattern='')
 
-    def __setstate__(self, dict):
-        super(LogicalFile, self).__setstate__(dict)
-        self._setLFNnamePattern(_lfn=self.name, _namePattern='')
-
     def __construct__(self, args):
 
         if len(args) >= 1:
