@@ -421,6 +421,7 @@ class Registry(object):
         returnable = [it[1] for it in self.items()]
         return returnable
 
+    @synchronised
     def __iter__(self):
         logger.debug("__iter__")
         returnable = iter(self.values())
@@ -433,16 +434,9 @@ class Registry(object):
 
         obj = stripProxy(_obj)
         try:
-            if hasattr(obj, _reg_id_str):
-                obj_reg_id = getattr(obj, _reg_id_str)
-                objects_obj = self._objects[obj_reg_id]
-                return obj_reg_id
-            elif hasattr(obj, _id_str):
-                obj_id = getattr(obj, _id_str)
-                objects_obj = self._objects[obj_id]
-                return obj_id
-            else:
-                raise ObjectNotInRegistryError("Repo find: Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
+            obj_reg_id = getattr(obj, _reg_id_str)
+            objects_obj = self._objects[obj_reg_id]
+            return obj_reg_id
         except AttributeError as err:
             logger.debug("%s" % str(err))
             raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % getName(obj))
