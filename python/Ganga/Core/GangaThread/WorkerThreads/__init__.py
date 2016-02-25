@@ -28,5 +28,7 @@ def shutDownQueues():
     _global_queues._purge_all()
     del _global_queues
     _global_queues = None
+    import Ganga.GPI
+    delattr(Ganga.GPI, 'queues')
 
 
