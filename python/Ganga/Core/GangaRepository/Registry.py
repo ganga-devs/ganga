@@ -607,12 +607,13 @@ class Registry(object):
 
         for obj in objs:
             with obj.lock:
-                obj._getWriteAccess()
-                obj_id = getattr(obj, _reg_id_str)
                 if not obj._dirty:
                     continue
+                obj._getWriteAccess()
+                obj_id = getattr(obj, _reg_id_str)
                 self.repository.flush([obj_id])
                 self.repository.unlock([obj_id])
+                obj._dirty = False
 
     @synchronised
     def flush_all(self):

@@ -803,7 +803,7 @@ class GangaObject(Node):
         # make sure to update the __getstate__ method as well
         # dirty flag is true if the object has been modified locally and its
         # contents is out-of-sync with its repository
-        self._dirty = False
+        self._dirty = True
 
         #Node.__init__(self, None)
 
