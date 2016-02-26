@@ -54,7 +54,7 @@ class RunTestsCommand(Command):
 
     def run(self):
 
-        cmd = ['nosetests']
+        cmd = ['nosetests --nocapture']
 
         if self.type in ['unit', 'all']:
             cmd.append('Ganga/new_tests/*.py')
