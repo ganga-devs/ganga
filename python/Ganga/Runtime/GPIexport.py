@@ -14,9 +14,9 @@ import Ganga.GPI
 
 from .gangadoc import adddoc
 
-from Ganga.GPIDev.Base.Proxy import isType, addProxy
+from Ganga.GPIDev.Base.Proxy import isType, addProxy, getProxyClass
 from Ganga.GPIDev.Base.Objects import GangaObject
-
+from inspect import isclass
 
 def exportToGPI(name, _object, doc_section, docstring=None):
     '''
@@ -33,6 +33,8 @@ def exportToGPI(name, _object, doc_section, docstring=None):
 
     if isType(_object, GangaObject):
         setattr(Ganga.GPI, name, addProxy(_object))
+    elif isclass(_object) and issubclass(_object, GangaObject):
+        setattr(Ganga.GPI, name, getProxyClass(_object))
     else:
         setattr(Ganga.GPI, name, _object)
 

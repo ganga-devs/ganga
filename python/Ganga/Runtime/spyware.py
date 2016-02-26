@@ -76,8 +76,7 @@ def ganga_job_submitted(application_name, backend_name, plain_job, master_job, s
 
         # start publisher thread and enqueue usage message for sending
         p.start()
-        p.send(msg_config['job_submission_message_destination'], repr(
-            job_submitted_message), {'persistent': 'true'})
+        p.send(msg_config['job_submission_message_destination'], repr(job_submitted_message), {'persistent': 'true'})
         # p.send('/queue/test.ganga.jobsubmission',repr(job_submitted_message),{'persistent':'true'})
         # ask publisher thread to stop. it will send queued message anyway.
         p.stop()

@@ -186,7 +186,7 @@ def flush_all():
         try:
             if registry.hasStarted() is True:
                 logger.debug("Flushing: %s" % thisName)
-                registry._flush()
+                registry.flush_all()
         except Exception as err:
             logger.debug("Failed to flush: %s" % str(thisName))
             logger.debug("Err: %s" % str(err))

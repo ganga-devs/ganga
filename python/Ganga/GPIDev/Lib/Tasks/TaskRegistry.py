@@ -171,6 +171,9 @@ class TaskRegistry(Registry):
     def stop(self):
         if self._main_thread is not None:
             self._main_thread.stop()
+            import time
+            while self._main_thread.isAlive():
+                time.sleep(0.5)
 
 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 

@@ -72,7 +72,7 @@ class PrepRegistry(Registry):
         except Exception as x:
             logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
         try:
-            self._flush()
+            self.flush_all()
         except Exception as x:
             logger.error("Exception on flushing '%s' registry: %s", self.name, x)
         #self._hasStarted = False
@@ -579,15 +579,5 @@ class _proxy_display(object):
             return stripProxy(cls)._proxy_display
         return stripProxy(obj)._proxy_display
 
-
-# class _copy(object):
-#    def __get__(self, obj, cls):
-#        if obj is None:
-#            return stripProxy(cls)._copy
-#        return stripProxy(obj)._copy
-
 ShareRef.__str__ = ShareRef._display
-ShareRef._proxyClass._display = _proxy_display()
-ShareRef._proxyClass.__str__ = _proxy_display()
-#ShareRef._proxyClass.copy = _copy()
 
