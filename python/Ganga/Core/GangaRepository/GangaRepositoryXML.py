@@ -81,32 +81,24 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         obj = stripProxy(_obj)
         check_app_hash(obj)
 
-        # global try...except to catch any OSErrors/IOErrors
-        try:
+        # Create the dirs
+        dirname = os.path.dirname(fn)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
 
-            # Create the dirs
-            dirname = os.path.dirname(fn)
-            if not os.path.exists(dirname):
-                os.makedirs(dirname)
+        # Prepare new data file
+        new_name = fn + '.new'
+        with open(new_name, "w") as tmpfile:
+            to_file(obj, tmpfile, ignore_subs)
 
-            # Prepare new data file
-            new_name = fn + '.new'
-            with open(new_name, "w") as tmpfile:
-                to_file(obj, tmpfile, ignore_subs)
+        # everything ready so create new data file and backup old one
+        if os.path.exists(new_name):
 
-            # everything ready so create new data file and backup old one
-            if os.path.exists(new_name):
+            # Do we have an old one to backup?
+            if os.path.exists(fn):
+                os.rename(fn, fn + "~")
 
-                # Do we have an old one to backup?
-                if os.path.exists(fn):
-                    os.rename(fn, fn + "~")
-
-                os.rename(new_name, fn)
-
-        except (IOError, OSError) as err:
-            raise IOError("Could not write file '%s' (%s)" % (fn, err))
-        except XMLFileError as err:
-            raise err
+            os.rename(new_name, fn)
 
 # Global lock for above function - See issue #185
 safe_save.lock = threading.Lock()
