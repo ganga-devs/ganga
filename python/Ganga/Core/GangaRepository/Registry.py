@@ -15,7 +15,7 @@ from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 logger = getLogger()
 
 _reg_id_str = '_registry_id'
-_id_str = 'id'
+_id_str = '_id'
 
 class RegistryError(GangaException):
 
@@ -126,9 +126,8 @@ class IncompleteObject(GangaObject):
             if self.registry.checkShouldFlush():
                 self.registry.repository.flush([self.registry._objects[self.id]])
                 self.registry._load([self.id])
-            if self.id not in self.registry_loaded_ids:
+            if hasattr(self._objects, '_registry_refresh'):
                 self.registry._load([self.id])
-                self.registry._loaded_ids.append(self.id)
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
             for d in self.registry.changed_ids.itervalues():
                 d.add(self.id)
@@ -188,8 +187,6 @@ class Registry(object):
         self.hard_lock = {}
         self.changed_ids = {}
         self._autoFlush = True
-
-        self._loaded_ids = []
 
         self._parent = None
 
@@ -395,9 +392,6 @@ class Registry(object):
         for key, _obj in self._objects.iteritems():
             summary = "found: "
             try:
-                if hasattr(_obj, _id_str):
-                    summary = summary + "%s = '%s'" % (_id_str, getattr(_obj, _id_str))
-                    assert(getattr(_obj, _id_str) == key)
                 if hasattr(_obj, _reg_id_str):
                     summary = summary + " %s = '%s'" % (_reg_id_str, getattr(_obj, _reg_id_str))
                     assert(getattr(_obj, _reg_id_str) == key)
@@ -432,30 +426,14 @@ class Registry(object):
 
         obj = stripProxy(_obj)
         try:
-            if hasattr(obj, _reg_id_str):
-                obj_reg_id = getattr(obj, _reg_id_str)
-                objects_obj = self._objects[obj_reg_id]
-                assert obj == objects_obj
-                if hasattr(obj, _id_str):
-                    if hasattr(objects_obj, _id_str):
-                        assert getattr(obj, _id_str) == getattr(objects_obj, _id_str)
-                assert obj_reg_id == getattr(objects_obj, _reg_id_str)
-                return obj_reg_id
-            elif hasattr(obj, _id_str):
-                obj_id = getattr(obj, _id_str)
-                objects_obj = self._objects[obj_id]
-                if hasattr(objects_obj, _reg_id_str):
-                    assert obj_id == getattr(objects_obj, _reg_id_str)
-                assert obj_id == getattr(objects_obj, _id_str)
-                return obj_id
-            else:
-                raise ObjectNotInRegistryError("Repo find: Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
+            obj_reg_id = getattr(obj, _reg_id_str)
         except AttributeError as err:
             logger.debug("%s" % str(err))
             raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % getName(obj))
-        except AssertionError as err:
-            logger.warning("%s" % str(err))
-            raise ObjectNotInRegistryError("Object '%s' is a duplicated version of the one in this registry: %s !" % (getName(obj), self.name))
+
+        try:
+            this_obj = self._objects[obj_reg_id]
+            return obj_reg_id
         except KeyError as err:
             logger.debug("%s", str(err))
             raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
@@ -509,8 +487,6 @@ class Registry(object):
             for _id in ids:
                 if hasattr(self._objects[_id], _reg_id_str):
                     assert(getattr(self._objects[_id], _reg_id_str) == _id)
-                if hasattr(self._objects[_id], _id_str):
-                    assert(getattr(self._objects[_id], _id_str) == _id)
 
             logger.debug("_add-ed as: %s" % str(ids))
         finally:
@@ -537,7 +513,8 @@ class Registry(object):
 
         try:
             returnable_id = self.__safe_add(obj, force_index)
-            self._loaded_ids.append(returnable_id)
+            if hasattr(obj, '_registry_refresh'):
+                delattr(obj, '_registry_refresh')
         except (RepositoryError) as err:
             raise err
         except Exception as err:
@@ -685,6 +662,8 @@ class Registry(object):
         try:
             for obj_id in obj_ids:
                 self.repository.load([obj_id])
+                if hasattr(self._objects[obj_id], '_registry_refresh'):
+                    delattr(self._objects[obj_id], '_registry_refresh')
         except Exception as err:
             logger.error("Error Loading Jobs!")
             raise err
@@ -701,16 +680,11 @@ class Registry(object):
         if self.hasStarted() is not True:
             raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
 
-        if hasattr(obj, "_registry_refresh"):
-            delattr(obj, "_registry_refresh")
-        assert not hasattr(obj, "_registry_refresh")
-
         try:
             this_id = self.find(obj)
             try:
-                if this_id not in self._loaded_ids:
+                if hasattr(self._objects[this_id], '_registry_refresh'):
                     self._load([this_id])
-                    self._loaded_ids.append(this_id)
             except KeyError as err:
                 logger.error("_read_access KeyError %s" % str(err))
                 raise RegistryKeyError("Read: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
@@ -775,11 +749,8 @@ class Registry(object):
                     raise err
                 finally:  # try to load even if lock fails
                     try:
-                        if this_id not in self._loaded_ids:
+                        if hasattr(self._objects[this_id], '_registry_refresh'):
                             self._load([this_id])
-                            self._loaded_ids.append(this_id)
-                            if hasattr(obj, "_registry_refresh"):
-                                delattr(obj, "_registry_refresh")
                     except KeyError, err:
                         logger.debug("_write_access KeyError %s" % str(err))
                         raise RegistryKeyError("Write: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
@@ -884,10 +855,12 @@ class Registry(object):
             self.changed_ids = {}
             t1 = time.time()
             logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
-        except Exception as err:
-            logger.debug("Logging Repo startup Error: %s" % str(err))
-            self._hasStarted = False
-            raise err
+        #except Exception as err:
+        #    logger.debug("Logging Repo startup Error: %s" % str(err))
+        #    self._hasStarted = False
+        #    raise err
+        finally:
+            pass
 
     @synchronised
     def shutdown(self):
@@ -923,8 +896,6 @@ class Registry(object):
                 obj._registry_locked = False
             self.repository.shutdown()
 
-            self._loaded_ids = []
-
         finally:
             self._hasStarted = False
 
@@ -943,18 +914,15 @@ class Registry(object):
         if len(other_sessions) > 0:
             logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
 
-    def has_loaded(self, obj):
+    @staticmethod
+    def has_loaded(obj):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!
         This ONLY applies to master jobs as the Registry has no apriori knowledge of the subjob structure.
         Consult SubJobXMLList for a more fine grained loaded/not-loaded info/test."""
-        try:
-            index = self.find(obj)
-        except ObjectNotInRegistryError:
-            return False
 
-        if index in self._loaded_ids:
-            return True
-        else:
+        if hasattr(obj, '_registry_refresh'):
             return False
+        else:
+            return True
 

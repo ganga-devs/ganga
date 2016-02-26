@@ -305,6 +305,7 @@ class GangaRepositoryLocal(GangaRepository):
                     obj = self._make_empty_object_(this_id, cat, cls)
                 except Exception as err:
                     raise IOError('Failed to Parse information in Index file: %s. Err: %s' % (str(fn), str(err)))
+            setattr(obj, '_registry_refresh', True)
             this_cache = obj.getNodeIndexCache()
             this_data = this_cache if this_cache else {}
             for k, v in cache.iteritems():
