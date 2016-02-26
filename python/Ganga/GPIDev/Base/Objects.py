@@ -364,15 +364,23 @@ class Node(object):
         if attrib_name in self._data.keys():
             del self._data[attrib_name]
 
-    def removeNodeIndexCacheAttribute(self, attrib_name):
-        if self._index_cache and attrib_name in self._index_cache.keys():
-            del self._index_cache[attrib_name]
-
     def setNodeIndexCache(self, new_index_cache):
+        if self.fullyLoadedFromDisk():
+            logger.debug("Warning: Setting IndexCache data on live object, please avoid!")
         setattr(self, '_index_cache', new_index_cache)
-
-    def getNodeIndexCache(self):
+                                       
+    def getNodeIndexCache(self, force_cache=False):
+        if self.fullyLoadedFromDisk() and not force_cache:
+            ## Fully loaded so lets regenerate this on the fly to avoid losing data
+            return self._getRegistry().getIndexCache(self)
+        ## Not in registry or not loaded, so can't re-generate if requested
         return self._index_cache
+                                                                 
+    def fullyLoadedFromDisk(self):
+        if self._getRegistry():
+            if self._getRegistry().has_loaded(self):
+                return True
+        return False
 
 ##########################################################################
 
@@ -433,7 +441,7 @@ class Descriptor(object):
             return obj_data[name]
 
         # Then try to get it from the index cache
-        obj_index = obj.getNodeIndexCache()
+        obj_index = obj.getNodeIndexCache(force_cache = len(obj_data) == 0)
         if name in obj_index:
             return obj_index[name]
 
