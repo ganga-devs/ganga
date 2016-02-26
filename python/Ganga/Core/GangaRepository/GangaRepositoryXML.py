@@ -334,15 +334,8 @@ class GangaRepositoryLocal(GangaRepository):
         try:
             ifn = self.get_idxfn(this_id)
             new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
-            if new_idx_cache != obj.getNodeIndexCache() or not os.path.exists(ifn):
-                new_cache = new_idx_cache
-                with open(ifn, "w") as this_file:
-                    pickle_to_file((obj._category, getName(obj), new_cache), this_file)
-                self._cached_obj[this_id] = new_cache
-                obj.setNodeIndexCache({})
-                #all_cache = new_cache.keys()
-                #for attr in all_cache:
-                #    obj.removeNodeIndexCacheAttribute(attr)
+            with open(ifn, "w") as this_file:
+                pickle_to_file((obj._category, getName(obj), new_idx_cache), this_file)
             self._cached_obj[this_id] = new_idx_cache
         except IOError as err:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn, getName(err), str(err)))
@@ -741,25 +734,26 @@ class GangaRepositoryLocal(GangaRepository):
     def _check_index_cache(self, obj, this_id):
 
         new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
-        if new_idx_cache != obj.getNodeIndexCache():
+        old_idx_cache = obj.getNodeIndexCache()
+        if new_idx_cache != old_idx_cache:
             logger.debug("NEW: %s" % str(new_idx_cache))
-            logger.debug("OLD: %s" % str(obj.getNodeIndexCache()))
+            logger.debug("OLD: %s" % str(old_idx_cache))
             # index is wrong! Try to get read access - then we can fix this
             if len(self.lock([this_id])) != 0:
                 self.index_write(this_id)
                 # self.unlock([this_id])
 
-                old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj.getNodeIndexCache().iteritems())
+                old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in old_idx_cache.iteritems())
                 if not old_idx_subset:
                     # Old index cache isn't subset of new index cache
-                    new_idx_subset = all((k in obj.getNodeIndexCache() and obj.getNodeIndexCache()[k] == v) for k, v in new_idx_cache.iteritems())
+                    new_idx_subset = all((k in old_idx_cache and old_idx_cache[k] == v) for k, v in new_idx_cache.iteritems())
                 else:
                     # Old index cache is subset of new index cache so no need to check
                     new_idx_subset = True
 
                 if not old_idx_subset and not new_idx_subset:
                     logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, this_id))
-                    logger.debug("old cache: %s\t\tnew cache: %s" % (str(obj.getNodeIndexCache()), str(new_idx_cache)))
+                    logger.debug("old cache: %s\t\tnew cache: %s" % (str(old_idx_cache), str(new_idx_cache)))
                     self.unlock([this_id])
             else:
                 pass
@@ -789,7 +783,8 @@ class GangaRepositoryLocal(GangaRepository):
                     node_val._setParent(obj)
 
         # Check if index cache; if loaded; was valid:
-        if obj.getNodeIndexCache() not in [{}]:
+        old_idx_cache = obj.getNodeIndexCache()
+        if old_idx_cache is not {}:
             self._check_index_cache(obj, this_id)
 
         obj.setNodeIndexCache({})

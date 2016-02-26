@@ -63,22 +63,15 @@ class TestQueuedSubmit(GangaUnitTest):
         from Ganga.GPI import jobs, queues
         from GangaTest.Framework.utils import sleep_until_completed
 
-        has_completed = False
-        while has_completed is False:
-            has_completed = True
-            print('waiting on job', end=' ')
-            for j in jobs:
-                if j.status != "completed":
-                    has_completed = has_completed and False
-                    print('%s' % j.id, end=' ')
-                    import sys
-                    sys.stdout.flush()
+        print('waiting on job', end=' ')
+        for j in jobs:
+            if j.status in ['submitted', 'running', 'completing']:
+                print('%s' % j.id, end=' ')
+                import sys
+                sys.stdout.flush()
 
-            print("")
-            import time
-            time.sleep(1.)
-            #assert sleep_until_completed(j), 'Timeout on job submission: job is still not finished'
-            #assert j.status == 'completed'
+                assert sleep_until_completed(j), 'Timeout on job submission: job is still not finished'
+            assert j.status == 'completed'
 
     def test_e_Cleanup(self):
         from Ganga.GPI import jobs
