@@ -217,11 +217,6 @@ class Registry(object):
         while this_id in self._inprogressDict.keys():
             logger.debug("Getting item being operated on: %s" % this_id)
             logger.debug("Currently in state: %s" % self._inprogressDict[this_id])
-            #import traceback
-            #traceback.print_stack()
-            #import sys
-            #sys.exit(-1)
-            #time.sleep(0.05)
         self._inprogressDict[this_id] = action
         if this_id not in self.hard_lock.keys():
             self.hard_lock[this_id] = threading.Lock()
@@ -763,8 +758,6 @@ class Registry(object):
                 obj._registry_locked = True
             except Exception as err:
                 raise err
-            #finally:
-            #    pass
 
         return True
 
@@ -864,8 +857,6 @@ class Registry(object):
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         from Ganga.Utility.logging import getLogger
-#        self.shouldReleaseRun = False
-#        self.releaseThread.stop()
         logger = getLogger()
         logger.debug("Shutting Down Registry")
         logger.debug("shutdown")
@@ -886,9 +877,6 @@ class Registry(object):
                 self.flush_all()
             except Exception as err:
                 logger.error("Exception on flushing '%s' registry: %s", self.name, str(err))
-                #raise err
-            #finally:
-            #    pass
             for obj in self._objects.values():
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
