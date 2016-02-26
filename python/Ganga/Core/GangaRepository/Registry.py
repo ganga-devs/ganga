@@ -855,12 +855,10 @@ class Registry(object):
             self.changed_ids = {}
             t1 = time.time()
             logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
-        #except Exception as err:
-        #    logger.debug("Logging Repo startup Error: %s" % str(err))
-        #    self._hasStarted = False
-        #    raise err
-        finally:
-            pass
+        except Exception as err:
+            logger.debug("Logging Repo startup Error: %s" % str(err))
+            self._hasStarted = False
+            raise err
 
     @synchronised
     def shutdown(self):

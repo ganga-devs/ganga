@@ -106,7 +106,6 @@ class HammerThread(GangaThread):
             # logger.info('stripped: %s' % stripProxy(self.owned_objs[_id]))
             logger.info('name: %s' % self.reg[_id].name)
             logger.info('Wanting: %s' % _id)
-            logger.info('Loaded: %s' % self.reg._loaded_ids)
             assert self.reg[_id].name.startswith('HT')
             if _id in self.owned_ids:
                 assert self.reg[_id].name == 'HT%i' % self.id, '{0} == {1}'.format(self.reg[_id].name, 'HT%i' % self.id)
