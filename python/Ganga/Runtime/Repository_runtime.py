@@ -93,7 +93,7 @@ def checkDiskQuota():
 
     return
 
-def bootstrap_reg_names():
+def bootstrap_getreg():
     # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
     # or even named templated registries as the _auto__init from job will require the prep registry to
     # already be ready. This showed up when adding the named templates.
@@ -102,11 +102,11 @@ def bootstrap_reg_names():
             return -1
         return 1
 
-    names = []
-    for registry in sorted(getRegistries(), prep_filter):
-        names.append(registry.name)
+    return [registry for registry in sorted(getRegistries(), prep_filter)]
 
-    return names
+def bootstrap_reg_names():
+    all_reg = bootstrap_getreg()
+    return [reg.name for reg in all_reg]
 
 def bootstrap():
     retval = []
@@ -118,15 +118,7 @@ def bootstrap():
     except Exception as err:
         logger.error("Disk quota check failed due to: %s" % str(err))
 
-    # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
-    # or even named templated registries as the _auto__init from job will require the prep registry to
-    # already be ready. This showed up when adding the named templates.
-    def prep_filter(x, y):
-        if x.name == 'prep':
-            return -1
-        return 1
-
-    for registry in sorted(getRegistries(), prep_filter):
+    for registry in bootstrap_getreg():
         if registry.name in started_registries:
             continue
         if not hasattr(registry, 'type'):
