@@ -58,8 +58,10 @@ class RunTestsCommand(Command):
 
         if self.type in ['unit', 'all']:
             cmd.append('python/Ganga/new_tests/Unit')
-            cmd.append('python/Ganga/Core')
-            cmd.append('python/Ganga/Runtime')
+            ## Ganga/Core finds zero tests
+            #cmd.append('python/Ganga/Core')
+            ## Ganga/Runtime imports GangaProgram but causes a vanilla instance to be loaded
+            #cmd.append('python/Ganga/Runtime')
             cmd.append('python/Ganga/Utility')
         if self.type in ['integration', 'all']:
             cmd.append('python/Ganga/new_tests/GPI')
