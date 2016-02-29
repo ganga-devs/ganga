@@ -33,6 +33,9 @@ class FakeRegistry(object):
     def _dirty(self, obj):
         self.repo.flush([obj._registry_id])
 
+    def has_loaded(self, obj):
+        return True
+
 
 # def _dirty(self,obj):
 #        pass
@@ -205,3 +208,6 @@ class TestRepository(object):
         logger.info(str(self.id) + ' shutdown()')
         self.repo.shutdown()
         logger.info(str(self.id) + ' shutdown() done!')
+
+    def has_loaded(self, obj):
+        return True

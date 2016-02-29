@@ -339,9 +339,6 @@ class GangaRepositoryLocal(GangaRepository):
                     pickle_to_file((obj._category, getName(obj), new_cache), this_file)
                 self._cached_obj[this_id] = new_cache
                 obj.setNodeIndexCache({})
-                #all_cache = new_cache.keys()
-                #for attr in all_cache:
-                #    obj.removeNodeIndexCacheAttribute(attr)
             self._cached_obj[this_id] = new_idx_cache
         except IOError as err:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn, getName(err), str(err)))
