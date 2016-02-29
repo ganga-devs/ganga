@@ -264,7 +264,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
                     num = rand.randint(0, 1000)
                     o.a = num
                     time.sleep(rand.uniform(0, 1E-6))
-                    self.assertEqual(o.a, num)
+                    assert o.a == num
 
         def write(thread_number):
             for _ in range(100):
@@ -293,9 +293,9 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
                     child_num = rand.randint(0, 1000)
                     o.b.a = child_num
                     time.sleep(rand.uniform(0, 1E-6))
-                    self.assertEqual(o.a, num)
-                    self.assertEqual(o.b.a, child_num)
-                    self.assertIs(o.b, child)
+                    assert o.a == num
+                    assert o.b.a == child_num
+                    assert o.b is child
 
         def write(thread_number):
             for _ in range(100):
@@ -321,26 +321,26 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
                     num = rand.randint(0, 1000)
                     o.a = num
                     time.sleep(rand.uniform(0, 1E-6))
-                    self.assertEqual(o.a, num)
+                    assert o.a == num
 
                 with o.lock:
                     o.b = rand.choice([ThreadedTestGangaObject, SimpleGangaObject])()
                     child_num = rand.randint(0, 1000)
                     o.b.a = child_num
                     time.sleep(rand.uniform(0, 1E-6))
-                    self.assertEqual(o.b.a, child_num)
+                    assert o.b.a == child_num
 
                     if isinstance(o.b, ThreadedTestGangaObject):
                         o.b.b.a = rand.choice([ThreadedTestGangaObject, SimpleGangaObject])()
                         num = rand.randint(0, 1000)
                         o.b.b.a = num
                         time.sleep(rand.uniform(0, 1E-6))
-                        self.assertEqual(o.b.b.a, num)
+                        assert o.b.b.a == num
 
                 with o.lock:
                     num = rand.randint(0, 1000)
                     o.b.a = num
                     time.sleep(rand.uniform(0, 1E-6))
-                    self.assertEqual(o.b.a, num)
+                    assert o.b.a == num
 
         self.run_threads([change], num_threads=50)
