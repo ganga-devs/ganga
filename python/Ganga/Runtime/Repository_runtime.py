@@ -133,6 +133,8 @@ def bootstrap():
             registry.type = config["repositorytype"]
         if not hasattr(registry, 'location'):
             registry.location = getLocalRoot()
+        logger.debug("Registry: %s" % registry.name)
+        logger.debug("Loc: %s" % registry.location)
         registry.startup()
         logger.debug("started " + registry.info(full=False))
         if registry.name == "prep":
@@ -163,6 +165,9 @@ def shutdown():
     # shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
     # method to perform actions on the box and/or job registries.
     logger.debug(started_registries)
+
+    all_registries = getRegistries()
+
     try:
         if 'prep' in started_registries:
             registry = getRegistry('prep')
@@ -186,6 +191,20 @@ def shutdown():
             logger.error("Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
             logger.error("%s" % str(x))
             logger.error("Trying to Shutdown cleanly regardless")
+
+
+    for registry in all_registries:
+
+        my_reg = [registry]
+        if hasattr(registry, 'metadata'):
+            if registry.metadata:
+                my_reg.append(registry.metadata)
+
+        assigned_attrs = ['location', 'type']
+        for this_reg in my_reg:
+            for attr in assigned_attrs:
+                if hasattr(registry, attr):
+                    delattr(registry, attr)
 
     from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
     removeGlobalSessionFileHandlers()
