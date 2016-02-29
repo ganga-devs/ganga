@@ -5,7 +5,7 @@ from Ganga.GPIDev.Lib.File import LocalFile
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
 
 
-class TestGangaObject(GangaObject):
+class SampleGangaObject(GangaObject):
     _schema = Schema(Version(1, 0), {
         'a': SimpleItem(42, typelist=['int']),
         # 'b' is skipped on purpose
@@ -46,7 +46,7 @@ class TestProxy(unittest.TestCase):
         Create an instance of the GangaObject subclass and save the proxy
         version of it
         """
-        new_object = TestGangaObject()
+        new_object = SampleGangaObject()
         self.p = Ganga.GPIDev.Base.Proxy.addProxy(new_object)
 
     def test_dict_attributes(self):
@@ -55,16 +55,16 @@ class TestProxy(unittest.TestCase):
         self.assertFalse(hasattr(NonProxiedGangaObject, '_impl'))
 
         # Proxied GangaObject class
-        self.assertTrue(hasattr(TestGangaObject, '_proxyClass'))
-        self.assertFalse(hasattr(TestGangaObject, '_impl'))
+        self.assertTrue(hasattr(SampleGangaObject, '_proxyClass'))
+        self.assertFalse(hasattr(SampleGangaObject, '_impl'))
 
         # Non-proxied GangaObject instance
-        non_proxied_instance = TestGangaObject()
+        non_proxied_instance = SampleGangaObject()
         self.assertTrue(hasattr(non_proxied_instance, '_proxyClass'))
         self.assertFalse(hasattr(non_proxied_instance, '_impl'))
 
         # Proxy class
-        proxy_class = TestGangaObject._proxyClass
+        proxy_class = SampleGangaObject._proxyClass
         self.assertFalse(hasattr(proxy_class, '_proxyClass'))
         self.assertTrue(hasattr(proxy_class, '_impl'))
 
@@ -128,10 +128,10 @@ class TestProxy(unittest.TestCase):
         stripped = Ganga.GPIDev.Base.Proxy.stripProxy(self.p)
         # TODO In Python >= 2.7 use
         #  self.assertIsInstance(stripped, TestGangaObject)
-        self.assertEqual(type(stripped), TestGangaObject)
+        self.assertEqual(type(stripped), SampleGangaObject)
 
     def test_isType(self):
-        self.assertTrue(Ganga.GPIDev.Base.Proxy.isType(self.p, TestGangaObject))
+        self.assertTrue(Ganga.GPIDev.Base.Proxy.isType(self.p, SampleGangaObject))
 
     def test_isProxy(self):
         self.assertTrue(Ganga.GPIDev.Base.Proxy.isProxy(self.p))
