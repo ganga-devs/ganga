@@ -198,6 +198,8 @@ def shutdown():
     removeGlobalSessionFileHandlers()
     removeGlobalSessionFiles()
 
+    removeRegistries()
+
 def flush_all():
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
@@ -212,4 +214,46 @@ def flush_all():
         except Exception as err:
             logger.debug("Failed to flush: %s" % str(thisName))
             logger.debug("Err: %s" % str(err))
+
+
+def startUpRegistries():
+    from Ganga.Runtime.GPIexport import exportToGPI
+    # import default runtime modules
+
+    # bootstrap user-defined runtime modules and enable transient named
+    # template registries
+
+    # bootstrap runtime modules
+    from Ganga.GPIDev.Lib.JobTree import TreeError
+
+    for n, k, d in bootstrap():
+        # make all repository proxies visible in GPI
+        exportToGPI(n, k, 'Objects', d)
+
+    # JobTree
+    from Ganga.Core.GangaRepository import getRegistry
+    jobtree = getRegistry("jobs").getJobTree()
+    exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
+    exportToGPI('TreeError', TreeError, 'Exceptions')
+
+    # ShareRef
+    shareref = getRegistry("prep").getShareRef()
+    exportToGPI('shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
+
+def removeRegistries():
+    ## Remove lingering Objects from the GPI
+
+    ## First start with repositories
+
+    import Ganga.GPI
+
+    from Ganga.Runtime import Repository_runtime
+
+    for name in Repository_runtime.bootstrap_reg_names():
+        delattr(Ganga.GPI, name)
+
+    ## Now remove the JobTree
+    delattr(Ganga.GPI, 'jobtree')
+    ## Now remove the sharedir
+    delattr(Ganga.GPI, 'shareref')
 
