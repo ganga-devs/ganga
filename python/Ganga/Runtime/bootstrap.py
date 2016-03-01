@@ -918,9 +918,6 @@ under certain conditions; type license() for details.
         exportToGPI('ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
         exportToGPI('JobError', JobError, 'Exceptions')
 
-        import Ganga.GPIDev.MonitoringServices
-        # This has a side-effect on import of adding a config section 'SIDE-EFFECTS'
-
         def license():
             'Print the full license (GPL)'
             with open(os.path.join(_gangaPythonPath, '..', 'LICENSE_GPL')) as printable:

@@ -194,10 +194,6 @@ exportToPublicInterface('ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions'
 exportToPublicInterface('JobError', JobError, 'Exceptions')
 
 # ------------------------------------------------------------------------------------
-# Import Monitoring Services
-import Ganga.GPIDev.MonitoringServices
-
-# ------------------------------------------------------------------------------------
 # only the available credentials are exported
 credential = getCredential(name='GridProxy', create=False)
 if credential:
