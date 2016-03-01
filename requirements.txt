@@ -1,0 +1,7 @@
+# This first line will grab the requirements from setup.py
+-e .
+
+pytest
+pytest-cov
+unittest2
+coverage

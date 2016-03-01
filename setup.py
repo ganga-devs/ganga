@@ -6,15 +6,17 @@ import os
 import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-ganga_python_dir = os.path.join(file_path, 'python')
-sys.path.insert(0, ganga_python_dir)
-from Ganga import _gangaVersion
+
+
+def version():
+    ganga_python_dir = os.path.join(file_path, 'python')
+    sys.path.insert(0, ganga_python_dir)
+    from Ganga import _gangaVersion
+    return _gangaVersion
+
 
 def readme():
-    import os.path
-    filename = 'README.rst'
-    if not os.path.exists(filename):
-        filename = os.path.abspath(os.path.join(file_path, filename))
+    filename = os.path.abspath(os.path.join(file_path, 'README.rst'))
     with open(filename) as f:
         return f.read()
 
@@ -37,43 +39,44 @@ class RunTestsCommand(Command):
         self.xunit = False
 
     def finalize_options(self):
-        if not self.type in self.all_types:
+        if self.type not in self.all_types:
             raise Exception('Test type must be [{0}]'.format(', '.join(self.all_types)))
 
     @staticmethod
-    def _getTestEnv():
+    def _get_test_env():
+        ganga_python_dir = os.path.join(file_path, 'python')
 
         test_env = os.environ.copy()
-        ## Make sure that the PYTHONPATH is correct for the tests to pick up 'import Ganga'
-        test_sys_path = ''
-        for _dir in sys.path:
-            test_sys_path = test_sys_path + _dir + ':'
-        test_env['PYTHONPATH'] = test_sys_path
+        path = ':'.join(s for s in [ganga_python_dir, test_env.get('PYTHONPATH', None)] if s)
+        test_env['PYTHONPATH'] = path
 
         return test_env
 
     def run(self):
 
-        cmd = ['nosetests']
+        cmd = ['py.test']
 
         if self.type in ['unit', 'all']:
-            cmd.append('Ganga/new_tests/*.py')
+            cmd.append('python/Ganga/new_tests/Unit')
+            cmd.append('python/Ganga/Core')
+            cmd.append('python/Ganga/Runtime')
+            cmd.append('python/Ganga/Utility')
         if self.type in ['integration', 'all']:
-            cmd.append('Ganga/new_tests/GPI --testmatch="(?:\\b|_)([Tt]est|Savannah|JIRA)"')
+            cmd.append('python/Ganga/new_tests/GPI')
 
         if self.coverage:
-            cmd.append('--with-coverage --cover-erase --cover-xml --cover-package=.')
+            cmd.append('--cov-report xml --cov .')
         if self.xunit:
-            cmd.append('--with-xunit')
+            cmd.append('--junitxml tests.xml')
 
-        subprocess.check_call(' '.join(cmd), cwd=ganga_python_dir, shell=True, env=self._getTestEnv())
+        subprocess.check_call(' '.join(cmd), cwd=file_path, shell=True, env=self._get_test_env())
 
 
 setup(name='ganga',
       description='Job management tool',
       long_description=readme(),
       url='https://github.com/ganga-devs/ganga',
-      version=_gangaVersion,
+      version=version(),
       author='Ganga Developers',
       author_email='project-ganga-developers@cern.ch',
       license='GPL v2',
