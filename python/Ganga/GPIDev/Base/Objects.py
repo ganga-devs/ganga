@@ -642,7 +642,7 @@ class Descriptor(object):
                     else:
                         newListObj = GangaList()
 
-                    self.__createNewList(newListObj, val, cloneVal)
+                    Descriptor.__createNewList(newListObj, val, cloneVal)
                     #for elem in val:
                     #    newListObj.append(cloneVal(elem))
                     new_val = newListObj
@@ -676,36 +676,7 @@ class Descriptor(object):
             return
 
         ## This makes it stick to 1 thread, useful for debugging problems
-        #addToList(input_elements, final_list, action)
-        #return
-
-        try:
-            from Ganga.GPI import queues
-            linearize = False
-        except ImportError:
-            linearize = True
-
-        try:
-            import threading
-        except ImportError:
-            linearize = True
-
-        if linearize is True or len(input_elements) < 20 or\
-            not isinstance(threading.current_thread(), threading._MainThread):
-            addToList(input_elements, final_list, action)
-            return
-
-        import math
-        tenth = math.ceil(float(len(input_elements))/10.)
-
-        for i in range(10):
-            these_elements = input_elements[int(i*tenth):int((i+1)*tenth)]
-            queues._monitoring_threadpool.add_function(addToList, (these_elements, final_list, action))
-
-        while(len(final_list) != len(input_elements)):
-            import time
-            time.sleep(0.5)
-
+        addToList(input_elements, final_list, action)
         return
 
 
@@ -1050,49 +1021,6 @@ class GangaObject(Node):
             return v._on_attribute__set__(self, name)
         return v
 
-    @staticmethod
-    def __createNewList(final_list, input_elements, action=None):
-
-        def addToList(_input_elements, _final_list, action=None):
-            if action is not None:
-                for element in _input_elements:
-                    _final_list.append(action(element))
-            else:
-                for element in _input_elements:
-                    _final_list.append(element)
-            return
-        ## This makes it stick to 1 thread, useful for debugging problems
-        #addToList(input_elements, final_list, action)
-        #return
-
-        try:
-            from Ganga.GPI import queues
-            linearize = False
-        except ImportError:
-            linearize = True
-
-        try:
-            import threading
-        except ImportError:
-            linearize = True
-
-        if linearize is True or len(input_elements) < 20 or\
-            not isinstance(threading.current_thread(), threading._MainThread):
-            addToList(input_elements, final_list, action)
-            return
-
-        import math
-        tenth = math.ceil(float(len(input_elements))/10.)
-
-        for i in range(10):
-            these_elements = input_elements[int(i*tenth):int((i+1)*tenth)]
-            queues._monitoring_threadpool.add_function(addToList, (these_elements, final_list, action))
-
-        while(len(final_list) != len(input_elements)):
-            import time
-            time.sleep(0.5)
-
-        return
 
 # define the default component object filter:
 # obj.x = "Y"   <=> obj.x = Y()
