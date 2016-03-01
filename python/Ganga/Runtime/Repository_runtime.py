@@ -15,16 +15,19 @@ logger = getLogger()
 
 
 def requiresAfsToken():
+    # Were we executed from within an AFS folder
     return fullpath(getLocalRoot(), True).find('/afs') == 0
 
 
 def getLocalRoot():
+    # Get the local top level directory for the Repo
     if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
         return os.path.join(expandfilename(config['gangadir'], True), 'repository', config['user'], config['repositorytype'])
     else:
         return ''
 
 def getLocalWorkspace():
+    # Get the local top level dirtectory for the Workspace
     if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
         return os.path.join(expandfilename(config['gangadir'], True), 'workspace', config['user'], config['repositorytype'])
     else:
@@ -37,7 +40,7 @@ partition_warning = 95
 partition_critical = 99
 
 def checkDiskQuota():
-
+    # Throw an error atthe user if their AFS area is (extremely close to) full to avoid repo corruption
     import subprocess
 
     repo_partition = getLocalRoot()
@@ -90,6 +93,8 @@ def checkDiskQuota():
     return
 
 def bootstrap_getreg():
+    # Get the list of registries sorted in the bootstrap way
+    
     # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
     # or even named templated registries as the _auto__init from job will require the prep registry to
     # already be ready. This showed up when adding the named templates.
@@ -101,10 +106,12 @@ def bootstrap_getreg():
     return [registry for registry in sorted(getRegistries(), prep_filter)]
 
 def bootstrap_reg_names():
+    # Get the list of registry names
     all_reg = bootstrap_getreg()
     return [reg.name for reg in all_reg]
 
 def bootstrap():
+    # Bootstrap for startup and setting of parameters for the Registries
     retval = []
 
     try:
@@ -137,6 +144,7 @@ def bootstrap():
 
 
 def updateLocksNow():
+    # Update all of the file locks for the registries
 
     logger.debug("Updating timestamp of Lock files")
     for registry in getRegistries():
@@ -145,6 +153,7 @@ def updateLocksNow():
 
 
 def shutdown():
+    # Shutdown method for all repgistries in order
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     logger.info('Registry Shutdown')
@@ -201,6 +210,7 @@ def shutdown():
     removeRegistries()
 
 def flush_all():
+    # Flush all registries in their current state with all dirty knowledge going to disk
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     logger.debug("Flushing All repositories")
@@ -217,6 +227,7 @@ def flush_all():
 
 
 def startUpRegistries():
+    # Startup the registries and export them to the GPI, also add jobtree and shareref
     from Ganga.Runtime.GPIexport import exportToGPI
     # import default runtime modules
 
@@ -241,7 +252,7 @@ def startUpRegistries():
     exportToGPI('shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
 
 def removeRegistries():
-    ## Remove lingering Objects from the GPI
+    ## Remove lingering Objects from the GPI and fully cleanup after the startup
 
     ## First start with repositories
 
