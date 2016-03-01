@@ -75,6 +75,7 @@ def checkHeartBeat():
 
             log.warning("Thread: %s Has not updated the heartbeat in %ss!! It's possibly dead" %(thread_name, str(dead_time)))
             log.warning("Thread is attempting to execute: %s" % this_thread._running_cmd)
+            log.warning("With arguments: (%s)" % str(this_thread._running_args))
 
             ## Add at least 5sec here to avoid spamming the user non-stop that a monitoring thread has locked up almost entirely
             ## You'll get a message at most once per 5sec or less if the Monitoring is busy/asleep
@@ -86,6 +87,7 @@ class MonitoringWorkerThread(GangaThread):
         GangaThread.__init__(self, name)
         self._currently_running_command = False
         self._running_cmd = None
+        self._running_args = None
         self._thread_name = name
 
     def run(self):
@@ -124,22 +126,31 @@ class MonitoringWorkerThread(GangaThread):
             try:
                 try:
                     self._running_cmd = action.function.__name__
+                    self._running_args = ""
+                    for arg in action.args:
+                        self._running_args.append("%s, " % arg)
+                    for k, v in action.kwargs:
+                        self._running_args.append("%s=%s, " % (str(k), str(v)))
                 except:
                     self._running_cmd = "unknown"
+                    self._running_args = ""
                 result = action.function(*action.args, **action.kwargs)
             except Exception as err:
                 log.debug("_execUpdateAction: %s" % str(err))
                 action.callback_Failure()
+            #finally:
+            #    pass
             else:
                 if result in action.success:
                     action.callback_Success()
                 else:
                     action.callback_Failure()
 
+            self._running_args = None
+            self._running_cmd = None
             self._currently_running_command = False
 
 # Create the thread pool
-
 
 def _makeThreadPool(threadPoolSize=THREAD_POOL_SIZE, daemonic=True):
     global ThreadPool, global_start_time, heartbeat_times
