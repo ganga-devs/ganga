@@ -1078,11 +1078,6 @@ under certain conditions; type license() for details.
         exportToGPI('shareref', shareref, 'Objects',
                     'Mechanism for tracking use of shared directory resources')
 
-        logger.debug("Bootstrap Workspace")
-        # bootstrap the workspace
-        from Ganga.Runtime import Workspace_runtime
-        Workspace_runtime.bootstrap()
-
         # export full_print
         from Ganga.GPIDev.Base.VPrinter import full_print
         exportToGPI('full_print', full_print, 'Functions')

@@ -13,7 +13,6 @@ from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 from Ganga.Runtime import Repository_runtime
 import Ganga.Core
 from Ganga.GPIDev.Lib.JobTree import TreeError
-from Ganga.Runtime import Workspace_runtime
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.VPrinter import full_print
 from Ganga.GPIDev.Base.Proxy import implRef
@@ -242,10 +241,6 @@ exportToPublicInterface('TreeError', TreeError, 'Exceptions')
 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
 exportToPublicInterface('shareref', shareref, 'Objects',
             'Mechanism for tracking use of shared directory resources')
-
-# ------------------------------------------------------------------------------------
-# bootstrap the workspace
-Workspace_runtime.bootstrap()
 
 # ------------------------------------------------------------------------------------
 # export full_print
