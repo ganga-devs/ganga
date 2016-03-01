@@ -3,7 +3,7 @@ import shutil
 import time
 import copy
 import threading
-from Ganga.Core.GangaRepository.Registry import Registry
+from Ganga.Core.GangaRepository.Registry import Registry, synchronised
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName
@@ -23,6 +23,7 @@ class PrepRegistry(Registry):
         self.releaseThread.start()
 
 
+    @synchronised
     def startup(self):
         self._needs_metadata = True
         super(PrepRegistry, self).startup()
@@ -37,6 +38,7 @@ class PrepRegistry(Registry):
     def getProxy(self):
         pass
 
+    @synchronised
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         self._hasStarted = True

@@ -9,7 +9,7 @@ from __future__ import absolute_import
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 
 from Ganga.Core.exceptions import GangaException
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, synchronised
 
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, addProxy
 
@@ -23,8 +23,9 @@ from .RegistrySlice import RegistrySlice
 
 from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 
-# display default values for job list
 from .RegistrySlice import config
+
+# display default values for job list
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -34,11 +35,13 @@ class JobRegistry(Registry):
     def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
         super(JobRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
 
+    @synchronised
     def getProxy(self):
         this_slice = JobRegistrySlice(self.name)
         this_slice.objects = self
         return JobRegistrySliceProxy(this_slice)
 
+    @synchronised
     def getIndexCache(self, obj):
 
         cached_values = ['status', 'id', 'name']
@@ -67,6 +70,7 @@ class JobRegistry(Registry):
 
         return cache
 
+    @synchronised
     def startup(self):
         self._needs_metadata = True
         super(JobRegistry, self).startup()
@@ -80,6 +84,7 @@ class JobRegistry(Registry):
     def getJobTree(self):
         return self.jobtree
 
+    @synchronised
     def _remove(self, obj, auto_removed=0):
         super(JobRegistry, self)._remove(obj, auto_removed)
         try:
@@ -201,7 +206,7 @@ class JobRegistrySlice(RegistrySlice):
 
     def force_status(self, status, keep_going, force):
         self.do_collective_operation(
-            keep_going, 'force_status', status, force=force)
+                keep_going, 'force_status', status, force=force)
 
     def remove(self, keep_going, force):
         self.do_collective_operation(keep_going, 'remove', force=force)
