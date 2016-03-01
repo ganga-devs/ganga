@@ -126,9 +126,11 @@ def runtimeEvalString(this_obj, attr_name, val):
 def raw_eval(val):
     try:
         import Ganga.GPI
-        new_val = eval(val, Ganga.GPI.__dict__)
-        if isclass(new_val):
-            new_val = new_val()
+        temp_val = eval(val, Ganga.GPI.__dict__)
+        if isclass(temp_val):
+            new_val = temp_val()
+        else:
+            new_val = temp_val
     except Exception as err:
         logger.debug("Proxy Cannot evaluate v=: '%s'" % str(val))
         logger.debug("Using raw value instead")
@@ -566,15 +568,24 @@ class ProxyDataDescriptor(object):
                 ## Does not modify val
                 new_val = self._stripAttribute(obj, val, attr_name)
 
+        if new_val is None and val is not None:
+            new_val = val
+
+        final_val = None
         # apply attribute filter to component items
         if item.isA(ComponentItem):
             ## Does not modify val
-            new_val = self._stripAttribute(obj, val, attr_name)
+            final_val = self._stripAttribute(obj, new_val, attr_name)
+        else:
+            final_val = new_val
+
+        if final_val is None and val is not None:
+            final_val = val
 
         ## Does not modify val?
-        self._check_type(obj, new_val)
+        self._check_type(obj, final_val)
 
-        GangaObject.__setattr__(raw_obj, attr_name, new_val)
+        GangaObject.__setattr__(raw_obj, attr_name, final_val)
 
 
 class ProxyMethodDescriptor(object):
