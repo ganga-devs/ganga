@@ -266,7 +266,7 @@ class Registry(object):
         return this_id in self._objects
 
     def updateLocksNow(self):
-        loger.debug("updateLocksNow")
+        logger.debug("updateLocksNow")
         self.repository.updateLocksNow()
 
     def trackandRelease(self):
