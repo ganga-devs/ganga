@@ -15,16 +15,19 @@ logger = getLogger()
 
 
 def requiresAfsToken():
+    # Were we executed from within an AFS folder
     return fullpath(getLocalRoot(), True).find('/afs') == 0
 
 
 def getLocalRoot():
+    # Get the local top level directory for the Repo
     if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
         return os.path.join(expandfilename(config['gangadir'], True), 'repository', config['user'], config['repositorytype'])
     else:
         return ''
 
 def getLocalWorkspace():
+    # Get the local top level dirtectory for the Workspace
     if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
         return os.path.join(expandfilename(config['gangadir'], True), 'workspace', config['user'], config['repositorytype'])
     else:
@@ -37,7 +40,7 @@ partition_warning = 95
 partition_critical = 99
 
 def checkDiskQuota():
-
+    # Throw an error atthe user if their AFS area is (extremely close to) full to avoid repo corruption
     import subprocess
 
     repo_partition = getLocalRoot()
@@ -90,6 +93,8 @@ def checkDiskQuota():
     return
 
 def bootstrap_getreg():
+    # Get the list of registries sorted in the bootstrap way
+    
     # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
     # or even named templated registries as the _auto__init from job will require the prep registry to
     # already be ready. This showed up when adding the named templates.
@@ -101,10 +106,12 @@ def bootstrap_getreg():
     return [registry for registry in sorted(getRegistries(), prep_filter)]
 
 def bootstrap_reg_names():
+    # Get the list of registry names
     all_reg = bootstrap_getreg()
     return [reg.name for reg in all_reg]
 
 def bootstrap():
+    # Bootstrap for startup and setting of parameters for the Registries
     retval = []
 
     try:
@@ -137,6 +144,7 @@ def bootstrap():
 
 
 def updateLocksNow():
+    # Update all of the file locks for the registries
 
     logger.debug("Updating timestamp of Lock files")
     for registry in getRegistries():
@@ -145,6 +153,7 @@ def updateLocksNow():
 
 
 def shutdown():
+    # Shutdown method for all repgistries in order
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     logger.info('Registry Shutdown')
@@ -198,7 +207,10 @@ def shutdown():
     removeGlobalSessionFileHandlers()
     removeGlobalSessionFiles()
 
+    removeRegistries()
+
 def flush_all():
+    # Flush all registries in their current state with all dirty knowledge going to disk
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     logger.debug("Flushing All repositories")
@@ -212,4 +224,47 @@ def flush_all():
         except Exception as err:
             logger.debug("Failed to flush: %s" % str(thisName))
             logger.debug("Err: %s" % str(err))
+
+
+def startUpRegistries():
+    # Startup the registries and export them to the GPI, also add jobtree and shareref
+    from Ganga.Runtime.GPIexport import exportToGPI
+    # import default runtime modules
+
+    # bootstrap user-defined runtime modules and enable transient named
+    # template registries
+
+    # bootstrap runtime modules
+    from Ganga.GPIDev.Lib.JobTree import TreeError
+
+    for n, k, d in bootstrap():
+        # make all repository proxies visible in GPI
+        exportToGPI(n, k, 'Objects', d)
+
+    # JobTree
+    from Ganga.Core.GangaRepository import getRegistry
+    jobtree = getRegistry("jobs").getJobTree()
+    exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
+    exportToGPI('TreeError', TreeError, 'Exceptions')
+
+    # ShareRef
+    shareref = getRegistry("prep").getShareRef()
+    exportToGPI('shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
+
+def removeRegistries():
+    ## Remove lingering Objects from the GPI and fully cleanup after the startup
+
+    ## First start with repositories
+
+    import Ganga.GPI
+
+    from Ganga.Runtime import Repository_runtime
+
+    for name in Repository_runtime.bootstrap_reg_names():
+        delattr(Ganga.GPI, name)
+
+    ## Now remove the JobTree
+    delattr(Ganga.GPI, 'jobtree')
+    ## Now remove the sharedir
+    delattr(Ganga.GPI, 'shareref')
 

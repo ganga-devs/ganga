@@ -1,16 +1,15 @@
 from __future__ import print_function
+
+import sys
+import shutil
+import os.path
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
 
 
-def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
-
-    import sys
-    import os.path
-
-
+def start_ganga(gangadir_for_test, extra_opts=[]):
     file_path = os.path.dirname(os.path.realpath(__file__))
     ganga_python_dir = os.path.join(file_path, '..', '..', '..')
     ganga_python_dir = os.path.realpath(ganga_python_dir)
@@ -33,7 +32,6 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
     logger.info("Starting ganga")
 
     logger.info("Parsing Command Line options")
-    import Ganga.Runtime
     this_argv = [
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
     ]
@@ -76,22 +74,8 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
         logger.info("Initializing")
         Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
     else:
-        from Ganga.Runtime.GPIexport import exportToGPI
-
-        from Ganga.Runtime import Repository_runtime
-        # boostrap the repositories and connect to them
-        for n, k, d in Repository_runtime.bootstrap():
-            # make all repository proxies visible in GPI
-            exportToGPI(n, k, 'Objects', d)
-
-        # JobTree
-        from Ganga.Core.GangaRepository import getRegistry
-        jobtree = getRegistry("jobs").getJobTree()
-        exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
-
-        # ShareRef
-        shareref = getRegistry("prep").getShareRef()
-        exportToGPI('shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
+        from Ganga.Runtime.Repository_runtime import startUpRegistries
+        startUpRegistries()
 
         # The queues are shut down by the atexit handlers so we need to start them here
         from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
@@ -123,6 +107,34 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
 
     logger.info("Passing to Unittest")
 
+def emptyRepositories():
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
+    # empty repository so we start again at job 0 when we restart
+    logger.info("Clearing the Job and Template repositories")
+
+    from Ganga.GPI import jobs, templates, tasks
+    for j in jobs:
+        try:
+            j.remove()
+        except:
+            pass
+    for t in templates:
+        try:
+            t.remove()
+        except:
+            pass
+    for t in tasks:
+        try:
+            t.remove(remove_jobs=True)
+        except:
+            pass
+    if hasattr(jobs, 'clean'):
+        jobs.clean(confirm=True, force=True)
+    if hasattr(templates, 'clean'):
+        templates.clean(confirm=True, force=True)
+    if hasattr(tasks, 'clean'):
+        tasks.clean(confirm=True, force=True)
 
 def stop_ganga():
 
@@ -137,28 +149,10 @@ def stop_ganga():
         whole_cleanup = getConfig('TestingFramework')['AutoCleanup']
     else:
         whole_cleanup = True
-
     logger.info("AutoCleanup: %s" % whole_cleanup)
 
     if whole_cleanup is True:
-        # empty repository so we start again at job 0 when we restart
-        logger.info("Clearing the Job and Template repositories")
-
-        from Ganga.GPI import jobs, templates
-        for j in jobs:
-            try:
-                j.remove()
-            except:
-                pass
-        for t in templates:
-            try:
-                t.remove()
-            except:
-                pass
-        if hasattr(jobs, 'clean'):
-            jobs.clean(confirm=True, force=True)
-        if hasattr(templates, 'clean'):
-            templates.clean(confirm=True, force=True)
+        emptyRepositories()
 
     logger.info("Shutting Down Internal Services")
 
@@ -184,59 +178,31 @@ def stop_ganga():
     # Finished
     logger.info("Test Finished")
 
-    ## Remove lingering Objects from the GPI
-
-    ## First start with repositories
-
-    import Ganga.GPI
-
-    from Ganga.Runtime import Repository_runtime
-
-    for name in Repository_runtime.bootstrap_reg_names():
-        delattr(Ganga.GPI, name)
-
-    ## Now remove the JobTree
-    delattr(Ganga.GPI, 'jobtree')
-    ## Now remove the sharedir
-    delattr(Ganga.GPI, 'shareref')
-
-
-    ## gridProxy and afsToken are assumed to be safe to persist beteen instances
-
 class GangaUnitTest(unittest.TestCase):
 
-    wipe_repo = None
-    gangadir = None
+    @classmethod
+    def gangadir(cls):
+        """
+        Return the directory that this test should store its registry and repository in
+        """
+        return os.path.join(os.path.expanduser('~'), 'gangadir_testing', cls.__name__)
 
-    def setUp(self, gangadir=None, wipe_repo=None, extra_opts=[]):
+    def setUp(self, extra_opts=[]):
         unittest.TestCase.setUp(self)
         # Start ganga and internal services
         # This is called before each unittest
-        if gangadir is None:
-            import os
-            gangadir = os.path.join('$HOME/gangadir_testing', self.__class__.__name__)
-            gangadir = os.path.expanduser(os.path.expandvars(gangadir))
-            if not os.path.isdir(gangadir):
-                os.makedirs(gangadir)
-        if wipe_repo is None:
-            self.wipe_repo=True
-        else:
-            self.wipe_repo=wipe_repo
-        self.gangadir = gangadir
-        self.__class__.gangadir = self.gangadir
-        self.__class__.wipe_repo = self.wipe_repo
+
+        gangadir = self.gangadir()
+        if not os.path.isdir(gangadir):
+            os.makedirs(gangadir)
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         # Stop ganga and mimick an exit to shutdown all internal processes
         stop_ganga()
-        import sys
         sys.stdout.flush()
 
     @classmethod
     def tearDownClass(cls):
-        if cls.wipe_repo:
-            import shutil
-            shutil.rmtree(cls.gangadir, ignore_errors=True)
-
+        shutil.rmtree(cls.gangadir(), ignore_errors=True)
