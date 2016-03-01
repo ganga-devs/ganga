@@ -107,6 +107,32 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
 
     logger.info("Passing to Unittest")
 
+def emptyReposiories():
+    # empty repository so we start again at job 0 when we restart
+    logger.info("Clearing the Job and Template repositories")
+
+    from Ganga.GPI import jobs, templates, tasks
+    for j in jobs:
+        try:
+            j.remove()
+        except:
+            pass
+    for t in templates:
+        try:
+            t.remove()
+        except:
+            pass
+    for t in tasks:
+        try:
+            t.remove(remove_jobs=True)
+        except:
+            pass
+    if hasattr(jobs, 'clean'):
+        jobs.clean(confirm=True, force=True)
+    if hasattr(templates, 'clean'):
+        templates.clean(confirm=True, force=True)
+    if hasattr(tasks, 'clean'):
+        tasks.clean(confirm=True, force=True)
 
 def stop_ganga():
 
@@ -121,28 +147,10 @@ def stop_ganga():
         whole_cleanup = getConfig('TestingFramework')['AutoCleanup']
     else:
         whole_cleanup = True
-
     logger.info("AutoCleanup: %s" % whole_cleanup)
 
     if whole_cleanup is True:
-        # empty repository so we start again at job 0 when we restart
-        logger.info("Clearing the Job and Template repositories")
-
-        from Ganga.GPI import jobs, templates
-        for j in jobs:
-            try:
-                j.remove()
-            except:
-                pass
-        for t in templates:
-            try:
-                t.remove()
-            except:
-                pass
-        if hasattr(jobs, 'clean'):
-            jobs.clean(confirm=True, force=True)
-        if hasattr(templates, 'clean'):
-            templates.clean(confirm=True, force=True)
+        emptyRepositories()
 
     logger.info("Shutting Down Internal Services")
 
@@ -167,7 +175,6 @@ def stop_ganga():
 
     # Finished
     logger.info("Test Finished")
-
 
 class GangaUnitTest(unittest.TestCase):
 
@@ -197,4 +204,3 @@ class GangaUnitTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.gangadir(), ignore_errors=True)
-
