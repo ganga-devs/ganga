@@ -32,7 +32,6 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
     logger.info("Starting ganga")
 
     logger.info("Parsing Command Line options")
-    import Ganga.Runtime
     this_argv = [
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
     ]
