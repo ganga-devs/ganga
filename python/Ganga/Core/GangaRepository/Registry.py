@@ -925,6 +925,8 @@ class Registry(object):
 
             self._loaded_ids = []
 
+            self.metadata = None
+
         finally:
             self._hasStarted = False
 
