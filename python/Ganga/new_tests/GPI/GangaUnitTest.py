@@ -107,7 +107,7 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
 
     logger.info("Passing to Unittest")
 
-def emptyReposiories():
+def emptyRepositories():
     
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
