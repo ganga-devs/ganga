@@ -14,7 +14,7 @@ def startUpQueues():
         exportToGPI('queues', _global_queues, 'Objects')
 
         import atexit
-        atexit.register((-10., shutDownQueues))
+        atexit.register((100, shutDownQueues))
 
     else:
         logger.error("Cannot Start queues if they've already started")
@@ -28,5 +28,7 @@ def shutDownQueues():
     _global_queues._purge_all()
     del _global_queues
     _global_queues = None
+    import Ganga.GPI
+    delattr(Ganga.GPI, 'queues')
 
 
