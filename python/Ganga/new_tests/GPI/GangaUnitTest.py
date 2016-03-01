@@ -206,3 +206,4 @@ class GangaUnitTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.gangadir(), ignore_errors=True)
+
