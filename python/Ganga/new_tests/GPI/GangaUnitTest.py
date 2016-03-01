@@ -1,16 +1,15 @@
 from __future__ import print_function
+
+import sys
+import shutil
+import os.path
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
 
 
-def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
-
-    import sys
-    import os.path
-
-
+def start_ganga(gangadir_for_test, extra_opts=[]):
     file_path = os.path.dirname(os.path.realpath(__file__))
     ganga_python_dir = os.path.join(file_path, '..', '..', '..')
     ganga_python_dir = os.path.realpath(ganga_python_dir)
@@ -33,7 +32,6 @@ def start_ganga(gangadir_for_test='$HOME/gangadir_testing', extra_opts=[]):
     logger.info("Starting ganga")
 
     logger.info("Parsing Command Line options")
-    import Ganga.Runtime
     this_argv = [
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
     ]
@@ -173,38 +171,30 @@ def stop_ganga():
 
 class GangaUnitTest(unittest.TestCase):
 
-    wipe_repo = None
-    gangadir = None
+    @classmethod
+    def gangadir(cls):
+        """
+        Return the directory that this test should store its registry and repository in
+        """
+        return os.path.join(os.path.expanduser('~'), 'gangadir_testing', cls.__name__)
 
-    def setUp(self, gangadir=None, wipe_repo=None, extra_opts=[]):
+    def setUp(self, extra_opts=[]):
         unittest.TestCase.setUp(self)
         # Start ganga and internal services
         # This is called before each unittest
-        if gangadir is None:
-            import os
-            gangadir = os.path.join('$HOME/gangadir_testing', self.__class__.__name__)
-            gangadir = os.path.expanduser(os.path.expandvars(gangadir))
-            if not os.path.isdir(gangadir):
-                os.makedirs(gangadir)
-        if wipe_repo is None:
-            self.wipe_repo=True
-        else:
-            self.wipe_repo=wipe_repo
-        self.gangadir = gangadir
-        self.__class__.gangadir = self.gangadir
-        self.__class__.wipe_repo = self.wipe_repo
+
+        gangadir = self.gangadir()
+        if not os.path.isdir(gangadir):
+            os.makedirs(gangadir)
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         # Stop ganga and mimick an exit to shutdown all internal processes
         stop_ganga()
-        import sys
         sys.stdout.flush()
 
     @classmethod
     def tearDownClass(cls):
-        if cls.wipe_repo:
-            import shutil
-            shutil.rmtree(cls.gangadir, ignore_errors=True)
+        shutil.rmtree(cls.gangadir(), ignore_errors=True)
 
