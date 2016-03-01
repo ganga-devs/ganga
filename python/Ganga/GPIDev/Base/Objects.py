@@ -829,8 +829,8 @@ class GangaObject(Node):
         if hasattr(shared_dir, 'name'):
 
             from Ganga.Core.GangaRepository import getRegistry
-            from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+            from Ganga.GPIDev.Base.Proxy import addProxy
+            shareref = addProxy(getRegistry("prep").getShareRef())
 
             logger.debug("Increasing shareref")
             shareref.increase(shared_dir.name)

@@ -5,7 +5,7 @@ from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from Ganga.GPIDev.Base.Proxy import getName
 import Ganga.Utility.logging
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import addProxy
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -47,9 +47,9 @@ class GangaDataset(Dataset):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
         if isinstance(i, type(slice(0))):
             ds = GangaDataset(files=self.files[i])
-            return GPIProxyObjectFactory(ds)
+            return addProxy(ds)
         else:
-            return GPIProxyObjectFactory(self.files[i])
+            return addProxy(self.files[i])
 
     def isEmpty(self): return not bool(self.files)
 
@@ -93,7 +93,7 @@ class GangaDataset(Dataset):
         data = GangaDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
     def isSubset(self, other):
         '''Is every file in this data set in other?'''
@@ -111,7 +111,7 @@ class GangaDataset(Dataset):
         data = GangaDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
@@ -120,7 +120,7 @@ class GangaDataset(Dataset):
         data = GangaDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
@@ -128,6 +128,6 @@ class GangaDataset(Dataset):
         data = GangaDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

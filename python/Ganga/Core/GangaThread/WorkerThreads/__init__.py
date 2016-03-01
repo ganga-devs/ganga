@@ -1,7 +1,7 @@
 
 _global_queues = None
 
-def startUpQueues():
+def startUpQueues(extra_interface=None):
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     global _global_queues
@@ -11,7 +11,7 @@ def startUpQueues():
         from Ganga.Runtime.GPIexport import exportToGPI
         from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
         _global_queues = ThreadPoolQueueMonitor()
-        exportToGPI('queues', _global_queues, 'Objects')
+        exportToGPI('queues', _global_queues, 'Objects', extra_interface)
 
         import atexit
         atexit.register((100, shutDownQueues))

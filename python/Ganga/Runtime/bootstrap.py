@@ -603,12 +603,13 @@ under certain conditions; type license() for details.
 
         config = getConfig("Configuration")
 
+        ## This is now handled properly in the config system in __init__
         # detect default user (equal to unix user name)
-        import getpass
-        try:
-            config.options['user'].default_value = getpass.getuser()
-        except Exception as x:
-            raise Ganga.Utility.Config.ConfigError('Cannot get default user name' + str(x))
+        #import getpass
+        #try:
+        #    config.options['user'].default_value = getpass.getuser()
+        #except Exception as x:
+        #    raise Ganga.Utility.Config.ConfigError('Cannot get default user name' + str(x))
 
         # import configuration from spyware
         from Ganga.Runtime import spyware
@@ -640,10 +641,10 @@ under certain conditions; type license() for details.
 
             def _accept(fname, p=re.compile('.*\.ini$')):
                 return (os.path.isfile(fname) or os.path.islink(fname)) and p.match(fname)
+
             files = []
             if dir and os.path.exists(dir) and os.path.isdir(dir):
-                files = [os.path.join(dir, f) for f in os.listdir(dir) if
-                         _accept(os.path.join(dir, f))]
+                files = [os.path.join(dir, f) for f in os.listdir(dir) if _accept(os.path.join(dir, f))]
             return string.join(files, os.pathsep)
 
         def _versionsort(s, p=re.compile(r'^(\d+)-(\d+)-*(\d*)')):
@@ -669,6 +670,7 @@ under certain conditions; type license() for details.
                         select = os.path.join(this_dir, d)
                         config_files.append(_createpath(select))
                         break
+
         if os.path.exists(self.options.config_file):
             config_files.append(self.options.config_file)
         Ganga.Utility.Config.configure(config_files, system_vars)
@@ -926,7 +928,6 @@ under certain conditions; type license() for details.
         exportToGPI('license', license, 'Functions')
         # bootstrap credentials
 
-        from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
         from Ganga.GPIDev.Credentials import getCredential
 
         # only the available credentials are exported
@@ -936,11 +937,11 @@ under certain conditions; type license() for details.
         # cache
         credential = getCredential(name='GridProxy', create=False)
         if credential:
-            exportToGPI('gridProxy', GPIProxyObjectFactory(credential), 'Objects', 'Grid proxy management object.')
+            exportToGPI('gridProxy', credential, 'Objects', 'Grid proxy management object.')
 
-        credential = getCredential('AfsToken')
-        if credential:
-            exportToGPI('afsToken', GPIProxyObjectFactory(credential), 'Objects', 'AFS token management object.')
+        credential_a = getCredential('AfsToken')
+        if credential_a:
+            exportToGPI('afsToken', credential_a, 'Objects', 'AFS token management object.')
 
         # add built-in functions
 
@@ -1066,12 +1067,12 @@ under certain conditions; type license() for details.
 
         # JobTree
         from Ganga.Core.GangaRepository import getRegistry
-        jobtree = GPIProxyObjectFactory(getRegistry("jobs").getJobTree())
+        jobtree = getRegistry("jobs").getJobTree()
         exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
         exportToGPI('TreeError', TreeError, 'Exceptions')
 
         # ShareRef
-        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        shareref = getRegistry("prep").getShareRef()
         exportToGPI('shareref', shareref, 'Objects',
                     'Mechanism for tracking use of shared directory resources')
 

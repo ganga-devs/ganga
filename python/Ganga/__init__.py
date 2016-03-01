@@ -38,7 +38,7 @@ else:
     _gangaVersion = "SVN_TRUNK"
 
 # store a path to Ganga libraries
-_gangaPythonPath = os.path.dirname(os.path.dirname(__file__))
+_gangaPythonPath = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # grab the hostname
@@ -128,7 +128,14 @@ conf_config.addOption(
 conf_config.addOption('workspacetype', 'LocalFilesystem',
                  'Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
 
-conf_config.addOption('user', '',
+try:
+    import getpass
+    real_username = getpass.getuser()
+except Exception as err:
+    logger.error("Failed to get the default username!")
+    logger.error("Err: %s" % str(err))
+    real_username = ''
+conf_config.addOption('user', real_username,
     'User name. The same person may have different roles (user names) and still use the same gangadir. Unless explicitly set this option defaults to the real user name.')
 conf_config.addOption('resubmitOnlyFailedSubjobs', True,
                  'If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs. Note that the auto_resubmit mechanism will only ever resubmit FAILED subjobs.')

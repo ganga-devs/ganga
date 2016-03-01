@@ -120,18 +120,18 @@ class RegistrySlice(object):
         logger = getLogger()
 
         this_repr = repr.Repr()
-        from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+        from Ganga.GPIDev.Base.Proxy import addProxy
         attrs_str = ""
         ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
         ## Reuired to flatten the additional arguments into a flat string in attrs_str
         for a in attrs:
             from inspect import isclass
             if isclass(attrs[a]):
-                this_attr = GPIProxyObjectFactory(attrs[a]())
+                this_attr = addProxy(attrs[a]())
             else:
                 from Ganga.GPIDev.Base.Objects import GangaObject
                 if isType(attrs[a], GangaObject):
-                    this_attr = GPIProxyObjectFactory(attrs[a])
+                    this_attr = addProxy(attrs[a])
                 else:
                     if type(attrs[a]) is str:
                         from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject

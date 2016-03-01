@@ -9,7 +9,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import addProxy
 
 from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Lib.File import FileBuffer
@@ -123,7 +123,7 @@ class LocalFile(IGangaFile):
                 d = LocalFile(namePattern=os.path.basename(currentFile))
                 d.compressed = self.compressed
 
-                self.subfiles.append(GPIProxyObjectFactory(d))
+                self.subfiles.append(addProxy(d))
 
     def processWildcardMatches(self):
 
@@ -145,7 +145,7 @@ class LocalFile(IGangaFile):
                     currentFile), localDir=os.path.dirname(currentFile))
                 d.compressed = self.compressed
 
-                self.subfiles.append(GPIProxyObjectFactory(d))
+                self.subfiles.append(addProxy(d))
 
     def getFilenameList(self):
         """Return the files referenced by this LocalFile"""

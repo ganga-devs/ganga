@@ -48,8 +48,7 @@ if not _after_bootstrap:
 
     # Problem if installing Ganga as config isn't setup properly
     if 'user' in config:
-        configDirac.addOption('DiracLFNBase', '/lhcb/user/%s/%s' % (config['user'][0],
-                                                                config['user']),
+        configDirac.addOption('DiracLFNBase', '/lhcb/user/%s/%s' % (config['user'][0], config['user']),
                           "Base dir appended to create LFN name from DiracFile('name')")
 
     configDirac.addOption('ReplicateOutputData', False,

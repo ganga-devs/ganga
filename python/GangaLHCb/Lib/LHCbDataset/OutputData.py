@@ -1,7 +1,7 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Base import GangaObject
 from LHCbDatasetUtils import strToDataFile
 
@@ -51,7 +51,7 @@ class OutputData(GangaObject):
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. od[2] returns the 3rd file name) '''
         if type(i) == type(slice(0)):
-            return GPIProxyObjectFactory(OutputData(files=self.files[i]))
+            return addProxy(OutputData(files=self.files[i]))
         else:
             return self.files[i]
 
