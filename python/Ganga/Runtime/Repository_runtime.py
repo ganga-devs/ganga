@@ -18,10 +18,6 @@ def requiresAfsToken():
     return fullpath(getLocalRoot(), True).find('/afs') == 0
 
 
-def requiresGridProxy():
-    return False
-
-
 def getLocalRoot():
     if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
         return os.path.join(expandfilename(config['gangadir'], True), 'repository', config['user'], config['repositorytype'])

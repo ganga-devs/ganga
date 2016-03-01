@@ -918,9 +918,6 @@ under certain conditions; type license() for details.
         exportToGPI('ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
         exportToGPI('JobError', JobError, 'Exceptions')
 
-        import Ganga.GPIDev.MonitoringServices
-        # This has a side-effect on import of adding a config section 'SIDE-EFFECTS'
-
         def license():
             'Print the full license (GPL)'
             with open(os.path.join(_gangaPythonPath, '..', 'LICENSE_GPL')) as printable:
@@ -1077,11 +1074,6 @@ under certain conditions; type license() for details.
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         exportToGPI('shareref', shareref, 'Objects',
                     'Mechanism for tracking use of shared directory resources')
-
-        logger.debug("Bootstrap Workspace")
-        # bootstrap the workspace
-        from Ganga.Runtime import Workspace_runtime
-        Workspace_runtime.bootstrap()
 
         # export full_print
         from Ganga.GPIDev.Base.VPrinter import full_print
