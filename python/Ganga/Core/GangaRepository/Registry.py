@@ -883,13 +883,10 @@ class Registry(object):
                 obj._registry_locked = False
             self.repository.shutdown()
 
-<<<<<<< HEAD
-=======
             self._loaded_ids = []
 
             self.metadata = None
 
->>>>>>> develop
         finally:
             self._hasStarted = False
 
