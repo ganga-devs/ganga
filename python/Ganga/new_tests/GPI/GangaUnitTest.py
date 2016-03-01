@@ -108,6 +108,9 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     logger.info("Passing to Unittest")
 
 def emptyReposiories():
+    
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
     # empty repository so we start again at job 0 when we restart
     logger.info("Clearing the Job and Template repositories")
 
