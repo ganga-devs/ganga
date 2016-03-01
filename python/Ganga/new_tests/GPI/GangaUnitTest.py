@@ -179,6 +179,7 @@ def stop_ganga():
     # Finished
     logger.info("Test Finished")
 
+
 class GangaUnitTest(unittest.TestCase):
 
     @classmethod
