@@ -44,8 +44,8 @@ class TestStdOut(GangaUnitTest):
 
         for j in self.jobslice:
             j.submit()
-            self.assertTrue(sleep_until_completed(j, timeout=60), 'Timeout on job submission: job is still not finished')
-            self.assertEqual(j.status, 'completed')
+            assert sleep_until_completed(j, timeout=60), 'Timeout on job submission: job is still not finished'
+            assert j.status == 'completed'
 
     def testCanSetStdOutMerge(self):
         from Ganga.GPI import SmartMerger
@@ -60,6 +60,6 @@ class TestStdOut(GangaUnitTest):
         sm = SmartMerger()
         sm.files = ['stdout']
         try:
-            self.assertFalse(sm.merge(self.jobslice, tmpdir))
+            assert not sm.merge(self.jobslice, tmpdir)
         except PostProcessException:
             pass

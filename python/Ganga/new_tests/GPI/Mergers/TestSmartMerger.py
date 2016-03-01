@@ -46,8 +46,8 @@ class TestSmartMerger(GangaUnitTest):
 
         for j in self.jobslice:
             j.submit()
-            self.assertTrue(sleep_until_completed(j), 'Timeout on job submission: job is still not finished')
-            self.assertEqual(j.status, 'completed')
+            assert sleep_until_completed(j), 'Timeout on job submission: job is still not finished'
+            assert j.status == 'completed'
 
     def tearDown(self):
 
@@ -65,9 +65,9 @@ class TestSmartMerger(GangaUnitTest):
         j1 = Job(outputfiles=files)
         j2 = Job(outputfiles=files)
 
-        self.assertEqual(j1.outputfiles, j2.outputfiles, 'File lists should be the same')
+        assert j1.outputfiles == j2.outputfiles, 'File lists should be the same'
 
-        self.assertEqual(findFilesToMerge([j1, j2]), ['foo.root', 'bar.root', 'out.log'], 'Should merge all files')
+        assert findFilesToMerge([j1, j2]) == ['foo.root', 'bar.root', 'out.log'], 'Should merge all files'
 
     def testNoFilesSpecifiedSomeOverlap(self):
         from Ganga.GPI import LocalFile, Job
@@ -75,7 +75,7 @@ class TestSmartMerger(GangaUnitTest):
         j1 = Job(outputfiles=[LocalFile('foo.root'), LocalFile('bar.root'), LocalFile('out.log')])
         j2 = Job(outputfiles=[LocalFile('a.root'), LocalFile('b.root'), LocalFile('out.log')])
 
-        self.assertEqual(findFilesToMerge([j1, j2]), ['out.log'], 'Should merge only some files')
+        assert findFilesToMerge([j1, j2]) == ['out.log'], 'Should merge only some files'
 
     def testNoFilesSpecifiedNoOverlap(self):
         from Ganga.GPI import LocalFile, Job
@@ -83,7 +83,7 @@ class TestSmartMerger(GangaUnitTest):
         j1 = Job(outputfiles=[LocalFile('foo.root'), LocalFile('bar.root'), LocalFile('out.log')])
         j2 = Job(outputfiles=[LocalFile('a.root'), LocalFile('b.root'), LocalFile('c.log')])
 
-        self.assertEqual(findFilesToMerge([j1, j2]), [], 'Should merge no files')
+        assert findFilesToMerge([j1, j2]) == [], 'Should merge no files'
 
     def testActualMergeJob(self):
         from Ganga.GPI import SmartMerger
@@ -93,12 +93,12 @@ class TestSmartMerger(GangaUnitTest):
         os.mkdir(tmpdir)
 
         sm = SmartMerger()
-        self.assertTrue(sm.merge(self.jobslice, tmpdir), 'Merge should complete')
+        assert sm.merge(self.jobslice, tmpdir), 'Merge should complete'
 
         for j in self.jobslice:
             output = os.path.join(j.outputdir, 'out.txt')
-            self.assertTrue(file_contains(output, 'Output from job %d.' % j.id), 'File must contain the output of each individual job')
+            assert file_contains(output, 'Output from job %d.' % j.id), 'File must contain the output of each individual job'
 
         for j in self.jobslice:
             output = os.path.join(j.outputdir, 'out2.txt')
-            self.assertTrue(file_contains(output, 'Output from job %d.' % (j.id * 10)), 'File must contain the output of each individual job')
+            assert file_contains(output, 'Output from job %d.' % (j.id * 10)), 'File must contain the output of each individual job'

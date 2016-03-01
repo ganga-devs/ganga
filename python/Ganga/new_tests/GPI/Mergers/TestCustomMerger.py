@@ -3,6 +3,8 @@ from __future__ import absolute_import
 import os
 import tempfile
 
+import pytest
+
 from GangaTest.Framework.utils import sleep_until_completed, write_file
 from Ganga.GPIDev.Base.Proxy import getProxyClass
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
@@ -49,7 +51,7 @@ class TestCustomMerger(GangaUnitTest):
         for j in self.jobslice:
             j.submit()
 
-            self.assertTrue(sleep_until_completed(j), 'Timeout on job submission: job is still not finished')
+            assert sleep_until_completed(j), 'Timeout on job submission: job is still not finished'
 
     def tearDown(self):
         for j in self.jobslice:
@@ -79,9 +81,9 @@ def mergefiles(file_list, output_file):
 
         cm = CustomMerger(module=file_name)
         cm.files = ['out.txt', 'out2.txt']
-        self.assertTrue(cm.merge(self.jobslice, tmpdir), 'Merge should complete')
-        self.assertTrue(os.path.exists(os.path.join(tmpdir, 'out.txt')), 'out.txt must exist')
-        self.assertTrue(os.path.exists(os.path.join(tmpdir, 'out2.txt')), 'out2.txt must exist')
+        assert cm.merge(self.jobslice, tmpdir), 'Merge should complete'
+        assert os.path.exists(os.path.join(tmpdir, 'out.txt')), 'out.txt must exist'
+        assert os.path.exists(os.path.join(tmpdir, 'out2.txt')), 'out2.txt must exist'
 
     def testFailJobOnMerge(self):
         from Ganga.GPI import CustomMerger
@@ -99,7 +101,8 @@ def mergefiles(file_list, output_file):
 
         cm = CustomMerger(module=file_name)
         cm.files = ['out.txt', 'out2.txt']
-        self.assertRaises(PostProcessException, cm.merge, self.jobslice, tmpdir)
+        with pytest.raises(PostProcessException):
+            cm.merge(self.jobslice, tmpdir)
 
         j = self.jobslice[0].copy()
         j.splitter = CopySplitter()
@@ -107,4 +110,4 @@ def mergefiles(file_list, output_file):
         j.submit()
 
         sleep_until_completed(j)
-        self.assertEqual(j.status, 'failed')
+        assert j.status == 'failed'

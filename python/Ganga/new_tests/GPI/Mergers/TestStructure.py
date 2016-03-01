@@ -3,6 +3,8 @@ from __future__ import division, absolute_import
 import os
 import tempfile
 
+import pytest
+
 from ..GangaUnitTest import GangaUnitTest
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 
@@ -46,7 +48,7 @@ class TestStructure(GangaUnitTest):
         for j in self.jobslice:
             j.submit()
         for j in self.jobslice:
-            self.assertTrue(sleep_until_completed(j, timeout=10, verbose=True), 'Timeout on job submission: job is still not finished')
+            assert sleep_until_completed(j, timeout=10, verbose=True), 'Timeout on job submission: job is still not finished'
             print('# upcoming status')
             print("Status 3: %s" % j.status)
             print('# printed status')
@@ -55,15 +57,15 @@ class TestStructure(GangaUnitTest):
             print('# printed impl status')
             print 'j._impl.__dict__', j._impl.__dict__
             #print 'type(j).__dict__', type(j).__dict__
-            self.assertEqual(j.status, 'completed')
+            assert j.status == 'completed'
 
     def testStructureCreated(self):
 
         self.runJobSlice()
 
         for j in self.jobslice:
-            self.assertTrue(os.path.exists(os.path.join(j.outputdir, 'out.txt')), 'File must exist')
-            self.assertTrue(os.path.exists(os.path.join(j.outputdir, 'subdir', 'out.txt')), 'File in directory must exist')
+            assert os.path.exists(os.path.join(j.outputdir, 'out.txt')), 'File must exist'
+            assert os.path.exists(os.path.join(j.outputdir, 'subdir', 'out.txt')), 'File in directory must exist'
 
     def testStructureOfMerger(self):
         """Test that structure in the output sandbox is recreated in the merge"""
@@ -76,8 +78,8 @@ class TestStructure(GangaUnitTest):
         tmpdir = tempfile.mktemp()
         os.mkdir(tmpdir)
 
-        self.assertTrue(tm.merge(self.jobslice, tmpdir), 'Merge must run correctly')
-        self.assertTrue(os.path.exists(os.path.join(tmpdir, 'out.txt')), 'Merge must produce the file')
+        assert tm.merge(self.jobslice, tmpdir), 'Merge must run correctly'
+        assert os.path.exists(os.path.join(tmpdir, 'out.txt')), 'Merge must produce the file'
 
     def testOutputEqualsInput(self):
         """Tests that setting outputdir == inputdir fails always"""
@@ -88,4 +90,5 @@ class TestStructure(GangaUnitTest):
         tm.files = ['out.txt']
 
         for j in self.jobslice:
-            self.assertRaises(PostProcessException, tm.merge, self.jobslice, outputdir=j.outputdir)
+            with pytest.raises(PostProcessException):
+                tm.merge(self.jobslice, outputdir=j.outputdir)

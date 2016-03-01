@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 import os
 
+import pytest
+
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
 from Ganga.GPIDev.Base.Proxy import getProxyClass
 
@@ -28,8 +30,8 @@ class TestMergeFailures(GangaUnitTest):
         j.submit()
 
         sleep_until_completed(j, 60)
-        self.assertEqual(j.status, 'failed')
-        self.assertTrue(os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created')
+        assert j.status == 'failed'
+        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsIgnoreFailed(self):
         from Ganga.GPI import Job, Executable, Local, LocalFile
@@ -44,8 +46,8 @@ class TestMergeFailures(GangaUnitTest):
         j.submit()
 
         sleep_until_completed(j, 60)
-        self.assertEqual(j.status, 'failed')
-        self.assertTrue(os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created')
+        assert j.status == 'failed'
+        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsOverwrite(self):
         from Ganga.GPI import Job, Executable, Local, LocalFile
@@ -60,8 +62,8 @@ class TestMergeFailures(GangaUnitTest):
         j.submit()
 
         sleep_until_completed(j, 60)
-        self.assertEqual(j.status, 'failed')
-        self.assertTrue(os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created')
+        assert j.status == 'failed'
+        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsFlagsSet(self):
         from Ganga.GPI import Job, Executable, Local, LocalFile
@@ -77,8 +79,8 @@ class TestMergeFailures(GangaUnitTest):
         j.submit()
 
         sleep_until_completed(j, 60)
-        self.assertEqual(j.status, 'failed')
-        self.assertTrue(os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created')
+        assert j.status == 'failed'
+        assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeRemoval(self):
         from Ganga.GPI import Job, Executable, Local, LocalFile, jobs
@@ -102,4 +104,5 @@ class TestMergeFailures(GangaUnitTest):
         sleep_until_state(j, state='running')
         j.remove()
 
-        self.assertRaises(KeyError, jobs, jobID)
+        with pytest.raises(KeyError):
+            jobs(jobID)
