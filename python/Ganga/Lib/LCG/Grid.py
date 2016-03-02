@@ -25,13 +25,24 @@ def credential():
     return getCredential('GridProxy')
 
 
+def check_proxy():
+    '''Check the proxy and prompt the user to refresh it'''
+
+    credential().voms = config['VirtualOrganisation']
+    status = credential().renew(maxTry=3)
+
+    if not status:
+        logger.warning("Could not get a proxy, giving up after 3 retries")
+        return False
+
+    return True
+
+
 class Grid(object):
 
     '''Helper class to implement grid interaction'''
 
     def __init__(self):
-
-        self.active = False
 
         self.re_token = re.compile('^token:(.*):(.*)$')
 
@@ -42,9 +53,6 @@ class Grid(object):
         self.new_config = ""
 
         self.proxy_id = {}
-
-#       create credential for this Grid object
-        self.active = self.check_proxy()
 
     @staticmethod
     def __get_cmd_prefix_hack__(binary=False):
@@ -251,20 +259,6 @@ class Grid(object):
 
         return glite_ids
 
-    def check_proxy(self):
-        '''Check the proxy and prompt the user to refresh it'''
-
-        if credential() is not None:
-            credential().voms = config['VirtualOrganisation']
-
-        status = credential().renew(maxTry=3)
-
-        if not status:
-            logger.warning("Could not get a proxy, giving up after 3 retries")
-            return False
-
-        return True
-
     def list_match(self, jdlpath, ce=None):
         '''Returns a list of computing elements can run the job'''
 
@@ -275,7 +269,7 @@ class Grid(object):
         cmd = 'glite-wms-job-list-match -a'
         exec_bin = True
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin not active.')
             return
 
@@ -324,7 +318,7 @@ class Grid(object):
         cmd = 'glite-wms-job-submit -a'
         exec_bin = True
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin not active.')
             return
 
@@ -378,7 +372,7 @@ class Grid(object):
         cmd = 'glite-wms-job-cancel'
         exec_bin = True
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin not active.')
             return False
 
@@ -433,7 +427,7 @@ class Grid(object):
         if is_collection:
             cmd = '%s -v 3' % cmd
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin not active.')
             return ([], [])
         if not credential().isValid('01:00'):
@@ -553,7 +547,7 @@ class Grid(object):
         if config['IgnoreGliteScriptHeader']:
             exec_bin = False
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin not active.')
             return False
         if not credential().isValid('01:00'):
@@ -594,7 +588,7 @@ class Grid(object):
         if config['Config']:
             cmd += ' --config %s' % config['Config']
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin is not active.')
             return (False, None)
         if not credential().isValid('01:00'):
@@ -653,7 +647,7 @@ class Grid(object):
         cmd = 'glite-wms-job-cancel'
         exec_bin = True
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin is not active.')
             return False
         if not credential().isValid('01:00'):
@@ -692,7 +686,7 @@ class Grid(object):
         cmd = 'glite-wms-job-cancel'
         exec_bin = True
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin is not active.')
             return False
         if not credential().isValid('01:00'):
@@ -776,7 +770,7 @@ class Grid(object):
     def __cream_ui_check__(self):
         '''checking if CREAM CE environment is set properly'''
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin not active.')
             return False
 
@@ -1158,7 +1152,7 @@ class Grid(object):
         cmd = 'lcg-infosites --vo %s %s' % (
             config['VirtualOrganisation'], opts)
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin not active.')
             return
 
@@ -1331,7 +1325,7 @@ class Grid(object):
             cmd = 'arcsync %s -j %s -f ' % (
                 self.__arc_get_config_file_arg__(), config["ArcJobListFile"])
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin is not active.')
             return False
         if not credential().isValid('01:00'):
@@ -1416,7 +1410,7 @@ class Grid(object):
         cmd = 'arckill'
         exec_bin = True
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin is not active.')
             return False
         if not credential().isValid('01:00'):
@@ -1451,7 +1445,7 @@ class Grid(object):
         cmd = 'arckill'
         exec_bin = True
 
-        if not self.active:
+        if not check_proxy():
             logger.warning('LCG plugin is not active.')
             return False
         if not credential().isValid('01:00'):

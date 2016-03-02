@@ -42,6 +42,8 @@ if simulator_enabled:
 else:
     from .Grid import Grid
 
+from .Grid import check_proxy
+
 lcg_output_downloader = None
 
 
@@ -1882,7 +1884,7 @@ sys.exit(0)
     def check_proxy(self):
         '''Update the proxy'''
 
-        return grid.check_proxy()
+        return check_proxy()
 
     def get_requirement_matches(self, jdl_file=None, spec_ce=''):
         """Return any matches using the requirements or given jdlfile"""
@@ -2246,7 +2248,8 @@ config.attachUserHandler(__preConfigHandler__, __postConfigHandler__)
 grid = None
 if config['GLITE_ENABLE']:
     grid = Grid()
-    config.setSessionValue('GLITE_ENABLE', grid.active)
+    active = check_proxy()
+    config.setSessionValue('GLITE_ENABLE', active)
 
 logger.debug('LCG module initialization: end')
 
