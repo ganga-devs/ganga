@@ -65,6 +65,8 @@ class PrepRegistry(Registry):
             self._hasStarted = False
             self._lock.release()
 
+        self.metadata = None
+
     def _safe_shutdown(self):
         try:
             if not self.metadata is None:

@@ -262,7 +262,7 @@ class Registry(object):
         return this_id in self._objects
 
     def updateLocksNow(self):
-        loger.debug("updateLocksNow")
+        logger.debug("updateLocksNow")
         self.repository.updateLocksNow()
 
     def trackandRelease(self):
@@ -924,6 +924,8 @@ class Registry(object):
             self.repository.shutdown()
 
             self._loaded_ids = []
+
+            self.metadata = None
 
         finally:
             self._hasStarted = False
