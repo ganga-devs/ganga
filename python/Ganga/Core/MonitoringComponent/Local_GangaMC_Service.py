@@ -138,8 +138,6 @@ class MonitoringWorkerThread(GangaThread):
             except Exception as err:
                 log.debug("_execUpdateAction: %s" % str(err))
                 action.callback_Failure()
-            #finally:
-            #    pass
             else:
                 if result in action.success:
                     action.callback_Success()
