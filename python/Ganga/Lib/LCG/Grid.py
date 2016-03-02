@@ -44,8 +44,6 @@ class Grid(object):
 
     def __init__(self):
 
-        self.re_token = re.compile('^token:(.*):(.*)$')
-
         self.perusable = False
 
         self.wms_list = []
