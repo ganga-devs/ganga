@@ -59,7 +59,8 @@ class Grid(object):
         if attr == 'config':
             self.shell = getShell()
 
-    def __get_cmd_prefix_hack__(self, binary=False):
+    @staticmethod
+    def __get_cmd_prefix_hack__(binary=False):
         # this is to work around inconsistency of LCG setup script and commands:
         # LCG commands require python2.2 but the setup script does not set this version of python
         # if another version of python is used (like in GUI), then python2.2 runs against wrong python libraries
@@ -162,7 +163,8 @@ class Grid(object):
 
         return submit_option
 
-    def __resolve_gridcmd_log_path__(self, regxp_logfname, cmd_output):
+    @staticmethod
+    def __resolve_gridcmd_log_path__(regxp_logfname, cmd_output):
         match_log = re.search(regxp_logfname, cmd_output)
 
         logfile = None
@@ -170,18 +172,20 @@ class Grid(object):
             logfile = match_log.group(1)
         return logfile
 
-    def __clean_gridcmd_log__(self, regxp_logfname, cmd_output):
+    @staticmethod
+    def __clean_gridcmd_log__(regxp_logfname, cmd_output):
 
-        logfile = self.__resolve_gridcmd_log_path__(regxp_logfname, cmd_output)
+        logfile = Grid.__resolve_gridcmd_log_path__(regxp_logfname, cmd_output)
 
         if logfile and os.path.exists(logfile):
             os.remove(logfile)
 
         return True
 
-    def __print_gridcmd_log__(self, regxp_logfname, cmd_output):
+    @staticmethod
+    def __print_gridcmd_log__(regxp_logfname, cmd_output):
 
-        logfile = self.__resolve_gridcmd_log_path__(regxp_logfname, cmd_output)
+        logfile = Grid.__resolve_gridcmd_log_path__(regxp_logfname, cmd_output)
 
         if logfile:
             for l in open(logfile, 'r'):
@@ -222,16 +226,17 @@ class Grid(object):
             '%s --vo %s lfc' % (cmd, self.config['VirtualOrganisation']), allowed_exit=[0, 255])
 
         if rc != 0:
-            # self.__print_gridcmd_log__('lcg-infosites',output)
+            # Grid.__print_gridcmd_log__('lcg-infosites',output)
             return None
         else:
             lfc_list = output.strip().split('\n')
             return lfc_list[0]
 
-    def __resolve_no_matching_jobs__(self, cmd_output):
+    @staticmethod
+    def __resolve_no_matching_jobs__(cmd_output):
         '''Parsing the glite-wms-job-status log to get the glite jobs which have been removed from the WMS'''
 
-        logfile = self.__resolve_gridcmd_log_path__(
+        logfile = Grid.__resolve_gridcmd_log_path__(
             '(.*-job-status.*\.log)', cmd_output)
 
         glite_ids = []
@@ -306,7 +311,7 @@ class Grid(object):
         logger.debug('job list match command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
-            self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+            Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         for l in output.split('\n'):
 
@@ -357,7 +362,7 @@ class Grid(object):
 
         logger.debug('job submit command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['SubmissionTimeout'])
 
@@ -375,12 +380,12 @@ class Grid(object):
                     "glite-wms-job-perusal --set -f stdout %s" % match.group(1))
 
             # remove the glite command log if it exists
-            self.__clean_gridcmd_log__('(.*-job-submit.*\.log)', output)
+            Grid.__clean_gridcmd_log__('(.*-job-submit.*\.log)', output)
             return match.group(1)
 
         else:
             logger.warning('Job submission failed.')
-            self.__print_gridcmd_log__('(.*-job-submit.*\.log)', output)
+            Grid.__print_gridcmd_log__('(.*-job-submit.*\.log)', output)
             return
 
     def native_master_cancel(self, jobids):
@@ -409,7 +414,7 @@ class Grid(object):
         logger.debug('job cancel command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
-            self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+            Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         # clean up tempfile
         if os.path.exists(idsfile):
@@ -417,12 +422,12 @@ class Grid(object):
 
         if rc != 0:
             logger.warning('Job cancellation failed.')
-            self.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+            Grid.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return False
         else:
             # job cancellation succeeded, try to remove the glite command
             # logfile if it exists
-            self.__clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+            Grid.__clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return True
 
     def status(self, jobids, is_collection=False):
@@ -454,14 +459,14 @@ class Grid(object):
         cmd = '%s --noint -i %s' % (cmd, idsfile)
         logger.debug('job status command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['StatusPollingTimeout'])
         os.remove(idsfile)
 
         missing_glite_jids = []
         if rc != 0:
-            missing_glite_jids = self.__resolve_no_matching_jobs__(output)
+            missing_glite_jids = Grid.__resolve_no_matching_jobs__(output)
 
             if missing_glite_jids:
                 logger.info(
@@ -469,11 +474,11 @@ class Grid(object):
                 logger.debug('jobs removed from WMS: %s' %
                              repr(missing_glite_jids))
             else:
-                self.__print_gridcmd_log__('(.*-job-status.*\.log)', output)
+                Grid.__print_gridcmd_log__('(.*-job-status.*\.log)', output)
 
         # job status query succeeded, try to remove the glite command logfile
         # if it exists
-        self.__clean_gridcmd_log__('(.*-job-status.*\.log)', output)
+        Grid.__clean_gridcmd_log__('(.*-job-status.*\.log)', output)
 
         re_id = re.compile('^\s*Status info for the Job : (https://.*\S)\s*$')
         re_status = re.compile('^\s*Current Status:\s+(.*\S)\s*$')
@@ -582,16 +587,16 @@ class Grid(object):
         logger.debug('job logging info command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
-            self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+            Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
         os.remove(idsfile)
 
         if rc != 0:
-            self.__print_gridcmd_log__('(.*-logging-info.*\.log)', output)
+            Grid.__print_gridcmd_log__('(.*-logging-info.*\.log)', output)
             return False
         else:
             # logging-info checking succeeded, try to remove the glite command
             # logfile if it exists
-            self.__clean_gridcmd_log__('(.*-logging-info.*\.log)', output)
+            Grid.__clean_gridcmd_log__('(.*-logging-info.*\.log)', output)
             # returns the path to the saved logging info if success
             return log_output
 
@@ -617,18 +622,18 @@ class Grid(object):
         logger.debug('job get output command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
-            self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+            Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         match = re.search('directory:\n\s*([^\t\n\r\f\v]+)\s*\n', output)
 
         if not match:
             logger.warning('Job output fetch failed.')
-            self.__print_gridcmd_log__('(.*-output.*\.log)', output)
+            Grid.__print_gridcmd_log__('(.*-output.*\.log)', output)
             return (False, 'cannot fetch job output')
 
         # job output fetching succeeded, try to remove the glite command
         # logfile if it exists
-        self.__clean_gridcmd_log__('(.*-output.*\.log)', output)
+        Grid.__clean_gridcmd_log__('(.*-output.*\.log)', output)
 
         outdir = match.group(1)
 
@@ -651,7 +656,7 @@ class Grid(object):
         else:
             pass
 
-        return self.__get_app_exitcode__(directory)
+        return Grid.__get_app_exitcode__(directory)
 
     def cancelMultiple(self, jobids):
         '''Cancel multiple jobs in one LCG job cancellation call'''
@@ -681,7 +686,7 @@ class Grid(object):
         logger.debug('job cancel command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
-            self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+            Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         # clean up tempfile
         if os.path.exists(idsfile):
@@ -690,11 +695,11 @@ class Grid(object):
         if rc == 0:
             # job cancelling succeeded, try to remove the glite command logfile
             # if it exists
-            self.__clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+            Grid.__clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return True
         else:
             logger.warning("Failed to cancel jobs.\n%s" % output)
-            self.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+            Grid.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return False
 
     def cancel(self, jobid):
@@ -715,19 +720,20 @@ class Grid(object):
         logger.debug('job cancel command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
-            self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+            Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         if rc == 0:
             # job cancelling succeeded, try to remove the glite command logfile
             # if it exists
-            self.__clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+            Grid.__clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return True
         else:
             logger.warning("Failed to cancel job %s.\n%s" % (jobid, output))
-            self.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+            Grid.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return False
 
-    def __cream_parse_job_status__(self, log):
+    @staticmethod
+    def __cream_parse_job_status__(log):
         '''Parsing job status report from CREAM CE status query'''
 
         jobInfoDict = {}
@@ -852,7 +858,7 @@ class Grid(object):
 
             logger.debug('proxy delegation command: %s' % cmd)
 
-            rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+            rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                             allowed_exit=[0, 255],
                                             timeout=self.config['SubmissionTimeout'])
             if rc != 0:
@@ -899,7 +905,7 @@ class Grid(object):
 
         logger.debug('job submit command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['SubmissionTimeout'])
 
@@ -934,12 +940,12 @@ class Grid(object):
         cmd = '%s -L 2 -n -i %s' % (cmd, idsfile)
         logger.debug('job status command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['StatusPollingTimeout'])
         jobInfoDict = {}
         if rc == 0 and output:
-            jobInfoDict = self.__cream_parse_job_status__(output)
+            jobInfoDict = Grid.__cream_parse_job_status__(output)
 
         # clean up tempfile
         if os.path.exists(idsfile):
@@ -965,7 +971,7 @@ class Grid(object):
         logger.debug('job purge command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
-            self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+            Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         logger.debug(output)
 
@@ -996,7 +1002,7 @@ class Grid(object):
         logger.debug('job cancel command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
-            self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+            Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         logger.debug(output)
 
@@ -1027,7 +1033,8 @@ class Grid(object):
 
         return cache.download(files=map(lambda x: x.id, gfiles), dest_dir=directory)
 
-    def __get_app_exitcode__(self, outputdir):
+    @staticmethod
+    def __get_app_exitcode__(outputdir):
 
         import Ganga.Core.Sandbox as Sandbox
 
@@ -1219,7 +1226,7 @@ class Grid(object):
 
         logger.debug('job submit command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['SubmissionTimeout'])
 
@@ -1264,7 +1271,7 @@ class Grid(object):
             cmd, self.__arc_get_config_file_arg__(), idsfile, self.config["ArcJobListFile"])
         logger.debug('job status command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 1, 255],
                                         timeout=self.config['StatusPollingTimeout'])
         jobInfoDict = {}
@@ -1275,7 +1282,7 @@ class Grid(object):
             self.__arc_sync__(cedict)
 
         if rc == 0 and output:
-            jobInfoDict = self.__arc_parse_job_status__(output)
+            jobInfoDict = Grid.__arc_parse_job_status__(output)
 
         # clean up tempfile
         if os.path.exists(idsfile):
@@ -1283,7 +1290,8 @@ class Grid(object):
 
         return jobInfoDict
 
-    def __arc_parse_job_status__(self, log):
+    @staticmethod
+    def __arc_parse_job_status__(log):
         '''Parsing job status report from CREAM CE status query'''
 
         # Job: gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/FowMDmswEljnvnizHq7yZUKmABFKDmABFKDmxbGKDmABFKDmlw9pKo
@@ -1347,7 +1355,7 @@ class Grid(object):
             return False
 
         logger.debug('sync ARC jobs list with: %s' % cmd)
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True), cmd),
+        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=True), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['StatusPollingTimeout'])
         if rc != 0:
@@ -1363,7 +1371,7 @@ class Grid(object):
         cmd = 'arcls %s %s' % (self.__arc_get_config_file_arg__(), jid)
         exec_bin = True
         logger.debug('arcls command: %s' % cmd)
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['SubmissionTimeout'])
         if rc:
@@ -1405,7 +1413,7 @@ class Grid(object):
         logger.debug('job purge command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
-            self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+            Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         logger.debug(output)
 
@@ -1437,16 +1445,16 @@ class Grid(object):
         logger.debug('job cancel command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
-            self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+            Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         if rc == 0:
             # job cancelling succeeded, try to remove the glite command logfile
             # if it exists
-            self.__clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+            Grid.__clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return True
         else:
             logger.warning("Failed to cancel job %s.\n%s" % (jobid, output))
-            self.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+            Grid.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return False
 
     def arc_cancelMultiple(self, jobids):
@@ -1477,7 +1485,7 @@ class Grid(object):
         logger.debug('job cancel command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
-            self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+            Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         # clean up tempfile
         if os.path.exists(idsfile):
@@ -1486,11 +1494,11 @@ class Grid(object):
         if rc == 0:
             # job cancelling succeeded, try to remove the glite command logfile
             # if it exists
-            self.__clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+            Grid.__clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return True
         else:
             logger.warning("Failed to cancel jobs.\n%s" % output)
-            self.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
+            Grid.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return False
 
     def arc_info(self):
@@ -1499,7 +1507,7 @@ class Grid(object):
         cmd = 'arcinfo %s > /dev/null' % self.__arc_get_config_file_arg__()
         logger.debug("Running arcinfo command '%s'" % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True), cmd),
+        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=True), cmd),
                                         allowed_exit=[0, 1, 255],
                                         timeout=self.config['StatusPollingTimeout'])
         return rc, output
