@@ -115,7 +115,7 @@ class LCG(IBackend):
         'exitcode': SimpleItem(defvalue='', protected=1, copyable=0, doc='Application exit code'),
         'exitcode_lcg': SimpleItem(defvalue='', protected=1, copyable=0, doc='Middleware exit code'),
         'reason': SimpleItem(defvalue='', protected=1, copyable=0, doc='Reason of causing the job status'),
-        'perusable': SimpleItem(defvalue=True, protected=0, copyable=1, doc='Enable the job perusal feature of GLITE'),
+        'perusable': SimpleItem(defvalue=False, protected=0, copyable=1, doc='Enable the job perusal feature of GLITE'),
         'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Computing Element where the job actually runs.'),
         'monInfo': SimpleItem(defvalue={}, protected=1, copyable=0, hidden=1, doc='Hidden information of the monitoring service.'),
         'flag': SimpleItem(defvalue=0, protected=1, copyable=0, hidden=1, doc='Hidden flag for internal control.')
