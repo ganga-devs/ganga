@@ -50,7 +50,7 @@ class RegistrySlice(object):
             raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
                 self.name, keep_going, method))
         result = []
-        id_list = self.objects.keys() if isType(self.objects, SubJobXMLList) else [id for id in range(len(self.objects))]
+        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
         for _id in id_list:
             obj = self.objects[_id]
             try:
@@ -203,7 +203,7 @@ class RegistrySlice(object):
                 maxid = sys.maxsize
             select = select_by_range
 
-        id_list = self.objects.keys() if isType(self.objects, SubJobXMLList) else [id for id in range(len(self.objects))]
+        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
 
         for this_id in id_list:
             obj = self.objects[this_id]
@@ -285,7 +285,7 @@ class RegistrySlice(object):
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
-        id_list = self.objects.keys() if isType(self.objects, SubJobXMLList) else [id for id in range(len(self.objects))]
+        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
         for _id in id_list:
             obj = self.objects[_id]
             #obj = _unwrap(obj)
