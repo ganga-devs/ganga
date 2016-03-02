@@ -261,10 +261,13 @@ def removeRegistries():
     from Ganga.Runtime import Repository_runtime
 
     for name in Repository_runtime.bootstrap_reg_names():
-        delattr(Ganga.GPI, name)
+        if hasattr(Ganga.GPI, name):
+            delattr(Ganga.GPI, name)
 
-    ## Now remove the JobTree
-    delattr(Ganga.GPI, 'jobtree')
-    ## Now remove the sharedir
-    delattr(Ganga.GPI, 'shareref')
+    if hasattr(Ganga.GPI, 'jobtree'):
+        ## Now remove the JobTree
+        delattr(Ganga.GPI, 'jobtree')
+    if hasattr(Ganga.GPI, 'shareref'):
+        ## Now remove the sharedir
+        delattr(Ganga.GPI, 'shareref')
 
