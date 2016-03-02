@@ -21,6 +21,10 @@ logger = getLogger()
 config = getConfig('LCG')
 
 
+def credential():
+    return getCredential('GridProxy')
+
+
 class Grid(object):
 
     '''Helper class to implement grid interaction'''
@@ -30,8 +34,6 @@ class Grid(object):
         self.active = False
 
         self.re_token = re.compile('^token:(.*):(.*)$')
-
-        self.credential = None
 
         self.perusable = False
 
@@ -185,8 +187,8 @@ class Grid(object):
 
     def __get_proxy_voname__(self):
         '''Check validity of proxy vo'''
-        logger.debug('voms of credential: %s' % self.credential.voms)
-        return self.credential.voms
+        logger.debug('voms of credential: %s' % credential().voms)
+        return credential().voms
 
     def __get_lfc_host__(self):
         '''Gets the LFC_HOST: from current shell or querying BDII on demand'''
@@ -252,13 +254,10 @@ class Grid(object):
     def check_proxy(self):
         '''Check the proxy and prompt the user to refresh it'''
 
-        if self.credential is None:
-            self.credential = getCredential('GridProxy')
-        else:
-            self.credential.voms = config['VirtualOrganisation']
-            self.credential = getCredential('GridProxy')
+        if credential() is not None:
+            credential().voms = config['VirtualOrganisation']
 
-        status = self.credential.renew(maxTry=3)
+        status = credential().renew(maxTry=3)
 
         if not status:
             logger.warning("Could not get a proxy, giving up after 3 retries")
@@ -280,7 +279,7 @@ class Grid(object):
             logger.warning('LCG plugin not active.')
             return
 
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return
 
@@ -329,7 +328,7 @@ class Grid(object):
             logger.warning('LCG plugin not active.')
             return
 
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return
 
@@ -383,7 +382,7 @@ class Grid(object):
             logger.warning('LCG plugin not active.')
             return False
 
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
@@ -437,7 +436,7 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin not active.')
             return ([], [])
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return ([], [])
 
@@ -557,7 +556,7 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin not active.')
             return False
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
@@ -598,7 +597,7 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin is not active.')
             return (False, None)
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return (False, None)
 
@@ -657,7 +656,7 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin is not active.')
             return False
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
@@ -696,7 +695,7 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin is not active.')
             return False
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
@@ -781,7 +780,7 @@ class Grid(object):
             logger.warning('LCG plugin not active.')
             return False
 
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
@@ -837,7 +836,7 @@ class Grid(object):
 
             cmd += ' -e %s' % ce.split('/cream')[0]
 
-            mydelid = '%s_%s' % (self.credential.identity(), get_uuid())
+            mydelid = '%s_%s' % (credential().identity(), get_uuid())
 
             cmd = '%s "%s"' % (cmd, mydelid)
 
@@ -855,7 +854,7 @@ class Grid(object):
                 # NB: expiration time is "current time" + "credential lifetime"
                 t_expire = time.time() + \
                     float(
-                        self.credential.timeleft(units="seconds", force_check=True))
+                        credential().timeleft(units="seconds", force_check=True))
 
                 logger.debug('new proxy at %s valid until %s' %
                              (ce, time.ctime(t_expire)))
@@ -1163,7 +1162,7 @@ class Grid(object):
             logger.warning('LCG plugin not active.')
             return
 
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return
 
@@ -1335,7 +1334,7 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin is not active.')
             return False
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
@@ -1420,7 +1419,7 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin is not active.')
             return False
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
@@ -1455,7 +1454,7 @@ class Grid(object):
         if not self.active:
             logger.warning('LCG plugin is not active.')
             return False
-        if not self.credential.isValid('01:00'):
+        if not credential().isValid('01:00'):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
