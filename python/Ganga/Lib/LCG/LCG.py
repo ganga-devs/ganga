@@ -179,7 +179,7 @@ class LCG(IBackend):
         from Ganga.Lib.LCG.LCGSandboxCache import LCGSandboxCache
         if isType(self.sandboxcache, LCGSandboxCache):
             if not self.sandboxcache.lfc_host:
-                self.sandboxcache.lfc_host = grids['GLITE'].__get_lfc_host__()
+                self.sandboxcache.lfc_host = grid.__get_lfc_host__()
 
             if not self.sandboxcache.se:
 
@@ -258,7 +258,7 @@ class LCG(IBackend):
 
         # or in general, query it from the Grid object
         if not lfc_host:
-            lfc_host = grids['GLITE'].__get_lfc_host__()
+            lfc_host = grid.__get_lfc_host__()
 
         idx['lfc_host'] = lfc_host
 
@@ -497,7 +497,7 @@ class LCG(IBackend):
             data['jdls'] = node_jdls[ibeg:iend]
             mt_data.append(data)
 
-        myAlg = MyAlgorithm(gridObj=grids['GLITE'], masterInputWorkspace=job.getInputWorkspace())
+        myAlg = MyAlgorithm(gridObj=grid, masterInputWorkspace=job.getInputWorkspace())
         myData = Data(collection=mt_data)
 
         runner = MTRunner(name='lcg_jsubmit', algorithm=myAlg,
@@ -509,7 +509,7 @@ class LCG(IBackend):
             # not all bulk jobs are successfully submitted. canceling the
             # submitted jobs on WMS immediately
             logger.error('some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            grids['GLITE'].cancelMultiple(runner.getResults().values())
+            grid.cancelMultiple(runner.getResults().values())
             return None
         else:
             return runner.getResults()
@@ -603,7 +603,7 @@ class LCG(IBackend):
         profiler.checkAndStart('job preparation elapsed time')
 
         if config['MatchBeforeSubmit']:
-            matches = grids['GLITE'].list_match(node_jdls[-1], ce=self.CE)
+            matches = grid.list_match(node_jdls[-1], ce=self.CE)
             if not matches:
                 self.__print_no_resource_error__(node_jdls[-1])
                 return False
@@ -657,7 +657,7 @@ class LCG(IBackend):
             node_jdls.append(jdlpath)
 
         if config['MatchBeforeSubmit']:
-            matches = grids['GLITE'].list_match(node_jdls[-1], ce=self.CE)
+            matches = grid.list_match(node_jdls[-1], ce=self.CE)
             if not matches:
                 self.__print_no_resource_error__(node_jdls[-1])
                 return False
@@ -715,7 +715,7 @@ class LCG(IBackend):
                 ids.append(sj.backend.id)
 
         # 2. cancel the collected jobs
-        ck = grids['GLITE'].cancelMultiple(ids)
+        ck = grid.cancelMultiple(ids)
         if not ck:
             logger.warning('Job cancellation failed')
             return False
@@ -742,7 +742,7 @@ class LCG(IBackend):
                 except KeyError:
                     pass
 
-        ck = grids['GLITE'].native_master_cancel(myids)
+        ck = grid.native_master_cancel(myids)
 
         if not ck:
             logger.warning('Job cancellation failed: %s' % self.id)
@@ -775,7 +775,7 @@ class LCG(IBackend):
 
         # successful logging info fetching returns a file path to the
         # information
-        loginfo_output = grids['GLITE'].get_loginfo(
+        loginfo_output = grid.get_loginfo(
             my_ids, job.outputdir, verbosity)
 
         if loginfo_output:
@@ -886,9 +886,9 @@ class LCG(IBackend):
             logger.debug('JDL used for match-making: %s' % jdlpath)
 
             # If GLITE, tell it whether to enable perusal
-            grids['GLITE'].perusable = self.perusable
+            grid.perusable = self.perusable
 
-            matches = grids['GLITE'].list_match(jdlpath, ce=self.CE)
+            matches = grid.list_match(jdlpath, ce=self.CE)
 
         except Exception as x:
             logger.warning('job match failed: %s', str(x))
@@ -912,15 +912,15 @@ class LCG(IBackend):
 
         jdlpath = self.preparejob(subjobconfig, master_job_sandbox)
         # If GLITE, tell it whether to enable perusal
-        grids['GLITE'].perusable = self.perusable
+        grid.perusable = self.perusable
 
         if config['MatchBeforeSubmit']:
-            matches = grids['GLITE'].list_match(jdlpath, ce=self.CE)
+            matches = grid.list_match(jdlpath, ce=self.CE)
             if not matches:
                 self.__print_no_resource_error__(jdlpath)
                 return None
 
-        self.id = grids['GLITE'].submit(jdlpath, ce=self.CE)
+        self.id = grid.submit(jdlpath, ce=self.CE)
 
         self.parent_id = self.id
 
@@ -936,12 +936,12 @@ class LCG(IBackend):
         self.updateExcudedCEsInJdl(jdlpath)
 
         if config['MatchBeforeSubmit']:
-            matches = grids['GLITE'].list_match(jdlpath, ce=self.CE)
+            matches = grid.list_match(jdlpath, ce=self.CE)
             if not matches:
                 self.__print_no_resource_error__(jdlpath)
                 return None
 
-        self.id = grids['GLITE'].submit(jdlpath, ce=self.CE)
+        self.id = grid.submit(jdlpath, ce=self.CE)
         self.parent_id = self.id
 
         if self.id:
@@ -965,7 +965,7 @@ class LCG(IBackend):
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return False
 
-        return grids['GLITE'].cancel(self.id)
+        return grid.cancel(self.id)
 
     def __jobWrapperTemplate__(self):
         '''Create job wrapper'''
@@ -1356,7 +1356,7 @@ sys.exit(0)
         if self.status == "Running" and self.perusable:
             fname = os.path.join(job.outputdir, '_peek.dat')
 
-            sh = grids['GLITE'].shell
+            sh = grid.shell
             re, output, m = sh.cmd("glite-wms-job-perusal --get --all -f stdout %s" % self.id, fname)
             job.viewFile(fname, cmd)
 
@@ -1664,62 +1664,52 @@ sys.exit(0)
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
 
-        jobdict = dict([[job.backend.id, job]
-                        for job in jobs if job.backend.id])
-
-        # divide jobs into classes based on the middleware type
-        jobclass = {}
-        for key in jobdict:
-            if 'GLITE' not in jobclass:
-                jobclass['GLITE'] = [key]
-            else:
-                jobclass['GLITE'].append(key)
+        jobdict = dict((job.backend.id, job) for job in jobs if job.backend.id)
 
         # loop over the job classes
         cnt_new_download_task = 0
-        for mt in jobclass.keys():
 
-            if not config['%s_ENABLE' % mt]:
-                continue
+        if not config['GLITE_ENABLE']:
+            return
 
-            # loop over the jobs in each class
-            status_info, missing_glite_jids = grids[mt].status(jobclass[mt])
+        # loop over the jobs in each class
+        status_info, missing_glite_jids = grid.status(jobdict.values())
 
-            __fail_missing_jobs__(missing_glite_jids, jobdict)
+        __fail_missing_jobs__(missing_glite_jids, jobdict)
 
-            for info in status_info:
+        for info in status_info:
 
-                create_download_task = False
+            create_download_task = False
 
-                job = jobdict[info['id']]
+            job = jobdict[info['id']]
 
-                if job.backend.actualCE != info['destination']:
-                    logger.info(
-                        'job %s has been assigned to %s', job.getFQID('.'), info['destination'])
-                    job.backend.actualCE = info['destination']
+            if job.backend.actualCE != info['destination']:
+                logger.info(
+                    'job %s has been assigned to %s', job.getFQID('.'), info['destination'])
+                job.backend.actualCE = info['destination']
 
-                if job.backend.status != info['status']:
-                    logger.info(
-                        'job %s has changed status to %s', job.getFQID('.'), info['status'])
-                    job.backend.status = info['status']
-                    job.backend.reason = info['reason']
-                    job.backend.exitcode_lcg = info['exit']
-                    if info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)':
-                        create_download_task = True
-                    else:
-                        LCG.updateGangaJobStatus(job, info['status'])
-                elif (info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)') and (job.status not in LCG._final_ganga_states):
+            if job.backend.status != info['status']:
+                logger.info(
+                    'job %s has changed status to %s', job.getFQID('.'), info['status'])
+                job.backend.status = info['status']
+                job.backend.reason = info['reason']
+                job.backend.exitcode_lcg = info['exit']
+                if info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)':
                     create_download_task = True
+                else:
+                    LCG.updateGangaJobStatus(job, info['status'])
+            elif (info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)') and (job.status not in LCG._final_ganga_states):
+                create_download_task = True
 
-                if create_download_task:
-                    # update to 'running' before changing to 'completing'
-                    if job.status == 'submitted':
-                        job.updateStatus('running')
+            if create_download_task:
+                # update to 'running' before changing to 'completing'
+                if job.status == 'submitted':
+                    job.updateStatus('running')
 
-                    downloader = get_lcg_output_downloader()
-                    downloader.addTask(grids[mt], job, False)
+                downloader = get_lcg_output_downloader()
+                downloader.addTask(grid, job, False)
 
-                    cnt_new_download_task += 1
+                cnt_new_download_task += 1
 
         if cnt_new_download_task > 0:
             downloader = get_lcg_output_downloader()
@@ -1730,8 +1720,6 @@ sys.exit(0)
     @staticmethod
     def master_bulk_updateMonitoringInformation(jobs):
         '''Monitoring loop for glite bulk jobs'''
-
-        grid = grids['GLITE']
 
         if not grid:
             return
@@ -1894,7 +1882,7 @@ sys.exit(0)
     def check_proxy(self):
         '''Update the proxy'''
 
-        return grids['GLITE'].check_proxy()
+        return grid.check_proxy()
 
     def get_requirement_matches(self, jdl_file=None, spec_ce=''):
         """Return any matches using the requirements or given jdlfile"""
@@ -1913,7 +1901,7 @@ sys.exit(0)
             jdl_file2 = tempfile.mktemp('.jdl')
             file(jdl_file2, 'w').write(jdl_file_txt)
 
-        matches = grids['GLITE'].list_match(jdl_file2, ce=spec_ce)
+        matches = grid.list_match(jdl_file2, ce=spec_ce)
 
         # clean up
         if not jdl_file:
@@ -1923,7 +1911,7 @@ sys.exit(0)
 
     def get_wms_list(self):
         """Grab a list of WMSs"""
-        out = grids['GLITE'].wrap_lcg_infosites("WMS")
+        out = grid.wrap_lcg_infosites("WMS")
 
         if out == "":
             logger.warning("get_wms_list returned no results!")
@@ -1940,7 +1928,7 @@ sys.exit(0)
 
     def get_ce_list(self):
         """Grab a list of CEs"""
-        out = grids['GLITE'].wrap_lcg_infosites("CE")
+        out = grid.wrap_lcg_infosites("CE")
 
         if out == "":
             logger.warning("get_ce_list returned no results!")
@@ -1964,7 +1952,7 @@ sys.exit(0)
 
     def get_se_list(self):
         """Grab a list of SEs"""
-        out = grids['GLITE'].wrap_lcg_infosites("SE")
+        out = grid.wrap_lcg_infosites("SE")
 
         if out == "":
             logger.warning("get_se_list returned no results!")
@@ -2176,8 +2164,9 @@ def __enableMiddleware__(opt, val):
             if config[opt]:
                 logger.info('LCG-%s was already enabled.' % mt)
             else:
-                grids[mt] = Grid(mt)
-                return grids[mt].active
+                global grid
+                grid = Grid()
+                return grid.active
         except:
             raise Ganga.Utility.Config.ConfigError(
                 'Failed to enable LCG-%s.' % mt)
@@ -2190,8 +2179,8 @@ def __enableMiddleware__(opt, val):
 def __disableMiddleware__(opt, val):
 
     if opt in ['GLITE_ENABLE'] and not val:
-        mt = opt.split('_')[0]
-        grids[mt] = None
+        global grid
+        grid = None
         if not config['GLITE_ENABLE']:
             logger.warning('No middleware is enabled. LCG handler is disabled.')
 
@@ -2204,24 +2193,22 @@ def __disableMiddleware__(opt, val):
 def __updateGridObjects__(opt, val):
 
     # update the config binded with the grid objects
-    for mt in grids.keys():
-        try:
-            # NB. grids[mt] is None if the corresponding
-            # middleware is not enabled before
-            grids[mt].config = getConfig('LCG')
-            logger.debug('update grid configuration for %s' % mt)
-        except AttributeError:
-            pass
+    try:
+        # NB. grid is None if the corresponding
+        # middleware is not enabled before
+        grid.config = getConfig('LCG')
+        logger.debug('update grid configuration for GLITE')
+    except AttributeError:
+        pass
 
     # when user changes the 'DefaultLFC', change the env. variable, LFC_HOST,
     # of the cached grid shells
     if opt == 'DefaultLFC' and val is not None:
-        for mt in grids.keys():
-            try:
-                grids[mt].shell.env['LFC_HOST'] = val
-                logger.debug('set env. variable LFC_HOST to %s' % val)
-            except:
-                pass
+        try:
+            grid.shell.env['LFC_HOST'] = val
+            logger.debug('set env. variable LFC_HOST to %s' % val)
+        except:
+            pass
     return
 
 # configuration preprocessor
@@ -2256,14 +2243,10 @@ import Ganga.Utility.Config
 config = getConfig('LCG')
 config.attachUserHandler(__preConfigHandler__, __postConfigHandler__)
 
-# startup two independent middleware environments for LCG
-grids = {'GLITE': None}
-
+grid = None
 if config['GLITE_ENABLE']:
-    grids['GLITE'] = Grid()
-#    if grids['GLITE'].shell:
-#        config.setSessionValue('DefaultLFC',grids['GLITE'].shell.env['LFC_HOST'])
-    config.setSessionValue('GLITE_ENABLE', grids['GLITE'].active)
+    grid = Grid()
+    config.setSessionValue('GLITE_ENABLE', grid.active)
 
 logger.debug('LCG module initialization: end')
 
