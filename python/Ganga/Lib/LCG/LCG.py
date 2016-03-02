@@ -2143,41 +2143,20 @@ class LCGJobConfig(StandardJobConfig):
 
 # initialisation
 
-# function for parsing VirtualOrganisation from ConfigVO
-def __getVOFromConfigVO__(file):
-    re_vo = re.compile(r'.*VirtualOrganisation\s*=\s*"(.*)"')
-    try:
-        for l in open(file):
-            m = re_vo.match(l.strip())
-            if m:
-                return m.groups()[0]
-    except:
-        raise Ganga.Utility.Config.ConfigError(
-            'ConfigVO %s does not exist.' % file)
-
 # configuration preprocessor : avoid VO switching
 
 
 def __avoidVOSwitch__(opt, val):
 
-    if not opt in ['VirtualOrganisation', 'ConfigVO']:
+    if opt != 'VirtualOrganisation':
         # bypass everything irrelevant to the VO
-        return val
-    elif opt == 'ConfigVO' and val == '':
-        # accepting '' to disable the ConfigVO
         return val
     else:
         # try to get current value of VO
-        if config['ConfigVO']:
-            vo_1 = __getVOFromConfigVO__(config['ConfigVO'])
-        else:
-            vo_1 = config['VirtualOrganisation']
+        vo_1 = config['VirtualOrganisation']
 
         # get the VO that the user trying to switch to
-        if opt == 'ConfigVO':
-            vo_2 = __getVOFromConfigVO__(val)
-        else:
-            vo_2 = val
+        vo_2 = val
 
         # if the new VO is not the same as the existing one, raise ConfigError
         if vo_2 != vo_1:
