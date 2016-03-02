@@ -18,6 +18,8 @@ from Ganga.Lib.Root import randomString
 # global variables
 logger = getLogger()
 
+config = getConfig('LCG')
+
 
 class Grid(object):
 
@@ -32,8 +34,6 @@ class Grid(object):
         self.credential = None
 
         self.perusable = False
-
-        self.config = getConfig('LCG')
 
         self.wms_list = []
 
@@ -72,15 +72,15 @@ class Grid(object):
 
         # VO specific WMS options (no longer used by glite-wms-job-submit command)
         # 1. vo specified in the configuration file
-        if self.config['ConfigVO']:
+        if config['ConfigVO']:
             logger.warning('ConfigVO configuration ignored by GLITE middleware. Set Config instead.')
         # 2. vo attached in the voms proxy
         elif voms:
             msg += 'in voms proxy: %s.' % voms
         # 3. vo is given explicitely
-        elif self.config['VirtualOrganisation']:
-            submit_option = '--vo %s' % self.config['VirtualOrganisation']
-            msg += 'in Ganga config: %s.' % self.config['VirtualOrganisation']
+        elif config['VirtualOrganisation']:
+            submit_option = '--vo %s' % config['VirtualOrganisation']
+            msg += 'in Ganga config: %s.' % config['VirtualOrganisation']
         # 4. no vo information is found
         else:
             logger.warning(
@@ -88,8 +88,8 @@ class Grid(object):
             return None
 
         # check for WMS list - has it changed?
-        if self.config['GLITE_ALLOWED_WMS_LIST'] == []:
-            self.wms_list = self.config['GLITE_ALLOWED_WMS_LIST'][:]
+        if config['GLITE_ALLOWED_WMS_LIST'] == []:
+            self.wms_list = config['GLITE_ALLOWED_WMS_LIST'][:]
 
             # remove old conf
             if self.new_config != "" and os.path.exists(self.new_config):
@@ -100,11 +100,11 @@ class Grid(object):
                         "Unable to remove old config file '%s'" % self.new_config)
 
             self.new_config = ""
-        elif self.wms_list != self.config['GLITE_ALLOWED_WMS_LIST']:
+        elif self.wms_list != config['GLITE_ALLOWED_WMS_LIST']:
             logger.info("Updating allowed WMS list...")
 
             # find path to wms conf file and a temporary file to copy to
-            wms_conf_path = os.path.join(getShell().env['GLITE_WMS_LOCATION'], 'etc', self.config[
+            wms_conf_path = os.path.join(getShell().env['GLITE_WMS_LOCATION'], 'etc', config[
                                          'VirtualOrganisation'], 'glite_wmsui.conf')
             temp_wms_conf = tempfile.mktemp('.conf')
 
@@ -115,14 +115,14 @@ class Grid(object):
             # find the last bracket and add in the new text
             pos = orig_text.rfind("]")
             wms_text = "\nWMProxyEndpoints  =  {" + ",".join(
-                ["\"%s\"" % wms for wms in self.config['GLITE_ALLOWED_WMS_LIST']]) + "};\n]\n"
+                ["\"%s\"" % wms for wms in config['GLITE_ALLOWED_WMS_LIST']]) + "};\n]\n"
             new_text = orig_text[:pos] + wms_text
 
             # write the new config file
             with open(temp_wms_conf, "w") as this_file:
                 this_file.write(new_text)
 
-            self.wms_list = self.config['GLITE_ALLOWED_WMS_LIST'][:]
+            self.wms_list = config['GLITE_ALLOWED_WMS_LIST'][:]
 
             # remove old conf
             if self.new_config != "" and os.path.exists(self.new_config):
@@ -137,8 +137,8 @@ class Grid(object):
         # general WMS options
         # NB. please be aware the config for gLite WMS is NOT compatible with the config for EDG RB
         #     although both shares the same command option: '--config'
-        if self.config['Config']:
-            submit_option += ' --config %s' % self.config['Config']
+        if config['Config']:
+            submit_option += ' --config %s' % config['Config']
         elif self.new_config:
             submit_option += ' --config %s' % self.new_config
 
@@ -208,7 +208,7 @@ class Grid(object):
         logger.debug('GLITE lfc-infosites called ...')
 
         rc, output, m = getShell().cmd1(
-            '%s --vo %s lfc' % (cmd, self.config['VirtualOrganisation']), allowed_exit=[0, 255])
+            '%s --vo %s lfc' % (cmd, config['VirtualOrganisation']), allowed_exit=[0, 255])
 
         if rc != 0:
             # Grid.__print_gridcmd_log__('lcg-infosites',output)
@@ -255,7 +255,7 @@ class Grid(object):
         if self.credential is None:
             self.credential = getCredential('GridProxy')
         else:
-            self.credential.voms = self.config['VirtualOrganisation']
+            self.credential.voms = config['VirtualOrganisation']
             self.credential = getCredential('GridProxy')
 
         status = self.credential.renew(maxTry=3)
@@ -349,7 +349,7 @@ class Grid(object):
 
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
-                                        timeout=self.config['SubmissionTimeout'])
+                                        timeout=config['SubmissionTimeout'])
 
         if output:
             output = "%s" % output.strip()
@@ -428,7 +428,7 @@ class Grid(object):
         cmd = 'glite-wms-job-status'
 
         exec_bin = True
-        if self.config['IgnoreGliteScriptHeader']:
+        if config['IgnoreGliteScriptHeader']:
             exec_bin = False
 
         if is_collection:
@@ -446,7 +446,7 @@ class Grid(object):
 
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
-                                        timeout=self.config['StatusPollingTimeout'])
+                                        timeout=config['StatusPollingTimeout'])
         os.remove(idsfile)
 
         missing_glite_jids = []
@@ -551,7 +551,7 @@ class Grid(object):
         cmd = 'glite-wms-job-logging-info -v %d' % verbosity
 
         exec_bin = True
-        if self.config['IgnoreGliteScriptHeader']:
+        if config['IgnoreGliteScriptHeader']:
             exec_bin = False
 
         if not self.active:
@@ -592,8 +592,8 @@ class Grid(object):
         exec_bin = True
         # general WMS options (somehow used by the glite-wms-job-output
         # command)
-        if self.config['Config']:
-            cmd += ' --config %s' % self.config['Config']
+        if config['Config']:
+            cmd += ' --config %s' % config['Config']
 
         if not self.active:
             logger.warning('LCG plugin is not active.')
@@ -845,7 +845,7 @@ class Grid(object):
 
             rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                             allowed_exit=[0, 255],
-                                            timeout=self.config['SubmissionTimeout'])
+                                            timeout=config['SubmissionTimeout'])
             if rc != 0:
                 # failed to delegate proxy
                 logger.error('proxy delegation error: %s' % output)
@@ -892,7 +892,7 @@ class Grid(object):
 
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
-                                        timeout=self.config['SubmissionTimeout'])
+                                        timeout=config['SubmissionTimeout'])
 
         if output:
             output = "%s" % output.strip()
@@ -927,7 +927,7 @@ class Grid(object):
 
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
-                                        timeout=self.config['StatusPollingTimeout'])
+                                        timeout=config['StatusPollingTimeout'])
         jobInfoDict = {}
         if rc == 0 and output:
             jobInfoDict = Grid.__cream_parse_job_status__(output)
@@ -1013,7 +1013,7 @@ class Grid(object):
             gfiles.append(gf)
 
         cache = GridftpSandboxCache()
-        cache.vo = self.config['VirtualOrganisation']
+        cache.vo = config['VirtualOrganisation']
         cache.uploaded_files = gfiles
 
         return cache.download(files=map(lambda x: x.id, gfiles), dest_dir=directory)
@@ -1157,7 +1157,7 @@ class Grid(object):
         '''Wrap the lcg-infosites command'''
 
         cmd = 'lcg-infosites --vo %s %s' % (
-            self.config['VirtualOrganisation'], opts)
+            config['VirtualOrganisation'], opts)
 
         if not self.active:
             logger.warning('LCG plugin not active.')
@@ -1178,8 +1178,8 @@ class Grid(object):
 
     def __arc_get_config_file_arg__(self):
         '''Helper function to return the config file argument'''
-        if self.config['ArcConfigFile']:
-            return "-z " + self.config['ArcConfigFile']
+        if config['ArcConfigFile']:
+            return "-z " + config['ArcConfigFile']
 
         return ""
 
@@ -1213,7 +1213,7 @@ class Grid(object):
 
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
-                                        timeout=self.config['SubmissionTimeout'])
+                                        timeout=config['SubmissionTimeout'])
 
         if output:
             output = "%s" % output.strip()
@@ -1253,12 +1253,12 @@ class Grid(object):
         exec_bin = True
 
         cmd = '%s %s -i %s -j %s' % (
-            cmd, self.__arc_get_config_file_arg__(), idsfile, self.config["ArcJobListFile"])
+            cmd, self.__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
         logger.debug('job status command: %s' % cmd)
 
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 1, 255],
-                                        timeout=self.config['StatusPollingTimeout'])
+                                        timeout=config['StatusPollingTimeout'])
         jobInfoDict = {}
 
         if rc != 0:
@@ -1327,10 +1327,10 @@ class Grid(object):
 
         if cedict[0]:
             cmd = 'arcsync %s -j %s -f -c %s' % (self.__arc_get_config_file_arg__(
-            ), self.config["ArcJobListFile"], ' -c '.join(cedict))
+            ), config["ArcJobListFile"], ' -c '.join(cedict))
         else:
             cmd = 'arcsync %s -j %s -f ' % (
-                self.__arc_get_config_file_arg__(), self.config["ArcJobListFile"])
+                self.__arc_get_config_file_arg__(), config["ArcJobListFile"])
 
         if not self.active:
             logger.warning('LCG plugin is not active.')
@@ -1342,7 +1342,7 @@ class Grid(object):
         logger.debug('sync ARC jobs list with: %s' % cmd)
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=True), cmd),
                                         allowed_exit=[0, 255],
-                                        timeout=self.config['StatusPollingTimeout'])
+                                        timeout=config['StatusPollingTimeout'])
         if rc != 0:
             logger.error('Unable to sync ARC jobs. Error: %s' % output)
 
@@ -1358,7 +1358,7 @@ class Grid(object):
         logger.debug('arcls command: %s' % cmd)
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
-                                        timeout=self.config['SubmissionTimeout'])
+                                        timeout=config['SubmissionTimeout'])
         if rc:
             logger.error(
                 "Could not find directory associated with ARC job ID '%s'" % jid)
@@ -1375,7 +1375,7 @@ class Grid(object):
             gfiles.append(gf)
 
         cache = GridftpSandboxCache()
-        cache.vo = self.config['VirtualOrganisation']
+        cache.vo = config['VirtualOrganisation']
         cache.uploaded_files = gfiles
         return cache.download(files=map(lambda x: x.id, gfiles), dest_dir=directory)
 
@@ -1393,7 +1393,7 @@ class Grid(object):
         exec_bin = True
 
         cmd = '%s %s -i %s -j %s' % (
-            cmd, self.__arc_get_config_file_arg__(), idsfile, self.config["ArcJobListFile"])
+            cmd, self.__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
 
         logger.debug('job purge command: %s' % cmd)
 
@@ -1425,7 +1425,7 @@ class Grid(object):
             return False
 
         cmd = '%s %s %s -j %s' % (cmd, str(
-            jobid)[1:-1], self.__arc_get_config_file_arg__(), self.config["ArcJobListFile"])
+            jobid)[1:-1], self.__arc_get_config_file_arg__(), config["ArcJobListFile"])
 
         logger.debug('job cancel command: %s' % cmd)
 
@@ -1465,7 +1465,7 @@ class Grid(object):
 
         # compose the cancel command
         cmd = '%s %s -i %s -j %s' % (
-            cmd, self.__arc_get_config_file_arg__(), idsfile, self.config["ArcJobListFile"])
+            cmd, self.__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
 
         logger.debug('job cancel command: %s' % cmd)
 
@@ -1494,5 +1494,5 @@ class Grid(object):
 
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=True), cmd),
                                         allowed_exit=[0, 1, 255],
-                                        timeout=self.config['StatusPollingTimeout'])
+                                        timeout=config['StatusPollingTimeout'])
         return rc, output
