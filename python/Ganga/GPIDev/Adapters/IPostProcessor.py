@@ -72,8 +72,7 @@ class MultiPostProcessor(IPostProcessor):
             else:
                 self.addProcess(args)
 
-            if hasattr(self.process_objects, 'order'):
-                self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
+            self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
         else:
             super(MultiPostProcessor, self).__construct__(args)
 
@@ -83,10 +82,11 @@ class MultiPostProcessor(IPostProcessor):
         else:
             return str(GPIProxyObjectFactory(self.process_objects))
 
-    def append(self, value):
+    def append(self, _value):
+        from Ganga.GPIDev.Proxy import stripProxy
+        value = stripProxy(value)
         self.addProcess(value)
-        if hasattr(self.process_objects, 'order'):
-            self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
+        self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
 
     def remove(self, value):
         for process in self.process_objects:
