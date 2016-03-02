@@ -33,7 +33,6 @@ ThreadPool = []
 
 heartbeat_times = None
 global_start_time = None
-global_count = 0
 
 # The JobAction class encapsulates a function, its arguments and its post result action
 # based on what is defined as a successful run of the function.
@@ -61,7 +60,7 @@ def getNumAliveThreads():
             num_currently_running_command += 1
     return num_currently_running_command
 
-def checkHeartBeat():
+def checkHeartBeat(global_count):
 
     latest_timeNow = time.time()
 
@@ -73,7 +72,6 @@ def checkHeartBeat():
         dead_time = config['HeartBeatTimeOut']
         max_warnings = 5
 
-        global global_count
         if (latest_timeNow - last_time) > dead_time and this_thread.isAlive()\
                 and this_thread._currently_running_command is True\
                 and global_count < max_warnings:
@@ -468,8 +466,9 @@ def get_jobs_in_bunches(jobList_fromset, blocks_of_size=5, stripProxies=True):
 class JobRegistry_Monitor(GangaThread):
 
     """Job monitoring service thread."""
-    uPollRate = 0.5
-    minPollRate = 1.0
+    uPollRate = 1.
+    minPollRate = 1.
+    global_count = 0
 
     def __init__(self, registry):
         GangaThread.__init__(self, name="JobRegistry_Monitor")
@@ -535,7 +534,7 @@ class JobRegistry_Monitor(GangaThread):
         log.debug("Starting run method")
 
         while self.alive:
-            checkHeartBeat()
+            checkHeartBeat(cls.global_count)
             log.debug("Monitoring Loop is alive")
             # synchronize the main loop since we can get disable requests
             with self.__mainLoopCond:
