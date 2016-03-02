@@ -12,7 +12,7 @@ for i in range(2):
     args.append(argv)
 j.splitter.values = args
 
-j.backend = LCG(middleware='GLITE')
+j.backend = LCG()
 
 cnf = Ganga.Utility.Config.getConfig('LCG')
 if cnf['GLITE_ENABLE']:

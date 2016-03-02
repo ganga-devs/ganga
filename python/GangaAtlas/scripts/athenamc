@@ -220,9 +220,7 @@ j.backend=LCG()
 if opt.ce:
     j.backend.CE=opt.ce
 if opt.glite:
-    j.backend.middleware = 'GLITE' 
-elif opt.edg:
-    j.backend.middleware = 'EDG'
+    j.backend.middleware = 'GLITE'
 
 j.application.prepare()
 

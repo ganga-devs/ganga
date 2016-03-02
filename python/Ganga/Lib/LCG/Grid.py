@@ -23,18 +23,13 @@ class Grid(object):
 
     '''Helper class to implement grid interaction'''
 
-    # attributes
-    _attributes = ('middleware', 'credential', 'config', 'active', 'perusable')
-
-    def __init__(self, middleware='EDG'):
+    def __init__(self):
 
         self.active = False
 
         self.re_token = re.compile('^token:(.*):(.*)$')
 
         self.credential = None
-
-        self.middleware = middleware.upper()
 
         self.perusable = False
 
@@ -45,14 +40,13 @@ class Grid(object):
         self.new_config = ""
 
 #       check that UI has been set up
-#       start up a shell object specific to the middleware
-        self.shell = getShell(self.middleware)
+#       start up a shell object
+        self.shell = getShell()
 
         self.proxy_id = {}
 
         if not self.shell:
-            logger.warning(
-                'LCG-%s UI has not been configured. The plugin has been disabled.' % self.middleware)
+            logger.warning('LCG-GLITE UI has not been configured. The plugin has been disabled.')
             return
 
 #       create credential for this Grid object
@@ -63,7 +57,7 @@ class Grid(object):
         # dynamic update the internal shell object if the config attribute is
         # reset
         if attr == 'config':
-            self.shell = getShell(self.middleware)
+            self.shell = getShell()
 
     def __get_cmd_prefix_hack__(self, binary=False):
         # this is to work around inconsistency of LCG setup script and commands:
@@ -71,7 +65,7 @@ class Grid(object):
         # if another version of python is used (like in GUI), then python2.2 runs against wrong python libraries
         # possibly should be fixed in LCG: either remove python2.2 from command scripts or make setup script force
         # correct version of python
-        prefix_hack = "${%s_LOCATION}/bin/" % self.middleware
+        prefix_hack = "${GLITE_LOCATION}/bin/"
 
         # some script-based glite-wms commands (status and logging-info) requires (#/usr/bin/env python2)
         # which leads to a python conflict problem.
@@ -93,16 +87,7 @@ class Grid(object):
         # VO specific WMS options (no longer used by glite-wms-job-submit command)
         # 1. vo specified in the configuration file
         if self.config['ConfigVO']:
-            if self.middleware == 'EDG':
-                submit_option = '--config-vo %s' % self.config['ConfigVO']
-                if not os.path.exists(self.config['ConfigVO']):
-                    #raise Ganga.Utility.Config.ConfigError('')
-                    raise ConfigError('')
-                else:
-                    msg += 'in %s.' % self.config['ConfigVO']
-            else:
-                logger.warning(
-                    'ConfigVO configuration ignored by %s middleware. Set Config instead.' % self.middleware)
+            logger.warning('ConfigVO configuration ignored by GLITE middleware. Set Config instead.')
         # 2. vo attached in the voms proxy
         elif voms:
             msg += 'in voms proxy: %s.' % voms
@@ -211,13 +196,8 @@ class Grid(object):
 
     def __get_proxy_voname__(self):
         '''Check validity of proxy vo'''
-
-        # for EDG, we never check it
-        if self.middleware == 'EDG':
-            return None
-        else:
-            logger.debug('voms of credential: %s' % self.credential.voms)
-            return self.credential.voms
+        logger.debug('voms of credential: %s' % self.credential.voms)
+        return self.credential.voms
 
     def __get_lfc_host__(self):
         '''Gets the LFC_HOST: from current shell or querying BDII on demand'''
@@ -236,7 +216,7 @@ class Grid(object):
 
         cmd = 'lcg-infosites'
 
-        logger.debug('%s lfc-infosites called ...' % self.middleware)
+        logger.debug('GLITE lfc-infosites called ...')
 
         rc, output, m = self.shell.cmd1(
             '%s --vo %s lfc' % (cmd, self.config['VirtualOrganisation']), allowed_exit=[0, 255])
@@ -283,11 +263,10 @@ class Grid(object):
         '''Check the proxy and prompt the user to refresh it'''
 
         if self.credential is None:
-            self.credential = getCredential('GridProxy', self.middleware)
-
-        if self.middleware == 'GLITE':
+            self.credential = getCredential('GridProxy')
+        else:
             self.credential.voms = self.config['VirtualOrganisation']
-            self.credential = getCredential('GridProxy', 'GLITE')
+            self.credential = getCredential('GridProxy')
 
         status = self.credential.renew(maxTry=3)
 
@@ -304,12 +283,8 @@ class Grid(object):
 
         matched_ces = []
 
-        if self.middleware == 'EDG':
-            cmd = 'edg-job-list-match'
-            exec_bin = False
-        else:
-            cmd = 'glite-wms-job-list-match -a'
-            exec_bin = True
+        cmd = 'glite-wms-job-list-match -a'
+        exec_bin = True
 
         if not self.active:
             logger.warning('LCG plugin not active.')
@@ -357,12 +332,8 @@ class Grid(object):
         '''Submit a JDL file to LCG'''
 
         # doing job submission
-        if self.middleware == 'EDG':
-            cmd = 'edg-job-submit'
-            exec_bin = False
-        else:
-            cmd = 'glite-wms-job-submit -a'
-            exec_bin = True
+        cmd = 'glite-wms-job-submit -a'
+        exec_bin = True
 
         if not self.active:
             logger.warning('LCG plugin not active.')
@@ -398,7 +369,7 @@ class Grid(object):
 
         if match:
             logger.debug('job id: %s' % match.group(1))
-            if self.middleware == 'GLITE' and self.perusable:
+            if self.perusable:
                 logger.info("Enabling perusal")
                 per_rc, per_out, per_m = self.shell.cmd1(
                     "glite-wms-job-perusal --set -f stdout %s" % match.group(1))
@@ -415,13 +386,8 @@ class Grid(object):
     def native_master_cancel(self, jobids):
         '''Native bulk cancellation supported by GLITE middleware.'''
 
-        if self.middleware == 'EDG':
-            logger.warning(
-                'EDG middleware doesn\'t support bulk cancellation.')
-            return False
-        else:
-            cmd = 'glite-wms-job-cancel'
-            exec_bin = True
+        cmd = 'glite-wms-job-cancel'
+        exec_bin = True
 
         if not self.active:
             logger.warning('LCG plugin not active.')
@@ -469,18 +435,14 @@ class Grid(object):
         with open(idsfile, 'w') as ids_file:
             ids_file.write('\n'.join(jobids) + '\n')
 
-        if self.middleware == 'EDG':
-            cmd = 'edg-job-status'
+        cmd = 'glite-wms-job-status'
+
+        exec_bin = True
+        if self.config['IgnoreGliteScriptHeader']:
             exec_bin = False
-        else:
-            cmd = 'glite-wms-job-status'
 
-            exec_bin = True
-            if self.config['IgnoreGliteScriptHeader']:
-                exec_bin = False
-
-            if is_collection:
-                cmd = '%s -v 3' % cmd
+        if is_collection:
+            cmd = '%s -v 3' % cmd
 
         if not self.active:
             logger.warning('LCG plugin not active.')
@@ -596,15 +558,11 @@ class Grid(object):
     def get_loginfo(self, jobids, directory, verbosity=1):
         '''Fetch the logging info of the given job and save the output in the job's outputdir'''
 
-        if self.middleware == 'EDG':
-            cmd = 'edg-job-get-logging-info -v %d' % verbosity
-            exec_bin = False
-        else:
-            cmd = 'glite-wms-job-logging-info -v %d' % verbosity
+        cmd = 'glite-wms-job-logging-info -v %d' % verbosity
 
-            exec_bin = True
-            if self.config['IgnoreGliteScriptHeader']:
-                exec_bin = False
+        exec_bin = True
+        if self.config['IgnoreGliteScriptHeader']:
+            exec_bin = False
 
         if not self.active:
             logger.warning('LCG plugin not active.')
@@ -640,16 +598,12 @@ class Grid(object):
     def get_output(self, jobid, directory, wms_proxy=False):
         '''Retrieve the output of a job on the grid'''
 
-        if self.middleware == 'EDG':
-            cmd = 'edg-job-get-output'
-            exec_bin = False
-        else:
-            cmd = 'glite-wms-job-output'
-            exec_bin = True
-            # general WMS options (somehow used by the glite-wms-job-output
-            # command)
-            if self.config['Config']:
-                cmd += ' --config %s' % self.config['Config']
+        cmd = 'glite-wms-job-output'
+        exec_bin = True
+        # general WMS options (somehow used by the glite-wms-job-output
+        # command)
+        if self.config['Config']:
+            cmd += ' --config %s' % self.config['Config']
 
         if not self.active:
             logger.warning('LCG plugin is not active.')
@@ -707,12 +661,8 @@ class Grid(object):
             return True
 
         # do the cancellation using a proper LCG command
-        if self.middleware == 'EDG':
-            cmd = 'edg-job-cancel'
-            exec_bin = False
-        else:
-            cmd = 'glite-wms-job-cancel'
-            exec_bin = True
+        cmd = 'glite-wms-job-cancel'
+        exec_bin = True
 
         if not self.active:
             logger.warning('LCG plugin is not active.')
@@ -750,12 +700,8 @@ class Grid(object):
     def cancel(self, jobid):
         '''Cancel a job'''
 
-        if self.middleware == 'EDG':
-            cmd = 'edg-job-cancel'
-            exec_bin = False
-        else:
-            cmd = 'glite-wms-job-cancel'
-            exec_bin = True
+        cmd = 'glite-wms-job-cancel'
+        exec_bin = True
 
         if not self.active:
             logger.warning('LCG plugin is not active.')
@@ -839,10 +785,6 @@ class Grid(object):
 
     def __cream_ui_check__(self):
         '''checking if CREAM CE environment is set properly'''
-
-        if self.middleware.upper() != 'GLITE':
-            logger.warning('CREAM CE job operation not supported')
-            return False
 
         if not self.active:
             logger.warning('LCG plugin not active.')
@@ -1080,7 +1022,6 @@ class Grid(object):
             gfiles.append(gf)
 
         cache = GridftpSandboxCache()
-        cache.middleware = 'GLITE'
         cache.vo = self.config['VirtualOrganisation']
         cache.uploaded_files = gfiles
 
@@ -1441,7 +1382,6 @@ class Grid(object):
             gfiles.append(gf)
 
         cache = GridftpSandboxCache()
-        cache.middleware = 'GLITE'
         cache.vo = self.config['VirtualOrganisation']
         cache.uploaded_files = gfiles
         return cache.download(files=map(lambda x: x.id, gfiles), dest_dir=directory)

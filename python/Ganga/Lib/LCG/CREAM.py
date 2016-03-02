@@ -117,13 +117,11 @@ class CREAM(IBackend):
         re_token = re.compile('^token:(.*):(.*)$')
 
         self.sandboxcache.vo = config['VirtualOrganisation']
-        self.sandboxcache.middleware = 'GLITE'
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         if self.sandboxcache._name == 'LCGSandboxCache':
             if not self.sandboxcache.lfc_host:
-                self.sandboxcache.lfc_host = grids[
-                    self.sandboxcache.middleware].__get_lfc_host__()
+                self.sandboxcache.lfc_host = grids['GLITE'].__get_lfc_host__()
 
             if not self.sandboxcache.se:
 
@@ -213,8 +211,7 @@ class CREAM(IBackend):
 
         # or in general, query it from the Grid object
         if not lfc_host:
-            lfc_host = grids[
-                self.sandboxcache.middleware.upper()].__get_lfc_host__()
+            lfc_host = grids['GLITE'].__get_lfc_host__()
 
         idx['lfc_host'] = lfc_host
 

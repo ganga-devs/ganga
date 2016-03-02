@@ -36,23 +36,20 @@ from Ganga.Utility.logging import getLogger
 _allShells = {}
 
 
-def getShell(middleware='EDG', force=False):
+def getShell(force=False):
     """
     Utility function for getting Grid Shell.
     Caller should take responsiblity of credential checking if proxy is needed.
 
     Argumennts:
 
-     middleware - grid m/w used 
      force      - False : if the shell already exists in local cache return the previous created instance
                   True  : recreate the shell and if not None update the cache
     """
 
     logger = getLogger()
 
-    if not middleware:
-        logger.debug('No middleware specified, assuming default EDG')
-        middleware = 'EDG'
+    middleware = 'GLITE'
 
     if middleware in _allShells.keys() and not force:
         return _allShells[middleware]
@@ -64,11 +61,7 @@ def getShell(middleware='EDG', force=False):
         except KeyError:
             pass
 
-    configname = ""
-    if middleware == 'EDG' or middleware == 'GLITE':
-        configname = 'LCG'
-    else:
-        configname = middleware
+    configname = 'LCG'
 
     config = None
     try:
