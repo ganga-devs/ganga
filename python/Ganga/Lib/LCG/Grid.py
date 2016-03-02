@@ -39,25 +39,10 @@ class Grid(object):
 
         self.new_config = ""
 
-#       check that UI has been set up
-#       start up a shell object
-        self.shell = getShell()
-
         self.proxy_id = {}
-
-        if not self.shell:
-            logger.warning('LCG-GLITE UI has not been configured. The plugin has been disabled.')
-            return
 
 #       create credential for this Grid object
         self.active = self.check_proxy()
-
-    def __setattr__(self, attr, value):
-        object.__setattr__(self, attr, value)
-        # dynamic update the internal shell object if the config attribute is
-        # reset
-        if attr == 'config':
-            self.shell = getShell()
 
     @staticmethod
     def __get_cmd_prefix_hack__(binary=False):
@@ -119,7 +104,7 @@ class Grid(object):
             logger.info("Updating allowed WMS list...")
 
             # find path to wms conf file and a temporary file to copy to
-            wms_conf_path = os.path.join(self.shell.env['GLITE_WMS_LOCATION'], 'etc', self.config[
+            wms_conf_path = os.path.join(getShell().env['GLITE_WMS_LOCATION'], 'etc', self.config[
                                          'VirtualOrganisation'], 'glite_wmsui.conf')
             temp_wms_conf = tempfile.mktemp('.conf')
 
@@ -207,8 +192,8 @@ class Grid(object):
         '''Gets the LFC_HOST: from current shell or querying BDII on demand'''
         lfc_host = None
 
-        if 'LFC_HOST' in self.shell.env:
-            lfc_host = self.shell.env['LFC_HOST']
+        if 'LFC_HOST' in getShell().env:
+            lfc_host = getShell().env['LFC_HOST']
 
         if not lfc_host:
             lfc_host = self.__get_default_lfc__()
@@ -222,7 +207,7 @@ class Grid(object):
 
         logger.debug('GLITE lfc-infosites called ...')
 
-        rc, output, m = self.shell.cmd1(
+        rc, output, m = getShell().cmd1(
             '%s --vo %s lfc' % (cmd, self.config['VirtualOrganisation']), allowed_exit=[0, 255])
 
         if rc != 0:
@@ -310,7 +295,7 @@ class Grid(object):
 
         logger.debug('job list match command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (
+        rc, output, m = getShell().cmd1('%s%s' % (
             Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         for l in output.split('\n'):
@@ -362,7 +347,7 @@ class Grid(object):
 
         logger.debug('job submit command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['SubmissionTimeout'])
 
@@ -376,7 +361,7 @@ class Grid(object):
             logger.debug('job id: %s' % match.group(1))
             if self.perusable:
                 logger.info("Enabling perusal")
-                per_rc, per_out, per_m = self.shell.cmd1(
+                per_rc, per_out, per_m = getShell().cmd1(
                     "glite-wms-job-perusal --set -f stdout %s" % match.group(1))
 
             # remove the glite command log if it exists
@@ -413,7 +398,7 @@ class Grid(object):
 
         logger.debug('job cancel command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (
+        rc, output, m = getShell().cmd1('%s%s' % (
             Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         # clean up tempfile
@@ -459,7 +444,7 @@ class Grid(object):
         cmd = '%s --noint -i %s' % (cmd, idsfile)
         logger.debug('job status command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['StatusPollingTimeout'])
         os.remove(idsfile)
@@ -586,7 +571,7 @@ class Grid(object):
 
         logger.debug('job logging info command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (
+        rc, output, m = getShell().cmd1('%s%s' % (
             Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
         os.remove(idsfile)
 
@@ -621,7 +606,7 @@ class Grid(object):
 
         logger.debug('job get output command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (
+        rc, output, m = getShell().cmd1('%s%s' % (
             Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         match = re.search('directory:\n\s*([^\t\n\r\f\v]+)\s*\n', output)
@@ -644,7 +629,7 @@ class Grid(object):
         jid_hash = urlparse.urlparse(jobid)[2][1:]
 
         if outdir.count(jid_hash):
-            if self.shell.system('mv "%s"/* "%s"' % (outdir, directory)) == 0:
+            if getShell().system('mv "%s"/* "%s"' % (outdir, directory)) == 0:
                 try:
                     os.rmdir(outdir)
                 except Exception as msg:
@@ -685,7 +670,7 @@ class Grid(object):
 
         logger.debug('job cancel command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (
+        rc, output, m = getShell().cmd1('%s%s' % (
             Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         # clean up tempfile
@@ -719,7 +704,7 @@ class Grid(object):
 
         logger.debug('job cancel command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (
+        rc, output, m = getShell().cmd1('%s%s' % (
             Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         if rc == 0:
@@ -858,7 +843,7 @@ class Grid(object):
 
             logger.debug('proxy delegation command: %s' % cmd)
 
-            rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+            rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                             allowed_exit=[0, 255],
                                             timeout=self.config['SubmissionTimeout'])
             if rc != 0:
@@ -905,7 +890,7 @@ class Grid(object):
 
         logger.debug('job submit command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['SubmissionTimeout'])
 
@@ -940,7 +925,7 @@ class Grid(object):
         cmd = '%s -L 2 -n -i %s' % (cmd, idsfile)
         logger.debug('job status command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['StatusPollingTimeout'])
         jobInfoDict = {}
@@ -970,7 +955,7 @@ class Grid(object):
 
         logger.debug('job purge command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (
+        rc, output, m = getShell().cmd1('%s%s' % (
             Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         logger.debug(output)
@@ -1001,7 +986,7 @@ class Grid(object):
 
         logger.debug('job cancel command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (
+        rc, output, m = getShell().cmd1('%s%s' % (
             Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         logger.debug(output)
@@ -1184,7 +1169,7 @@ class Grid(object):
 
         logger.debug('lcg-infosites command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s' % (cmd), allowed_exit=[0, 255])
+        rc, output, m = getShell().cmd1('%s' % (cmd), allowed_exit=[0, 255])
 
         if rc != 0:
             return ""
@@ -1226,13 +1211,13 @@ class Grid(object):
 
         logger.debug('job submit command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['SubmissionTimeout'])
 
         if output:
             output = "%s" % output.strip()
-        rc = self.shell.system('rm ' + tmpstr)
+        rc = getShell().system('rm ' + tmpstr)
 
         # Job submitted with jobid:
         # gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/vSoLDmvvEljnvnizHq7yZUKmABFKDmABFKDmCTGKDmABFKDmfN955m
@@ -1271,7 +1256,7 @@ class Grid(object):
             cmd, self.__arc_get_config_file_arg__(), idsfile, self.config["ArcJobListFile"])
         logger.debug('job status command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 1, 255],
                                         timeout=self.config['StatusPollingTimeout'])
         jobInfoDict = {}
@@ -1355,7 +1340,7 @@ class Grid(object):
             return False
 
         logger.debug('sync ARC jobs list with: %s' % cmd)
-        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=True), cmd),
+        rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=True), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['StatusPollingTimeout'])
         if rc != 0:
@@ -1371,7 +1356,7 @@ class Grid(object):
         cmd = 'arcls %s %s' % (self.__arc_get_config_file_arg__(), jid)
         exec_bin = True
         logger.debug('arcls command: %s' % cmd)
-        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=self.config['SubmissionTimeout'])
         if rc:
@@ -1412,7 +1397,7 @@ class Grid(object):
 
         logger.debug('job purge command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (
+        rc, output, m = getShell().cmd1('%s%s' % (
             Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         logger.debug(output)
@@ -1444,7 +1429,7 @@ class Grid(object):
 
         logger.debug('job cancel command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (
+        rc, output, m = getShell().cmd1('%s%s' % (
             Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         if rc == 0:
@@ -1484,7 +1469,7 @@ class Grid(object):
 
         logger.debug('job cancel command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (
+        rc, output, m = getShell().cmd1('%s%s' % (
             Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         # clean up tempfile
@@ -1507,7 +1492,7 @@ class Grid(object):
         cmd = 'arcinfo %s > /dev/null' % self.__arc_get_config_file_arg__()
         logger.debug("Running arcinfo command '%s'" % cmd)
 
-        rc, output, m = self.shell.cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=True), cmd),
+        rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=True), cmd),
                                         allowed_exit=[0, 1, 255],
                                         timeout=self.config['StatusPollingTimeout'])
         return rc, output
