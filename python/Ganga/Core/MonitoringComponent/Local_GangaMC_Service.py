@@ -534,7 +534,7 @@ class JobRegistry_Monitor(GangaThread):
         log.debug("Starting run method")
 
         while self.alive:
-            checkHeartBeat(cls.global_count)
+            checkHeartBeat(JobRegistry_Monitor.global_count)
             log.debug("Monitoring Loop is alive")
             # synchronize the main loop since we can get disable requests
             with self.__mainLoopCond:
@@ -794,7 +794,7 @@ class JobRegistry_Monitor(GangaThread):
         _purge_actions_queue()
         stop_and_free_thread_pool(fail_cb, max_retries)
 
-        cls.global_count = 0
+        JobRegistry_Monitor.global_count = 0
         return True
 
     def stop(self, fail_cb=None, max_retries=5):
@@ -844,7 +844,7 @@ class JobRegistry_Monitor(GangaThread):
         #while self._runningNow is True:
         #    time.sleep(0.5)
 
-        cls.global_count = 0
+        JobRegistry_Monitor.global_count = 0
         return True
 
     def __cleanUp(self):
