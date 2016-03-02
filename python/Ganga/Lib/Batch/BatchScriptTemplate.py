@@ -116,7 +116,7 @@ try:
 except:
     filefilter = None
 
-from Ganga.Utility.files import multi_glob, recursive_copy
+from files import multi_glob, recursive_copy
 
 createOutputSandbox(outputpatterns,filefilter,sharedoutputpath)
 
