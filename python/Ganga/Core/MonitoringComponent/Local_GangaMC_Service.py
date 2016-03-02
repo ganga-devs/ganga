@@ -794,7 +794,7 @@ class JobRegistry_Monitor(GangaThread):
         _purge_actions_queue()
         stop_and_free_thread_pool(fail_cb, max_retries)
 
-        global_count = 0
+        cls.global_count = 0
         return True
 
     def stop(self, fail_cb=None, max_retries=5):
@@ -844,7 +844,7 @@ class JobRegistry_Monitor(GangaThread):
         #while self._runningNow is True:
         #    time.sleep(0.5)
 
-        global_count = 0
+        cls.global_count = 0
         return True
 
     def __cleanUp(self):
