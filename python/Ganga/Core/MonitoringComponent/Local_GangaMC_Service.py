@@ -33,6 +33,7 @@ ThreadPool = []
 
 heartbeat_times = None
 global_start_time = None
+global_count = 0
 
 # The JobAction class encapsulates a function, its arguments and its post result action
 # based on what is defined as a successful run of the function.
@@ -70,8 +71,12 @@ def checkHeartBeat():
         last_time = heartbeat_times[thread_name]
 
         dead_time = config['HeartBeatTimeOut']
+        max_warnings = 5
 
-        if (latest_timeNow - last_time) > dead_time and this_thread.isAlive() and this_thread._currently_running_command is True:
+        global global_count
+        if (latest_timeNow - last_time) > dead_time and this_thread.isAlive()\
+                and this_thread._currently_running_command is True\
+                and global_count < max_warnings:
 
             log.warning("Thread: %s Has not updated the heartbeat in %ss!! It's possibly dead" %(thread_name, str(dead_time)))
             log.warning("Thread is attempting to execute: %s" % this_thread._running_cmd)
@@ -80,6 +85,7 @@ def checkHeartBeat():
             ## Add at least 5sec here to avoid spamming the user non-stop that a monitoring thread has locked up almost entirely
             ## You'll get a message at most once per 5sec or less if the Monitoring is busy/asleep
             heartbeat_times[thread_name] += 5.
+            global_count+=1
 
 class MonitoringWorkerThread(GangaThread):
 
