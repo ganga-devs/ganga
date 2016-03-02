@@ -73,7 +73,6 @@ def checkHeartBeat():
         dead_time = config['HeartBeatTimeOut']
         max_warnings = 5
 
-        global global_count
         if (latest_timeNow - last_time) > dead_time and this_thread.isAlive()\
                 and this_thread._currently_running_command is True\
                 and global_count < max_warnings:
