@@ -682,6 +682,8 @@ class Registry(object):
             #NO NO NO NO NO NO NO FOR THE SAKE OF MY SANITY NO, NEVER, EVER, EVER ITERATE OVER ALL OBJECTS BLINDLY FOR A FLUSH!!!
             #self._flush(self.values())
             self._flush()
+        if self.metadata and self.metadata.hasStarted():
+            self.metadata._flush()
 
     def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.
