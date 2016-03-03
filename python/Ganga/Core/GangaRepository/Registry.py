@@ -167,6 +167,33 @@ def synchronised(f):
     return decorated
 
 
+class RegistryFlusher(threading.Thread):
+    """
+    This class is intended to be used by the registry to perfom
+    automatic flushes on a fixed schedule so that information is not
+    lost if Ganga is shut down abruptly.
+    """
+    def __init__(self, registry, *args, **kwargs):
+        super(RegistryFlusher, self).__init__(*args, **kwargs)
+        self.registry = registry
+        self._stop = threading.Event()
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()
+
+    def run(self):
+        while not self.stopped():
+            for i in range(30):
+                time.sleep(1)
+                if self.stopped():
+                    return
+            print 'auto-flushing', self.registry.name
+            self.registry.flush_all()
+
+
 class Registry(object):
 
     """Ganga Registry
@@ -209,6 +236,9 @@ class Registry(object):
 
 
         self.shouldReleaseRun = True
+
+        self.flush_thread = None
+
 #        self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
 #        self.releaseThread.daemon = True
 #        self.releaseThread.start()
@@ -882,6 +912,8 @@ class Registry(object):
             self.repository.startup()
             # All Ids could have changed
             self.changed_ids = {}
+            self.flush_thread = RegistryFlusher(self)
+            self.flush_thread.start()
             t1 = time.time()
             logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
         except Exception as err:
@@ -899,6 +931,8 @@ class Registry(object):
         logger.debug("Shutting Down Registry")
         logger.debug("shutdown")
         try:
+            self.flush_thread.stop()
+            self.flush_thread.join()
             self._hasStarted = True
             try:
                 if not self.metadata is None:
