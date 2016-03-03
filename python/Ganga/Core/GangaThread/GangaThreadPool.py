@@ -191,9 +191,9 @@ class GangaThreadPool(object):
         # have disappeared
         for t in reversed(critThreads):
             logger.debug('shutting down Thread: %s' % t.getName())
-            if hasattr(t, 'setDeamon'):
-                t.setDeamon(False)
             t.stop()
+            if hasattr(t, 'setDaemon') and not t.isAlive():
+                t.setDaemon(False)
             logger.debug('shutdown Thread: %s' % t.getName())
             # t.unregister()
 

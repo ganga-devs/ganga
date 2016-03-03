@@ -225,9 +225,9 @@ class WorkerThreadPool(object):
     def _stop_worker_threads(self, shutdown=False):
         self._shutdown = shutdown
         for w in self.__worker_threads:
-            w.setDaemon(False)
             w.stop()
             w.join()
+            w.setDaemon(False)
             # FIXME NEED TO CALL AN OPTIONAL CLEANUP FUCNTION HERE IF THREAD IS STOPPED
             # w.unregister()
             #del w
