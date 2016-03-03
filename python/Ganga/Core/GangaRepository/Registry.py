@@ -183,18 +183,24 @@ class RegistryFlusher(threading.Thread):
     def stop(self):
         self._stop.set()
 
+    @property
     def stopped(self):
         return self._stop.isSet()
 
     def run(self):
+        """
+        This will run an indefinite loop which periodically checks
+        whether it should stop. In between calls to ``flush_all`` it
+        will wait for a fixed period of time.
+        """
         sleep_period = 30
         sleeps_per_second = 10  # This changes the granularity of the sleep.
-        while not self.stopped():
+        while not self.stopped:
             for i in range(sleep_period*sleeps_per_second):
                 time.sleep(1/sleeps_per_second)
-                if self.stopped():
+                if self.stopped:
                     return
-            print 'auto-flushing', self.registry.name
+            logger.debug('auto-flushing', self.registry.name)
             self.registry.flush_all()
 
 
