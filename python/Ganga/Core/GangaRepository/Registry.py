@@ -13,6 +13,7 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.Utility.Config import getConfig
 
 logger = getLogger()
 
@@ -201,7 +202,7 @@ class RegistryFlusher(threading.Thread):
         whether it should stop. In between calls to ``flush_all`` it
         will wait for a fixed period of time.
         """
-        sleep_period = 30
+        sleep_period = getConfig('Registry')['AutoFlusherWaitTime']
         sleeps_per_second = 10  # This changes the granularity of the sleep.
         while not self.stopped:
             for i in range(sleep_period*sleeps_per_second):
