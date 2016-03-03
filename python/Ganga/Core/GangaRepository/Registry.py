@@ -640,7 +640,7 @@ class Registry(object):
                 if not obj._dirty:
                     continue
                 self.repository.flush([obj_id])
-                obj._dirty = False
+                obj._setFlushed()
                 self.repository.unlock([obj_id])
 
     @synchronised
