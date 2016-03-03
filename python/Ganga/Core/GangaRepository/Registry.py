@@ -668,6 +668,7 @@ class Registry(object):
         obj._getWriteAccess()
         obj_id = getattr(obj, _reg_id_str)
         self.repository.flush([obj_id])
+        obj._dirty = False ## This better not trigger a dirty flag that this has been set
         ## THIS IS KNOWN TO BE NOT SAFE YET!!!
         #self.repository.unlock([obj_id])
 
