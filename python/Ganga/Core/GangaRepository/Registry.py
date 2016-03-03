@@ -645,7 +645,6 @@ class Registry(object):
                 obj_id = getattr(obj, _reg_id_str)
                 self.repository.flush([obj_id])
                 obj._setFlushed()
-                self.repository.unlock([obj_id])
 
     @synchronised
     def flush_all(self):
