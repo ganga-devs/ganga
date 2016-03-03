@@ -181,11 +181,19 @@ class RegistryFlusher(threading.Thread):
         self._stop = threading.Event()
 
     def stop(self):
+        """
+        Ask the thread to stop what it is doing and it will finish
+        the next chance it gets.
+        """
         self._stop.set()
 
     @property
     def stopped(self):
         return self._stop.isSet()
+
+    def join(self, *args, **kwargs):
+        self.stop()
+        super(RegistryFlusher, self).join(*args, **kwargs)
 
     def run(self):
         """
@@ -942,7 +950,6 @@ class Registry(object):
         logger.debug("Shutting Down Registry")
         logger.debug("shutdown")
         try:
-            self.flush_thread.stop()
             self.flush_thread.join()
             self._hasStarted = True
             try:
