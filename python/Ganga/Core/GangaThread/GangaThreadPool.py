@@ -192,8 +192,6 @@ class GangaThreadPool(object):
         for t in reversed(critThreads):
             logger.debug('shutting down Thread: %s' % t.getName())
             t.stop()
-            if hasattr(t, 'setDaemon') and not t.isAlive():
-                t.daemon = False
             logger.debug('shutdown Thread: %s' % t.getName())
             # t.unregister()
 
