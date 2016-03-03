@@ -656,6 +656,9 @@ class Registry(object):
         if self.hasStarted():
             self._flush(self.values())
 
+        if self.metadata and self.metadata.hasStarted():
+            self.metadata._flush()
+
     def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.
         sub-obj is the object the read access is actually desired (ignored at the moment)
