@@ -644,7 +644,7 @@ class Registry(object):
                 obj._getWriteAccess()
                 obj_id = getattr(obj, _reg_id_str)
                 self.repository.flush([obj_id])
-                obj._dirty = False
+                obj._setFlushed()
                 self.repository.unlock([obj_id])
 
     @synchronised
