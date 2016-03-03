@@ -636,12 +636,11 @@ class Registry(object):
         for obj in objs:
             with obj.lock:
                 # check if the object is dirty, if not do nothing
-                print obj._dirty
                 if not obj._dirty:
                     continue
 
                 # flush the object. Need to call _getWriteAccess for consistency reasons
-                # TODO: getWriteAccess should only 'get write access' and as that's not needed shouldn't be called here?
+                # TODO: getWriteAccess should only 'get write access', as that's not needed should it be called here?
                 obj._getWriteAccess()
                 obj_id = getattr(obj, _reg_id_str)
                 self.repository.flush([obj_id])
