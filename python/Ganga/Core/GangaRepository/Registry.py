@@ -1,3 +1,5 @@
+from __future__ import division
+
 import functools
 from Ganga.Utility.logging import getLogger
 
@@ -185,9 +187,11 @@ class RegistryFlusher(threading.Thread):
         return self._stop.isSet()
 
     def run(self):
+        sleep_period = 30
+        sleeps_per_second = 10  # This changes the granularity of the sleep.
         while not self.stopped():
-            for i in range(30):
-                time.sleep(1)
+            for i in range(sleep_period*sleeps_per_second):
+                time.sleep(1/sleeps_per_second)
                 if self.stopped():
                     return
             print 'auto-flushing', self.registry.name
