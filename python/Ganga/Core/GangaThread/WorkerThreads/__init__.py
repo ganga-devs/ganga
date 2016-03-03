@@ -32,6 +32,5 @@ def shutDownQueues():
     del _global_queues
     _global_queues = None
     import Ganga.GPI
-    setattr(Ganga.GPI, 'queues', None)
     delattr(Ganga.GPI, 'queues')
 
