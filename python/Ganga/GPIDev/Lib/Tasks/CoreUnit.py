@@ -2,7 +2,6 @@ from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 import copy
-import Ganga.GPI as GPI
 
 
 class CoreUnit(IUnit):
@@ -18,7 +17,8 @@ class CoreUnit(IUnit):
 
     def createNewJob(self):
         """Create any jobs required for this unit"""
-        j = GPI.Job()
+        from Ganga.GPI import Job
+        j = Job()
 
         j.backend = self._getParent().backend.clone()
 

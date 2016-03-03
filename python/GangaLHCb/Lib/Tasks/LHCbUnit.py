@@ -1,10 +1,10 @@
-from Ganga.GPIDev.Base.Proxy import isType
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy, isType
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 import Ganga.GPI as GPI
 from Ganga.GPIDev.Lib.Tasks.common import logger
@@ -21,7 +21,8 @@ class LHCbUnit(IUnit):
     def createNewJob(self):
         """Create any jobs required for this unit"""
         import copy
-        j = GPI.Job()
+        from Ganga.GPI import Job
+        j = Job()
         j.backend = self._getParent().backend.clone()
         j.application = self._getParent().application.clone()
         if self.inputdata:
@@ -35,8 +36,7 @@ class LHCbUnit(IUnit):
 
         j.outputfiles = copy.deepcopy(self._getParent().outputfiles)
         if len(self._getParent().postprocessors.process_objects) > 0:
-            j.postprocessors = copy.deepcopy(
-                addProxy(self._getParent()).postprocessors)
+            j.postprocessors = copy.deepcopy(addProxy(self._getParent()).postprocessors)
 
         if trf.splitter:
             j.splitter = trf.splitter.clone()
@@ -46,7 +46,7 @@ class LHCbUnit(IUnit):
             if isType(trf.splitter, GaussSplitter):
                 events_per_unit = j.splitter.eventsPerJob * \
                     j.splitter.numberOfJobs
-                j.splitter.firstEventNumber = self.getID() * events_per_unit
+                j.splitter.firstEventNumber += self.getID() * events_per_unit
 
         else:
             j.splitter = SplitByFiles()
@@ -78,6 +78,7 @@ class LHCbUnit(IUnit):
             # check that the parent replicas have been copied by checking
             # backend status == Done
             job_list = []
+            from Ganga.GPI import jobs
             for req_unit in self.req_units:
                 trf = self._getParent()._getParent().transforms[
                     int(req_unit.split(":")[0])]
@@ -85,10 +86,10 @@ class LHCbUnit(IUnit):
 
                 if req_unit_id != "ALL":
                     unit = trf.units[int(req_unit_id)]
-                    job_list.append(GPI.jobs(unit.active_job_ids[0]))
+                    job_list.append(jobs(unit.active_job_ids[0]))
                 else:
                     for unit in trf.units:
-                        job_list.append(GPI.jobs(unit.active_job_ids[0]))
+                        job_list.append(jobs(unit.active_job_ids[0]))
 
             for j in job_list:
                 if j.subjobs:
@@ -99,10 +100,13 @@ class LHCbUnit(IUnit):
                     if j.backend.status != "Done":
                         return
 
-            job = GPI.jobs(self.active_job_ids[0])
+            job = jobs(self.active_job_ids[0])
             for f in job.inputdata.files:
-                logger.warning(
-                    "Removing chain inputdata file '%s'..." % f.name)
+                if isType(f, DiracFile):
+                    name = f.lfn
+                else:
+                    name = f.namePattern
+                logger.warning("Removing chain inputdata file '%s'..." % name)
                 f.remove()
 
         super(LHCbUnit, self).updateStatus(status)

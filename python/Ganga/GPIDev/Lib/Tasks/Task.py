@@ -1,8 +1,7 @@
 from __future__ import absolute_import
-from Ganga import GPI
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import addProxy
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy, getName
 from .common import logger
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
@@ -18,7 +17,7 @@ class Task(GangaObject):
 
     """This is a Task without special properties"""
     _schema = Schema(Version(1, 0), {
-        'transforms': ComponentItem('transforms', defvalue=[], sequence=1, copyable=1, doc='list of transforms'),
+        'transforms': ComponentItem('transforms', defvalue=GangaList(), sequence=1, copyable=1, doc='list of transforms'),
         'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Task', typelist=["int"]),
         'name': SimpleItem(defvalue='NewTask', copyable=1, doc='Name of the Task', typelist=["str"]),
         'comment': SimpleItem('', protected=0, doc='comment of the task', typelist=["str"]),
@@ -89,15 +88,23 @@ class Task(GangaObject):
             logger.info(" * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id))
             return
         if remove_jobs:
-            for j in GPI.jobs:
+            from Ganga.GPI import jobs
+            for j in jobs:
                 try:
-                    stid = j.application.tasks_id.split(":")
-                    if int(stid[-2]) == self.id:
-                        j.remove()
+                    if hasattr(j.application, 'tasks_id'):
+                        stid = j.application.tasks_id.split(":")
+                        if int(stid[-2]) == self.id:
+                            j.remove()
+                    else:
+                        continue
                 except Exception as err:
                     logger.debug("Task remove_jobs task split Error!")
                     logger.debug("Error:\n%s" % str(err))
                     pass
+                #finally:
+                #    pass
+        logger.info("Reg Name: %s" % getName(self._getRegistry()))
+        logger.info("Reg ID: %s" % self._getRegistry().find(self))
         self._getRegistry()._remove(self)
         logger.info("Task #%s deleted" % self.id)
 
@@ -125,6 +132,7 @@ class Task(GangaObject):
 
     def run(self):
         """Confirms that this task is fully configured and ready to be run."""
+        logger.debug("Task run")
         if self.status == "new":
             self.check()
 
@@ -171,19 +179,21 @@ class Task(GangaObject):
                 else:
                     logger.warning("Transform %i was not affected!", tf.name)
 
-    def insertTransform(self, id, tf):
+    def insertTransform(self, id, _tf):
         """Insert transfrm tf before index id (counting from 0)"""
         if self.status != "new" and id < len(self.transforms):
             logger.error("You can only insert transforms at the end of the list. Only if a task is new it can be freely modified!")
             return
+        tf = stripProxy(_tf)
         # self.transforms.insert(id,tf.copy()) # this would be safer, but
         # breaks user exspectations
         # this means that t.insertTransform(0,t2.transforms[0]) will cause
         # Great Breakage
         self.transforms.insert(id, tf)
 
-    def appendTransform(self, tf):
+    def appendTransform(self, _tf):
         """Append transform"""
+        tf = stripProxy(_tf)
         return self.insertTransform(len(self.transforms), tf)
 
     def removeTransform(self, id):
@@ -204,7 +214,8 @@ class Task(GangaObject):
             if transform is None or partition is None or self.transforms[int(transform)]._app_partition[j.application.id] == partition:
                 jobslice.objects[j.fqid] = stripProxy(j)
 
-        for j in GPI.jobs:
+        from Ganga.GPI import jobs
+        for j in jobs:
             try:
                 stid = j.application.tasks_id.split(":")
                 if int(stid[-2]) == self.id and (transform is None or stid[-1] == str(transform)):

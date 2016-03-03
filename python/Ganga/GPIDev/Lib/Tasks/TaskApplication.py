@@ -1,7 +1,7 @@
-from Ganga import GPI
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from new import classobj
 from Ganga.GPIDev.Base.Proxy import getName, stripProxy
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from .common import logger
 
 handler_map = []
@@ -19,7 +19,7 @@ def __task__init__(self):
 _app_schema = {  'id': SimpleItem(defvalue=-1, protected=1, copyable=1, splitable=1, doc='number of this application in the transform.', typelist=["int"]),
                 'tasks_id': SimpleItem(defvalue="-1:-1", protected=1, copyable=1, splitable=1, doc='id of this task:transform', typelist=["str"])}.items()
 
-_splitter_schema = { 'task_partitions': SimpleItem(defvalue=[], copyable=1, doc='task partition numbers.', typelist=["list"]),}.items()
+_splitter_schema = { 'task_partitions': SimpleItem(defvalue=GangaList(), copyable=1, doc='task partition numbers.', typelist=["list"]),}.items()
 
 def taskify(baseclass, name):
     smajor = baseclass._schema.version.major
@@ -56,15 +56,16 @@ class TaskApplication(object):
 
     def getTransform(self):
         tid = self.tasks_id.split(":")
+        from Ganga.GPI import tasks
         if len(tid) == 2 and tid[0].isdigit() and tid[1].isdigit():
             try:
-                task = GPI.tasks(int(tid[0]))
+                task = tasks(int(tid[0]))
             except KeyError:
                 return None
             if task:
                 return task.transforms[int(tid[1])]
         if len(tid) == 3 and tid[1].isdigit() and tid[2].isdigit():
-            task = GPI.tasks(int(tid[1]))
+            task = tasks(int(tid[1]))
             if task:
                 return task.transforms[int(tid[2])]
         return None

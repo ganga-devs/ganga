@@ -877,7 +877,8 @@ class Job(GangaObject):
         self._setDirty()
 
         super(Job, self)._auto__init__()
-        stripProxy(self.info).uuid = str(uuid.uuid4())
+        if self.info is not None:
+            stripProxy(self.info).uuid = str(uuid.uuid4())
 
     def _init_workspace(self):
         logger.debug("Job %s Calling _init_workspace", str(self.getFQID('.')))

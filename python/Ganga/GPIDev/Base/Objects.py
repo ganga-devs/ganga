@@ -722,7 +722,7 @@ class ObjectMetaclass(type):
         # in the schema
         for attr, item in this_schema.simpleItems():
             if not item['getter']:
-                item._check_type(item['defvalue'], '.'.join([name, attr]), enableGangaList=False)
+                item._check_type(item['defvalue'], '.'.join([name, attr]))
 
         # create reference in schema to the pluginclass
         this_schema._pluginclass = cls

@@ -1,4 +1,3 @@
-from Ganga import GPI
 from Ganga.Utility.ColourText import ANSIMarkup
 from Ganga.Utility.ColourText import status_colours, overview_colours, fgcol, col
 from Ganga.GPIDev.Lib.Job.Job import Job
@@ -87,25 +86,6 @@ class LHCbAnalysisTransform(Transform):
         self.toProcess_dataset = LHCbDataset()
         self.removed_data = LHCbDataset()
 
-    #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-    def __deepcopy__(self, memo=None):
-        l = LHCbAnalysisTransform()
-        l.application = deepcopy(self.application, memo)
-        l.backend = deepcopy(self.backend, memo)
-        l.splitter = deepcopy(self.splitter, memo)
-        l.merger = deepcopy(self.merger, memo)
-        l.query = deepcopy(self.query, memo)
-        l.run_limit = deepcopy(self.run_limit, memo)
-        l.inputsandbox = deepcopy(self.inputsandbox)
-        l.outputsandbox = deepcopy(self.outputsandbox)
-        if self.inputdata:
-            l.inputdata = LHCbDataset()
-            l.inputdata.files = self.inputdata.files[:]
-        if self.outputdata:
-            l.outputdata = OutputData()
-            l.outputdata.files = self.outputdata.files[:]
-        l.name = self.name
-        return l
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def _attribute_filter__set__(self, name, value):
@@ -282,7 +262,8 @@ class LHCbAnalysisTransform(Transform):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def createNewJob(self, partition):
         """ Returns a new job initialized with the transforms application, backend and name """
-        j = GPI.Job()
+        from Ganga import Job
+        j = Job()
         stripProxy(j).backend = self.backend.clone()
         stripProxy(j).application = self.application.clone()
         stripProxy(j).application.tasks_id = "%i:%i" % (
@@ -424,7 +405,8 @@ class LHCbAnalysisTransform(Transform):
         # Need registry access here might be better to get registry directly
         # as in prepared stuff, see Executable for example or even
         # tasksregistry.py!
-        return GPI.jobs(partition_jobs[0].fqid.split('.')[0])
+        from Ganga.GPI import jobs
+        return jobs(partition_jobs[0].fqid.split('.')[0])
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def _mergeTransformOutput(self):

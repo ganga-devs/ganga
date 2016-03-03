@@ -11,7 +11,7 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
-from Ganga import GPI
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 
 class Transform(GangaObject):
@@ -19,8 +19,8 @@ class Transform(GangaObject):
         'status': SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=["str"]),
         'name': SimpleItem(defvalue='Simple Transform', doc='Name of the transform (cosmetic)', typelist=["str"]),
         'application': ComponentItem('applications', defvalue=None, optional=1, load_default=False, filter="checkTaskApplication", doc='Application of the Transform. Must be a Task-Supporting application.'),
-        'inputsandbox': FileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
-        'outputsandbox': SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc="list of filenames or patterns shipped from the worker node"),
+        'inputsandbox': FileItem(defvalue=GangaList(), typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
+        'outputsandbox': SimpleItem(defvalue=GangaList(), typelist=['str'], sequence=1, doc="list of filenames or patterns shipped from the worker node"),
         'inputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Input dataset'),
         'outputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Output dataset'),
         'backend': ComponentItem('backends', defvalue=None, optional=1, load_default=False, doc='Backend of the Transform.'),
@@ -59,8 +59,8 @@ class Transform(GangaObject):
         return 1
 
     def initialize(self):
-        from Ganga import GPI
-        self.backend = stripProxy(GPI.Local())
+        from Ganga.GPIDev.Lib.Localhost.Localhost import Localhost
+        self.backend = Localhost()
 
     def check(self):
         pass
@@ -76,7 +76,8 @@ class Transform(GangaObject):
         # Search jobs for task-supporting applications
         id = "%i:%i" % (
             self._getParent().id, self._getParent().transforms.index(self))
-        for j in GPI.jobs:
+        from Ganga.GPI import jobs
+        for j in jobs:
             if "tasks_id" in stripProxy(j.application).getNodeData():
                 # print "tasks_id of jobid ", j.fqid,
                 # stripProxy(j.application).getNodeAttribute("tasks_id"), id
@@ -120,7 +121,8 @@ class Transform(GangaObject):
 
         id = "%i:%i" % (
             self._getParent().id, self._getParent().transforms.index(self))
-        for j in GPI.jobs:
+        from Ganga.GPI import jobs
+        for j in jobs:
             if "tasks_id" in stripProxy(j.application).getNodeData():
                 if stripProxy(j.application).getNodeAttribute("tasks_id") == id:
                     try:
@@ -208,7 +210,8 @@ class Transform(GangaObject):
             if partition is None or self._app_partition[j.application.id] == partition:
                 jobslice.objects[j.fqid] = stripProxy(j)
 
-        for j in GPI.jobs:
+        from Ganga.GPI import jobs
+        for j in jobs:
             try:
                 stid = j.application.tasks_id.split(":")
                 if int(stid[-2]) == task.id and int(stid[-1]) == id:
@@ -425,7 +428,8 @@ class Transform(GangaObject):
         task = self._getParent(
         )  # this works because createNewJob is only called by a task
         id = task.transforms.index(self)
-        j = GPI.Job()
+        from Ganga.GPI import Job
+        j = Job()
         stripProxy(j).backend = self.backend.clone()
         stripProxy(j).application = self.application.clone()
         stripProxy(j).application.tasks_id = "%i:%i" % (task.id, id)
