@@ -24,11 +24,14 @@ def shutDownQueues():
     logger = getLogger()
     logger.debug("Shutting Down Queues system")
     global _global_queues
-    _global_queues.lock()
-    _global_queues._purge_all()
+    try:
+        _global_queues.lock()
+        _global_queues._purge_all()
+    except:
+        logger.warning("Error in shutting down queues thread. Likely harmless")
     del _global_queues
     _global_queues = None
     import Ganga.GPI
+    setattr(Ganga.GPI, 'queues', None)
     delattr(Ganga.GPI, 'queues')
-
 
