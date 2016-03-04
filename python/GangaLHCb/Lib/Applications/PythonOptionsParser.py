@@ -19,7 +19,7 @@ logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-## Due to a bug in Gaudi at some point we need this equivalenc here:
+## Due to a bug in Gaudi at some point we need this equivalenc here: see #204
 DataObjectDescriptorCollection = str
 
 class PythonOptionsParser:
