@@ -712,7 +712,7 @@ class Registry(object):
             self._flush(self.values())
 
         if self.metadata and self.metadata.hasStarted():
-            self.metadata._flush()
+            self.metadata.flush_all()
 
     def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.
