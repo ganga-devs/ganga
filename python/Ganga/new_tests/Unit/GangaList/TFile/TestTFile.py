@@ -1,8 +1,11 @@
+import unittest
 
-from GangaTest.Framework.tests import GangaGPITestCase
+from Ganga.GPIDev.Base.Proxy import getProxyClass
+from . import TFile
 
+TFile = getProxyClass(TFile)
 
-class TestTFile(GangaGPITestCase):
+class TestTFile(unittest.TestCase):
 
     def testEqualityName(self):
         t1 = TFile(name='foo')

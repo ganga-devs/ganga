@@ -990,31 +990,3 @@ class SessionLockManager(object):
         except Exception, err:
             logger.debug( "Session Info Exception: %s" % str(err))
             return session
-
-
-def test1():
-    slm = SessionLockManager("locktest", "tester")
-    while True:
-        logger.debug(
-            "lock  --- {0}".format(slm.lock_ids(random.sample(xrange(100), 3))))
-        logger.debug(
-            "unlock--- {0}".format(slm.release_ids(random.sample(xrange(100), 3))))
-        slm.check()
-
-
-def test2():
-    slm = SessionLockManager("locktest", "tester")
-    while True:
-        n = random.randint(1, 9)
-        logger.debug("get {0} ids --- {1}".format(n, slm.make_new_ids(n)))
-        slm.check()
-
-if __name__ == "__main__":
-    import sys
-    if len(sys.argv) == 1:
-        logger.debug("Usage: python SessionLock.py {1|2}")
-        sys.exit(-1)
-    if sys.argv[1] == "1":
-        test1()
-    elif sys.argv[1] == "2":
-        test2()
