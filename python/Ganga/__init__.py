@@ -838,6 +838,6 @@ Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 """, is_open=True)
 
 # ------------------------------------------------
-# MonitoringServices
+# Registry Dirty Monitoring Services (not related to actual Job Monitoring)
 reg_config = makeConfig('Registry','')
 reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')

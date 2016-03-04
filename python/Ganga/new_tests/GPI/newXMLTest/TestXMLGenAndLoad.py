@@ -74,7 +74,9 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         j.name = testStr
 
-        time.sleep(1.5*30.) ## Update from repo code
+        from Ganga.Utility.Config import getConfig
+        flush_timeout = getConfig('Registry')['AutoFlusherWaitTime']
+        time.sleep(2.*flush_timeout)
 
         newest_update = stat(getXMLFile(j))
 
@@ -95,7 +97,14 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         newest_update = stat(getXMLFile(j))
 
+        from GangaTest.Framework.utils import sleep_until_completed
+
+        sleep_until_completed(j)
+
+        final_update = stat(getXMLFile(j))
+
         assert newest_update.st_mtime > last_update.st_mtime
+        assert final_update.st_mtime > newest_update.st_mtime
 
     def test_e_testXMLContent(self):
 
@@ -106,7 +115,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         from tempfile import NamedTemporaryFile
 
-        j=jobs(0)
+        j = jobs(0)
         assert path.isfile(getXMLFile(j))
         handler = open(getXMLFile(j))
         tmpobj, errs = from_file(handler)
@@ -123,15 +132,18 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         new_temp_file2 = NamedTemporaryFile()
 
-        j2=Job()
-        j2.name=testStr
+        j2 = Job()
+        j2.name = testStr
+        j2.submit()
+        from GangaTest.Framework.utils import sleep_until_completed
+        sleep_until_completed(j2)
 
         to_file(stripProxy(j2), new_temp_file2, ignore_subs)
 
         import filecmp
 
         assert filecmp.cmp(handler.name, new_temp_file.name)
-        assert filecmp.cmp(new_temp_file.name, new_temp_file2.name)
+        assert not filecmp.cmp(new_temp_file.name, new_temp_file2.name)
         handler.close()
 
     def test_f_testXMLIndex(self):
@@ -140,13 +152,14 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         from Ganga.GPI import jobs
 
-        j=jobs(0)
+        j = jobs(0)
 
         assert path.isfile(getIndexFile(j))
 
         handler = open(getIndexFile(j))
         _obj, errs = from_file(handler)
         obj=_obj[0]
+        print("_obj: %s" % str(_obj))
 
         assert isinstance(obj, list)
 
@@ -157,3 +170,4 @@ class TestXMLGenAndLoad(GangaUnitTest):
         assert getIndexCache(j) == obj
 
         handler.close()
+

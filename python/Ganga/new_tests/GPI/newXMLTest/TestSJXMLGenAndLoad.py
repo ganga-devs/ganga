@@ -81,7 +81,9 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         j.name = testStr
 
-        time.sleep(1.5*30.) ## Update from repo code
+        from Ganga.Utility.Config import getConfig
+        flush_timeout = getConfig('Registry')['AutoFlusherWaitTime']
+        time.sleep(2.*flush_timeout)
 
         newest_update = stat(getXMLFile(j))
 
@@ -106,7 +108,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         assert newest_update.st_mtime > last_update.st_mtime
 
-    def test_b_JobXMLExists(self):
+    def test_e_SubJobXMLExists(self):
         """ Second get the job and check that getting it via jobs doesn't cause it to be loaded"""
         from Ganga.GPI import jobs
 
@@ -122,7 +124,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             assert path.isfile(getSJXMLFile(j))
             assert path.isfile(getSJXMLFile(j)+'~')
 
-    def test_e_testXMLContent(self):
+    def test_f_testXMLContent(self):
 
         from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
 
@@ -159,7 +161,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         assert filecmp.cmp(new_temp_file.name, new_temp_file2.name)
         handler.close()
 
-    def test_f_testSJXMLContent(self):
+    def test_g_testSJXMLContent(self):
 
         from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
 
@@ -185,7 +187,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
             counter+=1
 
-    def test_g_testXMLIndex(self):
+    def test_h_testXMLIndex(self):
 
         from Ganga.Core.GangaRepository.PickleStreamer import to_file, from_file
 
@@ -209,7 +211,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         handler.close()
 
-    def test_h_testSJXMLIndex(self):
+    def test_i_testSJXMLIndex(self):
 
         from Ganga.Core.GangaRepository.PickleStreamer import to_file, from_file
 
