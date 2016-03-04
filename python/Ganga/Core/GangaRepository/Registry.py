@@ -932,8 +932,6 @@ class Registry(object):
             self.repository.startup()
             # All Ids could have changed
             self.changed_ids = {}
-            self.flush_thread = RegistryFlusher(self)
-            self.flush_thread.start()
             t1 = time.time()
             logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
         except Exception as err:
@@ -951,7 +949,6 @@ class Registry(object):
         logger.debug("Shutting Down Registry")
         logger.debug("shutdown")
         try:
-            self.flush_thread.join()
             self._hasStarted = True
             try:
                 if not self.metadata is None:

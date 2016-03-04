@@ -39,7 +39,6 @@ class PrepRegistry(Registry):
 
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
-        self.flush_thread.join()
         self._hasStarted = True
         from Ganga.Utility.logging import getLogger
         self.shouldRun = True
