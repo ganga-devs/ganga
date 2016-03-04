@@ -141,8 +141,8 @@ class Node(object):
     @contextmanager
     def lock(self):
         """
-        This is a context manager which acquires the lock on the object and all it's ancestors.
-        When the context manager exits, all the locks are released in the reverse order to that which they were acquired.
+        This is a context manager which acquires the lock on the
+        object's root object.
         """
         root = self._getRoot()
         root._lock.acquire()
