@@ -209,8 +209,15 @@ class RegistryFlusher(threading.Thread):
                 time.sleep(1/sleeps_per_second)
                 if self.stopped:
                     return
-            logger.debug('auto-flushing', self.registry.name)
-            self.registry.flush_all()
+            # We want this to be a non-blocking lock to avoid this
+            # interfering with interactive work or monitoring. It
+            # will try again in a while anyway.
+            if self.registry._lock.acquire(blocking=False):
+                try:
+                    logger.debug('Auto-flushing', self.registry.name)
+                    self.registry.flush_all()
+                finally:
+                    self.registry._lock.release()
 
 
 class Registry(object):
