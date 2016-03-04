@@ -50,7 +50,9 @@ class RegistrySlice(object):
             raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
                 self.name, keep_going, method))
         result = []
-        for id, obj in self.objects.iteritems():
+        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
+        for _id in id_list:
+            obj = self.objects[_id]
             try:
                 if isinstance(method, str):
                     doc = method
@@ -65,7 +67,7 @@ class RegistrySlice(object):
                 if not keep_going:
                     raise
             except Exception as x:
-                logger.exception('%s %s %s: %s %s', doc, self.name, id, getName(x), str(x))
+                logger.exception('%s %s %s: %s %s', doc, self.name, _id, getName(x), str(x))
                 if not keep_going:
                     raise
         return result
@@ -201,7 +203,10 @@ class RegistrySlice(object):
                 maxid = sys.maxsize
             select = select_by_range
 
-        for this_id, obj in self.objects.iteritems():
+        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
+
+        for this_id in id_list:
+            obj = self.objects[this_id]
             logger.debug("id, obj: %s, %s" % (str(this_id), str(obj)))
             if select(int(this_id)):
                 logger.debug("Selected: %s" % str(this_id))
@@ -280,7 +285,9 @@ class RegistrySlice(object):
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
-        for id, obj in self.objects.iteritems():
+        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
+        for _id in id_list:
+            obj = self.objects[_id]
             #obj = _unwrap(obj)
             copy = obj.clone()
             # If the copied object is not automatically registered,
@@ -289,7 +296,7 @@ class RegistrySlice(object):
             if new_id is None:
                 reg = obj._getRegistry()
                 if reg is None:
-                    new_id = id
+                    new_id = _id
                 else:
                     reg._add(copy)
                     new_id = copy._getRegistryID()

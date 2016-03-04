@@ -1,3 +1,5 @@
+from __future__ import division
+
 import functools
 from Ganga.Utility.logging import getLogger
 
@@ -11,6 +13,7 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.Utility.Config import getConfig
 
 logger = getLogger()
 
@@ -166,6 +169,56 @@ def synchronised(f):
     return decorated
 
 
+class RegistryFlusher(threading.Thread):
+    """
+    This class is intended to be used by the registry to perfom
+    automatic flushes on a fixed schedule so that information is not
+    lost if Ganga is shut down abruptly.
+    """
+    def __init__(self, registry, *args, **kwargs):
+        super(RegistryFlusher, self).__init__(*args, **kwargs)
+        self.registry = registry
+        self._stop = threading.Event()
+
+    def stop(self):
+        """
+        Ask the thread to stop what it is doing and it will finish
+        the next chance it gets.
+        """
+        self._stop.set()
+
+    @property
+    def stopped(self):
+        return self._stop.isSet()
+
+    def join(self, *args, **kwargs):
+        self.stop()
+        super(RegistryFlusher, self).join(*args, **kwargs)
+
+    def run(self):
+        """
+        This will run an indefinite loop which periodically checks
+        whether it should stop. In between calls to ``flush_all`` it
+        will wait for a fixed period of time.
+        """
+        sleep_period = getConfig('Registry')['AutoFlusherWaitTime']
+        sleeps_per_second = 10  # This changes the granularity of the sleep.
+        while not self.stopped:
+            for i in range(sleep_period*sleeps_per_second):
+                time.sleep(1/sleeps_per_second)
+                if self.stopped:
+                    return
+            # We want this to be a non-blocking lock to avoid this
+            # interfering with interactive work or monitoring. It
+            # will try again in a while anyway.
+            if self.registry._lock.acquire(blocking=False):
+                try:
+                    logger.debug('Auto-flushing', self.registry.name)
+                    self.registry.flush_all()
+                finally:
+                    self.registry._lock.release()
+
+
 class Registry(object):
 
     """Ganga Registry
@@ -206,6 +259,9 @@ class Registry(object):
 
 
         self.shouldReleaseRun = True
+
+        self.flush_thread = None
+
 #        self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
 #        self.releaseThread.daemon = True
 #        self.releaseThread.start()
@@ -606,6 +662,10 @@ class Registry(object):
             raise RegistryAccessError("Cannot flush to a disconnected repository!")
 
         for obj in objs:
+            # check if the object is dirty, if not do nothing
+            if not obj._dirty:
+                continue
+
             with obj.lock:
                 if not obj._dirty:
                     continue
@@ -613,7 +673,6 @@ class Registry(object):
                 obj_id = getattr(obj, _reg_id_str)
                 self.repository.flush([obj_id])
                 self.repository.unlock([obj_id])
-                obj._dirty = False
 
     @synchronised
     def flush_all(self):
@@ -623,6 +682,9 @@ class Registry(object):
         """
         if self.hasStarted():
             self._flush(self.values())
+
+        if self.metadata and self.metadata.hasStarted():
+            self.metadata.flush_all()
 
     def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.

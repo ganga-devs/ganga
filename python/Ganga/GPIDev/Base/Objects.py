@@ -125,34 +125,31 @@ class Node(object):
         setattr(obj, '_registry', self._registry)
         return obj
 
-    @synchronised
     def _getParent(self):
         return self._parent
 
-    @synchronised
+    @synchronised  # This will lock the _current_ (soon to be _old_) root object
     def _setParent(self, parent):
-        setattr(self, '_parent', parent)
+        if parent is None:
+            setattr(self, '_parent', parent)
+        else:
+            with parent.lock:  # This will lock the _new_ root object
+                setattr(self, '_parent', parent)
+            # Finally the new and then old root objects will be unlocked
 
     @property
     @contextmanager
     def lock(self):
         """
-        This is a context manager which acquires the lock on the object and all it's ancestors.
-        When the context manager exits, all the locks are released in the reverse order to that which they were acquired.
+        This is a context manager which acquires the lock on the
+        object's root object.
         """
-        self._lock.acquire()
-        ancestors = []
-        p = self._parent
-        while p is not None:
-            p._lock.acquire()
-            ancestors.append(p)
-            p = p._parent
+        root = self._getRoot()
+        root._lock.acquire()
         try:
             yield
         finally:
-            for p in reversed(ancestors):
-                p._lock.release()
-            self._lock.release()
+            root._lock.release()
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object

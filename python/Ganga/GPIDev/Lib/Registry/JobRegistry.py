@@ -9,7 +9,7 @@ from __future__ import absolute_import
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 
 from Ganga.Core.exceptions import GangaException
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, synchronised
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher, synchronised
 
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, addProxy
 
@@ -80,6 +80,12 @@ class JobRegistry(Registry):
             stripProxy(jt)._setRegistry(self.metadata)
             self.metadata._add(jt)
         self.jobtree = self.metadata[self.metadata.ids()[-1]]
+        self.flush_thread = RegistryFlusher(self)
+        self.flush_thread.start()
+
+    def shutdown(self):
+        self.flush_thread.join()
+        super(JobRegistry, self).shutdown()
 
     def getJobTree(self):
         return self.jobtree

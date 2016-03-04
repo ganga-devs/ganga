@@ -60,7 +60,7 @@ def getNumAliveThreads():
             num_currently_running_command += 1
     return num_currently_running_command
 
-def checkHeartBeat():
+def checkHeartBeat(global_count):
 
     latest_timeNow = time.time()
 
@@ -70,15 +70,20 @@ def checkHeartBeat():
         last_time = heartbeat_times[thread_name]
 
         dead_time = config['HeartBeatTimeOut']
+        max_warnings = 5
 
-        if (latest_timeNow - last_time) > dead_time and this_thread.isAlive() and this_thread._currently_running_command is True:
+        if (latest_timeNow - last_time) > dead_time and this_thread.isAlive()\
+                and this_thread._currently_running_command is True\
+                and global_count < max_warnings:
 
             log.warning("Thread: %s Has not updated the heartbeat in %ss!! It's possibly dead" %(thread_name, str(dead_time)))
             log.warning("Thread is attempting to execute: %s" % this_thread._running_cmd)
+            log.warning("With arguments: (%s)" % str(this_thread._running_args))
 
             ## Add at least 5sec here to avoid spamming the user non-stop that a monitoring thread has locked up almost entirely
             ## You'll get a message at most once per 5sec or less if the Monitoring is busy/asleep
             heartbeat_times[thread_name] += 5.
+            global_count+=1
 
 class MonitoringWorkerThread(GangaThread):
 
@@ -86,6 +91,7 @@ class MonitoringWorkerThread(GangaThread):
         GangaThread.__init__(self, name)
         self._currently_running_command = False
         self._running_cmd = None
+        self._running_args = None
         self._thread_name = name
 
     def run(self):
@@ -124,8 +130,14 @@ class MonitoringWorkerThread(GangaThread):
             try:
                 try:
                     self._running_cmd = action.function.__name__
+                    self._running_args = ""
+                    for arg in action.args:
+                        self._running_args.append("%s, " % arg)
+                    for k, v in action.kwargs:
+                        self._running_args.append("%s=%s, " % (str(k), str(v)))
                 except:
                     self._running_cmd = "unknown"
+                    self._running_args = ""
                 result = action.function(*action.args, **action.kwargs)
             except Exception as err:
                 log.debug("_execUpdateAction: %s" % str(err))
@@ -136,10 +148,11 @@ class MonitoringWorkerThread(GangaThread):
                 else:
                     action.callback_Failure()
 
+            self._running_args = None
+            self._running_cmd = None
             self._currently_running_command = False
 
 # Create the thread pool
-
 
 def _makeThreadPool(threadPoolSize=THREAD_POOL_SIZE, daemonic=True):
     global ThreadPool, global_start_time, heartbeat_times
@@ -453,8 +466,9 @@ def get_jobs_in_bunches(jobList_fromset, blocks_of_size=5, stripProxies=True):
 class JobRegistry_Monitor(GangaThread):
 
     """Job monitoring service thread."""
-    uPollRate = 0.5
-    minPollRate = 1.0
+    uPollRate = 1.
+    minPollRate = 1.
+    global_count = 0
 
     def __init__(self, registry):
         GangaThread.__init__(self, name="JobRegistry_Monitor")
@@ -520,7 +534,7 @@ class JobRegistry_Monitor(GangaThread):
         log.debug("Starting run method")
 
         while self.alive:
-            checkHeartBeat()
+            checkHeartBeat(JobRegistry_Monitor.global_count)
             log.debug("Monitoring Loop is alive")
             # synchronize the main loop since we can get disable requests
             with self.__mainLoopCond:
@@ -780,6 +794,7 @@ class JobRegistry_Monitor(GangaThread):
         _purge_actions_queue()
         stop_and_free_thread_pool(fail_cb, max_retries)
 
+        JobRegistry_Monitor.global_count = 0
         return True
 
     def stop(self, fail_cb=None, max_retries=5):
@@ -829,6 +844,7 @@ class JobRegistry_Monitor(GangaThread):
         #while self._runningNow is True:
         #    time.sleep(0.5)
 
+        JobRegistry_Monitor.global_count = 0
         return True
 
     def __cleanUp(self):
