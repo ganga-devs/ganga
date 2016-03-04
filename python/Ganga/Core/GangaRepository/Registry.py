@@ -634,11 +634,11 @@ class Registry(object):
             raise RegistryAccessError("Cannot flush to a disconnected repository!")
 
         for obj in objs:
-            with obj.lock:
-                # check if the object is dirty, if not do nothing
-                if not obj._dirty:
-                    continue
+            # check if the object is dirty, if not do nothing
+            if not obj._dirty:
+                continue
 
+            with obj.lock:
                 # flush the object. Need to call _getWriteAccess for consistency reasons
                 # TODO: getWriteAccess should only 'get write access', as that's not needed should it be called here?
                 obj._getWriteAccess()
