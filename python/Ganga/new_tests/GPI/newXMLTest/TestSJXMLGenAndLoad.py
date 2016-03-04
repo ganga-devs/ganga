@@ -20,11 +20,11 @@ def getXMLDir(this_job):
 def getXMLFile(this_job):
     return path.join(getXMLDir(this_job), 'data')
 
-def getSJXMLIndex(this_job):
-    return path.join(getXMLDir(this_job), 'subjobs.idx')
+def getSJXMLIndex(this_sj):
+    return path.join(getXMLDir(this_sj), 'subjobs.idx')
 
 def getSJXMLFile(this_sj):
-    return path.join(getXMLDir(this_job), '%s' % str(sj.id), 'data')
+    return path.join(getXMLDir(this_sj), '%s' % str(this_sj.id), 'data')
 
 def getIndexFile(this_job):
     return path.join(getXMLDir(this_job), '../%s.index' % str(this_job.id))
