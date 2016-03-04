@@ -1,7 +1,9 @@
 *.pyc
+*.pyo
 doc/_build
 .idea
 doc/API/Ganga*
+doc/API/ganga.rst
 doc/API/modules.rst
 doc/GPI/plugins.rst
 doc/GPI/classes.rst
