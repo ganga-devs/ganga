@@ -24,7 +24,7 @@ class TestSavannah19123(GangaUnitTest):
 
         j = Job()
         j.application.exe = 'bash'
-        j.application.args = ['-c', 'for i in `seq 1 2`; do echo $i; sleep 1; done']
+        j.application.args = ['-c', 'for i in `seq 1 30`; do echo $i; sleep 1; done']
         j.backend = Local()
 
         j.submit()
