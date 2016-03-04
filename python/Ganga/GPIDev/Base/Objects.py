@@ -125,34 +125,31 @@ class Node(object):
         setattr(obj, '_registry', self._registry)
         return obj
 
-    @synchronised
     def _getParent(self):
         return self._parent
 
-    @synchronised
+    @synchronised  # This will lock the _current_ (soon to be _old_) root object
     def _setParent(self, parent):
-        setattr(self, '_parent', parent)
+        if parent is None:
+            setattr(self, '_parent', parent)
+        else:
+            with parent.lock:  # This will lock the _new_ root object
+                setattr(self, '_parent', parent)
+            # Finally the new and then old root objects will be unlocked
 
     @property
     @contextmanager
     def lock(self):
         """
-        This is a context manager which acquires the lock on the object and all it's ancestors.
-        When the context manager exits, all the locks are released in the reverse order to that which they were acquired.
+        This is a context manager which acquires the lock on the
+        object's root object.
         """
-        self._lock.acquire()
-        ancestors = []
-        p = self._parent
-        while p is not None:
-            p._lock.acquire()
-            ancestors.append(p)
-            p = p._parent
+        root = self._getRoot()
+        root._lock.acquire()
         try:
             yield
         finally:
-            for p in reversed(ancestors):
-                p._lock.release()
-            self._lock.release()
+            root._lock.release()
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
@@ -642,7 +639,7 @@ class Descriptor(object):
                     else:
                         newListObj = GangaList()
 
-                    self.__createNewList(newListObj, val, cloneVal)
+                    Descriptor.__createNewList(newListObj, val, cloneVal)
                     #for elem in val:
                     #    newListObj.append(cloneVal(elem))
                     new_val = newListObj
@@ -676,36 +673,7 @@ class Descriptor(object):
             return
 
         ## This makes it stick to 1 thread, useful for debugging problems
-        #addToList(input_elements, final_list, action)
-        #return
-
-        try:
-            from Ganga.GPI import queues
-            linearize = False
-        except ImportError:
-            linearize = True
-
-        try:
-            import threading
-        except ImportError:
-            linearize = True
-
-        if linearize is True or len(input_elements) < 20 or\
-            not isinstance(threading.current_thread(), threading._MainThread):
-            addToList(input_elements, final_list, action)
-            return
-
-        import math
-        tenth = math.ceil(float(len(input_elements))/10.)
-
-        for i in range(10):
-            these_elements = input_elements[int(i*tenth):int((i+1)*tenth)]
-            queues._monitoring_threadpool.add_function(addToList, (these_elements, final_list, action))
-
-        while(len(final_list) != len(input_elements)):
-            import time
-            time.sleep(0.5)
-
+        addToList(input_elements, final_list, action)
         return
 
 
@@ -1050,49 +1018,6 @@ class GangaObject(Node):
             return v._on_attribute__set__(self, name)
         return v
 
-    @staticmethod
-    def __createNewList(final_list, input_elements, action=None):
-
-        def addToList(_input_elements, _final_list, action=None):
-            if action is not None:
-                for element in _input_elements:
-                    _final_list.append(action(element))
-            else:
-                for element in _input_elements:
-                    _final_list.append(element)
-            return
-        ## This makes it stick to 1 thread, useful for debugging problems
-        #addToList(input_elements, final_list, action)
-        #return
-
-        try:
-            from Ganga.GPI import queues
-            linearize = False
-        except ImportError:
-            linearize = True
-
-        try:
-            import threading
-        except ImportError:
-            linearize = True
-
-        if linearize is True or len(input_elements) < 20 or\
-            not isinstance(threading.current_thread(), threading._MainThread):
-            addToList(input_elements, final_list, action)
-            return
-
-        import math
-        tenth = math.ceil(float(len(input_elements))/10.)
-
-        for i in range(10):
-            these_elements = input_elements[int(i*tenth):int((i+1)*tenth)]
-            queues._monitoring_threadpool.add_function(addToList, (these_elements, final_list, action))
-
-        while(len(final_list) != len(input_elements)):
-            import time
-            time.sleep(0.5)
-
-        return
 
 # define the default component object filter:
 # obj.x = "Y"   <=> obj.x = Y()
