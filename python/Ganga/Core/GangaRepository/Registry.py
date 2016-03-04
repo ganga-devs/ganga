@@ -690,14 +690,17 @@ class Registry(object):
             raise RegistryAccessError("Cannot flush to a disconnected repository!")
 
         for obj in objs:
+            # check if the object is dirty, if not do nothing
+            if not obj._dirty:
+                continue
+
             with obj.lock:
+                # flush the object. Need to call _getWriteAccess for consistency reasons
+                # TODO: getWriteAccess should only 'get write access', as that's not needed should it be called here?
                 obj._getWriteAccess()
                 obj_id = getattr(obj, _reg_id_str)
-                if not obj._dirty:
-                    continue
                 self.repository.flush([obj_id])
-                obj._dirty = False
-                self.repository.unlock([obj_id])
+                obj._setFlushed()
 
     @synchronised
     def flush_all(self):
@@ -707,6 +710,9 @@ class Registry(object):
         """
         if self.hasStarted():
             self._flush(self.values())
+
+        if self.metadata and self.metadata.hasStarted():
+            self.metadata._flush()
 
     def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.
