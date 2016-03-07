@@ -28,7 +28,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         self.assertEqual(len(jobs), 1) # Don't really gain anything from assertEqual...
 
     def test_b_JobXMLExists(self):
-        """ Second get the job and check that getting it via jobs doesn't cause it to be loaded"""
+        # Check things exist
         from Ganga.GPI import jobs
 
         assert len(jobs) == 1
@@ -53,7 +53,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         #assert not filecmp.cmp(getXMLFile(j), getXMLFile(j)+'~')
 
     def test_c_XMLAutoUpdated(self):
-
+        # Check they get updated
         from Ganga.GPI import jobs
 
         j=jobs(0)
@@ -74,7 +74,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
 
     def test_d_XMLUpdated(self):
-
+        # check they get updated elsewhere
         from Ganga.GPI import jobs, disableMonitoring
 
         disableMonitoring()
@@ -107,7 +107,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         #    assert final_update.st_mtime == newest_update.st_mtime
 
     def test_e_testXMLContent(self):
-
+        # Check content of XML is as expected
         from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
 
         from Ganga.GPI import jobs, Job
@@ -151,7 +151,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         unlink(temp_name)
 
     def test_f_testXMLIndex(self):
-
+        # Check XML Index content
         from Ganga.Core.GangaRepository.PickleStreamer import to_file, from_file
 
         from Ganga.GPI import jobs

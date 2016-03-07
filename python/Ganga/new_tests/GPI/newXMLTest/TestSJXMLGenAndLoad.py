@@ -26,10 +26,10 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         from Ganga.GPI import Job, jobs, ArgSplitter
         j=Job(splitter=ArgSplitter(args=testArgs))
-        self.assertEqual(len(jobs), 1) # Don't really gain anything from assertEqual...
+        assert len(jobs) == 1
 
     def test_b_JobXMLExists(self):
-        """ Second get the job and check that getting it via jobs doesn't cause it to be loaded"""
+        # Check things exist
         from Ganga.GPI import jobs
 
         assert len(jobs) == 1
@@ -51,7 +51,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         assert path.isfile(getIndexFile(j))
 
     def test_c_XMLAutoUpdated(self):
-
+        # Check they get updated
         from Ganga.GPI import jobs
 
         j=jobs(0)
@@ -72,7 +72,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
 
     def test_d_XMLUpdated(self):
-
+        # Check they get updated elsewhere
         from Ganga.GPI import jobs, disableMonitoring
 
         disableMonitoring()
@@ -92,7 +92,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         assert newest_update.st_mtime > last_update.st_mtime
 
     def test_e_SubJobXMLExists(self):
-        """ Second get the job and check that getting it via jobs doesn't cause it to be loaded"""
+        # Check other XML exit
         from Ganga.GPI import jobs
 
         assert len(jobs) == 1
@@ -109,7 +109,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             assert path.isfile(XMLFileName+'~')
 
     def test_f_testXMLContent(self):
-
+        # Check their content
         from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
 
         from Ganga.GPI import jobs, Job
@@ -149,11 +149,11 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         assert not filecmp.cmp(temp_name, temp_name2)
         handler.close()
 
-        #unlink(temp_name)
-        #unlink(temp_name2)
+        unlink(temp_name)
+        unlink(temp_name2)
 
     def test_g_testSJXMLContent(self):
-
+        # Check SJ content
         from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
 
         from Ganga.GPI import jobs
@@ -180,12 +180,12 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             import filecmp
             assert filecmp.cmp(XMLFileName, temp_name)
             handler.close()
-            #unlink(temp_name)
+            unlink(temp_name)
 
             counter+=1
 
     def test_h_testXMLIndex(self):
-
+        # Check index of job
         from Ganga.Core.GangaRepository.PickleStreamer import to_file, from_file
 
         from Ganga.GPI import jobs
@@ -213,7 +213,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         handler.close()
 
     def test_i_testSJXMLIndex(self):
-
+        # Check index of all sj
         from Ganga.Core.GangaRepository.PickleStreamer import to_file, from_file
 
         from Ganga.GPI import jobs

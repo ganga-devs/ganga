@@ -35,7 +35,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         global_AutoStartReg = False
 
     def test_b_TestRemoveXML(self):
-
+        # Remove XML force to use backup
         XMLFileName = getXMLFile(0)
 
         unlink(XMLFileName)
@@ -47,7 +47,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         global_AutoStartReg = True
 
     def test_c_TestBackupLoad(self):
-
+        # Test loading from backup
         from Ganga.GPI import jobs
 
         assert len(jobs) == 1
@@ -61,7 +61,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         global_AutoStartReg = False
 
     def test_d_TestCorruptXML(self):
-
+        # Corrupt the XML file
         XMLFileName = getXMLFile(0)
 
         unlink(XMLFileName)
@@ -84,7 +84,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         global_AutoStartReg = True
 
     def test_d_TestCorruptLoad(self):
-
+        # Test loading of backup when corrupt
         from Ganga.GPI import jobs
 
         assert len(jobs) == 1
