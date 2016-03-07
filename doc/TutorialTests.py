@@ -31,8 +31,8 @@ class TutorialTests(unittest.TestCase):
 
         # -- INSTALLANDBASICUSAGE EXECFILE START
         open('submit.py', 'w').write("""
-        j = Job()
-        j.submit()
-        """)
+j = Job()
+j.submit()
+""")
         execfile('submit.py')
         # -- INSTALLANDBASICUSAGE EXECFILE STOP
