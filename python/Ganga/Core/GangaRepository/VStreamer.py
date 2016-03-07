@@ -368,7 +368,7 @@ class Loader(object):
             # we make a GangaList from these items and put it on stack
             if name == 'sequence':
                 pos = self.sequence_start.pop()
-                alist = makeGangaListByRef(self.stack[pos:])
+                alist = [elem for elem in self.stack[pos:]]
                 del self.stack[pos:]
                 self.stack.append(alist)
 
