@@ -129,7 +129,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         new_temp_file = NamedTemporaryFile(delete=False)
         temp_name = new_temp_file.name
-        ignore_subs = ''
+        ignore_subs = 'subjobs'
 
         to_file(stripProxy(j), new_temp_file, ignore_subs)
         new_temp_file.flush()
@@ -238,8 +238,8 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             new_dict[sj.id] = temp_index
             assert raw_sj._category == raw_j._category
 
-        for k, v in new_dict:
-            for k1, v1 in v:
+        for k, v in new_dict.iteritems():
+            for k1, v1 in v.iteritems():
                 if k1 != 'modified':
                     assert obj[k][k1] == new_dict[k][k1]
 
