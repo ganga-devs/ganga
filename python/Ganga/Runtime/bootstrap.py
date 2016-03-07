@@ -1053,7 +1053,8 @@ under certain conditions; type license() for details.
 
         import Ganga.Core
         from Ganga.Runtime.Repository_runtime import startUpRegistries
-        startUpRegistries()
+        if config['AutoStartReg']:
+            startUpRegistries()
 
         # export full_print
         from Ganga.GPIDev.Base.VPrinter import full_print

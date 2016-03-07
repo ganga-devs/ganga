@@ -2,32 +2,11 @@ from __future__ import absolute_import
 
 from ..GangaUnitTest import GangaUnitTest
 
-from os import path, stat
+from os import path, stat, unlink
 
 import time
 
-def getJobsPath():
-    from Ganga.Runtime.Repository_runtime import getLocalRoot
-    jobs_path = path.join(getLocalRoot(), '6.0', 'jobs')
-    return jobs_path
-
-def getXMLDir(this_job):
-    jobs_path = getJobsPath()
-    _id = this_job.id
-    jobs_master_path = path.join(jobs_path, "%sxxx" % str(int(_id/1000)))
-    return path.join(jobs_master_path, str(_id))
-
-def getXMLFile(this_job):
-    return path.join(getXMLDir(this_job), 'data')
-
-def getSJXMLIndex(this_sj):
-    return path.join(getXMLDir(this_sj), 'subjobs.idx')
-
-def getSJXMLFile(this_sj):
-    return path.join(getXMLDir(this_sj), '%s' % str(this_sj.id), 'data')
-
-def getIndexFile(this_job):
-    return path.join(getXMLDir(this_job), '../%s.index' % str(this_job.id))
+from .utilFunctions import getJobsPath, getXMLDir, getXMLFile, getSJXMLFile, getSJXMLIndex, getIndexFile
 
 testStr = "testFooString"
 testArgs = [[1],[2],[3],[4],[5]]
@@ -77,7 +56,9 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         j=jobs(0)
 
-        last_update = stat(getXMLFile(j))
+        XMLFileName = getXMLFile(j)
+
+        last_update = stat(XMLFileName)
 
         j.name = testStr
 
@@ -85,7 +66,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         flush_timeout = getConfig('Registry')['AutoFlusherWaitTime']
         time.sleep(2.*flush_timeout)
 
-        newest_update = stat(getXMLFile(j))
+        newest_update = stat(XMLFileName)
 
         assert newest_update.st_mtime > last_update.st_mtime
 
@@ -98,11 +79,13 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         j=jobs(0)
 
-        last_update = stat(getXMLFile(j)) 
+        XMLFileName = getXMLFile(j)
+
+        last_update = stat(XMLFileName)
 
         j.submit()
 
-        newest_update = stat(getXMLFile(j))
+        newest_update = stat(XMLFileName)
 
         assert len(j.subjobs) == len(testArgs)
 
@@ -121,8 +104,9 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         assert path.isfile(getSJXMLIndex(j))
 
         for sj in j.subjobs:
-            assert path.isfile(getSJXMLFile(j))
-            assert path.isfile(getSJXMLFile(j)+'~')
+            XMLFileName = getSJXMLFile(sj)
+            assert path.isfile(XMLFileName)
+            assert path.isfile(XMLFileName+'~')
 
     def test_f_testXMLContent(self):
 
@@ -134,56 +118,69 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         from tempfile import NamedTemporaryFile
 
         j=jobs(0)
-        assert path.isfile(getXMLFile(j))
-        handler = open(getXMLFile(j))
+        XMLFileName = getXMLFile(j)
+        assert path.isfile(XMLFileName)
+        handler = open(XMLFileName)
         tmpobj, errs = from_file(handler)
 
         assert hasattr(tmpobj, 'name')
 
         assert tmpobj.name == testStr
 
-        new_temp_file = NamedTemporaryFile()
-
+        new_temp_file = NamedTemporaryFile(delete=False)
+        temp_name = new_temp_file.name
         ignore_subs = ''
 
         to_file(stripProxy(j), new_temp_file, ignore_subs)
+        new_temp_file.flush()
 
         new_temp_file2 = NamedTemporaryFile()
+        temp_name2 = new_temp_file2.name
 
         j2=Job()
         j2.name=testStr
 
         to_file(stripProxy(j2), new_temp_file2, ignore_subs)
+        new_temp_file2.flush()
 
         import filecmp
 
-        assert filecmp.cmp(handler.name, new_temp_file.name)
-        assert filecmp.cmp(new_temp_file.name, new_temp_file2.name)
+        assert filecmp.cmp(XMLFileName, temp_name)
+        assert not filecmp.cmp(temp_name, temp_name2)
         handler.close()
+
+        #unlink(temp_name)
+        #unlink(temp_name2)
 
     def test_g_testSJXMLContent(self):
 
         from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
 
         from Ganga.GPI import jobs
+        from tempfile import NamedTemporaryFile
+        from Ganga.GPIDev.Base.Proxy import stripProxy
 
         counter = 0
         for sj in jobs(0).subjobs:
-            assert path.isfile(getSJXMLFile(sj))
+            XMLFileName = getSJXMLFile(sj)
+            assert path.isfile(XMLFileName)
 
             ignore_subs = ''
 
-            handler = open(getSJXMLFile(sj))
+            handler = open(XMLFileName)
             tmpobj, errs = from_file(handler)
             assert hasattr(tmpobj, 'id')
             assert tmpobj.id == counter
 
-            new_temp_file = NamedTemporaryFile()
-            to_file(stripProxy(j), new_temp_file, ignore_subs)
+            new_temp_file = NamedTemporaryFile(delete=False)
+            temp_name = new_temp_file.name
+            to_file(stripProxy(sj), new_temp_file, ignore_subs)
+            new_temp_file.flush()
 
             import filecmp
-            assert filecmp.cmp(handler.name, new_temp_file.name)
+            assert filecmp.cmp(XMLFileName, temp_name)
             handler.close()
+            #unlink(temp_name)
 
             counter+=1
 
@@ -193,21 +190,25 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         from Ganga.GPI import jobs
 
-        j=jobs(0)
+        j = jobs(0)
 
         assert path.isfile(getIndexFile(j))
 
         handler = open(getIndexFile(j))
-        _obj, errs = from_file(handler)
-        obj=_obj[0]
+        obj, errs = from_file(handler)
 
-        assert isinstance(obj, list)
+        assert isinstance(obj, tuple)
 
-        from Ganga.GPIDev.Lib.Registry.JobRegistry import getIndexCache
+        from Ganga.GPIDev.Base.Proxy import stripProxy, getName
+        raw_j = stripProxy(j)
+        index_cache = raw_j._getRegistry().getIndexCache(raw_j)
+        assert isinstance(index_cache, dict)
 
-        assert isinstance(getIndexCache(j), list)
+        index_cls = getName(raw_j)
+        index_cat = raw_j._category
+        this_index_cache = (index_cat, index_cls, index_cache)
 
-        assert getIndexCache(j) == obj
+        assert this_index_cache == obj
 
         handler.close()
 
@@ -217,19 +218,32 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         from Ganga.GPI import jobs
 
-        handler = open(getSJXMLIndex(jobs(0)))
-        handler = open(getIndexFile(j))
-        _obj, errs = from_file(handler)
-        obj=_obj[0]
+        assert len(jobs) == 2
+
+        j=jobs(0)
+
+        handler = open(getSJXMLIndex(j))
+        obj, errs = from_file(handler)
 
         assert isinstance(obj, dict)
 
-        from Ganga.GPIDev.Lib.Registry.JobRegistry import getIndexCache
+        from Ganga.GPIDev.Base.Proxy import stripProxy, getName
+        raw_j = stripProxy(j)
 
         new_dict = {}
-        for sj in jobs(0).subjobs:
+        for sj in j.subjobs:
+            raw_sj = stripProxy(sj)
+            temp_index = raw_sj._getRegistry().getIndexCache(raw_sj)
 
-            new_dict[sj.id] = getIndexCache(sj)
+            new_dict[sj.id] = temp_index
+            assert raw_sj._category == raw_j._category
 
-        assert obj == new_dict
+        for k, v in new_dict:
+            for k1, v1 in v:
+                if k1 != 'modified':
+                    assert obj[k][k1] == new_dict[k][k1]
+
+        #assert obj == new_dict
+
+        handler.close()
 
