@@ -7,8 +7,9 @@ you encounter any problems!
 
 .. toctree::
     InstallAndBasicUsage
+    Configuration
 
-Configuration
+
 Job Manipulation
 4. Running Executables
 5. Using different backends

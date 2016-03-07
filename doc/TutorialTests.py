@@ -36,3 +36,26 @@ j.submit()
 """)
         execfile('submit.py')
         # -- INSTALLANDBASICUSAGE EXECFILE STOP
+
+
+    def testConfiguration(self):
+
+        # -- CONFIGURATION VIEWCHANGE START
+        # print full config
+        config
+
+        # print config section
+        config.Logging
+
+        # edit a config option
+        config.Logging['Ganga.Lib'] = 'DEBUG'
+        # -- CONFIGURATION VIEWCHANGE STOP
+
+        # -- CONFIGURATION DEFAULTCHANGE START
+        config.defaults_Executable.exe = 'ls'
+        # -- CONFIGURATION DEFAULTCHANGE STOP
+
+        # -- CONFIGURATION STARTUPSCRIPT START
+        slice = jobs.select(status='running')
+        print slice
+        # -- CONFIGURATION STARTUPSCRIPT STOP
