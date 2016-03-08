@@ -1,8 +1,8 @@
 from __future__ import absolute_import, print_function
 
-from ..GangaUnitTest import GangaUnitTest
-
 import time
+
+from Ganga.new_tests.lib.GangaUnitTest import GangaUnitTest
 
 global_num_threads = 20
 global_num_jobs = global_num_threads*5
@@ -23,7 +23,7 @@ class TestQueuedSubmit(GangaUnitTest):
         assert num_threads == global_num_threads
 
     def test_b_SetupJobs(self):
-        from Ganga.GPI import Job, jobs, Executable
+        from Ganga.GPI import Job, jobs
 
         # Just in-case, I know this shouldn't be here, but if the repo gets polluted this is a sane fix
         for j in jobs:
@@ -60,7 +60,7 @@ class TestQueuedSubmit(GangaUnitTest):
             assert j.status != 'new'
 
     def test_d_Finished(self):
-        from Ganga.GPI import jobs, queues
+        from Ganga.GPI import jobs
         from GangaTest.Framework.utils import sleep_until_completed
 
         print('waiting on job', end=' ')

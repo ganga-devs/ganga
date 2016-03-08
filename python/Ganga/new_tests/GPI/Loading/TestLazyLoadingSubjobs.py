@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.new_tests.lib.GangaUnitTest import GangaUnitTest
 
 global_subjob_num = 5
 default_CleanUp = None

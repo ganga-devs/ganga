@@ -5,11 +5,10 @@ import tempfile
 
 import pytest
 
-from GangaTest.Framework.utils import sleep_until_completed, write_file
-from Ganga.GPIDev.Base.Proxy import getProxyClass
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
-
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.GPIDev.Base.Proxy import getProxyClass
+from Ganga.new_tests.lib.GangaUnitTest import GangaUnitTest
+from GangaTest.Framework.utils import sleep_until_completed, write_file
 from .CopySplitter import CopySplitter
 
 CopySplitter = getProxyClass(CopySplitter)

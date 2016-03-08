@@ -5,8 +5,8 @@ import tempfile
 
 import pytest
 
-from ..GangaUnitTest import GangaUnitTest
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
+from Ganga.new_tests.lib.GangaUnitTest import GangaUnitTest
 
 
 class TestStructure(GangaUnitTest):
