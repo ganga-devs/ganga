@@ -27,6 +27,7 @@ def shutDownQueues():
     try:
         _global_queues.lock()
         _global_queues._purge_all()
+        _global_queues._stop_all_threads()
     except:
         logger.warning("Error in shutting down queues thread. Likely harmless")
     del _global_queues
