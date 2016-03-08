@@ -92,6 +92,10 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         else:
             logger.info("InternalServices still running")
 
+    # Set the extra options again here in case they were overridden by initEnvironment() above
+    for opt in extra_opts:
+        setConfigOption(*opt)
+
     logger.info("Bootstrapping")
     Ganga.Runtime._prog.bootstrap(interactive=False)
 

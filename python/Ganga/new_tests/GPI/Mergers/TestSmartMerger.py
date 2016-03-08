@@ -3,10 +3,9 @@ from __future__ import absolute_import
 import os
 import tempfile
 
-from GangaTest.Framework.utils import sleep_until_completed, file_contains, write_file
 from Ganga.Lib.Mergers.Merger import findFilesToMerge
-
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.new_tests.lib.GangaUnitTest import GangaUnitTest
+from GangaTest.Framework.utils import sleep_until_completed, file_contains, write_file
 
 
 class TestSmartMerger(GangaUnitTest):

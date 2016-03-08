@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import time
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.new_tests.lib.GangaUnitTest import GangaUnitTest
 
 master_timeout = 300.
 
@@ -22,13 +22,12 @@ class TestMonitoring(GangaUnitTest):
         super(TestMonitoring, self).setUp(extra_opts=extra_opts)
 
     def tearDown(self):
-        from Ganga.Utility.Config import getConfig
         #getConfig('PollThread').getOption('autostart').revertToDefault()
         #getConfig('PollThread').getOption('base_poll_rate').revertToDefault()
         super(TestMonitoring, self).tearDown()
 
     def test_a_JobConstruction(self):
-        from Ganga.GPI import Job, jobs, disableMonitoring
+        from Ganga.GPI import Job, jobs
 
         j=Job()
 
@@ -59,7 +58,7 @@ class TestMonitoring(GangaUnitTest):
 
     def test_d_anotherNewJob(self):
 
-        from Ganga.GPI import Job, jobs
+        from Ganga.GPI import Job
 
         j=Job()
 
@@ -68,7 +67,7 @@ class TestMonitoring(GangaUnitTest):
 
     def test_e_reEnableMon(self):
 
-        from Ganga.GPI import disableMonitoring, enableMonitoring, Job, jobs
+        from Ganga.GPI import disableMonitoring, enableMonitoring, Job
 
         disableMonitoring()
         enableMonitoring()

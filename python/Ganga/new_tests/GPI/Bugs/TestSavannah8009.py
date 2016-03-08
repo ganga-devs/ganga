@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.new_tests.lib.GangaUnitTest import GangaUnitTest
 
 
 class TestSavannah8009(GangaUnitTest):
 
     def test_Savannah8009(self):
-        from Ganga.GPI import Executable, Job, jobs, templates
+        from Ganga.GPI import Job, jobs, templates
 
         from GangaTest.Framework.utils import sleep_until_completed
 

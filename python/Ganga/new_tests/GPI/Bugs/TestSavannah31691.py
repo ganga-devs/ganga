@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-from ..GangaUnitTest import GangaUnitTest
-
 import os
+
+from Ganga.new_tests.lib.GangaUnitTest import GangaUnitTest
 
 
 class TestSavannah31691(GangaUnitTest):

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import random
 import threading
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.new_tests.lib.GangaUnitTest import GangaUnitTest
 
 
 class FakeRegistry(object):

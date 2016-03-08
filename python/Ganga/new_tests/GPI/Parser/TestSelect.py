@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.new_tests.lib.GangaUnitTest import GangaUnitTest
 
 class TestSelect(GangaUnitTest):
 
@@ -26,7 +26,7 @@ class TestSelect(GangaUnitTest):
 
     def test_SelectSubJob(self):
 
-        from Ganga.GPI import Job, jobs, ArgSplitter
+        from Ganga.GPI import Job, ArgSplitter
         j=Job(splitter=ArgSplitter(args=[[1],[2],[3]]))
 
         assert len(j.subjobs) == 0

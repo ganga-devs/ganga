@@ -1,4 +1,4 @@
-from GangaUnitTest import GangaUnitTest
+from Ganga.new_tests.lib.GangaUnitTest import GangaUnitTest
 
 class TestJob(GangaUnitTest):
 
