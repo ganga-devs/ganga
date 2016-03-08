@@ -145,7 +145,7 @@ def _diskSpaceChecker():
     return True
 
 
-def disableMonitoringService(shutdown=False):
+def disableMonitoringService():
 
     # disable the mon loop
     log.debug("Shutting down the main monitoring loop")
@@ -156,27 +156,8 @@ def disableMonitoringService(shutdown=False):
     from Ganga.Core import monitoring_component
     monitoring_component.disableMonitoring()
 
-    if not shutdown:
-        from Ganga.GPI import queues
-        queues._purge_all()
-        first = 0
-        while queues.totalNumAllThreads() != 0:
-            log.debug("Ensuring that all tasks are purged from the todo!")
-            if first is not 0:
-                import time
-                time.sleep(0.5)
-            queues._purge_all()
-            queues._stop_all_threads()
-            from Ganga.Core.GangaThread.GangaThreadPool import GangaThreadPool
-            pool = GangaThreadPool.getInstance()
-            pool.shutdown()
-            pool.__do_shutdown__()
-            first = 1
-        
-        log.debug("Queues Threads should now be gone")
 
-
-def disableInternalServices(shutdown=False):
+def disableInternalServices():
     """
     Deactivates all the internal services :
           * monitoring loop
@@ -207,7 +188,7 @@ def disableInternalServices(shutdown=False):
     log.debug("Disabling the internal services")
 
     # disable the mon loop
-    disableMonitoringService( shutdown )
+    disableMonitoringService()
 
     # For debugging what services are still alive after being requested to stop before we close the repository
     #from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
