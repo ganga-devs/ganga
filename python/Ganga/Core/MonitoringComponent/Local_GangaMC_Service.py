@@ -997,8 +997,6 @@ class JobRegistry_Monitor(GangaThread):
             # print masterJobList_fromset
             jobList_fromset = alljobList_fromset
             jobList_fromset.extend(masterJobList_fromset)
-            # print jobList_fromset
-            self.updateDict_ts.clearEntry(getName(backendObj))
             try:
                 log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
 
@@ -1086,7 +1084,10 @@ class JobRegistry_Monitor(GangaThread):
             log.debug("[Update Thread %s] Lock released for %s." % (currentThread, getName(backendObj)))
             self._runningNow = False
 
-        log.debug("Finishing _checkBackend")
+            # print jobList_fromset
+            self.updateDict_ts.clearEntry(getName(backendObj))
+            log.debug("Finishing _checkBackend")
+
         return
 
     def _checkActiveBackends(self, activeBackendsFunc):

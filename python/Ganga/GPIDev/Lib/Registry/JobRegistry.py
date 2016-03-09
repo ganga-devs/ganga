@@ -9,7 +9,7 @@ from __future__ import absolute_import
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 
 from Ganga.Core.exceptions import GangaException
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher, synchronised
 
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, addProxy
 
@@ -23,8 +23,9 @@ from .RegistrySlice import RegistrySlice
 
 from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 
-# display default values for job list
 from .RegistrySlice import config
+
+# display default values for job list
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -34,25 +35,22 @@ class JobRegistry(Registry):
     def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
         super(JobRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
 
+    @synchronised
     def getProxy(self):
         this_slice = JobRegistrySlice(self.name)
         this_slice.objects = self
         return JobRegistrySliceProxy(this_slice)
 
+    @synchronised
     def getIndexCache(self, obj):
 
         cached_values = ['status', 'id', 'name']
         cache = {}
         for cv in cached_values:
-            #print("cv: %s" % str(cv))
-            #if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
-            #    cache[cv] = obj.getNodeIndexCache()[cv]
-            #else:
             cache[cv] = getattr(obj, cv)
-            #logger.info("Setting: %s = %s" % (str(cv), str(cache[cv])))
+
         this_slice = JobRegistrySlice("jobs")
         for dpv in this_slice._display_columns:
-            #logger.debug("Storing: %s" % str(dpv))
             try:
                 value = this_slice._get_display_value(obj, dpv)
                 cache["display:" + dpv] = value
@@ -70,9 +68,9 @@ class JobRegistry(Registry):
                 for sj in obj.subjobs:
                     cache["subjobs:status"].append(sj.status)
 
-        #print("Cache: %s" % str(cache))
         return cache
 
+    @synchronised
     def startup(self):
         self._needs_metadata = True
         super(JobRegistry, self).startup()
@@ -92,6 +90,7 @@ class JobRegistry(Registry):
     def getJobTree(self):
         return self.jobtree
 
+    @synchronised
     def _remove(self, obj, auto_removed=0):
         super(JobRegistry, self)._remove(obj, auto_removed)
         try:
@@ -213,7 +212,7 @@ class JobRegistrySlice(RegistrySlice):
 
     def force_status(self, status, keep_going, force):
         self.do_collective_operation(
-            keep_going, 'force_status', status, force=force)
+                keep_going, 'force_status', status, force=force)
 
     def remove(self, keep_going, force):
         self.do_collective_operation(keep_going, 'remove', force=force)

@@ -41,7 +41,7 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_lock', '_proxyObject']
+do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_read_lock', '_write_lock', '_proxyObject']
 
 def _getGangaList():
     global _imported_GangaList
@@ -58,7 +58,7 @@ def synchronised(f):
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
-        with self.lock:
+        with self._internal_lock:
             return f(self, *args, **kwargs)
     return decorated
 
@@ -70,7 +70,8 @@ class Node(object):
         self._data = {}
         self._parent = parent
         self._index_cache = {}
-        self._lock = threading.RLock()
+        self._read_lock = threading.RLock() # Don't read out of thread whilst we're making a change
+        self._write_lock = threading.RLock() # Don't write from out of thread when modifying an object
         super(Node, self).__init__()
         #logger.info("Node __init__")
 
@@ -133,23 +134,37 @@ class Node(object):
         if parent is None:
             setattr(self, '_parent', parent)
         else:
-            with parent.lock:  # This will lock the _new_ root object
+            with parent._internal_lock:  # This will lock the _new_ root object
                 setattr(self, '_parent', parent)
             # Finally the new and then old root objects will be unlocked
 
     @property
     @contextmanager
-    def lock(self):
+    def _internal_lock(self):
         """
-        This is a context manager which acquires the lock on the
+        This is a context manager which acquires the internal read lock on the
         object's root object.
         """
         root = self._getRoot()
-        root._lock.acquire()
+        root._read_lock.acquire()
         try:
             yield
         finally:
-            root._lock.release()
+            root._read_lock.release()
+
+    @property
+    @contextmanager
+    def const_lock(self):
+        """
+        This is a context manager which acquires the const write lock on the
+        object's root object.
+        """
+        root = self._getRoot()
+        root._write_lock.acquire()
+        try:
+            yield
+        finally:
+            root._write_lock.release()
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
@@ -361,29 +376,52 @@ class Node(object):
         if attrib_name in self._data.keys():
             del self._data[attrib_name]
 
-    def removeNodeIndexCacheAttribute(self, attrib_name):
-        if self._index_cache and attrib_name in self._index_cache.keys():
-            del self._index_cache[attrib_name]
-
     def setNodeIndexCache(self, new_index_cache):
+        if self.fullyLoadedFromDisk():
+            logger.debug("Warning: Setting IndexCache data on live object, please avoid!")
         setattr(self, '_index_cache', new_index_cache)
-
-    def getNodeIndexCache(self):
+                                       
+    def getNodeIndexCache(self, force_cache=False):
+        if self.fullyLoadedFromDisk() and not force_cache:
+            ## Fully loaded so lets regenerate this on the fly to avoid losing data
+            return self._getRegistry().getIndexCache(self)
+        ## Not in registry or not loaded, so can't re-generate if requested
         return self._index_cache
+                                                                 
+    def fullyLoadedFromDisk(self):
+        if self._getRegistry():
+            if self._getRegistry().has_loaded(self):
+                return True
+        return False
 
 ##########################################################################
 
 
-def synchronised_descriptor(get_or_set):
+def synchronised_get_descriptor(get_function):
     """
-    This decorator should only be used on ``__get__`` or ``__set__`` methods of a ``Descriptor``.
+    This decorator should only be used on ``__get__`` method of the ``Descriptor``.
     """
-    @functools.wraps(get_or_set)
+    @functools.wraps(get_function)
     def decorated(self, obj, type_or_value):
         if obj is None:
-            return get_or_set(self, obj, type_or_value)
-        with obj.lock:
-            return get_or_set(self, obj, type_or_value)
+            return get_function(self, obj, type_or_value)
+
+        with obj._internal_lock:
+            return get_function(self, obj, type_or_value)
+
+    return decorated
+
+def synchronised_set_descriptor(set_function):
+    """
+    This decorator should only be used on ``__set__`` method of the ``Descriptor``.
+    """
+    def decorated(self, obj, type_or_value):
+        if obj is None:
+            return set_function(self, obj, type_or_value)
+
+        with obj.const_lock:
+            with obj._internal_lock:
+                return set_function(self, obj, type_or_value)
     return decorated
 
 
@@ -410,7 +448,7 @@ class Descriptor(object):
         if self._getter_name:
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
-    @synchronised_descriptor
+    @synchronised_get_descriptor
     def __get__(self, obj, cls):
         name = _getName(self)
 
@@ -430,7 +468,7 @@ class Descriptor(object):
             return obj_data[name]
 
         # Then try to get it from the index cache
-        obj_index = obj.getNodeIndexCache()
+        obj_index = obj.getNodeIndexCache(force_cache = len(obj_data) == 0)
         if name in obj_index:
             return obj_index[name]
 
@@ -522,7 +560,7 @@ class Descriptor(object):
 
         return v_copy
 
-    @synchronised_descriptor
+    @synchronised_set_descriptor
     def __set__(self, _obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
         ## _obj: parent class which 'owns' the attribute
@@ -763,7 +801,7 @@ class GangaObject(Node):
         # make sure to update the __getstate__ method as well
         # dirty flag is true if the object has been modified locally and its
         # contents is out-of-sync with its repository
-        self._dirty = False
+        self._dirty = True
 
         #Node.__init__(self, None)
 
