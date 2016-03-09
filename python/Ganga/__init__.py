@@ -28,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.1.15 $'
+_gangaVersion = '$Name: 6.1.16 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -245,7 +245,8 @@ poll_config.addOption('forced_shutdown_prompt_time', 10,
 poll_config.addOption('forced_shutdown_first_prompt_time', 5,
                  "User will get the FIRST prompt after N seconds, as specified by this parameter. This parameter also defines the time that Ganga will wait before shutting down, if there are only non-critical threads alive, in both interactive and batch mode.")
 
-poll_config.addOption('HeartBeatTimeOut', 300, 'Time before the user gets the warning that a thread has locked up due to failing to update the heartbeat attribute')
+import sys
+poll_config.addOption('HeartBeatTimeOut', sys.maxint, 'Time before the user gets the warning that a thread has locked up due to failing to update the heartbeat attribute')
 
 # ------------------------------------------------
 # Feedback
@@ -836,3 +837,7 @@ Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 
 """, is_open=True)
 
+# ------------------------------------------------
+# MonitoringServices
+reg_config = makeConfig('Registry','')
+reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')

@@ -52,8 +52,6 @@ def isCredentialRequired(credObj):
         return Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken()
 
     if getName(credObj) == 'GridProxy':
-        if Repository_runtime.requiresGridProxy() or Workspace_runtime.requiresGridProxy():
-            return True
         from Ganga.GPI import jobs, typename
         from Ganga.GPIDev.Base.Proxy import stripProxy
         for j in jobs:
