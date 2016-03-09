@@ -41,7 +41,7 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_lock', '_reg_lock', '_proxyObject']
+do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_read_lock', '_write_lock', '_proxyObject']
 
 def _getGangaList():
     global _imported_GangaList
@@ -58,7 +58,7 @@ def synchronised(f):
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
-        with self.lock:
+        with self._internal_lock:
             return f(self, *args, **kwargs)
     return decorated
 
@@ -70,8 +70,8 @@ class Node(object):
         self._data = {}
         self._parent = parent
         self._index_cache = {}
-        self._lock = threading.RLock()
-        self._reg_lock = threading.RLock()
+        self._read_lock = threading.RLock() # Don't read out of thread whilst we're making a change
+        self._write_lock = threading.RLock() # Don't write from out of thread when modifying an object
         super(Node, self).__init__()
         #logger.info("Node __init__")
 
@@ -134,32 +134,38 @@ class Node(object):
         if parent is None:
             setattr(self, '_parent', parent)
         else:
-            with parent.lock:  # This will lock the _new_ root object
-                setattr(self, '_parent', parent)
+            with parent.const_lock:
+                with parent._internal_lock:  # This will lock the _new_ root object
+                    setattr(self, '_parent', parent)
             # Finally the new and then old root objects will be unlocked
 
     @property
     @contextmanager
-    def lock(self):
+    def _internal_lock(self):
         """
-        This is a context manager which acquires the lock on the
+        This is a context manager which acquires the internal read lock on the
         object's root object.
         """
         root = self._getRoot()
-        root._lock.acquire()
+        root._read_lock.acquire()
         try:
             yield
         finally:
-            root._lock.release()
+            root._read_lock.release()
 
     @property
     @contextmanager
-    def reg_lock(self):
-        self._reg_lock.acquire()
+    def const_lock(self):
+        """
+        This is a context manager which acquires the const write lock on the
+        object's root object.
+        """
+        root = self._getRoot()
+        root._write_lock.acquire()
         try:
             yield
         finally:
-            self._reg_lock.release()
+            root._write_lock.release()
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
@@ -384,21 +390,31 @@ class Node(object):
 ##########################################################################
 
 
-def synchronised_descriptor(get_or_set):
+def synchronised_get_descriptor(get_function):
     """
-    This decorator should only be used on ``__get__`` or ``__set__`` methods of a ``Descriptor``.
+    This decorator should only be used on ``__get__`` method of the ``Descriptor``.
     """
-    @functools.wraps(get_or_set)
+    @functools.wraps(get_function)
     def decorated(self, obj, type_or_value):
         if obj is None:
-            return get_or_set(self, obj, type_or_value)
-        if get_or_set.__name__ == "__get__":
-            with obj.lock:
-                return get_or_set(self, obj, type_or_value)
-        elif get_or_set.__name__ == "__set__":
-            with obj._getRoot().reg_lock:
-                with obj.lock:
-                    return get_or_set(self, obj, type_or_value)
+            return get_function(self, obj, type_or_value)
+
+        with obj._internal_lock:
+            return get_function(self, obj, type_or_value)
+
+    return decorated
+
+def synchronised_set_descriptor(set_function):
+    """
+    This decorator should only be used on ``__set__`` method of the ``Descriptor``.
+    """
+    def decorated(self, obj, type_or_value):
+        if obj is None:
+            return set_function(self, obj, type_or_value)
+
+        with obj.const_lock:
+            with obj._internal_lock:
+                return set_function(self, obj, type_or_value)
     return decorated
 
 
@@ -425,7 +441,7 @@ class Descriptor(object):
         if self._getter_name:
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
-    @synchronised_descriptor
+    @synchronised_get_descriptor
     def __get__(self, obj, cls):
         name = _getName(self)
 
@@ -537,7 +553,7 @@ class Descriptor(object):
 
         return v_copy
 
-    @synchronised_descriptor
+    @synchronised_set_descriptor
     def __set__(self, _obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
         ## _obj: parent class which 'owns' the attribute
