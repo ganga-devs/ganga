@@ -765,7 +765,8 @@ class Grid(object):
 
         return jobInfoDict
 
-    def __cream_ui_check__(self):
+    @staticmethod
+    def __cream_ui_check__():
         '''checking if CREAM CE environment is set properly'''
 
         if not check_proxy():
@@ -807,7 +808,7 @@ class Grid(object):
     def cream_proxy_delegation(self, ce):
         '''CREAM CE proxy delegation'''
 
-        if not self.__cream_ui_check__():
+        if not Grid.__cream_ui_check__():
             return
 
         if not ce:
@@ -858,7 +859,7 @@ class Grid(object):
     def cream_submit(self, jdlpath, ce):
         '''CREAM CE direct job submission'''
 
-        if not self.__cream_ui_check__():
+        if not Grid.__cream_ui_check__():
             return
 
         if not ce:
@@ -900,7 +901,7 @@ class Grid(object):
     def cream_status(self, jobids):
         '''CREAM CE job status query'''
 
-        if not self.__cream_ui_check__():
+        if not Grid.__cream_ui_check__():
             return ([], [])
 
         if not jobids:
@@ -932,7 +933,7 @@ class Grid(object):
     def cream_purgeMultiple(self, jobids):
         '''CREAM CE job purging'''
 
-        if not self.__cream_ui_check__():
+        if not Grid.__cream_ui_check__():
             return False
 
         idsfile = tempfile.mktemp('.jids')
@@ -963,7 +964,7 @@ class Grid(object):
     def cream_cancelMultiple(self, jobids):
         '''CREAM CE job cancelling'''
 
-        if not self.__cream_ui_check__():
+        if not Grid.__cream_ui_check__():
             return False
 
         idsfile = tempfile.mktemp('.jids')
@@ -994,7 +995,7 @@ class Grid(object):
     def cream_get_output(self, osbURIList, directory):
         '''CREAM CE job output retrieval'''
 
-        if not self.__cream_ui_check__():
+        if not Grid.__cream_ui_check__():
             return (False, None)
 
         gfiles = []
@@ -1178,7 +1179,7 @@ class Grid(object):
         '''ARC CE direct job submission'''
 
         # use the CREAM UI check as it's the same
-        if not self.__cream_ui_check__():
+        if not Grid.__cream_ui_check__():
             return
 
         # No longer need to specify CE if available in client.conf
@@ -1230,7 +1231,7 @@ class Grid(object):
     def arc_status(self, jobids, cedict):
         '''ARC CE job status query'''
 
-        if not self.__cream_ui_check__():
+        if not Grid.__cream_ui_check__():
             return ([], [])
 
         if not jobids:
@@ -1340,7 +1341,7 @@ class Grid(object):
     def arc_get_output(self, jid, directory):
         '''ARC CE job output retrieval'''
 
-        if not self.__cream_ui_check__():
+        if not Grid.__cream_ui_check__():
             return (False, None)
 
         # construct URI list from ID and output from arcls
@@ -1373,7 +1374,7 @@ class Grid(object):
     def arc_purgeMultiple(self, jobids):
         '''ARC CE job purging'''
 
-        if not self.__cream_ui_check__():
+        if not Grid.__cream_ui_check_():
             return False
 
         idsfile = tempfile.mktemp('.jids')
