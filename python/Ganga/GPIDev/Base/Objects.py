@@ -58,7 +58,7 @@ def synchronised(f):
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
-        with self._internal_lock:
+        with self.const_lock:
             return f(self, *args, **kwargs)
     return decorated
 
@@ -134,8 +134,7 @@ class Node(object):
         if parent is None:
             setattr(self, '_parent', parent)
         else:
-            with parent.const_lock:
-                with parent._internal_lock:  # This will lock the _new_ root object
+            with parent.const_lock: # This will lock the _new_ root object
                     setattr(self, '_parent', parent)
             # Finally the new and then old root objects will be unlocked
 
