@@ -3,13 +3,13 @@ from os.path import join,basename
 
 # Do a standard Root job
 ganga_path = os.path.abspath(os.path.dirname(__file__))
-script_file = ganga_path + '/../python/GangaLHCb/test/GPI/Dirac/test.C'
+script_file = ganga_path + '/../python/GangaLHCb/old_test/GPI/Dirac/test.C'
 j1 = Job(application=Root(script=script_file),backend=Dirac())
 j1.submit()
 
 # Do a Root job using pyRoot
 ganga_path = os.path.abspath(os.path.dirname(__file__))
-script_file = ganga_path + '/../python/GangaLHCb/test/GPI/Dirac/test.py'
+script_file = ganga_path + '/../python/GangaLHCb/old_test/GPI/Dirac/test.py'
 j2 = Job(application=Root(script=script_file),backend=Dirac())
 j2.submit()
 

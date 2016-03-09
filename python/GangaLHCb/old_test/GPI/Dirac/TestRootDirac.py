@@ -15,7 +15,7 @@ if doConfig:
 
 import os
 ganga_path = os.path.abspath(os.path.dirname(__file__))
-script_file = ganga_path + '/../python/GangaLHCb/test/GPI/Dirac/test.C'
+script_file = ganga_path + '/../python/GangaLHCb/old_test/GPI/Dirac/test.C'
 
 
 class TestRootDirac(GangaGPITestCase):

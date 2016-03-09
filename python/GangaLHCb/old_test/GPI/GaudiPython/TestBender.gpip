@@ -14,7 +14,7 @@ from GangaLHCb.test import *
 import Ganga.Utility.Config
 
 ganga_path = os.path.abspath(os.path.dirname(__file__))
-pwd = ganga_path + '/../python/GangaLHCb/test/GPI/GaudiPython/'
+pwd = ganga_path + '/../python/GangaLHCb/old_test/GPI/GaudiPython/'
 module = '%s/DummyBenderModule.py' % pwd
 
 class TestBender(GangaGPITestCase):

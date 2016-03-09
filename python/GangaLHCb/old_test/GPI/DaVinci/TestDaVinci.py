@@ -14,7 +14,7 @@ class TestDaVinci(GangaGPITestCase):
 
     def setUp(self):
         ganga_path = os.path.abspath(os.path.dirname(__file__))
-        self.path = ganga_path + '/../python/GangaLHCb/test/GPI/DaVinci/'
+        self.path = ganga_path + '/../python/GangaLHCb/old_test/GPI/DaVinci/'
         self.input_data = [
             'LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst']
         #self.input_data = ['LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000326_1.dimuon.dst']

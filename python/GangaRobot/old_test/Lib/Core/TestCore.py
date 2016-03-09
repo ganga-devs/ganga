@@ -16,7 +16,7 @@ class TestCore(GangaGPITestCase):
         self.runid = Utility.utcid()
         self.submitter = CoreSubmitter()
         #force submitter patterns
-        self.submitter.options = {'CoreSubmitter_Patterns':['GangaRobot/test/Lib/Core/test-jobs.txt']}
+        self.submitter.options = {'CoreSubmitter_Patterns':['GangaRobot/old_test/Lib/Core/test-jobs.txt']}
         self.finisher = CoreFinisher()
         #force finisher timeout to 5 mins
         self.finisher.options = {'BaseFinisher_Timeout':300}
