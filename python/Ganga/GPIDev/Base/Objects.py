@@ -134,9 +134,8 @@ class Node(object):
         if parent is None:
             setattr(self, '_parent', parent)
         else:
-            with parent.const_lock:
-                with parent._internal_lock:  # This will lock the _new_ root object
-                    setattr(self, '_parent', parent)
+            with parent._internal_lock:  # This will lock the _new_ root object
+                setattr(self, '_parent', parent)
             # Finally the new and then old root objects will be unlocked
 
     @property
