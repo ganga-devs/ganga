@@ -666,13 +666,15 @@ class Registry(object):
             if not obj._dirty:
                 continue
 
-            with obj.lock:
+            with obj.const_lock:
                 if not obj._dirty:
                     continue
+                # flush the object. Need to call _getWriteAccess for consistency reasons
+                # TODO: getWriteAccess should only 'get write access', as that's not needed should it be called here?
                 obj._getWriteAccess()
                 obj_id = getattr(obj, _reg_id_str)
                 self.repository.flush([obj_id])
-                self.repository.unlock([obj_id])
+                obj._setFlushed()
 
     @synchronised
     def flush_all(self):
@@ -696,7 +698,7 @@ class Registry(object):
         if obj_id in self._inprogressDict.keys():
             return
 
-        with _obj.lock:
+        with _obj.const_lock:
             self.__safe_read_access(_obj, sub_obj)
 
     @synchronised
@@ -772,7 +774,7 @@ class Registry(object):
         if obj_id in self._inprogressDict.keys():
             return
 
-        with obj.lock:
+        with obj.const_lock:
             self.__write_access(obj)
 
     def __write_access(self, _obj):
