@@ -71,6 +71,7 @@ class Node(object):
         self._parent = parent
         self._index_cache = {}
         self._lock = threading.RLock()
+        self._reg_lock = threading.RLock()
         super(Node, self).__init__()
         #logger.info("Node __init__")
 
@@ -150,6 +151,15 @@ class Node(object):
             yield
         finally:
             root._lock.release()
+
+    @property
+    @contextmanager
+    def reg_lock(self):
+        self._reg_lock.acquire()
+        try:
+            yield
+        finally:
+            self._reg_lock.release()
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
@@ -382,8 +392,13 @@ def synchronised_descriptor(get_or_set):
     def decorated(self, obj, type_or_value):
         if obj is None:
             return get_or_set(self, obj, type_or_value)
-        with obj.lock:
-            return get_or_set(self, obj, type_or_value)
+        if get_or_set.__name__ == "__get__":
+            with obj.lock:
+                return get_or_set(self, obj, type_or_value)
+        elif get_or_set.__name__ == "__set__":
+            with obj._getRoot().reg_lock:
+                with obj.lock:
+                    return get_or_set(self, obj, type_or_value)
     return decorated
 
 
