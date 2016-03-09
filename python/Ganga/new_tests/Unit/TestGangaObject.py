@@ -263,7 +263,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
             rand = random.Random()
             rand.seed(time.clock() + thread_number)
             for _ in range(100):
-                with o.lock:
+                with o.const_lock:
                     num = rand.randint(0, 1000)
                     o.a = num
                     time.sleep(rand.uniform(0, 1E-6))
@@ -290,7 +290,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
             rand = random.Random()
             rand.seed(time.clock() + thread_number)
             for _ in range(100):
-                with child.lock:
+                with child.const_lock:
                     num = rand.randint(0, 1000)
                     o.a = num
                     child_num = rand.randint(0, 1000)
@@ -320,13 +320,13 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
             rand = random.Random()
             rand.seed(time.clock() + thread_number)
             for _ in range(10):  # Run this thread many times to keep it running for long enough to see problems.
-                with o.lock:
+                with o.const_lock:
                     num = rand.randint(0, 1000)
                     o.a = num
                     time.sleep(rand.uniform(0, 1E-6))
                     assert o.a == num
 
-                with o.lock:
+                with o.const_lock:
                     o.b = rand.choice([ThreadedTestGangaObject, SimpleGangaObject])()
                     child_num = rand.randint(0, 1000)
                     o.b.a = child_num
@@ -340,7 +340,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
                         time.sleep(rand.uniform(0, 1E-6))
                         assert o.b.b.a == num
 
-                with o.lock:
+                with o.const_lock:
                     num = rand.randint(0, 1000)
                     o.b.a = num
                     time.sleep(rand.uniform(0, 1E-6))
