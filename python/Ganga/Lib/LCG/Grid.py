@@ -28,6 +28,9 @@ def credential():
 def check_proxy():
     """Check the proxy and prompt the user to refresh it"""
 
+    if not credential():
+        return False
+
     credential().voms = config['VirtualOrganisation']
     status = credential().renew(maxTry=3)
 
