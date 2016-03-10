@@ -50,8 +50,6 @@ class Grid(object):
 
         self.new_config = ""
 
-        self.proxy_id = {}
-
     @staticmethod
     def __get_cmd_prefix_hack__(binary=False):
         # this is to work around inconsistency of LCG setup script and commands:
@@ -779,33 +777,8 @@ class Grid(object):
 
         return True
 
-    def cream_check_delegated_proxy(self, ce):
-        '''
-        Checking if the delegation id to given CE is still valid.
-        '''
-
-        id = None
-
-        try:
-            id, t_expire = self.proxy_id[ce]
-
-            # TODO: implement the check of the validity of the delegation id
-            now = time.time()
-
-            # check if the lifetime of the existing proxy still longer than
-            # 1800 seconds
-            if t_expire - now <= 1800:
-                logger.debug('existing proxy going to expire in 1800 seconds.')
-                id = None
-            else:
-                logger.debug('reusing valid proxy %s on %s' % (id, ce))
-
-        except KeyError:
-            pass
-
-        return id
-
-    def cream_proxy_delegation(self, ce):
+    @staticmethod
+    def cream_proxy_delegation(ce, delid):
         '''CREAM CE proxy delegation'''
 
         if not Grid.__cream_ui_check__():
@@ -815,48 +788,36 @@ class Grid(object):
             logger.warning('No CREAM CE endpoint specified')
             return
 
-        mydelid = self.cream_check_delegated_proxy(ce)
-
-        if not mydelid:
+        if not delid:
 
             logger.debug('making new proxy delegation to %s' % ce)
-
-            t_expire = 0
-
-            exec_bin = True
 
             cmd = 'glite-ce-delegate-proxy'
 
             cmd += ' -e %s' % ce.split('/cream')[0]
 
-            mydelid = '%s_%s' % (credential().identity(), get_uuid())
+            delid = '%s_%s' % (credential().identity(), get_uuid())
 
-            cmd = '%s "%s"' % (cmd, mydelid)
+            cmd = '%s "%s"' % (cmd, delid)
 
             logger.debug('proxy delegation command: %s' % cmd)
 
-            rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+            rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=True), cmd),
                                             allowed_exit=[0, 255],
                                             timeout=config['SubmissionTimeout'])
             if rc != 0:
                 # failed to delegate proxy
                 logger.error('proxy delegation error: %s' % output)
-                mydelid = ''
+                delid = ''
             else:
                 # proxy delegated successfully
-                # NB: expiration time is "current time" + "credential lifetime"
-                t_expire = time.time() + \
-                    float(
-                        credential().timeleft(units="seconds", force_check=True))
+                t_expire = time.time() + float(credential().timeleft(units="seconds", force_check=True))
 
-                logger.debug('new proxy at %s valid until %s' %
-                             (ce, time.ctime(t_expire)))
+                logger.debug('new proxy at %s valid until %s' % (ce, t_expire))
 
-            self.proxy_id[ce] = [mydelid, t_expire]
+        return delid
 
-        return mydelid
-
-    def cream_submit(self, jdlpath, ce):
+    def cream_submit(self, jdlpath, ce, delid):
         '''CREAM CE direct job submission'''
 
         if not Grid.__cream_ui_check__():
@@ -867,12 +828,11 @@ class Grid(object):
             return
 
         cmd = 'glite-ce-job-submit'
-        exec_bin = True
 
-        mydelid = self.cream_proxy_delegation(ce)
+        delid = Grid.cream_proxy_delegation(ce, delid)
 
-        if mydelid:
-            cmd = cmd + ' -D "%s"' % mydelid
+        if delid:
+            cmd = cmd + ' -D "%s"' % delid
         else:
             cmd = cmd + ' -a'
 
@@ -882,7 +842,7 @@ class Grid(object):
 
         logger.debug('job submit command: %s' % cmd)
 
-        rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+        rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=True), cmd),
                                         allowed_exit=[0, 255],
                                         timeout=config['SubmissionTimeout'])
 
