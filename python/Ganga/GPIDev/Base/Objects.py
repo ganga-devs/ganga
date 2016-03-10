@@ -388,8 +388,7 @@ class Node(object):
     def getNodeIndexCache(self, force_cache=False):
         if self.fullyLoadedFromDisk() and not force_cache:
             ## Fully loaded so lets regenerate this on the fly to avoid losing data
-            with self._internal_lock:
-                return self._getRegistry().getIndexCache(self._getRoot())
+            return self._getRegistry().getIndexCache(self._getRoot())
         ## Not in registry or not loaded, so can't re-generate if requested
         return self._index_cache
 
@@ -474,9 +473,10 @@ class Descriptor(object):
             return obj_data[name]
 
         # Then try to get it from the index cache
-        obj_index = obj.getNodeIndexCache()
-        if name in obj_index:
-            return obj_index[name]
+        if not obj.fullyLoadedFromDisk():
+            obj_index = obj.getNodeIndexCache(False)
+            if name in obj_index:
+                return obj_index[name]
 
         # Since we couldn't find the information in the cache, we will need to fully load the object
 
