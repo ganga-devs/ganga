@@ -42,12 +42,6 @@ class Grid(object):
 
     '''Helper class to implement grid interaction'''
 
-    def __init__(self):
-
-        self.wms_list = []
-
-        self.new_config = ""
-
     @staticmethod
     def __get_cmd_prefix_hack__(binary=False):
         # this is to work around inconsistency of LCG setup script and commands:
@@ -64,91 +58,34 @@ class Grid(object):
 
         return prefix_hack
 
-    def __set_submit_option__(self):
-
-        #       find out how the VO has been specified
-
+    @staticmethod
+    def __set_submit_option__():
         submit_option = ''
 
-        msg = 'use VO defined '
+        if config['Config']:
+            submit_option += ' --config %s' % config['Config']
+        elif config['GLITE_ALLOWED_WMS_LIST']:
+            # TODO: Cache this file somehow, maybe in a global dict
+            wms_conf_path = os.path.join(os.environ['GLITE_WMS_LOCATION'], 'etc', config['VirtualOrganisation'], 'glite_wmsui.conf')
+            temp_wms_conf = tempfile.NamedTemporaryFile(suffix='.conf', delete=False)
 
-        voms = Grid.__get_proxy_voname__()
-
-        # VO specific WMS options (no longer used by glite-wms-job-submit command)
-        # 1. vo specified in the configuration file
-        if config['ConfigVO']:
-            logger.warning('ConfigVO configuration ignored by GLITE middleware. Set Config instead.')
-        # 2. vo attached in the voms proxy
-        elif voms:
-            msg += 'in voms proxy: %s.' % voms
-        # 3. vo is given explicitely
-        elif config['VirtualOrganisation']:
-            submit_option = '--vo %s' % config['VirtualOrganisation']
-            msg += 'in Ganga config: %s.' % config['VirtualOrganisation']
-        # 4. no vo information is found
-        else:
-            logger.warning(
-                'No Virtual Organisation specified in the configuration. The plugin has been disabeled.')
-            return None
-
-        # check for WMS list - has it changed?
-        if config['GLITE_ALLOWED_WMS_LIST'] == []:
-            self.wms_list = config['GLITE_ALLOWED_WMS_LIST'][:]
-
-            # remove old conf
-            if self.new_config != "" and os.path.exists(self.new_config):
-                try:
-                    os.remove(self.new_config)
-                except:
-                    logger.warning(
-                        "Unable to remove old config file '%s'" % self.new_config)
-
-            self.new_config = ""
-        elif self.wms_list != config['GLITE_ALLOWED_WMS_LIST']:
-            logger.info("Updating allowed WMS list...")
-
-            # find path to wms conf file and a temporary file to copy to
-            wms_conf_path = os.path.join(getShell().env['GLITE_WMS_LOCATION'], 'etc', config[
-                                         'VirtualOrganisation'], 'glite_wmsui.conf')
-            temp_wms_conf = tempfile.mktemp('.conf')
-
-            # read in original
             with open(wms_conf_path, "r") as this_file:
                 orig_text = this_file.read()
 
             # find the last bracket and add in the new text
             pos = orig_text.rfind("]")
-            wms_text = "\nWMProxyEndpoints  =  {" + ",".join(
-                ["\"%s\"" % wms for wms in config['GLITE_ALLOWED_WMS_LIST']]) + "};\n]\n"
+            wms_text = "\nWMProxyEndpoints  =  {" + \
+                       ",".join("\"%s\"" % wms for wms in config['GLITE_ALLOWED_WMS_LIST']) + \
+                       "};\n]\n"
             new_text = orig_text[:pos] + wms_text
 
             # write the new config file
             with open(temp_wms_conf, "w") as this_file:
                 this_file.write(new_text)
 
-            self.wms_list = config['GLITE_ALLOWED_WMS_LIST'][:]
-
-            # remove old conf
-            if self.new_config != "" and os.path.exists(self.new_config):
-                try:
-                    os.remove(self.new_config)
-                except:
-                    logger.warning(
-                        "Unable to remove old config file '%s'" % self.new_config)
-
-            self.new_config = temp_wms_conf
-
-        # general WMS options
-        # NB. please be aware the config for gLite WMS is NOT compatible with the config for EDG RB
-        #     although both shares the same command option: '--config'
-        if config['Config']:
-            submit_option += ' --config %s' % config['Config']
-        elif self.new_config:
-            submit_option += ' --config %s' % self.new_config
+            submit_option += ' --config %s' % temp_wms_conf.name
 
         submit_option = ' %s ' % submit_option
-
-        logger.debug(msg)
 
         return submit_option
 
@@ -256,7 +193,8 @@ class Grid(object):
 
         return glite_ids
 
-    def list_match(self, jdlpath, ce=None):
+    @staticmethod
+    def list_match(jdlpath, ce=None):
         '''Returns a list of computing elements can run the job'''
 
         re_ce = re.compile('^\s*\-\s*(\S+\:(2119|8443)\/\S+)\s*$')
@@ -274,7 +212,7 @@ class Grid(object):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return
 
-        submit_opt = self.__set_submit_option__()
+        submit_opt = Grid.__set_submit_option__()
 
         if not submit_opt:
             return matched_ces
@@ -308,7 +246,8 @@ class Grid(object):
 
         return matched_ces
 
-    def submit(self, jdlpath, ce=None, perusable=False):
+    @staticmethod
+    def submit(jdlpath, ce=None, perusable=False):
         '''Submit a JDL file to LCG'''
 
         # doing job submission
@@ -323,7 +262,7 @@ class Grid(object):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return
 
-        submit_opt = self.__set_submit_option__()
+        submit_opt = Grid.__set_submit_option__()
 
         if not submit_opt:
             return
@@ -363,7 +302,8 @@ class Grid(object):
             Grid.__print_gridcmd_log__('(.*-job-submit.*\.log)', output)
             return
 
-    def native_master_cancel(self, jobids):
+    @staticmethod
+    def native_master_cancel(jobids):
         '''Native bulk cancellation supported by GLITE middleware.'''
 
         cmd = 'glite-wms-job-cancel'
@@ -377,7 +317,7 @@ class Grid(object):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
-        if not self.__set_submit_option__():
+        if not Grid.__set_submit_option__():
             return False
 
         idsfile = tempfile.mktemp('.jids')
