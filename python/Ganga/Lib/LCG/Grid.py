@@ -5,7 +5,7 @@ import time
 
 from Ganga.GPIDev.Credentials import getCredential
 
-from Ganga.Utility.Config import getConfig, ConfigError
+from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.GridShell import getShell
@@ -26,7 +26,7 @@ def credential():
 
 
 def check_proxy():
-    '''Check the proxy and prompt the user to refresh it'''
+    """Check the proxy and prompt the user to refresh it"""
 
     credential().voms = config['VirtualOrganisation']
     status = credential().renew(maxTry=3)
@@ -121,13 +121,13 @@ def __print_gridcmd_log__(regxp_logfname, cmd_output):
 
 
 def __get_proxy_voname__():
-    '''Check validity of proxy vo'''
+    """Check validity of proxy vo"""
     logger.debug('voms of credential: %s' % credential().voms)
     return credential().voms
 
 
 def __get_lfc_host__():
-    '''Gets the LFC_HOST: from current shell or querying BDII on demand'''
+    """Gets the LFC_HOST: from current shell or querying BDII on demand"""
     lfc_host = None
 
     if 'LFC_HOST' in getShell().env:
@@ -140,7 +140,7 @@ def __get_lfc_host__():
 
 
 def __get_default_lfc__():
-    '''Gets the default lfc host from lcg-infosites'''
+    """Gets the default lfc host from lcg-infosites"""
 
     cmd = 'lcg-infosites'
 
@@ -158,7 +158,7 @@ def __get_default_lfc__():
 
 
 def __resolve_no_matching_jobs__(cmd_output):
-    '''Parsing the glite-wms-job-status log to get the glite jobs which have been removed from the WMS'''
+    """Parsing the glite-wms-job-status log to get the glite jobs which have been removed from the WMS"""
 
     logfile = __resolve_gridcmd_log_path__(
         '(.*-job-status.*\.log)', cmd_output)
@@ -190,7 +190,7 @@ def __resolve_no_matching_jobs__(cmd_output):
 
 
 def list_match(jdlpath, ce=None):
-    '''Returns a list of computing elements can run the job'''
+    """Returns a list of computing elements can run the job"""
 
     re_ce = re.compile('^\s*\-\s*(\S+\:(2119|8443)\/\S+)\s*$')
 
@@ -243,7 +243,7 @@ def list_match(jdlpath, ce=None):
 
 
 def submit(jdlpath, ce=None, perusable=False):
-    '''Submit a JDL file to LCG'''
+    """Submit a JDL file to LCG"""
 
     # doing job submission
     cmd = 'glite-wms-job-submit -a'
@@ -299,7 +299,7 @@ def submit(jdlpath, ce=None, perusable=False):
 
 
 def native_master_cancel(jobids):
-    '''Native bulk cancellation supported by GLITE middleware.'''
+    """Native bulk cancellation supported by GLITE middleware."""
 
     cmd = 'glite-wms-job-cancel'
     exec_bin = True
@@ -342,7 +342,7 @@ def native_master_cancel(jobids):
 
 
 def status(jobids, is_collection=False):
-    '''Query the status of jobs on the grid'''
+    """Query the status of jobs on the grid"""
 
     if not jobids:
         return ([], [])
@@ -473,7 +473,7 @@ def status(jobids, is_collection=False):
 
 
 def get_loginfo(jobids, directory, verbosity=1):
-    '''Fetch the logging info of the given job and save the output in the job's outputdir'''
+    """Fetch the logging info of the given job and save the output in the job's outputdir"""
 
     cmd = 'glite-wms-job-logging-info -v %d' % verbosity
 
@@ -514,7 +514,7 @@ def get_loginfo(jobids, directory, verbosity=1):
 
 
 def get_output(jobid, directory, wms_proxy=False):
-    '''Retrieve the output of a job on the grid'''
+    """Retrieve the output of a job on the grid"""
 
     cmd = 'glite-wms-job-output'
     exec_bin = True
@@ -573,7 +573,7 @@ def get_output(jobid, directory, wms_proxy=False):
 
 
 def cancelMultiple(jobids):
-    '''Cancel multiple jobs in one LCG job cancellation call'''
+    """Cancel multiple jobs in one LCG job cancellation call"""
 
     # compose a temporary file with job ids in it
     if not jobids:
@@ -618,7 +618,7 @@ def cancelMultiple(jobids):
 
 
 def cancel(jobid):
-    '''Cancel a job'''
+    """Cancel a job"""
 
     cmd = 'glite-wms-job-cancel'
     exec_bin = True
@@ -649,7 +649,7 @@ def cancel(jobid):
 
 
 def __cream_parse_job_status__(log):
-    '''Parsing job status report from CREAM CE status query'''
+    """Parsing job status report from CREAM CE status query"""
 
     jobInfoDict = {}
 
@@ -706,7 +706,7 @@ def __cream_parse_job_status__(log):
 
 
 def __cream_ui_check__():
-    '''checking if CREAM CE environment is set properly'''
+    """checking if CREAM CE environment is set properly"""
 
     if not check_proxy():
         logger.warning('LCG plugin not active.')
@@ -720,7 +720,7 @@ def __cream_ui_check__():
 
 
 def cream_proxy_delegation(ce, delid):
-    '''CREAM CE proxy delegation'''
+    """CREAM CE proxy delegation"""
 
     if not __cream_ui_check__():
         return
@@ -760,7 +760,7 @@ def cream_proxy_delegation(ce, delid):
 
 
 def cream_submit(jdlpath, ce, delid):
-    '''CREAM CE direct job submission'''
+    """CREAM CE direct job submission"""
 
     if not __cream_ui_check__():
         return
@@ -802,7 +802,7 @@ def cream_submit(jdlpath, ce, delid):
 
 
 def cream_status(jobids):
-    '''CREAM CE job status query'''
+    """CREAM CE job status query"""
 
     if not __cream_ui_check__():
         return ([], [])
@@ -835,7 +835,7 @@ def cream_status(jobids):
 
 
 def cream_purgeMultiple(jobids):
-    '''CREAM CE job purging'''
+    """CREAM CE job purging"""
 
     if not __cream_ui_check__():
         return False
@@ -867,7 +867,7 @@ def cream_purgeMultiple(jobids):
 
 
 def cream_cancelMultiple(jobids):
-    '''CREAM CE job cancelling'''
+    """CREAM CE job cancelling"""
 
     if not __cream_ui_check__():
         return False
@@ -899,7 +899,7 @@ def cream_cancelMultiple(jobids):
 
 
 def cream_get_output(osbURIList, directory):
-    '''CREAM CE job output retrieval'''
+    """CREAM CE job output retrieval"""
 
     if not __cream_ui_check__():
         return (False, None)
@@ -950,7 +950,7 @@ def __get_app_exitcode__(outputdir):
 
 
 def expandxrsl(items):
-    '''Expand xrsl items'''
+    """Expand xrsl items"""
 
     xrsl = "&\n"
     for key, value in items.iteritems():
@@ -988,7 +988,7 @@ def expandxrsl(items):
 
 
 def expandjdl(items):
-    '''Expand jdl items'''
+    """Expand jdl items"""
 
     text = "[\n"
     for key, value in items.iteritems():
@@ -1053,7 +1053,7 @@ def expandjdl(items):
 
 
 def wrap_lcg_infosites(opts=""):
-    '''Wrap the lcg-infosites command'''
+    """Wrap the lcg-infosites command"""
 
     cmd = 'lcg-infosites --vo %s %s' % (
         config['VirtualOrganisation'], opts)
@@ -1077,7 +1077,7 @@ def wrap_lcg_infosites(opts=""):
 
 
 def __arc_get_config_file_arg__():
-    '''Helper function to return the config file argument'''
+    """Helper function to return the config file argument"""
     if config['ArcConfigFile']:
         return "-z " + config['ArcConfigFile']
 
@@ -1085,7 +1085,7 @@ def __arc_get_config_file_arg__():
 
 
 def arc_submit(jdlpath, ce, verbose):
-    '''ARC CE direct job submission'''
+    """ARC CE direct job submission"""
 
     # use the CREAM UI check as it's the same
     if not __cream_ui_check__():
@@ -1139,7 +1139,7 @@ def arc_submit(jdlpath, ce, verbose):
 
 
 def arc_status(jobids, cedict):
-    '''ARC CE job status query'''
+    """ARC CE job status query"""
 
     if not __cream_ui_check__():
         return ([], [])
@@ -1179,7 +1179,7 @@ def arc_status(jobids, cedict):
 
 
 def __arc_parse_job_status__(log):
-    '''Parsing job status report from CREAM CE status query'''
+    """Parsing job status report from CREAM CE status query"""
 
     # Job: gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/FowMDmswEljnvnizHq7yZUKmABFKDmABFKDmxbGKDmABFKDmlw9pKo
     # State: Finished (FINISHED)
@@ -1226,7 +1226,7 @@ def __arc_parse_job_status__(log):
 
 
 def __arc_sync__(cedict):
-    '''Collect jobs to jobs.xml'''
+    """Collect jobs to jobs.xml"""
 
     if cedict[0]:
         cmd = 'arcsync %s -j %s -f -c %s' % (__arc_get_config_file_arg__(
@@ -1251,7 +1251,7 @@ def __arc_sync__(cedict):
 
 
 def arc_get_output(jid, directory):
-    '''ARC CE job output retrieval'''
+    """ARC CE job output retrieval"""
 
     if not __cream_ui_check__():
         return (False, None)
@@ -1285,7 +1285,7 @@ def arc_get_output(jid, directory):
 
 
 def arc_purgeMultiple(jobids):
-    '''ARC CE job purging'''
+    """ARC CE job purging"""
 
     if not __cream_ui_check__():
         return False
@@ -1318,7 +1318,7 @@ def arc_purgeMultiple(jobids):
 
 
 def arc_cancel(jobid):
-    '''Cancel a job'''
+    """Cancel a job"""
 
     cmd = 'arckill'
     exec_bin = True
@@ -1350,7 +1350,7 @@ def arc_cancel(jobid):
 
 
 def arc_cancelMultiple(jobids):
-    '''Cancel multiple jobs in one LCG job cancellation call'''
+    """Cancel multiple jobs in one LCG job cancellation call"""
 
     # compose a temporary file with job ids in it
     if not jobids:
@@ -1395,7 +1395,7 @@ def arc_cancelMultiple(jobids):
 
 
 def arc_info():
-    '''Run the arcinfo command'''
+    """Run the arcinfo command"""
 
     cmd = 'arcinfo %s > /dev/null' % __arc_get_config_file_arg__()
     logger.debug("Running arcinfo command '%s'" % cmd)
