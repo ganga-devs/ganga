@@ -58,7 +58,7 @@ class JobRegistry(Registry):
                 cache["display:" + dpv] = value
             except Exception as err:
                 value = None
-        del this_slice
+        #del this_slice
 
         # store subjob status
         if hasattr(obj, "subjobs"):
