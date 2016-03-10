@@ -393,8 +393,10 @@ class Node(object):
         return self._index_cache
 
     def fullyLoadedFromDisk(self):
-        if self._getRegistry():
-            if self._getRegistry().has_loaded(self._getRoot()):
+        root = self._getRoot()
+        reg = root._getRegistry()
+        if reg:
+            if reg.has_loaded(root):
                 return True
         return False
 ##########################################################################

@@ -54,7 +54,7 @@ class JobRegistry(Registry):
         for dpv in this_slice._display_columns:
             #logger.debug("Storing: %s" % str(dpv))
             try:
-                value = dpv#this_slice._get_display_value(obj, dpv)
+                value = this_slice._get_display_value(obj, dpv)
                 cache["display:" + dpv] = value
             except Exception as err:
                 value = None
