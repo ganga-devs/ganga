@@ -72,7 +72,7 @@ class Grid(object):
 
         msg = 'use VO defined '
 
-        voms = self.__get_proxy_voname__()
+        voms = Grid.__get_proxy_voname__()
 
         # VO specific WMS options (no longer used by glite-wms-job-submit command)
         # 1. vo specified in the configuration file
@@ -187,12 +187,14 @@ class Grid(object):
             logger.warning('output\n%s\n', cmd_output)
             logger.warning('end of output')
 
-    def __get_proxy_voname__(self):
+    @staticmethod
+    def __get_proxy_voname__():
         '''Check validity of proxy vo'''
         logger.debug('voms of credential: %s' % credential().voms)
         return credential().voms
 
-    def __get_lfc_host__(self):
+    @staticmethod
+    def __get_lfc_host__():
         '''Gets the LFC_HOST: from current shell or querying BDII on demand'''
         lfc_host = None
 
@@ -200,11 +202,12 @@ class Grid(object):
             lfc_host = getShell().env['LFC_HOST']
 
         if not lfc_host:
-            lfc_host = self.__get_default_lfc__()
+            lfc_host = Grid.__get_default_lfc__()
 
         return lfc_host
 
-    def __get_default_lfc__(self):
+    @staticmethod
+    def __get_default_lfc__():
         '''Gets the default lfc host from lcg-infosites'''
 
         cmd = 'lcg-infosites'
@@ -402,7 +405,8 @@ class Grid(object):
             Grid.__clean_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return True
 
-    def status(self, jobids, is_collection=False):
+    @staticmethod
+    def status(jobids, is_collection=False):
         '''Query the status of jobs on the grid'''
 
         if not jobids:
@@ -532,7 +536,8 @@ class Grid(object):
 
         return (info, missing_glite_jids)
 
-    def get_loginfo(self, jobids, directory, verbosity=1):
+    @staticmethod
+    def get_loginfo(jobids, directory, verbosity=1):
         '''Fetch the logging info of the given job and save the output in the job's outputdir'''
 
         cmd = 'glite-wms-job-logging-info -v %d' % verbosity
@@ -572,7 +577,8 @@ class Grid(object):
             # returns the path to the saved logging info if success
             return log_output
 
-    def get_output(self, jobid, directory, wms_proxy=False):
+    @staticmethod
+    def get_output(jobid, directory, wms_proxy=False):
         '''Retrieve the output of a job on the grid'''
 
         cmd = 'glite-wms-job-output'
@@ -630,7 +636,8 @@ class Grid(object):
 
         return Grid.__get_app_exitcode__(directory)
 
-    def cancelMultiple(self, jobids):
+    @staticmethod
+    def cancelMultiple(jobids):
         '''Cancel multiple jobs in one LCG job cancellation call'''
 
         # compose a temporary file with job ids in it
@@ -674,7 +681,8 @@ class Grid(object):
             Grid.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return False
 
-    def cancel(self, jobid):
+    @staticmethod
+    def cancel(jobid):
         '''Cancel a job'''
 
         cmd = 'glite-wms-job-cancel'
@@ -815,7 +823,8 @@ class Grid(object):
 
         return delid
 
-    def cream_submit(self, jdlpath, ce, delid):
+    @staticmethod
+    def cream_submit(jdlpath, ce, delid):
         '''CREAM CE direct job submission'''
 
         if not Grid.__cream_ui_check__():
@@ -856,7 +865,8 @@ class Grid(object):
             logger.warning('Job submission failed.')
             return
 
-    def cream_status(self, jobids):
+    @staticmethod
+    def cream_status(jobids):
         '''CREAM CE job status query'''
 
         if not Grid.__cream_ui_check__():
@@ -888,7 +898,8 @@ class Grid(object):
 
         return jobInfoDict
 
-    def cream_purgeMultiple(self, jobids):
+    @staticmethod
+    def cream_purgeMultiple(jobids):
         '''CREAM CE job purging'''
 
         if not Grid.__cream_ui_check__():
@@ -919,7 +930,8 @@ class Grid(object):
         else:
             return False
 
-    def cream_cancelMultiple(self, jobids):
+    @staticmethod
+    def cream_cancelMultiple(jobids):
         '''CREAM CE job cancelling'''
 
         if not Grid.__cream_ui_check__():
@@ -950,7 +962,8 @@ class Grid(object):
         else:
             return False
 
-    def cream_get_output(self, osbURIList, directory):
+    @staticmethod
+    def cream_get_output(osbURIList, directory):
         '''CREAM CE job output retrieval'''
 
         if not Grid.__cream_ui_check__():
@@ -1103,7 +1116,8 @@ class Grid(object):
         text += "\n]\n"
         return text
 
-    def wrap_lcg_infosites(self, opts=""):
+    @staticmethod
+    def wrap_lcg_infosites(opts=""):
         '''Wrap the lcg-infosites command'''
 
         cmd = 'lcg-infosites --vo %s %s' % (
@@ -1126,14 +1140,16 @@ class Grid(object):
         else:
             return output
 
-    def __arc_get_config_file_arg__(self):
+    @staticmethod
+    def __arc_get_config_file_arg__():
         '''Helper function to return the config file argument'''
         if config['ArcConfigFile']:
             return "-z " + config['ArcConfigFile']
 
         return ""
 
-    def arc_submit(self, jdlpath, ce, verbose):
+    @staticmethod
+    def arc_submit(jdlpath, ce, verbose):
         '''ARC CE direct job submission'''
 
         # use the CREAM UI check as it's the same
@@ -1148,7 +1164,7 @@ class Grid(object):
         # write to a temporary XML file as otherwise can't submit in parallel
         tmpstr = '/tmp/' + randomString() + '.arcsub.xml'
         cmd = 'arcsub %s -S org.nordugrid.gridftpjob -j %s' % (
-            self.__arc_get_config_file_arg__(), tmpstr)
+            Grid.__arc_get_config_file_arg__(), tmpstr)
         exec_bin = True
 
         if verbose:
@@ -1186,7 +1202,8 @@ class Grid(object):
             logger.warning('Job submission failed.')
             return
 
-    def arc_status(self, jobids, cedict):
+    @staticmethod
+    def arc_status(jobids, cedict):
         '''ARC CE job status query'''
 
         if not Grid.__cream_ui_check__():
@@ -1203,7 +1220,7 @@ class Grid(object):
         exec_bin = True
 
         cmd = '%s %s -i %s -j %s' % (
-            cmd, self.__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
+            cmd, Grid.__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
         logger.debug('job status command: %s' % cmd)
 
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
@@ -1214,7 +1231,7 @@ class Grid(object):
         if rc != 0:
             logger.warning(
                 'jobs not found in XML file: arcsync will be executed to update the job information')
-            self.__arc_sync__(cedict)
+            Grid.__arc_sync__(cedict)
 
         if rc == 0 and output:
             jobInfoDict = Grid.__arc_parse_job_status__(output)
@@ -1272,15 +1289,16 @@ class Grid(object):
 
         return jobInfoDict
 
-    def __arc_sync__(self, cedict):
+    @staticmethod
+    def __arc_sync__(cedict):
         '''Collect jobs to jobs.xml'''
 
         if cedict[0]:
-            cmd = 'arcsync %s -j %s -f -c %s' % (self.__arc_get_config_file_arg__(
+            cmd = 'arcsync %s -j %s -f -c %s' % (Grid.__arc_get_config_file_arg__(
             ), config["ArcJobListFile"], ' -c '.join(cedict))
         else:
             cmd = 'arcsync %s -j %s -f ' % (
-                self.__arc_get_config_file_arg__(), config["ArcJobListFile"])
+                Grid.__arc_get_config_file_arg__(), config["ArcJobListFile"])
 
         if not check_proxy():
             logger.warning('LCG plugin is not active.')
@@ -1296,14 +1314,15 @@ class Grid(object):
         if rc != 0:
             logger.error('Unable to sync ARC jobs. Error: %s' % output)
 
-    def arc_get_output(self, jid, directory):
+    @staticmethod
+    def arc_get_output(jid, directory):
         '''ARC CE job output retrieval'''
 
         if not Grid.__cream_ui_check__():
             return (False, None)
 
         # construct URI list from ID and output from arcls
-        cmd = 'arcls %s %s' % (self.__arc_get_config_file_arg__(), jid)
+        cmd = 'arcls %s %s' % (Grid.__arc_get_config_file_arg__(), jid)
         exec_bin = True
         logger.debug('arcls command: %s' % cmd)
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=exec_bin), cmd),
@@ -1329,10 +1348,11 @@ class Grid(object):
         cache.uploaded_files = gfiles
         return cache.download(files=map(lambda x: x.id, gfiles), dest_dir=directory)
 
-    def arc_purgeMultiple(self, jobids):
+    @staticmethod
+    def arc_purgeMultiple(jobids):
         '''ARC CE job purging'''
 
-        if not Grid.__cream_ui_check_():
+        if not Grid.__cream_ui_check__():
             return False
 
         idsfile = tempfile.mktemp('.jids')
@@ -1343,7 +1363,7 @@ class Grid(object):
         exec_bin = True
 
         cmd = '%s %s -i %s -j %s' % (
-            cmd, self.__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
+            cmd, Grid.__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
 
         logger.debug('job purge command: %s' % cmd)
 
@@ -1361,7 +1381,8 @@ class Grid(object):
         else:
             return False
 
-    def arc_cancel(self, jobid):
+    @staticmethod
+    def arc_cancel(jobid):
         '''Cancel a job'''
 
         cmd = 'arckill'
@@ -1375,7 +1396,7 @@ class Grid(object):
             return False
 
         cmd = '%s %s %s -j %s' % (cmd, str(
-            jobid)[1:-1], self.__arc_get_config_file_arg__(), config["ArcJobListFile"])
+            jobid)[1:-1], Grid.__arc_get_config_file_arg__(), config["ArcJobListFile"])
 
         logger.debug('job cancel command: %s' % cmd)
 
@@ -1392,7 +1413,8 @@ class Grid(object):
             Grid.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return False
 
-    def arc_cancelMultiple(self, jobids):
+    @staticmethod
+    def arc_cancelMultiple(jobids):
         '''Cancel multiple jobs in one LCG job cancellation call'''
 
         # compose a temporary file with job ids in it
@@ -1415,7 +1437,7 @@ class Grid(object):
 
         # compose the cancel command
         cmd = '%s %s -i %s -j %s' % (
-            cmd, self.__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
+            cmd, Grid.__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
 
         logger.debug('job cancel command: %s' % cmd)
 
@@ -1436,10 +1458,11 @@ class Grid(object):
             Grid.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return False
 
-    def arc_info(self):
+    @staticmethod
+    def arc_info():
         '''Run the arcinfo command'''
 
-        cmd = 'arcinfo %s > /dev/null' % self.__arc_get_config_file_arg__()
+        cmd = 'arcinfo %s > /dev/null' % Grid.__arc_get_config_file_arg__()
         logger.debug("Running arcinfo command '%s'" % cmd)
 
         rc, output, m = getShell().cmd1('%s%s' % (Grid.__get_cmd_prefix_hack__(binary=True), cmd),
