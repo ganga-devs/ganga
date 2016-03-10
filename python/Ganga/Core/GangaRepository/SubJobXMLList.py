@@ -363,12 +363,14 @@ class SubJobXMLList(GangaObject):
                 try:
                     subjob_data = self.__get_dataFile(str(index), True)
                     self._cachedJobs[index] = from_file(sj_file)[0]
+                    if self._definedParent is not None:
+                        self._cachedJobs[index]._setParent( self._definedParent )
                 except Exception as err:
                     logger.debug("Failed to Load XML for job: %s using: %s" % (str(index), str(subjob_data)))
                     logger.debug("Err:\n%s" % str(err))
                     raise err
 
-        if self._definedParent is not None:
+        if self._definedParent is not None and self._cachedJobs[index]._getParent() is not self._definedParent:
             self._cachedJobs[index]._setParent( self._definedParent )
         return self._cachedJobs[index]
 
@@ -385,12 +387,14 @@ class SubJobXMLList(GangaObject):
 
         super(SubJobXMLList, self)._setParent( parentObj )
 
-        self._definedParent = parentObj
+        if self._definedParent is not parentObj:
+            self._definedParent = parentObj
 
         if not hasattr(self, '_cachedJobs'):
             return
         for k in self._cachedJobs.keys():
-            self._cachedJobs[k]._setParent( parentObj )
+            if self._cachedJobs[k]._getParent() is not self._definedParent:
+                self._cachedJobs[k]._setParent( parentObj )
 
     def getCachedData(self, index):
         """Get the cached data from the index for one of the subjobs"""
