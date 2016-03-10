@@ -96,12 +96,6 @@ RecoToDST-07/90000000/DST" ,
         super(BKQuery, self).__init__()
         self.path = path
 
-    def __construct__(self, args):
-        if (len(args) != 1) or (not isType(args[0], str)):
-            super(BKQuery, self).__construct__(args)
-        else:
-            self.path = args[0]
-
     def getDatasetMetadata(self):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
@@ -242,12 +236,6 @@ class BKQueryDict(GangaObject):
 
     def __init__(self):
         super(BKQueryDict, self).__init__()
-
-    def __construct__(self, args):
-        if (len(args) != 1) or type(args[0]) is not dict:
-            super(BKQueryDict, self).__construct__(args)
-        else:
-            self.dict = args[0]
 
     def getDatasetMetadata(self):
         '''Gets the dataset from the bookkeeping for current dict.'''

@@ -65,15 +65,6 @@ class PhysicalFile(LocalFile):
         logger.warning(
             "!!! Please update your scripts before PhysicalFile is removed")
 
-    def __construct__(self, args):
-        if (len(args) != 1) or (type(args[0]) is not type('')):
-            super(PhysicalFile, self).__construct__(args)
-        else:
-            self.name = full_expand_filename(args[0])
-            val = full_expand_filename(args[0])
-            self.localDir = os.path.dirname(val)
-            self.namePattern = os.path.basename(val)
-
     def _attribute_filter__set__(self, n, v):
         if n == 'name':
             import os.path

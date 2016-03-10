@@ -11,11 +11,11 @@ from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Schema import ComponentItem
 
 from Ganga.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass, _getName
-from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
+from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError, GangaValueError
 
 import os
 
-from inspect import isclass
+from inspect import isclass, getargspec
 
 import types
 
@@ -705,7 +705,29 @@ def GPIProxyClassFactory(name, pluginclass):
         else:
             ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
             ## Object was not passed by construction so need to construct new object for internal use
-            instance = pluginclass()
+            clean_args = [getRuntimeGPIObject(arg, True) if isinstance(arg, str) else arg for arg in args]
+            clean_args = [stripProxy(arg) for arg in args]
+            num_args = len(getargspec(pluginclass.__init__)[0])-1
+            if num_args == 0 and len(clean_args) > 0:
+                raise GangaValueError("Cannot construct class %s using un-named arguments" % getName(pluginclass))
+            if len(clean_args) > 1:
+                if len(clean_args) > num_args:
+                    raise GangaValueError("Got too many un-named options to Construct class: %s" % getName(pluginclass))
+                instance = pluginclass( *tuple(clean_args) )
+            elif len(clean_args) == 1:
+                if isinstance(clean_args[0], pluginclass):
+                    instance = pluginclass()
+                    instance.copyFrom(clean_args[0])
+                else:
+                    if num_args >= 1:
+                        try:
+                            instance = pluginclass(clean_args[0])
+                        except:
+                            raise GangaValueError("Cannot Construct class: %s from Argument: %s" %(getName(pluginclass), str(clean_args[0])))
+                    else:
+                        raise GangaValueError("Got too many un-named options to Construct class: %s" % getName(pluginclass))
+            else:
+                instance = pluginclass()
 
         ## Avoid intercepting any of the setter method associated with the implRef as they could trigger loading from disk
         setattr(self, implRef, instance)
@@ -731,18 +753,6 @@ def GPIProxyClassFactory(name, pluginclass):
                     instance.setNodeAttribute(key, stripProxy(val))
                 else:
                     instance.setNodeAttribute(key, stripProxy(val))
-
-
-        ## THIRD(?) CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
-        ## e.g. Job(application=exe, name='myJob', ...) or myJob2 = Job(myJob1)
-        ## THIS IS PRIMARILY FOR THE 2ND EXAMPLE ABOVE
-
-        ## DOESN'T MAKE SENSE TO KEEP PROXIES HERE AS WE MAY BE PERFORMING A PSEUDO-COPY OP
-        clean_args = [stripProxy(arg) for arg in args]
-        try:
-            stripProxy(self).__construct__(clean_args)
-        except TypeError:
-            stripProxy(self).__construct__([])
 
 
         ## FOURTH ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN

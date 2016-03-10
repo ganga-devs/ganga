@@ -64,22 +64,6 @@ class File(GangaObject):
         if not subdir is None:
             self.subdir = subdir
 
-    def __construct__(self, args):
-        if len(args) == 1 and isinstance(args[0], str):
-            v = args[0]
-            import os.path
-            expanded = expandfilename(v)
-            # if it is not already an absolute filename
-            if not urlprefix.match(expanded):
-                if os.path.exists(os.path.abspath(expanded)):
-                    self.name = os.path.abspath(expanded)
-                else:
-                    self.name = v
-            else:  # bugfix #20545
-                self.name = expanded
-        else:
-            super(File, self).__construct__(args)
-
     def _attribute_filter__set__(self, attribName, attribValue):
         if attribName is 'name':
             return expandfilename(attribValue)

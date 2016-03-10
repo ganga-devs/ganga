@@ -41,8 +41,7 @@ class Bookkeeping(GangaObject):
             cmd = 'bookkeepingGUI("%s")' % f
             execute(cmd)
             l = self._fileToList(f)
-            ds = LHCbDataset()
-            ds.__construct__([l])
+            ds = LHCbDataset([l])
             return ds
 
     def _fileToList(self, file):

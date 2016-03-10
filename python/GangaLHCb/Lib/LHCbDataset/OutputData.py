@@ -31,12 +31,6 @@ class OutputData(GangaObject):
         super(OutputData, self).__init__()
         self.files = files
 
-    def __construct__(self, args):
-        if (len(args) != 1) or (type(args[0]) not in [list, tuple]):
-            super(OutputData, self).__construct__(args)
-        else:
-            self.files = args[0]
-
     def __len__(self):
         """The number of files in the dataset."""
         result = 0

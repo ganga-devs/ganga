@@ -61,22 +61,6 @@ class MultiPostProcessor(IPostProcessor):
     def __init__(self):
         super(MultiPostProcessor, self).__init__()
 
-    def __construct__(self, args):
-        if len(args) == 1 or len(args) > 1 and isType(args, (GangaList, list)):
-            if isinstance(args, list) or isType(args, GangaList):
-                for process in args:
-                    self.addProcess(process)
-            elif isType(args, MultiPostProcessor):
-                for process in stripProxy(args).process_objects:
-                    self.addProcess(process)
-            else:
-                self.addProcess(args)
-
-            if hasattr(self.process_objects, 'order'):
-                self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
-        else:
-            super(MultiPostProcessor, self).__construct__(args)
-
     def __str__(self):
         if not isType(self.process_objects, GangaObject):
             return str(self.process_objects)
@@ -154,7 +138,6 @@ def postprocessor_filter(value, item):
 #    if item is Job._schema['postprocessors']:
     if item in valid_jobtypes:
         ds = MultiPostProcessor()
-        ds.__construct__([value])
         return ds
     else:
         raise PostProcessException(
