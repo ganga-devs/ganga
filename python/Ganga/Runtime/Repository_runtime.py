@@ -13,6 +13,7 @@ from Ganga.Core.exceptions import GangaException
 config = Ganga.Utility.Config.getConfig('Configuration')
 logger = getLogger()
 
+_added_additional = None
 
 def requiresAfsToken():
     # Were we executed from within an AFS folder
@@ -226,10 +227,13 @@ def flush_all():
             logger.debug("Err: %s" % str(err))
 
 
-def startUpRegistries():
+def startUpRegistries(additional_interface=None):
     # Startup the registries and export them to the GPI, also add jobtree and shareref
     from Ganga.Runtime.GPIexport import exportToGPI
     # import default runtime modules
+
+    global _added_additional
+    _added_additional = additional_interface
 
     # bootstrap user-defined runtime modules and enable transient named
     # template registries
@@ -239,17 +243,17 @@ def startUpRegistries():
 
     for n, k, d in bootstrap():
         # make all repository proxies visible in GPI
-        exportToGPI(n, k, 'Objects', d)
+        exportToGPI(n, k, 'Objects', d, additional_interface=additional_interface)
 
     # JobTree
     from Ganga.Core.GangaRepository import getRegistry
     jobtree = getRegistry("jobs").getJobTree()
-    exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
-    exportToGPI('TreeError', TreeError, 'Exceptions')
+    exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs', additional_interface=additional_interface)
+    exportToGPI('TreeError', TreeError, 'Exceptions', additional_interface=additional_interface)
 
     # ShareRef
     shareref = getRegistry("prep").getShareRef()
-    exportToGPI('shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
+    exportToGPI('shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources', additional_interface=additional_interface)
 
 def removeRegistries():
     ## Remove lingering Objects from the GPI and fully cleanup after the startup
@@ -260,14 +264,16 @@ def removeRegistries():
 
     from Ganga.Runtime import Repository_runtime
 
-    for name in Repository_runtime.bootstrap_reg_names():
+    to_remove = Repository_runtime.bootstrap_reg_names()
+    to_remove.append('jobtree')
+    to_remove.append('shareref')
+
+    global _added_additional
+    for name in to_remove:
         if hasattr(Ganga.GPI, name):
             delattr(Ganga.GPI, name)
+        if _added_additional:
+            if hasattr(_added_additional, name):
+                delattr(_added_additional, name)
 
-    if hasattr(Ganga.GPI, 'jobtree'):
-        ## Now remove the JobTree
-        delattr(Ganga.GPI, 'jobtree')
-    if hasattr(Ganga.GPI, 'shareref'):
-        ## Now remove the sharedir
-        delattr(Ganga.GPI, 'shareref')
 

@@ -36,13 +36,16 @@ def ganga_license():
 from Ganga.Core.InternalServices import ShutdownManager
 ShutdownManager.install()
 
+## TODO need to implement loading of the config system properly here.
+## loadPlugins and autoPopulateGPI will take 
+
 from Ganga.Utility.Runtime import loadPlugins, autoPopulateGPI
 import ganga
 loadPlugins( [Ganga.GPI, ganga] )
 autoPopulateGPI(ganga)
 
 from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
-startUpQueues()
+startUpQueues(ganga)
 
 # ------------------------------------------------------------------------------------
 # set the default value for the plugins
@@ -55,8 +58,9 @@ from Ganga.Runtime.bootstrap import manualExportToGPI
 manualExportToGPI(ganga)
 
 
+## Registries now add themselves to the Interface in this step
 from Ganga.Runtime.Repository_runtime import startUpRegistries
-startUpRegistries()
+startUpRegistries(ganga)
 
 # ------------------------------------------------------------------------------------
 #  bootstrap core modules
