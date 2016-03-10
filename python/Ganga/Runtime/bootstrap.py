@@ -167,6 +167,20 @@ def manualExportToGPI(my_interface=None):
     from Ganga.Utility.feedback_report import report
     exportToInterface(my_interface, 'report', report, 'Functions')
 
+    from Ganga.Core.InternalServices.Coordinator import enableInternalServices, disableMonitoringService, enableMonitoringService, disableInternalServices
+    exportToInterface(my_interface, 'reactivate', enableInternalServices, 'Functions')
+    exportToInterface(my_interface, 'disableMonitoring', disableMonitoringService, 'Functions')
+    exportToInterface(my_interface, 'enableMonitoring', enableMonitoringService, 'Functions')
+    exportToInterface(my_interface, 'disableServices', disableInternalServices, 'Functions')
+
+    from Ganga.Core import monitoring_component
+    exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
+
+    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+    exportToInterface(my_interface, 'GangaList', GangaList, 'Classes')
+
+    from Ganga.GPIDev.Lib.Registry.JobRegistry import jobSlice
+    exportToInterface(my_interface, "jobSlice", jobSlice, "Functions")
 
 class GangaProgram(object):
 

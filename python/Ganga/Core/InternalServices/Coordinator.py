@@ -300,12 +300,7 @@ def bootstrap():
     #global servicesEnabled
     #servicesEnabled = True
 
-    # export to GPI
-    from Ganga.Runtime.GPIexport import exportToGPI
-    exportToGPI('reactivate', enableInternalServices, 'Functions')
-    exportToGPI('disableMonitoring', disableMonitoringService, 'Functions')
-    exportToGPI('enableMonitoring', enableMonitoringService, 'Functions')
-    exportToGPI('disableServices', disableInternalServices, 'Functions')
+    # export to GPI moved to Runtime bootstrap
 
     servicesEnabled = True
 

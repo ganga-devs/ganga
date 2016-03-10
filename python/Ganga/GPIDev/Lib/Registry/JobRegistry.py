@@ -15,8 +15,6 @@ from Ganga.GPIDev.Base.Proxy import stripProxy, isType, addProxy
 
 import Ganga.Utility.logging
 
-from Ganga.Runtime.GPIexport import exportToGPI
-
 from Ganga.GPIDev.Lib.Job.Job import Job
 
 from .RegistrySlice import RegistrySlice
@@ -301,6 +299,5 @@ def jobSlice(joblist):
     this_slice.objects = oDict([(j.fqid, _unwrap(j)) for j in joblist])
     return _wrap(this_slice)
 
-# , "Create a job slice from a job list")
-exportToGPI("jobSlice", jobSlice, "Functions")
+# , "Create a job slice from a job list") exported to the Runtime bootstrap
 

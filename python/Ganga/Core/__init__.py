@@ -69,9 +69,7 @@ def bootstrap(reg, interactive_session):
 
     change_atexitPolicy(interactive_session)
 
-    # export to GPI
-    from Ganga.Runtime.GPIexport import exportToGPI
-    exportToGPI('runMonitoring', monitoring_component.runMonitoring, 'Functions')
+    # export to GPI moved to Runtime bootstrap
 
     autostart_default = interactive_session
     config.overrideDefaultValue('autostart', bool(autostart_default))
