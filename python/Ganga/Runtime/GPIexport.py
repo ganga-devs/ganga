@@ -18,7 +18,16 @@ from Ganga.GPIDev.Base.Proxy import isType, addProxy, getProxyClass
 from Ganga.GPIDev.Base.Objects import GangaObject
 from inspect import isclass
 
-def exportToGPI(name, _object, doc_section, docstring=None):
+def _addToInterface(interface, name, _object):
+
+    if isType(_object, GangaObject):
+        setattr(interface, name, addProxy(_object))
+    elif isclass(_object) and issubclass(_object, GangaObject):
+        setattr(interface, name, getProxyClass(_object))
+    else:
+        setattr(interface, name, _object)
+
+def exportToGPI(name, _object, doc_section, docstring=None, additional_interface=None):
     '''
     Make object available publicly as "name" in Ganga.GPI module. Add automatic documentation to gangadoc system.
     "doc_section" specifies how the object should be documented.
@@ -31,12 +40,9 @@ def exportToGPI(name, _object, doc_section, docstring=None):
     It has been observed that doing exportToGPI("obj",object,"Objects") may not work. To be understood.
     '''
 
-    if isType(_object, GangaObject):
-        setattr(Ganga.GPI, name, addProxy(_object))
-    elif isclass(_object) and issubclass(_object, GangaObject):
-        setattr(Ganga.GPI, name, getProxyClass(_object))
-    else:
-        setattr(Ganga.GPI, name, _object)
+    _addToInterface(Ganga.GPI, name, _object)
+    if additional_interface:
+        _addToInterface(additional_interface, name, _object)
 
     adddoc(name, getattr(Ganga.GPI, name), doc_section, docstring)
 
