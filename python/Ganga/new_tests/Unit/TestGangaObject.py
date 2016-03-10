@@ -254,7 +254,13 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
 
     def test_read_write(self):
         """
-        This tests whether claiming a lock on the object stops other threads overwriting our value
+        This tests whether claiming a lock on the object stops other threads
+        overwriting our value. It starts two types of thread:
+
+        1. one which acquires a lock for its duraction, sets values and then
+        makes sure they are unchanged
+        2. one which sets the value being checked in thread-type 1 to random
+        values.
         """
         o = ThreadedTestGangaObject()
         random.seed(time.gmtime())
@@ -279,7 +285,11 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
         """
         Are parent locks held correctly?
 
-        We make a parent and a child and then check whether claiming an explicit lock on the child will stop changes to the parent.
+        We make a parent and a child and then check whether claiming an
+        explicit lock on the child will stop changes to the parent.
+
+        This is similar to ``test_read_write`` except it is working on a child
+        object and making sure the lock holds.
         """
         o = ThreadedTestGangaObject()
         o.b = SimpleGangaObject()
@@ -311,8 +321,10 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
         """
         Make sure that the coarse locks work
 
-        In each thread we grab sole access of the object via its ``lock`` property and do things to it.
-        This is required for the cases where you need to do multiple things to an object before allowing anyone else to.
+        In each thread we grab sole access of the object via its ``const_lock``
+        property and do things to it.
+        This is required for the cases where you need to do multiple things to
+        an object before allowing anyone else to.
         """
         o = ThreadedTestGangaObject()
 

@@ -158,6 +158,10 @@ class Node(object):
         """
         This is a context manager which acquires the const write lock on the
         object's root object.
+
+        This lock acquires exclusive access over an object tree to prevent it
+        changing. Reading schema attributes on the object is still allowed
+        but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
         root._write_lock.acquire()
