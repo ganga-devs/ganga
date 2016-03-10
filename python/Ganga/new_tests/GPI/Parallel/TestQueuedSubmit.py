@@ -79,3 +79,4 @@ class TestQueuedSubmit(GangaUnitTest):
                 j.remove()
             except:
                 pass
+
