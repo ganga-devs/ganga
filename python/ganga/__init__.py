@@ -37,11 +37,13 @@ from Ganga.Core.InternalServices import ShutdownManager
 ShutdownManager.install()
 
 ## TODO need to implement loading of the config system properly here.
-## loadPlugins and autoPopulateGPI will take 
+## loadPlugins and autoPopulateGPI will take this into account when loading objects
+
+from Ganga.Runtime import plugins
 
 from Ganga.Utility.Runtime import loadPlugins, autoPopulateGPI
 import ganga
-loadPlugins( [Ganga.GPI, ganga] )
+loadPlugins(ganga)
 autoPopulateGPI(ganga)
 
 from Ganga.Core.GangaThread.WorkerThreads import startUpQueues

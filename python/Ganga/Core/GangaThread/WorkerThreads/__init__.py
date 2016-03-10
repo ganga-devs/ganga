@@ -1,21 +1,23 @@
 
 _global_queues = None
+_queues_interface = None
 
-_added_additional = None
-
-def startUpQueues(additional_interface=None):
+def startUpQueues(my_interface=None):
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     global _global_queues
-    global _added_additional
-    _added_additional = additional_interface
+    global _queues_interface
+    if not my_interface:
+        import Ganga.GPI
+        my_interface = Ganga.GPI
+    _queues_additional = my_interface
     if _global_queues is None:
         logger.debug("Starting Queues")
         # start queues
-        from Ganga.Runtime.GPIexport import exportToGPI
+        from Ganga.Runtime.GPIexport import exportToInterface
         from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
         _global_queues = ThreadPoolQueueMonitor()
-        exportToGPI('queues', _global_queues, 'Objects', additional_interface=additional_interface)
+        exportToInterface(my_interface, 'queues', _global_queues, 'Objects')
 
         import atexit
         atexit.register((100, shutDownQueues))
@@ -28,17 +30,15 @@ def shutDownQueues():
     logger = getLogger()
     logger.debug("Shutting Down Queues system")
     global _global_queues
+    global _queues_interface
     try:
         _global_queues.lock()
         _global_queues._purge_all()
     except:
         logger.warning("Error in shutting down queues thread. Likely harmless")
-    del _global_queues
     _global_queues = None
-    import Ganga.GPI
-    if hasattr(Ganga.GPI, 'queues'):
-        delattr(Ganga.GPI, 'queues')
-    if _added_additional:
-        if hasattr(_added_additional, 'queues'):
-            delattr(_added_additional, 'queues')
+    if _queues_interface:
+        if hasattr(_queues_interface, 'queues'):
+            delattr(_queues_interface, 'queues')
+    _queues_interface = None
 

@@ -102,39 +102,44 @@ if DEBUGFILES or MONITOR_FILES:
                 openfiles[f].close()
 
 
-def manualExportToGPI(additional_interface=None):
+def manualExportToGPI(my_interface=None):
     """ Additionally populate the GPI elements which are required
         This is here rather than in utility due to having knowledge of what is inside Ganga
         whilst Utility should not have too much (or any) of this
     """
-    from Ganga.Runtime.GPIexport import exportToGPI
+
+    if not my_interface:
+        import Ganga.GPI
+        my_interface = Ganga.GPI
+
+    from Ganga.Runtime.GPIexport import exportToInterface
 
     from Ganga.GPIDev.Base import ProtectedAttributeError, ReadOnlyObjectError, GangaAttributeError
     from Ganga.GPIDev.Lib.Job.Job import JobError
 
-    exportToGPI('GangaAttributeError', GangaAttributeError, 'Exceptions', additional_interface=additional_interface)
-    exportToGPI('ProtectedAttributeError', ProtectedAttributeError, 'Exceptions', additional_interface=additional_interface)
-    exportToGPI('ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions', additional_interface=additional_interface)
-    exportToGPI('JobError', JobError, 'Exceptions', additional_interface=additional_interface)
+    exportToInterface(my_interface, 'GangaAttributeError', GangaAttributeError, 'Exceptions')
+    exportToInterface(my_interface, 'ProtectedAttributeError', ProtectedAttributeError, 'Exceptions')
+    exportToInterface(my_interface, 'ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
+    exportToInterface(my_interface, 'JobError', JobError, 'Exceptions')
 
     from Ganga.Runtime.GPIFunctions import license, typename, categoryname, plugins, convert_merger_to_postprocessor
 
-    exportToGPI('license', license, 'Functions', additional_interface=additional_interface)
+    exportToInterface(my_interface, 'license', license, 'Functions')
     # FIXME:
     #from Ganga.Runtime.GPIFunctions import applications, backends, list_plugins
-    #exportToGPI('applications', applications, 'Functions', additional_interface=additional_interface)
-    #exportToGPI('backends', backends, 'Functions', additional_interface=additional_interface)
-    #exportToGPI('list_plugins', list_plugins, 'Functions', additional_interface=additional_interface)
+    #exportToInterface(my_interface, 'applications', applications, 'Functions)
+    #exportToInterface(my_interface, 'backends', backends, 'Functions')
+    #exportToInterface(my_interface, 'list_plugins', list_plugins, 'Functions')
     # FIXME: END DEPRECATED
 
-    exportToGPI('typename', typename, 'Functions', additional_interface=additional_interface)
-    exportToGPI('categoryname', categoryname, 'Functions', additional_interface=additional_interface)
-    exportToGPI('plugins', plugins, 'Functions', additional_interface=additional_interface)
-    exportToGPI('convert_merger_to_postprocessor', convert_merger_to_postprocessor, 'Functions', additional_interface=additional_interface)
+    exportToInterface(my_interface, 'typename', typename, 'Functions')
+    exportToInterface(my_interface, 'categoryname', categoryname, 'Functions')
+    exportToInterface(my_interface, 'plugins', plugins, 'Functions')
+    exportToInterface(my_interface, 'convert_merger_to_postprocessor', convert_merger_to_postprocessor, 'Functions')
 
     from Ganga.GPIDev.Persistency import export, load
-    exportToGPI('load', load, 'Functions', additional_interface=additional_interface)
-    exportToGPI('export', export, 'Functions', additional_interface=additional_interface)
+    exportToInterface(my_interface, 'load', load, 'Functions')
+    exportToInterface(my_interface, 'export', export, 'Functions')
 
 
 
@@ -145,22 +150,22 @@ def manualExportToGPI(additional_interface=None):
     # cache
     credential = getCredential(name='GridProxy', create=False)
     if credential:
-        exportToGPI('gridProxy', credential, 'Objects', 'Grid proxy management object.', additional_interface=additional_interface)
+        exportToInterface(my_interface, 'gridProxy', credential, 'Objects', 'Grid proxy management object.')
 
     credential2 = getCredential('AfsToken')
     if credential2:
-        exportToGPI('afsToken', credential2, 'Objects', 'AFS token management object.', additional_interface=additional_interface)
+        exportToInterface(my_interface, 'afsToken', credential2, 'Objects', 'AFS token management object.')
 
     # export full_print
     from Ganga.GPIDev.Base.VPrinter import full_print
-    exportToGPI('full_print', full_print, 'Functions', additional_interface=additional_interface)
+    exportToInterface(my_interface, 'full_print', full_print, 'Functions')
 
     import Ganga.GPIDev.Lib.Config
-    exportToGPI('config', Ganga.GPIDev.Lib.Config.config, 'Objects', 'access to Ganga configuration', additional_interface=additional_interface)
-    exportToGPI('ConfigError', Ganga.GPIDev.Lib.Config.ConfigError, 'Exceptions', additional_interface=additional_interface)
+    exportToInterface(my_interface, 'config', Ganga.GPIDev.Lib.Config.config, 'Objects', 'access to Ganga configuration')
+    exportToInterface(my_interface, 'ConfigError', Ganga.GPIDev.Lib.Config.ConfigError, 'Exceptions')
 
     from Ganga.Utility.feedback_report import report
-    exportToGPI('report', report, 'Functions', additional_interface=additional_interface)
+    exportToInterface(my_interface, 'report', report, 'Functions')
 
 
 class GangaProgram(object):
@@ -901,7 +906,7 @@ under certain conditions; type license() for details.
         config = Ganga.Utility.Config.getConfig('Configuration')
 
         from Ganga.Utility.Runtime import loadPlugins, autoPopulateGPI
-        loadPlugins( [Ganga.GPI] )
+        loadPlugins(Ganga.GPI)
         autoPopulateGPI()
         from Ganga.Utility.Runtime import setPluginDefaults
         setPluginDefaults()
