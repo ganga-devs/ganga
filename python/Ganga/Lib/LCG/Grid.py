@@ -44,8 +44,6 @@ class Grid(object):
 
     def __init__(self):
 
-        self.perusable = False
-
         self.wms_list = []
 
         self.new_config = ""
@@ -307,7 +305,7 @@ class Grid(object):
 
         return matched_ces
 
-    def submit(self, jdlpath, ce=None):
+    def submit(self, jdlpath, ce=None, perusable=False):
         '''Submit a JDL file to LCG'''
 
         # doing job submission
@@ -348,7 +346,7 @@ class Grid(object):
 
         if match:
             logger.debug('job id: %s' % match.group(1))
-            if self.perusable:
+            if perusable:
                 logger.info("Enabling perusal")
                 per_rc, per_out, per_m = getShell().cmd1(
                     "glite-wms-job-perusal --set -f stdout %s" % match.group(1))
