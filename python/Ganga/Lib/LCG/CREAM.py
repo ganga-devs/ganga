@@ -20,11 +20,12 @@ from Ganga.Lib.LCG.Utility import get_uuid
 from Ganga.Lib.LCG.Utility import get_md5sum
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
-from Ganga.Lib.LCG.Grid import Grid
-from Ganga.Lib.LCG.LCG import grid
+from Ganga.Lib.LCG import Grid
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
 from Ganga.GPIDev.Base.Proxy import getName
+
+config = getConfig('LCG')
 
 def __cream_resolveOSBList__(job, jdl):
 
@@ -122,7 +123,7 @@ class CREAM(IBackend):
 
         if self.sandboxcache._name == 'LCGSandboxCache':
             if not self.sandboxcache.lfc_host:
-                self.sandboxcache.lfc_host = grid.__get_lfc_host__()
+                self.sandboxcache.lfc_host = Grid.__get_lfc_host__()
 
             if not self.sandboxcache.se:
 
@@ -212,7 +213,7 @@ class CREAM(IBackend):
 
         # or in general, query it from the Grid object
         if not lfc_host:
-            lfc_host = grid.__get_lfc_host__()
+            lfc_host = Grid.__get_lfc_host__()
 
         idx['lfc_host'] = lfc_host
 
@@ -320,10 +321,9 @@ class CREAM(IBackend):
         # the algorithm for submitting a single bulk job
         class MyAlgorithm(Algorithm):
 
-            def __init__(self, gridObj, masterInputWorkspace, ce, delid):
+            def __init__(self, masterInputWorkspace, ce, delid):
                 Algorithm.__init__(self)
                 self.inpw = masterInputWorkspace
-                self.gridObj = gridObj
                 self.ce = ce
                 self.delid = delid
 
@@ -331,7 +331,7 @@ class CREAM(IBackend):
                 my_sj_id = jdl_info[0]
                 my_sj_jdl = jdl_info[1]
 
-                my_sj_jid = self.gridObj.cream_submit(my_sj_jdl, self.ce, self.delid)
+                my_sj_jid = Grid.cream_submit(my_sj_jdl, self.ce, self.delid)
 
                 if not my_sj_jid:
                     return False
@@ -343,8 +343,7 @@ class CREAM(IBackend):
         for id, jdl in node_jdls.items():
             mt_data.append((id, jdl))
 
-        myAlg = MyAlgorithm(
-            gridObj=grid, masterInputWorkspace=job.getInputWorkspace(), ce=self.CE, delid=self.delegation_id)
+        myAlg = MyAlgorithm(masterInputWorkspace=job.getInputWorkspace(), ce=self.CE, delid=self.delegation_id)
         myData = Data(collection=mt_data)
 
         runner = MTRunner(name='cream_jsubmit', algorithm=myAlg,
@@ -357,7 +356,7 @@ class CREAM(IBackend):
             # submitted jobs on WMS immediately
             logger.error(
                 'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            grid.cancelMultiple(runner.getResults().values())
+            Grid.cancelMultiple(runner.getResults().values())
             return None
         else:
             return runner.getResults()
@@ -783,6 +782,7 @@ sys.exit(0)
             pass
 
 #       prepare input/output sandboxes
+        import Ganga.Utility.files
         from Ganga.GPIDev.Lib.File import File
         from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
@@ -926,7 +926,7 @@ sys.exit(0)
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return False
 
-        return grid.cream_cancelMultiple([self.id])
+        return Grid.cream_cancelMultiple([self.id])
 
     def master_kill(self):
         '''kill the master job to the grid'''
@@ -955,7 +955,7 @@ sys.exit(0)
                 ids.append(sj.backend.id)
 
         # 2. cancel the collected jobs
-        ck = grid.cream_cancelMultiple(ids)
+        ck = Grid.cream_cancelMultiple(ids)
         if not ck:
             logger.warning('Job cancellation failed')
             return False
@@ -1103,7 +1103,7 @@ sys.exit(0)
         jdlpath = self.preparejob(subjobconfig, master_job_sandbox)
 
         if jdlpath:
-            self.id = grid.cream_submit(jdlpath, self.CE, self.delegation_id)
+            self.id = Grid.cream_submit(jdlpath, self.CE, self.delegation_id)
 
             if self.id:
                 self.actualCE = self.CE
@@ -1176,7 +1176,7 @@ sys.exit(0)
         jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
 
         if jdlpath:
-            self.id = grid.cream_submit(jdlpath, self.CE, self.delegation_id)
+            self.id = Grid.cream_submit(jdlpath, self.CE, self.delegation_id)
 
             if self.id:
                 # refresh the lcg job information
@@ -1193,7 +1193,7 @@ sys.exit(0)
         jobdict = dict([[job.backend.id, job]
                         for job in jobs if job.backend.id])
 
-        jobInfoDict = grid.cream_status(jobdict.keys())
+        jobInfoDict = Grid.cream_status(jobdict.keys())
 
         jidListForPurge = []
 
@@ -1235,8 +1235,8 @@ sys.exit(0)
 
                         if osbURIList:
 
-                            if grid.cream_get_output(osbURIList, job.getOutputWorkspace(create=True).getPath() ):
-                                (ick, app_exitcode) = grid.__get_app_exitcode__(
+                            if Grid.cream_get_output(osbURIList, job.getOutputWorkspace(create=True).getPath() ):
+                                (ick, app_exitcode) = Grid.__get_app_exitcode__(
                                     job.getOutputWorkspace(create=True).getPath() )
                                 job.backend.exitcode = app_exitcode
 
@@ -1268,7 +1268,7 @@ sys.exit(0)
 
             # purging the jobs the output has been fetched locally
             if jidListForPurge:
-                grid.cream_purgeMultiple(jidListForPurge)
+                Grid.cream_purgeMultiple(jidListForPurge)
 
     def updateGangaJobStatus(self):
         '''map backend job status to Ganga job status'''
