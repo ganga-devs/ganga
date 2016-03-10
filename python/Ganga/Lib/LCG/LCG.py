@@ -1412,6 +1412,7 @@ sys.exit(0)
 
 
 #       prepare input/output sandboxes
+        import Ganga.Utility.files
         from Ganga.GPIDev.Lib.File import File
         from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect

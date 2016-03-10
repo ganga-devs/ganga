@@ -167,18 +167,14 @@ def __resolve_no_matching_jobs__(cmd_output):
 
     if logfile:
 
-        re_jid = re.compile(
-            '^Unable to retrieve the status for: (https:\/\/\S+:9000\/[0-9A-Za-z_\.\-]+)\s*$')
+        re_jid = re.compile('^Unable to retrieve the status for: (https:\/\/\S+:9000\/[0-9A-Za-z_\.\-]+)\s*$')
         re_key = re.compile('^.*(no matching jobs found)\s*$')
 
-        m_jid = None
-        m_key = None
         myjid = ''
         for line in open(logfile, 'r'):
             m_jid = re_jid.match(line)
             if m_jid:
                 myjid = m_jid.group(1)
-                m_jid = None
 
             if myjid:
                 m_key = re_key.match(line)
@@ -192,7 +188,7 @@ def __resolve_no_matching_jobs__(cmd_output):
 def list_match(jdlpath, ce=None):
     """Returns a list of computing elements can run the job"""
 
-    re_ce = re.compile('^\s*\-\s*(\S+\:(2119|8443)\/\S+)\s*$')
+    re_ce = re.compile('^\s*\-\s*(\S+:(2119|8443)/\S+)\s*$')
 
     matched_ces = []
 
@@ -265,7 +261,7 @@ def submit(jdlpath, ce=None, perusable=False):
         cmd += submit_opt
 
     if ce:
-        cmd = cmd + ' -r %s' % ce
+        cmd += ' -r %s' % ce
 
     cmd = '%s --nomsg "%s" < /dev/null' % (cmd, jdlpath)
 
@@ -278,15 +274,13 @@ def submit(jdlpath, ce=None, perusable=False):
     if output:
         output = "%s" % output.strip()
 
-    #match = re.search('^(https:\S+)',output)
-    match = re.search('.*(https:\/\/\S+:9000\/[0-9A-Za-z_\.\-]+)', output)
+    match = re.search('.*(https://\S+:9000/[0-9A-Za-z_\.\-]+)', output)
 
     if match:
         logger.debug('job id: %s' % match.group(1))
         if perusable:
             logger.info("Enabling perusal")
-            per_rc, per_out, per_m = getShell().cmd1(
-                "glite-wms-job-perusal --set -f stdout %s" % match.group(1))
+            getShell().cmd1("glite-wms-job-perusal --set -f stdout %s" % match.group(1))
 
         # remove the glite command log if it exists
         __clean_gridcmd_log__('(.*-job-submit.*\.log)', output)
@@ -323,8 +317,7 @@ def native_master_cancel(jobids):
 
     logger.debug('job cancel command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (
-        __get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
     # clean up tempfile
     if os.path.exists(idsfile):
@@ -345,7 +338,7 @@ def status(jobids, is_collection=False):
     """Query the status of jobs on the grid"""
 
     if not jobids:
-        return ([], [])
+        return [], []
 
     idsfile = tempfile.mktemp('.jids')
     with open(idsfile, 'w') as ids_file:
@@ -362,10 +355,10 @@ def status(jobids, is_collection=False):
 
     if not check_proxy():
         logger.warning('LCG plugin not active.')
-        return ([], [])
+        return [], []
     if not credential().isValid('01:00'):
         logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return ([], [])
+        return [], []
 
     cmd = '%s --noint -i %s' % (cmd, idsfile)
     logger.debug('job status command: %s' % cmd)
@@ -396,7 +389,6 @@ def status(jobids, is_collection=False):
 
     # from glite UI version 1.5.14, the attribute 'Node Name:' is no longer available
     # for distinguishing master and node jobs. A new way has to be applied.
-    #re_name = re.compile('^\s*Node Name:\s+(.*\S)\s*$')
     re_exit = re.compile('^\s*Exit code:\s+(.*\S)\s*$')
     re_reason = re.compile('^\s*Status Reason:\s+(.*\S)\s*$')
     re_dest = re.compile('^\s*Destination:\s+(.*\S)\s*$')
@@ -409,21 +401,16 @@ def status(jobids, is_collection=False):
     re_nodename = re.compile('^\s*NodeName\s*=\s*"(gsj_[0-9]+)";\s*$')
 
     info = []
-    is_master = False
     is_node = False
-    #node_cnt  = 0
     for line in output.split('\n'):
 
         match = re_master.match(line)
         if match:
-            is_master = True
             is_node = False
-            #node_cnt  = 0
             continue
 
         match = re_node.match(line)
         if match:
-            is_master = False
             is_node = True
             continue
 
@@ -438,15 +425,11 @@ def status(jobids, is_collection=False):
                       'destination': ''}]
             if is_node:
                 info[-1]['is_node'] = True
-            # if is_node:
-            #    info[-1]['name'] = 'node_%d' % node_cnt
-            #    node_cnt = node_cnt + 1
             continue
 
         match = re_nodename.match(line)
         if match and is_node:
             info[-1]['name'] = match.group(1)
-            #logger.debug('id: %s, name: %s' % (info[-1]['id'],info[-1]['name']))
             continue
 
         match = re_status.match(line)
@@ -469,7 +452,7 @@ def status(jobids, is_collection=False):
             info[-1]['destination'] = match.group(1)
             continue
 
-    return (info, missing_glite_jids)
+    return info, missing_glite_jids
 
 
 def get_loginfo(jobids, directory, verbosity=1):
@@ -498,8 +481,7 @@ def get_loginfo(jobids, directory, verbosity=1):
 
     logger.debug('job logging info command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (
-        __get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
     os.remove(idsfile)
 
     if rc != 0:
@@ -525,10 +507,10 @@ def get_output(jobid, directory, wms_proxy=False):
 
     if not check_proxy():
         logger.warning('LCG plugin is not active.')
-        return (False, None)
+        return False, None
     if not credential().isValid('01:00'):
         logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return (False, None)
+        return False, None
 
     cmd = '%s --noint --dir %s %s' % (cmd, directory, jobid)
 
@@ -542,7 +524,7 @@ def get_output(jobid, directory, wms_proxy=False):
     if not match:
         logger.warning('Job output fetch failed.')
         __print_gridcmd_log__('(.*-output.*\.log)', output)
-        return (False, 'cannot fetch job output')
+        return False, 'cannot fetch job output'
 
     # job output fetching succeeded, try to remove the glite command
     # logfile if it exists
@@ -551,7 +533,7 @@ def get_output(jobid, directory, wms_proxy=False):
     outdir = match.group(1)
 
 #       some versions of LCG middleware create an extra output directory (named <uid>_<jid_hash>)
-#       inside the job.outputdir. Try to match the jid_hash in the outdir. Do output movememnt
+#       inside the job.outputdir. Try to match the jid_hash in the outdir. Do output movement
 #       if the <jid_hash> is found in the path of outdir.
     import urlparse
     jid_hash = urlparse.urlparse(jobid)[2][1:]
@@ -653,12 +635,12 @@ def __cream_parse_job_status__(log):
 
     jobInfoDict = {}
 
-    re_jid = re.compile('^\s+JobID\=\[(https:\/\/.*[:0-9]?\/CREAM.*)\]$')
-    re_log = re.compile('^\s+(\S+.*\S+)\s+\=\s+\[(.*)\]$')
+    re_jid = re.compile('^\s+JobID=\[(https://.*[:0-9]?/CREAM.*)\]$')
+    re_log = re.compile('^\s+(\S+.*\S+)\s+=\s+\[(.*)\]$')
 
     re_jts = re.compile('^\s+Job status changes:$')
     re_ts = re.compile(
-        '^\s+Status\s+\=\s+\[(.*)\]\s+\-\s+\[(.*)\]\s+\(([0-9]+)\)$')
+        '^\s+Status\s+=\s+\[(.*)\]\s+\-\s+\[(.*)\]\s+\(([0-9]+)\)$')
     re_cmd = re.compile('^\s+Issued Commands:$')
 
     # in case of status retrival failed
@@ -774,11 +756,11 @@ def cream_submit(jdlpath, ce, delid):
     delid = cream_proxy_delegation(ce, delid)
 
     if delid:
-        cmd = cmd + ' -D "%s"' % delid
+        cmd += ' -D "%s"' % delid
     else:
-        cmd = cmd + ' -a'
+        cmd += ' -a'
 
-    cmd = cmd + ' -r %s' % ce
+    cmd += ' -r %s' % ce
 
     cmd = '%s --nomsg "%s" < /dev/null' % (cmd, jdlpath)
 
@@ -791,7 +773,7 @@ def cream_submit(jdlpath, ce, delid):
     if output:
         output = "%s" % output.strip()
 
-    match = re.search('^(https:\/\/\S+:8443\/[0-9A-Za-z_\.\-]+)$', output)
+    match = re.search('^(https://\S+:8443/[0-9A-Za-z_\.\-]+)$', output)
 
     if match:
         logger.debug('job id: %s' % match.group(1))
@@ -805,10 +787,10 @@ def cream_status(jobids):
     """CREAM CE job status query"""
 
     if not __cream_ui_check__():
-        return ([], [])
+        return [], []
 
     if not jobids:
-        return ([], [])
+        return [], []
 
     idsfile = tempfile.mktemp('.jids')
     with open(idsfile, 'w') as ids_file:
@@ -902,7 +884,7 @@ def cream_get_output(osbURIList, directory):
     """CREAM CE job output retrieval"""
 
     if not __cream_ui_check__():
-        return (False, None)
+        return False, None
 
     gfiles = []
     for uri in osbURIList:
@@ -930,7 +912,7 @@ def __get_app_exitcode__(outputdir):
 
     if not os.path.exists(runtime_log):
         logger.warning('job runtime log not found: %s' % runtime_log)
-        return (False, 'job runtime log not found: %s' % runtime_log)
+        return False, 'job runtime log not found: %s' % runtime_log
 
     for line in open(runtime_log, 'r'):
         mat = pat.match(line)
@@ -944,9 +926,9 @@ def __get_app_exitcode__(outputdir):
     if app_exitcode != 0:
         logger.debug(
             'job\'s executable returns non-zero exit code: %d' % app_exitcode)
-        return (False, app_exitcode)
+        return False, app_exitcode
     else:
-        return (True, 0)
+        return True, 0
 
 
 def expandxrsl(items):
@@ -1106,7 +1088,7 @@ def arc_submit(jdlpath, ce, verbose):
         cmd += ' -d DEBUG '
 
     if ce:
-        cmd = cmd + ' -c %s' % ce
+        cmd += ' -c %s' % ce
 
     cmd = '%s "%s" < /dev/null' % (cmd, jdlpath)
 
@@ -1118,17 +1100,15 @@ def arc_submit(jdlpath, ce, verbose):
 
     if output:
         output = "%s" % output.strip()
-    rc = getShell().system('rm ' + tmpstr)
+    getShell().system('rm ' + tmpstr)
 
     # Job submitted with jobid:
     # gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/vSoLDmvvEljnvnizHq7yZUKmABFKDmABFKDmCTGKDmABFKDmfN955m
-    match = re.search(
-        '(gsiftp:\/\/\S+:2811\/jobs\/[0-9A-Za-z_\.\-]+)$', output)
+    match = re.search('(gsiftp://\S+:2811/jobs/[0-9A-Za-z_\.\-]+)$', output)
 
     # Job submitted with jobid: https://ce2.dur.scotac.uk:8443/arex/..
     if not match:
-        match = re.search(
-            '(https:\/\/\S+:8443\/arex\/[0-9A-Za-z_\.\-]+)$', output)
+        match = re.search('(https://\S+:8443/arex/[0-9A-Za-z_\.\-]+)$', output)
 
     if match:
         logger.debug('job id: %s' % match.group(1))
@@ -1142,10 +1122,10 @@ def arc_status(jobids, cedict):
     """ARC CE job status query"""
 
     if not __cream_ui_check__():
-        return ([], [])
+        return [], []
 
     if not jobids:
-        return ([], [])
+        return [], []
 
     idsfile = tempfile.mktemp('.jids')
     with open(idsfile, 'w') as ids_file:
