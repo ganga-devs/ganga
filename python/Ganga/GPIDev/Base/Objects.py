@@ -366,11 +366,22 @@ class Node(object):
             del self._index_cache[attrib_name]
 
     def setNodeIndexCache(self, new_index_cache):
+        if self.fullyLoadedFromDisk():
+            logger.debug("Warning: Setting IndexCache data on live object, please avoid!")
         setattr(self, '_index_cache', new_index_cache)
 
-    def getNodeIndexCache(self):
+    def getNodeIndexCache(self, force_cache=False):
+        if self.fullyLoadedFromDisk() and not force_cache:
+            ## Fully loaded so lets regenerate this on the fly to avoid losing data
+            return self._getRegistry().getIndexCache(self._getRoot())
+        ## Not in registry or not loaded, so can't re-generate if requested
         return self._index_cache
 
+    def fullyLoadedFromDisk(self):
+        if self._getRegistry():
+            if self._getRegistry().has_loaded(self._getRoot()):
+                return True
+        return False
 ##########################################################################
 
 
