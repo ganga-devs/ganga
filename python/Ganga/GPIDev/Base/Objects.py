@@ -388,9 +388,8 @@ class Node(object):
     def getNodeIndexCache(self, force_cache=False):
         if self.fullyLoadedFromDisk() and not force_cache:
             ## Fully loaded so lets regenerate this on the fly to avoid losing data
-            with self.const_lock:
-                with self._internal_lock:
-                    return self._getRegistry().getIndexCache(self._getRoot())
+            with self._internal_lock:
+                return self._getRegistry().getIndexCache(self._getRoot())
         ## Not in registry or not loaded, so can't re-generate if requested
         return self._index_cache
 
