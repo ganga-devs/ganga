@@ -61,6 +61,8 @@ class RepositoryError(GangaException):
         try:
             from Ganga.Core.InternalServices.Coordinator import disableInternalServices
             disableInternalServices()
+            from Ganga.Core.GangaThread.WorkerThreads import shutdownQueues
+            shutdownQueues()
             logger.error("Shutting Down Repository_runtime")
             from Ganga.Runtime import Repository_runtime
             Repository_runtime.shutdown()
