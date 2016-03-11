@@ -484,17 +484,17 @@ class SessionLockManager(object):
                 if not os.path.exists(lock_path):
                     os.makedirs(lock_path)
                 if not os.path.isfile(lock_file):
-                    lock_file_hand = open(lock_file, "w")
-                    lock_file_hand.close()
+                    with open(lock_file, "w"):
+                        pass
             except Exception as err:
                 logger.debug("Global Lock Setup Error: %s" % str(err))
         else:
             try:
                 self.lockfn = os.path.join(self.sdir, "global_lock")
                 if not os.path.isfile(self.lockfn):
-                    lock = open(self.lockfn, "w")
-                    # create file (does not interfere with existing sessions)
-                    lock.close()
+                    with open(self.lockfn, "w"):
+                        # create file (does not interfere with existing sessions)
+                        pass
                 self.lockfd = self.delayopen_global(self.lockfn)
                 registerGlobalSessionFile(self.lockfn)
                 registerGlobalSessionFileHandler(self.lockfd)
@@ -548,8 +548,8 @@ class SessionLockManager(object):
                 os.system("fs setacl %s %s rliwka" % (lock_path, getpass.getuser()))
 
                 while not os.path.isfile(lock_file):
-                    lock_file_hand = open(lock_file, "w")
-                    lock_file_hand.close()
+                    with open(lock_file, "w"):
+                        pass
                     time.sleep(0.01)
 
             else:
@@ -855,9 +855,8 @@ class SessionLockManager(object):
     def check(self):
         self.global_lock_acquire()
         try:
-            f = open(self.cntfn)
-            newcount = int(f.readline())
-            f.close()
+            with open(self.cntfn) as f:
+                newcount = int(f.readline())
             assert newcount >= self.count
             sessions = os.listdir(self.sdir)
             prevnames = set()
@@ -870,9 +869,8 @@ class SessionLockManager(object):
                     if not self.afs:
                         fd = os.open(sf, os.O_RDONLY)
                         fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
-                    sf_file = open(sf)
-                    names = pickle.load(sf_file)
-                    sf_file.close()
+                    with open(sf) as sf_file:
+                        names = pickle.load(sf_file)
                     if not self.afs and fd > 0:
                         fcntl.lockf(fd, fcntl.LOCK_UN)  # ONLY NFS
                         os.close(fd)
@@ -907,9 +905,8 @@ class SessionLockManager(object):
                     if not self.afs:
                         fd = os.open(sf, os.O_RDONLY)
                         fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
-                    sf_file = open(sf)
-                    names = pickle.load(sf_file)
-                    sf_file.close()
+                    with open(sf) as sf_file:
+                        names = pickle.load(sf_file)
                     if not self.afs and fd > 0:
                         fcntl.lockf(fd, fcntl.LOCK_UN)  # ONLY NFS
                         os.close(fd)
