@@ -29,17 +29,19 @@ class TestSubjobs(GangaUnitTest):
         """
         from Ganga.GPI import jobs, queues, Executable, Local
         from Ganga.GPIDev.Base.Proxy import isType
+        import random
+        import string
 
         def flush_full_job():
             j = jobs(0)
-            j._impl._setDirty()
+            j.comment = "Make sure I'm dirty " + ''.join( random.choice( string.ascii_uppercase) for _ in range(5))
             j._impl._getRegistry()._flush([j])
 
         # Make sure the main job is fully loaded
         j = jobs(0)
-        assert isType(j.application, Executable)
-        assert isType(j.backend, Local)
-        assert j.application.exe == "sleep"
+        self.assertTrue( isType(j.application, Executable) )
+        self.assertTrue( isType(j.backend, Local) )
+        self.assertEqual( j.application.exe, "sleep" )
 
         # fire off a load of threads to flush
         for i in range(0, 100):
@@ -47,10 +49,11 @@ class TestSubjobs(GangaUnitTest):
 
         # Now loop over and force the load of all the subjobs
         for sj in j.subjobs:
-            assert sj.splitter == None
-            assert isType(sj.application, Executable)
-            assert isType(sj.backend, Local)
-            assert sj.application.exe == "sleep"
-            assert sj.application.args == ['400']
-            assert sj._impl._getRoot() is j._impl
+            self.assertEqual( sj.splitter, None )
+            self.assertTrue( isType(sj.application, Executable) )
+            self.assertTrue( isType(sj.backend, Local) )
+            self.assertEqual( sj.application.exe, "sleep" )
+            self.assertEqual( sj.application.args, ['400'] )
+            self.assertIs( sj._impl._getRoot(), j._impl)
+
 
