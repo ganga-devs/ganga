@@ -453,6 +453,7 @@ class SessionLockManager(object):
                 if session_lock_refresher.numberRepos() <= 1:
                     session_lock_refresher = None
             #logger.debug("Session file '%s' deleted " % (self.fn))
+            os.close(self.lockfd)
             os.unlink(self.fn)
             # os.unlink(self.gfn)
         except OSError as x:
