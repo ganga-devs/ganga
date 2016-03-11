@@ -1,4 +1,5 @@
 *.pyc
+*.pyo
 doc/_build
 .idea
 doc/API/Ganga*
