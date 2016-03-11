@@ -111,8 +111,8 @@ class Schema(object):
 
     @property
     def name(self):
-        from Ganga.GPIDev.Base.Proxy import getName
-        return getName(self._pluginclass)
+        from Ganga.GPIDev.Base.Objects import _getName
+        return _getName(self._pluginclass)
 
     def allItems(self):
         if self.datadict is None: return zip()
@@ -402,7 +402,12 @@ class Item(object):
     # item.isA(SimpleItem)
     def isA(self, _what):
 
-        from Ganga.GPIDev.Base.Proxy import stripProxy
+        try:
+            from Ganga.GPIDev.Base.Proxy import stripProxy
+        except ImportError:
+            def dummyfunc(arg):
+                return arg
+            stripProxy = dummyfunc
 
         what = stripProxy(_what)
 

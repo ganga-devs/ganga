@@ -101,7 +101,7 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
         try:
             from Ganga.GPIDev.Base import GangaObject
         except:
-            GangaObject = None
+            GangaObject = type(None)
 
         raw_type = stripProxy(_type)
         raw_val = stripProxy(val)

@@ -869,6 +869,9 @@ under certain conditions; type license() for details.
 
         from Ganga.Runtime.GPIexport import exportToGPI
 
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        exportToGPI('GangaList', GangaList, 'Classes')
+
         from Ganga.Utility.Plugin import allPlugins
         # make all plugins visible in GPI
         for k in allPlugins.allCategories():
