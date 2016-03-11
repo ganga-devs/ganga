@@ -356,22 +356,25 @@ class SubJobXMLList(GangaObject):
 
             from Ganga.Core.GangaRepository.VStreamer import from_file
 
+            # load the subobject into a temporary object
+            loaded_sj = None
             try:
-                self._cachedJobs[index] = from_file(sj_file)[0]
+                loaded_sj = from_file(sj_file)[0]
             except Exception as err:
 
                 try:
                     subjob_data = self.__get_dataFile(str(index), True)
-                    self._cachedJobs[index] = from_file(sj_file)[0]
-                    if self._definedParent is not None:
-                        self._cachedJobs[index]._setParent( self._definedParent )
+                    loaded_sj = from_file(sj_file)[0]
                 except Exception as err:
                     logger.debug("Failed to Load XML for job: %s using: %s" % (str(index), str(subjob_data)))
                     logger.debug("Err:\n%s" % str(err))
                     raise err
 
-        if self._definedParent is not None and self._cachedJobs[index]._getParent() is not self._definedParent:
-            self._cachedJobs[index]._setParent( self._definedParent )
+            # if load was successful then set parent and add to the _cachedJobs dict
+            if loaded_sj:
+                loaded_sj._setParent( self._definedParent )
+                self._cachedJobs[index] = loaded_sj
+
         return self._cachedJobs[index]
 
     def _setParent(self, parentObj):
