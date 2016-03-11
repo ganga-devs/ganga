@@ -438,6 +438,9 @@ class SubJobXMLList(GangaObject):
                 subjob_data = self.__get_dataFile(str(index))
                 subjob_obj = self._cachedJobs[index]
 
+                if subjob_obj is subjob_obj._getRoot():
+                    raise GangaException(self, "Subjob parent not set correctly in flush.")
+
                 safe_save( subjob_data, subjob_obj, to_file )
 
         self.write_subJobIndex()
