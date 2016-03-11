@@ -1,6 +1,4 @@
 from GangaUnitTest import GangaUnitTest
-import stacktracer
-stacktracer.trace_start("/home/mws/Ganga/install/ganga/stacktracer.html")
 
 class TestSubjobs(GangaUnitTest):
 
@@ -37,12 +35,17 @@ class TestSubjobs(GangaUnitTest):
             j._impl._setDirty()
             j._impl._getRegistry()._flush([j])
 
+        # Make sure the main job is fully loaded
+        j = jobs(0)
+        assert isType(j.application, Executable)
+        assert isType(j.backend, Local)
+        assert j.application.exe == "sleep"
+
         # fire off a load of threads to flush
         for i in range(0, 100):
             queues.add( flush_full_job )
 
         # Now loop over and force the load of all the subjobs
-        j = jobs(0)
         for sj in j.subjobs:
             assert sj.splitter == None
             assert isType(sj.application, Executable)
