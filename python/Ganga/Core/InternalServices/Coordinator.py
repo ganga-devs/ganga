@@ -145,7 +145,7 @@ def _diskSpaceChecker():
     return True
 
 
-def disableMonitoringService(shutdown=False):
+def disableMonitoringService():
 
     # disable the mon loop
     log.debug("Shutting down the main monitoring loop")
@@ -156,27 +156,8 @@ def disableMonitoringService(shutdown=False):
     from Ganga.Core import monitoring_component
     monitoring_component.disableMonitoring()
 
-    if not shutdown:
-        from Ganga.GPI import queues
-        queues._purge_all()
-        first = 0
-        while queues.totalNumAllThreads() != 0:
-            log.debug("Ensuring that all tasks are purged from the todo!")
-            if first is not 0:
-                import time
-                time.sleep(0.5)
-            queues._purge_all()
-            queues._stop_all_threads()
-            from Ganga.Core.GangaThread.GangaThreadPool import GangaThreadPool
-            pool = GangaThreadPool.getInstance()
-            pool.shutdown()
-            pool.__do_shutdown__()
-            first = 1
-        
-        log.debug("Queues Threads should now be gone")
 
-
-def disableInternalServices(shutdown=False):
+def disableInternalServices():
     """
     Deactivates all the internal services :
           * monitoring loop
@@ -186,9 +167,8 @@ def disableInternalServices(shutdown=False):
           * the user is running out of space
     """
 
-    if shutdown is not True:
-        log.info("Ganga is now attempting to shut down all running processes accessing the repository in a clean manner")
-        log.info(" ... Please be patient! ")
+    log.info("Ganga is now attempting to shut down all running processes accessing the repository in a clean manner")
+    log.info(" ... Please be patient! ")
 
 
     ## MOVED TO THE END OF THE SHUTDOWN SO THAT WE NEVER ACCESS A REPO BEFORE WE ARE FINISHED!
@@ -207,7 +187,7 @@ def disableInternalServices(shutdown=False):
     log.debug("Disabling the internal services")
 
     # disable the mon loop
-    disableMonitoringService( shutdown )
+    disableMonitoringService()
 
     # For debugging what services are still alive after being requested to stop before we close the repository
     #from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
@@ -216,8 +196,7 @@ def disableInternalServices(shutdown=False):
 
     log.debug("Ganga is now about to shutdown the repository, any errors after this are likely due to badly behaved services")
 
-    if shutdown is not True:
-        log.info("Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt")
+    log.info("Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt")
 
     # flush the registries
     #log.debug( "Coordinator Shutting Down Repository_runtime" )

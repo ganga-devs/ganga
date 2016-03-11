@@ -189,7 +189,7 @@ class MultiThreadedTestCase(unittest.TestCase):
     and any exception raised by the thread will be correctly propagated to the main thread with correct traceback for test failure reporting.
     """
 
-    def run_threads(self, functions=None, num_threads=50, timeout=30):
+    def run_threads(self, functions=None, num_threads=50, timeout=60):
         """
         Args:
             functions: a list of functions which will be randomly chosen to run in threads. They will take one argument which is an integer thread id
@@ -254,7 +254,13 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
 
     def test_read_write(self):
         """
-        This tests whether claiming a lock on the object stops other threads overwriting our value
+        This tests whether claiming a lock on the object stops other threads
+        overwriting our value. It starts two types of thread:
+
+        1. one which acquires a lock for its duraction, sets values and then
+        makes sure they are unchanged
+        2. one which sets the value being checked in thread-type 1 to random
+        values.
         """
         o = ThreadedTestGangaObject()
         random.seed(time.gmtime())
@@ -263,7 +269,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
             rand = random.Random()
             rand.seed(time.clock() + thread_number)
             for _ in range(100):
-                with o.lock:
+                with o.const_lock:
                     num = rand.randint(0, 1000)
                     o.a = num
                     time.sleep(rand.uniform(0, 1E-6))
@@ -279,7 +285,11 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
         """
         Are parent locks held correctly?
 
-        We make a parent and a child and then check whether claiming an explicit lock on the child will stop changes to the parent.
+        We make a parent and a child and then check whether claiming an
+        explicit lock on the child will stop changes to the parent.
+
+        This is similar to ``test_read_write`` except it is working on a child
+        object and making sure the lock holds.
         """
         o = ThreadedTestGangaObject()
         o.b = SimpleGangaObject()
@@ -290,7 +300,7 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
             rand = random.Random()
             rand.seed(time.clock() + thread_number)
             for _ in range(100):
-                with child.lock:
+                with child.const_lock:
                     num = rand.randint(0, 1000)
                     o.a = num
                     child_num = rand.randint(0, 1000)
@@ -311,8 +321,10 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
         """
         Make sure that the coarse locks work
 
-        In each thread we grab sole access of the object via its ``lock`` property and do things to it.
-        This is required for the cases where you need to do multiple things to an object before allowing anyone else to.
+        In each thread we grab sole access of the object via its ``const_lock``
+        property and do things to it.
+        This is required for the cases where you need to do multiple things to
+        an object before allowing anyone else to.
         """
         o = ThreadedTestGangaObject()
 
@@ -320,13 +332,13 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
             rand = random.Random()
             rand.seed(time.clock() + thread_number)
             for _ in range(10):  # Run this thread many times to keep it running for long enough to see problems.
-                with o.lock:
+                with o.const_lock:
                     num = rand.randint(0, 1000)
                     o.a = num
                     time.sleep(rand.uniform(0, 1E-6))
                     assert o.a == num
 
-                with o.lock:
+                with o.const_lock:
                     o.b = rand.choice([ThreadedTestGangaObject, SimpleGangaObject])()
                     child_num = rand.randint(0, 1000)
                     o.b.a = child_num
@@ -340,10 +352,10 @@ class TestThreadSafeGangaObject(MultiThreadedTestCase):
                         time.sleep(rand.uniform(0, 1E-6))
                         assert o.b.b.a == num
 
-                with o.lock:
+                with o.const_lock:
                     num = rand.randint(0, 1000)
                     o.b.a = num
                     time.sleep(rand.uniform(0, 1E-6))
                     assert o.b.a == num
 
-        self.run_threads([change], num_threads=50)
+        self.run_threads([change])
