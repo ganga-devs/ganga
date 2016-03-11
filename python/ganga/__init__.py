@@ -39,10 +39,13 @@ ShutdownManager.install()
 ## TODO need to implement loading of the config system properly here.
 ## loadPlugins and autoPopulateGPI will take this into account when loading objects
 
+import ganga
 from Ganga.Runtime import plugins
 
+from Ganga.GPIDev.Base.Proxy import setProxyInterface
+setProxyInterface(ganga)
+
 from Ganga.Utility.Runtime import loadPlugins, autoPopulateGPI
-import ganga
 loadPlugins(ganga)
 autoPopulateGPI(ganga)
 
@@ -67,7 +70,8 @@ startUpRegistries(ganga)
 # ------------------------------------------------------------------------------------
 #  bootstrap core modules
 interactive = False
-Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, implRef), interactive)
+from Ganga.Core.GangaRepository import getRegistry
+Ganga.Core.bootstrap(getRegistry('jobs'), interactive)
 Ganga.GPIDev.Lib.Config.bootstrap()
 
 # ------------------------------------------------------------------------------------

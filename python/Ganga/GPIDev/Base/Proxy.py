@@ -31,10 +31,22 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _knownLists = None
 
+_stored_Interface = None
+
+def setProxyInterface(my_interface):
+    global _stored_Interface
+    _stored_Interface = my_interface
+
+def getProxyInterface():
+    if not _stored_Interface:
+        import Ganga.GPI
+        setProxyInterface(Ganga.GPI)
+    return _stored_Interface
+
 def getRuntimeGPIObject(obj_name, silent=False):
-    import Ganga.GPI
-    if obj_name in Ganga.GPI.__dict__.keys():
-        return Ganga.GPI.__dict__[obj_name]()
+    interface = getProxyInterface()
+    if obj_name in interface.__dict__.keys():
+        return interface.__dict__[obj_name]()
     else:
         returnable = raw_eval(obj_name)
         if returnable == obj_name:
@@ -79,8 +91,8 @@ def runtimeEvalString(this_obj, attr_name, val):
                         ## This type is written as a string so need to work out what it is
                         if type(this_type) == str:
                             try:
-                                import Ganga.GPI
-                                eval_type = eval(this_type, Ganga.GPI.__dict__)
+                                interface = getProxyInterface() 
+                                eval_type = eval(this_type, interface.__dict__)
                                 if eval_type == str:
                                     ## This type was written as "str" ... slightly annoying but OK...
                                     shouldEval = False
@@ -125,8 +137,8 @@ def runtimeEvalString(this_obj, attr_name, val):
 
 def raw_eval(val):
     try:
-        import Ganga.GPI
-        temp_val = eval(val, Ganga.GPI.__dict__)
+        interface = getProxyInterface() 
+        temp_val = eval(val, interface.__dict__)
         if isclass(temp_val):
             new_val = temp_val()
         else:

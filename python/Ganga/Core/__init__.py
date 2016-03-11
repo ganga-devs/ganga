@@ -37,7 +37,7 @@ def start_jobregistry_monitor(reg):
     monitoring_component.start()
 
 
-def bootstrap(reg, interactive_session):
+def bootstrap(reg, interactive_session, my_interface=None):
     """
     Create local subsystems. In the future this procedure should be enhanced to connect to remote subsystems.
     FIXME: this procedure should be moved to the Runtime package.
@@ -83,6 +83,12 @@ def bootstrap(reg, interactive_session):
     if config['autostart']:
         monitoring_component.enableMonitoring()
 
+    if not my_interface:
+        import Ganga.GPI
+        my_interface = Ganga.GPI
+    from Ganga.Runtime.GPIexport import exportToInterface
+    exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
+        
 
 def should_wait_interactive_cb(t_total, critical_thread_ids, non_critical_thread_ids):
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config

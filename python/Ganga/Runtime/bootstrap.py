@@ -173,9 +173,6 @@ def manualExportToGPI(my_interface=None):
     exportToInterface(my_interface, 'enableMonitoring', enableMonitoringService, 'Functions')
     exportToInterface(my_interface, 'disableServices', disableInternalServices, 'Functions')
 
-    from Ganga.Core import monitoring_component
-    exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
-
     from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
     exportToInterface(my_interface, 'GangaList', GangaList, 'Classes')
 
@@ -925,10 +922,10 @@ under certain conditions; type license() for details.
         from Ganga.Utility.Runtime import setPluginDefaults
         setPluginDefaults()
 
-        manualExportToGPI()
-
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
+
+        manualExportToGPI()
 
         import Ganga.Core
         from Ganga.Runtime.Repository_runtime import startUpRegistries
@@ -936,9 +933,9 @@ under certain conditions; type license() for details.
 
         logger.debug("Bootstrap Core Modules")
         # bootstrap core modules
-        from Ganga.GPIDev.Base.Proxy import stripProxy
+        from Ganga.Core.GangaRepository import getRegistry
         ## Here is where the monitoring loop and related services are started!
-        Ganga.Core.bootstrap(stripProxy(Ganga.GPI.jobs), interactive)
+        Ganga.Core.bootstrap(getRegistry('jobs'), interactive)
 
         # export all configuration items, new options should not be added after
         # this point
