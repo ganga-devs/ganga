@@ -6,6 +6,7 @@ from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base.Proxy import stripProxy
 import errno
 import copy
+import threading
 logger = getLogger()
 
 ##FIXME There has to be a better way of doing this?
@@ -68,6 +69,8 @@ class SubJobXMLList(GangaObject):
         self._cached_filenames = {}
         self._stored_len = []
 
+        self._getLock = threading.RLock
+
     def __construct__(self, args):
         super(SubJobXMLList, self).__construct__(args)
         self._definedParent = None
@@ -96,7 +99,7 @@ class SubJobXMLList(GangaObject):
         for dict_key, dict_value in self.__dict__.iteritems():
 
             ## Copy objects where it's sane to
-            if dict_key not in ['_cachedJobs', '_definedParent', '_registry', '_parent']:
+            if dict_key not in ['_cachedJobs', '_definedParent', '_registry', '_parent', '_getLock']:
                 new_dict[dict_key] = deepcopy(dict_value)
 
             ## Assign by reference objects where it's sane to
@@ -109,6 +112,7 @@ class SubJobXMLList(GangaObject):
         ## Manually define unsafe/uncopyable objects
         new_dict['_definedParent'] = None
         new_dict['_cachedJobs'] = {}
+        new_dict['_getLock'] = threading.RLock
         obj.__dict__ = new_dict
         return obj
 
@@ -328,7 +332,8 @@ class SubJobXMLList(GangaObject):
         """Return a subjob based upon index"""
         return self._getItem(index)
         try:
-            return self._getItem(index)
+            with self._getLock:
+                return self._getItem(index)
         except Exception as err:
             logger.error("CANNOT LOAD SUBJOB INDEX: %s" % str(index))
             return None
