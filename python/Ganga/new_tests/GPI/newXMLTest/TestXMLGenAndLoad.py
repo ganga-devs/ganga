@@ -131,8 +131,10 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         to_file(stripProxy(j), new_temp_file, ignore_subs)
         new_temp_file.flush()
+        new_temp_file.close()
 
-        new_temp_file2 = NamedTemporaryFile()
+        new_temp_file2 = NamedTemporaryFile(delete=False)
+        temp_name2 = new_temp_file2
 
         j2 = Job()
         j2.name = testStr
@@ -142,6 +144,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         to_file(stripProxy(j2), new_temp_file2, ignore_subs)
         new_temp_file2.flush()
+        new_temp_file2.close()
 
         import filecmp
 
@@ -149,6 +152,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         assert not filecmp.cmp(new_temp_file.name, new_temp_file2.name)
         handler.close()
         unlink(temp_name)
+        unlink(temp_name2)
 
     def test_f_testXMLIndex(self):
         # Check XML Index content

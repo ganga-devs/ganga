@@ -129,12 +129,13 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         new_temp_file = NamedTemporaryFile(delete=False)
         temp_name = new_temp_file.name
-        ignore_subs = 'subjobs'
+        ignore_subs = ''
 
         to_file(stripProxy(j), new_temp_file, ignore_subs)
         new_temp_file.flush()
+        new_temp_file.close()
 
-        new_temp_file2 = NamedTemporaryFile()
+        new_temp_file2 = NamedTemporaryFile(delete=False)
         temp_name2 = new_temp_file2.name
 
         j2=Job()
@@ -142,6 +143,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         to_file(stripProxy(j2), new_temp_file2, ignore_subs)
         new_temp_file2.flush()
+        new_temp_file2.close()
 
         import filecmp
 
@@ -176,13 +178,15 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             temp_name = new_temp_file.name
             to_file(stripProxy(sj), new_temp_file, ignore_subs)
             new_temp_file.flush()
-
+            new_temp_file.close()
             import filecmp
             assert filecmp.cmp(XMLFileName, temp_name)
             handler.close()
             unlink(temp_name)
 
             counter+=1
+
+        assert counter == len(jobs(0).subjobs)
 
     def test_h_testXMLIndex(self):
         # Check index of job
