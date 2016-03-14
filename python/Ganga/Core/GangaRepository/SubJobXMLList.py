@@ -334,7 +334,7 @@ class SubJobXMLList(GangaObject):
         try:
             return self._getItem(index)
         except Exception as err:
-            logger.error("CANNOT LOAD SUBJOB INDEX: %s" % str(index))
+            logger.error("CANNOT LOAD SUBJOB INDEX: %s. Reason: %s" % (str(index), str(err)))
             return None
 
     def _getItem(self, index):
