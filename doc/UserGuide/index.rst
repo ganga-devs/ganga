@@ -8,10 +8,9 @@ you encounter any problems!
 .. toctree::
     InstallAndBasicUsage
     Configuration
+    JobManipulation
 
-
-Job Manipulation
-4. Running Executables
+    4. Running Executables
 5. Using different backends
 6. Input and Output Data
 7. Splitters
