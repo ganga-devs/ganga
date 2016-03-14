@@ -44,18 +44,19 @@ class XMLFileError(GangaException):
             err = ''
         return "XMLFileError: %s %s" % (self.message, err)
 
-def _raw_to_file(j, fobj=None, ignore_subs=''):
+def _raw_to_file(j, fobj=None, ignore_subs=[]):
     vstreamer = VStreamer(out=fobj, selection=ignore_subs)
     vstreamer.begin_root()
     stripProxy(j).accept(vstreamer)
     vstreamer.end_root()
 
-def to_file(j, fobj=None, ignore_subs=''):
+def to_file(j, fobj=None, ignore_subs=[]):
     #used to debug write problems - rcurrie
     #_raw_to_file(j, fobj, ignore_subs)
     #return
+    _ignore_subs = [ignore_subs] if not isinstance(ignore_subs, list) else ignore_subs
     try:
-        _raw_to_file(j, fobj, ignore_subs)
+        _raw_to_file(j, fobj, _ignore_subs)
     except Exception as err:
         logger.error("XML to-file error for file:\n%s" % (str(err)))
         raise XMLFileError(err, "to-file error")
@@ -147,7 +148,7 @@ class VStreamer(object):
     # selection: string specifying the name of properties which should not be printed
     # e.g. 'subjobs' - will not print subjobs
 
-    def __init__(self, out=None, selection=''):
+    def __init__(self, out=None, selection=[]):
         self.level = 0
         self.selection = selection
         if out is not None:
@@ -179,7 +180,7 @@ class VStreamer(object):
         print('\n', self.indent(), '<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
 
     def showAttribute(self, node, name):
-        return not node._schema.getItem(name)['transient'] and (self.level > 1 or name != self.selection)
+        return not node._schema.getItem(name)['transient'] and (self.level > 1 or name not in self.selection)
 
     def simpleAttribute(self, node, name, value, sequence):
         if self.showAttribute(node, name):
