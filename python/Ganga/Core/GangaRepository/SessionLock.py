@@ -394,8 +394,10 @@ class SessionLockManager(object):
             if not os.path.exists(self.cntfn):
                 try:
                     fd = self.delay_init_open(self.cntfn)
-                    os.write(fd, "0")
-                    os.close(fd)
+                    try:
+                        os.write(fd, "0")
+                    finally:
+                        os.close(fd)
                     #registerGlobalSessionFile( self.cntfn )
                 except OSError as x:
                     if x.errno != errno.EEXIST:
@@ -413,8 +415,10 @@ class SessionLockManager(object):
             # Setup session file
             try:
                 fd = self.delay_init_open(self.fn)
-                os.write(fd, pickle.dumps(set()))
-                os.close(fd)
+                try:
+                    os.write(fd, pickle.dumps(set()))
+                finally:
+                    os.close(fd)
                 registerGlobalSessionFile(self.fn)
             except OSError as err:
                 logger.debug("Startup Session Exception: %s" % str(err))
@@ -449,6 +453,7 @@ class SessionLockManager(object):
                 if session_lock_refresher.numberRepos() <= 1:
                     session_lock_refresher = None
             #logger.debug("Session file '%s' deleted " % (self.fn))
+            os.close(self.lockfd)
             os.unlink(self.fn)
             # os.unlink(self.gfn)
         except OSError as x:
@@ -484,17 +489,17 @@ class SessionLockManager(object):
                 if not os.path.exists(lock_path):
                     os.makedirs(lock_path)
                 if not os.path.isfile(lock_file):
-                    lock_file_hand = open(lock_file, "w")
-                    lock_file_hand.close()
+                    with open(lock_file, "w"):
+                        pass
             except Exception as err:
                 logger.debug("Global Lock Setup Error: %s" % str(err))
         else:
             try:
                 self.lockfn = os.path.join(self.sdir, "global_lock")
                 if not os.path.isfile(self.lockfn):
-                    lock = open(self.lockfn, "w")
-                    # create file (does not interfere with existing sessions)
-                    lock.close()
+                    with open(self.lockfn, "w"):
+                        # create file (does not interfere with existing sessions)
+                        pass
                 self.lockfd = self.delayopen_global(self.lockfn)
                 registerGlobalSessionFile(self.lockfn)
                 registerGlobalSessionFileHandler(self.lockfd)
@@ -548,8 +553,8 @@ class SessionLockManager(object):
                 os.system("fs setacl %s %s rliwka" % (lock_path, getpass.getuser()))
 
                 while not os.path.isfile(lock_file):
-                    lock_file_hand = open(lock_file, "w")
-                    lock_file_hand.close()
+                    with open(lock_file, "w"):
+                        pass
                     time.sleep(0.01)
 
             else:
@@ -597,8 +602,8 @@ class SessionLockManager(object):
         try:
             # This can fail (thats OK, file deleted in the meantime)
             fd = self.delay_session_open(fn)
-            os.lseek(fd, 0, 0)
             try:
+                os.lseek(fd, 0, 0)
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_SH)
                 try:
@@ -671,13 +676,15 @@ class SessionLockManager(object):
             # If this fails, we want to shutdown the repository (corruption
             # possible)
             fd = self.delayopen(self.fn)
-            if not self.afs:
-                fcntl.lockf(fd, fcntl.LOCK_EX)
-            self.delaywrite(fd, pickle.dumps(self.locked))
-            if not self.afs:
-                fcntl.lockf(fd, fcntl.LOCK_UN)
-            os.fsync(fd)
-            os.close(fd)
+            try:
+                if not self.afs:
+                    fcntl.lockf(fd, fcntl.LOCK_EX)
+                self.delaywrite(fd, pickle.dumps(self.locked))
+                if not self.afs:
+                    fcntl.lockf(fd, fcntl.LOCK_UN)
+                os.fsync(fd)
+            finally:
+                os.close(fd)
         except OSError as x:
             if x.errno != errno.ENOENT:
                 raise RepositoryError(
@@ -742,12 +749,14 @@ class SessionLockManager(object):
             # If this fails, we want to shutdown the repository (corruption
             # possible)
             fd = os.open(self.cntfn, os.O_WRONLY)
-            if not self.afs:
-                fcntl.lockf(fd, fcntl.LOCK_EX)
-            os.write(fd, str(self.count) + "\n")
-            if not self.afs:
-                fcntl.lockf(fd, fcntl.LOCK_UN)
-            os.close(fd)
+            try:
+                if not self.afs:
+                    fcntl.lockf(fd, fcntl.LOCK_EX)
+                os.write(fd, str(self.count) + "\n")
+                if not self.afs:
+                    fcntl.lockf(fd, fcntl.LOCK_UN)
+            finally:
+                os.close(fd)
             finished = True
         except OSError as x:
             if x.errno != errno.ENOENT:
@@ -855,9 +864,8 @@ class SessionLockManager(object):
     def check(self):
         self.global_lock_acquire()
         try:
-            f = open(self.cntfn)
-            newcount = int(f.readline())
-            f.close()
+            with open(self.cntfn) as f:
+                newcount = int(f.readline())
             assert newcount >= self.count
             sessions = os.listdir(self.sdir)
             prevnames = set()
@@ -870,9 +878,8 @@ class SessionLockManager(object):
                     if not self.afs:
                         fd = os.open(sf, os.O_RDONLY)
                         fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
-                    sf_file = open(sf)
-                    names = pickle.load(sf_file)
-                    sf_file.close()
+                    with open(sf) as sf_file:
+                        names = pickle.load(sf_file)
                     if not self.afs and fd > 0:
                         fcntl.lockf(fd, fcntl.LOCK_UN)  # ONLY NFS
                         os.close(fd)
@@ -907,9 +914,8 @@ class SessionLockManager(object):
                     if not self.afs:
                         fd = os.open(sf, os.O_RDONLY)
                         fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
-                    sf_file = open(sf)
-                    names = pickle.load(sf_file)
-                    sf_file.close()
+                    with open(sf) as sf_file:
+                        names = pickle.load(sf_file)
                     if not self.afs and fd > 0:
                         fcntl.lockf(fd, fcntl.LOCK_UN)  # ONLY NFS
                         os.close(fd)
