@@ -25,7 +25,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         from Ganga.GPI import Job, jobs
         j=Job()
-        self.assertEqual(len(jobs), 1) # Don't really gain anything from assertEqual...
+        assert len(jobs) == 1
 
     def test_b_JobXMLExists(self):
         # Check things exist

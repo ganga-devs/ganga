@@ -34,7 +34,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         assert len(jobs) == 1
 
-        print("len: %s" % str(len(jobs)))
+        print("len: %s" % len(jobs))
 
         j=jobs(0)
 

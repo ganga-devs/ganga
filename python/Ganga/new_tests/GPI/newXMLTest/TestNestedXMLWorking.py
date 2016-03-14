@@ -44,7 +44,7 @@ class TestNestedXMLWorking(GangaUnitTest):
 
         assert len(jobs) == 1
 
-        print("len: %s" % str(len(jobs)))
+        print("len: %s" % len(jobs))
 
         j = jobs(0)
 
@@ -116,6 +116,7 @@ class TestNestedXMLWorking(GangaUnitTest):
         assert open(handler.name).read() == open(new_temp_file.name).read()
         assert open(handler.name) != open(new_temp_file2.name).read()
 
+        handler.close()
         unlink(new_temp_file.name)
         unlink(new_temp_file2.name)
 
