@@ -57,7 +57,7 @@ class TestNestedXMLWorking(GangaUnitTest):
 
     def test_c_JobLoaded(self):
         """ Third do something to trigger a loading of a Job and then test if it's loaded"""
-        from Ganga.GPI import jobs
+        from Ganga.GPI import jobs, ArgSplitter
 
         assert len(jobs) == 1
 
@@ -73,9 +73,11 @@ class TestNestedXMLWorking(GangaUnitTest):
 
         assert has_loaded_job
 
+        assert isinstance(j.splitter, ArgSplitter)
+
         assert j.splitter.args == getNestedList()
 
-    def test_e_testXMLContent(self):
+    def test_d_testXMLContent(self):
         # Check content of XML is as expected
         from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
 
@@ -107,11 +109,13 @@ class TestNestedXMLWorking(GangaUnitTest):
         to_file(stripProxy(j2), new_temp_file2, ignore_subs)
         new_temp_file2.flush()
 
-        import filecmp
+        #import filecmp
+        #assert filecmp.cmp(handler.name, new_temp_file.name)
+        #assert not filecmp.cmp(handler.name, new_temp_file2.name)
 
-        assert filecmp.cmp(handler.name, new_temp_file.name)
-        assert not filecmp.cmp(handler.name, new_temp_file2.name)
+        assert open(handler.name).read() == open(new_temp_file.name).read()
+        assert open(handler.name) != open(new_temp_file2.name).read()
 
-        #unlink(new_temp_file.name)
-        #unlink(new_temp_file2.name)
+        unlink(new_temp_file.name)
+        unlink(new_temp_file2.name)
 

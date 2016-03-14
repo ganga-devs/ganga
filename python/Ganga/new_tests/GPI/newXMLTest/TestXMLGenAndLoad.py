@@ -75,7 +75,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
     def test_d_XMLUpdated(self):
         # check they get updated elsewhere
-        from Ganga.GPI import jobs, disableMonitoring
+        from Ganga.GPI import jobs, disableMonitoring, enableMonitoring
 
         disableMonitoring()
 
@@ -91,18 +91,20 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         from GangaTest.Framework.utils import sleep_until_completed
 
+        enableMonitoring()
+
         can_assert = False
-        if j.status not in ['completed', 'failed']:
+        if j.status in ['submitted', 'running']:
             can_assert = True
-            sleep_until_completed(j)
+            sleep_until_completed(j, 60)
 
         final_update = stat(XMLFileName)
 
         assert newest_update.st_mtime > last_update.st_mtime
 
         # Apparently this requirement is a bad idea. This isn't implemented in 6.1.17 but should probably be in 6.1.18
-        #if can_assert:
-        #    assert final_update.st_mtime > newest_update.st_mtime
+        if can_assert:
+            assert final_update.st_mtime > newest_update.st_mtime
         #else:
         #    assert final_update.st_mtime == newest_update.st_mtime
 
