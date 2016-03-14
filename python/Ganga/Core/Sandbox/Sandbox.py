@@ -20,31 +20,6 @@ class SandboxError(GangaException):
 
 # FIXME: os.system error handling missing in this module!
 
-def getDefaultModules():
-    """ Return list of ganga modules which are needed for WNSandbox. """
-    import Ganga.Utility.files
-    return [Ganga.Utility, Ganga.Utility.files]
-
-
-def getGangaModulesAsSandboxFiles(modules):
-    """ This returns a list of sandbox files corresponding to specified Ganga modules.
-    Ganga modules are placed in a well-known location in the sandbox.
-    """
-    import inspect
-    import sys
-    from Ganga.Utility.files import remove_prefix
-    from Ganga.GPIDev.Lib.File import File
-
-    files = []
-    for m in modules:
-        fullpath = os.path.realpath(inspect.getsourcefile(m))
-        dir, fn = os.path.split(remove_prefix(fullpath, sys.path))
-        if os.path.join(dir, fn) == fullpath:
-            raise GangaIOError('Cannot find the prefix for %s' % fullpath)
-        files.append(File(fullpath, subdir=os.path.join(PYTHON_DIR, dir)))
-    return files
-
-
 def createPackedInputSandbox(sandbox_files, inws, name):
     """Put all sandbox_files into tarball called name and write it into to the input workspace.
        This function is called by Ganga client at the submission time.
