@@ -326,7 +326,6 @@ class SubJobXMLList(GangaObject):
 
     def __getitem__(self, index):
         """Return a subjob based upon index"""
-        return self._getItem(index)
         try:
             return self._getItem(index)
         except Exception as err:
