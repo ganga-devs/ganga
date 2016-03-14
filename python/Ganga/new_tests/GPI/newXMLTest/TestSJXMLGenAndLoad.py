@@ -145,10 +145,13 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         new_temp_file2.flush()
         new_temp_file2.close()
 
-        import filecmp
+        #import filecmp
+        #assert filecmp.cmp(XMLFileName, temp_name)
+        #assert not filecmp.cmp(temp_name, temp_name2)
 
-        assert filecmp.cmp(XMLFileName, temp_name)
-        assert not filecmp.cmp(temp_name, temp_name2)
+        assert open(XMLFileName).read() == open(temp_name).read()
+        assert open(temp_name).read() != open(temp_name2).read()
+
         handler.close()
 
         unlink(temp_name)
@@ -179,8 +182,9 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             to_file(stripProxy(sj), new_temp_file, ignore_subs)
             new_temp_file.flush()
             new_temp_file.close()
-            import filecmp
-            assert filecmp.cmp(XMLFileName, temp_name)
+            #import filecmp
+            #assert filecmp.cmp(XMLFileName, temp_name)
+            assert open(XMLFileName).read() == open(temp_name).read()
             handler.close()
             unlink(temp_name)
 

@@ -148,8 +148,15 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         import filecmp
 
-        assert filecmp.cmp(handler.name, new_temp_file.name)
-        assert not filecmp.cmp(new_temp_file.name, new_temp_file2.name)
+        with open(handler.name)
+
+        #import filecmp
+        #assert filecmp.cmp(handler.name, new_temp_file.name)
+        #assert not filecmp.cmp(new_temp_file.name, new_temp_file2.name)
+
+        assert open(handler.name).read() == open(temp_name).read()
+        assert open(temp_name).read() != open(temp_name2).read()
+
         handler.close()
         unlink(temp_name)
         unlink(temp_name2)
