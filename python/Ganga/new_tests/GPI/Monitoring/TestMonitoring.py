@@ -23,8 +23,6 @@ class TestMonitoring(GangaUnitTest):
 
     def tearDown(self):
         from Ganga.Utility.Config import getConfig
-        #getConfig('PollThread').getOption('autostart').revertToDefault()
-        #getConfig('PollThread').getOption('base_poll_rate').revertToDefault()
         super(TestMonitoring, self).tearDown()
 
     def test_a_JobConstruction(self):

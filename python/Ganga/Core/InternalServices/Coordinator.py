@@ -212,13 +212,11 @@ def enableMonitoringService():
     from Ganga.Core import monitoring_component
     monitoring_component.alive = True
     monitoring_component.enableMonitoring()
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool
-    _makeThreadPool()
-    from Ganga.GPI import queues
-    queues._start_all_threads()
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool, ThreadPool
+    if not ThreadPool or len(ThreadPool) == 0:
+        _makeThreadPool()
     global servicesEnabled
     servicesEnabled = True
-
 
 def enableInternalServices():
     """
