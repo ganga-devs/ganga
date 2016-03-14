@@ -365,7 +365,7 @@ class ATLASLocalDataset(Dataset):
 
        self.names.extend( new_names )
 
-       self._setDirty(1)
+       self._setDirty()
 
     def get_dataset_filenames(self):
         """Get filenames"""

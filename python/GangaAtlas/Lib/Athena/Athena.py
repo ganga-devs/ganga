@@ -1377,7 +1377,7 @@ class Athena(IPrepareApp):
                 logger.info('Using Group area from: %s ',self.group_area.name)            
                 
         os.chdir(savedir)       
-        self._setDirty(1)
+        self._setDirty()
 
     def configure(self,masterappconfig):
         logger.debug('Athena configure called')
