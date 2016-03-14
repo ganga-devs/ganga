@@ -691,7 +691,8 @@ class Registry(object):
 
         for obj in objs:
             # check if the object is dirty, if not do nothing
-            if not obj._dirty:
+            this_id = self.find(obj)
+            if not obj._dirty or this_id not in self._loaded_ids:
                 continue
 
             with obj.const_lock:
@@ -838,7 +839,6 @@ class Registry(object):
                     raise err
                 finally:  # try to load even if lock fails
                     try:
-                        if this_id not in self._loaded_ids:
                             self._load([this_id])
                             self._loaded_ids.append(this_id)
                             if hasattr(obj, "_registry_refresh"):
