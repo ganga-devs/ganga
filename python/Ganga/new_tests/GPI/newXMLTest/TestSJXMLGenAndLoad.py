@@ -129,7 +129,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         new_temp_file = NamedTemporaryFile(delete=False)
         temp_name = new_temp_file.name
-        ignore_subs = ''
+        ignore_subs = 'subjobs'
 
         to_file(stripProxy(j), new_temp_file, ignore_subs)
         new_temp_file.flush()
@@ -170,7 +170,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             XMLFileName = getSJXMLFile(sj)
             assert path.isfile(XMLFileName)
 
-            ignore_subs = ''
+            ignore_subs = 'subjobs'
 
             handler = open(XMLFileName)
             tmpobj, errs = from_file(handler)

@@ -146,10 +146,6 @@ class TestXMLGenAndLoad(GangaUnitTest):
         new_temp_file2.flush()
         new_temp_file2.close()
 
-        import filecmp
-
-        with open(handler.name)
-
         #import filecmp
         #assert filecmp.cmp(handler.name, new_temp_file.name)
         #assert not filecmp.cmp(new_temp_file.name, new_temp_file2.name)
