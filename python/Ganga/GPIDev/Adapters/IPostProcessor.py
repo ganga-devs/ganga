@@ -83,7 +83,7 @@ class MultiPostProcessor(IPostProcessor):
             return str(GPIProxyObjectFactory(self.process_objects))
 
     def append(self, _value):
-        from Ganga.GPIDev.Proxy import stripProxy
+        from Ganga.GPIDev.Base.Proxy import stripProxy
         value = stripProxy(value)
         self.addProcess(value)
         self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
