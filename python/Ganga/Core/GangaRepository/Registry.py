@@ -839,6 +839,7 @@ class Registry(object):
                     raise err
                 finally:  # try to load even if lock fails
                     try:
+                        if this_id not in self._loaded_ids:
                             self._load([this_id])
                             self._loaded_ids.append(this_id)
                             if hasattr(obj, "_registry_refresh"):
