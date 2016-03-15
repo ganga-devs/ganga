@@ -205,5 +205,5 @@ class TestRepository(object):
         assert self.thread.done
         self.logger.info(str(self.id) + ' shutdown()')
         self.repo.shutdown()
-        logger.info(str(self.id) + ' shutdown() done!')
+        self.logger.info(str(self.id) + ' shutdown() done!')
 
