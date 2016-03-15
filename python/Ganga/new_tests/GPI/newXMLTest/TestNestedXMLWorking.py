@@ -88,35 +88,30 @@ class TestNestedXMLWorking(GangaUnitTest):
 
         j = jobs(0)
         assert path.isfile(getXMLFile(j))
-        handler = open(getXMLFile(j))
-        tmpobj, errs = from_file(handler)
+        with open(getXMLFile(j)) as handler:
+            tmpobj, errs = from_file(handler)
 
-        assert tmpobj.splitter
-        assert tmpobj.splitter.args == getNestedList()
+            assert tmpobj.splitter
+            assert tmpobj.splitter.args == getNestedList()
 
-        new_temp_file = NamedTemporaryFile(delete=False)
+            new_temp_file = NamedTemporaryFile(delete=False)
 
-        ignore_subs = ''
+            ignore_subs = ''
 
-        to_file(stripProxy(j), new_temp_file, ignore_subs)
-        new_temp_file.flush()
+            to_file(stripProxy(j), new_temp_file, ignore_subs)
+            new_temp_file.flush()
 
-        new_temp_file2 = NamedTemporaryFile(delete=False)
-        j2 = Job()
-        j2.splitter = ArgSplitter()
-        j2.splitter.args = getNestedList()
+            new_temp_file2 = NamedTemporaryFile(delete=False)
+            j2 = Job()
+            j2.splitter = ArgSplitter()
+            j2.splitter.args = getNestedList()
 
-        to_file(stripProxy(j2), new_temp_file2, ignore_subs)
-        new_temp_file2.flush()
+            to_file(stripProxy(j2), new_temp_file2, ignore_subs)
+            new_temp_file2.flush()
 
-        #import filecmp
-        #assert filecmp.cmp(handler.name, new_temp_file.name)
-        #assert not filecmp.cmp(handler.name, new_temp_file2.name)
+            assert open(handler.name).read() == open(new_temp_file.name).read()
+            assert open(handler.name) != open(new_temp_file2.name).read()
 
-        assert open(handler.name).read() == open(new_temp_file.name).read()
-        assert open(handler.name) != open(new_temp_file2.name).read()
-
-        handler.close()
-        unlink(new_temp_file.name)
-        unlink(new_temp_file2.name)
+            unlink(new_temp_file.name)
+            unlink(new_temp_file2.name)
 

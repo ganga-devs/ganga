@@ -130,42 +130,36 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         j=jobs(0)
         XMLFileName = getXMLFile(j)
         assert path.isfile(XMLFileName)
-        handler = open(XMLFileName)
-        tmpobj, errs = from_file(handler)
+        with open(XMLFileName) as handler:
+            tmpobj, errs = from_file(handler)
 
-        assert hasattr(tmpobj, 'name')
+            assert hasattr(tmpobj, 'name')
 
-        assert tmpobj.name == testStr
+            assert tmpobj.name == testStr
 
-        new_temp_file = NamedTemporaryFile(delete=False)
-        temp_name = new_temp_file.name
-        ignore_subs = ['status', 'subjobs', 'time', 'backend', 'id', 'splitter', 'info', 'application']
+            new_temp_file = NamedTemporaryFile(delete=False)
+            temp_name = new_temp_file.name
+            ignore_subs = ['status', 'subjobs', 'time', 'backend', 'id', 'splitter', 'info', 'application']
 
-        to_file(stripProxy(j), new_temp_file, ignore_subs)
-        new_temp_file.flush()
-        new_temp_file.close()
+            to_file(stripProxy(j), new_temp_file, ignore_subs)
+            new_temp_file.flush()
+            new_temp_file.close()
 
-        new_temp_file2 = NamedTemporaryFile(delete=False)
-        temp_name2 = new_temp_file2.name
+            new_temp_file2 = NamedTemporaryFile(delete=False)
+            temp_name2 = new_temp_file2.name
 
-        j2=Job()
-        j2.name=testStr
+            j2=Job()
+            j2.name=testStr
 
-        to_file(stripProxy(j2), new_temp_file2, ignore_subs)
-        new_temp_file2.flush()
-        new_temp_file2.close()
+            to_file(stripProxy(j2), new_temp_file2, ignore_subs)
+            new_temp_file2.flush()
+            new_temp_file2.close()
 
-        #import filecmp
-        #assert filecmp.cmp(XMLFileName, temp_name)
-        #assert not filecmp.cmp(temp_name, temp_name2)
+            #assert open(XMLFileName).read() == open(temp_name).read()
+            assert open(temp_name).read() == open(temp_name2).read()
 
-        #assert open(XMLFileName).read() == open(temp_name).read()
-        assert open(temp_name).read() == open(temp_name2).read()
-
-        handler.close()
-
-        unlink(temp_name)
-        unlink(temp_name2)
+            unlink(temp_name)
+            unlink(temp_name2)
 
     def test_g_testSJXMLContent(self):
         # Check SJ content
@@ -190,21 +184,20 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             XMLFileName = getSJXMLFile(sj)
             assert path.isfile(XMLFileName)
 
-            handler = open(XMLFileName)
-            tmpobj, errs = from_file(handler)
-            assert hasattr(tmpobj, 'id')
-            assert tmpobj.id == counter
+            with open(XMLFileName) as handler:
+                tmpobj, errs = from_file(handler)
+                assert hasattr(tmpobj, 'id')
+                assert tmpobj.id == counter
 
-            new_temp_file = NamedTemporaryFile(delete=False)
-            temp_name = new_temp_file.name
-            to_file(stripProxy(sj), new_temp_file, ignore_subs)
-            new_temp_file.flush()
-            new_temp_file.close()
-            #import filecmp
-            #assert filecmp.cmp(XMLFileName, temp_name)
-            assert open(temp_name_a).read() == open(temp_name).read()
-            handler.close()
-            unlink(temp_name)
+                new_temp_file = NamedTemporaryFile(delete=False)
+                temp_name = new_temp_file.name
+                to_file(stripProxy(sj), new_temp_file, ignore_subs)
+                new_temp_file.flush()
+                new_temp_file.close()
+                #import filecmp
+                #assert filecmp.cmp(XMLFileName, temp_name)
+                assert open(temp_name_a).read() == open(temp_name).read()
+                unlink(temp_name)
 
             counter+=1
 
@@ -221,23 +214,21 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         assert path.isfile(getIndexFile(j))
 
-        handler = open(getIndexFile(j))
-        obj, errs = from_file(handler)
+        with open(getIndexFile(j)) as handler:
+            obj, errs = from_file(handler)
 
-        assert isinstance(obj, tuple)
+            assert isinstance(obj, tuple)
 
-        from Ganga.GPIDev.Base.Proxy import stripProxy, getName
-        raw_j = stripProxy(j)
-        index_cache = raw_j._getRegistry().getIndexCache(raw_j)
-        assert isinstance(index_cache, dict)
+            from Ganga.GPIDev.Base.Proxy import stripProxy, getName
+            raw_j = stripProxy(j)
+            index_cache = raw_j._getRegistry().getIndexCache(raw_j)
+            assert isinstance(index_cache, dict)
 
-        index_cls = getName(raw_j)
-        index_cat = raw_j._category
-        this_index_cache = (index_cat, index_cls, index_cache)
+            index_cls = getName(raw_j)
+            index_cat = raw_j._category
+            this_index_cache = (index_cat, index_cls, index_cache)
 
-        assert this_index_cache == obj
-
-        handler.close()
+            assert this_index_cache == obj
 
     def test_i_testSJXMLIndex(self):
         # Check index of all sj
@@ -249,28 +240,24 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         j=jobs(0)
 
-        handler = open(getSJXMLIndex(j))
-        obj, errs = from_file(handler)
+        with open(getSJXMLIndex(j)) as handler:
+            obj, errs = from_file(handler)
 
-        assert isinstance(obj, dict)
+            assert isinstance(obj, dict)
 
-        from Ganga.GPIDev.Base.Proxy import stripProxy, getName
-        raw_j = stripProxy(j)
+            from Ganga.GPIDev.Base.Proxy import stripProxy, getName
+            raw_j = stripProxy(j)
 
-        new_dict = {}
-        for sj in j.subjobs:
-            raw_sj = stripProxy(sj)
-            temp_index = raw_sj._getRegistry().getIndexCache(raw_sj)
+            new_dict = {}
+            for sj in j.subjobs:
+                raw_sj = stripProxy(sj)
+                temp_index = raw_sj._getRegistry().getIndexCache(raw_sj)
 
-            new_dict[sj.id] = temp_index
-            assert raw_sj._category == raw_j._category
+                new_dict[sj.id] = temp_index
+                assert raw_sj._category == raw_j._category
 
-        for k, v in new_dict.iteritems():
-            for k1, v1 in v.iteritems():
-                if k1 != 'modified':
-                    assert obj[k][k1] == new_dict[k][k1]
-
-        #assert obj == new_dict
-
-        handler.close()
+            for k, v in new_dict.iteritems():
+                for k1, v1 in v.iteritems():
+                    if k1 != 'modified':
+                        assert obj[k][k1] == new_dict[k][k1]
 

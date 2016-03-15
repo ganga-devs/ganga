@@ -67,10 +67,9 @@ class TestXMLGenAndLoad(GangaUnitTest):
         unlink(XMLFileName)
         assert not path.isfile(XMLFileName)
 
-        handler = open(XMLFileName, 'w')
-        handler.write(badStr)
-        handler.flush()
-        handler.close()
+        with open(XMLFileName, 'w') as handler:
+            handler.write(badStr)
+            handler.flush()
 
         from tempfile import NamedTemporaryFile
         myTempfile = NamedTemporaryFile()

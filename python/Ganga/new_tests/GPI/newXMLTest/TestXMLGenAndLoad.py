@@ -128,45 +128,44 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         j = jobs(0)
         assert path.isfile(getXMLFile(j))
-        handler = open(getXMLFile(j))
-        tmpobj, errs = from_file(handler)
+        with open(getXMLFile(j)) as handler:
+            tmpobj, errs = from_file(handler)
 
-        assert hasattr(tmpobj, 'name')
+            assert hasattr(tmpobj, 'name')
 
-        assert tmpobj.name == testStr
+            assert tmpobj.name == testStr
 
-        new_temp_file = NamedTemporaryFile(delete=False)
-        temp_name = new_temp_file.name
+            new_temp_file = NamedTemporaryFile(delete=False)
+            temp_name = new_temp_file.name
 
-        ignore_subs = ['time', 'subjobs', 'info', 'application', 'backend', 'id']
+            ignore_subs = ['time', 'subjobs', 'info', 'application', 'backend', 'id']
 
-        to_file(stripProxy(j), new_temp_file, ignore_subs)
-        new_temp_file.flush()
-        new_temp_file.close()
+            to_file(stripProxy(j), new_temp_file, ignore_subs)
+            new_temp_file.flush()
+            new_temp_file.close()
 
-        new_temp_file2 = NamedTemporaryFile(delete=False)
-        temp_name2 = new_temp_file2.name
+            new_temp_file2 = NamedTemporaryFile(delete=False)
+            temp_name2 = new_temp_file2.name
 
-        j2 = Job()
-        j2.name = testStr
-        j2.submit()
-        from GangaTest.Framework.utils import sleep_until_completed
-        sleep_until_completed(j2)
+            j2 = Job()
+            j2.name = testStr
+            j2.submit()
+            from GangaTest.Framework.utils import sleep_until_completed
+            sleep_until_completed(j2)
 
-        to_file(stripProxy(j2), new_temp_file2, ignore_subs)
-        new_temp_file2.flush()
-        new_temp_file2.close()
+            to_file(stripProxy(j2), new_temp_file2, ignore_subs)
+            new_temp_file2.flush()
+            new_temp_file2.close()
 
-        #import filecmp
-        #assert filecmp.cmp(handler.name, new_temp_file.name)
-        #assert not filecmp.cmp(new_temp_file.name, new_temp_file2.name)
+            #import filecmp
+            #assert filecmp.cmp(handler.name, new_temp_file.name)
+            #assert not filecmp.cmp(new_temp_file.name, new_temp_file2.name)
 
-        #assert open(getXMLFile(j)).read() == open(temp_name).read()
-        assert open(temp_name).read() == open(temp_name2).read()
+            #assert open(getXMLFile(j)).read() == open(temp_name).read()
+            assert open(temp_name).read() == open(temp_name2).read()
 
-        handler.close()
-        unlink(temp_name)
-        unlink(temp_name2)
+            unlink(temp_name)
+            unlink(temp_name2)
 
     def test_f_testXMLIndex(self):
         # Check XML Index content
@@ -178,21 +177,20 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         assert path.isfile(getIndexFile(j))
 
-        handler = open(getIndexFile(j))
-        obj, errs = from_file(handler)
+        with open(getIndexFile(j)) as handler:
+            obj, errs = from_file(handler)
 
-        assert isinstance(obj, tuple)
+            assert isinstance(obj, tuple)
 
-        from Ganga.GPIDev.Base.Proxy import stripProxy, getName
-        raw_j = stripProxy(j)
-        index_cache = raw_j._getRegistry().getIndexCache(raw_j)
-        assert isinstance(index_cache, dict)
+            from Ganga.GPIDev.Base.Proxy import stripProxy, getName
+            raw_j = stripProxy(j)
+            index_cache = raw_j._getRegistry().getIndexCache(raw_j)
+            assert isinstance(index_cache, dict)
 
-        index_cls = getName(raw_j)
-        index_cat = raw_j._category
-        this_index_cache = (index_cat, index_cls, index_cache)
+            index_cls = getName(raw_j)
+            index_cat = raw_j._category
+            this_index_cache = (index_cat, index_cls, index_cache)
 
-        assert this_index_cache == obj
+            assert this_index_cache == obj
 
-        handler.close()
 

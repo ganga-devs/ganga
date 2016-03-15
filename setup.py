@@ -54,7 +54,7 @@ class RunTestsCommand(Command):
 
     def run(self):
 
-        cmd = ['py.test -vv']
+        cmd = ['py.test']
 
         if self.type in ['unit', 'all']:
             cmd.append('python/Ganga/new_tests/Unit')
