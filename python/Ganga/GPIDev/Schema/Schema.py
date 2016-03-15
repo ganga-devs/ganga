@@ -400,16 +400,7 @@ class Item(object):
     # compare the kind of item:
     # all calls are equivalent:
     # item.isA(SimpleItem)
-    def isA(self, _what):
-
-        try:
-            from Ganga.GPIDev.Base.Proxy import stripProxy
-        except ImportError:
-            def dummyfunc(arg):
-                return arg
-            stripProxy = dummyfunc
-
-        what = stripProxy(_what)
+    def isA(self, what):
 
         if isinstance(what, types.InstanceType):
             what = what.__class__
