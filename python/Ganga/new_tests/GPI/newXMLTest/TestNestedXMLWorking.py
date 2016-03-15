@@ -94,20 +94,20 @@ class TestNestedXMLWorking(GangaUnitTest):
             assert tmpobj.splitter
             assert tmpobj.splitter.args == getNestedList()
 
-            new_temp_file = NamedTemporaryFile(delete=False)
-
             ignore_subs = ''
 
-            to_file(stripProxy(j), new_temp_file, ignore_subs)
-            new_temp_file.flush()
+            with NamedTemporaryFile(delete=False) as new_temp_file:
 
-            new_temp_file2 = NamedTemporaryFile(delete=False)
-            j2 = Job()
-            j2.splitter = ArgSplitter()
-            j2.splitter.args = getNestedList()
+                to_file(stripProxy(j), new_temp_file, ignore_subs)
+                new_temp_file.flush()
 
-            to_file(stripProxy(j2), new_temp_file2, ignore_subs)
-            new_temp_file2.flush()
+            with NamedTemporaryFile(delete=False) as new_temp_file2:
+                j2 = Job()
+                j2.splitter = ArgSplitter()
+                j2.splitter.args = getNestedList()
+
+                to_file(stripProxy(j2), new_temp_file2, ignore_subs)
+                new_temp_file2.flush()
 
             assert open(handler.name).read() == open(new_temp_file.name).read()
             assert open(handler.name) != open(new_temp_file2.name).read()

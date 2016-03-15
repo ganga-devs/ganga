@@ -15,7 +15,8 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestSJXMLGenAndLoad, self).setUp()
+        extra_opts = [('Registry', 'AutoFlusherWaitTime', 10)]
+        super(TestSJXMLGenAndLoad, self).setUp(extra_opts=extra_opts)
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
@@ -68,7 +69,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         total_time=0.
         new_update = 0
         lst_update = last_update.st_mtime
-        while total_time < 2.*flush_timeout or new_update < lst_update:
+        while total_time < 2.*flush_timeout and new_update <= lst_update:
             total_time+=1.
             time.sleep(1.)
             try:
@@ -137,23 +138,22 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
             assert tmpobj.name == testStr
 
-            new_temp_file = NamedTemporaryFile(delete=False)
-            temp_name = new_temp_file.name
             ignore_subs = ['status', 'subjobs', 'time', 'backend', 'id', 'splitter', 'info', 'application']
 
-            to_file(stripProxy(j), new_temp_file, ignore_subs)
-            new_temp_file.flush()
-            new_temp_file.close()
+            with NamedTemporaryFile(delete=False) as new_temp_file:
+                temp_name = new_temp_file.name
 
-            new_temp_file2 = NamedTemporaryFile(delete=False)
-            temp_name2 = new_temp_file2.name
+                to_file(stripProxy(j), new_temp_file, ignore_subs)
+                new_temp_file.flush()
 
-            j2=Job()
-            j2.name=testStr
+            with NamedTemporaryFile(delete=False) as new_temp_file2:
+                temp_name2 = new_temp_file2.name
 
-            to_file(stripProxy(j2), new_temp_file2, ignore_subs)
-            new_temp_file2.flush()
-            new_temp_file2.close()
+                j2=Job()
+                j2.name=testStr
+
+                to_file(stripProxy(j2), new_temp_file2, ignore_subs)
+                new_temp_file2.flush()
 
             #assert open(XMLFileName).read() == open(temp_name).read()
             assert open(temp_name).read() == open(temp_name2).read()
@@ -169,15 +169,14 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         from tempfile import NamedTemporaryFile
         from Ganga.GPIDev.Base.Proxy import stripProxy
 
-        new_temp_file_a = NamedTemporaryFile(delete=False)
-        temp_name_a = new_temp_file_a.name
-
         ignore_subs = ['subjobs', 'time', 'backend', 'id', 'splitter', 'info', 'application', 'inputdata']
 
-        j=jobs(0)
-        to_file(stripProxy(j), new_temp_file_a, ignore_subs)
-        new_temp_file_a.flush()
-        new_temp_file_a.close()
+        with NamedTemporaryFile(delete=False) as new_temp_file_a:
+            temp_name_a = new_temp_file_a.name
+
+            j=jobs(0)
+            to_file(stripProxy(j), new_temp_file_a, ignore_subs)
+            new_temp_file_a.flush()
 
         counter = 0
         for sj in j.subjobs:
@@ -189,11 +188,11 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
                 assert hasattr(tmpobj, 'id')
                 assert tmpobj.id == counter
 
-                new_temp_file = NamedTemporaryFile(delete=False)
-                temp_name = new_temp_file.name
-                to_file(stripProxy(sj), new_temp_file, ignore_subs)
-                new_temp_file.flush()
-                new_temp_file.close()
+                with NamedTemporaryFile(delete=False) as new_temp_file:
+                    temp_name = new_temp_file.name
+                    to_file(stripProxy(sj), new_temp_file, ignore_subs)
+                    new_temp_file.flush()
+
                 #import filecmp
                 #assert filecmp.cmp(XMLFileName, temp_name)
                 assert open(temp_name_a).read() == open(temp_name).read()

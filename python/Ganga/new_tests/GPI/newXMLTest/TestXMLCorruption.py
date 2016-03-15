@@ -72,12 +72,14 @@ class TestXMLGenAndLoad(GangaUnitTest):
             handler.flush()
 
         from tempfile import NamedTemporaryFile
-        myTempfile = NamedTemporaryFile()
-        myTempfile.write(badStr)
-        myTempfile.flush()
+        with NamedTemporaryFile(delete=False) as myTempfile:
+            myTempfile.write(badStr)
+            myTempfile.flush()
+            myTempName = myTempfile.name
 
         import filecmp
-        assert filecmp.cmp(XMLFileName, myTempfile.name)
+        assert filecmp.cmp(XMLFileName, myTempName)
+        unlink(myTempName)
 
         global global_AutoStartReg
         global_AutoStartReg = True
@@ -95,10 +97,12 @@ class TestXMLGenAndLoad(GangaUnitTest):
         XMLFileName = getXMLFile(0)
         
         from tempfile import NamedTemporaryFile
-        myTempfile = NamedTemporaryFile()
-        myTempfile.write(badStr)
-        myTempfile.flush()
+        with NamedTemporaryFile(delete=False) as myTempfile:
+            myTempfile.write(badStr)
+            myTempfile.flush()
+            myTempName=myTempfile.name
 
         import filecmp
-        assert not filecmp.cmp(XMLFileName, myTempfile.name)
+        assert not filecmp.cmp(XMLFileName, myTempName)
+        unlink(myTempName)
 

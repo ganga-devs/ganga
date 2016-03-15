@@ -14,7 +14,8 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestXMLGenAndLoad, self).setUp()
+        extra_opts = [('Registry', 'AutoFlusherWaitTime', 10)]
+        super(TestXMLGenAndLoad, self).setUp(extra_opts=extra_opts)
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
@@ -69,7 +70,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         total_time=0.
         new_update = 0
         lst_update = last_update.st_mtime
-        while total_time < 2.*flush_timeout or new_update < lst_update:
+        while total_time < 2.*flush_timeout and new_update <= lst_update:
             total_time+=1.
             time.sleep(1.)
             try:
@@ -135,27 +136,26 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
             assert tmpobj.name == testStr
 
-            new_temp_file = NamedTemporaryFile(delete=False)
-            temp_name = new_temp_file.name
-
             ignore_subs = ['time', 'subjobs', 'info', 'application', 'backend', 'id']
 
-            to_file(stripProxy(j), new_temp_file, ignore_subs)
-            new_temp_file.flush()
-            new_temp_file.close()
+            with NamedTemporaryFile(delete=False) as new_temp_file:
+                temp_name = new_temp_file.name
 
-            new_temp_file2 = NamedTemporaryFile(delete=False)
-            temp_name2 = new_temp_file2.name
 
-            j2 = Job()
-            j2.name = testStr
-            j2.submit()
-            from GangaTest.Framework.utils import sleep_until_completed
-            sleep_until_completed(j2)
+                to_file(stripProxy(j), new_temp_file, ignore_subs)
+                new_temp_file.flush()
 
-            to_file(stripProxy(j2), new_temp_file2, ignore_subs)
-            new_temp_file2.flush()
-            new_temp_file2.close()
+            with NamedTemporaryFile(delete=False) as new_temp_file2:
+                temp_name2 = new_temp_file2.name
+
+                j2 = Job()
+                j2.name = testStr
+                j2.submit()
+                from GangaTest.Framework.utils import sleep_until_completed
+                sleep_until_completed(j2)
+
+                to_file(stripProxy(j2), new_temp_file2, ignore_subs)
+                new_temp_file2.flush()
 
             #import filecmp
             #assert filecmp.cmp(handler.name, new_temp_file.name)
