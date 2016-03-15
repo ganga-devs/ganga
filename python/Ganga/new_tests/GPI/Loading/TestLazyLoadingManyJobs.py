@@ -34,11 +34,11 @@ class TestLazyLoadingManyJobs(GangaUnitTest):
 
         self.assertEqual(len(jobs), numJobs)
 
-        print("len: %s" % str(len(jobs)))
+        print("len: %s" % len(jobs))
 
         for j in jobs:
 
-            if j.id is not 9:
+            if j.id != 9:
                 raw_j = stripProxy(j)
 
                 has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
@@ -47,7 +47,7 @@ class TestLazyLoadingManyJobs(GangaUnitTest):
 
         for j in jobs:
 
-            if j.id is not 9:
+            if j.id != 9:
                 raw_j = stripProxy(j)
 
                 print("job: %s status = %s" % (j.id, j.status))
