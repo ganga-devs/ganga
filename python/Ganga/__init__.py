@@ -28,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.1.16 $'
+_gangaVersion = '$Name: 6.1.17 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -837,3 +837,7 @@ Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 
 """, is_open=True)
 
+# ------------------------------------------------
+# MonitoringServices
+reg_config = makeConfig('Registry','')
+reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')
