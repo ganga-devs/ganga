@@ -34,7 +34,7 @@ class TestQueuedSJSubmit(GangaUnitTest):
 
         for i in range(global_num_jobs):
             print('creating job', end=' ')
-            j = Job(splitter=ArgSplitter(args=[[0],[1],[2]]))
+            j = Job(splitter=ArgSplitter(args=[[0], [1], [2]]))
             print(j.id)
 
         print('job len:', len(jobs))

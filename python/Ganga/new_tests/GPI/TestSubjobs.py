@@ -1,4 +1,7 @@
 from GangaUnitTest import GangaUnitTest
+import random
+import string
+
 
 class TestSubjobs(GangaUnitTest):
 
@@ -17,11 +20,11 @@ class TestSubjobs(GangaUnitTest):
         j.application.exe = "sleep"
         j.splitter = GenericSplitter()
         j.splitter.attribute = 'application.args'
-        j.splitter.values = [ ['400'] for i in range(0, 20) ]
+        j.splitter.values = [['400'] for _ in range(0, 20)]
         j.backend = Local()
         j.submit()
 
-        self.assertEqual( len(j.subjobs), 20 )
+        assert len(j.subjobs) == 20
 
     def testSetParentOnLoad(self):
         """
@@ -29,31 +32,27 @@ class TestSubjobs(GangaUnitTest):
         """
         from Ganga.GPI import jobs, queues, Executable, Local
         from Ganga.GPIDev.Base.Proxy import isType
-        import random
-        import string
 
         def flush_full_job():
-            j = jobs(0)
-            j.comment = "Make sure I'm dirty " + ''.join( random.choice( string.ascii_uppercase) for _ in range(5))
-            j._impl._getRegistry()._flush([j])
+            mj = jobs(0)
+            mj.comment = "Make sure I'm dirty " + ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+            mj._impl._getRegistry()._flush([j])
 
         # Make sure the main job is fully loaded
         j = jobs(0)
-        self.assertTrue( isType(j.application, Executable) )
-        self.assertTrue( isType(j.backend, Local) )
-        self.assertEqual( j.application.exe, "sleep" )
+        assert isType(j.application, Executable)
+        assert isType(j.backend, Local)
+        assert j.application.exe == "sleep"
 
         # fire off a load of threads to flush
         for i in range(0, 20):
-            queues.add( flush_full_job )
+            queues.add(flush_full_job)
 
         # Now loop over and force the load of all the subjobs
         for sj in j.subjobs:
-            self.assertEqual( sj.splitter, None )
-            self.assertTrue( isType(sj.application, Executable) )
-            self.assertTrue( isType(sj.backend, Local) )
-            self.assertEqual( sj.application.exe, "sleep" )
-            self.assertEqual( sj.application.args, ['400'] )
-            self.assertIs( sj._impl._getRoot(), j._impl)
-
-
+            assert sj.splitter is None
+            assert isType(sj.application, Executable)
+            assert isType(sj.backend, Local)
+            assert sj.application.exe == "sleep"
+            assert sj.application.args == ['400']
+            assert sj._impl._getRoot() is j._impl
