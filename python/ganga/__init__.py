@@ -6,14 +6,13 @@ from Ganga.Utility.Plugin import allPlugins
 from Ganga.GPIDev.Base import ProtectedAttributeError, ReadOnlyObjectError, GangaAttributeError
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga import _gangaPythonPath
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, getProxyClass
 from Ganga.GPIDev.Credentials import getCredential
 from Ganga.GPIDev.Persistency import export, load
 from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 from Ganga.Runtime import Repository_runtime
 import Ganga.Core
 from Ganga.GPIDev.Lib.JobTree import TreeError
-from Ganga.Runtime import Workspace_runtime
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.VPrinter import full_print
 from Ganga.GPIDev.Base.Proxy import implRef
@@ -155,7 +154,7 @@ for k in allPlugins.allCategories():
     for n in allPlugins.allClasses(k):
         cls = allPlugins.find(k, n)
         if not cls._declared_property('hidden'):
-            exportToPublicInterface(n, cls._proxyClass, 'Classes')
+            exportToPublicInterface(n, getProxyClass(cls), 'Classes')
 
 # ------------------------------------------------------------------------------------
 # set the default value for the plugins
@@ -193,10 +192,6 @@ exportToPublicInterface('GangaAttributeError', GangaAttributeError, 'Exceptions'
 exportToPublicInterface('ProtectedAttributeError', ProtectedAttributeError, 'Exceptions')
 exportToPublicInterface('ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
 exportToPublicInterface('JobError', JobError, 'Exceptions')
-
-# ------------------------------------------------------------------------------------
-# Import Monitoring Services
-import Ganga.GPIDev.MonitoringServices
 
 # ------------------------------------------------------------------------------------
 # only the available credentials are exported
@@ -242,10 +237,6 @@ exportToPublicInterface('TreeError', TreeError, 'Exceptions')
 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
 exportToPublicInterface('shareref', shareref, 'Objects',
             'Mechanism for tracking use of shared directory resources')
-
-# ------------------------------------------------------------------------------------
-# bootstrap the workspace
-Workspace_runtime.bootstrap()
 
 # ------------------------------------------------------------------------------------
 # export full_print

@@ -585,7 +585,9 @@ under certain conditions; type license() for details.
         import Ganga.Utility.util
         import inspect
         GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
-        self.options.config_path = Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath, self.options.config_path))
+
+        if self.options.config_path:
+            self.options.config_path = Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath, self.options.config_path))
 
         # check if the specified config options are different from the defaults
         # and set session values appropriately
@@ -918,9 +920,6 @@ under certain conditions; type license() for details.
         exportToGPI('ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
         exportToGPI('JobError', JobError, 'Exceptions')
 
-        import Ganga.GPIDev.MonitoringServices
-        # This has a side-effect on import of adding a config section 'SIDE-EFFECTS'
-
         def license():
             'Print the full license (GPL)'
             with open(os.path.join(_gangaPythonPath, '..', 'LICENSE_GPL')) as printable:
@@ -1052,36 +1051,9 @@ under certain conditions; type license() for details.
         exportToGPI('convert_merger_to_postprocessor',
                     convert_merger_to_postprocessor, 'Functions')
 
-        # import default runtime modules
-        from Ganga.Runtime import Repository_runtime
         import Ganga.Core
-
-        # bootstrap user-defined runtime modules and enable transient named
-        # template registries
-
-        # bootstrap runtime modules
-        from Ganga.GPIDev.Lib.JobTree import TreeError
-
-        # boostrap the repositories and connect to them
-        for n, k, d in Repository_runtime.bootstrap():
-            # make all repository proxies visible in GPI
-            exportToGPI(n, k, 'Objects', d)
-
-        # JobTree
-        from Ganga.Core.GangaRepository import getRegistry
-        jobtree = GPIProxyObjectFactory(getRegistry("jobs").getJobTree())
-        exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
-        exportToGPI('TreeError', TreeError, 'Exceptions')
-
-        # ShareRef
-        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-        exportToGPI('shareref', shareref, 'Objects',
-                    'Mechanism for tracking use of shared directory resources')
-
-        logger.debug("Bootstrap Workspace")
-        # bootstrap the workspace
-        from Ganga.Runtime import Workspace_runtime
-        Workspace_runtime.bootstrap()
+        from Ganga.Runtime.Repository_runtime import startUpRegistries
+        startUpRegistries()
 
         # export full_print
         from Ganga.GPIDev.Base.VPrinter import full_print
