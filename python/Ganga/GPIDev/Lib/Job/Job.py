@@ -1483,7 +1483,7 @@ class Job(GangaObject):
 
         For split jobs: consult https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaSplitters#Subjob_submission
         """
-
+        self._getRegistry()._flush([self])
         logger.debug("Submitting Job %s" % str(self.getFQID('.')))
 
         gpiconfig = getConfig('GPI_Semantics')
@@ -1617,7 +1617,7 @@ class Job(GangaObject):
             # make sure that the status change goes to the repository, NOTE:
             # this commit is redundant if updateStatus() is used on the line
             # above
-            self._commit()
+            self._getRegistry()._flush([self])
 
             # send job submission message
             if len(self.subjobs) == 0:
@@ -1676,9 +1676,7 @@ class Job(GangaObject):
 
             ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", str(submitted_count))
 
-
-        stripProxy(self)._setDirty()
-        stripProxy(self)._getRegistry()._flush([stripProxy(self)])
+        self._getRegistry()._flush([self])
 
         return 1
 
@@ -2143,7 +2141,7 @@ class Job(GangaObject):
     def _commit(self, objects=None):
         """ Helper method to unconditionally commit to the repository. The 'objects' list specifies objects
         to be commited (for example the subjobs). If objects are not specified then just the self is commited """
-
+        # TODO This function should force a flush. However it is currently used everywhere which causes too many flushes.
         self._getRoot()._setDirty()
 
 

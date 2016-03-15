@@ -72,12 +72,6 @@ def _ganga_run_exitfuncs():
         from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
         getStackTrace()
         monitoring_component.disableMonitoring()
-        #monitoring_component.stop()
-
-    ## This will stop the Registries flat but we may still have threads processing data!
-    #from Ganga.Core.InternalServices import Coordinator
-    #if Coordinator.servicesEnabled:
-    #    Coordinator.disableInternalServices( shutdown = True )
 
     ## Stop the tasks system from running it's GangaThread before we get to the GangaThread shutdown section!
     from Ganga.GPIDev.Lib.Tasks import stopTasks

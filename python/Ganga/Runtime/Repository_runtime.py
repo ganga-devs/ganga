@@ -15,20 +15,19 @@ logger = getLogger()
 
 
 def requiresAfsToken():
+    # Were we executed from within an AFS folder
     return fullpath(getLocalRoot(), True).find('/afs') == 0
 
 
-def requiresGridProxy():
-    return False
-
-
 def getLocalRoot():
+    # Get the local top level directory for the Repo
     if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
         return os.path.join(expandfilename(config['gangadir'], True), 'repository', config['user'], config['repositorytype'])
     else:
         return ''
 
 def getLocalWorkspace():
+    # Get the local top level dirtectory for the Workspace
     if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
         return os.path.join(expandfilename(config['gangadir'], True), 'workspace', config['user'], config['repositorytype'])
     else:
@@ -41,7 +40,7 @@ partition_warning = 95
 partition_critical = 99
 
 def checkDiskQuota():
-
+    # Throw an error atthe user if their AFS area is (extremely close to) full to avoid repo corruption
     import subprocess
 
     repo_partition = getLocalRoot()
@@ -93,7 +92,26 @@ def checkDiskQuota():
 
     return
 
+def bootstrap_getreg():
+    # Get the list of registries sorted in the bootstrap way
+    
+    # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
+    # or even named templated registries as the _auto__init from job will require the prep registry to
+    # already be ready. This showed up when adding the named templates.
+    def prep_filter(x, y):
+        if x.name == 'prep':
+            return -1
+        return 1
+
+    return [registry for registry in sorted(getRegistries(), prep_filter)]
+
+def bootstrap_reg_names():
+    # Get the list of registry names
+    all_reg = bootstrap_getreg()
+    return [reg.name for reg in all_reg]
+
 def bootstrap():
+    # Bootstrap for startup and setting of parameters for the Registries
     retval = []
 
     try:
@@ -103,21 +121,15 @@ def bootstrap():
     except Exception as err:
         logger.error("Disk quota check failed due to: %s" % str(err))
 
-    # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
-    # or even named templated registries as the _auto__init from job will require the prep registry to
-    # already be ready. This showed up when adding the named templates.
-    def prep_filter(x, y):
-        if x.name == 'prep':
-            return -1
-        return 1
-
-    for registry in sorted(getRegistries(), prep_filter):
+    for registry in bootstrap_getreg():
         if registry.name in started_registries:
             continue
         if not hasattr(registry, 'type'):
             registry.type = config["repositorytype"]
         if not hasattr(registry, 'location'):
             registry.location = getLocalRoot()
+        logger.debug("Registry: %s" % registry.name)
+        logger.debug("Loc: %s" % registry.location)
         registry.startup()
         logger.debug("started " + registry.info(full=False))
         if registry.name == "prep":
@@ -132,6 +144,7 @@ def bootstrap():
 
 
 def updateLocksNow():
+    # Update all of the file locks for the registries
 
     logger.debug("Updating timestamp of Lock files")
     for registry in getRegistries():
@@ -140,6 +153,7 @@ def updateLocksNow():
 
 
 def shutdown():
+    # Shutdown method for all repgistries in order
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     logger.info('Registry Shutdown')
@@ -148,6 +162,9 @@ def shutdown():
     # shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
     # method to perform actions on the box and/or job registries.
     logger.debug(started_registries)
+
+    all_registries = getRegistries()
+
     try:
         if 'prep' in started_registries:
             registry = getRegistry('prep')
@@ -158,6 +175,9 @@ def shutdown():
         logger.debug("Err: %s" % str(err))
         logger.error("Failed to Shutdown prep Repository!!! please check for stale lock files")
         logger.error("Trying to shutdown cleanly regardless")
+    #finally:
+    #    pass
+    ##Useful in debugging shutdown errors
 
     for registry in getRegistries():
         thisName = registry.name
@@ -171,12 +191,32 @@ def shutdown():
             logger.error("Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
             logger.error("%s" % str(x))
             logger.error("Trying to Shutdown cleanly regardless")
+        #finally:
+        #    pass
+        ##Useful in debugging shutdown errors
+
+
+    for registry in all_registries:
+
+        my_reg = [registry]
+        if hasattr(registry, 'metadata'):
+            if registry.metadata:
+                my_reg.append(registry.metadata)
+
+        assigned_attrs = ['location', 'type']
+        for this_reg in my_reg:
+            for attr in assigned_attrs:
+                if hasattr(registry, attr):
+                    delattr(registry, attr)
 
     from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
     removeGlobalSessionFileHandlers()
     removeGlobalSessionFiles()
 
+    removeRegistries()
+
 def flush_all():
+    # Flush all registries in their current state with all dirty knowledge going to disk
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     logger.debug("Flushing All repositories")
@@ -190,4 +230,50 @@ def flush_all():
         except Exception as err:
             logger.debug("Failed to flush: %s" % str(thisName))
             logger.debug("Err: %s" % str(err))
+
+
+def startUpRegistries():
+    # Startup the registries and export them to the GPI, also add jobtree and shareref
+    from Ganga.Runtime.GPIexport import exportToGPI
+    # import default runtime modules
+
+    # bootstrap user-defined runtime modules and enable transient named
+    # template registries
+
+    # bootstrap runtime modules
+    from Ganga.GPIDev.Lib.JobTree import TreeError
+
+    for n, k, d in bootstrap():
+        # make all repository proxies visible in GPI
+        exportToGPI(n, k, 'Objects', d)
+
+    # JobTree
+    from Ganga.Core.GangaRepository import getRegistry
+    jobtree = getRegistry("jobs").getJobTree()
+    exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
+    exportToGPI('TreeError', TreeError, 'Exceptions')
+
+    # ShareRef
+    shareref = getRegistry("prep").getShareRef()
+    exportToGPI('shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
+
+def removeRegistries():
+    ## Remove lingering Objects from the GPI and fully cleanup after the startup
+
+    ## First start with repositories
+
+    import Ganga.GPI
+
+    from Ganga.Runtime import Repository_runtime
+
+    for name in Repository_runtime.bootstrap_reg_names():
+        if hasattr(Ganga.GPI, name):
+            delattr(Ganga.GPI, name)
+
+    if hasattr(Ganga.GPI, 'jobtree'):
+        ## Now remove the JobTree
+        delattr(Ganga.GPI, 'jobtree')
+    if hasattr(Ganga.GPI, 'shareref'):
+        ## Now remove the sharedir
+        delattr(Ganga.GPI, 'shareref')
 
