@@ -13,6 +13,8 @@ from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass, _getName
 from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+
 import os
 
 from inspect import isclass
@@ -142,14 +144,7 @@ def raw_eval(val):
     return new_val
 
 def getKnownLists():
-    global _knownLists
-    if _knownLists is None:
-        try:
-            from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-        except ImportError:
-            _knownLists = None
-            return (tuple, list)
-        _knownLists = (tuple, list, GangaList)
+    _knownLists = (tuple, list, GangaList)
     return _knownLists
 
 def isProxy(obj):
@@ -436,6 +431,7 @@ class ProxyDataDescriptor(object):
         else:
             # val is not iterable
             if item['strict_sequence']:
+                logger.error("Didn't expect to get: %s" % str(val))
                 raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), getName(obj), name))
             if stripper is not None:
                 new_v = makeGangaList(stripper(val))
