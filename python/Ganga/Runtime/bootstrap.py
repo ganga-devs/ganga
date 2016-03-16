@@ -28,6 +28,8 @@ import time
 import re
 import atexit
 
+from future.utils import exec_
+
 from Ganga import _gangaVersion, _gangaPythonPath
 from Ganga.Utility.Config.Config import getConfig
 from Ganga.Utility import stacktracer
@@ -1048,7 +1050,7 @@ under certain conditions; type license() for details.
             # using explicitly '\n' and '\t' chars
             code = config['StartupGPI'].replace(
                 '\\t', '\t').replace('\\n', '\n')
-            exec code in local_ns
+            exec_(code, local_ns)
 
         logger.debug("loaded .ganga.py")
 

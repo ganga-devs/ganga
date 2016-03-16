@@ -89,6 +89,7 @@ setup(name='ganga',
           'python-gflags>=2.0',
           'google-api-python-client>=1.1',
           'stomp.py>=3.1.7',
+          'future',
       ],
       classifiers=[
           'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
