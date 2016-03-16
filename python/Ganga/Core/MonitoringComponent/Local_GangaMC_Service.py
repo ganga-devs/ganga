@@ -1,4 +1,4 @@
-import Queue
+import queue
 import threading
 import time
 import copy
@@ -28,7 +28,7 @@ log = getLogger()
 
 config = getConfig("PollThread")
 THREAD_POOL_SIZE = config['update_thread_pool_size']
-Qin = Queue.Queue()
+Qin = queue.Queue()
 ThreadPool = []
 
 heartbeat_times = None
@@ -113,7 +113,7 @@ class MonitoringWorkerThread(GangaThread):
                 try:
                     action = Qin.get(block=True, timeout=0.5)
                     break
-                except Queue.Empty:
+                except queue.Empty:
                     continue
 
             if self.should_stop():
@@ -235,7 +235,7 @@ def _purge_actions_queue():
             # fail to terminate
             if isType(action, JobAction) and action.function == 'stop':
                 Qin.put(action)
-        except Queue.Empty:
+        except queue.Empty:
             break
 
 if config['autostart_monThreads'] is True:

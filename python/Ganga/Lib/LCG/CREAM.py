@@ -5,7 +5,7 @@ import math
 import re
 import mimetypes
 
-from urlparse import urlparse
+from future.moves.urllib.parse import urlparse
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Core import GangaException

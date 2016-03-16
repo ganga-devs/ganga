@@ -5,8 +5,7 @@ from __future__ import absolute_import
 # $Id: JobRegistry.py,v 1.1.2.1 2009-07-24 13:39:39 ebke Exp $
 ##########################################################################
 
-#from Ganga.Utility.external.ordereddict import oDict
-from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
+from future.moves.collections import OrderedDict as oDict
 
 from Ganga.Core.exceptions import GangaException
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher

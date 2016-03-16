@@ -2,7 +2,7 @@ from __future__ import print_function
 """Wrapper around the publish features of stomp.py."""
 
 import time
-from Queue import Queue
+from queue import Queue
 import logging
 logging_DEBUG = logging.DEBUG
 

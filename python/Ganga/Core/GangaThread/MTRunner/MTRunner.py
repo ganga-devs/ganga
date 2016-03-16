@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import time
 import traceback
 from threading import Lock
-from Queue import Empty
+from queue import Empty
 from .Algorithm import AlgorithmError
 from Ganga.Core.GangaThread.GangaThread import GangaThread
 from Ganga.Core.GangaThread.MTRunner.Data import DuplicateDataItemError

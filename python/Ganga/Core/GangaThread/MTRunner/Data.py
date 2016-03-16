@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from Queue import Queue
+from queue import Queue
 import threading
 
 

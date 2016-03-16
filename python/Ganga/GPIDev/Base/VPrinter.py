@@ -9,7 +9,7 @@ from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod, stripProxy
 from Ganga.GPIDev.Base.Objects import GangaObject
 
 from inspect import isclass
-from cStringIO import StringIO
+from io import StringIO
 
 def quoteValue(value, interactive=False):
     """A quoting function. Used to get consistent formatting"""
