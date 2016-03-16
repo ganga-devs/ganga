@@ -180,7 +180,6 @@ class RegistryFlusher(threading.Thread):
         super(RegistryFlusher, self).__init__(*args, **kwargs)
         self.registry = registry
         self._stop = threading.Event()
-        self.logger = getLogger()
 
     def stop(self):
         """
@@ -214,7 +213,7 @@ class RegistryFlusher(threading.Thread):
             # interfering with interactive work or monitoring. It
             # will try again in a while anyway.
             with self.registry._lock:
-                self.logger.debug('Auto-flushing: %s', self.registry.name)
+                logger.debug('Auto-flushing: %s' % self.registry.name)
                 self.registry.flush_all()
 
 
