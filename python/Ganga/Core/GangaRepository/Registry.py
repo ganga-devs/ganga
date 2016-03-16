@@ -202,9 +202,9 @@ class RegistryFlusher(threading.Thread):
         whether it should stop. In between calls to ``flush_all`` it
         will wait for a fixed period of time.
         """
-        sleep_period = getConfig('Registry')['AutoFlusherWaitTime']
         sleeps_per_second = 10  # This changes the granularity of the sleep.
         while not self.stopped:
+            sleep_period = getConfig('Registry')['AutoFlusherWaitTime']
             for i in range(sleep_period*sleeps_per_second):
                 time.sleep(1/sleeps_per_second)
                 if self.stopped:
