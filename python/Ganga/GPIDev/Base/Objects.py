@@ -78,7 +78,7 @@ class Node(object):
         cls = self.__class__
         obj = cls()
         # FIXME: this is different than for deepcopy... is this really correct?
-        this_dict = self.__dict__.copy()
+        this_dict = copy(self.__dict__)
         global do_not_copy
         for elem in this_dict.keys():
             if elem not in do_not_copy:
@@ -93,7 +93,7 @@ class Node(object):
     def __deepcopy__(self, memo=None):
         cls = self.__class__
         obj = cls()
-        this_dict = self.__dict__
+        this_dict = copy(self.__dict__)
         global do_not_copy
         for elem in this_dict.keys():
             if elem not in do_not_copy:
