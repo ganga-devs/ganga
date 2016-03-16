@@ -9,6 +9,8 @@ from Ganga.Utility.util import containsGangaObjects
 import copy
 import sys
 
+from future.utils import implements_iterator
+
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
@@ -59,7 +61,7 @@ def makeGangaListByRef(_list, preparable=False):
 def decorateListEntries(entries, typename):
     return "[%d Entries of type '%s']" % (entries, typename)
 
-
+@implements_iterator
 class GangaListIter(object):
 
     """Simple wrapper around the listiterator"""
@@ -67,7 +69,7 @@ class GangaListIter(object):
     def __init__(self, it):
         self.it = it
 
-    def next(self):
+    def __next__(self):
         return addProxy(next(self.it))
 
     def __iter__(self):
