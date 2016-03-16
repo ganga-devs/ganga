@@ -1,11 +1,9 @@
-from BaseHTTPServer import BaseHTTPRequestHandler
+from http.server import HTTPServer, BaseHTTPRequestHandler
 from Ganga.Core.GangaRepository import getRegistry, RegistryKeyError
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Utility.util import hostname
 from Ganga.GPIDev.Base.Proxy import getName
-from BaseHTTPServer import HTTPServer
 
-import urlparse
 import Ganga.GPI
 from Ganga.GPIDev.Lib.Config import config
 import time

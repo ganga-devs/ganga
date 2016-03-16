@@ -2,7 +2,7 @@ from __future__ import print_function
 """Wrapper around the publish features of stomp.py."""
 
 import time
-from Queue import Queue
+from queue import Queue
 from Ganga.Utility.logging import _get_logging
 logging_DEBUG = _get_logging().DEBUG
 

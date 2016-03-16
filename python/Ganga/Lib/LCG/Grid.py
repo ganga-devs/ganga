@@ -3,6 +3,8 @@ import re
 import tempfile
 import time
 
+from future.moves.urllib.parse import urlparse
+
 from Ganga.GPIDev.Credentials import getCredential
 
 from Ganga.Utility.Config import getConfig, ConfigError
@@ -681,7 +683,6 @@ class Grid(object):
 #       some versions of LCG middleware create an extra output directory (named <uid>_<jid_hash>)
 #       inside the job.outputdir. Try to match the jid_hash in the outdir. Do output movememnt
 #       if the <jid_hash> is found in the path of outdir.
-        import urlparse
         jid_hash = urlparse.urlparse(jobid)[2][1:]
 
         if outdir.count(jid_hash):

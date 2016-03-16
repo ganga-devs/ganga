@@ -7,7 +7,7 @@ import fnmatch
 import collections
 
 from Ganga.GPIDev.Schema import ComponentItem
-from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
+from future.moves.collections import OrderedDict as oDict
 import Ganga.Utility.Config
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, addProxy
 from Ganga.Utility.logging import getLogger
