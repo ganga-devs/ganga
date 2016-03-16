@@ -5,7 +5,7 @@
 ###############################################################################
 
 from Ganga.Utility.Config import getConfig, ConfigError
-from commands import getstatusoutput
+import subprocess
 import Ganga.Utility.logging
 import os
 from Ganga.Utility.logging import getLogger
@@ -168,7 +168,7 @@ def getpythonhome(arch=None, pythonversion=None):
         # supports ${foo} type variable expansion
         for k in configroot.keys():
             pythonhome = pythonhome.replace('${%s}' % k, configroot[k])
-    except ConfigError, err:
+    except ConfigError as err:
         logger.debug("Config Error!\n%s"%str(err))
         pass
     import os
@@ -223,13 +223,14 @@ def checkrootprefix(rootsys=None):
     rc, rootprefix = Ganga.Utility.root.getrootprefix(rootsys)
 
     cmdtest = rootprefix + "root-config --version"
-    rc, out = getstatusoutput(cmdtest)
-    if (rc != 0):
+    p = subprocess.Popen(cmdtest, shell=True)
+    stdout, stderr = p.communicate()
+    if p.returncode != 0:
         logger.error("No proper ROOT setup")
-        logger.error("%s", out)
+        logger.error("%s", stderr)
         return 1
     else:
-        logger.info("ROOT Version: %s", out)
+        logger.info("ROOT Version: %s", stdout)
         return 0
 
 

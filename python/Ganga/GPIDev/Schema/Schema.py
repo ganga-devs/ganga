@@ -152,7 +152,7 @@ class Schema(object):
     # make a schema copy for a derived class, does not copy the pluginclass
     def inherit_copy(self):
         new_dict = {}
-        for key, val in self.datadict.iteritems():
+        for key, val in self.datadict.items():
             new_dict[key] = copy.deepcopy(val)
         return Schema(version=copy.deepcopy(self.version), datadict=new_dict)
 
@@ -406,9 +406,6 @@ class Item(object):
 
         what = stripProxy(_what)
 
-        if isinstance(what, types.InstanceType):
-            what = what.__class__
-
         return issubclass(self.__class__, what)
 
     def _update(self, kwds, forced=None):
@@ -511,7 +508,7 @@ class Item(object):
             else:  # Non-sequence
                 if isinstance(self._meta['defvalue'], dict):
                     if isinstance(val, dict):
-                        for dKey, dVal in val.iteritems():
+                        for dKey, dVal in val.items():
                             if not valueTypeAllowed(dKey, validTypes) or not valueTypeAllowed(dVal, validTypes):
                                 raise TypeMismatchError('Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % (dKey, dVal, name, validTypes))
                     else:  # new value is not a dict

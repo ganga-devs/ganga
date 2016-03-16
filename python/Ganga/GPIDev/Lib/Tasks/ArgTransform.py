@@ -9,9 +9,9 @@ from .TaskApplication import ArgSplitterTask
 
 
 class ArgTransform(Transform):
-    _schema = Schema(Version(1, 0), dict(Transform._schema.datadict.items() + {
+    _schema = Schema(Version(1, 0), dict(list(Transform._schema.datadict.items()) + list({
         'args': SimpleItem(defvalue=[], typelist=['list', 'Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'], sequence=1, doc='A list of lists of arguments to pass to script'),
-    }.items()))
+    }.items())))
     _category = 'transforms'
     _name = 'ArgTransform'
     _exportmethods = Transform._exportmethods

@@ -83,7 +83,7 @@ class Node(object):
         return d
 
     def __setstate__(self, this_dict):
-        for key, val in this_dict['_data'].iteritems():
+        for key, val in this_dict['_data'].items():
             if isinstance(val, Node) and key not in self._ref_list:
                 val._setParent(self)
 
@@ -91,7 +91,7 @@ class Node(object):
             if not hasattr(self, attr):
                 setattr(self, attr, None)
 
-        for key, val in this_dict.iteritems():
+        for key, val in this_dict.items():
             setattr(self, key, val)
 
     def __copy__(self, memo=None):
@@ -264,7 +264,7 @@ class Node(object):
 
         ## Fix some objects losing parent knowledge
         src_dict = srcobj.__dict__
-        for key, val in src_dict.iteritems():
+        for key, val in src_dict.items():
             this_attr = getattr(srcobj, key)
             if isinstance(this_attr, Node) and key not in Node._ref_list:
                 #logger.debug("k: %s  Parent: %s" % (str(key), (srcobj)))
@@ -363,7 +363,7 @@ class Node(object):
 
     def setNodeData(self, new_data):
         self._data = new_data
-        for k, v in self._data.iteritems():
+        for k, v in self._data.items():
             if isinstance(v, Node):
                 v._setParent(self)
 
@@ -503,7 +503,7 @@ class Descriptor(object):
             return int(v)
         elif isinstance(v, dict):
             new_dict = {}
-            for key, item in new_dict.iteritems():
+            for key, item in new_dict.items():
                 new_dict[key] = self.__cloneVal(v, obj)
             return new_dict
         else:
@@ -896,7 +896,7 @@ class GangaObject(Node):
                 if item.isA(Schema.SharedItem):
                     self.__incrementShareRef(self_copy, name)
 
-        for k, v in self.__dict__.iteritems():
+        for k, v in self.__dict__.items():
             if k not in do_not_copy:
                 try:
                     self_copy.__dict__[k] = deepcopy(v)
@@ -912,7 +912,7 @@ class GangaObject(Node):
         from Ganga.Utility.Config.Config import getConfig, ConfigError
         try:
             _timeOut = getConfig('Configuration')['DiskIOTimeout']
-        except ConfigError, err:
+        except ConfigError:
             _timeOut = 5. # 5sec hardcoded default
         return _timeOut
 
@@ -991,7 +991,7 @@ class GangaObject(Node):
     def _getRegistryID(self):
         try:
             return self._registry.find(self)
-        except AttributeError, err:
+        except AttributeError as err:
             logger.debug("_getRegistryID Exception: %s" % str(err))
             return None
 

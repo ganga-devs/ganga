@@ -70,10 +70,10 @@ from Ganga.Utility.ColourText import Foreground, Effects
 import Ganga.Utility.logging
 from Ganga.Utility.Config import getConfig
 
-import commands
 import inspect
 import os
 import shutil
+import subprocess
 import time
 
 logger = Ganga.Utility.logging.getLogger()
@@ -155,7 +155,9 @@ class Condor(IBackend):
         commandList.append(cdfpath)
         commandString = " ".join(commandList)
 
-        status, output = commands.getstatusoutput(commandString)
+        p = subprocess.Popen(commandString, shell=True)
+        stdout, stderr = p.communicate()
+        status = p.returncode
 
         self.id = ""
         if 0 != status:
@@ -163,22 +165,24 @@ class Condor(IBackend):
                 ("Tried submitting job with command: '%s'" % commandString)
             logger.error("Return code: %s" % str(status))
             logger.error("Condor output:")
-            logger.error(output)
+            logger.error(stderr)
         else:
-            tmpList = output.split("\n")
+            tmpList = stdout.split("\n")
             for item in tmpList:
                 if 1 + item.find("** Proc"):
                     localId = item.strip(":").split()[2]
                     queryCommand = " ".join\
                         (["condor_q -format \"%s\" GlobalJobId", localId])
-                    qstatus, qoutput = commands.getstatusoutput(queryCommand)
-                    if 0 != status:
+                    qp = subprocess.Popen(queryCommand, shell=True)
+                    qstdout, qstderr = qp.communicate()
+                    qstatus = qp.returncode
+                    if 0 != qstatus:
                         logger.warning\
                             ("Problem determining global id for Condor job '%s'" %
                              localId)
                         self.id = localId
                     else:
-                        self.id = qoutput
+                        self.id = qstdout
                     break
 
         return not self.id is ""
@@ -241,14 +245,16 @@ class Condor(IBackend):
         else:
             killCommand = "condor_rm %s" % (idElementList[0])
 
-        status, output = commands.getstatusoutput(killCommand)
+        p = subprocess.Popen(killCommand, shell=True)
+        stdout, stderr = p.communicate()
+        status = p.returncode
 
         if (status != 0):
             logger.warning\
                 ("Return code '%s' killing job '%s' - Condor id '%s'" %
                  (str(status), job.id, job.backend.id))
             logger.warning("Tried command: '%s'" % killCommand)
-            logger.warning("Command output: '%s'" % output)
+            logger.warning("Command output: '%s'" % stderr)
             logger.warning("Anyway continuing with job removal")
 
         job.backend.status = "Removed"
@@ -432,15 +438,17 @@ class Condor(IBackend):
                 "-format \"%d \" JobStatus",
                 "-format \"%f\\n\" RemoteUserCpu"
             ])
-        status, output = commands.getstatusoutput(queryCommand)
+        p = subprocess.Popen(queryCommand, shell=True)
+        stdout, stderr = p.communicate()
+        status = p.returncode
         if 0 != status:
             logger.error("Problem retrieving status for Condor jobs")
             return
 
-        if ("All queues are empty" == output):
+        if ("All queues are empty" == stdout):
             infoList = []
         else:
-            infoList = output.split("\n")
+            infoList = stdout.split("\n")
 
         allDict = {}
         for infoString in infoList:
@@ -479,9 +487,11 @@ class Condor(IBackend):
                         "-format \"%s\" GlobalJobId",
                         id
                     ])
-                status, output = commands.getstatusoutput(queryCommand)
+                p = subprocess.Popen(queryCommand, shell=True)
+                stdout, stderr = p.communicate()
+                status = p.returncode
                 if 0 == status:
-                    globalId = output
+                    globalId = stdout
 
             if globalId in allDict.keys():
                 status = allDict[globalId]["status"]

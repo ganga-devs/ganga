@@ -1,3 +1,4 @@
+from __future__ import print_function
 #----------------------------------------------------------------------
 #  eliza.py
 #
@@ -338,11 +339,11 @@ gPats = [
 
 
 def command_interface():
-    print "Ganga Interactive Help\n\n"
-    print "Ask your questions by typing them in plain English, using normal upper-"
-    print 'and lower-case letters and punctuation.  Enter "quit" when done.'
-    print '=' * 72
-    print "Hello.  What is your problem?\n"
+    print("Ganga Interactive Help\n\n")
+    print("Ask your questions by typing them in plain English, using normal upper-")
+    print('and lower-case letters and punctuation.  Enter "quit" when done.')
+    print('=' * 72)
+    print("Hello.  What is your problem?\n")
     s = ""
     therapist = eliza()
     while s != "quit":
@@ -350,10 +351,10 @@ def command_interface():
             s = raw_input(">")
         except EOFError:
             s = "quit"
-            print s
+            print(s)
         while s[-1] in "!.":
             s = s[:-1]
-        print therapist.respond(s)
+        print(therapist.respond(s))
 
 
 if __name__ == "__main__":

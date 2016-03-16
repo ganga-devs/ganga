@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 """Wrapper around the publish features of stomp.py.
 
 The wrapper adds asynchronicity and connection management.
@@ -38,6 +39,6 @@ Changes in version 2.0:
     accepting only dict and converting to string using repr().
 """
 
-from publisher import createPublisher
+from .publisher import createPublisher
 
 __version__ = '2.3'

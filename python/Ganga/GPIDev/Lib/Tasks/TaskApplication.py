@@ -1,6 +1,5 @@
 from Ganga import GPI
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from new import classobj
 from Ganga.GPIDev.Base.Proxy import getName, stripProxy
 from .common import logger
 
@@ -35,7 +34,7 @@ def taskify(baseclass, name):
         taskclass = TaskSplitter
 
     classdict = {
-        "_schema": Schema(Version(smajor, sminor), dict(baseclass._schema.datadict.items() + schema_items)),
+        "_schema": Schema(Version(smajor, sminor), dict(list(baseclass._schema.datadict.items()) + list(schema_items))),
         "_category": cat,
         "_name": name,
         "__init__": __task__init__,
@@ -43,7 +42,7 @@ def taskify(baseclass, name):
 
     if '_exportmethods' in baseclass.__dict__:
         classdict['_exportmethods'] = baseclass.__dict__['_exportmethods']
-    cls = classobj(name, (taskclass, baseclass), classdict)
+    cls = type(name, (taskclass, baseclass), classdict)
 
     global handler_map
     # Use the same handlers as for the base class

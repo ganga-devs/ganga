@@ -15,7 +15,7 @@ def expandvars(c, v):
 def expandgangasystemvars(c, v):
     """Expands vars with the syntax '@{VAR}' from the System config item."""
     system = getConfig('System')
-    for key in system.options.iterkeys():
+    for key in system.options.keys():
         option = '@{%s}' % key
         if option in v:
             v = v.replace(option, system[key])

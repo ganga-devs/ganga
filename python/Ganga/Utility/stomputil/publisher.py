@@ -1,3 +1,4 @@
+from __future__ import print_function
 """Wrapper around the publish features of stomp.py."""
 
 import time
@@ -161,8 +162,9 @@ def createPublisher(T, server, port, user='', password='', logger=None,
             self._message_queue.put(m)
             self._log(logging_DEBUG, 'Message queued. %s queued message(s).', self._message_queue.qsize())
 
-        def _send(self, (message, headers, keyword_headers)):
+        def _send(self, data):
             """Send given message to MSG server."""
+            message, headers, keyword_headers = data
             if self._cx is None:
                 self._log(logging_DEBUG, 'NOT Sending message:\n%s' % str(message))
                 return

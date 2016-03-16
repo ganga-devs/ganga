@@ -46,7 +46,7 @@ logger = Ganga.Utility.logging.getLogger()
 
 def expand_vars(env):
     tmp_dict = {}
-    for k, v in env.iteritems():
+    for k, v in env.items():
         if not str(v).startswith('() {'):
             if not str(k).endswith('()'):
                 tmp_dict[k] = os.path.expandvars(v)
@@ -109,7 +109,7 @@ class Shell(object):
             command = 'source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup, " ".join(setup_args))
             logger.debug('Running:   %s' % command )
             pipe = subprocess.Popen('bash', env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-            output = pipe.communicate(command)
+            output = pipe.communicate(command.encode())
             rc = pipe.poll()
             if rc:
                 logger.warning('Unexpected rc %d from setup command %s', rc, setup)

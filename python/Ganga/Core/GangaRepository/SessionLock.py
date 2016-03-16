@@ -58,7 +58,7 @@ session_lock_last = 0
 session_expiration_timeout = 0
 try:
     session_expiration_timeout = getConfig('Configuration')['DiskIOTimeout']
-except ConfigError, err:
+except ConfigError as err:
     session_expiratrion_timeout = 5
 
 session_lock_refresher = None
@@ -405,7 +405,7 @@ class SessionLockManager(object):
                             self.repo, "OSError on count file create: %s" % x)
             try:
                 self.count = max(self.count, self.cnt_read())
-            except ValueError, err:
+            except ValueError as err:
                 logger.debug("Startup ValueError Exception: %s" % str(err))
                 logger.error("Corrupt count file '%s'! Trying to recover..." % (self.cntfn))
             except OSError as err:
@@ -995,6 +995,6 @@ class SessionLockManager(object):
         si = session.split(".")
         try:
             return "%s (pid %s) since %s" % (".".join(si[:-3]), si[-2], ".".join(si[-5:-3]))
-        except Exception, err:
+        except Exception as err:
             logger.debug( "Session Info Exception: %s" % str(err))
             return session

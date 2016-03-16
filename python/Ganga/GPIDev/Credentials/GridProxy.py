@@ -396,7 +396,7 @@ class GridProxy(ICredential):
             self.chooseCommandSet()
             infoList = [self.command.info]
             # Append option value pairs
-            for optName, optVal in self.command.infoOpts.iteritems():
+            for optName, optVal in self.command.infoOpts.items():
                 infoList.append("%s %s" % (optName, optVal))
             logger.debug("Executing timeHMS Command: %s" % " ".join(infoList))
             status, output, message = self.shell.cmd1\

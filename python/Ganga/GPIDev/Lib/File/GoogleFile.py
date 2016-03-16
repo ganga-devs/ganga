@@ -106,7 +106,7 @@ class GoogleFile(IGangaFile):
                     try:
                         import webbrowser
                         webbrowser.get('firefox').open(authorize_url, 0, True)
-                    except Exception, err:
+                    except Exception as err:
                         logger.error("Error: %s" % str(err))
                         pass
             logger.info(

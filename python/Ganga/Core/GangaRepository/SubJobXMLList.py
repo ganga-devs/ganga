@@ -136,7 +136,7 @@ class SubJobXMLList(GangaObject):
                 try:
                     index_file_obj = open( index_file, "r" )
                     self._subjobIndexData = from_file( index_file_obj )[0]
-                except IOError, err:
+                except IOError:
                     self._subjobIndexData = None
 
                 if self._subjobIndexData is None:
@@ -165,7 +165,7 @@ class SubJobXMLList(GangaObject):
                             self._subjobIndexData[subjob_id] = new_data
                             continue
                             #self._subjobIndexData = {}
-            except Exception, err:
+            except Exception as err:
                 logger.error( "Subjob Index file open, error: %s" % str(err) )
                 self._subjobIndexData = {}
             finally:
@@ -209,7 +209,7 @@ class SubJobXMLList(GangaObject):
             index_file_obj = open( index_file, "w" )
             to_file( all_caches, index_file_obj )
             index_file_obj.close()
-        except Exception, err:
+        except Exception as err:
             logger.debug( "cache write error: %s" % str(err) )
 
     def __iter__(self):
@@ -301,7 +301,7 @@ class SubJobXMLList(GangaObject):
         #sys.exit(-1)
         try:
             job_obj = self.getJobObject()
-        except Exception, err:
+        except Exception as err:
             logger.debug( "Error: %s" % str(err) )
             try:
                 job_obj = self._getParent()

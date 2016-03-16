@@ -42,8 +42,8 @@ class TestSchema(unittest.TestCase):
         Make sure all the items are added
         """
 
-        self.assertEqual(self.s.allItems(), self.dd.items())
-        self.assertEqual(sorted(self.s.componentItems()+self.s.simpleItems()), sorted(self.dd.items()))
+        assert list(self.s.allItems()) == list(self.dd.items())
+        assert sorted(self.s.componentItems()+self.s.simpleItems()) == sorted(self.dd.items())
 
     def test_get_non_existant(self):
         """

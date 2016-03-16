@@ -89,6 +89,7 @@ There is a GPI wrapper in Ganga.GPIDev.Lib.Config which:
 
 
 """
+from __future__ import print_function
 
 from functools import reduce
 

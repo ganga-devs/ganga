@@ -1,8 +1,8 @@
 import unittest
 
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Lib.File import LocalFile
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
+from Ganga.Runtime import plugins  # This loads the core plugins
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 
 class SampleGangaObject(GangaObject):
@@ -78,7 +78,7 @@ class TestProxy(unittest.TestCase):
         self.assertFalse(hasattr(proxied, '_impl'))
 
         # A proxy instance should only have _impl in its dict
-        self.assertEqual(self.p.__dict__.keys(), ['_impl'])
+        self.assertEqual(list(self.p.__dict__.keys()), ['_impl'])
 
     def test_default(self):
         """

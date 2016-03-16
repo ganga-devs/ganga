@@ -12,7 +12,7 @@ from Ganga.GPIDev.Lib.File import LocalFile
 from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
-import commands
+import subprocess
 import os
 import string
 import copy
@@ -33,15 +33,15 @@ def getMergerObject(file_ext):
             file_types = config['associate']
             associate_merger = file_types[file_ext]
             result = allPlugins.find('postprocessor', associate_merger)()
-    except ConfigError, err:
+    except ConfigError as err:
         logger.debug("ConfError %s" % str(err))
-    except KeyError, err:
+    except KeyError as err:
         logger.debug("KeyError %s" % str(err))
-    except PluginManagerError, err:
+    except PluginManagerError as err:
         logger.debug("PluginError %s" % str(err))
-    except SyntaxError, err:
+    except SyntaxError as err:
         logger.debug("SyntaxError %s" % str(err))
-    except TypeError, err:  # TypeError as we may not be able to call ()
+    except TypeError as err:  # TypeError as we may not be able to call ()
         logger.debug("TypeError %s" % str(err))
     return result
 
@@ -222,17 +222,17 @@ class RootMerger(IMerger):
         arg_list.extend(file_list)
         merge_cmd += string.join(arg_list, ' ')
 
-        rc, out = commands.getstatusoutput(merge_cmd)
+        p = subprocess.Popen(merge_cmd, shell=True)
+        stdout, stderr = p.communicate()
 
         log_file = '%s.hadd_output' % output_file
         with open(log_file, 'w') as log:
             log.write('# -- Hadd output -- #\n')
-            log.write('%s\n' % out)
+            log.write('%s\n' % stdout)
 
-        if rc:
-            logger.error(out)
-            raise PostProcessException(
-                'The ROOT merge failed to complete. The command used was %s.' % merge_cmd)
+        if p.returncode != 0:
+            logger.error(stderr)
+            raise PostProcessException('The ROOT merge failed to complete. The command used was %s.' % merge_cmd)
 
 
 class CustomMerger(IMerger):

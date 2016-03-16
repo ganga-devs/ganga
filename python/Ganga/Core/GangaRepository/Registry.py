@@ -843,7 +843,7 @@ class Registry(object):
                             self._loaded_ids.append(this_id)
                             if hasattr(obj, "_registry_refresh"):
                                 delattr(obj, "_registry_refresh")
-                    except KeyError, err:
+                    except KeyError as err:
                         logger.debug("_write_access KeyError %s" % str(err))
                         raise RegistryKeyError("Write: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
                     except InaccessibleObjectError as err:
@@ -967,7 +967,7 @@ class Registry(object):
                 if not self.metadata is None:
                     try:
                         self.flush_all()
-                    except Exception, err:
+                    except Exception as err:
                         logger.debug("shutdown _flush Exception: %s" % str(err))
                     self.metadata.shutdown()
             except Exception as err:

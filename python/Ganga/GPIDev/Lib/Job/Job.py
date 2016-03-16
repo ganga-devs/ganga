@@ -1766,9 +1766,9 @@ class Job(GangaObject):
             try:
                 if not force:
                     self._kill(transition_update=False)
-            except GangaException, x:
+            except GangaException:
                 log_user_exception(logger, debug=True)
-            except Exception, x:
+            except Exception:
                 log_user_exception(logger)
                 logger.warning('unhandled exception in j.kill(), job id=%s', str(self.id))
 
@@ -1815,7 +1815,7 @@ class Job(GangaObject):
                         def doit_sj(f):
                             try:
                                 f()
-                            except OSError, err:
+                            except OSError as err:
                                 logger.warning('cannot remove file workspace associated with the sub-job %s : %s', self.getFQID('.'), str(err))
 
                         wsp_input = stripProxy(sj).getInputWorkspace(create=False)
@@ -1832,7 +1832,7 @@ class Job(GangaObject):
             def doit(f):
                 try:
                     f()
-                except OSError, err:
+                except OSError as err:
                     logger.warning('cannot remove file workspace associated with the job %s : %s', str(self.id), str(err))
 
             wsp_input = self.getInputWorkspace(create=False)
@@ -1908,7 +1908,7 @@ class Job(GangaObject):
             if self.status in ['submitted', 'running']:
                 try:
                     self._kill(transition_update=False)
-                except JobError, x:
+                except JobError as x:
                     x.what += "Use force_status('%s',force=True) to ignore kill errors." % status
                     raise x
         try:
@@ -1963,7 +1963,7 @@ class Job(GangaObject):
                 else:
                     msg = "backend.master_kill() returned False"
                     raise JobError(msg)
-            except GangaException, x:
+            except GangaException as x:
                 msg = "failed to kill job %s: %s" % (self.getFQID('.'), str(x))
                 logger.error(msg)
                 raise JobError(msg)
@@ -2064,7 +2064,7 @@ class Job(GangaObject):
 
         try:
             self._commit()
-        except Exception, x:
+        except Exception:
             msg = 'cannot commit the job %s, resubmission aborted' % self.getFQID('.')
             logger.error(msg)
             self.status = oldstatus
@@ -2103,7 +2103,7 @@ class Job(GangaObject):
 
                 if not result:
                     raise JobManagerError('error during submit')
-            except IncompleteJobSubmissionError, x:
+            except IncompleteJobSubmissionError as x:
                 logger.warning('Not all subjobs of job %s have been sucessfully re-submitted: %s', self.getFQID('.'), x)
 
             # fix for bug 77962 plus for making auto_resubmit test work
@@ -2139,7 +2139,7 @@ class Job(GangaObject):
 
                 ganga_job_submitted(getName(self.application), getName(self.backend), "0", "0", str(submitted_count))
 
-        except GangaException, x:
+        except GangaException as x:
             logger.error("failed to resubmit job, %s" % (str(x),))
             logger.warning('reverting job %s to the %s status', fqid, oldstatus)
             self.status = oldstatus

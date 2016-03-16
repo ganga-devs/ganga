@@ -7,7 +7,7 @@ from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Adapters.IChecker import IFileChecker
 from Ganga.GPIDev.Schema import FileItem, SimpleItem
 from Ganga.Utility.logging import getLogger
-import commands
+import subprocess
 import copy
 import os
 import re
@@ -122,8 +122,9 @@ class RootFileChecker(IFileChecker):
                     return self.success
 
                 for failString in ['Could not find branch', 'One of the export branches', 'Skipped file']:
-                    grepoutput = commands.getoutput('grep "%s" %s' % (failString, haddoutput))
-                    if len(grepoutput):
+                    p = subprocess.Popen('grep "%s" %s' % (failString, haddoutput), shell=True)
+                    stdout, stderr = p.communicate()
+                    if len(stdout):
                         logger.info('There was a problem with hadd, the string "%s" was found. Will fail job', failString)
                         return self.failure
 
