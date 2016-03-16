@@ -126,7 +126,7 @@ class SubJobXMLList(GangaObject):
                 try:
                     index_file_obj = open( index_file, "r" )
                     self._subjobIndexData = from_file( index_file_obj )[0]
-                except IOError as err:
+                except IOError:
                     self._subjobIndexData = None
 
                 if self._subjobIndexData is None:
@@ -154,9 +154,8 @@ class SubJobXMLList(GangaObject):
                             new_data = self._registry.getIndexCache( self.__getitem__(subjob_id) )
                             self._subjobIndexData[subjob_id] = new_data
                             continue
-                        #self._subjobIndexData = {}
             except Exception as err:
-                logger.error( "Subjob Index file open, error: %s" % err )
+                logger.error( "Subjob Index file open, error: %s" % err)
                 self._subjobIndexData = {}
             finally:
                 if index_file_obj is not None:
@@ -200,9 +199,8 @@ class SubJobXMLList(GangaObject):
             index_file_obj = open(index_file, "w")
             to_file(all_caches, index_file_obj)
             index_file_obj.close()
-        ## Once I work out what the other exceptions here are I'll add them
-        except (IOError,) as err:
-            logger.debug("cache write error: %s" % err)
+        except IOError as err:
+            logger.debug( "cache write error: %s" % err)
 
     def __iter__(self):
         """Return iterator for this class"""

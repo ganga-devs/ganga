@@ -107,13 +107,15 @@ class JobRegistrySlice(RegistrySlice):
         fg = Foreground()
         fx = Effects()
         bg = Background()
+        eval_namespace = {'fg': fg, 'fx': fx, 'bg': bg}
         try:
             status_colours = config['jobs_status_colours']
-            self.status_colours = dict([(k, eval(v)) for k, v in status_colours.iteritems()])
+            self.status_colours = dict([(k, eval(v, None, eval_namespace)) for k, v in status_colours.items()])
         except Exception as x:
             logger.warning('configuration problem with colour specification: "%s"', str(x))
             status_colours = config.options['jobs_status_colours'].default_value
-            self.status_colours = dict([(k, eval(v)) for k, v in status_colours.iteritems()])
+            print(fg)
+            self.status_colours = dict([(k, eval(v, None, eval_namespace)) for k, v in status_colours.items()])
         self.fx = fx
         self._proxyClass = JobRegistrySliceProxy
 

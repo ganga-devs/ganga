@@ -53,7 +53,7 @@ def expand_vars(env):
         env (dict): dictionary describing the environment which is to be sanitized
     """
     tmp_dict = {}
-    for k, v in env.iteritems():
+    for k, v in env.items():
         if not str(v).startswith('() {'):
             if not str(k).endswith('()'):
                 tmp_dict[k] = os.path.expandvars(v)
@@ -93,10 +93,10 @@ def get_env_from_arg(this_arg, def_env_on_fail = True):
         this_cwd = os.path.abspath(tempfile.gettempdir())
 
     logger.debug("Using CWD: %s" % this_cwd)
-    command = 'source %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (this_arg)
-    logger.debug('Running:   %s' % command)
+    command = 'source %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(dict(os.environ))"' % (this_arg)
+    logger.debug('Running:   %s' % command.encode())
     pipe = subprocess.Popen('bash', env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    output = pipe.communicate(command)
+    output = pipe.communicate(command.encode())
     rc = pipe.poll()
 
     # When good output = ( "some_env_python_dict_repr", None )
@@ -361,7 +361,7 @@ class Shell(object):
         fullpath = os.path.join(self.dirname, cmd)
         with open(fullpath, 'w') as f:
             f.write("#!/bin/bash\n")
-            for k, v in self.env.iteritems():
+            for k, v in self.env.items():
                 f.write("export %s='%s'\n" % (k, v))
             if preexecute:
                 f.write("%s\n" % preexecute)

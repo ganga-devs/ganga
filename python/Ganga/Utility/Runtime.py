@@ -296,7 +296,7 @@ def setPluginDefaults(my_interface=None):
     for opt in default_plugins_cfg:
         try:
             category, tag = opt.split('_')
-        except ValueError, err:
+        except ValueError as err:
             logger.warning("do not understand option %s in [Plugins]", opt)
             logger.debug('Reason: want %s' % str(err))
         else:

@@ -31,15 +31,16 @@ __author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__ = "25 September 2007"
 __version__ = "1.5"
 
+import copy
+
 from Ganga.GPIDev.Credentials.AfsToken import AfsToken
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.GPIDev.Credentials.GridProxy import GridProxy
 
 _credentialPlugins = {}
-for item in locals().keys():
-    if ((hasattr(locals()[item], "_category"))
-            and (hasattr(locals()[item], "_name"))):
+for item in copy.copy(locals()).keys():
+    if hasattr(locals()[item], "_category") and hasattr(locals()[item], "_name"):
         _category = getattr(locals()[item], "_category")
         if "credentials" == _category:
             _name = getattr(locals()[item], "_name")

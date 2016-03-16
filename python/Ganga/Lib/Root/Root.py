@@ -561,7 +561,7 @@ def defaultPyRootScript():
 def randomString():
     """Simple method to generate a random string"""
     from random import randint
-    from string import ascii_uppercase, join
+    from string import ascii_uppercase
 
     def addToSample(sample, ascii_length):
         """Basically random.select but python2.2"""
@@ -579,6 +579,6 @@ def randomString():
     assert(len(sample) == 6)
 
     # seed is set to clock during import
-    return join([str(a) for a in sample], '')
+    return ''.join([str(a) for a in sample])
 
 

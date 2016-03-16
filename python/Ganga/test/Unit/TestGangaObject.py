@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 try:
     import unittest2 as unittest
 except ImportError:
@@ -31,7 +33,7 @@ class TestGangaObject(unittest.TestCase):
         self.obj._setRegistry(None)
 
     def test_getRegistryID(self):
-        print self.obj._getRegistryID()
+        print(self.obj._getRegistryID())
 
     def test_setDirty(self):
         self.obj._setDirty()

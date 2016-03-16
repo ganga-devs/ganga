@@ -332,7 +332,7 @@ class Descriptor(object):
             return int(v)
         elif isinstance(v, dict):
             new_dict = {}
-            for key, item in new_dict.iteritems():
+            for key, item in new_dict.items():
                 new_dict[key] = self.__cloneVal(v, obj)
             return new_dict
         else:
@@ -749,7 +749,7 @@ class GangaObject(Node):
 
         ## Fix some objects losing parent knowledge
         src_dict = srcobj.__dict__
-        for key, val in src_dict.iteritems():
+        for key, val in src_dict.items():
             this_attr = getattr(srcobj, key)
             if isinstance(this_attr, Node) and key not in do_not_copy:
                 #logger.debug("k: %s  Parent: %s" % (key, (srcobj)))
@@ -923,7 +923,7 @@ class GangaObject(Node):
                 if item.isA(Schema.SharedItem):
                     self.__incrementShareRef(self_copy, name)
 
-        for k, v in self.__dict__.iteritems():
+        for k, v in self.__dict__.items():
             if k not in do_not_copy:
                 try:
                     self_copy.__dict__[k] = deepcopy(v)
@@ -947,7 +947,7 @@ class GangaObject(Node):
         from Ganga.Utility.Config.Config import getConfig, ConfigError
         try:
             _timeOut = getConfig('Configuration')['DiskIOTimeout']
-        except ConfigError, err:
+        except ConfigError:
             _timeOut = 5. # 5sec hardcoded default
         return _timeOut
 
@@ -1041,7 +1041,7 @@ class GangaObject(Node):
         """
         try:
             return self._registry.find(self)
-        except AttributeError, err:
+        except AttributeError as err:
             logger.debug("_getRegistryID Exception: %s" % err)
             return None
 

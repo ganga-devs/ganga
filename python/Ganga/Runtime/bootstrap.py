@@ -412,7 +412,7 @@ under certain conditions; type license() for details.
                 if not os.path.exists(bn):
                     try:
                         os.rename(config_file, bn)
-                    except Exception, err:
+                    except Exception as err:
                         logger.error('Failed to create config backup file %s' % bn)
                         logger.error('Old file will not be overwritten, please manually remove it and start ganga with the -g option to re-generate it')
                         logger.error('Reason: %s' % err)
@@ -468,7 +468,7 @@ under certain conditions; type license() for details.
             with open(pathname, 'r') as f:
                 try:
                     notes = [l.strip() for l in f.read().replace(bounding_line, '').split(dividing_line)]
-                except Exception, err:
+                except Exception as err:
                     logger.error('Error while attempting to read release notes')
                     logger.debug('Reason: %s' % err)
                     raise
@@ -655,7 +655,7 @@ under certain conditions; type license() for details.
         if self.options.config_path is None:
             try:
                 self.options.config_path = os.environ['GANGA_CONFIG_PATH']
-            except KeyError, err:
+            except KeyError:
                 self.options.config_path = ''
             if self.options.config_path is None:
                 self.options.config_path = ''
@@ -874,7 +874,7 @@ under certain conditions; type license() for details.
 
             for path in paths:
                 r = RuntimePackage(path)
-        except KeyError, err:
+        except KeyError as err:
             logger.debug("init KeyError: %s" % err)
 
         logger.debug("Internal_ProxReexec")
@@ -1203,7 +1203,7 @@ under certain conditions; type license() for details.
             os.makedirs(os.environ['IPYTHONDIR'])
 
         rc_file = os.path.join(os.environ['IPYTHONDIR'], 'ipythonrc')
-	logger.debug("Checking: %s" % rc_file)
+        logger.debug("Checking: %s" % rc_file)
         if not os.path.isfile(rc_file):
             lock = open(rc_file, "w")
             lock.close()

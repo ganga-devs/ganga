@@ -1248,7 +1248,7 @@ def getStackTrace():
         #log.info("Queue", str(Qin.queue))
         log.debug("Trace: %s" % str(status))
         return status
-    except Exception, err:
+    except Exception as err:
         print("Err: %s" % str(err))
     finally:
         pass

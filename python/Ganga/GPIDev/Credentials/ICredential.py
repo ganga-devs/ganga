@@ -265,7 +265,7 @@ class ICredential(GangaObject):
                 # Create initialisation list with the 'pipe' parameter
                 initList = [self.command.init, self.command.init_parameters["pipe"]]
                 # Append option value pairs
-                for optName, optVal in self.command.currentOpts.iteritems():
+                for optName, optVal in self.command.currentOpts.items():
                     initList.append("%s %s" % (optName, optVal))
                 status = self.shell.system("cat %s|%s" % (tFile.name, " ".join(initList)))
                 tFile.close()
@@ -287,7 +287,7 @@ class ICredential(GangaObject):
                         self.command.currentOpts[self.command.init_parameters['valid']] = validity
                     initList = [self.command.init]
                     # Append option value pairs
-                    for optName, optVal in self.command.currentOpts.iteritems():
+                    for optName, optVal in self.command.currentOpts.items():
                         initList.append("%s %s" % (optName, optVal))
                     status = self.shell.system(" ".join(initList))
                     if status == 0:
@@ -335,7 +335,7 @@ class ICredential(GangaObject):
             return False
 
         destroyList = [self.command.destroy]
-        for optName, optVal in self.command.destroyOpts.iteritems():
+        for optName, optVal in self.command.destroyOpts.items():
             destroyList.append("%s %s" % (optName, optVal))
 
         Coordinator.notifyInvalidCredential(self)
