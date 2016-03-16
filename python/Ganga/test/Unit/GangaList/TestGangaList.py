@@ -21,6 +21,11 @@ from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 
+def compare(x, y):
+    """Replacement for ``cmp`` which is removed in Python 3"""
+    return (x > y) - (x < y)
+
+
 class TestGangaList(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
@@ -120,8 +125,8 @@ class TestGangaList(unittest.TestCase):
 
     def testAddMixed2(self):
 
-        self.plain1 = range(10)
-        self.plain2 = range(10)
+        self.plain1 = list(range(10))
+        self.plain2 = list(range(10))
 
         self.assertTrue(isProxy(self.proxied2[-1]), 'Element access must get proxies')
         self.assertFalse(isProxy(self.plain1[0]), 'Element access must not proxies')
@@ -376,7 +381,7 @@ class TestGangaList(unittest.TestCase):
 
     def testExtend(self):
 
-        t1 = [self._makeRandomTFile() for _ in xrange(10)]
+        t1 = [self._makeRandomTFile() for _ in range(10)]
 
         self.plain1.extend(t1)
         self.proxied1.extend(t1)
@@ -447,8 +452,7 @@ class TestGangaList(unittest.TestCase):
         self.assertEqual(count, len(self.proxied1), 'Must visit every member')
 
     def testCmp(self):
-
-        self.assertEqual(cmp(self.proxied1, self.proxied2), cmp(self.plain1, self.plain2))
+        self.assertEqual(compare(self.proxied1, self.proxied2), compare(self.plain1, self.plain2))
 
     def testHash(self):
 
