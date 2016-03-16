@@ -9,6 +9,7 @@ import threading
 import time
 import random
 
+from future.utils import with_metaclass, raise_
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
@@ -129,8 +130,7 @@ class TestNode(unittest.TestCase):
 class TestObjectMetaclass(unittest.TestCase):
 
     def testObjectMetaclass(self):
-        class GangaObject(Node):
-            __metaclass__ = ObjectMetaclass
+        class GangaObject(with_metaclass(ObjectMetaclass, Node)):
             _schema = None
             _category = None
             _hidden = True

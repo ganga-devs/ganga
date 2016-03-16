@@ -22,6 +22,8 @@ import Ganga.Utility.logging
 from copy import deepcopy, copy
 import inspect
 
+from future.utils import with_metaclass
+
 import Ganga.GPIDev.Schema as Schema
 
 from Ganga.Core.exceptions import GangaValueError, GangaException
@@ -767,8 +769,7 @@ class ObjectMetaclass(type):
             this_schema.createDefaultConfig()
 
 
-class GangaObject(Node):
-    __metaclass__ = ObjectMetaclass
+class GangaObject(with_metaclass(ObjectMetaclass, Node)):
     _schema = None  # obligatory, specified in the derived classes
     _category = None  # obligatory, specified in the derived classes
     _registry = None  # automatically set for Root objects
