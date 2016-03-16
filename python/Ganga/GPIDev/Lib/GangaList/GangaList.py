@@ -85,7 +85,7 @@ class GangaList(GangaObject):
                       '__getitem__', '__getslice__', '__gt__', '__iadd__', '__imul__',
                       '__iter__', '__le__', '__len__', '__lt__', '__mul__', '__ne__', '__reversed__', '__radd__', '__rmul__',
                       '__setitem__', '__setslice__', 'append', 'count', 'extend', 'index',
-                      'insert', 'pop', 'remove', 'reverse', 'sort', '__hash__', 'get']
+                      'insert', 'pop', 'remove', 'reverse', 'sort', '__hash__', 'get', 'clear']
     _hidden = 1
     _enable_plugin = 1
     _name = 'GangaList'
@@ -312,13 +312,17 @@ class GangaList(GangaObject):
         return self._list.__ge__(self.__getListToCompare(obj_list))
 
     def __getitem__(self, index):
-        return self._list.__getitem__(index)
+        if isinstance(index, slice):
+            return self.__getslice__(index.start, index.stop)
+        else:
+            return self._list.__getitem__(index)
 
     def _export___getitem__(self, index):
         return addProxy(self.__getitem__(index))
 
     def __getslice__(self, start, end):
-        return makeGangaList(_list=self._list.__getslice__(start, end), preparable=self._is_preparable)
+        """DEPRECATED since Python 2.0"""
+        return makeGangaList(_list=self._list[start:end], preparable=self._is_preparable)
 
     def _export___getslice__(self, start, end):
         return addProxy(self.__getslice__(start, end))
@@ -512,6 +516,9 @@ class GangaList(GangaObject):
     def _export_sort(self, cmpfunc=None):
         self.checkReadOnly()
         self.sort(cmpfunc)
+
+    def clear(self):
+        del self._list[:]
 
     # now some more ganga specific methods
     def findSchemaParentSchemaEntry(self, parent):
