@@ -29,6 +29,8 @@
   repository/workspace) when credentials become invalid preventing normal functioning of these services.
   E.g: invalid grid proxy triggers the monitor-loop stop
 """
+from future.utils import exec_
+
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import getName
@@ -123,7 +125,7 @@ def _diskSpaceChecker():
                 code = "def check():"
                 for line in config['DiskSpaceChecker'].splitlines():
                     code += "\t%s\n" % line
-                exec code in ns
+                exec_(code, ns)
                 _checker = new.function(
                     ns["check"].__code__, _prog.local_ns, 'check')
             except Exception as e:
