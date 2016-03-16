@@ -5,6 +5,12 @@ from . import TFile
 
 TFile = getProxyClass(TFile)
 
+
+def compare(x, y):
+    """Replacement for ``cmp`` which is removed in Python 3"""
+    return (x > y) - (x < y)
+
+
 class TestTFile(unittest.TestCase):
 
     def testEqualityName(self):
@@ -39,7 +45,7 @@ class TestTFile(unittest.TestCase):
         t1 = TFile(name='foo')
         t2 = TFile(name='foo')
 
-        assert cmp(t1, t2) == 0, 'Files are equal'
+        assert compare(t1, t2) == 0, 'Files are equal'
 
     def testCmpOrder(self):
 
@@ -48,26 +54,26 @@ class TestTFile(unittest.TestCase):
         t2 = TFile(name='def')
         t1 = TFile(name='abc')
 
-        assert cmp(t1, t2) < 0
-        assert cmp(t2, t1) > 0
+        assert compare(t1, t2) < 0
+        assert compare(t2, t1) > 0
 
     def testCmpOrderSubdir(self):
 
         t2 = TFile(name='abc', subdir='a')
         t1 = TFile(name='abc')
 
-        assert cmp(t1, t2) < 0
-        assert cmp(t2, t1) > 0
+        assert compare(t1, t2) < 0
+        assert compare(t2, t1) > 0
 
     def testCmpList(self):
 
         a = [TFile(name='abc'), TFile(name='def')]
         b = [TFile(name='abc'), TFile(name='def'), TFile(name='ijk')]
 
-        assert cmp(a, b) < 0
+        assert compare(a, b) < 0
 
         a.append(TFile(name='ijk'))
-        assert cmp(a, b) == 0, 'Lists should now be the same.'
+        assert compare(a, b) == 0, 'Lists should now be the same.'
 
     def testIAdd(self):
 

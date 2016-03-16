@@ -141,8 +141,8 @@ class TestObjectMetaclass(unittest.TestCase):
 
 
 class _ExcThread(threading.Thread):
-    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
-        super(_ExcThread, self).__init__(group, target, name, args, kwargs, verbose)
+    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None):
+        super(_ExcThread, self).__init__(group, target, name, args, kwargs)
         if kwargs is None:
             kwargs = {}
         self.target = target
@@ -163,7 +163,7 @@ class _ExcThread(threading.Thread):
     def join(self, *args, **kwargs):
         threading.Thread.join(self, *args, **kwargs)
         if self.exc:
-            raise self.exc[0], self.exc[1], self.exc[2]
+            raise_(self.exc[0], self.exc[1], self.exc[2])
 
 
 class MultiThreadedTestCase(unittest.TestCase):
