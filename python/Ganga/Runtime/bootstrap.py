@@ -937,7 +937,7 @@ under certain conditions; type license() for details.
         # bootstrap core modules
         from Ganga.Core.GangaRepository import getRegistry
         ## Here is where the monitoring loop and related services are started!
-        Ganga.Core.bootstrap(getRegistry('jobs'), interactive)
+        Ganga.Core.bootstrap(getRegistry('jobs').getSlice(), interactive)
 
         # export all configuration items, new options should not be added after
         # this point
