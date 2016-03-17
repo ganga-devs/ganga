@@ -55,7 +55,7 @@ startUpRegistries(ganga)
 #  bootstrap core modules
 interactive = False
 from Ganga.Core.GangaRepository import getRegistry
-Ganga.Core.bootstrap(getRegistry('jobs'), interactive)
+Ganga.Core.bootstrap(getRegistry('jobs').getSlice(), interactive)
 Ganga.GPIDev.Lib.Config.bootstrap()
 
 # ------------------------------------------------------------------------------------
