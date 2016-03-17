@@ -180,7 +180,6 @@ class RegistryFlusher(threading.Thread):
         super(RegistryFlusher, self).__init__(*args, **kwargs)
         self.registry = registry
         self._stop = threading.Event()
-        self.logger = getLogger()
 
     def stop(self):
         """
@@ -213,9 +212,8 @@ class RegistryFlusher(threading.Thread):
             # We want this to be a non-blocking lock to avoid this
             # interfering with interactive work or monitoring. It
             # will try again in a while anyway.
-            with self.registry._lock:
-                self.logger.debug('Auto-flushing: %s', self.registry.name)
-                self.registry.flush_all()
+            logger.debug('Auto-flushing: %s', self.registry.name)
+            self.registry.flush_all()
 
 
 class Registry(object):
@@ -700,14 +698,14 @@ class Registry(object):
                 self.repository.flush([obj_id])
                 obj._setFlushed()
 
-    @synchronised
     def flush_all(self):
         """
         This will attempt to flush all the jobs in the registry.
         It does this via ``_flush`` so the same conditions apply.
         """
         if self.hasStarted():
-            self._flush(self.values())
+            for _obj in self.values():
+                self._flush(_obj)
 
         if self.metadata and self.metadata.hasStarted():
             self.metadata.flush_all()
