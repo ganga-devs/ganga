@@ -25,6 +25,8 @@ except ImportError:
     def highlight_trace(string):
         return '<pre>' + string + '</pre>'
 
+from Ganga.Utility.Config import getConfig
+
 
 def stacktraces():
     # type: () -> str
@@ -108,7 +110,7 @@ class TraceDumper(threading.Thread):
 _tracer = None
 
 
-def trace_start(path, interval=5, auto=True):
+def trace_start(filename='thread_trace.html', interval=5, auto=True):
     # type: (str, int, bool) -> None
     """
     Start tracing into the given file.
@@ -120,6 +122,7 @@ def trace_start(path, interval=5, auto=True):
             Clear flag (False) to update only if file not exists.
             (Then delete the file to force update.)
     """
+    path = os.path.join(getConfig('Configuration')['gangadir'], filename)
     global _tracer
     if _tracer is None:
         _tracer = TraceDumper(path, interval, auto)
