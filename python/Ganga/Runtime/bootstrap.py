@@ -26,9 +26,11 @@ import string
 import sys
 import time
 import re
+import atexit
 
 from Ganga import _gangaVersion, _gangaPythonPath
 from Ganga.Utility.Config.Config import getConfig
+from Ganga.Utility import stacktracer
 import Ganga.Runtime
 
 def new_version_format_to_old(version):
@@ -923,6 +925,10 @@ under certain conditions; type license() for details.
         autoPopulateGPI()
         from Ganga.Utility.Runtime import setPluginDefaults
         setPluginDefaults()
+
+        # Start tracking all the threads and saving the information to a file
+        stacktracer.trace_start()
+        atexit.register((100, stacktracer.trace_stop))
 
         from Ganga.Utility.logging import getLogger
         logger = getLogger()

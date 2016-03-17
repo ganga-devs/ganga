@@ -1563,16 +1563,16 @@ class Job(GangaObject):
             # split into subjobs
             rjobs = self._doSplitting()
 
-
             #
             logger.debug("Now have %s subjobs" % str(len(self.subjobs)))
             logger.debug("Also have %s rjobs" % str(len(rjobs)))
 
             # Output Files
             # validate the output files
-            (validOutputFiles, errorMsg) = self.validateOutputfilesOnSubmit()
-            if not validOutputFiles:
-                raise JobError(errorMsg)
+            for this_job in rjobs:
+                (validOutputFiles, errorMsg) = this_job.validateOutputfilesOnSubmit()
+                if not validOutputFiles:
+                    raise JobError(errorMsg)
 
             # configure the application of each subjob
             appsubconfig = self._getAppSubConfig(rjobs)
@@ -2007,9 +2007,15 @@ class Job(GangaObject):
             logger.error(msg)
             raise JobError(msg)
 
-        (validOutputFiles, errorMsg) = self.validateOutputfilesOnSubmit()
-        if not validOutputFiles:
-            raise JobError(errorMsg)
+        if len(self.subjobs) != 0:
+            these_jobs = self.subjobs
+        else:
+            these_jobs = [self]
+
+        for this_job in these_jobs:
+            (validOutputFiles, errorMsg) = this_job.validateOutputfilesOnSubmit()
+            if not validOutputFiles:
+                raise JobError(errorMsg)
 
         if self.status in ['new']:
             msg = "cannot resubmit a new job %s, please use submit()" % (self.getFQID('.'))
