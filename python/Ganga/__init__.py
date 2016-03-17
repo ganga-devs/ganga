@@ -162,6 +162,8 @@ conf_config.addOption('UsageMonitoringMSG', True,
                  "enable usage monitoring through MSG server defined in MSGMS configuration")
 conf_config.addOption('Batch', 'LSF', 'default batch system')
 
+conf_config.addOption('AutoStartReg', True, 'AutoStart the registries, needed to access any jobs in registry therefore needs to be True for 99.999% of use cases')
+
 # ------------------------------------------------
 # IPython
 ipython_config = makeConfig('TextShell_IPython', '''IPython shell configuration
@@ -838,6 +840,6 @@ Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 """, is_open=True)
 
 # ------------------------------------------------
-# MonitoringServices
+# Registry Dirty Monitoring Services (not related to actual Job Monitoring)
 reg_config = makeConfig('Registry','')
 reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')
