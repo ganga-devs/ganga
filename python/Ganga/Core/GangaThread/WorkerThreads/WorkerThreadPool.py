@@ -22,7 +22,7 @@ class WorkerThreadPool(object):
     Client class through which Ganga objects interact with the local DIRAC server.
     """
     __slots__ = ['__queue', '__worker_threads',
-                 '_saved_num_worker', '_saved_thread_prefix', '_locked', '_shutdown']
+                 '_saved_num_worker', '_saved_thread_prefix', '_frozen', '_shutdown']
 
     def __init__(self, num_worker_threads=None, worker_thread_prefix='Worker_'):
         if num_worker_threads is None:
@@ -35,7 +35,7 @@ class WorkerThreadPool(object):
 
         self.__init_worker_threads(self._saved_num_worker, self._saved_thread_prefix)
 
-        self._locked = False
+        self._frozen = False
         self._shutdown = False
 
     def __init_worker_threads(self, num_worker_threads, worker_thread_prefix):
@@ -159,9 +159,9 @@ class WorkerThreadPool(object):
         if not isinstance(function, collections.Callable):
             logger.error('Only a python callable object may be added to the queue using the add_function() method')
             return
-        if self._locked is True:
+        if self._frozen is True:
             if not self._shutdown:
-                logger.warning("Cannot Add Process as Queue is Locked!")
+                logger.warning("Cannot Add Process as Queue is frozen!")
             return
         self.__queue.put(QueueElement(priority=priority,
                                       command_input=FunctionInput(
@@ -181,9 +181,9 @@ class WorkerThreadPool(object):
         if not isinstance(command, str):
             logger.error("Input command must be of type 'string'")
             return
-        if self._locked is True:
+        if self._frozen is True:
             if self._shutdown:
-                logger.warning("Cannot Add Process as Queue is Locked!")
+                logger.warning("Cannot Add Process as Queue is frozen!")
             return
         self.__queue.put(QueueElement(priority=priority,
                                       command_input=CommandInput(
@@ -196,8 +196,8 @@ class WorkerThreadPool(object):
     def map(self, function, *iterables):
         if not isinstance(function, collections.Callable):
             raise TypeError('must be a function')
-        if self._locked is True:
-            logger.error("Cannot map a Function as Queue is Locked!")
+        if self._frozen is True:
+            logger.error("Cannot map a Function as Queue is frozen!")
         for args in zip(*iterables):
             self.__queue.put(QueueElement(priority=5,
                                           command_input=FunctionInput(

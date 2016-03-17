@@ -116,7 +116,7 @@ def _ganga_run_exitfuncs():
 
     from Ganga.Core.GangaThread.WorkerThreads import _global_queues
     if _global_queues:
-        _global_queues.lock()
+        _global_queues.freeze()
 
     import inspect
     while atexit._exithandlers:

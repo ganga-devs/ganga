@@ -23,7 +23,7 @@ def shutDownQueues():
     global _global_queues
     try:
         if _global_queues:
-            _global_queues.lock()
+            _global_queues.freeze()
             _global_queues._purge_all()
             _global_queues._stop_all_threads()
     except:
