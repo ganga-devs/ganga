@@ -136,7 +136,8 @@ def bootstrap():
         if registry.name == "prep":
             registry.print_other_sessions()
         started_registries.append(registry.name)
-        retval.append((registry.name, registry.getProxy(), registry.doc))
+        proxied_registry_slice = registry.getProxy()
+        retval.append((registry.name, proxied_registry_slice, registry.doc))
 
     #import atexit
     #atexit.register(shutdown)

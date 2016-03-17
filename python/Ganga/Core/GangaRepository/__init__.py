@@ -20,3 +20,10 @@ def getRegistries():
 
 def getRegistry(name):
     return allRegistries[name]
+
+def getRegistrySlice(name):
+    return allRegistries[name].getSlice()
+
+def getRegistryProxy(name):
+    return allRegistries[name].getProxy()
+

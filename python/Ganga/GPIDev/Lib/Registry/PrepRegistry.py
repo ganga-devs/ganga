@@ -34,6 +34,9 @@ class PrepRegistry(Registry):
     def getShareRef(self):
         return self.shareref
 
+    def getSlice(self):
+        pass
+
     def getProxy(self):
         pass
 

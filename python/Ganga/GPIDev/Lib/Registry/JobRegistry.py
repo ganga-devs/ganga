@@ -31,11 +31,15 @@ class JobRegistry(Registry):
 
     def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
         super(JobRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
+        self.stored_slice = JobRegistrySlice(self.name)
+        self.stored_slice.objects = self
+        self.stored_proxy = JobRegistrySliceProxy(self.stored_slice)
+
+    def getSlice(self):
+        return self.stored_slice
 
     def getProxy(self):
-        this_slice = JobRegistrySlice(self.name)
-        this_slice.objects = self
-        return JobRegistrySliceProxy(this_slice)
+        return self.stored_proxy
 
     def getIndexCache(self, obj):
 
