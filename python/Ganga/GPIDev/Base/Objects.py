@@ -331,8 +331,6 @@ class Node(object):
 
         if self is node:
             return 1
-        if not node:  # or not self._schema.isEqual(node._schema):
-            return 0
 
         if not isinstance(node, type(self)):
             return 0
