@@ -325,10 +325,7 @@ class Node(object):
         from Ganga.GPIDev.Base.VPrinter import VSummaryPrinter
         self.accept(VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection, interactive))
 
-    def __eq__(self, _node):
-
-        node = _node
-
+    def __eq__(self, node):
         if self is node:
             return 1
 
