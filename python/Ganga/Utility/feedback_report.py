@@ -186,6 +186,7 @@ def report(job=None):
         gangaLogFileName = "gangalog.txt"
         jobsListFileName = "jobslist.txt"
         tasksListFileName = "taskslist.txt"
+        thread_trace_file_name = 'thread_trace.html'
         from Ganga.Utility import Config
         uploadFileServer = Config.getConfig('Feedback')['uploadServer']
         #uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
@@ -651,6 +652,15 @@ def report(job=None):
             except Exception as err:
                 logger.debug("Err %s" % str(err))
                 writeErrorLog(str(sys.exc_info()[1]))
+
+        # Copy thread stack trace file
+        try:
+            thread_trace_source_path = os.path.join(getConfig('Configuration')['gangadir'], thread_trace_file_name)
+            thread_trace_target_path = os.path.join(fullLogDirName, thread_trace_file_name)
+            shutil.copyfile(thread_trace_source_path, thread_trace_target_path)
+        except (OSError, IOError) as err:
+            logger.debug('Err %s', err)
+            writeErrorLog(str(sys.exc_info()[1]))
 
         resultArchive = '%s.tar.gz' % folderToArchive
 
