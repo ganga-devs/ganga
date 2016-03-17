@@ -14,6 +14,7 @@ import sys
 import threading
 import time
 import traceback
+from datetime import datetime
 
 try:
     from pygments import highlight
@@ -54,6 +55,7 @@ def stacktraces():
         trace = traceback.format_stack(stack)
         html.append(highlight_trace(''.join(trace)))
 
+    html.append('<small>' + datetime.utcnow().isoformat() + '</small>')
     html.append('</body>')
     html.append('</html>')
 
