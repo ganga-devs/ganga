@@ -99,7 +99,10 @@ class TraceDumper(threading.Thread):
 
     def stacktraces(self):
         with open(self.path, 'wb+') as fout:
-            fout.write(stacktraces())
+            try:
+                fout.write(stacktraces())
+            except IOError:
+                pass  # Don't warn if the file faile to write
 
 
 _tracer = None
