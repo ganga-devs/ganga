@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from ..GangaUnitTest import GangaUnitTest
 
 class TestSJIDName(GangaUnitTest):
+    """test for sjid in filename names explain each test"""
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
@@ -10,6 +11,7 @@ class TestSJIDName(GangaUnitTest):
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def test_a_jobSubmit(self):
+        """here for testing a submit"""
         from Ganga.GPI import Job, Executable, ArgSplitter, MassStorageFile
 
         j=Job()
@@ -22,6 +24,7 @@ class TestSJIDName(GangaUnitTest):
         sleep_until_completed(j)
 
     def test_b_jobResubmit(self):
+        """here for testing a re-submit"""
         from Ganga.GPI import jobs
 
         jobs(0).resubmit()
@@ -30,7 +33,7 @@ class TestSJIDName(GangaUnitTest):
         sleep_until_completed(jobs(0))
 
     def test_c_onlyCreate(self):
-
+        """here for testing job create"""
         from Ganga.GPI import Job, Executable, ArgSplitter, MassStorageFile
 
         j=Job()
@@ -39,7 +42,7 @@ class TestSJIDName(GangaUnitTest):
         j.outputfiles=[MassStorageFile(outputfilenameformat = '/test/{sjid}-{fname}', namePattern = '*.txt')]
 
     def test_d_loadSubmit(self):
-
+        """here for testing a loaded submit"""
         from Ganga.GPI import jobs
 
         jobs(1).submit()
