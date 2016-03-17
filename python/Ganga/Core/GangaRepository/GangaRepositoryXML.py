@@ -23,7 +23,7 @@ from Ganga.Core.GangaRepository.VStreamer import to_file as xml_to_file
 from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Base.Objects import Node
 from Ganga.Core.GangaRepository import SubJobXMLList
 

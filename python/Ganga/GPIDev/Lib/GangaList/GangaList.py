@@ -23,13 +23,12 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
     else:
         _list = [_list]
 
-    #logger.debug("_list: %s" % str(_list))
-
     if mapfunction is not None:
         _list = map(mapfunction, _list)
 
-    #logger.debug("Making a GangaList of size: %s" % str(len(_list)))
-    result = makeGangaListByRef(_list, preparable)
+    result = GangaList()
+    result._list = [ stripProxy(e) for e in _list ]
+    result._is_preparable = preparable
     result._is_a_ref = False
 
     # set the parent if possible
@@ -50,10 +49,7 @@ def stripGangaList(_list):
 def makeGangaListByRef(_list, preparable=False):
     """Faster version of makeGangaList. Does not make a copy of _list but use it by reference."""
     result = GangaList()
-    if len(_list) == 0:
-        return result
-    temp_list = [stripProxy(element) for element in _list]
-    result._list = temp_list
+    result._list = _list
     result._is_a_ref = True
     result._is_preparable = preparable
     return result
@@ -87,7 +83,7 @@ class GangaList(GangaObject):
     _hidden = 1
     _enable_plugin = 1
     _name = 'GangaList'
-    _schema = Schema(Version(1, 0), {'_list': ComponentItem(defvalue=[], doc='The raw list', hidden=1, category='internal'),
+    _schema = Schema(Version(1, 0), {'_list': SimpleItem(defvalue=[], doc='The raw list', hidden=1, category='internal'),
                                      '_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),
                                     })
     _enable_config = 1
