@@ -25,7 +25,7 @@ class TestMonitoring(GangaUnitTest):
         from Ganga.Utility.Config import getConfig
         super(TestMonitoring, self).tearDown()
 
-    def teat_0_testRegistryAsserts(self):
+    def test_0_testRegistryAsserts(self):
         from Ganga.GPI import jobs, box, tasks, prep
         from Ganga.GPIDev.Base.Proxy import stripProxy
         from Ganga.Core.GangaRepository import getRegistryProxy, getRegistrySlice, getRegistry
