@@ -30,5 +30,6 @@ def shutDownQueues():
         logger.warning("Error in shutting down queues thread. Likely harmless")
     _global_queues = None
     import Ganga.GPI
-    delattr(Ganga.GPI, 'queues')
+    if hasattr(Ganga.GPI, 'queues'):
+        delattr(Ganga.GPI, 'queues')
 
