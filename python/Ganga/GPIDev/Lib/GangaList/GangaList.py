@@ -565,7 +565,5 @@ class GangaList(GangaObject):
         returnable_str += "]"
         return returnable_str
 
-
-from Ganga.Runtime.GPIexport import exportToGPI
-exportToGPI('GangaList', GangaList, 'Classes')
+# export to GPI moved to the Runtime bootstrap
 

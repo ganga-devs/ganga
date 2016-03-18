@@ -11,12 +11,22 @@ allRegistries = {}
 
 
 def addRegistry(registry):
+    """ Add a registry to the global dict"""
     allRegistries[registry.name] = registry
 
-
 def getRegistries():
+    """ Get all registries from the global dict"""
     return allRegistries.values()
 
-
 def getRegistry(name):
+    """ Get a specific Registry from the global dict"""
     return allRegistries[name]
+
+def getRegistrySlice(name):
+    """ Get The registry slice wrapping the registry of choice"""
+    return allRegistries[name].getSlice()
+
+def getRegistryProxy(name):
+    """ Get the proxied registry slice wrapping the registry of choice"""
+    return allRegistries[name].getProxy()
+
