@@ -13,6 +13,7 @@ from Ganga.Utility.Plugin import PluginManagerError, allPlugins
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
+from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
 from .GangaRepository import SchemaVersionError
 
@@ -369,7 +370,7 @@ class Loader(object):
             # we make a GangaList from these items and put it on stack
             if name == 'sequence':
                 pos = self.sequence_start.pop()
-                alist = [elem for elem in self.stack[pos:]]
+                alist = makeGangaList(self.stack[pos:])
                 del self.stack[pos:]
                 self.stack.append(alist)
 
