@@ -75,7 +75,9 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
     else:
         from Ganga.Runtime.Repository_runtime import startUpRegistries
-        startUpRegistries()
+        from Ganga.Utility.Config import getConfig
+        if getConfig('Configuration')['AutoStartReg']:
+            startUpRegistries()
 
         # The queues are shut down by the atexit handlers so we need to start them here
         from Ganga.Core.GangaThread.WorkerThreads import startUpQueues

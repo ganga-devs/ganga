@@ -206,6 +206,7 @@ class GangaRepository(object):
         obj.setNodeData({})
         obj.setNodeAttribute('id', this_id)
 
+        obj._setFlushed()
         self._internal_setitem__(this_id, obj)
         return obj
 

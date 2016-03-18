@@ -114,6 +114,10 @@ def _ganga_run_exitfuncs():
 
     logger.info("Stopping Job processing before shutting down Repositories")
 
+    from Ganga.Core.GangaThread.WorkerThreads import _global_queues
+    if _global_queues:
+        _global_queues.freeze()
+
     import inspect
     while atexit._exithandlers:
 
@@ -141,6 +145,9 @@ def _ganga_run_exitfuncs():
                 logger.debug("\n%s" % inspect.getsource(func))
             except Exception as err2:
                 logger.debug("Error getting source code and failure reason: %s" % str(err2))
+
+    from Ganga.Core.GangaThread.WorkerThreads import shutDownQueues
+    shutDownQueues()
 
     logger.info("Shutting Down Ganga Repositories")
     from Ganga.Runtime import Repository_runtime

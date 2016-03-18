@@ -937,7 +937,8 @@ under certain conditions; type license() for details.
 
         import Ganga.Core
         from Ganga.Runtime.Repository_runtime import startUpRegistries
-        startUpRegistries()
+        if config['AutoStartReg']:
+            startUpRegistries()
 
         logger.debug("Bootstrap Core Modules")
         # bootstrap core modules

@@ -456,7 +456,7 @@ class SessionLockManager(object):
             if not self.afs:
                 os.close(self.lockfd)
             os.unlink(self.fn)
-            os.unlink(self.lockfn)
+            #os.unlink(self.lockfn)
             # os.unlink(self.gfn)
         except OSError as x:
             logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (self.fn, self.gfn, str(x)))

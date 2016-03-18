@@ -19,9 +19,6 @@ def startUpQueues(my_interface=None):
         _global_queues = ThreadPoolQueueMonitor()
         exportToInterface(my_interface, 'queues', _global_queues, 'Objects')
 
-        import atexit
-        atexit.register((100, shutDownQueues))
-
     else:
         logger.error("Cannot Start queues if they've already started")
 
@@ -33,7 +30,7 @@ def shutDownQueues():
     global _queues_interface
     try:
         if _global_queues:
-            _global_queues.lock()
+            _global_queues.freeze()
             _global_queues._purge_all()
             _global_queues._stop_all_threads()
     except:
