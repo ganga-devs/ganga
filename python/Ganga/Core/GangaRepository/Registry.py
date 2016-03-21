@@ -202,9 +202,9 @@ class RegistryFlusher(threading.Thread):
         whether it should stop. In between calls to ``flush_all`` it
         will wait for a fixed period of time.
         """
-        sleep_period = getConfig('Registry')['AutoFlusherWaitTime']
         sleeps_per_second = 10  # This changes the granularity of the sleep.
         while not self.stopped:
+            sleep_period = getConfig('Registry')['AutoFlusherWaitTime']
             for i in range(sleep_period*sleeps_per_second):
                 time.sleep(1/sleeps_per_second)
                 if self.stopped:
@@ -212,12 +212,8 @@ class RegistryFlusher(threading.Thread):
             # We want this to be a non-blocking lock to avoid this
             # interfering with interactive work or monitoring. It
             # will try again in a while anyway.
-            if self.registry._lock.acquire(blocking=False):
-                try:
-                    logger.debug('Auto-flushing', self.registry.name)
-                    self.registry.flush_all()
-                finally:
-                    self.registry._lock.release()
+            logger.debug('Auto-flushing: %s', self.registry.name)
+            self.registry.flush_all()
 
 
 class Registry(object):
@@ -702,14 +698,14 @@ class Registry(object):
                 self.repository.flush([obj_id])
                 obj._setFlushed()
 
-    @synchronised
     def flush_all(self):
         """
         This will attempt to flush all the jobs in the registry.
         It does this via ``_flush`` so the same conditions apply.
         """
         if self.hasStarted():
-            self._flush(self.values())
+            for _obj in self.values():
+                self._flush(_obj)
 
         if self.metadata and self.metadata.hasStarted():
             self.metadata.flush_all()

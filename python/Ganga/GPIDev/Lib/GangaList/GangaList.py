@@ -436,7 +436,7 @@ class GangaList(GangaObject):
 
     def append(self, obj, my_filter=True):
         if isType(obj, GangaList):
-            self._list.append(obj._list)
+            self._list.append(stripProxy(obj))
             return
         elem = self.strip_proxy(obj, my_filter)
         list_objs = (list, tuple)
@@ -565,7 +565,5 @@ class GangaList(GangaObject):
         returnable_str += "]"
         return returnable_str
 
-
-from Ganga.Runtime.GPIexport import exportToGPI
-exportToGPI('GangaList', GangaList, 'Classes')
+# export to GPI moved to the Runtime bootstrap
 
