@@ -212,13 +212,11 @@ def enableMonitoringService():
     from Ganga.Core import monitoring_component
     monitoring_component.alive = True
     monitoring_component.enableMonitoring()
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool
-    _makeThreadPool()
-    from Ganga.GPI import queues
-    queues._start_all_threads()
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool, ThreadPool
+    if not ThreadPool or len(ThreadPool) == 0:
+        _makeThreadPool()
     global servicesEnabled
     servicesEnabled = True
-
 
 def enableInternalServices():
     """
@@ -279,12 +277,7 @@ def bootstrap():
     #global servicesEnabled
     #servicesEnabled = True
 
-    # export to GPI
-    from Ganga.Runtime.GPIexport import exportToGPI
-    exportToGPI('reactivate', enableInternalServices, 'Functions')
-    exportToGPI('disableMonitoring', disableMonitoringService, 'Functions')
-    exportToGPI('enableMonitoring', enableMonitoringService, 'Functions')
-    exportToGPI('disableServices', disableInternalServices, 'Functions')
+    # export to GPI moved to Runtime bootstrap
 
     servicesEnabled = True
 

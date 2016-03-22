@@ -13,6 +13,7 @@ from Ganga.Core.exceptions import GangaException
 config = Ganga.Utility.Config.getConfig('Configuration')
 logger = getLogger()
 
+_runtime_interface = None
 
 def requiresAfsToken():
     # Were we executed from within an AFS folder
@@ -135,7 +136,8 @@ def bootstrap():
         if registry.name == "prep":
             registry.print_other_sessions()
         started_registries.append(registry.name)
-        retval.append((registry.name, registry.getProxy(), registry.doc))
+        proxied_registry_slice = registry.getProxy()
+        retval.append((registry.name, proxied_registry_slice, registry.doc))
 
     #import atexit
     #atexit.register(shutdown)
@@ -232,10 +234,16 @@ def flush_all():
             logger.debug("Err: %s" % str(err))
 
 
-def startUpRegistries():
+def startUpRegistries(my_interface=None):
     # Startup the registries and export them to the GPI, also add jobtree and shareref
-    from Ganga.Runtime.GPIexport import exportToGPI
+    from Ganga.Runtime.GPIexport import exportToInterface
+    if not my_interface:
+        import Ganga.GPI
+        my_interface = Ganga.GPI
     # import default runtime modules
+
+    global _runtime_interface
+    _runtime_interface = my_interface
 
     # bootstrap user-defined runtime modules and enable transient named
     # template registries
@@ -245,17 +253,17 @@ def startUpRegistries():
 
     for n, k, d in bootstrap():
         # make all repository proxies visible in GPI
-        exportToGPI(n, k, 'Objects', d)
+        exportToInterface(my_interface, n, k, 'Objects', d)
 
     # JobTree
     from Ganga.Core.GangaRepository import getRegistry
     jobtree = getRegistry("jobs").getJobTree()
-    exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
-    exportToGPI('TreeError', TreeError, 'Exceptions')
+    exportToInterface(my_interface, 'jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
+    exportToInterface(my_interface, 'TreeError', TreeError, 'Exceptions')
 
     # ShareRef
     shareref = getRegistry("prep").getShareRef()
-    exportToGPI('shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
+    exportToInterface(my_interface, 'shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
 
 def removeRegistries():
     ## Remove lingering Objects from the GPI and fully cleanup after the startup
@@ -266,14 +274,14 @@ def removeRegistries():
 
     from Ganga.Runtime import Repository_runtime
 
-    for name in Repository_runtime.bootstrap_reg_names():
-        if hasattr(Ganga.GPI, name):
-            delattr(Ganga.GPI, name)
+    to_remove = Repository_runtime.bootstrap_reg_names()
+    to_remove.append('jobtree')
+    to_remove.append('shareref')
 
-    if hasattr(Ganga.GPI, 'jobtree'):
-        ## Now remove the JobTree
-        delattr(Ganga.GPI, 'jobtree')
-    if hasattr(Ganga.GPI, 'shareref'):
-        ## Now remove the sharedir
-        delattr(Ganga.GPI, 'shareref')
+    global _runtime_interface
+    for name in to_remove:
+        if hasattr(_runtime_interface, name):
+            delattr(_runtime_interface, name)
+
+    _runtime_interface = None
 
