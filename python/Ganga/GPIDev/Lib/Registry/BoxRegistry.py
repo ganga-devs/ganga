@@ -42,6 +42,12 @@ class BoxRegistry(Registry):
     def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
         super(BoxRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
 
+        self.stored_slice = BoxRegistrySlice(self.name)
+        self.stored_slice.objects = self
+        self.stored_proxy = BoxRegistrySliceProxy(self.stored_slice)
+        self.stored_proxy.add = self.proxy_add
+        self.stored_proxy.rename = self.proxy_rename
+        self.stored_proxy.remove = self.proxy_remove
 
     def _setName(self, obj, name):
         nobj = self.metadata[self.find(obj)]
@@ -155,14 +161,11 @@ class BoxRegistry(Registry):
 
         self._remove(self._get_obj(obj_id))
 
+    def getSlice(self):
+        return self.stored_slice
+
     def getProxy(self):
-        slice = BoxRegistrySlice(self.name)
-        slice.objects = self
-        proxy = BoxRegistrySliceProxy(slice)
-        proxy.add = self.proxy_add
-        proxy.rename = self.proxy_rename
-        proxy.remove = self.proxy_remove
-        return proxy
+        return self.stored_proxy
 
     def startup(self):
         self._needs_metadata = True
