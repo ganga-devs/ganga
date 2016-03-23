@@ -36,25 +36,21 @@ class GaudiRunRTHandler(IRuntimeHandler):
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
 
-        prepared_exe = app.exe
-        if app.is_prepared is not None:
-            shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
-            if isinstance(app.exe, str):
-                # we have a file. is it an absolute path?
-                if os.path.abspath(app.exe) == app.exe:
-                    logger.info("Submitting a prepared application; taking any input files from %s" % (app.is_prepared.name))
-                    prepared_exe = File(os.path.join(os.path.join(
-                        shared_path, app.is_prepared.name), os.path.basename(File(app.exe).name)))
-                # else assume it's a system binary, so we don't need to
-                # transport anything to the sharedir
-                else:
-                    prepared_exe = app.exe
-            elif isType(app.exe, File):
-                logger.info("Submitting a prepared application; taking any input files from %s" % (app.is_prepared.name))
-                prepared_exe = File(os.path.join(
-                    os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
+        print("app: %s" % app)
+        print("appconf: %s" % appconfig)
+        print("appmasterconfig: %s" % str(appmasterconfig))
+        print("jobmasterconfig: %s" % str(jobmasterconfig))
 
-        c = StandardJobConfig(prepared_exe, stripProxy(app).getJobObject().inputsandbox, convertIntToStringArgs(app.args), stripProxy(app).getJobObject().outputsandbox)
+        prepared_files = app.get_prepared_files()
+
+        job_command = 'ls'
+        job_args = ['-l']
+        #input_sand = stripProxy(app).getJobObject().inputsandbox
+        output_sand = stripProxy(app).getJobObject().outputsandbox
+
+        input_sand = prepared_files
+
+        c = StandardJobConfig(job_command, input_sand, job_args, output_sand)
         return c
 
 allHandlers.add('GaudiRun', 'LSF', GaudiRunRTHandler)

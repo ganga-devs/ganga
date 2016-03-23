@@ -22,6 +22,9 @@ import time
 import subprocess
 
 logger = getLogger()
+cmake_sandbox_name = 'cmake-input-sandbox.tgz'
+build_target = 'ganga-input-sandbox'
+build_dest = 'input-sandbox.tgz'
 
 def _exec_cmd(cmd, cwdir):
     pipe = subprocess.Popen(cmd,
@@ -49,7 +52,8 @@ class GaudiRun(IPrepareApp):
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash':         SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=0,
             doc='MD5 hash of the string representation of applications preparable attributes'),
-        'arch':         SimpleItem(defvalue="x86_64-slc6-gcc49-opt", typelist=[str], doc='Arch the application was built for'),
+        'arch':         SimpleItem(defvalue="x86_64-slc6-gcc49-opt", typelist=['str'], doc='Arch the application was built for'),
+        'build_target': SimpleItem(defvalue='', typelist=['str'], doc='Target which is to be added to the prepared state of an application', hidden=1, preparable=1),
         })
     _category = 'applications'
     _name = 'GaudiRun'
@@ -78,9 +82,7 @@ class GaudiRun(IPrepareApp):
         setattr(self, 'is_prepared', ShareDir())
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
-        self.buildGangaTarget()
-        import sys
-        sys.exit(-1)
+        self.build_target = self.buildGangaTarget()
 
         try:
             # copy any 'preparable' objects into the shared directory
@@ -88,27 +90,7 @@ class GaudiRun(IPrepareApp):
             # add the newly created shared directory into the metadata system
             # if the app is associated with a persisted object
             self.checkPreparedHasParent(self)
-            # return
-            # [join(self.is_prepared.name,basename(send_to_sharedir))]
             self.post_prepare()
-
-            if isType(self.exe, File):
-                source = self.exe.name
-            elif isType(self.exe, str):
-                source = self.exe
-
-            if not exists(source):
-                logger.debug("Error copying exe: %s to input workspace" % str(source))
-            else:
-                try:
-                    parent_job = self.getJobObject()
-                except:
-                    parent_job = None
-                    logger.warning("Application not attached to a Job, changes will be lost on exit")
-                    pass
-                if parent_job is not None:
-                    input_dir = parent_job.getInputWorkspace(create=True).getPath()
-                    shutil.copy2(source, input_dir)
 
         except Exception as err:
             logger.debug("Err: %s" % str(err))
@@ -142,16 +124,18 @@ class GaudiRun(IPrepareApp):
         if rc != 0:
             logger.error("Failed to execute command: %s" % script_run)
             logger.error("Tried to execute command in: %s" % self.getDir())
+            logger.error("StdErr: %s" % str(stderr))
             raise GangaException("Failed to Execute command")
 
     def buildGangaTarget(self):
 
-        self.exec_cmd('make ganga-input-sandbox')
+        logger.info("Make-ing target '%s'" % build_target)
+        self.exec_cmd('make %s' % build_target)
 
         targetPath = join(self.getDir(), 'build.%s' % self.arch, 'ganga')
         if not isdir(targetPath):
             raise GangaException("Target Path: %s NOT found!" % targetPath)
-        sandbox_str = 'input-sandbox.tgz'
+        sandbox_str = '%s' % build_dest
         targetFile = join(targetPath, sandbox_str)
         if not isfile(targetFile):
             raise GangaException("Target File: %s NOT found!" % targetFile)
@@ -159,6 +143,10 @@ class GaudiRun(IPrepareApp):
         rename(targetFile, wantedTargetFile)
         if not isfile(wantedTargetFile):
             raise GangaException("Wanted Target File: %s NOT found" % wantedTargetFile)
+
+        logger.info("Built %s" % wantedTargetFile)
         return wantedTargetFile
 
+    def get_prepared_files(self):
+        return [File(self.build_target)]
 
