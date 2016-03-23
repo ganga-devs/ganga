@@ -21,7 +21,7 @@ def getPackedInputSandbox(tarpath, dest_dir='.'):
       'dest_dir': a destination directory
     """
 
-    with closing(tarfile.open(tarpath, "r:gz")) as tf:
+    with closing(tarfile.open(tarpath, "r:*")) as tf:
         tf.extractall(dest_dir)
 
 
@@ -77,7 +77,7 @@ def createOutputSandbox(output_patterns, filter, dest_dir):
             print("ERROR: (job ###JOBID### createOutput )", x)
 
 
-def createPackedOutputSandbox(output_patterns, filter, dest_dir):
+def createPackedOutputSandbox(output_patterns, _filter, dest_dir):
     """Get all files matching output patterns except filtered with filter and
        put them to the Sandbox tarball in destination directory.
        This function is called by wrapper script at the run time.
@@ -122,10 +122,17 @@ def createPackedOutputSandbox(output_patterns, filter, dest_dir):
             print("Fail!")
             raise e
 
-    outputlist = multi_glob(output_patterns, filter)
+    outputlist = multi_glob(output_patterns, _filter)
 
     if outputlist:
-        with closing(tarfile.open(tgzfile, "w:gz")) as tf:
+        if str(tgzfile).endswith('.gz') or str(tgzfile).endswith('.tgz'):
+            file_format = 'gz'
+        elif str(tgzfile).endswith('.bz2'):
+            file_format = 'bz2'
+        else:
+            file_format = ''
+        with closing(tarfile.open(tgzfile, "w:%s" % file_format)) as tf:
             tf.dereference = True
             for f in outputlist:
                 tf.add(f)
+

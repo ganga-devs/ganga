@@ -59,7 +59,8 @@ import tarfile
 # -- SINCE PYTHON 2.6 THERE WAS A SUBTLE CHANGE OF SEMANTICS IN THIS AREA
 
 for f in input_sandbox:
-    getPackedInputSandbox(f)
+    if str(f).endswith('.gz') or str(f).endswith('.bz2') or str(f).endswith('.tgz'):
+        getPackedInputSandbox(f)
 
 # -- END OF MOVED CODE BLOCK
 

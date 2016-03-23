@@ -56,7 +56,15 @@ def createPackedInputSandbox(sandbox_files, inws, name):
 
 #
 # Future release with tarball module
-    with open(tgzfile, 'w') as this_tarfile:
+
+    if str(tgzfile).endswith('.gz') or  str(tgzfile).endswith('.tgz'):
+        file_format = 'gz'
+    elif  str(tgzfile).endswith('.bz2'):
+        file_format = 'bz2'
+    else:
+        file_format = ''
+
+    with open(tgzfile, 'w:%s' % file_format) as this_tarfile:
         tf = tarfile.open(name=tgzfile, fileobj=this_tarfile, mode="w:gz")
         tf.dereference = True  # --not needed in Windows
 
@@ -136,12 +144,12 @@ def getPackedOutputSandbox(src_dir, dest_dir):
         import tarfile
 
         try:
-            tf = tarfile.open(tgzfile, "r:gz")
+            tf = tarfile.open(tgzfile, "r:*")
         except tarfile.ReadError:
             logger.warning('Sandbox is empty or unreadable')
             return
         else:
-            [tf.extract(tarinfo, dest_dir) for tarinfo in tf]
+            [tf.extractall(dest_dir, [tarinfo]) for tarinfo in tf]
             tf.close()
 
 

@@ -37,7 +37,8 @@ if not os.path.exists( '###WORKDIR###'):
     os.makedirs('###WORKDIR###')
 os.chdir( '###WORKDIR###' )
 for inFile in ###IN_BOX###:
-    getPackedInputSandbox( inFile )
+    if str(inFile).endswith('.gz') or str(inFile).endswith('.bz2') or str(inFile).endswith('.tgz'):
+        getPackedInputSandbox( inFile )
 
 ###WN_INPUTFILES###
 
