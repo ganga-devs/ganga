@@ -95,7 +95,7 @@ class TraceDumper(threading.Thread):
 
     def stop(self):
         self.stop_requested.set()
-        self.join()
+        self.join(timeout=0)
         try:
             os.unlink(self.path)
         except OSError:
