@@ -14,6 +14,7 @@ from __future__ import absolute_import
 import os
 import re
 import math
+import mimetypes
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Core import GangaException
