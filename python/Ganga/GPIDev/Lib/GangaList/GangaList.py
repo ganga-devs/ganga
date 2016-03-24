@@ -288,14 +288,21 @@ class GangaList(GangaObject):
             new_list._is_preparable = self._is_preparable
             return new_list
 
-    @staticmethod
-    def __getListToCompare(input_list):
-        if isType(input_list, GangaList):
-            return stripProxy(input_list)._list
-        elif isinstance(input_list, tuple):
-            return list(input_list)
-        else:
+    def __getListToCompare(self, input_list):
+
+        # if the arg isn't a list, just give it back
+        if not self.is_list(self.strip_proxy(input_list)):
             return input_list
+
+        # setup up the list correctly
+        tmp_list = input_list
+        if isType(input_list, GangaList):
+            tmp_list = stripProxy(input_list)._list
+        elif isinstance(input_list, tuple):
+            tmp_list = list(input_list)
+
+        # Now return the list after stripping the objects of proxies
+        return self.strip_proxy_list(tmp_list)
 
     def __eq__(self, obj_list):
         if obj_list is self:  # identity check
