@@ -47,10 +47,12 @@ if not _hasInit:
     logging.basicConfig(stream=sys.stdout)
     _hasIinit = True
 
+logger_name_limit = 35
+
 _formats = {
     'DEBUG': '%(asctime)s "%(filename)s":%(funcName)-10s at %(lineno)d, %(threadName)s: %(levelname)-8s %(message)s',
-    'VERBOSE': '%(asctime)s %(name)-35s: %(levelname)-8s %(message)s',
-    'NORMAL': '%(name)-35s: %(levelname)-8s %(message)s',
+    'VERBOSE': '%(asctime)s %(name)-' + str(logger_name_limit) + 's: %(levelname)-8s %(message)s',
+    'NORMAL': '%(name)-' + str(logger_name_limit) + 's: %(levelname)-8s %(message)s',
     'TERSE': 'Ganga: %(levelname)-8s %(message)s'
 }
 
@@ -141,8 +143,7 @@ def _make_file_handler(logfile, logfile_size):
     global file_handler
     if logfile:
         try:
-            new_file_handler = logging.handlers.RotatingFileHandler(
-                logfile, maxBytes=logfile_size, backupCount=1)
+            new_file_handler = logging.handlers.RotatingFileHandler(logfile, maxBytes=logfile_size, backupCount=1)
         except IOError as x:
             private_logger.error('Cannot open the log file: %s', str(x))
             return
@@ -162,7 +163,9 @@ def _make_file_handler(logfile, logfile_size):
                 # the logging system
                 pass
 
-        new_file_handler.setFormatter(logging.Formatter(_formats['VERBOSE']))
+        file_format = '%(asctime)s %(threadName)s %(pathname)-35s:%(lineno)d %(levelname)-8s %(message)s'
+
+        new_file_handler.setFormatter(logging.Formatter(file_format))
         main_logger.addHandler(new_file_handler)
         file_handler = new_file_handler
 
@@ -226,7 +229,6 @@ def post_config_handler(opt, value):
         logfile, logfile_size = config['_logfile'], config['_logfile_size']
 
     if opt in ['_logfile', '_logfile_size']:
-        global file_handler
         _make_file_handler(logfile, logfile_size)
         return
 
@@ -257,7 +259,6 @@ def _guess_module_logger_name(modulename, frame=None):
         print('using frame from the caller')
 
     global lookup_frame_names
-
 
     this__file__ = None
     if '__file__' in frame.f_globals.keys():
@@ -298,6 +299,11 @@ def _guess_module_logger_name(modulename, frame=None):
         if idx != -1:
             return s[:idx]
         return s
+    def get_tail(s, tail):
+        idx = s.rfind(tail)
+        if idx != -1:
+            return s[idx:]
+        return s
 
     # get rid of trailing .py  .pyc .pyo
     name = remove_tail(name, '.py')
@@ -308,6 +314,17 @@ def _guess_module_logger_name(modulename, frame=None):
     # return full module name
     if modulename == 1:
         return name
+
+    # limit name of module
+    this_tail = get_tail(name, '.')
+    if len(name) > logger_name_limit:
+        new_path = name[:logger_name_limit-3]
+        new_path = new_path + "--"
+        new_path = new_path + this_tail
+    else:
+        new_path = name
+
+    name = new_path
 
     if name == 'ganga':  # interactive IPython session
         name = "Ganga.GPI"
@@ -360,7 +377,7 @@ def _getLogger(name=None, modulename=None):
     if name is None:
         name = _guess_module_logger_name(modulename)
 
-    if name.split('.')[0] != 'Ganga' and name != 'Ganga':
+    if not name.startswith('Ganga'):
         name = 'Ganga.' + name
 
     if name in _allLoggers:
@@ -410,6 +427,7 @@ def bootstrap(internal=False, handler=None):
     # main_logger.propagate = 0 # do not propagate messages upwards...
     # main_logger.addHandler(default_handler)
     if file_handler:
+        ## File Handler set to be VERBOSE
         main_logger.addHandler(file_handler)
 
     opts = filter(lambda o: o.find('Ganga') == 0, config)
@@ -499,3 +517,4 @@ def log_unknown_exception():
 
     tb_logger.debug('Bare except clause triggered {0}:{1}'.format(caller.filename, caller.lineno))
     tb_logger.debug('Exception caught:', exc_info=True)
+
