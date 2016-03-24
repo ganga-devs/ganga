@@ -8,6 +8,7 @@ import os
 import re
 import time
 import uuid
+import sys
 
 import Ganga.Core.FileWorkspace
 import Ganga.GPIDev.MonitoringServices
