@@ -1,4 +1,9 @@
-from GangaUnitTest import GangaUnitTest
+from __future__ import absolute_import
+
+from Ganga.GPIDev.Base.Proxy import stripProxy
+
+from .GangaUnitTest import GangaUnitTest
+
 
 class TestJob(GangaUnitTest):
 
@@ -101,3 +106,14 @@ class TestJob(GangaUnitTest):
         self.assertTrue( isType(j2.splitter, GenericSplitter) )
         self.assertEqual( j2.splitter.attribute, "application.args" )
         self.assertEqual( j2.splitter.values, ['arg 1', 'arg 2', 'arg 3'])
+
+    def test_job_equality(self):
+        """Check that copies of Jobs are equal to each other"""
+        from Ganga.GPI import Job
+        j = Job()
+        j2 = j.copy()
+        j3 = Job(j)
+        assert j == j2
+        assert j2 == j3
+        assert stripProxy(j) == stripProxy(j2)
+        assert stripProxy(j2) == stripProxy(j3)

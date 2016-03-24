@@ -304,25 +304,20 @@ class Node(object):
         from Ganga.GPIDev.Base.VPrinter import VSummaryPrinter
         self.accept(VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection, interactive))
 
-    def __eq__(self, _node):
-
-        node = _node
-
+    def __eq__(self, node):
         if self is node:
-            return 1
-        if not node:  # or not self._schema.isEqual(node._schema):
-            return 0
+            return True
 
         if not isinstance(node, type(self)):
-            return 0
+            return False
 
         # Compare the schemas against each other
         if (hasattr(self, '_schema') and self._schema is None) and (hasattr(node, '_schema') and node._schema is None):
-            return 1  # If they're both `None`
+            return True  # If they're both `None`
         elif (hasattr(self, '_schema') and self._schema is None) or (hasattr(node, '_schema') and node._schema is None):
-            return 0  # If just one of them is `None`
+            return False  # If just one of them is `None`
         elif not self._schema.isEqual(node._schema):
-            return 0  # Both have _schema but do not match
+            return False  # Both have _schema but do not match
 
         # Check each schema item in turn and check for equality
         for (name, item) in self._schema.allItems():
@@ -330,9 +325,9 @@ class Node(object):
                 #logger.info("testing: %s::%s" % (str(_getName(self)), str(name)))
                 if getattr(self, name) != getattr(node, name):
                     #logger.info( "diff: %s::%s" % (str(_getName(self)), str(name)))
-                    return 0
+                    return False
 
-        return 1
+        return True
 
     def __ne__(self, node):
         return not self.__eq__(node)
