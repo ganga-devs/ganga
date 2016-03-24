@@ -1260,14 +1260,14 @@ try:
         if not lcg_file_download(vo, guid, os.path.join(wdir,f), timeout=int(timeout)):
             raise IOError('Download remote input %s:%s failed.' % (guid,f) )
         else:
-            if str(f).endswith('.gz') or str(f).endswith('.bz2') or str(f).endswith('.tgz'):
+            if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
                 getPackedInputSandbox(f)
 
     printInfo('Download inputsandbox from iocache passed.')
 
 #   unpack inputsandbox from wdir
     for f in input_sandbox['local']:
-        if str(f).endswith('.gz') or str(f).endswith('.bz2') or str(f).endswith('.tgz'):
+        if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
             getPackedInputSandbox(os.path.join(orig_wdir,f))
 
     printInfo('Unpack inputsandbox passed.')

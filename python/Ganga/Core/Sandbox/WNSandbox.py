@@ -9,6 +9,7 @@ OUTPUT_TARBALL_NAME = '_output_sandbox.tgz'
 PYTHON_DIR = '_python'
 
 import os
+import mimetypes
 
 import tarfile
 from contextlib import closing
@@ -125,9 +126,9 @@ def createPackedOutputSandbox(output_patterns, _filter, dest_dir):
     outputlist = multi_glob(output_patterns, _filter)
 
     if outputlist:
-        if str(tgzfile).endswith('.gz') or str(tgzfile).endswith('.tgz'):
+        if mimetypes.guess_type(tgzfile)[1] in ['gzip']:
             file_format = 'gz'
-        elif str(tgzfile).endswith('.bz2'):
+        elif mimetypes.guess_type(tgzfile)[1] in ['bzip2']:
             file_format = 'bz2'
         else:
             file_format = ''

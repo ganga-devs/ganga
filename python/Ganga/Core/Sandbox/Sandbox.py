@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import os
 import sys
+import mimetypes
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=True)
 
@@ -57,9 +58,9 @@ def createPackedInputSandbox(sandbox_files, inws, name):
 #
 # Future release with tarball module
 
-    if str(tgzfile).endswith('.gz') or  str(tgzfile).endswith('.tgz'):
+    if mimetypes.guess_type(tgzfile)[1] in ['gzip']:
         file_format = 'gz'
-    elif  str(tgzfile).endswith('.bz2'):
+    elif mimetypes.guess_type(tgzfile)[1] in ['bzip2']:
         file_format = 'bz2'
     else:
         file_format = ''
