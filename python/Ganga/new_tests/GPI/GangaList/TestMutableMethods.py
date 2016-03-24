@@ -1,19 +1,21 @@
-from GangaTest.Framework.tests import GangaGPITestCase
-from Ganga.GPIDev.Base.Proxy import isProxy, isType, TypeMismatchError
-from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
-from Ganga.GPIDev.Lib.GangaList.GangaList import decorateListEntries
-from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-
 import random
 import string
 import time
 
+from ..GangaUnitTest import GangaUnitTest
+from Ganga.GPIDev.Base.Proxy import getProxyClass, isProxy, isType, TypeMismatchError
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
+from Ganga.GPIDev.Lib.GangaList.GangaList import decorateListEntries
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
+from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError
 from Ganga.Utility.logging import getLogger
+from .TFile import TFile
+TFile = getProxyClass(TFile)
+from GListApp import GListApp
+GListApp = getProxyClass(GListApp)
+GangaList = getProxyClass(GangaList)
 
-GangaList = GangaList._proxyClass
 logger = getLogger(modulename=True)
 
 g_random = random
@@ -27,12 +29,19 @@ def completeJob(job):
     job._impl.updateStatus('completed')
 
 
-class TestMutableMethods(GangaGPITestCase):
+class TestMutableMethods(GangaUnitTest):
 
-    def __init__(self):
+    def setUp(self):
+        """Make sure that the Job object isn't destroyed between tests"""
+        super(TestMutableMethods, self).setUp()
+        from Ganga.Utility.Config import setConfigOption
+        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
-        self.test_job = Job()
+        from Ganga.GPI import Job, TestSubmitter
 
+        self.test_job = Job(application=GListApp(gListComp=[self._makeRandomTFile() for _ in range(10)],
+                                         gList=[self._makeRandomString() for _ in range(10)],
+                                         seq=range(10)),backend=TestSubmitter())
     def _makeRandomString(self):
         global g_random
         str_len = g_random.randint(3, 10)
@@ -45,14 +54,6 @@ class TestMutableMethods(GangaGPITestCase):
         name = self._makeRandomString()
         subdir = self._makeRandomString()
         return TFile(name=name, subdir=subdir)
-
-    def setUp(self):
-
-        self.test_job = Job(application=GListApp(gListComp=[self._makeRandomTFile() for _ in range(10)],
-                                                 gList=[
-                                                     self._makeRandomString() for _ in range(10)],
-                                                 seq=range(10)),
-                            backend=TestSubmitter())
 
     def testApp(self):
 
@@ -75,6 +76,8 @@ class TestMutableMethods(GangaGPITestCase):
         assert isType(self.test_job.application.gListComp, gangaList)
 
     def testGetDefaults(self):
+
+        from Ganga.GPI import Job, TestSubmitter
 
         test_job = Job(application=GListApp(), backend=TestSubmitter())
 
@@ -165,6 +168,7 @@ class TestMutableMethods(GangaGPITestCase):
             pass
 
     def testAppendWrongComponentItem(self):
+        from Ganga.GPI import Executable
 
         assert len(
             self.test_job.application.gListComp) == 10, 'List is as we expect'
@@ -206,6 +210,7 @@ class TestMutableMethods(GangaGPITestCase):
         assert self.test_job.application.no_summary == strs, 'summary_sequence_maxlen == -1'
 
     def testJobPrint(self):
+        from Ganga.GPI import full_print
 
         # just want to check there is no error here. Its hard to test this
         # automatically
@@ -219,6 +224,7 @@ class TestMutableMethods(GangaGPITestCase):
         # sequences
         print(str(self.test_job.application.bound_print_comp))
         assert str(self.test_job.application.bound_print_comp) == '_print_summary_bound_comp'
+        print(str(self.test_job.application.bound_print_simple))
         assert str(self.test_job.application.bound_print_simple) == '_print_summary_bound_simple'
 
     def testBoundMethodPrintsNonSequence(self):
@@ -230,6 +236,7 @@ class TestMutableMethods(GangaGPITestCase):
 
     def testSubjobsSubmit(self):
 
+        from Ganga.GPI import Job, Executable, TestSubmitter, ArgSplitter
         j = Job(application=Executable(), backend=TestSubmitter())
         j.splitter = ArgSplitter(args=[['A'], ['B'], ['C']])
 
@@ -243,7 +250,7 @@ class TestMutableMethods(GangaGPITestCase):
 
     def testShortCuts(self):
         """Make sure that shortcuts are called"""
-
+        from Ganga.GPI import Job, LocalFile
         j = Job()
 
         from Ganga.GPIDev.Lib.File import File as gFile
@@ -335,6 +342,8 @@ class TestMutableMethods(GangaGPITestCase):
         assert eval(g_string) == g, 'String should correctly eval'
 
     def testFullPrintingGPIObjectList(self):
+
+        from Ganga.GPI import full_print
 
         g = GangaList()
         for _ in range(10):

@@ -1,3 +1,0 @@
-#prints a application
-a = TestApplication()
-full_print(a)

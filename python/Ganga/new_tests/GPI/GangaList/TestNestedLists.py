@@ -1,11 +1,11 @@
-from GangaTest.Framework.tests import GangaGPITestCase
+from ..GangaUnitTest import GangaUnitTest
 from Ganga.GPIDev.Base.Proxy import addProxy, TypeMismatchError
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 import random
 import string
 
 
-class TestNestedLists(GangaGPITestCase):
+class TestNestedLists(GangaUnitTest):
 
     def _makeRandomString(self):
         str_len = random.randint(3, 10)
@@ -15,19 +15,16 @@ class TestNestedLists(GangaGPITestCase):
         return s
 
     def _makeRandomTFile(self):
+        from Ganga.GPI import File
         name = self._makeRandomString()
         subdir = self._makeRandomString()
         return File(name=name, subdir=subdir)
 
-    def __init__(self):
-
-        self.filelist = []
-        self.gangalist = None
-
     def setUp(self):
-
+        super(TestNestedLists, self).setUp()
         # make a list of lists containing GangaObjects
         self.filelist = []
+        self.gangalist = None
         for _ in range(10):
             self.filelist.append([self._makeRandomTFile() for _ in range(3)])
 
@@ -35,58 +32,33 @@ class TestNestedLists(GangaGPITestCase):
         self.gangalist = addProxy(makeGangaList([]))
 
     def testAdd(self):
-
-        try:
-            self.gangalist + self.filelist
-            assert False, 'Exception should be thrown'
-        except TypeMismatchError as e:
-            pass
+        new_list = self.gangalist + self.filelist
 
     def testSetItem(self):
 
         for _ in range(10):
             self.gangalist.append(self._makeRandomTFile())
 
-        try:
-            self.gangalist[0] = self.filelist
-            assert False, 'Exception should be thrown'
-        except TypeMismatchError as e:
-            pass
+        self.gangalist[0] = self.filelist
+        assert self.gangalist[0] == self.filelist
 
     def testSetSlice(self):
 
         for _ in range(10):
             self.gangalist.append(self._makeRandomTFile())
 
-        try:
-            self.gangalist[0:4] = self.filelist[0:4]
-            assert False, 'Exception should be thrown'
-        except TypeMismatchError as e:
-            pass
+        self.gangalist[0:4] = self.filelist[0:4]
+        assert self.gangalist[0:4] == self.filelist[0:4]
 
     def testAppend(self):
-
-        try:
-            self.gangalist.append(self.filelist)
-            assert False, 'Exception should be thrown'
-        except TypeMismatchError as e:
-            pass
+        self.gangalist.append(self.filelist)
 
     def testExtend(self):
-
-        try:
-            self.gangalist.extend(self.filelist)
-            assert False, 'Exception should be thrown'
-        except TypeMismatchError as e:
-            pass
+        self.gangalist.extend(self.filelist)
 
     def testInsert(self):
 
         for _ in range(10):
             self.gangalist.append(self._makeRandomTFile())
 
-        try:
-            self.gangalist.insert(5, self.filelist)
-            assert False, 'Exception should be thrown'
-        except TypeMismatchError as e:
-            pass
+        self.gangalist.insert(5, self.filelist)
