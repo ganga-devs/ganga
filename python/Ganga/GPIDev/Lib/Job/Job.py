@@ -628,7 +628,7 @@ class Job(GangaObject):
         except Exception as x:
             self.status = saved_status
             log_user_exception()
-            raise JobStatusError(x)
+            raise JobStatusError(x), None, sys.exc_info()[2]
         # useful for debugging
         #finally:
         #    pass
@@ -1652,7 +1652,7 @@ class Job(GangaObject):
                 # revert to the new status
                 logger.error('%s ... reverting job %s to the new status', str(err), self.getFQID('.'))
                 self.updateStatus('new')
-                raise JobError("Error: %s" % str(err))
+                raise JobError("Error: %s" % str(err)), None, sys.exc_info()[2]
 
         # This appears to be done by the backend now in a way that handles sub-jobs,
         # in the case of a master job however we need to still perform this
