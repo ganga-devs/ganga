@@ -47,8 +47,7 @@ class RegistrySlice(object):
         """
         """
         if not isinstance(keep_going, bool):
-            raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
-                self.name, keep_going, method))
+            raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (self.name, keep_going, method))
         result = []
         id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
         for _id in id_list:
@@ -326,7 +325,7 @@ class RegistrySlice(object):
             return addProxy(self.objects[this_id])
         except KeyError as err:
             logger.debug('Object id=%d not found' % this_id)
-            logger.deubg("%s" % str(err))
+            logger.debug("%s" % str(err))
             raise RegistryKeyError('Object id=%d not found' % this_id)
 
     def __iter__(self):
@@ -415,7 +414,7 @@ class RegistrySlice(object):
             if not val and not item in self._display_columns_show_empty:
                 val = ""
         except AttributeError as err:
-            logger.debug("AttibErr: %s" % str(err))
+            logger.debug("AttribErr: %s" % str(err))
             val = ""
         finally:
             pass

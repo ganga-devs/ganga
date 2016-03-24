@@ -184,7 +184,7 @@ class Job(GangaObject):
 
     _schema = Schema(Version(1, 6), {'inputsandbox': FileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
                                      'outputsandbox': SimpleItem(defvalue=[], typelist=['str'], sequence=1, copyable=_outputfieldCopyable(), doc="list of filenames or patterns shipped from the worker node"),
-                                     'info': ComponentItem('jobinfos', defvalue=None, doc='JobInfo '),
+                                     'info': ComponentItem('jobinfos', defvalue=JobInfo(), doc='JobInfo '),
                                      'comment': SimpleItem('', protected=0, changable_at_resubmit=1, doc='comment of the job'),
                                      'time': ComponentItem('jobtime', defvalue=JobTime(), protected=1, comparable=0, doc='provides timestamps for status transitions'),
                                      'application': ComponentItem('applications', doc='specification of the application to be executed'),

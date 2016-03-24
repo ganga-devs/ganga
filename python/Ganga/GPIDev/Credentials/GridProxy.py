@@ -206,7 +206,7 @@ class GridProxy(ICredential):
         Return value: None
         """
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-        if "ICommandSet" == self.command._name or isType(self.command, GangaList):
+        if isinstance(self.command, str) or "ICommandSet" == self.command._name or isType(self.command, GangaList):
             if self.voms:
                 self.command = self.vomsCommand
             else:

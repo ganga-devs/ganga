@@ -1,6 +1,7 @@
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 import re
 import os
 
@@ -11,9 +12,9 @@ class TaskLocalCopy(Dataset):
 
     _schema = Schema(Version(1, 0), {
         'local_location': SimpleItem(defvalue="", doc="Local location to copy files to"),
-        'include_file_mask': SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='List of Regular expressions of which files to include in copy'),
-        'exclude_file_mask': SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='List of Regular expressions of which files to exclude from copy'),
-        'files': SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='List of successfully downloaded files'),
+        'include_file_mask': SimpleItem(defvalue=GangaList(), typelist=['str'], sequence=1, doc='List of Regular expressions of which files to include in copy'),
+        'exclude_file_mask': SimpleItem(defvalue=GangaList(), typelist=['str'], sequence=1, doc='List of Regular expressions of which files to exclude from copy'),
+        'files': SimpleItem(defvalue=GangaList(), typelist=['str'], sequence=1, doc='List of successfully downloaded files'),
     })
 
     _category = 'datasets'

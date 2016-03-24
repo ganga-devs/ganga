@@ -12,6 +12,7 @@ import time
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
 import sys
 import traceback
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 def formatTraceback():
    "Helper function to printout a traceback as a string"
@@ -25,20 +26,20 @@ class IUnit(GangaObject):
         'inputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Input dataset'),
         'outputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Output dataset'),
         'active': SimpleItem(defvalue=False, hidden=1, doc='Is this unit active'),
-        'active_job_ids': SimpleItem(defvalue=[], typelist=['int'], sequence=1, hidden=1, doc='Active job ids associated with this unit'),
-        'prev_job_ids': SimpleItem(defvalue=[], typelist=['int'], sequence=1,  hidden=1, doc='Previous job ids associated with this unit'),
+        'active_job_ids': SimpleItem(defvalue=GangaList(), typelist=['int'], sequence=1, hidden=1, doc='Active job ids associated with this unit'),
+        'prev_job_ids': SimpleItem(defvalue=GangaList(), typelist=['int'], sequence=1,  hidden=1, doc='Previous job ids associated with this unit'),
         'minor_resub_count': SimpleItem(defvalue=0, hidden=1, doc='Number of minor resubmits'),
         'major_resub_count': SimpleItem(defvalue=0, hidden=1, doc='Number of major resubmits'),
-        'req_units': SimpleItem(defvalue=[], typelist=['str'], sequence=1, hidden=1, doc='List of units that must complete for this to start (format TRF_ID:UNIT_ID)'),
+        'req_units': SimpleItem(defvalue=GangaList(), typelist=['str'], sequence=1, hidden=1, doc='List of units that must complete for this to start (format TRF_ID:UNIT_ID)'),
         'start_time': SimpleItem(defvalue=0, hidden=1, doc='Start time for this unit. Allows a delay to be put in'),
         'copy_output': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, doc='The dataset to copy the output of this unit to, e.g. Grid dataset -> Local Dataset'),
         'merger': ComponentItem('mergers', defvalue=None, load_default=0, optional=1, doc='Merger to be run after this unit completes.'),
         'splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter used on each unit of the Transform.'),
         'postprocessors': ComponentItem('postprocessor', defvalue=None, doc='list of postprocessors to run after job has finished'),
-        'inputsandbox': FileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
-        'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
-        'outputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
-        'info' : SimpleItem(defvalue=[],typelist=['str'],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
+        'inputsandbox': FileItem(defvalue=GangaList(), typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
+        'inputfiles': GangaFileItem(defvalue=GangaList(), typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
+        'outputfiles': GangaFileItem(defvalue=GangaList(), typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
+        'info' : SimpleItem(defvalue=GangaList(),typelist=['str'],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
         'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Unit', typelist=["int"]),
     })
 
@@ -104,7 +105,8 @@ class IUnit(GangaObject):
             return False
 
         # if we're using threads, check the max number
-        if self._getParent().submit_with_threads and GPI.queues.totalNumUserThreads() > self._getParent().max_active_threads:
+        from Ganga.GPI import queues
+        if self._getParent().submit_with_threads and queues.totalNumUserThreads() > self._getParent().max_active_threads:
             return False
 
         return True
@@ -116,7 +118,8 @@ class IUnit(GangaObject):
         if len(self.active_job_ids) == 0:
             return False
         else:
-            job = GPI.jobs(self.active_job_ids[0])
+            from Ganga.GPI import jobs
+            job = jobs(self.active_job_ids[0])
             if job.status in ["failed", "killed"]:
                 return True
 
@@ -160,7 +163,8 @@ class IUnit(GangaObject):
             trf = None
         if trf is not None and trf.submit_with_threads:
             addInfoString( self, "Attempting job re-submission with queues..." )
-            GPI.queues.add(job.resubmit)
+            from Ganga.GPI import queues
+            queues.add(job.resubmit)
         else:
             addInfoString( self, "Attempting job re-submission..." )
             job.resubmit()
@@ -196,7 +200,8 @@ class IUnit(GangaObject):
             try:
                 if trf.submit_with_threads:
                     addInfoString( self, "Attempting job submission with queues..." )
-                    GPI.queues.add(j.submit)
+                    from Ganga.GPI import queues
+                    queues.add(j.submit)
                 else:
                     addInfoString( self, "Attempting job submission..." )
                     j.submit()
@@ -226,7 +231,8 @@ class IUnit(GangaObject):
             # we have an active job so see if this job is OK and resubmit if
             # not
             try:
-                job = GPI.jobs(jid)
+                from Ganga.GPI import jobs
+                job = jobs(jid)
             except Exception as err:
                 logger.debug("Update2 Err: %s" % str(err))
                 logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %
@@ -345,10 +351,11 @@ class IUnit(GangaObject):
         tot_active = 0
         active_states = ['submitted', 'running']
 
+        from Ganga.GPI import jobs
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = jobs(jid)
             except Exception as err:
                 logger.debug("n_active Err: %s" % str(err))
                 task = self._getParent()._getParent()
@@ -382,10 +389,11 @@ class IUnit(GangaObject):
 
     def n_status(self, status):
         tot_active = 0
+        from Ganga.GPI import jobs
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = jobs(jid)
             except Exception as err:
                 logger.debug("n_status Err: %s" % str(err))
                 task = self._getParent()._getParent()
@@ -420,10 +428,11 @@ class IUnit(GangaObject):
 
     def n_all(self):
         total = 0
+        from Ganga.GPI import jobs
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = jobs(jid)
             except Exception as err:
                 logger.debug("n_all Err: %s" % str(err))
                 task = self._getParent()._getParent()
