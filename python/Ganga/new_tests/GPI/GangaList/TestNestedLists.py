@@ -1,5 +1,5 @@
 from ..GangaUnitTest import GangaUnitTest
-from Ganga.GPIDev.Base.Proxy import addProxy, TypeMismatchError
+from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 import random
 import string
@@ -31,10 +31,12 @@ class TestNestedLists(GangaUnitTest):
         # make an empty GangaList
         self.gangalist = addProxy(makeGangaList([]))
 
-    def testAdd(self):
+    def test_a_Add(self):
         new_list = self.gangalist + self.filelist
 
-    def testSetItem(self):
+        assert len(new_list), len(self.gangalist) + len(self.filelist)
+
+    def test_b_SetItem(self):
 
         for _ in range(10):
             self.gangalist.append(self._makeRandomTFile())
@@ -42,7 +44,7 @@ class TestNestedLists(GangaUnitTest):
         self.gangalist[0] = self.filelist
         assert self.gangalist[0] == self.filelist
 
-    def testSetSlice(self):
+    def test_c_SetSlice(self):
 
         for _ in range(10):
             self.gangalist.append(self._makeRandomTFile())
@@ -50,15 +52,25 @@ class TestNestedLists(GangaUnitTest):
         self.gangalist[0:4] = self.filelist[0:4]
         assert self.gangalist[0:4] == self.filelist[0:4]
 
-    def testAppend(self):
+    def test_d_Append(self):
+        gl_len = len(self.gangalist)
         self.gangalist.append(self.filelist)
 
-    def testExtend(self):
+        assert len(self.gangalist), gl_len + len(self.filelist)
+
+    def test_e_Extend(self):
+        gl_len = len(self.gangalist)
         self.gangalist.extend(self.filelist)
 
-    def testInsert(self):
+        assert len(self.gangalist), gl_len + len(self.filelist)
 
+
+    def test_f_Insert(self):
+
+        gl_len = len(self.gangalist)
         for _ in range(10):
             self.gangalist.append(self._makeRandomTFile())
 
         self.gangalist.insert(5, self.filelist)
+
+        assert len(self.gangalist), gl_len + 10 + len(self.filelist)

@@ -3,18 +3,11 @@ import string
 import time
 
 from ..GangaUnitTest import GangaUnitTest
-from Ganga.GPIDev.Base.Proxy import getProxyClass, isProxy, isType, TypeMismatchError
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
+from Ganga.GPIDev.Base.Proxy import isProxy, isType, TypeMismatchError
 from Ganga.GPIDev.Lib.GangaList.GangaList import decorateListEntries
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError
 from Ganga.Utility.logging import getLogger
-from .TFile import TFile
-TFile = getProxyClass(TFile)
-from GListApp import GListApp
-GListApp = getProxyClass(GListApp)
-GangaList = getProxyClass(GangaList)
 
 logger = getLogger(modulename=True)
 
@@ -37,7 +30,7 @@ class TestMutableMethods(GangaUnitTest):
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
-        from Ganga.GPI import Job, TestSubmitter
+        from Ganga.GPI import Job, TestSubmitter, GListApp
 
         self.test_job = Job(application=GListApp(gListComp=[self._makeRandomTFile() for _ in range(10)],
                                          gList=[self._makeRandomString() for _ in range(10)],
@@ -51,6 +44,7 @@ class TestMutableMethods(GangaUnitTest):
         return s
 
     def _makeRandomTFile(self):
+        from Ganga.GPI import TFile
         name = self._makeRandomString()
         subdir = self._makeRandomString()
         return TFile(name=name, subdir=subdir)
@@ -66,6 +60,7 @@ class TestMutableMethods(GangaUnitTest):
             assert not isProxy(s), 'Items in list must not be proxies'
 
     def testGet(self):
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
 
         assert isProxy(self.test_job.application.seq)
         assert isProxy(self.test_job.application.gList)
@@ -77,7 +72,8 @@ class TestMutableMethods(GangaUnitTest):
 
     def testGetDefaults(self):
 
-        from Ganga.GPI import Job, TestSubmitter
+        from Ganga.GPI import Job, TestSubmitter, GListApp
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
 
         test_job = Job(application=GListApp(), backend=TestSubmitter())
 
@@ -91,6 +87,7 @@ class TestMutableMethods(GangaUnitTest):
 
     def testSetComponent(self):
         """Sets a list of proxies and makes sure we get a GangaList"""
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
 
         # component types
         r = [self._makeRandomTFile() for _ in range(15)]
@@ -110,6 +107,7 @@ class TestMutableMethods(GangaUnitTest):
 
     def testSetSimple(self):
         """Sets a list of proxies and makes sure we get a GangaList"""
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
 
         # simple types
         s = [self._makeRandomString() for _ in range(15)]
@@ -237,6 +235,8 @@ class TestMutableMethods(GangaUnitTest):
     def testSubjobsSubmit(self):
 
         from Ganga.GPI import Job, Executable, TestSubmitter, ArgSplitter
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
+
         j = Job(application=Executable(), backend=TestSubmitter())
         j.splitter = ArgSplitter(args=[['A'], ['B'], ['C']])
 
@@ -319,6 +319,7 @@ class TestMutableMethods(GangaUnitTest):
                 pass
 
     def testPrintingPlainList(self):
+        from Ganga.GPI import GangaList
 
         g = GangaList()
         l = []
@@ -333,6 +334,7 @@ class TestMutableMethods(GangaUnitTest):
         assert str(l) == str(g), 'Normal Python objects should print the same'
 
     def testPrintingGPIObjectList(self):
+        from Ganga.GPI import GangaList, TFile
 
         g = GangaList()
         for _ in range(10):
@@ -343,7 +345,7 @@ class TestMutableMethods(GangaUnitTest):
 
     def testFullPrintingGPIObjectList(self):
 
-        from Ganga.GPI import full_print
+        from Ganga.GPI import full_print, GangaList
 
         g = GangaList()
         for _ in range(10):

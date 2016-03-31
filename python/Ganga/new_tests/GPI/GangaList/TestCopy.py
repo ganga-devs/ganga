@@ -3,13 +3,10 @@ import copy
 import random
 import string
 
-from Ganga.GPIDev.Base.Proxy import getProxyClass
+from ..GangaUnitTest import GangaUnitTest
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from .TFile import TFile
-TFile = getProxyClass(TFile)
 
-
-class TestCopy(unittest.TestCase):
+class TestCopy(GangaUnitTest):
 
     def _makeRandomString(self):
         str_len = random.randint(3, 10)
@@ -19,6 +16,7 @@ class TestCopy(unittest.TestCase):
         return s
 
     def _makeRandomTFile(self):
+        from Ganga.GPI import TFile
         name = self._makeRandomString()
         subdir = self._makeRandomString()
         return TFile(name=name, subdir=subdir)
