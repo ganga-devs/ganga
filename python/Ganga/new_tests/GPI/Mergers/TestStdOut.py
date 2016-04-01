@@ -1,23 +1,21 @@
-##########################################################################
-# Ganga Project. http://cern.ch/ganga
-#
-# $Id: TestStdOut.py,v 1.1 2008-07-17 16:41:12 moscicki Exp $
-##########################################################################
-from __future__ import division
-from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed, write_file
+from __future__ import division, absolute_import
+
 import os
 import tempfile
 
+from ..GangaUnitTest import GangaUnitTest
 
-class TestStdOut(GangaGPITestCase):
 
-    def __init__(self):
+class TestStdOut(GangaUnitTest):
+    def setUp(self):
+        super(TestStdOut, self).setUp()
+        from Ganga.GPI import Job, Executable, Local, File, LocalFile, config
+        from GangaTest.Framework.utils import write_file
+
+        config['Mergers']['associate'] = {'stdout': 'RootMerger'}
 
         self.jobslice = []
         self.file_name = 'id_echo.sh'
-
-    def setUp(self):
 
         for i in range(2):
 
@@ -42,15 +40,15 @@ class TestStdOut(GangaGPITestCase):
             self.jobslice.append(j)
 
     def runJobSlice(self):
+        from GangaTest.Framework.utils import sleep_until_completed
 
         for j in self.jobslice:
             j.submit()
-
-            if not sleep_until_completed(j):
-                assert False, 'Test timed out'
+            assert sleep_until_completed(j, timeout=60), 'Timeout on job submission: job is still not finished'
             assert j.status == 'completed'
 
     def testCanSetStdOutMerge(self):
+        from Ganga.GPI import SmartMerger
 
         from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 
@@ -62,6 +60,6 @@ class TestStdOut(GangaGPITestCase):
         sm = SmartMerger()
         sm.files = ['stdout']
         try:
-            assert not sm.merge(self.jobslice, tmpdir), 'Merge should fail'
+            assert not sm.merge(self.jobslice, tmpdir)
         except PostProcessException:
             pass

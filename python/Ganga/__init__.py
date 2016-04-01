@@ -28,7 +28,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.1.16 $'
+_gangaVersion = '$Name: 6.1.18 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -161,6 +161,8 @@ conf_config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued b
 conf_config.addOption('UsageMonitoringMSG', True,
                  "enable usage monitoring through MSG server defined in MSGMS configuration")
 conf_config.addOption('Batch', 'LSF', 'default batch system')
+
+conf_config.addOption('AutoStartReg', True, 'AutoStart the registries, needed to access any jobs in registry therefore needs to be True for 99.999% of use cases')
 
 # ------------------------------------------------
 # IPython
@@ -837,3 +839,7 @@ Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 
 """, is_open=True)
 
+# ------------------------------------------------
+# Registry Dirty Monitoring Services (not related to actual Job Monitoring)
+reg_config = makeConfig('Registry','')
+reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')

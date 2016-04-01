@@ -26,9 +26,11 @@ import string
 import sys
 import time
 import re
+import atexit
 
 from Ganga import _gangaVersion, _gangaPythonPath
 from Ganga.Utility.Config.Config import getConfig
+from Ganga.Utility import stacktracer
 import Ganga.Runtime
 
 def new_version_format_to_old(version):
@@ -101,6 +103,83 @@ if DEBUGFILES or MONITOR_FILES:
             if f not in safeFiles:
                 openfiles[f].close()
 
+
+def manualExportToGPI(my_interface=None):
+    """ Additionally populate the GPI elements which are required
+        This is here rather than in utility due to having knowledge of what is inside Ganga
+        whilst Utility should not have too much (or any) of this
+    """
+
+    if not my_interface:
+        import Ganga.GPI
+        my_interface = Ganga.GPI
+
+    from Ganga.Runtime.GPIexport import exportToInterface
+
+    from Ganga.GPIDev.Base import ProtectedAttributeError, ReadOnlyObjectError, GangaAttributeError
+    from Ganga.GPIDev.Lib.Job.Job import JobError
+
+    exportToInterface(my_interface, 'GangaAttributeError', GangaAttributeError, 'Exceptions')
+    exportToInterface(my_interface, 'ProtectedAttributeError', ProtectedAttributeError, 'Exceptions')
+    exportToInterface(my_interface, 'ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
+    exportToInterface(my_interface, 'JobError', JobError, 'Exceptions')
+
+    from Ganga.Runtime.GPIFunctions import license, typename, categoryname, plugins, convert_merger_to_postprocessor
+
+    exportToInterface(my_interface, 'license', license, 'Functions')
+    # FIXME:
+    #from Ganga.Runtime.GPIFunctions import applications, backends, list_plugins
+    #exportToInterface(my_interface, 'applications', applications, 'Functions)
+    #exportToInterface(my_interface, 'backends', backends, 'Functions')
+    #exportToInterface(my_interface, 'list_plugins', list_plugins, 'Functions')
+    # FIXME: END DEPRECATED
+
+    exportToInterface(my_interface, 'typename', typename, 'Functions')
+    exportToInterface(my_interface, 'categoryname', categoryname, 'Functions')
+    exportToInterface(my_interface, 'plugins', plugins, 'Functions')
+    exportToInterface(my_interface, 'convert_merger_to_postprocessor', convert_merger_to_postprocessor, 'Functions')
+
+    from Ganga.GPIDev.Persistency import export, load
+    exportToInterface(my_interface, 'load', load, 'Functions')
+    exportToInterface(my_interface, 'export', export, 'Functions')
+
+
+
+    from Ganga.GPIDev.Credentials import getCredential
+    # only the available credentials are exported
+    # At this point we expect to have the GridProxy already created
+    # by one of the Grid plugins (LCG/NG/etc) so we search for it in creds
+    # cache
+    credential = getCredential(name='GridProxy', create=False)
+    if credential:
+        exportToInterface(my_interface, 'gridProxy', credential, 'Objects', 'Grid proxy management object.')
+
+    credential2 = getCredential('AfsToken')
+    if credential2:
+        exportToInterface(my_interface, 'afsToken', credential2, 'Objects', 'AFS token management object.')
+
+    # export full_print
+    from Ganga.GPIDev.Base.VPrinter import full_print
+    exportToInterface(my_interface, 'full_print', full_print, 'Functions')
+
+    import Ganga.GPIDev.Lib.Config
+    exportToInterface(my_interface, 'config', Ganga.GPIDev.Lib.Config.config, 'Objects', 'access to Ganga configuration')
+    exportToInterface(my_interface, 'ConfigError', Ganga.GPIDev.Lib.Config.ConfigError, 'Exceptions')
+
+    from Ganga.Utility.feedback_report import report
+    exportToInterface(my_interface, 'report', report, 'Functions')
+
+    from Ganga.Core.InternalServices.Coordinator import enableInternalServices, disableMonitoringService, enableMonitoringService, disableInternalServices
+    exportToInterface(my_interface, 'reactivate', enableInternalServices, 'Functions')
+    exportToInterface(my_interface, 'disableMonitoring', disableMonitoringService, 'Functions')
+    exportToInterface(my_interface, 'enableMonitoring', enableMonitoringService, 'Functions')
+    exportToInterface(my_interface, 'disableServices', disableInternalServices, 'Functions')
+
+    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+    exportToInterface(my_interface, 'GangaList', GangaList, 'Classes')
+
+    from Ganga.GPIDev.Lib.Registry.JobRegistry import jobSlice
+    exportToInterface(my_interface, "jobSlice", jobSlice, "Functions")
 
 class GangaProgram(object):
 
@@ -585,7 +664,9 @@ under certain conditions; type license() for details.
         import Ganga.Utility.util
         import inspect
         GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
-        self.options.config_path = Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath, self.options.config_path))
+
+        if self.options.config_path:
+            self.options.config_path = Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath, self.options.config_path))
 
         # check if the specified config options are different from the defaults
         # and set session values appropriately
@@ -839,243 +920,38 @@ under certain conditions; type license() for details.
         import Ganga.Utility.Config
         config = Ganga.Utility.Config.getConfig('Configuration')
 
-        from Ganga.Core import GangaException
-        from Ganga.Utility.Runtime import allRuntimes
+        from Ganga.Utility.Runtime import loadPlugins, autoPopulateGPI
+        loadPlugins(Ganga.GPI)
+        autoPopulateGPI()
+        from Ganga.Utility.Runtime import setPluginDefaults
+        setPluginDefaults()
+
+        # Start tracking all the threads and saving the information to a file
+        stacktracer.trace_start()
+
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
 
-        for n, r in zip(allRuntimes.keys(), allRuntimes.values()):
-            try:
-                r.bootstrap(Ganga.GPI.__dict__)
-            except Exception as err:
-                logger.error('problems with bootstrapping %s -- ignored', n)
-                logger.error('Reason: %s' % str(err))
-                raise err
-            try:
-                r.loadNamedTemplates(Ganga.GPI.__dict__,
-                                     Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_ext'],
-                                     Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
-            except Exception as err:
-                logger.error('problems with loading Named Templates for %s', n)
-                logger.error('Reason: %s' % str(err))
-        # load user-defined plugins...
-
-        for r in allRuntimes.values():
-            try:
-                r.loadPlugins()
-            except Exception as err:
-                logger.error("problems with loading plugins for %s -- ignored" % r.name)
-                logger.error('Reason: %s' % str(err))
-
-        from Ganga.Runtime.GPIexport import exportToGPI
-
-        from Ganga.Utility.Plugin import allPlugins
-        # make all plugins visible in GPI
-        for k in allPlugins.allCategories():
-            for n in allPlugins.allClasses(k):
-                cls = allPlugins.find(k, n)
-                if not cls._declared_property('hidden'):
-                    if n != cls.__name__:
-                        exportToGPI(cls.__name__, cls, 'Classes')
-                    exportToGPI(n, cls, 'Classes')
-
-        # set the default value for the plugins
-        from Ganga.Utility.Config import getConfig
-        default_plugins_cfg = getConfig("Plugins")
-
-        for opt in default_plugins_cfg:
-            try:
-                category, tag = opt.split('_')
-            except ValueError, err:
-                logger.warning("do not understand option %s in [Plugins]", opt)
-                logger.debug('Reason: want %s' % str(err))
-            else:
-                if tag == 'default':
-                    try:
-                        allPlugins.setDefault(category, default_plugins_cfg[opt])
-                    except Ganga.Utility.Plugin.PluginManagerError as x:
-                        logger.warning('cannot set the default plugin "%s": %s' % (opt, x))
-                else:
-                    logger.warning("do not understand option %s in [Plugins]", opt)
-
-        # set alias for default Batch plugin (it will not appear in the
-        # configuration)
-
-        batch_default_name = Ganga.Utility.Config.getConfig('Configuration').getEffectiveOption('Batch')
-        try:
-            batch_default = allPlugins.find('backends', batch_default_name)
-        except Exception as x:
-            raise Ganga.Utility.Config.ConfigError('Check configuration. Unable to set default Batch backend alias (%s)' % str(x))
-        else:
-            allPlugins.add(batch_default, 'backends', 'Batch')
-            exportToGPI('Batch', batch_default, 'Classes')
-
-        from Ganga.GPIDev.Base import ProtectedAttributeError, ReadOnlyObjectError, GangaAttributeError
-        from Ganga.GPIDev.Lib.Job.Job import JobError
-
-        exportToGPI('GangaAttributeError', GangaAttributeError, 'Exceptions')
-        exportToGPI('ProtectedAttributeError', ProtectedAttributeError, 'Exceptions')
-        exportToGPI('ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
-        exportToGPI('JobError', JobError, 'Exceptions')
-
-        def license():
-            'Print the full license (GPL)'
-            with open(os.path.join(_gangaPythonPath, '..', 'LICENSE_GPL')) as printable:
-                logger.info(printable.read())
-
-        exportToGPI('license', license, 'Functions')
-        # bootstrap credentials
-
-        from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-        from Ganga.GPIDev.Credentials import getCredential
-
-        # only the available credentials are exported
-
-        # At this point we expect to have the GridProxy already created
-        # by one of the Grid plugins (LCG/NG/etc) so we search for it in creds
-        # cache
-        credential = getCredential(name='GridProxy', create=False)
-        if credential:
-            exportToGPI('gridProxy', GPIProxyObjectFactory(credential), 'Objects', 'Grid proxy management object.')
-
-        credential = getCredential('AfsToken')
-        if credential:
-            exportToGPI('afsToken', GPIProxyObjectFactory(credential), 'Objects', 'AFS token management object.')
-
-        # add built-in functions
-
-        from Ganga.GPIDev.Persistency import export, load
-        exportToGPI('load', load, 'Functions')
-        exportToGPI('export', export, 'Functions')
-
-        from Ganga.Utility.logging import getLogger
-
-        def typename(obj):
-            """Return a name of Ganga object as a string, example: typename(j.application) -> 'DaVinci'"""
-            from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, implRef
-            if isProxy(obj):
-                if hasattr(stripProxy(obj), '_name'):
-                    return stripProxy(obj)._name
-                else:
-                    logger = getLogger()
-                    logger.error("Object %s DOES NOT have the _name parameter set" % (str(obj)))
-                    #import traceback
-                    #traceback.print_stack()
-                    return ""
-            else:
-                if hasattr(obj, '_name'):
-                    return obj._name
-                else:
-                    logger = getLogger()
-                    logger.error("Object %s DOES NOT have the %s or _name parameter set" % (str(obj), str(implRef)))
-                    #import traceback
-                    #traceback.print_stack()
-                    return ""
-
-        def categoryname(obj):
-            """Return a category of Ganga object as a string, example: categoryname(j.application) -> 'applications'"""
-            from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, implRef
-            if isProxy(obj):
-                if hasattr(stripProxy(obj), '_category'):
-                    return stripProxy(obj)._category
-                else:
-                    logger = getLogger()
-                    logger.error("Object %s DOES NOT have the _category parameter set" % (str(obj)))
-                    #import traceback
-                    #traceback.print_stack()
-                    return ""
-            else:
-                if hasattr(obj, '_category'):
-                    return obj._category
-                else:
-                    logger = getLogger()
-                    logger.error("Object %s DOES NOT have the %s or _category parameter set" % (str(obj), str(implRef)))
-                    #import traceback
-                    #traceback.print_stack()
-                    return ""
-
-        def plugins(category=None):
-            """List loaded plugins.
-
-            If no argument is given return a dictionary of all loaded plugins.
-            Keys are category name. Values are lists of plugin names in each
-            category.
-
-            If a category is specified (for example 'splitters') return a list
-            of all plugin names in this category.
-            """
-            from Ganga.Utility.Plugin import allPlugins
-            if category:
-                return allPlugins.allClasses(category).keys()
-            else:
-                d = {}
-                for c in allPlugins.allCategories():
-                    d[c] = allPlugins.allCategories()[c].keys()
-                return d
-
-        # FIXME: DEPRECATED
-        def list_plugins(category):
-            """List all plugins in a given category, OBSOLETE: use plugins(category)"""
-            raise DeprecationWarning("use plugins('%s')" % category)
-
-        def applications():
-            """return a list of all available applications, OBSOLETE: use plugins('applications')"""
-            raise DeprecationWarning("use plugins('applications')")
-
-        def backends():
-            """return a list of all available backends, OBSOLETE: use plugins('backends')"""
-            raise DeprecationWarning("use plugins('backends')")
-        from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
-
-        def convert_merger_to_postprocessor(j):
-            from Ganga.GPIDev.Base.Proxy import stripProxy
-            if len(stripProxy(j.postprocessors).process_objects):
-                logger.info('job(%s) already has postprocessors' % j.fqid)
-            if stripProxy(j).merger is None:
-                logger.info(
-                    'job(%s) does not have a merger to convert' % j.fqid)
-            if not len(stripProxy(j.postprocessors).process_objects) and stripProxy(j).merger is not None:
-                mp = MultiPostProcessor()
-                mp.process_objects.append(stripProxy(j).merger)
-                stripProxy(j).postprocessors = mp
-        exportToGPI('applications', applications, 'Functions')
-        exportToGPI('backends', backends, 'Functions')
-        exportToGPI('list_plugins', list_plugins, 'Functions')
-        # FIXME: END DEPRECATED
-
-        exportToGPI('typename', typename, 'Functions')
-        exportToGPI('categoryname', categoryname, 'Functions')
-        exportToGPI('plugins', plugins, 'Functions')
-        exportToGPI('convert_merger_to_postprocessor',
-                    convert_merger_to_postprocessor, 'Functions')
+        manualExportToGPI()
 
         import Ganga.Core
         from Ganga.Runtime.Repository_runtime import startUpRegistries
-        startUpRegistries()
-
-        # export full_print
-        from Ganga.GPIDev.Base.VPrinter import full_print
-        exportToGPI('full_print', full_print, 'Functions')
+        if config['AutoStartReg']:
+            startUpRegistries()
 
         logger.debug("Bootstrap Core Modules")
         # bootstrap core modules
-        from Ganga.GPIDev.Base.Proxy import stripProxy
-        Ganga.Core.bootstrap(stripProxy(Ganga.GPI.jobs), interactive)
-
-        import Ganga.GPIDev.Lib.Config
-        exportToGPI('config', Ganga.GPIDev.Lib.Config.config,
-                    'Objects', 'access to Ganga configuration')
-        exportToGPI('ConfigError', Ganga.GPIDev.Lib.Config.ConfigError, 'Exceptions')
-
-        from Ganga.Utility.feedback_report import report
-
-        exportToGPI('report', report, 'Functions')
+        from Ganga.Core.GangaRepository import getRegistrySlice
+        ## Here is where the monitoring loop and related services are started!
+        Ganga.Core.bootstrap(getRegistrySlice('jobs'), interactive)
 
         # export all configuration items, new options should not be added after
         # this point
         Ganga.GPIDev.Lib.Config.bootstrap()
 
+
         logger.debug("Post-Bootstrap hooks")
+        from Ganga.Utility.Runtime import allRuntimes
         ###########
         # run post bootstrap hooks
         for r in allRuntimes.values():
@@ -1084,6 +960,7 @@ under certain conditions; type license() for details.
             except Exception as err:
                 logger.error("problems with post bootstrap hook for %s" % r.name)
                 logger.error("Reason: %s" % str(err))
+
 
     @staticmethod
     def startTestRunner(my_args):

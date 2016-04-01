@@ -40,6 +40,8 @@ Extend the behaviour of the default *atexit* module to support:
 
 import atexit
 
+from Ganga.Utility import stacktracer
+
 
 def _ganga_run_exitfuncs():
     """run any registered exit functions
@@ -72,12 +74,6 @@ def _ganga_run_exitfuncs():
         from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
         getStackTrace()
         monitoring_component.disableMonitoring()
-        #monitoring_component.stop()
-
-    ## This will stop the Registries flat but we may still have threads processing data!
-    #from Ganga.Core.InternalServices import Coordinator
-    #if Coordinator.servicesEnabled:
-    #    Coordinator.disableInternalServices( shutdown = True )
 
     ## Stop the tasks system from running it's GangaThread before we get to the GangaThread shutdown section!
     from Ganga.GPIDev.Lib.Tasks import stopTasks
@@ -120,6 +116,10 @@ def _ganga_run_exitfuncs():
 
     logger.info("Stopping Job processing before shutting down Repositories")
 
+    from Ganga.Core.GangaThread.WorkerThreads import _global_queues
+    if _global_queues:
+        _global_queues.freeze()
+
     import inspect
     while atexit._exithandlers:
 
@@ -148,6 +148,9 @@ def _ganga_run_exitfuncs():
             except Exception as err2:
                 logger.debug("Error getting source code and failure reason: %s" % str(err2))
 
+    from Ganga.Core.GangaThread.WorkerThreads import shutDownQueues
+    shutDownQueues()
+
     logger.info("Shutting Down Ganga Repositories")
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.shutdown()
@@ -158,6 +161,9 @@ def _ganga_run_exitfuncs():
     from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
     removeGlobalSessionFileHandlers()
     removeGlobalSessionFiles()
+
+    if stacktracer._tracer:
+        stacktracer.trace_stop()
 
     from Ganga.Utility.logging import requires_shutdown, final_shutdown
     if requires_shutdown is True:

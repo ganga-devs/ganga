@@ -1,26 +1,25 @@
-##########################################################################
-# Ganga Project. http://cern.ch/ganga
-#
-# $Id: TestStructure.py,v 1.1 2008-07-17 16:41:12 moscicki Exp $
-##########################################################################
-from __future__ import division
-from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed, write_file
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
+from __future__ import division, absolute_import
+
 import os
 import tempfile
 
+import pytest
 
-class TestStructure(GangaGPITestCase):
+from ..GangaUnitTest import GangaUnitTest
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 
-    def __init__(self):
+
+class TestStructure(GangaUnitTest):
+
+    def setUp(self):
+        super(TestStructure, self).setUp()
+        from Ganga.GPI import Job, Executable, Local, File, LocalFile
+        from GangaTest.Framework.utils import write_file
 
         self.jobslice = []
         self.file_name = 'id_echo.sh'
 
-    def setUp(self):
-
-        for _ in range(2):
+        for _ in range(5):
 
             j = Job(application=Executable(), backend=Local())
 
@@ -44,12 +43,20 @@ class TestStructure(GangaGPITestCase):
             self.jobslice.append(j)
 
     def runJobSlice(self):
+        from GangaTest.Framework.utils import sleep_until_completed
 
         for j in self.jobslice:
             j.submit()
-
-            if not sleep_until_completed(j):
-                assert False, 'Test timed out'
+        for j in self.jobslice:
+            assert sleep_until_completed(j, timeout=10, verbose=True), 'Timeout on job submission: job is still not finished'
+            print('# upcoming status')
+            print("Status 3: %s" % j.status)
+            print('# printed status')
+            print('# upcoming impl status')
+            print("Status 3: %s" % j._impl.status)
+            print('# printed impl status')
+            print 'j._impl.__dict__', j._impl.__dict__
+            #print 'type(j).__dict__', type(j).__dict__
             assert j.status == 'completed'
 
     def testStructureCreated(self):
@@ -57,14 +64,12 @@ class TestStructure(GangaGPITestCase):
         self.runJobSlice()
 
         for j in self.jobslice:
-
-            assert os.path.exists(
-                os.path.join(j.outputdir, 'out.txt')), 'File must exist'
-            assert os.path.exists(
-                os.path.join(j.outputdir, 'subdir', 'out.txt')), 'File in directory must exist'
+            assert os.path.exists(os.path.join(j.outputdir, 'out.txt')), 'File must exist'
+            assert os.path.exists(os.path.join(j.outputdir, 'subdir', 'out.txt')), 'File in directory must exist'
 
     def testStructureOfMerger(self):
         """Test that structure in the output sandbox is recreated in the merge"""
+        from Ganga.GPI import TextMerger
         self.runJobSlice()
 
         tm = TextMerger()
@@ -74,20 +79,16 @@ class TestStructure(GangaGPITestCase):
         os.mkdir(tmpdir)
 
         assert tm.merge(self.jobslice, tmpdir), 'Merge must run correctly'
-        assert os.path.exists(
-            os.path.join(tmpdir, 'out.txt')), 'Merge must produce the file'
+        assert os.path.exists(os.path.join(tmpdir, 'out.txt')), 'Merge must produce the file'
 
     def testOutputEqualsInput(self):
         """Tests that setting outputdir == inputdir fails always"""
+        from Ganga.GPI import TextMerger
 
         self.runJobSlice()
         tm = TextMerger(overwrite=True)
         tm.files = ['out.txt']
 
         for j in self.jobslice:
-            try:
+            with pytest.raises(PostProcessException):
                 tm.merge(self.jobslice, outputdir=j.outputdir)
-            except PostProcessException:
-                pass
-            else:
-                assert False, 'Must raise PostProcessException'

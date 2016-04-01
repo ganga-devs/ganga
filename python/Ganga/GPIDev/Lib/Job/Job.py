@@ -1012,14 +1012,6 @@ class Job(GangaObject):
     def getDebugWorkspace(self, create=True):
         return self.getWorkspace('DebugWorkspace', create=create)
 
-    #def __getstate__(self):
-        #this_dict = super(Job, self).__getstate__()
-        #if hasattr(this_dict, '_registry'):
-        #this_dict['_registry'] = None
-        #return this_dict
-#        # FIXME: dict['_data']['id'] = 0 # -> replaced by 'copyable' mechanism
-#        # in base class
-
     def peek(self, filename="", command=""):
         """
         Allow viewing of job output (and input) files
@@ -1491,7 +1483,7 @@ class Job(GangaObject):
 
         For split jobs: consult https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaSplitters#Subjob_submission
         """
-
+        self._getRegistry()._flush([self])
         logger.debug("Submitting Job %s" % str(self.getFQID('.')))
 
         gpiconfig = getConfig('GPI_Semantics')
@@ -1563,16 +1555,16 @@ class Job(GangaObject):
             # split into subjobs
             rjobs = self._doSplitting()
 
-
             #
             logger.debug("Now have %s subjobs" % str(len(self.subjobs)))
             logger.debug("Also have %s rjobs" % str(len(rjobs)))
 
             # Output Files
             # validate the output files
-            (validOutputFiles, errorMsg) = self.validateOutputfilesOnSubmit()
-            if not validOutputFiles:
-                raise JobError(errorMsg)
+            for this_job in rjobs:
+                (validOutputFiles, errorMsg) = this_job.validateOutputfilesOnSubmit()
+                if not validOutputFiles:
+                    raise JobError(errorMsg)
 
             # configure the application of each subjob
             appsubconfig = self._getAppSubConfig(rjobs)
@@ -1625,7 +1617,7 @@ class Job(GangaObject):
             # make sure that the status change goes to the repository, NOTE:
             # this commit is redundant if updateStatus() is used on the line
             # above
-            self._commit()
+            self._getRegistry()._flush([self])
 
             # send job submission message
             if len(self.subjobs) == 0:
@@ -1684,9 +1676,7 @@ class Job(GangaObject):
 
             ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", str(submitted_count))
 
-
-        stripProxy(self)._setDirty()
-        stripProxy(self)._getRegistry()._flush([stripProxy(self)])
+        self._getRegistry()._flush([self])
 
         return 1
 
@@ -2009,9 +1999,15 @@ class Job(GangaObject):
             logger.error(msg)
             raise JobError(msg)
 
-        (validOutputFiles, errorMsg) = self.validateOutputfilesOnSubmit()
-        if not validOutputFiles:
-            raise JobError(errorMsg)
+        if len(self.subjobs) != 0:
+            these_jobs = self.subjobs
+        else:
+            these_jobs = [self]
+
+        for this_job in these_jobs:
+            (validOutputFiles, errorMsg) = this_job.validateOutputfilesOnSubmit()
+            if not validOutputFiles:
+                raise JobError(errorMsg)
 
         if self.status in ['new']:
             msg = "cannot resubmit a new job %s, please use submit()" % (self.getFQID('.'))
@@ -2151,7 +2147,7 @@ class Job(GangaObject):
     def _commit(self, objects=None):
         """ Helper method to unconditionally commit to the repository. The 'objects' list specifies objects
         to be commited (for example the subjobs). If objects are not specified then just the self is commited """
-
+        # TODO This function should force a flush. However it is currently used everywhere which causes too many flushes.
         self._getRoot()._setDirty()
 
 
