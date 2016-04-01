@@ -191,7 +191,11 @@ class Node(object):
         visitor.nodeBegin(self)
 
         for (name, item) in self._schema.simpleItems():
-            if item['visitable']:
+
+            # Special check for Ganga list to allow nested lists
+            if name == "_list" and self._name == "GangaList":
+                visitor.componentAttribute(self, "_list", self._getdata("_list"), 1)
+            elif item['visitable']:
                 visitor.simpleAttribute(self, name, self._getdata(name), item['sequence'])
 
         for (name, item) in self._schema.sharedItems():
