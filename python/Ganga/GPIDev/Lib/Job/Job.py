@@ -218,19 +218,21 @@ class Job(GangaObject):
 
     default_registry = 'jobs'
 
-    _storedRTHandler = None
-    _storedJobSubConfig = None
-    _storedAppSubConfig = None
-    _storedJobMasterConfig = None
-    _storedAppMasterConfig = None
-
     # TODO: usage of **kwds may be envisaged at this level to optimize the
     # overriding of values, this must be reviewed
     def __init__(self):
         super(Job, self).__init__()
         # Finished initializing 'special' objects which are used in getter methods and alike
         self.time.newjob()  # <-----------NEW: timestamp method
+
+        self._storedRTHandler = None
+        self._storedJobSubConfig = None
+        self._storedAppSubConfig = None
+        self._storedJobMasterConfig = None
+        self._storedAppMasterConfig = None
         logger.debug("__init__")
+
+        self._stored_subjobs_proxy = None
 
     def _getMasterJob(self):
         parent = self._getParent()
@@ -1299,10 +1301,10 @@ class Job(GangaObject):
 
                     finished = {}
 
-                    from Ganga.GPI import queues
+                    from Ganga.Core.GangaThread.WorkerThreads import getQueues
                     index=0
                     for sub_j, sub_conf in zip(subjobs, appsubconfig):
-                        queues._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, stripProxy(sub_j.application), sub_conf, appmasterconfig, jobmasterconfig, finished))
+                        getQueues()._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, stripProxy(sub_j.application), sub_conf, appmasterconfig, jobmasterconfig, finished))
                         index += 1
 
                     while len(finished) != len(subjobs):
@@ -2180,15 +2182,30 @@ class Job(GangaObject):
 # return tuple(index)
 
     def _subjobs_proxy(self):
-        from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
-        subjobs = JobRegistrySlice('jobs(%s).subjobs' % str(self.id))
-        if isType(self.subjobs, SubJobXMLList):
-            subjobs.objects = self.subjobs
-        else:
-            for sj in self.subjobs:
-                subjobs.objects[sj.id] = sj
-        #print('return slice: %s' % str(subjobs))
-        return _wrap(subjobs)
+
+        if self._stored_subjobs_proxy is None:
+            from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
+            subjob_slice = JobRegistrySlice('jobs(%s).subjobs' % str(self.id))
+            self._stored_subjobs_proxy = _wrap(subjob_slice)
+
+        if len(self._stored_subjobs_proxy) != len(self.subjobs):
+
+            if isType(self.subjobs, SubJobXMLList):
+                subjob_slice.objects = self.subjobs
+                from Ganga.GPIDev.Base.Proxy import stripProxy
+                from Ganga.GPIDev.Lib.Registry.JobRegistry import _wrap
+                self._stored_subjobs_proxy = _wrap(stripProxy(self._stored_subjobs_proxy))
+            elif isType(self.subjobs, (list, GangaList)):
+                from Ganga.GPIDev.Base.Proxy import stripProxy
+                from Ganga.GPIDev.Lib.Registry.JobRegistry import _wrap
+                subjob_slice = stripProxy(self._stored_subjobs_proxy)
+                for sj in self.subjobs:
+                    subjob_slice.objects[sj.id] = sj
+                self._stored_subjobs_proxy = _wrap(stripProxy(self._stored_subjobs_proxy))
+            else:
+                raise GangaException("This should never arise, cannot understand subjob list")
+
+        return self._stored_subjobs_proxy
 
     def _subjobs_summary_print(self, value, verbosity_level, interactive=False):
         rslice = self._subjobs_proxy()
