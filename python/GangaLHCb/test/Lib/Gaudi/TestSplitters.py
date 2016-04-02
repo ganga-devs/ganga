@@ -1,7 +1,6 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaLHCb.Lib.Gaudi.Gaudi import GaudiExtras
 #from GangaLHCb.Lib.Gaudi.Splitters import copy_app
-from Ganga import GPI
 from tempfile import mkdtemp
 
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler

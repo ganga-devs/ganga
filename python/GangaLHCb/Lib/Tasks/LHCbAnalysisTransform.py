@@ -1,4 +1,3 @@
-from Ganga import GPI
 from Ganga.Utility.ColourText import ANSIMarkup
 from Ganga.Utility.ColourText import status_colours, overview_colours, fgcol, col
 from Ganga.GPIDev.Lib.Job.Job import Job

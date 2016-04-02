@@ -39,7 +39,7 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
         
     from time import sleep
     from Ganga.Core import monitoring_component
-    from Ganga.Core.GangaRegistry import getRegistryProxy
+    from Ganga.Core.GangaRepository import getRegistryProxy
     
     jobs = getRegistryProxy('jobs')
 
