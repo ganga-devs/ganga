@@ -5,7 +5,7 @@ from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 def assert_cannot_submit(j):
-    from Ganga.GPI import JobError
+    from Ganga.GPIDev.Lib.Job.Job import JobError
     try:
         j.submit()
         assert False, 'submit() should raise JobError'
@@ -13,7 +13,7 @@ def assert_cannot_submit(j):
         pass  
 
 def assert_cannot_kill(j):
-    from Ganga.GPI import JobError    
+    from Ganga.GPIDev.Lib.Job.Job import JobError    
     try:
         j.kill()
         assert False, 'kill() should raise JobError'
@@ -39,7 +39,9 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
         
     from time import sleep
     from Ganga.Core import monitoring_component
-    from Ganga.GPI import jobs
+    from Ganga.Core.GangaRegistry import getRegistryProxy
+    
+    jobs = getRegistryProxy('jobs')
 
     current_status = None
     while j.status != state and timeout > 0:
