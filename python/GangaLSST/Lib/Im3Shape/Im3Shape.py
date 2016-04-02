@@ -29,28 +29,6 @@ logger = getLogger()
 class Im3Shape(IPrepareApp):
 
     """
-    Executable application -- running arbitrary programs.
-
-    When you want to run on a worker node an exact copy of your script you should specify it as a File object. Ganga will
-    then ship it in a sandbox:
-       app.exe = File('/path/to/my/script')
-
-    When you want to execute a command on the worker node you should specify it as a string. Ganga will call the command
-    with its full path on the worker node:
-       app.exe = '/bin/date'
-
-    A command string may be either an absolute path ('/bin/date') or a command name ('echo').
-    Relative paths ('a/b') or directory paths ('/a/b/') are not allowed because they have no meaning
-    on the worker node where the job executes.
-
-    The arguments may be specified in the following way:
-       app.args = ['-v',File('/some/input.dat')]
-
-    This will yield the following shell command: executable -v input.dat
-    The input.dat will be automatically added to the input sandbox.
-
-    If only one argument is specified the the following abbreviation may be used:
-       apps.args = '-v'
 
     """
     _schema = Schema(Version(2, 0), {

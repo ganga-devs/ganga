@@ -51,7 +51,7 @@ class Im3ShapeSplitter(ISplitter):
 
         subjobs = []
 
-        for rank in range(1,self.size):
+        for rank in range(0,self.size-1):
             j = self.createSubjob(job, ['application'])
             # Add new arguments to subjob
             app = copy.deepcopy(job.application)

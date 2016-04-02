@@ -37,7 +37,7 @@ class Im3ShapeRTHandler(IRuntimeHandler):
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
-        input_data,   parametricinput_data = dirac_inputdata(app)
+        input_data,   parametricinput_data = dirac_inputdata(app, hasOtherInputData=True)
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
         job = stripProxy(app).getJobObject()
@@ -62,7 +62,7 @@ class Im3ShapeRTHandler(IRuntimeHandler):
                             contents=script_generator(exe_script_template(),
                                                     #remove_unreplaced = False,
                                                     # ,
-                                                    COMMAND=commandline,
+                                                    COMMAND='ls -l',
                                                     OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
                                                     ),
                                        executable=True))
@@ -70,10 +70,8 @@ class Im3ShapeRTHandler(IRuntimeHandler):
 
         dirac_outputfiles = dirac_outputfile_jdl(outputfiles)
 
-        if not input_data:
-            input_data = []
-        input_data.extend([app.location.lfn])
-        input_data.extend([app.blacklist.lfn])
+        job.inputfiles.extend([app.location])
+        job.inputfiles.extend([app.blacklist])
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
@@ -83,8 +81,8 @@ class Im3ShapeRTHandler(IRuntimeHandler):
                                         DIRAC_OBJECT='Dirac()',
                                         JOB_OBJECT='Job()',
                                         NAME=mangle_job_name(app),
-                                        EXE='ls',
-                                        EXE_ARG_STR='-l',
+                                        EXE=exe_script_name,
+                                        EXE_ARG_STR='',
                                         EXE_LOG_FILE='Ganga_Executable.log',
                                         ENVIRONMENT=None,
                                         INPUTDATA=input_data,
