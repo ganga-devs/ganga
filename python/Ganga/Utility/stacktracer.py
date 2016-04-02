@@ -95,18 +95,18 @@ class TraceDumper(threading.Thread):
 
     def stop(self):
         self.stop_requested.set()
-        self.join()
+        self.join(timeout=0)
         try:
             os.unlink(self.path)
         except OSError:
             pass
 
     def stacktraces(self):
-        with open(self.path, 'wb+') as fout:
-            try:
+        try:
+            with open(self.path, 'wb+') as fout:
                 fout.write(stacktraces())
-            except IOError:
-                pass  # Don't warn if the file faile to write
+        except IOError:
+            pass  # Don't warn if the file faile to write
 
 
 _tracer = None
