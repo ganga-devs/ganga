@@ -181,7 +181,7 @@ class LCG(IBackend):
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         # Should this __really__ be in Core?
-            from Ganga.GPIDev.Base.Proxy import getProxyInterface
+        from Ganga.GPIDev.Base.Proxy import getProxyInterface
         if 'DQ2SandboxCache' in getProxyInterface.__dict__.keys():
             DQ2SandboxCache = getProxyInterface()['DQ2SandboxCache']
         else:
