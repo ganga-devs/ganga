@@ -278,6 +278,9 @@ class Task(GangaObject):
         return sum([t.n_all() for t in self.transforms])
 
     def n_status(self, status):
+        return sum([t.n_status(status) for t in self.transforms])
+
+    def table(self):
         getRegistryProxy('tasks')[self.id:self.id].table()
 
     def overview(self):
