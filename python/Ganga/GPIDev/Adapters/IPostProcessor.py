@@ -10,9 +10,6 @@ from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
-import Ganga.GPI
-
-
 class PostProcessException(GangaException):
 
     def __init__(self, x=''):
@@ -150,7 +147,7 @@ def postprocessor_filter(value, item):
                       and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), ITransform))
                       and 'postprocessors' in stripProxy(i)._schema.datadict]
 
- # Alex modified this line to that from above to allow for arbitrary dynamic LHCbJobTemplate etc types
+    # Alex modified this line to that from above to allow for arbitrary dynamic LHCbJobTemplate etc types
 #    if item is Job._schema['postprocessors']:
     if item in valid_jobtypes:
         ds = MultiPostProcessor()

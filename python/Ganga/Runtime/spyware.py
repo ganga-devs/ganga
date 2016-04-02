@@ -32,12 +32,6 @@ def ganga_started(session_type, **extended_attributes):
 
     usage_message.update(extended_attributes)
 
-    #if config['UsageMonitoringURL']:
-    #    from Ganga.GPI import queues
-    #    # Lets move the actual monitoring out of the main thread for some performance
-    #    msg = '%s@%s_%s' % (user, host, start)
-    #    queues.add( _setupMonitor, (config['UsageMonitoringURL'], msg, usage_message) )
-
     if config['UsageMonitoringMSG']:
         from Ganga.GPIDev.MonitoringServices import MSGUtil
         msg_config = getConfig('MSGMS')

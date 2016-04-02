@@ -5,7 +5,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, File
 from .common import logger
 from Ganga.Utility.ColourText import status_colours, overview_colours, ANSIMarkup
 markup = ANSIMarkup()
-import Ganga.GPI as GPI
+from Ganga.GPIDev.Lib.Tasks.common import getJobByID
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import stripProxy
 import time
@@ -117,7 +117,7 @@ class IUnit(GangaObject):
         if len(self.active_job_ids) == 0:
             return False
         else:
-            job = GPI.jobs(self.active_job_ids[0])
+            job = getJobByID(self.active_job_ids[0])
             if job.status in ["failed", "killed"]:
                 return True
 
@@ -229,7 +229,7 @@ class IUnit(GangaObject):
             # we have an active job so see if this job is OK and resubmit if
             # not
             try:
-                job = GPI.jobs(jid)
+                job = getJobByID(jid)
             except Exception as err:
                 logger.debug("Update2 Err: %s" % str(err))
                 logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %
@@ -351,7 +351,7 @@ class IUnit(GangaObject):
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = getJobByID(jid)
             except Exception as err:
                 logger.debug("n_active Err: %s" % str(err))
                 task = self._getParent()._getParent()
@@ -388,7 +388,7 @@ class IUnit(GangaObject):
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = getJobByID(jid)
             except Exception as err:
                 logger.debug("n_status Err: %s" % str(err))
                 task = self._getParent()._getParent()
@@ -426,7 +426,7 @@ class IUnit(GangaObject):
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = getJobByID(jid)
             except Exception as err:
                 logger.debug("n_all Err: %s" % str(err))
                 task = self._getParent()._getParent()

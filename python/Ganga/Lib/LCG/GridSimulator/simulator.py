@@ -14,7 +14,8 @@
 # cd simu
 # cp path/to/simulation.py .
 # run simulation.py as described above
-from Ganga.GPI import Job
+
+from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Lib.LCG import LCG
 from Ganga.Lib.Splitters import GenericSplitter
 from Ganga.Utility.logging import getLogger
@@ -39,6 +40,7 @@ def submit(N, K):
     jobs = []
     for i in range(K):
         j = Job()
+        j._auto__init__()
         j.backend = LCG()
         j.backend.middleware = 'GLITE'
         j.splitter = GenericSplitter()

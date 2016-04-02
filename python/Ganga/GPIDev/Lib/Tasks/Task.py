@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from Ganga import GPI
+from Ganga.Core.GangaRepository import getRegistryProxy
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Base.Proxy import stripProxy
@@ -41,7 +41,7 @@ class Task(GangaObject):
 
     default_registry = "tasks"
 
-# Special methods:
+    # Special methods:
     def _auto__init__(self, registry=None):
         if registry is None:
             from Ganga.Core.GangaRepository import getRegistry
@@ -89,7 +89,8 @@ class Task(GangaObject):
             logger.info(" * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id))
             return
         if remove_jobs:
-            for j in GPI.jobs:
+            from Ganga.Core.GangaRepository import getRegistryProxy
+            for j in getRegistryProxy('jobs'):
                 try:
                     stid = j.application.tasks_id.split(":")
                     if int(stid[-2]) == self.id:
@@ -204,7 +205,8 @@ class Task(GangaObject):
             if transform is None or partition is None or self.transforms[int(transform)]._app_partition[j.application.id] == partition:
                 jobslice.objects[j.fqid] = stripProxy(j)
 
-        for j in GPI.jobs:
+        from Ganga.Core.GangaRepository import getRegistryProxy
+        for j in getRegistryProxy:
             try:
                 stid = j.application.tasks_id.split(":")
                 if int(stid[-2]) == self.id and (transform is None or stid[-1] == str(transform)):
@@ -276,11 +278,7 @@ class Task(GangaObject):
         return sum([t.n_all() for t in self.transforms])
 
     def n_status(self, status):
-        return sum([t.n_status(status) for t in self.transforms])
-
-    def table(self):
-        from Ganga.GPI import tasks
-        tasks[self.id:self.id].table()
+        getRegistryProxy('tasks')[self.id:self.id].table()
 
     def overview(self):
         """ Get an ascii art overview over task status. Can be overridden """

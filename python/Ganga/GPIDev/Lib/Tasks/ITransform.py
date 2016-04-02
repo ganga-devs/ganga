@@ -10,10 +10,10 @@ from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from .IUnit import IUnit
-import Ganga.GPI as GPI
 import time
 import os
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
+from Ganga.GPIDev.Lib.Tasks.common import getJobByID
 
 class ITransform(GangaObject):
     _schema = Schema(Version(1, 0), {
@@ -132,8 +132,8 @@ OutputFile objects to be copied to all jobs"),
         return 1
 
     def initialize(self):
-        from Ganga import GPI
-        self.backend = stripProxy(GPI.Local())
+        from Ganga.Lib.Localhost.Localhost import Localhost
+        self.backend = Localhost()
         self.updateStatus("new")
 
     def check(self):
@@ -562,7 +562,7 @@ OutputFile objects to be copied to all jobs"),
         """Return the list of parent jobs"""
         job_list = []
         for parent in parent_units:
-            job = GPI.jobs(parent.active_job_ids[0])
+            job = getJobByID(parent.active_job_ids[0])
             if job.subjobs:
                 job_list += job.subjobs
             else:
@@ -576,7 +576,7 @@ OutputFile objects to be copied to all jobs"),
             for jid in unit.prev_job_ids:
                 try:
                     logger.warning("Removing job '%d'..." % jid)
-                    job = GPI.jobs(jid)
+                    job = getJobByID(jid)
                     job.remove()
                 except Exception as err:
                     logger.debug("removeUnused: %s" % str(err))
