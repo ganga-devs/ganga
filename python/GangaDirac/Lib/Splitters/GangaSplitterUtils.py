@@ -31,11 +31,11 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     file_replicas = {}
 
-    from Ganga.GPI import queues
+    from Ganga.Core.GangaThread.WorkerThreads import getQueues
 
     for i in inputs:
         #logging.debug( "getting metadata: %s" % str(i.lfn) )
-        queues.add(i.getReplicas)
+        getQueues().add(i.getReplicas)
 
     logger.info("Requesting LFN replica info")
 

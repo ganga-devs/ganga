@@ -104,7 +104,8 @@ class IUnit(GangaObject):
             return False
 
         # if we're using threads, check the max number
-        if self._getParent().submit_with_threads and GPI.queues.totalNumUserThreads() > self._getParent().max_active_threads:
+        from Ganga.Core.GangaThread.WorkerThreads import getQueues
+        if self._getParent().submit_with_threads and getQueues.totalNumUserThreads() > self._getParent().max_active_threads:
             return False
 
         return True
@@ -160,7 +161,8 @@ class IUnit(GangaObject):
             trf = None
         if trf is not None and trf.submit_with_threads:
             addInfoString( self, "Attempting job re-submission with queues..." )
-            GPI.queues.add(job.resubmit)
+            from Ganga.Core.GangaThread.WorkerThreads import getQueues
+            getQueues().add(job.resubmit)
         else:
             addInfoString( self, "Attempting job re-submission..." )
             job.resubmit()
@@ -196,7 +198,8 @@ class IUnit(GangaObject):
             try:
                 if trf.submit_with_threads:
                     addInfoString( self, "Attempting job submission with queues..." )
-                    GPI.queues.add(j.submit)
+                    from Ganga.Core.GangaThread.WorkerThreads import getQueues
+                    getQueues().add(j.submit)
                 else:
                     addInfoString( self, "Attempting job submission..." )
                     j.submit()

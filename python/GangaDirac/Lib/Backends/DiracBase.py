@@ -710,12 +710,12 @@ class DiracBase(IBackend):
         logger.debug('Monitor jobs    : ' + repr([j.fqid for j in monitor_jobs]))
         logger.debug('Requeue jobs    : ' + repr([j.fqid for j in requeue_jobs]))
 
-        from Ganga.GPI import queues
+        from Ganga.Core.GangaThread.WorkerThreads import getQueues
 
         # requeue existing completed job
         for j in requeue_jobs:
             #            if j.backend.status in requeue_dirac_status:
-            queues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
+            getQueues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                        args=(j, requeue_dirac_status[j.backend.status]),
                                                        priority=5, name="Job %s Finalizing" % j.fqid)
             j.been_queued = True
@@ -787,7 +787,7 @@ class DiracBase(IBackend):
                     if job.master:
                         job.master.updateMasterJobStatus()
 
-                queues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
+                getQueues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                            args=(job, updated_dirac_status),
                                                            priority=5, name="Job %s Finalizing" % job.fqid)
                 job.been_queued = True
