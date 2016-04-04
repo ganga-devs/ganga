@@ -813,10 +813,9 @@ class GangaRepositoryLocal(GangaRepository):
             a4=time.time()
             logger.debug("Loading XML file for ID: %s took %s sec" % (this_id, str(a4-b4)))
 
-            if errs is not None:
-                if len(errs) > 0:
-                    logger.error("#%s Error(s) Loading File: %s" % (str(len(errs)), fobj.name))
-                    raise InaccessibleObjectError(self, this_id, errs[0])
+            if len(errs) > 0:
+                logger.error("#%s Error(s) Loading File: %s" % (len(errs), fobj.name))
+                raise InaccessibleObjectError(self, this_id, errs[0])
 
             has_children = (self.sub_split is not None) and (self.sub_split in tmpobj.getNodeData()) and len(tmpobj.getNodeAttribute(self.sub_split)) == 0
 

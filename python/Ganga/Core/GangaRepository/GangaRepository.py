@@ -36,7 +36,7 @@ class SchemaVersionError(GangaException):
 class InaccessibleObjectError(GangaException):
 
     def __init__(self, repo=None, id='', orig=None):
-        super(InaccessibleObjectError, self).__init__("Inaccessible Object: %s" % str(id))
+        super(InaccessibleObjectError, self).__init__("Inaccessible Object: %s" % id)
         self.repo = repo
         self.id = id
         self.orig = orig
