@@ -588,6 +588,7 @@ class Registry(object):
 
         try:
             returnable_id = self.__safe_add(obj, force_index)
+            ## Add to list of loaded jobs in memory
             self._loaded_ids.append(returnable_id)
         except (RepositoryError) as err:
             raise err
@@ -729,8 +730,7 @@ class Registry(object):
             self.__safe_read_access(_obj, sub_obj)
 
     @synchronised
-    def _updateIndexCache(self, _obj):
-        logger.debug("_updateIndexCache")
+    def _updateIndexC
         obj = stripProxy(_obj)
         if self.find(obj) in self._inprogressDict.keys():
             return
@@ -746,17 +746,37 @@ class Registry(object):
             these_ids.append(this_id)
             self.lock_transaction(this_id, "_load")
 
+        ## Record dirty status before flushing
+        ## Just in case we've requested loading over the job in memory
+        prior_status = {}
+        for obj_id in obj_ids:
+            if obj_id in self._objects:
+                prior_status[obj_id] = self._objects[obj_id]._dirty
+
         try:
             for obj_id in obj_ids:
                 self.repository.load([obj_id])
+                ## Track the objects we've loaded into memory
                 self._loaded_ids.append(obj_id)
         except Exception as err:
             logger.error("Error Loading Jobs!")
+            ## Cleanup aftr ourselves if an error occured
             for obj_id in obj_ids:
                 if obj_id in self._loaded_ids:
                     del self._loaded_ids[obj_id]
+                ## Didn't load mark as clean so it's not flushed
+                if obj_id in self._objects:
+                    self._objects[obj_id]._setFlushed()
             raise err
         finally:
+            ## Lets make sure jobs forcibly reloaded twice are only conditionally
+            ## Marked clean incase you've modified the state in memory.
+            for obj_id in obj_ids:
+                if obj_id in self._loaded_ids:
+                    if obj_id in prior_status and not prior_status[obj_id]:
+                        self._objects[obj_id]._setFlushed()
+                    else:
+                        self._objects[obj_id]._setDirty()
             for obj_id in these_ids:
                 self.unlock_transaction(obj_id)
 
