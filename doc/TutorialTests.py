@@ -63,6 +63,8 @@ j.submit()
 
     def test_c_JobManipulation(self):
 
+        runMonitoring()
+
         # -- JOBMANIPULATION JOBCOPY START
         j = Job(name = 'original')
         j2 = j.copy()
