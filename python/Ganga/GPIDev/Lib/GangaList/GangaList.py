@@ -297,11 +297,12 @@ class GangaList(GangaObject):
         # setup up the list correctly
         tmp_list = input_list
         if isType(input_list, GangaList):
-            tmp_list = stripProxy(input_list)._list
+            # GangaLists should never contain proxied objects so just return the list
+            return stripProxy(input_list)._list
         elif isinstance(input_list, tuple):
             tmp_list = list(input_list)
 
-        # Now return the list after stripping the objects of proxies
+        # Now return the list after stripping any objects of proxies
         return self.strip_proxy_list(tmp_list)
 
     def __eq__(self, obj_list):
