@@ -10,7 +10,7 @@ class TutorialTests(unittest.TestCase):
     # A set of tests that are explicitly quoted in the tutorial docs
     # DON'T CHANGE THE COMMENTS as these are used to pick out the code!
     # Should also add more checks for completed jobs, etc.
-    def testInstallAndBasicUsage(self):
+    def test_a_InstallAndBasicUsage(self):
 
         # -- INSTALLANDBASICUSAGE HELP START
         help(Job)
@@ -38,7 +38,7 @@ j.submit()
         # -- INSTALLANDBASICUSAGE EXECFILE STOP
 
 
-    def testConfiguration(self):
+    def test_b_Configuration(self):
 
         # -- CONFIGURATION VIEWCHANGE START
         # print full config
@@ -61,7 +61,7 @@ j.submit()
         # -- CONFIGURATION STARTUPSCRIPT STOP
 
 
-    def testJobManipulation(self):
+    def test_c_JobManipulation(self):
 
         # -- JOBMANIPULATION JOBCOPY START
         j = Job(name = 'original')
@@ -113,3 +113,35 @@ j.submit()
         jlist = load('my_job.txt')
         jlist[0].submit()
         # -- JOBMANIPULATION EXPORTJOB STOP
+
+    def test_d_RunningExecutables(self):
+
+        # -- RUNNINGEXECUTABLES EXAMPLE START
+        # Already existing Exe
+        j = Job()
+        j.application = Executable()
+        j.application.exe = '/bin/ls'
+        j.application.args = ['-l', '-h']
+        j.submit()
+
+        # Wait for completion
+        j.peek("stdout")
+
+        # Send a script
+        open('my_script.sh', 'w').write("""#!/bin/bash
+        echo 'Current dir: ' `pwd`
+        echo 'Contents:'
+        ls -ltr
+        echo 'Args: ' $@
+        """)
+        import os
+        os.system('chmod +x my_script.sh')
+
+        j = Job()
+        j.application = Executable()
+        j.application.exe = File('my_script.sh')
+        j.submit()
+
+        # Wait for completion
+        j.peek("stdout")
+        # -- RUNNINGEXECUTABLES EXAMPLE STOP
