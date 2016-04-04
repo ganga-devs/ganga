@@ -304,11 +304,6 @@ class TestMutableMethods(GangaUnitTest):
 
             list_third = [LocalFile(self._makeRandomString()) for _ in range(10)]
             j.inputfiles.extend(list_third)
-            #print(list_two)
-            #print(list_third)
-            #print(j.inputfiles)
-            #for f in list_third:
-            #    j.inputfiles.append(f)
             assert len(j.inputfiles) == 20, "Must be added correctly finally"
             testList(j.inputfiles)
 
