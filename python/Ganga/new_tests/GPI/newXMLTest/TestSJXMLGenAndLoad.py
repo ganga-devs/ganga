@@ -84,7 +84,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
     def test_d_XMLUpdated(self):
         # Check they get updated elsewhere
-        from Ganga.GPI import jobs, disableMonitoring
+        from Ganga.GPI import jobs, disableMonitoring, enableMonitoring
 
         disableMonitoring()
 
@@ -101,6 +101,10 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         assert len(j.subjobs) == len(testArgs)
 
         assert newest_update.st_mtime > last_update.st_mtime
+
+        enableMonitoring()
+        from GangaTest.Framework.utils import sleep_until_completed
+        sleep_until_completed(j)
 
     def test_e_SubJobXMLExists(self):
         # Check other XML exit

@@ -25,9 +25,7 @@ class GangaException(Exception):
         #    from Ganga.Utility.logging import getLogger
         #    self.logger = getLogger()
 
-        #from Ganga.Utility.logging import _get_logging
-        #logging = _get_logging()
-
+        #import logging
         #if self.logger.isEnabledFor(logging.DEBUG):
         #    import traceback
         #    traceback.print_stack()
@@ -153,9 +151,7 @@ class GangaAttributeError(AttributeError, GangaException):
         #    from Ganga.Utility.logging import getLogger
         #    self.logger = Ganga.Utility.logging.getLogger()
 
-        #    from Gangs.Utility.logging import _get_logging
-        #    logging = _get_logging()
-
+        #    import logging
         #    if self.logger.isEnabledFor(logging.DEBUG):
         #        import traceback
         #        traceback.print_stack()

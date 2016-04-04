@@ -14,6 +14,7 @@ from __future__ import absolute_import
 import os
 import re
 import math
+import mimetypes
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Core import GangaException
@@ -1260,13 +1261,15 @@ try:
         if not lcg_file_download(vo, guid, os.path.join(wdir,f), timeout=int(timeout)):
             raise IOError('Download remote input %s:%s failed.' % (guid,f) )
         else:
-            getPackedInputSandbox(f)
+            if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+                getPackedInputSandbox(f)
 
     printInfo('Download inputsandbox from iocache passed.')
 
 #   unpack inputsandbox from wdir
     for f in input_sandbox['local']:
-        getPackedInputSandbox(os.path.join(orig_wdir,f))
+        if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+            getPackedInputSandbox(os.path.join(orig_wdir,f))
 
     printInfo('Unpack inputsandbox passed.')
 
