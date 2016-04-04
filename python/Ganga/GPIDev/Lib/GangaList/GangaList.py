@@ -569,5 +569,29 @@ class GangaList(GangaObject):
         returnable_str += "]"
         return returnable_str
 
+    # accept a visitor pattern - overrides GangaObject because we need to process _list as a ComponentItem in this
+    # case to allow save/load of nested lists to work.
+    # Could just get away with SimpleItem checks here but have included Shared and Component just in case these
+    # are added in the future
+    @synchronised
+    def accept(self):
+        visitor.nodeBegin(self)
+
+        for (name, item) in self._schema.simpleItems():
+            if name == "_list" and self._name == "GangaList":
+                visitor.componentAttribute(self, "_list", self._getdata("_list"), 1)
+            elif item['visitable']:
+                visitor.simpleAttribute(self, name, self._getdata(name), item['sequence'])
+
+        for (name, item) in self._schema.sharedItems():
+            if item['visitable']:
+                visitor.sharedAttribute(self, name, self._getdata(name), item['sequence'])
+
+        for (name, item) in self._schema.componentItems():
+            if item['visitable']:
+                visitor.componentAttribute(self, name, self._getdata(name), item['sequence'])
+
+        visitor.nodeEnd(self)
+
 # export to GPI moved to the Runtime bootstrap
 
