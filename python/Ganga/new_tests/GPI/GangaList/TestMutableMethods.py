@@ -3,7 +3,6 @@ import string
 import time
 
 from ..GangaUnitTest import GangaUnitTest
-from Ganga.GPIDev.Base.Proxy import isProxy, isType, TypeMismatchError
 from Ganga.GPIDev.Lib.GangaList.GangaList import decorateListEntries
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError
@@ -51,6 +50,7 @@ class TestMutableMethods(GangaUnitTest):
 
     def testApp(self):
 
+        from Ganga.GPIDev.Base.Proxy import isProxy
         assert not isinstance(self.test_job.application.seq, list)
 
         for f in self.test_job.application.gListComp:
@@ -61,6 +61,7 @@ class TestMutableMethods(GangaUnitTest):
 
     def testGet(self):
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
+        from Ganga.GPIDev.Base.Proxy import isProxy, isType
 
         assert isProxy(self.test_job.application.seq)
         assert isProxy(self.test_job.application.gList)
@@ -74,6 +75,7 @@ class TestMutableMethods(GangaUnitTest):
 
         from Ganga.GPI import Job, TestSubmitter, GListApp
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
+        from Ganga.GPIDev.Base.Proxy import isProxy, isType
 
         test_job = Job(application=GListApp(), backend=TestSubmitter())
 
@@ -88,6 +90,7 @@ class TestMutableMethods(GangaUnitTest):
     def testSetComponent(self):
         """Sets a list of proxies and makes sure we get a GangaList"""
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
+        from Ganga.GPIDev.Base.Proxy import isProxy
 
         # component types
         r = [self._makeRandomTFile() for _ in range(15)]
@@ -108,6 +111,7 @@ class TestMutableMethods(GangaUnitTest):
     def testSetSimple(self):
         """Sets a list of proxies and makes sure we get a GangaList"""
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
+        from Ganga.GPIDev.Base.Proxy import isProxy
 
         # simple types
         s = [self._makeRandomString() for _ in range(15)]
@@ -167,6 +171,7 @@ class TestMutableMethods(GangaUnitTest):
 
     def testAppendWrongComponentItem(self):
         from Ganga.GPI import Executable
+        from Ganga.GPIDev.Base.Proxy import TypeMismatchError
 
         assert len(
             self.test_job.application.gListComp) == 10, 'List is as we expect'
@@ -236,6 +241,7 @@ class TestMutableMethods(GangaUnitTest):
 
         from Ganga.GPI import Job, Executable, TestSubmitter, ArgSplitter
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
+        from Ganga.GPIDev.Base.Proxy import isType
 
         j = Job(application=Executable(), backend=TestSubmitter())
         j.splitter = ArgSplitter(args=[['A'], ['B'], ['C']])
@@ -250,6 +256,7 @@ class TestMutableMethods(GangaUnitTest):
 
     def testShortCuts(self):
         """Make sure that shortcuts are called"""
+        from Ganga.GPIDev.Base.Proxy import isType, TypeMismatchError
         from Ganga.GPI import Job, LocalFile
         j = Job()
 
