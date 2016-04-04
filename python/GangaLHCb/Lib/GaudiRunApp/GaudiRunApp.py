@@ -130,7 +130,7 @@ class GaudiRun(IPrepareApp):
     def buildGangaTarget(self):
 
         logger.info("Make-ing target '%s'" % build_target)
-        self.exec_cmd('make %s' % build_target)
+        self.exec_cmd('make clean && make %s' % build_target)
 
         targetPath = join(self.getDir(), 'build.%s' % self.arch, 'ganga')
         if not isdir(targetPath):

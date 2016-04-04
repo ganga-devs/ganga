@@ -45,10 +45,10 @@ class GaudiRunRTHandler(IRuntimeHandler):
 
         job_command = 'ls'
         job_args = ['-l']
-        #input_sand = stripProxy(app).getJobObject().inputsandbox
+        input_sand = stripProxy(app).getJobObject().inputsandbox
         output_sand = stripProxy(app).getJobObject().outputsandbox
 
-        input_sand = prepared_files
+        input_sand = unique(input_sand + prepared_files)
 
         c = StandardJobConfig(job_command, input_sand, job_args, output_sand)
         return c
@@ -150,8 +150,13 @@ import sys
 # Main
 if __name__ == '__main__':
 
-    environ['PATH'] = getcwd() + (pathsep + environ['PATH'])        
-    rc = (system('###COMMAND###')/256)
+    environ['PATH'] = getcwd() + (pathsep + environ['PATH'])
+    if path.isfile('./###TAR_FILE###'):
+        rc = system('tar -zxf ###TAR_FILE### -C .')
+        if rc !=0:
+            print("COULD NOT EXTRACT: %s" % str('###TAR_FILE###'))
+            sys.exit(rc)
+    rc = system('###COMMAND###')
 
     ###OUTPUTFILESINJECTEDCODE###
     sys.exit(rc)
@@ -162,3 +167,4 @@ if __name__ == '__main__':
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('GaudiRun', 'Dirac', GaudiRunDiracRTHandler)
+
