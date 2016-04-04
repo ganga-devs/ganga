@@ -237,7 +237,7 @@ class Schema(object):
         from Ganga.Utility.Config import Config
         is_finalized = Config._after_bootstrap
 
-        _useDefVal = False
+        useDefVal = False
 
         try:
             # Attempt to get the relevant config section
@@ -254,11 +254,11 @@ class Schema(object):
                     ## Just in case a developer puts the proxied object into the default value!
                     _found_attrs[stored_attr_key] = defvalue
                 else:
-                    _useDefVal = True
+                    useDefVal = True
         except (KeyError, Config.ConfigError):
-            _useDefVal = True
+            useDefVal = True
 
-        if _useDefVal:
+        if useDefVal:
             # hidden, protected and sequence values are not represented in config
             defvalue = item['defvalue']
             from Ganga.GPIDev.Base.Proxy import isProxy

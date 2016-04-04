@@ -108,7 +108,7 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
             except IOError as err:
                 raise IOError("Could not write file '%s' (%s)" % (fn, err))
             except XMLFileError as err:
-                raise err
+                raise
         else:
             try:
                 if not os.path.exists(fn):
@@ -128,7 +128,7 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
             except IOError as e:
                 raise IOError("Could not write file %s.new (%s)" % (fn, e))
             except XMLFileError as err:
-                raise err
+                raise
             # Try to make backup copy...
             try:
                 if os.path.exists(fn+'~'):
@@ -169,7 +169,7 @@ def rmrf(name, count=0):
                 logger.debug("rmrf Err: %s" % str(err))
                 logger.debug("name: %s" % str(name))
                 remove_name = name
-                raise err
+                raise
             return
 
         for sfn in os.listdir(remove_name):
@@ -189,7 +189,7 @@ def rmrf(name, count=0):
                 rmrf(remove_name, count+1)
             elif err.errno != errno.ENOENT:
                 logger.debug("%s" % str(err))
-                raise err
+                raise
             return
     else:
         try:
@@ -197,7 +197,7 @@ def rmrf(name, count=0):
             os.rename(name, remove_name)
         except OSError as err:
             if err.errno not in [errno.ENOENT, errno.EBUSY]:
-                raise err
+                raise
             logger.debug("rmrf Move err: %s" % str(err))
             logger.debug("name: %s" % str(name))
             if err.errno == errno.EBUSY:
@@ -210,7 +210,7 @@ def rmrf(name, count=0):
             if err.errno != errno.ENOENT:
                 logger.debug("%s" % str(err))
                 logger.debug("name: %s" % str(remove_name))
-                raise err
+                raise
             return
 
 
@@ -900,13 +900,13 @@ class GangaRepositoryLocal(GangaRepository):
             except Exception as err:
                 logger.debug("XML load: Failed to load XML file: %s" % str(fn))
                 logger.debug("Error was:\n%s" % str(err))
-                raise err
+                raise
 
             try:
                 self._actually_load_xml(fobj, fn, this_id, load_backup)
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % str(err))
-                raise err
+                raise
 
             except Exception as err:
 
@@ -915,7 +915,7 @@ class GangaRepositoryLocal(GangaRepository):
                 if should_continue is True:
                     continue
                 else:
-                    raise err
+                    raise
 
             finally:
                 fobj.close()

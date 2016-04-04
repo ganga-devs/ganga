@@ -1074,7 +1074,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
                 except KeyError as err:
                     logger.debug("ObjectMetaClass Error internal_name: %s,\t d: %s" % (internal_name, d))
                     logger.debug("ObjectMetaClass Error: %s" % err)
-                    raise err
+                    raise
 
                 if not isinstance(method, types.FunctionType):
                     continue
