@@ -749,7 +749,7 @@ class Registry(object):
         try:
             for obj_id in obj_ids:
                 self.repository.load([obj_id])
-                self._loaded_ids.append(this_id)
+                self._loaded_ids.append(obj_id)
         except Exception as err:
             logger.error("Error Loading Jobs!")
             for obj_id in obj_ids:
