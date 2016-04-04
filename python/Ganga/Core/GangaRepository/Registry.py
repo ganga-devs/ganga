@@ -131,7 +131,6 @@ class IncompleteObject(GangaObject):
                 self.registry._load([self.id])
             if self.id not in self.registry_loaded_ids:
                 self.registry._load([self.id])
-                self.registry._loaded_ids.append(self.id)
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
             for d in self.registry.changed_ids.itervalues():
                 d.add(self.id)
@@ -690,11 +689,17 @@ class Registry(object):
             if not obj._dirty:
                 continue
 
+            if hasattr(obj, _reg_id_str):
+                obj_id = getattr(obj, _reg_id_str)
+                if obj_id not in self._loaded_ids:
+                    continue
+            else:
+                continue
+
             with obj.const_lock:
                 # flush the object. Need to call _getWriteAccess for consistency reasons
                 # TODO: getWriteAccess should only 'get write access', as that's not needed should it be called here?
                 obj._getWriteAccess()
-                obj_id = getattr(obj, _reg_id_str)
                 self.repository.flush([obj_id])
                 obj._setFlushed()
 
@@ -744,8 +749,12 @@ class Registry(object):
         try:
             for obj_id in obj_ids:
                 self.repository.load([obj_id])
+                self._loaded_ids.append(this_id)
         except Exception as err:
             logger.error("Error Loading Jobs!")
+            for obj_id in obj_ids:
+                if obj_id in self._loaded_ids:
+                    del self._loaded_ids[obj_id]
             raise err
         finally:
             for obj_id in these_ids:
@@ -769,7 +778,6 @@ class Registry(object):
             try:
                 if this_id not in self._loaded_ids:
                     self._load([this_id])
-                    self._loaded_ids.append(this_id)
             except KeyError as err:
                 logger.error("_read_access KeyError %s" % str(err))
                 raise RegistryKeyError("Read: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
@@ -836,7 +844,6 @@ class Registry(object):
                     try:
                         if this_id not in self._loaded_ids:
                             self._load([this_id])
-                            self._loaded_ids.append(this_id)
                             if hasattr(obj, "_registry_refresh"):
                                 delattr(obj, "_registry_refresh")
                     except KeyError, err:
@@ -947,6 +954,8 @@ class Registry(object):
             logger.debug("Logging Repo startup Error: %s" % str(err))
             self._hasStarted = False
             raise err
+        #finally:
+        #    pass
 
     @synchronised
     def shutdown(self):
