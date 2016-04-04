@@ -84,7 +84,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         global global_AutoStartReg
         global_AutoStartReg = True
 
-    def test_d_TestCorruptLoad(self):
+    def test_e_TestCorruptLoad(self):
         # Test loading of backup when corrupt
         from Ganga.GPI import jobs
 
@@ -102,7 +102,6 @@ class TestXMLGenAndLoad(GangaUnitTest):
             myTempfile.flush()
             myTempName=myTempfile.name
 
-        import filecmp
-        assert not filecmp.cmp(XMLFileName, myTempName)
+        assert open(XMLFileName).read() != open(myTempName).read()
         unlink(myTempName)
 
