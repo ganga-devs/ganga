@@ -575,11 +575,11 @@ class GangaList(GangaObject):
     # Could just get away with SimpleItem checks here but have included Shared and Component just in case these
     # are added in the future
     @synchronised
-    def accept(self):
+    def accept(self, visitor):
         visitor.nodeBegin(self)
 
         for (name, item) in self._schema.simpleItems():
-            if name == "_list" and self._name == "GangaList":
+            if name == "_list":
                 visitor.componentAttribute(self, "_list", self._getdata("_list"), 1)
             elif item['visitable']:
                 visitor.simpleAttribute(self, name, self._getdata(name), item['sequence'])
