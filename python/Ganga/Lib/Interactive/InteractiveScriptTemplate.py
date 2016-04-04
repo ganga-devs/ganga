@@ -9,6 +9,7 @@ import os
 import sys
 import time
 import glob
+import mimetypes
 
 sys.path.insert( 0, '###GANGA_PYTHONPATH###' )
 
@@ -37,7 +38,8 @@ if not os.path.exists( '###WORKDIR###'):
     os.makedirs('###WORKDIR###')
 os.chdir( '###WORKDIR###' )
 for inFile in ###IN_BOX###:
-    getPackedInputSandbox( inFile )
+    if mimetypes.guess_type(inFile)[1] in ['gzip', 'bzip2']:
+        getPackedInputSandbox( inFile )
 
 ###WN_INPUTFILES###
 

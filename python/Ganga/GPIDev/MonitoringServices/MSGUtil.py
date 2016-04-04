@@ -10,9 +10,10 @@ config = Config.getConfig('Logging')
 if 'stomp.py' in config:
     pass  # config['stomp.py']
 else:
-    from Ganga.Utility.logging import getLogger, _get_logging
+    from Ganga.Utility.logging import getLogger
+    import logging
     # set stomp.py logger to CRITICAL
-    getLogger('stomp.py').setLevel(_get_logging().CRITICAL)
+    getLogger('stomp.py').setLevel(logging.CRITICAL)
 
 
 def createPublisher(server, port, user='ganga', password='analysis', idle_timeout=None, exit_timeout=None):

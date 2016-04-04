@@ -928,7 +928,6 @@ under certain conditions; type license() for details.
 
         # Start tracking all the threads and saving the information to a file
         stacktracer.trace_start()
-        atexit.register((100, stacktracer.trace_stop))
 
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
