@@ -20,7 +20,7 @@ class GListApp(IPrepareApp):
     _name = 'GListApp'
     _schema = Schema(Version(1, 0), {
         'bound_print_comp': ComponentItem('files', defvalue=[], sequence=1, summary_print='_print_summary_bound_comp', typelist=['str', 'Ganga.test.GPI.GangaList.TFile.TFile']),
-        'bound_print_simple': SimpleItem(defvalue=GangaList(), summary_print='_print_summary_bound_simple'),
+        'bound_print_simple': SimpleItem(defvalue=[], summary_print='_print_summary_bound_simple'),
         'no_summary': SimpleItem(defvalue=[], sequence=1, summary_sequence_maxlen=-1, typelist=['str']),
         'seq': SimpleItem(defvalue=[], sequence=1, typelist=['int']),
         'gList': SimpleItem(defvalue=[], sequence=1, typelist=['str']),
