@@ -4,6 +4,7 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError, getName
 from Ganga.GPIDev.Base.VPrinter import full_print, summary_print
 from Ganga.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Base.Objects import synchronised
 from Ganga.Utility.util import containsGangaObjects
 import copy
 import sys
