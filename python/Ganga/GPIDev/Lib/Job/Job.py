@@ -2183,8 +2183,9 @@ class Job(GangaObject):
 
     def _subjobs_proxy(self):
 
-        if self._stored_subjobs_proxy is None:
-            from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
+        from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+        if not isType(self._stored_subjobs_proxy, JobRegistrySlice):
             subjob_slice = JobRegistrySlice('jobs(%s).subjobs' % str(self.id))
             self._stored_subjobs_proxy = _wrap(subjob_slice)
 
@@ -2192,16 +2193,16 @@ class Job(GangaObject):
 
             if isType(self.subjobs, SubJobXMLList):
                 subjob_slice.objects = self.subjobs
-                from Ganga.GPIDev.Base.Proxy import stripProxy
-                from Ganga.GPIDev.Lib.Registry.JobRegistry import _wrap
-                self._stored_subjobs_proxy = _wrap(stripProxy(self._stored_subjobs_proxy))
+                #self._stored_subjobs_proxy = _wrap(stripProxy(self._stored_subjobs_proxy))
             elif isType(self.subjobs, (list, GangaList)):
-                from Ganga.GPIDev.Base.Proxy import stripProxy
-                from Ganga.GPIDev.Lib.Registry.JobRegistry import _wrap
                 subjob_slice = stripProxy(self._stored_subjobs_proxy)
+                if len(subjob_slice.objects.keys()):
+                    removeable = subjob_slice.objects.keys()
+                    for sj_id in removeable:
+                        del subjob_slice.objects[sj_id]
                 for sj in self.subjobs:
                     subjob_slice.objects[sj.id] = sj
-                self._stored_subjobs_proxy = _wrap(stripProxy(self._stored_subjobs_proxy))
+                #self._stored_subjobs_proxy = _wrap(stripProxy(self._stored_subjobs_proxy))
             else:
                 raise GangaException("This should never arise, cannot understand subjob list")
 
