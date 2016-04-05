@@ -52,11 +52,6 @@ class TaskRegistry(Registry):
         # Add runtime handlers for all the taskified applications, since now
         # all the backends are loaded
         from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-        from .TaskApplication import handler_map
-        for basename, name in handler_map:
-            for backend in allHandlers.getAllBackends(basename):
-                allHandlers.add(
-                    name, backend, allHandlers.get(basename, backend))
 
         from Ganga.Core.GangaRepository import getRegistry
         while getRegistry("jobs").hasStarted() is not True:

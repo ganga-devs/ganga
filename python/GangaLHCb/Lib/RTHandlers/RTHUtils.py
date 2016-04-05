@@ -9,7 +9,6 @@ import Ganga.Utility.logging
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template, dirac_outputfile_jdl
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import TaskApplication
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

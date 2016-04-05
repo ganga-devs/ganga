@@ -2,9 +2,6 @@
 # File : TaskApplication.py
 ########################################################################
 
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import taskify
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import task_map
-
 # Must take care of "taskifying" all possible apps
 #from GangaLHCb.Lib.Applications.AppsBase import *
 #from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps
