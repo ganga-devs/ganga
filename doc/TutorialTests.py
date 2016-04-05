@@ -147,3 +147,15 @@ j.submit()
         # Wait for completion
         j.peek("stdout")
         # -- RUNNINGEXECUTABLES EXAMPLE STOP
+
+    def test_e_UsingDifferentBackends(self):
+
+        # -- USINGDIFFERENTBACKENDS PLUGINS START
+        plugins("backends")
+        # -- USINGDIFFERENTBACKENDS PLUGINS STOP
+
+        # -- USINGDIFFERENTBACKENDS LOCAL START
+        j = Job()
+        j.backend = Local()
+        j.submit()
+        # -- USINGDIFFERENTBACKENDS LOCAL STOP
