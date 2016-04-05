@@ -431,22 +431,22 @@ def %(method_name)s(self):
         try:
             import Ganga.Core.InternalServices.Coordinator
             if Ganga.Core.InternalServices.Coordinator.servicesEnabled:
-                from Ganga.GPI import disableServices
-                disableServices()
+                from Ganga.Core.InternalServices.Coordinator disableInternalServices
+                disableInternalServices()
         
-            from Ganga.GPI import  reactivate
+            from Ganga.Core.InternalServices.Coordinator import enableInternalServices, disableInternalServices
+            enableInternalServices()
             reactivate()
         
-            from Ganga.GPI import jobs, templates
-            for j in jobs: j.remove()
-            for t in templates: t.remove()
-            if hasattr(jobs,'clean'):
-                jobs.clean(confirm=True, force=True)
-            if hasattr(templates,'clean'):
-                templates.clean(confirm=True, force=True)
+            from Ganga.Core.GangaRepository import getRegistryProxy
+            for j in getRegistryProxy('jobs'): j.remove()
+            for t in getRegistryProxy('templates'): t.remove()
+            if hasattr(getRegistryProxy('jobs'),'clean'):
+                getRegistryProxy('jobs').clean(confirm=True, force=True)
+            if hasattr(getRegistryProxy('templates'),'clean'):
+                getRegistryProxy('templates').clean(confirm=True, force=True)
         
-            from Ganga.GPI import disableServices
-            disableServices()
+            disableInternalServices()
         
         #    # DANGEROUS only use as a last resort to files being kept open
         #    #from Ganga.Runtime import bootstrap
@@ -454,12 +454,6 @@ def %(method_name)s(self):
         #
         except:
             pass
-
-        #try:
-        #    from Ganga.GPI import disableServices
-        #    disableServices()
-        #except:
-        #    pass
 
         script_runner.append('{ ' + cmd + '; }')
         output = open(output_path,out_mode)
@@ -485,35 +479,6 @@ def %(method_name)s(self):
         out=text[:tb_index]
         err=text[tb_index:]
 
-        #try:
-        #    import Ganga.Core.InternalServices.Coordinator
-        #    if Ganga.Core.InternalServices.Coordinator.servicesEnabled:
-        #        from Ganga.GPI import disableServices
-        #        disableServices()
-        #
-        #    from Ganga.GPI import reactivate
-        #    reactivate()
-        #
-        #
-        #    from Ganga.GPI import jobs, templates
-        #    for j in jobs: j.remove()
-        #    for t in templates: t.remove()
-        #    if hasattr(jobs,'clean'):
-        #        jobs.clean(confirm=True, force=True)
-        #    if hasattr(templates,'clean'):
-        #        templates.clean(confirm=True, force=True)
-        #
-        #    from Ganga.GPI import disableServices
-        #    disableServices()
-        
-        #except:
-        #    pass
-
-        #try:
-        #    from Ganga.GPI import reactivate
-        #    reactivate()
-        #except:
-        #    pass
 
         return sts,out,err
         

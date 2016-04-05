@@ -52,9 +52,6 @@ def getRuntimeGPIObject(obj_name, silent=False):
         if returnable == obj_name:
             if silent is False:
                 logger.error("Cannot find Object: '%s' in GPI. Returning None." % str(obj_name))
-                #logger.error("dict: %s" % Ganga.GPI.__dict__)
-                #import traceback
-                #traceback.print_stack()
             return None
         return returnable
 
