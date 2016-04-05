@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import print_function
-from .common import config, logger
 import time
 import traceback
 import sys
@@ -9,6 +8,12 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName, isType
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours, status_colours, fgcol
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
+from Ganga.Utility.Config import getConfig
+config = getConfig('Tasks')
 
 markup = ANSIMarkup()
 str_run = markup("run", overview_colours["running"])

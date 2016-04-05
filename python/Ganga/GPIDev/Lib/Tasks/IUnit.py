@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
-from .common import logger
+from Ganga.Utility.logging import getLogger
 from Ganga.Utility.ColourText import status_colours, overview_colours, ANSIMarkup
 markup = ANSIMarkup()
 import Ganga.GPI as GPI
@@ -12,6 +12,8 @@ import time
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
 import sys
 import traceback
+
+logger = getLogger()
 
 def formatTraceback():
    "Helper function to printout a traceback as a string"

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
-from .common import logger
+from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Lib.Job import MetadataDict
@@ -9,6 +9,8 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga import GPI
 import time
+
+logger = getLogger()
 
 ########################################################################
 def addInfoString( task_obj, info_str ):

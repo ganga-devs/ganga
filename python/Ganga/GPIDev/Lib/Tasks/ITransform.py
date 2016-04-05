@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
-from .common import logger
+from Ganga.Utility.logging import getLogger
 from Ganga.Utility.ColourText import status_colours, overview_colours, ANSIMarkup
 markup = ANSIMarkup()
 from Ganga.Core.exceptions import ApplicationConfigurationError
@@ -14,6 +14,8 @@ import Ganga.GPI as GPI
 import time
 import os
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
+
+logger = getLogger()
 
 class ITransform(GangaObject):
     _schema = Schema(Version(1, 0), {

@@ -12,9 +12,6 @@ from Ganga.GPIDev.Lib.Tasks.CoreTask import CoreTask
 from Ganga.GPIDev.Lib.Tasks.CoreTransform import CoreTransform
 from Ganga.GPIDev.Lib.Tasks.CoreUnit import CoreUnit
 
-# Logger
-from Ganga.GPIDev.Lib.Tasks.common import logger
-
 # Create the registry
 myTaskRegistry = TaskRegistry("tasks", "Tasks Registry")
 addRegistry(myTaskRegistry)
