@@ -188,7 +188,7 @@ def lookUpLFNReplicas(inputs, allLFNData):
     for i in range(int(math.ceil(float(len(allLFNs)) * limit_divide_one))):
 
         from Ganga.Core.GangaThread.WorkerThreads import getQueues
-        getQueues._monitoring_threadpool.add_function(getLFNReplicas, (allLFNs, i, allLFNData))
+        getQueues()._monitoring_threadpool.add_function(getLFNReplicas, (allLFNs, i, allLFNData))
 
     while len(allLFNData) != int(math.ceil(float(len(allLFNs)) * limit_divide_one)):
         import time

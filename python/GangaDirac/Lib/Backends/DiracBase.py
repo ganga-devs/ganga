@@ -715,7 +715,7 @@ class DiracBase(IBackend):
         # requeue existing completed job
         for j in requeue_jobs:
             #            if j.backend.status in requeue_dirac_status:
-            getQueues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
+            getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                        args=(j, requeue_dirac_status[j.backend.status]),
                                                        priority=5, name="Job %s Finalizing" % j.fqid)
             j.been_queued = True
@@ -787,7 +787,7 @@ class DiracBase(IBackend):
                     if job.master:
                         job.master.updateMasterJobStatus()
 
-                getQueues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
+                getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                            args=(job, updated_dirac_status),
                                                            priority=5, name="Job %s Finalizing" % job.fqid)
                 job.been_queued = True

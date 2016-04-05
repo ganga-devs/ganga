@@ -105,7 +105,7 @@ class IUnit(GangaObject):
 
         # if we're using threads, check the max number
         from Ganga.Core.GangaThread.WorkerThreads import getQueues
-        if self._getParent().submit_with_threads and getQueues.totalNumUserThreads() > self._getParent().max_active_threads:
+        if self._getParent().submit_with_threads and getQueues().totalNumUserThreads() > self._getParent().max_active_threads:
             return False
 
         return True

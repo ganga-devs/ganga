@@ -144,7 +144,7 @@ class IBackend(GangaObject):
 
             from Ganga.Core.GangaThread.WorkerThreads import getQueues
 
-            threads_before = getQueues.totalNumIntThreads()
+            threads_before = getQueues().totalNumIntThreads()
 
             for sc, sj in zip(subjobconfigs, rjobs):
 
