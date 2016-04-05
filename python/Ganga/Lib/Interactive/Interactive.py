@@ -168,7 +168,13 @@ class Interactive(IBackend):
 
         job = self.getJobObject()
 
-        inputfiles = jobconfig.getSandboxFiles()
+        from Ganga.GPIDev.Lib.File import File
+        from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
+        import Ganga.Utility.files
+        import inspect
+
+        fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
+        inputfiles = jobconfig.getSandboxFiles() + [ fileutils ]
         inbox = job.createPackedInputSandbox(inputfiles)
 
         inbox.extend(master_input_sandbox)

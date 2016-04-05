@@ -19,8 +19,11 @@ logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+## Due to a bug in Gaudi at some point we need this equivalenc here: see #204
+DataObjectDescriptorCollection = str
 
 class PythonOptionsParser:
+
 
     """ Parses job options file(s) w/ gaudirun.py to extract user's files"""
 

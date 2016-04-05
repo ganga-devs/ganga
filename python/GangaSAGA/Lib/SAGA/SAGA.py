@@ -163,9 +163,12 @@ class SAGA(IBackend):
             logger.info("  * adding %s user defined files to input sandbox", len(sandbox_files))
             
             import Ganga.Core.Sandbox as Sandbox
-            
-            compressed_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles()
-              + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()))
+            from Ganga.GPIDev.Lib.File import File
+            from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
+            import inspect
+
+            fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
+            compressed_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
 
             try:
                 for f in compressed_input_sandbox:

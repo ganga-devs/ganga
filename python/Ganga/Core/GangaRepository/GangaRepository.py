@@ -61,6 +61,8 @@ class RepositoryError(GangaException):
         try:
             from Ganga.Core.InternalServices.Coordinator import disableInternalServices
             disableInternalServices()
+            from Ganga.Core.GangaThread.WorkerThreads import shutdownQueues
+            shutdownQueues()
             logger.error("Shutting Down Repository_runtime")
             from Ganga.Runtime import Repository_runtime
             Repository_runtime.shutdown()
@@ -204,6 +206,7 @@ class GangaRepository(object):
         obj.setNodeData({})
         obj.setNodeAttribute('id', this_id)
 
+        obj._setFlushed()
         self._internal_setitem__(this_id, obj)
         return obj
 

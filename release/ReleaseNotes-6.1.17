@@ -1,0 +1,18 @@
+**************************************************************************************************************
+6.1.17 (2016/03/07)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* This release focused on making sure that jobs are flushed to disk in a timely fashion. They should all be flushed every 30 seconds as well as at the beginning and end of submit()
+* job.subjobs.select(...) now works as expected. PR #253
+* The messages printed by the monitoring loop's heartbeat checker have been temporarily disabled. PR #269
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* A fix for the Gaudi bug where DataObjectDescriptorCollection() was not found. PR #280
+
+**************************************************************************************************************

@@ -22,6 +22,11 @@ class TransientRegistry(Registry):
         self.pickle_files = pickle_files
         self._needs_metadata = False
 
+        self.stored_slice = TransientRegistrySlice(self.name)
+        self.stored_slice.objects = self
+        self.stored_slice.add = self.add
+        self.stored_proxy = TransientRegistrySliceProxy(self.stored_proxy)
+
     # def startup(self):
         # Note call the base class setup as dont want
         # metadata which JobRegistry forces on us
@@ -43,12 +48,11 @@ class TransientRegistry(Registry):
         # print stripProxy(obj), o
         super(TransientRegistry, self)._add(o)
 
+    def getSlice(self):
+        return self.stored_slice
+
     def getProxy(self):
-        slice = TransientRegistrySlice(self.name)
-        slice.objects = self
-        proxy = TransientRegistrySliceProxy(slice)
-        slice.add = self.add
-        return proxy
+        return self.stored_proxy
 
 
 class TransientRegistrySlice(RegistrySlice):

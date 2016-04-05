@@ -8,7 +8,7 @@ from .GangaRepository import GangaRepository, RepositoryError
 import os
 import os.path
 
-import sqlite
+import sqlite3
 
 try:
     import cPickle as pickle
@@ -34,7 +34,7 @@ class GangaRepositorySQLite(GangaRepository):
             os.makedirs(self.root)
         except OSError as x:
             pass
-        self.con = sqlite.connect(os.path.join(self.root, "database.db"))
+        self.con = sqlite3.connect(os.path.join(self.root, "database.db"))
         logger.debug("Connected to ", os.path.join(self.root, "database.db"))
         self.cur = self.con.cursor()
         tables = self.cur.execute(
@@ -125,7 +125,6 @@ class GangaRepositorySQLite(GangaRepository):
                 obj = self.objects[id]
             if obj.getNodeData() is None:
                 obj.setNodeData( pickle.loads(e[3]) )
-                obj.__setstate__(obj.__dict__)
             ids.remove(id)
         if len(ids) > 0:
             raise KeyError(ids[0])

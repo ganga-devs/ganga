@@ -386,7 +386,12 @@ class Batch(IBackend):
         job = self.getJobObject()
         mon = job.getMonitoringService()
         import Ganga.Core.Sandbox as Sandbox
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()))
+        from Ganga.GPIDev.Lib.File import File
+        from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
+        import inspect
+
+        fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         sharedoutputpath = job.getOutputWorkspace().getPath()

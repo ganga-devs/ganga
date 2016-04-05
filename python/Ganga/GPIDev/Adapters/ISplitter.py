@@ -37,7 +37,7 @@ class ISplitter(GangaObject):
         j.splitter = None
         j.inputsandbox = []
         j.inputfiles = []
-        j.inputdata = []
+        j.inputdata = None
         return j
 
     def split(self, job):

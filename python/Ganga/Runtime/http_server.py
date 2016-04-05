@@ -7,7 +7,7 @@ from BaseHTTPServer import HTTPServer
 
 import urlparse
 import Ganga.GPI
-from Ganga.GPI import config, jobs
+from Ganga.GPIDev.Lib.Config import config
 import time
 import datetime
 import os
@@ -164,6 +164,7 @@ def get_job_JSON(job):
 
 
 def get_subjobs_in_time_range(jobid, fromDate=None, toDate=None):
+    from Ganga.GPI import jobs
 
     subjobs = []
 
@@ -423,6 +424,7 @@ def get_jobs_JSON(fromDate=None, toDate=None):
 
 
 def update_jobs_dictionary():
+    from Ganga.GPI import jobs
 
     reg = getRegistry("jobs")
     # get the changed jobs
@@ -445,6 +447,7 @@ def update_jobs_dictionary():
 
 
 def fill_jobs_dictionary():
+    from Ganga.GPI import jobs
 
     for job in jobs:
         try:

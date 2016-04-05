@@ -3,6 +3,7 @@ import os
 import os.path
 import math
 import re
+import mimetypes
 
 from urlparse import urlparse
 
@@ -563,13 +564,15 @@ try:
         if not lcg_file_download(vo, guid, os.path.join(wdir,f), timeout=int(timeout)):
             raise IOError('Download remote input %s:%s failed.' % (guid,f) )
         else:
-            getPackedInputSandbox(f)
+            if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+                getPackedInputSandbox(f)
 
     printInfo('Download inputsandbox from iocache passed.')
 
 #   unpack inputsandbox from wdir
     for f in input_sandbox['local']:
-        getPackedInputSandbox(os.path.join(orig_wdir,f))
+        mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+            getPackedInputSandbox(os.path.join(orig_wdir,f))
 
     printInfo('Unpack inputsandbox passed.')
 
@@ -739,7 +742,12 @@ sys.exit(0)
             pass
 
 #       prepare input/output sandboxes
-        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules())
+        from Ganga.GPIDev.Lib.File import File
+        from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
+        import inspect
+
+        fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
+        packed_files = jobconfig.getSandboxFiles() + [ fileutils ]
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox

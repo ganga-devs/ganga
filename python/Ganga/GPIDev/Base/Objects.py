@@ -41,7 +41,7 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_lock']
+do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_read_lock', '_write_lock', '_proxyObject']
 
 def _getGangaList():
     global _imported_GangaList
@@ -58,54 +58,34 @@ def synchronised(f):
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
-        with self.lock:
+        with self.const_lock:
             return f(self, *args, **kwargs)
     return decorated
 
 
 class Node(object):
-    _ref_list = ['_parent', '_registry', '_index_cache']
 
     def __init__(self, parent=None):
         self._data = {}
         self._parent = parent
         self._index_cache = {}
-        self._lock = threading.RLock()
+        self._registry = None
+        self._read_lock = threading.RLock() # Don't read out of thread whilst we're making a change
+        self._write_lock = threading.RLock() # Don't write from out of thread when modifying an object
         super(Node, self).__init__()
-        #logger.info("Node __init__")
-
-    def __getstate__(self):
-        d = self.__dict__
-        d['_data'] = d['_data'].copy()
-        for r in self._ref_list:
-            d[r] = None
-        return d
-
-    def __setstate__(self, this_dict):
-        for key, val in this_dict['_data'].iteritems():
-            if isinstance(val, Node) and key not in self._ref_list:
-                val._setParent(self)
-
-        for attr in self._ref_list:
-            if not hasattr(self, attr):
-                setattr(self, attr, None)
-
-        for key, val in this_dict.iteritems():
-            setattr(self, key, val)
 
     def __copy__(self, memo=None):
         cls = self.__class__
         obj = cls()
         # FIXME: this is different than for deepcopy... is this really correct?
-        this_dict = self.__dict__.copy()
+        this_dict = copy(self.__dict__)
         global do_not_copy
         for elem in this_dict.keys():
             if elem not in do_not_copy:
                 this_dict[elem] = copy(this_dict[elem])
             else:
                 this_dict[elem] = None
-        #obj.__setstate__(this_dict)
-        obj.getParent(self._getParent())
+        obj._setParent(self._getParent())
         setattr(obj, '_index_cache', {})
         setattr(obj, '_registry', self._registry)
         return obj
@@ -113,7 +93,7 @@ class Node(object):
     def __deepcopy__(self, memo=None):
         cls = self.__class__
         obj = cls()
-        this_dict = self.__getstate__()
+        this_dict = copy(self.__dict__)
         global do_not_copy
         for elem in this_dict.keys():
             if elem not in do_not_copy:
@@ -125,34 +105,49 @@ class Node(object):
         setattr(obj, '_registry', self._registry)
         return obj
 
-    @synchronised
     def _getParent(self):
         return self._parent
 
-    @synchronised
+    @synchronised  # This will lock the _current_ (soon to be _old_) root object
     def _setParent(self, parent):
-        setattr(self, '_parent', parent)
+        if parent is None:
+            setattr(self, '_parent', parent)
+        else:
+            with parent.const_lock: # This will lock the _new_ root object
+                setattr(self, '_parent', parent)
+            # Finally the new and then old root objects will be unlocked
 
     @property
     @contextmanager
-    def lock(self):
+    def _internal_lock(self):
         """
-        This is a context manager which acquires the lock on the object and all it's ancestors.
-        When the context manager exits, all the locks are released in the reverse order to that which they were acquired.
+        This is a context manager which acquires the internal read lock on the
+        object's root object.
         """
-        self._lock.acquire()
-        ancestors = []
-        p = self._parent
-        while p is not None:
-            p._lock.acquire()
-            ancestors.append(p)
-            p = p._parent
+        root = self._getRoot()
+        root._read_lock.acquire()
         try:
             yield
         finally:
-            for p in reversed(ancestors):
-                p._lock.release()
-            self._lock.release()
+            root._read_lock.release()
+
+    @property
+    @contextmanager
+    def const_lock(self):
+        """
+        This is a context manager which acquires the const write lock on the
+        object's root object.
+
+        This lock acquires exclusive access over an object tree to prevent it
+        changing. Reading schema attributes on the object is still allowed
+        but changing them is not. Only one thread can hold this lock at once.
+        """
+        root = self._getRoot()
+        root._write_lock.acquire()
+        try:
+            yield
+        finally:
+            root._write_lock.release()
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
@@ -209,9 +204,6 @@ class Node(object):
 
         visitor.nodeEnd(self)
 
-    def __copy__(self):
-        copied_obj = self.clone()
-
     # clone self and return a properly initialized object
     def clone(self):
         new_obj = deepcopy(self)
@@ -253,7 +245,7 @@ class Node(object):
         src_dict = srcobj.__dict__
         for key, val in src_dict.iteritems():
             this_attr = getattr(srcobj, key)
-            if isinstance(this_attr, Node) and key not in Node._ref_list:
+            if isinstance(this_attr, Node) and key not in do_not_copy:
                 #logger.debug("k: %s  Parent: %s" % (str(key), (srcobj)))
                 this_attr._setParent(srcobj)
 
@@ -274,13 +266,13 @@ class Node(object):
                 if not hasattr(self, name):
                     setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
-                if isinstance(this_attr, Node) and name not in Node._ref_list:
+                if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
             elif not item['copyable']: ## Default of '1' instead of True...
                 if not hasattr(self, name):
                     setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
-                if isinstance(this_attr, Node) and name not in Node._ref_list:
+                if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
             else:
                 copy_obj = deepcopy(getattr(_srcobj, name))
@@ -312,25 +304,20 @@ class Node(object):
         from Ganga.GPIDev.Base.VPrinter import VSummaryPrinter
         self.accept(VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection, interactive))
 
-    def __eq__(self, _node):
-
-        node = _node
-
+    def __eq__(self, node):
         if self is node:
-            return 1
-        if not node:  # or not self._schema.isEqual(node._schema):
-            return 0
+            return True
 
         if not isinstance(node, type(self)):
-            return 0
+            return False
 
         # Compare the schemas against each other
         if (hasattr(self, '_schema') and self._schema is None) and (hasattr(node, '_schema') and node._schema is None):
-            return 1  # If they're both `None`
+            return True  # If they're both `None`
         elif (hasattr(self, '_schema') and self._schema is None) or (hasattr(node, '_schema') and node._schema is None):
-            return 0  # If just one of them is `None`
+            return False  # If just one of them is `None`
         elif not self._schema.isEqual(node._schema):
-            return 0  # Both have _schema but do not match
+            return False  # Both have _schema but do not match
 
         # Check each schema item in turn and check for equality
         for (name, item) in self._schema.allItems():
@@ -338,9 +325,9 @@ class Node(object):
                 #logger.info("testing: %s::%s" % (str(_getName(self)), str(name)))
                 if getattr(self, name) != getattr(node, name):
                     #logger.info( "diff: %s::%s" % (str(_getName(self)), str(name)))
-                    return 0
+                    return False
 
-        return 1
+        return True
 
     def __ne__(self, node):
         return not self.__eq__(node)
@@ -380,16 +367,31 @@ class Node(object):
 ##########################################################################
 
 
-def synchronised_descriptor(get_or_set):
+def synchronised_get_descriptor(get_function):
     """
-    This decorator should only be used on ``__get__`` or ``__set__`` methods of a ``Descriptor``.
+    This decorator should only be used on ``__get__`` method of the ``Descriptor``.
     """
-    @functools.wraps(get_or_set)
+    @functools.wraps(get_function)
     def decorated(self, obj, type_or_value):
         if obj is None:
-            return get_or_set(self, obj, type_or_value)
-        with obj.lock:
-            return get_or_set(self, obj, type_or_value)
+            return get_function(self, obj, type_or_value)
+
+        with obj._internal_lock:
+            return get_function(self, obj, type_or_value)
+
+    return decorated
+
+def synchronised_set_descriptor(set_function):
+    """
+    This decorator should only be used on ``__set__`` method of the ``Descriptor``.
+    """
+    def decorated(self, obj, type_or_value):
+        if obj is None:
+            return set_function(self, obj, type_or_value)
+
+        with obj.const_lock:
+            with obj._internal_lock:
+                return set_function(self, obj, type_or_value)
     return decorated
 
 
@@ -416,7 +418,7 @@ class Descriptor(object):
         if self._getter_name:
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
-    @synchronised_descriptor
+    @synchronised_get_descriptor
     def __get__(self, obj, cls):
         name = _getName(self)
 
@@ -528,7 +530,7 @@ class Descriptor(object):
 
         return v_copy
 
-    @synchronised_descriptor
+    @synchronised_set_descriptor
     def __set__(self, _obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
         ## _obj: parent class which 'owns' the attribute
@@ -645,7 +647,7 @@ class Descriptor(object):
                     else:
                         newListObj = GangaList()
 
-                    self.__createNewList(newListObj, val, cloneVal)
+                    Descriptor.__createNewList(newListObj, val, cloneVal)
                     #for elem in val:
                     #    newListObj.append(cloneVal(elem))
                     new_val = newListObj
@@ -679,36 +681,7 @@ class Descriptor(object):
             return
 
         ## This makes it stick to 1 thread, useful for debugging problems
-        #addToList(input_elements, final_list, action)
-        #return
-
-        try:
-            from Ganga.GPI import queues
-            linearize = False
-        except ImportError:
-            linearize = True
-
-        try:
-            import threading
-        except ImportError:
-            linearize = True
-
-        if linearize is True or len(input_elements) < 20 or\
-            not isinstance(threading.current_thread(), threading._MainThread):
-            addToList(input_elements, final_list, action)
-            return
-
-        import math
-        tenth = math.ceil(float(len(input_elements))/10.)
-
-        for i in range(10):
-            these_elements = input_elements[int(i*tenth):int((i+1)*tenth)]
-            queues._monitoring_threadpool.add_function(addToList, (these_elements, final_list, action))
-
-        while(len(final_list) != len(input_elements)):
-            import time
-            time.sleep(0.5)
-
+        addToList(input_elements, final_list, action)
         return
 
 
@@ -806,8 +779,8 @@ class GangaObject(Node):
             for attr, item in self._schema.allItems():
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
-                    defVal = self._schema.getDefaultValue(attr)
-                    self.setNodeAttribute(attr, defVal)
+                    setattr(self, attr, self._schema.getDefaultValue(attr))
+
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
@@ -838,21 +811,6 @@ class GangaObject(Node):
         else:
             from Ganga.GPIDev.Base.Proxy import TypeMismatchError
             raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
-
-    def __getstate__(self):
-        # IMPORTANT: keep this in sync with the __init__
-        #self._getReadAccess()
-        this_dict = super(GangaObject, self).__getstate__()
-        #this_dict['_dirty'] = False
-        return this_dict
-
-    def __setstate__(self, this_dict):
-        #self._getWriteAccess()
-        super(GangaObject, self).__setstate__(this_dict)
-        #if '_parent' in this_dict:
-        #    self._setParent(this_dict['_parent'])
-        #self._setParent(None)
-        self._dirty = False
 
     @staticmethod
     def __incrementShareRef(obj, attr_name):
@@ -998,7 +956,7 @@ class GangaObject(Node):
 
     # mark object as "dirty" and inform the registry about it
     # the registry is always associated with the root object
-    def _setDirty(self, dummy=1):
+    def _setDirty(self):
         self._dirty = True
         parent = self._getParent()
         if parent is not None:
@@ -1053,49 +1011,6 @@ class GangaObject(Node):
             return v._on_attribute__set__(self, name)
         return v
 
-    @staticmethod
-    def __createNewList(final_list, input_elements, action=None):
-
-        def addToList(_input_elements, _final_list, action=None):
-            if action is not None:
-                for element in _input_elements:
-                    _final_list.append(action(element))
-            else:
-                for element in _input_elements:
-                    _final_list.append(element)
-            return
-        ## This makes it stick to 1 thread, useful for debugging problems
-        #addToList(input_elements, final_list, action)
-        #return
-
-        try:
-            from Ganga.GPI import queues
-            linearize = False
-        except ImportError:
-            linearize = True
-
-        try:
-            import threading
-        except ImportError:
-            linearize = True
-
-        if linearize is True or len(input_elements) < 20 or\
-            not isinstance(threading.current_thread(), threading._MainThread):
-            addToList(input_elements, final_list, action)
-            return
-
-        import math
-        tenth = math.ceil(float(len(input_elements))/10.)
-
-        for i in range(10):
-            these_elements = input_elements[int(i*tenth):int((i+1)*tenth)]
-            queues._monitoring_threadpool.add_function(addToList, (these_elements, final_list, action))
-
-        while(len(final_list) != len(input_elements)):
-            import time
-            time.sleep(0.5)
-
-        return
 
 # define the default component object filter:
 # obj.x = "Y"   <=> obj.x = Y()

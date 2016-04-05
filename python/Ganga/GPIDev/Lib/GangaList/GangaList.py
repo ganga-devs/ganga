@@ -4,6 +4,7 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError, getName
 from Ganga.GPIDev.Base.VPrinter import full_print, summary_print
 from Ganga.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Base.Objects import synchronised
 from Ganga.Utility.util import containsGangaObjects
 import copy
 import sys
@@ -23,13 +24,12 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
     else:
         _list = [_list]
 
-    #logger.debug("_list: %s" % str(_list))
-
     if mapfunction is not None:
         _list = map(mapfunction, _list)
 
-    #logger.debug("Making a GangaList of size: %s" % str(len(_list)))
-    result = makeGangaListByRef(_list, preparable)
+    result = GangaList()
+    result._list = [ stripProxy(e) for e in _list ]
+    result._is_preparable = preparable
     result._is_a_ref = False
 
     # set the parent if possible
@@ -50,10 +50,7 @@ def stripGangaList(_list):
 def makeGangaListByRef(_list, preparable=False):
     """Faster version of makeGangaList. Does not make a copy of _list but use it by reference."""
     result = GangaList()
-    if len(_list) == 0:
-        return result
-
-    result._list.extend([stripProxy(element) for element in _list])
+    result._list = _list
     result._is_a_ref = True
     result._is_preparable = preparable
     return result
@@ -87,7 +84,7 @@ class GangaList(GangaObject):
     _hidden = 1
     _enable_plugin = 1
     _name = 'GangaList'
-    _schema = Schema(Version(1, 0), {'_list': ComponentItem(defvalue=[], doc='The raw list', hidden=1, category='internal'),
+    _schema = Schema(Version(1, 0), {'_list': SimpleItem(defvalue=[], doc='The raw list', hidden=1, category='internal'),
                                      '_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),
                                     })
     _enable_config = 1
@@ -292,14 +289,22 @@ class GangaList(GangaObject):
             new_list._is_preparable = self._is_preparable
             return new_list
 
-    @staticmethod
-    def __getListToCompare(input_list):
+    def __getListToCompare(self, input_list):
+
+        # if the arg isn't a list, just give it back
+        if not self.is_list(self.strip_proxy(input_list)):
+            return input_list
+
+        # setup up the list correctly
+        tmp_list = input_list
         if isType(input_list, GangaList):
+            # GangaLists should never contain proxied objects so just return the list
             return stripProxy(input_list)._list
         elif isinstance(input_list, tuple):
-            return list(input_list)
-        else:
-            return input_list
+            tmp_list = list(input_list)
+
+        # Now return the list after stripping any objects of proxies
+        return self.strip_proxy_list(tmp_list)
 
     def __eq__(self, obj_list):
         if obj_list is self:  # identity check
@@ -436,7 +441,7 @@ class GangaList(GangaObject):
 
     def append(self, obj, my_filter=True):
         if isType(obj, GangaList):
-            self._list.append(obj._list)
+            self._list.append(stripProxy(obj))
             return
         elem = self.strip_proxy(obj, my_filter)
         list_objs = (list, tuple)
@@ -565,7 +570,29 @@ class GangaList(GangaObject):
         returnable_str += "]"
         return returnable_str
 
+    # accept a visitor pattern - overrides GangaObject because we need to process _list as a ComponentItem in this
+    # case to allow save/load of nested lists to work.
+    # Could just get away with SimpleItem checks here but have included Shared and Component just in case these
+    # are added in the future
+    @synchronised
+    def accept(self, visitor):
+        visitor.nodeBegin(self)
 
-from Ganga.Runtime.GPIexport import exportToGPI
-exportToGPI('GangaList', GangaList, 'Classes')
+        for (name, item) in self._schema.simpleItems():
+            if name == "_list":
+                visitor.componentAttribute(self, "_list", self._getdata("_list"), 1)
+            elif item['visitable']:
+                visitor.simpleAttribute(self, name, self._getdata(name), item['sequence'])
+
+        for (name, item) in self._schema.sharedItems():
+            if item['visitable']:
+                visitor.sharedAttribute(self, name, self._getdata(name), item['sequence'])
+
+        for (name, item) in self._schema.componentItems():
+            if item['visitable']:
+                visitor.componentAttribute(self, name, self._getdata(name), item['sequence'])
+
+        visitor.nodeEnd(self)
+
+# export to GPI moved to the Runtime bootstrap
 

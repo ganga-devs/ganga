@@ -5,6 +5,7 @@ import os
 import time
 import popen2
 import glob
+import mimetypes
 
 ############################################################################################
 
@@ -59,7 +60,8 @@ import tarfile
 # -- SINCE PYTHON 2.6 THERE WAS A SUBTLE CHANGE OF SEMANTICS IN THIS AREA
 
 for f in input_sandbox:
-    getPackedInputSandbox(f)
+    if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+        getPackedInputSandbox(f)
 
 # -- END OF MOVED CODE BLOCK
 
@@ -116,7 +118,7 @@ try:
 except:
     filefilter = None
 
-from Ganga.Utility.files import multi_glob, recursive_copy
+from files import multi_glob, recursive_copy
 
 createOutputSandbox(outputpatterns,filefilter,sharedoutputpath)
 

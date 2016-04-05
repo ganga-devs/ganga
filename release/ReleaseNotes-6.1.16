@@ -1,0 +1,22 @@
+**************************************************************************************************************
+6.1.16 (2016/02/25)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+
+This release has focussed on the overall stability of Ganga in order to avoid data loss and lockups in the background threads.
+Also situations where the status of jobs is accidentally reverted have been eliminated.
+
+* Fix parent of jobs being set to a Descriptor incorrectly
+* Fix some jobs not being picked up my the monitoring loop. Issue #85
+* Cleanup of GangaObject and proxy internals to make things more streamlined and consistent. PR #163
+* Fixes for stomp sometimes stalling. PR #171
+* Fix for cases where two threads attempt to write the same repository file at the same time, corrupting `data`. PR #186
+* GangaObject is now thread-safe for reads and writes to schema attributes. PR #191
+* Added a heartbeat monitor for the monitoring threads to catch stalled tasks. PR #200
+* Fixed most common cases of the monitoring locking up against the registry. PR #09
+* Fix Job.copy() not copying all its attributes. PR #217
+
+**************************************************************************************************************
