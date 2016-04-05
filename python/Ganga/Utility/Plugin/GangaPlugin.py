@@ -5,7 +5,8 @@ logger = getLogger()
 
 class PluginManagerError(GangaValueError):
 
-    def __init__(self, x): ValueError.__init__(self, x)
+    def __init__(self, x):
+        super(PluginManagerError, self).__init__(self, x)
 
 # Simple Ganga Plugin Mechanism
 #

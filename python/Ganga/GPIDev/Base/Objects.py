@@ -779,8 +779,8 @@ class GangaObject(Node):
             for attr, item in self._schema.allItems():
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
-                    defVal = self._schema.getDefaultValue(attr)
-                    self.setNodeAttribute(attr, defVal)
+                    setattr(self, attr, self._schema.getDefaultValue(attr))
+
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
