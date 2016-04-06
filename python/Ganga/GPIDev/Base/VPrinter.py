@@ -1,5 +1,4 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import print_function, absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -9,6 +8,7 @@ from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod, stripProxy
 
 from inspect import isclass
 
+from functools import partial
 
 def quoteValue(value, interactive=False):
     """A quoting function. Used to get consistent formatting"""
@@ -20,7 +20,7 @@ def quoteValue(value, interactive=False):
             return repr(value)
     try:
         # If it's an iterable like a list or a GangaList then quote each element
-        quoted_list = [quoteValue(s, interactive) for s in value]
+        quoted_list = map(partial(quoteValue, interactive=interactive), value)
         string_of_list = '[' + ', '.join(quoted_list) + ']'
         return string_of_list
     except TypeError:
@@ -152,10 +152,11 @@ class VPrinter(object):
             if sequence:
                 print('[', end='', file=self.out)
                 self.level+=1
-                for s in subnode:
+                def subnode_print(s):
                     print(self.indent(), file=self.out)
                     self.acceptOptional(s)
                     print(',', end='', file=self.out)
+                map(subnode_print, subnode)
                 self.level-=1
                 print(']', end='', file=self.out)
             else:
@@ -278,7 +279,7 @@ def full_print(obj, out=None, interactive=False):
             from Ganga.GPIDev.Base.Objects import GangaObject
             outString = '['
             count = 0
-            for x in obj:
+            def print_x(x, outString):
                 if isType(x, GangaObject):
                     sio = cStringIO.StringIO()
                     x.printTree(sio, interactive)
@@ -292,6 +293,7 @@ def full_print(obj, out=None, interactive=False):
                 count += 1
                 if count != obj_len:
                     outString += ', '
+            map(partial(print_x, outString=outString, count=count), obj)
             outString += ']'
             print(outString, end=' ', file=out)
         return
@@ -321,7 +323,7 @@ def summary_print(obj, out=None, interactive=False):
             from Ganga.GPIDev.Base.Objects import GangaObject
             outString = '['
             count = 0
-            for x in obj:
+            def print_x(x, outString, count):
                 if isType(x, GangaObject):
                     sio = cStringIO.StringIO()
                     x.printSummaryTree(0, 0, '', out=sio)
@@ -335,6 +337,7 @@ def summary_print(obj, out=None, interactive=False):
                 count += 1
                 if count != obj_len:
                     outString += ', '
+            map(partial(print_x, outString=outString, count=count), obj)
             outString += ']'
             print(outString, end=' ', file=out)
         return

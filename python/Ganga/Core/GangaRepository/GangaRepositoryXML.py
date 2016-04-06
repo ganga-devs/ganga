@@ -613,7 +613,6 @@ class GangaRepositoryLocal(GangaRepository):
                     ## equivalent to for sj in job.subjobs
                     tempSubJList._setParent(obj)
                     job_dict = {}
-                    print("%s" % obj.getNodeAttribute(self.sub_split))
                     for sj in obj.getNodeAttribute(self.sub_split):
                         job_dict[sj.id] = stripProxy(sj)
                     tempSubJList._reset_cachedJobs(job_dict)

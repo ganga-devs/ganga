@@ -5,7 +5,7 @@ from __future__ import absolute_import
 # $Id: Proxy.py,v 1.2.4.3 2009-07-10 11:29:27 ebke Exp $
 ##########################################################################
 
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Schema import ComponentItem
@@ -26,7 +26,7 @@ proxyObject = '_proxyObject'
 
 prepconfig = getConfig('Preparable')
 
-logger = Ganga.Utility.logging.getLogger(modulename=1)
+logger = getLogger(modulename=1)
 
 # some proxy related convieniance methods
 

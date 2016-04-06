@@ -10,7 +10,7 @@ import time
 import uuid
 
 import Ganga.Core.FileWorkspace
-import Ganga.GPIDev.MonitoringServices
+from Ganga.GPIDev.MonitoringServices import getMonitoringObject
 from Ganga.Core import GangaException, IncompleteJobSubmissionError, JobManagerError, Sandbox
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
@@ -798,7 +798,7 @@ class Job(GangaObject):
         j.updateStatus(new_stat)
 
     def getMonitoringService(self):
-        return Ganga.GPIDev.MonitoringServices.getMonitoringObject(self)
+        return getMonitoringObject(self)
 
     def monitorPrepare_hook(self, subjobconfig):
         """Let monitoring services work with the subjobconfig after it's prepared"""

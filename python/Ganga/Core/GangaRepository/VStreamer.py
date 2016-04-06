@@ -15,6 +15,8 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
 from .GangaRepository import SchemaVersionError
 
+from functools import partial
+
 import xml.sax.saxutils
 import copy
 
@@ -193,8 +195,7 @@ class VStreamer(object):
                 self.level += 1
                 print(file=self.out)
                 print(self.indent(), '<sequence>', file=self.out)
-                for v in value:
-                    self.acceptOptional(v)
+                map(self.acceptOptional, value)
                 print(self.indent(), '</sequence>', file=self.out)
                 self.level -= 1
                 print(self.indent(), '</attribute>', file=self.out)
@@ -220,8 +221,7 @@ class VStreamer(object):
                 stripProxy(s).accept(self)
             elif isType(s, (list, tuple, GangaList)):
                 print(self.indent(), '<sequence>', file=self.out)
-                for sub_s in s:
-                    self.acceptOptional(sub_s)
+                map(self.acceptOptional, s)
                 print(self.indent(), '</sequence>', file=self.out)
             else:
                 self.print_value(stripProxy(s))
@@ -234,8 +234,7 @@ class VStreamer(object):
             if sequence:
                 self.level += 1
                 print(self.indent(), '<sequence>', file=self.out)
-                for s in subnode:
-                    self.acceptOptional(s)
+                map(self.acceptOptional, subnode)
                 print(self.indent(), '</sequence>', file=self.out)
                 self.level -= 1
             else:
@@ -383,14 +382,16 @@ class Loader(object):
             # is a root object)
             if name == 'class':
                 obj = self.stack[-1]
-                for attr, item in obj._schema.allItems():
+                def schema_assign(_tuple, obj):
+                    attr = _tuple[0]
+                    item = _tuple[1]
                     if not attr in obj.getNodeData():
                         #logger.info("Opening: %s" % attr)
                         if item._meta["sequence"] == 1:
                             obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr, make_copy=False)))
                         else:
                             obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr, make_copy=False))
-
+                map(partial(schema_assign, obj=obj), obj._schema.allItems())
                 #print("Constructed: %s" % getName(obj))
 
         def char_data(data):

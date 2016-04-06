@@ -13,16 +13,16 @@
 #   and followed by
 #    obj._setDirty()
 
-import threading
+from threading import RLock
 from contextlib import contextmanager
-import functools
+from functools import wraps
 
-import Ganga.Utility.logging
+from Ganga.Utility.logging import getLogger
 
 from copy import deepcopy, copy
-import inspect
+from inspect import isclass
 
-import Ganga.GPIDev.Schema as Schema
+from Ganga.GPIDev.Schema import Schema, Item, ComponentItem, SharedItem
 
 from Ganga.Core.exceptions import GangaValueError, GangaException
 
@@ -30,14 +30,13 @@ from Ganga.Utility.Plugin import allPlugins
 
 def _getName(obj):
     """ Return the name of an object based on what we prioritise"""
-    returnable = getattr(obj, '_name', getattr(obj, '__name__', None))
+    returnable = getattr(obj, '_name', getattr(obj, '__name__', getattr(getattr(obj, '__class__', None), '__name__', None)))
     if returnable is None:
-        returnable = getattr(getattr(obj, '__class__', None), '__name__', None)
-    if returnable is None:
-        returnable = str(obj)
-    return returnable
+        return str(obj)
+    else:
+        return returnable
 
-logger = Ganga.Utility.logging.getLogger(modulename=1)
+logger = getLogger(modulename=1)
 
 _imported_GangaList = None
 
@@ -56,7 +55,7 @@ def synchronised(f):
     This decorator must be attached to a method on a ``Node`` subclass
     It uses the object's lock to make sure that the object is held for the duration of the decorated function
     """
-    @functools.wraps(f)
+    @wraps(f)
     def decorated(self, *args, **kwargs):
         with self.const_lock:
             return f(self, *args, **kwargs)
@@ -70,8 +69,8 @@ class Node(object):
         self._parent = parent
         self._index_cache = {}
         self._registry = None
-        self._read_lock = threading.RLock() # Don't read out of thread whilst we're making a change
-        self._write_lock = threading.RLock() # Don't write from out of thread when modifying an object
+        self._read_lock = RLock() # Don't read out of thread whilst we're making a change
+        self._write_lock = RLock() # Don't write from out of thread when modifying an object
         super(Node, self).__init__()
 
     def __copy__(self, memo=None):
@@ -80,11 +79,12 @@ class Node(object):
         # FIXME: this is different than for deepcopy... is this really correct?
         this_dict = copy(self.__dict__)
         global do_not_copy
-        for elem in this_dict.keys():
+        def internal_copyMethod(elem):
             if elem not in do_not_copy:
                 this_dict[elem] = copy(this_dict[elem])
             else:
                 this_dict[elem] = None
+        map(internal_copyMethod, this_dict.keys())
         obj._setParent(self._getParent())
         setattr(obj, '_index_cache', {})
         setattr(obj, '_registry', self._registry)
@@ -95,9 +95,10 @@ class Node(object):
         obj = cls()
         this_dict = copy(self.__dict__)
         global do_not_copy
-        for elem in this_dict.keys():
+        def internal_deepcopyMethod(elem):
             if elem not in do_not_copy:
-                this_dict[elem] = deepcopy(this_dict[elem], memo)  # FIXED
+                this_dict[elem] = deepcopy(this_dict[elem], memo)
+        map(internal_deepcopyMethod, this_dict.keys())
 
         obj.__dict__ = this_dict
         if self._getParent() is not None:
@@ -190,24 +191,35 @@ class Node(object):
 
         visitor.nodeBegin(self)
 
-        for (name, item) in self._schema.simpleItems():
+        def simpleFunc(_tuple):
+            name = _tuple[0]
+            item = _tuple[1]
             if item['visitable']:
                 visitor.simpleAttribute(self, name, self._getdata(name), item['sequence'])
 
-        for (name, item) in self._schema.sharedItems():
+        def sharedFunc(_tuple):
+            name = _tuple[0]
+            item = _tuple[1]
             if item['visitable']:
                 visitor.sharedAttribute(self, name, self._getdata(name), item['sequence'])
 
-        for (name, item) in self._schema.componentItems():
+        def componentFunc(_tuple):
+            name = _tuple[0]
+            item = _tuple[1]
             if item['visitable']:
                 visitor.componentAttribute(self, name, self._getdata(name), item['sequence'])
+
+        map(simpleFunc, self._schema.simpleItems())
+
+        map(sharedFunc, self._schema.sharedItems())
+
+        map(componentFunc, self._schema.componentItems())
 
         visitor.nodeEnd(self)
 
     # clone self and return a properly initialized object
     def clone(self):
         new_obj = deepcopy(self)
-
         return new_obj
 
     # copy all the properties recursively from the srcobj
@@ -221,8 +233,8 @@ class Node(object):
         # Check if this object is derived from the source object, then the copy
         # will not throw away information
 
-        if not hasattr(_srcobj, '__class__') and not inspect.isclass(_srcobj.__class__):
-            raise GangaValueError("Can't copyFrom a non-class object: %s isclass: %s" % (str(_srcobj), str(inspect.isclass(_srcobj))))
+        if not hasattr(_srcobj, '__class__') and not isclass(_srcobj.__class__):
+            raise GangaValueError("Can't copyFrom a non-class object: %s isclass: %s" % (str(_srcobj), str(isclass(_srcobj))))
 
         if not isinstance(self, _srcobj.__class__) and not isinstance(_srcobj, self.__class__):
             raise GangaValueError("copyFrom: Cannot copy from %s to %s!" % (_getName(_srcobj), _getName(self)))
@@ -371,7 +383,7 @@ def synchronised_get_descriptor(get_function):
     """
     This decorator should only be used on ``__get__`` method of the ``Descriptor``.
     """
-    @functools.wraps(get_function)
+    @wraps(get_function)
     def decorated(self, obj, type_or_value):
         if obj is None:
             return get_function(self, obj, type_or_value)
@@ -495,7 +507,7 @@ class Descriptor(object):
                     new_v.append(self.__cloneVal(elem, obj))
                 #return new_v
             elif not isinstance(v, Node):
-                if inspect.isclass(v):
+                if isclass(v):
                     new_v = v()
                 else:
                     new_v = v
@@ -537,37 +549,33 @@ class Descriptor(object):
         return v_copy
 
     @synchronised_set_descriptor
-    def __set__(self, _obj, _val):
+    def __set__(self, obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
-        ## _obj: parent class which 'owns' the attribute
+        ## obj: parent class which 'owns' the attribute
         ## _val: value of the attribute which we're about to set
 
         obj_flushing_dectivated = False
-        obj = _obj
         if isinstance(obj, GangaObject):
-            obj_reg = obj._getRegistry()
-            if obj_reg is not None and hasattr(obj_reg, 'isAutoFlushEnabled'):
-                if obj_reg.isAutoFlushEnabled() is True and hasattr(obj_reg, 'turnOffAutoFlushing'):
-                    obj_reg.turnOffAutoFlushing()
-                    obj_flushing_deactivated = True
+            if obj._getRegistry() is not None and\
+                    obj._getRegistry().isAutoFlushEnabled() is True:
+                obj._getRegistry().turnOffAutoFlushing()
+                obj_flushing_deactivated = True
 
         val_flushing_dectivated = False
         val = _val
         if isinstance(val, GangaObject):
-            val_reg = val._getRegistry()
-            if val_reg is not None and hasattr(val_reg, 'isAutoFlushEnabled'):
-                val_prevState = val_reg.isAutoFlushEnabled()
-                if val_prevState is True and hasattr(val_reg, 'turnOffAutoFlushing'):
-                    val_reg.turnOffAutoFlushing()
-                    val_flushing_dectivated = True
+            if val._getRegistry() is not None and\
+                    val._getRegistry().isAutoFlushEnabled() is True:
+                val._getRegistry().turnOffAutoFlushing()
+                val_flushing_dectivated = True
 
         if type(_val) is str:
             from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
-            new_val = stripProxy(runtimeEvalString(_obj, _getName(self), _val))
+            new_val = stripProxy(runtimeEvalString(obj, _getName(self), _val))
         else:
             new_val = _val
 
-        self.__atomic_set__(_obj, new_val)
+        self.__atomic_set__(obj, new_val)
 
         if isinstance(new_val, Node):
             val._setDirty()
@@ -578,28 +586,25 @@ class Descriptor(object):
         if obj_flushing_dectivated:
             obj._getRegistry().turnOnAutoFlushing()
 
-    def __atomic_set__(self, _obj, _val):
+    def __atomic_set__(self, obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
-        ## _obj: parent class which 'owns' the attribute
+        ## obj: parent class which 'owns' the attribute
         ## _val: value of the attribute which we're about to set
-
-        obj = _obj
-        temp_val = _val
 
         from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
         if hasattr(obj, '_checkset_name'):
             checkSet = self._bind_method(obj, self._checkset_name)
             if checkSet is not None:
-                checkSet(temp_val)
+                checkSet(_val)
         if hasattr(obj, '_filter_name'):
             this_filter = self._bind_method(obj, self._filter_name)
             if this_filter:
-                val = this_filter(temp_val)
+                val = this_filter(_val)
             else:
-                val = temp_val
+                val = _val
         else:
-            val = temp_val
+            val = _val
 
         # LOCKING
         obj._getWriteAccess()
@@ -615,17 +620,17 @@ class Descriptor(object):
                 GangaList = _getGangaList()
                 new_val = GangaList()
             else:
-                if isinstance(item, Schema.ComponentItem):
+                if isinstance(item, ComponentItem):
                     new_val = makeGangaList(val, Descriptor.cloneVal, parent=obj, preparable=_preparable, extra_args=(self, obj))
                 else:
                     new_val = makeGangaList(val, parent=obj, preparable=_preparable)
         else:
             ## Else we need to work out what we've got.
-            if isinstance(item, Schema.ComponentItem):
+            if isinstance(item, ComponentItem):
                 GangaList = _getGangaList()
                 if isinstance(val, (list, tuple, GangaList)):
                     ## Can't have a GangaList inside a GangaList easily so lets not
-                    if isinstance(_obj, GangaList):
+                    if isinstance(obj, GangaList):
                         new_val = []
                     else:
                         new_val = GangaList()
@@ -664,7 +669,6 @@ class Descriptor(object):
             for element in _input_elements:
                 _final_list.append(element)
 
-
 class ObjectMetaclass(type):
     _descriptor = Descriptor
 
@@ -674,7 +678,7 @@ class ObjectMetaclass(type):
 
         # all Ganga classes must have (even empty) schema
         if cls._schema is None:
-            cls._schema = Schema.Schema(None, None)
+            cls._schema = Schema(None, None)
 
         this_schema = cls._schema
 
@@ -682,7 +686,7 @@ class ObjectMetaclass(type):
         # TODO: We _could_ add base class's Items here by going through `bases` as well.
         # We can't just yet because at this point the base class' Item has been overwritten with a Descriptor
         for member_name, member in this_dict.items():
-            if isinstance(member, Schema.Item):
+            if isinstance(member, Item):
                 this_schema.datadict[member_name] = member
 
         # sanity checks for schema...
@@ -799,8 +803,7 @@ class GangaObject(Node):
         if hasattr(shared_dir, 'name'):
 
             from Ganga.Core.GangaRepository import getRegistry
-            from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+            shareref = getRegistry("prep").getShareRef()
 
             logger.debug("Increasing shareref")
             shareref.increase(shared_dir.name)
@@ -832,7 +835,7 @@ class GangaObject(Node):
                 if isinstance(this_attr, Node):
                     this_attr._setParent(self_copy)
 
-                if item.isA(Schema.SharedItem):
+                if item.isA(SharedItem):
                     self.__incrementShareRef(self_copy, name)
 
         for k, v in self.__dict__.iteritems():

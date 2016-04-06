@@ -13,7 +13,7 @@ FileWorkspace in a location-independent way.
 
 from Ganga.Utility.logging import getLogger
 
-import os
+from os import path, makedirs, rename, mkdir
 import time
 
 from Ganga.Utility.files import expandfilename, chmod_executable
@@ -50,15 +50,14 @@ class FileWorkspace(object):
         """ create a workspace, an optional jobid parameter specifies the job directory
             you can call create() as many times as you want without any harm """
 
-        # FIXME: make a helper method for os.makedirs
+        # FIXME: make a helper method for makedirs
         logger.debug('creating %s', self.getPath())
         self.jobid = jobid
         try:
-            import os.path
-            if os.path.isdir(self.getPath()):
+            if path.isdir(self.getPath()):
                 return
 
-            os.makedirs(self.getPath())
+            makedirs(self.getPath())
         except OSError as x:
             import errno
             if x.errno == errno.EEXIST:
@@ -79,7 +78,7 @@ class FileWorkspace(object):
             jobdir = ''
             subpath = ''
 
-        return expandfilename(os.path.join(self.top, jobdir, subpath, filename), True)
+        return expandfilename(path.join(self.top, jobdir, subpath, filename), True)
 
     # write a file (represent as file object) to the workspace
     # file object may be:
@@ -101,10 +100,10 @@ class FileWorkspace(object):
         # Added a subdir to files, (see Ganga/GPIDev/Lib/File/File.py) This allows
         # to copy files into the a subdirectory of the workspace
 
-        # FIXME: make a helper method for os.makedirs
-        path_to_build = os.path.join(self.getPath(), fileobj.subdir)
-        if not os.path.isdir(path_to_build):
-            os.makedirs(path_to_build)
+        # FIXME: make a helper method for makedirs
+        path_to_build = path.join(self.getPath(), fileobj.subdir)
+        if not path.isdir(path_to_build):
+            makedirs(path_to_build)
             logger.debug('created %s', self.getPath())
         else:
             logger.debug('already exists: %s', self.getPath())
@@ -126,13 +125,13 @@ class FileWorkspace(object):
         try:
             import shutil
             logger.debug('removing %s', self.getPath())
-            if os.path.exists(self.getPath()):
+            if path.exists(self.getPath()):
 
                 try:
                     import time
-                    remove_path = os.path.dirname(self.getPath()) + "_" + str(time.time()) + '__to_be_deleted_'
+                    remove_path = path.dirname(self.getPath()) + "_" + str(time.time()) + '__to_be_deleted_'
                     logger.debug("Moving Path: %s to: %s ahead of delete operation" % (self.getPath(), remove_path))
-                    os.rename(self.getPath(), remove_path)
+                    rename(self.getPath(), remove_path)
                     logger.debug("Move completed")
                 except OSError as err:
                     logger.debug("Move Error!")
@@ -159,9 +158,9 @@ class FileWorkspace(object):
 
                 shutil.rmtree(remove_path, ignore_errors=False, onerror=retryRemove)
                 logger.debug('removed %s', remove_path)
-                if preserve_top and not os.path.exists(self.getPath()):
+                if preserve_top and not path.exists(self.getPath()):
                     logger.debug('preserving the topdir: mkdir %s' % self.getPath())
-                    os.mkdir(self.getPath())
+                    mkdir(self.getPath())
             else:
                 logger.debug('%s : DOES NOT EXIST', self.getPath())
 
@@ -177,7 +176,7 @@ class FileWorkspace(object):
 def gettop():
     from Ganga.Utility.Config import getConfig
     c = getConfig('Configuration')
-    return os.path.join(c['gangadir'], 'workspace', c['user'], c['repositorytype'])
+    return path.join(c['gangadir'], 'workspace', c['user'], c['repositorytype'])
 
 
 class InputWorkspace(FileWorkspace):
