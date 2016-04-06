@@ -202,8 +202,6 @@ OutputFile objects to be copied to all jobs"),
 
     def update(self):
         """Called by the parent task to check for status updates, submit jobs, etc."""
-        #logger.warning("Entered Transform %d update function..." % self.getID())
-
         if self.status == "pause" or self.status == "new":
             return 0
 
@@ -269,7 +267,6 @@ OutputFile objects to be copied to all jobs"),
                     return 0
 
         # update status and check
-        old_status = self.status
         for state in ['running', 'hold', 'bad', 'completed']:
             if state in unit_status_list:
                 if state == 'hold':
