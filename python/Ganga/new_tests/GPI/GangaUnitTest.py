@@ -90,8 +90,8 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
             # Start internal services
             logger.info("InternalServices restarting")
 
-            from Ganga.GPI import reactivate
-            reactivate()
+            from Ganga.Core.InternalServices.Coordinator import enableInternalServices
+            enableInternalServices()
         else:
             logger.info("InternalServices still running")
 
