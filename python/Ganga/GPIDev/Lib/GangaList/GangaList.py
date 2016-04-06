@@ -402,7 +402,7 @@ class GangaList(GangaObject):
 
     def _export___radd__(self, obj):
         # return the proxied objects
-        cp = [i for i in self._export__iter__()]
+        cp = [i for i in self._export___iter__()]
         return obj + cp
 
     def __rmul__(self, number):
