@@ -92,23 +92,17 @@ class ITask(GangaObject):
     def update(self):
         """Called by the monitoring thread. Base class just calls update on each Transform"""
 
+        # if we're new, then do nothing
         if self.status == "new":
             return
 
-        #logger.warning("Entering update for Task '%s' (%i)... " % (self.name, time.time()))
+        # loop over all transforms and call update
         for trf in self.transforms:
             if trf.status != "running":
                 continue
 
             if trf.update() and not self.check_all_trfs:
                 break
-
-        # make sure all changes to unit info has been stored
-        for trf in self.transforms:
-            for i in range(0, 100):
-                if not trf._dirty:
-                    break
-                time.sleep(0.1)
 
         # update status and check
         self.updateStatus()

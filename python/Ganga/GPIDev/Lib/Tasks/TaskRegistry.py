@@ -4,7 +4,7 @@ import traceback
 import sys
 import Ganga.GPIDev.Lib.Registry.RegistrySlice
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError, RegistryFlusher
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName, isType
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours, status_colours, fgcol
 
@@ -133,7 +133,12 @@ class TaskRegistry(Registry):
         self._main_thread = GangaThread(name="GangaTasks", target=self._thread_main)
         self._main_thread.start()
 
+        # create a registry flusher
+        self.flush_thread = RegistryFlusher(self)
+        self.flush_thread.start()
+
     def shutdown(self):
+        self.flush_thread.join()
         super(TaskRegistry, self).shutdown()
 
     def stop(self):
