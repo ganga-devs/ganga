@@ -212,24 +212,6 @@ class ITask(GangaObject):
             logger.info("Transform is already completed!")
         self.float = float_cache
 
-    def setBackend(self, backend):
-        """Sets the backend on all transforms"""
-        for tf in self.transforms:
-            if backend is None:
-                tf.backend = None
-            else:
-                tf.backend = stripProxy(backend).clone()
-
-    def setParameter(self, **args):
-        """Use: setParameter(processName="HWW") to set the processName in all applications to "HWW"
-           Warns if applications are not affected because they lack the parameter"""
-        for name, parm in args.iteritems():
-            for tf in [t for t in self.transforms if t.application]:
-                if name in tf.application.getNodeData():
-                    addProxy(tf.application).__setattr__(name, parm)
-                else:
-                    logger.warning("Transform %i was not affected!", tf.name)
-
     def insertTransform(self, id, tf):
         """Insert transfrm tf before index id (counting from 0)"""
         if self.status != "new" and id < len(self.transforms):
