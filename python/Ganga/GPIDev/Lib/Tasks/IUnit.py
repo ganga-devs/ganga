@@ -169,7 +169,6 @@ class IUnit(GangaObject):
 
     def update(self):
         """Update the unit and (re)submit jobs as required"""
-        #logger.warning("Entered Unit %d update function..." % self.getID())
 
         # if we're complete, then just return
         if self.status in ["completed", "recreating"] or not self.active:
