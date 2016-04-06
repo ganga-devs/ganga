@@ -157,18 +157,19 @@ translated_names = {}
 def _migrate_name(name):
     import Ganga.Utility.strings as strings
 
-    if (name not in translated_names.keys()) and (not strings.is_identifier(name)):
+    if (name not in translated_names) and (not strings.is_identifier(name)):
         name2 = strings.drop_spaces(name)
-        name2 = name2.replace(':', '_')
+        name3 = name2.replace(':', '_')
 
-        if not strings.is_identifier(name2):
-            raise ValueError(
-                'config name %s is not a valid python identifier' % name)
+        if not strings.is_identifier(name3):
+            raise ValueError('config name %s is not a valid python identifier' % name)
         else:
             logger = getLogger()
-            logger.warning('obsolete config name found: replaced "%s" -> "%s"' % (name, name2))
+            logger.warning('obsolete config name found: replaced "%s" -> "%s"' % (name, name3))
             logger.warning('config names must be python identifiers, please correct your usage in the future ')
-            translated_names[name] = name2
+            translated_names[name] = name3
+    elif name in translated_names:
+        pass
     else:
         translated_names[name] = name
 

@@ -18,6 +18,7 @@ import os
 from inspect import isclass
 
 import types
+import copy
 
 implRef = '_impl'
 proxyClass = '_proxyClass'
@@ -130,9 +131,14 @@ def runtimeEvalString(this_obj, attr_name, val):
 
     return new_val
 
-
+_stored_evals = {}
 
 def raw_eval(val):
+    if val not in _stored_evals:
+        _stored_evals[val] = _really_eval(val)
+    return copy.deepcopy(_stored_evals[val])
+
+def _really_eval(val):
     try:
         interface = getProxyInterface() 
         temp_val = eval(val, interface.__dict__)

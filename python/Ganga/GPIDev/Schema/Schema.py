@@ -27,6 +27,7 @@ logger = Ganga.Utility.logging.getLogger()
 _found_components = {}
 _found_configs = {}
 _found_attrs = {}
+_found_eval = {}
 _stored_defaults = {}
 
 #
@@ -111,8 +112,8 @@ class Schema(object):
 
     @property
     def name(self):
-        from Ganga.GPIDev.Base.Proxy import getName
-        return getName(self._pluginclass)
+        from Ganga.GPIDev.Base.Objects import _getName
+        return _getName(self._pluginclass)
 
     def allItems(self):
         if self.datadict is None: return zip()
@@ -159,8 +160,8 @@ class Schema(object):
     def createDefaultConfig(self):
         # create a configuration unit for default values of object properties
         # take the defaults from schema defaults
-        config = Ganga.Utility.Config.makeConfig(defaultConfigSectionName(self.name),
-                                                 "default attribute values for %s objects" % self.name)
+        _self_name = self.name
+        config = Ganga.Utility.Config.makeConfig(defaultConfigSectionName(_self_name), "default attribute values for %s objects" % _self_name)
 
         for name, item in self.allItems():
             # and not item['sequence']: #FIXME: do we need it or not??
@@ -180,16 +181,14 @@ class Schema(object):
                 if isinstance(item['defvalue'], dict):
                     if not types is None:
                         types.append('dict')
-                config.addOption(
-                    name, item['defvalue'], item['doc'], override=False, typelist=types)
+                config.addOption(name, item['defvalue'], item['doc'], override=False, typelist=types)
+
 
         def prehook(name, x):
             errmsg = "Cannot set %s=%s in [%s]: " % (name, repr(x), config.name)
 
             try:
                 item = self.getItem(name)
-            #except KeyError as x:
-            #    raise Ganga.Utility.Config.ConfigError(errmsg + "attribute not defined in the schema")
             except Exception as x:
                 raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
 
@@ -201,17 +200,9 @@ class Schema(object):
                 except Exception as err:
                     logger.info("Unexpected error: %s", err)
                     raise
-                    #Ganga.Utility.logging.log_unknown_exception()
-                    #raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
 
             if item['protected'] or item['hidden']:
                 raise Ganga.Utility.Config.ConfigError(errmsg + "protected or hidden property")
-
-            # FIXME: File() == 'x' triggers AttributeError
-            # try:
-            #    if x == '': x = None
-            # except AttributeError:
-            #    pass
 
             return x
 
@@ -219,10 +210,14 @@ class Schema(object):
         config.attachSessionHandler(prehook, None)
 
 
-    def getDefaultValue(self, attr):
+    def getDefaultValue(self, attr, make_copy=True):
         """ Get the default value of a schema item, both simple and component.
         """
-        return self._getDefaultValueInternal(attr)
+        returnable = self._getDefaultValueInternal(attr)
+        if make_copy and returnable is not None:
+            return copy.deepcopy(returnable)
+        else:
+            return returnable
 
     def _getDefaultValueInternal(self, attr, val=None, check=False):
         """ Get the default value of a schema item, both simple and component.
@@ -304,11 +299,14 @@ class Schema(object):
             from Ganga.GPIDev.Base.Proxy import isType, getRuntimeGPIObject, stripProxy, getName
             from Ganga.GPIDev.Base.Objects import Node
             if isinstance(defvalue, Node):
-                return stripProxy(getRuntimeGPIObject(getName(defvalue)))
+                objName = getName(defvalue)
+                if objName not in _found_eval:
+                    _found_eval[objName] = stripProxy(getRuntimeGPIObject(getName(defvalue)))
+                return _found_eval[objName]
             else:
-                return copy.deepcopy(defvalue)
+                return defvalue
         except ImportError:
-            return copy.deepcopy(defvalue)
+            return defvalue
 
 
 # Items in schema may be either Components,Simples, Files or BindingItems.

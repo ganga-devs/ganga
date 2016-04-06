@@ -8,12 +8,13 @@ from Ganga.GPIDev.Base.Objects import synchronised
 from Ganga.Utility.util import containsGangaObjects
 import copy
 import sys
+import functools
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 
-def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
+def makeGangaList(_list, mapfunction=None, parent=None, preparable=False, extra_args=None):
     """Should be used for makeing full gangalists"""
 
     # work with a simple list always
@@ -25,7 +26,10 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
         _list = [_list]
 
     if mapfunction is not None:
-        _list = map(mapfunction, _list)
+        if extra_args is None:
+            _list = map(mapfunction, _list)
+        else:
+            _list = map(functools.partial(mapfunction, extra_args=extra_args), _list)
 
     result = GangaList()
     result._list = [ stripProxy(e) for e in _list ]

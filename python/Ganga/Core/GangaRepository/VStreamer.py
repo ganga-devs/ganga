@@ -1,5 +1,4 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import print_function, absolute_import
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
@@ -7,7 +6,8 @@ from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
 # config_scope is namespace used for evaluating simple objects (e.g. File)
-from Ganga.Utility.Config import config_scope
+#from Ganga.Utility.Config import config_scope
+from Ganga.GPIDev.Base.Proxy import getProxyInterface
 
 from Ganga.Utility.Plugin import PluginManagerError, allPlugins
 
@@ -18,8 +18,11 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 from .GangaRepository import SchemaVersionError
 
 import xml.sax.saxutils
+import copy
 
 logger = getLogger()
+
+_eval_strings = {}
 
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
@@ -361,7 +364,9 @@ class Loader(object):
                 # unescape the special characters
                 s = unescape(self.value_construct)
                 #logger.debug('string value: %s',s)
-                val = eval(s, config_scope)
+                if s not in _eval_strings:
+                    _eval_strings[s] = eval(s, getProxyInterface().__dict__)
+                val = copy.deepcopy(_eval_strings[s])
                 #logger.debug('evaled value: %s type=%s',repr(val),type(val))
                 self.stack.append(val)
                 self.value_construct = None
@@ -384,11 +389,9 @@ class Loader(object):
                     if not attr in obj.getNodeData():
                         #logger.info("Opening: %s" % attr)
                         if item._meta["sequence"] == 1:
-                            obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
-                            #setattr(obj, attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
+                            obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr, make_copy=False)))
                         else:
-                            obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr))
-                            #setattr(obj, attr, obj._schema.getDefaultValue(attr))
+                            obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr, make_copy=False))
 
                 #print("Constructed: %s" % getName(obj))
 

@@ -181,6 +181,9 @@ def manualExportToGPI(my_interface=None):
     from Ganga.GPIDev.Lib.Registry.JobRegistry import jobSlice
     exportToInterface(my_interface, "jobSlice", jobSlice, "Functions")
 
+    import datetime
+    exportToInterface(my_interface, "datetime", datetime, 'Classes')
+
 class GangaProgram(object):
 
     """ High level API to create instances of Ganga programs and configure/run it """
