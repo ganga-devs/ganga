@@ -542,16 +542,16 @@ class Descriptor(object):
         ## _obj: parent class which 'owns' the attribute
         ## _val: value of the attribute which we're about to set
 
-        obj_reg = None
+        obj_flushing_dectivated = False
         obj = _obj
         if isinstance(obj, GangaObject):
             obj_reg = obj._getRegistry()
             if obj_reg is not None and hasattr(obj_reg, 'isAutoFlushEnabled'):
-                obj_prevState = obj_reg.isAutoFlushEnabled()
-                if obj_prevState is True and hasattr(obj_reg, 'turnOffAutoFlushing'):
+                if obj_reg.isAutoFlushEnabled() is True and hasattr(obj_reg, 'turnOffAutoFlushing'):
                     obj_reg.turnOffAutoFlushing()
+                    obj_flushing_deactivated = True
 
-        val_reg = None
+        val_flushing_dectivated = False
         val = _val
         if isinstance(val, GangaObject):
             val_reg = val._getRegistry()
@@ -559,6 +559,7 @@ class Descriptor(object):
                 val_prevState = val_reg.isAutoFlushEnabled()
                 if val_prevState is True and hasattr(val_reg, 'turnOffAutoFlushing'):
                     val_reg.turnOffAutoFlushing()
+                    val_flushing_dectivated = True
 
         if type(_val) is str:
             from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
@@ -571,13 +572,11 @@ class Descriptor(object):
         if isinstance(new_val, Node):
             val._setDirty()
 
-        if val_reg is not None:
-            if val_prevState is True and hasattr(val_reg, 'turnOnAutoFlushing'):
-                val_reg.turnOnAutoFlushing()
+        if val_flushing_dectivated:
+            val._getRegistry().turnOnAutoFlushing()
 
-        if obj_reg is not None:
-            if obj_prevState is True and hasattr(obj_reg, 'turnOnAutoFlushing'):
-                obj_reg.turnOnAutoFlushing()
+        if obj_flushing_dectivated:
+            obj._getRegistry().turnOnAutoFlushing()
 
     def __atomic_set__(self, _obj, _val):
         ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
