@@ -36,9 +36,8 @@ def report(job=None):
     import os
     import platform
 
-    from Ganga.GPI import config
-    from Ganga.GPI import full_print
-    from Ganga.GPI import Job
+    import Ganga.GPIDev.Lib.Config.config as config
+    from Ganga.GPIDev.Base.VPrinter import full_print
 
     import Ganga
 
@@ -403,8 +402,8 @@ def report(job=None):
             outputFile = open(jobsListFullFileName, 'w')
             try:
 
-                from Ganga.GPI import jobs
-                print(jobs, file=outputFile)
+                from Ganga.Core.GangaRegistry import getRegistryProxy
+                print(getRegistryProxy('jobs'), file=outputFile)
 
             finally:
                 outputFile.close()
@@ -421,8 +420,8 @@ def report(job=None):
             outputFile = open(tasksListFullFileName, 'w')
             try:
 
-                from Ganga.GPI import tasks
-                print(tasks, file=outputFile)
+                from Ganga.Core.GangaRegistry import getRegistryProxy
+                print(getRegistryProxy('tasks'), file=outputFile)
 
             finally:
                 outputFile.close()
@@ -722,7 +721,9 @@ def report(job=None):
 
         # make typecheck of the param passed
         if job is not None:
-            isJob = isinstance(job, Job)
+            from Ganga.GPIDev.Lib.Job.Job import Job
+            from Ganga.GPIDev.Base.Proxy import stripProxy
+            isJob = isinstance(stripProxy(job), Job)
             if hasattr(stripProxy(job), '_category') and (stripProxy(job)._category == 'tasks'):
                 isTask = True
 

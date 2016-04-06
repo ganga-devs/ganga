@@ -7,7 +7,7 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistryS
 from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Base.Proxy import addProxy
-from Ganga import GPI
+from Ganga.GPIDev.Lib.Tasks.common import getJobByID
 import time
 
 ########################################################################
@@ -148,7 +148,7 @@ class ITask(GangaObject):
                 for unit in trf.units:
                     for jid in unit.active_job_ids:
                         try:
-                            j = GPI.jobs(jid)
+                            j = getJobByID(jid)
                             j.remove()
                         except Exception as err:
                             logger.debug("Remove Err: %s" % str(err))
@@ -156,7 +156,7 @@ class ITask(GangaObject):
 
                     for jid in unit.prev_job_ids:
                         try:
-                            j = GPI.jobs(jid)
+                            j = getJobByID(jid)
                             j.remove()
                         except Exception as err2:
                             logger.debug("Remove Err2: %s" % str(err2))
@@ -263,8 +263,7 @@ class ITask(GangaObject):
         jobslice = JobRegistrySlice("tasks(%i).getJobs()" % (self.id))
         for trf in self.transforms:
             for jid in trf.getJobs():
-                jobslice.objects[GPI.jobs(jid).fqid] = stripProxy(
-                    GPI.jobs(jid))
+                jobslice.objects[getJobByID(jid).fqid] = stripProxy(getJobByID(jid))
 
         return JobRegistrySliceProxy(jobslice)
 
@@ -311,8 +310,8 @@ class ITask(GangaObject):
         return sum([t.n_status(status) for t in self.transforms])
 
     def table(self):
-        from Ganga.GPI import tasks
-        t = tasks.table(id=self.id)
+        from Ganga.Core.GangaRepository import getRegistryProxy
+        t = getRegistryProxy('tasks').table(id=self.id)
 
     def overview(self, status=''):
         """ Show an overview of the Task """

@@ -60,7 +60,7 @@ def is_gaudi_child(app):
         return True
 
     if isType(app, TaskApplication):
-        from Ganga.GPI import GaudiPythonTask, BenderTask
+        from GangaLHCb.Lib.Applications import GaudiPythonTask, BenderTask
         if not isType(app, GaudiPythonTask) and not isType(app, BenderTask):
             return True
 

@@ -10,7 +10,6 @@ import time
 import uuid
 
 import Ganga.Core.FileWorkspace
-import Ganga.GPIDev.Lib.File.FileUtils
 import Ganga.GPIDev.MonitoringServices
 from Ganga.Core import GangaException, IncompleteJobSubmissionError, JobManagerError, Sandbox
 from Ganga.Core.GangaRepository import getRegistry
@@ -343,12 +342,14 @@ class Job(GangaObject):
 
             # Apply needed transform to move Sandbox item to the
             if self.inputsandbox != []:
+                from Ganga.GPIDev.Lib.File.FileUtils import safeTransformFile
                 for i in self.inputsandbox:
-                    c.inputfiles.append(Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile(i))
+                    c.inputfiles.append(safeTransformFile(i))
             else:
                 if self.master and self.master.inputsandbox != []:
+                    from Ganga.GPIDev.Lib.File.FileUtils import safeTransformFile
                     for i in self.master.inputsandbox:
-                        c.inputfiles.append(Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile(i))
+                        c.inputfiles.append(safeTransformFile(i))
 
             c.inputsandbox = []
 
