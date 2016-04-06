@@ -1,4 +1,4 @@
-from Ganga.GPIDev.Lib.Tasks.common import *
+from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
@@ -21,7 +21,7 @@ class ND280Unit(IUnit):
       
    def createNewJob(self):
       """Create any jobs required for this unit"""      
-      j = GPI.Job()
+      j = makeRegisteredJob()
       j._impl.backend = self._getParent().backend.clone()
       j._impl.application = self._getParent().application.clone()
       if not self.inputdata == None:
@@ -74,7 +74,7 @@ class ND280Unit(IUnit):
    def copyOutput(self):
       """Copy the output data to local storage"""
 
-      job = GPI.jobs(self.active_job_ids[0])
+      job = getJobByID(self.active_job_ids[0])
       
       if self.copy_output._name != "TaskLocalCopy" or job.outputdata._impl._name != "DQ2OutputDataset":
          logger.error("Cannot transfer from DS type '%s' to '%s'. Please contact plugin developer." % (job.outputdata._name, self.copy_output._name))

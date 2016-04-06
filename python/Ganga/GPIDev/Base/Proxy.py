@@ -52,9 +52,6 @@ def getRuntimeGPIObject(obj_name, silent=False):
         if returnable == obj_name:
             if silent is False:
                 logger.error("Cannot find Object: '%s' in GPI. Returning None." % str(obj_name))
-                #logger.error("dict: %s" % Ganga.GPI.__dict__)
-                #import traceback
-                #traceback.print_stack()
             return None
         return returnable
 
@@ -853,35 +850,40 @@ def GPIProxyClassFactory(name, pluginclass):
             p.text('proxy object...')
             return
 
-        if hasattr(self, implRef):
-            raw_self = stripProxy(self)
-            if hasattr(raw_self, '_repr_pretty_'):
-                raw_self._repr_pretty_(p, cycle)
-            elif hasattr(raw_self, '_display'):
-                p.text(raw_self._display())
+        p_text = ""
+        try:
+
+            if hasattr(self, implRef):
+                raw_self = stripProxy(self)
+                if hasattr(raw_self, '_repr_pretty_'):
+                    raw_self._repr_pretty_(p, cycle)
+                elif hasattr(raw_self, '_display'):
+                    p_text = raw_self._display()
+                else:
+                    p_text = self.__str__(interactive=True)
             else:
-                #try:
-                p.text(self.__str__(interactive=True))
-                #except:
-                ##    p.text(self.__str__())
-        else:
-            #try:
-            p.text(self.__str__(interactive=True))
-            #except:
-            #    p.text(self.__str__())
+                p_text = self.__str__(interactive=True)
+        except Exception as err:
+            p_text = "Error Representing object: %s\nErr:\n%s" % (type(self), str(err))
+
+        p.text(p_text)
 
     helptext(_repr_pretty_, """Return a nice string to be printed in the IPython termial""")
 
     def _repr(self):
-        has_proxy = hasattr(self, implRef)
-        if has_proxy:
-            raw_proxy = stripProxy(self)
-        else:
-            raw_proxy = None
-        if has_proxy and hasattr(raw_proxy, '_repr'):
-            return raw_proxy._repr()
-        else:
-            return '<' + repr(stripProxy(self)) + ' PROXY at ' + hex(abs(id(self))) + '>'
+        try:
+            has_proxy = hasattr(self, implRef)
+            if has_proxy:
+                raw_proxy = stripProxy(self)
+            else:
+                raw_proxy = None
+            if has_proxy and hasattr(raw_proxy, '_repr'):
+                return raw_proxy._repr()
+            else:
+                return '<' + repr(stripProxy(self)) + ' PROXY at ' + hex(abs(id(self))) + '>'
+        except Exception as err:
+            return "Error Representing object: %s\nErr:\n" % (type(self), str(err))
+
     helptext(_repr, "Return an short representation of %(classname)s object.")
 
     def _eq(self, x):
@@ -1069,7 +1071,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
                 except KeyError as err:
                     logger.debug("ObjectMetaClass Error internal_name: %s,\t d: %s" % (internal_name, d))
                     logger.debug("ObjectMetaClass Error: %s" % err)
-                    raise err
+                    raise
 
                 if not isinstance(method, types.FunctionType):
                     continue

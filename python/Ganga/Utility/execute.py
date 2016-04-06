@@ -6,7 +6,6 @@ import pickle
 import signal
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Lib.File.FileUtils import indentScript
 logger = getLogger()
 
 def env_update_script(indent=''):
@@ -17,6 +16,7 @@ os.close(###FD_READ###)
 with os.fdopen(###FD_WRITE###,'wb') as envpipe:
     pickle.dump(os.environ, envpipe)
 '''
+    from Ganga.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
     script =  script.replace('###INDENT###'  , indent      )\
@@ -46,6 +46,7 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     except:
         print(pickle.dumps(traceback.format_exc()), file=PICKLE_STREAM)
 '''
+    from Ganga.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
     script =  script.replace('###INDENT###'     , indent              )\

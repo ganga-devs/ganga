@@ -5,37 +5,32 @@ from GangaTest.Framework.utils import sleep_until_state
 stripping20up = '/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST'
 stripping20down = '/LHCb/Collision12/Beam4000GeV-VeloClosed-MagDown/Real Data/Reco14/Stripping20/90000000/DIMUON.DST'
 
-try:
-    import Ganga.Utility.Config.Config
-    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
-except x:
-    print(x)
-    doConfig = True
+import Ganga.Utility.Config.Config
+doConfig = not Ganga.Utility.Config.Config._after_bootstrap
 
-if doConfig:
-    from GangaTest.Framework.tests import GangaGPITestCase
-    from Ganga import GPI
-    bkQueryList = [GPI.BKTestQuery(stripping20up)]
+from GangaTest.Framework.tests import GangaGPITestCase
+from Ganga.GPI import BKTestQuery
+bkQueryList = [BKTestQuery(stripping20up)]
 
 
 class TestLHCbTransform(GangaGPITestCase):
 
     def test_overview(self):
-        from Ganga import GPI
-        tr = GPI.LHCbTransform(application=DaVinci(), backend=Local())
+        from Ganga.GPI import LHCbTransform
+        tr = LHCbTransform(application=DaVinci(), backend=Local())
         tr.overview()
 
     def test_update(self):
-        from Ganga import GPI
-        t = GPI.LHCbTask()
-        tr = GPI.LHCbTransform(application=DaVinci(), backend=Dirac())
+        from Ganga.GPI import LHCbTask, LHCbTransform, jobs
+        t = LHCbTask()
+        tr = LHCbTransform(application=DaVinci(), backend=Dirac())
         t.appendTransform(tr)
         try:
-            bkQueryList = [GPI.BKTestQuery(stripping20up)]
+            bkQueryList = [BKTestQuery(stripping20up)]
             tr.updateQuery()
             assert false, 'Should have thrown exception if updated with no query'
         except:
-            tr.addQuery(GPI.BKTestQuery(stripping20down))
+            tr.addQuery(BKTestQuery(stripping20down))
 
             # Check some new data added
             assert len(tr.inputdata), 'No data added after call to update'
@@ -50,7 +45,7 @@ class TestLHCbTransform(GangaGPITestCase):
                 # old dataset only created when run called.
                 t.run()
                 assert len(tr.getJobs()), "No Jobs created upon run()"
-                job = GPI.jobs(int(tr.getJobs()[0].fqid.split('.')[0]))
+                job = jobs(int(tr.getJobs()[0].fqid.split('.')[0]))
                 sleep_until_state(job, 300, 'submitted')
                 del tr._impl.query.dataset.files[0]
                 tr.update(True)

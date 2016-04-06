@@ -14,8 +14,6 @@ from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Proxy import getName
 
-from Ganga.GPIDev.Lib.File import FileUtils
-
 import errno
 import re
 import os
