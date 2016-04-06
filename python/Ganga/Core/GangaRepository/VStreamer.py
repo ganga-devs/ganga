@@ -5,8 +5,6 @@ from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
-# config_scope is namespace used for evaluating simple objects (e.g. File)
-#from Ganga.Utility.Config import config_scope
 from Ganga.GPIDev.Base.Proxy import getProxyInterface
 
 from Ganga.Utility.Plugin import PluginManagerError, allPlugins
@@ -22,7 +20,7 @@ import copy
 
 logger = getLogger()
 
-_eval_strings = {}
+_cached_eval_strings = {}
 
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
@@ -364,9 +362,9 @@ class Loader(object):
                 # unescape the special characters
                 s = unescape(self.value_construct)
                 #logger.debug('string value: %s',s)
-                if s not in _eval_strings:
-                    _eval_strings[s] = eval(s, getProxyInterface().__dict__)
-                val = copy.deepcopy(_eval_strings[s])
+                if s not in _cached_eval_strings:
+                    _cached_eval_strings[s] = eval(s, getProxyInterface().__dict__)
+                val = copy.deepcopy(_cached_eval_strings[s])
                 #logger.debug('evaled value: %s type=%s',repr(val),type(val))
                 self.stack.append(val)
                 self.value_construct = None

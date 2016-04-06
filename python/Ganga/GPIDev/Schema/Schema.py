@@ -212,6 +212,9 @@ class Schema(object):
 
     def getDefaultValue(self, attr, make_copy=True):
         """ Get the default value of a schema item, both simple and component.
+        attr, some attribute name
+        self, myself a Schema
+        make_copy, should I return the default object of a deepcopy of it?
         """
         returnable = self._getDefaultValueInternal(attr)
         if make_copy and returnable is not None:

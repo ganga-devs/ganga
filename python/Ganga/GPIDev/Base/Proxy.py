@@ -13,12 +13,12 @@ from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass, _getName
 from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
-import os
+from os import path
 
 from inspect import isclass
 
-import types
-import copy
+from types import FunctionType
+from copy import deepcopy
 
 implRef = '_impl'
 proxyClass = '_proxyClass'
@@ -34,20 +34,33 @@ _knownLists = None
 
 _stored_Interface = None
 
+_cached_evals = {}
+
 def setProxyInterface(my_interface):
+    """ set teh interface used by the proxy"""
     global _stored_Interface
     _stored_Interface = my_interface
 
 def getProxyInterface():
+    """ get the interface which the proxy is living in
+    """
     if not _stored_Interface:
         import Ganga.GPI
         setProxyInterface(Ganga.GPI)
     return _stored_Interface
 
 def getRuntimeGPIObject(obj_name, silent=False):
+    """
+    Return an object from the GPI. If it's a class, return an instance.
+    If not found try to evaluate the object
+    """
     interface = getProxyInterface()
     if obj_name in interface.__dict__.keys():
-        return interface.__dict__[obj_name]()
+        this_obj = interface.__dict__[obj_name]
+        if isclass(this_obj):
+            return this_obj()
+        else:
+            return this_obj
     else:
         returnable = raw_eval(obj_name)
         if returnable == obj_name:
@@ -57,6 +70,9 @@ def getRuntimeGPIObject(obj_name, silent=False):
         return returnable
 
 def runtimeEvalString(this_obj, attr_name, val):
+    """
+    Eval the string 'val' and store the output in the attr_name of this_obj... simple really
+    """
 
     ## Don't check or try to auto-eval non-string objects
     if type(val) != str:
@@ -131,14 +147,17 @@ def runtimeEvalString(this_obj, attr_name, val):
 
     return new_val
 
-_stored_evals = {}
-
 def raw_eval(val):
-    if val not in _stored_evals:
-        _stored_evals[val] = _really_eval(val)
-    return copy.deepcopy(_stored_evals[val])
+    """ eval a string against the stored interface. Lookup against a cache and take copy if already done before
+    is it a bird, is it a plane, no it's a wrapping function...
+    """
+    if val not in _cached_evals:
+        _cached_evals[val] = _fully_eval(val)
+    return deepcopy(_cached_evals[val])
 
-def _really_eval(val):
+def _fully_eval(val):
+    """ eval the input string if possible against the interface else return the string
+    """
     try:
         interface = getProxyInterface() 
         temp_val = eval(val, interface.__dict__)
@@ -403,8 +422,8 @@ class ProxyDataDescriptor(object):
                     if hasattr(val.is_prepared, 'name'):
                         from Ganga.Utility.files import expandfilename
                         Config_conf = getConfig('Configuration')
-                        shared_path = os.path.join(expandfilename(Config_conf['gangadir']), 'shared', Config_conf['user'])
-                        if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
+                        shared_path = path.join(expandfilename(Config_conf['gangadir']), 'shared', Config_conf['user'])
+                        if not path.isdir(path.join(shared_path, val.is_prepared.name)):
                             logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
 
     @staticmethod
@@ -919,7 +938,7 @@ def GPIProxyClassFactory(name, pluginclass):
 
         def _getSharedPath():
             Config_conf = getConfig('Configuration')
-            return os.path.join(expandfilename(Config_conf['gangadir']), 'shared', Config_conf['user'])
+            return path.join(expandfilename(Config_conf['gangadir']), 'shared', Config_conf['user'])
 
         if hasattr(self, 'application'):
             if hasattr(self.application, 'is_prepared'):
@@ -927,7 +946,7 @@ def GPIProxyClassFactory(name, pluginclass):
                 if self.application.is_prepared not in [None, True]:
                     if hasattr(self.application.is_prepared, 'name'):
                         shared_path = _getSharedPath()
-                        if os.path.isdir(os.path.join(shared_path, self.application.is_prepared.name)):
+                        if path.isdir(path.join(shared_path, self.application.is_prepared.name)):
                             from Ganga.Core.GangaRepository import getRegistry
                             shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                             logger.debug('increasing counter from proxy.py')
@@ -935,7 +954,7 @@ def GPIProxyClassFactory(name, pluginclass):
                             logger.debug('Found ShareDir directory: %s' % self.application.is_prepared.name)
                 elif self.application.is_prepared not in [None, True]:
                     shared_path = _getSharedPath()
-                    if not os.path.isdir(os.path.join(shared_path, self.application.is_prepared.name)):
+                    if not path.isdir(path.join(shared_path, self.application.is_prepared.name)):
                         logger.error('ShareDir directory not found: %s' % self.application.is_prepared.name)
                         logger.error('Unpreparing Job #%s' % self.id)
                         from Ganga.Core.GangaRepository import getRegistry
@@ -949,7 +968,7 @@ def GPIProxyClassFactory(name, pluginclass):
                 if self.is_prepared not in [None, True]:
                     if hasattr(self.is_prepared, 'name'):
                         shared_path = _getSharedPath()
-                        if not os.path.isdir(os.path.join(shared_path, self.is_prepared.name)):
+                        if not path.isdir(path.join(shared_path, self.is_prepared.name)):
                             logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
                             logger.error('Unpreparing %s application' % getName(stripProxy(self)))
                             self.unprepare()
@@ -1079,7 +1098,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
                     logger.debug("ObjectMetaClass Error: %s" % err)
                     raise
 
-                if not isinstance(method, types.FunctionType):
+                if not isinstance(method, FunctionType):
                     continue
                 f = ProxyMethodDescriptor(k, internal_name)
                 f.__doc__ = method.__doc__

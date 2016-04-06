@@ -181,6 +181,7 @@ def manualExportToGPI(my_interface=None):
     from Ganga.GPIDev.Lib.Registry.JobRegistry import jobSlice
     exportToInterface(my_interface, "jobSlice", jobSlice, "Functions")
 
+    """Needed for the JobTime if we plan to use the interface to eval the XML as well"""
     import datetime
     exportToInterface(my_interface, "datetime", datetime, 'Classes')
 

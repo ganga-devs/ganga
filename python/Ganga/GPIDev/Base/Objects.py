@@ -264,13 +264,13 @@ class Node(object):
             if not self._schema.hasAttribute(name):
                 #raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(_getName(_srcobj), _getName(self)))
                 if not hasattr(self, name):
-                    setattr(self, name, self._schema.getDefaultValue(name, make_copy=False))
+                    setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
                 if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
             elif not item['copyable']: ## Default of '1' instead of True...
                 if not hasattr(self, name):
-                    setattr(self, name, self._schema.getDefaultValue(name, make_copy=False))
+                    setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
                 if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
@@ -455,7 +455,7 @@ class Descriptor(object):
 
         # Finally, get the default value from the schema
         if obj._schema.hasItem(name):
-            return obj._schema.getDefaultValue(name, make_copy=False)
+            return obj._schema.getDefaultValue(name)
 
         raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
 
@@ -760,7 +760,7 @@ class GangaObject(Node):
             for attr, item in self._schema.allItems():
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
-                    setattr(self, attr, self._schema.getDefaultValue(attr, make_copy=False))
+                    setattr(self, attr, self._schema.getDefaultValue(attr))
 
 
         # Overwrite default values with any config values specified
@@ -822,12 +822,12 @@ class GangaObject(Node):
         if self._schema is not None:
             for name, item in self._schema.allItems():
                 if not item['copyable'] or name in do_not_copy:
-                    setattr(self_copy, name, self._schema.getDefaultValue(name, make_copy=False))
+                    setattr(self_copy, name, self._schema.getDefaultValue(name))
                 else:
                     if hasattr(self, name):
                         setattr(self_copy, name, deepcopy(getattr(self, name)))
                     else:
-                        setattr(self_copy, name, self._schema.getDefaultValue(name, make_copy=False))
+                        setattr(self_copy, name, self._schema.getDefaultValue(name))
 
                 this_attr = getattr(self_copy, name)
                 if isinstance(this_attr, Node):
