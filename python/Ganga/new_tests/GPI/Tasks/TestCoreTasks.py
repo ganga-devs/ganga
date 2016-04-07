@@ -85,8 +85,3 @@ class TestCoreTasks(GangaUnitTest):
         assert t.status == "running"
         assert t.transforms[0].status == "running"
 
-    def test_e_TaskJobsCreated(self):
-        """Check that Tasks has created jobs"""
-        from Ganga.GPI import jobs
-
-        assert len(jobs) > 0
