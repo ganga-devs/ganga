@@ -159,3 +159,75 @@ j.submit()
         j.backend = Local()
         j.submit()
         # -- USINGDIFFERENTBACKENDS LOCAL STOP
+
+    def test_f_InputAndOutputData(self):
+
+        # -- INPUTANDOUTPUTDATA BASIC START
+        # create a script to send
+        open('my_script2.sh', 'w').write("""#!/bin/bash
+        ls -ltr
+        more "my_input.txt"
+        echo "TESTING" > my_output.txt
+        """)
+        import os
+        os.system('chmod +x my_script2.sh')
+
+        # create a script to send
+        open('my_input.txt', 'w').write('Input Testing works!')
+
+        j = Job()
+        j.application.exe = File('my_script2.sh')
+        j.inputfiles = [ LocalFile('my_input.txt') ]
+        j.outputfiles = [ LocalFile('my_output.txt') ]
+        j.submit()
+        # -- INPUTANDOUTPUTDATA BASIC STOP
+
+        # -- INPUTANDOUTPUTDATA PEEKOUTPUT START
+        j.peek()   # list output dir contents
+        j.peek('my_output.txt')
+        # -- INPUTANDOUTPUTDATA PEEKOUTPUT STOP
+
+        # -- INPUTANDOUTPUTDATA FAILJOB START
+        # This job will fail
+        j = Job()
+        j.application.exe = File('my_script2.sh')
+        j.inputfiles = [ LocalFile('my_input.txt') ]
+        j.outputfiles = [ LocalFile('my_output_FAIL.txt') ]
+        j.submit()
+        # -- INPUTANDOUTPUTDATA FAILJOB STOP
+
+        # -- INPUTANDOUTPUTDATA WILDCARD START
+        # This job will pick up both 'my_input.txt' and 'my_output.txt'
+        j = Job()
+        j.application.exe = File('my_script2.sh')
+        j.inputfiles = [ LocalFile('my_input.txt') ]
+        j.outputfiles = [ LocalFile('*.txt') ]
+        j.submit()
+        # -- INPUTANDOUTPUTDATA WILDCARD STOP
+
+        # -- INPUTANDOUTPUTDATA OUTPUTFILES START
+        j.outputfiles
+        # -- INPUTANDOUTPUTDATA OUTPUTFILES STOP
+
+        # -- INPUTANDOUTPUTDATA INPUTDATA START
+        # Create a test script
+        open('my_script3.sh', 'w').write("""#!/bin/bash
+        echo $PATH
+        ls -ltr
+        more __GangaInputData.txt__
+        echo "MY TEST FILE" > output_file.txt
+        """)
+        import os
+        os.system('chmod +x my_script3.sh')
+
+        # Submit a job
+        j = Job()
+        j.application.exe = File('my_script3.sh')
+        j.inputdata = GangaDataset( files = [ LocalFile('*.sh') ] )
+        j.backend = Local()
+        j.submit()
+        # -- INPUTANDOUTPUTDATA INPUTDATA STOP
+
+        # -- INPUTANDOUTPUTDATA GANGAFILES START
+        plugins('gangafiles')
+        # -- INPUTANDOUTPUTDATA GANGAFILES STOP
