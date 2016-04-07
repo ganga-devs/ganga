@@ -2,8 +2,8 @@
 
 import time
 from Queue import Queue
-from Ganga.Utility.logging import _get_logging
-logging_DEBUG = _get_logging().DEBUG
+import logging
+logging_DEBUG = logging.DEBUG
 
 BEAT_TIME = 0.3 # Seconds between publisher thread heart beats.
 IDLE_TIMEOUT = 30 # Maximum seconds to idle before closing connection.

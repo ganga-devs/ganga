@@ -24,10 +24,15 @@ class TaskRegistry(Registry):
 
         self._main_thread = None
 
+        self.stored_slice = TaskRegistrySlice(self.name)
+        self.stored_slice.objects = self
+        self.stored_proxy = TaskRegistrySliceProxy(self.stored_slice)
+
+    def getSlice(self):
+        return self.stored_slice
+
     def getProxy(self):
-        this_slice = TaskRegistrySlice(self.name)
-        this_slice.objects = self
-        return TaskRegistrySliceProxy(this_slice)
+        return self.stored_proxy
 
     def getIndexCache(self, obj):
         if obj.getNodeData() is None:
@@ -171,9 +176,7 @@ class TaskRegistry(Registry):
     def stop(self):
         if self._main_thread is not None:
             self._main_thread.stop()
-            import time
-            while self._main_thread.isAlive():
-                time.sleep(0.5)
+            self._main_thread.join()
 
 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 

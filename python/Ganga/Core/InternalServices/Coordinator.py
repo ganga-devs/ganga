@@ -52,9 +52,10 @@ def isCredentialRequired(credObj):
         return Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken()
 
     if getName(credObj) == 'GridProxy':
-        from Ganga.GPI import jobs, typename
+        from Ganga.Core.GangaRepository import getRegistryProxy
+        from Ganga.Runtime.GPIFunctions import typename
         from Ganga.GPIDev.Base.Proxy import stripProxy
-        for j in jobs:
+        for j in getRegistryProxy('jobs'):
             ji = stripProxy(j)
             if ji.status in ['submitted', 'running', 'completing']:
                 if ji.getNodeIndexCache() is not None and 'display:backend' in ji.getNodeIndexCache().keys():
@@ -212,13 +213,11 @@ def enableMonitoringService():
     from Ganga.Core import monitoring_component
     monitoring_component.alive = True
     monitoring_component.enableMonitoring()
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool
-    _makeThreadPool()
-    from Ganga.GPI import queues
-    queues._start_all_threads()
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool, ThreadPool
+    if not ThreadPool or len(ThreadPool) == 0:
+        _makeThreadPool()
     global servicesEnabled
     servicesEnabled = True
-
 
 def enableInternalServices():
     """
@@ -279,12 +278,7 @@ def bootstrap():
     #global servicesEnabled
     #servicesEnabled = True
 
-    # export to GPI
-    from Ganga.Runtime.GPIexport import exportToGPI
-    exportToGPI('reactivate', enableInternalServices, 'Functions')
-    exportToGPI('disableMonitoring', disableMonitoringService, 'Functions')
-    exportToGPI('enableMonitoring', enableMonitoringService, 'Functions')
-    exportToGPI('disableServices', disableInternalServices, 'Functions')
+    # export to GPI moved to Runtime bootstrap
 
     servicesEnabled = True
 

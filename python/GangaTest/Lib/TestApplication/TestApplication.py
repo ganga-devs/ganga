@@ -49,7 +49,7 @@ class TestApplication(IPrepareApp):
 
     def modify(self):
         self.modified = 1
-        self._setDirty(1)
+        self._setDirty()
 
     def postprocess(self):
 

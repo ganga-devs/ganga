@@ -6,10 +6,6 @@ import StringIO
 import time
 from socket import *
 import threading
-from Ganga.Utility.logging import getLogger
-
-from Ganga.GPI import jobs
-from Ganga.GPI import tasks
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)

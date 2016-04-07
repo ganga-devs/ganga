@@ -97,19 +97,6 @@ class LHCbDataset(GangaDataset):
         self.depth = depth
         logger.debug("Dataset Created")
 
-    #def __deepcopy__(self, memo):
-        #stripProxy(self)._getReadAccess()
-        #cls = type(stripProxy(self))
-        #obj = super(cls, cls).__new__(cls)
-        #this_dict = stripProxy(self).__getstate__()
-        #for n in this_dict.keys():
-        #    this_dict[n] = deepcopy(this_dict[n], memo)
-        #    #if n == 'files':
-        #    #    for this_file in this_dict['files']:
-        #    #        stripProxy(this_file)._setParent(obj)
-        #obj.__setstate__(this_dict)
-        #return obj
-
     def __construct__(self, args):
         logger.debug("__construct__")
         self.files = []
@@ -559,8 +546,8 @@ def string_dataset_shortcut(files, item):
     # This clever change mirrors that in IPostprocessor (see there)
     # essentially allows for dynamic extensions to JobTemplate
     # such as LHCbJobTemplate etc.
-
-    inputdataList = [stripProxy(i)._schema.datadict['inputdata'] for i in Ganga.GPI.__dict__.values()
+    from Ganga.GPIDev.Base.Proxy import getProxyInterface
+    inputdataList = [stripProxy(i)._schema.datadict['inputdata'] for i in getProxyInterface().__dict__.values()
                      if isinstance(stripProxy(i), ObjectMetaclass)
                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))
                      and 'inputdata' in stripProxy(i)._schema.datadict]

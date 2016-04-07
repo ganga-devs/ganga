@@ -153,10 +153,7 @@ class GangaThreadPool(object):
         from Ganga.Utility.logging import getLogger
         logger = getLogger('GangaThread')
 
-        try:
-            from Ganga.GPI import queues
-        except ImportError:
-            from Ganga.Core.GangaThread.WorkerThreads import _global_queues as queues
+        from Ganga.Core.GangaThread.WorkerThreads import _global_queues as queues
 
         if queues is not None:
             queues._purge_all()
