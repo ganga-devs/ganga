@@ -21,6 +21,7 @@ from Ganga.Utility.logging import getLogger
 
 from copy import deepcopy, copy
 from inspect import isclass
+from functools import partial
 
 from Ganga.GPIDev.Schema import Schema, Item, ComponentItem, SharedItem
 
@@ -254,12 +255,11 @@ class Node(object):
         self._actually_copyFrom(_srcobj, _ignore_atts)
 
         ## Fix some objects losing parent knowledge
-        src_dict = srcobj.__dict__
-        for key, val in src_dict.iteritems():
+        def restoreParent(key, srcobj):
             this_attr = getattr(srcobj, key)
             if isinstance(this_attr, Node) and key not in do_not_copy:
-                #logger.debug("k: %s  Parent: %s" % (str(key), (srcobj)))
                 this_attr._setParent(srcobj)
+        map(partial(restoreParent, srcobj=srcobj), srcobj.__dict__.keys())
 
     def _actually_copyFrom(self, _srcobj, _ignore_atts):
 
@@ -289,6 +289,8 @@ class Node(object):
             else:
                 copy_obj = deepcopy(getattr(_srcobj, name))
                 setattr(self, name, copy_obj)
+
+
 
     def printTree(self, f=None, sel=''):
         from Ganga.GPIDev.Base.VPrinter import VPrinter
@@ -838,12 +840,14 @@ class GangaObject(Node):
                 if item.isA(SharedItem):
                     self.__incrementShareRef(self_copy, name)
 
-        for k, v in self.__dict__.iteritems():
+        def performCopy(k, self_copy):
             if k not in do_not_copy:
+                v = self.__dict__[k]
                 try:
                     self_copy.__dict__[k] = deepcopy(v)
                 except:
                     self_copy.__dict__[k] = v
+        map(partial(performCopy, self_copy=self_copy), self.__dict__.keys())
 
         if true_parent is not None:
             self._setParent(true_parent)
