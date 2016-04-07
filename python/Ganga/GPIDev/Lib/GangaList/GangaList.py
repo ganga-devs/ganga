@@ -212,9 +212,7 @@ class GangaList(GangaObject):
 
         if isType(obj_list, GangaList):
             return getProxyAttr(obj_list, '_list')
-        result = []
-        for o in obj_list:
-            result.append(self.strip_proxy(o, filter))
+        result = [self.strip_proxy(o, filter) for o in obj_list]
         return result
 
     def getCategory(self):
@@ -564,7 +562,7 @@ class GangaList(GangaObject):
     def toString(self):
         """Returns a simple str of the _list."""
         returnable_str = "["
-        for element in self._list:
+        def stringFunc(element, returnable_str):
             if isType( element, GangaObject):
                 returnable_str += repr(stripProxy(element))
             else:
@@ -572,6 +570,7 @@ class GangaList(GangaObject):
                 returnable_str += str(stripProxy(element))
                 returnable_str += "'"
             returnable_str += ", "
+        map(partial(stringFunc, returnable_str=returnable_str), self._list)
         returnable_str += "]"
         return returnable_str
 
@@ -587,9 +586,9 @@ class GangaList(GangaObject):
             name = _tuple[0]
             item = _tuple[1]
             if name == "_list":
-               visitor.componentAttribute(self, "_list", self._getdata("_list"), 1)
+                visitor.componentAttribute(self, "_list", self._getdata("_list"), 1)
             elif item['visitable']:
-               visitor.simpleAttribute(self, name, self._getdata(name), item['sequence'])
+                visitor.simpleAttribute(self, name, self._getdata(name), item['sequence'])
 
         def sharedFunc(_tuple):
             name = _tuple[0]
