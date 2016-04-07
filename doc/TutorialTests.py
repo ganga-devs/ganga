@@ -223,7 +223,7 @@ j.submit()
         # Submit a job
         j = Job()
         j.application.exe = File('my_script3.sh')
-        j.inputdata = GangaDataset( files = [ LocalFile('*.sh') ] )
+        j.inputdata = GangaDataset(files=[LocalFile('*.sh')])
         j.backend = Local()
         j.submit()
         # -- INPUTANDOUTPUTDATA INPUTDATA STOP
@@ -231,3 +231,36 @@ j.submit()
         # -- INPUTANDOUTPUTDATA GANGAFILES START
         plugins('gangafiles')
         # -- INPUTANDOUTPUTDATA GANGAFILES STOP
+
+    def test_g_Splitters(self):
+
+        # -- SPLITTERS BASICUSE START
+        j = Job()
+        j.splitter = GenericSplitter()
+        j.splitter.attribute = 'application.args'
+        j.splitter.values = [['hello', 1], ['world', 2], ['again', 3]]
+        j.submit()
+        # -- SPLITTERS BASICUSE STOP
+
+        # -- SPLITTERS SUBJOBCHECK START
+        j.subjobs
+        j.subjobs(0).peek("stdout")
+        # -- SPLITTERS SUBJOBCHECK STOP
+
+        # -- SPLITTERS MULTIATTRS START
+        j = Job()
+        j.splitter = GenericSplitter()
+        j.splitter.multi_attrs = { 'application.args': ['hello1', 'hello2' ],
+                                   'application.env':  [{'MYENV':'test1'}, {'MYENV':'test2'}] }
+        j.submit()
+        # -- SPLITTERS MULTIATTRS STOP
+
+         # -- SPLITTERS DATASETSPLITTER START
+        j = Job()
+        j.application.exe = 'more'
+        j.application.args = ['__GangaInputData.txt__']
+        j.inputdata = GangaDataset( files=[ LocalFile('*.txt') ] )
+        j.splitter = GangaDatasetSplitter()
+        j.splitter.files_per_subjob = 2
+        j.submit()
+        # -- SPLITTERS DATASETSPLITTER STOP

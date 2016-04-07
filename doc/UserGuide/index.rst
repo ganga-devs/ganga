@@ -12,10 +12,10 @@ you encounter any problems!
     RunningExecutables
     UsingDifferentBackends
     InputAndOutputData
+    Splitters
+    PostProcessors
 
 
-7. Splitters
-8. Post Processors
 9. Miscellaneous functionality
 10. Queues
 11. Tasks
