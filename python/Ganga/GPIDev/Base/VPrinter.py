@@ -279,7 +279,7 @@ def full_print(obj, out=None, interactive=False):
             from Ganga.GPIDev.Base.Objects import GangaObject
             outString = '['
             count = 0
-            def print_x(x, outString):
+            def print_x(x, outString, count):
                 if isType(x, GangaObject):
                     sio = cStringIO.StringIO()
                     x.printTree(sio, interactive)
