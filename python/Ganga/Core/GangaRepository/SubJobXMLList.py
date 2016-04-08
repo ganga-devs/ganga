@@ -383,6 +383,7 @@ class SubJobXMLList(GangaObject):
                 # if load was successful then set parent and add to the _cachedJobs dict
                 if loaded_sj:
                     loaded_sj._setParent( self._definedParent )
+                    loaded_sj._setFlushed()
                     self._cachedJobs[index] = loaded_sj
 
         return self._cachedJobs[index]
