@@ -1,12 +1,13 @@
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: Executable.py,v 1.1 2008-07-17 16:40:57 moscicki Exp $
+# $Id: Im3Shape.py,v 1.1 2008-07-17 16:40:57 moscicki Exp $
 ##########################################################################
 
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
 
@@ -31,16 +32,16 @@ class Im3Shape(IPrepareApp):
     """
 
     """
-    _schema = Schema(Version(2, 0), {
-        'location': GangaFileItem(defvalue=DiracFile(lfn='/lhcb/user/r/rcurrie/firstTestDiracFile.txt'), doc="Location of the Im3Shape program tarball"),
-        'ini_location': GangaFileItem(defvalue=LocalFile('myIniFile.ini'), doc=".ini file used to configure Im3Shape"),
+    _schema = Schema(Version(1, 0), {
+        'location': SimpleItem(defvalue=DiracFile(lfn='/lhcb/user/r/rcurrie/firstTestDiracFile.txt'),types=[IGangaFile], doc="Location of the Im3Shape program tarball"),
+        'ini_location': SimpleItem(defvalue=LocalFile('myIniFile.ini'), types=[IGangaFile], doc=".ini file used to configure Im3Shape"),
         'env': SimpleItem(defvalue={}, typelist=['str'], doc='Dictionary of environment variables that will be replaced in the running environment.'),
-        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=['type(None)', 'bool', ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, 'bool', ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes'),
-        'blacklist': GangaFileItem(defvalue=DiracFile('/lhcb/user/r/rcurrie/secondTestDiracFile.txt'), doc="Blacklist file for running Im3Shape"),
+        'blacklist': SimpleItem(defvalue=DiracFile('/lhcb/user/r/rcurrie/secondTestDiracFile.txt'), types=[IGangaFile], doc="Blacklist file for running Im3Shape"),
         'rank': SimpleItem(defvalue=1, doc="Rank in the split of the tile from splitting"),
         'size': SimpleItem(defvalue=5, doc="Size of the splitting of the tile from splitting"),
-        'catalog': GangaFileItem(defvalue=None, doc="Catalog which is used to describe what is processed"),
+        'catalog': SimpleItem(defvalue=None, types=[IGangaFile, None], doc="Catalog which is used to describe what is processed"),
     })
     _category = 'applications'
     _name = 'Im3Shape'
@@ -54,9 +55,9 @@ class Im3Shape(IPrepareApp):
 
     def unprepare(self, force=False):
         """
-        Revert an Executable() application back to it's unprepared state.
+        Revert an Im3Shape() application back to it's unprepared state.
         """
-        logger.debug('Running unprepare in Executable app')
+        logger.debug('Running unprepare in Im3Shape app')
         if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
@@ -64,7 +65,7 @@ class Im3Shape(IPrepareApp):
 
     def prepare(self, force=False):
         """
-        A method to place the Executable application into a prepared state.
+        A method to place the Im3Shape application into a prepared state.
 
         The application wil have a Shared Directory object created for it. 
         If the application's 'exe' attribute references a File() object or
@@ -106,24 +107,6 @@ class Im3Shape(IPrepareApp):
             # [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
             self.post_prepare()
 
-           # if isType(self.exe, File):
-           #     source = self.exe.name
-           # elif isType(self.exe, str):
-           #     source = self.exe
-            
-            #if not os.path.exists(source):
-            #if False:#
-            #    logger.debug("Error copying exe: %s to input workspace" % str(source))
-            #else:
-            #    try:
-            #        parent_job = self.getJobObject()
-            #    except:
-            #        parent_job = None
-            #        pass
-            #    if parent_job is not None:
-            #        input_dir = parent_job.getInputWorkspace(create=True).getPath()
-            #        shutil.copy2(source, input_dir)
-
         except Exception as err:
             logger.debug("Err: %s" % str(err))
             self.unprepare()
@@ -132,71 +115,6 @@ class Im3Shape(IPrepareApp):
         return 1
 
     def configure(self, masterappconfig):
-        from Ganga.Core import ApplicationConfigurationError
-        import os.path
-
-        # do the validation of input attributes, with additional checks for exe
-        # property
-
-        def validate_argument(x, exe=None):
-            if isinstance(x, str):
-                if exe:
-                    if not x:
-                        raise ApplicationConfigurationError(None, 'exe not specified')
-
-                    if len(x.split()) > 1:
-                        raise ApplicationConfigurationError(None, 'exe "%s" contains white spaces' % x)
-
-                    dirn, filen = os.path.split(x)
-                    if not filen:
-                        raise ApplicationConfigurationError(None, 'exe "%s" is a directory' % x)
-                    if dirn and not os.path.isabs(dirn) and self.is_prepared is None:
-                        raise ApplicationConfigurationError(None, 'exe "%s" is a relative path' % x)
-                    if not os.path.basename(x) == x:
-                        if not os.path.isfile(x):
-                            raise ApplicationConfigurationError(None, '%s: file not found' % x)
-
-            else:
-                try:
-                    # int arguments are allowed -> later converted to strings
-                    if isinstance(x, int):
-                        return
-                    if not x.exists():
-                        raise ApplicationConfigurationError(None, '%s: file not found' % x.name)
-                except AttributeError as err:
-                    raise ApplicationConfigurationError(err, '%s (%s): unsupported type, must be a string or File' % (str(x), str(type(x))))
-
-        #validate_argument(self.exe, exe=1)
-
-        #for a in self.args:
-        #    validate_argument(a)
 
         return (None, None)
-
-# disable type checking for 'exe' property (a workaround to assign File() objects)
-# FIXME: a cleaner solution, which is integrated with type information in
-# schemas should be used automatically
-config = getConfig('defaults_Executable')  # _Properties
-#config.setDefaultOption('exe',Executable._schema.getItem('exe')['defvalue'], type(None),override=True)
-config.options['exe'].type = type(None)
-
-# not needed anymore:
-#   the backend is also required in the option name
-#   so we need a kind of dynamic options (5.0)
-#mc = getConfig('MonitoringServices')
-#mc['Executable'] = None
-
-
-def convertIntToStringArgs(args):
-
-    result = []
-
-    for arg in args:
-        if isinstance(arg, int):
-            result.append(str(arg))
-        else:
-            result.append(arg)
-
-    return result
-
 

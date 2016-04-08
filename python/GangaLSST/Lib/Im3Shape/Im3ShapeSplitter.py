@@ -45,58 +45,33 @@ class Im3ShapeSplitter(ISplitter):
     subjob 3 : CCC  3
 """
     _name = "Im3ShapeSplitter"
-    _schema = Schema(Version(1, 0), {'size': SimpleItem(defvalue=5, doc='Size of the tiles which are to be split.')})
+    _schema = Schema(Version(1, 0), {'size': SimpleItem(defvalue=5, doc='Size of the tiles which are to be split.'),
+                                     'split_by_file': SimpleItem(defvalue=True, doc='Should we auto-split into subjobs here on a per-file basis?')})
 
     def split(self, job):
 
         subjobs = []
 
-        for rank in range(0,self.size-1):
-            j = self.createSubjob(job, ['application'])
-            # Add new arguments to subjob
+        def getApp(job, rank, size):
             app = copy.deepcopy(job.application)
-            app.args = arg
             app.rank = rank
-            app.size = self.size
-            j.application = app
-            logger.debug('Rank for split job is: ' + str(rank))
-            subjobs.append(stripProxy(j))
+            app.size = size
+
+        if split_by_file:
+            for this_file in job.inputdata:
+                for range in range(0, self.size-1):
+                    j = self.createSubjob(job, ['application'])
+                    # Add new arguments to subjob
+                    j.application = getApp(job, rank, self.size)
+                    j.inputdata = Dataset([this_file])
+                    subjobs.append(j)
+        else:
+            for rank in range(0,self.size-1):
+                j = self.createSubjob(job, ['application'])
+                j.application = getApp(job, rank, self.size)
+                j.inputdata = job.inputdata
+                logger.debug('Rank for split job is: ' + str(rank))
+                subjobs.append(j)
 
         return subjobs
 
-
-#
-#
-# $Log: not supported by cvs2svn $
-# Revision 1.7.4.3  2008/07/03 08:36:16  wreece
-# Typesystem fix for Splitters
-#
-# Revision 1.7.4.2  2008/03/12 12:42:38  wreece
-# Updates the splitters to check for File objects in the list
-#
-# Revision 1.7.4.1  2008/02/08 15:09:52  amuraru
-# fixed the TypeMismatchError
-#
-# Revision 1.7  2007/07/10 13:08:32  moscicki
-# docstring updates (ganga devdays)
-#
-# Revision 1.6  2006/09/29 08:31:56  moscicki
-# typo fix
-#
-# Revision 1.5  2006/09/15 14:24:24  moscicki
-# fixed a typo
-#
-# Revision 1.4  2006/08/24 16:52:10  moscicki
-# splitter.createJob()
-#
-# Revision 1.3  2006/08/03 08:14:30  moscicki
-# SimpleItem fix
-#
-# Revision 1.2  2006/08/01 10:25:50  moscicki
-# small schema fixes
-#
-# Revision 1.1  2006/06/21 11:27:29  moscicki
-# splitters moved to the new location
-#
-#
-#
