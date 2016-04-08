@@ -55,8 +55,9 @@ startUpRegistries(ganga)
 #  bootstrap core modules
 interactive = False
 from Ganga.Core.GangaRepository import getRegistrySlice
-Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, implRef), interactive)
-exportToPublicInterface('runMonitoring', Ganga.Core.monitoring_component.runMonitoring, 'Functions')
+Ganga.Core.bootstrap(getRegistrySlice('jobs'), interactive)
+from Ganga.Runtime.GPIexport import exportToInterface
+exportToInterface(ganga, 'runMonitoring', Ganga.Core.monitoring_component.runMonitoring, 'Functions')
 Ganga.GPIDev.Lib.Config.bootstrap()
 
 # ------------------------------------------------------------------------------------
