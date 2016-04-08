@@ -15,9 +15,8 @@ you encounter any problems!
     Splitters
     PostProcessors
     MiscellaneousFunctionality
+    Queues
 
-
-10. Queues
 11. Tasks
 12. Pure Python Usage
 13. Ganga as a Service

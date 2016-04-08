@@ -395,3 +395,29 @@ j.submit()
         # submit the some jobs
         jobtree.getjobs().submit()
         # -- MISCFUNCTIONALITY JOBTREE STOP
+
+    def test_j_Queues(self):
+
+        queues
+
+        # -- QUEUES EXAMPLE START
+        for i in range(1, 20):
+            j = Job()
+            queues.add( j.submit )
+        # -- QUEUES EXAMPLE STOP
+
+        # -- QUEUES FUNCTION START
+        def f(x):
+            print x
+
+        queues.add(f, args=(123,))
+        # -- QUEUES FUNCTION STOP
+
+        # -- QUEUES SPLIT START
+        j = Job()
+        j.splitter = GenericSplitter()
+        j.splitter.attribute = 'application.args'
+        j.splitter.values = [ i for i in range(0, 50) ]
+        j.parallel_submit = True
+        j.submit()
+        # -- QUEUES SPLIT STOP
