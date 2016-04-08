@@ -684,6 +684,13 @@ under certain conditions; type license() for details.
 
         config = getConfig("Configuration")
 
+        # detect default user (equal to unix user name)
+        import getpass
+        try:
+            config.options['user'].default_value = getpass.getuser()
+        except Exception as x:
+            raise Ganga.Utility.Config.ConfigError('Cannot get default user name' + str(x))
+
         # import configuration from spyware
         from Ganga.Runtime import spyware
 
