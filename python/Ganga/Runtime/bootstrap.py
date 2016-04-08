@@ -1074,8 +1074,8 @@ under certain conditions; type license() for details.
                 logger.warning('Test Runner interrupted!')
                 import Ganga.Core.InternalServices.Coordinator
                 if not Ganga.Core.InternalServices.Coordinator.servicesEnabled:
-                    from Ganga.GPI import reactivate
-                    reactivate()
+                    from Ganga.Core.InternalServices.Coordinator import enableInternalServices
+                    enableInternalServices()
                 sys.exit(1)
             sys.exit(rc)
 

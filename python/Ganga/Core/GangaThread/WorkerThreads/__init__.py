@@ -2,6 +2,9 @@
 _global_queues = None
 _queues_interface = None
 
+def getQueues():
+    return _global_queues
+
 def startUpQueues(my_interface=None):
     from Ganga.Utility.logging import getLogger
     logger = getLogger()

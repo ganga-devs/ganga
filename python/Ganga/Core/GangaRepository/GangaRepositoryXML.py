@@ -23,7 +23,6 @@ from Ganga.Core.GangaRepository.VStreamer import to_file as xml_to_file
 from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
 from Ganga.Core.GangaRepository import SubJobXMLList
 
@@ -123,7 +122,7 @@ def rmrf(name, count=0):
                 logger.debug("rmrf Err: %s" % str(err))
                 logger.debug("name: %s" % str(name))
                 remove_name = name
-                raise err
+                raise
             return
 
         for sfn in os.listdir(remove_name):
@@ -143,7 +142,7 @@ def rmrf(name, count=0):
                 rmrf(remove_name, count+1)
             elif err.errno != errno.ENOENT:
                 logger.debug("%s" % str(err))
-                raise err
+                raise
             return
     else:
         try:
@@ -151,7 +150,7 @@ def rmrf(name, count=0):
             os.rename(name, remove_name)
         except OSError as err:
             if err.errno not in [errno.ENOENT, errno.EBUSY]:
-                raise err
+                raise
             logger.debug("rmrf Move err: %s" % str(err))
             logger.debug("name: %s" % str(name))
             if err.errno == errno.EBUSY:
@@ -164,7 +163,7 @@ def rmrf(name, count=0):
             if err.errno != errno.ENOENT:
                 logger.debug("%s" % str(err))
                 logger.debug("name: %s" % str(remove_name))
-                raise err
+                raise
             return
 
 
@@ -497,6 +496,8 @@ class GangaRepositoryLocal(GangaRepository):
                     ## we can't reasonably write all possible exceptions here!
                     logger.debug("update_index: Failed to load id %i: %s" % (this_id, str(x)))
                     summary.append((this_id, str(x)))
+                #finally:
+                #    pass
 
         logger.debug("Iterated over Items")
 
@@ -765,10 +766,13 @@ class GangaRepositoryLocal(GangaRepository):
             a4=time.time()
             logger.debug("Loading XML file for ID: %s took %s sec" % (this_id, str(a4-b4)))
 
+            if len(errs) > 0:
+                logger.error("#%s Error(s) Loading File: %s" % (len(errs), fobj.name))
+                raise InaccessibleObjectError(self, this_id, errs[0])
+
             has_children = (self.sub_split is not None) and (self.sub_split in tmpobj.getNodeData()) and len(tmpobj.getNodeAttribute(self.sub_split)) == 0
 
             if this_id in self.objects:
-
                 self._must_actually_load_xml(fobj, fn, this_id, load_backup, has_children, tmpobj, errs)
 
             else:
@@ -849,13 +853,13 @@ class GangaRepositoryLocal(GangaRepository):
             except Exception as err:
                 logger.debug("XML load: Failed to load XML file: %s" % str(fn))
                 logger.debug("Error was:\n%s" % str(err))
-                raise err
+                raise
 
             try:
                 self._actually_load_xml(fobj, fn, this_id, load_backup)
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % str(err))
-                raise err
+                raise
 
             except Exception as err:
 
@@ -863,6 +867,8 @@ class GangaRepositoryLocal(GangaRepository):
 
                 if should_continue is True:
                     continue
+                else:
+                    raise
 
             finally:
                 fobj.close()
@@ -872,33 +878,35 @@ class GangaRepositoryLocal(GangaRepository):
 
     def _handle_load_exception(self, err, fn, this_id, load_backup):
         if isType(err, XMLFileError):
-             logger.error("XML File failed to load for Job id: %s" % str(this_id))
-             logger.error("Actual Error was:\n%s" % str(err))
+            logger.error("XML File failed to load for Job id: %s" % str(this_id))
+            logger.error("Actual Error was:\n%s" % str(err))
 
         if load_backup:
-             logger.debug("Could not load backup object #%i: %s", this_id, str(err))
-             raise InaccessibleObjectError(self, this_id, err)
+            logger.debug("Could not load backup object #%s: %s" % (str(this_id), str(err)))
+            raise InaccessibleObjectError(self, this_id, err)
 
-        logger.debug("Could not load object #%i: %s", this_id, str(err))
+        logger.debug("Could not load object #%s: %s" % (str(this_id), str(err)))
 
         # try loading backup
         try:
-             self.load([this_id], load_backup=True)
-             logger.warning("Object '%s' #%i loaded from backup file - the last changes may be lost.", self.registry.name, this_id)
-             return True
+            self.load([this_id], load_backup=True)
+            logger.warning("Object '%s' #%s loaded from backup file - the last changes may be lost." % (str(self.registry.name), str(this_id)))
+            return True
         except Exception as err2:
-             logger.debug("Exception when loading backup: %s" % str(err2) )
+            logger.debug("Exception when loading backup: %s" % str(err2) )
+        #finally:
+        #    pass
 
-        if isType(err2, XMLFileError):
-             logger.error("XML File failed to load for Job id: %s" % str(this_id))
-             logger.error("Actual Error was:\n%s" % str(err2))
+        logger.error("XML File failed to load for Job id: %s" % str(this_id))
+        logger.error("Actual Error was:\n%s" % str(err2))
+
         # add object to incomplete_objects
         if not this_id in self.incomplete_objects:
-             self.incomplete_objects.append(this_id)
-             # remove index so we do not continue working with wrong
-             # information
-             rmrf(os.path.dirname(fn) + ".index")
-             raise InaccessibleObjectError(self, this_id, err)
+            self.incomplete_objects.append(this_id)
+            # remove index so we do not continue working with wrong
+            # information
+            rmrf(os.path.dirname(fn) + ".index")
+            raise InaccessibleObjectError(self, this_id, err)
 
         return False
 
