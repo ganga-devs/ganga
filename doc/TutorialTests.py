@@ -232,11 +232,11 @@ j.submit()
         os.system('chmod +x my_script3.sh')
 
         # Submit a job
-        #TODO: j = Job()
-        #TODO: j.application.exe = File('my_script3.sh')
-        #TODO: j.inputdata = GangaDataset(files=[LocalFile('*.sh')])
-        #TODO: j.backend = Local()
-        #TODO: j.submit()
+        j = Job()
+        j.application.exe = File('my_script3.sh')
+        j.inputdata = GangaDataset(files=[LocalFile('*.sh')])
+        j.backend = Local()
+        j.submit()
         # -- INPUTANDOUTPUTDATA INPUTDATA STOP
 
         # -- INPUTANDOUTPUTDATA GANGAFILES START
@@ -266,14 +266,14 @@ j.submit()
         j.submit()
         # -- SPLITTERS MULTIATTRS STOP
 
-         # -- SPLITTERS DATASETSPLITTER START
-        #TODO: j = Job()
-        #TODO: j.application.exe = 'more'
-        #TODO: j.application.args = ['__GangaInputData.txt__']
-        #TODO: j.inputdata = GangaDataset( files=[ LocalFile('*.txt') ] )
-        #TODO: j.splitter = GangaDatasetSplitter()
-        #TODO: j.splitter.files_per_subjob = 2
-        #TODO: j.submit()
+        # -- SPLITTERS DATASETSPLITTER START
+        j = Job()
+        j.application.exe = 'more'
+        j.application.args = ['__GangaInputData.txt__']
+        j.inputdata = GangaDataset( files=[ LocalFile('*.txt') ] )
+        j.splitter = GangaDatasetSplitter()
+        j.splitter.files_per_subjob = 2
+        j.submit()
         # -- SPLITTERS DATASETSPLITTER STOP
 
     def test_h_PostProcessors(self):
@@ -281,7 +281,7 @@ j.submit()
         j = Job()
 
         # -- POSTPROCESSORS APPEND START
-        #TODO: j.postprocessors.append(RootMerger(files = ['thesis_data.root'],ignorefailed = True,overwrite = True))
+        j.postprocessors.append(RootMerger(files = ['thesis_data.root'],ignorefailed = True,overwrite = True))
         # -- POSTPROCESSORS APPEND STOP
 
         # -- POSTPROCESSORS TEXTMERGER START
@@ -297,16 +297,16 @@ j.submit()
         # -- POSTPROCESSORS CUSTOMMERGER STOP
 
         # -- POSTPROCESSORS SMARTMERGER START
-        #TODO: SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True)
+        SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True)
         # -- POSTPROCESSORS SMARTMERGER STOP
 
         # -- POSTPROCESSORS SMARTMERGERAPPEND START
-        #TODO: j.postprocessors.append(SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True))
+        j.postprocessors.append(SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True))
         # -- POSTPROCESSORS SMARTMERGERAPPEND STOP
 
         # -- POSTPROCESSORS SMARTMERGERAPPEND2 START
-        #TODO: j.postprocessors.append(TextMerger(files = ['stdout'],overwrite = True))
-        #TODO: j.postprocessors.append(RootMerger(files = ['thesis_data.root'],overwrite = False))
+        j.postprocessors.append(TextMerger(files = ['stdout'],overwrite = True))
+        j.postprocessors.append(RootMerger(files = ['thesis_data.root'],overwrite = False))
         # -- POSTPROCESSORS SMARTMERGERAPPEND2 STOP
 
         # -- POSTPROCESSORS FILECHECKER START
@@ -325,7 +325,7 @@ j.submit()
         # -- POSTPROCESSORS FILECHECKEROPTS START
         rfc = RootFileChecker(files = ["*.root"])
         rfc.files = ["*.root"]
-        #TODO: j.postprocessors.append(rfc)
+        j.postprocessors.append(rfc)
         # -- POSTPROCESSORS FILECHECKEROPTS STOP
 
         # -- POSTPROCESSORS CUSTOMCHECKER START
@@ -347,15 +347,15 @@ j.submit()
         cc = CustomChecker(module = '~/mychecker.py')
         n = Notifier(address = 'myadress.cern.ch')
 
-        j.postprocessors = [tm,rm,fc,cc,n]
+        # TODO: j.postprocessors = [tm,rm,fc,cc,n]
         # -- POSTPROCESSORS MULTIPLE STOP
 
         # -- POSTPROCESSORS MULTIPLE2 START
-        #TODO: j.postprocessors.append(fc)
-        #TODO: j.postprocessors.append(tm)
-        #TODO: j.postprocessors.append(rm)
-        #TODO: j.postprocessors.append(cc)
-        #TODO: j.postprocessors.append(n)
+        j.postprocessors.append(fc)
+        j.postprocessors.append(tm)
+        j.postprocessors.append(rm)
+        j.postprocessors.append(cc)
+        j.postprocessors.append(n)
         # -- POSTPROCESSORS MULTIPLE2 STOP
 
         j.postprocessors.remove(FileChecker())
