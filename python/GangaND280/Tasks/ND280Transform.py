@@ -1,4 +1,4 @@
-from Ganga.GPIDev.Lib.Tasks.common import *
+from Ganga.GPIDev.Lib.Tasks.common import getJobByID
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
@@ -102,7 +102,7 @@ class ND280Transform(ITransform):
          unit.inputdata = ND280LocalDataset()
          for parent in parent_units:
             # loop over the output files and add them to the ND280LocalDataset - THIS MIGHT NEED SOME WORK!
-            job = GPI.jobs(parent.active_job_ids[0])
+            job = getJobByID(parent.active_job_ids[0])
             for f in job.outputfiles:
                # should check for different file types and add them as appropriate to the dataset
                # self.inputdata (== TaskChainInput).include/exclude_file_mask could help with this

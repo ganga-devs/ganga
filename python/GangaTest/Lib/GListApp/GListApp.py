@@ -4,12 +4,14 @@
 # $Id: GListApp.py,v 1.2 2008-10-22 11:59:19 wreece Exp $
 ##########################################################################
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from Ganga.GPIDev.Adapters.IApplication import IApplication
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Lib.File import File, ShareDir
 
 
-class GListApp(IApplication):
+class GListApp(IPrepareApp):
 
     """Test File object with well known equality properties -i.e. Does not reply on proxy!"""
 # summary_print
@@ -24,7 +26,8 @@ class GListApp(IApplication):
         'gList': SimpleItem(defvalue=[], sequence=1, typelist=['str']),
         'gListComp': ComponentItem('files', defvalue=[], sequence=1),
         'simple_print': SimpleItem(defvalue='', summary_print='_print_summary_simple_print'),
-        'comp_print': ComponentItem('backends', defvalue=None, summary_print='_print_summary_comp_print')
+        'comp_print': ComponentItem('backends', defvalue=None, summary_print='_print_summary_comp_print'),
+        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=['type(None)', 'bool', ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
     })
 
     def configure(self, master_appconfig):

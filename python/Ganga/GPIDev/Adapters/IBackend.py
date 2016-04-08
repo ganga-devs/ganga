@@ -142,9 +142,9 @@ class IBackend(GangaObject):
 
         if parallel_submit:
 
-            from Ganga.GPI import queues
+            from Ganga.Core.GangaThread.WorkerThreads import getQueues
 
-            threads_before = queues.totalNumIntThreads()
+            threads_before = getQueues().totalNumIntThreads()
 
             for sc, sj in zip(subjobconfigs, rjobs):
 
@@ -152,9 +152,7 @@ class IBackend(GangaObject):
                 b = sj.backend
                 # FIXME would be nice to move this to the internal threads not user ones
                 #from Ganga.GPIDev.Base.Proxy import stripProxy
-                #all_queues = stripProxy(queues)
-                #all_queues._addSystem( self._parallel_submit, ( b, sj, sc, master_input_sandbox, fqid, logger ) )
-                queues._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
+                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
 
             def subjob_status_check(rjobs):
                 has_submitted = True

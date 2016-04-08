@@ -29,7 +29,7 @@ def _addToInterface(interface, name, _object):
 
 def exportToInterface(myInterface, name, _object, doc_section, docstring=None):
     '''
-    Make object available publicly as "name" in Ganga.GPI module. Add automatic documentation to gangadoc system.
+    Make object available publicly as "name" in the interface module. Add automatic documentation to gangadoc system.
     "doc_section" specifies how the object should be documented.
     If docstring is specified then use it to document the object (only use for "Objects" section). Otherwise use __doc__ (via pydoc utilities).
     FIXME: if you try to export the object instance, you should import it with fully qualified path, e.g.

@@ -17,4 +17,4 @@ def to_file(obj, fileobj, ignore_subs=''):
     except Exception as err:
         logger.error("Failed to Write: %s" % str(obj))
         logger.error("Err: %s" % str(err))
-        raise err
+        raise

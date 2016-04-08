@@ -378,7 +378,7 @@ class SubJobXMLList(GangaObject):
                     except Exception as err:
                         logger.debug("Failed to Load XML for job: %s using: %s" % (str(index), str(subjob_data)))
                         logger.debug("Err:\n%s" % str(err))
-                        raise err
+                        raise
 
                 # if load was successful then set parent and add to the _cachedJobs dict
                 if loaded_sj:

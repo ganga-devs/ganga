@@ -181,9 +181,11 @@ class LCG(IBackend):
         self.sandboxcache.middleware = self.middleware.upper()
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
-        try:
-            from Ganga.GPI import DQ2SandboxCache
-        except ImportError:
+        # Should this __really__ be in Core?
+        from Ganga.GPIDev.Base.Proxy import getProxyInterface
+        if 'DQ2SandboxCache' in getProxyInterface.__dict__.keys():
+            DQ2SandboxCache = getProxyInterface()['DQ2SandboxCache']
+        else:
             DQ2SandboxCache = None
 
         from Ganga.Lib.LCG.LCGSandboxCache import LCGSandboxCache
