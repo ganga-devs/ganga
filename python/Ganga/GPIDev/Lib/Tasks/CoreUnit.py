@@ -2,7 +2,6 @@ from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob
-from Ganga.GPIDev.Base.Proxy import stripProxy
 import copy
 
 
@@ -33,7 +32,7 @@ class CoreUnit(IUnit):
             if (f == "postprocessors" and len(getattr(self, f).process_objects) > 0):
                 j.postprocessors = copy.deepcopy(addProxy(self).postprocessors)
             elif (f != "postprocessors" and getattr(self, f)):
-                setattr(stripProxy(j), f, copy.deepcopy(getattr(self, f)))
+                setattr(j, f, copy.deepcopy(getattr(self, f)))
             elif (f == "postprocessors" and len(getattr(self._getParent(), f).process_objects) > 0):
                 j.postprocessors = copy.deepcopy(
                     addProxy(self._getParent()).postprocessors)
