@@ -2,7 +2,6 @@ from Ganga.GPIDev.Lib.Tasks.common import *
 import random
 
 from Ganga.GPIDev.Lib.Tasks import Transform
-from TaskApplication import AthenaMCTask
 from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import AthenaMCOutputDatasets, AthenaMCInputDatasets, _usertag
 from Ganga.GPIDev.Schema import *
 from Ganga.Utility.ColourText import overview_colours, status_colours, ANSIMarkup

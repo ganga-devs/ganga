@@ -9,9 +9,6 @@ import Ganga.Utility.Config
 
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
 
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import taskify
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import task_map
-
 from Ganga.GPIDev.Schema import SimpleItem
 
 available_lhcb_apps = None

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
-from .common import logger
+from Ganga.Utility.logging import getLogger
 from Ganga.Utility.ColourText import status_colours, overview_colours, ANSIMarkup
 markup = ANSIMarkup()
 from Ganga.GPIDev.Lib.Tasks.common import getJobByID
@@ -12,6 +12,8 @@ import time
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
 import sys
 import traceback
+
+logger = getLogger()
 
 def formatTraceback():
    "Helper function to printout a traceback as a string"
@@ -169,7 +171,6 @@ class IUnit(GangaObject):
 
     def update(self):
         """Update the unit and (re)submit jobs as required"""
-        #logger.warning("Entered Unit %d update function..." % self.getID())
 
         # if we're complete, then just return
         if self.status in ["completed", "recreating"] or not self.active:
