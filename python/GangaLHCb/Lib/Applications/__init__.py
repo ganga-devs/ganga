@@ -1,5 +1,4 @@
 import os
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import taskify, task_map
 
 from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory
