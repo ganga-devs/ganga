@@ -963,6 +963,11 @@ class GangaObject(Node):
             parent._setDirty()
 
     def _setFlushed(self):
+        if self._schema:
+            for k in self._schema.allItemNames():
+                this_attr = getattr(self, k)
+                if isinstance(this_attr, Node):
+                    this_attr._setFlushed()
         self._dirty = False
 
     # post __init__ hook automatically called by GPI Proxy __init__

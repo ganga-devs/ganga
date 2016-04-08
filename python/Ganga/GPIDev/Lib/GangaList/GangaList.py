@@ -594,5 +594,12 @@ class GangaList(GangaObject):
 
         visitor.nodeEnd(self)
 
+    def _setFlushed(self):
+        super(GangaList, self)._setFlushed()
+        from Ganga.GPIDev.Base.Objects import Node
+        for elem in self._list:
+            if isinstance(elem, Node):
+                elem._setFlushed()
+
 # export to GPI moved to the Runtime bootstrap
 
