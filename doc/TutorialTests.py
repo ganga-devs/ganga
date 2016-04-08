@@ -264,3 +264,85 @@ j.submit()
         j.splitter.files_per_subjob = 2
         j.submit()
         # -- SPLITTERS DATASETSPLITTER STOP
+
+    def test_h_PostProcessors(self):
+
+        # -- POSTPROCESSORS APPEND START
+        j.postprocessors.append(RootMerger(files = ['thesis_data.root'],ignorefailed = true,overwrite = true))
+        # -- POSTPROCESSORS APPEND STOP
+
+        # -- POSTPROCESSORS TEXTMERGER START
+        TextMerger(compress = True)
+        # -- POSTPROCESSORS TEXTMERGER STOP
+
+        # -- POSTPROCESSORS ROOTMERGER START
+        RootMerger(args = '-T')
+        # -- POSTPROCESSORS ROOTMERGER STOP
+
+        # -- POSTPROCESSORS CUSTOMMERGER START
+        CustomMerger().module = '~/mymerger.py'
+        # -- POSTPROCESSORS CUSTOMMERGER STOP
+
+        # -- POSTPROCESSORS SMARTMERGER START
+        SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True)
+        # -- POSTPROCESSORS SMARTMERGER STOP
+
+        # -- POSTPROCESSORS SMARTMERGERAPPEND START
+        j.postprocessors.append(SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True))
+        # -- POSTPROCESSORS SMARTMERGERAPPEND STOP
+
+        # -- POSTPROCESSORS SMARTMERGERAPPEND2 START
+        j.postprocessors.append(TextMerger(files = ['stdout'],overwrite = True))
+        j.postprocessors.append(RootMerger(files = ['thesis_data.root'],overwrite = False))
+        # -- POSTPROCESSORS SMARTMERGERAPPEND2 STOP
+
+        # -- POSTPROCESSORS FILECHECKER START
+        fc = FileChecker(files = ['stdout'], searchStrings = ['Segmentation'])
+        # -- POSTPROCESSORS FILECHECKER STOP
+
+        # -- POSTPROCESSORS FILECHECKERMUSTEXIST START
+        fc.filesMustExist = True
+        # -- POSTPROCESSORS FILECHECKERMUSTEXIST STOP
+
+        # -- POSTPROCESSORS FILECHECKEROPTS START
+        fc.searchStrings = [ 'SUCCESS' ]
+        fc.failIfFound = False
+        # -- POSTPROCESSORS FILECHECKEROPTS STOP
+
+        # -- POSTPROCESSORS FILECHECKEROPTS START
+        rfc = RootFileChecker(files = ["*.root"])
+        rfc.files = ["*.root"]
+        j.postprocessors.append(rfc)
+        # -- POSTPROCESSORS FILECHECKEROPTS STOP
+
+        # -- POSTPROCESSORS CUSTOMCHECKER START
+        cc = CustomChecker(module = '~/mychecker.py')
+        # -- POSTPROCESSORS CUSTOMCHECKER STOP
+
+        # -- POSTPROCESSORS NOTIFIER START
+        n = Notifier(address = 'myaddress.cern.ch')
+        # -- POSTPROCESSORS NOTIFIER STOP
+
+        # -- POSTPROCESSORS NOTIFIEROPTS START
+        n.verbose = True
+        # -- POSTPROCESSORS NOTIFIEROPTS STOP
+
+        # -- POSTPROCESSORS MULTIPLE START
+        tm = TextMerger(files=['stdout'],compress = True)
+        rm = RootMerger(files=['thesis_data.root'],args = -f6)
+        fc = FileChecker(files = ['stdout'],searchString['Segmentation'])
+        cc = CustomChecker(module = '~/mychecker.py')
+        n = Notifier(address = 'myadress.cern.ch')
+
+        j.postprocessors = [tm,rm,fc,cc,n]
+        # -- POSTPROCESSORS MULTIPLE STOP
+
+        # -- POSTPROCESSORS MULTIPLE2 START
+        j.postprocessors.append(fc)
+        j.postprocessors.append(tm)
+        j.postprocessors.append(rm)
+        j.postprocessors.append(cc)
+        j.postprocessors.append(n)
+        # -- POSTPROCESSORS MULTIPLE2 STOP
+
+        j.postprocessors.remove(FileChecker())
