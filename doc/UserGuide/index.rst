@@ -14,9 +14,9 @@ you encounter any problems!
     InputAndOutputData
     Splitters
     PostProcessors
+    MiscellaneousFunctionality
 
 
-9. Miscellaneous functionality
 10. Queues
 11. Tasks
 12. Pure Python Usage

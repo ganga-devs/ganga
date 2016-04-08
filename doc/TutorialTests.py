@@ -346,3 +346,52 @@ j.submit()
         # -- POSTPROCESSORS MULTIPLE2 STOP
 
         j.postprocessors.remove(FileChecker())
+
+    def test_i_MiscellaneousFunctionality(self):
+
+        # -- MISCFUNCTIONALITY TEMPLATE1 START
+        j = JobTemplate()
+        j.name = 'LsExeLocal'
+        j.application.exe = 'ls'
+        j.backend = Local()
+        # -- MISCFUNCTIONALITY TEMPLATE1 STOP
+
+        # -- MISCFUNCTIONALITY TEMPLATE2 START
+        templates
+        # -- MISCFUNCTIONALITY TEMPLATE2 STOP
+
+        # -- MISCFUNCTIONALITY TEMPLATE3 START
+        j = Job(templates[0], name = 'JobFromTemplate')
+        j.submit()
+        # -- MISCFUNCTIONALITY TEMPLATE3 STOP
+
+        # -- MISCFUNCTIONALITY JOBTREE START
+        # show the current job tree (empty to start with)
+        jobtree
+
+        # make some dirs and subdirs
+        jobtree.mkdir('test_old')
+        jobtree.mkdir('test')
+        jobtree.mkdir('prod')
+        jobtree.mkdir('/test/jan')
+        jobtree.mkdir('/prod/full')
+
+        # have a look at the tree
+        jobtree.printtree()
+
+        # remove a dir
+        jobtree.rm('test_old')
+
+        # create some jobs and add them
+        jobtree.cd('/test/jan')
+        jobtree.add( Job() )
+        jobtree.cd('/prod/full')
+        jobtree.add( Job() )
+        jobtree.add( Job() )
+
+        # look at the tree again
+        jobtree.printtree()
+
+        # submit the some jobs
+        jobtree.getjobs().submit()
+        # -- MISCFUNCTIONALITY JOBTREE STOP
