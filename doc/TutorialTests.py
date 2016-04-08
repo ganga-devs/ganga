@@ -330,7 +330,7 @@ j.submit()
         # -- POSTPROCESSORS MULTIPLE START
         tm = TextMerger(files=['stdout'],compress = True)
         rm = RootMerger(files=['thesis_data.root'],args = -f6)
-        fc = FileChecker(files = ['stdout'],searchString['Segmentation'])
+        fc = FileChecker(files = ['stdout'],searchString = ['Segmentation'])
         cc = CustomChecker(module = '~/mychecker.py')
         n = Notifier(address = 'myadress.cern.ch')
 
