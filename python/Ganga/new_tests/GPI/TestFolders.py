@@ -1,13 +1,15 @@
 
-from GangaTest.Framework.tests import GangaGPITestCase
-from Ganga.CLIP import *
+from __future__ import absolute_import
+
+from .GangaUnitTest import GangaUnitTest
 
 # FIXME: THE TREE SHOULD BE CLEANED IN-BETWEEN TESTS, THIS WILL BE ADDED SOON
 
 
-class TestFolders(GangaGPITestCase):
+class TestFolders(GangaUnitTest):
 
     def test_addremove(self):
+        from Ganga.GPI import jobtree, Job
         jobtree.cd()
 
         # make sure the job is really added
@@ -30,10 +32,11 @@ class TestFolders(GangaGPITestCase):
         jobtree.rm('/*')
 
     def test_clean(self):  # asaroka
+        from Ganga.GPI import jobtree, Job
         jobtree.cd()
         jobtree.mkdir('testdir')
         jobtree.add(Job())
-        print jobtree
+        print("%s" % jobtree)
         jobtree.add(Job(), 'testdir')
 
         jobtree.rm('/*')
@@ -41,6 +44,7 @@ class TestFolders(GangaGPITestCase):
         assert(jobtree.listdirs('/') == [])
 
     def test_directory(self):
+        from Ganga.GPI import jobtree, Job
         jobtree.cd()
         assert(jobtree.pwd() == '/')
 
@@ -69,6 +73,7 @@ class TestFolders(GangaGPITestCase):
         jobtree.rm('/*')
 
     def test_find(self):  # uegede
+        from Ganga.GPI import jobtree, Job
         jobtree.cd()
         jobtree.mkdir('a')
         jobtree.mkdir('b')
@@ -95,6 +100,7 @@ class TestFolders(GangaGPITestCase):
         jobtree.rm('/*')
 
     def test_find_job(self):  # asaroka
+        from Ganga.GPI import jobtree, Job
         jobtree.cd()
         jobtree.mkdir('a')
         jobtree.mkdir('b')
@@ -120,7 +126,7 @@ class TestFolders(GangaGPITestCase):
         jobtree.rm('/*')
 
     def test_faults(self):
-
+        from Ganga.GPI import jobtree, TreeError
         try:
             # add rubbish
             jobtree.add(1)
@@ -129,9 +135,12 @@ class TestFolders(GangaGPITestCase):
 
     # Add by AT ---
     def test_copyTree(self):
+        from Ganga.GPI import jobtree
         jobtree_copy = jobtree.copy()
         assert(jobtree_copy == jobtree)
-        assert(jobtree_copy is not jobtree)
-        del jobtree_copy
+        # rcurrie this has changed so that there is 1 jobtree for the Job repo
+        # and only 1 jobtree ever in memory, otherwise we end up getting confused
+        assert(jobtree_copy is jobtree)
+        #del jobtree_copy
     # -------------
 

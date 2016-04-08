@@ -5,12 +5,9 @@ from Ganga.Utility.logging import getLogger
 #from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
 #from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-from Ganga.GPI import queues
 logger = getLogger()
 #user_threadpool       = WorkerThreadPool()
 #monitoring_threadpool = WorkerThreadPool()
-#queues_threadpoolMonitor = ThreadPoolQueueMonitor(user_threadpool, monitoring_threadpool)
-#exportToGPI('queues', queues_threadpoolMonitor, 'Objects')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
@@ -51,7 +48,8 @@ def diracAPI_interactive(connection_attempts=5):
     import traceback
     from GangaDirac.Lib.Server.InspectionClient import runClient
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'InspectionServer.py')
-    queues.add(execute("execfile('%s')" % serverpath, timeout=None, shell=False))
+    from Ganga.Core.GangaThread.WorkerThreads import getQueues
+    getQueues().add(execute("execfile('%s')" % serverpath, timeout=None, shell=False))
 
     #time.sleep(1)
     sys.stdout.write( "\nType 'q' or 'Q' or 'exit' or 'exit()' to quit but NOT ctrl-D")
@@ -76,7 +74,8 @@ def diracAPI_async(cmd, timeout=120):
     '''
     Execute DIRAC API commands from w/in Ganga.
     '''
-    return queues.add(execute(cmd, timeout=timeout))
+    from Ganga.Core.GangaThread.WorkerThreads import getQueues
+    return getQueues().add(execute(cmd, timeout=timeout))
 
 exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
 

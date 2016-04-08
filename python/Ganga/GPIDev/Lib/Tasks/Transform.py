@@ -11,8 +11,8 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
-from Ganga import GPI
-
+from Ganga.Core.GangaRepository import getRegistryProxy
+from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob
 
 class Transform(GangaObject):
     _schema = Schema(Version(1, 0), {
@@ -59,8 +59,8 @@ class Transform(GangaObject):
         return 1
 
     def initialize(self):
-        from Ganga import GPI
-        self.backend = stripProxy(GPI.Local())
+        from Ganga.Lib.Localhost.Localhost import Localhost
+        self.backend = Localhost()
 
     def check(self):
         pass
@@ -76,7 +76,8 @@ class Transform(GangaObject):
         # Search jobs for task-supporting applications
         id = "%i:%i" % (
             self._getParent().id, self._getParent().transforms.index(self))
-        for j in GPI.jobs:
+        
+        for j in getRegistryProxy('jobs'):
             if "tasks_id" in stripProxy(j.application).getNodeData():
                 # print "tasks_id of jobid ", j.fqid,
                 # stripProxy(j.application).getNodeAttribute("tasks_id"), id
@@ -120,7 +121,7 @@ class Transform(GangaObject):
 
         id = "%i:%i" % (
             self._getParent().id, self._getParent().transforms.index(self))
-        for j in GPI.jobs:
+        for j in getRegistryProxy('jobs'):
             if "tasks_id" in stripProxy(j.application).getNodeData():
                 if stripProxy(j.application).getNodeAttribute("tasks_id") == id:
                     try:
@@ -208,7 +209,7 @@ class Transform(GangaObject):
             if partition is None or self._app_partition[j.application.id] == partition:
                 jobslice.objects[j.fqid] = stripProxy(j)
 
-        for j in GPI.jobs:
+        for j in getRegistryPRoxy('jobs'):
             try:
                 stid = j.application.tasks_id.split(":")
                 if int(stid[-2]) == task.id and int(stid[-1]) == id:
@@ -411,30 +412,29 @@ class Transform(GangaObject):
 
     def getNewAppID(self, partition):
         """ Returns a new application ID and associates this ID with the partition given. """
-        id = self._next_app_id
-        self._app_partition[id] = partition
+        _id = self._next_app_id
+        self._app_partition[_id] = partition
         if partition in self.getPartitionApps():
-            self.getPartitionApps()[partition].append(id)
+            self.getPartitionApps()[partition].append(_id)
         else:
-            self.getPartitionApps()[partition] = [id]
+            self.getPartitionApps()[partition] = [_id]
         self._next_app_id += 1
-        return id
+        return _id
 
     def createNewJob(self, partition):
         """ Returns a new job initialized with the transforms application, backend and name """
-        task = self._getParent(
-        )  # this works because createNewJob is only called by a task
-        id = task.transforms.index(self)
-        j = GPI.Job()
-        stripProxy(j).backend = self.backend.clone()
-        stripProxy(j).application = self.application.clone()
-        stripProxy(j).application.tasks_id = "%i:%i" % (task.id, id)
-        stripProxy(j).application.id = self.getNewAppID(partition)
+        task = self._getParent()  # this works because createNewJob is only called by a task
+        _id = task.transforms.index(self)
+        j = makeRegisteredJob()
+        j.backend = self.backend.clone()
+        j.application = self.application.clone()
+        j.application.tasks_id = "%i:%i" % (task.id, _id)
+        j.application.id = self.getNewAppID(partition)
         j.inputdata = self.inputdata
         j.outputdata = self.outputdata
         j.inputsandbox = self.inputsandbox
         j.outputsandbox = self.outputsandbox
-        j.name = "T%i:%i C%i" % (task.id, id, partition)
+        j.name = "T%i:%i C%i" % (task.id, _id, partition)
         return j
 
 # Methods that can/should be overridden by derived classes

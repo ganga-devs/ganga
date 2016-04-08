@@ -5,6 +5,7 @@ import os,os.path,shutil,tempfile
 import sys,time
 import glob
 import sys
+import mimetypes
 
 # FIXME: print as DEBUG: to __syslog__ file
 #print(sys.path)
@@ -55,7 +56,8 @@ os.chdir(workdir)
 # -- SINCE PYTHON 2.6 THERE WAS A SUBTLE CHANGE OF SEMANTICS IN THIS AREA
 
 for f in input_sandbox:
-    getPackedInputSandbox(f)
+    if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+        getPackedInputSandbox(f)
 
 # -- END OF MOVED CODE BLOCK
 

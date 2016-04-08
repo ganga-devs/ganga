@@ -10,7 +10,6 @@ import time
 import uuid
 
 import Ganga.Core.FileWorkspace
-import Ganga.GPIDev.Lib.File.FileUtils
 import Ganga.GPIDev.MonitoringServices
 from Ganga.Core import GangaException, IncompleteJobSubmissionError, JobManagerError, Sandbox
 from Ganga.Core.GangaRepository import getRegistry
@@ -341,12 +340,14 @@ class Job(GangaObject):
 
             # Apply needed transform to move Sandbox item to the
             if self.inputsandbox != []:
+                from Ganga.GPIDev.Lib.File.FileUtils import safeTransformFile
                 for i in self.inputsandbox:
-                    c.inputfiles.append(Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile(i))
+                    c.inputfiles.append(safeTransformFile(i))
             else:
                 if self.master and self.master.inputsandbox != []:
+                    from Ganga.GPIDev.Lib.File.FileUtils import safeTransformFile
                     for i in self.master.inputsandbox:
-                        c.inputfiles.append(Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile(i))
+                        c.inputfiles.append(safeTransformFile(i))
 
             c.inputsandbox = []
 
@@ -1012,14 +1013,6 @@ class Job(GangaObject):
     def getDebugWorkspace(self, create=True):
         return self.getWorkspace('DebugWorkspace', create=create)
 
-    #def __getstate__(self):
-        #this_dict = super(Job, self).__getstate__()
-        #if hasattr(this_dict, '_registry'):
-        #this_dict['_registry'] = None
-        #return this_dict
-#        # FIXME: dict['_data']['id'] = 0 # -> replaced by 'copyable' mechanism
-#        # in base class
-
     def peek(self, filename="", command=""):
         """
         Allow viewing of job output (and input) files
@@ -1307,10 +1300,10 @@ class Job(GangaObject):
 
                     finished = {}
 
-                    from Ganga.GPI import queues
+                    from Ganga.Core.GangaThread.WorkerThreads import getQueues
                     index=0
                     for sub_j, sub_conf in zip(subjobs, appsubconfig):
-                        queues._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, stripProxy(sub_j.application), sub_conf, appmasterconfig, jobmasterconfig, finished))
+                        getQueues()._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, stripProxy(sub_j.application), sub_conf, appmasterconfig, jobmasterconfig, finished))
                         index += 1
 
                     while len(finished) != len(subjobs):
@@ -1563,16 +1556,16 @@ class Job(GangaObject):
             # split into subjobs
             rjobs = self._doSplitting()
 
-
             #
             logger.debug("Now have %s subjobs" % str(len(self.subjobs)))
             logger.debug("Also have %s rjobs" % str(len(rjobs)))
 
             # Output Files
             # validate the output files
-            (validOutputFiles, errorMsg) = self.validateOutputfilesOnSubmit()
-            if not validOutputFiles:
-                raise JobError(errorMsg)
+            for this_job in rjobs:
+                (validOutputFiles, errorMsg) = this_job.validateOutputfilesOnSubmit()
+                if not validOutputFiles:
+                    raise JobError(errorMsg)
 
             # configure the application of each subjob
             appsubconfig = self._getAppSubConfig(rjobs)
@@ -2007,9 +2000,15 @@ class Job(GangaObject):
             logger.error(msg)
             raise JobError(msg)
 
-        (validOutputFiles, errorMsg) = self.validateOutputfilesOnSubmit()
-        if not validOutputFiles:
-            raise JobError(errorMsg)
+        if len(self.subjobs) != 0:
+            these_jobs = self.subjobs
+        else:
+            these_jobs = [self]
+
+        for this_job in these_jobs:
+            (validOutputFiles, errorMsg) = this_job.validateOutputfilesOnSubmit()
+            if not validOutputFiles:
+                raise JobError(errorMsg)
 
         if self.status in ['new']:
             msg = "cannot resubmit a new job %s, please use submit()" % (self.getFQID('.'))
