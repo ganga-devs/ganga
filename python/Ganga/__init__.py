@@ -2,7 +2,7 @@
 import os
 import re
 import inspect
-
+import getpass
 
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 
@@ -127,8 +127,7 @@ conf_config.addOption(
     'repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
 conf_config.addOption('workspacetype', 'LocalFilesystem',
                  'Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
-
-conf_config.addOption('user', '',
+conf_config.addOption('user', getpass.getuser(),
     'User name. The same person may have different roles (user names) and still use the same gangadir. Unless explicitly set this option defaults to the real user name.')
 conf_config.addOption('resubmitOnlyFailedSubjobs', True,
                  'If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs. Note that the auto_resubmit mechanism will only ever resubmit FAILED subjobs.')
