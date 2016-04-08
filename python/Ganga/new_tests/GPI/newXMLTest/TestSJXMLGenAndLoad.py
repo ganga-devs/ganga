@@ -109,10 +109,17 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
     def test_e_SubJobXMLExists(self):
         # Check other XML exit
         from Ganga.GPI import jobs
+        from Ganga.GPIDev.Base.Proxy import stripProxy
 
         assert len(jobs) == 1
 
         j=jobs(0)
+
+        for sj in j.subjobs:
+            this_bak = sj.backend
+            stripProxy(sj)._setDirty()
+        
+        stripProxy(stripProxy(j).subjobs).flush()
 
         assert path.isdir(getXMLDir(j))
 
