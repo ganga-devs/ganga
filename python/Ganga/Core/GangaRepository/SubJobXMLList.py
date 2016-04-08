@@ -448,8 +448,10 @@ class SubJobXMLList(GangaObject):
 
         for index in range(len(self)):
             if index in self._cachedJobs.keys():
+                ## If it ain't dirty skip it
                 if not self._cachedJobs[index]._dirty:
                     continue
+
                 subjob_data = self.__get_dataFile(str(index))
                 subjob_obj = self._cachedJobs[index]
 
@@ -462,6 +464,7 @@ class SubJobXMLList(GangaObject):
         return
 
     def _setFlushed(self):
+        """ Like Node only descend into objects which aren't in the Schema"""
         for index in self._cachedJobs.keys():
             self._cachedJobs[index]._setFlushed()
         super(SubJobXMLList, self)._setFlushed()

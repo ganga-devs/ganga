@@ -595,7 +595,8 @@ class GangaList(GangaObject):
         visitor.nodeEnd(self)
 
     def _setFlushed(self):
-        super(GangaList, self)._setFlushed()
+        """Set flushed like the Node but do the _list by hand to avoid problems"""
+        self._dirty = False
         from Ganga.GPIDev.Base.Objects import Node
         for elem in self._list:
             if isinstance(elem, Node):

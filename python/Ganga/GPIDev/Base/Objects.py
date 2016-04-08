@@ -957,12 +957,14 @@ class GangaObject(Node):
     # mark object as "dirty" and inform the registry about it
     # the registry is always associated with the root object
     def _setDirty(self):
+        """ Set the dirty flag all the way up to the parent"""
         self._dirty = True
         parent = self._getParent()
         if parent is not None:
             parent._setDirty()
 
     def _setFlushed(self):
+        """Un-Set the dirty flag all of the way down the schema."""
         if self._schema:
             for k in self._schema.allItemNames():
                 this_attr = getattr(self, k)
