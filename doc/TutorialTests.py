@@ -421,3 +421,96 @@ j.submit()
         j.parallel_submit = True
         j.submit()
         # -- QUEUES SPLIT STOP
+
+    def test_k_Tasks(self):
+
+        # -- TASKS EXAMPLE START
+        # First create the overall Task
+        t = CoreTask()
+
+        # Now create the Transform ( -> Job template)
+        trf = CoreTransform()
+        trf.application = Executable()
+        trf.backend = Local()
+
+        # Set the unit splitter (unique to CoreTransform - you may have better ways of creating units in your own
+        # plugins). This will create a unit based on the splitting of any given splitter
+        # If you put in your own splitter here, use the trf.fields_to_copy string list to tell Tasks which fields of
+        # a Job to preserve from the split. Here, Tasks already knows about GenericSplitter and knows that we want to
+        # change the 'application' object for each Unit/Master Job
+        trf.unit_splitter = GenericSplitter()
+        trf.unit_splitter.attribute = "application.args"
+        trf.unit_splitter.values = [ 'arg 1', 'arg 2', 'arg 3' ]
+
+        # Append the transform
+        t.appendTransform( trf )
+
+        # set the maximum number of active jobs to have running (allows for throttling)
+        t.float = 100
+
+        # run the Task
+        t.run()
+        # -- TASKS EXAMPLE STOP
+
+        # -- TASKS OVERVIEW START
+        tasks
+        tasks(0).overview()
+        # -- TASKS OVERVIEW STOP
+
+        # -- TASKS OPTIONS START
+        # note - done at the transform level rather than task level as different backends may not need it
+        trf.max_active_threads = 10  # optional - specifies the max number of submissions to queue up
+        trf.submit_with_threads = True
+        # -- TASKS OPTIONS STOP
+
+        # -- TASKS JOBCHAIN START
+        # Create a test script
+        open('my_script3.sh', 'w').write("""#!/bin/bash
+        echo $PATH
+        ls -ltr
+        more __GangaInputData.txt__
+        echo "MY TEST FILE" > output_file.txt
+        sleep 120
+        """)
+
+        # Create the parent task
+        t = CoreTask()
+
+        # Create the first transform
+        trf1 = CoreTransform()
+        trf1.application = Executable()
+        trf1.application.exe = File('my_script3.sh')
+        trf1.outputfiles = [ LocalFile("*.txt") ]
+        d = GangaDataset()
+        d.files = [ LocalFile("*.txt") ]
+        d.treat_as_inputfiles = True
+        trf1.addInputData( d )
+        trf1.files_per_unit = 1
+        trf1.submit_with_threads = True
+
+        trf1.splitter = GangaDatasetSplitter()
+        trf1.splitter.files_per_subjob = 2
+
+        trf1.backend = Local()
+        t.appendTransform( trf1 )
+
+        # Create the second transform
+        trf2 = CoreTransform()
+        trf2.application = Executable()
+        trf1.application.exe = File('my_script3.sh')
+        trf2.submit_with_threads = True
+
+        d = TaskChainInput()
+        d.input_trf_id = trf1.getID()
+        trf2.addInputData( d )
+
+        trf2.splitter = GangaDatasetSplitter()
+        trf2.splitter.files_per_subjob = 2
+
+        trf2.backend = Local()
+        t.appendTransform( trf2 )
+
+        # Set the Task running
+        t.float = 1
+        t.run()
+        # -- TASKS JOBCHAIN STOP

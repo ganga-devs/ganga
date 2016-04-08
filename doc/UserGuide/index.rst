@@ -16,8 +16,14 @@ you encounter any problems!
     PostProcessors
     MiscellaneousFunctionality
     Queues
+    Tasks
+    PurePythonUsage
+    GangaService
+    DevelopingNewApplication
 
-11. Tasks
-12. Pure Python Usage
-13. Ganga as a Service
-14. Developing a New Application
+
+Sections still to be added:
+
+* Pure Python Usage
+* Ganga as a Service
+* Developing a New Application
