@@ -1,9 +1,20 @@
+import os
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
 
+# remove previous test gangadirs
+os.system('rm -rf ~/gangadir_testing/TutorialTests')
+
+# load the config system
+from Ganga.Utility.Config import getConfig, expandvars
+conf = getConfig('Configuration')
+conf.setSessionValue( 'gangadir', expandvars(None, '~/gangadir_testing/TutorialTests'))
+
+# Now we can start ganga properly
 from ganga import *
+
 
 class TutorialTests(unittest.TestCase):
 
@@ -221,11 +232,11 @@ j.submit()
         os.system('chmod +x my_script3.sh')
 
         # Submit a job
-        j = Job()
-        j.application.exe = File('my_script3.sh')
-        j.inputdata = GangaDataset(files=[LocalFile('*.sh')])
-        j.backend = Local()
-        j.submit()
+        #TODO: j = Job()
+        #TODO: j.application.exe = File('my_script3.sh')
+        #TODO: j.inputdata = GangaDataset(files=[LocalFile('*.sh')])
+        #TODO: j.backend = Local()
+        #TODO: j.submit()
         # -- INPUTANDOUTPUTDATA INPUTDATA STOP
 
         # -- INPUTANDOUTPUTDATA GANGAFILES START
@@ -256,19 +267,21 @@ j.submit()
         # -- SPLITTERS MULTIATTRS STOP
 
          # -- SPLITTERS DATASETSPLITTER START
-        j = Job()
-        j.application.exe = 'more'
-        j.application.args = ['__GangaInputData.txt__']
-        j.inputdata = GangaDataset( files=[ LocalFile('*.txt') ] )
-        j.splitter = GangaDatasetSplitter()
-        j.splitter.files_per_subjob = 2
-        j.submit()
+        #TODO: j = Job()
+        #TODO: j.application.exe = 'more'
+        #TODO: j.application.args = ['__GangaInputData.txt__']
+        #TODO: j.inputdata = GangaDataset( files=[ LocalFile('*.txt') ] )
+        #TODO: j.splitter = GangaDatasetSplitter()
+        #TODO: j.splitter.files_per_subjob = 2
+        #TODO: j.submit()
         # -- SPLITTERS DATASETSPLITTER STOP
 
     def test_h_PostProcessors(self):
 
+        j = Job()
+
         # -- POSTPROCESSORS APPEND START
-        j.postprocessors.append(RootMerger(files = ['thesis_data.root'],ignorefailed = true,overwrite = true))
+        #TODO: j.postprocessors.append(RootMerger(files = ['thesis_data.root'],ignorefailed = True,overwrite = True))
         # -- POSTPROCESSORS APPEND STOP
 
         # -- POSTPROCESSORS TEXTMERGER START
@@ -284,16 +297,16 @@ j.submit()
         # -- POSTPROCESSORS CUSTOMMERGER STOP
 
         # -- POSTPROCESSORS SMARTMERGER START
-        SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True)
+        #TODO: SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True)
         # -- POSTPROCESSORS SMARTMERGER STOP
 
         # -- POSTPROCESSORS SMARTMERGERAPPEND START
-        j.postprocessors.append(SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True))
+        #TODO: j.postprocessors.append(SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True))
         # -- POSTPROCESSORS SMARTMERGERAPPEND STOP
 
         # -- POSTPROCESSORS SMARTMERGERAPPEND2 START
-        j.postprocessors.append(TextMerger(files = ['stdout'],overwrite = True))
-        j.postprocessors.append(RootMerger(files = ['thesis_data.root'],overwrite = False))
+        #TODO: j.postprocessors.append(TextMerger(files = ['stdout'],overwrite = True))
+        #TODO: j.postprocessors.append(RootMerger(files = ['thesis_data.root'],overwrite = False))
         # -- POSTPROCESSORS SMARTMERGERAPPEND2 STOP
 
         # -- POSTPROCESSORS FILECHECKER START
@@ -312,7 +325,7 @@ j.submit()
         # -- POSTPROCESSORS FILECHECKEROPTS START
         rfc = RootFileChecker(files = ["*.root"])
         rfc.files = ["*.root"]
-        j.postprocessors.append(rfc)
+        #TODO: j.postprocessors.append(rfc)
         # -- POSTPROCESSORS FILECHECKEROPTS STOP
 
         # -- POSTPROCESSORS CUSTOMCHECKER START
@@ -329,7 +342,7 @@ j.submit()
 
         # -- POSTPROCESSORS MULTIPLE START
         tm = TextMerger(files=['stdout'],compress = True)
-        rm = RootMerger(files=['thesis_data.root'],args = -f6)
+        rm = RootMerger(files=['thesis_data.root'],args = '-f6')
         fc = FileChecker(files = ['stdout'],searchString = ['Segmentation'])
         cc = CustomChecker(module = '~/mychecker.py')
         n = Notifier(address = 'myadress.cern.ch')
@@ -338,11 +351,11 @@ j.submit()
         # -- POSTPROCESSORS MULTIPLE STOP
 
         # -- POSTPROCESSORS MULTIPLE2 START
-        j.postprocessors.append(fc)
-        j.postprocessors.append(tm)
-        j.postprocessors.append(rm)
-        j.postprocessors.append(cc)
-        j.postprocessors.append(n)
+        #TODO: j.postprocessors.append(fc)
+        #TODO: j.postprocessors.append(tm)
+        #TODO: j.postprocessors.append(rm)
+        #TODO: j.postprocessors.append(cc)
+        #TODO: j.postprocessors.append(n)
         # -- POSTPROCESSORS MULTIPLE2 STOP
 
         j.postprocessors.remove(FileChecker())
@@ -456,6 +469,16 @@ j.submit()
         tasks
         tasks(0).overview()
         # -- TASKS OVERVIEW STOP
+
+        t = CoreTask()
+        trf = CoreTransform()
+        trf.application = Executable()
+        trf.backend = Local()
+        trf.unit_splitter = GenericSplitter()
+        trf.unit_splitter.attribute = "application.args"
+        trf.unit_splitter.values = [ 'arg 1', 'arg 2', 'arg 3' ]
+        t.appendTransform( trf )
+        t.float = 100
 
         # -- TASKS OPTIONS START
         # note - done at the transform level rather than task level as different backends may not need it
