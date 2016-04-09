@@ -25,9 +25,9 @@ class TestCoreTasks(GangaUnitTest):
         trf.application = Executable()
         trf.unit_splitter = GenericSplitter()
         trf.unit_splitter.attribute = "application.args"
-        trf.unit_splitter.values = [ 'arg 1', 'arg 2', 'arg 3' ]
+        trf.unit_splitter.values = ['arg 1', 'arg 2', 'arg 3']
 
-        t.appendTransform( trf )
+        t.appendTransform(trf)
         t.float = 20
 
         # Test Task has been setup correctly
@@ -38,7 +38,7 @@ class TestCoreTasks(GangaUnitTest):
         assert isType(t.transforms[0].application, Executable)
         assert isType(t.transforms[0].unit_splitter, GenericSplitter)
         assert t.transforms[0].unit_splitter.attribute == "application.args"
-        assert t.transforms[0].unit_splitter.values == [ 'arg 1', 'arg 2', 'arg 3' ]
+        assert t.transforms[0].unit_splitter.values == ['arg 1', 'arg 2', 'arg 3']
         assert t.float == 20
 
     def test_b_TaskPersistency(self):
@@ -58,7 +58,7 @@ class TestCoreTasks(GangaUnitTest):
         assert isType(t.transforms[0].application, Executable)
         assert isType(t.transforms[0].unit_splitter, GenericSplitter)
         assert t.transforms[0].unit_splitter.attribute == "application.args"
-        assert t.transforms[0].unit_splitter.values == [ 'arg 1', 'arg 2', 'arg 3' ]
+        assert t.transforms[0].unit_splitter.values == ['arg 1', 'arg 2', 'arg 3']
         assert t.float == 20
 
     def test_c_TaskRunning(self):
@@ -85,8 +85,3 @@ class TestCoreTasks(GangaUnitTest):
         assert t.status == "running"
         assert t.transforms[0].status == "running"
 
-    def test_e_TaskJobsCreated(self):
-        """Check that Tasks has created jobs"""
-        from Ganga.GPI import jobs
-
-        assert len(jobs) > 0
