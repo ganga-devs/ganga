@@ -40,9 +40,6 @@ class RegistrySlice(object):
         self._colour_normal = Effects().normal
         self._proxyClass = None
 
-    def _getObjKeys(self):
-        return deepcopy(self.objects.keys())
-
     def _getColour(self, obj):
         """ Override this function in derived slices to colorize your job/task/... list"""
         return self._colour_normal
@@ -54,7 +51,7 @@ class RegistrySlice(object):
             raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
                 self.name, keep_going, method))
         result = []
-        id_list = self._getObjKeys()
+        id_list = self.objects.keys()
         for _id in id_list:
             obj = self.objects[_id]
             try:
@@ -82,7 +79,8 @@ class RegistrySlice(object):
             maxid = sys.maxsize
         if minid is None:
             minid = 0
-        return [k for k in self._getObjKeys() if minid <= k <= maxid]
+        allObjK = self.objects.keys()
+        return [k for k in allObjK if minid <= k <= maxid]
 
     def clean(self, confirm=False, force=False):
         """Cleans the repository only if this slice represents the repository
@@ -202,7 +200,7 @@ class RegistrySlice(object):
                 maxid = sys.maxsize
             select = select_by_range
 
-        id_list = self._getObjKeys()
+        id_list = self.objects.keys()
 
         for this_id in id_list:
             obj = self.objects[this_id]
@@ -284,7 +282,7 @@ class RegistrySlice(object):
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
-        id_list = self._getObjKeys()
+        id_list = self.objects.keys()
         for _id in id_list:
             obj = self.objects[_id]
             #obj = _unwrap(obj)
@@ -303,7 +301,8 @@ class RegistrySlice(object):
         return this_slice
 
     def __contains__(self, j):
-        return j.id in self._getObjKeys()
+        allObjK = self.objects.keys()
+        return j.id in allObjK
 
     def __call__(self, this_id):
         """ Retrieve an object by id.
@@ -362,7 +361,8 @@ class RegistrySlice(object):
 
         if isinstance(x, str):
             ids = []
-            for i in self._getObjKeys():
+            allObjK = self.objects.keys()
+            for i in allObjK:
                 j = self.objects[i]
                 if j.name == x:
                     ids.append(j.id)
@@ -448,7 +448,8 @@ class RegistrySlice(object):
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
 
-        for obj_i in self._getObjKeys():
+        allObjK = self.objects.keys()
+        for obj_i in allObjK:
 
             cached_data = None
 
