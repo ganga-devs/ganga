@@ -11,7 +11,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
 from OutputData import OutputData
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory, getName
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, addProxy, getName
 from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
@@ -62,34 +62,34 @@ class LHCbDataset(GangaDataset):
         super(LHCbDataset, self).__init__()
         if files is None:
             files = []
-        new_files = GangaList()
+        self.files = GangaList()
         if isType(files, LHCbDataset):
             for this_file in files:
-                new_files.append(deepcopy(this_file))
+                self.files.append(deepcopy(this_file))
         elif isType(files, IGangaFile):
-            new_files.append(deepcopy(this_file))
+            self.files.append(deepcopy(this_file))
         elif isType(files, (list, tuple, GangaList)):
             new_list = []
             for this_file in files:
                 if type(this_file) is str:
                     new_file = string_datafile_shortcut_lhcb(this_file, None)
                 elif isType(this_file, IGangaFile):
-                    new_file = this_file
+                    new_file = stripProxy(this_file)
                 else:
                     new_file = strToDataFile(this_file)
-                new_list.append(stripProxy(new_file))
-            stripProxy(new_files)._list = new_list
+                new_list.append(new_file)
+            self.files.extend(new_list)
         elif type(files) is str:
-            new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+            self.files.append(string_datafile_shortcut_lhcb(this_file, None), False)
         else:
             raise GangaException("Unknown object passed to LHCbDataset constructor!")
-        new_files._setParent(self)
+
+        self.files._setParent(self)
 
         logger.debug("Processed inputs, assigning files")
 
         # Feel free to turn this on again for debugging but it's potentially quite expensive
-        #logger.debug( "Creating dataset with:\n%s" % files )
-        self.files = new_files
+        #logger.debug( "Creating dataset with:\n%s" % self.files )
         
         logger.debug("Assigned files")
 
@@ -139,7 +139,7 @@ class LHCbDataset(GangaDataset):
         #this_file = self.files[i]
         # print type(this_file)
         # return this_file
-        # return GPIProxyObjectFactory(this_file)
+        # return addProxy(this_file)
         # return this_file
         if type(i) == type(slice(0)):
             ds = LHCbDataset(files=self.files[i])
@@ -423,7 +423,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
     def isSubset(self, other):
         '''Is every file in this data set in other?'''
@@ -443,7 +443,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
@@ -452,7 +452,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
@@ -461,7 +461,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '
