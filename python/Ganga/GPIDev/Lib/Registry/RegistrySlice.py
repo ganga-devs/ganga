@@ -5,6 +5,7 @@ from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexE
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 import fnmatch
 import collections
+from copy import deepcopy
 
 from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
@@ -39,6 +40,9 @@ class RegistrySlice(object):
         self._colour_normal = Effects().normal
         self._proxyClass = None
 
+    def _getObjKeys(self):
+        return deepcopy(self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))])
+
     def _getColour(self, obj):
         """ Override this function in derived slices to colorize your job/task/... list"""
         return self._colour_normal
@@ -50,7 +54,7 @@ class RegistrySlice(object):
             raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
                 self.name, keep_going, method))
         result = []
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
+        id_list = self._getObjKeys()
         for _id in id_list:
             obj = self.objects[_id]
             try:
@@ -78,12 +82,7 @@ class RegistrySlice(object):
             maxid = sys.maxsize
         if minid is None:
             minid = 0
-        return [k for k in self.objects.keys() if minid <= k <= maxid]
-        #ids = []
-        # def callback(j):
-        #    ids.append(j.id)
-        # self.do_select(callback,minid,maxid)
-        # return ids
+        return [k for k in self._getObjKeys() if minid <= k <= maxid]
 
     def clean(self, confirm=False, force=False):
         """Cleans the repository only if this slice represents the repository
@@ -203,7 +202,7 @@ class RegistrySlice(object):
                 maxid = sys.maxsize
             select = select_by_range
 
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
+        id_list = self._getObjKeys()
 
         for this_id in id_list:
             obj = self.objects[this_id]
@@ -285,7 +284,7 @@ class RegistrySlice(object):
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
+        id_list = self._getObjKeys()
         for _id in id_list:
             obj = self.objects[_id]
             #obj = _unwrap(obj)
@@ -304,7 +303,7 @@ class RegistrySlice(object):
         return this_slice
 
     def __contains__(self, j):
-        return j.id in self.objects.keys()
+        return j.id in self._getObjKeys()
 
     def __call__(self, this_id):
         """ Retrieve an object by id.
@@ -363,7 +362,7 @@ class RegistrySlice(object):
 
         if isinstance(x, str):
             ids = []
-            for i in self.objects.keys():
+            for i in self._getObjKeys():
                 j = self.objects[i]
                 if j.name == x:
                     ids.append(j.id)
@@ -449,7 +448,7 @@ class RegistrySlice(object):
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
 
-        for obj_i in self.objects.keys():
+        for obj_i in self._getObjKeys():
 
             cached_data = None
 
