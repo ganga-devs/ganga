@@ -1,14 +1,18 @@
-from __future__ import absolute_import
 from __future__ import print_function
-from .common import config, logger
 import time
 import traceback
 import sys
 import Ganga.GPIDev.Lib.Registry.RegistrySlice
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError, RegistryFlusher
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName, isType
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours, status_colours, fgcol
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
+from Ganga.Utility.Config import getConfig
+config = getConfig('Tasks')
 
 markup = ANSIMarkup()
 str_run = markup("run", overview_colours["running"])
@@ -16,11 +20,12 @@ str_fail = markup("fail", overview_colours["failed"])
 str_hold = markup("hold", overview_colours["hold"])
 str_bad = markup("bad", overview_colours["bad"])
 
+
 class TaskRegistry(Registry):
 
     def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30):
 
-        super(TaskRegistry, self).__init__( name, doc, dirty_flush_counter=10, update_index_time=30 )
+        super(TaskRegistry, self).__init__( name, doc, dirty_flush_counter=dirty_flush_counter, update_index_time=update_index_time )
 
         self._main_thread = None
 
@@ -49,15 +54,6 @@ class TaskRegistry(Registry):
 
     def _thread_main(self):
         """ This is an internal function; the main loop of the background thread """
-        # Add runtime handlers for all the taskified applications, since now
-        # all the backends are loaded
-        from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-        from .TaskApplication import handler_map
-        for basename, name in handler_map:
-            for backend in allHandlers.getAllBackends(basename):
-                allHandlers.add(
-                    name, backend, allHandlers.get(basename, backend))
-
         from Ganga.Core.GangaRepository import getRegistry
         while getRegistry("jobs").hasStarted() is not True:
             time.sleep(0.1)
@@ -90,27 +86,15 @@ class TaskRegistry(Registry):
         # Main loop
         while self._main_thread is not None and not self._main_thread.should_stop():
 
-            # For each task try to run it
+            # If monitoring is enabled (or forced for Tasks) loop over each one and update
             if config['ForceTaskMonitoring'] or monitoring_component.enabled:
                 for tid in self.ids():
 
                     logger.debug("Running over tid: %s" % str(tid))
 
                     try:
-                        from Ganga.GPIDev.Lib.Tasks import ITask
-                        if isType(self[tid], ITask):
-                            # for new ITasks, always need write access
-                            self[tid]._getWriteAccess()
-                            p = self[tid]
-                        else:
-                            if self[tid].status in ["running", "running/pause"]:
-                                self[tid]._getWriteAccess()
-                                p = self[tid]
-                            elif self[tid].status is 'completed' and (self[tid].n_status('ready') or self[tid].n_status('running')):
-                                self[tid].updateStatus()
-                                continue
-                            else:
-                                continue
+                        self[tid]._getWriteAccess()
+                        p = self[tid]
                     except RegistryError:
                         # could not acquire lock
                         continue
@@ -119,28 +103,7 @@ class TaskRegistry(Registry):
                         break
 
                     try:
-                        from Ganga.GPIDev.Lib.Tasks import ITask
-                        if isType(self[tid], ITask):
-                            # for new ITasks, always call update()
-                            p.update()
-                        else:
-                            # TODO: Make this user-configurable and add better
-                            # error message
-                            if (p.n_status("failed") * 100.0 / (20 + p.n_status("completed")) > 20):
-                                p.pause()
-                                logger.error("Task %s paused - %i jobs have failed while only %i jobs have completed successfully." % (
-                                    p.name, p.n_status("failed"), p.n_status("completed")))
-                                logger.error(
-                                    "Please investigate the cause of the failing jobs and then remove the previously failed jobs using job.remove()")
-                                logger.error(
-                                    "You can then continue to run this task with tasks(%i).run()" % p.id)
-                                continue
-                            numjobs = p.submitJobs()
-                            if numjobs > 0:
-                                self._flush([p])
-                            # finalise any required transforms
-                            p.finaliseTransforms()
-                            p.updateStatus()
+                        p.update()
 
                     except Exception as x:
                         logger.error(
@@ -170,7 +133,12 @@ class TaskRegistry(Registry):
         self._main_thread = GangaThread(name="GangaTasks", target=self._thread_main)
         self._main_thread.start()
 
+        # create a registry flusher
+        self.flush_thread = RegistryFlusher(self)
+        self.flush_thread.start()
+
     def shutdown(self):
+        self.flush_thread.join()
         super(TaskRegistry, self).shutdown()
 
     def stop(self):

@@ -115,6 +115,9 @@ class Schema(object):
         from Ganga.GPIDev.Base.Objects import _getName
         return _getName(self._pluginclass)
 
+    def allItemNames(self):
+        return self.datadict.keys()
+
     def allItems(self):
         if self.datadict is None: return zip()
         return zip(self.datadict.keys(), self.datadict.values())
