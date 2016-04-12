@@ -41,7 +41,7 @@ class RegistrySlice(object):
         self._proxyClass = None
 
     def _getObjKeys(self):
-        return deepcopy(self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))])
+        return deepcopy(self.objects.keys())
 
     def _getColour(self, obj):
         """ Override this function in derived slices to colorize your job/task/... list"""
