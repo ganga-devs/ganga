@@ -531,6 +531,7 @@ class GangaList(GangaObject):
         return result
 
     def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=sys.stdout, selection='', interactive=False):
+        #logger.debug("self._list: %s" % self._list)
         parent = self._getParent()
         schema_entry = self.findSchemaParentSchemaEntry(parent)
 
@@ -556,6 +557,8 @@ class GangaList(GangaObject):
                 summary_print(self, out)
                 return
 
+        #logger.debug("self._list: %s" % self._list)
+
         out.write(str(self._list))
         return
 
@@ -563,7 +566,7 @@ class GangaList(GangaObject):
         """Returns a simple str of the _list."""
         returnable_str = "["
         def stringFunc(element, returnable_str):
-            if isType( element, GangaObject):
+            if isType(element, GangaObject):
                 returnable_str += repr(stripProxy(element))
             else:
                 returnable_str += "'"
@@ -614,9 +617,11 @@ class GangaList(GangaObject):
         """Set flushed like the Node but do the _list by hand to avoid problems"""
         self._dirty = False
         from Ganga.GPIDev.Base.Objects import Node
-        for elem in self._list:
+        def flushFunc(elem):
             if isinstance(elem, Node):
                 elem._setFlushed()
+        map(flushFunc, self._list)
+        super(GangaList, self)._setFlushed()
 
 # export to GPI moved to the Runtime bootstrap
 

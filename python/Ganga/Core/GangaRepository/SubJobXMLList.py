@@ -466,7 +466,8 @@ class SubJobXMLList(GangaObject):
 
     def _setFlushed(self):
         """ Like Node only descend into objects which aren't in the Schema"""
-        for index in self._cachedJobs.keys():
-            self._cachedJobs[index]._setFlushed()
+        def flushFunc(elem):
+            elem._setFlushed()
+        map(flushFunc, self._cachedJobs.items())
         super(SubJobXMLList, self)._setFlushed()
 

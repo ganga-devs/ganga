@@ -10,6 +10,10 @@ from inspect import isclass
 
 from functools import partial
 
+from Ganga.Utility.logging import getLogger
+
+logger = getLogger()
+
 def quoteValue(value, interactive=False):
     """A quoting function. Used to get consistent formatting"""
     if isType(value, str):
@@ -266,34 +270,35 @@ def full_print(obj, out=None, interactive=False):
     if out == None:
         out = sys.stdout
 
-    from Ganga.GPIDev.Lib.GangaList import GangaList
+    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
-    obj = stripProxy(obj)
+    _obj = stripProxy(obj)
 
-    if isType(obj, GangaList.GangaList):
-        obj_len = len(obj)
+
+    if isType(_obj, GangaList):
+        obj_len = len(_obj)
         if obj_len == 0:
             print('[]', end=' ', file=out)
         else:
             import cStringIO
             from Ganga.GPIDev.Base.Objects import GangaObject
             outString = '['
-            count = 0
-            def print_x(x, outString, count):
+            outStringList = []
+            def print_x(x, outStringList, obj_len):
                 if isType(x, GangaObject):
                     sio = cStringIO.StringIO()
                     x.printTree(sio, interactive)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
-                    outString += result.rstrip()
+                    outStringList.append(result.rstrip())
                 else:
                     result = str(x)
                     # remove trailing whitespace and newlines
-                    outString += result.rstrip()
-                count += 1
-                if count != obj_len:
-                    outString += ', '
-            map(partial(print_x, outString=outString, count=count), obj)
+                    outStringList.append(result.rstrip())
+                if (len(outStringList)+1) != 2*obj_len:
+                    outStringList.append(', ')
+            map(partial(print_x, outStringList=outStringList, obj_len=obj_len), _obj)
+            outString += ''.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)
         return
@@ -304,7 +309,7 @@ def full_print(obj, out=None, interactive=False):
         runProxyMethod(obj, 'printTree', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)
     else:
-        print(str(obj), end=' ', file=out)
+        print(str(_obj), end=' ', file=out)
 
 
 def summary_print(obj, out=None, interactive=False):
