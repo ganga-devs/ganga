@@ -203,9 +203,11 @@ class VSummaryPrinter(VPrinter):
     def _CallPrintSummaryTree(self, obj):
         import cStringIO
         sio = cStringIO.StringIO()
+        #logger.debug("_CallPrintSummaryTree")
         if not hasattr(stripProxy(obj), 'printSummaryTree'):
             print("%s" % str(obj), file=self.out)
         else:
+            #logger.debug("calling printSummaryTree")
             runProxyMethod(obj, 'printSummaryTree', self.level, self.verbosity_level, self.indent(), sio, self.selection, self._interactive)
         result = sio.getvalue()
         if result.endswith('\n'):
@@ -327,22 +329,22 @@ def summary_print(obj, out=None, interactive=False):
             import cStringIO
             from Ganga.GPIDev.Base.Objects import GangaObject
             outString = '['
-            count = 0
-            def print_x(x, outString, count):
+            def print_x(x, outStringList, obj_len):
                 if isType(x, GangaObject):
                     sio = cStringIO.StringIO()
+                    #logger.debug("summary_print: printSummaryTree")
                     x.printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
-                    outString += result.rstrip()
+                    outStringList.append(result.rstrip())
                 else:
                     result = str(x)
                     # remove trailing whitespace and newlines
-                    outString += result.rstrip()
-                count += 1
-                if count != obj_len:
-                    outString += ', '
-            map(partial(print_x, outString=outString, count=count), obj)
+                    outStringList.append(result.rstrip())
+                if len(outStringList)+1 != 2*obj_len:
+                    outStringList.append(', ')
+            map(partial(print_x, outStringList=outStringList, obj_len=obj_len), obj)
+            outString += ''.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)
         return
@@ -350,6 +352,7 @@ def summary_print(obj, out=None, interactive=False):
     if isProxy(obj):
         import cStringIO
         sio = cStringIO.StringIO()
+        #logger.debug("#2 printSummaryTree")
         runProxyMethod(obj, 'printSummaryTree', 0, 0, '', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)
     else:

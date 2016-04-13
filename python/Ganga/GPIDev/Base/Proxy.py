@@ -865,6 +865,7 @@ def GPIProxyClassFactory(name, pluginclass):
     def _str(self, interactive=False):
         import cStringIO
         sio = cStringIO.StringIO()
+        #logger.debug("Proxy str: printSummaryTree")
         stripProxy(self).printSummaryTree(0, 0, '', out=sio, interactive=interactive)
         returnable = str(sio.getvalue()).rstrip()
         return returnable
