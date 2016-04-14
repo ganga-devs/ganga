@@ -688,8 +688,6 @@ class Registry(object):
         for obj in objs:
             # check if the object is dirty, if not do nothing
             this_id = self.find(obj)
-            if not obj._dirty or this_id not in self._loaded_ids:
-                continue
 
             if hasattr(obj, _reg_id_str):
                 obj_id = getattr(obj, _reg_id_str)
