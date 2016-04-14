@@ -329,6 +329,7 @@ def summary_print(obj, out=None, interactive=False):
             import cStringIO
             from Ganga.GPIDev.Base.Objects import GangaObject
             outString = '['
+            outStringList = []
             def print_x(x, outStringList, obj_len):
                 if isType(x, GangaObject):
                     sio = cStringIO.StringIO()
