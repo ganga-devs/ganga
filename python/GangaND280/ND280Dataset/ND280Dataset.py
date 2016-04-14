@@ -181,7 +181,7 @@ class ND280LocalDataset(ND280Dataset):
 
        self.names.extend( new_names )
 
-       self._setDirty(1)
+       self._setDirty()
 
 
 class ND280DCacheDataset(ND280Dataset):
@@ -237,4 +237,4 @@ class ND280DCacheDataset(ND280Dataset):
 
       self.names.extend( new_names )
 
-      self._setDirty(1)
+      self._setDirty()
