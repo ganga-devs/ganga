@@ -5,7 +5,6 @@ from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexE
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 import fnmatch
 import collections
-from copy import deepcopy
 
 from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
@@ -51,8 +50,7 @@ class RegistrySlice(object):
             raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
                 self.name, keep_going, method))
         result = []
-        id_list = self.objects.keys()
-        for _id in id_list:
+        for _id in self.objects.keys():
             obj = self.objects[_id]
             try:
                 if isinstance(method, str):
@@ -79,8 +77,7 @@ class RegistrySlice(object):
             maxid = sys.maxsize
         if minid is None:
             minid = 0
-        allObjK = self.objects.keys()
-        return [k for k in allObjK if minid <= k <= maxid]
+        return [k for k in self.objects.keys() if minid <= k <= maxid]
 
     def clean(self, confirm=False, force=False):
         """Cleans the repository only if this slice represents the repository
@@ -200,9 +197,7 @@ class RegistrySlice(object):
                 maxid = sys.maxsize
             select = select_by_range
 
-        id_list = self.objects.keys()
-
-        for this_id in id_list:
+        for this_id in self.objects.keys():
             obj = self.objects[this_id]
             logger.debug("id, obj: %s, %s" % (str(this_id), str(obj)))
             if select(int(this_id)):
@@ -282,8 +277,7 @@ class RegistrySlice(object):
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
-        id_list = self.objects.keys()
-        for _id in id_list:
+        for _id in self.objects.keys():
             obj = self.objects[_id]
             #obj = _unwrap(obj)
             copy = obj.clone()
@@ -301,8 +295,7 @@ class RegistrySlice(object):
         return this_slice
 
     def __contains__(self, j):
-        allObjK = self.objects.keys()
-        return j.id in allObjK
+        return j.id in self.objects.keys()
 
     def __call__(self, this_id):
         """ Retrieve an object by id.
@@ -361,8 +354,7 @@ class RegistrySlice(object):
 
         if isinstance(x, str):
             ids = []
-            allObjK = self.objects.keys()
-            for i in allObjK:
+            for i in self.objects.keys():
                 j = self.objects[i]
                 if j.name == x:
                     ids.append(j.id)
@@ -448,8 +440,7 @@ class RegistrySlice(object):
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
 
-        allObjK = self.objects.keys()
-        for obj_i in allObjK:
+        for obj_i in self.objects.keys():
 
             cached_data = None
 
