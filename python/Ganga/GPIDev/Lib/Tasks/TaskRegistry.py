@@ -72,10 +72,7 @@ class TaskRegistry(Registry):
         # and must go away soon
         for tid in self.ids():
             try:
-                self[tid]._getWriteAccess()
                 self[tid].startup()
-            except RegistryError:
-                continue
             except Exception as err:
                 logger.error("Unknown/Unexpected Error in starting up tasks main loop")
                 logger.error("Exiting: err=%s" % str(err))
