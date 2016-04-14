@@ -252,7 +252,7 @@ class Registry(object):
         self._dirty_max_timeout = dirty_max_timeout
         self._dirty_min_timeout = dirty_min_timeout
 
-
+        ## Id's id(obj) of objects undergoing a transaction such as flush, remove, add, etc.
         self._inprogressDict = {}
 
 
@@ -733,7 +733,7 @@ class Registry(object):
     def _updateIndexCache(self, _obj):
         logger.debug("_updateIndexCache")
         obj = stripProxy(_obj)
-        if self.find(obj) in self._inprogressDict.keys():
+        if id(obj) in self._inprogressDict.keys():
             return
 
         self.repository.updateIndexCache(obj)
@@ -784,7 +784,7 @@ class Registry(object):
     def __safe_read_access(self,  _obj, sub_obj):
         logger.debug("_safe_read_access")
         obj = stripProxy(_obj)
-        if self.find(obj) in self._inprogressDict.keys():
+        if id(obj) in self._inprogressDict.keys():
             return
 
         if self.hasStarted() is not True:
@@ -834,10 +834,10 @@ class Registry(object):
     def __write_access(self, _obj):
         logger.debug("__write_acess")
         obj = stripProxy(_obj)
-        this_id = self.find(obj)
+        this_id = id(obj)
         if this_id in self._inprogressDict.keys():
             for this_d in self.changed_ids.itervalues():
-                this_d.add(this_id)
+                this_d.add(self.find(obj))
             return
 
         if self.hasStarted() is not True:
@@ -902,7 +902,7 @@ class Registry(object):
         logger.debug("_release_lock")
         obj = stripProxy(_obj)
 
-        if self.find(obj) in self._inprogressDict.keys():
+        if id(obj) in self._inprogressDict.keys():
             return
 
         if self.hasStarted() is not True:
