@@ -53,7 +53,6 @@ class TestCoreTasks(GangaUnitTest):
     def test_b_TaskPersistency(self):
         """Check the task is persisted properly"""
         from Ganga.GPIDev.Base.Proxy import isType
-        from Ganga.GPI import tasks
         from Ganga.GPI import tasks, CoreTask, CoreTransform, Executable, GenericSplitter
 
         assert len(tasks) == 1
@@ -102,7 +101,7 @@ class TestCoreTasks(GangaUnitTest):
         for _ in range(0, self._numTasks):
             t = self.createTask()
             t.run()
-            
+
         assert len(tasks) == self._numTasks + 1
 
     def test_f_CheckAccessToManyTasks(self):
