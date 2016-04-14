@@ -109,6 +109,8 @@ class TestCoreTasks(GangaUnitTest):
         from Ganga.GPI import tasks, CoreTask, CoreTransform, Executable, GenericSplitter
         from Ganga.GPIDev.Base.Proxy import isType
 
+        # loop over all the tasks lots of times to test contention with the monitoring
+        # Use _numTasks so it scales with the number of Tasks
         for _ in range(0, self._numTasks):
             for t in tasks:
                 assert len(tasks) == self._numTasks + 1
