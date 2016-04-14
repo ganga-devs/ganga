@@ -236,7 +236,6 @@ class RegistrySlice(object):
                                 'undefined select attribute: %s' % str(a))
                     else:
 
-                        logger.debug("Testing: %s MOO!" % a)
                         if a == 'ids':
                             if int(this_id) not in attrs['ids']:
                                 selected = False
@@ -244,10 +243,7 @@ class RegistrySlice(object):
                         else:
                             try:
                                 item = obj._schema.getItem(a)
-                                logger.debug("obj: %s" % str(obj))
-                                logger.debug("Here: %s, item: %s" % (a, str(item)))
-                                logger.debug("%s = %s" % (str(a), str(attrs[a])))
-                                logger.debug("attrs[a] == item %s" % (attrs[a] == item))
+                                logger.debug("Here: %s, is item: %s" % (a, type(item)))
                             except KeyError as err:
                                 from Ganga.GPIDev.Base import GangaAttributeError
                                 logger.debug("KeyError getting item: '%s' from schema" % str(a))
