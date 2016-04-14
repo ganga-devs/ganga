@@ -689,6 +689,7 @@ class Registry(object):
             # check if the object is dirty, if not do nothing
             if not obj._dirty:
                 continue
+
             if hasattr(obj, _reg_id_str):
                 obj_id = getattr(obj, _reg_id_str)
                 if obj_id not in self._loaded_ids:
