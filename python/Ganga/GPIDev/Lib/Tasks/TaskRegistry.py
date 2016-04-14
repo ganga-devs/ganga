@@ -93,16 +93,7 @@ class TaskRegistry(Registry):
                     logger.debug("Running over tid: %s" % str(tid))
 
                     try:
-                        self[tid]._getWriteAccess()
                         p = self[tid]
-                    except RegistryError:
-                        # could not acquire lock
-                        continue
-
-                    if self._main_thread.should_stop():
-                        break
-
-                    try:
                         p.update()
 
                     except Exception as x:
@@ -115,6 +106,7 @@ class TaskRegistry(Registry):
 
                     if self._main_thread.should_stop():
                         break
+
                 if self._main_thread.should_stop():
                     break
 
