@@ -252,7 +252,7 @@ class Registry(object):
         self._dirty_max_timeout = dirty_max_timeout
         self._dirty_min_timeout = dirty_min_timeout
 
-
+        ## Id's id(obj) of objects undergoing a transaction such as flush, remove, add, etc.
         self._inprogressDict = {}
 
 
