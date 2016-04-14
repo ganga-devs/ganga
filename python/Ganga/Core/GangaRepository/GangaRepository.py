@@ -26,7 +26,7 @@ logger = getLogger()
 class SchemaVersionError(GangaException):
 
     def __init__(self, what=''):
-        GangaException.__init__(self, what)
+        super(SchemaVersionError, self).__init__(what)
         self.what = what
 
     def __str__(self):
@@ -36,7 +36,7 @@ class SchemaVersionError(GangaException):
 class InaccessibleObjectError(GangaException):
 
     def __init__(self, repo=None, id='', orig=None):
-        GangaException.__init__(self, "Inaccessible Object")
+        super(InaccessibleObjectError, self).__init__("Inaccessible Object: %s" % id)
         self.repo = repo
         self.id = id
         self.orig = orig
@@ -53,7 +53,7 @@ class RepositoryError(GangaException):
     """ This error is raised if there is a fatal error in the repository."""
 
     def __init__(self, repo=None, what=''):
-        GangaException.__init__(self, what)
+        super(RepositoryError, self).__init__(self, what)
         self.what = what
         self.repository = repo
         logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))

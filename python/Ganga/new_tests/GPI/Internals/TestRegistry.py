@@ -225,3 +225,4 @@ class TestReg(object):
         self.logger.info(str(self.id) + ' shutdown()')
         self.registry.shutdown()
         self.logger.info(str(self.id) + ' shutdown() done!')
+

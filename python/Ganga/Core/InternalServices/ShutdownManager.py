@@ -40,6 +40,8 @@ Extend the behaviour of the default *atexit* module to support:
 
 import atexit
 
+from Ganga.Utility import stacktracer
+
 
 def _ganga_run_exitfuncs():
     """run any registered exit functions
@@ -114,6 +116,10 @@ def _ganga_run_exitfuncs():
 
     logger.info("Stopping Job processing before shutting down Repositories")
 
+    from Ganga.Core.GangaThread.WorkerThreads import _global_queues
+    if _global_queues:
+        _global_queues.freeze()
+
     import inspect
     while atexit._exithandlers:
 
@@ -142,6 +148,9 @@ def _ganga_run_exitfuncs():
             except Exception as err2:
                 logger.debug("Error getting source code and failure reason: %s" % str(err2))
 
+    from Ganga.Core.GangaThread.WorkerThreads import shutDownQueues
+    shutDownQueues()
+
     logger.info("Shutting Down Ganga Repositories")
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.shutdown()
@@ -152,6 +161,9 @@ def _ganga_run_exitfuncs():
     from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
     removeGlobalSessionFileHandlers()
     removeGlobalSessionFiles()
+
+    if stacktracer._tracer:
+        stacktracer.trace_stop()
 
     from Ganga.Utility.logging import requires_shutdown, final_shutdown
     if requires_shutdown is True:

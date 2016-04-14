@@ -34,6 +34,9 @@ class PrepRegistry(Registry):
     def getShareRef(self):
         return self.shareref
 
+    def getSlice(self):
+        pass
+
     def getProxy(self):
         pass
 
@@ -112,24 +115,6 @@ class ShareRef(GangaObject):
             self.name = {}
         #self._setRegistry(None)
 
-    def __getstate__(self):
-        this_dict = super(ShareRef, self).__getstate__()
-        #this_dict['_registry'] = None
-        this_dict['_counter'] = 0
-        return this_dict
-
-    def __setstate__(self, this_dict):
-        #self._getWriteAccess()
-        try:
-            super(ShareRef, self).__setstate__(this_dict)
-        #    self._setRegistry(None)
-            self._setDirty()
-        except Exception as err:
-            logger.debug("setstate Error: %s" % str(err))
-        finally:
-            #self._releaseWriteAccess()
-            self._setDirty()
-
     def __getName(self):
         if not hasattr(self, 'name') or self.name is None:
             self.name = {}
@@ -200,13 +185,13 @@ class ShareRef(GangaObject):
         The optional parameter 'unprepare=True' can be set to call the unprepare method 
         on the returned objects.
         """
-        from Ganga.GPI import jobs, box, tasks
+        from Ganga.Core.GangaRepository import getRegistryProxy
         objectlist = []
-        for thing in jobs.select():
+        for thing in getRegistryProxy('jobs').select():
             objectlist.append({thing: 'job'})
-        for thing in box.select():
+        for thing in getRegistryProxy('box').select():
             objectlist.append({thing: 'box'})
-        for thing in tasks.select():
+        for thing in getRegistryProxy('tasks').select():
             objectlist.append({thing: 'task'})
 
         run_unp = None
@@ -297,20 +282,19 @@ class ShareRef(GangaObject):
         this results in the directory being deleted upon Ganga exit.
         """
         self._getWriteAccess()
-        from Ganga.GPI import jobs, box, tasks
         # clear the shareref table
         self.name = {}
         lookup_input = []
 
         from Ganga.GPIDev.Lib.File import getSharedPath
-
+        from Ganga.Core.GangaRepository import getRegistryProxy
 
         objectlist = []
-        for thing in jobs.select():
+        for thing in getRegistryProxy('jobs').select():
             objectlist.append({thing: 'job'})
-        for thing in box.select():
+        for thing in getRegistryProxy('box').select():
             objectlist.append({thing: 'box'})
-        for thing in tasks.select():
+        for thing in getRegistryProxy('tasks').select():
             objectlist.append({thing: 'task'})
 
         for item in objectlist:

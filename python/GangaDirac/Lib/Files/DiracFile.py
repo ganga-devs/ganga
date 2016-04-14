@@ -12,7 +12,6 @@ from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.files import expandfilename
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute
-from Ganga.GPI import queues
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 configDirac = getConfig('DIRAC')
@@ -342,7 +341,7 @@ class DiracFile(IGangaFile):
         Remove called when job is removed as long as config option allows
         """
         if self.lfn != '':
-            queues.add(self.remove)
+            self.remove()
 
     def remove(self):
         """

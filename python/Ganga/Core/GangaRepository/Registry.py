@@ -131,7 +131,6 @@ class IncompleteObject(GangaObject):
                 self.registry._load([self.id])
             if self.id not in self.registry_loaded_ids:
                 self.registry._load([self.id])
-                self.registry._loaded_ids.append(self.id)
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
             for d in self.registry.changed_ids.itervalues():
                 d.add(self.id)
@@ -202,9 +201,9 @@ class RegistryFlusher(threading.Thread):
         whether it should stop. In between calls to ``flush_all`` it
         will wait for a fixed period of time.
         """
-        sleep_period = getConfig('Registry')['AutoFlusherWaitTime']
         sleeps_per_second = 10  # This changes the granularity of the sleep.
         while not self.stopped:
+            sleep_period = getConfig('Registry')['AutoFlusherWaitTime']
             for i in range(sleep_period*sleeps_per_second):
                 time.sleep(1/sleeps_per_second)
                 if self.stopped:
@@ -212,12 +211,8 @@ class RegistryFlusher(threading.Thread):
             # We want this to be a non-blocking lock to avoid this
             # interfering with interactive work or monitoring. It
             # will try again in a while anyway.
-            if self.registry._lock.acquire(blocking=False):
-                try:
-                    logger.debug('Auto-flushing', self.registry.name)
-                    self.registry.flush_all()
-                finally:
-                    self.registry._lock.release()
+            logger.debug('Auto-flushing: %s', self.registry.name)
+            self.registry.flush_all()
 
 
 class Registry(object):
@@ -536,10 +531,10 @@ class Registry(object):
             self.changed_ids = {}
             self.repository.clean()
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-            raise err
+            raise
         except Exception as err:
             logger.debug("Clean Unknown Err: %s" % str(err))
-            raise err
+            raise
 
     @synchronised
     def __safe_add(self, obj, force_index=None):
@@ -593,12 +588,13 @@ class Registry(object):
 
         try:
             returnable_id = self.__safe_add(obj, force_index)
+            ## Add to list of loaded jobs in memory
             self._loaded_ids.append(returnable_id)
         except (RepositoryError) as err:
-            raise err
+            raise
         except Exception as err:
             logger.debug("Unknown Add Error: %s" % str(err))
-            raise err
+            raise
 
         self._updateIndexCache(obj)
 
@@ -629,7 +625,7 @@ class Registry(object):
                 pass
             pass
         except Exception as err:
-            raise err
+            raise
 
     def __reg_remove(self, obj, auto_removed=0):
 
@@ -661,10 +657,10 @@ class Registry(object):
                     for this_v in self.changed_ids.itervalues():
                         this_v.add(this_id)
                 except (RepositoryError, RegistryAccessError, RegistryLockError) as err:
-                    raise err
+                    raise
                 except Exception as err:
                     logger.debug("unknown Remove Error: %s" % str(err))
-                    raise err
+                    raise
         finally:
 
             self.unlock_transaction(obj_id)
@@ -695,22 +691,28 @@ class Registry(object):
             if not obj._dirty or this_id not in self._loaded_ids:
                 continue
 
+            if hasattr(obj, _reg_id_str):
+                obj_id = getattr(obj, _reg_id_str)
+                if obj_id not in self._loaded_ids:
+                    continue
+            else:
+                continue
+
             with obj.const_lock:
                 # flush the object. Need to call _getWriteAccess for consistency reasons
                 # TODO: getWriteAccess should only 'get write access', as that's not needed should it be called here?
                 obj._getWriteAccess()
-                obj_id = getattr(obj, _reg_id_str)
                 self.repository.flush([obj_id])
                 obj._setFlushed()
 
-    @synchronised
     def flush_all(self):
         """
         This will attempt to flush all the jobs in the registry.
         It does this via ``_flush`` so the same conditions apply.
         """
         if self.hasStarted():
-            self._flush(self.values())
+            for _obj in self.values():
+                self._flush(_obj)
 
         if self.metadata and self.metadata.hasStarted():
             self.metadata.flush_all()
@@ -746,13 +748,37 @@ class Registry(object):
             these_ids.append(this_id)
             self.lock_transaction(this_id, "_load")
 
+        ## Record dirty status before flushing
+        ## Just in case we've requested loading over the job in memory
+        prior_status = {}
+        for obj_id in obj_ids:
+            if obj_id in self._objects:
+                prior_status[obj_id] = self._objects[obj_id]._dirty
+
         try:
             for obj_id in obj_ids:
                 self.repository.load([obj_id])
+                ## Track the objects we've loaded into memory
+                self._loaded_ids.append(obj_id)
         except Exception as err:
             logger.error("Error Loading Jobs!")
-            raise err
+            ## Cleanup aftr ourselves if an error occured
+            for obj_id in obj_ids:
+                if obj_id in self._loaded_ids:
+                    del self._loaded_ids[obj_id]
+                ## Didn't load mark as clean so it's not flushed
+                if obj_id in self._objects:
+                    self._objects[obj_id]._setFlushed()
+            raise
         finally:
+            ## Lets make sure jobs forcibly reloaded twice are only conditionally
+            ## Marked clean incase you've modified the state in memory.
+            for obj_id in obj_ids:
+                if obj_id in self._loaded_ids:
+                    if obj_id in prior_status and not prior_status[obj_id]:
+                        self._objects[obj_id]._setFlushed()
+                    else:
+                        self._objects[obj_id]._setDirty()
             for obj_id in these_ids:
                 self.unlock_transaction(obj_id)
 
@@ -774,7 +800,6 @@ class Registry(object):
             try:
                 if this_id not in self._loaded_ids:
                     self._load([this_id])
-                    self._loaded_ids.append(this_id)
             except KeyError as err:
                 logger.error("_read_access KeyError %s" % str(err))
                 raise RegistryKeyError("Read: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
@@ -785,10 +810,10 @@ class Registry(object):
             for this_d in self.changed_ids.itervalues():
                 this_d.add(this_id)
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-            raise err
+            raise
         except Exception as err:
             logger.debug("Unknown read access Error: %s" % str(err))
-            raise err
+            raise
         #finally:
         #    pass
 
@@ -827,21 +852,20 @@ class Registry(object):
                         try:
                             errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(this_id)
                         except RegistryLockError as err:
-                            raise err
+                            raise
                         except Exception as err:
                             logger.debug( "Unknown Locking Exception: %s" % str(err) )
-                            raise err
+                            raise
                         raise RegistryLockError(errstr)
                 except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-                    raise err
+                    raise
                 except Exception as err:
                     logger.debug("Unknown write access Error: %s" % str(err))
-                    raise err
+                    raise
                 finally:  # try to load even if lock fails
                     try:
                         if this_id not in self._loaded_ids:
                             self._load([this_id])
-                            self._loaded_ids.append(this_id)
                             if hasattr(obj, "_registry_refresh"):
                                 delattr(obj, "_registry_refresh")
                     except KeyError, err:
@@ -855,7 +879,7 @@ class Registry(object):
                         this_d.add(this_id)
                 obj._registry_locked = True
             except Exception as err:
-                raise err
+                raise
             #finally:
             #    pass
 
@@ -873,7 +897,7 @@ class Registry(object):
             pass
         except Exception as err:
             logger.debug("Unknown exception %s" % str(err))
-            raise err
+            raise
 
     def __release_lock(self, _obj):
         logger.debug("_release_lock")
@@ -892,11 +916,11 @@ class Registry(object):
                 obj._registry_locked = False
                 self.repository.unlock([oid])
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-            raise err
+            raise
         except Exception as err:
             logger.debug("un-known registry release lock err!")
             logger.debug("Err: %s" % str(err))
-            raise err
+            raise
 
     @synchronised
     def pollChangedJobs(self, name):
@@ -951,7 +975,9 @@ class Registry(object):
         except Exception as err:
             logger.debug("Logging Repo startup Error: %s" % str(err))
             self._hasStarted = False
-            raise err
+            raise
+        #finally:
+        #    pass
 
     @synchronised
     def shutdown(self):
@@ -979,7 +1005,7 @@ class Registry(object):
                 self.flush_all()
             except Exception as err:
                 logger.error("Exception on flushing '%s' registry: %s", self.name, str(err))
-                #raise err
+                #raise
             #finally:
             #    pass
             for obj in self._objects.values():

@@ -5,3 +5,4 @@ pytest
 pytest-cov
 unittest2
 coverage
+pygments

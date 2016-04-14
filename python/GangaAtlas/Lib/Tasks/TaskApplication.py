@@ -1,5 +1,4 @@
 
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import taskify
 from GangaAtlas.Lib.AthenaMC.AthenaMC import AthenaMC, AthenaMCSplitterJob
 from GangaAtlas.Lib.Athena.Athena import Athena
 AthenaTask = taskify(Athena,"AthenaTask")
@@ -49,6 +48,5 @@ class AnaTaskSplitterJob(ISplitter):
             job.application.tasks_id = "00:%s" % job.application.tasks_id
         return sjl
     
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import task_map
 task_map["Athena"] = AthenaTask
 task_map["AthenaMC"] = AthenaMCTask
