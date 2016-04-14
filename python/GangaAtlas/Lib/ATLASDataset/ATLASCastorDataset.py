@@ -68,7 +68,7 @@ class ATLASCastorDataset(Dataset):
             self.location=''
             self.pattern=''
 
-        self._setDirty(1)
+        self._setDirty()
    
     def list_datasets(self):
         '''List the datasets of a given type'''
@@ -127,7 +127,7 @@ class ATLASCastorDataset(Dataset):
 
        self.names = names[start:end]
 
-       self._setDirty(1)
+       self._setDirty()
            
     def filenames(self):
         '''Get the full filename'''
