@@ -14,9 +14,6 @@ from AtlasTask import AtlasTask
 from AtlasTransform import AtlasTransform
 from AtlasUnit import AtlasUnit
 
-# Applications
-from TaskApplication import AthenaTask, AthenaMCTask, AthenaMCTaskSplitterJob, AnaTaskSplitterJob
-
 # Start Logger
 #import Ganga.Utility.logging
 #logger = Ganga.Utility.logging.getLogger()

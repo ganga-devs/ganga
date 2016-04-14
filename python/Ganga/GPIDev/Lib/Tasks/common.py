@@ -1,10 +1,3 @@
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
-
-config = getConfig('Tasks')
-
-logger = getLogger()
-
 def getTaskByID(this_id):
     """returns proxied task accoding to this_id"""
     return getObjectByID(this_id, 'tasks')
@@ -27,9 +20,3 @@ def makeRegisteredJob():
     j._auto__init__()
     return j
 
-def say(number, unit):
-    """Helper function for singular/plural"""
-    if number == 1:
-        return "one %s" % (unit)
-    else:
-        return "%s %ss" % (number, unit)
