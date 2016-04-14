@@ -116,18 +116,18 @@ class RegistrySlice(object):
         logger = getLogger()
 
         this_repr = repr.Repr()
-        from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+        from Ganga.GPIDev.Base.Proxy import addProxy
         attrs_str = ""
         ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
-        ## Reuired to flatten the additional arguments into a flat string in attrs_str
+        ## Required to flatten the additional arguments into a flat string in attrs_str
         for a in attrs:
             from inspect import isclass
             if isclass(attrs[a]):
-                this_attr = GPIProxyObjectFactory(attrs[a]())
+                this_attr = addProxy(attrs[a]())
             else:
                 from Ganga.GPIDev.Base.Objects import GangaObject
                 if isType(attrs[a], GangaObject):
-                    this_attr = GPIProxyObjectFactory(attrs[a])
+                    this_attr = addProxy(attrs[a])
                 else:
                     if type(attrs[a]) is str:
                         from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
@@ -235,6 +235,7 @@ class RegistrySlice(object):
                         else:
                             try:
                                 item = obj._schema.getItem(a)
+                                logger.debug("Here: %s, is item: %s" % (a, type(item)))
                             except KeyError as err:
                                 from Ganga.GPIDev.Base import GangaAttributeError
                                 logger.debug("KeyError getting item: '%s' from schema" % str(a))
@@ -243,6 +244,9 @@ class RegistrySlice(object):
                                 attrvalue = attrs[a]
 
                                 if item.isA(ComponentItem):
+                                    ## TODO we need to distinguish between passing a Class type and a defined class instance
+                                    ## If we passed a class type to select it should look only for classes which are of this type
+                                    ## If we pass a class instance a compartison of the internal attributes should be performed
                                     from Ganga.GPIDev.Base.Filters import allComponentFilters
 
                                     cfilter = allComponentFilters[item['category']]
@@ -265,15 +269,16 @@ class RegistrySlice(object):
                                         if not reobj.match(str(getattr(obj, a))):
                                             selected = False
                                     else:
-                                        ## We will want to use this if we ever want to select by:
-                                        # jobs.select(application=Executable(exe='myExe')) rather than by jobs.select(application=Exectuable())
-                                        #if getattr(obj, a) != attrvalue:
-                                        ## Changed for 6.1.14 rcurrie
-                                        if not isType(getattr(obj, a), type(attrvalue)):
+                                        if getattr(obj, a) != attrvalue:
                                             selected = False
                                             break
                 if selected:
+                    logger.debug("Actually Selected")
                     callback(this_id, obj)
+                else:
+                    logger.debug("NOT Actually Selected")
+            else:
+                logger.debug("NOT Selected: %s" % str(this_id))
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
