@@ -50,11 +50,4 @@ exec modules
 
 logger.debug("Fin")
 
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
-GaudiPythonTask = taskify(GaudiPython, "GaudiPythonTask")
-task_map["GaudiPython"] = GaudiPythonTask
-
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
-BenderTask = taskify(Bender, "BenderTask")
-task_map["Bender"] = BenderTask
 
