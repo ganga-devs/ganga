@@ -103,8 +103,14 @@ class LHCbUnit(IUnit):
 
             job = getJobByID(self.active_job_ids[0])
             for f in job.inputdata.files:
+                # check for an lfn
+                if hasattr(f, "lfn"):
+                    fname = f.lfn
+                else:
+                    fname = f.namePattern
+
                 logger.warning(
-                    "Removing chain inputdata file '%s'..." % f.name)
+                    "Removing chain inputdata file '%s'..." % fname)
                 f.remove()
 
         super(LHCbUnit, self).updateStatus(status)
