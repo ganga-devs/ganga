@@ -50,8 +50,7 @@ class RegistrySlice(object):
             raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
                 self.name, keep_going, method))
         result = []
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
-        for _id in id_list:
+        for _id in self.objects.keys():
             obj = self.objects[_id]
             try:
                 if isinstance(method, str):
@@ -79,11 +78,6 @@ class RegistrySlice(object):
         if minid is None:
             minid = 0
         return [k for k in self.objects.keys() if minid <= k <= maxid]
-        #ids = []
-        # def callback(j):
-        #    ids.append(j.id)
-        # self.do_select(callback,minid,maxid)
-        # return ids
 
     def clean(self, confirm=False, force=False):
         """Cleans the repository only if this slice represents the repository
@@ -203,9 +197,7 @@ class RegistrySlice(object):
                 maxid = sys.maxsize
             select = select_by_range
 
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
-
-        for this_id in id_list:
+        for this_id in self.objects.keys():
             obj = self.objects[this_id]
             logger.debug("id, obj: %s, %s" % (str(this_id), str(obj)))
             if select(int(this_id)):
@@ -290,8 +282,7 @@ class RegistrySlice(object):
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
-        for _id in id_list:
+        for _id in self.objects.keys():
             obj = self.objects[_id]
             #obj = _unwrap(obj)
             copy = obj.clone()
