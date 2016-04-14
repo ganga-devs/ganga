@@ -100,8 +100,9 @@ class TestCoreTasks(GangaUnitTest):
         from Ganga.GPI import tasks
 
         for _ in range(0, self._numTasks):
-            self.createTask()
-
+            t = self.createTask()
+            t.run()
+            
         assert len(tasks) == self._numTasks + 1
 
     def test_f_CheckAccessToManyTasks(self):
