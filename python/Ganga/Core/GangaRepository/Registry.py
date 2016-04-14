@@ -837,7 +837,7 @@ class Registry(object):
         this_id = id(obj)
         if this_id in self._inprogressDict.keys():
             for this_d in self.changed_ids.itervalues():
-                this_d.add(this_id)
+                this_d.add(self.find(obj))
             return
 
         if self.hasStarted() is not True:
