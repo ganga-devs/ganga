@@ -6,7 +6,10 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistryS
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
-from Ganga.GPIDev.Lib.Tasks.common import logger, makeRegisteredJob, getJobByID
+from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
+from Ganga.Utility.logging import getLogger
+
+logger = getLogger()
 
 class LHCbUnit(IUnit):
     _schema = Schema(Version(1, 0), dict(IUnit._schema.datadict.items() + {
