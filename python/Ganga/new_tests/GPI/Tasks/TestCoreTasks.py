@@ -11,13 +11,11 @@ class TestCoreTasks(GangaUnitTest):
         super(TestCoreTasks, self).setUp()
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
+        setConfigOption('Tasks', 'TaskLoopFrequency', 1)
+        self._numTasks = 50
 
-    def test_a_TaskCreation(self):
-        """ First construct a Task object with Transform, etc."""
-        from Ganga.Utility.Config import getConfig
-        self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
-
-        from Ganga.GPIDev.Base.Proxy import isType
+    def createTask(self):
+        """create a task with some defaults"""
         from Ganga.GPI import tasks, CoreTask, CoreTransform, Executable, GenericSplitter
         t = CoreTask()
 
@@ -29,6 +27,17 @@ class TestCoreTasks(GangaUnitTest):
 
         t.appendTransform(trf)
         t.float = 20
+
+        return t
+
+    def test_a_TaskCreation(self):
+        """ First construct a Task object with Transform, etc."""
+        from Ganga.Utility.Config import getConfig
+        from Ganga.GPI import tasks, CoreTask, CoreTransform, Executable, GenericSplitter
+        self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
+        from Ganga.GPIDev.Base.Proxy import isType
+
+        t = self.createTask()
 
         # Test Task has been setup correctly
         assert len(tasks) == 1
@@ -84,4 +93,33 @@ class TestCoreTasks(GangaUnitTest):
 
         assert t.status == "running"
         assert t.transforms[0].status == "running"
+
+    def test_e_CreateManyTasks(self):
+        """Create a load of tasks"""
+        from Ganga.GPI import tasks
+
+        for _ in range(0, self._numTasks):
+            t = self.createTask()
+            t.run()
+
+        assert len(tasks) == self._numTasks + 1
+
+    def test_f_CheckAccessToManyTasks(self):
+        """Access the Tasks while monitoring"""
+        from Ganga.GPI import tasks, CoreTask, CoreTransform, Executable, GenericSplitter
+        from Ganga.GPIDev.Base.Proxy import isType
+
+        # loop over all the tasks lots of times to test contention with the monitoring
+        # Use _numTasks so it scales with the number of Tasks
+        for _ in range(0, self._numTasks):
+            for t in tasks:
+                assert len(tasks) == self._numTasks + 1
+                assert isType(t, CoreTask)
+                assert len(t.transforms) == 1
+                assert isType(t.transforms[0], CoreTransform)
+                assert isType(t.transforms[0].application, Executable)
+                assert isType(t.transforms[0].unit_splitter, GenericSplitter)
+                assert t.transforms[0].unit_splitter.attribute == "application.args"
+                assert t.transforms[0].unit_splitter.values == ['arg 1', 'arg 2', 'arg 3']
+                assert t.float == 20
 

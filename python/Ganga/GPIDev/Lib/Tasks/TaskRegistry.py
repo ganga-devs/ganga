@@ -72,10 +72,7 @@ class TaskRegistry(Registry):
         # and must go away soon
         for tid in self.ids():
             try:
-                self[tid]._getWriteAccess()
                 self[tid].startup()
-            except RegistryError:
-                continue
             except Exception as err:
                 logger.error("Unknown/Unexpected Error in starting up tasks main loop")
                 logger.error("Exiting: err=%s" % str(err))
@@ -93,16 +90,7 @@ class TaskRegistry(Registry):
                     logger.debug("Running over tid: %s" % str(tid))
 
                     try:
-                        self[tid]._getWriteAccess()
                         p = self[tid]
-                    except RegistryError:
-                        # could not acquire lock
-                        continue
-
-                    if self._main_thread.should_stop():
-                        break
-
-                    try:
                         p.update()
 
                     except Exception as x:
@@ -115,6 +103,7 @@ class TaskRegistry(Registry):
 
                     if self._main_thread.should_stop():
                         break
+
                 if self._main_thread.should_stop():
                     break
 

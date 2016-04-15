@@ -50,8 +50,7 @@ class RegistrySlice(object):
             raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
                 self.name, keep_going, method))
         result = []
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
-        for _id in id_list:
+        for _id in self.objects.keys():
             obj = self.objects[_id]
             try:
                 if isinstance(method, str):
@@ -79,11 +78,6 @@ class RegistrySlice(object):
         if minid is None:
             minid = 0
         return [k for k in self.objects.keys() if minid <= k <= maxid]
-        #ids = []
-        # def callback(j):
-        #    ids.append(j.id)
-        # self.do_select(callback,minid,maxid)
-        # return ids
 
     def clean(self, confirm=False, force=False):
         """Cleans the repository only if this slice represents the repository
@@ -122,18 +116,18 @@ class RegistrySlice(object):
         logger = getLogger()
 
         this_repr = repr.Repr()
-        from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+        from Ganga.GPIDev.Base.Proxy import addProxy
         attrs_str = ""
         ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
-        ## Reuired to flatten the additional arguments into a flat string in attrs_str
+        ## Required to flatten the additional arguments into a flat string in attrs_str
         for a in attrs:
             from inspect import isclass
             if isclass(attrs[a]):
-                this_attr = GPIProxyObjectFactory(attrs[a]())
+                this_attr = addProxy(attrs[a]())
             else:
                 from Ganga.GPIDev.Base.Objects import GangaObject
                 if isType(attrs[a], GangaObject):
-                    this_attr = GPIProxyObjectFactory(attrs[a])
+                    this_attr = addProxy(attrs[a])
                 else:
                     if type(attrs[a]) is str:
                         from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
@@ -203,9 +197,7 @@ class RegistrySlice(object):
                 maxid = sys.maxsize
             select = select_by_range
 
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
-
-        for this_id in id_list:
+        for this_id in self.objects.keys():
             obj = self.objects[this_id]
             logger.debug("id, obj: %s, %s" % (str(this_id), str(obj)))
             if select(int(this_id)):
@@ -243,6 +235,7 @@ class RegistrySlice(object):
                         else:
                             try:
                                 item = obj._schema.getItem(a)
+                                logger.debug("Here: %s, is item: %s" % (a, type(item)))
                             except KeyError as err:
                                 from Ganga.GPIDev.Base import GangaAttributeError
                                 logger.debug("KeyError getting item: '%s' from schema" % str(a))
@@ -251,6 +244,9 @@ class RegistrySlice(object):
                                 attrvalue = attrs[a]
 
                                 if item.isA(ComponentItem):
+                                    ## TODO we need to distinguish between passing a Class type and a defined class instance
+                                    ## If we passed a class type to select it should look only for classes which are of this type
+                                    ## If we pass a class instance a compartison of the internal attributes should be performed
                                     from Ganga.GPIDev.Base.Filters import allComponentFilters
 
                                     cfilter = allComponentFilters[item['category']]
@@ -273,20 +269,20 @@ class RegistrySlice(object):
                                         if not reobj.match(str(getattr(obj, a))):
                                             selected = False
                                     else:
-                                        ## We will want to use this if we ever want to select by:
-                                        # jobs.select(application=Executable(exe='myExe')) rather than by jobs.select(application=Exectuable())
-                                        #if getattr(obj, a) != attrvalue:
-                                        ## Changed for 6.1.14 rcurrie
-                                        if not isType(getattr(obj, a), type(attrvalue)):
+                                        if getattr(obj, a) != attrvalue:
                                             selected = False
                                             break
                 if selected:
+                    logger.debug("Actually Selected")
                     callback(this_id, obj)
+                else:
+                    logger.debug("NOT Actually Selected")
+            else:
+                logger.debug("NOT Selected: %s" % str(this_id))
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
-        for _id in id_list:
+        for _id in self.objects.keys():
             obj = self.objects[_id]
             #obj = _unwrap(obj)
             copy = obj.clone()
