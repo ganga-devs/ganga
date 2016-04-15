@@ -246,7 +246,7 @@ def addProxy(obj):
 
 def getProxyAttr(obj, attr_name):
     """Gets an attribute from a proxied object"""
-    return getattr(stripProxy(obj), attr_name)
+    return getattr(obj, attr_name)
 
 
 def runProxyMethod(obj, method_name, *args):
@@ -302,7 +302,7 @@ class ProxyDataDescriptor(object):
         def getProxy(v):
             if not isType(v, GangaObject):
                 raise GangaAttributeError("invalid type: cannot assign '%s' to attribute '%s'" % (repr(v), getName(self)))
-            return GPIProxyObjectFactory(v)
+            return addProxy(v)
 
         # convert implementation object to GPI value according to the
         # static method defined in the implementation object
@@ -323,7 +323,7 @@ class ProxyDataDescriptor(object):
     # apply attribute conversion
     def disguiseAttribute(self, v):
         if isType(v, GangaObject):
-            return GPIProxyObjectFactory(v)
+            return addProxy(v)
         return v
 
     def __get__(self, obj, cls):
@@ -409,7 +409,7 @@ class ProxyDataDescriptor(object):
             if hasattr(val, 'is_prepared'):
                 if val.is_prepared not in [None, True]:
                     from Ganga.Core.GangaRepository import getRegistry
-                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    shareref = getRegistry("prep").getShareRef()
                     logger.debug('Overwriting application with a prepared one')
                     if stripProxy(obj.application) != val:
                         stripProxy(obj.application).unprepare()
@@ -444,7 +444,7 @@ class ProxyDataDescriptor(object):
                 # it's safe to unprepare 'not-prepared' applications.
                 stripProxy(obj).unprepare()
                 from Ganga.Core.GangaRepository import getRegistry
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                shareref = getRegistry("prep").getShareRef()
                 shareref.increase(val.name)
 
         if type(val) is str:
@@ -944,12 +944,12 @@ def GPIProxyClassFactory(name, pluginclass):
         if hasattr(self, 'application'):
             if hasattr(self.application, 'is_prepared'):
                 from Ganga.Utility.files import expandfilename
+                from Ganga.Core.GangaRepository import getRegistry
                 if self.application.is_prepared not in [None, True]:
                     if hasattr(self.application.is_prepared, 'name'):
                         shared_path = _getSharedPath()
                         if path.isdir(path.join(shared_path, self.application.is_prepared.name)):
-                            from Ganga.Core.GangaRepository import getRegistry
-                            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                            shareref = getRegistry("prep").getShareRef()
                             logger.debug('increasing counter from proxy.py')
                             shareref.increase(self.application.is_prepared.name)
                             logger.debug('Found ShareDir directory: %s' % self.application.is_prepared.name)
@@ -958,8 +958,7 @@ def GPIProxyClassFactory(name, pluginclass):
                     if not path.isdir(path.join(shared_path, self.application.is_prepared.name)):
                         logger.error('ShareDir directory not found: %s' % self.application.is_prepared.name)
                         logger.error('Unpreparing Job #%s' % self.id)
-                        from Ganga.Core.GangaRepository import getRegistry
-                        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                        shareref = getRegistry("prep").getShareRef()
                         shareref.increase(self.application.is_prepared.name)
                         self.unprepare()
 
@@ -977,7 +976,7 @@ def GPIProxyClassFactory(name, pluginclass):
             c = stripProxy(self).clone()
             if hasattr(c, 'is_prepared') and c._getRegistry() is None:
                 from Ganga.Core.GangaRepository import getRegistry
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                shareref = getRegistry("prep").getShareRef()
                 shareref.increase(self.is_prepared.name)
             stripProxy(c)._auto__init__(unprepare=True)
         else:
