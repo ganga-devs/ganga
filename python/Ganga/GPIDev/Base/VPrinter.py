@@ -325,6 +325,7 @@ def summary_print(obj, out=None, interactive=False):
             print('[]', end=' ', file=out)
         else:
             outString = '['
+            outStringList = []
             def print_x(x, outStringList, obj_len):
                 if isType(x, GangaObject):
                     sio =StringIO()
