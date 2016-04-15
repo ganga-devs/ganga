@@ -32,7 +32,7 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False, extra_
             _list = map(partial(mapfunction, extra_args=extra_args), _list)
 
     result = GangaList()
-    result._list = map(stripProxy, _list)
+    result._list.extend(map(stripProxy, _list))
     result._is_preparable = preparable
     result._is_a_ref = False
 
@@ -54,7 +54,7 @@ def stripGangaList(_list):
 def makeGangaListByRef(_list, preparable=False):
     """Faster version of makeGangaList. Does not make a copy of _list but use it by reference."""
     result = GangaList()
-    result._list = _list
+    result._list.extend(_list)
     result._is_a_ref = True
     result._is_preparable = preparable
     return result

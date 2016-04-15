@@ -284,16 +284,17 @@ def full_print(obj, out=None, interactive=False):
             outString = '['
             outStringList = []
             def print_x(x, outStringList, obj_len):
-                if isType(x, GangaObject):
+                if isinstance(x, (str, int, float, bool, type)):
+                    outStringList.append(str(x).rstrip())
+                elif isType(x, GangaObject):
                     sio = StringIO()
                     x.printTree(sio, interactive)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
                     outStringList.append(result.rstrip())
                 else:
-                    result = str(x)
                     # remove trailing whitespace and newlines
-                    outStringList.append(result.rstrip())
+                    outStringList.append(str(x).rstrip())
                 if (len(outStringList)+1) != 2*obj_len:
                     outStringList.append(', ')
             map(partial(print_x, outStringList=outStringList, obj_len=obj_len), _obj)
@@ -327,7 +328,9 @@ def summary_print(obj, out=None, interactive=False):
             outString = '['
             outStringList = []
             def print_x(x, outStringList, obj_len):
-                if isType(x, GangaObject):
+                if isinstance(x, str, int, float, bool, type):
+                    outStringList.append(str(x).rstrip())
+                elif isType(x, GangaObject):
                     sio =StringIO()
                     #logger.debug("summary_print: printSummaryTree")
                     x.printSummaryTree(0, 0, '', out=sio)
@@ -335,9 +338,8 @@ def summary_print(obj, out=None, interactive=False):
                     # remove trailing whitespace and newlines
                     outStringList.append(result.rstrip())
                 else:
-                    result = str(x)
                     # remove trailing whitespace and newlines
-                    outStringList.append(result.rstrip())
+                    outStringList.append(str(x).rstrip())
                 if len(outStringList)+1 != 2*obj_len:
                     outStringList.append(', ')
             map(partial(print_x, outStringList=outStringList, obj_len=obj_len), obj)

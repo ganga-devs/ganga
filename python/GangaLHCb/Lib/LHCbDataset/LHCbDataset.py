@@ -62,10 +62,10 @@ class LHCbDataset(GangaDataset):
         super(LHCbDataset, self).__init__()
         if files is None:
             files = []
+        self.files = GangaList()
         if fromRef:
-            self.files = makeGangaListByRef(files)
+            self.files._list.extend(files)
         else:
-            self.files = GangaList()
             if isType(files, LHCbDataset):
                 for this_file in files:
                     self.files.append(deepcopy(this_file))

@@ -151,26 +151,25 @@ class DiracFile(IGangaFile):
 
         return
 
-    def __deepcopy__(self, memo):
-
-        cls = type(stripProxy(self))
-        c = super(cls, cls).__new__(cls)
-        super(DiracFile, c).__init__()
-
-        c.lfn = self.lfn
-        c.localDir = self.lfn
-        c.remoteDir = self.remoteDir
-        c.namePattern = self.namePattern
-        c.compressed = self.compressed
-        c.locations = self.locations
-        c.guid = self.guid
-        c._storedReplicas = self._storedReplicas
-        c._remoteURLs = self._remoteURLs
-        c.failureReason = self.failureReason
-
-        c.subfiles = copy.deepcopy(self.subfiles)
-        c._have_copied = True
-        return c
+#    def __deepcopy__(self, memo):
+#
+#        c = DiracFile()
+#
+#        c.lfn = self.lfn
+#        c.localDir = self.lfn
+#        c.remoteDir = self.remoteDir
+#        c.namePattern = self.namePattern
+#        c.compressed = self.compressed
+#        c.locations = self.locations
+#        c.guid = self.guid
+#        c._storedReplicas = self._storedReplicas
+#        c._remoteURLs = self._remoteURLs
+#        c.failureReason = self.failureReason
+#
+#        if self.subfiles:
+#            c.subfiles = copy.deepcopy(self.subfiles, memo)
+#        c._have_copied = True
+#        return c
 
     def _attribute_filter__set__(self, name, value):
 
