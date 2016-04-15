@@ -320,7 +320,7 @@ def summary_print(obj, out=None, interactive=False):
             for x in _obj:
                 if isType(x, GangaObject):
                     sio = StringIO()
-                    stripProy(x).printSummaryTree(0, 0, '', out=sio)
+                    stripProxy(x).printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
                     outString += result.rstrip()
