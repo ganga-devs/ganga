@@ -296,7 +296,7 @@ def full_print(obj, out=None, interactive=False):
             print(outString, end=' ', file=out)
         return
 
-    if isProxy(obj):
+    if isProxy(obj) and isType(obj, GangaObject):
         import cStringIO
         sio = cStringIO.StringIO()
         runProxyMethod(obj, 'printTree', sio, interactive)
@@ -342,7 +342,7 @@ def summary_print(obj, out=None, interactive=False):
             print(outString, end=' ', file=out)
         return
 
-    if isProxy(obj):
+    if isProxy(obj) and isType(obj, GangaObject):
         import cStringIO
         sio = cStringIO.StringIO()
         runProxyMethod(obj, 'printSummaryTree', 0, 0, '', sio, interactive)
