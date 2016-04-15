@@ -5,6 +5,8 @@ from __future__ import print_function, absolute_import
 # $Id: VPrinter.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
 from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod, stripProxy
+from Ganga.GPIDev.Base.Objects import GangaObject
+from cStringIO import StringIO
 
 from inspect import isclass
 
@@ -201,8 +203,7 @@ class VSummaryPrinter(VPrinter):
         return function_pointer_available
 
     def _CallPrintSummaryTree(self, obj):
-        import cStringIO
-        sio = cStringIO.StringIO()
+        sio = StringIO()
         #logger.debug("_CallPrintSummaryTree")
         if not hasattr(stripProxy(obj), 'printSummaryTree'):
             print("%s" % str(obj), file=self.out)
@@ -254,7 +255,6 @@ class VSummaryPrinter(VPrinter):
             return
         if self._CallSummaryPrintMember(node, name, subnode):
             return
-        from Ganga.GPIDev.Base.Objects import GangaObject
         if isType(subnode, GangaObject):
             self.empty_body = 0
             self.comma()
@@ -276,19 +276,16 @@ def full_print(obj, out=None, interactive=False):
 
     _obj = stripProxy(obj)
 
-
     if isType(_obj, GangaList):
         obj_len = len(_obj)
         if obj_len == 0:
             print('[]', end=' ', file=out)
         else:
-            import cStringIO
-            from Ganga.GPIDev.Base.Objects import GangaObject
             outString = '['
             outStringList = []
             def print_x(x, outStringList, obj_len):
                 if isType(x, GangaObject):
-                    sio = cStringIO.StringIO()
+                    sio = StringIO()
                     x.printTree(sio, interactive)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
@@ -305,9 +302,8 @@ def full_print(obj, out=None, interactive=False):
             print(outString, end=' ', file=out)
         return
 
-    if isProxy(obj):
-        import cStringIO
-        sio = cStringIO.StringIO()
+    if isProxy(obj) and isType(obj, GangaObject):
+        sio = StringIO()
         runProxyMethod(obj, 'printTree', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)
     else:
@@ -320,18 +316,18 @@ def summary_print(obj, out=None, interactive=False):
     if out == None:
         out = sys.stdout
 
+    _obj = stripProxy(obj)
+
     from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-    if isType(obj, GangaList):
-        obj_len = len(obj)
+    if isType(_obj, GangaList):
+        obj_len = len(_obj)
         if obj_len == 0:
             print('[]', end=' ', file=out)
         else:
-            import cStringIO
-            from Ganga.GPIDev.Base.Objects import GangaObject
             outString = '['
             def print_x(x, outStringList, obj_len):
                 if isType(x, GangaObject):
-                    sio = cStringIO.StringIO()
+                    sio =StringIO()
                     #logger.debug("summary_print: printSummaryTree")
                     x.printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()
@@ -349,11 +345,11 @@ def summary_print(obj, out=None, interactive=False):
             print(outString, end=' ', file=out)
         return
 
-    if isProxy(obj):
-        import cStringIO
-        sio = cStringIO.StringIO()
+    if isProxy(obj) and isType(obj, GangaObject):
+        sio = StringIO()
         #logger.debug("#2 printSummaryTree")
         runProxyMethod(obj, 'printSummaryTree', 0, 0, '', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)
     else:
-        print(str(obj), end=' ', file=out)
+        print(str(_obj), end=' ', file=out)
+

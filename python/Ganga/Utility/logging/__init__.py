@@ -343,7 +343,7 @@ class FlushedMemoryHandler(_MemHandler):
         The exception to this is when the MemHandler says we flush as we want to always flush then.
         """
         return (threading.currentThread().getName() == "MainThread") or \
-                super(FlushedMemoryHandler, self).shouldFlush(record)
+                _MemHandler.shouldFlush(self, record)
 
 
 def enableCaching():

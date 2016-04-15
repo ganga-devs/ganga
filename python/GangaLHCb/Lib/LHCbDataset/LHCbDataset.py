@@ -58,31 +58,34 @@ class LHCbDataset(GangaDataset):
                       'symmetricDifference', 'union', 'bkMetadata',
                       'isEmpty', 'hasPFNs', 'getPFNs']  # ,'pop']
 
-    def __init__(self, files=None, persistency=None, depth=0):
+    def __init__(self, files=None, persistency=None, depth=0, fromRef=False):
         super(LHCbDataset, self).__init__()
         if files is None:
             files = []
-        self.files = GangaList()
-        if isType(files, LHCbDataset):
-            for this_file in files:
-                self.files.append(deepcopy(this_file))
-        elif isType(files, IGangaFile):
-            self.files.append(deepcopy(this_file))
-        elif isType(files, (list, tuple, GangaList)):
-            new_list = []
-            for this_file in files:
-                if type(this_file) is str:
-                    new_file = string_datafile_shortcut_lhcb(this_file, None)
-                elif isType(this_file, IGangaFile):
-                    new_file = stripProxy(this_file)
-                else:
-                    new_file = strToDataFile(this_file)
-                new_list.append(new_file)
-            self.files.extend(new_list)
-        elif type(files) is str:
-            self.files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+        if fromRef:
+            self.files = makeGangaListByRef(files)
         else:
-            raise GangaException("Unknown object passed to LHCbDataset constructor!")
+            self.files = GangaList()
+            if isType(files, LHCbDataset):
+                for this_file in files:
+                    self.files.append(deepcopy(this_file))
+            elif isType(files, IGangaFile):
+                self.files.append(deepcopy(this_file))
+            elif isType(files, (list, tuple, GangaList)):
+                new_list = []
+                for this_file in files:
+                    if type(this_file) is str:
+                        new_file = string_datafile_shortcut_lhcb(this_file, None)
+                    elif isType(this_file, IGangaFile):
+                        new_file = stripProxy(this_file)
+                    else:
+                        new_file = strToDataFile(this_file)
+                    new_list.append(new_file)
+                self.files.extend(new_list)
+            elif type(files) is str:
+                self.files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+            else:
+                raise GangaException("Unknown object passed to LHCbDataset constructor!")
 
         self.files._setParent(self)
 

@@ -212,7 +212,7 @@ class GangaList(GangaObject):
 
         if isType(obj_list, GangaList):
             return getProxyAttr(obj_list, '_list')
-        result = [self.strip_proxy(o, filter) for o in obj_list]
+        result = map(partial(self.strip_proxy, filter=filter), obj_list)
         return result
 
     def getCategory(self):
@@ -400,7 +400,7 @@ class GangaList(GangaObject):
 
     def _export___radd__(self, obj):
         # return the proxied objects
-        cp = [i for i in self._export___iter__()]
+        cp = all(self._export___iter__)
         return obj + cp
 
     def __rmul__(self, number):

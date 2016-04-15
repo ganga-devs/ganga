@@ -196,7 +196,7 @@ RecoToDST-07/90000000/DST" ,
 
         from GangaLHCb.Lib.LHCbDataset import LHCbDataset
         logger.debug("Imported LHCbDataset")
-        ds = LHCbDataset(files=new_files)
+        ds = LHCbDataset(files=new_files, fromRef=True)
 
         logger.debug("Returning Dataset")
 
@@ -292,7 +292,7 @@ class BKQueryDict(GangaObject):
         this_list = map(myDiracFileFunc, files)
 
         from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-        ds = LHCbDataset(files=this_list)
+        ds = LHCbDataset(files=this_list, fromRef=True)
 
         return addProxy(ds)
 
