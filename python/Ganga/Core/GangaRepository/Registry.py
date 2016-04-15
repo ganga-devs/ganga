@@ -590,7 +590,7 @@ class Registry(object):
             returnable_id = self.__safe_add(obj, force_index)
             ## Add to list of loaded jobs in memory
             self._loaded_ids.append(returnable_id)
-        except (RepositoryError) as err:
+        except RepositoryError as err:
             raise
         except Exception as err:
             logger.debug("Unknown Add Error: %s" % str(err))
