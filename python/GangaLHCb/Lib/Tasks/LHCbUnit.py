@@ -6,7 +6,10 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistryS
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
-from Ganga.GPIDev.Lib.Tasks.common import logger, makeRegisteredJob, getJobByID
+from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
+from Ganga.Utility.logging import getLogger
+
+logger = getLogger()
 
 class LHCbUnit(IUnit):
     _schema = Schema(Version(1, 0), dict(IUnit._schema.datadict.items() + {
@@ -100,8 +103,14 @@ class LHCbUnit(IUnit):
 
             job = getJobByID(self.active_job_ids[0])
             for f in job.inputdata.files:
+                # check for an lfn
+                if hasattr(f, "lfn"):
+                    fname = f.lfn
+                else:
+                    fname = f.namePattern
+
                 logger.warning(
-                    "Removing chain inputdata file '%s'..." % f.name)
+                    "Removing chain inputdata file '%s'..." % fname)
                 f.remove()
 
         super(LHCbUnit, self).updateStatus(status)

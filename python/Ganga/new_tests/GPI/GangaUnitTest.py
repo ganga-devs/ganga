@@ -9,7 +9,7 @@ except ImportError:
     import unittest
 
 
-def start_ganga(gangadir_for_test, extra_opts=[]):
+def _setupGangaPath():
     file_path = os.path.dirname(os.path.realpath(__file__))
     ganga_python_dir = os.path.join(file_path, '..', '..', '..')
     ganga_python_dir = os.path.realpath(ganga_python_dir)
@@ -17,6 +17,10 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         sys.path.insert(0, ganga_python_dir)
 
         print("Adding: %s to Python Path\n" % ganga_python_dir)
+
+_setupGangaPath()
+
+def start_ganga(gangadir_for_test, extra_opts=[]):
 
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()

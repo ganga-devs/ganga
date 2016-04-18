@@ -53,6 +53,9 @@ class GangaDataset(Dataset):
 
     def isEmpty(self): return not bool(self.files)
 
+    def append(self, input_file):
+        self.extend([input_file])
+
     def extend(self, files, unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
@@ -65,12 +68,24 @@ class GangaDataset(Dataset):
         names = self.getFileNames()
         files = [f for f in files]  # just in case they extend w/ self
         for f in files:
-            file = getDataFile(f)
-            if file is None:
-                file = f
-            if unique and file.name in names:
+            if unique and f.name in names:
                 continue
-            self.files.append(file)
+            self.files.append(f)
+
+    def getFileNames(self):
+        'Returns a list of the names of all files stored in the dataset.'
+        names = []
+        for i in self.files:
+            if hasattr(i, lfn):
+                names.append(i.lfn)
+            else:
+                try:
+                    names.append(i.namePattern)
+                except:
+                    logger.warning("Cannot determine filename for: %s " % i)
+                    raise GangaException("Cannot Get File Name")
+
+        return names
 
     def getFilenameList(self):
         "return a list of filenames to be created as input.txt on the WN"
