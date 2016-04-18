@@ -10,7 +10,9 @@ import time
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from Ganga.GPIDev.Lib.Tasks import ITask
 from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
-from Ganga.GPIDev.Lib.Tasks.common import logger
+from Ganga.Utility.logging import getLogger
+
+logger = getLogger()
 
 ########################################################################
 
