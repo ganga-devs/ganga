@@ -335,7 +335,7 @@ class SubJobXMLList(GangaObject):
             return self._getItem(index)
         except Exception as err:
             logger.error("CANNOT LOAD SUBJOB INDEX: %s. Reason: %s" % (index, err))
-            return None
+            raise
 
     def _getItem(self, index):
         """Actual meat of loading the subjob from disk is required, parsing and storing a copy in memory
@@ -352,6 +352,8 @@ class SubJobXMLList(GangaObject):
                 if index in self._cachedJobs:
                     return self._cachedJobs[index]
 
+                has_loaded_backup = False
+
                 # Now try to load the subjob
                 if len(self) < index:
                     raise GangaException("Subjob: %s does NOT exist" % str(index))
@@ -359,8 +361,16 @@ class SubJobXMLList(GangaObject):
                 try:
                     sj_file = self._loadSubJobFromDisk(subjob_data)
                 except IOError as x:
+                    logger.warning("Error loading XML file: %s" % str(x))
                     if x.errno == errno.ENOENT:
-                        raise IOError("Subobject %s not found: %s" % (index, x))
+                        try:
+                            logger.debug("Loading subjob #%s from disk, recent changes may be lost" % index)
+                            subjob_data = self.__get_dataFile(str(index), True)
+                            sj_file = self._loadSubJobFromDisk(subjob_data)
+                            has_loaded_backup = True
+                        except Exception as err:
+                            logger.error("Error loading subjob XML:\n%s" % str(err))
+                            raise IOError("Subobject %s not found: %s" % (index, x))
                     else:
                         raise RepositoryError(self,"IOError on loading subobject %s: %s" % (index, x))
 
@@ -368,7 +378,6 @@ class SubJobXMLList(GangaObject):
 
                 # load the subobject into a temporary object
                 loaded_sj = None
-                has_loaded_backup = False
                 try:
                     loaded_sj = from_file(sj_file)[0]
                 except Exception as err:
@@ -387,7 +396,7 @@ class SubJobXMLList(GangaObject):
                 if loaded_sj:
                     loaded_sj._setParent( self._definedParent )
                     if has_loaded_backup:
-                        loaded_sh._setDirty()
+                        loaded_sj._setDirty()
                     else:
                         loaded_sj._setFlushed()
                     self._cachedJobs[index] = loaded_sj

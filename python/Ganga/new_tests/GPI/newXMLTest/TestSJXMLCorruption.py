@@ -13,11 +13,11 @@ global_AutoStartReg = True
 notXMLStr = ['ThisIsNOTXML' for _ in range(20)]
 badStr = ''.join(notXMLStr)
 
-class TestSJXMLGenAndLoad(GangaUnitTest):
+class TestSJXMLCorruption(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestSJXMLGenAndLoad, self).setUp()
+        super(TestSJXMLCorruption, self).setUp()
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
         setConfigOption('Configuration', 'AutoStartReg', global_AutoStartReg)
@@ -51,6 +51,16 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         global global_AutoStartReg
         global_AutoStartReg = False
 
+        for sj in j.subjobs:
+            stripProxy(sj)._setDirty()
+
+        while stripProxy(j)._dirty:
+            import time
+            time.sleep(0.5)
+
+        for sj in j.subjobs:
+            stripProxy(sj)._setDirty()
+
     def test_b_TestRemoveSJXML(self):
         # Remove XML force to use backup
         from Ganga.GPI import jobs
@@ -71,7 +81,8 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         assert len(jobs) == 1
         assert len(jobs(0).subjobs) == 2
 
-        assert isinstance(jobs(0).subjobs(0), Job)
+        for sj in jobs(0).subjobs:
+            assert isinstance(sj, Job)
 
         ## trigger load
         backend2 = jobs(0).subjobs(0).backend
