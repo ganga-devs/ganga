@@ -2198,10 +2198,10 @@ class Job(GangaObject):
                 #self._stored_subjobs_proxy = _wrap(stripProxy(self._stored_subjobs_proxy))
             elif isType(self.subjobs, (list, GangaList)):
                 subjob_slice = stripProxy(self._stored_subjobs_proxy)
-                if len(subjob_slice.objects.keys()):
-                    removeable = subjob_slice.objects.keys()
-                    for sj_id in removeable:
-                        del subjob_slice.objects[sj_id]
+                #First clear the dictionary
+                if subjob_slice.objects:
+                    del subjobs_slice.objects[:]
+                #Not put the objects back in
                 for sj in self.subjobs:
                     subjob_slice.objects[sj.id] = sj
                 #self._stored_subjobs_proxy = _wrap(stripProxy(self._stored_subjobs_proxy))
