@@ -383,6 +383,7 @@ class SubJobXMLList(GangaObject):
                 # if load was successful then set parent and add to the _cachedJobs dict
                 if loaded_sj:
                     loaded_sj._setParent( self._definedParent )
+                    loaded_sj._setFlushed()
                     self._cachedJobs[index] = loaded_sj
 
         return self._cachedJobs[index]
@@ -448,6 +449,10 @@ class SubJobXMLList(GangaObject):
 
         for index in range(len(self)):
             if index in self._cachedJobs.keys():
+                ## If it ain't dirty skip it
+                if not self._cachedJobs[index]._dirty:
+                    continue
+
                 subjob_data = self.__get_dataFile(str(index))
                 subjob_obj = self._cachedJobs[index]
 
@@ -458,4 +463,10 @@ class SubJobXMLList(GangaObject):
 
         self.write_subJobIndex()
         return
+
+    def _setFlushed(self):
+        """ Like Node only descend into objects which aren't in the Schema"""
+        for index in self._cachedJobs.keys():
+            self._cachedJobs[index]._setFlushed()
+        super(SubJobXMLList, self)._setFlushed()
 

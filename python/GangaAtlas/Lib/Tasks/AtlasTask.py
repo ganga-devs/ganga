@@ -13,6 +13,9 @@ from Ganga.GPIDev.Schema import *
 from Ganga.Utility.Config import getConfig
 configDQ2 = getConfig('DQ2')
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
 ########################################################################
 
 class AtlasTask(ITask):

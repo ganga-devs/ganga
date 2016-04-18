@@ -849,7 +849,7 @@ under certain conditions; type license() for details.
         except Exception as x:
             logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', str(x))
             logger.exception(x)
-            raise GangaException(x)
+            raise GangaException(x), None, sys.exc_info()[2]
 
         # initialize runtime packages, they are registered in allRuntimes
         # dictionary automatically
