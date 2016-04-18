@@ -13,15 +13,22 @@ conf = getConfig('Configuration')
 conf.setSessionValue('gangadir', expandvars(None, '~/gangadir_testing/TutorialTests'))
 
 # Now we can start ganga properly
-from ganga import *
+#from ganga import *
+from .GangaUnitTest import GangaUnitTest
 
-
-class TutorialTests(unittest.TestCase):
+class TutorialTests(GangaUnitTest):
 
     # A set of tests that are explicitly quoted in the tutorial docs
     # DON'T CHANGE THE COMMENTS as these are used to pick out the code!
     # Should also add more checks for completed jobs, etc.
+    def setUp(self):
+        """Make sure that the Tasks object isn't destroyed between tests"""
+        super(TutorialTests, self).setUp()
+        from Ganga.Utility.Config import setConfigOption
+        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
+
     def test_a_InstallAndBasicUsage(self):
+        from Ganga.GPI import Job, jobs
 
         # -- INSTALLANDBASICUSAGE HELP START
         help(Job)
@@ -50,6 +57,7 @@ j.submit()
 
 
     def test_b_Configuration(self):
+        from Ganga.GPI import config, jobs
 
         # -- CONFIGURATION VIEWCHANGE START
         # print full config
@@ -73,6 +81,8 @@ j.submit()
 
 
     def test_c_JobManipulation(self):
+
+        from Ganga.GPI import runMonitoring, Job, jobs, export, load
 
         runMonitoring()
 
@@ -128,6 +138,7 @@ j.submit()
         # -- JOBMANIPULATION EXPORTJOB STOP
 
     def test_d_RunningExecutables(self):
+        from Ganga.GPI import Job, File, Executable
 
         # -- RUNNINGEXECUTABLES EXAMPLE START
         # Already existing Exe
@@ -160,6 +171,7 @@ j.submit()
         # -- RUNNINGEXECUTABLES EXAMPLE STOP
 
     def test_e_UsingDifferentBackends(self):
+        from Ganga.GPI import Job, plugins, Local
 
         # -- USINGDIFFERENTBACKENDS PLUGINS START
         plugins("backends")
@@ -172,7 +184,7 @@ j.submit()
         # -- USINGDIFFERENTBACKENDS LOCAL STOP
 
     def test_f_InputAndOutputData(self):
-
+        from Ganga.GPI import Job, File, LocalFile, GangaDataset, Local, plugins
         # -- INPUTANDOUTPUTDATA BASIC START
         # create a script to send
         open('my_script2.sh', 'w').write("""#!/bin/bash
@@ -244,6 +256,7 @@ j.submit()
         # -- INPUTANDOUTPUTDATA GANGAFILES STOP
 
     def test_g_Splitters(self):
+        from Ganga.GPI import Job, GenericSplitter, GangaDataset, GangaDatasetSplitter, LocalFile
 
         # -- SPLITTERS BASICUSE START
         j = Job()
@@ -277,6 +290,9 @@ j.submit()
         # -- SPLITTERS DATASETSPLITTER STOP
 
     def test_h_PostProcessors(self):
+
+        from Ganga.GPI import Job, RootMerger, TextMerger, CustomMerger, SmartMerger, RootFileChecker, FileChecker, \
+            Notifier, CustomChecker
 
         j = Job()
 
@@ -361,6 +377,7 @@ j.submit()
         j.postprocessors.remove(FileChecker())
 
     def test_i_MiscellaneousFunctionality(self):
+        from Ganga.GPI import JobTemplate, Local, Job, templates, jobtree
 
         # -- MISCFUNCTIONALITY TEMPLATE1 START
         j = JobTemplate()
@@ -410,6 +427,7 @@ j.submit()
         # -- MISCFUNCTIONALITY JOBTREE STOP
 
     def test_j_Queues(self):
+        from Ganga.GPI import queues, Job, GenericSplitter
 
         queues
 
@@ -436,6 +454,8 @@ j.submit()
         # -- QUEUES SPLIT STOP
 
     def test_k_Tasks(self):
+        from Ganga.GPI import CoreTask, CoreTransform, Executable, Local, GenericSplitter, LocalFile, GangaDataset, \
+            GangaDatasetSplitter, TaskChainInput, File, tasks
 
         # -- TASKS EXAMPLE START
         # First create the overall Task
