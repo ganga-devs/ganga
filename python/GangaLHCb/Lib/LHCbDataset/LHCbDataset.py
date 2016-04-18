@@ -63,9 +63,22 @@ class LHCbDataset(GangaDataset):
         if files is None:
             files = []
         self.files = GangaList()
+        process_files = True
         if fromRef:
             self.files._list.extend(files)
-        else:
+            process_files = False
+        elif isinstance(files, GangaList):
+            def isFileTest(_file):
+                return isinstance(_file, IGangaFile)
+            areFiles = all(map(isFileTest, files._list))
+            if areFiles:
+                self.file._list.extend(files._list)
+                process_files = False
+        elif isinstance(files, LHCbDataset):
+            self.files._list.extend(files.files._list)
+            process_files = False
+
+        if process_files:
             if isType(files, LHCbDataset):
                 for this_file in files:
                     self.files.append(deepcopy(this_file))

@@ -208,14 +208,16 @@ def isType(_obj, type_or_seq):
     ## is type_or_seq iterable?
     if isinstance(type_or_seq, getKnownLists()):
         clean_list = []
-        for type_obj in type_or_seq:
-            str_type = type('')
-            if type_obj != str_type and type(type_obj) != type(str_type) and (not isclass(type_obj)):
-                clean_list.append(type(stripProxy(type_obj)))
+
+        def process_type(type_obj):
+            if type_obj != str and type(type_obj) != type(str) and (not isclass(type_obj)):
+                return type(stripProxy(type_obj))
             elif isclass(type_obj):
-                clean_list.append(type_obj)
+                return type_obj
             else:
-                clean_list.append(type_obj)
+                return type_obj
+
+        clean_list = map(process_type, type_or_seq)
 
         return isinstance(obj, tuple(clean_list))
 
@@ -380,8 +382,7 @@ class ProxyDataDescriptor(object):
         if isinstance(v, list):
             from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
             v_new = GangaList()
-            for elem in v:
-                v_new.append(elem)
+            v_new._list.extend(v)
         if isinstance(v, GPIProxyObject) or hasattr(v, implRef):
             new_v = stripProxy(v)
             logger.debug('%s property: assigned a component object (%s used)' % (name, implRef))
@@ -505,7 +506,7 @@ class ProxyDataDescriptor(object):
                     can_be_modified.append( True )
                 else:
                     can_be_modified.append( False )
-        
+
         can_modify = False
         for i in can_be_modified:
             can_modify = can_modify or i
@@ -529,11 +530,12 @@ class ProxyDataDescriptor(object):
                     else:
                         val[key] = elem
             else:
-                for elem in _val:
+                def _recursiveStrip(elem):
                     if isType(elem, GangaObject):
-                        val.append(ProxyDataDescriptor.__recursive_strip(stripProxy(elem)))
+                        return ProxyDataDescriptor.__recursive_strip(stripProxy(elem))
                     else:
-                        val.append(elem)
+                        return elem
+                val.extend(map(_recursiveStrip, _val))
         else:
             val = stripProxy(_val)
         return val
