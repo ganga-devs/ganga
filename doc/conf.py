@@ -16,6 +16,10 @@ import sys
 import os
 import subprocess
 
+# Copy the Tutorial tests as readthedocs doesn't seem to like them in the python dir
+os.system("pwd")
+os.system("cp ../python/Ganga/new_tests/GPI/TutorialTests.py .")
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.

@@ -9,7 +9,7 @@ Copying Jobs
 You can copy jobs using the ``copy`` method or using the cop-constructor in the Job creation. The job status is
 always set to ``new``:
 
-.. literalinclude:: /../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: /TutorialTests.py
     :start-after: # -- JOBMANIPULATION JOBCOPY START
     :end-before: # -- JOBMANIPULATION JOBCOPY STOP
     :dedent: 8
