@@ -7,7 +7,7 @@ can also supply arguments  and environment settings with the options in the ``Ex
 
 As an example:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- RUNNINGEXECUTABLES EXAMPLE START
     :end-before: # -- RUNNINGEXECUTABLES EXAMPLE STOP
     :dedent: 8

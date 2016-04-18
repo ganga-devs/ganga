@@ -12,7 +12,7 @@ A merger is an object which will merge files from each subjobs and place it the 
 method to merge depends on the type of merger object (or file type). For example, if each subjob produces a root
 file 'thesis_data.root' and you would like this to be merged you can attach a RootMerger object to your job:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS APPEND START
     :end-before: # -- POSTPROCESSORS APPEND STOP
     :dedent: 8
@@ -35,7 +35,7 @@ There are several mergers available:
 TextMerger
 ^^^^^^^^^^
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS TEXTMERGER START
     :end-before: # -- POSTPROCESSORS TEXTMERGER STOP
     :dedent: 8
@@ -47,7 +47,7 @@ the output with
 RootMerger
 ^^^^^^^^^^
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS TEXTMERGER START
     :end-before: # -- POSTPROCESSORS TEXTMERGER STOP
     :dedent: 8
@@ -61,7 +61,7 @@ CustomMerger
 A custom merger where you can define your own merge function. For this merger to work you must supply a path to a
 python module which carries out the merge with
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS CUSTOMMERGER START
     :end-before: # -- POSTPROCESSORS CUSTOMMERGER STOP
     :dedent: 8
@@ -92,7 +92,7 @@ The final merger object which can be used is the ``SmartMerger()``, which will c
 output file extension. It supports different file types. For example the following SmartMerger would use a RootMerger
 for 'thesis_data.root' and a TextMerger for 'stdout'.
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS SMARTMERGER START
     :end-before: # -- POSTPROCESSORS SMARTMERGER STOP
     :dedent: 8
@@ -100,7 +100,7 @@ for 'thesis_data.root' and a TextMerger for 'stdout'.
 
 Note that:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS SMARTMERGERAPPEND START
     :end-before: # -- POSTPROCESSORS SMARTMERGERAPPEND STOP
     :dedent: 8
@@ -108,7 +108,7 @@ Note that:
 
 is equivalent to doing:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS SMARTMERGERAPPEND2 START
     :end-before: # -- POSTPROCESSORS SMARTMERGERAPPEND2 STOP
     :dedent: 8
@@ -130,7 +130,7 @@ FileChecker
 
 Checks the list of output files and fails job if a particular string is found (or not found). For example, you could do:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS FILECHECKER START
     :end-before: # -- POSTPROCESSORS FILECHECKER STOP
     :dedent: 8
@@ -138,7 +138,7 @@ Checks the list of output files and fails job if a particular string is found (o
 
 You can also enforce that your file must exist, by setting ``filesMustExists`` to ``True``:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS FILECHECKERMUSTEXIST START
     :end-before: # -- POSTPROCESSORS FILECHECKERMUSTEXIST STOP
     :dedent: 8
@@ -148,7 +148,7 @@ If a job does not produce a stdout file, the checker will fail the job. This Fil
 and grep the file for the string 'Segmentation'. If it finds it, the job will fail. If you want to fail the job
 a string doesn’t exist, then you can do:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS FILECHECKEROPTS START
     :end-before: # -- POSTPROCESSORS FILECHECKEROPTS STOP
     :dedent: 8
@@ -164,7 +164,7 @@ This checks that all your ROOT files are closed properly and have nonzero size. 
 worked properly. Adding a RootFileChecker to your job will add some protection against hadd failures, and ensure that
 your ROOT files are mergable. If you do:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS ROOTFILECHECKER START
     :end-before: # -- POSTPROCESSORS ROOTFILECHECKER STOP
     :dedent: 8
@@ -193,7 +193,7 @@ can make a checker in your home directory called '``mychecker.py``'. In this fil
 
 Then in ganga do:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS CUSTOMCHECKER START
     :end-before: # -- POSTPROCESSORS CUSTOMCHECKER STOP
     :dedent: 8
@@ -210,7 +210,7 @@ feature is used. Important note: Emails will only be sent when ganga is running,
 if you have ganga running in the background (e.g. screen session, ``GangaService``). To make a notifier, just do
 something like:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS NOTIFIER START
     :end-before: # -- POSTPROCESSORS NOTIFIER STOP
     :dedent: 8
@@ -218,7 +218,7 @@ something like:
 
 If you want emails about every subjob, do
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS NOTIFIER START
     :end-before: # -- POSTPROCESSORS NOTIFIER STOP
     :dedent: 8
@@ -231,14 +231,14 @@ You can add multiple post processors to a Job and Ganga will order them to some 
 checkers, then finally the notifier. It will preserve the order within each class though (e.g. The ordering of the
 #checkers is defined by the user). To add some postprocessors to your job, you can do something like
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS MULTIPLE START
     :end-before: # -- POSTPROCESSORS MULTIPLE STOP
     :dedent: 8
 
 or:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- POSTPROCESSORS MULTIPLE2 START
     :end-before: # -- POSTPROCESSORS MULTIPLE2 STOP
     :dedent: 8

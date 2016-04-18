@@ -17,7 +17,7 @@ Basic Input/Output File usage
 
 To start with, we'll show a job that sends an input text file with a job and then sends an output text file back:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INPUTANDOUTPUTDATA BASIC START
     :end-before: # -- INPUTANDOUTPUTDATA BASIC STOP
     :dedent: 8
@@ -25,7 +25,7 @@ To start with, we'll show a job that sends an input text file with a job and the
 
 After the job completes, you can then view the output directory and see the output file:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INPUTANDOUTPUTDATA PEEKOUTPUT START
     :end-before: # -- INPUTANDOUTPUTDATA PEEKOUTPUT STOP
     :dedent: 8
@@ -33,7 +33,7 @@ After the job completes, you can then view the output directory and see the outp
 
 If the job doesn't produce the output Ganga was expecting, it will mark the job as failed:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INPUTANDOUTPUTDATA FAILJOB START
     :end-before: # -- INPUTANDOUTPUTDATA FAILJOB STOP
     :dedent: 8
@@ -41,7 +41,7 @@ If the job doesn't produce the output Ganga was expecting, it will mark the job 
 
 You can also use wildcards in the files as well:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INPUTANDOUTPUTDATA WILDCARD START
     :end-before: # -- INPUTANDOUTPUTDATA WILDCARD STOP
     :dedent: 8
@@ -49,7 +49,7 @@ You can also use wildcards in the files as well:
 
 After completion, the output files found are copied as above but they are also recorded in the job appropriately:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INPUTANDOUTPUTDATA OUTPUTFILES START
     :end-before: # -- INPUTANDOUTPUTDATA OUTPUTFILES STOP
     :dedent: 8
@@ -79,7 +79,7 @@ Mass or Shared Storage using the mechanisms within the running program, e.g. Ope
 
 As an example:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INPUTANDOUTPUTDATA INPUTDATA START
     :end-before: # -- INPUTANDOUTPUTDATA INPUTDATA STOP
     :dedent: 8
@@ -90,7 +90,7 @@ File Types Available
 
 Ganga provides several File types for accessing data from various sources. To find out what's available, do:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INPUTANDOUTPUTDATA GANGAFILES START
     :end-before: # -- INPUTANDOUTPUTDATA GANGAFILES STOP
     :dedent: 8

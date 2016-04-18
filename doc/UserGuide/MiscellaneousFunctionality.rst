@@ -10,7 +10,7 @@ If there is a version of a job that you use a lot, it can be beneficial to store
 you can easily retrieve and then only alter a few parameters of. To create a template you do exactly what you would
 do for a normal job except you create a ``JobTemplate`` object instead of a ``Job`` object:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- MISCFUNCTIONALITY TEMPLATE1 START
     :end-before: # -- MISCFUNCTIONALITY TEMPLATE1 STOP
     :dedent: 8
@@ -18,7 +18,7 @@ do for a normal job except you create a ``JobTemplate`` object instead of a ``Jo
 
 To view the ``templates`` available, just do:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- MISCFUNCTIONALITY TEMPLATE2 START
     :end-before: # -- MISCFUNCTIONALITY TEMPLATE2 STOP
     :dedent: 8
@@ -26,7 +26,7 @@ To view the ``templates`` available, just do:
 
 You can then create a job from this template by doing:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- MISCFUNCTIONALITY TEMPLATE3 START
     :end-before: # -- MISCFUNCTIONALITY TEMPLATE3 STOP
     :dedent: 8
@@ -39,7 +39,7 @@ As you submit more jobs of different types, it can become quite difficult to kee
 calibrations, analyses, etc. Jobs are stored by `id` and can be thought of as soft links to the main Ganga Job
 Repository.
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- MISCFUNCTIONALITY JOBTREE START
     :end-before: # -- MISCFUNCTIONALITY JOBTREE STOP
     :dedent: 8

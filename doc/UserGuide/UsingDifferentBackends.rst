@@ -6,7 +6,7 @@ backends) by only changing one or two lines in your scripts. Though there are of
 for each backend, Ganga tries to hide this as much as possible. We'll cover the main options in Ganga Core below but
 to get a full list, use:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- USINGDIFFERENTBACKENDS PLUGINS START
     :end-before: # -- USINGDIFFERENTBACKENDS PLUGINS STOP
     :dedent: 8
@@ -17,7 +17,7 @@ Local Backend
 This is the default and refers to the machine that Ganga is running on. The job will be spawned as a separate process,
 independent of Ganga. Typical usage is:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- USINGDIFFERENTBACKENDS LOCAL START
     :end-before: # -- USINGDIFFERENTBACKENDS LOCAL STOP
     :dedent: 8

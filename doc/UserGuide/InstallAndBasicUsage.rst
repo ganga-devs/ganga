@@ -172,7 +172,7 @@ The documentation for all objects and functions in Ganga can be accessed using t
 Now typing ``index`` at the prompt will list all the objects, etc. available. You can also directly access the
 documentation for an object using ``help`` directly:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INSTALLANDBASICUSAGE HELP START
     :end-before: # -- INSTALLANDBASICUSAGE HELP STOP
     :dedent: 8
@@ -185,7 +185,7 @@ Hello World with Ganga
 We are now in a position to submit our first job. This will take the defaults of the Ganga Job object which is
 to run ``echo 'Hello World'`` on the machine you're currently running on:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INSTALLANDBASICUSAGE SUBMIT START
     :end-before: # -- INSTALLANDBASICUSAGE SUBMIT STOP
     :dedent: 8
@@ -240,14 +240,14 @@ You can view the job in your repository using the ``jobs`` command which lists a
 
 You can get more info about your job by selecting it from the repository:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INSTALLANDBASICUSAGE JOBS START
     :end-before: # -- INSTALLANDBASICUSAGE JOBS STOP
     :dedent: 8
 
 You can also select specific info about the job object, e.g. the application that was run:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INSTALLANDBASICUSAGE JOBSAPP START
     :end-before: # -- INSTALLANDBASICUSAGE JOBSAPP STOP
     :dedent: 8
@@ -277,7 +277,7 @@ Scripting and Batch Mode
 
 You can put your ganga commands into a python script and then execute it from the Ganga prompt like this:
 
-.. literalinclude:: ../TutorialTests.py
+.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
     :start-after: # -- INSTALLANDBASICUSAGE EXECFILE START
     :end-before: # -- INSTALLANDBASICUSAGE EXECFILE STOP
     :dedent: 8
