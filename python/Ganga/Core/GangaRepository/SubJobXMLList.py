@@ -368,13 +368,16 @@ class SubJobXMLList(GangaObject):
 
                 # load the subobject into a temporary object
                 loaded_sj = None
+                has_loaded_backup = False
                 try:
                     loaded_sj = from_file(sj_file)[0]
                 except Exception as err:
 
                     try:
+                        logger.warning("Loading subjob #%s from backup, recent changes may be lost" % index)
                         subjob_data = self.__get_dataFile(str(index), True)
                         loaded_sj = from_file(sj_file)[0]
+                        has_loaded_backup = True
                     except Exception as err:
                         logger.debug("Failed to Load XML for job: %s using: %s" % (str(index), str(subjob_data)))
                         logger.debug("Err:\n%s" % str(err))
@@ -383,7 +386,10 @@ class SubJobXMLList(GangaObject):
                 # if load was successful then set parent and add to the _cachedJobs dict
                 if loaded_sj:
                     loaded_sj._setParent( self._definedParent )
-                    loaded_sj._setFlushed()
+                    if has_loaded_backup:
+                        loaded_sh._setDirty()
+                    else:
+                        loaded_sj._setFlushed()
                     self._cachedJobs[index] = loaded_sj
 
         return self._cachedJobs[index]

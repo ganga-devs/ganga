@@ -795,10 +795,13 @@ class GangaRepositoryLocal(GangaRepository):
 
         fobj = None
 
+        has_loaded_backup = False
+
         try:
             if not os.path.isfile(fn) and _copy_backup:
                 if os.path.isfile(fn + '~'):
-                    logger.warning("XML File: %s missing, recovering from backup, some changes may have been lost!" % fn)
+                    logger.warning("XML File: %s missing, recovering from backup, recent changes may have been lost!" % fn)
+                    has_loaded_backup = True
                     try:
                         from shutil import copyfile
                         copyfile(fn+'~', fn)
@@ -824,12 +827,12 @@ class GangaRepositoryLocal(GangaRepository):
                     ld = os.listdir(os.path.dirname(fn))
                     if len(ld) == 0:
                         os.rmdir(os.path.dirname(fn))
-                        logger.debug("No job index or data found, removing empty directory: %s" % os.path.dirname(fn))
+                        logger.warning("No job index or data found, removing empty directory: %s" % os.path.dirname(fn))
             except Exception as err:
                 logger.debug("load error %s" % str(err))
                 pass
 
-        return fobj
+        return fobj, has_loaded_backup
 
     def load(self, ids, load_backup=False):
 
@@ -844,12 +847,17 @@ class GangaRepositoryLocal(GangaRepository):
 
             fn = self.get_fn(this_id)
             if load_backup:
+                has_loaded_backup = True
                 fn = fn + "~"
+            else:
+                has_loaded_backup = False
 
             fobj = None
 
             try:
-                fobj = self._open_xml_file(fn, this_id, _copy_backup=True)
+                fobj, has_loaded_backup2 = self._open_xml_file(fn, this_id, _copy_backup=True)
+                if has_loaded_backup2:
+                    has_loaded_backup = has_loaded_backup2
             except Exception as err:
                 logger.debug("XML load: Failed to load XML file: %s" % str(fn))
                 logger.debug("Error was:\n%s" % str(err))
@@ -866,12 +874,18 @@ class GangaRepositoryLocal(GangaRepository):
                 should_continue = self._handle_load_exception(err, fn, this_id, load_backup)
 
                 if should_continue is True:
+                    has_loaded_backup = True
                     continue
                 else:
                     raise
 
             finally:
                 fobj.close()
+
+            if has_loaded_backup:
+                self.objects[this_id]._setDirty()
+            else:
+                self.objects[this_id]._setFlushed()
 
         logger.debug("Finished 'load'-ing of: %s" % str(ids))
 
@@ -890,7 +904,7 @@ class GangaRepositoryLocal(GangaRepository):
         # try loading backup
         try:
             self.load([this_id], load_backup=True)
-            logger.warning("Object '%s' #%s loaded from backup file - the last changes may be lost." % (str(self.registry.name), str(this_id)))
+            logger.warning("Object '%s' #%s loaded from backup file - recent changes may be lost." % (str(self.registry.name), str(this_id)))
             return True
         except Exception as err2:
             logger.debug("Exception when loading backup: %s" % str(err2) )

@@ -86,16 +86,27 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
     def test_e_TestCorruptLoad(self):
         # Test loading of backup when corrupt
-        from Ganga.GPI import jobs
+        from Ganga.GPI import jobs, Job
 
         assert len(jobs) == 1
 
         backend2 = jobs(0).backend
 
+        assert isinstance(jobs(0), Job)
         assert backend2 is not None
 
         XMLFileName = getXMLFile(0)
         
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+
+        print("%s" % stripProxy(jobs(0)).__dict__)
+        assert stripProxy(jobs(0))._dirty is True
+
+        stripProxy(jobs(0))._setDirty()
+        while stripProxy(jobs(0))._dirty:
+            import time
+            time.sleep(0.5)
+
         from tempfile import NamedTemporaryFile
         with NamedTemporaryFile(delete=False) as myTempfile:
             myTempfile.write(badStr)

@@ -444,6 +444,9 @@ class Descriptor(object):
 
         # Since we couldn't find the information in the cache, we will need to fully load the object
 
+        if name in obj.__dict__:
+            return obj.__dict__[name]
+
         # Guarantee that the object is now loaded from disk
         obj._getReadAccess()
 
