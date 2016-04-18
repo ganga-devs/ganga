@@ -8,9 +8,9 @@ import os
 import re
 import time
 import uuid
+import sys
 
 import Ganga.Core.FileWorkspace
-import Ganga.GPIDev.Lib.File.FileUtils
 import Ganga.GPIDev.MonitoringServices
 from Ganga.Core import GangaException, IncompleteJobSubmissionError, JobManagerError, Sandbox
 from Ganga.Core.GangaRepository import getRegistry
@@ -343,12 +343,14 @@ class Job(GangaObject):
 
             # Apply needed transform to move Sandbox item to the
             if self.inputsandbox != []:
+                from Ganga.GPIDev.Lib.File.FileUtils import safeTransformFile
                 for i in self.inputsandbox:
-                    c.inputfiles.append(Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile(i))
+                    c.inputfiles.append(safeTransformFile(i))
             else:
                 if self.master and self.master.inputsandbox != []:
+                    from Ganga.GPIDev.Lib.File.FileUtils import safeTransformFile
                     for i in self.master.inputsandbox:
-                        c.inputfiles.append(Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile(i))
+                        c.inputfiles.append(safeTransformFile(i))
 
             c.inputsandbox = []
 
@@ -629,7 +631,7 @@ class Job(GangaObject):
         except Exception as x:
             self.status = saved_status
             log_user_exception()
-            raise JobStatusError(x)
+            raise JobStatusError(x), None, sys.exc_info()[2]
         # useful for debugging
         #finally:
         #    pass
@@ -1653,7 +1655,7 @@ class Job(GangaObject):
                 # revert to the new status
                 logger.error('%s ... reverting job %s to the new status', str(err), self.getFQID('.'))
                 self.updateStatus('new')
-                raise JobError("Error: %s" % str(err))
+                raise JobError("Error: %s" % str(err)), None, sys.exc_info()[2]
 
         # This appears to be done by the backend now in a way that handles sub-jobs,
         # in the case of a master job however we need to still perform this

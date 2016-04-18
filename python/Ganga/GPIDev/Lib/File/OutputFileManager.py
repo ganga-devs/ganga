@@ -5,7 +5,6 @@ import copy
 
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Lib.File import FileUtils
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 
@@ -227,6 +226,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
 for f in ###FILELIST###:
    os.symlink(f, os.path.basename(f)) 
 """
+                    from Ganga.GPIDev.Lib.File import FileUtils
                     shortScript = FileUtils.indentScript(shortScript, '###INDENT####')
 
                     insertScript += shortScript
@@ -294,6 +294,7 @@ for patternToZip in ###PATTERNSTOZIP###:
 postprocesslocations = file(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFILENAME###'), 'w')  
 """
 
+    from Ganga.GPIDev.Lib.File import FileUtils
     shortScript = FileUtils.indentScript(shortScript, '###INDENT###')
 
     insertScript = shortScript

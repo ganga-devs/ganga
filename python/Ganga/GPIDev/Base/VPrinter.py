@@ -267,10 +267,10 @@ def full_print(obj, out=None, interactive=False):
 
     from Ganga.GPIDev.Lib.GangaList import GangaList
 
-    obj = stripProxy(obj)
+    _obj = stripProxy(obj)
 
-    if isType(obj, GangaList.GangaList):
-        obj_len = len(obj)
+    if isType(_obj, GangaList.GangaList):
+        obj_len = len(_obj)
         if obj_len == 0:
             print('[]', end=' ', file=out)
         else:
@@ -296,13 +296,13 @@ def full_print(obj, out=None, interactive=False):
             print(outString, end=' ', file=out)
         return
 
-    if isProxy(obj):
+    if isProxy(obj) and isType(obj, GangaObject):
         import cStringIO
         sio = cStringIO.StringIO()
         runProxyMethod(obj, 'printTree', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)
     else:
-        print(str(obj), end=' ', file=out)
+        print(str(_obj), end=' ', file=out)
 
 
 def summary_print(obj, out=None, interactive=False):
@@ -311,9 +311,12 @@ def summary_print(obj, out=None, interactive=False):
     if out == None:
         out = sys.stdout
 
+    from Ganga.GPIDev.Base.Proxy import stripProxy
+    _obj = stripProxy(obj)
+
     from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-    if isType(obj, GangaList):
-        obj_len = len(obj)
+    if isType(_obj, GangaList):
+        obj_len = len(_obj)
         if obj_len == 0:
             print('[]', end=' ', file=out)
         else:
@@ -321,7 +324,7 @@ def summary_print(obj, out=None, interactive=False):
             from Ganga.GPIDev.Base.Objects import GangaObject
             outString = '['
             count = 0
-            for x in obj:
+            for x in _obj:
                 if isType(x, GangaObject):
                     sio = cStringIO.StringIO()
                     x.printSummaryTree(0, 0, '', out=sio)
@@ -339,10 +342,11 @@ def summary_print(obj, out=None, interactive=False):
             print(outString, end=' ', file=out)
         return
 
-    if isProxy(obj):
+    if isProxy(obj) and isType(obj, GangaObject):
         import cStringIO
         sio = cStringIO.StringIO()
         runProxyMethod(obj, 'printSummaryTree', 0, 0, '', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)
     else:
-        print(str(obj), end=' ', file=out)
+        print(str(_obj), end=' ', file=out)
+

@@ -849,7 +849,7 @@ under certain conditions; type license() for details.
         except Exception as x:
             logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', str(x))
             logger.exception(x)
-            raise GangaException(x)
+            raise GangaException(x), None, sys.exc_info()[2]
 
         # initialize runtime packages, they are registered in allRuntimes
         # dictionary automatically
@@ -928,7 +928,6 @@ under certain conditions; type license() for details.
 
         # Start tracking all the threads and saving the information to a file
         stacktracer.trace_start()
-        atexit.register((100, stacktracer.trace_stop))
 
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
@@ -1082,8 +1081,8 @@ under certain conditions; type license() for details.
                 logger.warning('Test Runner interrupted!')
                 import Ganga.Core.InternalServices.Coordinator
                 if not Ganga.Core.InternalServices.Coordinator.servicesEnabled:
-                    from Ganga.GPI import reactivate
-                    reactivate()
+                    from Ganga.Core.InternalServices.Coordinator import enableInternalServices
+                    enableInternalServices()
                 sys.exit(1)
             sys.exit(rc)
 

@@ -9,7 +9,7 @@ except ImportError:
     import unittest
 
 
-def set_ganga_sys_path():
+def _setupGangaPath():
     file_path = os.path.dirname(os.path.realpath(__file__))
     ganga_python_dir = os.path.join(file_path, '..', '..', '..')
     ganga_python_dir = os.path.realpath(ganga_python_dir)
@@ -18,7 +18,7 @@ def set_ganga_sys_path():
 
         print("Adding: %s to Python Path\n" % ganga_python_dir)
 
-set_ganga_sys_path()
+_setupGangaPath()
 
 def start_ganga(gangadir_for_test, extra_opts=[]):
 
@@ -94,8 +94,8 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
             # Start internal services
             logger.info("InternalServices restarting")
 
-            from Ganga.GPI import reactivate
-            reactivate()
+            from Ganga.Core.InternalServices.Coordinator import enableInternalServices
+            enableInternalServices()
         else:
             logger.info("InternalServices still running")
 

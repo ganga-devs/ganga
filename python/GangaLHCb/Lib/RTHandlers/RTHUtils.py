@@ -9,7 +9,6 @@ import Ganga.Utility.logging
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template, dirac_outputfile_jdl
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import TaskApplication
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -60,7 +59,7 @@ def is_gaudi_child(app):
         return True
 
     if isType(app, TaskApplication):
-        from Ganga.GPI import GaudiPythonTask, BenderTask
+        from GangaLHCb.Lib.Applications import GaudiPythonTask, BenderTask
         if not isType(app, GaudiPythonTask) and not isType(app, BenderTask):
             return True
 

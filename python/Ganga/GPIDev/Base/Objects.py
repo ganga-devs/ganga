@@ -779,8 +779,8 @@ class GangaObject(Node):
             for attr, item in self._schema.allItems():
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
-                    defVal = self._schema.getDefaultValue(attr)
-                    self.setNodeAttribute(attr, defVal)
+                    setattr(self, attr, self._schema.getDefaultValue(attr))
+
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
@@ -957,12 +957,20 @@ class GangaObject(Node):
     # mark object as "dirty" and inform the registry about it
     # the registry is always associated with the root object
     def _setDirty(self):
+        """ Set the dirty flag all the way up to the parent"""
         self._dirty = True
         parent = self._getParent()
         if parent is not None:
             parent._setDirty()
 
     def _setFlushed(self):
+        """Un-Set the dirty flag all of the way down the schema."""
+        if self._schema:
+            for k in self._schema.allItemNames():
+                this_attr = getattr(self, k)
+                if isinstance(this_attr, Node):
+                    if this_attr._dirty:
+                        this_attr._setFlushed()
         self._dirty = False
 
     # post __init__ hook automatically called by GPI Proxy __init__
