@@ -95,7 +95,7 @@ class TestSJXMLCorruption(GangaUnitTest):
     def test_d_TestCorruptXML(self):
         # Corrupt the XML file
         from Ganga.GPI import jobs, Job
-        assert isinstance(jobs(0).subjobs(0))
+        assert isinstance(jobs(0).subjobs(0), Job)
         XMLFileName = getSJXMLFile(jobs(0).subjobs(0))
 
         unlink(XMLFileName)
