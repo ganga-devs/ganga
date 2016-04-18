@@ -370,7 +370,9 @@ class Node(object):
         if self._getRegistry():
             if self._getRegistry().has_loaded(self):
                 return True
-        return False
+            else:
+                return False
+        return True
 
 ##########################################################################
 
