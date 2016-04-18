@@ -10,7 +10,7 @@ os.system('rm -rf ~/gangadir_testing/TutorialTests')
 # load the config system
 from Ganga.Utility.Config import getConfig, expandvars
 conf = getConfig('Configuration')
-conf.setSessionValue( 'gangadir', expandvars(None, '~/gangadir_testing/TutorialTests'))
+conf.setSessionValue('gangadir', expandvars(None, '~/gangadir_testing/TutorialTests'))
 
 # Now we can start ganga properly
 from ganga import *
@@ -211,8 +211,8 @@ j.submit()
         # This job will pick up both 'my_input.txt' and 'my_output.txt'
         j = Job()
         j.application.exe = File('my_script2.sh')
-        j.inputfiles = [ LocalFile('my_input.txt') ]
-        j.outputfiles = [ LocalFile('*.txt') ]
+        j.inputfiles = [LocalFile('my_input.txt')]
+        j.outputfiles = [LocalFile('*.txt')]
         j.submit()
         # -- INPUTANDOUTPUTDATA WILDCARD STOP
 
@@ -261,8 +261,8 @@ j.submit()
         # -- SPLITTERS MULTIATTRS START
         j = Job()
         j.splitter = GenericSplitter()
-        j.splitter.multi_attrs = { 'application.args': ['hello1', 'hello2' ],
-                                   'application.env':  [{'MYENV':'test1'}, {'MYENV':'test2'}] }
+        j.splitter.multi_attrs = {'application.args': ['hello1', 'hello2'],
+                                  'application.env': [{'MYENV':'test1'}, {'MYENV':'test2'}]}
         j.submit()
         # -- SPLITTERS MULTIATTRS STOP
 
@@ -318,7 +318,7 @@ j.submit()
         # -- POSTPROCESSORS FILECHECKERMUSTEXIST STOP
 
         # -- POSTPROCESSORS FILECHECKEROPTS START
-        fc.searchStrings = [ 'SUCCESS' ]
+        fc.searchStrings = ['SUCCESS']
         fc.failIfFound = False
         # -- POSTPROCESSORS FILECHECKEROPTS STOP
 
@@ -341,13 +341,13 @@ j.submit()
         # -- POSTPROCESSORS NOTIFIEROPTS STOP
 
         # -- POSTPROCESSORS MULTIPLE START
-        tm = TextMerger(files=['stdout'],compress = True)
-        rm = RootMerger(files=['thesis_data.root'],args = '-f6')
-        fc = FileChecker(files = ['stdout'],searchString = ['Segmentation'])
-        cc = CustomChecker(module = '~/mychecker.py')
-        n = Notifier(address = 'myadress.cern.ch')
+        tm = TextMerger(files=['stdout'], compress=True)
+        rm = RootMerger(files=['thesis_data.root'], args='-f6')
+        fc = FileChecker(files=['stdout'], searchStrings=['Segmentation'])
+        cc = CustomChecker(module='~/mychecker.py')
+        n = Notifier(address='myadress.cern.ch')
 
-        # TODO: j.postprocessors = [tm,rm,fc,cc,n]
+        j.postprocessors = [tm, rm, fc, cc, n]
         # -- POSTPROCESSORS MULTIPLE STOP
 
         # -- POSTPROCESSORS MULTIPLE2 START
@@ -399,8 +399,8 @@ j.submit()
         jobtree.cd('/test/jan')
         jobtree.add( Job() )
         jobtree.cd('/prod/full')
-        jobtree.add( Job() )
-        jobtree.add( Job() )
+        jobtree.add(Job())
+        jobtree.add(Job())
 
         # look at the tree again
         jobtree.printtree()
@@ -416,7 +416,7 @@ j.submit()
         # -- QUEUES EXAMPLE START
         for i in range(1, 20):
             j = Job()
-            queues.add( j.submit )
+            queues.add(j.submit)
         # -- QUEUES EXAMPLE STOP
 
         # -- QUEUES FUNCTION START
@@ -430,7 +430,7 @@ j.submit()
         j = Job()
         j.splitter = GenericSplitter()
         j.splitter.attribute = 'application.args'
-        j.splitter.values = [ i for i in range(0, 50) ]
+        j.splitter.values = [i for i in range(0, 50)]
         j.parallel_submit = True
         j.submit()
         # -- QUEUES SPLIT STOP
@@ -453,10 +453,10 @@ j.submit()
         # change the 'application' object for each Unit/Master Job
         trf.unit_splitter = GenericSplitter()
         trf.unit_splitter.attribute = "application.args"
-        trf.unit_splitter.values = [ 'arg 1', 'arg 2', 'arg 3' ]
+        trf.unit_splitter.values = ['arg 1', 'arg 2', 'arg 3']
 
         # Append the transform
-        t.appendTransform( trf )
+        t.appendTransform(trf)
 
         # set the maximum number of active jobs to have running (allows for throttling)
         t.float = 100
@@ -476,8 +476,8 @@ j.submit()
         trf.backend = Local()
         trf.unit_splitter = GenericSplitter()
         trf.unit_splitter.attribute = "application.args"
-        trf.unit_splitter.values = [ 'arg 1', 'arg 2', 'arg 3' ]
-        t.appendTransform( trf )
+        trf.unit_splitter.values = ['arg 1', 'arg 2', 'arg 3']
+        t.appendTransform(trf)
         t.float = 100
 
         # -- TASKS OPTIONS START
@@ -503,11 +503,11 @@ j.submit()
         trf1 = CoreTransform()
         trf1.application = Executable()
         trf1.application.exe = File('my_script3.sh')
-        trf1.outputfiles = [ LocalFile("*.txt") ]
+        trf1.outputfiles = [LocalFile("*.txt")]
         d = GangaDataset()
-        d.files = [ LocalFile("*.txt") ]
+        d.files = [LocalFile("*.txt")]
         d.treat_as_inputfiles = True
-        trf1.addInputData( d )
+        trf1.addInputData(d)
         trf1.files_per_unit = 1
         trf1.submit_with_threads = True
 
@@ -515,7 +515,7 @@ j.submit()
         trf1.splitter.files_per_subjob = 2
 
         trf1.backend = Local()
-        t.appendTransform( trf1 )
+        t.appendTransform(trf1)
 
         # Create the second transform
         trf2 = CoreTransform()
@@ -525,13 +525,13 @@ j.submit()
 
         d = TaskChainInput()
         d.input_trf_id = trf1.getID()
-        trf2.addInputData( d )
+        trf2.addInputData(d)
 
         trf2.splitter = GangaDatasetSplitter()
         trf2.splitter.files_per_subjob = 2
 
         trf2.backend = Local()
-        t.appendTransform( trf2 )
+        t.appendTransform(trf2)
 
         # Set the Task running
         t.float = 1
