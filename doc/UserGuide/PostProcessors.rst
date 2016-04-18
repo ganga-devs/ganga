@@ -184,6 +184,7 @@ can make a checker in your home directory called '``mychecker.py``'. In this fil
 ``check(j)``, which takes in your job as input and returns ``True`` (pass) or ``False`` (fail)
 
 .. code-block:: python
+
     import os
 
     def check(j):

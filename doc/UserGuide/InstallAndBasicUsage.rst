@@ -285,6 +285,7 @@ You can put your ganga commands into a python script and then execute it from th
 In addition, Ganga can be run in batch mode by just providing a script as the last argument:
 
 .. code-block:: bash
+
     ganga submit.py
     /cvmfs/ganga.cern.ch/runGanga.sh submit.py
 

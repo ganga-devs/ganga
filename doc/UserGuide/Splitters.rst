@@ -51,6 +51,7 @@ the following a try:
 This will produce subjobs with the exe and environment:
 
 .. code-block:: bash
+
     echo hello1 ; MYENV = test1  # subjob 1
     echo hello2 ; MYENV = test2  # subjob 2
 
