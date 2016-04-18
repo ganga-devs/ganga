@@ -153,7 +153,10 @@ def postprocessor_filter(value, item):
 #    if item is Job._schema['postprocessors']:
     if item in valid_jobtypes:
         ds = MultiPostProcessor()
-        ds.__construct__([value])
+        if isinstance(value, list) or isType(value, GangaList):
+            ds.__construct__(value)
+        else:
+            ds.__construct__([value])
         return ds
     else:
         raise PostProcessException(
