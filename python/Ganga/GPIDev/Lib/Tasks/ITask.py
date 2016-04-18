@@ -158,7 +158,7 @@ class ITask(GangaObject):
                             logger.debug("Remove Err2: %s" % str(err2))
                             pass
 
-        self._getRegistry()._remove(self)
+        self._getRegistry()._remove(self, auto_removed=1)
         logger.info("Task #%s deleted" % self.id)
 
     def clone(self):
