@@ -55,8 +55,8 @@ Excluded execution hosts, given as a string of space-separated names:
 'machine1 machine2 machine3'; or as a list of names:
 [ 'machine1', 'machine2', 'machine3' ]
 """ ),
-        "opsys": SimpleItem(defvalue="LINUX", doc="Operating system"),
-        "arch": SimpleItem(defvalue="INTEL", doc="System architecture"),
+        "opsys": SimpleItem(defvalue="", doc="Operating system"),
+        "arch": SimpleItem(defvalue="", doc="System architecture"),
         "memory": SimpleItem(defvalue=400, doc="Mininum physical memory"),
         "virtual_memory": SimpleItem(defvalue=400,
                                      doc="Minimum virtual memory"),
