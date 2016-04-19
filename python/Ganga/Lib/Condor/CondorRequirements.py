@@ -57,8 +57,8 @@ Excluded execution hosts, given as a string of space-separated names:
 """ ),
         "opsys": SimpleItem(defvalue="", doc="Operating system"),
         "arch": SimpleItem(defvalue="", doc="System architecture"),
-        "memory": SimpleItem(defvalue=400, doc="Mininum physical memory"),
-        "virtual_memory": SimpleItem(defvalue=400,
+        "memory": SimpleItem(defvalue=0, doc="Mininum physical memory"),
+        "virtual_memory": SimpleItem(defvalue=0,
                                      doc="Minimum virtual memory"),
         "other": SimpleItem(defvalue=[], typelist=["str"], sequence=1,
                             doc="""
