@@ -96,7 +96,6 @@ class SubJobXMLList(GangaObject):
             return
         cls = self.__class__
         obj = cls()
-        obj.__init__()
         new_dict = {}
         for dict_key, dict_value in self.__dict__.iteritems():
 
@@ -360,19 +359,20 @@ class SubJobXMLList(GangaObject):
                 subjob_data = self.__get_dataFile(str(index))
                 try:
                     sj_file = self._loadSubJobFromDisk(subjob_data)
-                except IOError as x:
+                except Exception as x:
                     logger.warning("Error loading XML file: %s" % str(x))
-                    if x.errno == errno.ENOENT:
-                        try:
-                            logger.debug("Loading subjob #%s from disk, recent changes may be lost" % index)
-                            subjob_data = self.__get_dataFile(str(index), True)
-                            sj_file = self._loadSubJobFromDisk(subjob_data)
-                            has_loaded_backup = True
-                        except Exception as err:
-                            logger.error("Error loading subjob XML:\n%s" % str(err))
+                    try:
+                        logger.debug("Loading subjob #%s from disk, recent changes may be lost" % index)
+                        subjob_data = self.__get_dataFile(str(index), True)
+                        sj_file = self._loadSubJobFromDisk(subjob_data)
+                        has_loaded_backup = True
+                    except Exception as err:
+                        logger.error("Error loading subjob XML:\n%s" % str(err))
+
+                        if isinstance(x, IOError) and x.errno == errno.ENOENT:
                             raise IOError("Subobject %s not found: %s" % (index, x))
-                    else:
-                        raise RepositoryError(self,"IOError on loading subobject %s: %s" % (index, x))
+                        else:
+                            raise RepositoryError(self,"IOError on loading subobject %s: %s" % (index, x))
 
                 from Ganga.Core.GangaRepository.VStreamer import from_file
 
@@ -385,6 +385,7 @@ class SubJobXMLList(GangaObject):
                     try:
                         logger.warning("Loading subjob #%s from backup, recent changes may be lost" % index)
                         subjob_data = self.__get_dataFile(str(index), True)
+                        sj_file = self._loadSubJobFromDisk(subjob_data)
                         loaded_sj = from_file(sj_file)[0]
                         has_loaded_backup = True
                     except Exception as err:
@@ -392,14 +393,13 @@ class SubJobXMLList(GangaObject):
                         logger.debug("Err:\n%s" % str(err))
                         raise
 
-                # if load was successful then set parent and add to the _cachedJobs dict
-                if loaded_sj:
-                    loaded_sj._setParent( self._definedParent )
-                    if has_loaded_backup:
-                        loaded_sj._setDirty()
-                    else:
-                        loaded_sj._setFlushed()
-                    self._cachedJobs[index] = loaded_sj
+                loaded_sj._setParent( self._definedParent )
+                if has_loaded_backup:
+                    loaded_sj._setDirty()
+                    loaded_sj._getParent()._setDirty()
+                else:
+                    loaded_sj._setFlushed()
+                self._cachedJobs[index] = loaded_sj
 
         return self._cachedJobs[index]
 

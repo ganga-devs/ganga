@@ -51,12 +51,12 @@ class TestSJXMLCorruption(GangaUnitTest):
         global global_AutoStartReg
         global_AutoStartReg = False
 
+        stripProxy(sj)._getRegistry().flush_all()
+
         for sj in j.subjobs:
             stripProxy(sj)._setDirty()
 
-        while stripProxy(j)._dirty:
-            import time
-            time.sleep(0.5)
+        stripProxy(sj)._getRegistry().flush_all()
 
         for sj in j.subjobs:
             stripProxy(sj)._setDirty()
@@ -89,6 +89,13 @@ class TestSJXMLCorruption(GangaUnitTest):
 
         assert backend2 is not None
 
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+        assert stripProxy(jobs(0).subjobs(0))._dirty is True
+        print("jobs(0): %s" % str(stripProxy(jobs(0))))
+        assert stripProxy(jobs(0))._dirty is True
+
+        stripProxy(sj)._getRegistry().flush_all()
+
         global global_AutoStartReg
         global_AutoStartReg = False
 
@@ -111,8 +118,11 @@ class TestSJXMLCorruption(GangaUnitTest):
             myTempfile.flush()
             myTempName = myTempfile.name
 
-        import filecmp
-        assert filecmp.cmp(XMLFileName, myTempName)
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+        assert stripProxy(jobs(0).subjobs(0))._dirty is False
+        assert stripProxy(jobs(0))._dirty is False
+
+        assert open(XMLFileName, 'r').read() == open(myTempName, 'r').read()
         unlink(myTempName)
 
         global global_AutoStartReg
@@ -136,6 +146,12 @@ class TestSJXMLCorruption(GangaUnitTest):
             myTempfile.write(badStr)
             myTempfile.flush()
             myTempName=myTempfile.name
+
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+        assert stripProxy(jobs(0).subjobs(0))._dirty is True
+        assert stripProxy(jobs(0))._dirty is True
+
+        stripProxy(jobs(0).subjobs(0))._getRegistry().flush_all()
 
         assert open(XMLFileName).read() != open(myTempName).read()
         unlink(myTempName)
