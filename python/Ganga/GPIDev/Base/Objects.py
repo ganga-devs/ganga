@@ -970,10 +970,16 @@ class GangaObject(Node):
         """Un-Set the dirty flag all of the way down the schema."""
         if self._schema:
             for k in self._schema.allItemNames():
+                ## Avoid attributes the likes of job.master which crawl back up the tree
+                if self._schema[k].hasProperty('visitable'):
+                    if (not self._schema[k].getProperties()['visitable'] or self._schema[k].getProperties()['visitable'] == 0):
+                        continue
+                if self._schema[k].hasProperty('transient'):
+                    if(self._schema[k].getProperties()['transient'] or self._schema[k].getProperties()['transient'] == 1):
+                        continue
                 this_attr = getattr(self, k)
                 if isinstance(this_attr, Node):
-                    if this_attr._dirty:
-                        this_attr._setFlushed()
+                    this_attr._setFlushed()
         self._dirty = False
 
     # post __init__ hook automatically called by GPI Proxy __init__
