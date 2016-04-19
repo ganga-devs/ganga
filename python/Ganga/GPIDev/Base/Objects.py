@@ -361,8 +361,12 @@ class Node(object):
 
     def getNodeIndexCache(self, force_cache=False):
         if self.fullyLoadedFromDisk() and not force_cache:
-            ## Fully loaded so lets regenerate this on the fly to avoid losing data
-            return self._getRegistry().getIndexCache(self)
+            if self._getRegistry():
+                ## Fully loaded so lets regenerate this on the fly to avoid losing data
+                return self._getRegistry().getIndexCache(self)
+            else:
+                ## No registry therefore can't work out the Cache, probably empty, lets return that
+                return self._index_cache
         ## Not in registry or not loaded, so can't re-generate if requested
         return self._index_cache
                                                                  
