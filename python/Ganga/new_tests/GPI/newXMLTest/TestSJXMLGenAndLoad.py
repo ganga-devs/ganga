@@ -29,9 +29,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         j=Job(splitter=ArgSplitter(args=testArgs))
         assert len(jobs) == 1
         from Ganga.GPIDev.Base.Proxy import stripProxy
-        while stripProxy(j)._dirty:
-            import time
-            time.sleep(0.5)
+        stripProxy(j)._getRegistry().flush_all()
         stripProxy(j)._setDirty()
 
     def test_b_JobXMLExists(self):
