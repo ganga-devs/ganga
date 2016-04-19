@@ -396,7 +396,6 @@ class SubJobXMLList(GangaObject):
                 loaded_sj._setParent( self._definedParent )
                 if has_loaded_backup:
                     loaded_sj._setDirty()
-                    loaded_sj._getParent()._setDirty()
                 else:
                     loaded_sj._setFlushed()
                 self._cachedJobs[index] = loaded_sj
