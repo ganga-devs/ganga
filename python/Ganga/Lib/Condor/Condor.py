@@ -113,7 +113,8 @@ class Condor(IBackend):
         "globusscheduler": SimpleItem(defvalue="", doc="Globus scheduler to be used (required for Condor-G submission)"),
         "globus_rsl": SimpleItem(defvalue="",
                                  doc="Globus RSL settings (for Condor-G submission)"),
-
+        "accounting_group": SimpleItem(defvalue='', doc="Provide an accounting group for this job."),
+        "cdf_options": SimpleItem(defvalue={}, doc="Additional options to set in the CDF file given by a dictionary")
     })
 
     _category = "backends"
@@ -365,6 +366,13 @@ class Condor(IBackend):
                 'stream_error': 'false',
                 'getenv': self.getenv
             }
+
+        # extend with additional cdf options
+        cdfDict.update(self.cdf_options)
+
+        # accounting group
+        if self.accounting_group:
+            cdfDict['accounting_group'] = self.accounting_group
 
         envList = []
         if self.env:

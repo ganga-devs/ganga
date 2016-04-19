@@ -222,7 +222,7 @@ class Node(object):
         # will not throw away information
 
         if not hasattr(_srcobj, '__class__') and not inspect.isclass(_srcobj.__class__):
-            raise GangaValueError("Can't copyFrom a non-class object: %s isclass: %s" % (str(_srcobj), str(inspect.isclass(_srcobj))))
+            raise GangaValueError("Can't copyFrom a non-class object: %s isclass: %s" % (_srcobj, inspect.isclass(_srcobj)))
 
         if not isinstance(self, _srcobj.__class__) and not isinstance(_srcobj, self.__class__):
             raise GangaValueError("copyFrom: Cannot copy from %s to %s!" % (_getName(_srcobj), _getName(self)))
@@ -246,7 +246,7 @@ class Node(object):
         for key, val in src_dict.iteritems():
             this_attr = getattr(srcobj, key)
             if isinstance(this_attr, Node) and key not in do_not_copy:
-                #logger.debug("k: %s  Parent: %s" % (str(key), (srcobj)))
+                #logger.debug("k: %s  Parent: %s" % (key, (srcobj)))
                 this_attr._setParent(srcobj)
 
     def _actually_copyFrom(self, _srcobj, _ignore_atts):
@@ -255,7 +255,7 @@ class Node(object):
             if name in _ignore_atts:
                 continue
 
-            #logger.debug("Copying: %s : %s" % (str(name), str(item)))
+            #logger.debug("Copying: %s : %s" % (name, item))
             if name == 'application' and hasattr(_srcobj.application, 'is_prepared'):
                 _app = _srcobj.application
                 if _app.is_prepared not in [None, True]:
@@ -322,9 +322,9 @@ class Node(object):
         # Check each schema item in turn and check for equality
         for (name, item) in self._schema.allItems():
             if item['comparable'] == True:
-                #logger.info("testing: %s::%s" % (str(_getName(self)), str(name)))
+                #logger.info("testing: %s::%s" % (_getName(self), name))
                 if getattr(self, name) != getattr(node, name):
-                    #logger.info( "diff: %s::%s" % (str(_getName(self)), str(name)))
+                    #logger.info( "diff: %s::%s" % (_getName(self), name))
                     return False
 
         return True
@@ -504,8 +504,8 @@ class Descriptor(object):
                 else:
                     new_v = v
                 if not isinstance(new_v, Node):
-                    logger.error("v: %s" % str(v))
-                    raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (str(v), str(type(v))))
+                    logger.error("v: %s" % v)
+                    raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (v, type(v)))
                 else:
                     new_v = self.__copyNodeObject(new_v, obj)
             else:
@@ -906,12 +906,12 @@ class GangaObject(Node):
                     from time import sleep
                     sleep(_sleep_size)  # Sleep 2 sec between tests
                     logger.info("Waiting on Write access to registry: %s" % reg.name)
-                    logger.debug("err: %s" % str(x))
+                    logger.debug("err: %s" % x)
                     err = x
                 _counter = _counter + 1
                 # Sleep 2 sec longer than the time taken to bail out
                 if _counter * _sleep_size >= _timeOut + 2:
-                    logger.error("Failed to get access to registry: %s. Reason: %s" % (reg.name, str(err)))
+                    logger.error("Failed to get access to registry: %s. Reason: %s" % (reg.name, err))
                     if err is not None:
                         raise err
 
@@ -959,18 +959,28 @@ class GangaObject(Node):
         try:
             return self._registry.find(self)
         except AttributeError, err:
-            logger.debug("_getRegistryID Exception: %s" % str(err))
+            logger.debug("_getRegistryID Exception: %s" % err)
             return None
 
     # mark object as "dirty" and inform the registry about it
     # the registry is always associated with the root object
     def _setDirty(self):
+        """ Set the dirty flag all the way up to the parent"""
         self._dirty = True
         parent = self._getParent()
         if parent is not None:
             parent._setDirty()
 
     def _setFlushed(self):
+        """Un-Set the dirty flag all of the way down the schema."""
+        if self._schema:
+            for k in self._schema.allItemNames():
+                ## Avoid attributes the likes of job.master which crawl back up the tree
+                if not self._schema[k].getProperties()['visitable'] or self._schema[k].getProperties()['transient']:
+                    continue
+                this_attr = getattr(self, k)
+                if isinstance(this_attr, Node):
+                    this_attr._setFlushed()
         self._dirty = False
 
     # post __init__ hook automatically called by GPI Proxy __init__
@@ -1034,7 +1044,7 @@ def string_type_shortcut_filter(val, item):
             obj._auto__init__()
             return obj
         except PluginManagerError as err:
-            logger.debug("string_type_shortcut_filter Exception: %s" % str(err))
+            logger.debug("string_type_shortcut_filter Exception: %s" % err)
             raise ValueError(err)
     return None
 

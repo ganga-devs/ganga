@@ -28,6 +28,9 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         from Ganga.GPI import Job, jobs, ArgSplitter
         j=Job(splitter=ArgSplitter(args=testArgs))
         assert len(jobs) == 1
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+        stripProxy(j)._getRegistry().flush_all()
+        stripProxy(j)._setDirty()
 
     def test_b_JobXMLExists(self):
         # Check things exist
@@ -109,10 +112,17 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
     def test_e_SubJobXMLExists(self):
         # Check other XML exit
         from Ganga.GPI import jobs
+        from Ganga.GPIDev.Base.Proxy import stripProxy
 
         assert len(jobs) == 1
 
         j=jobs(0)
+
+        for sj in j.subjobs:
+            this_bak = sj.backend
+            stripProxy(sj)._setDirty()
+        
+        stripProxy(stripProxy(j).subjobs).flush()
 
         assert path.isdir(getXMLDir(j))
 

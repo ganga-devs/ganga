@@ -337,7 +337,12 @@ class FlushedMemoryHandler(_MemHandler):
         _MemHandler.__init__(self, *args, **kwds)
 
     def shouldFlush(self, record):
-        return threading.currentThread().getName().find("GANGA_Update_Thread") == -1 or \
+        """
+        Right here is where we make the decision on what to buffer or not in the logger in the interactive mode.
+        The only thread we don't want to buffer is the MainThread. All other threads are supporting threads and not of primary interest.
+        The exception to this is when the MemHandler says we flush as we want to always flush then.
+        """
+        return (threading.currentThread().getName() == "MainThread") or \
                 _MemHandler.shouldFlush(self, record)
 
 

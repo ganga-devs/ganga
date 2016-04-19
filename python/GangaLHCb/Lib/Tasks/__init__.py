@@ -1,6 +1,3 @@
-from LHCbAnalysisTransform import LHCbAnalysisTransform
-from LHCbAnalysisTask import LHCbAnalysisTask
-
 from BKTestQuery import BKTestQuery
 
 from LHCbTask import LHCbTask
