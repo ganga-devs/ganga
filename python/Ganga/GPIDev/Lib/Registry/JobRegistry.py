@@ -150,19 +150,12 @@ class JobRegistrySlice(RegistrySlice):
         t = type(this_id)
         if t is int:
             try:
-                from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
-                if isType(self.objects, SubJobXMLList):
-                    print("Parent: %s" % str(self.objects._getParent()))
                 return _wrap(self.objects[this_id])
             except KeyError:
                 if self.name == 'templates':
                     raise RegistryKeyError('Template %d not found' % this_id)
                 else:
                     raise RegistryKeyError('Job %d not found' % this_id)
-            finally:
-                from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
-                if isType(self.objects, SubJobXMLList):
-                    print("Parent: %s" % str(self.objects._getParent()._dirty))
         elif t is tuple:
             ids = this_id
         elif t is str:
