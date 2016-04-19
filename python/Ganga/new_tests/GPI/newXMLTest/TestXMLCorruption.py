@@ -103,9 +103,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         assert stripProxy(jobs(0))._dirty is True
 
         stripProxy(jobs(0))._setDirty()
-        while stripProxy(jobs(0))._dirty:
-            import time
-            time.sleep(0.5)
+        stripProxy(jobs(0))._getRegistry().flush_all()
 
         from tempfile import NamedTemporaryFile
         with NamedTemporaryFile(delete=False) as myTempfile:

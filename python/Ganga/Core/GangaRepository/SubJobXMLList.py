@@ -4,6 +4,7 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaRepository.GangaRepository import RepositoryError
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 import errno
 import copy
 import threading
@@ -135,7 +136,7 @@ class SubJobXMLList(GangaObject):
                 try:
                     index_file_obj = open( index_file, "r" )
                     self._subjobIndexData = from_file( index_file_obj )[0]
-                except IOError, err:
+                except IOError as err:
                     self._subjobIndexData = None
 
                 if self._subjobIndexData is None:
@@ -164,7 +165,7 @@ class SubJobXMLList(GangaObject):
                             self._subjobIndexData[subjob_id] = new_data
                             continue
                             #self._subjobIndexData = {}
-            except Exception, err:
+            except Exception as err:
                 logger.error( "Subjob Index file open, error: %s" % str(err) )
                 self._subjobIndexData = {}
             finally:
@@ -178,7 +179,7 @@ class SubJobXMLList(GangaObject):
         """interface for writing the index which captures errors and alerts the user vs throwing uncaught exception"""
         try:
             self.__really_writeIndex()
-        except Exception as err:
+        except (IOError) as err:
             logger.debug("Can't write Index. Moving on as this is not essential to functioning it's a performance bug")
             logger.debug("Error: %s" % str(err))
 
@@ -208,7 +209,7 @@ class SubJobXMLList(GangaObject):
             index_file_obj = open( index_file, "w" )
             to_file( all_caches, index_file_obj )
             index_file_obj.close()
-        except Exception, err:
+        except (IOError) as err:
             logger.debug( "cache write error: %s" % str(err) )
 
     def __iter__(self):
@@ -289,6 +290,35 @@ class SubJobXMLList(GangaObject):
         """Return the actual subjobs"""
         return [self[i] for i in range(0, len(self))]
 
+    def getSafeJob(self):
+        # Return the job object or None, no faffing around with throwing exceptions
+        try:
+            job_obj = self.getJobObject()
+        except Exception as err:
+            logger.debug( "Error: %s" % str(err) )
+            try:
+                job_obj = self._getParent()
+            except Exception as err:
+                job_obj = None
+        #finally:
+        #    pass
+        return job_obj
+
+    def getMasterID(self):
+        # Return a string corresponding to the parent job ID
+        job_obj = self.getSafeJob()
+        if job_obj is not None:
+            try:
+                fqid = job_obj.getFQID('.')
+            except Exception as err:
+                try:
+                    fqid = job_obj.id
+                except:
+                    fqid = "unknown"
+        else:
+            fqid = "unknown"
+        return fqid
+
     def _loadSubJobFromDisk(self, subjob_data):
         """Load the subjob file 'subjob_data' from disk. No Parsing"""
         # For debugging where this was called from to try and push it to as high a level as possible at runtime
@@ -298,27 +328,10 @@ class SubJobXMLList(GangaObject):
         #print("\n\n\n")
         #import sys
         #sys.exit(-1)
-        try:
-            job_obj = self.getJobObject()
-        except Exception, err:
-            logger.debug( "Error: %s" % str(err) )
-            try:
-                job_obj = self._getParent()
-            except Exception as err:
-                job_obj = None
-            job_obj = None
-        finally:
-            pass
+        job_obj = self.getSafeJob()
         if job_obj is not None:
-            try:
-                fqid = job_obj.getFQID('.')
-                logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
-            except Exception as err:
-                try:
-                    _id = job_obj.id
-                except:
-                    _id = "unknown"
-                logger.debug("Loading subjob at: $s for job %s" % (subjob_data, _id))
+            fqid = self.getMasterID()
+            logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
         else:
             logger.debug( "Loading subjob at: %s" % subjob_data )
         sj_file = open(subjob_data, "r")
@@ -332,7 +345,7 @@ class SubJobXMLList(GangaObject):
         """Return a subjob based upon index"""
         try:
             return self._getItem(index)
-        except Exception as err:
+        except (GangaException, IOError, XMLFileError) as err:
             logger.error("CANNOT LOAD SUBJOB INDEX: %s. Reason: %s" % (index, err))
             raise
 
@@ -359,14 +372,14 @@ class SubJobXMLList(GangaObject):
                 subjob_data = self.__get_dataFile(str(index))
                 try:
                     sj_file = self._loadSubJobFromDisk(subjob_data)
-                except Exception as x:
+                except (XMLFileError, IOError) as x:
                     logger.warning("Error loading XML file: %s" % str(x))
                     try:
-                        logger.debug("Loading subjob #%s from disk, recent changes may be lost" % index)
+                        logger.debug("Loading subjob #%s for job #%s from disk, recent changes may be lost" % (index, self.getMasterID()))
                         subjob_data = self.__get_dataFile(str(index), True)
                         sj_file = self._loadSubJobFromDisk(subjob_data)
                         has_loaded_backup = True
-                    except Exception as err:
+                    except (IOError, XMLFileError) as err:
                         logger.error("Error loading subjob XML:\n%s" % str(err))
 
                         if isinstance(x, IOError) and x.errno == errno.ENOENT:
@@ -380,15 +393,15 @@ class SubJobXMLList(GangaObject):
                 loaded_sj = None
                 try:
                     loaded_sj = from_file(sj_file)[0]
-                except Exception as err:
+                except (IOError, XMLFileError) as err:
 
                     try:
-                        logger.warning("Loading subjob #%s from backup, recent changes may be lost" % index)
+                        logger.warning("Loading subjob #%s for job #%s from backup, recent changes may be lost" % (index, self.getMasterID()))
                         subjob_data = self.__get_dataFile(str(index), True)
                         sj_file = self._loadSubJobFromDisk(subjob_data)
                         loaded_sj = from_file(sj_file)[0]
                         has_loaded_backup = True
-                    except Exception as err:
+                    except (IOError, XMLFileError) as err:
                         logger.debug("Failed to Load XML for job: %s using: %s" % (str(index), str(subjob_data)))
                         logger.debug("Err:\n%s" % str(err))
                         raise
