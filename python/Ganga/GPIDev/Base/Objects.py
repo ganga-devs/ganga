@@ -971,9 +971,7 @@ class GangaObject(Node):
         if self._schema:
             for k in self._schema.allItemNames():
                 ## Avoid attributes the likes of job.master which crawl back up the tree
-                if self._schema[k].hasProperty('visitable') and not self._schema[k].getProperties()['visitable']:
-                    continue
-                if self._schema[k].hasProperty('transient') and self._schema[k].getProperties()['transient']:
+                if not self._schema[k].getProperties()['visitable'] or self._schema[k].getProperties()['transient']:
                     continue
                 this_attr = getattr(self, k)
                 if isinstance(this_attr, Node):
