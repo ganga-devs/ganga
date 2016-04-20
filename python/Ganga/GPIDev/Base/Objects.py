@@ -373,7 +373,7 @@ class Node(object):
     def fullyLoadedFromDisk(self):
         """This returns a boolean. and it's related to if self has_loaded in the Registry of this object"""
         if self._getRegistry():
-            return self._getRegistry().has_loaded(self):
+            return self._getRegistry().has_loaded(self)
         return True
 
 ##########################################################################
