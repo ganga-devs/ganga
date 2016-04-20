@@ -137,7 +137,7 @@ class FileWorkspace(object):
                 except OSError as err:
                     logger.debug("Move Error!")
                     logger.debug("Error moving file for deletion, not using new path")
-                    logger.debug("Error: %s" % str(err))
+                    logger.debug("Error: %s" % err)
                     remove_path = self.getPath()
 
                 self.__removeTrials = 0
@@ -167,10 +167,10 @@ class FileWorkspace(object):
 
         # FIXME: error strategy
         except OSError as x:
-            logger.debug("OSError: %s" % str(x))
+            logger.debug("OSError: %s" % x)
             raise
         except Exception as x:
-            logger.debug("Exception: %s" % str(x))
+            logger.debug("Exception: %s" % x)
             raise
 
 

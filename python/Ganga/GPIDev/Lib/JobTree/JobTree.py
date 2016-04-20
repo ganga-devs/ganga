@@ -105,14 +105,14 @@ class JobTree(GangaObject):
             ## catch thie exception
             if _dir not in returnable_folder.keys():
                 clean_path = os.path.join(*path)
-                raise TreeError(1, "Directory %s does not exist in folder %s, accessing: %s" % (str(_dir), str(top_level), str(clean_path)))
+                raise TreeError(1, "Directory %s does not exist in folder %s, accessing: %s" % (_dir, top_level, clean_path))
 
             ## 'cd' into the folder of interest
             returnable_folder = returnable_folder[_dir]
 
             if not isType(returnable_folder, type({})):
                 clean_path = os.path.join(*path)
-                raise TreeError(2, "%s not a directory, accessing: %s" % (str(_dir), str(clean_path)))
+                raise TreeError(2, "%s not a directory, accessing: %s" % (_dir, clean_path))
 
             top_level = _dir
 
@@ -131,7 +131,7 @@ class JobTree(GangaObject):
 
         if not isType(returnable_folder[local_dir], type({})):
             clean_path = os.path.join(*_path)
-            raise TreeError(2, "%s not a directory, accessing: %s" % (str(local_dir), str(clean_path)))
+            raise TreeError(2, "%s not a directory, accessing: %s" % (local_dir, clean_path))
 
         return returnable_folder[local_dir]
 
@@ -223,8 +223,8 @@ class JobTree(GangaObject):
                 return False
         except Exception, err:
             clean_path = os.path.join(*path)
-            logger.debug('Error getting path: %s' % str(clean_path))
-            logger.debug('%s' % str(err))
+            logger.debug('Error getting path: %s' % clean_path)
+            logger.debug('%s' % err)
             return False
         return True
 
@@ -280,7 +280,7 @@ class JobTree(GangaObject):
                     try:
                         self.__remove_dir(path=dpath, dir=pp[-1])
                     except KeyError:
-                        raise TreeError(1, "%s does not exist" % str(pp[-1]))
+                        raise TreeError(1, "%s does not exist" % pp[-1])
                 else:
                     for k in self.__get_folders().keys():
                         del self.__get_folders()[k]
@@ -421,7 +421,7 @@ class JobTree(GangaObject):
             pp = self.__get_path(path)
             fc = self.__folder_cd(pp)
 
-            #print("self._getRegistry(): %s" % str(stripProxy(self)._getRegistry()))
+            #print("self._getRegistry(): %s" % stripProxy(self)._getRegistry())
 
             for i in fc.keys():
                 if isType(fc[i], type({})):
@@ -441,7 +441,7 @@ class JobTree(GangaObject):
                         self.__remove_dir(path=path, dir=i)
                         self._setDirty()
                         #except ObjectNotInRegistryError as err:
-                        #    logger.debug("Object: %s Not in Reg: %s" % (str(_id), str(err)))
+                        #    logger.debug("Object: %s Not in Reg: %s" % (_id, err))
                         #    pass
                         try:
                             pass
@@ -449,7 +449,7 @@ class JobTree(GangaObject):
                             try:
                                 self._releaseWriteAccess()
                             except ObjectNotInRegistryError as err:
-                                logger.debug("Object: %s Not in Reg: %s" % (str(_id), str(err)))
+                                logger.debug("Object: %s Not in Reg: %s" % (_id, err))
                                 pass
 
     def printtree(self, path=None):

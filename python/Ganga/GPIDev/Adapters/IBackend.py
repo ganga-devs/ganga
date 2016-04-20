@@ -73,11 +73,11 @@ class IBackend(GangaObject):
 
             #from Ganga.Core.exceptions import GangaException
             #if isinstance(err, GangaException):
-            #    logger.error(str(err))
+            #    logger.error("%s" % err)
             #    #log_user_exception(logger, debug=True)
             #else:
             #    #log_user_exception(logger, debug=False)
-            logger.error("Parallel Job Submission Failed: %s" % str(err))
+            logger.error("Parallel Job Submission Failed: %s" % err)
         finally:
             pass
 
@@ -189,7 +189,7 @@ class IBackend(GangaObject):
             except Exception as x:
                 #sj.updateStatus('new')
                 if isType(x, GangaException):
-                    logger.error(str(x))
+                    logger.error("%s" % x)
                     log_user_exception(logger, debug=True)
                 else:
                     log_user_exception(logger, debug=False)
@@ -413,7 +413,7 @@ class IBackend(GangaObject):
         ## Have to import here so it's actually defined
         from Ganga.Core import monitoring_component
 
-        logger.debug("Running Monitoring for Jobs: %s" % str([j.getFQID('.') for j in jobs]))
+        logger.debug("Running Monitoring for Jobs: %s" % [j.getFQID('.') for j in jobs])
 
         ## Only process 10 files from the backend at once
         #blocks_of_size = 10
@@ -422,7 +422,7 @@ class IBackend(GangaObject):
             blocks_of_size = getConfig('PollThread')['numParallelJobs']
         except Exception as err:
             logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
-            logger.debug("Error: %s" % str(err))
+            logger.debug("Error: %s" % err)
             blocks_of_size = 5
         ## Separate different backends implicitly
         simple_jobs = {}
@@ -452,7 +452,7 @@ class IBackend(GangaObject):
                         if sj.status in ['submitted', 'running']:
                             monitorable_subjob_ids.append(sj.id)
 
-                #logger.info('Monitoring subjobs: %s', str(monitorable_subjob_ids)
+                #logger.info('Monitoring subjobs: %s', monitorable_subjob_ids)
 
                 if not monitorable_subjob_ids:
                     continue
@@ -485,7 +485,7 @@ class IBackend(GangaObject):
                             subjobs_to_monitor.append(j.subjobs[sj_id])
                         stripProxy(j.backend).updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
-                        logger.error("Monitoring Error: %s" % str(err))
+                        logger.error("Monitoring Error: %s" % err)
                     j.updateMasterJobStatus()
 
                 ## NB ONLY THE MASTER JOB IS KNOWN TO THE JOB REPO!!!
