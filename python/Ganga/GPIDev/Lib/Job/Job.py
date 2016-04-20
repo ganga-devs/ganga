@@ -50,14 +50,16 @@ def lazyLoadJobApplication(this_job):
     return lazyLoadJobObject(this_job, 'application')
 
 
-def lazyLoadJobObject(this_job, this_attr):
+def lazyLoadJobObject(raw_job, this_attr):
 
-    if stripProxy(this_job)._getRegistry():
-        if stripProxy(this_job)._getRegistry().has_loaded(stripProxy(this_job)):
+    this_job = stripProxy(raw_job)
+
+    if this_job._getRegistry():
+        if this_job._getRegistry().has_loaded(this_job):
             return getattr(this_job, this_attr)
 
     lzy_loading_str = 'display:'+ this_attr
-    job_index_cache = stripProxy(this_job).getNodeIndexCache()
+    job_index_cache = this_job.getNodeIndexCache()
     if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache.keys():
         obj_name = job_index_cache[lzy_loading_str]
         if obj_name is not None:
