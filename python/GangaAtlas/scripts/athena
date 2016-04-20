@@ -99,6 +99,7 @@ p.add_option('--panda', action='store_const', const='panda', dest='backend', hel
 p.add_option('--jedi', action='store_const', const='jedi', dest='backend', help='Submit job(s) to jedi')
 p.add_option('--lsf', action='store_const', const='lsf', dest='backend', help='Submit job(s) to the local LSF batch system, e.g. on lxplus')
 p.add_option('--condor', action='store_const', const='condor', dest='backend', help='Submit job(s) to the local Condor batch system')
+p.add_option('--arch', action='store', type='string', dest='arch', help='Set the architecture. By default will be taken from CMT (only used by Condor backend at present)')
 p.add_option('--pbs', action='store_const', const='pbs', dest='backend', help='Submit job(s) to the local PBS batch system')
 p.add_option('--sge', action='store_const', const='sge', dest='backend', help='Submit job(s) to the local SGE batch system')
 p.add_option('--local', action='store_const', const='local', dest='backend', help='Execute job on the local desktop computer')
@@ -624,6 +625,13 @@ elif opt.backend == 'cream':
 
 elif opt.backend == 'condor':
     j.backend = Condor()
+
+    # set the condor arch requirements from --arch or CMT if available
+    if opt.arch:
+        j.backend.requirements.arch = opt.arch
+    elif j.application.atlas_cmtconfig:
+        j.backend.requirements.arch = j.application.atlas_cmtconfig.split('-')[0].upper()
+
     if opt.queue: j.backend.queue = opt.queue        
 elif opt.backend == 'pbs':
     j.backend = PBS()
