@@ -71,9 +71,6 @@ class BoxRegistry(Registry):
         cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:
-            #if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
-            #    c[cv] = obj.getNodeIndexCache()[cv]
-            #else:
             try:
                 c[cv] = getattr(obj, cv)
             except AttributeError as err:

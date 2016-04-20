@@ -452,7 +452,7 @@ class Descriptor(object):
             return obj_data[name]
 
         # Then try to get it from the index cache
-        obj_index = obj.getNodeIndexCache()
+        obj_index = obj.getNodeIndexCache(force_cache=True)
         if name in obj_index:
             return obj_index[name]
 
