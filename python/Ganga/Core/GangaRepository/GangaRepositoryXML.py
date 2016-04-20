@@ -217,6 +217,8 @@ class GangaRepositoryLocal(GangaRepository):
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
+        for k in self._fully_loaded.keys():
+            self.index_write(k, shutdown=True)
         self._write_master_cache(True)
         self.sessionlock.shutdown()
 
@@ -279,22 +281,22 @@ class GangaRepositoryLocal(GangaRepository):
             logger.debug("Just silently continuing")
         return False
 
-    def index_write(self, this_id):
+    def index_write(self, this_id, shutdown=False):
         """ write an index file for this object (must be locked).
             Should not raise any Errors """
+        logger.debug("Writing index: %s" % this_id)
         obj = self.objects[this_id]
         try:
             ifn = self.get_idxfn(this_id)
             new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
-            if new_idx_cache != obj.getNodeIndexCache() or not os.path.exists(ifn):
+            if not os.path.exists(ifn) or shutdown:
                 new_cache = new_idx_cache
                 with open(ifn, "w") as this_file:
-                    pickle_to_file((obj._category, getName(obj), new_cache), this_file)
+                    new_index = (obj._category, getName(obj), new_cache)
+                    logger.debug("Writing: %s" % str(new_index))
+                    pickle_to_file(new_index, this_file)
                 self._cached_obj[this_id] = new_cache
                 obj.setNodeIndexCache({})
-                #all_cache = new_cache.keys()
-                #for attr in all_cache:
-                #    obj.removeNodeIndexCacheAttribute(attr)
             self._cached_obj[this_id] = new_idx_cache
         except IOError as err:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn, getName(err), err))
@@ -369,6 +371,7 @@ class GangaRepositoryLocal(GangaRepository):
             if os.path.isfile(_master_idx) and not shutdown:
                 if abs(self._master_index_timestamp - os.stat(_master_idx).st_ctime) < 300:
                     return
+
             items_to_save = self.objects.iteritems()
             #logger.info("Updating Items: %s" % self.objects.keys())
             for k, v in items_to_save:
@@ -380,6 +383,7 @@ class GangaRepositoryLocal(GangaRepository):
                         new_index = None
                         if obj is not None:
                             new_index = self.registry.getIndexCache(stripProxy(obj))
+
                         if new_index is not None:
                             #logger.debug("k: %s" % k)
                             arr_k = [k]
@@ -388,9 +392,11 @@ class GangaRepositoryLocal(GangaRepository):
                                 self.unlock(arr_k)
                                 #stripProxy(obj).setNodeIndexCache(new_index)
                                 self._cached_obj[k] = new_index
+
                 except Exception as err:
                     logger.debug("Failed to update index: %s on startup/shutdown" % k)
                     logger.debug("Reason: %s" % err)
+
             #cached_list = []
             iterables = self._cache_load_timestamp.iteritems()
             for k, v in iterables:
@@ -413,6 +419,7 @@ class GangaRepositoryLocal(GangaRepository):
                     cached_list.append(self._cached_cls[k])
                     cached_list.append(self._cached_obj[k])
                     this_master_cache.append(cached_list)
+
             try:
                 with open(_master_idx, 'w') as of:
                     pickle_to_file(this_master_cache, of)
