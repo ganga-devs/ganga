@@ -158,7 +158,7 @@ class TestRepo(GangaUnitTest):
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def test_pass1(self):
-        t = TestRepository(1)
+        t = testRepository(1)
         while not t.isReadyForCheck():
             pass
         returnable = t.checkTest()
@@ -168,7 +168,7 @@ class TestRepo(GangaUnitTest):
         return returnable
 
     def test_pass2(self):
-        t = TestRepository(1)
+        t = testRepository(1)
         while not t.isReadyForCheck():
             pass
         returnable = t.checkTest()
@@ -178,7 +178,8 @@ class TestRepo(GangaUnitTest):
         return returnable
 
 
-class TestRepository(object):
+class testRepository(object):
+
     def __init__(self, id):
         self.id = id
         fr = FakeRegistry('TestRegistry')
