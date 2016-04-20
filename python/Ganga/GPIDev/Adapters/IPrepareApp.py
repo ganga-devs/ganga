@@ -98,7 +98,7 @@ class IPrepareApp(IApplication):
                                 if not os.path.isidr(shr_dir):
                                     os.makedirs(shr_dir)
                                 shutil.copy2(subitem, shr_dir)
-                                logger.debug("Copying into: %s" % str(shr_dir))
+                                logger.debug("Copying into: %s" % shr_dir)
                             except IOError as e:
                                 logger.error(e)
                                 return 0
@@ -108,7 +108,7 @@ class IPrepareApp(IApplication):
                             shr_dir = os.path.join(shared_path, self.is_prepared.name)
                             if not os.path.isdir(shr_dir):
                                 os.makedirs(shr_dir)
-                                logger.debug("Copying into: %s" % str(shr_dir))
+                                logger.debug("Copying into: %s" % shr_dir)
                             shutil.copy2(subitem.name, shr_dir)
                         except IOError as e:
                             logger.error(e)
@@ -123,7 +123,7 @@ class IPrepareApp(IApplication):
                         shr_dir = os.path.join(shared_path, self.is_prepared.name)
                         if not os.path.isdir(shr_dir):
                             os.makedirs(shr_dir)
-                        logger.debug("Copying into: %s" % str(shr_dir))
+                        logger.debug("Copying into: %s" % shr_dir)
                         shutil.copy2(prepitem, shr_dir)
                     except IOError as e:
                         logger.error(e)
@@ -135,7 +135,7 @@ class IPrepareApp(IApplication):
                     shr_dir = os.path.join(shared_path, self.is_prepared.name)
                     if not os.path.isdir(shr_dir):
                         os.makedirs(shr_dir)
-                    logger.debug("Copying into: %s" % str(shr_dir))
+                    logger.debug("Copying into: %s" % shr_dir)
                     shutil.copy2(prepitem.name, shr_dir)
                 except IOError as e:
                     logger.error(e)
@@ -157,7 +157,7 @@ class IPrepareApp(IApplication):
             import hashlib
             digest = hashlib.new('md5')
         except Exception as err:
-            logger.debug("Err: %s" % str(err))
+            logger.debug("Err: %s" % err)
             import md5
             digest = md5.new()
 

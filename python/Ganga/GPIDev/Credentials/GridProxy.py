@@ -336,7 +336,7 @@ class GridProxy(ICredential):
                 except IndexError:
                     pass
         except Exception as err:
-            logger.debug("Err: %s" % str(err))
+            logger.debug("Err: %s" % err)
             pass
 
         id = "".join(cn.split())

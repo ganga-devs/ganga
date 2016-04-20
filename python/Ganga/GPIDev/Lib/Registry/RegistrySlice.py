@@ -66,7 +66,7 @@ class RegistrySlice(object):
                 if not keep_going:
                     raise
             except Exception as x:
-                logger.exception('%s %s %s: %s %s', doc, self.name, _id, getName(x), str(x))
+                logger.exception('%s %s %s: %s %s', doc, self.name, _id, getName(x), x)
                 if not keep_going:
                     raise
         return result
@@ -139,10 +139,10 @@ class RegistrySlice(object):
             for line in split_str:
                 line = line.strip()
             flat_str = ''.join(split_str)
-            attrs_str += ", %s=\"%s\"" % (str(a), flat_str)
+            attrs_str += ", %s=\"%s\"" % (a, flat_str)
 
-        logger.debug("Attrs_Str: %s" % str(attrs_str))
-        logger.debug("Constructing slice: %s" % str("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str)))
+        logger.debug("Attrs_Str: %s" % attrs_str)
+        logger.debug("Constructing slice: %s" % ("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str)))
         this_slice = self.__class__("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str))
 
         def append(id, obj):
@@ -177,7 +177,7 @@ class RegistrySlice(object):
                 else:
                     attrs[k] = new_val
 
-        logger.debug("do_select: attrs: %s" % str(attrs))
+        logger.debug("do_select: attrs: %s" % attrs)
 
         def select_by_list(this_id):
             return this_id in ids
@@ -199,9 +199,9 @@ class RegistrySlice(object):
 
         for this_id in self.objects.keys():
             obj = self.objects[this_id]
-            logger.debug("id, obj: %s, %s" % (str(this_id), str(obj)))
+            logger.debug("id, obj: %s, %s" % (this_id, obj))
             if select(int(this_id)):
-                logger.debug("Selected: %s" % str(this_id))
+                logger.debug("Selected: %s" % this_id)
                 selected = True
                 for a in attrs:
                     if self.name == 'box':
@@ -225,7 +225,7 @@ class RegistrySlice(object):
                         else:
                             from Ganga.GPIDev.Base import GangaAttributeError
                             raise GangaAttributeError(
-                                'undefined select attribute: %s' % str(a))
+                                'undefined select attribute: %s' % a)
                     else:
 
                         if a == 'ids':
@@ -238,8 +238,8 @@ class RegistrySlice(object):
                                 logger.debug("Here: %s, is item: %s" % (a, type(item)))
                             except KeyError as err:
                                 from Ganga.GPIDev.Base import GangaAttributeError
-                                logger.debug("KeyError getting item: '%s' from schema" % str(a))
-                                raise GangaAttributeError('undefined select attribute: %s' % str(a))
+                                logger.debug("KeyError getting item: '%s' from schema" % a)
+                                raise GangaAttributeError('undefined select attribute: %s' % a)
                             else:
                                 attrvalue = attrs[a]
 
@@ -278,7 +278,7 @@ class RegistrySlice(object):
                 else:
                     logger.debug("NOT Actually Selected")
             else:
-                logger.debug("NOT Selected: %s" % str(this_id))
+                logger.debug("NOT Selected: %s" % this_id)
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
@@ -322,7 +322,7 @@ class RegistrySlice(object):
             return addProxy(self.objects[this_id])
         except KeyError as err:
             logger.debug('Object id=%d not found' % this_id)
-            logger.deubg("%s" % str(err))
+            logger.deubg("%s" % err)
             raise RegistryKeyError('Object id=%d not found' % this_id)
 
     def __iter__(self):
@@ -403,15 +403,15 @@ class RegistrySlice(object):
                 else:
                     val = self._getatr(obj, item.split('.'))
             except KeyError as err:
-                logger.debug("_get_display_value KeyError: %s" % str(err))
-                logger.debug("item: \"%s\"" % str(item))
-                #logger.debug("func: %s" % str(config[self._display_prefix + '_columns_functions']))
+                logger.debug("_get_display_value KeyError: %s" % err)
+                logger.debug("item: \"%s\"" % item)
+                #logger.debug("func: %s" % config[self._display_prefix + '_columns_functions'])
                 #val = self._getatr(obj, item.split('.'))
                 val = ""
             if not val and not item in self._display_columns_show_empty:
                 val = ""
         except AttributeError as err:
-            logger.debug("AttibErr: %s" % str(err))
+            logger.debug("AttibErr: %s" % err)
             val = ""
         finally:
             pass
@@ -475,7 +475,7 @@ class RegistrySlice(object):
                             vals.append(str(cached_data[display_str])[0:width])
                     continue
                 except KeyError as err:
-                    logger.debug("_display KeyError: %s" % str(err))
+                    logger.debug("_display KeyError: %s" % err)
                     pass
                 if item == "fqid":
                     vals.append(self._get_display_value(obj, item))
