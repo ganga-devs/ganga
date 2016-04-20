@@ -103,6 +103,10 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
 safe_save.lock = threading.Lock()
 
 def rmrf(name, count=0):
+    """
+    Safely recursively remove a file/folder from disk by first moving it then removing it
+    calls self and will only attempt to move/remove a file 3 times before giving up
+    """
 
     if count != 0:
         logger.debug("Trying again to remove: %s" % name)
@@ -172,6 +176,9 @@ class GangaRepositoryLocal(GangaRepository):
     """GangaRepository Local"""
 
     def __init__(self, registry):
+        """
+        Initialize a Repository from within a Registry and keep a reference to the Registry which 'owns' it
+        """
         super(GangaRepositoryLocal, self).__init__(registry)
         self.dataFileName = "data"
         self.sub_split = "subjobs"
@@ -213,7 +220,8 @@ class GangaRepositoryLocal(GangaRepository):
 
     def shutdown(self):
         """Shutdown the repository. Flushing is done by the Registry
-        Raise RepositoryError"""
+        Raise RepositoryError
+        Write an index file for all new objects in memory and master index file of indexes"""
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
@@ -283,7 +291,8 @@ class GangaRepositoryLocal(GangaRepository):
 
     def index_write(self, this_id, shutdown=False):
         """ write an index file for this object (must be locked).
-            Should not raise any Errors """
+            Should not raise any Errors,
+            shutdown=True causes this to always be written regardless of any checks"""
         logger.debug("Writing index: %s" % this_id)
         obj = self.objects[this_id]
         try:
@@ -332,6 +341,9 @@ class GangaRepositoryLocal(GangaRepository):
         return objs
 
     def _read_master_cache(self):
+        """
+        read in the master cache to reduce significant I/O over many indexes separately on startup
+        """
         try:
             _master_idx = os.path.join(self.root, 'master.idx')
             if os.path.isfile(_master_idx):
@@ -354,6 +366,9 @@ class GangaRepositoryLocal(GangaRepository):
             self._clear_stored_cache()
 
     def _clear_stored_cache(self):
+        """
+        clear the master cache(s) which have been stored in memory
+        """
         for k, v in self._cache_load_timestamp.iteritems():
             self._cache_load_timestamp.pop(k)
         for k, v in self._cached_cat.iteritems():
@@ -364,6 +379,10 @@ class GangaRepositoryLocal(GangaRepository):
             self._cached_obj.pop(k)
 
     def _write_master_cache(self, shutdown=False):
+        """
+        write a master index cache once per 300sec
+        shutdown=True causes this to be written now
+        """
         #logger.info("Updating master index: %s" % self.registry.name)
         try:
             _master_idx = os.path.join(self.root, 'master.idx')
@@ -436,6 +455,10 @@ class GangaRepositoryLocal(GangaRepository):
         return
 
     def updateLocksNow(self):
+        """
+        Trigger the session locks to all be updated now
+        This is useful when the SessionLock is updating either too slowly or has gone to sleep when there are multiple sessions
+        """
         self.sessionlock.updateNow()
 
     def update_index(self, this_id=None, verbose=False, firstRun=False):
@@ -583,6 +606,10 @@ class GangaRepositoryLocal(GangaRepository):
         return ids
 
     def _safe_flush_xml(self, this_id):
+        """
+        Flush XML to disk whilst checking for relavent SubJobXMLList which handles subjobs now
+        flush for "this_id" in the self.objects list
+        """
 
         fn = self.get_fn(this_id)
         obj = self.objects[this_id]
@@ -590,7 +617,8 @@ class GangaRepositoryLocal(GangaRepository):
         if not isType(obj, EmptyGangaObject):
             split_cache = None
 
-            has_children = (not self.sub_split is None) and (self.sub_split in obj.getNodeData()) and obj.getNodeAttribute(self.sub_split) and len(obj.getNodeAttribute(self.sub_split)) > 0
+            has_children = (not self.sub_split is None) and\
+                    (self.sub_split in obj.getNodeData()) and obj.getNodeAttribute(self.sub_split) and len(obj.getNodeAttribute(self.sub_split)) > 0
 
             if has_children:
 
@@ -651,6 +679,9 @@ class GangaRepositoryLocal(GangaRepository):
             self._fully_loaded[this_id] = obj
 
     def flush(self, ids):
+        """
+        flush the set of "ids" to disk and write the XML representing said objects in self.objects
+        """
         logger.debug("Flushing: %s" % ids)
 
         #import traceback
@@ -678,11 +709,17 @@ class GangaRepositoryLocal(GangaRepository):
                 raise RepositoryError(self, "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x))
 
     def is_loaded(self, this_id):
-
+        """
+        Has "this_id" been loaded from disk already
+        Check self.objects for the ._data sttribute
+        """
         return (this_id in self.objects) and (self.objects[this_id].getNodeData() is not None)
 
     def count_nodes(self, this_id):
-
+        """
+        Count the number of nodes in "this_id" of self.objects"
+        Is this used any more?
+        """
         node_count = 0
         fn = self.get_fn(this_id)
 
@@ -697,10 +734,17 @@ class GangaRepositoryLocal(GangaRepository):
         return node_count
 
     def _actually_loaded(self, this_id):
+        """
+        Return if "this_id" is in the _full_loaded dictionary of objects loaded from XML by this class
+        This is different to is_loaded as it checks for actual read operations
+        """
         return this_id in self._fully_loaded.keys()
 
     def _check_index_cache(self, obj, this_id):
-
+        """
+        Checks the index cache of "this_id" against the index cache generated from the "obj"ect
+        If there is a problem then the object is unloaded from memory but will not do anything if everything agrees here
+        """
         new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
         if new_idx_cache != obj.getNodeIndexCache():
             logger.debug("NEW: %s" % new_idx_cache)
@@ -729,8 +773,13 @@ class GangaRepositoryLocal(GangaRepository):
                 # process modifying the repo
                 #obj.setNodeIndexCache(None)
 
-    def _must_actually_load_xml(self, fobj, fn, this_id, load_backup, has_children, tmpobj, errs):
-
+    def _must_actually_load_xml(self, fn, this_id, load_backup, has_children, tmpobj):
+        """
+        If we must actually load the object from disk then we end up here.
+        This replaces the attrs of "objects[this_id]" with the attrs from tmpobj
+        If there are children then a SubJobXMLList is created to manage them.
+        The fn of the job is passed to the SubbJobXMLList and there is some knowledge of if we should be loading the backup passed as well
+        """
         obj = self.objects[this_id]
         for key, val in tmpobj.getNodeData().iteritems():
             obj.setNodeAttribute(key, val)
@@ -760,7 +809,10 @@ class GangaRepositoryLocal(GangaRepository):
             self._fully_loaded[this_id] = obj
 
     def _actually_load_xml(self, fobj, fn, this_id, load_backup):
-
+        """
+        This is the method which will load the job from fn using the fobj using the self.from_file method and _must_actually_load_xml is called to replace the
+        self.objects[this_id] with the correct attributes. We also preseve knowledge of if we're being asked to load a backup or not
+        """
         #print("ACTUALLY LOAD")
 
         tmpobj = None
@@ -780,7 +832,7 @@ class GangaRepositoryLocal(GangaRepository):
             has_children = (self.sub_split is not None) and (self.sub_split in tmpobj.getNodeData()) and len(tmpobj.getNodeAttribute(self.sub_split)) == 0
 
             if this_id in self.objects:
-                self._must_actually_load_xml(fobj, fn, this_id, load_backup, has_children, tmpobj, errs)
+                self._must_actually_load_xml(fn, this_id, load_backup, has_children, tmpobj)
 
             else:
                 #tmpobj.setNodeIndexCache(None)
@@ -799,7 +851,9 @@ class GangaRepositoryLocal(GangaRepository):
         logger.debug("Finished Loading XML")
 
     def _open_xml_file(self, fn, this_id, _copy_backup=False):
-
+        """
+        This loads the XML for the job "this_id" in self.objects using the file "fn" and knowing whether we want the file or the backup by _copy_backup
+        """
         fobj = None
 
         has_loaded_backup = False
@@ -842,7 +896,11 @@ class GangaRepositoryLocal(GangaRepository):
         return fobj, has_loaded_backup
 
     def load(self, ids, load_backup=False):
-
+        """
+        Load the following "ids" from disk
+        If we want to load the backup files for these ids then use _copy_backup
+        Correctly loaded objects are dirty, Objects loaded from backups for whatever reason are marked dirty
+        """
         #print("load: %s " % ids)
         #import traceback
         #traceback.print_stack()
@@ -898,6 +956,10 @@ class GangaRepositoryLocal(GangaRepository):
 
 
     def _handle_load_exception(self, err, fn, this_id, load_backup):
+        """
+        This method does a lot of the handling of an exception thrown from the load method
+        We will return True/False here, True if the error can be correctly caught and False if this is terminal and we couldn't load the object
+        """
         if isType(err, XMLFileError):
             logger.error("XML File failed to load for Job id: %s" % this_id)
             logger.error("Actual Error was:\n%s" % err)
@@ -932,6 +994,9 @@ class GangaRepositoryLocal(GangaRepository):
         return False
 
     def delete(self, ids):
+        """
+        This is the method to 'delete' an object from disk, it's written in python and starts with the indexes first
+        """
         for this_id in ids:
             # First remove the index, so that it is gone if we later have a
             # KeyError
@@ -948,9 +1013,15 @@ class GangaRepositoryLocal(GangaRepository):
                 del self.objects[this_id]
 
     def lock(self, ids):
+        """
+        Request a session lock for the following ids
+        """
         return self.sessionlock.lock_ids(ids)
 
     def unlock(self, ids):
+        """
+        Unlock (release file locks of) the following ids
+        """
         released_ids = self.sessionlock.release_ids(ids)
         if len(released_ids) < len(ids):
             logger.error("The write locks of some objects could not be released!")
@@ -984,6 +1055,9 @@ class GangaRepositoryLocal(GangaRepository):
         self.startup()
 
     def updateIndexCache(self, obj):
+        """
+        This method should be obsoleted fairly soon as it's no longer needed. We now handle caches correctly
+        """
         #stripProxy(obj).setNodeIndexCache(self.registry.getIndexCache(stripProxy(obj)))
         pass
 
