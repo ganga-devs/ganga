@@ -30,7 +30,7 @@ class BoxMetadataObject(GangaObject):
 
     """Internal object to store names"""
     _schema = Schema(Version(1, 0), {"name": SimpleItem(
-        defvalue="", copyable=1, doc='the name of this object', typelist=["str"])})
+        defvalue="", copyable=1, doc='the name of this object', typelist=[str])})
     _name = "BoxMetadataObject"
     _category = "internal"
     _enable_plugin = True

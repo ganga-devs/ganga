@@ -11,7 +11,7 @@ from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
-from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File import FileBuffer
 
 import Ganga.Utility.logging
@@ -35,8 +35,8 @@ class LocalFile(IGangaFile):
                                      'localDir': SimpleItem(defvalue="", doc='local dir where the file is stored, used from get and put methods'),
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
                                                 typelist=['Ganga.GPIDev.Lib.File.LocalFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
-                                     'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
-                                     #'output_location': SimpleItem(defvalue=None, typelist=['str', 'None'], hidden=1, copyable=1, doc="path of output location on disk")
+                                     'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
+                                     #'output_location': SimpleItem(defvalue=None, typelist=[str, None], hidden=1, copyable=1, doc="path of output location on disk")
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"

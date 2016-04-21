@@ -30,7 +30,7 @@ config = getConfig('ROOT')
 
 def getDefaultScript():
     name = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'defaultRootScript.C')
-    return File(name)
+    return File(name=name)
 
 class Root(IPrepareApp):
 
@@ -202,12 +202,12 @@ class Root(IPrepareApp):
 
     """
     _schema = Schema(Version(1, 1), {
-        'script': FileItem(defvalue=getDefaultScript(), preparable=1, doc='A File object specifying the script to execute when Root starts', checkset='_checkset_script'),
-        'args': SimpleItem(defvalue=[], typelist=['str', 'int'], sequence=1, doc="List of arguments for the script. Accepted types are numerics and strings"),
+        'script': FileItem(defvalue=None, preparable=1, doc='A File object specifying the script to execute when Root starts', checkset='_checkset_script'),
+        'args': SimpleItem(defvalue=[], typelist=[str, int], sequence=1, doc="List of arguments for the script. Accepted types are numerics and strings"),
         'version': SimpleItem(defvalue='6.04.02', doc="The version of Root to run"),
         'usepython': SimpleItem(defvalue=False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
-        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['None', 'bool'], protected=1, hidden=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash': SimpleItem(defvalue=None, typelist=['None', 'str'], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes')
+        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=[None, bool], protected=1, hidden=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes')
     })
     _category = 'applications'
     _name = 'Root'
@@ -219,6 +219,8 @@ class Root(IPrepareApp):
         from Ganga.GPIDev.Lib.File import getSharedPath
 
         self.shared_path = Ganga.GPIDev.Lib.File.getSharedPath()
+        if self.script is None or self.script == File():
+            self.script = getDefaultScript()
 
     def configure(self, masterappconfig):
         return (None, None)

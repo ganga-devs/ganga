@@ -33,7 +33,7 @@ class Localhost(IBackend):
     """
     _schema = Schema(Version(1, 2), {'id': SimpleItem(defvalue=-1, protected=1, copyable=0, doc='Process id.'),
                                      'status': SimpleItem(defvalue=None, typelist=[None, str], protected=1, copyable=0, hidden=1, doc='*NOT USED*'),
-                                     'exitcode': SimpleItem(defvalue=None, typelist=['int', 'None'], protected=1, copyable=0, doc='Process exit code.'),
+                                     'exitcode': SimpleItem(defvalue=None, typelist=[int, None], protected=1, copyable=0, doc='Process exit code.'),
                                      'workdir': SimpleItem(defvalue='', protected=1, copyable=0, doc='Working directory.'),
                                      'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Hostname where the job was submitted.'),
                                      'wrapper_pid': SimpleItem(defvalue=-1, protected=1, copyable=0, hidden=1, doc='(internal) process id of the execution wrapper'),
