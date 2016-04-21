@@ -241,6 +241,9 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             index_cat = raw_j._category
             this_index_cache = (index_cat, index_cls, index_cache)
 
+            print("just-built index: %s" % str(this_index_cache))
+            print("from disk: %s" % str(obj))
+
             assert this_index_cache == obj
 
     def test_i_testSJXMLIndex(self):

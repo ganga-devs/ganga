@@ -13,11 +13,11 @@ global_AutoStartReg = True
 notXMLStr = ['ThisIsNOTXML' for _ in range(20)]
 badStr = ''.join(notXMLStr)
 
-class TestXMLGenAndLoad(GangaUnitTest):
+class TestXMLCorruption(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestXMLGenAndLoad, self).setUp()
+        super(TestXMLCorruption, self).setUp()
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
         setConfigOption('Configuration', 'AutoStartReg', global_AutoStartReg)
