@@ -47,12 +47,10 @@ if not _hasInit:
     logging.basicConfig(stream=sys.stdout)
     _hasIinit = True
 
-logger_name_limit = 35
-
 _formats = {
-    'DEBUG': '%(asctime)s "%(filename)s":%(funcName)-10s at %(lineno)d, %(threadName)s: %(levelname)-8s %(message)s',
-    'VERBOSE': '%(asctime)s %(name)-' + str(logger_name_limit) + 's: %(levelname)-8s %(message)s',
-    'NORMAL': '%(name)-' + str(logger_name_limit) + 's: %(levelname)-8s %(message)s',
+    'DEBUG': '%(asctime)s "%(filename)s":%(funcName)-20s at %(lineno)d, %(threadName)s: %(levelname)-8s %(message)s',
+    'VERBOSE': '%(asctime)s %(module)-35s:%(funcName)-20s %(levelname)-8s %(message)s',
+    'NORMAL': '%(module)-35s:%(funcName)-20s %(levelname)-8s %(message)s',
     'TERSE': 'Ganga: %(levelname)-8s %(message)s'
 }
 
@@ -315,16 +313,7 @@ def _guess_module_logger_name(modulename, frame=None):
     if modulename == 1:
         return name
 
-    # limit name of module
-    this_tail = get_tail(name, '.')
-    if len(name) > logger_name_limit:
-        new_path = name[:logger_name_limit-3]
-        new_path = new_path + "--"
-        new_path = new_path + this_tail
-    else:
-        new_path = name
-
-    name = new_path
+    name = remove_tail(name, '.')
 
     if name == 'ganga':  # interactive IPython session
         name = "Ganga.GPI"
