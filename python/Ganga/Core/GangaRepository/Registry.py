@@ -131,7 +131,6 @@ class IncompleteObject(GangaObject):
                 self.registry._load([self.id])
             if self.id not in self.registry_loaded_ids:
                 self.registry._load([self.id])
-                self.registry._loaded_ids.append(self.id)
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
             for d in self.registry.changed_ids.itervalues():
                 d.add(self.id)
@@ -146,7 +145,7 @@ class IncompleteObject(GangaObject):
                 try:
                     errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(self.id)
                 except Exception as err:
-                    logger.debug("Remove Lock error: %s" % str(err))
+                    logger.debug("Remove Lock error: %s" % err)
                 raise RegistryLockError(errstr)
             self.registry.repository.delete([self.id])
             for d in self.registry.changed_ids.itervalues():
@@ -253,7 +252,7 @@ class Registry(object):
         self._dirty_max_timeout = dirty_max_timeout
         self._dirty_min_timeout = dirty_min_timeout
 
-
+        ## Id's id(obj) of objects undergoing a transaction such as flush, remove, add, etc.
         self._inprogressDict = {}
 
 
@@ -503,13 +502,13 @@ class Registry(object):
             else:
                 raise ObjectNotInRegistryError("Repo find: Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
         except AttributeError as err:
-            logger.debug("%s" % str(err))
+            logger.debug("%s" % err)
             raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % getName(obj))
         except AssertionError as err:
-            logger.warning("%s" % str(err))
+            logger.warning("%s" % err)
             raise ObjectNotInRegistryError("Object '%s' is a duplicated version of the one in this registry: %s !" % (getName(obj), self.name))
         except KeyError as err:
-            logger.debug("%s", str(err))
+            logger.debug("%s", err)
             raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
 
     @synchronised
@@ -532,10 +531,10 @@ class Registry(object):
             self.changed_ids = {}
             self.repository.clean()
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-            raise err
+            raise
         except Exception as err:
-            logger.debug("Clean Unknown Err: %s" % str(err))
-            raise err
+            logger.debug("Clean Unknown Err: %s" % err)
+            raise
 
     @synchronised
     def __safe_add(self, obj, force_index=None):
@@ -564,7 +563,7 @@ class Registry(object):
                 if hasattr(self._objects[_id], _id_str):
                     assert(getattr(self._objects[_id], _id_str) == _id)
 
-            logger.debug("_add-ed as: %s" % str(ids))
+            logger.debug("_add-ed as: %s" % ids)
         finally:
             self.unlock_transaction(this_id)
         return ids[0]
@@ -589,12 +588,13 @@ class Registry(object):
 
         try:
             returnable_id = self.__safe_add(obj, force_index)
+            ## Add to list of loaded jobs in memory
             self._loaded_ids.append(returnable_id)
-        except (RepositoryError) as err:
-            raise err
+        except RepositoryError as err:
+            raise
         except Exception as err:
-            logger.debug("Unknown Add Error: %s" % str(err))
-            raise err
+            logger.debug("Unknown Add Error: %s" % err)
+            raise
 
         self._updateIndexCache(obj)
 
@@ -625,7 +625,7 @@ class Registry(object):
                 pass
             pass
         except Exception as err:
-            raise err
+            raise
 
     def __reg_remove(self, obj, auto_removed=0):
 
@@ -647,7 +647,7 @@ class Registry(object):
                 try:
                     self._write_access(obj)
                 except RegistryKeyError as err:
-                    logger.debug("Registry KeyError: %s" % str(err))
+                    logger.debug("Registry KeyError: %s" % err)
                     logger.warning("double delete: Object #%i is not present in registry '%s'!" % (this_id, self.name))
                     return
                 logger.debug('deleting the object %d from the registry %s', this_id, self.name)
@@ -657,10 +657,10 @@ class Registry(object):
                     for this_v in self.changed_ids.itervalues():
                         this_v.add(this_id)
                 except (RepositoryError, RegistryAccessError, RegistryLockError) as err:
-                    raise err
+                    raise
                 except Exception as err:
-                    logger.debug("unknown Remove Error: %s" % str(err))
-                    raise err
+                    logger.debug("unknown Remove Error: %s" % err)
+                    raise
         finally:
 
             self.unlock_transaction(obj_id)
@@ -690,11 +690,17 @@ class Registry(object):
             if not obj._dirty:
                 continue
 
+            if hasattr(obj, _reg_id_str):
+                obj_id = getattr(obj, _reg_id_str)
+                if obj_id not in self._loaded_ids:
+                    continue
+            else:
+                continue
+
             with obj.const_lock:
                 # flush the object. Need to call _getWriteAccess for consistency reasons
                 # TODO: getWriteAccess should only 'get write access', as that's not needed should it be called here?
                 obj._getWriteAccess()
-                obj_id = getattr(obj, _reg_id_str)
                 self.repository.flush([obj_id])
                 obj._setFlushed()
 
@@ -727,7 +733,7 @@ class Registry(object):
     def _updateIndexCache(self, _obj):
         logger.debug("_updateIndexCache")
         obj = stripProxy(_obj)
-        if self.find(obj) in self._inprogressDict.keys():
+        if id(obj) in self._inprogressDict.keys():
             return
 
         self.repository.updateIndexCache(obj)
@@ -741,12 +747,28 @@ class Registry(object):
             these_ids.append(this_id)
             self.lock_transaction(this_id, "_load")
 
+        ## Record dirty status before flushing
+        ## Just in case we've requested loading over the job in memory
+        prior_status = {}
+        for obj_id in obj_ids:
+            if obj_id in self._objects:
+                prior_status[obj_id] = self._objects[obj_id]._dirty
+
         try:
             for obj_id in obj_ids:
                 self.repository.load([obj_id])
+                ## Track the objects we've loaded into memory
+                self._loaded_ids.append(obj_id)
         except Exception as err:
-            logger.error("Error Loading Jobs!")
-            raise err
+            logger.error("Error Loading Jobs! '%s'" % obj_ids)
+            ## Cleanup aftr ourselves if an error occured
+            for obj_id in obj_ids:
+                if obj_id in self._loaded_ids:
+                    del self._loaded_ids[obj_id]
+                ## Didn't load mark as clean so it's not flushed
+                if obj_id in self._objects:
+                    self._objects[obj_id]._setFlushed()
+            raise
         finally:
             for obj_id in these_ids:
                 self.unlock_transaction(obj_id)
@@ -754,7 +776,7 @@ class Registry(object):
     def __safe_read_access(self,  _obj, sub_obj):
         logger.debug("_safe_read_access")
         obj = stripProxy(_obj)
-        if self.find(obj) in self._inprogressDict.keys():
+        if id(obj) in self._inprogressDict.keys():
             return
 
         if self.hasStarted() is not True:
@@ -769,21 +791,20 @@ class Registry(object):
             try:
                 if this_id not in self._loaded_ids:
                     self._load([this_id])
-                    self._loaded_ids.append(this_id)
             except KeyError as err:
-                logger.error("_read_access KeyError %s" % str(err))
+                logger.error("_read_access KeyError %s" % err)
                 raise RegistryKeyError("Read: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
             except InaccessibleObjectError as err:
-                raise RegistryKeyError("Read: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, str(err)))
+                raise RegistryKeyError("Read: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, err))
             #finally:
             #    pass
             for this_d in self.changed_ids.itervalues():
                 this_d.add(this_id)
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-            raise err
+            raise
         except Exception as err:
-            logger.debug("Unknown read access Error: %s" % str(err))
-            raise err
+            logger.debug("Unknown read access Error: %s" % err)
+            raise
         #finally:
         #    pass
 
@@ -805,10 +826,10 @@ class Registry(object):
     def __write_access(self, _obj):
         logger.debug("__write_acess")
         obj = stripProxy(_obj)
-        this_id = self.find(obj)
+        this_id = id(obj)
         if this_id in self._inprogressDict.keys():
             for this_d in self.changed_ids.itervalues():
-                this_d.add(this_id)
+                this_d.add(self.find(obj))
             return
 
         if self.hasStarted() is not True:
@@ -822,35 +843,34 @@ class Registry(object):
                         try:
                             errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(this_id)
                         except RegistryLockError as err:
-                            raise err
+                            raise
                         except Exception as err:
-                            logger.debug( "Unknown Locking Exception: %s" % str(err) )
-                            raise err
+                            logger.debug( "Unknown Locking Exception: %s" % err)
+                            raise
                         raise RegistryLockError(errstr)
                 except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-                    raise err
+                    raise
                 except Exception as err:
-                    logger.debug("Unknown write access Error: %s" % str(err))
-                    raise err
+                    logger.debug("Unknown write access Error: %s" % err)
+                    raise
                 finally:  # try to load even if lock fails
                     try:
                         if this_id not in self._loaded_ids:
                             self._load([this_id])
-                            self._loaded_ids.append(this_id)
                             if hasattr(obj, "_registry_refresh"):
                                 delattr(obj, "_registry_refresh")
                     except KeyError, err:
-                        logger.debug("_write_access KeyError %s" % str(err))
+                        logger.debug("_write_access KeyError %s" % err)
                         raise RegistryKeyError("Write: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
                     except InaccessibleObjectError as err:
-                        raise RegistryKeyError("Write: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, str(err)))
+                        raise RegistryKeyError("Write: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, err))
                     #finally:
                     #    pass
                     for this_d in self.changed_ids.itervalues():
                         this_d.add(this_id)
                 obj._registry_locked = True
             except Exception as err:
-                raise err
+                raise
             #finally:
             #    pass
 
@@ -867,19 +887,19 @@ class Registry(object):
         except ObjectNotInRegistryError as err:
             pass
         except Exception as err:
-            logger.debug("Unknown exception %s" % str(err))
-            raise err
+            logger.debug("Unknown exception %s" % err)
+            raise
 
     def __release_lock(self, _obj):
         logger.debug("_release_lock")
         obj = stripProxy(_obj)
 
-        if self.find(obj) in self._inprogressDict.keys():
+        if id(obj) in self._inprogressDict.keys():
             return
 
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot manipulate locks of a disconnected repository!")
-        logger.debug("Reg: %s _release_lock(%s)" % (self.name, str(self.find(obj))))
+        logger.debug("Reg: %s _release_lock(%s)" % (self.name, self.find(obj)))
         try:
             if hasattr(obj, '_registry_locked') and obj._registry_locked:
                 oid = self.find(obj)
@@ -887,11 +907,11 @@ class Registry(object):
                 obj._registry_locked = False
                 self.repository.unlock([oid])
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-            raise err
+            raise
         except Exception as err:
             logger.debug("un-known registry release lock err!")
-            logger.debug("Err: %s" % str(err))
-            raise err
+            logger.debug("Err: %s" % err)
+            raise
 
     @synchronised
     def pollChangedJobs(self, name):
@@ -934,7 +954,7 @@ class Registry(object):
                 logger.debug("metadata startup")
                 self.metadata.startup()
                 t3 = time.time()
-                logger.debug("Startup of %s.metadata took %s sec" % (str(self.name), str(t3-t2)))
+                logger.debug("Startup of %s.metadata took %s sec" % (self.name, t3-t2))
 
             logger.debug("repo startup")
             #self.hasStarted() = True
@@ -944,9 +964,11 @@ class Registry(object):
             t1 = time.time()
             logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
         except Exception as err:
-            logger.debug("Logging Repo startup Error: %s" % str(err))
+            logger.debug("Logging Repo startup Error: %s" % err)
             self._hasStarted = False
-            raise err
+            raise
+        #finally:
+        #    pass
 
     @synchronised
     def shutdown(self):
@@ -964,17 +986,17 @@ class Registry(object):
                     try:
                         self.flush_all()
                     except Exception, err:
-                        logger.debug("shutdown _flush Exception: %s" % str(err))
+                        logger.debug("shutdown _flush Exception: %s" % err)
                     self.metadata.shutdown()
             except Exception as err:
-                logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, str(err))
+                logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, err)
             #finally:
             #    pass
             try:
                 self.flush_all()
             except Exception as err:
-                logger.error("Exception on flushing '%s' registry: %s", self.name, str(err))
-                #raise err
+                logger.error("Exception on flushing '%s' registry: %s", self.name, err)
+                #raise
             #finally:
             #    pass
             for obj in self._objects.values():

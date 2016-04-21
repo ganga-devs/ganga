@@ -58,12 +58,12 @@ class PrepRegistry(Registry):
             stripProxy(self.shareref).closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
         except Exception as err:
             logger.error("Shutdown Error in ShareRef")
-            logger.error("Err: %s" % str(err))
+            logger.error("Err: %s" % err)
 
         try:
             self._safe_shutdown()
         except Exception as err:
-            logger.debug("Shutdown Error: %s" % str(err))
+            logger.debug("Shutdown Error: %s" % err)
         finally:
             self._hasStarted = False
             self._lock.release()
@@ -173,7 +173,7 @@ class ShareRef(GangaObject):
         # if we try to decrease a shareref that doesn't exist, we just set the
         # corresponding shareref to 0
         except KeyError as err:
-            logger.debug("KeyError: %s" % str(err))
+            logger.debug("KeyError: %s" % err)
             self.__getName()[basedir] = 0
 
         self._setDirty()
@@ -185,13 +185,13 @@ class ShareRef(GangaObject):
         The optional parameter 'unprepare=True' can be set to call the unprepare method 
         on the returned objects.
         """
-        from Ganga.GPI import jobs, box, tasks
+        from Ganga.Core.GangaRepository import getRegistryProxy
         objectlist = []
-        for thing in jobs.select():
+        for thing in getRegistryProxy('jobs').select():
             objectlist.append({thing: 'job'})
-        for thing in box.select():
+        for thing in getRegistryProxy('box').select():
             objectlist.append({thing: 'box'})
-        for thing in tasks.select():
+        for thing in getRegistryProxy('tasks').select():
             objectlist.append({thing: 'task'})
 
         run_unp = None
@@ -205,7 +205,7 @@ class ShareRef(GangaObject):
                     master_index += 1
 
             except AttributeError as err:
-                logger.debug("Err: %s" % str(err))
+                logger.debug("Err: %s" % err)
                 try:
                     item.keys()[0].application.is_prepared.name
                     if item.keys()[0].application.is_prepared.name == sharedir:
@@ -213,7 +213,7 @@ class ShareRef(GangaObject):
                         run_unp = item.keys()[0].application
                         master_index += 1
                 except AttributeError as err2:
-                    logger.debug("Err2: %s" % str(err2))
+                    logger.debug("Err2: %s" % err2)
                     try:
                         item.keys()[0].analysis.application.is_prepared.name
                         if item.keys()[0].analysis.application.is_prepared.name == sharedir:
@@ -221,7 +221,7 @@ class ShareRef(GangaObject):
                             run_unp = item.keys()[0].analysis.application
                             master_index += 1
                     except AttributeError as err3:
-                        logger.debug("Err3: %s" % str(err3))
+                        logger.debug("Err3: %s" % err3)
                         pass
 
             if run_unp is not None and unprepare is True:
@@ -247,7 +247,7 @@ class ShareRef(GangaObject):
         try:
             stripProxy(this_object).is_prepared.name = os.path.basename(this_object.is_prepared.name)
         except Exception as err:
-            logger.debug("rebuild Error: %s" % str(err))
+            logger.debug("rebuild Error: %s" % err)
             Ganga.Utility.logging.log_unknown_exception()
             logger.warn("Unable to convert object's is_prepared.name attribute to a relative path")
 
@@ -282,20 +282,19 @@ class ShareRef(GangaObject):
         this results in the directory being deleted upon Ganga exit.
         """
         self._getWriteAccess()
-        from Ganga.GPI import jobs, box, tasks
         # clear the shareref table
         self.name = {}
         lookup_input = []
 
         from Ganga.GPIDev.Lib.File import getSharedPath
-
+        from Ganga.Core.GangaRepository import getRegistryProxy
 
         objectlist = []
-        for thing in jobs.select():
+        for thing in getRegistryProxy('jobs').select():
             objectlist.append({thing: 'job'})
-        for thing in box.select():
+        for thing in getRegistryProxy('box').select():
             objectlist.append({thing: 'box'})
-        for thing in tasks.select():
+        for thing in getRegistryProxy('tasks').select():
             objectlist.append({thing: 'task'})
 
         for item in objectlist:
@@ -303,15 +302,15 @@ class ShareRef(GangaObject):
             try:
                 shortname = item.keys()[0].is_prepared.name
             except AttributeError as err:
-                logger.debug("Err: %s" % str(err))
+                logger.debug("Err: %s" % err)
                 try:
                     shortname = item.keys()[0].application.is_prepared.name
                 except AttributeError as err2:
-                    logger.debug("Err2: %s" % str(err2))
+                    logger.debug("Err2: %s" % err2)
                     try:
                         shortname = item.keys()[0].analysis.application.is_prepared.name
                     except AttributeError as err3:
-                        logger.debug("Err3: %s" % str(err3))
+                        logger.debug("Err3: %s" % err3)
                         pass
             try:
                 if shortname is not None and shortname is not True:
@@ -320,12 +319,12 @@ class ShareRef(GangaObject):
                     try:
                         numsubjobs = len(item.keys()[0].subjobs.ids())
                     except Exception as err:
-                        logger.debug("Path Error: %s" % str(err))
+                        logger.debug("Path Error: %s" % err)
                         Ganga.Utility.logging.log_unknown_exception()
                         numsubjobs = 0
                     self.helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
             except Exception as err:
-                logger.debug("-Error: %s" % str(err))
+                logger.debug("-Error: %s" % err)
                 Ganga.Utility.logging.log_unknown_exception()
                 pass
 
@@ -433,8 +432,8 @@ class ShareRef(GangaObject):
             # if the sharedir in the table doesn't exist on the filesytem, and the reference counter is > 0,
             # we need to unprepare any associated jobs
             #logger.debug("Examining: %s" % full_shareddir_path)
-            #logger.debug("shareddir: %s" % str(shareddir))
-            #logger.debug("cleanup_list: %s" % str(cleanup_list))
+            #logger.debug("shareddir: %s" % shareddir)
+            #logger.debug("cleanup_list: %s" % cleanup_list)
             if not os.path.isdir(full_shareddir_path) and shareddir not in cleanup_list:
             #    logger.info('%s not found on disk. Removing entry from shareref table and unpreparing any associated Ganga objects.' % shareddir)
             #    self.lookup(sharedir=shareddir, unprepare=True)

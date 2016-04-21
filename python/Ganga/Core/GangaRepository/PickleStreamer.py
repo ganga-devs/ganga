@@ -15,6 +15,6 @@ def to_file(obj, fileobj, ignore_subs=''):
     try:
         pickle.dump(obj, fileobj, 1)
     except Exception as err:
-        logger.error("Failed to Write: %s" % str(obj))
-        logger.error("Err: %s" % str(err))
-        raise err
+        logger.error("Failed to Write: %s" % obj)
+        logger.error("Err: %s" % err)
+        raise

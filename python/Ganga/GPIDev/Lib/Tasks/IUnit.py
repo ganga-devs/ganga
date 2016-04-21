@@ -2,16 +2,18 @@ from __future__ import absolute_import
 from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
-from .common import logger
+from Ganga.Utility.logging import getLogger
 from Ganga.Utility.ColourText import status_colours, overview_colours, ANSIMarkup
 markup = ANSIMarkup()
-import Ganga.GPI as GPI
+from Ganga.GPIDev.Lib.Tasks.common import getJobByID
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import stripProxy
 import time
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
 import sys
 import traceback
+
+logger = getLogger()
 
 def formatTraceback():
    "Helper function to printout a traceback as a string"
@@ -104,7 +106,8 @@ class IUnit(GangaObject):
             return False
 
         # if we're using threads, check the max number
-        if self._getParent().submit_with_threads and GPI.queues.totalNumUserThreads() > self._getParent().max_active_threads:
+        from Ganga.Core.GangaThread.WorkerThreads import getQueues
+        if self._getParent().submit_with_threads and getQueues().totalNumUserThreads() > self._getParent().max_active_threads:
             return False
 
         return True
@@ -116,7 +119,7 @@ class IUnit(GangaObject):
         if len(self.active_job_ids) == 0:
             return False
         else:
-            job = GPI.jobs(self.active_job_ids[0])
+            job = getJobByID(self.active_job_ids[0])
             if job.status in ["failed", "killed"]:
                 return True
 
@@ -160,14 +163,14 @@ class IUnit(GangaObject):
             trf = None
         if trf is not None and trf.submit_with_threads:
             addInfoString( self, "Attempting job re-submission with queues..." )
-            GPI.queues.add(job.resubmit)
+            from Ganga.Core.GangaThread.WorkerThreads import getQueues
+            getQueues().add(job.resubmit)
         else:
             addInfoString( self, "Attempting job re-submission..." )
             job.resubmit()
 
     def update(self):
         """Update the unit and (re)submit jobs as required"""
-        #logger.warning("Entered Unit %d update function..." % self.getID())
 
         # if we're complete, then just return
         if self.status in ["completed", "recreating"] or not self.active:
@@ -196,7 +199,8 @@ class IUnit(GangaObject):
             try:
                 if trf.submit_with_threads:
                     addInfoString( self, "Attempting job submission with queues..." )
-                    GPI.queues.add(j.submit)
+                    from Ganga.Core.GangaThread.WorkerThreads import getQueues
+                    getQueues().add(j.submit)
                 else:
                     addInfoString( self, "Attempting job submission..." )
                     j.submit()
@@ -226,7 +230,7 @@ class IUnit(GangaObject):
             # we have an active job so see if this job is OK and resubmit if
             # not
             try:
-                job = GPI.jobs(jid)
+                job = getJobByID(jid)
             except Exception as err:
                 logger.debug("Update2 Err: %s" % str(err))
                 logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %
@@ -348,7 +352,7 @@ class IUnit(GangaObject):
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = getJobByID(jid)
             except Exception as err:
                 logger.debug("n_active Err: %s" % str(err))
                 task = self._getParent()._getParent()
@@ -385,7 +389,7 @@ class IUnit(GangaObject):
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = getJobByID(jid)
             except Exception as err:
                 logger.debug("n_status Err: %s" % str(err))
                 task = self._getParent()._getParent()
@@ -423,7 +427,7 @@ class IUnit(GangaObject):
         for jid in self.active_job_ids:
 
             try:
-                job = GPI.jobs(jid)
+                job = getJobByID(jid)
             except Exception as err:
                 logger.debug("n_all Err: %s" % str(err))
                 task = self._getParent()._getParent()

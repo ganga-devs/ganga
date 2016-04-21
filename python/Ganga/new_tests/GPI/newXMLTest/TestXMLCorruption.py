@@ -13,11 +13,11 @@ global_AutoStartReg = True
 notXMLStr = ['ThisIsNOTXML' for _ in range(20)]
 badStr = ''.join(notXMLStr)
 
-class TestXMLGenAndLoad(GangaUnitTest):
+class TestXMLCorruption(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestXMLGenAndLoad, self).setUp()
+        super(TestXMLCorruption, self).setUp()
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
         setConfigOption('Configuration', 'AutoStartReg', global_AutoStartReg)
@@ -84,25 +84,33 @@ class TestXMLGenAndLoad(GangaUnitTest):
         global global_AutoStartReg
         global_AutoStartReg = True
 
-    def test_d_TestCorruptLoad(self):
+    def test_e_TestCorruptLoad(self):
         # Test loading of backup when corrupt
-        from Ganga.GPI import jobs
+        from Ganga.GPI import jobs, Job
 
         assert len(jobs) == 1
 
         backend2 = jobs(0).backend
 
+        assert isinstance(jobs(0), Job)
         assert backend2 is not None
 
         XMLFileName = getXMLFile(0)
         
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+
+        print("%s" % stripProxy(jobs(0)).__dict__)
+        assert stripProxy(jobs(0))._dirty is True
+
+        stripProxy(jobs(0))._setDirty()
+        stripProxy(jobs(0))._getRegistry().flush_all()
+
         from tempfile import NamedTemporaryFile
         with NamedTemporaryFile(delete=False) as myTempfile:
             myTempfile.write(badStr)
             myTempfile.flush()
             myTempName=myTempfile.name
 
-        import filecmp
-        assert not filecmp.cmp(XMLFileName, myTempName)
+        assert open(XMLFileName).read() != open(myTempName).read()
         unlink(myTempName)
 
