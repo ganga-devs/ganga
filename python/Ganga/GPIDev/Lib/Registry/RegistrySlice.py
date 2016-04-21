@@ -2,7 +2,6 @@ import sys
 import Ganga.Utility.logging
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError
-from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 import fnmatch
 import collections
 
@@ -445,43 +444,38 @@ class RegistrySlice(object):
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
 
-        for obj_i in self.objects.keys():
+        if hasattr(self.objects, '_private_display'):
+            ds += self.objects._private_display(self, this_format, default_width, markup)
 
-            cached_data = None
+        else:
+            for obj_i in self.objects.keys():
 
-            if isType(self.objects, SubJobXMLList):
-                cached_data = self.objects.getCachedData(obj_i)
-                colour = self._getColour( cached_data )
-            else:
+                cached_data = None
+
                 reg_object = self.objects[obj_i]
                 obj = stripProxy(reg_object)
                 colour = self._getColour(obj)
 
-            vals = []
-            for item in self._display_columns:
-                display_str = "display:" + str(item)
-                #logger.info("Looking for : %s" % display_str)
-                width = self._display_columns_width.get(item, default_width)
-                try:
-                    if not isType(self.objects, SubJobXMLList):
+                vals = []
+                for item in self._display_columns:
+                    display_str = "display:" + str(item)
+                    #logger.info("Looking for : %s" % display_str)
+                    width = self._display_columns_width.get(item, default_width)
+                    try:
                         if item == "fqid":
-                            vals.append(str(stripProxy(obj).getNodeIndexCache()[display_str]))
+                            vals.append(str(obj.getNodeIndexCache()[display_str]))
                         else:
-                            vals.append(str(stripProxy(obj).getNodeIndexCache()[display_str])[0:width])
-                    else:
-                        if item == 'fqid':
-                            vals.append(str(cached_data[display_str]))
+                            vals.append(str(obj.getNodeIndexCache()[display_str])[0:width])
+                        continue
+                    except KeyError as err:
+                        logger.debug("_display KeyError: %s" % err)
+                        #pass
+                        if item == "fqid":
+                            vals.append(self._get_display_value(obj, item))
                         else:
-                            vals.append(str(cached_data[display_str])[0:width])
-                    continue
-                except KeyError as err:
-                    logger.debug("_display KeyError: %s" % err)
-                    pass
-                if item == "fqid":
-                    vals.append(self._get_display_value(obj, item))
-                else:
-                    vals.append(self._get_display_value(obj, item)[0:width])
-            ds += markup(this_format % tuple(vals), colour)
+                            vals.append(self._get_display_value(obj, item)[0:width])
+                ds += markup(this_format % tuple(vals), colour)
+
         return ds
 
     __str__ = _display

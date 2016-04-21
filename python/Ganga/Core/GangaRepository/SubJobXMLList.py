@@ -164,7 +164,7 @@ class SubJobXMLList(GangaObject):
                             new_data = self._registry.getIndexCache( self.__getitem__(subjob_id) )
                             self._subjobIndexData[subjob_id] = new_data
                             continue
-                            #self._subjobIndexData = {}
+                        #self._subjobIndexData = {}
             except Exception as err:
                 logger.error( "Subjob Index file open, error: %s" % err )
                 self._subjobIndexData = {}
@@ -500,3 +500,28 @@ class SubJobXMLList(GangaObject):
             self._cachedJobs[index]._setFlushed()
         super(SubJobXMLList, self)._setFlushed()
 
+    def _private_display(self, reg_slice, this_format, default_width, markup):
+        """ This is a private display method which makes use of the display slice as well as knowlede of the wanted format, default_width and markup to be used"""
+        ds=""
+        for obj_i in self.keys():
+
+            cached_data = self.getCachedData(obj_i)
+            colour = reg_slice._getColour(cached_data)
+
+            vals = []
+            for item in reg_slice._display_columns:
+                display_str = "display:" + str(item)
+                #logger.info("Looking for : %s" % display_str)
+                width = reg_slice._display_columns_width.get(item, default_width)
+                try:
+                    if item == 'fqid':
+                        vals.append(str(cached_data[display_str]))
+                    else:
+                        vals.append(str(cached_data[display_str])[0:width])
+                except KeyError as err:
+                    logger.debug("_private_display KeyError: %s" % err)
+                    vals.append("Unknown")
+
+            ds += markup(this_format % tuple(vals), colour)
+
+        return ds
