@@ -7,7 +7,7 @@ from BaseHTTPServer import HTTPServer
 
 import urlparse
 import Ganga.GPI
-from Ganga.GPI import config, jobs
+from Ganga.GPIDev.Lib.Config import config
 import time
 import datetime
 import os
@@ -164,10 +164,11 @@ def get_job_JSON(job):
 
 
 def get_subjobs_in_time_range(jobid, fromDate=None, toDate=None):
+    from Ganga.Core.GangaRepository import getRegistryProxy
 
     subjobs = []
 
-    for subjob in jobs(jobid).subjobs:
+    for subjob in getRegistryProxy('jobs')(jobid).subjobs:
 
         timeCreated = subjob.time.timestamps['new']
 
@@ -423,6 +424,7 @@ def get_jobs_JSON(fromDate=None, toDate=None):
 
 
 def update_jobs_dictionary():
+    from Ganga.Core.GangaRepository import getRegistryProxy
 
     reg = getRegistry("jobs")
     # get the changed jobs
@@ -431,7 +433,7 @@ def update_jobs_dictionary():
     for job_id in changed_ids:
         try:
 
-            job = jobs(job_id)
+            job = getRegistryProxy('jobs')(job_id)
 
             try:
                 jobs_dictionary[job_id] = JobRelatedInfo(
@@ -445,8 +447,9 @@ def update_jobs_dictionary():
 
 
 def fill_jobs_dictionary():
+    from Ganga.Core.GangaRepository import getRegistryProxy
 
-    for job in jobs:
+    for job in getRegistryProxy('jobs'):
         try:
             # get the id -> it could cause RegistryKeyError and the code below
             # will not be executed

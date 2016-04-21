@@ -41,7 +41,7 @@ class GangaThreadPool(object):
         try:
             self.__threads.append(t)
         except DuplicateDataItemError as e:
-            self.logger.debug(str(e))
+            self.logger.debug("%s" % e)
 
     def delServiceThread(self, t):
         #logger.debug('service thread "%s" deleted from the GangaThreadPool', t.getName())
@@ -49,7 +49,7 @@ class GangaThreadPool(object):
             if t in self.__threads:
                 self.__threads.remove(t)
         except ValueError as e:
-            logger.debug(str(e))
+            logger.debug("%s" % e)
 
     def shutdown(self, should_wait_cb=None):
         """Shutdown the Ganga session.
@@ -76,13 +76,10 @@ class GangaThreadPool(object):
             from Ganga.Utility.logging import getLogger
             logger = getLogger('GangaThread')
             logger.error("Error shutting down thread Pool!")
-            logger.error("\n%s" % str(err))
+            logger.error("\n%s" % err)
         return
 
     def _really_shutdown(self, should_wait_cb=None):
-
-        #from Ganga.GPI import queues
-        #queues._stop_all_threads(shutdown=True)
 
         from Ganga.Utility.logging import getLogger
         logger = getLogger('GangaThread')
@@ -156,18 +153,13 @@ class GangaThreadPool(object):
         from Ganga.Utility.logging import getLogger
         logger = getLogger('GangaThread')
 
-        from Ganga.GPI import queues
+        from Ganga.Core.GangaThread.WorkerThreads import _global_queues as queues
 
-        queues._purge_all()
-        queues._stop_all_threads(shutdown=True)
+        if queues is not None:
+            queues._purge_all()
+            queues._stop_all_threads(shutdown=True)
 
-        # while queues.totalNumAllThreads() != 0:
-        #    queues._stop_all_threads()
-        #    logger.warning( "Tasks still running: %s" % queues.threadStatus() )
-        #    import time
-        #    time.sleep( 0.1 )
-
-        logger.debug("ExternalTasks still running: %s" % queues.threadStatus())
+            logger.debug("ExternalQueues still running: %s" % queues.threadStatus())
 
         logger.debug('Service threads to shutdown: %s' % ([i for i in reversed(list(_all_threads))]))
 

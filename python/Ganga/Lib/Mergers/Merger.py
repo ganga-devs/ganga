@@ -269,14 +269,14 @@ class CustomMerger(IMerger):
     def mergefiles(self, file_list, output_file):
 
         import os
-        if not os.path.exists(self.module.name):
+        if not os.path.exists(self.module):
             raise PostProcessException(
-                "The module '&s' does not exist and so merging will fail.", self.module.name)
+                "The module '&s' does not exist and so merging will fail.", self.module)
         result = False
         try:
             ns = {'file_list': copy.copy(file_list),
                   'output_file': copy.copy(output_file)}
-            execfile(self.module.name, ns)
+            execfile(self.module, ns)
             exec('_result = mergefiles(file_list,output_file)', ns)
             result = ns.get('_result', result)
         except Exception as e:

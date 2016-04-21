@@ -205,7 +205,8 @@ def load(filename="", returnList=True):
         item = item.strip()
         if item:
             try:
-                this_object = eval(str(item), Ganga.GPI.__dict__)
+                from Ganga.GPIDev.Base.Proxy import getProxyInterface
+                this_object = eval(str(item), getProxyInterface().__dict__)
                 objectList.append(this_object)
             except NameError as x:
                 logger.exception(x)

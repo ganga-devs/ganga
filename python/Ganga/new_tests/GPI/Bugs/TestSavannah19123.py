@@ -31,7 +31,17 @@ class TestSavannah19123(GangaUnitTest):
 
         check(False)
 
-        sleep_until_state(j, 5, 'running')
+        if not sleep_until_state(j, 5, 'running'):
+            # problem with the test - print out stdout/stderr and assert
+            for fn in ['stdout','stderr']:
+                fn = os.path.join(j.outputdir,fn)
+                print " ----  Contents of " + fn
+                if os.path.exists(fn):
+                    print open(fn).read()
+                else:
+                    print "NO FILE AVAILABLE"
+
+            self.assertEqual(j.status, 'running')
 
         j.kill()
 

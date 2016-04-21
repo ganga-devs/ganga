@@ -1,3 +1,4 @@
+from __future__ import print_function
 import collections
 from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
 from Ganga.Utility.Config import getConfig
@@ -19,10 +20,12 @@ class ThreadPoolQueueMonitor(object):
     the getConfig('Queues')['NumWorkerThreads'] config option.
     '''
 
-    def __init__(self,
-                 user_threadpool=WorkerThreadPool(
-                     worker_thread_prefix="User_Worker_"),
-                 monitoring_threadpool=WorkerThreadPool(worker_thread_prefix="Ganga_Worker_")):
+    def __init__(self, user_threadpool=None, monitoring_threadpool=None):
+
+        if user_threadpool is None:
+            user_threadpool = WorkerThreadPool(worker_thread_prefix="User_Worker_")
+        if monitoring_threadpool is None:
+            monitoring_threadpool = WorkerThreadPool(worker_thread_prefix="Ganga_Worker_")
 
         global _user_threadpool
         global _monitoring_threadpool
@@ -47,7 +50,7 @@ class ThreadPoolQueueMonitor(object):
         _user_threadpool = self._user_threadpool
         _monitoring_threadpool = self._monitoring_threadpool
 
-        self._locked = False
+        self._frozen = False
         self._shutdown = False
 
     def _display_element(self, item):
@@ -122,15 +125,15 @@ class ThreadPoolQueueMonitor(object):
         if queue_size > 0 and not force:
             keyin = None
             while keyin == None:
-                print "User queue contains unfinished tasks:"
-                print str([self._display_element(i) for i in _user_queue])
+                print("User queue contains unfinished tasks:")
+                print(str([self._display_element(i) for i in _user_queue]))
                 keyin = raw_input("Do you want to Purge the user queue ([y]/n): ")
                 if keyin in ['y', '']:
                     _actually_purge = True
                 elif keyin == 'n':
                     _actually_purge = False
                 else:
-                    print "(y/n) please!"
+                    print("(y/n) please!")
                     keyin = None
         if _actually_purge:
             self._user_threadpool.clear_queue()
@@ -154,15 +157,15 @@ class ThreadPoolQueueMonitor(object):
         if queue_size > 0 and not force:
             keyin = None
             while keyin == None:
-                print "Monitoring queue contains unfinished tasks:"
-                print str([self._display_element(i) for i in _monitor_queue])
+                print("Monitoring queue contains unfinished tasks:")
+                print(str([self._display_element(i) for i in _monitor_queue]))
                 keyin = raw_input("Do you want to Purge the monitoring queue ([y]/n): ")
                 if keyin in ['y', '']:
                     _actually_purge = True
                 elif keyin == 'n':
                     _actually_purge = False
                 else:
-                    print "(y/n) please"
+                    print("(y/n) please")
                     keyin = None
         if _actually_purge:
             self._monitoring_threadpool.clear_queue()
@@ -217,9 +220,9 @@ class ThreadPoolQueueMonitor(object):
             logger.error("Error Adding internal task!! please report this to the Ganga developers!")
             return
 
-        if self._locked is True:
+        if self._frozen is True:
             if not self._shutdown:
-                logger.warning("Queue System is locked not adding any more System processes!")
+                logger.warning("Queue System is frozen not adding any more System processes!")
             return
 
         self._monitoring_threadpool.add_function(worker_code,
@@ -301,9 +304,9 @@ class ThreadPoolQueueMonitor(object):
             logger.error("Input command must be of type 'string'")
             return
 
-        if self._locked is True:
+        if self._frozen is True:
             if not self._shutdown:
-                logger.warning("Queues system is Locked. Not adding any more processes!")
+                logger.warning("Queues system is frozen. Not adding any more processes!")
             return
 
         self._user_threadpool.add_process(command,
@@ -355,15 +358,15 @@ class ThreadPoolQueueMonitor(object):
         num = num + self.totalNumIntThreads()
         return num
 
-    def lock(self):
-        self._locked = True
-        self._user_threadpool._locked = True
-        self._monitoring_threadpool._locked = True
+    def freeze(self):
+        self._frozen = True
+        self._user_threadpool._frozen = True
+        self._monitoring_threadpool._frozen = True
 
-    def unlock(self):
-        self._locked = False
-        self._user_threadpool._locked = False
-        self._monitoring_threadpool._locked = False
+    def unfreeze(self):
+        self._frozen = False
+        self._user_threadpool._frozen = False
+        self._monitoring_threadpool._frozen = False
 
     def _stop_all_threads(self, shutdown=False):
         self._shutdown = shutdown

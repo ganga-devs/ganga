@@ -97,19 +97,6 @@ class LHCbDataset(GangaDataset):
         self.depth = depth
         logger.debug("Dataset Created")
 
-    #def __deepcopy__(self, memo):
-        #stripProxy(self)._getReadAccess()
-        #cls = type(stripProxy(self))
-        #obj = super(cls, cls).__new__(cls)
-        #this_dict = stripProxy(self).__getstate__()
-        #for n in this_dict.keys():
-        #    this_dict[n] = deepcopy(this_dict[n], memo)
-        #    #if n == 'files':
-        #    #    for this_file in this_dict['files']:
-        #    #        stripProxy(this_file)._setParent(obj)
-        #obj.__setstate__(this_dict)
-        #return obj
-
     def __construct__(self, args):
         logger.debug("__construct__")
         self.files = []
@@ -136,17 +123,6 @@ class LHCbDataset(GangaDataset):
         #logger.debug( "Constructing dataset len: %s\n%s" % (str(len(self.files)), str(self.files) ) )
         logger.debug("Constructing dataset len: %s" % str(len(self.files)))
 
-    def __len__(self):
-        """The number of files in the dataset."""
-        result = 0
-        if self.files:
-            result = len(self.files)
-        return result
-
-    def __nonzero__(self):
-        """This is always True, as with an object."""
-        return True
-
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
         #this_file = self.files[i]
@@ -161,8 +137,6 @@ class LHCbDataset(GangaDataset):
             return ds
         else:
             return self.files[i]
-
-    def isEmpty(self): return not bool(self.files)
 
     def getReplicas(self):
         'Returns the replicas for all files in the dataset.'
@@ -216,9 +190,6 @@ class LHCbDataset(GangaDataset):
                 msg = '2nd replication attempt failed for file %s. (will not retry)' % f.lfn
                 logger.warning(msg)
                 logger.warning(str(err))
-
-    def append(self, input_file):
-        self.extend([input_file])
 
     def extend(self, files, unique=False):
         '''Extend the dataset. If unique, then only add files which are not
@@ -299,22 +270,6 @@ class LHCbDataset(GangaDataset):
             if isPFN(f):
                 pfns.append(f.namePattern)
         return pfns
-
-    def getFileNames(self):
-        'Returns a list of the names of all files stored in the dataset.'
-        names = []
-        from GangaDirac.Lib.Files.DiracFile import DiracFile
-        for i in self.files:
-            if isType(i, DiracFile):
-                names.append(i.lfn)
-            else:
-                try:
-                    names.append(i.namePattern)
-                except:
-                    logger.warning("Cannot determine filename for: %s " % i)
-                    raise GangaException("Cannot Get File Name")
-
-        return names
 
     def getFullFileNames(self):
         'Returns all file names w/ PFN or LFN prepended.'
@@ -559,8 +514,8 @@ def string_dataset_shortcut(files, item):
     # This clever change mirrors that in IPostprocessor (see there)
     # essentially allows for dynamic extensions to JobTemplate
     # such as LHCbJobTemplate etc.
-
-    inputdataList = [stripProxy(i)._schema.datadict['inputdata'] for i in Ganga.GPI.__dict__.values()
+    from Ganga.GPIDev.Base.Proxy import getProxyInterface
+    inputdataList = [stripProxy(i)._schema.datadict['inputdata'] for i in getProxyInterface().__dict__.values()
                      if isinstance(stripProxy(i), ObjectMetaclass)
                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))
                      and 'inputdata' in stripProxy(i)._schema.datadict]

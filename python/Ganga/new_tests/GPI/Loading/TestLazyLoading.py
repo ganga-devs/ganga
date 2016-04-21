@@ -54,7 +54,34 @@ class TestLazyLoading(GangaUnitTest):
 
         self.assertTrue(has_loaded_job)
 
-    def test_d_JobRemoval(self):
+    def test_d_GetNonSchemaAttr(self):
+        """ Don't load a job looking at non-Schema objects"""
+        from Ganga.GPI import jobs
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+
+        raw_j = stripProxy(jobs(0))
+
+        assert raw_j._getRegistry().has_loaded(raw_j) is False
+
+        dirty_status = raw_j._dirty
+
+        assert dirty_status is False
+
+        assert raw_j._getRegistry().has_loaded(raw_j) is False
+
+        try:
+            non_object = jobs(0)._dirty
+            raise Exception("Shouldn't be here")
+        except AttributeError:
+            pass
+
+        assert raw_j._getRegistry().has_loaded(raw_j) is False
+
+        raw_j.printSummaryTree()
+
+        assert  raw_j._getRegistry().has_loaded(raw_j) is True
+
+    def test_e_JobRemoval(self):
         """ Fourth make sure that we get rid of the jobs safely"""
         from Ganga.GPI import jobs
 
@@ -66,4 +93,5 @@ class TestLazyLoading(GangaUnitTest):
 
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'True')
+
 

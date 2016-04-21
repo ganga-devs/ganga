@@ -6,8 +6,10 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistryS
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
-import Ganga.GPI as GPI
-from Ganga.GPIDev.Lib.Tasks.common import logger
+from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
+from Ganga.Utility.logging import getLogger
+
+logger = getLogger()
 
 class LHCbUnit(IUnit):
     _schema = Schema(Version(1, 0), dict(IUnit._schema.datadict.items() + {
@@ -21,7 +23,7 @@ class LHCbUnit(IUnit):
     def createNewJob(self):
         """Create any jobs required for this unit"""
         import copy
-        j = GPI.Job()
+        j = makeRegisteredJob()
         j.backend = self._getParent().backend.clone()
         j.application = self._getParent().application.clone()
         if self.inputdata:
@@ -85,10 +87,10 @@ class LHCbUnit(IUnit):
 
                 if req_unit_id != "ALL":
                     unit = trf.units[int(req_unit_id)]
-                    job_list.append(GPI.jobs(unit.active_job_ids[0]))
+                    job_list.append(getJobByID(unit.active_job_ids[0]))
                 else:
                     for unit in trf.units:
-                        job_list.append(GPI.jobs(unit.active_job_ids[0]))
+                        job_list.append(getJobByID(unit.active_job_ids[0]))
 
             for j in job_list:
                 if j.subjobs:
@@ -99,10 +101,16 @@ class LHCbUnit(IUnit):
                     if j.backend.status != "Done":
                         return
 
-            job = GPI.jobs(self.active_job_ids[0])
+            job = getJobByID(self.active_job_ids[0])
             for f in job.inputdata.files:
+                # check for an lfn
+                if hasattr(f, "lfn"):
+                    fname = f.lfn
+                else:
+                    fname = f.namePattern
+
                 logger.warning(
-                    "Removing chain inputdata file '%s'..." % f.name)
+                    "Removing chain inputdata file '%s'..." % fname)
                 f.remove()
 
         super(LHCbUnit, self).updateStatus(status)

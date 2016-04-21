@@ -1,19 +1,22 @@
 from __future__ import print_function
 from __future__ import absolute_import
 
-from . import test
-import Ganga.Utility.logging
-Ganga.Utility.logging.config['Ganga.Utility.logging'] = 'DEBUG'
+import logging
 
-logger = Ganga.Utility.logging.getLogger()
+from Ganga.Utility.logging import getLogger, _formats
 
-import sys
-print(sys.path)
 
-print(logger.name)
+def test_logging():
+    logger = getLogger()
 
-logger.info('info test')
-logger.error('error test')
-logger.warning('warning test')
+    logger.info('info test')
+    logger.error('error test')
+    logger.warning('warning test')
 
-# Ganga.Utility.logging.bootstrap()
+    private_logger = logging.getLogger("TESTLOGGER.CHILD.GRANDCHILD")
+    formatter = logging.Formatter(_formats['DEBUG'])
+    console = logging.StreamHandler()
+    console.setFormatter(formatter)
+    private_logger.setLevel(logging.DEBUG)
+    private_logger.addHandler(console)
+    private_logger.critical('hello')

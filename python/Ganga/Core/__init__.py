@@ -29,15 +29,15 @@ def set_autostart_policy(interactive_session):
 t_last = None
 
 
-def start_jobregistry_monitor(reg):
+def start_jobregistry_monitor(reg_slice):
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor
     # start the monitoring loop
     global monitoring_component
-    monitoring_component = JobRegistry_Monitor(reg)
+    monitoring_component = JobRegistry_Monitor(reg_slice)
     monitoring_component.start()
 
 
-def bootstrap(reg, interactive_session):
+def bootstrap(reg_slice, interactive_session, my_interface=None):
     """
     Create local subsystems. In the future this procedure should be enhanced to connect to remote subsystems.
     FIXME: this procedure should be moved to the Runtime package.
@@ -57,22 +57,19 @@ def bootstrap(reg, interactive_session):
     Coordinator.bootstrap()
 
     # backend-specific setup (e.g. Remote: setup any remote ssh pipes)
-    # for j in reg:
+    # for j in reg_slice:
     #    if hasattr(j,'status') and j.status in ['submitted','running']:
     #        if hasattr(j,'backend'): # protect: EmptyGangaObject does not have backend either
     #            if hasattr(j.backend,'setup'): # protect: EmptyGangaObject does not have setup() method
     #                j.backend.setup()
 
-    start_jobregistry_monitor(reg)
+    start_jobregistry_monitor(reg_slice)
 
     # register the MC shutdown hook
 
     change_atexitPolicy(interactive_session)
 
-    # export to GPI
-    from Ganga.Runtime.GPIexport import exportToGPI
-    exportToGPI(
-        'runMonitoring', monitoring_component.runMonitoring, 'Functions')
+    # export to GPI moved to Runtime bootstrap
 
     autostart_default = interactive_session
     config.overrideDefaultValue('autostart', bool(autostart_default))
@@ -86,6 +83,12 @@ def bootstrap(reg, interactive_session):
     if config['autostart']:
         monitoring_component.enableMonitoring()
 
+    if not my_interface:
+        import Ganga.GPI
+        my_interface = Ganga.GPI
+    from Ganga.Runtime.GPIexport import exportToInterface
+    exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
+        
 
 def should_wait_interactive_cb(t_total, critical_thread_ids, non_critical_thread_ids):
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
@@ -172,8 +175,7 @@ def change_atexitPolicy(interactive_session=True, new_policy=None):
         from Ganga.Core.GangaThread import GangaThreadPool
         # create generic Ganga thread pool
         thread_pool = GangaThreadPool.getInstance()
-        atexit.register(
-            thread_pool.shutdown, should_wait_cb=at_exit_should_wait_cb)
+        atexit.register(thread_pool.shutdown, should_wait_cb=at_exit_should_wait_cb)
     else:
         at_exit_should_wait_cb = should_wait_cb
 

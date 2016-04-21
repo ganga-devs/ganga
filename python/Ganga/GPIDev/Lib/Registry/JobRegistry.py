@@ -9,13 +9,11 @@ from __future__ import absolute_import
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 
 from Ganga.Core.exceptions import GangaException
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher
 
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, addProxy
 
 import Ganga.Utility.logging
-
-from Ganga.Runtime.GPIexport import exportToGPI
 
 from Ganga.GPIDev.Lib.Job.Job import Job
 
@@ -33,11 +31,15 @@ class JobRegistry(Registry):
 
     def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
         super(JobRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
+        self.stored_slice = JobRegistrySlice(self.name)
+        self.stored_slice.objects = self
+        self.stored_proxy = JobRegistrySliceProxy(self.stored_slice)
+
+    def getSlice(self):
+        return self.stored_slice
 
     def getProxy(self):
-        this_slice = JobRegistrySlice(self.name)
-        this_slice.objects = self
-        return JobRegistrySliceProxy(this_slice)
+        return self.stored_proxy
 
     def getIndexCache(self, obj):
 
@@ -45,9 +47,6 @@ class JobRegistry(Registry):
         cache = {}
         for cv in cached_values:
             #print("cv: %s" % str(cv))
-            #if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
-            #    cache[cv] = obj.getNodeIndexCache()[cv]
-            #else:
             cache[cv] = getattr(obj, cv)
             #logger.info("Setting: %s = %s" % (str(cv), str(cache[cv])))
         this_slice = JobRegistrySlice("jobs")
@@ -82,6 +81,12 @@ class JobRegistry(Registry):
             stripProxy(jt)._setRegistry(self.metadata)
             self.metadata._add(jt)
         self.jobtree = self.metadata[self.metadata.ids()[-1]]
+        self.flush_thread = RegistryFlusher(self)
+        self.flush_thread.start()
+
+    def shutdown(self):
+        self.flush_thread.join()
+        super(JobRegistry, self).shutdown()
 
     def getJobTree(self):
         return self.jobtree
@@ -114,10 +119,8 @@ class JobRegistrySlice(RegistrySlice):
 
     def _getColour(self, obj):
         if isType(obj, Job):
-            if stripProxy(obj).getNodeIndexCache():
-                status_attr = stripProxy(obj).getNodeIndexCache()['display:status']
-            else:
-                status_attr = obj.status
+            from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus
+            status_attr = lazyLoadJobStatus(stripProxy(obj))
         elif isType(obj, str):
             status_attr = obj
         elif isType(obj, dict):
@@ -295,6 +298,5 @@ def jobSlice(joblist):
     this_slice.objects = oDict([(j.fqid, _unwrap(j)) for j in joblist])
     return _wrap(this_slice)
 
-# , "Create a job slice from a job list")
-exportToGPI("jobSlice", jobSlice, "Functions")
+# , "Create a job slice from a job list") exported to the Runtime bootstrap
 

@@ -14,6 +14,7 @@ from __future__ import absolute_import
 import os
 import re
 import math
+import mimetypes
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Core import GangaException
@@ -180,9 +181,11 @@ class LCG(IBackend):
         self.sandboxcache.middleware = self.middleware.upper()
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
-        try:
-            from Ganga.GPI import DQ2SandboxCache
-        except ImportError:
+        # Should this __really__ be in Core?
+        from Ganga.GPIDev.Base.Proxy import getProxyInterface
+        if 'DQ2SandboxCache' in getProxyInterface.__dict__.keys():
+            DQ2SandboxCache = getProxyInterface()['DQ2SandboxCache']
+        else:
             DQ2SandboxCache = None
 
         from Ganga.Lib.LCG.LCGSandboxCache import LCGSandboxCache
@@ -1260,13 +1263,15 @@ try:
         if not lcg_file_download(vo, guid, os.path.join(wdir,f), timeout=int(timeout)):
             raise IOError('Download remote input %s:%s failed.' % (guid,f) )
         else:
-            getPackedInputSandbox(f)
+            if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+                getPackedInputSandbox(f)
 
     printInfo('Download inputsandbox from iocache passed.')
 
 #   unpack inputsandbox from wdir
     for f in input_sandbox['local']:
-        getPackedInputSandbox(os.path.join(orig_wdir,f))
+        if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+            getPackedInputSandbox(os.path.join(orig_wdir,f))
 
     printInfo('Unpack inputsandbox passed.')
 
@@ -1470,7 +1475,12 @@ sys.exit(0)
 
 
 #       prepare input/output sandboxes
-        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules())
+        from Ganga.GPIDev.Lib.File import File
+        from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
+        import inspect
+
+        fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
+        packed_files = jobconfig.getSandboxFiles() + [ fileutils ]
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox

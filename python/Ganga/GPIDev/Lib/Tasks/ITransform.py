@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
-from .common import logger
+from Ganga.Utility.logging import getLogger
 from Ganga.Utility.ColourText import status_colours, overview_colours, ANSIMarkup
 markup = ANSIMarkup()
 from Ganga.Core.exceptions import ApplicationConfigurationError
@@ -10,10 +10,12 @@ from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from .IUnit import IUnit
-import Ganga.GPI as GPI
 import time
 import os
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
+from Ganga.GPIDev.Lib.Tasks.common import getJobByID
+
+logger = getLogger()
 
 class ITransform(GangaObject):
     _schema = Schema(Version(1, 0), {
@@ -132,8 +134,8 @@ OutputFile objects to be copied to all jobs"),
         return 1
 
     def initialize(self):
-        from Ganga import GPI
-        self.backend = stripProxy(GPI.Local())
+        from Ganga.Lib.Localhost.Localhost import Localhost
+        self.backend = Localhost()
         self.updateStatus("new")
 
     def check(self):
@@ -200,8 +202,6 @@ OutputFile objects to be copied to all jobs"),
 
     def update(self):
         """Called by the parent task to check for status updates, submit jobs, etc."""
-        #logger.warning("Entered Transform %d update function..." % self.getID())
-
         if self.status == "pause" or self.status == "new":
             return 0
 
@@ -267,7 +267,6 @@ OutputFile objects to be copied to all jobs"),
                     return 0
 
         # update status and check
-        old_status = self.status
         for state in ['running', 'hold', 'bad', 'completed']:
             if state in unit_status_list:
                 if state == 'hold':
@@ -562,7 +561,7 @@ OutputFile objects to be copied to all jobs"),
         """Return the list of parent jobs"""
         job_list = []
         for parent in parent_units:
-            job = GPI.jobs(parent.active_job_ids[0])
+            job = getJobByID(parent.active_job_ids[0])
             if job.subjobs:
                 job_list += job.subjobs
             else:
@@ -576,7 +575,7 @@ OutputFile objects to be copied to all jobs"),
             for jid in unit.prev_job_ids:
                 try:
                     logger.warning("Removing job '%d'..." % jid)
-                    job = GPI.jobs(jid)
+                    job = getJobByID(jid)
                     job.remove()
                 except Exception as err:
                     logger.debug("removeUnused: %s" % str(err))
