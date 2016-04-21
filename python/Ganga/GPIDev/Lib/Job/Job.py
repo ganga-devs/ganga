@@ -39,7 +39,7 @@ def lazyLoadJobFQID(this_job):
 
 
 def lazyLoadJobStatus(this_job):
-    return lazyLoadJobObject(this_job, 'status', dont_eval=True)
+    return lazyLoadJobObject(this_job, 'status', do_eval=True)
 
 
 def lazyLoadJobBackend(this_job):
@@ -50,7 +50,7 @@ def lazyLoadJobApplication(this_job):
     return lazyLoadJobObject(this_job, 'application')
 
 
-def lazyLoadJobObject(raw_job, this_attr, dont_eval=False):
+def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
     ## Returns an object which corresponds to an attribute from a Job, or matches it's default equivalent without triggering a load from disk
     ## i.e. lazy loading a Dirac backend will return a raw Dirac() object and lazy loading the status will return the status string
     ## These are all evaluated from the strings in the index file for the job.
@@ -66,11 +66,11 @@ def lazyLoadJobObject(raw_job, this_attr, dont_eval=False):
     job_index_cache = this_job.getNodeIndexCache()
     if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache.keys():
         obj_name = job_index_cache[lzy_loading_str]
-        if obj_name is not None and not dont_eval:
+        if obj_name is not None and do_eval:
             job_obj = getRuntimeGPIObject(obj_name, True)
             if job_obj is None:
                 job_obj = getattr(this_job, this_attr)
-        elif dont_eval:
+        elif not do_eval:
             job_obj = obj_name
         else:
             job_obj = getattr(this_job, this_attr)
