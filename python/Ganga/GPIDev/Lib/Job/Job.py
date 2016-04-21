@@ -27,6 +27,7 @@ from Ganga.GPIDev.Schema import ComponentItem, FileItem, GangaFileItem, Schema, 
 from Ganga.Runtime.spyware import ganga_job_submitted
 from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.GPIDev.Lib.Dataset import Dataset
 
 from .JobTime import JobTime
 
@@ -209,7 +210,7 @@ class Job(GangaObject):
                                      'name': SimpleItem('', doc='optional label which may be any combination of ASCII characters', typelist=[str]),
                                      'inputdir': SimpleItem(getter="getStringInputDir", defvalue=None, transient=1, protected=1, comparable=0, load_default=0, optional=1, copyable=0, typelist=[str], doc='location of input directory (file workspace)'),
                                      'outputdir': SimpleItem(getter="getStringOutputDir", defvalue=None, transient=1, protected=1, comparable=0, load_default=0, optional=1, copyable=0, typelist=[str], doc='location of output directory (file workspace)'),
-                                     'inputdata': ComponentItem('datasets', defvalue=None, typelist=[Ganga.GPIDev.Lib.Dataset.Dataset], load_default=0, optional=1, doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
+                                     'inputdata': ComponentItem('datasets', defvalue=None, typelist=[Dataset], load_default=0, optional=1, doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
                                      'outputdata': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, copyable=_outputfieldCopyable(), doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
                                      'splitter': ComponentItem('splitters', defvalue=None, load_default=0, optional=1, doc='optional splitter'),
                                      'subjobs': ComponentItem('jobs', defvalue=GangaList(), typelist=[list, GangaList], sequence=1, protected=1, load_default=0, copyable=0, comparable=0, optional=1, proxy_get="_subjobs_proxy", doc='list of subjobs (if splitting)', summary_print='_subjobs_summary_print'),
