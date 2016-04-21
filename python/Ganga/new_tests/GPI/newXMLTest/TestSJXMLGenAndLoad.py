@@ -28,6 +28,9 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         from Ganga.GPI import Job, jobs, ArgSplitter
         j=Job(splitter=ArgSplitter(args=testArgs))
         assert len(jobs) == 1
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+        stripProxy(j)._getRegistry().flush_all()
+        stripProxy(j)._setDirty()
 
     def test_b_JobXMLExists(self):
         # Check things exist
@@ -237,6 +240,9 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             index_cls = getName(raw_j)
             index_cat = raw_j._category
             this_index_cache = (index_cat, index_cls, index_cache)
+
+            print("just-built index: %s" % str(this_index_cache))
+            print("from disk: %s" % str(obj))
 
             assert this_index_cache == obj
 

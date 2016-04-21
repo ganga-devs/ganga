@@ -65,7 +65,7 @@ def getRuntimeGPIObject(obj_name, silent=False):
         returnable = raw_eval(obj_name)
         if returnable == obj_name:
             if silent is False:
-                logger.error("Cannot find Object: '%s' in GPI. Returning None." % str(obj_name))
+                logger.error("Cannot find Object: '%s' in GPI. Returning None." % obj_name)
             return None
         return returnable
 
@@ -115,8 +115,8 @@ def runtimeEvalString(this_obj, attr_name, val):
                                     ## This type is NOT a string so based on this we should Eval
                                     shouldEval = True
                             except Exception as err:
-                                logger.debug("Failed to evalute type: %s" % str(this_type))
-                                logger.debug("Err: %s" % str(err))
+                                logger.debug("Failed to evalute type: %s" % this_type)
+                                logger.debug("Err: %s" % err)
                                 ## We can't eval in this case. It may just be the type which is broken
                                 shouldEval = True
                         else:
@@ -166,7 +166,7 @@ def _fully_eval(val):
         else:
             new_val = temp_val
     except Exception as err:
-        logger.debug("Proxy Cannot evaluate v=: '%s'" % str(val))
+        logger.debug("Proxy Cannot evaluate v=: '%s'" % val)
         logger.debug("Using raw value instead")
         new_val = val
 
@@ -273,7 +273,7 @@ def stripComponentObject(v, cfilter, item):
     def getImpl(v):
         if v is None:
             if not item['optional']:
-                raise TypeMismatchError(None, 'component(%s) is mandatory and None may not be used' % str(getName(item)))
+                raise TypeMismatchError(None, 'component(%s) is mandatory and None may not be used' % getName(item))
                 return v
             else:
                 return None
@@ -892,7 +892,7 @@ def GPIProxyClassFactory(name, pluginclass):
             else:
                 p_text = self.__str__(interactive=True)
         except Exception as err:
-            p_text = "Error Representing object: %s\nErr:\n%s" % (type(self), str(err))
+            p_text = "Error Representing object: %s\nErr:\n%s" % (type(self), err)
 
         p.text(p_text)
 
@@ -910,7 +910,7 @@ def GPIProxyClassFactory(name, pluginclass):
             else:
                 return '<' + repr(stripProxy(self)) + ' PROXY at ' + hex(abs(id(self))) + '>'
         except Exception as err:
-            return "Error Representing object: %s\nErr:\n" % (type(self), str(err))
+            return "Error Representing object: %s\nErr:\n" % (type(self), err)
 
     helptext(_repr, "Return an short representation of %(classname)s object.")
 
@@ -933,7 +933,7 @@ def GPIProxyClassFactory(name, pluginclass):
     helptext(_ne, "Non-equality operator (!=).")
 
     def _copy(self, unprepare=None):
-        logger.debug('unprepare is %s', str(unprepare))
+        logger.debug('unprepare is %s', unprepare)
         if unprepare is None:
             if prepconfig['unprepare_on_copy'] is True:
                 if hasattr(self, 'is_prepared') or hasattr(self, 'application'):
@@ -1042,7 +1042,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 
     def _getattribute(self, name):
 
-        #logger.debug("_getattribute: %s" % str(name))
+        #logger.debug("_getattribute: %s" % name)
 
         if name.startswith('__') or name == implRef:
             return GPIProxyObject.__getattribute__(self, name)
@@ -1114,7 +1114,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
     def __getitem(self, arg):
 
         if not hasattr(stripProxy(self), '__getitem__'):
-            raise AttributeError('I (%s) do not have a __getitem__ attribute' % str(getName(self)))
+            raise AttributeError('I (%s) do not have a __getitem__ attribute' % getName(self))
 
         output = stripProxy(self).__getitem__(args)
 

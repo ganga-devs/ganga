@@ -47,7 +47,7 @@ p.add_option('--inPfnListFile', action='store', type='string', dest='input_pfnli
 p.add_option('--inTagDS', action='store', type='string', dest='tag_input_dataset', metavar='TAGDATASETNAME', help='Name of the Tag DQ2 datasetname to process')
 p.add_option('--inTagFiles', action='store', type='string', dest='tag_input_files', help='Name of local TAG files to determine input data' )
 p.add_option('--tagCollRef', action='store', type='string', dest='tag_coll_ref', help='Directly specify the collection reference if not in JOs (e.g. TRF usage)' )
-p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['DQ2', 'ATLAS', 'Local', 'Castor'],  default='DQ2', help='Type of the input dataset: DQ2, ATLAS, Local, Castor, [default: DQ2]' )
+p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['', 'DQ2', 'Local', 'Castor'],  default='', help='Type of the input dataset: DQ2, Local, Castor' )
 p.add_option('--inputaccessmode', action='store', type='choice', dest='inputaccessmode', choices = ['DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'FILE_STAGER' ], default='DQ2_LOCAL',  help='Access mode of the DQ2/TAG input dataset: DQ2_LOCAL, FILE_STAGER, LFC, TAG, TAG_REC [default: DQ2_LOCAL]'  )
 p.add_option('--inputfailover', action='store_true', help='Use DQ2_COPY automatically if DQ2_LOCAL fails' )
 p.add_option('--inputaccessprotocol', action='store', type='string', dest='inputaccessprotocol', help='Access protocol on worker node, like Xrootd'  )
@@ -75,7 +75,7 @@ p.add_option('--create_poolfilecatalog', action='store_true', help='Create the P
 
 # Output dataset
 p.add_option('--outputdata', '-o', action='store', type='string', dest='outputdata', help='List of job output roottuples to be stored, separated by ":", e.g. AnalysisSekeleton.aan.root:Numbers.txt')
-p.add_option('--outputtype', action='store', type='choice', dest='outputtype', choices = ['DQ2', 'ATLAS'], default='DQ2', help='Type of the output dataset: DQ2, ATLAS, [default: DQ2]')
+p.add_option('--outputtype', action='store', type='choice', dest='outputtype', choices = ['', 'DQ2', 'ATLAS'], default='', help='Type of the output dataset: DQ2, ATLAS')
 p.add_option('--outDS', action='store', type='string', dest='output_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname for the job output, will be of the type: user.username.ganga.DATSETNAME')
 p.add_option('--outputlocation', action='store', type='string', dest='output_location', help='Location and path of the job output on the remote storage element for grid jobs or local path for local or batch jobs, e.g. sfn://castorgrid.cern.ch/castor/cern.ch/atlas/scratch/$USER/ganga or /path/to/storefiles/')
 p.add_option('--outputlocallocation', action='store', type='string', dest='output_local_location', help='Local path to store output that is transfered with retrieve() method')
@@ -99,6 +99,7 @@ p.add_option('--panda', action='store_const', const='panda', dest='backend', hel
 p.add_option('--jedi', action='store_const', const='jedi', dest='backend', help='Submit job(s) to jedi')
 p.add_option('--lsf', action='store_const', const='lsf', dest='backend', help='Submit job(s) to the local LSF batch system, e.g. on lxplus')
 p.add_option('--condor', action='store_const', const='condor', dest='backend', help='Submit job(s) to the local Condor batch system')
+p.add_option('--arch', action='store', type='string', dest='arch', help='Set the architecture. By default will be taken from CMT (only used by Condor backend at present)')
 p.add_option('--pbs', action='store_const', const='pbs', dest='backend', help='Submit job(s) to the local PBS batch system')
 p.add_option('--sge', action='store_const', const='sge', dest='backend', help='Submit job(s) to the local SGE batch system')
 p.add_option('--local', action='store_const', const='local', dest='backend', help='Execute job on the local desktop computer')
@@ -345,35 +346,30 @@ if opt.useAthenaPackages:
 if opt.cmtConfig:
     j.application.atlas_cmtconfig=opt.cmtConfig
 
+# defaults for inputtype
+if not opt.inputtype:
+    if opt.backend in ['lcg', 'cream', 'panda', 'jedi']:
+        opt.inputtype = 'DQ2'
+    else:
+        opt.inputtype = 'Local'
 
 # inputdata
-
-if opt.input_pfnlistfile:
-    j.inputdata = ATLASTier3Dataset()
-    j.inputdata.pfnListFile = opt.input_pfnlistfile
-
 if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inputtype=='Local':
     #print opt.inputtype
     if opt.inputtype:
         if opt.inputtype=='DQ2':
             j.inputdata = DQ2Dataset()
-        if opt.inputtype=='ATLAS':
-            j.inputdata = ATLASDataset()
-            if opt.inputlfn:
-                 j.inputdata.lfn=opt.inputlfn.split(',')
-            else:
-                print >>sys.stderr, 'ERROR: No parameter --inputlfn for ATLASDataset given'
-                sys.exit(4)
-            if opt.inputlfc:
-                 j.inputdata.lfc=opt.inputlfc
 
         if opt.inputtype=='Local':
             j.inputdata = ATLASLocalDataset()
 
             # decide where to get input info from: locallocation or inDS
-            if opt.locallocation:
-		for loc in opt.locallocation:
-		    for loc_dir in loc[0].split(","):		        
+            if opt.input_pfnlistfile:
+                j.inputdata = ATLASLocalDataset()
+                j.inputdata.get_dataset_from_list(opt.input_pfnlistfile, no_dir_check=True)
+            elif opt.locallocation:
+                for loc in opt.locallocation:
+                    for loc_dir in loc[0].split(","):
                         print "Using locallocation for input: " + loc_dir + ", " +  loc[1]
                         j.inputdata.get_dataset(loc_dir,loc[1])
             elif opt.input_dataset:
@@ -489,6 +485,13 @@ if opt.pickevent:
             j.splitter = DQ2JobSplitter()
             j.splitter.numsubjobs = 1
 
+# defaults for outputtype
+if not opt.outputtype:
+    if opt.backend in ['lcg', 'cream', 'panda', 'jedi']:
+        opt.outputtype = 'DQ2'
+    else:
+        opt.outputtype = 'ATLAS'
+
 # outputdata
 
 # local backends can now run without specifying outputdata
@@ -545,10 +548,6 @@ if opt.numsubjobs > 0:
         j.splitter = AthenaSplitterJob()
         j.splitter.numsubjobs = opt.numsubjobs
 
-    if opt.input_pfnlistfile:
-        j.splitter = ATLASTier3Splitter()
-        j.splitter.numjobs = opt.numsubjobs
-
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
 	pass
@@ -562,10 +561,6 @@ elif opt.numfiles_subjob>0:
     else:
         j.splitter = AthenaSplitterJob()
         j.splitter.numfiles_subjob = opt.numfiles_subjob
-
-    if opt.input_pfnlistfile:
-        j.splitter = ATLASTier3Splitter()
-        j.splitter.numfiles = opt.numfiles_subjob
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
@@ -630,6 +625,13 @@ elif opt.backend == 'cream':
 
 elif opt.backend == 'condor':
     j.backend = Condor()
+
+    # set the condor arch requirements from --arch or CMT if available
+    if opt.arch:
+        j.backend.requirements.arch = opt.arch
+    elif j.application.atlas_cmtconfig:
+        j.backend.requirements.arch = j.application.atlas_cmtconfig.split('-')[0].upper()
+
     if opt.queue: j.backend.queue = opt.queue        
 elif opt.backend == 'pbs':
     j.backend = PBS()

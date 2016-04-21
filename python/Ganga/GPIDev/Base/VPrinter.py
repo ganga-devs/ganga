@@ -16,6 +16,7 @@ from Ganga.Utility.logging import getLogger
 
 logger = getLogger()
 
+
 def quoteValue(value, interactive=False):
     """A quoting function. Used to get consistent formatting"""
     if isType(value, str):
@@ -288,7 +289,7 @@ def full_print(obj, out=None, interactive=False):
                     outStringList.append(str(x).rstrip())
                 elif isType(x, GangaObject):
                     sio = StringIO()
-                    x.printTree(sio, interactive)
+                    stripProxy(x).printTree(sio, interactive)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
                     outStringList.append(result.rstrip())
@@ -303,7 +304,7 @@ def full_print(obj, out=None, interactive=False):
             print(outString, end=' ', file=out)
         return
 
-    if isProxy(obj) and isType(obj, GangaObject):
+    if isProxy(obj) and isinstance(_obj, GangaObject):
         sio = StringIO()
         runProxyMethod(obj, 'printTree', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)
@@ -333,7 +334,7 @@ def summary_print(obj, out=None, interactive=False):
                 elif isType(x, GangaObject):
                     sio =StringIO()
                     #logger.debug("summary_print: printSummaryTree")
-                    x.printSummaryTree(0, 0, '', out=sio)
+                    stripProxy(x).printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
                     outStringList.append(result.rstrip())
@@ -348,7 +349,7 @@ def summary_print(obj, out=None, interactive=False):
             print(outString, end=' ', file=out)
         return
 
-    if isProxy(obj) and isType(obj, GangaObject):
+    if isProxy(obj) and isinstance(_obj, GangaObject):
         sio = StringIO()
         #logger.debug("#2 printSummaryTree")
         runProxyMethod(obj, 'printSummaryTree', 0, 0, '', sio, interactive)
