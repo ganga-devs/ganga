@@ -248,7 +248,7 @@ def addProxy(obj):
 
 def getProxyAttr(obj, attr_name):
     """Gets an attribute from a proxied object"""
-    return getattr(obj, attr_name)
+    return getattr(stripProxy(obj), attr_name)
 
 
 def runProxyMethod(obj, method_name, *args):
