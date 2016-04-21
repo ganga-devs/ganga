@@ -453,7 +453,8 @@ class RegistrySlice(object):
                 cached_data = self.objects.getCachedData(obj_i)
                 colour = self._getColour( cached_data )
             else:
-                obj = stripProxy(self.objects[obj_i])
+                reg_object = self.objects[obj_i]
+                obj = stripProxy(reg_object)
                 colour = self._getColour(obj)
 
             vals = []
@@ -463,7 +464,6 @@ class RegistrySlice(object):
                 width = self._display_columns_width.get(item, default_width)
                 try:
                     if not isType(self.objects, SubJobXMLList):
-                        obj = stripProxy(self.objects[obj_i])
                         if item == "fqid":
                             vals.append(str(stripProxy(obj).getNodeIndexCache()[display_str]))
                         else:
