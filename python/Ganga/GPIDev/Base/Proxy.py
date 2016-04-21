@@ -33,20 +33,31 @@ _knownLists = None
 
 _stored_Interface = None
 
+_eval_cache = {}
+
 def setProxyInterface(my_interface):
+    ## Set the proxy interface, not strictly needed for Ganga.GPI but good practice as we move to 'ganga'
     global _stored_Interface
     _stored_Interface = my_interface
 
 def getProxyInterface():
+    ## Get the proxy interface  Ganga.GPI by default, 'ganga' if it's be set to this
     if not _stored_Interface:
         import Ganga.GPI
         setProxyInterface(Ganga.GPI)
     return _stored_Interface
 
 def getRuntimeGPIObject(obj_name, silent=False):
+    ## Get, or attempt to get an object from the GPI, if it exists then return a new instance if a class or an object if it's not
+    ## If it doesn't exist attempt to evaluate the obj_name as a string like a standard python object
+    ## If it's none of the above then return 'None' rather than the object string which was input
     interface = getProxyInterface()
     if obj_name in interface.__dict__.keys():
-        return interface.__dict__[obj_name]()
+        this_obj = interface.__dict__[obj_name]
+        if isclass(this_obj):
+            return this_obj()
+        else:
+            return this_obj
     else:
         returnable = raw_eval(obj_name)
         if returnable == obj_name:
@@ -56,6 +67,9 @@ def getRuntimeGPIObject(obj_name, silent=False):
         return returnable
 
 def runtimeEvalString(this_obj, attr_name, val):
+    ## Return the evaluated value of the 'val' after checking the schema and attributes associated with this_obj and attr_name
+    ## If the attribute or the Schema are or allow for string objects then val is not evaluated but if it does allow for non string objects and isn't then an eval is performed
+    ## This is ugly and is a direct consequence of allowing j.backend = 'Dirac' which in this authors (rcurrie) opinion is going to hurt us later
 
     ## Don't check or try to auto-eval non-string objects
     if type(val) != str:
@@ -133,7 +147,17 @@ def runtimeEvalString(this_obj, attr_name, val):
 
 
 def raw_eval(val):
+    ## Attempts to evaluate the val object and return the object it evaluates to if it is a Python object
+    ## Makes use of basic caching as we don't expect that things at this level should change.
+    from copy import deepcopy
+    if val in _eval_cache:
+        return deepcopy(_eval_cache[val])
+
     try:
+        ## Catch common strings which shouldn't be evaluated anyway and return them asif an exception occured
+        if val in ['', '.', 'new']:
+            _eval_cache[val] = val
+            return deepcopy(val)
         interface = getProxyInterface() 
         temp_val = eval(val, interface.__dict__)
         if isclass(temp_val):
@@ -141,6 +165,8 @@ def raw_eval(val):
         else:
             new_val = temp_val
     except Exception as err:
+        ## Useful for debugging these
+        ## import traceback; traceback.print_stack()
         logger.debug("Proxy Cannot evaluate v=: '%s'" % val)
         logger.debug("Using raw value instead")
         new_val = val
@@ -148,7 +174,9 @@ def raw_eval(val):
     if hasattr(stripProxy(new_val), '_auto__init__'):
         stripProxy(new_val)._auto__init__()
 
-    return new_val
+    _eval_cache[val] = new_val
+
+    return deepcopy(new_val)
 
 def getKnownLists():
     global _knownLists
