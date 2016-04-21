@@ -192,7 +192,7 @@ class RootMerger(IMerger):
     _name = 'RootMerger'
     _schema = IMerger._schema.inherit_copy()
     _schema.datadict['args'] = SimpleItem(defvalue=None, doc='Arguments to be passed to hadd.',
-                                          typelist=['str', 'type(None)'])
+                                          typelist=['str', 'None'])
 
     def mergefiles(self, file_list, output_file):
 

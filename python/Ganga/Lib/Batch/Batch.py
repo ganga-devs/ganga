@@ -93,7 +93,7 @@ class Batch(IBackend):
     _schema = Schema(Version(1, 0), {'queue': SimpleItem(defvalue='', doc='queue name as defomed in your local Batch installation'),
                                      'extraopts': SimpleItem(defvalue='', doc='extra options for Batch. See help(Batch) for more details'),
                                      'id': SimpleItem(defvalue='', protected=1, copyable=0, doc='Batch id of the job'),
-                                     'exitcode': SimpleItem(defvalue=None, typelist=['int', 'type(None)'], protected=1, copyable=0, doc='Process exit code'),
+                                     'exitcode': SimpleItem(defvalue=None, typelist=['int', 'None'], protected=1, copyable=0, doc='Process exit code'),
                                      'status': SimpleItem(defvalue='', protected=1, hidden=1, copyable=0, doc='Batch status of the job'),
                                      'actualqueue': SimpleItem(defvalue='', protected=1, copyable=0, doc='queue name where the job was submitted.'),
                                      'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='hostname where the job is/was running.')

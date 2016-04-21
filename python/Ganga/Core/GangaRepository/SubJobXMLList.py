@@ -345,6 +345,7 @@ class SubJobXMLList(GangaObject):
 
     def __getitem__(self, index):
         """Return a subjob based upon index"""
+        logger.debug("SJ:__getitem__")
         try:
             return self._getItem(index)
         except (GangaException, IOError, XMLFileError) as err:

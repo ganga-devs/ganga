@@ -36,7 +36,7 @@ class LocalFile(IGangaFile):
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
                                                 typelist=['Ganga.GPIDev.Lib.File.LocalFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                                      'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
-                                     #'output_location': SimpleItem(defvalue=None, typelist=['str', 'type(None)'], hidden=1, copyable=1, doc="path of output location on disk")
+                                     #'output_location': SimpleItem(defvalue=None, typelist=['str', 'None'], hidden=1, copyable=1, doc="path of output location on disk")
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"
