@@ -1279,7 +1279,7 @@ under certain conditions; type license() for details.
         ipshell.confirm_exit = config['confirm_exit']
 
         # Launch embedded shell
-        ipshell(local_ns=local_ns, global_ns=local_ns)
+        ipshell(local_ns=local_ns)
 
     @staticmethod
     def ganga_prompt(dummy=None):
