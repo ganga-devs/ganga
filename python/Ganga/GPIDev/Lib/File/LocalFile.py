@@ -26,15 +26,23 @@ logger = Ganga.Utility.logging.getLogger()
 
 regex = re.compile('[*?\[\]]')
 
+class LocalFileStub(IGangaFile):
 
-class LocalFile(IGangaFile):
+    _schema = Schema(Version(1,0), {})
+    _name = "LocalFileStub"
+    _hidden = False
+
+    def __init__(self):
+        super(LocalFileStub, self).__init__()
+
+class LocalFile(LocalFileStub):
 
     """LocalFile represents base class for output files, such as MassStorageFile, LCGSEFile, etc 
     """
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
                                      'localDir': SimpleItem(defvalue="", doc='local dir where the file is stored, used from get and put methods'),
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
-                                                typelist=['Ganga.GPIDev.Lib.File.LocalFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+                                                typelist=[LocalFileStub], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                                      'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
                                      #'output_location': SimpleItem(defvalue=None, typelist=[str, None], hidden=1, copyable=1, doc="path of output location on disk")
                                      })

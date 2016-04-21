@@ -23,8 +23,16 @@ import Ganga.Utility.Config
 regex = re.compile('[*?\[\]]')
 logger = getLogger()
 
-class MassStorageFile(IGangaFile):
+class MassStorageFileStub(IGangaFile):
 
+    _schema = Schema(Version(1,0), {})
+    _name = "MassStorageFileStub"
+    _hidden = False
+
+    def __init__(self):
+        super(LocalFileStub, self).__init__()
+
+class MassStorageFile(MassStorageFileStub):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
     """
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
@@ -36,7 +44,7 @@ class MassStorageFile(IGangaFile):
                                                         if this field is not set, the output will go in {jid}/{sjid}/{fname} or in {jid}/{fname}\
                                                         depending on whether the job is split or not"),
                                      'inputremotedirectory': SimpleItem(defvalue=None, typelist=[str, None], protected=0, doc="Directory on mass storage where the file is stored"),
-                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.MassStorageFile'], sequence=1, copyable=0,\
+                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=[MassStorageFileStub], sequence=1, copyable=0,\
                                                     doc="collected files from the wildcard namePattern"),
                                      'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
                                      'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere')
