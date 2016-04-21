@@ -4,7 +4,7 @@ from .GangaUnitTest import GangaUnitTest
 
 
 class TestArgSplitter(GangaUnitTest):
-    def TestArgSplitter(self):
+    def testArgSplitter(self):
         from Ganga.GPI import Job, ArgSplitter
         from GangaTest.Framework.utils import sleep_until_completed
 

@@ -1,4 +1,5 @@
-from GangaUnitTest import GangaUnitTest
+from __future__ import absolute_import
+from .GangaUnitTest import GangaUnitTest
 import random
 import string
 

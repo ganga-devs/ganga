@@ -218,7 +218,7 @@ poll_config.addOption('autostart_monThreads', True, 'enable populating of the mo
 poll_config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
 poll_config.addOption('MaxNumResubmits', 5, 'Maximum number of automatic job resubmits to do before giving')
 poll_config.addOption('MaxFracForResubmit', 0.25, 'Maximum fraction of failed jobs before stopping automatic resubmission')
-poll_config.addOption('update_thread_pool_size', 5, 'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
+poll_config.addOption('update_thread_pool_size', 50, 'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
 poll_config.addOption('default_backend_poll_rate', 30, 'Default rate for polling job status in the thread pool. This is the default value for all backends.')
 poll_config.addOption('Local', 10, 'Poll rate for Local backend.')
 poll_config.addOption('LCG', 30, 'Poll rate for LCG backend.')
