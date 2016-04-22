@@ -360,7 +360,7 @@ class Node(object):
         setattr(self, '_index_cache', new_index_cache)
 
     def getNodeIndexCache(self, force_cache=False):
-        if self.fullyLoadedFromDisk() and not force_cache:
+        if not force_cache and self.fullyLoadedFromDisk():
             if self._getRegistry() is not None:
                 ## Fully loaded so lets regenerate this on the fly to avoid losing data
                 return self._getRegistry().getIndexCache(self)
