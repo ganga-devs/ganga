@@ -159,10 +159,6 @@ def raw_eval(val):
         return deepcopy(_eval_cache[val])
 
     try:
-        ## Catch common string(s) which shouldn't be evaluated anyway and return them asif an exception occured
-        if val in ['']:
-            _eval_cache[val] = val
-            return deepcopy(val)
         interface = getProxyInterface() 
         temp_val = eval(val, interface.__dict__)
         if isclass(temp_val):
