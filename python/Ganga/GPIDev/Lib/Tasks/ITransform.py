@@ -14,6 +14,8 @@ import time
 import os
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
 from Ganga.GPIDev.Lib.Tasks.common import getJobByID
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
+from Ganga.GPIDev.Lib.File.File import File
 
 logger = getLogger()
 
@@ -22,7 +24,7 @@ class ITransform(GangaObject):
         'status': SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=[str]),
         'name': SimpleItem(defvalue='Simple Transform', doc='Name of the transform (cosmetic)', typelist=[str]),
         'application': ComponentItem('applications', defvalue=None, optional=1, load_default=False, doc='Application of the Transform.'),
-        'inputsandbox': FileItem(defvalue=[], typelist=[str, 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
+        'inputsandbox': FileItem(defvalue=[], typelist=[str, File], sequence=1, doc="list of File objects shipped to the worker node "),
         'outputsandbox': SimpleItem(defvalue=[], typelist=[str], sequence=1, doc="list of filenames or patterns shipped from the worker node"),
         'backend': ComponentItem('backends', defvalue=None, optional=1, load_default=False, doc='Backend of the Transform.'),
         'splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter used on each unit of the Transform.'),
@@ -37,9 +39,8 @@ class ITransform(GangaObject):
         'units': ComponentItem('units', defvalue=[], sequence=1, copyable=1, doc='list of units'),
         'inputdata': ComponentItem('datasets', defvalue=[], sequence=1, protected=1, optional=1, load_default=False, doc='Input datasets to run over'),
         'outputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Output dataset template'),
-        'inputfiles': GangaFileItem(defvalue=[], typelist=[str, 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
-        'outputfiles' : GangaFileItem(defvalue=[], typelist=[str, 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of \
-OutputFile objects to be copied to all jobs"),
+        'inputfiles': GangaFileItem(defvalue=[], typelist=[str, IGangaFile], sequence=1, doc="list of file objects that will act as input files for a job"),
+        'outputfiles' : GangaFileItem(defvalue=[], typelist=[str, IGangaFile], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
         'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1),
         'rebroker_on_job_fail': SimpleItem(defvalue=True, doc='Rebroker if too many minor resubs'),
         'abort_loop_on_submit': SimpleItem(defvalue=True, doc='Break out of the Task Loop after submissions'),

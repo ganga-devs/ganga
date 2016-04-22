@@ -12,6 +12,8 @@ import time
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
 import sys
 import traceback
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
+from Ganga.GPIDev.Lib.File.File import File
 
 logger = getLogger()
 
@@ -37,9 +39,9 @@ class IUnit(GangaObject):
         'merger': ComponentItem('mergers', defvalue=None, load_default=0, optional=1, doc='Merger to be run after this unit completes.'),
         'splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter used on each unit of the Transform.'),
         'postprocessors': ComponentItem('postprocessor', defvalue=None, doc='list of postprocessors to run after job has finished'),
-        'inputsandbox': FileItem(defvalue=[], typelist=[str, 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
-        'inputfiles': GangaFileItem(defvalue=[], typelist=[str, 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
-        'outputfiles': GangaFileItem(defvalue=[], typelist=[str, 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
+        'inputsandbox': FileItem(defvalue=[], typelist=[str, File], sequence=1, doc="list of File objects shipped to the worker node "),
+        'inputfiles': GangaFileItem(defvalue=[], typelist=[str, IGangaFile], sequence=1, doc="list of file objects that will act as input files for a job"),
+        'outputfiles': GangaFileItem(defvalue=[], typelist=[str, IGangaFile], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
         'info' : SimpleItem(defvalue=[],typelist=[str],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
         'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Unit', typelist=[int]),
     })

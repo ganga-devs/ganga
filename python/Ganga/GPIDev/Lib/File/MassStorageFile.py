@@ -30,7 +30,7 @@ class MassStorageFileStub(IGangaFile):
     _hidden = False
 
     def __init__(self):
-        super(LocalFileStub, self).__init__()
+        super(MassStorageFileStub, self).__init__()
 
 class MassStorageFile(MassStorageFileStub):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
