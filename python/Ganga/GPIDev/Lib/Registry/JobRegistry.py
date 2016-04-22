@@ -47,9 +47,6 @@ class JobRegistry(Registry):
         cache = {}
         for cv in cached_values:
             #print("cv: %s" % str(cv))
-            #if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
-            #    cache[cv] = obj.getNodeIndexCache()[cv]
-            #else:
             cache[cv] = getattr(obj, cv)
             #logger.info("Setting: %s = %s" % (str(cv), str(cache[cv])))
         this_slice = JobRegistrySlice("jobs")
@@ -122,10 +119,8 @@ class JobRegistrySlice(RegistrySlice):
 
     def _getColour(self, obj):
         if isType(obj, Job):
-            if stripProxy(obj).getNodeIndexCache():
-                status_attr = stripProxy(obj).getNodeIndexCache()['display:status']
-            else:
-                status_attr = obj.status
+            from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus
+            status_attr = lazyLoadJobStatus(stripProxy(obj))
         elif isType(obj, str):
             status_attr = obj
         elif isType(obj, dict):

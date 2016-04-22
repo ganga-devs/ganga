@@ -120,10 +120,8 @@ def loadPlugins( config = {} ):
    import Lib.Athena
    import Lib.ATLASDataset
    import Lib.AthenaMC
-   import Lib.Tnt
    import Lib.AtlasLCGRequirements
    import Lib.Tasks
-   import Lib.TagPrepare
    import Lib.AMIGA
    
    return None

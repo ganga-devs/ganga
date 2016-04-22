@@ -66,7 +66,7 @@ if DEBUGFILES or MONITOR_FILES:
                 from Ganga.Utility.logging import getLogger
                 logger = getLogger(modulename=True)
                 logger.debug("init")
-                logger.debug("### OPENING %s ###" % str(self.x))
+                logger.debug("### OPENING %s ###" % self.x)
             oldfile.__init__(self, *args)
             openfiles[self.x] = self
 
@@ -74,7 +74,7 @@ if DEBUGFILES or MONITOR_FILES:
             if DEBUGFILES:
                 from Ganga.Utility.logging import getLogger
                 logger = getLogger(modulename=True)
-                logger.debug("### CLOSING %s ###" % str(self.x))
+                logger.debug("### CLOSING %s ###" % self.x)
             oldfile.close(self)
             #openfiles[ self.x ] = None
             del openfiles[self.x]
@@ -415,7 +415,7 @@ under certain conditions; type license() for details.
                     except Exception, err:
                         logger.error('Failed to create config backup file %s' % bn)
                         logger.error('Old file will not be overwritten, please manually remove it and start ganga with the -g option to re-generate it')
-                        logger.error('Reason: %s' % str(err))
+                        logger.error('Reason: %s' % err)
                         return
                     logger.info('Copied current config file to %s' % bn)
                     break
@@ -470,7 +470,7 @@ under certain conditions; type license() for details.
                     notes = [l.strip() for l in f.read().replace(bounding_line, '').split(dividing_line)]
                 except Exception, err:
                     logger.error('Error while attempting to read release notes')
-                    logger.debug('Reason: %s' % str(err))
+                    logger.debug('Reason: %s' % err)
                     raise
 
             if notes[0].find(_gangaVersion) < 0:
@@ -562,7 +562,7 @@ under certain conditions; type license() for details.
                     for section, option, val in opts:
                         config = getConfig(section).setUserValue(option, val)
                 except ConfigError as x:
-                    self.exit('command line option error when resetting after config generation: %s' % str(x))
+                    self.exit('command line option error when resetting after config generation: %s' % x)
 
     @staticmethod
     def parse_cmdline_config_options(cmdline_options):
@@ -605,7 +605,7 @@ under certain conditions; type license() for details.
                     if should_set:
                         config = Ganga.Utility.Config.setSessionValue(section, option, val)
             except ConfigError as x:
-                self.exit('command line option error: %s' % str(x))
+                self.exit('command line option error: %s' % x)
 
         # set logging options
         set_cmdline_config_options(sects=['Logging'])
@@ -650,7 +650,7 @@ under certain conditions; type license() for details.
             # ignore all I/O errors (e.g. file does not exist), this is just an
             # advisory check
             this_logger = getLogger("Configure")
-            this_logger.debug("Config File Exception: %s" % str(x))
+            this_logger.debug("Config File Exception: %s" % x)
 
         if self.options.config_path is None:
             try:
@@ -689,7 +689,7 @@ under certain conditions; type license() for details.
         try:
             config.options['user'].default_value = getpass.getuser()
         except Exception as x:
-            raise Ganga.Utility.Config.ConfigError('Cannot get default user name' + str(x))
+            raise Ganga.Utility.Config.ConfigError('Cannot get default user name %s' % x)
 
         # import configuration from spyware
         from Ganga.Runtime import spyware
@@ -770,7 +770,7 @@ under certain conditions; type license() for details.
         logger = getLogger()
 
         logger.debug('default user name is %s', config['user'])
-        logger.debug('user specified cmdline_options: %s', str(self.options.cmdline_options))
+        logger.debug('user specified cmdline_options: %s', self.options.cmdline_options)
 
         # override the config options from the command line arguments
         # the format is [section]option=value OR option=value
@@ -847,7 +847,7 @@ under certain conditions; type license() for details.
             # load Ganga system plugins...
             from Ganga.Runtime import plugins
         except Exception as x:
-            logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', str(x))
+            logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', x)
             logger.exception(x)
             raise GangaException(x), None, sys.exc_info()[2]
 
@@ -875,7 +875,7 @@ under certain conditions; type license() for details.
             for path in paths:
                 r = RuntimePackage(path)
         except KeyError, err:
-            logger.debug("init KeyError: %s" % str(err))
+            logger.debug("init KeyError: %s" % err)
 
         logger.debug("Internal_ProxReexec")
 
@@ -891,7 +891,7 @@ under certain conditions; type license() for details.
                         os.environ.update(_env)
                 except Exception as err:
                     logger.error("can't get environment for %s, possible problem with the return value of getEvironment()" % r.name)
-                    logger.error("Reason: %s" % str(err))
+                    logger.error("Reason: %s" % err)
                     raise
 
             # in some cases the reexecution of the process is needed for LD_LIBRARY_PATH to take effect
@@ -900,8 +900,8 @@ under certain conditions; type license() for details.
                 logger.debug('re-executing the process for LD_LIBRARY_PATH changes to take effect')
                 os.environ['GANGA_INTERNAL_PROCREEXEC'] = '1'
                 prog = os.path.normpath(sys.argv[0])
-                logger.debug('Program: %s' % str(prog))
-                logger.debug('sys.argv: %s' % str(sys.argv))
+                logger.debug('Program: %s' % prog)
+                logger.debug('sys.argv: %s' % sys.argv)
                 os.execv(prog, sys.argv)
 
         else:
@@ -959,7 +959,7 @@ under certain conditions; type license() for details.
                 r.postBootstrapHook()
             except Exception as err:
                 logger.error("problems with post bootstrap hook for %s" % r.name)
-                logger.error("Reason: %s" % str(err))
+                logger.error("Reason: %s" % err)
 
 
     @staticmethod
@@ -991,7 +991,7 @@ under certain conditions; type license() for details.
                     logger.warning("Please specify the tests to run ( i.e. ganga --test Ganga/test )")
                     return -1
 
-                logger.info("myargs = %s" % str(" ".join(my_args)))
+                logger.info("myargs = %s" % " ".join(my_args))
 
                 rc = runner.start(test_selection=" ".join(my_args))
             else:
@@ -1038,7 +1038,7 @@ under certain conditions; type license() for details.
             try:
                 execfile(fileName, local_ns)
             except Exception as x:
-                logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(x))
+                logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, x)
         # exec StartupGPI code
         from Ganga.Utility.Config import getConfig
         config = getConfig('Configuration')
@@ -1152,7 +1152,7 @@ under certain conditions; type license() for details.
                 self.check_IPythonDir()
                 self.launch_IPython(local_ns, args, self._ganga_error_handler, self.ganga_prompt)
             else:
-                print("Unknown IPython version: %s" % str(ipver))
+                print("Unknown IPython version: %s" % ipver)
                 return
 
         else:
@@ -1203,7 +1203,7 @@ under certain conditions; type license() for details.
             os.makedirs(os.environ['IPYTHONDIR'])
 
         rc_file = os.path.join(os.environ['IPYTHONDIR'], 'ipythonrc')
-	logger.debug("Checking: %s" % str(rc_file))
+	logger.debug("Checking: %s" % rc_file)
         if not os.path.isfile(rc_file):
             lock = open(rc_file, "w")
             lock.close()
@@ -1218,7 +1218,7 @@ under certain conditions; type license() for details.
         ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
         from Ganga.Utility.logging import getLogger
         logger = getLogger(modulename=True)
-        logger.error("Error: %s" % str(value))
+        logger.error("Error: %s" % value)
 
         from Ganga.Core.exceptions import GangaException
         if not issubclass(etype, GangaException):
@@ -1279,7 +1279,7 @@ under certain conditions; type license() for details.
         ipshell.confirm_exit = config['confirm_exit']
 
         # Launch embedded shell
-        ipshell(local_ns=local_ns, global_ns=local_ns)
+        ipshell(local_ns=local_ns)
 
     @staticmethod
     def ganga_prompt(dummy=None):
