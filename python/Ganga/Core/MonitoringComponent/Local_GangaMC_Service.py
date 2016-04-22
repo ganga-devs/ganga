@@ -805,8 +805,6 @@ class JobRegistry_Monitor(GangaThread):
         """
 
         if not self.alive and ThreadPool != []:
-            import traceback
-            traceback.print_stack()
             log.warning("Monitoring loop has already been stopped")
             return False
         else:

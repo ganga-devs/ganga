@@ -345,7 +345,7 @@ class SubJobXMLList(GangaObject):
 
     def __getitem__(self, index):
         """Return a subjob based upon index"""
-        logger.debug("SJ:__getitem__")
+        logger.debug("__getitem__")
         try:
             return self._getItem(index)
         except (GangaException, IOError, XMLFileError) as err:
@@ -501,7 +501,8 @@ class SubJobXMLList(GangaObject):
         super(SubJobXMLList, self)._setFlushed()
 
     def _private_display(self, reg_slice, this_format, default_width, markup):
-        """ This is a private display method which makes use of the display slice as well as knowlede of the wanted format, default_width and markup to be used"""
+        """ This is a private display method which makes use of the display slice as well as knowlede of the wanted format, default_width and markup to be used
+        Given it's  display method this returns a displayable string. Given it's tied into the RegistrySlice it's similar to that"""
         ds=""
         for obj_i in self.keys():
 
