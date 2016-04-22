@@ -180,6 +180,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 randomized_lfn = lfn + ('.%s.%d.%s' % (job.backend.site, int(time.time()), commands.getoutput('uuidgen 2> /dev/null')[:4] ) )
             else:
                 randomized_lfn = lfn
+
             ofspec.lfn = randomized_lfn
             randomized_lfns.append(randomized_lfn)
             ofspec.destinationDBlock = jspec.destinationDBlock
@@ -187,10 +188,15 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             ofspec.dataset = jspec.destinationDBlock
             ofspec.type = 'output'
             jspec.addFile(ofspec)
+
+            # remove the first section of the file name if it matches the file type
+            if len(randomized_lfn.split('.')) > 1 and randomized_lfn.split('.')[0].find(lfntype) != -1:
+                randomized_lfn = '.'.join(randomized_lfn.split('.')[1:])
+
             if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
-                jspec.jobParameters += ' --output%sFile %s' % (lfntype, randomized_lfns[ilfn])
+                jspec.jobParameters += ' --output%sFile %s' % (lfntype, randomized_lfn)
             else:
-                jspec.jobParameters += ' output%sFile=%s' % (lfntype, randomized_lfns[ilfn])
+                jspec.jobParameters += ' output%sFile=%s' % (lfntype, randomized_lfn)
             ilfn=ilfn+1
 
         # Input files.
