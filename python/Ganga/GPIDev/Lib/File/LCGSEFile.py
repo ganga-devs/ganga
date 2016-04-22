@@ -26,16 +26,7 @@ regex = re.compile('[*?\[\]]')
 def getLCGConfig():
     return getConfig('Output')['LCGSEFile']['uploadOptions']
 
-class LCGSEFileStub(IGangaFile):
-
-    _schema = Schema(Version(1,0), {})
-    _name = "LocalFileStub"
-    _hidden = False
-
-    def __init__(self):
-        super(LCGSEStub, self).__init__()
-
-class LCGSEFile(LCGSEFileStub):
+class LCGSEFile(IGangaFile):
 
     """LCGSEFile represents a class marking an output file to be written into LCG SE
     """
@@ -52,7 +43,7 @@ class LCGSEFile(LCGSEFileStub):
         'SURL': SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
         'port': SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
         'locations': SimpleItem(defvalue=[], copyable=1, typelist=[str], sequence=1, doc="list of locations where the outputfiles were uploaded"),
-        'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=[LCGSEFileStub], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+        'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
         'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
         'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'gangafiles'

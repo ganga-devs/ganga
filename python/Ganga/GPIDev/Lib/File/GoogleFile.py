@@ -19,16 +19,7 @@ regex = re.compile('[*?\[\]]')
 badlogger = getLogger('oauth2client.util')
 badlogger.setLevel(logging.ERROR)
 
-class GoogleFileStub(IGangaFile):
-
-    _schema = Schema(Version(1,0), {})
-    _name = "GoogleFileStub"
-    _hidden = False
-
-    def __init__(self):
-        super(GoogleFileStub, self).__init__()
-
-class GoogleFile(GoogleFileStub):
+class GoogleFile(IGangaFile):
 
     """
     The GoogleFile outputfile type allows for files to be directly uploaded, downloaded, removed and restored from the GoogleDrive service.
@@ -56,8 +47,7 @@ class GoogleFile(GoogleFileStub):
                       'localDir': SimpleItem(defvalue="", copyable=1,
                                              doc='local dir where the file is stored, used from get and put methods'),
                       'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
-                                                typelist=[GoogleFileStub], sequence=1, copyable=0,
-                                                doc="collected files from the wildcard namePattern"),
+                                                sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                       'failureReason': SimpleItem(defvalue="", copyable=1,
                                                   doc='reason for the upload failure'),
                       'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0,
