@@ -947,11 +947,11 @@ class JobRegistry_Monitor(GangaThread):
                 j = stripProxy(self.registry_slice(i))
 
                 job_status = lazyLoadJobStatus(j)
-                backend_obj = lazyLoadJobBackend(j)
-                backend_name = getName(backend_obj)
 
                 if job_status in ['submitted', 'running'] or (j.master and (job_status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
+                        backend_obj = lazyLoadJobBackend(j)
+                        backend_name = getName(backend_obj)
                         active_backends.setdefault(backend_name, [])
                         active_backends[backend_name].append(j)
             except RegistryKeyError as err:
