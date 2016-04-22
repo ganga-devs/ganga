@@ -159,8 +159,8 @@ def raw_eval(val):
         return deepcopy(_eval_cache[val])
 
     try:
-        ## Catch common strings which shouldn't be evaluated anyway and return them asif an exception occured
-        if val in ['', '.', 'new']:
+        ## Catch common string(s) which shouldn't be evaluated anyway and return them asif an exception occured
+        if val in ['']:
             _eval_cache[val] = val
             return deepcopy(val)
         interface = getProxyInterface() 
