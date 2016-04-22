@@ -190,9 +190,9 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             jspec.addFile(ofspec)
 
             # remove the first section of the file name if it matches the file type
-            if len(randomized_lfn.split('.')) > 0 and randomized_lfn.split('.')[0].find( lfntype ) != -1:
-                randomized_lfn = '.'.join( randomized_lfn.split('.')[1:] )
-                       
+            if len(randomized_lfn.split('.')) > 1 and randomized_lfn.split('.')[0].find(lfntype) != -1:
+                randomized_lfn = '.'.join(randomized_lfn.split('.')[1:])
+
             if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
                 jspec.jobParameters += ' --output%sFile %s' % (lfntype, randomized_lfn)
             else:
