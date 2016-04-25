@@ -345,7 +345,6 @@ class SubJobXMLList(GangaObject):
 
     def __getitem__(self, index):
         """Return a subjob based upon index"""
-        logger.debug("__getitem__")
         try:
             return self._getItem(index)
         except (GangaException, IOError, XMLFileError) as err:
@@ -355,10 +354,12 @@ class SubJobXMLList(GangaObject):
     def _getItem(self, index):
         """Actual meat of loading the subjob from disk is required, parsing and storing a copy in memory
         (_cached_subjobs) for future use"""
-        logger.debug("Requesting: %s" % index)
+        logger.debug("Requesting subjob: #%s" % index)
 
         subjob_data = None
         if not index in self._cachedJobs.keys():
+
+            logging.debug("Attempting to load subjob: #%s from disk" % index)
 
             # obtain a lock to make sure multiple loads of the same object don't happen
             with self._load_lock:
