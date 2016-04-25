@@ -42,14 +42,14 @@ class CondorRequirements(GangaObject):
     '''
 
     _schema = Schema(Version(1, 0), {
-        "machine": SimpleItem(defvalue="", typelist=["str", "list"],
+        "machine": SimpleItem(defvalue="", typelist=[str, list],
                               doc="""
 Requested execution hosts, given as a string of space-separated names:
 'machine1 machine2 machine3'; or as a list of names:
 [ 'machine1', 'machine2', 'machine3' ]
 """ ),
         "excluded_machine": SimpleItem(defvalue="",
-                                       typelist=["str", "list"],
+                                       typelist=[str, list],
                                        doc="""
 Excluded execution hosts, given as a string of space-separated names:
 'machine1 machine2 machine3'; or as a list of names:
@@ -60,7 +60,7 @@ Excluded execution hosts, given as a string of space-separated names:
         "memory": SimpleItem(defvalue=0, doc="Mininum physical memory"),
         "virtual_memory": SimpleItem(defvalue=0,
                                      doc="Minimum virtual memory"),
-        "other": SimpleItem(defvalue=[], typelist=["str"], sequence=1,
+        "other": SimpleItem(defvalue=[], typelist=[str], sequence=1,
                             doc="""
 Other requirements, given as a list of strings, for example:
 [ 'OSTYPE == "SLC4"', '(POOL == "GENERAL" || POOL == "GEN_FARM")' ];

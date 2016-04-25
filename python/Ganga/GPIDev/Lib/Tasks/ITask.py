@@ -31,13 +31,13 @@ class ITask(GangaObject):
     """This is the framework of a task without special properties"""
     _schema = Schema(Version(1, 0), {
         'transforms': ComponentItem('transforms', defvalue=[], sequence=1, copyable=1, doc='list of transforms'),
-        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Task', typelist=["int"]),
-        'name': SimpleItem(defvalue='NewTask', copyable=1, doc='Name of the Task', typelist=["str"]),
-        'comment': SimpleItem('', protected=0, doc='comment of the task', typelist=["str"]),
-        'status': SimpleItem(defvalue='new', protected=1, doc='Status - new, running, pause or completed', typelist=["str"]),
-        'float': SimpleItem(defvalue=0, copyable=1, doc='Number of Jobs run concurrently', typelist=["int"]),
+        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Task', typelist=[int]),
+        'name': SimpleItem(defvalue='NewTask', copyable=1, doc='Name of the Task', typelist=[str]),
+        'comment': SimpleItem('', protected=0, doc='comment of the task', typelist=[str]),
+        'status': SimpleItem(defvalue='new', protected=1, doc='Status - new, running, pause or completed', typelist=[str]),
+        'float': SimpleItem(defvalue=0, copyable=1, doc='Number of Jobs run concurrently', typelist=[int]),
         'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1),
-        'creation_date': SimpleItem(defvalue="19700101", copyable=0, protected=1, doc='Creation date of the task', typelist=["str"]),
+        'creation_date': SimpleItem(defvalue="19700101", copyable=0, protected=1, doc='Creation date of the task', typelist=[str]),
         'check_all_trfs': SimpleItem(defvalue=True, doc='Check all Transforms during each monitoring loop cycle'),
     })
 

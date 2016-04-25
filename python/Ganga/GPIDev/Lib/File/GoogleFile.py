@@ -19,7 +19,6 @@ regex = re.compile('[*?\[\]]')
 badlogger = getLogger('oauth2client.util')
 badlogger.setLevel(logging.ERROR)
 
-
 class GoogleFile(IGangaFile):
 
     """
@@ -48,11 +47,10 @@ class GoogleFile(IGangaFile):
                       'localDir': SimpleItem(defvalue="", copyable=1,
                                              doc='local dir where the file is stored, used from get and put methods'),
                       'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
-                                                typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0,
-                                                doc="collected files from the wildcard namePattern"),
+                                                sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                       'failureReason': SimpleItem(defvalue="", copyable=1,
                                                   doc='reason for the upload failure'),
-                      'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0,
+                      'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0,
                                                doc='wheather the output file should be compressed before sending somewhere'),
                       'downloadURL': SimpleItem(defvalue="", copyable=1, protected=1,
                                                 doc='download URL assigned to the file upon upload to GoogleDrive'),
