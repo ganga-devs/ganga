@@ -48,13 +48,9 @@ if not _hasInit:
     _hasIinit = True
 
 _formats = {
-#    'DEBUG': '%(asctime)s "%(filename)s":%(funcName)-10s at %(lineno)d, %(threadName)s: %(levelname)-8s %(message)s',
     'DEBUG': '%(asctime)s %(threadName)s %(module)-20s::%(funcName)-20s:%(lineno)d %(levelname)-8s: %(message)s',
-#    'VERBOSE': '%(asctime)s %(name)-35s: %(levelname)-8s %(message)s',
     'VERBOSE': '%(asctime)s %(module)-25s::%(funcName)-10s: %(levelname)-8s %(message)s',
-#    'NORMAL': '%(name)-35s: %(levelname)-8s %(message)s',
     'NORMAL': '%(levelname)-8s %(message)s',
-#    'TERSE': 'Ganga: %(levelname)-8s %(message)s'
     'TERSE': '%(levelname)-8s %(message)s',
 }
 
