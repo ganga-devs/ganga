@@ -179,25 +179,27 @@ class HammerThread(threading.Thread):
 
 
 class TestRegistry(GangaUnitTest):
+
     def setUp(self):
         super(TestRegistry, self).setUp()
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def test_pass1(self):
-        t = TestReg(1)
+        t = testReg(1)
         while not t.isReadyForCheck():
             pass
         return t.checkTest()
 
     def test_pass2(self):
-        t = TestReg(2)
+        t = testReg(2)
         while not t.isReadyForCheck():
             pass
         return t.checkTest()
 
 
-class TestReg(object):
+class testReg(object):
+
     def __init__(self, _id):
         self.id = _id
         from Ganga.Core.GangaRepository.Registry import Registry
@@ -225,3 +227,4 @@ class TestReg(object):
         self.logger.info(str(self.id) + ' shutdown()')
         self.registry.shutdown()
         self.logger.info(str(self.id) + ' shutdown() done!')
+

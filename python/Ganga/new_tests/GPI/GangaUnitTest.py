@@ -9,7 +9,7 @@ except ImportError:
     import unittest
 
 
-def start_ganga(gangadir_for_test, extra_opts=[]):
+def _setupGangaPath():
     file_path = os.path.dirname(os.path.realpath(__file__))
     ganga_python_dir = os.path.join(file_path, '..', '..', '..')
     ganga_python_dir = os.path.realpath(ganga_python_dir)
@@ -17,6 +17,10 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         sys.path.insert(0, ganga_python_dir)
 
         print("Adding: %s to Python Path\n" % ganga_python_dir)
+
+_setupGangaPath()
+
+def start_ganga(gangadir_for_test, extra_opts=[]):
 
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()
@@ -34,6 +38,7 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     logger.info("Parsing Command Line options")
     this_argv = [
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
+        '--no-rexec',  # Don't re-exec Ganga when running tests
     ]
 
     # These are the default options for all test instances
@@ -75,7 +80,9 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
     else:
         from Ganga.Runtime.Repository_runtime import startUpRegistries
-        startUpRegistries()
+        from Ganga.Utility.Config import getConfig
+        if getConfig('Configuration')['AutoStartReg']:
+            startUpRegistries()
 
         # The queues are shut down by the atexit handlers so we need to start them here
         from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
@@ -87,8 +94,8 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
             # Start internal services
             logger.info("InternalServices restarting")
 
-            from Ganga.GPI import reactivate
-            reactivate()
+            from Ganga.Core.InternalServices.Coordinator import enableInternalServices
+            enableInternalServices()
         else:
             logger.info("InternalServices still running")
 

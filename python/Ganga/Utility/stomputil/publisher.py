@@ -2,8 +2,8 @@
 
 import time
 from Queue import Queue
-from Ganga.Utility.logging import _get_logging
-logging_DEBUG = _get_logging().DEBUG
+import logging
+logging_DEBUG = logging.DEBUG
 
 BEAT_TIME = 0.3 # Seconds between publisher thread heart beats.
 IDLE_TIMEOUT = 30 # Maximum seconds to idle before closing connection.
@@ -20,7 +20,7 @@ except (Exception, ImportError) as err:
 
     if not isinstance(err, ImportError):
         print("Error Importing Stomp utility!")
-        print("err: %s" % str(err))
+        print("err: %s" % err)
 
     class stomp(object):
         def __init__(self):
@@ -164,7 +164,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
         def _send(self, (message, headers, keyword_headers)):
             """Send given message to MSG server."""
             if self._cx is None:
-                self._log(logging_DEBUG, 'NOT Sending message:\n%s' % str(message))
+                self._log(logging_DEBUG, 'NOT Sending message:\n%s' % message)
                 return
             self._log(logging_DEBUG, 'Sending message. body=%r headers=%r keyword_headers=%r.', message, headers, keyword_headers)
             global stomp_major_version

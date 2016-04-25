@@ -164,7 +164,6 @@ class Batch(IBackend):
         if jobnameopt and job.name != '':
             # PBS doesn't like names with spaces
             tmp_name = job.name
-            from Ganga.GPI import PBS
             if isType(self, PBS):
                 tmp_name = tmp_name.replace(" ", "_")
             queue_option = queue_option + " " + \
@@ -256,7 +255,7 @@ class Batch(IBackend):
         if jobnameopt and job.name != '':
             # PBS doesn't like names with spaces
             tmp_name = job.name
-            if self._name == "PBS":
+            if isType(self, PBS):
                 tmp_name = tmp_name.replace(" ", "_")
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)

@@ -13,6 +13,7 @@ from Ganga.Core.exceptions import GangaException
 config = Ganga.Utility.Config.getConfig('Configuration')
 logger = getLogger()
 
+_runtime_interface = None
 
 def requiresAfsToken():
     # Were we executed from within an AFS folder
@@ -67,7 +68,7 @@ def checkDiskQuota():
         if fullpath(data_partition, True).find('/afs') == 0:
             quota = subprocess.Popen(['fs', 'quota', '%s' % data_partition], stdout=subprocess.PIPE)
             output = quota.communicate()[0]
-            logger.debug("fs quota %s:\t%s" % (str(data_partition), str(output)))
+            logger.debug("fs quota %s:\t%s" % (data_partition, output))
         else:
             df = subprocess.Popen(["df", '-Pk', data_partition], stdout=subprocess.PIPE)
             output = df.communicate()[0]
@@ -78,17 +79,17 @@ def checkDiskQuota():
             quota_percent = output.split('%')[0]
             if int(quota_percent) >= partition_warning:
                 logger.warning("WARNING: You're running low on disk space, Ganga may stall on launch or fail to download job output")
-                logger.warning("WARNING: Please free some disk space on: %s" % str(data_partition))
+                logger.warning("WARNING: Please free some disk space on: %s" % data_partition)
             if int(quota_percent) >= partition_critical and config['force_start'] is False:
                 logger.error("You are crtitically low on disk space!")
                 logger.error("To prevent repository corruption and data loss we won't start Ganga.")
                 logger.error("Either set your config variable 'force_start' in .gangarc to enable starting and ignore this check.")
-                logger.error("Or, make sure you have more than %s percent free disk space on: %s" %(str(100-partition_critical), str(data_partition)))
+                logger.error("Or, make sure you have more than %s percent free disk space on: %s" %(100-partition_critical, data_partition))
                 raise GangaException("Not Enough Disk Space!!!")
         except GangaException as err:
-            raise err
+            raise
         except Exception as err:
-            logger.debug("Error checking disk partition: %s" % str(err))
+            logger.debug("Error checking disk partition: %s" % err)
 
     return
 
@@ -117,9 +118,9 @@ def bootstrap():
     try:
         checkDiskQuota()
     except GangaException as err:
-        raise err
+        raise
     except Exception as err:
-        logger.error("Disk quota check failed due to: %s" % str(err))
+        logger.error("Disk quota check failed due to: %s" % err)
 
     for registry in bootstrap_getreg():
         if registry.name in started_registries:
@@ -135,11 +136,12 @@ def bootstrap():
         if registry.name == "prep":
             registry.print_other_sessions()
         started_registries.append(registry.name)
-        retval.append((registry.name, registry.getProxy(), registry.doc))
+        proxied_registry_slice = registry.getProxy()
+        retval.append((registry.name, proxied_registry_slice, registry.doc))
 
     #import atexit
     #atexit.register(shutdown)
-    #logger.debug("Registries: %s" % str(started_registries))
+    #logger.debug("Registries: %s" % started_registries)
     return retval
 
 
@@ -172,9 +174,12 @@ def shutdown():
             # in case this is called repeatedly, only call shutdown once
             started_registries.remove(registry.name)
     except Exception as err:
-        logger.debug("Err: %s" % str(err))
+        logger.debug("Err: %s" % err)
         logger.error("Failed to Shutdown prep Repository!!! please check for stale lock files")
         logger.error("Trying to shutdown cleanly regardless")
+    #finally:
+    #    pass
+    ##Useful in debugging shutdown errors
 
     for registry in getRegistries():
         thisName = registry.name
@@ -186,8 +191,11 @@ def shutdown():
             registry.shutdown()  # flush and release locks
         except Exception as x:
             logger.error("Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
-            logger.error("%s" % str(x))
+            logger.error("%s" % x)
             logger.error("Trying to Shutdown cleanly regardless")
+        #finally:
+        #    pass
+        ##Useful in debugging shutdown errors
 
 
     for registry in all_registries:
@@ -222,14 +230,20 @@ def flush_all():
                 logger.debug("Flushing: %s" % thisName)
                 registry.flush_all()
         except Exception as err:
-            logger.debug("Failed to flush: %s" % str(thisName))
-            logger.debug("Err: %s" % str(err))
+            logger.debug("Failed to flush: %s" % thisName)
+            logger.debug("Err: %s" % err)
 
 
-def startUpRegistries():
+def startUpRegistries(my_interface=None):
     # Startup the registries and export them to the GPI, also add jobtree and shareref
-    from Ganga.Runtime.GPIexport import exportToGPI
+    from Ganga.Runtime.GPIexport import exportToInterface
+    if not my_interface:
+        import Ganga.GPI
+        my_interface = Ganga.GPI
     # import default runtime modules
+
+    global _runtime_interface
+    _runtime_interface = my_interface
 
     # bootstrap user-defined runtime modules and enable transient named
     # template registries
@@ -239,17 +253,17 @@ def startUpRegistries():
 
     for n, k, d in bootstrap():
         # make all repository proxies visible in GPI
-        exportToGPI(n, k, 'Objects', d)
+        exportToInterface(my_interface, n, k, 'Objects', d)
 
     # JobTree
     from Ganga.Core.GangaRepository import getRegistry
     jobtree = getRegistry("jobs").getJobTree()
-    exportToGPI('jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
-    exportToGPI('TreeError', TreeError, 'Exceptions')
+    exportToInterface(my_interface, 'jobtree', jobtree, 'Objects', 'Logical tree view of the jobs')
+    exportToInterface(my_interface, 'TreeError', TreeError, 'Exceptions')
 
     # ShareRef
     shareref = getRegistry("prep").getShareRef()
-    exportToGPI('shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
+    exportToInterface(my_interface, 'shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
 
 def removeRegistries():
     ## Remove lingering Objects from the GPI and fully cleanup after the startup
@@ -260,14 +274,14 @@ def removeRegistries():
 
     from Ganga.Runtime import Repository_runtime
 
-    for name in Repository_runtime.bootstrap_reg_names():
-        if hasattr(Ganga.GPI, name):
-            delattr(Ganga.GPI, name)
+    to_remove = Repository_runtime.bootstrap_reg_names()
+    to_remove.append('jobtree')
+    to_remove.append('shareref')
 
-    if hasattr(Ganga.GPI, 'jobtree'):
-        ## Now remove the JobTree
-        delattr(Ganga.GPI, 'jobtree')
-    if hasattr(Ganga.GPI, 'shareref'):
-        ## Now remove the sharedir
-        delattr(Ganga.GPI, 'shareref')
+    global _runtime_interface
+    for name in to_remove:
+        if hasattr(_runtime_interface, name):
+            delattr(_runtime_interface, name)
+
+    _runtime_interface = None
 

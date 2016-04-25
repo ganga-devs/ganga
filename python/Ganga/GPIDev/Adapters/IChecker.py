@@ -42,7 +42,7 @@ class IChecker(IPostProcessor):
                     with open(os.path.join(job.getDebugWorkspace().getPath(), 'checker_errors.txt'), 'a') as debug_file:
                         debug_file.write('\n Checker has failed with the following error: \n')
                         debug_file.write(str(e))
-                    logger.error(str(e))
+                    logger.error("%s" % e)
                     return True
         else:
             return True

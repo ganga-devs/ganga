@@ -41,7 +41,7 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_lock', '_proxyObject']
+do_not_copy = ['_index_cache', '_parent', '_registry', '_data', '_read_lock', '_write_lock', '_proxyObject']
 
 def _getGangaList():
     global _imported_GangaList
@@ -58,53 +58,33 @@ def synchronised(f):
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
-        with self.lock:
+        with self.const_lock:
             return f(self, *args, **kwargs)
     return decorated
 
 
 class Node(object):
-    _ref_list = ['_parent', '_registry', '_index_cache']
 
     def __init__(self, parent=None):
         self._data = {}
         self._parent = parent
         self._index_cache = {}
-        self._lock = threading.RLock()
+        self._registry = None
+        self._read_lock = threading.RLock() # Don't read out of thread whilst we're making a change
+        self._write_lock = threading.RLock() # Don't write from out of thread when modifying an object
         super(Node, self).__init__()
-        #logger.info("Node __init__")
-
-    def __getstate__(self):
-        d = self.__dict__
-        d['_data'] = d['_data'].copy()
-        for r in self._ref_list:
-            d[r] = None
-        return d
-
-    def __setstate__(self, this_dict):
-        for key, val in this_dict['_data'].iteritems():
-            if isinstance(val, Node) and key not in self._ref_list:
-                val._setParent(self)
-
-        for attr in self._ref_list:
-            if not hasattr(self, attr):
-                setattr(self, attr, None)
-
-        for key, val in this_dict.iteritems():
-            setattr(self, key, val)
 
     def __copy__(self, memo=None):
         cls = self.__class__
         obj = cls()
         # FIXME: this is different than for deepcopy... is this really correct?
-        this_dict = self.__dict__.copy()
+        this_dict = copy(self.__dict__)
         global do_not_copy
         for elem in this_dict.keys():
             if elem not in do_not_copy:
                 this_dict[elem] = copy(this_dict[elem])
             else:
                 this_dict[elem] = None
-        #obj.__setstate__(this_dict)
         obj._setParent(self._getParent())
         setattr(obj, '_index_cache', {})
         setattr(obj, '_registry', self._registry)
@@ -113,7 +93,7 @@ class Node(object):
     def __deepcopy__(self, memo=None):
         cls = self.__class__
         obj = cls()
-        this_dict = self.__getstate__()
+        this_dict = copy(self.__dict__)
         global do_not_copy
         for elem in this_dict.keys():
             if elem not in do_not_copy:
@@ -133,23 +113,41 @@ class Node(object):
         if parent is None:
             setattr(self, '_parent', parent)
         else:
-            with parent.lock:  # This will lock the _new_ root object
+            with parent.const_lock: # This will lock the _new_ root object
                 setattr(self, '_parent', parent)
             # Finally the new and then old root objects will be unlocked
 
     @property
     @contextmanager
-    def lock(self):
+    def _internal_lock(self):
         """
-        This is a context manager which acquires the lock on the
+        This is a context manager which acquires the internal read lock on the
         object's root object.
         """
         root = self._getRoot()
-        root._lock.acquire()
+        root._read_lock.acquire()
         try:
             yield
         finally:
-            root._lock.release()
+            root._read_lock.release()
+
+    @property
+    @contextmanager
+    def const_lock(self):
+        """
+        This is a context manager which acquires the const write lock on the
+        object's root object.
+
+        This lock acquires exclusive access over an object tree to prevent it
+        changing. Reading schema attributes on the object is still allowed
+        but changing them is not. Only one thread can hold this lock at once.
+        """
+        root = self._getRoot()
+        root._write_lock.acquire()
+        try:
+            yield
+        finally:
+            root._write_lock.release()
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
@@ -224,7 +222,7 @@ class Node(object):
         # will not throw away information
 
         if not hasattr(_srcobj, '__class__') and not inspect.isclass(_srcobj.__class__):
-            raise GangaValueError("Can't copyFrom a non-class object: %s isclass: %s" % (str(_srcobj), str(inspect.isclass(_srcobj))))
+            raise GangaValueError("Can't copyFrom a non-class object: %s isclass: %s" % (_srcobj, inspect.isclass(_srcobj)))
 
         if not isinstance(self, _srcobj.__class__) and not isinstance(_srcobj, self.__class__):
             raise GangaValueError("copyFrom: Cannot copy from %s to %s!" % (_getName(_srcobj), _getName(self)))
@@ -247,8 +245,8 @@ class Node(object):
         src_dict = srcobj.__dict__
         for key, val in src_dict.iteritems():
             this_attr = getattr(srcobj, key)
-            if isinstance(this_attr, Node) and key not in Node._ref_list:
-                #logger.debug("k: %s  Parent: %s" % (str(key), (srcobj)))
+            if isinstance(this_attr, Node) and key not in do_not_copy:
+                #logger.debug("k: %s  Parent: %s" % (key, (srcobj)))
                 this_attr._setParent(srcobj)
 
     def _actually_copyFrom(self, _srcobj, _ignore_atts):
@@ -257,7 +255,7 @@ class Node(object):
             if name in _ignore_atts:
                 continue
 
-            #logger.debug("Copying: %s : %s" % (str(name), str(item)))
+            #logger.debug("Copying: %s : %s" % (name, item))
             if name == 'application' and hasattr(_srcobj.application, 'is_prepared'):
                 _app = _srcobj.application
                 if _app.is_prepared not in [None, True]:
@@ -268,13 +266,13 @@ class Node(object):
                 if not hasattr(self, name):
                     setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
-                if isinstance(this_attr, Node) and name not in Node._ref_list:
+                if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
             elif not item['copyable']: ## Default of '1' instead of True...
                 if not hasattr(self, name):
                     setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
-                if isinstance(this_attr, Node) and name not in Node._ref_list:
+                if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
             else:
                 copy_obj = deepcopy(getattr(_srcobj, name))
@@ -306,35 +304,30 @@ class Node(object):
         from Ganga.GPIDev.Base.VPrinter import VSummaryPrinter
         self.accept(VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection, interactive))
 
-    def __eq__(self, _node):
-
-        node = _node
-
+    def __eq__(self, node):
         if self is node:
-            return 1
-        if not node:  # or not self._schema.isEqual(node._schema):
-            return 0
+            return True
 
         if not isinstance(node, type(self)):
-            return 0
+            return False
 
         # Compare the schemas against each other
         if (hasattr(self, '_schema') and self._schema is None) and (hasattr(node, '_schema') and node._schema is None):
-            return 1  # If they're both `None`
+            return True  # If they're both `None`
         elif (hasattr(self, '_schema') and self._schema is None) or (hasattr(node, '_schema') and node._schema is None):
-            return 0  # If just one of them is `None`
+            return False  # If just one of them is `None`
         elif not self._schema.isEqual(node._schema):
-            return 0  # Both have _schema but do not match
+            return False  # Both have _schema but do not match
 
         # Check each schema item in turn and check for equality
         for (name, item) in self._schema.allItems():
             if item['comparable'] == True:
-                #logger.info("testing: %s::%s" % (str(_getName(self)), str(name)))
+                #logger.info("testing: %s::%s" % (_getName(self), name))
                 if getattr(self, name) != getattr(node, name):
-                    #logger.info( "diff: %s::%s" % (str(_getName(self)), str(name)))
-                    return 0
+                    #logger.info( "diff: %s::%s" % (_getName(self), name))
+                    return False
 
-        return 1
+        return True
 
     def __ne__(self, node):
         return not self.__eq__(node)
@@ -361,35 +354,70 @@ class Node(object):
         if attrib_name in self._data.keys():
             del self._data[attrib_name]
 
-    def removeNodeIndexCacheAttribute(self, attrib_name):
-        if self._index_cache and attrib_name in self._index_cache.keys():
-            del self._index_cache[attrib_name]
-
     def setNodeIndexCache(self, new_index_cache):
+        if self.fullyLoadedFromDisk():
+            logger.debug("Warning: Setting IndexCache data on live object, please avoid!")
         setattr(self, '_index_cache', new_index_cache)
 
-    def getNodeIndexCache(self):
+    def getNodeIndexCache(self, force_cache=False):
+        if not force_cache and self.fullyLoadedFromDisk():
+            if self._getRegistry() is not None:
+                ## Fully loaded so lets regenerate this on the fly to avoid losing data
+                return self._getRegistry().getIndexCache(self)
+            else:
+                ## No registry therefore can't work out the Cache, probably empty, lets return that
+                return self._index_cache
+        ## Not in registry or not loaded, so can't re-generate if requested
         return self._index_cache
+                                                                 
+    def fullyLoadedFromDisk(self):
+        """This returns a boolean. and it's related to if self has_loaded in the Registry of this object"""
+        if self._getRegistry() is not None:
+            return self._getRegistry().has_loaded(self)
+        return True
 
 ##########################################################################
 
 
-def synchronised_descriptor(get_or_set):
+def synchronised_get_descriptor(get_function):
     """
-    This decorator should only be used on ``__get__`` or ``__set__`` methods of a ``Descriptor``.
+    This decorator should only be used on ``__get__`` method of the ``Descriptor``.
     """
-    @functools.wraps(get_or_set)
+    @functools.wraps(get_function)
     def decorated(self, obj, type_or_value):
         if obj is None:
-            return get_or_set(self, obj, type_or_value)
-        with obj.lock:
-            return get_or_set(self, obj, type_or_value)
+            return get_function(self, obj, type_or_value)
+
+        with obj._internal_lock:
+            return get_function(self, obj, type_or_value)
+
+    return decorated
+
+def synchronised_set_descriptor(set_function):
+    """
+    This decorator should only be used on ``__set__`` method of the ``Descriptor``.
+    """
+    def decorated(self, obj, type_or_value):
+        if obj is None:
+            return set_function(self, obj, type_or_value)
+
+        with obj.const_lock:
+            with obj._internal_lock:
+                return set_function(self, obj, type_or_value)
     return decorated
 
 
 class Descriptor(object):
 
+    """
+    This is a Descriptor.
+    TODO: explain in more detail how the Descriptor fits in in this context other than providing get/set methods in some cases and thread/locking
+    """
+
     def __init__(self, name, item):
+        """
+        Lets build a descriptor for this item with this name
+        """
         self._name = name
         self._item = item
         self._getter_name = None
@@ -410,8 +438,12 @@ class Descriptor(object):
         if self._getter_name:
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
-    @synchronised_descriptor
+    @synchronised_get_descriptor
     def __get__(self, obj, cls):
+        """
+        Get method of Descriptor
+        TODO, explain why/how this is different to a get method on a standard object
+        """
         name = _getName(self)
 
         # If obj is None then the getter was called on the class so return the Item
@@ -430,7 +462,7 @@ class Descriptor(object):
             return obj_data[name]
 
         # Then try to get it from the index cache
-        obj_index = obj.getNodeIndexCache()
+        obj_index = obj.getNodeIndexCache(force_cache=True)
         if name in obj_index:
             return obj_index[name]
 
@@ -450,7 +482,10 @@ class Descriptor(object):
         raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
 
     def __cloneVal(self, v, obj):
-
+        """
+        Clone v using knowledge of the obj the attr is being set on and the name of self is the attribute name
+        return a new instance of v equal to v
+        """
         item = obj._schema[_getName(self)]
 
         if v is None:
@@ -488,8 +523,8 @@ class Descriptor(object):
                 else:
                     new_v = v
                 if not isinstance(new_v, Node):
-                    logger.error("v: %s" % str(v))
-                    raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (str(v), str(type(v))))
+                    logger.error("v: %s" % v)
+                    raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (v, type(v)))
                 else:
                     new_v = self.__copyNodeObject(new_v, obj)
             else:
@@ -522,11 +557,16 @@ class Descriptor(object):
 
         return v_copy
 
-    @synchronised_descriptor
+    @synchronised_set_descriptor
     def __set__(self, _obj, _val):
-        ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
-        ## _obj: parent class which 'owns' the attribute
-        ## _val: value of the attribute which we're about to set
+        """
+        Set method
+        TODO: explain why/how this is different to a get/set or fits in with the GangaObject
+        TODO: Is this needed if flush per n dirty calls has been dropped. This was a major change in usage btw
+        self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
+        _obj: parent class which 'owns' the attribute
+        _val: value of the attribute which we're about to set
+        """
 
         obj_reg = None
         obj_prevState = None
@@ -568,9 +608,12 @@ class Descriptor(object):
                 obj_reg.turnOnAutoFlushing()
 
     def __atomic_set__(self, _obj, _val):
-        ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
-        ## _obj: parent class which 'owns' the attribute
-        ## _val: value of the attribute which we're about to set
+        """
+        Set the attribute now that the registry flushng has been turned off
+        self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
+        _obj: parent class which 'owns' the attribute
+        _val: value of the attribute which we're about to set
+        """
 
         #if hasattr(_obj, _getName(self)):
         #    if not isinstance(getattr(_obj, _getName(self)), GangaObject):
@@ -658,10 +701,14 @@ class Descriptor(object):
         obj._setDirty()
 
     def __delete__(self, obj):
+        """
+        Delete an attribute from teh Descriptor(?) and Node
+        """
         obj.removeNodeAttribute(_getName(self))
 
     @staticmethod
     def __createNewList(final_list, input_elements, action=None):
+        """ Create a new list object which contains the old object with a possible action parsing the elements before they're added"""
 
         def addToList(_input_elements, _final_list, action=None):
             if action is not None:
@@ -680,7 +727,15 @@ class Descriptor(object):
 class ObjectMetaclass(type):
     _descriptor = Descriptor
 
+    """
+    This is a MetaClass...
+    TODO explain what this does"""
+
     def __init__(cls, name, bases, this_dict):
+        """
+        Init method for a class of name, name
+        TODO, explain what bases and this_dict are used for
+        """
 
         super(ObjectMetaclass, cls).__init__(name, bases, this_dict)
 
@@ -757,6 +812,9 @@ class GangaObject(Node):
 
     # must be fully initialized
     def __init__(self):
+        """
+        Main GangaObject that many classes inherit from
+        """
         super(GangaObject, self).__init__(None)
 
         # IMPORTANT: if you add instance attributes like in the line below
@@ -771,8 +829,8 @@ class GangaObject(Node):
             for attr, item in self._schema.allItems():
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
-                    defVal = self._schema.getDefaultValue(attr)
-                    self.setNodeAttribute(attr, defVal)
+                    setattr(self, attr, self._schema.getDefaultValue(attr))
+
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
@@ -804,30 +862,17 @@ class GangaObject(Node):
             from Ganga.GPIDev.Base.Proxy import TypeMismatchError
             raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
 
-    def __getstate__(self):
-        # IMPORTANT: keep this in sync with the __init__
-        #self._getReadAccess()
-        this_dict = super(GangaObject, self).__getstate__()
-        #this_dict['_dirty'] = False
-        return this_dict
-
-    def __setstate__(self, this_dict):
-        #self._getWriteAccess()
-        super(GangaObject, self).__setstate__(this_dict)
-        #if '_parent' in this_dict:
-        #    self._setParent(this_dict['_parent'])
-        #self._setParent(None)
-        self._dirty = False
-
     @staticmethod
     def __incrementShareRef(obj, attr_name):
+        """
+        This increments the shareRef of the prep registry according to the attr_name.name
+        """
         shared_dir = getattr(obj, attr_name)
 
         if hasattr(shared_dir, 'name'):
 
             from Ganga.Core.GangaRepository import getRegistry
-            from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+            shareref = getRegistry("prep").getShareRef()
 
             logger.debug("Increasing shareref")
             shareref.increase(shared_dir.name)
@@ -835,6 +880,9 @@ class GangaObject(Node):
     # on the deepcopy reset all non-copyable properties as defined in the
     # schema
     def __deepcopy__(self, memo=None):
+        """
+        Perform a deep copy of the GangaObject class
+        """
         true_parent = self._getParent()
         ## This triggers a read of the job from disk
         self._getReadAccess()
@@ -875,6 +923,9 @@ class GangaObject(Node):
         return self_copy
 
     def _getIOTimeOut(self):
+        """
+        Get the DiskIOTimeout or 5 if this is not defined in the config
+        """
         from Ganga.Utility.Config.Config import getConfig, ConfigError
         try:
             _timeOut = getConfig('Configuration')['DiskIOTimeout']
@@ -905,12 +956,12 @@ class GangaObject(Node):
                     from time import sleep
                     sleep(_sleep_size)  # Sleep 2 sec between tests
                     logger.info("Waiting on Write access to registry: %s" % reg.name)
-                    logger.debug("err: %s" % str(x))
+                    logger.debug("err: %s" % x)
                     err = x
                 _counter = _counter + 1
                 # Sleep 2 sec longer than the time taken to bail out
                 if _counter * _sleep_size >= _timeOut + 2:
-                    logger.error("Failed to get access to registry: %s. Reason: %s" % (reg.name, str(err)))
+                    logger.error("Failed to get access to registry: %s. Reason: %s" % (reg.name, err))
                     if err is not None:
                         raise err
 
@@ -935,6 +986,10 @@ class GangaObject(Node):
     # define when the object is read-only (for example a job is read-only in
     # the states other than new)
     def _readonly(self):
+        """
+        Returns a 1 or 0 depending on if this object is read-only
+        TODO: make this True/False
+        """
         r = self._getRoot()
         # is object a root for itself? check needed otherwise infinite
         # recursion
@@ -945,35 +1000,60 @@ class GangaObject(Node):
 
     # set the registry for this object (assumes this object is a root object)
     def _setRegistry(self, registry):
+        """
+        Set the Registry of the GangaObject which will manage it
+        """
         assert self._getParent() is None
         self._registry = registry
 
     # get the registry for the object by getting the registry associated with
     # the root object (if any)
     def _getRegistry(self):
+        """
+        Get the registry which is managing this GangaObject
+        The registry is only managing a root object so it gets this first
+        """
         r = self._getRoot()
         return r._registry
 
     def _getRegistryID(self):
+        """
+        Get the ID of self within a Registry
+        This is normally the .id of an object itself but there is no need for it to be implemented this way
+        """
         try:
             return self._registry.find(self)
         except AttributeError, err:
-            logger.debug("_getRegistryID Exception: %s" % str(err))
+            logger.debug("_getRegistryID Exception: %s" % err)
             return None
 
     # mark object as "dirty" and inform the registry about it
     # the registry is always associated with the root object
-    def _setDirty(self, dummy=1):
+    def _setDirty(self):
+        """ Set the dirty flag all the way up to the parent"""
         self._dirty = True
         parent = self._getParent()
         if parent is not None:
             parent._setDirty()
 
     def _setFlushed(self):
+        """Un-Set the dirty flag all of the way down the schema."""
+        if self._schema:
+            for k in self._schema.allItemNames():
+                ## Avoid attributes the likes of job.master which crawl back up the tree
+                if not self._schema[k].getProperties()['visitable'] or self._schema[k].getProperties()['transient']:
+                    continue
+                this_attr = getattr(self, k)
+                if isinstance(this_attr, Node):
+                    this_attr._setFlushed()
         self._dirty = False
 
     # post __init__ hook automatically called by GPI Proxy __init__
     def _auto__init__(self):
+        """
+        This is called when an object is constructed from infront of the Proxy automatically, or manually when mimicing the behavior of the IPython prompt
+        default behavior is to do nothing
+        """
         pass
 
     # return True if _name attribute was explicitly defined in the class
@@ -988,6 +1068,9 @@ class GangaObject(Node):
     # the FIRST PARENT Job is returned...
     # this method is for convenience and may well be moved to some subclass
     def getJobObject(self):
+        """
+        Return the parent Job which manages this object or throw an AssertionError is non exists
+        """
         from Ganga.GPIDev.Lib.Job import Job
         r = self._getRoot(cond=lambda o: isinstance(o, Job))
         if not isinstance(r, Job):
@@ -1024,6 +1107,10 @@ class GangaObject(Node):
 
 
 def string_type_shortcut_filter(val, item):
+    """
+    Filter which allows for "obj.x = "Y"   <=> obj.x = Y()"
+    TODO evaluate removing this and the architecture behind it
+    """
     if isinstance(val, type('')):
         if item is None:
             raise ValueError('cannot apply default string conversion, probably you are trying to use it in the constructor')
@@ -1033,7 +1120,7 @@ def string_type_shortcut_filter(val, item):
             obj._auto__init__()
             return obj
         except PluginManagerError as err:
-            logger.debug("string_type_shortcut_filter Exception: %s" % str(err))
+            logger.debug("string_type_shortcut_filter Exception: %s" % err)
             raise ValueError(err)
     return None
 

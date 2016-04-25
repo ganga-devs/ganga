@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, absolute_import
 
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
@@ -20,40 +20,19 @@ from __future__ import print_function
 #  - special functions:
 #       - log_user_exception() allows to format nicely exception messages
 
-logging = None
-handlers = None
-
-def _get_logging():
-
-    global logging
-
-    if logging is None:
-        import logging as _logging
-        logging = _logging
-
-    return logging
-
-def _get_handlers():
-
-    global handlers
-
-    if handlers is None:
-        import logging.handlers as _handlers
-
-        handlers = _handlers
-
-    return handlers
-
+import cStringIO
+import logging
+import logging.handlers
+import os.path
 import sys
+import threading
+import traceback
 
 # logger configuration
 # settings for new loggers may be added here at will (for example read
 # from the config file)
-import Ganga.Utility.Config
 
 import Ganga.Utility.ColourText as ColourText
-
-import threading
 
 from Ganga.Utility.Config import getConfig
 config = getConfig("Logging")
@@ -65,7 +44,7 @@ config = getConfig("Logging")
 _hasInit = False
 
 if not _hasInit:
-    _get_logging().basicConfig(stream=sys.stdout)
+    logging.basicConfig(stream=sys.stdout)
     _hasIinit = True
 
 _formats = {
@@ -80,7 +59,7 @@ requires_shutdown = False
 private_logger = None  # private logger of this module
 
 # main logger corresponds to the root of the hierarchy
-main_logger = _get_logging().getLogger()
+main_logger = logging.getLogger()
 
 # this is the handler used to print on screen directly
 direct_screen_handler = main_logger.handlers[0]  # get default StreamHandler
@@ -104,26 +83,28 @@ _global_level = None
 # all loggers which are used by all modules
 _allLoggers = {}
 
+
 # use this function to get new loggers into your packages
 # if you do not provide the name then logger will detect your package name
 # if you specify the modulename as a string then it will be appended to the package name
 # if you specify the modulename==1 then your module name will be guessed and appended to the package name
 # the guessing algorithm may be modified by passing the frame object (to emulate a different physical location of the logger)
 # this is only useful for special usage such as IBackend base class
-def getLogger(name=None, modulename=None, frame=None):
-    return _getLogger(name, modulename, frame=frame)
+def getLogger(name=None, modulename=None):
+    return _getLogger(name, modulename)
 
-class ColourFormatter(_get_logging().Formatter, object):
+
+class ColourFormatter(logging.Formatter, object):
 
     def __init__(self, *args, **kwds):
-        _get_logging().Formatter.__init__(self, *args, **kwds)
+        logging.Formatter.__init__(self, *args, **kwds)
         fg = ColourText.Foreground()
         fx = ColourText.Effects()
-        self.colours = {_get_logging().INFO: fx.normal,
-                        _get_logging().WARNING: fg.orange,
-                        _get_logging().ERROR: fg.red,
-                        _get_logging().CRITICAL: fg.red,
-                        _get_logging().DEBUG: fx.normal}
+        self.colours = {logging.INFO: fx.normal,
+                        logging.WARNING: fg.orange,
+                        logging.ERROR: fg.red,
+                        logging.CRITICAL: fg.red,
+                        logging.DEBUG: fx.normal}
         self.markup = ColourText.ANSIMarkup()
 
     def format(self, record):
@@ -144,6 +125,7 @@ class ColourFormatter(_get_logging().Formatter, object):
         else:
             self.markup = ColourText.NoMarkup()
 
+
 def _set_formatter(handler):
     if config['_customFormat'] != "":
         for k in _formats.keys():
@@ -153,20 +135,18 @@ def _set_formatter(handler):
     formatter.setColour(config['_colour'])
     handler.setFormatter(formatter)
 
+
 def _make_file_handler(logfile, logfile_size):
-    import os.path
     logfile = os.path.expanduser(logfile)
     global file_handler
     if logfile:
         try:
-            new_file_handler = _get_handlers().RotatingFileHandler(
+            new_file_handler = logging.handlers.RotatingFileHandler(
                 logfile, maxBytes=logfile_size, backupCount=1)
         except IOError as x:
             private_logger.error('Cannot open the log file: %s', str(x))
             return
         # remove old handler if exists
-        # print 'removing old file handler',file_handler
-        # print 'installing new file handler',new_file_handler
         if file_handler:
             main_logger.removeHandler(file_handler)
             file_handler.flush()
@@ -176,15 +156,16 @@ def _make_file_handler(logfile, logfile_size):
             try:
                 # WARNING: this relies on the implementation details of the
                 # logging module
-                del _get_logging()._handlers[file_handler]
+                del logging._handlers[file_handler]
             except KeyError:
                 # don't complain if the handler was correctly unregistered by
                 # the logging system
                 pass
 
-        new_file_handler.setFormatter(_get_logging().Formatter(_formats['VERBOSE']))
+        new_file_handler.setFormatter(logging.Formatter(_formats['VERBOSE']))
         main_logger.addHandler(new_file_handler)
         file_handler = new_file_handler
+
 
 # set the loglevel for a logger to a given string value (example: "DEBUG")
 def _set_log_level(logger, value):
@@ -201,11 +182,6 @@ def _set_log_level(logger, value):
 
     try:
         logger.setLevel(_string2level(value))
-        #if value != 'DEBUG':
-        #    return value
-        #    #logging._srcfile = None
-        #    #logging.logThreads = 0
-        #    #logging.logThreads = 0
         return value
     except AttributeError as err:
         logger.error('Attribute Error: %s', str(err))
@@ -222,8 +198,6 @@ def post_config_handler(opt, value):
 
     if config is not None:
         _format, colour = config['_format'], config['_colour']
-
-    #print("")# rcurrie - This strangely seems to trick the logging into working when the _customFormat is used on first start
 
     if opt in ['_format', '_customFormat']:
         badConfig = False
@@ -273,11 +247,9 @@ config.attachSessionHandler(None, post_config_handler)
 
 lookup_frame_names = {}
 
+
 def _guess_module_logger_name(modulename, frame=None):
-    # print " _guess_module_logger_name",modulename
     # find the filename of the calling module
-    import sys
-    import os.path
     if frame is None:
         # assuming 2 nested calls to the module boundary!
         frame = sys._getframe(3)
@@ -355,19 +327,24 @@ def _guess_module_logger_name(modulename, frame=None):
     # return custom module name
     return return_name
 
-_MemHandler = _get_handlers().MemoryHandler
+_MemHandler = logging.handlers.MemoryHandler
+
 
 # Caching will not be done for messages which are generated by the main thread.
 class FlushedMemoryHandler(_MemHandler):
 
     def __init__(self, *args, **kwds):
-       _MemHandler.__init__(self, *args, **kwds)
+        _MemHandler.__init__(self, *args, **kwds)
 
     def shouldFlush(self, record):
-        return threading.currentThread().getName().find("GANGA_Update_Thread") == -1 or \
+        """
+        Right here is where we make the decision on what to buffer or not in the logger in the interactive mode.
+        The only thread we don't want to buffer is the MainThread. All other threads are supporting threads and not of primary interest.
+        The exception to this is when the MemHandler says we flush as we want to always flush then.
+        """
+        return (threading.currentThread().getName() == "MainThread") or \
                 _MemHandler.shouldFlush(self, record)
-        #        #threading.currentThread().getName().find("Main") == -1
-        #return False
+
 
 def enableCaching():
     """
@@ -386,44 +363,24 @@ def enableCaching():
     main_logger.addHandler(default_handler)
 
 
-def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=None):
-
-    if handler is None:
-        handler = default_handler
-
-    requested_name = name
+def _getLogger(name=None, modulename=None):
 
     if name is None:
-        name = _guess_module_logger_name(modulename, frame=frame)
+        name = _guess_module_logger_name(modulename)
 
     if name.split('.')[0] != 'Ganga' and name != 'Ganga':
         name = 'Ganga.' + name
 
-    ## Reduce verbosity on startup
-    #if private_logger:
-    #    private_logger.debug('getLogger: effective_name=%s original_name=%s', name, requested_name)
-
     if name in _allLoggers:
         return _allLoggers[name]
-        # print 'reusing existing logger: ',name
     else:
 
-        logger = _get_logging().getLogger(name)
+        logger = logging.getLogger(name)
         _allLoggers[name] = logger
-        #logger.setLevel( _get_logging().CRITICAL )
 
         if name in config:
             thisConfig = config[name]
             _set_log_level(logger, thisConfig)
-
-        ## Reduce verbosity on startup
-        #if private_logger:
-        #    private_logger.debug('created logger %s in %s mode', name, _get_logging().getLevelName(logger.getEffectiveLevel()))
-        #    private_logger.debug('applied %s format string to %s', config['_format'], name)
-
-        # print '------------>',logger
-        #logger.critical('initialization of logger for module %s',name)
-        # print '------------> should have printed the message'
 
         return logger
 
@@ -438,7 +395,7 @@ def bootstrap(internal=False, handler=None):
 
     global private_logger, main_logger
 
-    if internal == True and private_logger is not None:
+    if internal is True and private_logger is not None:
         return
 
     private_logger = getLogger('Ganga.Utility.logging')
@@ -469,7 +426,6 @@ def bootstrap(internal=False, handler=None):
         # should reconfigure Ganga and private logger according to the config
         # file contents
 
-        # _get_logging().getLevelName(getLogger(opt).getEffectiveLevel()))
         msg = 'logging %s in %s mode' % (opt, config[opt])
         if internal:
             private_logger.debug(msg)
@@ -479,7 +435,7 @@ def bootstrap(internal=False, handler=None):
         _set_log_level(getLogger(opt), config[opt])
 
     if not internal:
-        class NoErrorFilter(_get_logging().Filter):
+        class NoErrorFilter(logging.Filter):
             """
             A filter which only allow messages which are WARNING or lower to be logged
             """
@@ -490,8 +446,8 @@ def bootstrap(internal=False, handler=None):
         direct_screen_handler.addFilter(NoErrorFilter())
 
         # Add a new handler for ERROR and CRITICAL which prints to stderr
-        error_logger = _get_logging().StreamHandler(sys.stderr)
-        error_logger.setLevel(_get_logging().ERROR)
+        error_logger = logging.StreamHandler(sys.stderr)
+        error_logger.setLevel(logging.ERROR)
         _set_formatter(error_logger)
         main_logger.addHandler(error_logger)
 
@@ -503,7 +459,7 @@ def bootstrap(internal=False, handler=None):
 
 def final_shutdown():
     private_logger.debug('shutting down logsystem')
-    _get_logging().shutdown()
+    logging.shutdown()
 
 
 # do the initial bootstrap automatically at import -> this will bootstrap
@@ -522,8 +478,6 @@ def force_global_level(level):
 
 
 def log_user_exception(logger=None, debug=False):
-    import traceback
-    import cStringIO
     buf = cStringIO.StringIO()
     traceback.print_exc(file=buf)
     banner = 10 * '-' + ' error in user/extension code ' + 10 * '-'
@@ -548,12 +502,8 @@ def log_unknown_exception():
 
     # Fetch the place from where this function was called to locate the bare
     # except
-    from inspect import getframeinfo, stack, getsourcefile
+    from inspect import getframeinfo, stack
     caller = getframeinfo(stack()[1][0])
 
     tb_logger.debug('Bare except clause triggered {0}:{1}'.format(caller.filename, caller.lineno))
     tb_logger.debug('Exception caught:', exc_info=True)
-
-
-# extra imports for more convenient work with the logging module
-getLevelName = _get_logging().getLevelName
