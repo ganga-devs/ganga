@@ -1,7 +1,5 @@
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
-from Ganga.Utility.Config import getConfig, ConfigError
-from Ganga.Utility.logging import getLogger
 
 class JediRequirements(GangaObject):
     '''Helper class to group Jedi requirements.
@@ -38,6 +36,7 @@ class JediRequirements(GangaObject):
 
     _category = 'JediRequirements'
     _name = 'JediRequirements'
+    _defcloud = ''
     
     def __init__(self):
         super(JediRequirements,self).__init__()
@@ -45,7 +44,12 @@ class JediRequirements(GangaObject):
         import sys
         sys.stdout = open('/dev/null','w')
         sys.stderr = open('/dev/null','w')
-        self.cloud = PsubUtils.getCloudUsingFQAN(None,False)
+
+        # cache the call to getCloudUsingFQAN as otherwise it can be slow
+        if JediRequirements._defcloud == '':
+            JediRequirements._defcloud = PsubUtils.getCloudUsingFQAN(None,False)
+        self.cloud = self._defcloud
+
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
         if not self.cloud:
