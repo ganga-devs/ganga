@@ -549,7 +549,7 @@ class Registry(object):
         obj._setRegistry(self)
         obj._registry_locked = True
 
-        this_id = self.find(obj)
+        this_id = id(obj)
         try:
             self.lock_transaction(this_id, "_add")
 
