@@ -24,6 +24,8 @@ from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
 from Ganga.GPIDev.Base.Proxy import getName
 
+config = getConfig('LCG')
+
 class ARC(IBackend):
 
     '''ARC backend - direct job submission to an ARC CE'''
