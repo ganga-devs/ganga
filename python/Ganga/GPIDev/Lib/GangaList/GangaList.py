@@ -376,7 +376,7 @@ class GangaList(GangaObject):
 
     def __ne__(self, obj_list):
         if obj_list is self:  # identity check
-            return True
+            return False
         result = True
         if self.is_list(obj_list):
             result = self._list.__ne__(self.strip_proxy_list(obj_list))
