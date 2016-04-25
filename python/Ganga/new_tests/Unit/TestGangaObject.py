@@ -227,7 +227,7 @@ class MultiThreadedTestCase(unittest.TestCase):
 
 class SimpleGangaObject(GangaObject):
     _schema = Schema(Version(1, 0), {
-        'a': SimpleItem(42, typelist=['int']),
+        'a': SimpleItem(42, typelist=[int]),
     })
     _category = 'TestGangaObject'
     _hidden = True
@@ -236,7 +236,7 @@ class SimpleGangaObject(GangaObject):
 
 class ThreadedTestGangaObject(GangaObject):
     _schema = Schema(Version(1, 0), {
-        'a': SimpleItem(42, typelist=['int']),
+        'a': SimpleItem(42, typelist=[int]),
         'b': ComponentItem('TestGangaObject', defvalue='SimpleGangaObject'),
     })
     _category = 'TestGangaObject'

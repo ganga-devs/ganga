@@ -7,7 +7,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, File
 
 class SampleGangaObject(GangaObject):
     _schema = Schema(Version(1, 0), {
-        'a': SimpleItem(42, typelist=['int']),
+        'a': SimpleItem(42, typelist=[int]),
         # 'b' is skipped on purpose
         'c': ComponentItem('gangafiles'),
     })

@@ -804,7 +804,7 @@ class JobRegistry_Monitor(GangaThread):
          fail_cb : if not None, this callback is called if a retry attempt is needed
         """
 
-        if not self.alive:
+        if not self.alive and ThreadPool != []:
             log.warning("Monitoring loop has already been stopped")
             return False
         else:

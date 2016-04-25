@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-from Ganga.GPIDev.Base.Proxy import stripProxy
-
 from .GangaUnitTest import GangaUnitTest
+
+from Ganga.GPIDev.Base.Proxy import stripProxy
 
 
 class TestJob(GangaUnitTest):

@@ -18,15 +18,17 @@ from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import addProxy, getName, getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
-from Ganga.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys
+from Ganga.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys, File
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
 from Ganga.GPIDev.Schema import ComponentItem, FileItem, GangaFileItem, Schema, SimpleItem, Version
 from Ganga.Runtime.spyware import ganga_job_submitted
 from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.GPIDev.Lib.Dataset import Dataset
 
 from .JobTime import JobTime
 
@@ -39,7 +41,7 @@ def lazyLoadJobFQID(this_job):
 
 
 def lazyLoadJobStatus(this_job):
-    return lazyLoadJobObject(this_job, 'status')
+    return lazyLoadJobObject(this_job, 'status', do_eval=True)
 
 
 def lazyLoadJobBackend(this_job):
@@ -50,11 +52,15 @@ def lazyLoadJobApplication(this_job):
     return lazyLoadJobObject(this_job, 'application')
 
 
-def lazyLoadJobObject(raw_job, this_attr):
+def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
+    ## Returns an object which corresponds to an attribute from a Job, or matches it's default equivalent without triggering a load from disk
+    ## i.e. lazy loading a Dirac backend will return a raw Dirac() object and lazy loading the status will return the status string
+    ## These are all evaluated from the strings in the index file for the job.
+    ## dont_eval lets the method know a string is expected to be returned and not evaluated so nothing is evaluated against the GPI
 
     this_job = stripProxy(raw_job)
 
-    if this_job._getRegistry():
+    if this_job._getRegistry() is not None:
         if this_job._getRegistry().has_loaded(this_job):
             return getattr(this_job, this_attr)
 
@@ -62,10 +68,12 @@ def lazyLoadJobObject(raw_job, this_attr):
     job_index_cache = this_job.getNodeIndexCache()
     if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache.keys():
         obj_name = job_index_cache[lzy_loading_str]
-        if obj_name is not None:
+        if obj_name is not None and do_eval:
             job_obj = getRuntimeGPIObject(obj_name, True)
             if job_obj is None:
                 job_obj = getattr(this_job, this_attr)
+        elif not do_eval:
+            job_obj = obj_name
         else:
             job_obj = getattr(this_job, this_attr)
 
@@ -106,7 +114,7 @@ class JobInfo(GangaObject):
         'submit_counter': SimpleItem(defvalue=0, protected=1, doc="job submission/resubmission counter"),
         'monitor': ComponentItem('monitor', defvalue=None, load_default=0, comparable=0, optional=1, doc="job monitor instance"),
         'uuid': SimpleItem(defvalue='', protected=1, comparable=0, doc='globally unique job identifier'),
-        'monitoring_links': SimpleItem(defvalue=[], typelist=['tuple'], sequence=1, protected=1, copyable=0, doc="list of tuples of monitoring links")
+        'monitoring_links': SimpleItem(defvalue=[], typelist=[tuple], sequence=1, protected=1, copyable=0, doc="list of tuples of monitoring links")
     })
 
     _category = 'jobinfos'
@@ -188,32 +196,32 @@ class Job(GangaObject):
     Datasets are highly application and virtual organisation specific.
     """
 
-    _schema = Schema(Version(1, 6), {'inputsandbox': FileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
-                                     'outputsandbox': SimpleItem(defvalue=[], typelist=['str'], sequence=1, copyable=_outputfieldCopyable(), doc="list of filenames or patterns shipped from the worker node"),
+    _schema = Schema(Version(1, 6), {'inputsandbox': FileItem(defvalue=[], sequence=1, doc="list of File objects shipped to the worker node "),
+                                     'outputsandbox': SimpleItem(defvalue=[], typelist=[str], sequence=1, copyable=_outputfieldCopyable(), doc="list of filenames or patterns shipped from the worker node"),
                                      'info': ComponentItem('jobinfos', defvalue=None, doc='JobInfo '),
                                      'comment': SimpleItem('', protected=0, changable_at_resubmit=1, doc='comment of the job'),
                                      'time': ComponentItem('jobtime', defvalue=JobTime(), protected=1, comparable=0, doc='provides timestamps for status transitions'),
                                      'application': ComponentItem('applications', doc='specification of the application to be executed'),
                                      'backend': ComponentItem('backends', doc='specification of the resources to be used (e.g. batch system)'),
-                                     'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
-                                     'outputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects decorating what have to be done with the output files after job is completed "),
-                                     'non_copyable_outputfiles': GangaFileItem(defvalue=[], hidden=1, typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
+                                     'inputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects that will act as input files for a job"),
+                                     'outputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects decorating what have to be done with the output files after job is completed "),
+                                     'non_copyable_outputfiles': GangaFileItem(defvalue=[], hidden=1, sequence=1, doc="list of file objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
                                      'id': SimpleItem('', protected=1, comparable=0, doc='unique Ganga job identifier generated automatically'),
                                      'status': SimpleItem('new', protected=1, checkset='_checkset_status', doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"', copyable=False),
-                                     'name': SimpleItem('', doc='optional label which may be any combination of ASCII characters', typelist=['str']),
-                                     'inputdir': SimpleItem(getter="getStringInputDir", defvalue=None, transient=1, protected=1, comparable=0, load_default=0, optional=1, copyable=0, typelist=['str'], doc='location of input directory (file workspace)'),
-                                     'outputdir': SimpleItem(getter="getStringOutputDir", defvalue=None, transient=1, protected=1, comparable=0, load_default=0, optional=1, copyable=0, typelist=['str'], doc='location of output directory (file workspace)'),
-                                     'inputdata': ComponentItem('datasets', defvalue=None, typelist=['Ganga.GPIDev.Lib.Dataset.Dataset'], load_default=0, optional=1, doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
+                                     'name': SimpleItem('', doc='optional label which may be any combination of ASCII characters', typelist=[str]),
+                                     'inputdir': SimpleItem(getter="getStringInputDir", defvalue=None, transient=1, protected=1, comparable=0, load_default=0, optional=1, copyable=0, typelist=[str], doc='location of input directory (file workspace)'),
+                                     'outputdir': SimpleItem(getter="getStringOutputDir", defvalue=None, transient=1, protected=1, comparable=0, load_default=0, optional=1, copyable=0, typelist=[str], doc='location of output directory (file workspace)'),
+                                     'inputdata': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
                                      'outputdata': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, copyable=_outputfieldCopyable(), doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
                                      'splitter': ComponentItem('splitters', defvalue=None, load_default=0, optional=1, doc='optional splitter'),
-                                     'subjobs': ComponentItem('jobs', defvalue=GangaList(), typelist=[list, GangaList], sequence=1, protected=1, load_default=0, copyable=0, comparable=0, optional=1, proxy_get="_subjobs_proxy", doc='list of subjobs (if splitting)', summary_print='_subjobs_summary_print'),
+                                     'subjobs': ComponentItem('jobs', defvalue=GangaList(), sequence=1, protected=1, load_default=0, copyable=0, comparable=0, optional=1, proxy_get="_subjobs_proxy", doc='list of subjobs (if splitting)', summary_print='_subjobs_summary_print'),
                                      'master': ComponentItem('jobs', getter="_getMasterJob", transient=1, protected=1, load_default=0, defvalue=None, optional=1, copyable=0, comparable=0, doc='master job', visitable=0),
                                      'postprocessors': ComponentItem('postprocessor', defvalue=MultiPostProcessor(), doc='list of postprocessors to run after job has finished'),
                                      'merger': ComponentItem('mergers', defvalue=None, hidden=1, copyable=0, load_default=0, optional=1, doc='optional output merger'),
                                      'do_auto_resubmit': SimpleItem(defvalue=False, doc='Automatically resubmit failed subjobs'),
                                      'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1, copyable=0),
-                                     'fqid': SimpleItem(getter="getStringFQID", transient=1, protected=1, load_default=0, defvalue=None, optional=1, copyable=0, comparable=0, typelist=['str'], doc='fully qualified job identifier', visitable=0),
-                                     'been_queued': SimpleItem(transient=1, hidden=1, defvalue=False, optional=0, copyable=0, comparable=0, typelist=['bool'], doc='flag to show job has been queued for postprocessing', visitable=0),
+                                     'fqid': SimpleItem(getter="getStringFQID", transient=1, protected=1, load_default=0, defvalue=None, optional=1, copyable=0, comparable=0, typelist=[str], doc='fully qualified job identifier', visitable=0),
+                                     'been_queued': SimpleItem(transient=1, hidden=1, defvalue=False, optional=0, copyable=0, comparable=0, typelist=[bool], doc='flag to show job has been queued for postprocessing', visitable=0),
                                      'parallel_submit': SimpleItem(transient=1, defvalue=False, doc="Enable Submission of subjobs in parallel"),
                                      })
 

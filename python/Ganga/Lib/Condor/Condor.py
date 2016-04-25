@@ -96,7 +96,7 @@ class Condor(IBackend):
                              doc='Flag to pass current envrionment to execution host'),
         "rank": SimpleItem(defvalue="Memory",
                            doc="Ranking scheme to be used when selecting execution host"),
-        "submit_options": SimpleItem(defvalue=[], typelist=["str"],
+        "submit_options": SimpleItem(defvalue=[], typelist=[str],
                                      sequence=1, doc="Options passed to Condor at submission time"),
         "id": SimpleItem(defvalue="", protected=1, copyable=0,
                          doc="Condor jobid"),
