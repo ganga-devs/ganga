@@ -505,10 +505,12 @@ bootstrap(internal=True)
 
 def force_global_level(level):
     """ Force the global logging level to be set to level. In the case of DEBUG change the formatting to reflect this """
-    global _global_level
     if level is not None:
         for l in _allLoggers:
             _set_log_level(_allLoggers[l], level)
+
+        global _global_level
+        _global_level = level
 
     ## May wish to do this for more levels in teh future
     if level in ['DEBUG']:
@@ -521,8 +523,6 @@ def force_global_level(level):
         for l in _allLoggers:
             for this_handler in _allLoggers[l].handlers:
                 _set_formatter(this_handler, 'DEBUG')
-
-    _global_level = level
 
 
 def log_user_exception(logger=None, debug=False):
