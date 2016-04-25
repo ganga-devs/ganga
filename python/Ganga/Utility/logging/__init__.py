@@ -49,7 +49,7 @@ if not _hasInit:
 
 _formats = {
 #    'DEBUG': '%(asctime)s "%(filename)s":%(funcName)-10s at %(lineno)d, %(threadName)s: %(levelname)-8s %(message)s',
-    'DEBUG': '%(asctime)s %(threadName)s %(module)-10s::%(funcName)-10s:%(lineno)d %(levelname)-8s: %(message)s',
+    'DEBUG': '%(asctime)s %(threadName)s %(module)-20s::%(funcName)-20s:%(lineno)d %(levelname)-8s: %(message)s',
 #    'VERBOSE': '%(asctime)s %(name)-35s: %(levelname)-8s %(message)s',
     'VERBOSE': '%(asctime)s %(module)-25s::%(funcName)-10s: %(levelname)-8s %(message)s',
 #    'NORMAL': '%(name)-35s: %(levelname)-8s %(message)s',
@@ -505,11 +505,10 @@ bootstrap(internal=True)
 
 def force_global_level(level):
     """ Force the global logging level to be set to level. In the case of DEBUG change the formatting to reflect this """
+    global _global_level
     if level is not None:
         for l in _allLoggers:
             _set_log_level(_allLoggers[l], level)
-        global _global_level
-        _global_level = level
 
     ## May wish to do this for more levels in teh future
     if level in ['DEBUG']:
@@ -523,8 +522,7 @@ def force_global_level(level):
             for this_handler in _allLoggers[l].handlers:
                 _set_formatter(this_handler, 'DEBUG')
 
-        global _global_level
-        _global_level = "DEBUG"
+    _global_level = level
 
 
 def log_user_exception(logger=None, debug=False):
