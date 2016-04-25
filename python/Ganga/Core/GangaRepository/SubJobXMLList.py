@@ -359,7 +359,7 @@ class SubJobXMLList(GangaObject):
         subjob_data = None
         if not index in self._cachedJobs.keys():
 
-            logging.debug("Attempting to load subjob: #%s from disk" % index)
+            logger.debug("Attempting to load subjob: #%s from disk" % index)
 
             # obtain a lock to make sure multiple loads of the same object don't happen
             with self._load_lock:
