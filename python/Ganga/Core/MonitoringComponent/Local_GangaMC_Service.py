@@ -991,8 +991,11 @@ class JobRegistry_Monitor(GangaThread):
             #FIXME We've lost IList and the above method for adding a job which is in a submitted state looks like one that didn't work
             # Come back and fix this once 6.1.3 is out. We can drop features for functionalist here as the lazy loading is fixed in this release
             # rcurrie
-            alljobList_fromset = list(filter(lambda x: x.status in ['submitting', 'submitted', 'running'], jobListSet))
+            log.debug("jobListSet: %s" % str(jobListSet))
+            alljobList_fromset = list(filter(lambda x: lazyLoadJobStatus(x) in ['submitting', 'submitted', 'running'], jobListSet))
             masterJobList_fromset = list()
+
+            log.debug("all: %s" % str(alljobList_fromset))
 
             # print masterJobList_fromset
             jobList_fromset = alljobList_fromset
@@ -1000,6 +1003,7 @@ class JobRegistry_Monitor(GangaThread):
             # print jobList_fromset
             self.updateDict_ts.clearEntry(getName(backendObj))
             try:
+                log.debug("Update list: %s" % str([x.id for x in jobList_fromset]))
                 log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
 
                 tested_backends = []
@@ -1122,7 +1126,6 @@ class JobRegistry_Monitor(GangaThread):
             self.updateDict_ts.addEntry(backendObj, self._checkBackend, jList, pRate)
             summary = str([stripProxy(x).getFQID('.') for x in jList])
             log.debug("jList: %s" % str(summary))
-
 
     def makeUpdateJobStatusFunction(self, makeActiveBackendsFunc=None):
         log.debug("makeUpdateJobStatusFunction")
