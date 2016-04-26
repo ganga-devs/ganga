@@ -7,7 +7,7 @@ There are several ways that you can configure and control how Ganga behaves. The
 2. Supply command line options:  ``ganga -o[Logging]Ganga.Lib=DEBUG``
 3. At runtime using the `config` variable:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- CONFIGURATION VIEWCHANGE START
     :end-before: # -- CONFIGURATION VIEWCHANGE STOP
     :dedent: 8
@@ -16,7 +16,7 @@ There are several ways that you can configure and control how Ganga behaves. The
 The config system also provides a set of ``default_`` options for each Ganga object which override what values
 the object starts with on creation. e.g.
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- CONFIGURATION DEFAULTCHANGE START
     :end-before: # -- CONFIGURATION DEFAULTCHANGE STOP
     :dedent: 8
@@ -25,7 +25,7 @@ In addition to this, you can also supply a ``~/.ganga.py`` file that will be exe
 commands when Ganga starts up e.g. this will show all running jobs when you start Ganga if put into the
 ``~/.ganga.py`` file:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- CONFIGURATION STARTUPSCRIPT START
     :end-before: # -- CONFIGURATION STARTUPSCRIPT STOP
     :dedent: 8
