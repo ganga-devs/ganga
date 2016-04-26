@@ -28,8 +28,6 @@ class Grid(object):
 
     def __init__(self, middleware='EDG'):
 
-        self.active = False
-
         self.re_token = re.compile('^token:(.*):(.*)$')
 
         self.credential = None
@@ -55,8 +53,15 @@ class Grid(object):
                 'LCG-%s UI has not been configured. The plugin has been disabled.' % self.middleware)
             return
 
-#       create credential for this Grid object
-        self.active = self.check_proxy()
+
+    def get_active(self, create=True):
+        """ This checks if the proxy is valid and returns a True/False
+        If the create=True (default) it will attempt to create a new proxy.
+        If it is ceate=False then no calls which generate a new proxy on disk will be made."""
+        isValid = self.check_proxy(True)
+        return isValid
+    # Replace self.active with call to get_active with default args
+    active = property(get_active)
 
     def __setattr__(self, attr, value):
         object.__setattr__(self, attr, value)
@@ -279,23 +284,29 @@ class Grid(object):
 
         return glite_ids
 
-    def check_proxy(self):
-        '''Check the proxy and prompt the user to refresh it'''
+    def check_proxy(self, create=True):
+        '''Check the proxy and prompt the user to refresh it
+        If create is True, create a new proxy/or renew.
+        If create is False don't create a new proxy and just check credential.isValid()'''
 
         if self.credential is None:
-            self.credential = getCredential('GridProxy', self.middleware)
+            self.credential = getCredential('GridProxy', self.middleware, create)
 
         if self.middleware == 'GLITE':
             self.credential.voms = self.config['VirtualOrganisation']
-            self.credential = getCredential('GridProxy', 'GLITE')
+            self.credential = getCredential('GridProxy', 'GLITE', create)
 
-        status = self.credential.renew(maxTry=3)
+        if create:
+            status = self.credential.renew(maxTry=3)
 
-        if not status:
-            logger.warning("Could not get a proxy, giving up after 3 retries")
-            return False
+            if not status:
+                logger.warning("Could not get a proxy, giving up after 3 retries")
+                return False
+            else:
+                return True
+        else:
+            return self.credential.isValid()
 
-        return True
 
     def list_match(self, jdlpath, ce=None):
         '''Returns a list of computing elements can run the job'''
