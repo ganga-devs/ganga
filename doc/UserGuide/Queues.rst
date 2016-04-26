@@ -32,7 +32,7 @@ To start with, you can view the state of the background threads by just typing `
 
 To add a function call to the queue such as a submit call, do the following:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- QUEUES EXAMPLE START
     :end-before: # -- QUEUES EXAMPLE STOP
     :dedent: 8
@@ -40,7 +40,7 @@ To add a function call to the queue such as a submit call, do the following:
 
 You can also supply your own functions as well as provide arguments to these functions:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- QUEUES FUNCTION START
     :end-before: # -- QUEUES FUNCTION STOP
     :dedent: 8
@@ -48,7 +48,7 @@ You can also supply your own functions as well as provide arguments to these fun
 
 Queues can also be used to submit subjobs in parallel:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- QUEUES SPLIT START
     :end-before: # -- QUEUES SPLIT STOP
     :dedent: 8

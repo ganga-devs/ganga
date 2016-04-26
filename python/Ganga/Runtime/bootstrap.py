@@ -192,7 +192,7 @@ class GangaProgram(object):
 
         self.argv = argv[:]
         # record the start time.Currently we are using this in performance measurements
-        # see Ganga/test/Performance tests
+        # see Ganga/old_test/Performance tests
         self.start_time = time.time()
 
         if hello_string is None:
@@ -281,7 +281,7 @@ under certain conditions; type license() for details.
 
         parser.add_option("--test", dest='TEST', action="store_true", default=False,
                           help='run Ganga test(s) using internal test-runner. It requires GangaTest package to be installed.'
-                               'Usage example: *ganga --test Ganga/test/MyTestcase* .'
+                               'Usage example: *ganga --test Ganga/old_test/MyTestcase* .'
                                'Refer to [TestingFramework] section in Ganga config for more information on how to configure the test runner.')
 
         parser.add_option("--daemon", dest='daemon', action="store_true", default=False,
@@ -988,7 +988,7 @@ under certain conditions; type license() for details.
                 logger.info("Starting Ganga Test Runner")
 
                 if not my_args:
-                    logger.warning("Please specify the tests to run ( i.e. ganga --test Ganga/test )")
+                    logger.warning("Please specify the tests to run ( i.e. ganga --test Ganga/old_test )")
                     return -1
 
                 logger.info("myargs = %s" % " ".join(my_args))
