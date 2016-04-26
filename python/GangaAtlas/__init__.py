@@ -103,6 +103,21 @@ if not _after_bootstrap:
     config.addOption('recon_files_per_job',10,'OBSOLETE', type=int)
 
 
+def standardSetup():
+
+    import PACKAGE
+    PACKAGE.standardSetup()
+
+    # set up X509_CERT_DIR for DQ2
+    from Ganga.Utility.GridShell import getShell
+    gshell = getShell()
+    if gshell:
+        try:
+            os.environ.update({'X509_CERT_DIR':gshell.env['X509_CERT_DIR'],
+                               'X509_USER_PROXY':gshell.env['X509_USER_PROXY']})
+        except KeyError:
+            os.environ.update({'X509_CERT_DIR':'/etc/grid-security/certificates'})
+
 
 def loadPlugins( config = {} ):
 
@@ -118,20 +133,6 @@ def loadPlugins( config = {} ):
    import Lib.AMIGA
    
    return None
-
-def getEnvironment(c):
-    import PACKAGE
-    PACKAGE.standardSetup()
-    
-    #   set up X509_CERT_DIR for DQ2
-    from Ganga.Utility.GridShell import getShell
-    gshell = getShell()
-    if gshell:
-       try:
-          return { 'X509_CERT_DIR' : gshell.env['X509_CERT_DIR'], 'X509_USER_PROXY' : gshell.env['X509_USER_PROXY']  }
-       except KeyError:
-          return { 'X509_CERT_DIR' : '/etc/grid-security/certificates' }
-
 
 # some checks to make sure that new Dashboard MSG service is enabled in the user's configuration
 

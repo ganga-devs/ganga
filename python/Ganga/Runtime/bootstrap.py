@@ -610,16 +610,11 @@ under certain conditions; type license() for details.
         # set logging options
         set_cmdline_config_options(sects=['Logging'])
 
-        # we will be reexecutig the process so for the moment just shut up
-        # (unless DEBUG was forced with --debug)
-        if self.options.rexec and 'GANGA_INTERNAL_PROCREEXEC' not in os.environ and not self.options.generate_config and 'GANGA_NEVER_REEXEC' not in os.environ:
-            if self.options.force_loglevel != 'DEBUG':
-                self.options.force_loglevel = 'CRITICAL'
-        else:  # say hello
-            if logLevel:
-                self.options.force_loglevel = logLevel
-            if self.options.force_loglevel in (None, 'DEBUG'):
-                sys.stdout.write(str(self.hello_string)+'\n')
+        # Say Hello
+        if logLevel:
+            self.options.force_loglevel = logLevel
+        if self.options.force_loglevel in (None, 'DEBUG'):
+            sys.stdout.write(str(self.hello_string)+'\n')
 
         if self.options.config_file is None or self.options.config_file == '':
             self.options.config_file = self.default_config_file
@@ -877,39 +872,10 @@ under certain conditions; type license() for details.
         except KeyError, err:
             logger.debug("init KeyError: %s" % err)
 
-        logger.debug("Internal_ProxReexec")
-
-        # initialize the environment only if the current ganga process has not
-        # been rexeced
-        if 'GANGA_INTERNAL_PROCREEXEC' not in os.environ and 'GANGA_NEVER_REEXEC' not in os.environ:
-            logger.debug('initializing runtime environment')
-            # update environment of the current process
-            for r in allRuntimes.values():
-                try:
-                    _env = r.getEnvironment()
-                    if isinstance(_env, dict):
-                        os.environ.update(_env)
-                except Exception as err:
-                    logger.error("can't get environment for %s, possible problem with the return value of getEvironment()" % r.name)
-                    logger.error("Reason: %s" % err)
-                    raise
-
-            # in some cases the reexecution of the process is needed for LD_LIBRARY_PATH to take effect
-            # re-exec the process if it is allowed in the options
-            if opt_rexec:
-                logger.debug('re-executing the process for LD_LIBRARY_PATH changes to take effect')
-                os.environ['GANGA_INTERNAL_PROCREEXEC'] = '1'
-                prog = os.path.normpath(sys.argv[0])
-                logger.debug('Program: %s' % prog)
-                logger.debug('sys.argv: %s' % sys.argv)
-                os.execv(prog, sys.argv)
-
-        else:
-            logger.debug('skipped the environment initialization -- the processed has been re-execed and setup was done already')
-
-        # bugfix 40110
-        if 'GANGA_INTERNAL_PROCREEXEC' in os.environ:
-            del os.environ['GANGA_INTERNAL_PROCREEXEC']
+        # perform any setup of runtime packages
+        logger.debug('Setting up Runtime Packages')
+        for r in allRuntimes.values():
+            r.standardSetup()
 
         from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
         startUpQueues()

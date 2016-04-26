@@ -17,10 +17,10 @@ if not _after_bootstrap:
     config.addOption('sbk_pass', '', 'sbk DB password')
 
 
-def getEnvironment(c):
+def standardSetup():
     import PACKAGE
     PACKAGE.standardSetup()
-    return {}
+
 
 def loadPlugins(c):
     import Lib.SBApp

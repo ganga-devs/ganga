@@ -45,10 +45,10 @@ if not _after_bootstrap:
 
 
 
-def getEnvironment(c):
+def standardSetup():
     import PACKAGE
     PACKAGE.standardSetup()
-    return {}
+
     
 def loadPlugins(c):
 
