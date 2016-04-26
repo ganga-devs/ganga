@@ -2343,17 +2343,20 @@ config.attachUserHandler(__preConfigHandler__, __postConfigHandler__)
 # startup two independent middleware environments for LCG
 grids = {'EDG': None, 'GLITE': None}
 
+# LETS NOT DISABLE THE SYSTEMS RIGHT AT BOOT JUST BECAUSE A PROXY ISN'T AVAILABLE.
+# CHECK FOR THEM BEFORE YOU USE THEM IT'S MUCH SAFER AND BETTER
+
 if config['GLITE_ENABLE']:
     grids['GLITE'] = Grid('GLITE')
 #    if grids['GLITE'].shell:
 #        config.setSessionValue('DefaultLFC',grids['GLITE'].shell.env['LFC_HOST'])
-    config.setSessionValue('GLITE_ENABLE', grids['GLITE'].active)
+#    config.setSessionValue('GLITE_ENABLE', grids['GLITE'].get_active(create=False))
 
 if config['EDG_ENABLE']:
     grids['EDG'] = Grid('EDG')
 #    if grids['EDG'].shell:
 #        config.setSessionValue('DefaultLFC', grids['EDG'].shell.env['LFC_HOST'])
-    config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
+#    config.setSessionValue('EDG_ENABLE', grids['EDG'].get_active(create=False))
 
 logger.debug('LCG module initialization: end')
 
