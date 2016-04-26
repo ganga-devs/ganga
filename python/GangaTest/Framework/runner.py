@@ -54,8 +54,8 @@ myConfig.addOption('EnableHTMLReporter', False, 'enable/disable html reporter')
 myConfig.addOption('EnableXMLDifferencer','False', 'enable/disable xml differencer')
 #search for local tests lookup
 myConfig.addOption('SearchLocalTests', True, 'search for local tests lookup')
-#search for tests packaged in release (PACKAGE/test dir) lookup
-myConfig.addOption('SearchReleaseTests', True, 'search for tests packaged in release (PACKAGE/test dir) lookup')
+#search for tests packaged in release (PACKAGE/old_test dir) lookup
+myConfig.addOption('SearchReleaseTests', True, 'search for tests packaged in release (PACKAGE/old_test dir) lookup')
 #Coverage output
 myConfig.addOption('CoverageReport', '', 'The file used to save the testing coverage statistics')
 
