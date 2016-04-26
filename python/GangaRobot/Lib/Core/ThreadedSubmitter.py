@@ -49,7 +49,7 @@ class ThreadedSubmitterAlgorithm(Algorithm):
         jobs = load(match)
         logger.info("Loaded %d jobs from '%s'.", len(jobs), match)
         for j in jobs:
-            j.application.is_prepared = True
+            j.application.is_prepared._impl = True
             j.submit()
             jobids.append(j.id)
 
