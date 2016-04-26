@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
-from .common import logger
+from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Lib.Job import MetadataDict
@@ -9,6 +9,8 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Lib.Tasks.common import getJobByID
 import time
+
+logger = getLogger()
 
 ########################################################################
 def addInfoString( task_obj, info_str ):
@@ -29,13 +31,13 @@ class ITask(GangaObject):
     """This is the framework of a task without special properties"""
     _schema = Schema(Version(1, 0), {
         'transforms': ComponentItem('transforms', defvalue=[], sequence=1, copyable=1, doc='list of transforms'),
-        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Task', typelist=["int"]),
-        'name': SimpleItem(defvalue='NewTask', copyable=1, doc='Name of the Task', typelist=["str"]),
-        'comment': SimpleItem('', protected=0, doc='comment of the task', typelist=["str"]),
-        'status': SimpleItem(defvalue='new', protected=1, doc='Status - new, running, pause or completed', typelist=["str"]),
-        'float': SimpleItem(defvalue=0, copyable=1, doc='Number of Jobs run concurrently', typelist=["int"]),
+        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Task', typelist=[int]),
+        'name': SimpleItem(defvalue='NewTask', copyable=1, doc='Name of the Task', typelist=[str]),
+        'comment': SimpleItem('', protected=0, doc='comment of the task', typelist=[str]),
+        'status': SimpleItem(defvalue='new', protected=1, doc='Status - new, running, pause or completed', typelist=[str]),
+        'float': SimpleItem(defvalue=0, copyable=1, doc='Number of Jobs run concurrently', typelist=[int]),
         'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1),
-        'creation_date': SimpleItem(defvalue="19700101", copyable=0, protected=1, doc='Creation date of the task', typelist=["str"]),
+        'creation_date': SimpleItem(defvalue="19700101", copyable=0, protected=1, doc='Creation date of the task', typelist=[str]),
         'check_all_trfs': SimpleItem(defvalue=True, doc='Check all Transforms during each monitoring loop cycle'),
     })
 
@@ -90,23 +92,17 @@ class ITask(GangaObject):
     def update(self):
         """Called by the monitoring thread. Base class just calls update on each Transform"""
 
+        # if we're new, then do nothing
         if self.status == "new":
             return
 
-        #logger.warning("Entering update for Task '%s' (%i)... " % (self.name, time.time()))
+        # loop over all transforms and call update
         for trf in self.transforms:
             if trf.status != "running":
                 continue
 
             if trf.update() and not self.check_all_trfs:
                 break
-
-        # make sure all changes to unit info has been stored
-        for trf in self.transforms:
-            for i in range(0, 100):
-                if not trf._dirty:
-                    break
-                time.sleep(0.1)
 
         # update status and check
         self.updateStatus()
@@ -162,7 +158,7 @@ class ITask(GangaObject):
                             logger.debug("Remove Err2: %s" % str(err2))
                             pass
 
-        self._getRegistry()._remove(self)
+        self._getRegistry()._remove(self, auto_removed=1)
         logger.info("Task #%s deleted" % self.id)
 
     def clone(self):
@@ -215,24 +211,6 @@ class ITask(GangaObject):
         else:
             logger.info("Transform is already completed!")
         self.float = float_cache
-
-    def setBackend(self, backend):
-        """Sets the backend on all transforms"""
-        for tf in self.transforms:
-            if backend is None:
-                tf.backend = None
-            else:
-                tf.backend = stripProxy(backend).clone()
-
-    def setParameter(self, **args):
-        """Use: setParameter(processName="HWW") to set the processName in all applications to "HWW"
-           Warns if applications are not affected because they lack the parameter"""
-        for name, parm in args.iteritems():
-            for tf in [t for t in self.transforms if t.application]:
-                if name in tf.application.getNodeData():
-                    addProxy(tf.application).__setattr__(name, parm)
-                else:
-                    logger.warning("Transform %i was not affected!", tf.name)
 
     def insertTransform(self, id, tf):
         """Insert transfrm tf before index id (counting from 0)"""

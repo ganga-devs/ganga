@@ -2,7 +2,7 @@
 import os
 import re
 import inspect
-
+import getpass
 
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 
@@ -127,8 +127,7 @@ conf_config.addOption(
     'repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
 conf_config.addOption('workspacetype', 'LocalFilesystem',
                  'Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
-
-conf_config.addOption('user', '',
+conf_config.addOption('user', getpass.getuser(),
     'User name. The same person may have different roles (user names) and still use the same gangadir. Unless explicitly set this option defaults to the real user name.')
 conf_config.addOption('resubmitOnlyFailedSubjobs', True,
                  'If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs. Note that the auto_resubmit mechanism will only ever resubmit FAILED subjobs.')
@@ -236,7 +235,7 @@ poll_config.addOption('creds_poll_rate', 30, "The frequency in seconds for crede
 poll_config.addOption('diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
 poll_config.addOption('DiskSpaceChecker', "", "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
 poll_config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
-poll_config.addOption('numParallelJobs', 5, 'Number of Jobs to update the status for in parallel')
+poll_config.addOption('numParallelJobs', 50, 'Number of Jobs to update the status for in parallel')
 
 poll_config.addOption('forced_shutdown_policy', 'session_type',
                  'If there are remaining background activities at exit such as monitoring, output download Ganga will attempt to wait for the activities to complete. You may select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the system waits on a timeout without questions ("timeout"). The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')

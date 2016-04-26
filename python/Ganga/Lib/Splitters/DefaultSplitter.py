@@ -25,7 +25,7 @@ class DefaultSplitter(ISplitter):
     _name = "DefaultSplitter"
     ## A dummy value is required to not get a bug in writing the object to an XML repo.
     ## The nature of the problem of writing an empty schema should probably be understood more correctly but is difficult to track down -rcurrie
-    _schema = Schema(Version(1, 0), {'dummy_value': SimpleItem(defvalue=1, hidden=1, visitable=0, doc='the number of files per subjob', typelist=["int"])})
+    _schema = Schema(Version(1, 0), {'dummy_value': SimpleItem(defvalue=1, hidden=1, visitable=0, doc='the number of files per subjob', typelist=[int])})
 
     def split(self, job):
 

@@ -376,7 +376,7 @@ class GangaList(GangaObject):
 
     def __ne__(self, obj_list):
         if obj_list is self:  # identity check
-            return True
+            return False
         result = True
         if self.is_list(obj_list):
             result = self._list.__ne__(self.strip_proxy_list(obj_list))
@@ -593,6 +593,14 @@ class GangaList(GangaObject):
                 visitor.componentAttribute(self, name, self._getdata(name), item['sequence'])
 
         visitor.nodeEnd(self)
+
+    def _setFlushed(self):
+        """Set flushed like the Node but do the _list by hand to avoid problems"""
+        self._dirty = False
+        from Ganga.GPIDev.Base.Objects import Node
+        for elem in self._list:
+            if isinstance(elem, Node):
+                elem._setFlushed()
 
 # export to GPI moved to the Runtime bootstrap
 

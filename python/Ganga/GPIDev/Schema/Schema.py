@@ -114,6 +114,9 @@ class Schema(object):
         from Ganga.GPIDev.Base.Proxy import getName
         return getName(self._pluginclass)
 
+    def allItemNames(self):
+        return self.datadict.keys()
+
     def allItems(self):
         if self.datadict is None: return zip()
         return zip(self.datadict.keys(), self.datadict.values())
@@ -350,6 +353,7 @@ class Schema(object):
 # Metaproperties of SimpleItems
 #
 # typelist  : a list of type names (strings) indicating allowed types of the property (e.g. ["str","int","Ganga.GPIDev.Lib.File.File.File"]), see: http://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaTypes
+#     please consider not using strings in future, we can support the type objects correctly
 #
 #
 # Metaproperties of ComponentItems:

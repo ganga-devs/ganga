@@ -11,8 +11,9 @@ from Ganga.GPIDev.Base.Proxy import isType
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Lib.Tasks.common import logger
+from Ganga.Utility.logging import getLogger
 
+logger = getLogger()
 
 class LHCbTransform(ITransform):
     _schema = Schema(Version(1, 0), dict(ITransform._schema.datadict.items() + {
