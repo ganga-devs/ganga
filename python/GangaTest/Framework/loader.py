@@ -43,7 +43,7 @@ class GangaTestLoader:
     Ganga specific TestLoader:
     Loads all the tests from project, filtering based on the given pattern (e.g. Ganga.test.Bugs.* .
     There are two types of tests that may be loaded :
-        - *Release Tests* : tests distributed within Ganga distribution and located in a separate branch for each top-level package ( e.g. Ganga/tests/)
+        - *Release Tests* : tests distributed within Ganga distribution and located in a separate branch for each top-level package ( e.g. Ganga/old_test/)
         - *Local Tests*   : local test-cases loaded from arbitrary locations 
     """    
     def __init__(self,args,logger=None):        
@@ -169,7 +169,7 @@ class GangaTestLoader:
         suites = {}
         tests_no=0
         for config in self.config:
-            config_path = "%s/%s/test/config/%s"%(self.testsTopDir,top_level_package,config)
+            config_path = "%s/%s/old_test/config/%s"%(self.testsTopDir,top_level_package,config)
             config_path = "%s:%s" % (config_path,self.userConfig)            
             
             self.configAlias = os.path.splitext(config)[0]
@@ -220,7 +220,7 @@ class GangaTestLoader:
         The pattern is interpreted as a path to a list of individual tests:
         Example:
         The following physical structure for tests:
-            Ganga/test/
+            Ganga/old_test/
                   /Folders/
                       testA.gpi
                       testB.gpi
@@ -228,7 +228,7 @@ class GangaTestLoader:
                   /Folders.py {multiple tests embedded: testE, testF...}
         
         is transformed in the logical structure:
-            Ganga/tests/Folders
+            Ganga/old_test/Folders
                            /{testA,testB,testE,testF}
                            /TestGroup{testC,testD}                     
         So, the pattern Ganga.test.Folders.* will match all the tests 
@@ -300,8 +300,8 @@ class GangaTestLoader:
             
             #else, we found smth
             for l in paths:                
-                #if the location is inside GANGA_PACKAGE/test/ dir then
-                #use (as in release tests) the GANGA_PACKAGE/test/config dir to load
+                #if the location is inside GANGA_PACKAGE/old_test/ dir then
+                #use (as in release tests) the GANGA_PACKAGE/old_test/config dir to load
                 #the configuration from
                 tpath = fullpath(l)
                 rpath = os.path.join(self.releaseTopDir,'python')
@@ -334,7 +334,7 @@ class GangaTestLoader:
             self.configAlias = os.path.splitext(config)[0]            
             # construct the test configuration path
             # 1. User config : GANGA_CONFIG_FILE:GANGA_CONFIG_PATH
-            config_path = "%s/python/%s/test/config/%s"%(self.releaseTopDir,gangaPackage,config)
+            config_path = "%s/python/%s/old_test/config/%s"%(self.releaseTopDir,gangaPackage,config)
             ganga_config_path = ":".join([config_path,self.userConfig])
 
             ext = get_ext(file)

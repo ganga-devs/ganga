@@ -1,4 +1,0 @@
-#submit jobs with all (permited) combinations of (backend,application) pair
-# this test-case invokes the Ganga/test/GPI/BackendApplicationMatrix.gpi
-
-execfile('../../../Ganga/test/GPI/BackendApplicationMatrix.gpim')
