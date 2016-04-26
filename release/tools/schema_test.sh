@@ -5,7 +5,7 @@ usage()
 cat << EOF
 usage: $0 [options] 
 
-The default behaviour is to run the Ganga/test/Schema/Test/Test.gpi file against 
+The default behaviour is to run the Ganga/old_test/Schema/Test/Test.gpi file against
 the given version of Ganga, using all repositories found in the user's gangadir.
 
 
@@ -111,7 +111,7 @@ case `whoami` in
         export LOAD_PACKAGES='GangaTest:GangaLHCb' ;;
 esac
 
-GANGA_TEST='Ganga/test/Schema/Test'
+GANGA_TEST='Ganga/old_test/Schema/Test'
 
 
 if [[  -n "$REPO_LOC" ]]
