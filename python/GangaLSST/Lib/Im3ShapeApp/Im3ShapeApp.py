@@ -1,7 +1,5 @@
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
-#
-# $Id: Im3Shape.py,v 1.1 2008-07-17 16:40:57 moscicki Exp $
 ##########################################################################
 
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -27,7 +25,7 @@ from Ganga.GPIDev.Lib.File import LocalFile
 
 logger = getLogger()
 
-class Im3Shape(IPrepareApp):
+class Im3ShapeApp(IPrepareApp):
 
     """
 
@@ -44,20 +42,20 @@ class Im3Shape(IPrepareApp):
         'catalog': SimpleItem(defvalue=None, types=[IGangaFile, None], doc="Catalog which is used to describe what is processed"),
     })
     _category = 'applications'
-    _name = 'Im3Shape'
+    _name = 'Im3ShapeApp'
     _exportmethods = ['prepare', 'unprepare']
 
     def __init__(self):
-        super(Im3Shape, self).__init__()
+        super(Im3ShapeApp, self).__init__()
 
     def __deepcopy__(self, memo):
-        return super(Im3Shape, self).__deepcopy__(memo)
+        return super(Im3ShapeApp, self).__deepcopy__(memo)
 
     def unprepare(self, force=False):
         """
-        Revert an Im3Shape() application back to it's unprepared state.
+        Revert an Im3ShapeApp() application back to it's unprepared state.
         """
-        logger.debug('Running unprepare in Im3Shape app')
+        logger.debug('Running unprepare in Im3ShapeApp')
         if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
@@ -65,7 +63,7 @@ class Im3Shape(IPrepareApp):
 
     def prepare(self, force=False):
         """
-        A method to place the Im3Shape application into a prepared state.
+        A method to place the Im3ShapeApp application into a prepared state.
 
         The application wil have a Shared Directory object created for it. 
         If the application's 'exe' attribute references a File() object or
