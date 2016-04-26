@@ -309,7 +309,7 @@ lcg_config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env
                  filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption(
-    'GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
+    'GLITE_ENABLE', False, 'Enables/disables the support of the GLITE middleware')
 
 lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
                  'sets the LCG-UI environment setup script for the GLITE middleware',
