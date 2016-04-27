@@ -57,12 +57,12 @@ class RunTestsCommand(Command):
         cmd = ['py.test']
 
         if self.type in ['unit', 'all']:
-            cmd.append('python/Ganga/new_tests/Unit')
+            cmd.append('python/Ganga/test/Unit')
             cmd.append('python/Ganga/Core')
             cmd.append('python/Ganga/Runtime')
             cmd.append('python/Ganga/Utility')
         if self.type in ['integration', 'all']:
-            cmd.append('python/Ganga/new_tests/GPI')
+            cmd.append('python/Ganga/test/GPI')
 
         if self.coverage:
             cmd.append('--cov-report xml --cov .')
