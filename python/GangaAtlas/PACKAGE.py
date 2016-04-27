@@ -16,7 +16,7 @@ _external_packages = {
     'DQ2Clients' : { 'version' : '2.6.1_rc15',
                      'DQ2_HOME' : 'opt/dq2',
                      'PATH' : ['opt/dq2/bin','nordugrid/bin'],
-                     'PYTHONPATH' : ['opt/dq2/lib/','external/mysqldb32/'],
+                     'syspath' : ['opt/dq2/lib/','external/mysqldb32/'],
                      'LD_LIBRARY_PATH' : ['external/mysql32/','external/mysqldb32/','external/nordugrid/lib/'],
                      'DQ2_ENDUSER_SETUP' : 'True',
                      'noarch':True ,
@@ -24,8 +24,7 @@ _external_packages = {
                      },
     'rucio-clients' : { 'version' : '1.0.1',
                      'PATH' : ['bin/'],
-                     'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages' ],
-                     #'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-i686-2.6', 'externals/kerberos/lib.slc6-x86_64-2.6', 'lib/python2.6/site-packages' ],
+                     'syspath' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages' ],
                      'RUCIO_HOME' : '/afs/cern.ch/sw/ganga/external/rucio-clients/0.2.13/noarch/', # done properly below
                      'RUCIO_AUTH_TYPE' : 'x509_proxy',
                      'RUCIO_ACCOUNT' : 'ganga',
@@ -34,13 +33,13 @@ _external_packages = {
                      },
 
     'panda-client' : { 'version' : '0.5.39', 
-                       'PYTHONPATH':['lib/python2.4/site-packages'],
+                       'syspath':['lib/python2.4/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
                        'noarch':True
                        },
     'zsi' : { 'version' : '2.1-a1',  # Needed for pyAMI
-                       'PYTHONPATH':['lib/python'],
+                       'syspath':['lib/python'],
                        'noarch':True
                        },
     '4Suite' : { 'version' : '1.0.2.1', 
@@ -48,7 +47,7 @@ _external_packages = {
                  'syspath':['lib/python2.4/site-packages']
                        },
     'pyAMI' : { 'version' : '3.1.2.1', 
-                       'PYTHONPATH':['.'],
+                       'syspath':['.'],
                        'noarch':True
                        }
 
@@ -81,14 +80,10 @@ def standardSetup(setup=setup):
                 # hack the 4Suite path for 2.5
                 setup.packages['4Suite']['PYTHONPATH']  =  [ package.replace('2.4','2.5') for package in setup.packages['4Suite']['PYTHONPATH'] ]
                 setup.packages['4Suite']['syspath']  =  [ package.replace('2.4','2.5') for package in setup.packages['4Suite']['syspath'] ]
-                setup.setSysPath(name)
             elif name == '4Suite' and sys.hexversion > 0x2060000:
                 # hack the 4Suite path for 2.6
                 setup.packages['4Suite']['PYTHONPATH']  =  [ package.replace('2.4','2.6') for package in setup.packages['4Suite']['PYTHONPATH'] ]
                 setup.packages['4Suite']['syspath']  =  [ package.replace('2.4','2.6') for package in setup.packages['4Suite']['syspath'] ]
-                setup.setSysPath(name)
-            else:
-               pass 
     else:
         sys.exit()
 
@@ -104,4 +99,9 @@ def standardSetup(setup=setup):
         if 'RUCIO_AUTH_TYPE' in setup.packages[p]:
             os.environ['RUCIO_AUTH_TYPE'] = setup.packages[p]['RUCIO_AUTH_TYPE']
 
-    
+    # update the syspath and PYTHONPATH for the packages
+    for name in setup.packages:
+        setup.setSysPath(name)
+
+    print sys.path
+    print os.environ['PYTHONPATH']

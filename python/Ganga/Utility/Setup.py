@@ -84,17 +84,34 @@ class PackageSetup(object):
                     pp = ''
                 os.environ[var] = path + pp
 
-    def setSysPath(self, name):
+    def setSysPath(self, name, set_python_path=True):
         """ Update the sys.path variable for a given package by adding a given package to the PYTHONPATH.
         It assumes that the first item in PYTHONPATH is Ganga, so the package path is added as a second item.
+        If set_python_path is True, it will update the PYTHONPATH as well
         """
         import sys
-        import os.path
+        import os
 
         if getExternalHome():
-            path = self.getPackagePath2(name, 'syspath')
-            if path:
-                sys.path.insert(1, path)
+
+            # get the path(s)
+            paths = self.getPackagePath2(name, 'syspath')
+            if not paths:
+                return True
+
+            for path in paths.split(':'):
+                if path not in sys.path:
+
+                    # add to sys path
+                    sys.path.insert(1, path)
+
+                # add to PYTHONPATH?
+                if set_python_path:
+                    pp_toks = os.environ['PYTHONPATH'].split(':')
+                    if path not in pp_toks:
+                        pp_toks.insert(1, path)
+
+                    os.environ['PYTHONPATH'] = ':'.join(pp_toks)
 
         return True
 
