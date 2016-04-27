@@ -103,5 +103,3 @@ def standardSetup(setup=setup):
     for name in setup.packages:
         setup.setSysPath(name)
 
-    print sys.path
-    print os.environ['PYTHONPATH']
