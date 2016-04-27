@@ -39,8 +39,8 @@ class BoxMetadataObject(GangaObject):
 
 class BoxRegistry(Registry):
 
-    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
-        super(BoxRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
+    def __init__(self, name, doc, update_index_time=30):
+        super(BoxRegistry, self).__init__(name, doc, update_index_time)
 
         self.stored_slice = BoxRegistrySlice(self.name)
         self.stored_slice.objects = self
