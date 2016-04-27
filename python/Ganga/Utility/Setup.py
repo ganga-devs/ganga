@@ -99,7 +99,7 @@ class PackageSetup(object):
             if not paths:
                 return True
 
-            for path in paths.split(':'):
+            for path in reversed(paths.split(':')):
                 if path not in sys.path:
 
                     # add to sys path
