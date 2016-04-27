@@ -138,7 +138,7 @@ class SessionLockRefresher(GangaThread):
             except OSError as x:
                 # print "fail"
                 value = None
-                i = i + 1
+                i += 1
                 time.sleep(0.1)
                 if i >= 60:  # 3000:
                     raise x
