@@ -81,7 +81,7 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         logger.info("Parsing Configuration Options")
         Ganga.Runtime._prog.configure()
         logger.info("Initializing")
-        Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
+        Ganga.Runtime._prog.initEnvironment()
     else:
         from Ganga.Runtime.Repository_runtime import startUpRegistries
         from Ganga.Utility.Config import getConfig
