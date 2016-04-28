@@ -321,7 +321,7 @@ class RegistrySlice(object):
             return addProxy(self.objects[this_id])
         except KeyError as err:
             logger.debug('Object id=%d not found' % this_id)
-            logger.deubg("%s" % err)
+            logger.debug("%s" % err)
             raise RegistryKeyError('Object id=%d not found' % this_id)
 
     def __iter__(self):
