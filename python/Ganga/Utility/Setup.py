@@ -99,6 +99,7 @@ class PackageSetup(object):
             if not paths:
                 return True
 
+            # loop over the sys paths to be added
             for path in reversed(paths.split(':')):
                 if path not in sys.path:
 
@@ -107,7 +108,13 @@ class PackageSetup(object):
 
                 # add to PYTHONPATH?
                 if set_python_path:
-                    pp_toks = os.environ['PYTHONPATH'].split(':')
+                    if 'PYTHONPATH' in os.environ:
+                        pp_toks = os.environ['PYTHONPATH'].split(':')
+                    else:
+                        # PYTHONPATH is empty so add Ganga in first
+                        pp_toks = [sys.path[0]]
+
+                    # create a new PYTHONPATH
                     if path not in pp_toks:
                         pp_toks.insert(1, path)
 
