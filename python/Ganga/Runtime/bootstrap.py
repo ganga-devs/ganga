@@ -276,7 +276,7 @@ under certain conditions; type license() for details.
                           help='never prompt interactively for anything except IPython (FIXME: this is not fully implemented)')
 
         parser.add_option("--no-rexec", dest="rexec", action="store_const", const=0,
-                          help='rely on existing environment and do not re-exec ganga process'
+                          help='[DEPRECATED] rely on existing environment and do not re-exec ganga process'
                                'to setup runtime plugin modules (affects LD_LIBRARY_PATH)')
 
         parser.add_option("--test", dest='TEST', action="store_true", default=False,
@@ -292,6 +292,11 @@ under certain conditions; type license() for details.
         parser.disable_interspersed_args()
 
         (self.options, self.args) = parser.parse_args(args=self.argv[1:])
+
+        # check for --no-rexec. It does nothing now!
+        if self.options.rexec == 0:
+            from Ganga.Utility.logging import getLogger
+            getLogger().warning("Ganga no longer re-execs. --no-rexec option will be ignored.")
 
         def file_opens(f, message):
             try:
@@ -820,11 +825,8 @@ under certain conditions; type license() for details.
             os.dup2(se.fileno(), sys.stderr.fileno())
 
     # initialize environment: find all user-defined runtime modules and set their environments
-    # if option rexec=1 then initEnvironment restarts the current ganga process (needed for LD_LIBRARY_PATH on linux)
-    # set rexec=0 if you prepare your environment outside of Ganga and you do
-    # not want to rexec process
     @staticmethod
-    def initEnvironment(opt_rexec):
+    def initEnvironment():
 
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
