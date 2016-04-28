@@ -8,6 +8,7 @@ from GangaRobot.Lib.Core.CoreSubmitter import CoreSubmitter
 from Ganga.Utility.logging import getLogger
 from Ganga.GPI import load
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
+from Ganga.GPIDev.Base.Proxy import stripProxy
 
 logger = getLogger()
 
@@ -49,7 +50,7 @@ class ThreadedSubmitterAlgorithm(Algorithm):
         jobs = load(match)
         logger.info("Loaded %d jobs from '%s'.", len(jobs), match)
         for j in jobs:
-            j.application.is_prepared._impl = True
+            stripProxy(j.application).is_prepared = True
             j.submit()
             jobids.append(j.id)
 
