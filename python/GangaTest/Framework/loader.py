@@ -118,7 +118,7 @@ class GangaTestLoader:
             if len(atoms) > 2:
                 top_level_package = atoms[0]
                 tests_type = atoms[1]
-                if tests_type == "RT" or tests_type == "test" :
+                if tests_type == "RT" or tests_type == "old_test" :
                     release_tests = self._loadReleaseTests(pattern)
                     if release_tests:
                         return release_tests
