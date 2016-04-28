@@ -431,7 +431,7 @@ def %(method_name)s(self):
         try:
             import Ganga.Core.InternalServices.Coordinator
             if Ganga.Core.InternalServices.Coordinator.servicesEnabled:
-                from Ganga.Core.InternalServices.Coordinator disableInternalServices
+                from Ganga.Core.InternalServices.Coordinator import disableInternalServices
                 disableInternalServices()
         
             from Ganga.Core.InternalServices.Coordinator import enableInternalServices, disableInternalServices
