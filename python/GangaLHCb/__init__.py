@@ -46,6 +46,11 @@ if not _after_bootstrap:
                      'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
                       options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
 
+    configDirac.overrideDefaultValue('userVO', 'lhcb')
+    configDirac.overrideDefaultValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
+    configDirac.overrideDefaultValue('noInputDataBannedSites', ['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
+
+
 def _guess_version(name):
     if 'GANGASYSROOT' in os.environ.keys():
         gangasys = os.environ['GANGASYSROOT']

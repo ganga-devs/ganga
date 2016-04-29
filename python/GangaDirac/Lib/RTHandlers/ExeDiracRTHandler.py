@@ -66,6 +66,18 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                                     ),
                                        executable=True))
 
+        for _file in job.inputfiles:
+            if isinstance(_file, LocalFile):
+                for name in _file.getFilenameList():
+                    inputsandbox.append(name)
+            elif isinstance(_file, DiracFile):
+                name = _file.lfn
+                if isinstance(input_data, list):
+                    input_data.append(name)
+                else:
+                    input_data = [name]
+
+
         dirac_outputfiles = dirac_outputfile_jdl(outputfiles)
 
         # NOTE special case for replicas: replicate string must be empty for no
@@ -97,6 +109,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         INPUT_SANDBOX='##INPUT_SANDBOX##'
                                         )
 
+        logger.info("dirac_script: %s" % dirac_script)
 
         #logger.info("inbox: %s" % str(unique(inputsandbox)))
         #logger.info("outbox: %s" % str(unique(outputsandbox)))
