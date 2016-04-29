@@ -29,9 +29,6 @@ if not _after_bootstrap:
     configDirac.addOption('DiracCommandFiles', [os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracCommands.py')],
                       'The file containing the python commands that the local DIRAC server can execute. The default DiracCommands.py is added automatically')
 
-    configDirac.addOption('DiracOutputDataSE', [],
-                      'List of SEs where Dirac ouput data should be placed (empty means let DIRAC decide where to put the data).')
-
     configDirac.addOption('noInputDataBannedSites', [],
                       'List of sites to ban when a user job has no input data (this is meant to reduce the load on these sites)')
 

@@ -99,7 +99,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         OUTPUT_SANDBOX=API_nullifier(outputsandbox),
                                         OUTPUTFILESSCRIPT=dirac_outputfiles,
                                         OUTPUT_PATH="",  # job.fqid,
-                                        OUTPUT_SE=getConfig('DIRAC')['DiracOutputDataSE'],
+                                        OUTPUT_SE=repr([getConfig('DIRAC')['DiracDefaultSE']]),
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
                                         REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
