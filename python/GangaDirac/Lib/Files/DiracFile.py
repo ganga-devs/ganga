@@ -98,6 +98,9 @@ class DiracFile(IGangaFile):
         if remoteDir is not None:
             self.remoteDir = remoteDir
 
+        if defaultSE == '':
+            defaultSE = configDirac['DiracDefaultSE']
+
     def __construct__(self, args):
 
         self.locations = []

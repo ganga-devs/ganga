@@ -78,7 +78,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                     input_data = [name]
 
 
-        dirac_outputfiles = dirac_outputfile_jdl(outputfiles)
+        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, True)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
