@@ -218,7 +218,7 @@ poll_config.addOption('autostart_monThreads', True, 'enable populating of the mo
 poll_config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
 poll_config.addOption('MaxNumResubmits', 5, 'Maximum number of automatic job resubmits to do before giving')
 poll_config.addOption('MaxFracForResubmit', 0.25, 'Maximum fraction of failed jobs before stopping automatic resubmission')
-poll_config.addOption('update_thread_pool_size', 50, 'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
+poll_config.addOption('update_thread_pool_size', 5, 'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
 poll_config.addOption('default_backend_poll_rate', 30, 'Default rate for polling job status in the thread pool. This is the default value for all backends.')
 poll_config.addOption('Local', 10, 'Poll rate for Local backend.')
 poll_config.addOption('LCG', 30, 'Poll rate for LCG backend.')
@@ -235,7 +235,7 @@ poll_config.addOption('creds_poll_rate', 30, "The frequency in seconds for crede
 poll_config.addOption('diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
 poll_config.addOption('DiskSpaceChecker', "", "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
 poll_config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
-poll_config.addOption('numParallelJobs', 5, 'Number of Jobs to update the status for in parallel')
+poll_config.addOption('numParallelJobs', 50, 'Number of Jobs to update the status for in parallel')
 
 poll_config.addOption('forced_shutdown_policy', 'session_type',
                  'If there are remaining background activities at exit such as monitoring, output download Ganga will attempt to wait for the activities to complete. You may select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the system waits on a timeout without questions ("timeout"). The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')

@@ -18,13 +18,13 @@
 9.-  Two options to submit a job, pass the parameters manually through the inputdata,
      or directly as a crab.cfg file to the application. Let's take the easiest. So,
      configure properly the file in:
-       GangaCMS/test/crab.cfg
+       GangaCMS/old_test/crab.cfg
 10.- Create the first job:
        j=Job();
        j.backend=CRABBackend();
        j.inputdata=CRABDataset();
        j.splitter = CRABSplitter();
-       j.application = CRABApp(cfg_file='./ganga/install/HEAD/python/GangaCMS/test/crab.cfg');
+       j.application = CRABApp(cfg_file='./ganga/install/HEAD/python/GangaCMS/old_test/crab.cfg');
 11.- Submit the first job:
        j.submit();
 12.- Enjoy.
