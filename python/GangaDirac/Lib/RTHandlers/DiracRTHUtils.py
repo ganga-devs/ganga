@@ -12,6 +12,7 @@ logger = getLogger()
 
 
 def mangle_job_name(app):
+    """ Create a safe job name to send to DIRAC """
     job = stripProxy(app).getJobObject()
 
     jobName = job.name
@@ -43,11 +44,17 @@ def mangle_job_name(app):
 
 
 def API_nullifier(item):
+    """ Return is item None or emtpy list"""
     if item is None or len(item) == 0:
         return None
     return item
 
-def dirac_outputfile_jdl(output_files):
+def dirac_outputfile_jdl(output_files, empty_SE_check):
+    """
+    This constructs the setOutputData such that the data will be sent to the chosen SE/Token
+    In the case that the empty_SE_check is True it will raise an exception if the defaultSE is empty
+    In the case that it's False an empty SE is allowed.
+    """
 
     _output_files = [this_file for this_file in output_files if isType(this_file, DiracFile)]
 
@@ -58,9 +65,7 @@ def dirac_outputfile_jdl(output_files):
             file_SE_dict[this_file.defaultSE] = []
         file_SE_dict[this_file.defaultSE].append( this_file.namePattern )
 
-    per_SE_JDL = '''
-j.setOutputData(###OUTPUTDATA###, outputPath='###OUTPUT_PATH###', outputSE=###OUTPUT_SE###)
-'''
+    per_SE_JDL = '''j.setOutputData(###OUTPUTDATA###, outputPath='###OUTPUT_PATH###', outputSE=###OUTPUT_SE###)'''
     total_JDL = ''
 
     for outputSE, namePatterns in file_SE_dict.iteritems():
@@ -70,6 +75,9 @@ j.setOutputData(###OUTPUTDATA###, outputPath='###OUTPUT_PATH###', outputSE=###OU
         if outputSE != '':
             myLine = myLine.replace('###OUTPUT_SE###', str([outputSE]))
         else:
+            if empty_SE_check is True:
+                raise GangaException("Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
+            config = getConfig('Dirac')
             myLine = myLine.replace('###OUTPUT_SE###', str([]))
 
         total_JDL += myLine + "\n"
@@ -78,6 +86,7 @@ j.setOutputData(###OUTPUTDATA###, outputPath='###OUTPUT_PATH###', outputSE=###OU
 
 
 def dirac_inputdata(app, hasOtherInputData=False):
+    """ Construct the JDL compoenent which requests the inputdata for a job """
     job = stripProxy(app).getJobObject()
     input_data = None
     parametricinput_data = None
@@ -136,6 +145,7 @@ def dirac_inputdata(app, hasOtherInputData=False):
 
 
 def dirac_parametric_split(app):
+    """ Bulk job submission splitter. TODO document more """
     data = app.getJobObject().inputdata
     splitter = app.getJobObject().splitter
 
@@ -160,6 +170,7 @@ def dirac_parametric_split(app):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def dirac_ouputdata(app):
+    """ TODO work out if this is still called anywhere, returns the outputdata files as a tuple of files and location """
     job = app.getJobObject()
     if job.outputdata:
         return job.outputdata.files[:], job.outputdata.location
@@ -185,6 +196,10 @@ def diracAPI_script_template():
 
 
 def diracAPI_script_settings(app):
+    """
+    Set some additional setting on the diracAPI in the JDL making use of any custom parameters set in the backend object
+    return JDL lines
+    """
     job = stripProxy(app).getJobObject()
     diracAPI_line = ''
     if type(job.backend.settings) is not dict:

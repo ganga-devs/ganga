@@ -88,7 +88,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                 else:
                     input_data = [name]
 
-        dirac_outputfiles = dirac_outputfile_jdl(outputfiles)
+        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, True)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
@@ -109,7 +109,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         OUTPUT_SANDBOX=API_nullifier(outputsandbox),
                                         OUTPUTFILESSCRIPT=dirac_outputfiles,
                                         OUTPUT_PATH="",  # job.fqid,
-                                        OUTPUT_SE=getConfig('DIRAC')['DiracOutputDataSE'],
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
                                         REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
