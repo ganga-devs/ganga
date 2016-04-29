@@ -51,8 +51,6 @@ if not _after_bootstrap:
 
     configDirac.addOption('allDiracSE', [], 'SE/Space-Tokens allowed for replication, writing files etc.')
 
-    configDirac.addOption('DiracDefaultSE', '', 'Default SE/Space-Token used for "put"ing a file into Dirac Storage')
-
     configDirac.addOption('DiracFileAutoGet', True, 'Should the DiracFile object automatically poll the Dirac backend for missing information on an lfn?')
 
     configDirac.addOption('OfflineSplitterFraction', 0.75, 'If subset is above OfflineSplitterFraction*filesPerJob then keep the subset')
