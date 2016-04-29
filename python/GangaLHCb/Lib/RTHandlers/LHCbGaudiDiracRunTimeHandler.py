@@ -180,7 +180,6 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         OUTPUTFILESSCRIPT=lhcb_dirac_outputfiles,
                                         # job.fqid,#outputdata_path,
                                         OUTPUT_PATH="",
-                                        OUTPUT_SE=repr([getConfig('DIRAC')['DiracDefaultSE']]),
                                         SETTINGS=diracAPI_script_settings(job.application),
                                         DIRAC_OPTS=job.backend.diracOpts,
                                         PLATFORM=app.platform,

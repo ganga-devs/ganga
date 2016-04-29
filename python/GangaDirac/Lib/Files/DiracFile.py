@@ -22,7 +22,7 @@ global stored_list_of_sites
 stored_list_of_sites = []
 
 
-def all_SE_list(first_SE = ''):
+def all_SE_list(first_SE = '', defaultSE = ''):
 
     global stored_list_of_sites
     if stored_list_of_sites != []:
@@ -30,7 +30,7 @@ def all_SE_list(first_SE = ''):
 
     all_storage_elements = configDirac['allDiracSE']
     if first_SE == '':
-        default_SE = configDirac['DiracDefaultSE']
+        default_SE = defaultSE
     else:
         default_SE = first_SE
 
@@ -40,9 +40,6 @@ def all_SE_list(first_SE = ''):
     stored_list_of_sites = all_storage_elements
 
     return all_storage_elements
-
-def getDefaultSE( ):
-    return configDirac['DiracDefaultSE']
 
 class DiracFile(IGangaFile):
 
@@ -97,9 +94,6 @@ class DiracFile(IGangaFile):
             self.localDir = expandfilename(localDir)
         if remoteDir is not None:
             self.remoteDir = remoteDir
-
-        if defaultSE == '':
-            defaultSE = configDirac['DiracDefaultSE']
 
     def __construct__(self, args):
 
@@ -530,7 +524,6 @@ class DiracFile(IGangaFile):
             self.getReplicas()
 
         # Now we have to match the replicas to find one at the
-        # DiracDefaultSE
         if len(self.subfiles) == 0:
 
             files_URLs = self._remoteURLs
@@ -738,9 +731,9 @@ class DiracFile(IGangaFile):
             lfn_base = self.remoteDir
 
         if uploadSE != "":
-            storage_elements = all_SE_list(uploadSE)
+            storage_elements = all_SE_list(uploadSE, self.defaultSE)
         else:
-            storage_elements = all_SE_list(self.defaultSE)
+            storage_elements = all_SE_list(self.defaultSE, self.defaultSE)
 
         outputFiles = GangaList()
         for this_file in glob.glob(os.path.join(sourceDir, self.namePattern)):

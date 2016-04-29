@@ -62,7 +62,6 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                   'OUTPUT_SANDBOX': API_nullifier(outputsandbox),
                   'OUTPUTFILESSCRIPT' : lhcb_dirac_outputfiles,
                   'OUTPUT_PATH': "",  # job.fqid,
-                  'OUTPUT_SE': repr(getConfig('DIRAC')['DiracDefaultSE']]),
                   'SETTINGS': diracAPI_script_settings(app),
                   'DIRAC_OPTS': job.backend.diracOpts,
                   'PLATFORM': getConfig('ROOT')['arch'],
