@@ -77,7 +77,11 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
         else:
             if empty_SE_check is True:
                 raise GangaException("Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
-            myLine = myLine.replace('###OUTPUT_SE###', str([]))
+            config = getConfig('Dirac')
+            if config['DiracDefaultSE'] != '':
+                myLine = myLine.replace('###OUTPUT_SE###', config['DiracDefaultSE'] )
+            else:
+                myLine = myLine.replace('###OUTPUT_SE###', str([]))
 
         total_JDL += myLine + "\n"
 
