@@ -1,8 +1,0 @@
-from GangaLHCb.test import *
-
-ganga_path = os.path.abspath(os.path.dirname(__file__))
-script_file = ganga_path + '/../python/GangaLHCb/test/GPI/Dirac/test.C'
-j = Job(application=Root(script=script_file), backend=DiracTestSubmitter())
-
-addDiracTestSubmitter()
-assert(j.submit())
