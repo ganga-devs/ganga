@@ -883,7 +883,7 @@ for f in glob.glob('###NAME_PATTERN###'):
         upload_script = FileUtils.loadScript(script_location, '')
 
         WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
-        script = FileUtils.loadScript(WNscript_location, '###INDENT###')
+        script = FileUtils.loadScript(WNscript_location, '')
 
         selfConstructedLFNs = False
 
