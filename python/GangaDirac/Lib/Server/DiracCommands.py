@@ -11,39 +11,46 @@ from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 dirac = Dirac()
 
-# Write to output pipe
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
-#reserved_stdout = sys.stdout
-#sys.stdout = sys.stderr
-# def output(object):
-#    reserved_stdout.write("CHECK ME " + str(object))
-#    reserved_stdout.write(pickle.dumps(object))
-
 # Dirac commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
-def getJobGroupJobs(jg): output(dirac.selectJobs(jobGroup=jg))
+def getJobGroupJobs(jg):
+    ''' Return jobs in a group'''
+    output(dirac.selectJobs(jobGroup=jg))
 
 
-def kill(id): output(dirac.delete(id))
+def kill(id):
+    ''' Kill a given DIRAC Job ID within DIRAC '''
+    output(dirac.delete(id))
 
 
-def peek(id): output(dirac.peek(id))
+def peek(id):
+    ''' Peek at the DIRAC Job id and return what we saw '''
+    output(dirac.peek(id))
 
 
-def getJobCPUTime(id): output(dirac.getJobCPUTime(id))
+def getJobCPUTime(id):
+    ''' Get the amount of CPU time taken by the DIRAC Job id'''
+    output(dirac.getJobCPUTime(id))
 
 
-def reschedule(id): output(dirac.reschedule(id))
+def reschedule(id):
+    ''' Reschedule within DIRAC a given DIRAC Job id'''
+    output(dirac.reschedule(id))
 
 
-def submit(djob, mode='wms'): output(dirac.submit(djob, mode=mode))
+def submit(djob, mode='wms'):
+    ''' Submit a DIRAC job given by the jdl:djob with a given mode '''
+    output(dirac.submit(djob, mode=mode))
 
 
-def ping(system, service): output(dirac.ping(system, service))
+def ping(system, service):
+    ''' Ping a given service on a given system running DIRAC '''
+    output(dirac.ping(system, service))
 
 
 def removeFile(lfn):
+    ''' Remove a given LFN from the DFC'''
     ret = {}
     if type(lfn) is list:
         for l in lfn:
@@ -53,38 +60,50 @@ def removeFile(lfn):
     output(ret)
 
 
-def getMetadata(lfn): output(dirac.getMetadata(lfn))
+def getMetadata(lfn):
+    ''' Return the metadata associated with a given :DN'''
+    output(dirac.getMetadata(lfn))
 
 
-def getReplicas(lfns): output(dirac.getReplicas(lfns))
+def getReplicas(lfns):
+    ''' Return  the locations of the replicas of a given LFN in a dict format, SE: location '''
+    output(dirac.getReplicas(lfns))
 
 
-def getFile(lfns, destDir=''): output(dirac.getFile(lfns, destDir=destDir))
+def getFile(lfns, destDir=''):
+    ''' Put the physical file behind the LFN in the destDir path'''
+    output(dirac.getFile(lfns, destDir=destDir))
 
 
 def replicateFile(lfn, destSE, srcSE, locCache=''):
+    ''' Replicate a given LFN from a srcSE to a destSE'''
     res = dirac.replicateFile(lfn, destSE, srcSE, locCache)
     output(res)
-    sys.stdout.write(res)
+    #print(res)
 
 
 def removeReplica(lfn, sE):
+    ''' Remove the physical files and LFN from the DFC'''
     output(dirac.removeReplica(lfn, sE))
 
 
 def getOutputData(id, outputFiles='', destinationDir=''):
+    ''' Return output data of a requeted DIRAC Job id, place outputFiles in a given destinationDir') '''
     output(dirac.getJobOutputData(id, outputFiles, destinationDir))
 
 
 def splitInputData(files, files_per_job):
+    ''' Split list of files ito a list of list of smaller files (below files_per_job in length) and return the list of lists'''
     output(dirac.splitInputData(files, files_per_job))
 
 
 def getInputDataCatalog(lfns, site, xml_file):
+    ''' Get the XML describing the given LFNs at a given site'''
     output(dirac.getInputDataCatalog(lfns, site, xml_file))
 
 
 def uploadFile(lfn, file, diracSEs, guid=None):
+    ''' Upload a given file to an lfn with 1 replica places at each element in diracSEs. Use a given guid if given'''
     outerr = {}
     for se in diracSEs:
         result = dirac.addFile(lfn, file, se, guid)
@@ -102,15 +121,17 @@ def uploadFile(lfn, file, diracSEs, guid=None):
 
 
 def addFile(lfn, file, diracSE, guid):
+    ''' Upload a given file to an lfn with 1 replica places at each element in diracSEs. Use a given guid if given'''
     output(dirac.addFile(lfn, file, diracSE, guid))
 
 
 def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True, pipe_out=True):
-    #Get the outputsandbox and return the output from Dirac to the calling function
-    #id: the DIRAC jobid of interest
-    #outputDir: output directory locall on disk to use
-    #oversized: is this output sandbox oversized this will be modified
-    #output: should I output the Dirac output or should I return a python object (False)
+    '''
+    Get the outputsandbox and return the output from Dirac to the calling function
+    id: the DIRAC jobid of interest
+    outputDir: output directory locall on disk to use
+    oversized: is this output sandbox oversized this will be modified
+    output: should I output the Dirac output or should I return a python object (False)'''
     result = dirac.getOutputSandbox(id, outputDir, oversized)
     if result is not None and result.get('OK', False):
         tmpdir = os.path.join(outputDir, str(id))
@@ -127,6 +148,7 @@ def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True, pipe_out=True):
 
 
 def getOutputDataInfo(id, pipe_out=True):
+    ''' Get information on the output data generated by a job of ID and pipe it out or return it'''
     ret = {}
     result = getOutputDataLFNs(id, pipe_out=False)
     if result.get('OK', False) and 'Value' in result:
@@ -157,6 +179,7 @@ def getOutputDataInfo(id, pipe_out=True):
 
 # could shrink this with dirac.getJobOutputLFNs from ##dirac
 def getOutputDataLFNs(id, pipe_out=True):
+    ''' Get the outputDataLFN which have been generated by a Dirac job of ID and pipe it out or return it'''
     parameters = dirac.parameters(id)
     lfns = []
     ok = False
@@ -193,6 +216,7 @@ def getOutputDataLFNs(id, pipe_out=True):
 
 
 def normCPUTime(id, pipe_out=True):
+    ''' Get the normalied CPU time that has been used by a DIRAC job of ID and pipe it out or return it'''
     parameters = dirac.parameters(id)
     ncput = None
     if parameters is not None and parameters.get('OK', False):
@@ -206,6 +230,7 @@ def normCPUTime(id, pipe_out=True):
 
 
 def finalize_job(id, outputDir=os.getcwd(), oversized=True):
+    ''' Nesting function to reduce number of calls made against DIRAC when finalising a job, takes arguments such as getOutputSandbox'''
     out_cpuTime = normCPUTime(id, pipe_out=False)
     out_sandbox = getOutputSandbox(id, outputDir, oversized, pipe_out=False)
     out_dataInfo = getOutputDataInfo(id, pipe_out=False)
@@ -213,6 +238,7 @@ def finalize_job(id, outputDir=os.getcwd(), oversized=True):
 
 
 def status(job_ids):
+    '''Function to check the status and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
     statusmapping = {'Checking': 'submitted',
                      'Completed': 'completed',
@@ -250,18 +276,18 @@ def status(job_ids):
         try:
             from DIRAC.Core.DISET.RPCClient import RPCClient
             monitoring = RPCClient('WorkloadManagement/JobMonitoring')
-            app_status = monitoring.getJobAttributes(
-                id)['Value']['ApplicationStatus']
+            app_status = monitoring.getJobAttributes(id)['Value']['ApplicationStatus']
         except:
             app_status = "unknown ApplicationStatus"
 
         status_list.append([minor_status, dirac_status, dirac_site,
-                            ganga_status, str(app_status)])
+                            ganga_status, app_status])
 
     output(status_list)
 
 
 def getStateTime(id, status):
+    ''' Return the state time from DIRAC corresponding to DIRACJob tranasitions'''
     log = dirac.loggingInfo(id)
     if 'Value' not in log:
         output(None)
@@ -281,7 +307,7 @@ def getStateTime(id, status):
         checkstr = ''
 
     if checkstr == '':
-        sys.stdout.write(None)
+        print("%s" % None)
         return
 
     for l in L:
@@ -293,7 +319,8 @@ def getStateTime(id, status):
     output(None)
 
 
-def timedetails(id):
+def timedetails(i$id)
+    ''' Function to return the loggingInfo for a DIRAC Job of id'''
     log = dirac.loggingInfo(id)
     d = {}
     for i in range(0, len(log['Value'])):
@@ -305,6 +332,7 @@ def timedetails(id):
 
 
 def getJobPilotOutput(id, dir):
+    ''' Get the output of the DIRAC pilot that this job was running on and place it in dir'''
     pwd = os.getcwd()
     try:
         os.chdir(dir)
@@ -316,16 +344,21 @@ def getJobPilotOutput(id, dir):
     output(result)
 
 
-def getServicePorts(): output(DiracAdmin().getServicePorts())
+def getServicePorts():
+    ''' Get the service ports from the DiracAdmin based upon the Dirac config'''
+    output(DiracAdmin().getServicePorts())
 
 
 def getSitesForSE(se):
+    ''' Get the Sites associated with this SE'''
     from DIRAC.Core.Utilities.SiteSEMapping import getSitesForSE
-    result = getSitesForSE(se)
+    result = getSitesForSE(storageElement=se)
     output(result)
 
 
 def getSEsForSite(site):
+    ''' Get the list of SE associated with this site'''
     from DIRAC.Core.Utilities.SiteSEMapping import getSEsForSite
     result = getSEsForSite(site)
     output(result)
+
