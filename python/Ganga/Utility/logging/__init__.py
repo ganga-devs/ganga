@@ -48,10 +48,10 @@ if not _hasInit:
     _hasIinit = True
 
 _formats = {
-    'DEBUG': '%(asctime)s "%(filename)s":%(funcName)-10s at %(lineno)d, %(threadName)s: %(levelname)-8s %(message)s',
-    'VERBOSE': '%(asctime)s %(name)-35s: %(levelname)-8s %(message)s',
-    'NORMAL': '%(name)-35s: %(levelname)-8s %(message)s',
-    'TERSE': 'Ganga: %(levelname)-8s %(message)s'
+    'DEBUG': '%(asctime)s %(threadName)s %(module)-20s::%(funcName)-20s:%(lineno)d %(levelname)-8s: %(message)s',
+    'VERBOSE': '%(asctime)s %(module)-25s::%(funcName)-10s: %(levelname)-8s %(message)s',
+    'NORMAL': '%(levelname)-8s %(message)s',
+    'TERSE': '%(levelname)-8s %(message)s',
 }
 
 requires_shutdown = False
@@ -72,6 +72,10 @@ cached_screen_handler = None
 # or it may be overriden by bootstrap() to be arbitrary handler
 default_handler = direct_screen_handler
 
+# This is the default formatter key from _formats which is to be used in constructing new Handlers
+# None by default otherwise it interferes with user configs
+default_formatter = None
+
 # if defined this is ADDITIONAL handler that is used for the logfile
 file_handler = None
 
@@ -91,10 +95,12 @@ _allLoggers = {}
 # the guessing algorithm may be modified by passing the frame object (to emulate a different physical location of the logger)
 # this is only useful for special usage such as IBackend base class
 def getLogger(name=None, modulename=None):
+    """ get a logger depending on if the modulename is 1/0 and if the name of the logger is provided, see _getLogger for more details"""
     return _getLogger(name, modulename)
 
 
 class ColourFormatter(logging.Formatter, object):
+    """ Adds colour to our formatting """
 
     def __init__(self, *args, **kwds):
         logging.Formatter.__init__(self, *args, **kwds)
@@ -108,6 +114,7 @@ class ColourFormatter(logging.Formatter, object):
         self.markup = ColourText.ANSIMarkup()
 
     def format(self, record):
+        """ Actually format this message(record) and return the formatted version"""
         try:
             s = super(ColourFormatter, self).format(record)
         except TypeError:
@@ -120,23 +127,34 @@ class ColourFormatter(logging.Formatter, object):
             return s
 
     def setColour(self, yes):
+        """ Boolean set for if teh colours should be used"""
         if yes:
             self.markup = ColourText.ANSIMarkup()
         else:
             self.markup = ColourText.NoMarkup()
 
 
-def _set_formatter(handler):
+def _set_formatter(handler, this_format=None):
+    """ Set the formatter for this handler. 1 formatter per handler.
+    Precdence in deciding which format to use
+    _customFormat in the Config changes all formats all the time
+    this_format here overloads the default in the config (useful for --debug
+    otherwise the format set by default in the config is used"""
     if config['_customFormat'] != "":
         for k in _formats.keys():
             _formats[k] = config['_customFormat']
 
-    formatter = ColourFormatter(_formats[config['_format']])
+    if this_format is not None and this_format in _formats:
+        formatter = ColourFormatter(_formats[this_format])
+    else:
+        formatter = ColourFormatter(_formats[config['_format']])
     formatter.setColour(config['_colour'])
     handler.setFormatter(formatter)
 
 
 def _make_file_handler(logfile, logfile_size):
+    """ Make a new file handler and add it to the main_logger.
+    Makes use of logfile and logfile_size to know where to put the log and how big to ket it get"""
     logfile = os.path.expanduser(logfile)
     global file_handler
     if logfile:
@@ -162,13 +180,14 @@ def _make_file_handler(logfile, logfile_size):
                 # the logging system
                 pass
 
-        new_file_handler.setFormatter(logging.Formatter(_formats['VERBOSE']))
+        new_file_handler.setFormatter(logging.Formatter(_formats['DEBUG']))
         main_logger.addHandler(new_file_handler)
         file_handler = new_file_handler
 
 
 # set the loglevel for a logger to a given string value (example: "DEBUG")
 def _set_log_level(logger, value):
+    """ Sets the log level for this logger. When in info, only display INFO/WARNING/... etc the value is the level to set, must be a standard Python logging level """
 
     global _global_level
 
@@ -191,6 +210,7 @@ def _set_log_level(logger, value):
 
 # reflect all user changes immediately
 def post_config_handler(opt, value):
+    """ This is called after a config has been set upon startup in the Schema, make the changes here immediate, change 1 option (opt) to 1 value """
 
     if config is not None and '_customFormat' in config and config['_customFormat'] != "":
         for k in _formats.keys():
@@ -226,7 +246,6 @@ def post_config_handler(opt, value):
         logfile, logfile_size = config['_logfile'], config['_logfile_size']
 
     if opt in ['_logfile', '_logfile_size']:
-        global file_handler
         _make_file_handler(logfile, logfile_size)
         return
 
@@ -249,6 +268,7 @@ lookup_frame_names = {}
 
 
 def _guess_module_logger_name(modulename, frame=None):
+    """Gues the Module name from the current frame or from a given frame if specified. If module == 1 return full name, else trim module name"""
     # find the filename of the calling module
     if frame is None:
         # assuming 2 nested calls to the module boundary!
@@ -332,6 +352,7 @@ _MemHandler = logging.handlers.MemoryHandler
 
 # Caching will not be done for messages which are generated by the main thread.
 class FlushedMemoryHandler(_MemHandler):
+    """ Flushed memory handler used for caching anything sent to the logging not on the MainThread"""
 
     def __init__(self, *args, **kwds):
         _MemHandler.__init__(self, *args, **kwds)
@@ -360,10 +381,13 @@ def enableCaching():
     main_logger.removeHandler(default_handler)
     cached_screen_handler = FlushedMemoryHandler(1000, target=direct_screen_handler)
     default_handler = cached_screen_handler
+    if default_formatter is not None:
+        _set_formatter(cached_screen_handler, default_formatter)
     main_logger.addHandler(default_handler)
 
 
 def _getLogger(name=None, modulename=None):
+    """ Get a logger, either by name or by modulename and return it"""
 
     if name is None:
         name = _guess_module_logger_name(modulename)
@@ -392,6 +416,8 @@ def _getLogger(name=None, modulename=None):
 # default handler
 
 def bootstrap(internal=False, handler=None):
+    """ This is called in the main bootstrap to initialize, the logfile, the main_logger and logging defaults
+    This requires access to a fully loaded config system in order to correctly initialize all objects based upon .gangarc"""
 
     global private_logger, main_logger
 
@@ -414,7 +440,10 @@ def bootstrap(internal=False, handler=None):
             main_logger.addHandler(handler)
             default_handler = handler
 
-    _set_formatter(default_handler)
+    if default_formatter is not None:
+        _set_formatter(default_handler, default_formatter)
+    else:
+        _set_formatter(default_handler)
     # main_logger.propagate = 0 # do not propagate messages upwards...
     # main_logger.addHandler(default_handler)
     if file_handler:
@@ -458,6 +487,7 @@ def bootstrap(internal=False, handler=None):
 
 
 def final_shutdown():
+    """ Shutdown the logging system via a call here as we don't want to do this in the wrong place in the shutdown method """
     private_logger.debug('shutting down logsystem')
     logging.shutdown()
 
@@ -470,14 +500,29 @@ bootstrap(internal=True)
 
 
 def force_global_level(level):
+    """ Force the global logging level to be set to level. In the case of DEBUG change the formatting to reflect this """
     if level is not None:
         for l in _allLoggers:
             _set_log_level(_allLoggers[l], level)
+
         global _global_level
         _global_level = level
 
+    ## May wish to do this for more levels in teh future
+    if level in ['DEBUG']:
+        global default_formatter
+        default_formatter = "DEBUG"
+        if cached_screen_handler is not None:
+            _set_formatter(cached_screen_handler, 'DEBUG')
+        if direct_screen_handler is not None:
+            _set_formatter(direct_screen_handler, 'DEBUG')
+        for l in _allLoggers:
+            for this_handler in _allLoggers[l].handlers:
+                _set_formatter(this_handler, 'DEBUG')
+
 
 def log_user_exception(logger=None, debug=False):
+    """ Log a user exception based upon a given position in the code. This is used internally despite the name and is not exposed to usersi """
     buf = cStringIO.StringIO()
     traceback.print_exc(file=buf)
     banner = 10 * '-' + ' error in user/extension code ' + 10 * '-'
