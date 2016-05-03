@@ -88,8 +88,6 @@ import subprocess
 
 import time #datetime #disabled for python2.2 compatiblity
 
-appscriptpath[0] = os.path.abspath(appscriptpath[0])
-
 try:
     child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)
 except OSError as x:
@@ -97,8 +95,7 @@ except OSError as x:
     errfile.close()
     print('EXITCODE: %d'%-9999, file=statusfile)
     print('FAILED: %s'%time.strftime('%a %b %d %H:%M:%S %Y'), file=statusfile) #datetime.datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
-    print('PROBLEM STARTING THE APPLICATION SCRIPT: \'%s\' \'%s\''%(appscriptpath,str(x)), file=statusfile)
-    print('FILES FOUND ARE: %s' % os.listdir('.'), file=statusfile)
+    print('PROBLEM STARTING THE APPLICATION SCRIPT: %s %s'%(appscriptpath,str(x)), file=statusfile)
     statusfile.close()
     sys.exit()
 
