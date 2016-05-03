@@ -105,7 +105,12 @@ def addFile(lfn, file, diracSE, guid):
     output(dirac.addFile(lfn, file, diracSE, guid))
 
 
-def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True):
+def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True, pipe_out=True):
+    #Get the outputsandbox and return the output from Dirac to the calling function
+    #id: the DIRAC jobid of interest
+    #outputDir: output directory locall on disk to use
+    #oversized: is this output sandbox oversized this will be modified
+    #output: should I output the Dirac output or should I return a python object (False)
     result = dirac.getOutputSandbox(id, outputDir, oversized)
     if result is not None and result.get('OK', False):
         tmpdir = os.path.join(outputDir, str(id))
@@ -115,10 +120,13 @@ def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True):
 
         if ganga_logs:
             os.system('ln -s %s %s/stdout' % (ganga_logs[0], outputDir))
-    output(result)
+    if pipe_out:
+        output(result)
+    else:
+        return result
 
 
-def getOutputDataInfo(id):
+def getOutputDataInfo(id, pipe_out=True):
     ret = {}
     result = getOutputDataLFNs(id, pipe_out=False)
     if result.get('OK', False) and 'Value' in result:
@@ -141,7 +149,10 @@ def getOutputDataInfo(id):
             if rp.get('OK', False) and lfn in rp.get('Value', {'Successful': {}})['Successful']:
                 ret[file_name].update(
                     {'LOCATIONS': rp['Value']['Successful'][lfn].keys()})
-    output(ret)
+    if pipe_out:
+        output(ret)
+    else:
+        return ret
 
 
 # could shrink this with dirac.getJobOutputLFNs from ##dirac
@@ -177,17 +188,28 @@ def getOutputDataLFNs(id, pipe_out=True):
 
     if pipe_out:
         output(result)
-    return result
+    else:
+        return result
 
 
-def normCPUTime(id):
+def normCPUTime(id, pipe_out=True):
     parameters = dirac.parameters(id)
     ncput = None
     if parameters is not None and parameters.get('OK', False):
         parameters = parameters['Value']
         if 'NormCPUTime(s)' in parameters:
             ncput = parameters['NormCPUTime(s)']
-    output(ncput)
+    if pipe_out:
+        output(ncput)
+    else:
+        return ncput
+
+
+def finalize_job(id, outputDir=os.getcwd(), oversized=True):
+    out_cpuTime = normCPUTime(id, pipe_out=False)
+    out_sandbox = getOutputSandbox(id, outputDir, oversized, pipe_out=False)
+    out_dataInfo = getOutputDataInfo(id, pipe_out=False)
+    output((out_cpuTime, out_sandbox, out_dataInfo))
 
 
 def status(job_ids):
