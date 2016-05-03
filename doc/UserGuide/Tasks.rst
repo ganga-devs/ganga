@@ -40,7 +40,7 @@ Basic Core Usage
 It's quite likely you will want to develop your own plugins to maximise your use of GangaTasks, however there is a set
 of generalised classes that can get you started. Typical use of these is shown below:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- TASKS EXAMPLE START
     :end-before: # -- TASKS EXAMPLE STOP
     :dedent: 8
@@ -50,7 +50,7 @@ After running the above commands you won't see much happen initially as Tasks ru
 triggers every 30s (configurable in ``~/.gangarc``). Eventually though you will see the units created and then jobs
 for each of these units will be submitted. To see the progress of your tasks use:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- TASKS OVERVIEW START
     :end-before: # -- TASKS OVERVIEW STOP
     :dedent: 8
@@ -58,7 +58,7 @@ for each of these units will be submitted. To see the progress of your tasks use
 
 Tasks can also take advantage of using queues for submission as well. Simply add:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- TASKS OPTIONS START
     :end-before: # -- TASKS OPTIONS STOP
     :dedent: 8
@@ -74,7 +74,7 @@ the Transform is depends on. You can have multiple transforms feed into one Tran
 
 A typical example is shown below:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- TASKS JOBCHAIN START
     :end-before: # -- TASKS JOBCHAIN STOP
     :dedent: 8

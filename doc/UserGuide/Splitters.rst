@@ -13,7 +13,7 @@ The ``GenericSplitter`` is a useful tool to split a job based on arguments or pa
 You can specify whatever attribute you want to split over within the job as a string using the ``attribute`` option.
 A typical example using the basic ``Executable`` application is to produce subjobs with different arguments:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- SPLITTERS BASICUSE START
     :end-before: # -- SPLITTERS BASICUSE STOP
     :dedent: 8
@@ -31,7 +31,7 @@ This produces 3 subjobs with the arguments:
 Each subjob is essentially another ``Job`` object with all the parameters set appropriately for the subjob. You
 can check each one by using:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- SPLITTERS SUBJOBCHECK START
     :end-before: # -- SPLITTERS SUBJOBCHECK STOP
     :dedent: 8
@@ -42,7 +42,7 @@ the ``env`` options in the ``Executable`` application. This can be done with the
 a dictionary with each key being the attribute values to change and the lists being the values to change. Give
 the following a try:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- SPLITTERS MULTIATTRS START
     :end-before: # -- SPLITTERS MULTIATTRS STOP
     :dedent: 8
@@ -62,7 +62,7 @@ The ``GangaDatasetSplitter`` is provided as an easy way of splitting over a numb
 ``inputdata`` field of a job. The splitter will create a subjob with the maximum number of file specified
 (default is 5). A typical example is:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- SPLITTERS DATASETSPLITTER START
     :end-before: # -- SPLITTERS DATASETSPLITTER STOP
     :dedent: 8
