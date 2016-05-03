@@ -57,12 +57,6 @@ j.setAncestorDepth(###ANCESTOR_DEPTH###)
 def is_gaudi_child(app):
     if isType(app, Gaudi):
         return True
-
-    if isType(app, TaskApplication):
-        from GangaLHCb.Lib.Applications import GaudiPythonTask, BenderTask
-        if not isType(app, GaudiPythonTask) and not isType(app, BenderTask):
-            return True
-
     return False
 
 
