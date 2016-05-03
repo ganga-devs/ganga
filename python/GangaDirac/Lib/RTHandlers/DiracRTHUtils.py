@@ -76,7 +76,7 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
             myLine = myLine.replace('###OUTPUT_SE###', str([outputSE]))
         else:
             if empty_SE_check is True:
-                raise GangaException("Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
+                raise BackendError("Dirac", "Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
             config = getConfig('Dirac')
             myLine = myLine.replace('###OUTPUT_SE###', str([]))
 
@@ -134,7 +134,8 @@ def dirac_inputdata(app, hasOtherInputData=False):
             job.backend.settings['BannedSites'].extend(t1_sites)
             job.backend.settings['BannedSites'] = unique(job.backend.settings['BannedSites'])
         else:
-            job.backend.settings['BannedSites'] = t1_sites[:]
+            if t1_sites:
+                job.backend.settings['BannedSites'] = t1_sites[:]
 
     #import traceback
     # traceback.print_stack()
