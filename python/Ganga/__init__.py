@@ -821,6 +821,7 @@ disp_config.addOption(
 tasks_config = makeConfig('Tasks', 'Tasks configuration options')
 tasks_config.addOption('TaskLoopFrequency', 60., "Frequency of Task Monitoring loop in seconds")
 tasks_config.addOption('ForceTaskMonitoring', False, "Monitor tasks even if the monitoring loop isn't enabled")
+tasks_config.addOption('disableTaskMon', False, "Should I disable the Task Monitoring loop?")
 
 # ------------------------------------------------
 # MonitoringServices
