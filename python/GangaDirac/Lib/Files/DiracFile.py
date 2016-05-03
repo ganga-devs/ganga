@@ -736,8 +736,11 @@ class DiracFile(IGangaFile):
             storage_elements = all_SE_list(self.defaultSE, self.defaultSE)
 
         outputFiles = GangaList()
+        backup_lfn = self.lfn
         for this_file in glob.glob(os.path.join(sourceDir, self.namePattern)):
             name = this_file
+
+            self.lfn = backup_lfn
 
             if not os.path.exists(name):
                 if not self.compressed:
