@@ -285,6 +285,9 @@ def getWNCodeForOutputPostprocessing(job, indent):
                 outputFilesProcessedOnWN[
                     outputfileClassName].append(outputFile)
 
+    if patternsToZip == []:
+        return ""
+
     shortScript = """\n
 import os, glob
 for patternToZip in ###PATTERNSTOZIP###:

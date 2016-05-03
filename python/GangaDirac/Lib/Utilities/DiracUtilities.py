@@ -169,7 +169,7 @@ def execute(command,
 
     _checkProxy()
 
-    #logger.debug("Executing command:\n'%s'" % str(command))
+    #logger.info("Executing command:\n'%s'" % str(command))
     #logger.debug("python_setup:\n'%s'" % str(python_setup))
     #logger.debug("eval_includes:\n'%s'" % str(eval_includes))
 

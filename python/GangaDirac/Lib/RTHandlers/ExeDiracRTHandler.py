@@ -118,7 +118,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         INPUT_SANDBOX='##INPUT_SANDBOX##'
                                         )
 
-        logger.info("dirac_script: %s" % dirac_script)
+        #logger.info("dirac_script: %s" % dirac_script)
 
         #logger.info("inbox: %s" % str(unique(inputsandbox)))
         #logger.info("outbox: %s" % str(unique(outputsandbox)))
@@ -147,12 +147,16 @@ if __name__ == '__main__':
 
     exe_cmd = ###COMMAND###
 
+    if isinstance(exe_cmd, str):
+        exe_cmd = [exe_cmd]
+
     if isinstance(exe_cmd, list):
-        exe_cmd[0] = path.abspath(exe_cmd[0])
+        if path.isfile(path.abspath(exe_cmd[0])):
+            exe_cmd[0] = path.abspath(exe_cmd[0])
 
     err = None
     try:
-        rc = (subprocess.call(exe_cmd, env=my_env, shell=True)/256)
+        rc = subprocess.call(exe_cmd, env=my_env, shell=True)
     except Exception as x:
         rc = -9999
         print('Exception occured in running process: ' + exe_cmd)
