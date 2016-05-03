@@ -33,10 +33,10 @@ class Im3ShapeRTHandler(IRuntimeHandler):
 
             os.system('chmod +x %s' % exefile)
         return StandardJobConfig(inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
+                outputbox=unique(outputsandbox))
 
-    def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
-        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
+        def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
+            inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app, hasOtherInputData=True)
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
@@ -59,13 +59,13 @@ class Im3ShapeRTHandler(IRuntimeHandler):
         exe_script_name = 'exe-script.py'
 
         inputsandbox.append(FileBuffer(name=exe_script_name,
-                            contents=script_generator(exe_script_template(),
-                                                    #remove_unreplaced = False,
-                                                    # ,
-                                                    COMMAND='ls -l',
-                                                    OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
-                                                    ),
-                                       executable=True))
+            contents=script_generator(exe_script_template(),
+                #remove_unreplaced = False,
+                # ,
+                COMMAND='ls -l',
+                OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
+                ),
+            executable=True))
         inputsandbox.append(File(name=app.ini_location.namePattern))
 
         dirac_outputfiles = dirac_outputfile_jdl(outputfiles)
@@ -76,55 +76,82 @@ class Im3ShapeRTHandler(IRuntimeHandler):
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
         dirac_script = script_generator(diracAPI_script_template(),
-                                        DIRAC_IMPORT='from DIRAC.Interfaces.API.Dirac import Dirac',
-                                        DIRAC_JOB_IMPORT='from DIRAC.Interfaces.API.Job import Job',
-                                        DIRAC_OBJECT='Dirac()',
-                                        JOB_OBJECT='Job()',
-                                        NAME=mangle_job_name(app),
-                                        EXE=exe_script_name,
-                                        EXE_ARG_STR='',
-                                        EXE_LOG_FILE='Ganga_Executable.log',
-                                        ENVIRONMENT=None,
-                                        INPUTDATA=input_data,
-                                        PARAMETRIC_INPUTDATA=parametricinput_data,
-                                        OUTPUT_SANDBOX=API_nullifier(outputsandbox),
-                                        OUTPUTFILESSCRIPT=dirac_outputfiles,
-                                        OUTPUT_PATH="",  # job.fqid,
-                                        OUTPUT_SE=getConfig('DIRAC')['DiracOutputDataSE'],
-                                        SETTINGS=diracAPI_script_settings(app),
-                                        DIRAC_OPTS=job.backend.diracOpts,
-                                        REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
-                                        # leave the sandbox for altering later as needs
-                                        # to be done in backend.submit to combine master.
-                                        # Note only using 2 #s as auto-remove 3
-                                        INPUT_SANDBOX='##INPUT_SANDBOX##'
-                                        )
+                DIRAC_IMPORT='from DIRAC.Interfaces.API.Dirac import Dirac',
+                DIRAC_JOB_IMPORT='from DIRAC.Interfaces.API.Job import Job',
+                DIRAC_OBJECT='Dirac()',
+                JOB_OBJECT='Job()',
+                NAME=mangle_job_name(app),
+                EXE=exe_script_name,
+                EXE_ARG_STR='',
+                EXE_LOG_FILE='Ganga_Executable.log',
+                ENVIRONMENT=None,
+                INPUTDATA=input_data,
+                PARAMETRIC_INPUTDATA=parametricinput_data,
+                OUTPUT_SANDBOX=API_nullifier(outputsandbox),
+                OUTPUTFILESSCRIPT=dirac_outputfiles,
+                OUTPUT_PATH="",  # job.fqid,
+                OUTPUT_SE=getConfig('DIRAC')['DiracOutputDataSE'],
+                SETTINGS=diracAPI_script_settings(app),
+                DIRAC_OPTS=job.backend.diracOpts,
+                REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
+                # leave the sandbox for altering later as needs
+                # to be done in backend.submit to combine master.
+                # Note only using 2 #s as auto-remove 3
+                INPUT_SANDBOX='##INPUT_SANDBOX##'
+                )
 
 
         #logger.info("inbox: %s" % str(unique(inputsandbox)))
         #logger.info("outbox: %s" % str(unique(outputsandbox)))
 
         return StandardJobConfig(dirac_script,
-                                 inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
+                inputbox=unique(inputsandbox),
+                outputbox=unique(outputsandbox))
 
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+        #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def exe_script_template():
     script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
-from os import system, environ, pathsep, getcwd
+from __future__ import print_function
+from os import system, environ, pathsep, getcwd, listdir, path
 import sys
+import subprocess
 
 # Main
 if __name__ == '__main__':
 
-    environ['PATH'] = getcwd() + (pathsep + environ['PATH'])        
-    rc = (system('###COMMAND###')/256)
+    my_env = environ
+    my_env['PATH'] = getcwd() + (pathsep + my_env['PATH'])
+
+    exe_cmd = ###COMMAND###
+
+    if isinstance(exe_cmd, str):
+        exe_cmd = [exe_cmd]
+
+    if isinstance(exe_cmd, list):
+        if path.isfile(path.abspath(exe_cmd[0])):
+            exe_cmd[0] = path.abspath(exe_cmd[0])
+
+    err = None
+    try:
+        rc = subprocess.call(exe_cmd, env=my_env, shell=True)
+    except Exception as x:
+        rc = -9999
+        print('Exception occured in running process: ' + exe_cmd)
+        print('Err was: ' + str(err))
+        subprocess.call('''['echo', '$PATH']''')
+        print('PATH: ' + str(my_env['PATH']))
+        print('PWD: ' + str(my_env['PWD']))
+        print("files on WN: " + str(listdir('.')))
+        raise
+
+    print("files on WN: " + str(listdir('.')))
 
     ###OUTPUTFILESINJECTEDCODE###
+
     sys.exit(rc)
 """
     return script_template
