@@ -77,12 +77,12 @@ class ExeDiracRTHandler(IRuntimeHandler):
 
         from os.path import abspath, expanduser
 
-        for _file in job.inputfiles:
-            if isinstance(_file, LocalFile):
-                for name in _file.getFilenameList():
+        for this_file in job.inputfiles:
+            if isinstance(this_file, LocalFile):
+                for name in this_file.getFilenameList():
                     inputsandbox.append(File(abspath(expanduser(name))))
-            elif isinstance(_file, DiracFile):
-                name = _file.lfn
+            elif isinstance(this_file, DiracFile):
+                name = this_file.lfn
                 if isinstance(input_data, list):
                     input_data.append(name)
                 else:

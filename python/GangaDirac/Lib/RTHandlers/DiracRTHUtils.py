@@ -75,7 +75,8 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
         if outputSE != '':
             myLine = myLine.replace('###OUTPUT_SE###', str([outputSE]))
         else:
-            if empty_SE_check is True:
+            if empty_SE_check:
+                ## If true check, if not false check
                 raise BackendError("Dirac", "Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
             config = getConfig('Dirac')
             myLine = myLine.replace('###OUTPUT_SE###', str([]))

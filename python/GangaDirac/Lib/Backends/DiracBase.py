@@ -6,6 +6,7 @@ import os
 import re
 import fnmatch
 import time
+import datetime
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Core import BackendError, GangaException
@@ -442,7 +443,6 @@ class DiracBase(IBackend):
         cmd = 'getServicePorts()'
         result = execute(cmd)
         if type(result) == str:
-            import datetime
             try:
                 result = eval(result)
             except Exception as err:
@@ -457,7 +457,6 @@ class DiracBase(IBackend):
             cmd = "ping('%s','%s')" % (system, service)
             result = execute(cmd)
             if type(result) == str:
-                import datetime
                 try:
                     result = eval(result)
                 except Exception as err:
@@ -497,25 +496,23 @@ class DiracBase(IBackend):
             if not job.subjobs and status in b_list:
                 for childstatus in b_list:
                     if job.backend.id:
-               #         logger.debug("Accessing getStateTime() in diracAPI")
-                        #be_statetime = execute("getStateTime(%d,\'%s\')" % (job.backend.id, childstatus))
+                        logger.debug("Accessing getStateTime() in diracAPI")
                         if childstatus in backend_final:
                             be_statetime = execute("getStateTime(%d,\'%s\')" % (job.backend.id, childstatus))
                             job.time.timestamps["backend_final"] = be_statetime
                             break
-               #             logger.debug("Wrote 'backend_final' to timestamps.")
+                            logger.debug("Wrote 'backend_final' to timestamps.")
                         else:
                             time_str = "backend_" + childstatus
                             if time_str not in job.time.timestamps:
                                 be_statetime = execute("getStateTime(%d,\'%s\')" % (job.backend.id, childstatus))
                                 job.time.timestamps["backend_" + childstatus] = be_statetime
-               #             logger.debug("Wrote 'backend_%s' to timestamps.", childstatus)
+                            logger.debug("Wrote 'backend_%s' to timestamps.", childstatus)
                     if childstatus == status:
                         break
-            #logger.debug("_getStateTime(job with id: %d, '%s') called.", job.id, job.status)
+            logger.debug("_getStateTime(job with id: %d, '%s') called.", job.id, job.status)
         else:
-            pass
-            #logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", job.status, status)
+            logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", job.status, status)
 
     def timedetails(self):
         """Prints contents of the loggingInfo from the Dirac API."""
@@ -543,7 +540,6 @@ class DiracBase(IBackend):
         logger = getLogger()
 
         if updated_dirac_status == 'completed':
-            import time
             start = time.time()
             # firstly update job to completing
             DiracBase._getStateTime(job, 'completing')
@@ -557,6 +553,7 @@ class DiracBase(IBackend):
                 job.master.updateMasterJobStatus()
 
             # contact dirac for information
+            # The following single execute command is equivalent to the following few lines
             #job.backend.normCPUTime = execute('normCPUTime(%d)' % job.backend.id)
             #getSandboxResult = execute("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()))
             #file_info_dict = execute('getOutputDataInfo(%d)' % job.backend.id)
@@ -577,10 +574,12 @@ class DiracBase(IBackend):
 
             lfn_store = os.path.join(output_path, getConfig('Output')['PostProcessLocationsFileName'])
 
+            ## Make the file if it doesn't exist as we do in other places...
             if not os.path.isfile(lfn_store):
                 with open(lfn_store, 'w'):
                     pass
 
+            ## Now we can iterate over the contents of the file
             with open(lfn_store, 'ab') as postprocesslocationsfile:
                 if not hasattr(file_info_dict, 'keys'):
                     logger.error("Error understanding OutputDataInfo: %s" % str(file_info_dict))
