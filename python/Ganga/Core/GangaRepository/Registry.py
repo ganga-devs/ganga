@@ -480,35 +480,11 @@ class Registry(object):
     def find(self, _obj):
         """Returns the id of the given object in this registry, or 
         Raise ObjectNotInRegistryError if the Object is not found"""
-
+    
         obj = stripProxy(_obj)
         try:
-            if hasattr(obj, _reg_id_str):
-                obj_reg_id = getattr(obj, _reg_id_str)
-                objects_obj = self._objects[obj_reg_id]
-                assert obj == objects_obj
-                if hasattr(obj, _id_str):
-                    if hasattr(objects_obj, _id_str):
-                        assert getattr(obj, _id_str) == getattr(objects_obj, _id_str)
-                assert obj_reg_id == getattr(objects_obj, _reg_id_str)
-                return obj_reg_id
-            elif hasattr(obj, _id_str):
-                obj_id = getattr(obj, _id_str)
-                objects_obj = self._objects[obj_id]
-                if hasattr(objects_obj, _reg_id_str):
-                    assert obj_id == getattr(objects_obj, _reg_id_str)
-                assert obj_id == getattr(objects_obj, _id_str)
-                return obj_id
-            else:
-                raise ObjectNotInRegistryError("Repo find: Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
-        except AttributeError as err:
-            logger.debug("%s" % err)
-            raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % getName(obj))
-        except AssertionError as err:
-            logger.warning("%s" % err)
-            raise ObjectNotInRegistryError("Object '%s' is a duplicated version of the one in this registry: %s !" % (getName(obj), self.name))
-        except KeyError as err:
-            logger.debug("%s", err)
+            return next(id for id, o in self._objects.items() if o is obj)
+        except StopIteration:
             raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
 
     @synchronised
