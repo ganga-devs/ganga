@@ -233,3 +233,97 @@ class RuntimePackage(object):
         else:
             logger.debug("no postBootstrapHook() in runtime package %s", self.name)
 
+
+
+def loadPlugins(environment):
+    """
+    Given a list of environments fully load the found Plugins into them exposing all of the relavent objects
+    """
+    from Ganga.Utility.Runtime import allRuntimes
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
+    env_dict = environment.__dict__
+    for n, r in zip(allRuntimes.keys(), allRuntimes.values()):
+        try:
+            r.bootstrap(env_dict)
+        except Exception as err:
+            logger.error('problems with bootstrapping %s -- ignored', n)
+            logger.error('Reason: %s' % str(err))
+            raise err
+        try:
+            r.loadNamedTemplates(env_dict, Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_ext'],
+                                           Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
+        except Exception as err:
+            logger.error('problems with loading Named Templates for %s', n)
+            logger.error('Reason: %s' % str(err))
+
+    for r in allRuntimes.values():
+        try:
+            r.loadPlugins()
+        except Exception as err:
+            logger.error('problems with loading Named Templates for %s', n)
+            logger.error('Reason: %s' % str(err))
+
+def autoPopulateGPI(my_interface=None):
+    """
+    Fully expose all plugins registered with the interface in a single line.
+    By default only populate GPI, but also populate any other interface requested
+    """
+    if not my_interface:
+        import Ganga.GPI
+        my_interface = Ganga.GPI
+    from Ganga.Runtime.GPIexport import exportToInterface
+    from Ganga.Utility.Plugin import allPlugins
+    # make all plugins visible in GPI
+    for k in allPlugins.allCategories():
+        for n in allPlugins.allClasses(k):
+            cls = allPlugins.find(k, n)
+            if not cls._declared_property('hidden'):
+                if n != cls.__name__:
+                    exportToInterface(my_interface, cls.__name__, cls, 'Classes')
+                exportToInterface(my_interface, n, cls, 'Classes')
+
+def setPluginDefaults(my_interface=None):
+    """
+    Set the plugin defaults for things like getting the defult plugin based upon class
+    """
+    from Ganga.Utility.Plugin import allPlugins
+    # set the default value for the plugins
+    from Ganga.Utility.Config import getConfig
+    default_plugins_cfg = getConfig("Plugins")
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
+    for opt in default_plugins_cfg:
+        try:
+            category, tag = opt.split('_')
+        except ValueError, err:
+            logger.warning("do not understand option %s in [Plugins]", opt)
+            logger.debug('Reason: want %s' % str(err))
+        else:
+            if tag == 'default':
+                try:
+                    allPlugins.setDefault(category, default_plugins_cfg[opt])
+                except Ganga.Utility.Plugin.PluginManagerError as x:
+                    logger.warning('cannot set the default plugin "%s": %s' % (opt, x))
+            else:
+                logger.warning("do not understand option %s in [Plugins]", opt)
+
+
+    # set alias for default Batch plugin (it will not appear in the
+    # configuration)
+
+    batch_default_name = getConfig('Configuration').getEffectiveOption('Batch')
+    try:
+        batch_default = allPlugins.find('backends', batch_default_name)
+    except Exception as x:
+        raise Ganga.Utility.Config.ConfigError('Check configuration. Unable to set default Batch backend alias (%s)' % str(x))
+    else:
+        allPlugins.add(batch_default, 'backends', 'Batch')
+        from Ganga.Runtime.GPIexport import exportToInterface
+        if not my_interface:
+            import Ganga.GPI
+            my_interface = Ganga.GPI
+        exportToInterface(my_interface, 'Batch', batch_default, 'Classes')
+
+
+

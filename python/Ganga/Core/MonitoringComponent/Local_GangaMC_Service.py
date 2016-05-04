@@ -470,11 +470,11 @@ class JobRegistry_Monitor(GangaThread):
     minPollRate = 1.
     global_count = 0
 
-    def __init__(self, registry):
+    def __init__(self, registry_slice):
         GangaThread.__init__(self, name="JobRegistry_Monitor")
         log.debug("Constructing JobRegistry_Monitor")
         self.setDaemon(True)
-        self.registry = registry
+        self.registry_slice = registry_slice
         self.__sleepCounter = 0.0
         self.__updateTimeStamp = time.time()
         self.progressCallback = lambda x: None
@@ -692,7 +692,7 @@ class JobRegistry_Monitor(GangaThread):
                     log.warning('runMonitoring: jobs argument must be a registry slice such as a result of jobs.select() or jobs[i1:i2]')
                     return False
 
-                self.registry = m_jobs
+                self.registry_slice = m_jobs
                 #log.debug("m_jobs: %s" % str(m_jobs))
                 self.makeUpdateJobStatusFunction()
 
@@ -804,7 +804,7 @@ class JobRegistry_Monitor(GangaThread):
          fail_cb : if not None, this callback is called if a retry attempt is needed
         """
 
-        if not self.alive:
+        if not self.alive and ThreadPool != []:
             log.warning("Monitoring loop has already been stopped")
             return False
         else:
@@ -939,19 +939,19 @@ class JobRegistry_Monitor(GangaThread):
         active_backends = {}
         # FIXME: this is not thread safe: if the new jobs are added then
         # iteration exception is raised
-        fixed_ids = self.registry.ids()
-        #log.debug("Registry: %s" % str(self.registry))
+        fixed_ids = self.registry_slice.ids()
+        #log.debug("Registry: %s" % str(self.registry_slice))
         log.debug("Running over fixed_ids: %s" % str(fixed_ids))
         for i in fixed_ids:
             try:
-                j = stripProxy(self.registry(i))
+                j = stripProxy(self.registry_slice(i))
 
                 job_status = lazyLoadJobStatus(j)
-                backend_obj = lazyLoadJobBackend(j)
-                backend_name = getName(backend_obj)
 
                 if job_status in ['submitted', 'running'] or (j.master and (job_status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
+                        backend_obj = lazyLoadJobBackend(j)
+                        backend_name = getName(backend_obj)
                         active_backends.setdefault(backend_name, [])
                         active_backends[backend_name].append(j)
             except RegistryKeyError as err:
@@ -1073,7 +1073,7 @@ class JobRegistry_Monitor(GangaThread):
             # FIXME THIS RETURNS A REGISTRYSLICE OBJECT NOT A REGISTRY, IS THIS CORRECT? SHOULD WE FLUSH
             # COMMENTING OUT AS IT SIMPLY WILL NOT RUN/RESOLVE!
             # this concerns me - rcurrie
-            #self.registry._flush(jobList_fromset)  # Optimisation required!
+            #self.registry_slice._flush(jobList_fromset)  # Optimisation required!
 
             #for this_job in jobList_fromset:
             #    stripped_job = stripProxy(this_job)

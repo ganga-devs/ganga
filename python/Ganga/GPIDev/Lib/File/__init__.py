@@ -10,8 +10,6 @@ from Ganga.GPIDev.Lib.File.LCGSEFile import LCGSEFile
 from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
 from Ganga.GPIDev.Lib.File.GoogleFile import GoogleFile
 
-from Ganga.GPIDev.Lib.File import FileUtils
-
 import Ganga.Utility.logging
 
 from Ganga.GPIDev.Base.Proxy import stripProxy

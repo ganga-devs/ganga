@@ -41,7 +41,7 @@ class GangaThreadPool(object):
         try:
             self.__threads.append(t)
         except DuplicateDataItemError as e:
-            self.logger.debug(str(e))
+            self.logger.debug("%s" % e)
 
     def delServiceThread(self, t):
         #logger.debug('service thread "%s" deleted from the GangaThreadPool', t.getName())
@@ -49,7 +49,7 @@ class GangaThreadPool(object):
             if t in self.__threads:
                 self.__threads.remove(t)
         except ValueError as e:
-            logger.debug(str(e))
+            logger.debug("%s" % e)
 
     def shutdown(self, should_wait_cb=None):
         """Shutdown the Ganga session.
@@ -76,7 +76,7 @@ class GangaThreadPool(object):
             from Ganga.Utility.logging import getLogger
             logger = getLogger('GangaThread')
             logger.error("Error shutting down thread Pool!")
-            logger.error("\n%s" % str(err))
+            logger.error("\n%s" % err)
         return
 
     def _really_shutdown(self, should_wait_cb=None):
@@ -153,10 +153,7 @@ class GangaThreadPool(object):
         from Ganga.Utility.logging import getLogger
         logger = getLogger('GangaThread')
 
-        try:
-            from Ganga.GPI import queues
-        except ImportError:
-            from Ganga.Core.GangaThread.WorkerThreads import _global_queues as queues
+        from Ganga.Core.GangaThread.WorkerThreads import _global_queues as queues
 
         if queues is not None:
             queues._purge_all()

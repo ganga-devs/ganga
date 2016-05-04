@@ -77,7 +77,7 @@ j.setOutputData(###OUTPUTDATA###, outputPath='###OUTPUT_PATH###', outputSE=###OU
     return total_JDL
 
 
-def dirac_inputdata(app):
+def dirac_inputdata(app, hasOtherInputData=False):
     job = stripProxy(app).getJobObject()
     input_data = None
     parametricinput_data = None
@@ -115,7 +115,7 @@ def dirac_inputdata(app):
         else:
             input_data = job.inputdata.getLFNs()
 
-    elif 'Destination' not in job.backend.settings and not has_input_DiracFile:
+    elif 'Destination' not in job.backend.settings and not has_input_DiracFile and not hasOtherInputData:
         ##THIS IS NOT VERY DIRAC CENTRIC
         ##PLEASE WHEN TIME MOVE TO LHCBDIRAC where T1 is more applicable rcurrie
         ##Also editing the settings on the fly is asking for potential problems, should avoid

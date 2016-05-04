@@ -22,6 +22,9 @@ import os
 from Ganga.Utility.Config import getConfig
 configDQ2 = getConfig('DQ2')
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
 class AtlasTransform(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
       'local_location'     : SimpleItem(defvalue='', doc='Local location to copy output to', typelist=["str"]),

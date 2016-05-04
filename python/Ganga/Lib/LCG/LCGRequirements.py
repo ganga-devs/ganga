@@ -12,7 +12,7 @@ class LCGRequirements(GangaObject):
     '''
 
     _schema = Schema(Version(1, 2), {
-        'software': SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Software Installations'),
+        'software': SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Software Installations'),
         'nodenumber': SimpleItem(defvalue=1, doc='Number of Nodes for MPICH jobs'),
         'memory': SimpleItem(defvalue=0, doc='Mininum available memory (MB)'),
         'cputime': SimpleItem(defvalue=0, doc='Minimum available CPU time (min)'),
@@ -20,9 +20,9 @@ class LCGRequirements(GangaObject):
         'ipconnectivity': SimpleItem(defvalue=False, doc='External connectivity'),
         'allowedCEs': SimpleItem(defvalue='', doc='allowed CEs in regular expression'),
         'excludedCEs': SimpleItem(defvalue='', doc='excluded CEs in regular expression'),
-        'datarequirements': SimpleItem(defvalue=[], typelist=['dict'], sequence=1, doc='The DataRequirements entry for the JDL. A list of dictionaries, each with "InputData", "DataCatalogType" and optionally "DataCatalog" entries'),
-        'dataaccessprotocol': SimpleItem(defvalue=['gsiftp'], typelist=['str'], sequence=1, doc='A list of strings giving the available DataAccessProtocol protocols'),
-        'other': SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='Other Requirements')
+        'datarequirements': SimpleItem(defvalue=[], typelist=[dict], sequence=1, doc='The DataRequirements entry for the JDL. A list of dictionaries, each with "InputData", "DataCatalogType" and optionally "DataCatalog" entries'),
+        'dataaccessprotocol': SimpleItem(defvalue=['gsiftp'], typelist=[str], sequence=1, doc='A list of strings giving the available DataAccessProtocol protocols'),
+        'other': SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Other Requirements')
     })
 
     _category = 'LCGRequirements'

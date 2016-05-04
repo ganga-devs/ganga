@@ -5,7 +5,8 @@ from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from Ganga.GPIDev.Base.Proxy import getName
 import Ganga.Utility.logging
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import addProxy
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -17,8 +18,7 @@ class GangaDataset(Dataset):
     '''
     schema = {}
     docstr = 'List of File objects'
-    schema['files'] = GangaFileItem(defvalue=[], typelist=[
-                                    'str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will be the inputdata for the job")
+    schema['files'] = GangaFileItem(defvalue=[], sequence=1, doc="list of file objects that will be the inputdata for the job")
     schema['treat_as_inputfiles'] = SimpleItem(
         defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
     _schema = Schema(Version(3, 0), schema)
@@ -47,11 +47,14 @@ class GangaDataset(Dataset):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
         if isinstance(i, type(slice(0))):
             ds = GangaDataset(files=self.files[i])
-            return GPIProxyObjectFactory(ds)
+            return addProxy(ds)
         else:
-            return GPIProxyObjectFactory(self.files[i])
+            return addProxy(self.files[i])
 
     def isEmpty(self): return not bool(self.files)
+
+    def append(self, input_file):
+        self.extend([input_file])
 
     def extend(self, files, unique=False):
         '''Extend the dataset. If unique, then only add files which are not
@@ -65,12 +68,24 @@ class GangaDataset(Dataset):
         names = self.getFileNames()
         files = [f for f in files]  # just in case they extend w/ self
         for f in files:
-            file = getDataFile(f)
-            if file is None:
-                file = f
-            if unique and file.name in names:
+            if unique and f.name in names:
                 continue
-            self.files.append(file)
+            self.files.append(f)
+
+    def getFileNames(self):
+        'Returns a list of the names of all files stored in the dataset.'
+        names = []
+        for i in self.files:
+            if hasattr(i, lfn):
+                names.append(i.lfn)
+            else:
+                try:
+                    names.append(i.namePattern)
+                except:
+                    logger.warning("Cannot determine filename for: %s " % i)
+                    raise GangaException("Cannot Get File Name")
+
+        return names
 
     def getFilenameList(self):
         "return a list of filenames to be created as input.txt on the WN"
@@ -93,7 +108,7 @@ class GangaDataset(Dataset):
         data = GangaDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
     def isSubset(self, other):
         '''Is every file in this data set in other?'''
@@ -111,7 +126,7 @@ class GangaDataset(Dataset):
         data = GangaDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
@@ -120,7 +135,7 @@ class GangaDataset(Dataset):
         data = GangaDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
@@ -128,6 +143,6 @@ class GangaDataset(Dataset):
         data = GangaDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return addProxy(data)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

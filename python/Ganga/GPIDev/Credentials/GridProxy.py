@@ -189,8 +189,6 @@ class GridProxy(ICredential):
         self.middleware = middleware
         if self.middleware:
             self.shell = getShell(self.middleware)
-        self.gridCommand = GridCommand()
-        self.vomsCommand = VomsCommand()
         self.chooseCommandSet()
         return
 
@@ -206,12 +204,10 @@ class GridProxy(ICredential):
         Return value: None
         """
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-        if "ICommandSet" == self.command._name or isType(self.command, GangaList):
-            if self.voms:
-                self.command = self.vomsCommand
-            else:
-                self.command = self.gridCommand
-        return None
+        if self.voms:
+            self.command = VomsCommand()
+        else:
+            self.command = GridCommand()
 
     # Populate the self.command.currentOpts dictionary with
     # GridProxy specific options.
@@ -336,7 +332,7 @@ class GridProxy(ICredential):
                 except IndexError:
                     pass
         except Exception as err:
-            logger.debug("Err: %s" % str(err))
+            logger.debug("Err: %s" % err)
             pass
 
         id = "".join(cn.split())

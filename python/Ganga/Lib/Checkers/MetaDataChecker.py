@@ -23,9 +23,9 @@ class MetaDataChecker(IChecker):
     """
     _schema = IChecker._schema.inherit_copy()
     _schema.datadict['expression'] = SimpleItem(
-        defvalue=None, typelist=['str', 'type(None)'], doc='The metadata attribute')
+        defvalue=None, typelist=[str, None], doc='The metadata attribute')
     _schema.datadict['result'] = SimpleItem(
-        defvalue=None, typelist=['bool', 'type(None)'], hidden=1, doc='Check result')
+        defvalue=None, typelist=[bool, None], hidden=1, doc='Check result')
     _category = 'postprocessor'
     _name = 'MetaDataChecker'
     _hidden = 1

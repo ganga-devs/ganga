@@ -1,22 +1,24 @@
 from __future__ import absolute_import
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from .common import logger
+from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.CoreUnit import CoreUnit
 from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
 from Ganga.GPIDev.Lib.Job.Job import Job
-from Ganga.GPIDev.Base.Proxy import stripProxy, getName
+from Ganga.GPIDev.Base.Proxy import stripProxy, getName, isType
+from Ganga.Lib.Splitters.GenericSplitter import GenericSplitter
 import copy
 import re
 
+logger = getLogger()
 
 class CoreTransform(ITransform):
     _schema = Schema(Version(1, 0), dict(ITransform._schema.datadict.items() + {
         'unit_splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter to be used to create the units'),
         'chaindata_as_inputfiles': SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN"),
         'files_per_unit': SimpleItem(defvalue=-1, doc="Number of files per unit if possible. Set to -1 to just create a unit per input dataset"),
-        'fields_to_copy': SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='A list of fields that should be copied when creating units, e.g. application, inputfiles. Empty (default) implies all fields are copied unless the GeenricSplitter is used '),
+        'fields_to_copy': SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='A list of fields that should be copied when creating units, e.g. application, inputfiles. Empty (default) implies all fields are copied unless the GeenricSplitter is used '),
     }.items()))
 
     _category = 'transforms'
@@ -63,7 +65,7 @@ class CoreTransform(ITransform):
             fields = []
             if len(self.fields_to_copy) > 0:
                 fields = self.fields_to_copy
-            elif self.unit_splitter._name == "GenericSplitter":
+            elif isType(self.unit_splitter, GenericSplitter):
                 if self.unit_splitter.attribute != "":
                     fields = [self.unit_splitter.attribute.split(".")[0]]
                 else:
@@ -89,7 +91,7 @@ class CoreTransform(ITransform):
                 filelist = []
                 for ds in self.inputdata:
 
-                    if ds._name == "GangaDataset":
+                    if isType(ds, GangaDataset):
                         for f in ds.files:
                             if f.containsWildcards():
                                 # we have a wildcard so grab the subfiles
@@ -120,7 +122,7 @@ class CoreTransform(ITransform):
                 for ds in self.inputdata:
 
                     # avoid splitting over chain inputs
-                    if ds._name == "TaskChainInput":
+                    if isType(ds, TaskChainInput):
                         continue
 
                     unit = CoreUnit()

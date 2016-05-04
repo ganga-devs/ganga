@@ -1,5 +1,4 @@
 import os
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import taskify, task_map
 
 from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory
@@ -36,11 +35,7 @@ for app in AppsBaseUtils.available_apps():
     if app in dir():
         continue
     app = str(app)
-    this_class = cls.replace('AppName', app)
-    this_task = '%sTask = taskify(%s,"%sTask")' % (app, app, app)
-    this_map = 'task_map["%s"] = %sTask' % (app, app)
-    this_app = this_class + str('\n\n') + this_task + str('\n\n') + this_map
-
+    this_app = cls.replace('AppName', app)
     all_apps = all_apps + str('\n\n') + this_app
     #exec(this_exec, all_global, all_local)
     logger.debug("Adding %s" % str(app))
@@ -51,11 +46,4 @@ exec modules
 
 logger.debug("Fin")
 
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
-GaudiPythonTask = taskify(GaudiPython, "GaudiPythonTask")
-task_map["GaudiPython"] = GaudiPythonTask
-
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
-BenderTask = taskify(Bender, "BenderTask")
-task_map["Bender"] = BenderTask
 

@@ -60,7 +60,7 @@ class IMerger(IPostProcessor):
     _name = 'IMerger'
     _hidden = 1
     _schema = Schema(Version(1, 0), {
-        'files': SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='A list of files to merge.'),
+        'files': SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='A list of files to merge.'),
         'ignorefailed': SimpleItem(defvalue=False, doc='Jobs that are in the failed or killed states will be excluded from the merge when this flag is set to True.'),
         'overwrite': SimpleItem(defvalue=False, doc='The default behaviour for this Merger object. Will overwrite output files.'),
     })
@@ -74,7 +74,7 @@ class IMerger(IPostProcessor):
             try:
                 return self.merge(job.subjobs, job.outputdir)
             except PostProcessException as e:
-                logger.error(str(e))
+                logger.error("%s" % e)
                 return self.failure
         else:
             return True
@@ -140,7 +140,7 @@ class IMerger(IPostProcessor):
                         relMatchedFile = os.path.relpath(
                             matchedFile, j.outputdir)
                     except Exception as err:
-                        logger.debug("Err: %s" % str(err))
+                        logger.debug("Err: %s" % err)
                         Ganga.Utility.logging.log_unknown_exception()
                         relMatchedFile = relpath(matchedFile, j.outputdir)
                     if relMatchedFile in files:
@@ -150,11 +150,11 @@ class IMerger(IPostProcessor):
 
                 if not len(glob.glob(os.path.join(j.outputdir, f))):
                     if ignorefailed:
-                        logger.warning('The file pattern %s in Job %s was not found. The file will be ignored.', str(f), j.fqid)
+                        logger.warning('The file pattern %s in Job %s was not found. The file will be ignored.', f, j.fqid)
                         continue
                     else:
                         raise PostProcessException('The file pattern %s in Job %s was not found and so the merge can not continue. '
-                                                   'This can be overridden with the ignorefailed flag.' % (str(f), j.fqid))
+                                                   'This can be overridden with the ignorefailed flag.' % (f, j.fqid))
                 # files[f].extend(matchedFiles)
 
         for k in files.keys():
@@ -162,7 +162,7 @@ class IMerger(IPostProcessor):
             outputfile = os.path.join(outputdir, k)
             if os.path.exists(outputfile) and not overwrite:
                 raise PostProcessException('The merge process can not continue as it will result in over writing. '
-                                           'Either move the file %s or set the overwrite flag to True.' % str(outputfile))
+                                           'Either move the file %s or set the overwrite flag to True.' % outputfile)
 
             # make the directory if it does not exist
             if not os.path.exists(outputdir):

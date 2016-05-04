@@ -135,7 +135,7 @@ class GPIPRunner:
                 #self.testName = testName
                 self.outputPath = outputPath
                 self.timeout = timeout
-                self.description = description # description template - 'GangaDummy/test/Root/TestRoot/%s [GPIP]'
+                self.description = description # description template - 'GangaDummy/old_test/Root/TestRoot/%s [GPIP]'
                 self.releaseTest = releaseTest # is release test mode enable 
                 self.report_outputpath = report_outputpath # release report directory 
                 self.parent_report_name = parent_report_name # indicate the parent report name(suite name)
