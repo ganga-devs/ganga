@@ -165,7 +165,8 @@ class GangaList(GangaObject):
     def get(self, to_match):
         def matching_filter(item):
             if '_list_get__match__' in dir(item):
-                return item._list_get__match__(to_match)
+                ## This drops through to a base class so for sanity sake strip it !
+                return item._list_get__match__(stripProxy(to_match))
             return to_match == item
         return makeGangaListByRef(filter(matching_filter, self._list), preparable=self._is_preparable)
 
