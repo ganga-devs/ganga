@@ -758,8 +758,9 @@ class Job(GangaObject):
 
         # check if any output was matched - be careful about master jobs
         if getConfig('Output')['FailJobIfNoOutputMatched'] and not self.subjobs:
-            for outputfile in self.outputfiles:
-                if not outputfile.hasMatchedFiles():
+            from Ganga.GPIDev.Lib.File.OutputFileManager import outputFilePostProxessingOnSubmit
+            for outputfile in self.outputfiles: 
+                if not outputFilePostProxessingOnSubmit(self, getName(outputfile)) and not outputfile.hasMatchedFiles():
                     logger.warning("Job: %s OutputFile failed to match file type %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                     postprocessFailure = True
 

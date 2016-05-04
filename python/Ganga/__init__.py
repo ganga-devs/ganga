@@ -646,9 +646,9 @@ output_config.addOption('LCGSEFile',
                        LCGSEFileExt)
 
 # DiracFile
-
+## TODO MOVE ME TO GANGADIRAC!!!
 # Should this be in Core or elsewhere?
-diracBackPost = {'Dirac': 'WN', 'LSF': 'WN', 'PBS': 'WN', 'LCG': 'WN',
+diracBackPost = {'Dirac': 'submit', 'LSF': 'WN', 'PBS': 'WN', 'LCG': 'WN',
                  'CREAM': 'WN', 'ARC': 'WN', 'Localhost': 'WN', 'Interactive': 'WN'}
 diracFileExts = docstr_Ext % ('DIRAC', 'DIRAC')
 
