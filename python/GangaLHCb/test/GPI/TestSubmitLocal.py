@@ -2,11 +2,12 @@ from __future__ import absolute_import
 
 from Ganga.test.GPI.GangaUnitTest import GangaUnitTest
 
+
 class TestJob(GangaUnitTest):
 
     def testSubmitLocal(self):
         from Ganga.GPI import DaVinci, Job, TestSubmitter, JobError
-        from GangaLHCb.test import addLocalTestSubmitter
+        from GangaLHCb.testlib import addLocalTestSubmitter
 
         ap = DaVinci()
         j = Job(application=ap, backend=TestSubmitter())
