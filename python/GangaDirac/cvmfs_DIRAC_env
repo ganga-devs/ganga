@@ -1,0 +1,36 @@
+DIRAC=/cvmfs/ganga.cern.ch/dirac_ui
+HISTSIZE=1000
+PYTHONUNBUFFERED=yes
+QTDIR=/usr/lib64/qt-3.3
+DIRACLIB=/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/lib
+LD_LIBRARY_PATH=/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/lib:/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/lib/mysql
+PATH=/cvmfs/ganga.cern.ch/dirac_ui/scripts:/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/bin:/usr/sue/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin
+PYTHONOPTIMIZE=x
+LANG=en_GB.UTF-8
+X509_VOMS_DIR=/cvmfs/ganga.cern.ch/dirac_ui/etc/grid-security/vomsdir
+DIRACSCRIPTS=/cvmfs/ganga.cern.ch/dirac_ui/scripts
+HISTCONTROL=ignoredups
+SHLVL=1
+TERMINFO=/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/share/terminfo
+OPENSSL_CONF=/tmp
+DIRACBIN=/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/bin
+DYLD_LIBRARY_PATH=/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/lib:/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/lib/mysql
+PYTHONPATH=/cvmfs/ganga.cern.ch/dirac_ui
+CVS_RSH=ssh
+LESSOPEN=||/usr/bin/lesspipe.sh %s
+SUDO_GID=1307
+RRD_DEFAULT_FONT=/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/share/rrdtool/fonts/DejaVuSansMono-Roman.ttf
+G_BROKEN_FILENAMES=1
+_=/bin/env
+# DIRAC bashrc file, used by service and agent run scripts to set environment
+X509_VOMS_DIR=/cvmfs/ganga.cern.ch/dirac_ui/etc/grid-security/vomsdir
+# Some DIRAC locations
+TERMINFO=/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/share/terminfo
+RRD_DEFAULT_FONT=/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/share/rrdtool/fonts/DejaVuSansMono-Roman.ttf
+# Clear the PYTHONPATH and the LD_LIBRARY_PATH
+LD_LIBRARY_PATH=/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/lib:/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/lib/mysql
+DYLD_LIBRARY_PATH=/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/lib:/cvmfs/ganga.cern.ch/dirac_ui/Linux_x86_64_glibc-2.12/lib/mysql
+PYTHONPATH=/cvmfs/ganga.cern.ch/dirac_ui
+# new OpenSSL version require OPENSSL_CONF to point to some accessible location
+OPENSSL_CONF=/tmp
+

@@ -34,8 +34,15 @@ def getDiracEnv(force=False):
     lock = Dirac_Env_Lock
     lock.acquire()
     if DIRAC_ENV == {} or force:
-        if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(getConfig('DIRAC')['DiracEnvFile']):
-            with open(getConfig('DIRAC')['DiracEnvFile'], 'r') as env_file:
+        config_file = getConfig('DIRAC')['DiracEnvFile']
+        if not os.path.exists(config_file):
+            import inspect
+            absolute_path = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
+                                        '../..', config_file)
+        else:
+            absolute_path = config_file
+        if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(absolute_path):
+            with open(absolute_path, 'r') as env_file:
                 DIRAC_ENV = dict((tuple(line.strip().split('=', 1)) for line in env_file.readlines(
                 ) if len(line.strip().split('=', 1)) == 2))
                 keys_to_remove = []
@@ -46,9 +53,9 @@ def getDiracEnv(force=False):
                     del DIRAC_ENV[key]
 
         else:
-            logger.error(
-                "'DiracEnvFile' config variable empty or file not present")
+            logger.error("'DiracEnvFile' config variable empty or file not present")
     lock.release()
+    logger.debug("Dirac Env: %s" % DIRAC_ENV)
     return DIRAC_ENV
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
