@@ -1279,7 +1279,8 @@ under certain conditions; type license() for details.
         ipshell.confirm_exit = config['confirm_exit']
 
         # Launch embedded shell
-        ipshell(local_ns=local_ns)
+        from Ganga import GPI
+        ipshell(local_ns=local_ns, module=Ganga.GPI)
 
     @staticmethod
     def ganga_prompt(dummy=None):
