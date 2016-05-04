@@ -563,7 +563,7 @@ class DiracBase(IBackend):
             job.backend.normCPUTime, getSandboxResult, file_info_dict = execute("finalize_job(%d, '%s')" % (job.backend.id, output_path))
 
             now = time.time()
-            logger.info('Job ' + job.fqid + ' Time for Dirac metadata : ' + str(now - start))
+            logger.debug('Job ' + job.fqid + ' Time for Dirac metadata : ' + str(now - start))
 
             #logger.info('Job ' + job.fqid + ' OutputDataInfo: ' + str(file_info_dict))
             #logger.info('Job ' + job.fqid + ' OutputSandbox: ' + str(getSandboxResult))
@@ -641,7 +641,7 @@ class DiracBase(IBackend):
             if job.master:
                 job.master.updateMasterJobStatus()
             now = time.time()
-            logger.info('Job ' + job.fqid + ' Time for complete update : ' + str(now - start))
+            logger.debug('Job ' + job.fqid + ' Time for complete update : ' + str(now - start))
 
         elif updated_dirac_status == 'failed':
             # firstly update status to failed

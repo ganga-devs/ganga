@@ -67,8 +67,7 @@ def getDiracCommandIncludes(force=False):
     if DIRAC_INCLUDE == '' or force:
         for fname in getConfig('DIRAC')['DiracCommandFiles']:
             if not os.path.exists(fname):
-                raise GangaException(
-                    "Specified Dirac command file '%s' does not exist." % fname)
+                raise GangaException("Specified Dirac command file '%s' does not exist." % fname)
             with open(fname, 'r') as inc_file:
                 DIRAC_INCLUDE += inc_file.read() + '\n'
 

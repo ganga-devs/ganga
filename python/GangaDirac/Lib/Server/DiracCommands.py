@@ -319,7 +319,7 @@ def getStateTime(id, status):
     output(None)
 
 
-def timedetails(i$id)
+def timedetails(id):
     ''' Function to return the loggingInfo for a DIRAC Job of id'''
     log = dirac.loggingInfo(id)
     d = {}
