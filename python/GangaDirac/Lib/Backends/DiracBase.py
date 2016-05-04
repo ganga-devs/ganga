@@ -617,6 +617,9 @@ class DiracBase(IBackend):
                                                                                 )
                         #logger.debug("DiracFileData: %s" % str(DiracFileData))
                         postprocesslocationsfile.write(DiracFileData)
+                        postprocesslocationsfile.flush()
+
+            logger.debug("Written: %s" % open(lfn_store, 'r').readlines())
 
             # check outputsandbox downloaded correctly
             if not result_ok(getSandboxResult):
@@ -720,7 +723,7 @@ class DiracBase(IBackend):
         interesting_jobs = [j for j in jobs if not j.been_queued]
         # status that correspond to a ganga 'completed' or 'failed' (see DiracCommands.status(id))
         # if backend status is these then the job should be on the queue
-        requeue_dirac_status = {'Completed': 'completed',
+        requeue_dirac_status = {#'Completed': 'running',
                                 'Done': 'completed',
                                 'Failed': 'failed',
                                 'Deleted': 'failed',
@@ -819,6 +822,12 @@ class DiracBase(IBackend):
                     if job.master:
                         job.master.updateMasterJobStatus()
 
+                logger.debug("State: %s" % state[1])
+                if state[1] in ['Completed']:
+                    if job.outputfiles.get(DiracFile):
+                        # DIRAC may have completed 'running the job' but the output hasn't yet been uploaded until Done as we probably have no LFN to process yet.
+                        logger.debug("Skipping")
+                        continue
 
                 getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                            args=(job, updated_dirac_status),

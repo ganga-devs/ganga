@@ -238,10 +238,10 @@ def finalize_job(id, outputDir=os.getcwd(), oversized=True):
 
 
 def status(job_ids):
-    '''Function to check the status and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
+    '''Function to check the statuses and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
     statusmapping = {'Checking': 'submitted',
-                     'Completed': 'completed',
+                     'Completed': 'running',
                      'Deleted': 'failed',
                      'Done': 'completed',
                      'Failed': 'failed',
@@ -259,8 +259,8 @@ def status(job_ids):
         return
     status_list = []
     bulk_status = result['Value']
-    for id in job_ids:
-        job_status = bulk_status.get(id, {})
+    for _id in job_ids:
+        job_status = bulk_status.get(_id, {})
         minor_status = job_status.get('MinorStatus', None)
         dirac_status = job_status.get('Status', None)
         dirac_site = job_status.get('Site', None)
@@ -268,15 +268,15 @@ def status(job_ids):
         if ganga_status is None:
             ganga_status = 'failed'
             dirac_status = 'Unknown: No status for Job'
-        if dirac_status == 'Completed' and (minor_status not in ['Pending Requests']):
-            ganga_status = 'running'
+        #if dirac_status == 'Completed' and (minor_status not in ['Pending Requests']):
+        #    ganga_status = 'running'
         if minor_status in ['Uploading Output Data']:
             ganga_status = 'running'
 
         try:
             from DIRAC.Core.DISET.RPCClient import RPCClient
             monitoring = RPCClient('WorkloadManagement/JobMonitoring')
-            app_status = monitoring.getJobAttributes(id)['Value']['ApplicationStatus']
+            app_status = monitoring.getJobAttributes(_id)['Value']['ApplicationStatus']
         except:
             app_status = "unknown ApplicationStatus"
 

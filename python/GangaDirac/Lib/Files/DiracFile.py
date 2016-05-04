@@ -268,7 +268,8 @@ class DiracFile(IGangaFile):
         guid = tokens[3]
         try:
             locations = eval(tokens[2])
-        except:
+        except Excaption as err:
+            logger.warning("err: %s" % err)
             locations = tokens[2]
 
         if pattern == name:
@@ -302,6 +303,7 @@ class DiracFile(IGangaFile):
             return False
 
         else:
+            logger.debug("False")
             return False
 
     def setLocation(self):
@@ -322,12 +324,17 @@ class DiracFile(IGangaFile):
         try:
             postprocesslocations = open(postprocessLocationsPath, 'r')
             self.subfiles = []
+            logger.info("lines: %s" % postprocesslocations.readlines())
             for line in postprocesslocations.readlines():
                 if line.startswith('DiracFile'):
                     if self.dirac_line_processor(line, self, os.path.dirname(postprocessLocationsPath)) and regex.search(self.namePattern) is None:
                         logger.error("Error processing line:\n%s\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern)))
+                    else:
+                        logger.debug("Parsed: %s" % line)
+                else:
+                    logger.debug("Skipping: %s" % line)
 
-        except Exception, err:
+        except Exception as err:
             logger.warning("unexpected Error: %s" % str(err))
         finally:
             if postprocesslocations is not None:
@@ -345,8 +352,7 @@ class DiracFile(IGangaFile):
         Remove this lfn and all replicas from DIRAC LFC/SEs
         """
         if self.lfn == "":
-            raise GangaException(
-                'Can\'t remove a  file from DIRAC SE without an LFN.')
+            raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
         stdout = execute('removeFile("%s")' % self.lfn)
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
