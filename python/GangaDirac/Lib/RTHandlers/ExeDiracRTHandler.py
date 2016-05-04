@@ -14,6 +14,7 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 logger = getLogger()
+config = getConfig('DIRAC')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -88,7 +89,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                 else:
                     input_data = [name]
 
-        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, True)
+        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, config['RequireDefaultSE'])
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
@@ -111,7 +112,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         OUTPUT_PATH="",  # job.fqid,
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
-                                        REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
+                                        REPLICATE='True' if config['ReplicateOutputData'] else '',
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3

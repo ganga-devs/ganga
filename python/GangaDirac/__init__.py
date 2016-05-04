@@ -59,6 +59,7 @@ if not _after_bootstrap:
     configDirac.addOption('OfflineSplitterLimit', 50,
                       'Number of iterations of selecting random Sites that are performed before the spliter reduces the OfflineSplitter fraction by raising it by 1 power and reduces OfflineSplitterMaxCommonSites by 1. Smaller number makes the splitter accept many smaller subsets higher means keeping more subsets but takes much more CPU to match files accordingly.')
 
+    configDirac.addOption('RequireDefaultSE', True, 'Do we require the user to configure a defaultSE in some way?')
 
 def getEnvironment(config=None):
     import sys
