@@ -41,7 +41,7 @@ def lazyLoadJobFQID(this_job):
 
 
 def lazyLoadJobStatus(this_job):
-    return lazyLoadJobObject(this_job, 'status', do_eval=True)
+    return lazyLoadJobObject(this_job, 'status', do_eval=False)
 
 
 def lazyLoadJobBackend(this_job):
@@ -66,6 +66,7 @@ def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
 
     lzy_loading_str = 'display:'+ this_attr
     job_index_cache = this_job.getNodeIndexCache()
+
     if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache.keys():
         obj_name = job_index_cache[lzy_loading_str]
         if obj_name is not None and do_eval:
@@ -78,7 +79,10 @@ def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
             job_obj = getattr(this_job, this_attr)
 
     else:
-        job_obj = getattr(this_job, this_attr)
+        if this_attr in job_index_cache.keys():
+            job_obj = job_index_cache[this_attr]
+        else:
+            job_obj = getattr(this_job, this_attr)
 
     return job_obj
 

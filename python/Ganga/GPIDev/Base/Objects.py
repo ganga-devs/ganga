@@ -461,23 +461,33 @@ class Descriptor(object):
         if name in obj_data:
             return obj_data[name]
 
-        # Then try to get it from the index cache
-        obj_index = obj.getNodeIndexCache(force_cache=True)
-        if name in obj_index:
-            return obj_index[name]
+        if obj._getRegistry() is not None and not obj.fullyLoadedFromDisk():
+            # Then try to get it from the index cache
+            obj_index = obj.getNodeIndexCache(force_cache=True)
+            if name in obj_index:
+                return obj_index[name]
 
         # Since we couldn't find the information in the cache, we will need to fully load the object
+        # Or, if not in a repo we can get the default value
 
-        # Guarantee that the object is now loaded from disk
-        obj._getReadAccess()
+        if obj._getRegistry() is not None:
+            # Guarantee that the object is now loaded from disk
+            obj._getReadAccess()
 
-        # First try to load the object from the attributes on disk
-        if name in obj.getNodeData():
-            return obj.getNodeAttribute(name)
+            if obj.fullyLoadedFromDisk():
+                # First try to load the object from the attributes on disk
+                if name in obj.getNodeData():
+                    return obj.getNodeAttribute(name)
 
         # Finally, get the default value from the schema
         if obj._schema.hasItem(name):
-            return obj._schema.getDefaultValue(name)
+            item = obj._schema[name]
+            if item.getProperties()['getter'] is None:
+                defObj = obj._schema.getDefaultValue(name)
+                self.__set__(obj, defObj)
+                obj_data = obj.getNodeData()
+                if name in obj_data:
+                    return obj_data[name]
 
         raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
 
@@ -825,11 +835,11 @@ class GangaObject(Node):
 
         #Node.__init__(self, None)
 
-        if self._schema is not None and hasattr(self._schema, 'allItems'):
-            for attr, item in self._schema.allItems():
-                ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
-                if item.getProperties()['getter'] is None:
-                    setattr(self, attr, self._schema.getDefaultValue(attr))
+        #if self._schema is not None and hasattr(self._schema, 'allItems'):
+        #    for attr, item in self._schema.allItems():
+        #        ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
+        #        if item.getProperties()['getter'] is None:
+        #            setattr(self, attr, self._schema.getDefaultValue(attr))
 
 
         # Overwrite default values with any config values specified
