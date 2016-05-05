@@ -26,7 +26,8 @@ if not _after_bootstrap:
     configDirac.addOption('DiracEnvFile', diracenv,
                       'Ganga environment file for DIRAC environment (do not change unless you are sure you know what you are doing).')
 
-    configDirac.addOption('DiracCommandFiles', [os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracCommands.py')],
+    configDirac.addOption('DiracCommandFiles', [os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracDefinition.py'),
+                                                os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracCommands.py')],
                       'The file containing the python commands that the local DIRAC server can execute. The default DiracCommands.py is added automatically')
 
     configDirac.addOption('noInputDataBannedSites', [],
