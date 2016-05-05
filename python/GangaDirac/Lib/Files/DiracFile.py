@@ -324,7 +324,7 @@ class DiracFile(IGangaFile):
         try:
             postprocesslocations = open(postprocessLocationsPath, 'r')
             self.subfiles = []
-            logger.info("lines: %s" % postprocesslocations.readlines())
+            logger.debug("lines: %s" % postprocesslocations.readlines())
             for line in postprocesslocations.readlines():
                 if line.startswith('DiracFile'):
                     if self.dirac_line_processor(line, self, os.path.dirname(postprocessLocationsPath)) and regex.search(self.namePattern) is None:
