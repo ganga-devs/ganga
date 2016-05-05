@@ -225,21 +225,9 @@ def finalize_job(id, outputDir=os.getcwd(), oversized=True):
     output((out_cpuTime, out_sandbox, out_dataInfo))
 
 
-def status(job_ids):
+def status(job_ids, statusmapping):
     '''Function to check the statuses and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
-    statusmapping = {'Checking': 'submitted',
-                     'Completed': 'running',
-                     'Deleted': 'failed',
-                     'Done': 'completed',
-                     'Failed': 'failed',
-                     'Killed': 'killed',
-                     'Matched': 'submitted',
-                     'Received': 'submitted',
-                     'Running': 'running',
-                     'Staging': 'submitted',
-                     'Stalled': 'running',
-                     'Waiting': 'submitted'}
 
     result = dirac.status(job_ids)
     if not result['OK']:

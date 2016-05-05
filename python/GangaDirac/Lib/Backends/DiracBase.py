@@ -18,6 +18,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Credentials import getCredential
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
 
@@ -658,7 +659,7 @@ class DiracBase(IBackend):
                 job.master.updateMasterJobStatus()
 
             # if requested try downloading outputsandbox anyway
-            if getConfig('DIRAC')['failed_sandbox_download']:
+            if configDirac['failed_sandbox_download']:
                 execute("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()))
         else:
             logger.error("Unexpected dirac status '%s' encountered" % updated_dirac_status)
@@ -723,14 +724,10 @@ class DiracBase(IBackend):
         interesting_jobs = [j for j in jobs if not j.been_queued]
         # status that correspond to a ganga 'completed' or 'failed' (see DiracCommands.status(id))
         # if backend status is these then the job should be on the queue
-        requeue_dirac_status = {#'Completed': 'running',
-                                'Done': 'completed',
-                                'Failed': 'failed',
-                                'Deleted': 'failed',
-                                'Unknown: No status for Job': 'failed'}
+        queueable_dirac_statuses = configDirac['queueable_dirac_statuses']
 
-        monitor_jobs = [j for j in interesting_jobs if j.backend.status not in requeue_dirac_status]
-        requeue_jobs = [j for j in interesting_jobs if j.backend.status in requeue_dirac_status]
+        monitor_jobs = [j for j in interesting_jobs if j.backend.status not in queueable_dirac_statuses]
+        requeue_jobs = [j for j in interesting_jobs if j.backend.status in queueable_dirac_statuses]
 
         logger.debug('Interesting jobs: ' + repr([j.fqid for j in interesting_jobs]))
         logger.debug('Monitor jobs    : ' + repr([j.fqid for j in monitor_jobs]))
@@ -738,13 +735,17 @@ class DiracBase(IBackend):
 
         from Ganga.Core.GangaThread.WorkerThreads import getQueues
 
+        from Ganga.Core import monitoring_component
+
         # requeue existing completed job
         for j in requeue_jobs:
+            if monitoring_component:
+                if monitoring_component.should_stop():
+                    break
             if j.been_queued:
                 continue
-            #            if j.backend.status in requeue_dirac_status:
             getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
-                                                       args=(j, requeue_dirac_status[j.backend.status]),
+                                                       args=(j, queueable_dirac_statuses[j.backend.status]),
                                                        priority=5, name="Job %s Finalizing" % j.fqid)
             j.been_queued = True
 
@@ -752,7 +753,7 @@ class DiracBase(IBackend):
         # that have yet to be assigned an id so ignore them
         # NOT SURE THIS IS VALID NOW BULK SUBMISSION IS GONE
         # EVEN THOUGH COULD ADD queues.add(j.submit) WILL KEEP AN EYE ON IT
-#        dirac_job_ids    = [ j.backend.id for j in monitor_jobs if j.backend.id is not None ]
+        # dirac_job_ids    = [ j.backend.id for j in monitor_jobs if j.backend.id is not None ]
         # Correction this did become a problem for a crashed session during
         # submit, see #104454
         dead_jobs = (j for j in monitor_jobs if j.backend.id is None)
@@ -764,32 +765,29 @@ class DiracBase(IBackend):
         ganga_job_status = [j.status for j in monitor_jobs if j.backend.id is not None]
         dirac_job_ids = [j.backend.id for j in monitor_jobs if j.backend.id is not None]
 
-        #logger.debug("GangaStatus: %s" % str(ganga_job_status))
-        #logger.debug("diracJobIDs: %s" % str(dirac_job_ids))
+        logger.debug("GangaStatus: %s" % str(ganga_job_status))
+        logger.debug("diracJobIDs: %s" % str(dirac_job_ids))
 
         if not dirac_job_ids:
             ## Nothing to do here stop bugging DIRAC about it!
+            ## Everything else beyond here in the function depends on some ids present here, no ids means we can stop.
             return
 
-        result = execute('status(%s)' % str(dirac_job_ids))
+        statusmapping = configDirac['statusmapping']
+
+        result = execute('status(%s, %s)' %( str(dirac_job_ids), repr(statusmapping)))
 
         if len(result) != len(ganga_job_status):
             logger.warning('Dirac monitoring failed fro %s, result = %s' % (
                 str(dirac_job_ids), str(result)))
             return
 
-        #logger.debug("%s, %s, %s" % (str(len(ganga_job_status)), str(len(dirac_job_ids)), str(len(result))))
-
-        from Ganga.Core import monitoring_component
 
         thread_handled_states = ['completed', 'failed']
         for job, state, old_state in zip(monitor_jobs, result, ganga_job_status):
             if monitoring_component:
                 if monitoring_component.should_stop():
                     break
-
-            if job.been_queued:
-                continue
 
             job.backend.statusInfo = state[0]
             job.backend.status = state[1]
@@ -822,12 +820,8 @@ class DiracBase(IBackend):
                     if job.master:
                         job.master.updateMasterJobStatus()
 
-                logger.debug("State: %s" % state[1])
-                if state[1] in ['Completed']:
-                    if job.outputfiles.get(DiracFile):
-                        # DIRAC may have completed 'running the job' but the output hasn't yet been uploaded until Done as we probably have no LFN to process yet.
-                        logger.debug("Skipping")
-                        continue
+                if job.been_queued:
+                    continue
 
                 getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                            args=(job, updated_dirac_status),

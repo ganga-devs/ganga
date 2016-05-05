@@ -62,6 +62,27 @@ if not _after_bootstrap:
 
     configDirac.addOption('RequireDefaultSE', True, 'Do we require the user to configure a defaultSE in some way?')
 
+    configDirac.addOption('statusmapping', {'Checking': 'submitted',
+                                            'Completed': 'running',
+                                            'Deleted': 'failed',
+                                            'Done': 'completed',
+                                            'Failed': 'failed',
+                                            'Killed': 'killed',
+                                            'Matched': 'submitted',
+                                            'Received': 'submitted',
+                                            'Running': 'running',
+                                            'Staging': 'submitted',
+                                            'Stalled': 'running',
+                                            'Waiting': 'submitted'}, "Mapping between Dirac Job Major Status and Ganga Job Status")
+
+    configDirac.addOption('queueable_dirac_statuses', #{'Completed': 'running',
+                                                {'Done': 'completed',
+                                                 'Failed': 'failed',
+                                                 'Killed': 'killed',
+                                                 'Deleted': 'failed',
+                                                 'Unknown: No status for Job': 'failed'},
+                                                "Mapping of Dirac to Ganga Job statuses used to construct a queue to finalize a given job, i.e. final statues in 'statusmapping'")
+
 def getEnvironment(config=None):
     import sys
     import os.path
