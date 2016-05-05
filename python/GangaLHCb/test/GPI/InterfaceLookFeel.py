@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from Ganga.test.GPI.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestInterfaceLookFeel(GangaUnitTest):

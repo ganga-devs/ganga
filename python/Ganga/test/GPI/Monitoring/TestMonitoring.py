@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import time
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 master_timeout = 300.
 

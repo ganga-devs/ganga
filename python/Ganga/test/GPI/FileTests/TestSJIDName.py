@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 class TestSJIDName(GangaUnitTest):
     """test for sjid in filename names explain each test"""

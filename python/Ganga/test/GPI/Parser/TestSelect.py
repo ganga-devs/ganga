@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 job_num = 5
 job_names = ['a', 'b', 'c', 'd', 'e']

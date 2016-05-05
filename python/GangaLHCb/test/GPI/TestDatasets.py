@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import pytest
 from Ganga.testlib import external
-from Ganga.test.GPI.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestDatasets(GangaUnitTest):
