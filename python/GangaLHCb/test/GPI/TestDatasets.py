@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import pytest
+from Ganga.testlib import external
 from Ganga.test.GPI.GangaUnitTest import GangaUnitTest
 
 
@@ -9,6 +10,7 @@ class TestDatasets(GangaUnitTest):
     # TODO: Mark as expected to fail because there should be an addProxy in __getitem__.
     # Will be superceded by new Proxy handling code from Matt Williams
     @pytest.mark.xfail
+    @external
     def testDatasets(self):
 
         from Ganga.GPI import DiracFile, PhysicalFile, LHCbDataset, Job, LocalFile

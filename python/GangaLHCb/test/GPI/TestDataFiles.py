@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 
+from Ganga.testlib import external
 from Ganga.test.GPI.GangaUnitTest import GangaUnitTest
 
 
 class TestDataFiles(GangaUnitTest):
 
+    @external
     def testDataFiles(self):
 
         from Ganga.GPI import DiracFile, config
