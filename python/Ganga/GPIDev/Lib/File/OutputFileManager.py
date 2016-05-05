@@ -8,6 +8,8 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
 
 def outputFilePostProcessingOnWN(job, outputFileClassName):
     """
@@ -297,7 +299,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
         if should_exit:
             return ""
 
-    logger.info("Process: '%s' on WN" % str(outputFilePostProcessingOnWN))
+    logger.debug("Process: '%s' on WN" % str(outputFilePostProcessingOnWN))
 
     shortScript = """\n
 import os, glob
