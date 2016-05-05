@@ -324,15 +324,18 @@ class DiracFile(IGangaFile):
         try:
             postprocesslocations = open(postprocessLocationsPath, 'r')
             self.subfiles = []
-            logger.debug("lines: %s" % postprocesslocations.readlines())
-            for line in postprocesslocations.readlines():
+            ## NB remember only do this once at it leaves the 'cursor' at the end of the file - rcurrie
+            all_lines = postprocesslocations.readlines()
+            logger.debug("lines:\n%s" % all_lines)
+            for line in all_lines:
+                logger.debug("This line: %s" % line)
                 if line.startswith('DiracFile'):
                     if self.dirac_line_processor(line, self, os.path.dirname(postprocessLocationsPath)) and regex.search(self.namePattern) is None:
                         logger.error("Error processing line:\n%s\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern)))
                     else:
-                        logger.debug("Parsed: %s" % line)
+                        logger.debug("Parsed the Line")
                 else:
-                    logger.debug("Skipping: %s" % line)
+                    logger.debug("Skipping the Line")
 
         except Exception as err:
             logger.warning("unexpected Error: %s" % str(err))

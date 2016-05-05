@@ -733,7 +733,7 @@ class Job(GangaObject):
                         try:
                             outputfile.setLocation()
                         except Exception as err:
-                            logger.debug("Error: %s" % err)
+                            logger.error("Error: %s" % err)
 
             if outputfileClass == 'LocalFile':
                 outputfile.processOutputWildcardMatches()
@@ -758,9 +758,8 @@ class Job(GangaObject):
 
         # check if any output was matched - be careful about master jobs
         if getConfig('Output')['FailJobIfNoOutputMatched'] and not self.subjobs:
-            from Ganga.GPIDev.Lib.File.OutputFileManager import outputFilePostProxessingOnSubmit
             for outputfile in self.outputfiles: 
-                if not outputFilePostProxessingOnSubmit(self, getName(outputfile)) and not outputfile.hasMatchedFiles():
+                if not outputfile.hasMatchedFiles():
                     logger.warning("Job: %s OutputFile failed to match file type %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                     postprocessFailure = True
 

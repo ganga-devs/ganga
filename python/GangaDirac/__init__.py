@@ -75,7 +75,7 @@ if not _after_bootstrap:
                                             'Stalled': 'running',
                                             'Waiting': 'submitted'}, "Mapping between Dirac Job Major Status and Ganga Job Status")
 
-    configDirac.addOption('queueable_dirac_statuses', #{'Completed': 'running',
+    configDirac.addOption('queueable_dirac_statuses',
                                                 {'Done': 'completed',
                                                  'Failed': 'failed',
                                                  'Killed': 'killed',
