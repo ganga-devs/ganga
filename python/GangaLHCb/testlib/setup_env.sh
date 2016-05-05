@@ -55,7 +55,6 @@ export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
 export GANGASYSROOT=/cvmfs/lhcb.cern.ch/lib/lhcb/GANGA/GANGA_v601r18/GangaSys
 export Lbcom_release_area=/cvmfs/lhcb.cern.ch/lib/lhcb
 export HPATH=/cvmfs/lhcb.cern.ch/lib/lhcb/LBSCRIPTS/LBSCRIPTS_v8r6p1/InstallArea/doc/help
-export ENV=/home/mws/.envrc
 export Panoramix_release_area=/cvmfs/lhcb.cern.ch/lib/lhcb
 export LHCBPROJECTPATH=/cvmfs/lhcb.cern.ch/lib/lhcb:/cvmfs/lhcb.cern.ch/lib/lcg/releases:/cvmfs/lhcb.cern.ch/lib/lcg/app/releases:/cvmfs/lhcb.cern.ch/lib/lcg/external
 export googleapipythonclient=1.1
@@ -113,7 +112,6 @@ export GLITE_SD_SERVICES_XML=/usr/etc/services.xml
 export LCG_hostos=x86_64-slc6
 export GLITE_LOCATION_VAR=/var
 export SHLVL=2
-export HOME=/home/mws
 export pycrypto=2.0.1
 export Calibration_release_area=/cvmfs/lhcb.cern.ch/lib/lhcb
 export LHCB_USERLOGS=/cvmfs/lhcb.cern.ch/lib/log/users
@@ -160,3 +158,5 @@ export LHCbDirac_release_area=/cvmfs/lhcb.cern.ch/lib/lhcb
 export Gauss_release_area=/cvmfs/lhcb.cern.ch/lib/lhcb
 export LHCbGrid_release_area=/cvmfs/lhcb.cern.ch/lib/lhcb
 
+# Set up the GANGADIRACENVIORNMENT variable to make sure Dirac works properly
+export GANGADIRACENVIRONMENT=$HOME/.cache/LHCbDIRAC_ENV/$CMTCONFIG/v8r2p27
