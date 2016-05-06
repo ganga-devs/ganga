@@ -3,7 +3,7 @@ from __future__ import division, absolute_import
 import os
 import tempfile
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestStdOut(GangaUnitTest):

@@ -14,7 +14,7 @@ conf.setSessionValue('gangadir', expandvars(None, '~/gangadir_testing/TutorialTe
 
 # Now we can start ganga properly
 #from ganga import *
-from .GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 class TutorialTests(GangaUnitTest):
 
