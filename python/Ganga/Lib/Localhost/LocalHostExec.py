@@ -75,7 +75,6 @@ import subprocess
 import tarfile
 
 fullenvironment = os.environ.copy()
-fullenvironment['PATH'] = os.getcwd():fullenvironment['PATH']
 
 outfile=open('stdout','w')
 errorfile=open('stderr','w')
