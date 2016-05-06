@@ -22,7 +22,7 @@ global stored_list_of_sites
 stored_list_of_sites = []
 
 
-def all_SE_list(first_SE = ''):
+def all_SE_list(first_SE = '', defaultSE = ''):
 
     global stored_list_of_sites
     if stored_list_of_sites != []:
@@ -30,7 +30,7 @@ def all_SE_list(first_SE = ''):
 
     all_storage_elements = configDirac['allDiracSE']
     if first_SE == '':
-        default_SE = configDirac['DiracDefaultSE']
+        default_SE = defaultSE
     else:
         default_SE = first_SE
 
@@ -40,9 +40,6 @@ def all_SE_list(first_SE = ''):
     stored_list_of_sites = all_storage_elements
 
     return all_storage_elements
-
-def getDefaultSE( ):
-    return configDirac['DiracDefaultSE']
 
 class DiracFile(IGangaFile):
 
@@ -271,7 +268,8 @@ class DiracFile(IGangaFile):
         guid = tokens[3]
         try:
             locations = eval(tokens[2])
-        except:
+        except Exception as err:
+            logger.debug("line_process err: %s" % err)
             locations = tokens[2]
 
         if pattern == name:
@@ -305,6 +303,7 @@ class DiracFile(IGangaFile):
             return False
 
         else:
+            logger.debug("False")
             return False
 
     def setLocation(self):
@@ -325,12 +324,20 @@ class DiracFile(IGangaFile):
         try:
             postprocesslocations = open(postprocessLocationsPath, 'r')
             self.subfiles = []
-            for line in postprocesslocations.readlines():
+            ## NB remember only do this once at it leaves the 'cursor' at the end of the file - rcurrie
+            all_lines = postprocesslocations.readlines()
+            logger.debug("lines:\n%s" % all_lines)
+            for line in all_lines:
+                logger.debug("This line: %s" % line)
                 if line.startswith('DiracFile'):
                     if self.dirac_line_processor(line, self, os.path.dirname(postprocessLocationsPath)) and regex.search(self.namePattern) is None:
                         logger.error("Error processing line:\n%s\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern)))
+                    else:
+                        logger.debug("Parsed the Line")
+                else:
+                    logger.debug("Skipping the Line")
 
-        except Exception, err:
+        except Exception as err:
             logger.warning("unexpected Error: %s" % str(err))
         finally:
             if postprocesslocations is not None:
@@ -348,8 +355,7 @@ class DiracFile(IGangaFile):
         Remove this lfn and all replicas from DIRAC LFC/SEs
         """
         if self.lfn == "":
-            raise GangaException(
-                'Can\'t remove a  file from DIRAC SE without an LFN.')
+            raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
         stdout = execute('removeFile("%s")' % self.lfn)
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
@@ -527,7 +533,6 @@ class DiracFile(IGangaFile):
             self.getReplicas()
 
         # Now we have to match the replicas to find one at the
-        # DiracDefaultSE
         if len(self.subfiles) == 0:
 
             files_URLs = self._remoteURLs
@@ -735,13 +740,16 @@ class DiracFile(IGangaFile):
             lfn_base = self.remoteDir
 
         if uploadSE != "":
-            storage_elements = all_SE_list(uploadSE)
+            storage_elements = all_SE_list(uploadSE, self.defaultSE)
         else:
-            storage_elements = all_SE_list(self.defaultSE)
+            storage_elements = all_SE_list(self.defaultSE, self.defaultSE)
 
         outputFiles = GangaList()
+        backup_lfn = self.lfn
         for this_file in glob.glob(os.path.join(sourceDir, self.namePattern)):
             name = this_file
+
+            self.lfn = backup_lfn
 
             if not os.path.exists(name):
                 if not self.compressed:
@@ -883,7 +891,7 @@ for f in glob.glob('###NAME_PATTERN###'):
         upload_script = FileUtils.loadScript(script_location, '')
 
         WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
-        script = FileUtils.loadScript(WNscript_location, '###INDENT###')
+        script = FileUtils.loadScript(WNscript_location, '')
 
         selfConstructedLFNs = False
 

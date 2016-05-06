@@ -49,8 +49,6 @@ class GaudiDiracRunTimeHandler(GaudiRunTimeHandler):
                                         OUTPUT_SANDBOX=outputsandbox,
                                         OUTPUTDATA=list(outputfiles),
                                         OUTPUT_PATH="",  # job.fqid,
-                                        OUTPUT_SE=getConfig(
-                                            'DIRAC')['DiracOutputDataSE'],
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
                                         PLATFORM=app.platform,
@@ -75,10 +73,7 @@ def gaudi_script_template(self):
 from os import curdir, system, environ, pathsep, sep, getcwd
 from os.path import join
 import sys
-
-def prependEnv(key, value):
-    if key in environ: value += (pathsep + environ[key])
-    environ[key] = value
+import subprocess
 
 # Main
 if __name__ == '__main__':
@@ -87,9 +82,33 @@ if __name__ == '__main__':
     prependEnv('PYTHONPATH', getcwd() + '/InstallArea/python')
     prependEnv('PYTHONPATH', getcwd() + '/InstallArea/###PLATFORM###/python')
 
-    rc = system('''###COMMAND### ''' + ' '.join(sys.argv))/256
+    exe_cmd = "###COMMAND###"
+
+    my_env = environ
+    my_env['PATH'] = getcwd() + (pathsep + my_env['PATH'])
+
+    if os.path.isfile(os.path.abspath(exe_cmd)):
+        exe_cmd = [os.path.abspath(exe_cmd)]
+    else:
+        exe_cmd = [exe_cmd]
+
+    err = None
+    try:
+        rc = subprocess.call(exe_cmd, env=my_env, shell=True)
+    except Exception as x:
+        rc = -9999
+        print('Exception occured in running process: ' + exe_cmd)
+        print('Err was: ' + str(err))
+        subprocess.call('''['echo', '$PATH']''')
+        print('PATH: ' + str(my_env['PATH']))
+        print('PWD: ' + str(my_env['PWD']))
+        print("files on WN: " + str(listdir('.')))
+        raise
+
+    print("files on WN: " + str(listdir('.')))
 
     ###OUTPUTFILESINJECTEDCODE###
+
     sys.exit(rc)
 """
     return script_template
