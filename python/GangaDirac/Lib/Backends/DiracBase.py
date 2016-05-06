@@ -546,22 +546,17 @@ class DiracBase(IBackend):
             DiracBase._getStateTime(job, 'completing')
             if job.status in ['removed', 'killed']:
                 return
-            elif (job.master and job.master.status in ['removed', 'killed']):
+            if (job.master and job.master.status in ['removed', 'killed']):
                 return  # user changed it under us
 
             job.updateStatus('completing')
             if job.master:
                 job.master.updateMasterJobStatus()
 
-            # contact dirac for information
-            # The following single execute command is equivalent to the following few lines
-            #job.backend.normCPUTime = execute('normCPUTime(%d)' % job.backend.id)
-            #getSandboxResult = execute("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()))
-            #file_info_dict = execute('getOutputDataInfo(%d)' % job.backend.id)
-
             output_path = job.getOutputWorkspace().getPath()
 
-            job.backend.normCPUTime, getSandboxResult, file_info_dict = execute("finalize_job(%d, '%s')" % (job.backend.id, output_path))
+            # Contact dirac which knows about the job
+            job.backend.normCPUTime, getSandboxResult, file_info_dict = execute("finished_job(%d, '%s')" % (job.backend.id, output_path))
 
             now = time.time()
             logger.debug('Job ' + job.fqid + ' Time for Dirac metadata : ' + str(now - start))
@@ -575,12 +570,12 @@ class DiracBase(IBackend):
 
             lfn_store = os.path.join(output_path, getConfig('Output')['PostProcessLocationsFileName'])
 
-            ## Make the file if it doesn't exist as we do in other places...
+            # Make the file on disk with a nullop...
             if not os.path.isfile(lfn_store):
                 with open(lfn_store, 'w'):
                     pass
 
-            ## Now we can iterate over the contents of the file
+            # Now we can iterate over the contents of the file without touchin it
             with open(lfn_store, 'ab') as postprocesslocationsfile:
                 if not hasattr(file_info_dict, 'keys'):
                     logger.error("Error understanding OutputDataInfo: %s" % str(file_info_dict))

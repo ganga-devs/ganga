@@ -143,7 +143,7 @@ import subprocess
 # Main
 if __name__ == '__main__':
 
-    my_env = environ
+    my_env = environ.copy()
     my_env['PATH'] = getcwd() + (pathsep + my_env['PATH'])
 
     exe_cmd = ###COMMAND###

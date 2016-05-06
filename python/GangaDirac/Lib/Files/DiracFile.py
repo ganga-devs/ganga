@@ -268,8 +268,8 @@ class DiracFile(IGangaFile):
         guid = tokens[3]
         try:
             locations = eval(tokens[2])
-        except Excaption as err:
-            logger.warning("err: %s" % err)
+        except Exception as err:
+            logger.debug("line_process err: %s" % err)
             locations = tokens[2]
 
         if pattern == name:

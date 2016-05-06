@@ -16,7 +16,7 @@ def outputFilePostProcessingOnWN(job, outputFileClassName):
     Checks if the output files of a given job(we are interested in the backend) 
     should be postprocessed on the WN, depending on job.backend_output_postprocess dictionary
     """
-    return outputFilePostProcessingOnTest(job, outputFileClassName, 'WN')
+    return outputFilePostProcessingTestForWhen(job, outputFileClassName, 'WN')
 
 
 def outputFilePostProcessingOnClient(job, outputFileClassName):
@@ -24,7 +24,7 @@ def outputFilePostProcessingOnClient(job, outputFileClassName):
     Checks if the output files of a given job(we are interested in the backend) 
     should be postprocessed on the client, depending on job.backend_output_postprocess dictionary
     """
-    return outputFilePostProcessingOnTest(job, outputFileClassName, 'client')
+    return outputFilePostProcessingTestForWhen(job, outputFileClassName, 'client')
 
 
 def outputFilePostProxessingOnSubmit(job, outputFileClassName):
@@ -32,10 +32,10 @@ def outputFilePostProxessingOnSubmit(job, outputFileClassName):
     Checks if the output files of a given job(we are interested in the backend)
     should have been postprocessed on job submission, depending on job.backend_output_postprocess dictionary
     """
-    return outputFilePostProcessingOnTest(job, outputFileClassName, 'submit')
+    return outputFilePostProcessingTestForWhen(job, outputFileClassName, 'submit')
 
 
-def outputFilePostProcessingOnTest(job, outputFileClassName, when):
+def outputFilePostProcessingTestForWhen(job, outputFileClassName, when):
     """
     Checks if the output files of a given job(we are interested in the backend)
     should be postprocessed 'when', depending on job.backend_output_postprocess dictionary
@@ -46,7 +46,7 @@ def outputFilePostProcessingOnTest(job, outputFileClassName, when):
     if backendClassName in backend_output_postprocess:
         if outputFileClassName in backend_output_postprocess[backendClassName]:
             if backend_output_postprocess[backendClassName][outputFileClassName] == when:
-                 return True
+                return True
 
     return False
 
@@ -291,12 +291,8 @@ def getWNCodeForOutputPostprocessing(job, indent):
             if outputFilePostProcessingOnWN(job, outputfileClassName):
                 outputFilesProcessedOnWN[outputfileClassName].append(outputFile)
 
-    if patternsToZip == []:
-        should_exit = True
-        for output_class in outputFilesProcessedOnWN:
-            if outputFilesProcessedOnWN[output_class] != []:
-                should_exit = False
-        if should_exit:
+    if not patternsToZip:
+        if not any(outputFilesProcessedOnWN.values()):
             return ""
 
     logger.debug("Process: '%s' on WN" % str(outputFilePostProcessingOnWN))

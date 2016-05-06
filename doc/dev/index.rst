@@ -62,7 +62,7 @@ Job monitoring
 IGangaFile
 ----------
 
-All file types as of Ganga 6.1 inherit from ```IGangaFile```. This main exception to this is the ```File``` object which as of 05/05/2016 is used as it still has more features than the ```IGangaFile``` inheirted classes do.
+All file types as of Ganga 6.1 inherit from ``IGangaFile``. This main exception to this is the ``File`` object which as of 05/05/2016 is used as it still has more features than the ``IGangaFile`` inheirted classes do.
 
 +-------------------+--------------------------------------------------------------------------------------------------------+---------------+
 | Attribute         | Use/Doc                                                                                                | Return type   |
