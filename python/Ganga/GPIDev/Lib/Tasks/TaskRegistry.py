@@ -84,7 +84,7 @@ class TaskRegistry(Registry):
         while self._main_thread is not None and not self._main_thread.should_stop():
 
             # If monitoring is enabled (or forced for Tasks) loop over each one and update
-            if config['ForceTaskMonitoring'] or monitoring_component.enabled:
+            if (config['ForceTaskMonitoring'] or monitoring_component.enabled) and not config['disableTaskMon']:
                 for tid in self.ids():
 
                     logger.debug("Running over tid: %s" % str(tid))
