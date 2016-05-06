@@ -485,6 +485,9 @@ class GangaRepositoryLocal(GangaRepository):
             # Locked IDs can be ignored
             if this_id in locked_ids:
                 continue
+            # Skip corrupt IDs
+            if this_id in self.incomplete_objects:
+                continue
             # Now we treat unlocked IDs
             try:
                 # if this succeeds, all is well and we are done
@@ -526,6 +529,7 @@ class GangaRepositoryLocal(GangaRepository):
                     ## we can't reasonably write all possible exceptions here!
                     logger.debug("update_index: Failed to load id %i: %s" % (this_id, x))
                     summary.append((this_id, x))
+                    
                 #finally:
                 #    pass
 
@@ -549,6 +553,7 @@ class GangaRepositoryLocal(GangaRepository):
                 self.known_bad_ids.append(this_id)
                 # add object to incomplete_objects
                 if not this_id in self.incomplete_objects:
+                    logger.error("Adding: %s to Incomplete Objects to avoid loading it again in future" % this_id)
                     self.incomplete_objects.append(this_id)
 
             for exc, ids in cnt.items():
@@ -910,6 +915,9 @@ class GangaRepositoryLocal(GangaRepository):
 
         for this_id in ids:
 
+            if this_id in self.incomplete_objects:
+                raise RepositoryError(self.repo, "Trying to re-load a corrupt repository id: %s" % this_id)
+
             fn = self.get_fn(this_id)
             if load_backup:
                 has_loaded_backup = True
@@ -926,12 +934,16 @@ class GangaRepositoryLocal(GangaRepository):
             except Exception as err:
                 logger.debug("XML load: Failed to load XML file: %s" % fn)
                 logger.debug("Error was:\n%s" % err)
+                logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                self.incomplete_objects.append(this_id)
                 raise
 
             try:
                 self._actually_load_xml(fobj, fn, this_id, load_backup)
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % err)
+                logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                self.incomplete_objects.append(this_id)
                 raise
 
             except Exception as err:
@@ -942,6 +954,8 @@ class GangaRepositoryLocal(GangaRepository):
                     has_loaded_backup = True
                     continue
                 else:
+                    logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                    self.incomplete_objects.append(this_id)
                     raise
 
             finally:
@@ -985,6 +999,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         # add object to incomplete_objects
         if not this_id in self.incomplete_objects:
+            logger.error("Loading: %s into incomplete_objects to avoid loading it again in future" % this_id)
             self.incomplete_objects.append(this_id)
             # remove index so we do not continue working with wrong
             # information
