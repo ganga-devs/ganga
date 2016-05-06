@@ -11,7 +11,6 @@ class TestDataFiles(GangaUnitTest):
 
         from Ganga.GPI import DiracFile, config
 
-        print config['LHCb']
         # LFNs
         name = 'test.txt'
         lfn = DiracFile(lfn=name)
