@@ -19,11 +19,11 @@ class TestDataFiles(GangaUnitTest):
         assert lfn.lfn == name
         lfn = DiracFile('LFN:'+name)
         assert lfn.lfn == name
-        try:
-            lfn = DiracFile('pfn:'+name)
-            raise RuntimeError('Should have got exception trying to create DiracFile from pfn.')
-        except:
-            pass
+
+        # not sure if this should raise an exception or not. The original test had a try..except that would always
+        # pass so not sure :)
+        lfn = DiracFile('pfn:'+name)
+
 
         # Methods
         lfn = DiracFile(lfn='/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000326_1.dimuon.dst')

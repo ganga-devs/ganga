@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import pytest
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
@@ -13,14 +14,10 @@ class TestJob(GangaUnitTest):
         j = Job(application=ap, backend=TestSubmitter())
 
         # Test that submission fails before adding runtime handler
-        try:
-          j.submit()
-        except JobError:
-          pass
+        with pytest.raises(JobError):
+            j.submit()
 
         # Test that submission succeeds after adding it.
         addLocalTestSubmitter()
-        assert(j.submit())
-
-
+        assert j.submit()
 

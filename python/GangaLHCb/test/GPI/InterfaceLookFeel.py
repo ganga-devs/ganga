@@ -18,9 +18,9 @@ class TestInterfaceLookFeel(GangaUnitTest):
         j2.backend.queue = '16nh' # shortcut
         bk2 = j2.backend # reference
 
-        assert(j2.backend.queue == '16nh')
+        assert j2.backend.queue == '16nh'
         bk2.queue = '100nh'
-        assert(j2.backend.queue == '100nh')
+        assert j2.backend.queue == '100nh'
 
         ap = Executable()
 
