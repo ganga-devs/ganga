@@ -13,6 +13,7 @@ from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass, _getName
 from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
+import functools
 import os
 
 from inspect import isclass
@@ -626,6 +627,24 @@ class ProxyDataDescriptor(object):
         GangaObject.__setattr__(raw_obj, attr_name, final_val)
 
 
+def proxy_wrap(f):
+    # type: (Callable) -> Callable
+    """
+    A decorator to strip the proxy from all incoming arguments
+    (including ``self`` if it's a method) and add one to the return
+    value.
+    """
+
+    @functools.wraps(f)
+    def proxy_wrapped(*args, **kwargs):
+        s_args = [stripProxy(a) for a in args]
+        s_kwargs = dict((name, stripProxy(a)) for name, a in kwargs.items())
+        r = f(*s_args, **s_kwargs)
+        return addProxy(r)
+
+    return proxy_wrapped
+
+
 class ProxyMethodDescriptor(object):
 
     def __init__(self, name, internal_name):
@@ -634,8 +653,10 @@ class ProxyMethodDescriptor(object):
 
     def __get__(self, obj, cls):
         if obj is None:
-            return getattr(stripProxy(cls), self._internal_name)
-        return getattr(stripProxy(obj), self._internal_name)
+            method = getattr(stripProxy(cls), self._internal_name)
+        else:
+            method = getattr(stripProxy(obj), self._internal_name)
+        return proxy_wrap(method)
 
 ##########################################################################
 
