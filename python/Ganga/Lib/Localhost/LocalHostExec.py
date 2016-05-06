@@ -88,9 +88,6 @@ import subprocess
 
 import time #datetime #disabled for python2.2 compatiblity
 
-if os.path.isfile(os.path.abspath(appscriptpath[0])):
-    appscriptpath[0] = os.path.abspath(appscriptpath[0])
-
 try:
     child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)
 except OSError as x:
