@@ -174,8 +174,7 @@ class DiracFile(IGangaFile):
         if value != "" and value is not None:
             #   Do some checking of the filenames in a subprocess
             if name == 'lfn':
-                if self.namePattern == '':
-                    self.namePattern = os.path.basename(value)
+                self.namePattern = os.path.basename(value)
                 self.remoteDir = os.path.dirname(value)
                 return value
 
@@ -193,6 +192,12 @@ class DiracFile(IGangaFile):
         return self.locations
 
     def _setLFNnamePattern(self, _lfn="", _namePattern=""):
+
+        ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
+        if _namePattern.split(os.pathsep)[0] == configDirac['defaultSE']:
+            temp = _lfn
+            _lfn = _namePattern
+            _namePattern = temp
 
         if _lfn != "" and _lfn is not None:
             if len(_lfn) > 3 and _lfn[0:4] == "LFN:":
@@ -722,8 +727,6 @@ class DiracFile(IGangaFile):
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
             self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
             selfConstructedLFN = True
-        #if self.remoteDir == '' and self.lfn != '':
-        #    self.remoteDir = configDirac['DiracLFNBase']
 
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
