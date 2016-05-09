@@ -178,9 +178,6 @@ class ShareDir(GangaObject):
         # shareref.increase(self.name)
         # shareref.decrease(self.name)
 
-    def __deepcopy__(self, memo):
-        return super(ShareDir, self).__deepcopy__(memo)
-
     def add(self, input):
         from Ganga.Core.GangaRepository import getRegistry
         if not isType(input, list):

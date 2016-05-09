@@ -277,12 +277,12 @@ class GangaList(GangaObject):
         self.checkReadOnly()
         self.__delslice__(start, end)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo=None):
         """Bypass any checking when making the copy"""
         #logger.info("memo: %s" % str(memo))
         #logger.info("self.len: %s" % str(len(self._list)))
         if self._list != []:
-            return makeGangaListByRef(_list=copy.deepcopy(self._list), preparable=self._is_preparable)
+            return makeGangaListByRef(_list=copy.deepcopy(self._list, memo), preparable=self._is_preparable)
         else:
             new_list = GangaList()
             new_list._is_preparable = self._is_preparable
