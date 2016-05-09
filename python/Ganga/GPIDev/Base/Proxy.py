@@ -788,9 +788,7 @@ def GPIProxyClassFactory(name, pluginclass):
                 val = stripProxy(getattr(self, key))
                 if isinstance(val, GangaObject):
                     val._auto__init__()
-                    instance.setNodeAttribute(key, stripProxy(val))
-                else:
-                    instance.setNodeAttribute(key, stripProxy(val))
+                setattr(instance, key, val)
 
 
         ## THIRD(?) CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
@@ -833,7 +831,7 @@ def GPIProxyClassFactory(name, pluginclass):
                         this_arg._auto__init__()
 
                 if type(this_arg) is str:
-                    raw_self.setNodeAttribute(k, this_arg)
+                    setattr(raw_self, k, this_arg)
                     continue
                 else:
                     item = pluginclass._schema.getItem(k)
@@ -858,7 +856,7 @@ def GPIProxyClassFactory(name, pluginclass):
                     if hasattr(this_arg, '_auto__init__'):
                         this_arg._auto__init__()
 
-                    raw_self.setNodeAttribute(k, this_arg)
+                    setattr(raw_self, k, this_arg)
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
