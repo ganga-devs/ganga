@@ -26,7 +26,8 @@ if not _after_bootstrap:
     configDirac.addOption('DiracEnvFile', diracenv,
                       'Ganga environment file for DIRAC environment (do not change unless you are sure you know what you are doing).')
 
-    configDirac.addOption('DiracCommandFiles', [os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracCommands.py')],
+    configDirac.addOption('DiracCommandFiles', [os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracDefinition.py'),
+                                                os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracCommands.py')],
                       'The file containing the python commands that the local DIRAC server can execute. The default DiracCommands.py is added automatically')
 
     configDirac.addOption('noInputDataBannedSites', [],
@@ -59,6 +60,28 @@ if not _after_bootstrap:
     configDirac.addOption('OfflineSplitterLimit', 50,
                       'Number of iterations of selecting random Sites that are performed before the spliter reduces the OfflineSplitter fraction by raising it by 1 power and reduces OfflineSplitterMaxCommonSites by 1. Smaller number makes the splitter accept many smaller subsets higher means keeping more subsets but takes much more CPU to match files accordingly.')
 
+    configDirac.addOption('RequireDefaultSE', True, 'Do we require the user to configure a defaultSE in some way?')
+
+    configDirac.addOption('statusmapping', {'Checking': 'submitted',
+                                            'Completed': 'running',
+                                            'Deleted': 'failed',
+                                            'Done': 'completed',
+                                            'Failed': 'failed',
+                                            'Killed': 'killed',
+                                            'Matched': 'submitted',
+                                            'Received': 'submitted',
+                                            'Running': 'running',
+                                            'Staging': 'submitted',
+                                            'Stalled': 'running',
+                                            'Waiting': 'submitted'}, "Mapping between Dirac Job Major Status and Ganga Job Status")
+
+    configDirac.addOption('queueable_dirac_statuses',
+                                                {'Done': 'completed',
+                                                 'Failed': 'failed',
+                                                 'Killed': 'killed',
+                                                 'Deleted': 'failed',
+                                                 'Unknown: No status for Job': 'failed'},
+                                                "Mapping of Dirac to Ganga Job statuses used to construct a queue to finalize a given job, i.e. final statues in 'statusmapping'")
 
 def getEnvironment(config=None):
     import sys

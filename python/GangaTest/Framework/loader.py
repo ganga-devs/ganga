@@ -118,7 +118,7 @@ class GangaTestLoader:
             if len(atoms) > 2:
                 top_level_package = atoms[0]
                 tests_type = atoms[1]
-                if tests_type == "RT" or tests_type == "test" :
+                if tests_type == "RT" or tests_type == "old_test" :
                     release_tests = self._loadReleaseTests(pattern)
                     if release_tests:
                         return release_tests
@@ -160,7 +160,7 @@ class GangaTestLoader:
         from os.path import join, getsize
         
         top_level_package = pattern.split(".")[0]
-        dirname = os.path.abspath("%s/%s/%s"%(self.testsTopDir,top_level_package,"test"))          
+        dirname = os.path.abspath("%s/%s/%s"%(self.testsTopDir,top_level_package,"old_test"))          
         #print "Project RELEASE TOP_DIR: %s"%self.releaseTopDir
         #print "Project TESTS TOP_DIR: %s"%self.testsTopDir
         #print "Package: %s\nPattern: %s "%(top_level_package, pattern)
@@ -431,7 +431,7 @@ def %(method_name)s(self):
         try:
             import Ganga.Core.InternalServices.Coordinator
             if Ganga.Core.InternalServices.Coordinator.servicesEnabled:
-                from Ganga.Core.InternalServices.Coordinator disableInternalServices
+                from Ganga.Core.InternalServices.Coordinator import disableInternalServices
                 disableInternalServices()
         
             from Ganga.Core.InternalServices.Coordinator import enableInternalServices, disableInternalServices

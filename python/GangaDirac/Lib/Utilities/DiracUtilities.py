@@ -14,6 +14,7 @@ import Ganga.Utility.execute as gexecute
 import time
 import math
 import copy
+import inspect
 
 logger = getLogger()
 proxy = getCredential('GridProxy', '')
@@ -36,9 +37,7 @@ def getDiracEnv(force=False):
     if DIRAC_ENV == {} or force:
         config_file = getConfig('DIRAC')['DiracEnvFile']
         if not os.path.exists(config_file):
-            import inspect
-            absolute_path = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                        '../../..', config_file)
+            absolute_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../..', config_file)
         else:
             absolute_path = config_file
         if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(absolute_path):

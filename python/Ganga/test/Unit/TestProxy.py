@@ -14,10 +14,16 @@ class SampleGangaObject(GangaObject):
     _category = 'TestGangaObject'
     _name = 'TestGangaObject'
 
-    _exportmethods = ['example']
+    _exportmethods = ['example', 'check_not_proxy']
 
     def example(self):
         return 'example_string'
+
+    def check_not_proxy(self, obj):
+        assert not Ganga.GPIDev.Base.Proxy.isProxy(obj), 'incoming argument should be proxy-stripped'
+        ret = SampleGangaObject()
+        assert not Ganga.GPIDev.Base.Proxy.isProxy(ret), 'new object should not be proxy-wrapped'
+        return ret
 
     def not_proxied(self):
         return 'example_string'
@@ -141,6 +147,12 @@ class TestProxy(unittest.TestCase):
 
     def test_call_proxy_method(self):
         self.assertEqual(self.p.example(), 'example_string')
+
+    def test_proxy_layer_function(self):
+        """Ensure that proxies are removed from any arguments to a method"""
+        p2 = Ganga.GPIDev.Base.Proxy.addProxy(SampleGangaObject())
+        ret = self.p.check_not_proxy(p2)
+        assert Ganga.GPIDev.Base.Proxy.isProxy(ret), 'returned object should be proxy-wrapped'
 
     def test_call_nonproxied_method(self):
         def _call():

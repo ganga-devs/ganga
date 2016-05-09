@@ -1,15 +1,3 @@
-import os
-import sys
-import time
-import datetime
-import glob
-import pickle
-## NB parseCommandLine first then import Dirac!!
-from DIRAC.Core.Base.Script import parseCommandLine
-parseCommandLine()
-from DIRAC.Interfaces.API.Dirac import Dirac
-from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
-dirac = Dirac()
 
 # Dirac commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
@@ -229,29 +217,18 @@ def normCPUTime(id, pipe_out=True):
         return ncput
 
 
-def finalize_job(id, outputDir=os.getcwd(), oversized=True):
-    ''' Nesting function to reduce number of calls made against DIRAC when finalising a job, takes arguments such as getOutputSandbox'''
+def finished_job(id, outputDir=os.getcwd(), oversized=True):
+    ''' Nesting function to reduce number of calls made against DIRAC when finalising a job, takes arguments such as getOutputSandbox
+    Returns the CPU time of the job as a dict, the output sandbox information in another dict and a dict of the LFN of any uploaded data'''
     out_cpuTime = normCPUTime(id, pipe_out=False)
     out_sandbox = getOutputSandbox(id, outputDir, oversized, pipe_out=False)
     out_dataInfo = getOutputDataInfo(id, pipe_out=False)
     output((out_cpuTime, out_sandbox, out_dataInfo))
 
 
-def status(job_ids):
-    '''Function to check the status and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
+def status(job_ids, statusmapping):
+    '''Function to check the statuses and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
-    statusmapping = {'Checking': 'submitted',
-                     'Completed': 'completed',
-                     'Deleted': 'failed',
-                     'Done': 'completed',
-                     'Failed': 'failed',
-                     'Killed': 'killed',
-                     'Matched': 'submitted',
-                     'Received': 'submitted',
-                     'Running': 'running',
-                     'Staging': 'submitted',
-                     'Stalled': 'running',
-                     'Waiting': 'submitted'}
 
     result = dirac.status(job_ids)
     if not result['OK']:
@@ -259,8 +236,8 @@ def status(job_ids):
         return
     status_list = []
     bulk_status = result['Value']
-    for id in job_ids:
-        job_status = bulk_status.get(id, {})
+    for _id in job_ids:
+        job_status = bulk_status.get(_id, {})
         minor_status = job_status.get('MinorStatus', None)
         dirac_status = job_status.get('Status', None)
         dirac_site = job_status.get('Site', None)
@@ -268,15 +245,15 @@ def status(job_ids):
         if ganga_status is None:
             ganga_status = 'failed'
             dirac_status = 'Unknown: No status for Job'
-        if dirac_status == 'Completed' and (minor_status not in ['Pending Requests']):
-            ganga_status = 'running'
+        #if dirac_status == 'Completed' and (minor_status not in ['Pending Requests']):
+        #    ganga_status = 'running'
         if minor_status in ['Uploading Output Data']:
             ganga_status = 'running'
 
         try:
             from DIRAC.Core.DISET.RPCClient import RPCClient
             monitoring = RPCClient('WorkloadManagement/JobMonitoring')
-            app_status = monitoring.getJobAttributes(id)['Value']['ApplicationStatus']
+            app_status = monitoring.getJobAttributes(_id)['Value']['ApplicationStatus']
         except:
             app_status = "unknown ApplicationStatus"
 

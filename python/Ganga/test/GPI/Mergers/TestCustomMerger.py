@@ -9,7 +9,7 @@ from GangaTest.Framework.utils import sleep_until_completed, write_file
 from Ganga.GPIDev.Base.Proxy import getProxyClass
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from .CopySplitter import CopySplitter
 
 CopySplitter = getProxyClass(CopySplitter)

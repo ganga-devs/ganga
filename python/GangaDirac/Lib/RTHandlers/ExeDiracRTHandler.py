@@ -14,6 +14,7 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 logger = getLogger()
+config = getConfig('DIRAC')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -77,18 +78,18 @@ class ExeDiracRTHandler(IRuntimeHandler):
 
         from os.path import abspath, expanduser
 
-        for _file in job.inputfiles:
-            if isinstance(_file, LocalFile):
-                for name in _file.getFilenameList():
+        for this_file in job.inputfiles:
+            if isinstance(this_file, LocalFile):
+                for name in this_file.getFilenameList():
                     inputsandbox.append(File(abspath(expanduser(name))))
-            elif isinstance(_file, DiracFile):
-                name = _file.lfn
+            elif isinstance(this_file, DiracFile):
+                name = this_file.lfn
                 if isinstance(input_data, list):
                     input_data.append(name)
                 else:
                     input_data = [name]
 
-        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, True)
+        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, config['RequireDefaultSE'])
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
@@ -111,7 +112,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         OUTPUT_PATH="",  # job.fqid,
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
-                                        REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
+                                        REPLICATE='True' if config['ReplicateOutputData'] else '',
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
@@ -142,7 +143,7 @@ import subprocess
 # Main
 if __name__ == '__main__':
 
-    my_env = environ
+    my_env = environ.copy()
     my_env['PATH'] = getcwd() + (pathsep + my_env['PATH'])
 
     exe_cmd = ###COMMAND###
