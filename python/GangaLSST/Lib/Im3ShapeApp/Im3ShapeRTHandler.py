@@ -7,7 +7,8 @@ from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, ge
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Lib.File import File, FileBuffer
+from Ganga.GPIDev.Lib.File import FileBuffer
+from Ganga.GPIDev.Lib.File.File import File
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
@@ -17,61 +18,48 @@ logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
-class Im3ShapeRTHandler(IRuntimeHandler):
+class Im3ShapeDiracRTHandler(IRuntimeHandler):
 
     """The runtime handler to run plain executables on the Dirac backend"""
 
     def master_prepare(self, app, appmasterconfig):
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
-        #if type(app.exe) == File:
-        if False:
-            input_dir = app.getJobObject().getInputWorkspace().getPath()
-            exefile = os.path.join(input_dir, os.path.basename(app.exe.name))
-            if not os.path.exists(exefile):
-                msg = 'Executable: "%s" must exist!' % str(exefile)
-                raise ApplicationConfigurationError(None, msg)
-
-            os.system('chmod +x %s' % exefile)
         return StandardJobConfig(inputbox=unique(inputsandbox),
                 outputbox=unique(outputsandbox))
 
-        def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
-            inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
+    def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
+        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app, hasOtherInputData=True)
-#        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
         job = stripProxy(app).getJobObject()
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
-        commandline = ''#app.exe
-        if False:#isType(app.exe, File):
-            #logger.info("app: %s" % str(app.exe.name))
-            #fileName = os.path.join(get_share_path(app), os.path.basename(app.exe.name))
-            #logger.info("EXE: %s" % str(fileName))
-            #inputsandbox.append(File(name=fileName))
-            inputsandbox.append(app.exe)
-            commandline = os.path.basename(app.exe.name)
-        commandline += ' '
-        commandline += ' '#.join([str(arg) for arg in app.args])
-        logger.debug('Command line: %s: ', commandline)
+        exe_script_name = 'im3shape-script.py'
 
-        #exe_script_path = os.path.join(job.getInputWorkspace().getPath(), "exe-script.py")
-        exe_script_name = 'exe-script.py'
+        im3shape_args = ' '.join([ os.path.basename(job.inputdata[0].lfn), os.path.basename(app.ini_location.namePattern) # input.fz, config.ini
+                                   app.catalog, os.path.basename(job.inputdata[0].lfn) + '.' + app.rank + '.' + app.size, # catalog, output
+                                   app.rank, app.size ])
 
-        inputsandbox.append(FileBuffer(name=exe_script_name,
-            contents=script_generator(exe_script_template(),
-                #remove_unreplaced = False,
-                # ,
-                COMMAND='ls -l',
-                OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
-                ),
-            executable=True))
-        inputsandbox.append(File(name=app.ini_location.namePattern))
+        inputsandbox.append(FileBuffer( name=exe_script_name,
+                                        contents=script_generator(Im3Shape_script_template(),
+                                                                  ## ARGS for app from job.app
+                                                                  EXE_NAME = app.exe_name,
+                                                                  RUN_DIR = app.run_dir,
+                                                                  FZ_FILE = os.path.basename(job.inputdata[0].lfn),
+                                                                  INI_FILE = os.path.basename(app.ini_location.namePattern),
+                                                                  BLACKLIST = os.path.basename(app.blacklist.namePattern),
+                                                                  EXE_ARGS = im3spahe_args,
+                                                                  ## Stuff for Ganga
+                                                                  UTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    '),
+                                                                 ),
+                                        executable=True)
+                            )
 
-        dirac_outputfiles = dirac_outputfile_jdl(outputfiles)
+        app_file_list = [app.im3_location, app.ini_location, app.blacklist]
+        
+        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, False)
 
-        job.inputfiles.extend([app.location])
-        job.inputfiles.extend([app.blacklist])
+        job.inputfiles.extend(app_file_list)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
@@ -90,7 +78,6 @@ class Im3ShapeRTHandler(IRuntimeHandler):
                 OUTPUT_SANDBOX=API_nullifier(outputsandbox),
                 OUTPUTFILESSCRIPT=dirac_outputfiles,
                 OUTPUT_PATH="",  # job.fqid,
-                OUTPUT_SE=getConfig('DIRAC')['DiracOutputDataSE'],
                 SETTINGS=diracAPI_script_settings(app),
                 DIRAC_OPTS=job.backend.diracOpts,
                 REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
@@ -101,9 +88,6 @@ class Im3ShapeRTHandler(IRuntimeHandler):
                 )
 
 
-        #logger.info("inbox: %s" % str(unique(inputsandbox)))
-        #logger.info("outbox: %s" % str(unique(outputsandbox)))
-
         return StandardJobConfig(dirac_script,
                 inputbox=unique(inputsandbox),
                 outputbox=unique(outputsandbox))
@@ -112,13 +96,42 @@ class Im3ShapeRTHandler(IRuntimeHandler):
         #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
-def exe_script_template():
+def Im3Shape_script_template():
     script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
 from __future__ import print_function
-from os import system, environ, pathsep, getcwd, listdir, path
+from os import system, environ, pathsep, getcwd, listdir, path, chdir
 import sys
+import shutil
 import subprocess
+
+def run_Im3ShapeApp(my_env):
+
+    run_dir = '###RUN_DIR###'
+    run_dir = path.join(getcwd(), run_dir)
+
+    INI_FILE_ = '###INI_FILE###'
+    BLACKLIST_ = '###BLACKLIST###'
+
+    shutil.move(path.join(getcwd(), INI_FILE_), run_dir)
+    shutil.move(path.join(getcwd(), BLACKLIST_), path.join(run_dir, 'blacklist-y1.txt'))
+
+    FZ_FILE_ = '###FZ_FILE###'
+    FZ_FILE_ = path.join(getcwd(), FZ_FILE_)
+
+    chdir(run_dir)
+
+    EXE_NAME_ = '###EXE_NAME###'
+    EXE_NAME_ = path.join(getcwd(), EXE_NAME_)
+
+    EXE_ARGS_ = '###EXE_ARGS###'
+
+    full_cmd = EXE_NAME_ + ' ' + EXE_ARGS
+
+    print("full_cmd: %s" % full_cmd)
+
+    rc = 0
+    return rc
 
 # Main
 if __name__ == '__main__':
@@ -126,23 +139,14 @@ if __name__ == '__main__':
     my_env = environ
     my_env['PATH'] = getcwd() + (pathsep + my_env['PATH'])
 
-    exe_cmd = ###COMMAND###
-
-    if isinstance(exe_cmd, str):
-        exe_cmd = [exe_cmd]
-
-    if isinstance(exe_cmd, list):
-        if path.isfile(path.abspath(exe_cmd[0])):
-            exe_cmd[0] = path.abspath(exe_cmd[0])
-
     err = None
     try:
-        rc = subprocess.call(exe_cmd, env=my_env, shell=True)
+        rc = run_Im3ShapeApp(my_env)
     except Exception as x:
         rc = -9999
-        print('Exception occured in running process: ' + exe_cmd)
-        print('Err was: ' + str(err))
-        subprocess.call('''['echo', '$PATH']''')
+        print('Exception occured in running app.')
+        print('Err was: ' + str(x))
+        #subprocess.call('''['echo', '$PATH']''')
         print('PATH: ' + str(my_env['PATH']))
         print('PWD: ' + str(my_env['PWD']))
         print("files on WN: " + str(listdir('.')))
@@ -159,5 +163,5 @@ if __name__ == '__main__':
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-allHandlers.add('Im3Shape', 'Dirac', Im3ShapeRTHandler)
+allHandlers.add('Im3ShapeApp', 'Dirac', Im3ShapeDiracRTHandler)
 

@@ -5,7 +5,7 @@
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, GangaFileItem
 
 from Ganga.Utility.Config import getConfig
 
@@ -31,15 +31,17 @@ class Im3ShapeApp(IPrepareApp):
 
     """
     _schema = Schema(Version(1, 0), {
-        'location': SimpleItem(defvalue=DiracFile(lfn='/lhcb/user/r/rcurrie/firstTestDiracFile.txt'),types=[IGangaFile], doc="Location of the Im3Shape program tarball"),
-        'ini_location': SimpleItem(defvalue=LocalFile('myIniFile.ini'), types=[IGangaFile], doc=".ini file used to configure Im3Shape"),
-        'env': SimpleItem(defvalue={}, typelist=['str'], doc='Dictionary of environment variables that will be replaced in the running environment.'),
-        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, 'bool', ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes'),
-        'blacklist': SimpleItem(defvalue=DiracFile('/lhcb/user/r/rcurrie/secondTestDiracFile.txt'), types=[IGangaFile], doc="Blacklist file for running Im3Shape"),
+        'im3_location': GangaFileItem(defvalue=None, doc="Location of the Im3Shape program tarball"),
+        'exe_name': SimpleItem(defvalue='run-im3shape', doc="Name of the im3shape binary"),
+        'ini_location': GangaFileItem(defvalue=None, doc=".ini file used to configure Im3Shape"),
+        'env': SimpleItem(defvalue={}, typelist=[str], doc='Dictionary of environment variables that will be replaced in the running environment.'),
+        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes'),
+        'blacklist': GangaFileItem(defvalue=None, doc="Blacklist file for running Im3Shape"),
         'rank': SimpleItem(defvalue=1, doc="Rank in the split of the tile from splitting"),
         'size': SimpleItem(defvalue=5, doc="Size of the splitting of the tile from splitting"),
-        'catalog': SimpleItem(defvalue=None, types=[IGangaFile, None], doc="Catalog which is used to describe what is processed"),
+        'catalog': SimpleItem(defvalue='all', types=[IGangaFile, str], doc="Catalog which is used to describe what is processed"),
+        'run_dir': SimpleItem(defvalue='im3shape-grid', types=[str], doc="Directory on the WN where the binary is"),
     })
     _category = 'applications'
     _name = 'Im3ShapeApp'
@@ -47,9 +49,6 @@ class Im3ShapeApp(IPrepareApp):
 
     def __init__(self):
         super(Im3ShapeApp, self).__init__()
-
-    def __deepcopy__(self, memo):
-        return super(Im3ShapeApp, self).__deepcopy__(memo)
 
     def unprepare(self, force=False):
         """
