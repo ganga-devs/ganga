@@ -48,7 +48,7 @@ class IPrepareApp(IApplication):
         Base class for all applications which can be placed into a prepared\
         state. 
         Args:
-            force (bool) : Fforces the prepare function to be called no matter what when True
+            force (bool) : forces the prepare function to be called no matter what when True
         """
         pass
 
