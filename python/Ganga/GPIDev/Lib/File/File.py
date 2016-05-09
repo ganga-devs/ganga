@@ -145,7 +145,6 @@ class ShareDir(GangaObject):
     _category = 'shareddirs'
     _exportmethods = ['add', 'ls']
     _name = "ShareDir"
-    _data = None
 #    def _readonly(self):
 #        return True
 
