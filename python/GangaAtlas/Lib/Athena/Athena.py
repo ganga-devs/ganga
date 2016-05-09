@@ -22,7 +22,7 @@ from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from GangaAtlas.Lib.ATLASDataset import filecheck
+from GangaAtlas.Lib.ATLASDataset import filecheck, ATLASOutputDataset
 
 from Ganga.Lib.Mergers.Merger import *
 from Ganga.Core.GangaRepository import getRegistry
@@ -1527,7 +1527,8 @@ class AthenaSplitterJob(ISplitter):
         'numsubjobs'           : SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
         'numfiles_subjob'      : SimpleItem(defvalue=0,sequence=0, doc="Number of files per subjob"),
         'match_subjobs_files'  : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of inputfiles"),
-        'split_per_dataset'   : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of datasets")
+        'split_per_dataset'    : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of datasets"),
+        'map_input_to_output'  : SimpleItem(defvalue={}, doc='Dictionary that sets the output location for each input file')
         } )
 
     _GUIPrefs = [ { 'attribute' : 'numsubjobs',           'widget' : 'Int' },
@@ -1630,6 +1631,16 @@ class AthenaSplitterJob(ISplitter):
                         if self.split_per_dataset:
                             j.inputdata.dataset=job.inputdata.dataset[i]
             j.outputdata=job.outputdata
+
+            # if we have local outputdata and mapping, change output location depending on input
+            if self.map_input_to_output and isinstance(j.outputdata, ATLASOutputDataset):
+                # loop over the keys, find a match and set the output location
+                for infile in j.inputdata.names:
+                    if infile not in self.map_input_to_output:
+                        logger.warning('Input file "%s" is not present in the splitter mapping' % infile)
+                        continue
+                    j.outputdata.location = self.map_input_to_output[infile]
+
             j.application = job.application
             j.backend=job.backend
             j.inputsandbox=job.inputsandbox
