@@ -501,8 +501,8 @@ class DiracBase(IBackend):
                         if childstatus in backend_final:
                             be_statetime = execute("getStateTime(%d,\'%s\')" % (job.backend.id, childstatus))
                             job.time.timestamps["backend_final"] = be_statetime
-                            break
                             logger.debug("Wrote 'backend_final' to timestamps.")
+                            break
                         else:
                             time_str = "backend_" + childstatus
                             if time_str not in job.time.timestamps:
