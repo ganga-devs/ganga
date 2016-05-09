@@ -1012,8 +1012,5 @@ class Registry(object):
         except ObjectNotInRegistryError:
             return False
 
-        if index in self._loaded_ids:
-            return True
-        else:
-            return False
+        return index in self._loaded_ids
 
