@@ -33,17 +33,11 @@ class IPrepareApp(IApplication):
     _name = 'PrepareApp'
     _hidden = 1
 
-    def __init__(self):
-        """
-        default constructor
-        """
-        super(IPrepareApp, self).__init__()
-
     def _auto__init__(self, unprepare=None):
         """
-        Funiction called when initializing from the Proxy layer i.e. interactive prompt or 'import ganga'
+        Function called when initializing from the Proxy layer i.e. interactive prompt or 'import ganga'
         Args:
-            unprepare (bool): a bool which unprepares an app when it's created new i.e. don't copy prepared sandboxes
+            unprepare (bool): a parameter which unprepares an app when it's created new i.e. don't copy prepared sandboxes
         """
         if unprepare is True:
             logger.debug("Calling unprepare() from IPrepareApp's _auto__init__()")
