@@ -194,7 +194,7 @@ class DiracFile(IGangaFile):
     def _setLFNnamePattern(self, _lfn="", _namePattern=""):
 
         ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
-        if _namePattern.split(os.pathsep)[0] == configDirac['defaultSE']:
+        if _namePattern.split(os.pathsep)[0] == self.defaultSE:
             temp = _lfn
             _lfn = _namePattern
             _namePattern = temp
@@ -212,8 +212,7 @@ class DiracFile(IGangaFile):
         elif _lfn != "" and _namePattern == "":
             self.lfn = _lfn
             self.remoteDir = os.path.dirname(self.lfn)
-            if self.namePattern != "":
-                self.namePattern = os.path.basename(self.lfn)
+            self.namePattern = os.path.basename(self.lfn)
             self.localDir = ""
 
         elif _namePattern != "" and _lfn == "":
