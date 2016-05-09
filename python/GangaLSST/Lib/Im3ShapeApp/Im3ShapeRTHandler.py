@@ -36,9 +36,9 @@ class Im3ShapeDiracRTHandler(IRuntimeHandler):
 
         exe_script_name = 'im3shape-script.py'
 
-        im3shape_args = ' '.join([ os.path.basename(job.inputdata[0].lfn), os.path.basename(app.ini_location.namePattern) # input.fz, config.ini
-                                   app.catalog, os.path.basename(job.inputdata[0].lfn) + '.' + app.rank + '.' + app.size, # catalog, output
-                                   app.rank, app.size ])
+        im3shape_args = ' '.join([ os.path.basename(job.inputdata[0].lfn), os.path.basename(app.ini_location.namePattern), # input.fz, config.ini
+                                   app.catalog, os.path.basename(job.inputdata[0].lfn) + '.' + str(app.rank) + '.' + str(app.size), # catalog, output
+                                   str(app.rank), str(app.size) ])
 
         inputsandbox.append(FileBuffer( name=exe_script_name,
                                         contents=script_generator(Im3Shape_script_template(),
@@ -48,7 +48,7 @@ class Im3ShapeDiracRTHandler(IRuntimeHandler):
                                                                   FZ_FILE = os.path.basename(job.inputdata[0].lfn),
                                                                   INI_FILE = os.path.basename(app.ini_location.namePattern),
                                                                   BLACKLIST = os.path.basename(app.blacklist.namePattern),
-                                                                  EXE_ARGS = im3spahe_args,
+                                                                  EXE_ARGS = im3shape_args,
                                                                   ## Stuff for Ganga
                                                                   UTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    '),
                                                                  ),
@@ -107,14 +107,16 @@ import subprocess
 
 def run_Im3ShapeApp(my_env):
 
+    wn_dir = str(getcwd())
+
     run_dir = '###RUN_DIR###'
-    run_dir = path.join(getcwd(), run_dir)
+    run_dir = path.join(wn_dir, run_dir)
 
     INI_FILE_ = '###INI_FILE###'
     BLACKLIST_ = '###BLACKLIST###'
 
-    shutil.move(path.join(getcwd(), INI_FILE_), run_dir)
-    shutil.move(path.join(getcwd(), BLACKLIST_), path.join(run_dir, 'blacklist-y1.txt'))
+    shutil.move(path.join(wn_dir, INI_FILE_), run_dir)
+    shutil.move(path.join(wn_dir, BLACKLIST_), path.join(run_dir, 'blacklist-y1.txt'))
 
     FZ_FILE_ = '###FZ_FILE###'
     FZ_FILE_ = path.join(getcwd(), FZ_FILE_)
@@ -122,7 +124,7 @@ def run_Im3ShapeApp(my_env):
     chdir(run_dir)
 
     EXE_NAME_ = '###EXE_NAME###'
-    EXE_NAME_ = path.join(getcwd(), EXE_NAME_)
+    EXE_NAME_ = path.join(run_dir, EXE_NAME_)
 
     EXE_ARGS_ = '###EXE_ARGS###'
 

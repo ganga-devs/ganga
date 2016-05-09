@@ -8,6 +8,8 @@ import copy
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
+from GangaLSST.Lib.Im3ShapeApp.Im3ShapeApp import Im3ShapeApp
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -56,17 +58,18 @@ class Im3ShapeSplitter(ISplitter):
             app = copy.deepcopy(job.application)
             app.rank = rank
             app.size = size
+            return app
 
-        if split_by_file:
+        if self.split_by_file:
             for this_file in job.inputdata:
-                for range in range(0, self.size-1):
+                for rank in range(0, self.size):
                     j = self.createSubjob(job, ['application'])
                     # Add new arguments to subjob
                     j.application = getApp(job, rank, self.size)
-                    j.inputdata = Dataset([this_file])
+                    j.inputdata = GangaDataset(files = [stripProxy(this_file)])
                     subjobs.append(j)
         else:
-            for rank in range(0,self.size-1):
+            for rank in range(0,self.size):
                 j = self.createSubjob(job, ['application'])
                 j.application = getApp(job, rank, self.size)
                 j.inputdata = job.inputdata

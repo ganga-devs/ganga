@@ -100,6 +100,10 @@ class Im3ShapeApp(IPrepareApp):
             # add the newly created shared directory into the metadata system
             # if the app is associated with a persisted object
             self.checkPreparedHasParent(self)
+            for file_ in [self.ini_location, self.im3_location, self.blacklist]:
+                if isinstance(file_, LocalFile):
+                    self.copyIntoPrepDir(file_.namePattern)
+                assert type(file_) in [LocalFile, DiracFile]
             # return
             # [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
             self.post_prepare()
