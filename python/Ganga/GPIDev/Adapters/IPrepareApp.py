@@ -67,6 +67,18 @@ class IPrepareApp(IApplication):
             self.is_prepared = None
         self.hash = None
 
+    def copyIntoPrepDir(self, obj2copy):
+        """
+        Method for actually copying the "obj2copy" object to the prepared state dir of this application
+        """
+        shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+
+        shr_dir = os.path.join(shared_path, self.is_prepared.name)
+        if not os.path.isdir(shr_dir):
+            os.makedirs(shr_dir)
+        shutil.copy2(obj2copy, shr_dir)
+        logger.debug("Copying %s into: %s" % (obj2copy, shr_dir))
+
     def copyPreparables(self):
         """
         This method iterates over all attributes in an application and decides\
@@ -81,7 +93,7 @@ class IPrepareApp(IApplication):
                 logger.debug('Found preparable %s' % (name))
                 logger.debug('adding to sharedir %s' % (self.__getattribute__(name)))
                 send_to_sharedir.append(self.__getattribute__(name))
-        shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+
         for prepitem in send_to_sharedir:
             logger.debug('working on %s' % (prepitem))
             # we may have a list of files/strings
@@ -94,22 +106,14 @@ class IPrepareApp(IApplication):
                         if os.path.abspath(subitem) == subitem:
                             logger.debug('Sending file %s to shared directory.' % (subitem))
                             try:
-                                shr_dir = os.path.join(shared_path, self.is_prepared.name)
-                                if not os.path.isidr(shr_dir):
-                                    os.makedirs(shr_dir)
-                                shutil.copy2(subitem, shr_dir)
-                                logger.debug("Copying into: %s" % shr_dir)
+                                self.copyIntoPrepDir(subitem)
                             except IOError as e:
                                 logger.error(e)
                                 return 0
                     elif isType(subitem, File) and subitem.name is not '':
                         logger.debug('Sending file object %s to shared directory' % subitem.name)
                         try:
-                            shr_dir = os.path.join(shared_path, self.is_prepared.name)
-                            if not os.path.isdir(shr_dir):
-                                os.makedirs(shr_dir)
-                                logger.debug("Copying into: %s" % shr_dir)
-                            shutil.copy2(subitem.name, shr_dir)
+                            self.copyIntoPrepDir(subitem.name)
                         except IOError as e:
                             logger.error(e)
                             return 0
@@ -120,11 +124,7 @@ class IPrepareApp(IApplication):
                 if os.path.abspath(prepitem) == prepitem:
                     logger.debug('Sending string file %s to shared directory.' % (prepitem))
                     try:
-                        shr_dir = os.path.join(shared_path, self.is_prepared.name)
-                        if not os.path.isdir(shr_dir):
-                            os.makedirs(shr_dir)
-                        logger.debug("Copying into: %s" % shr_dir)
-                        shutil.copy2(prepitem, shr_dir)
+                        self.copyIntoPrepDir(prepitem)
                     except IOError as e:
                         logger.error(e)
                         return 0
@@ -132,11 +132,7 @@ class IPrepareApp(IApplication):
                 logger.debug('found a file')
                 logger.debug('Sending "File" object %s to shared directory' % prepitem.name)
                 try:
-                    shr_dir = os.path.join(shared_path, self.is_prepared.name)
-                    if not os.path.isdir(shr_dir):
-                        os.makedirs(shr_dir)
-                    logger.debug("Copying into: %s" % shr_dir)
-                    shutil.copy2(prepitem.name, shr_dir)
+                    self.copyIntoPrepDir(prepitem.name, shr_dir)
                 except IOError as e:
                     logger.error(e)
                     return 0
