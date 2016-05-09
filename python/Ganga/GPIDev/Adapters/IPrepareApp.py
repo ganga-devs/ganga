@@ -48,7 +48,7 @@ class IPrepareApp(IApplication):
         Base class for all applications which can be placed into a prepared\
         state. 
         Args:
-            force (bool) : ignored by the base class. Higher up forces the prepare function to be called no matter what
+            force (bool) : Fforces the prepare function to be called no matter what when True
         """
         pass
 
@@ -63,7 +63,7 @@ class IPrepareApp(IApplication):
         Revert an application back to the exact state it was in prior to being\
         prepared.
         Args:
-            force (bool): ignored from the base class, higher up causes unprepare to run always or not
+            force (bool): causes unprepare to run always or not if True
         """
         logger.debug("Running unprepare() from IPrepareApp")
         if self.is_prepared is True:
