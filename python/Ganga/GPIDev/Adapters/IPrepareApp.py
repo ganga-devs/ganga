@@ -70,6 +70,7 @@ class IPrepareApp(IApplication):
     def copyIntoPrepDir(self, obj2copy):
         """
         Method for actually copying the "obj2copy" object to the prepared state dir of this application
+        obj2copy is a string address of a file to be copied as it's passed to shutil.copy2
         """
         shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
 
