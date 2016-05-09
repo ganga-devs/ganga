@@ -788,15 +788,9 @@ def GPIProxyClassFactory(name, pluginclass):
                 val = stripProxy(getattr(self, key))
                 if isinstance(val, GangaObject):
                     val._auto__init__()
-                    if hasattr(instance, '_attribute_filter__set__'):
-                        instance.setNodeAttribute(key, instance._attribute_filter__set__(key, stripProxy(val)))
-                    else:
-                        instance.setNodeAttribute(key, stripProxy(val))
+                    instance.setNodeAttribute(key, instance._attribute_filter__set__(key, stripProxy(val)))
                 else:
-                    if hasattr(instance, '_attribute_filter__set__'):
-                        instance.setNodeAttribute(key, instance._attribute_filter__set__(key, stripProxy(val)))
-                    else:
-                        instance.setNodeAttribute(key, stripProxy(val))
+                    instance.setNodeAttribute(key, instance._attribute_filter__set__(key, stripProxy(val)))
 
 
         ## THIRD(?) CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
@@ -839,10 +833,7 @@ def GPIProxyClassFactory(name, pluginclass):
                         this_arg._auto__init__()
 
                 if type(this_arg) is str:
-                    if hasattr(raw_self, '_attribute_filter__set__'):
-                        raw_self.setNodeAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
-                    else:
-                        raw_self.setNodeAttribute(k, this_arg)
+                    raw_self.setNodeAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
                     continue
                 else:
                     item = pluginclass._schema.getItem(k)
@@ -867,10 +858,7 @@ def GPIProxyClassFactory(name, pluginclass):
                     if hasattr(this_arg, '_auto__init__'):
                         this_arg._auto__init__()
 
-                    if hasattr(raw_self, '_attribute_filter__set__'):
-                        raw_self.setNodeAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
-                    else:
-                        raw_self.setNodeAttribute(k, this_arg)
+                    raw_self.setNodeAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
