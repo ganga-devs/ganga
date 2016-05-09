@@ -34,9 +34,17 @@ class IPrepareApp(IApplication):
     _hidden = 1
 
     def __init__(self):
+        """
+        default constructor
+        """
         super(IPrepareApp, self).__init__()
 
     def _auto__init__(self, unprepare=None):
+        """
+        Funiction called when initializing from the Proxy layer i.e. interactive prompt or 'import ganga'
+        Args:
+            unprepare (bool): a bool which unprepares an app when it's created new i.e. don't copy prepared sandboxes
+        """
         if unprepare is True:
             logger.debug("Calling unprepare() from IPrepareApp's _auto__init__()")
             self.unprepare()
@@ -45,7 +53,8 @@ class IPrepareApp(IApplication):
         """
         Base class for all applications which can be placed into a prepared\
         state. 
-
+        Args:
+            force (bool) : ignored by the base class. Higher up forces the prepare function to be called no matter what
         """
         pass
 
@@ -59,6 +68,8 @@ class IPrepareApp(IApplication):
         """
         Revert an application back to the exact state it was in prior to being\
         prepared.
+        Args:
+            force (bool): ignored from the base class, higher up causes unprepare to run always or not
         """
         logger.debug("Running unprepare() from IPrepareApp")
         if self.is_prepared is True:
@@ -70,7 +81,8 @@ class IPrepareApp(IApplication):
     def copyIntoPrepDir(self, obj2copy):
         """
         Method for actually copying the "obj2copy" object to the prepared state dir of this application
-        obj2copy is a string address of a file to be copied as it's passed to shutil.copy2
+        Args:
+            obj2copy (bool): is a string (local) address of a file to be copied as it's passed to shutil.copy2
         """
         shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
 
@@ -133,7 +145,7 @@ class IPrepareApp(IApplication):
                 logger.debug('found a file')
                 logger.debug('Sending "File" object %s to shared directory' % prepitem.name)
                 try:
-                    self.copyIntoPrepDir(prepitem.name, shr_dir)
+                    self.copyIntoPrepDir(prepitem.name)
                 except IOError as e:
                     logger.error(e)
                     return 0
@@ -147,6 +159,8 @@ class IPrepareApp(IApplication):
         the initial value) every time the application is written to the Ganga repository. This
         allows warnings to be generated should an application's locked attributes be changed 
         post-preparation.
+        Args:
+            verify (bool) : If the hash is to be verified in the future True save it to the hash schema attribute
         """
         from Ganga.GPIDev.Base.Proxy import runProxyMethod
         import cStringIO
@@ -171,12 +185,24 @@ class IPrepareApp(IApplication):
             return digest.hexdigest() == self.hash
 
     def incrementShareCounter(self, shared_directory_name):
+        """
+        Function which is used to increment the number of (sub)jobs which share the prepared sandbox
+        managed by this app
+        Args:
+            shared_directory_name (str): full name of directory managed by this app
+        """
         logger.debug('Incrementing shared directory reference counter')
-        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        shareref = getRegistry("prep").getShareRef()
         logger.debug('within incrementShareCounter, calling increase')
         shareref.increase(shared_directory_name)
 
     def decrementShareCounter(self, shared_directory_name, remove=0):
+        """
+        Function which is used to decrement the number of (sub)jobs which share the prepared sandbox
+        managed by this app
+        Args:
+            shared_directory_name (str): full name of directory managed by this app
+        """
         remove = remove
         logger.debug('Decrementing shared directory reference counter')
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
@@ -187,10 +213,20 @@ class IPrepareApp(IApplication):
         shareref
 
     def listShareDirContents(self, shared_directory_name):
+        """
+        Function which is used to list the contents of the prepared sandbox folder managed by this app
+        Args:
+            shared_directory_name (str): full name of directory managed by this app
+        """
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref.ls(shared_directory_name)
 
     def checkPreparedHasParent(self, prepared_object):
+        """
+        Function which is used to check if a prepared app has a parent in a registry 
+        Args:
+            prepared_object (IPrepareApp): object in a registry which manages a prepared state
+        """
         if prepared_object._getRegistry() is None:
             self.incrementShareCounter(prepared_object.is_prepared.name)
             self.decrementShareCounter(prepared_object.is_prepared.name)
