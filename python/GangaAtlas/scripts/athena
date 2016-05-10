@@ -380,10 +380,11 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
                            logger.error('File %s does not exist',pfn_list)
                            sys.exit(1)
 
-                        f = open( pfn_list )
+                        f = open(pfn_list)
+                        j.splitter.output_loc_to_input[pfn_list] = []
                         for ln in f.readlines():
                             j.inputdata.names.append(ln.strip())
-                            j.splitter.map_input_to_output[ln.strip()] = pfn_list
+                            j.splitter.output_loc_to_input[pfn_list].append(ln.strip())
 
             elif opt.locallocation:
                 for loc in opt.locallocation:
@@ -538,9 +539,10 @@ if True:
         j.outputdata.location = opt.output_location
 
         # prepend local location for maps input data -> output location
-        if j.splitter and j.splitter.map_input_to_output:
-            for f in j.splitter.map_input_to_output:
-                j.splitter.map_input_to_output[f] = os.path.join(opt.output_location, j.splitter.map_input_to_output[f])
+        if j.splitter and j.splitter.output_loc_to_input:
+            for f in j.splitter.output_loc_to_input:
+                j.splitter.output_loc_to_input[os.path.join(opt.output_location, f)] = j.splitter.output_loc_to_input[f]
+                del j.splitter.output_loc_to_input[f]
 
     if opt.output_local_location:
         j.outputdata.local_location = opt.output_local_location

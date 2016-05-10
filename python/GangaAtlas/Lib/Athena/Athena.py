@@ -1524,11 +1524,13 @@ class AthenaSplitterJob(ISplitter):
     
     _name = "AthenaSplitterJob"
     _schema = Schema(Version(1,0), {
-        'numsubjobs'           : SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
-        'numfiles_subjob'      : SimpleItem(defvalue=0,sequence=0, doc="Number of files per subjob"),
-        'match_subjobs_files'  : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of inputfiles"),
-        'split_per_dataset'    : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of datasets"),
-        'map_input_to_output'  : SimpleItem(defvalue={}, doc='Dictionary that sets the output location for each input file')
+        'numsubjobs'          : SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
+        'numfiles_subjob'     : SimpleItem(defvalue=0,sequence=0, doc="Number of files per subjob"),
+        'match_subjobs_files' : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of inputfiles"),
+        'split_per_dataset'   : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of datasets"),
+        'output_loc_to_input' : SimpleItem(defvalue={}, doc='Dictionary that lists the input files that should go to a '
+                                                            'particular output dir, e.g. { "/out/dir": ["/in/file1", "/in/file2"].'
+                                                            'Input files must match what is given to ATLASLocalDataset }')
         } )
 
     _GUIPrefs = [ { 'attribute' : 'numsubjobs',           'widget' : 'Int' },
@@ -1550,20 +1552,57 @@ class AthenaSplitterJob(ISplitter):
 
             if (job.inputdata._name == 'ATLASCastorDataset') or \
                    (job.inputdata._name == 'ATLASLocalDataset'):
-                inputnames=[]
+                inputnames = []
+                outputnames = []
                 numfiles = len(job.inputdata.get_dataset_filenames())
                 if self.numfiles_subjob > 0:
                     import math
                     self.numsubjobs = int( math.ceil( numfiles / float(self.numfiles_subjob) ) )
                 if self.match_subjobs_files:
-                    self.numsubjobs = numfiles 
-                for i in xrange(self.numsubjobs):    
-                    inputnames.append([])
+                    self.numsubjobs = numfiles
                 if numfiles < self.numsubjobs:
                     self.numsubjobs = numfiles
                     logger.warning('Number of requested subjobs larger than number of files found - changing j.splitter.numsubjobs = %d ' %self.numsubjobs )
-                for j in xrange(numfiles):
-                    inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset_filenames()[j])
+                for i in xrange(self.numsubjobs):
+                    inputnames.append([])
+                    outputnames.append([])
+
+                # check for output data mapping
+                if self.output_loc_to_input and isinstance(job.outputdata, ATLASOutputDataset):
+
+                    # check we have enough subjobs for outputdirs
+                    if self.numsubjobs < len(self.output_loc_to_input):
+                        self.numsubjobs = len(self.output_loc_to_input)
+                        logger.warning('Number of requested subjobs smaller than number of output dirs found - '
+                                       'changing j.splitter.numsubjobs = %d ' % self.numsubjobs)
+
+                    # find num files per subjob - take into account extra jobs from output dir boundaries
+                    import math
+                    num_files_per_sj = int(math.ceil(numfiles/(self.numsubjobs - len(self.output_loc_to_input)+1)))
+
+                    # loop over the map and set the input/outputnames to the subjob number appropriately
+                    # we split for every output file and also when we hit the number of files per subjob
+                    jnum = 0
+                    for outdir in self.output_loc_to_input:
+                        fnum = 0
+                        for infile in self.output_loc_to_input[outdir]:
+                            inputnames[jnum].append(infile)
+                            fnum += 1
+                            if fnum == num_files_per_sj and infile != self.output_loc_to_input[outdir][-1]:
+                                outputnames[jnum] = outdir
+                                jnum += 1
+                                fnum = 0
+
+                        outputnames[jnum] = outdir
+                        jnum += 1
+
+                    if jnum != self.numsubjobs:
+                        logger.warning('Generated %d subjobs instead of the requested %d subjobs due to output '
+                                       'mapping' % (jnum, self.numsubjobs))
+                        self.numsubjobs = jnum
+                else:
+                    for j in xrange(numfiles):
+                        inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset_filenames()[j])
 
             if job.inputdata._name == 'ATLASDataset':
                 for i in xrange(self.numsubjobs):    
@@ -1632,14 +1671,9 @@ class AthenaSplitterJob(ISplitter):
                             j.inputdata.dataset=job.inputdata.dataset[i]
             j.outputdata=job.outputdata
 
-            # if we have local outputdata and mapping, change output location depending on input
-            if self.map_input_to_output and isinstance(j.outputdata, ATLASOutputDataset):
-                # loop over the keys, find a match and set the output location
-                for infile in j.inputdata.names:
-                    if infile not in self.map_input_to_output:
-                        logger.warning('Input file "%s" is not present in the splitter mapping' % infile)
-                        continue
-                    j.outputdata.location = self.map_input_to_output[infile]
+            # Set the output location if we have mapping
+            if self.output_loc_to_input and isinstance(job.outputdata, ATLASOutputDataset):
+                j.outputdata.location = outputnames[i]
 
             j.application = job.application
             j.backend=job.backend
