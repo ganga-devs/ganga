@@ -383,6 +383,10 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
                         f = open(pfn_list)
                         j.splitter.output_loc_to_input[pfn_list] = []
                         for ln in f.readlines():
+                            # ignore comments and blank lines
+                            if not ln.strip() or ln.strip()[0] == '#':
+                                continue
+
                             j.inputdata.names.append(ln.strip())
                             j.splitter.output_loc_to_input[pfn_list].append(ln.strip())
 
