@@ -578,7 +578,7 @@ if opt.numsubjobs > 0:
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass
+        pass
 elif opt.numfiles_subjob>0:
     if (opt.backend in [ 'lcg' ] or opt.glite or (opt.backend in ['sge'] and config.Athena.ENABLE_SGE_DQ2JOBSPLITTER)):
         j.splitter = DQ2JobSplitter()
@@ -595,7 +595,7 @@ elif opt.numfiles_subjob>0:
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass
+        pass
 
 elif opt.filesize>0:
     if (opt.backend in [ 'lcg' ] or opt.glite or (opt.backend in ['sge'] and config.Athena.ENABLE_SGE_DQ2JOBSPLITTER)):
@@ -607,7 +607,7 @@ elif opt.filesize>0:
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass
+        pass
 
 if opt.match_subjobs_files:
     # splitter could have been created above for input data -> output location mapping
@@ -618,7 +618,7 @@ if opt.match_subjobs_files:
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass
+        pass
 
 if opt.noblacklist:
     if j.splitter and j.splitter.__class__.__name__=='DQ2JobSplitter':

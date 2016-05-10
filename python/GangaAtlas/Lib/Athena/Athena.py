@@ -9,6 +9,7 @@
 # 
 
 import os, re, commands, string, sys, shutil
+import math
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -1556,7 +1557,6 @@ class AthenaSplitterJob(ISplitter):
                 outputnames = []
                 numfiles = len(job.inputdata.get_dataset_filenames())
                 if self.numfiles_subjob > 0:
-                    import math
                     self.numsubjobs = int( math.ceil( numfiles / float(self.numfiles_subjob) ) )
                 if self.match_subjobs_files:
                     self.numsubjobs = numfiles
@@ -1574,7 +1574,6 @@ class AthenaSplitterJob(ISplitter):
                                        'changing j.splitter.numsubjobs = %d ' % self.numsubjobs)
 
                     # find num files per subjob - take into account extra jobs from output dir boundaries
-                    import math
                     num_files_per_sj = int(math.ceil(numfiles/(self.numsubjobs - len(self.output_loc_to_input)+1)))
 
                     # loop over the map and set the input/outputnames to the subjob number appropriately
