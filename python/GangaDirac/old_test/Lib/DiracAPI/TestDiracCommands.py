@@ -16,6 +16,19 @@ unix_t = time.mktime(t.timetuple())
 rand = random
 rand.seed(unix_t)
 
+statusmapping = {'Checking': 'submitted',
+                'Completed': 'running',
+                'Deleted': 'failed',
+                'Done': 'completed',
+                'Failed': 'failed',
+                'Killed': 'killed',
+                'Matched': 'submitted',
+                'Received': 'submitted',
+                'Running': 'running',
+                'Staging': 'submitted',
+                'Stalled': 'running',
+                'Waiting': 'submitted'}
+
 def random_str():
 
     t = datetime.datetime.now()
@@ -83,10 +96,10 @@ output(result)
 
         os.remove(exe_path_name)
 
-        status = execute('status([%d])' % cls._id)
+        status = execute('status([%s], %s)' % (cls._id, repr(statusmapping)) )
         while status[0][1] not in ['Completed', 'Failed']:
             time.sleep(5)
-            status = execute('status([%d])' % cls._id)
+            status = execute('status([%s], %s)' % (cls._id, repr(statusmapping))
 
         assert status[0][1] == 'Completed', 'job not completed properly: %s' % str(status)
 
@@ -163,7 +176,7 @@ output(result)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_status(self):
-        confirm = execute('status("%s")' % self.__class__._id)
+        confirm = execute('status([%s], %s)' % (self.__class__._id, repr(status_mapping)))
         logging.info(str(confirm))
         self.assertEqual("%s" % type(confirm), "<type 'list'>", 'Command not executed successfully')
 
