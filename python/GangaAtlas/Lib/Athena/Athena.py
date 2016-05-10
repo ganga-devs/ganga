@@ -1563,9 +1563,6 @@ class AthenaSplitterJob(ISplitter):
                 if numfiles < self.numsubjobs:
                     self.numsubjobs = numfiles
                     logger.warning('Number of requested subjobs larger than number of files found - changing j.splitter.numsubjobs = %d ' %self.numsubjobs )
-                for i in xrange(self.numsubjobs):
-                    inputnames.append([])
-                    outputnames.append([])
 
                 # check for output data mapping
                 if self.output_loc_to_input and isinstance(job.outputdata, ATLASOutputDataset):
@@ -1582,25 +1579,35 @@ class AthenaSplitterJob(ISplitter):
 
                     # loop over the map and set the input/outputnames to the subjob number appropriately
                     # we split for every output file and also when we hit the number of files per subjob
-                    jnum = 0
                     for outdir in self.output_loc_to_input:
+
+                        # another subjob needed
+                        inputnames.append([])
+                        outputnames.append([])
                         fnum = 0
+
                         for infile in self.output_loc_to_input[outdir]:
-                            inputnames[jnum].append(infile)
+                            inputnames[-1].append(infile)
                             fnum += 1
                             if fnum == num_files_per_sj and infile != self.output_loc_to_input[outdir][-1]:
-                                outputnames[jnum] = outdir
-                                jnum += 1
+                                outputnames[-1] = outdir
+
+                                # another subjob needed
+                                inputnames.append([])
+                                outputnames.append([])
                                 fnum = 0
 
-                        outputnames[jnum] = outdir
-                        jnum += 1
+                        outputnames[-1] = outdir
 
-                    if jnum != self.numsubjobs:
+                    if len(inputnames) != self.numsubjobs:
                         logger.warning('Generated %d subjobs instead of the requested %d subjobs due to output '
-                                       'mapping' % (jnum, self.numsubjobs))
-                        self.numsubjobs = jnum
+                                       'mapping' % (len(inputnames), self.numsubjobs))
+                        self.numsubjobs = len(inputnames)
                 else:
+                    for i in xrange(self.numsubjobs):
+                        inputnames.append([])
+                        outputnames.append([])
+
                     for j in xrange(numfiles):
                         inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset_filenames()[j])
 
