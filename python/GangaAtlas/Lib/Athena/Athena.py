@@ -1567,6 +1567,15 @@ class AthenaSplitterJob(ISplitter):
                 # check for output data mapping
                 if self.output_loc_to_input and isinstance(job.outputdata, ATLASOutputDataset):
 
+                    # check all input data is available in the mapping dictionary
+                    all_input = []
+                    for file_list in self.output_loc_to_input.values():
+                        all_input += file_list
+
+                    if frozenset(all_input) != frozenset(job.inputdata.names):
+                        raise ApplicationConfigurationError(None, 'Not all inputdata specified in splitter data mapping.'
+                                                                  'Please make sure all input data is mapped.')
+
                     # check we have enough subjobs for outputdirs
                     if self.numsubjobs < len(self.output_loc_to_input):
                         self.numsubjobs = len(self.output_loc_to_input)
@@ -1602,6 +1611,15 @@ class AthenaSplitterJob(ISplitter):
                         logger.warning('Generated %d subjobs instead of the requested %d subjobs due to output '
                                        'mapping' % (len(inputnames), self.numsubjobs))
                         self.numsubjobs = len(inputnames)
+
+                    # check all input data was mapped
+                    all_input = []
+                    for file_list in inputnames:
+                        all_input += file_list
+                    if frozenset(all_input) != frozenset(job.inputdata.names):
+                        raise ApplicationConfigurationError(None, "Inputdata was incorrectly mapped to output location."
+                                                                  "This shouldn't happen - please contact the devs!")
+
                 else:
                     for i in xrange(self.numsubjobs):
                         inputnames.append([])
