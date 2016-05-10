@@ -1,4 +1,4 @@
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 import random

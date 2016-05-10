@@ -733,7 +733,7 @@ class Job(GangaObject):
                         try:
                             outputfile.setLocation()
                         except Exception as err:
-                            logger.debug("Error: %s" % err)
+                            logger.error("Error: %s" % err)
 
             if outputfileClass == 'LocalFile':
                 outputfile.processOutputWildcardMatches()

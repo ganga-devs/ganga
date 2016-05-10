@@ -6,7 +6,7 @@ import tempfile
 from GangaTest.Framework.utils import sleep_until_completed, file_contains, write_file
 from Ganga.Lib.Mergers.Merger import findFilesToMerge
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestSmartMerger(GangaUnitTest):

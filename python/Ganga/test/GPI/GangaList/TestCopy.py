@@ -3,7 +3,7 @@ import copy
 import random
 import string
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 class TestCopy(GangaUnitTest):
