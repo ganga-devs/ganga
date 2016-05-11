@@ -512,6 +512,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
                 else:
                     # cmt config
+                    jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
                     jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
 
                 if (job.backend.bexec != '') or (job.backend.requirements.rootver != '') or app.useRootCore or app.useMana or app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
