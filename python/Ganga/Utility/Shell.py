@@ -45,6 +45,13 @@ logger = Ganga.Utility.logging.getLogger()
 
 
 def expand_vars(env):
+    """
+    This function takes a raw dictionary which describes the environment and sanitizes it slightly
+    This makes some attempt to take multi-line aliases and functions and make then into single line strings.
+    At best we don't like bash functions being assigned to variables here but we shouldn't crash when some users have bad a env
+    Args:
+        env (dict): dictionary describing the environment which is to be sanitized
+    """
     tmp_dict = {}
     for k, v in env.iteritems():
         if not str(v).startswith('() {'):
