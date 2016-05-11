@@ -511,10 +511,9 @@ class DiracBase(IBackend):
                             logger.debug("Wrote 'backend_%s' to timestamps.", childstatus)
                     if childstatus == status:
                         break
-            #logger.debug("_getStateTime(job with id: %d, '%s') called.", job.id, job.status)
+            logger.debug("_getStateTime(job with id: %d, '%s') called.", job.id, job.status)
         else:
-            pass
-            #logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", job.status, status)
+            logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", job.status, status)
 
     def timedetails(self):
         """Prints contents of the loggingInfo from the Dirac API."""
@@ -737,7 +736,7 @@ class DiracBase(IBackend):
         for j in requeue_jobs:
             if j.been_queued:
                 continue
-            #            if j.backend.status in requeue_dirac_status:
+
             if monitoring_component:
                 if monitoring_component.should_stop():
                     break
