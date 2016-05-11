@@ -544,7 +544,7 @@ if True:
 
         # prepend local location for maps input data -> output location
         if j.splitter and j.splitter.output_loc_to_input:
-            for f in j.splitter.output_loc_to_input:
+            for f in list(j.splitter.output_loc_to_input):
                 j.splitter.output_loc_to_input[os.path.join(opt.output_location, f)] = j.splitter.output_loc_to_input[f]
                 del j.splitter.output_loc_to_input[f]
 
