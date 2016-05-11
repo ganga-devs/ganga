@@ -775,7 +775,7 @@ class DiracBase(IBackend):
         result = execute('status(%s, %s)' %( str(dirac_job_ids), repr(statusmapping)))
 
         if len(result) != len(ganga_job_status):
-            logger.warning('Dirac monitoring failed fro %s, result = %s' % (
+            logger.warning('Dirac monitoring failed for %s, result = %s' % (
                 str(dirac_job_ids), str(result)))
             return
 
