@@ -20,71 +20,92 @@ logger = getLogger()
 
 class Im3ShapeDiracRTHandler(IRuntimeHandler):
 
-    """The runtime handler to run plain executables on the Dirac backend"""
+    """The runtime handler to run the Im3ShapeApp on the Dirac backend"""
 
     def master_prepare(self, app, appmasterconfig):
+        """
+        This function prepares the application of a master job during submit. A priori we aren't doing anything with this in Im3ShapeApp but until this is understood I'd rather not remove it
+        Args:
+            app (IApplication): This is the application given in the master job
+            appasterconfig (tuple): This is the configuration which is to prepare the app in the master job # TODO check type and this interface
+        """
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
         return StandardJobConfig(inputbox=unique(inputsandbox),
                 outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
+        """
+        This function prepares the application of the actual job being submitted, master or not
+        Args:
+            app (IApplication): This is the application actually being submitted belonging to the master or sub job being configured
+            appsubconfig (tuple): This is used to prepare the inputsandbox according to the configuration for each subjob if it varies
+            appmasterconfig (tuple): This is also used to prepare the inputsandbox but contains the config of the app for the master job
+            jobmasterconfig (StandardJobConfig): This is the configuration of the master job which may or may not be the same job as owning the app
+        """
+
+        # Construct some common objects used in job submission here
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app, hasOtherInputData=True)
 
+
         job = stripProxy(app).getJobObject()
-        outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
+        outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
+
+        # Construct the im3shape-script which is used by this job. i.e. the script and full command line to be used in this job
         exe_script_name = 'im3shape-script.py'
-
         im3shape_args = ' '.join([ os.path.basename(job.inputdata[0].lfn), os.path.basename(app.ini_location.namePattern), # input.fz, config.ini
                                    app.catalog, os.path.basename(job.inputdata[0].lfn) + '.' + str(app.rank) + '.' + str(app.size), # catalog, output
                                    str(app.rank), str(app.size) ])
 
+        full_cmd = app.exe_name + ' ' + im3shape_args
+
         inputsandbox.append(FileBuffer( name=exe_script_name,
                                         contents=script_generator(Im3Shape_script_template(),
                                                                   ## ARGS for app from job.app
-                                                                  EXE_NAME = app.exe_name,
                                                                   RUN_DIR = app.run_dir,
-                                                                  FZ_FILE = os.path.basename(job.inputdata[0].lfn),
-                                                                  INI_FILE = os.path.basename(app.ini_location.namePattern),
                                                                   BLACKLIST = os.path.basename(app.blacklist.namePattern),
-                                                                  EXE_ARGS = im3shape_args,
+                                                                  COMMAND = full_cmd,
                                                                   ## Stuff for Ganga
-                                                                  UTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    '),
+                                                                  OUTPUTFILES = repr([this_file.namePattern for this_file in job.outputfiles]),
+                                                                  OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    '),
                                                                  ),
                                         executable=True)
                             )
 
+        # TODO once there is a common, IApplication.getMeFilesForThisApp function replace this list with a getter ad it shouldn't really be hard-coded
         app_file_list = [app.im3_location, app.ini_location, app.blacklist]
-        
-        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, False)
 
+        app_file_list = [this_file for this_file in app_file_list if isinstance(this_app, DiracFile)]
         job.inputfiles.extend(app_file_list)
+
+        # Slightly mis-using this here but it would be nice to have these files
+        #job.inputfiles.extend(job.inputdata)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
         dirac_script = script_generator(diracAPI_script_template(),
-                DIRAC_IMPORT='from DIRAC.Interfaces.API.Dirac import Dirac',
-                DIRAC_JOB_IMPORT='from DIRAC.Interfaces.API.Job import Job',
-                DIRAC_OBJECT='Dirac()',
-                JOB_OBJECT='Job()',
-                NAME=mangle_job_name(app),
-                EXE=exe_script_name,
-                EXE_ARG_STR='',
-                EXE_LOG_FILE='Ganga_Executable.log',
-                ENVIRONMENT=None,
-                INPUTDATA=input_data,
-                PARAMETRIC_INPUTDATA=parametricinput_data,
-                OUTPUT_SANDBOX=API_nullifier(outputsandbox),
-                OUTPUTFILESSCRIPT=dirac_outputfiles,
-                OUTPUT_PATH="",  # job.fqid,
-                SETTINGS=diracAPI_script_settings(app),
-                DIRAC_OPTS=job.backend.diracOpts,
-                REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
+                DIRAC_IMPORT = 'from DIRAC.Interfaces.API.Dirac import Dirac',
+                DIRAC_JOB_IMPORT = 'from DIRAC.Interfaces.API.Job import Job',
+                DIRAC_OBJECT = 'Dirac()',
+                JOB_OBJECT = 'Job()',
+                NAME = mangle_job_name(app),
+                EXE = exe_script_name,
+                EXE_ARG_STR = '',
+                EXE_LOG_FILE = 'Ganga_Executable.log',
+                ENVIRONMENT = None,
+                INPUTDATA = input_data,
+                PARAMETRIC_INPUTDATA = parametricinput_data,
+                OUTPUT_SANDBOX = API_nullifier(outputsandbox),
+                OUTPUTFILESSCRIPT = dirac_outputfile_jdl(outputfiles, False),
+                OUTPUT_PATH = "",  # job.fqid,
+                SETTINGS = diracAPI_script_settings(app),
+                DIRAC_OPTS = job.backend.diracOpts,
+                REPLICATE = 'True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
                 # leave the sandbox for altering later as needs
                 # to be done in backend.submit to combine master.
                 # Note only using 2 #s as auto-remove 3
-                INPUT_SANDBOX='##INPUT_SANDBOX##'
+                INPUT_SANDBOX = '##INPUT_SANDBOX##'
                 )
 
 
@@ -97,68 +118,84 @@ class Im3ShapeDiracRTHandler(IRuntimeHandler):
 
 
 def Im3Shape_script_template():
+    """
+    This function returns the script to be run on the worker nodes for Im3ShapeApp
+    """
     script_template = """#!/usr/bin/env python
-'''Script to run Executable application'''
+'''Script to run Im3Shape application'''
 from __future__ import print_function
 from os import system, environ, pathsep, getcwd, listdir, path, chdir
-import sys
-import shutil
-import subprocess
+from shutil import move
+from glob import glob
+from subprocess import call
+from sys import exit
+from copy import deepcopy
 
-def run_Im3ShapeApp(my_env):
+def run_Im3ShapeApp():
 
-    wn_dir = str(getcwd())
-
+    # Some useful paths to store
+    wn_dir = getcwd()
     run_dir = '###RUN_DIR###'
     run_dir = path.join(wn_dir, run_dir)
 
-    INI_FILE_ = '###INI_FILE###'
-    BLACKLIST_ = '###BLACKLIST###'
+    ## Move all needed files into run_dir
 
-    shutil.move(path.join(wn_dir, INI_FILE_), run_dir)
-    shutil.move(path.join(wn_dir, BLACKLIST_), path.join(run_dir, 'blacklist-y1.txt'))
+    #Blacklist is currently hard-coded lets move the file on the WN
+    blacklist_file = '###BLACKLIST###'
+    move(path.join(wn_dir, blacklist_file), path.join(run_dir, 'blacklist-y1.txt'))
 
-    FZ_FILE_ = '###FZ_FILE###'
-    FZ_FILE_ = path.join(getcwd(), FZ_FILE_)
+    # Move all .txt, .ini and .fz files in the WN to the run_dir of the executable by convention
+    for pattern in ['./*.txt', './*.fz', './*.ini']:
+        for this_file in glob(pattern):
+            move(path.join(wn_dir, this_file), run_dir)
+
+    ## Fully construct the command we're about to run
 
     chdir(run_dir)
 
-    EXE_NAME_ = '###EXE_NAME###'
-    EXE_NAME_ = path.join(run_dir, EXE_NAME_)
-
-    EXE_ARGS_ = '###EXE_ARGS###'
-
-    full_cmd = EXE_NAME_ + ' ' + EXE_ARGS
+    full_cmd = '###COMMAND###'
 
     print("full_cmd: %s" % full_cmd)
 
-    rc = 0
+    my_env = deepcopy(environ)
+    my_env['PATH'] = getcwd() + ':' + my_env['PATH']
+
+    rc = call(full_cmd, env=my_env, shell=True)
+
+    output_filePattern = ###OUTPUTFILES###
+
+    for pattern in output_filePattern: 
+        for this_file in glob(pattern):
+            try:
+                move(path.join(run_dir, this_file), wn_dir)
+            except:
+                # Let the job fail at a later stage if 1 of the outputs are missing,
+                # don't crash, we may still be returning useful stuff
+                pass
+
+    chdir(wn_dir)
+
     return rc
 
 # Main
 if __name__ == '__main__':
 
-    my_env = environ
-    my_env['PATH'] = getcwd() + (pathsep + my_env['PATH'])
-
     err = None
     try:
-        rc = run_Im3ShapeApp(my_env)
+        rc = run_Im3ShapeApp()
     except Exception as x:
         rc = -9999
         print('Exception occured in running app.')
         print('Err was: ' + str(x))
-        #subprocess.call('''['echo', '$PATH']''')
-        print('PATH: ' + str(my_env['PATH']))
-        print('PWD: ' + str(my_env['PWD']))
         print("files on WN: " + str(listdir('.')))
+        print("environ: %s" % environ)
         raise
 
     print("files on WN: " + str(listdir('.')))
 
     ###OUTPUTFILESINJECTEDCODE###
 
-    sys.exit(rc)
+    exit(rc)
 """
     return script_template
 

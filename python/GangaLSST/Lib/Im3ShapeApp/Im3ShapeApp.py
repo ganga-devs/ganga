@@ -28,31 +28,41 @@ logger = getLogger()
 class Im3ShapeApp(IPrepareApp):
 
     """
+    This App is to store the configuration of the Im3Shape app which is to be run according to a given set of configs:
 
+    i.e.
+    ./run_dir/exe_name <someData> ini_location catalog <someOutput> rank size
+
+    e.g.
+    ./run_dir/run-im3shape someData.fz ini_file.ini all someData.fz.0.20 0 20
+
+    The input and output file names are configured in the RTHandler based upon the inputdata given to a particular job.
+
+    The im3_location is the path to a .tgz file (or some file which can be extracted by the RTHandler) which gives the im3shape-grid (run_dir) folder containing the run-im3shape app (exe-name) on the WN
     """
     _schema = Schema(Version(1, 0), {
+        ## Required to configure Im3ShapeApp
         'im3_location': GangaFileItem(defvalue=None, doc="Location of the Im3Shape program tarball"),
         'exe_name': SimpleItem(defvalue='run-im3shape', doc="Name of the im3shape binary"),
         'ini_location': GangaFileItem(defvalue=None, doc=".ini file used to configure Im3Shape"),
-        'env': SimpleItem(defvalue={}, typelist=[str], doc='Dictionary of environment variables that will be replaced in the running environment.'),
-        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes'),
         'blacklist': GangaFileItem(defvalue=None, doc="Blacklist file for running Im3Shape"),
-        'rank': SimpleItem(defvalue=1, doc="Rank in the split of the tile from splitting"),
-        'size': SimpleItem(defvalue=5, doc="Size of the splitting of the tile from splitting"),
+        'rank': SimpleItem(defvalue=0, doc="Rank in the split of the tile from splitting"),
+        'size': SimpleItem(defvalue=200, doc="Size of the splitting of the tile from splitting"),
         'catalog': SimpleItem(defvalue='all', types=[IGangaFile, str], doc="Catalog which is used to describe what is processed"),
         'run_dir': SimpleItem(defvalue='im3shape-grid', types=[str], doc="Directory on the WN where the binary is"),
+        ## Below is needed for prepared state stuff
+        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes'),
     })
     _category = 'applications'
     _name = 'Im3ShapeApp'
     _exportmethods = ['prepare', 'unprepare']
 
-    def __init__(self):
-        super(Im3ShapeApp, self).__init__()
-
     def unprepare(self, force=False):
         """
-        Revert an Im3ShapeApp() application back to it's unprepared state.
+        Revert an Im3ShapeApp application back to it's unprepared state.
+        args:
+            force (bool): should force the unprepare step to run
         """
         logger.debug('Running unprepare in Im3ShapeApp')
         if self.is_prepared is not None:
@@ -62,25 +72,9 @@ class Im3ShapeApp(IPrepareApp):
 
     def prepare(self, force=False):
         """
-        A method to place the Im3ShapeApp application into a prepared state.
-
-        The application wil have a Shared Directory object created for it. 
-        If the application's 'exe' attribute references a File() object or
-        is a string equivalent to the absolute path of a file, the file 
-        will be copied into the Shared Directory.
-
-        Otherwise, it is assumed that the 'exe' attribute is referencing a 
-        file available in the user's path (as per the default "echo Hello World"
-        example). In this case, a wrapper script which calls this same command 
-        is created and placed into the Shared Directory.
-
-        When the application is submitted for execution, it is the contents of the
-        Shared Directory that are shipped to the execution backend. 
-
-        The Shared Directory contents can be queried with 
-        shareref.ls('directory_name')
-
-        See help(shareref) for further information.
+        This prepares the Im3ShapeApp application and copies any LocalFile objects which are allocated to: im3_location, ini_location and blacklist into the prepared sandbox to be shipped to the WN
+        Args:
+            force (bool): Should force the prepare step to run
         """
 
         if (self.is_prepared is not None) and (force is not True):
@@ -116,6 +110,8 @@ class Im3ShapeApp(IPrepareApp):
         return 1
 
     def configure(self, masterappconfig):
-
+        """
+        This is a null-op effecitvely, we may add something here in the future but this function is stub
+        """
         return (None, None)
 

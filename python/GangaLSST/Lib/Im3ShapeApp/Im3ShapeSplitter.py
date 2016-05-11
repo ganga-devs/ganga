@@ -18,39 +18,25 @@ logger = getLogger()
 class Im3ShapeSplitter(ISplitter):
 
     """
-    Split job by changing the args attribute of the application.
+    This splitter splits jobs using the Im3ShapeApp application using the size parameter.
 
-    This splitter only applies to the applications which have args attribute (e.g. Executable, Root).
-    It is a special case of the GenericSplitter.
+    If a splitter is configured with size = 5, split_by_file = True, then it will create 5 subjobs per file in the master_job.inputdata
+    If a splitter is configured with size = 5, split_by_file = False, then it will create 5 subjobs total and configure all subjobs to use all given data.
 
-    This splitter allows the creation of a series of subjobs where
-    the only difference between different jobs are their
-    arguments. Below is an example that executes a ROOT script ~/analysis.C
-
-    void analysis(const char* type, int events) {
-      std::cout << type << "  " << events << std::endl;
-    }
-
-    with 3 different sets of arguments.
-
-    s = ArgSplitter(args=[['AAA',1],['BBB',2],['CCC',3]])
-    r = Root(version='5.10.00',script='~/analysis.C')
-    j.Job(application=r, splitter=s)
-
-    Notice how each job takes a list of arguments (in this case a list
-    with a string and an integer). The splitter thus takes a list of
-    lists, in this case with 3 elements so there will be 3 subjobs.
-
-    Running the subjobs will produce the output:
-    subjob 1 : AAA  1
-    subjob 2 : BBB  2
-    subjob 3 : CCC  3
-"""
+    In the future there may be support for splitting based upon regex and namePatterns in the inputdata to allow a certain subset of data to be put in each subjob.
+    """
     _name = "Im3ShapeSplitter"
     _schema = Schema(Version(1, 0), {'size': SimpleItem(defvalue=5, doc='Size of the tiles which are to be split.'),
                                      'split_by_file': SimpleItem(defvalue=True, doc='Should we auto-split into subjobs here on a per-file basis?')})
 
     def split(self, job):
+        """
+        Actually perform the splitting of the given master job. The generated subjobs of the splitting are returned
+        Args:
+            job (Job): This is the master job object which is to be split and the subjobs of which are returned
+        """
+
+        assert isinstance(job.application, Im3ShapeApp)
 
         subjobs = []
 
