@@ -381,6 +381,7 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
                            sys.exit(1)
 
                         f = open(pfn_list)
+                        pfn_list = os.path.basename(pfn_list)
                         j.splitter.output_loc_to_input[pfn_list] = []
                         for ln in f.readlines():
                             # ignore comments and blank lines
