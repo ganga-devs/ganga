@@ -19,12 +19,11 @@ class GangaDataset(Dataset):
     schema = {}
     docstr = 'List of File objects'
     schema['files'] = GangaFileItem(defvalue=[], sequence=1, doc="list of file objects that will be the inputdata for the job")
-    schema['treat_as_inputfiles'] = SimpleItem(
-        defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
+    schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
     _name = "GangaDataset"
-    _exportmethods = []
+    _exportmethods = ['append', 'extend', '__len__', 'isEmtpy', 'getFileNames', 'getFilenameList', '__getitem__']
 
     def __init__(self, files=None):
         if files is None:
