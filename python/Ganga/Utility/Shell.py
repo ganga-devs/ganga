@@ -64,6 +64,69 @@ def expand_vars(env):
     return tmp_dict
 
 
+def get_env_from_arg(this_arg, def_env_on_fail = True):
+    """
+    Function to return the environment after running the command "this_command"
+    Args:
+        this_arg (str): This file/command is the command which is to be run after source to alter an environment
+        def_env_on_fail (bool): True means the default environment is to be returned on failure (i.e. I expect a dict of environ), False is return None on failure
+    """
+
+    if def_env_on_fail:
+        env = dict(os.environ)
+        env = expand_vars(env)
+    else:
+        env = None
+
+    logger.debug("Initializing Shell")
+    logger.debug("arg:\n%s" % this_arg)
+
+    this_cwd = os.path.abspath(os.getcwd())
+    if not os.path.exists(this_cwd):
+        this_cwd = os.path.abspath(tempfile.gettempdir())
+
+    logger.debug("Using CWD: %s" % this_cwd)
+    command = 'source %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (this_arg)
+    logger.debug('Running:   %s' % command)
+    pipe = subprocess.Popen('bash', env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    output = pipe.communicate(command)
+    rc = pipe.poll()
+
+    if rc:
+        logger.warning('Unexpected rc %d from setup command %s', rc, setup)
+
+        try:
+            env2 = expand_vars(eval(eval(str(output))[0]))
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
+            env2 = None
+            logger.error("Cannot construct environ:\n%s" % str(output))
+            try:
+                logger.error("eval: %s" % str(eval(str(output))[0]))
+            except Exception as err2:
+                logger.debug("Err2: %s" % str(err2))
+                pass
+            try:
+                logger.error("eval(eval): %s" % eval(eval(str(output))[0]))
+            except Exception as err3:
+                logger.debug("Err3: %s" % str(err3))
+                pass
+
+        if env2:
+            env = env2
+    else:
+        try:
+            env2 = expand_vars(eval(eval(str(output))[0]))
+        except Exception as err:
+            raise
+
+        if env2:
+            env = env2
+
+    #logger.debug("returning: %s" % str(env))
+
+    return env
+
 class Shell(object):
 
     def __init__(self, setup=None, setup_args=[]):
@@ -94,47 +157,8 @@ class Shell(object):
         """
 
         if setup is not None:
+            self.env = get_env_from_arg(this_arg="%s %s" % (setup, " ".join(setup_args)))
 
-            env = dict(os.environ)
-            env = expand_vars(env)
-
-            logger.debug("Initializing Shell")
-            logger.debug("command:\n%s" % setup)
-            logger.debug("args:\n%s" % " ".join(setup_args))
-
-            this_cwd = os.path.abspath(os.getcwd())
-            if not os.path.exists(this_cwd):
-                this_cwd = os.path.abspath(tempfile.gettempdir())
-            logger.debug("Using CWD: %s" % this_cwd)
-            command = 'source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup, " ".join(setup_args))
-            logger.debug('Running:   %s' % command )
-            pipe = subprocess.Popen('bash', env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-            output = pipe.communicate(command)
-            rc = pipe.poll()
-            if rc:
-                logger.warning('Unexpected rc %d from setup command %s', rc, setup)
-
-            try:
-                env2 = expand_vars(eval(eval(str(output))[0]))
-            except Exception as err:
-                logger.debug("Err: %s" % str(err))
-                env2 = None
-                logger.error("Cannot construct environ:\n%s" % str(output))
-                try:
-                    logger.error("eval: %s" % str(eval(str(output)[0])))
-                except Exception as err2:
-                    logger.debug("Err2: %s" % str(err2))
-                    pass
-                try:
-                    logger.error("eval(eval): %s" % eval(eval(str(output))[0]))
-                except Exception as err3:
-                    logger.debug("Err3: %s" % str(err3))
-                    pass
-
-            if env2:
-                env = env2
-
-            self.env = env
         else:
             # bug #44334: Ganga/Utility/Shell.py does not save environ
             env = dict(os.environ)
@@ -143,7 +167,7 @@ class Shell(object):
         self.dirname = None
 
     def pythonCmd(self, cmd, soutfile=None, allowed_exit=None,
-                  capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
+            capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
         "Execute a python command and captures the stderr and stdout which are returned in a file"
 
         if allowed_exit is None:
@@ -191,7 +215,7 @@ class Shell(object):
                         break
                 if timeout and time.time() - t0 > timeout:
                     logger.warning(
-                        'Command interrupted - timeout %ss reached: %s', timeout0, cmd)
+                            'Command interrupted - timeout %ss reached: %s', timeout0, cmd)
                     if already_killed:
                         sig = signal.SIGKILL
                     else:
@@ -239,7 +263,7 @@ class Shell(object):
             allowed_exit = [0]
 
         rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr,
-                                  timeout, mention_outputfile_on_errors=False, python=python)
+                timeout, mention_outputfile_on_errors=False, python=python)
 
         from contextlib import closing
         with closing(open(outfile)) as out_file:
@@ -272,7 +296,7 @@ class Shell(object):
             rc = subprocess.call(['/bin/sh', '-c', cmd], env=self.env)
         except OSError as e:
             logger.warning(
-                'Problem with shell command: %s, %s', e.errno, e.strerror)
+                    'Problem with shell command: %s, %s', e.errno, e.strerror)
             rc = 255
         return rc
 
