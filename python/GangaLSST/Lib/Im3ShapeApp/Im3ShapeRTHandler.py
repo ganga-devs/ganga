@@ -49,16 +49,19 @@ class Im3ShapeDiracRTHandler(IRuntimeHandler):
 
 
         job = stripProxy(app).getJobObject()
-        outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
-
 
         # Construct the im3shape-script which is used by this job. i.e. the script and full command line to be used in this job
         exe_script_name = 'im3shape-script.py'
+        output_filename = os.path.basename(job.inputdata[0].lfn) + '.' + str(app.rank) + '.' + str(app.size)
         im3shape_args = ' '.join([ os.path.basename(job.inputdata[0].lfn), os.path.basename(app.ini_location.namePattern), # input.fz, config.ini
-                                   app.catalog, os.path.basename(job.inputdata[0].lfn) + '.' + str(app.rank) + '.' + str(app.size), # catalog, output
+                                   app.catalog, output_filename, # catalog, output
                                    str(app.rank), str(app.size) ])
 
         full_cmd = app.exe_name + ' ' + im3shape_args
+
+        job.outputfiles.append(DiracFile(namePattern=output_filename))
+
+        outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
         inputsandbox.append(FileBuffer( name=exe_script_name,
                                         contents=script_generator(Im3Shape_script_template(),
@@ -172,6 +175,8 @@ def run_Im3ShapeApp():
                 # Let the job fail at a later stage if 1 of the outputs are missing,
                 # don't crash, we may still be returning useful stuff
                 pass
+
+    print("files in run_dir: " + str(listdir('.')))
 
     chdir(wn_dir)
 

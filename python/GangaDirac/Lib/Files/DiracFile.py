@@ -194,7 +194,11 @@ class DiracFile(IGangaFile):
     def _setLFNnamePattern(self, _lfn="", _namePattern=""):
 
         ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
-        if _namePattern.split(os.pathsep)[0] == self.defaultSE:
+        # Check for /lhcb/some/path or /gridpp/some/path
+        if _namePattern.split(os.pathsep)[0] == self.defaultSE \
+            or (len(_lfn) > 3 and _lfn[0:4] == "LFN:" and len(_namePattern.split(os.pathsep)) >= 1\
+                    and _namePattern.split(os.pathsep)[1] == self.defaultSE):
+            # Check for LFN:/gridpp/some/path or others...
             temp = _lfn
             _lfn = _namePattern
             _namePattern = temp
