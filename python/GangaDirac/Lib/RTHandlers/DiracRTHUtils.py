@@ -88,47 +88,37 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
 
 def dirac_inputdata(app, hasOtherInputData=False):
     """ Construct the JDL compoenent which requests the inputdata for a job """
-    job = stripProxy(app).getJobObject()
+    job = app.getJobObject()
     input_data = None
     parametricinput_data = None
 
     inputLFNs = []
 
-    if hasattr(job.inputdata, 'getLFNs'):
-        inputLFNs = job.inputdata.getLFNs()
+    input_data = None
+    parametricinput_data = None
 
-    if job.master:
-        logger.debug("job.master.inputdata: %s " % str(job.master.inputdata))
-    logger.debug("job.inputdata: %s" % str(job.inputdata))
-    if hasattr(job.inputdata, 'getLFNs'):
-        logger.debug("getLFNs(): %s" % job.inputdata.getLFNs())
+    if not job.inputdata and not job.master.inputdata:
+        return input_data, parametricinput_data
 
-    has_input_DiracFile = False
-    for this_file in job.inputfiles:
-        if isType(this_file, DiracFile):
-            has_input_DiracFile = True
-            break
-    if job.master and not has_input_DiracFile:
-        for this_file in job.master.inputfiles:
-            if isType(this_file, DiracFile):
-                has_input_DiracFile = True
-                break
+    wanted_job = job
+    if not job.inputdata and job.master.inputdata:
+        wanted_job = job.master
 
-    if len(inputLFNs) > 0:
-        # master job with a splitter reaching prepare, hence bulk submit
-        if not job.master and job.splitter:
-            parametricinput_data = dirac_parametric_split(app)
-            if parametricinput_data is not None and len(parametricinput_data) > getConfig('DIRAC')['MaxDiracBulkJobs']:
-                raise BackendError('Dirac', 'Number of bulk submission jobs \'%s\' exceeds the maximum allowed \'%s\' if more are needed please modify your config. Note there is a hard limit in Dirac of currently 1000.' % (
-                    len(parametricinput_data), getConfig('DIRAC')['MaxDiracBulkJobs']))
+    inputLFNs = ['LFN:'+this_file.lfn for this_file in wanted_job.inputdata if isType(this_file, DiracFile)]
+
+    logger.info("LFNS: %s" % inputLFNs)
+
+    # master job with a splitter reaching prepare, hence bulk submit
+    if not job.master and job.splitter:
+        parametricinput_data = dirac_parametric_split(app)
+        if parametricinput_data is not None and len(parametricinput_data) > getConfig('DIRAC')['MaxDiracBulkJobs']:
+            raise BackendError('Dirac', 'Number of bulk submission jobs \'%s\' exceeds the maximum allowed \'%s\' if more are needed please modify your config. Note there is a hard limit in Dirac of currently 1000.' % (
+                len(parametricinput_data), getConfig('DIRAC')['MaxDiracBulkJobs']))
         # master job with no splitter or subjob already split proceed as normal
         else:
-            input_data = job.inputdata.getLFNs()
+            input_data = inputLFNs
 
-    elif 'Destination' not in job.backend.settings and not has_input_DiracFile and not hasOtherInputData:
-        ##THIS IS NOT VERY DIRAC CENTRIC
-        ##PLEASE WHEN TIME MOVE TO LHCBDIRAC where T1 is more applicable rcurrie
-        ##Also editing the settings on the fly is asking for potential problems, should avoid
+    if 'Destination' not in job.backend.settings and not inputLFNs and not hasOtherInputData:
         t1_sites = getConfig('DIRAC')['noInputDataBannedSites']
         logger.info('Job has no inputdata (T1 sites will be banned to help avoid overloading them).')
         if 'BannedSites' in job.backend.settings:
@@ -138,8 +128,8 @@ def dirac_inputdata(app, hasOtherInputData=False):
             if t1_sites:
                 job.backend.settings['BannedSites'] = t1_sites[:]
 
-    #import traceback
-    # traceback.print_stack()
+    if not input_data and not parametricinput_data:
+        input_data = inputLFNs
 
     return input_data, parametricinput_data
 
