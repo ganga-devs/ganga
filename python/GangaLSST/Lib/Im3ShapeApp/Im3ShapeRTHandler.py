@@ -76,7 +76,7 @@ class Im3ShapeDiracRTHandler(IRuntimeHandler):
         # TODO once there is a common, IApplication.getMeFilesForThisApp function replace this list with a getter ad it shouldn't really be hard-coded
         app_file_list = [app.im3_location, app.ini_location, app.blacklist]
 
-        app_file_list = [this_file for this_file in app_file_list if isinstance(this_app, DiracFile)]
+        app_file_list = [this_file for this_file in app_file_list if isinstance(this_file, DiracFile)]
         job.inputfiles.extend(app_file_list)
 
         # Slightly mis-using this here but it would be nice to have these files
