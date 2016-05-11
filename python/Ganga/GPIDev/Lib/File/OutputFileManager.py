@@ -297,9 +297,6 @@ def getWNCodeForOutputPostprocessing(job, indent):
 
     logger.debug("Process: '%s' on WN" % str(outputFilePostProcessingOnWN))
 
-    if patternsToZip == []:
-        return ""
-
     shortScript = """\n
 import os, glob
 for patternToZip in ###PATTERNSTOZIP###:
