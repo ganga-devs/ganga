@@ -6,6 +6,7 @@ import pickle
 import signal
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Shell import get_env_from_arg
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Credentials import getCredential
 import Ganga.Utility.execute as gexecute
@@ -39,15 +40,14 @@ def getDiracEnv(force=False):
             else:
                 absolute_path = config_file
             if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(absolute_path):
-                with open(absolute_path, 'r') as env_file:
-                    DIRAC_ENV = dict((tuple(line.strip().split('=', 1)) for line in env_file.readlines(
-                    ) if len(line.strip().split('=', 1)) == 2))
-                    keys_to_remove = []
-                    for k, v in DIRAC_ENV.iteritems():
-                        if str(v).startswith('() {'):
-                            keys_to_remove.append(k)
-                    for key in keys_to_remove:
-                        del DIRAC_ENV[key]
+
+                env_dict = get_env_from_arg(this_arg = absolute_path, def_env_on_fail = False)
+
+                if env_dict is not None:
+                    DIRAC_ENV = env_dict
+                else:
+                    logger.error("Error determining DIRAC environment")
+                    raise GangaException("Error determining DIRAC environment")
 
             else:
                 logger.error("'DiracEnvFile' config variable empty or file not present")
