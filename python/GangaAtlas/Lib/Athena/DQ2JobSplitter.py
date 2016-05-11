@@ -137,6 +137,8 @@ class DQ2JobSplitter(ISplitter):
 
         faxSites = []
 
+        logger.warning('job.inputdata.dataset %s job.backend.site %s ' % (str(job.inputdata.dataset), job.backend.site))
+
         if not job.inputdata:
             if (job.application.options.find("%SKIPEVENTS") != 0) or (job.application.options.find("%RNDM") != 0):
 
@@ -599,6 +601,7 @@ class DQ2JobSplitter(ISplitter):
             allowed_sites.append('PRAGUELCG2-RUCIOTEST_DATADISK')
 
         logger.debug('allowed_sites = %s ', allowed_sites)
+        logger.warning('allowed_sites = %s ', allowed_sites)
 
         contents_temp = job.inputdata.get_contents(overlap=False, size=True)
 
@@ -743,6 +746,7 @@ class DQ2JobSplitter(ISplitter):
         #print "%10s %20s %10s %10s %10s %10s %10s %10s %10s "  %("nrjob", "guid", "nevents", "skip_events", "max_events", "unused_evts", "id_lower", "id_upper", "counter")
 
         for dataset, siteinfo in siteinfos.iteritems():
+            logger.info('dataset [%s] siteinfo [%s]' % (dataset, siteinfo))
 
             self.numfiles = orig_numfiles
             self.numsubjobs = orig_numsubjobs
@@ -1203,6 +1207,7 @@ class DQ2JobSplitter(ISplitter):
 
         if not subjobs:
             logger.error('DQ2JobSplitter did not produce any subjobs! Either the dataset is not present in the cloud or at the site or all chosen sites are black-listed for the moment.')
+            logger.warning('job.inputdata.dataset %s job.backend.site %s ' % (str(job.inputdata.dataset), job.backend.site))
             raise ApplicationConfigurationError(None,'!!! Stopping submission now !!!')
 
         # reset missing files in case of a previous submission attempt

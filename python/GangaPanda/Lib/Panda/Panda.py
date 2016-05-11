@@ -7,6 +7,7 @@
 
 import os, sys, time, commands, re, tempfile, exceptions, urllib, fnmatch
 import cPickle as pickle
+import json
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IBackend import IBackend
@@ -51,6 +52,19 @@ except:
     agisinfos = []
     logger.error("Failed to load AGIS info from http://atlas-agis-api.cern.ch/request/site/query/list/?json&state=ACTI\
 VE&rc_site_state=ACTIVE")
+
+##### fix by jschovan, use outputs of AGIS collector
+def load_json(filename):
+    result=None
+    f=open(filename, 'r')
+    result=json.loads(f.read())
+    f.close()
+    return result
+
+pandaresources_json = '/tmp/agis_pandaresources.json'
+pandaresources_list=load_json(pandaresources_json)
+pandaresources=dict([(x['name'], x) for x in pandaresources_list])
+##### fix by jschovan END
 
 def setChirpVariables():
     """Helper function to fill chirp config variables"""
@@ -133,6 +147,16 @@ def convertDQ2NamesToQueueName(locations):
     return info
 
 def convertQueueNameToDQ2Names(queue):
+
+    ret=[pandaresources[x]['ddm'] for x in pandaresources if pandaresources[x]['name']==queue]
+    # logger.warning('(%s) ret:%s:' % (type(ret), ret))
+    try:
+        ret=ret[0]
+    except:
+        # logger.warning('oh well')
+        import traceback
+        logger.error('queue %s error %s'%(queue, str(traceback.print_exc() )))
+    return str(ret).split(',')
 
     # refreshAGISSpecs()
     # tokens = []
@@ -1651,6 +1675,9 @@ class Panda(IBackend):
                 if (allowTape or not Client.isTapeSite(t)) and t.find("TZERO") == -1:
                     spacetokens.append(t)
 
+        if '' in spacetokens:
+            spacetokens.pop(spacetokens.index(''))
+        logger.warning('site %s spacetokens %s' % (self.site, spacetokens))
         return spacetokens
 
     def get_stats(self):
