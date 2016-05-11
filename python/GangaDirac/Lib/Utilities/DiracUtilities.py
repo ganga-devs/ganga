@@ -31,30 +31,27 @@ Dirac_Proxy_Lock = threading.Lock()
 
 def getDiracEnv(force=False):
     global DIRAC_ENV
-    global Dirac_Env_Lock
-    lock = Dirac_Env_Lock
-    lock.acquire()
-    if DIRAC_ENV == {} or force:
-        config_file = getConfig('DIRAC')['DiracEnvFile']
-        if not os.path.exists(config_file):
-            absolute_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../..', config_file)
-        else:
-            absolute_path = config_file
-        if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(absolute_path):
-            with open(absolute_path, 'r') as env_file:
-                DIRAC_ENV = dict((tuple(line.strip().split('=', 1)) for line in env_file.readlines(
-                ) if len(line.strip().split('=', 1)) == 2))
-                keys_to_remove = []
-                for k, v in DIRAC_ENV.iteritems():
-                    if str(v).startswith('() {'):
-                        keys_to_remove.append(k)
-                for key in keys_to_remove:
-                    del DIRAC_ENV[key]
+    with Dirac_Env_Lock:
+        if DIRAC_ENV == {} or force:
+            config_file = getConfig('DIRAC')['DiracEnvFile']
+            if not os.path.exists(config_file):
+                absolute_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../..', config_file)
+            else:
+                absolute_path = config_file
+            if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(absolute_path):
+                with open(absolute_path, 'r') as env_file:
+                    DIRAC_ENV = dict((tuple(line.strip().split('=', 1)) for line in env_file.readlines(
+                    ) if len(line.strip().split('=', 1)) == 2))
+                    keys_to_remove = []
+                    for k, v in DIRAC_ENV.iteritems():
+                        if str(v).startswith('() {'):
+                            keys_to_remove.append(k)
+                    for key in keys_to_remove:
+                        del DIRAC_ENV[key]
 
-        else:
-            logger.error("'DiracEnvFile' config variable empty or file not present")
-            logger.error("Tried looking in : '%s' Please check your config" % absolute_path) 
-    lock.release()
+            else:
+                logger.error("'DiracEnvFile' config variable empty or file not present")
+                logger.error("Tried looking in : '%s' Please check your config" % absolute_path) 
     logger.debug("Dirac Env: %s" % DIRAC_ENV)
     return DIRAC_ENV
 
@@ -129,22 +126,20 @@ def _proxyValid():
 
 def _checkProxy( delay=60, renew = True ):
     ## Handling mutable globals in a multi-threaded system to remember to LOCK
-    global Dirac_Proxy_Lock
-    Dirac_Proxy_Lock.acquire()
-    ## Function to check for a valid proxy once every 60( or n) seconds
-    global last_modified_time
-    if last_modified_time is None:
-        # This will move/change when new credential system in place
-        ############################
-        _dirac_check_proxy( True )
-        ############################
-        last_modified_time = time.time()
+    with Dirac_Proxy_Lock:
+        ## Function to check for a valid proxy once every 60( or n) seconds
+        global last_modified_time
+        if last_modified_time is None:
+            # This will move/change when new credential system in place
+            ############################
+            _dirac_check_proxy( True )
+            ############################
+            last_modified_time = time.time()
 
-    if abs(last_modified_time - time.time()) > int(delay):
-        _dirac_check_proxy( renew )
-        last_modified_time = time.time()
+        if abs(last_modified_time - time.time()) > int(delay):
+            _dirac_check_proxy( renew )
+            last_modified_time = time.time()
 
-    Dirac_Proxy_Lock.release()
 
 def execute(command,
             timeout=getConfig('DIRAC')['Timeout'],
