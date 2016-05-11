@@ -23,7 +23,9 @@ class GangaDataset(Dataset):
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
     _name = "GangaDataset"
-    _exportmethods = ['append', 'extend', '__len__', 'isEmtpy', 'getFileNames', 'getFilenameList', '__getitem__']
+    _exportmethods = ['append', 'extend', '__len__', 'isEmtpy', 'getFileNames', 'getFilenameList', '__getitem__', '__nonzero__', 'isEmpty',
+                        'getFileNames', 'getFilenameList', 'difference', 'isSubset', 'isSuperset', 'symmetricDifference', 'intersection',
+                        'union']
 
     def __init__(self, files=None):
         if files is None:
