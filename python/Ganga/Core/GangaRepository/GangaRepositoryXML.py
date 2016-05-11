@@ -227,7 +227,7 @@ class GangaRepositoryLocal(GangaRepository):
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
         for k in self._fully_loaded.keys():
             self.index_write(k, shutdown=True)
-        self._write_master_cache(True)
+        self._write_master_cache()
         self.sessionlock.shutdown()
 
     def get_fn(self, this_id):
@@ -378,7 +378,7 @@ class GangaRepositoryLocal(GangaRepository):
         for k, v in self._cached_obj.iteritems():
             self._cached_obj.pop(k)
 
-    def _write_master_cache(self, shutdown=False):
+    def _write_master_cache(self):
         """
         write a master index cache once per 300sec
         shutdown=True causes this to be written now
@@ -387,9 +387,6 @@ class GangaRepositoryLocal(GangaRepository):
         try:
             _master_idx = os.path.join(self.root, 'master.idx')
             this_master_cache = []
-            if os.path.isfile(_master_idx) and not shutdown:
-                if abs(self._master_index_timestamp - os.stat(_master_idx).st_ctime) < 300:
-                    return
 
             items_to_save = self.objects.iteritems()
             #logger.info("Updating Items: %s" % self.objects.keys())
@@ -567,7 +564,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         if len(changed_ids) != 0:
             isShutdown = not firstRun
-            self._write_master_cache(shutdown=isShutdown)
+            self._write_master_cache()
 
         return changed_ids
 
@@ -710,6 +707,8 @@ class GangaRepositoryLocal(GangaRepository):
 
             except (OSError, IOError, XMLFileError) as x:
                 raise RepositoryError(self, "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x))
+
+        self._write_master_cache()
 
     def is_loaded(self, this_id):
         """
