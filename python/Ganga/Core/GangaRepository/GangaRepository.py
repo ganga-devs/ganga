@@ -96,7 +96,7 @@ class GangaRepository(object):
     def update_index(self, id=None):
         """update_index(id = None) --> iterable of ids
         Read the index containing the given ID (or all indices if id is None).
-        Create objects as needed , and set the _index_cache through setNodeIndexCache
+        Create objects as needed , and set the _index_cache
         for all objects that are not fully loaded.
         Returns a list of ids of jobs that changed/removed/added
         Raise RepositoryError
@@ -201,10 +201,7 @@ class GangaRepository(object):
             self._found_classes[compound_name] = cls
         cls = self._found_classes[compound_name]
         obj = cls()
-        #setattr(obj, '_parent', None)
-        #obj.__init__()
-        obj.setNodeData({})
-        obj.setNodeAttribute('id', this_id)
+        obj._data = {}
 
         obj._setFlushed()
         self._internal_setitem__(this_id, obj)
@@ -217,13 +214,12 @@ class GangaRepository(object):
         if this_id in self.incomplete_objects:
             self.incomplete_objects.remove(this_id)
         self.objects[this_id] = obj
-        setattr(obj, "_registry_id", this_id)
-        setattr(obj, "_registry_locked", False)
-        setattr(obj, "_id", this_id)
-        #if obj.getNodeData() and "id" in obj.getNodeData().keys():  # MAGIC id
-        obj.setNodeAttribute('id', this_id)
+        obj._registry_id = this_id
+        obj._registry_locked = False
+        obj._id = this_id
+        if 'id' in obj._schema.allItemNames():
+            obj.setSchemaAttribute('id', this_id)  # Don't set the object as dirty
         obj._setRegistry(self.registry)
-
 
     def _internal_del__(self, id):
         """ Internal function for repository classes to (logically) delete items to the repository."""

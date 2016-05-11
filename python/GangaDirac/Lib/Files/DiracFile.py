@@ -148,7 +148,7 @@ class DiracFile(IGangaFile):
 
         return
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo=None):
 
         cls = type(stripProxy(self))
         c = super(cls, cls).__new__(cls)
