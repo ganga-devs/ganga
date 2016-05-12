@@ -244,7 +244,7 @@ class TestMutableMethods(GangaUnitTest):
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
         from Ganga.GPIDev.Base.Proxy import isType
 
-        j = Job(application=Executable(), backend=TestSubmitter())
+        j = Job(application=Executable(), backend=TestSubmitter(time=1))
         j.splitter = ArgSplitter(args=[['A'], ['B'], ['C']])
 
         j.submit()
