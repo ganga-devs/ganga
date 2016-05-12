@@ -6,6 +6,7 @@ import pickle
 import signal
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Shell import get_env_from_arg
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Credentials import getCredential
 import Ganga.Utility.execute as gexecute
@@ -31,9 +32,11 @@ Dirac_Proxy_Lock = threading.Lock()
 
 def getDiracEnv(force=False):
     """
-    Function to get and load the DIRAC env from disk and store it in a global cached dictionary
+    Returns the dirac environment stored in a global dictionary by Ganga.
+    This is expected to be stored as some form of 'source'-able file on disk which can be used to get the printenv after sourcing
+    Once loaded and stored his is used for executing all DIRAC code in future
     Args:
-        force (bool): Forces the (re)loading of the env from disk again
+        force (bool): This triggers a compulsory reload of the env from disk
     """
     global DIRAC_ENV
     with Dirac_Env_Lock:
@@ -44,15 +47,14 @@ def getDiracEnv(force=False):
             else:
                 absolute_path = config_file
             if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(absolute_path):
-                with open(absolute_path, 'r') as env_file:
-                    DIRAC_ENV = dict((tuple(line.strip().split('=', 1)) for line in env_file.readlines(
-                    ) if len(line.strip().split('=', 1)) == 2))
-                    keys_to_remove = []
-                    for k, v in DIRAC_ENV.iteritems():
-                        if str(v).startswith('() {'):
-                            keys_to_remove.append(k)
-                    for key in keys_to_remove:
-                        del DIRAC_ENV[key]
+
+                env_dict = get_env_from_arg(this_arg = absolute_path, def_env_on_fail = False)
+
+                if env_dict is not None:
+                    DIRAC_ENV = env_dict
+                else:
+                    logger.error("Error determining DIRAC environment")
+                    raise GangaException("Error determining DIRAC environment")
 
             else:
                 logger.error("'DiracEnvFile' config variable empty or file not present")
@@ -65,9 +67,10 @@ def getDiracEnv(force=False):
 
 def getDiracCommandIncludes(force=False):
     """
-    Function to get and load the DIRAC commands used to translate requests between ganga/DIRAC
+    This helper function returns the Ganga DIRAC helper functions which are called by Ganga code to talk to DIRAC
+    These are loaded from disk once and then saved in memory.
     Args:
-        force (bool): Forces the (re)loading of the code from disk again
+        force (bool): Triggers a reload from disk when True
     """
     global DIRAC_INCLUDE
     if DIRAC_INCLUDE == '' or force:
@@ -119,9 +122,9 @@ last_modified_valid = False
 
 def _dirac_check_proxy( renew = True):
     """
-    Function to check the balidity of a DIRAC proxy
+    This function checks the validity of the DIRAC proxy
     Args:
-        renew (bool): Will trigger the proxy to be regenerated if needed when True
+        renew (bool): When True this will require a proxy to be valid before we proceed. False means raise Exception when expired
     """
     global last_modified_valid
     global proxy
@@ -144,7 +147,7 @@ def _dirac_check_proxy( renew = True):
 
 def _proxyValid():
     """
-    Function to check if the proxy is valid without triggering it to be regenerated
+    This function is a wrapper for the _checkProxy with a default of False for renew. Returns the last modified time global object
     """
     _checkProxy( renew = False )
     return last_modified_valid
@@ -186,14 +189,14 @@ def execute(command,
     This function blocks until the server returns.
     
     Args:
-        command (str): The command to be executed
-        timeout (int): The time a command is given before it's assumed it may have timed out
-        env (dict): Optional dict in which the command is to be executed
-        cwd (str): Optional, the path where a command is to be run
-        shell (bool): Should we launch a new shell for these commands
-        python_setup (str): Unclear what this is used for TODO: DOCUMENT BETTER
-        eval_includes (None): Unclear what this is used for TODO: DOCUMENT BETTER
-        update_env (bool): Should the env passed to the function be updated after command has been run
+        command (str): This is the command we're running within our DIRAC session
+        timeout (bool): This is the length of time that a DIRAC call has before it's decided some interaction has timed out
+        env (dict): an optional environment to execute the DIRAC code in
+        cwd (str): an optional string to a valid path where this code should be executed
+        shell (bool): Should this code be executed in a new shell environment
+        python_setup (str): Optional extra code to pass to python when executing
+        eval_incldes (???): TODO document me
+        update_env (bool): Should this modify the given env object with the env after the command has executed
     """
 
     if env is None:
@@ -216,49 +219,8 @@ def execute(command,
                                   eval_includes=eval_includes,
                                   update_env=update_env)
 
-    #TODO: can we just use deepcopy here on the returned object?
+    # TODO can we just deepcopy?
 
-    # rcurrie I've seen problems with just returning this raw object,
-    # expanding it to be sure that an instance remains in memory
-    myObject = {}
-    if hasattr(returnable, 'keys'):
-        # Expand object(s) in dictionaries
-        myObject = _expand_object(returnable)
-    elif type(returnable) in[list, tuple]:
-        # Expand object(s) in lists
-        myObject = _expand_list(returnable)
-    else:
-        # Copy object(s) so thet they definately are in memory
-        myObject = copy.deepcopy(returnable)
+    return copy.deepcopy(returnable)
 
-    return myObject
-
-
-def _expand_object(myobj):
-    """
-    An attempt to go into children of a dict object and deepcopy the contents
-    Args:
-        myobj (dict): dictionary to be descended into and copied
-    """
-    new_obj = {}
-    if hasattr(myobj, 'keys'):
-        for key in myobj.keys():
-            value = myobj.get(key)
-            if hasattr(value, 'keys'):
-                new_obj[key] = _expand_object(value)
-            else:
-                new_obj[key] = copy.deepcopy(value)
-    return new_obj
-
-
-def _expand_list(mylist):
-    """
-    An attempt to go into children of a list object and deepcopy the contents
-    Args:
-        mylist (list): list to be descended into and copied
-    """
-    new_list = []
-    for element in mylist:
-        new_list.append(copy.deepcopy(element))
-    return new_list
 

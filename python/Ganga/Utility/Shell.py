@@ -45,6 +45,13 @@ logger = Ganga.Utility.logging.getLogger()
 
 
 def expand_vars(env):
+    """
+    This function takes a raw dictionary which describes the environment and sanitizes it slightly
+    This makes some attempt to take multi-line aliases and functions and make then into single line strings.
+    At best we don't like bash functions being assigned to variables here but we shouldn't crash when some users have bad a env
+    Args:
+        env (dict): dictionary describing the environment which is to be sanitized
+    """
     tmp_dict = {}
     for k, v in env.iteritems():
         if not str(v).startswith('() {'):
@@ -63,6 +70,65 @@ def expand_vars(env):
             # print tmp_dict[k]
     return tmp_dict
 
+
+def get_env_from_arg(this_arg, def_env_on_fail = True):
+    """
+    Function to return the environment after running the command "this_command"
+    Args:
+        this_arg (str): This file/command is the command which is to be run after source to alter an environment
+        def_env_on_fail (bool): True means the default environment is to be returned on failure (i.e. I expect a dict of environ), False is return None on failure
+    """
+
+    if def_env_on_fail:
+        env = dict(os.environ)
+        env = expand_vars(env)
+    else:
+        env = None
+
+    logger.debug("Initializing Shell")
+    logger.debug("arg:\n%s" % this_arg)
+
+    this_cwd = os.path.abspath(os.getcwd())
+    if not os.path.exists(this_cwd):
+        this_cwd = os.path.abspath(tempfile.gettempdir())
+
+    logger.debug("Using CWD: %s" % this_cwd)
+    command = 'source %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (this_arg)
+    logger.debug('Running:   %s' % command)
+    pipe = subprocess.Popen('bash', env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    output = pipe.communicate(command)
+    rc = pipe.poll()
+
+    # When good output = ( "some_env_python_dict_repr", None )
+    # When bad = ( stdout, stderr )
+
+    if rc:
+
+        logger.warning('Unexpected rc %d from setup command %s', rc, setup)
+
+        try:
+            env2 = expand_vars(eval(output[0]))
+        except Exception as err:
+            logger.debug("Err: %s" % err)
+            env2 = None
+            logger.error("Cannot construct environ:\n%s" % str(output))
+            try:
+                logger.error("eval: %s" % str(output))
+            except Exception as err2:
+                logger.debug("Err2: %s" % err2)
+
+        if env2:
+            env = env2
+    else:
+        
+        env2 = expand_vars(eval(output[0]))
+
+        if env2:
+            env = env2
+
+    #logger.debug("returning: %s" % str(env))
+
+    return env
 
 class Shell(object):
 
@@ -90,51 +156,23 @@ class Shell(object):
         s = Shell()
         if 'NO_BAR' not in os.environ:
            assert s.env['FOO'] == '$NO_BAR'
+           
+        will store an env from:
+        
+        source setup setup_args[0] setup_args[1]
+        e.g.
+        source . && myCmd.sh someoption
+        source =  '.'
+        source_args = ['&&', 'myCmd.sh', 'someoption']
 
+        Args:
+            setup (str): typically a file or '.' being sourced in bash
+            setup_args (list): list of strings which are executed directly with a ' ' character spacing
         """
 
         if setup is not None:
+            self.env = get_env_from_arg(this_arg="%s %s" % (setup, " ".join(setup_args)))
 
-            env = dict(os.environ)
-            env = expand_vars(env)
-
-            logger.debug("Initializing Shell")
-            logger.debug("command:\n%s" % setup)
-            logger.debug("args:\n%s" % " ".join(setup_args))
-
-            this_cwd = os.path.abspath(os.getcwd())
-            if not os.path.exists(this_cwd):
-                this_cwd = os.path.abspath(tempfile.gettempdir())
-            logger.debug("Using CWD: %s" % this_cwd)
-            command = 'source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup, " ".join(setup_args))
-            logger.debug('Running:   %s' % command )
-            pipe = subprocess.Popen('bash', env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-            output = pipe.communicate(command)
-            rc = pipe.poll()
-            if rc:
-                logger.warning('Unexpected rc %d from setup command %s', rc, setup)
-
-            try:
-                env2 = expand_vars(eval(eval(str(output))[0]))
-            except Exception as err:
-                logger.debug("Err: %s" % str(err))
-                env2 = None
-                logger.error("Cannot construct environ:\n%s" % str(output))
-                try:
-                    logger.error("eval: %s" % str(eval(str(output)[0])))
-                except Exception as err2:
-                    logger.debug("Err2: %s" % str(err2))
-                    pass
-                try:
-                    logger.error("eval(eval): %s" % eval(eval(str(output))[0]))
-                except Exception as err3:
-                    logger.debug("Err3: %s" % str(err3))
-                    pass
-
-            if env2:
-                env = env2
-
-            self.env = env
         else:
             # bug #44334: Ganga/Utility/Shell.py does not save environ
             env = dict(os.environ)
@@ -143,8 +181,16 @@ class Shell(object):
         self.dirname = None
 
     def pythonCmd(self, cmd, soutfile=None, allowed_exit=None,
-                  capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
-        "Execute a python command and captures the stderr and stdout which are returned in a file"
+            capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
+        """Execute a python command and captures the stderr and stdout which are returned in a file
+        Args:
+            cmd (str): command to be executed in a shell
+            soutfile (str): filename of file to store the output in (optional)
+            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
+            capture_stderr (None): unused, kept for API compatability?
+            timeout (int): length of time (sec) that a command is expected to have finished by
+            mention_outputfile_on_errors (bool): Should we print warning pointing to output when something when something goes wrong
+        """
 
         if allowed_exit is None:
             allowed_exit = [0]
@@ -152,7 +198,15 @@ class Shell(object):
 
     def cmd(self, cmd, soutfile=None, allowed_exit=None,
             capture_stderr=False, timeout=None, mention_outputfile_on_errors=True, python=False):
-        "Execute an OS command and captures the stderr and stdout which are returned in a file"
+        """Execute an OS command and captures the stderr and stdout which are returned in a file
+        Args:
+            cmd (str): command to be executed in a shell
+            soutfile (str): filename of file to store the output in (optional)
+            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
+            capture_stderr (None): unused, kept for API compatability?
+            timeout (int): length of time (sec) that a command is expected to have finished by
+            mention_outputfile_on_errors (bool): Should we print warning pointing to output when something when something goes wrong
+        """
 
         if allowed_exit is None:
             allowed_exit = [0]
@@ -191,7 +245,7 @@ class Shell(object):
                         break
                 if timeout and time.time() - t0 > timeout:
                     logger.warning(
-                        'Command interrupted - timeout %ss reached: %s', timeout0, cmd)
+                            'Command interrupted - timeout %ss reached: %s', timeout0, cmd)
                     if already_killed:
                         sig = signal.SIGKILL
                     else:
@@ -233,13 +287,22 @@ class Shell(object):
         return rc, soutfile, m is None
 
     def cmd1(self, cmd, allowed_exit=None, capture_stderr=False, timeout=None, python=False):
-        "Executes an OS command and captures the stderr and stdout which are returned as a string"
+        """Executes an OS command and captures the stderr and stdout which are returned as a string
+        Args:
+            cmd (str): command to be executed in a shell
+            soutfile (str): filename of file to store the output in (optional)
+            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
+            capture_stderr (None): unused, kept for API compatability?
+            timeout (int): length of time (sec) that a command is expected to have finished by
+            mention_outputfile_on_errors (bool): Should we print warning pointing to output when something when something goes wrong
+            python (bool): is a Python cmd?
+        """
 
         if allowed_exit is None:
             allowed_exit = [0]
 
         rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr,
-                                  timeout, mention_outputfile_on_errors=False, python=python)
+                timeout, mention_outputfile_on_errors=False, python=python)
 
         from contextlib import closing
         with closing(open(outfile)) as out_file:
@@ -250,7 +313,6 @@ class Shell(object):
             if err.errno != errno.ENOENT:
                 logger.debug("Err removing shell output: %s" % str(err))
                 raise err
-            pass
 
         return rc, output, m
 
@@ -259,6 +321,11 @@ class Shell(object):
         caputured and are passed on the caller.
 
         stderr_capture may specify a name of a file to which stderr is redirected.
+        
+        Args:
+            cmd (str): command to be executed in a shell
+            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
+            capture_stderr (None): unused, kept for API compatability?
         """
         if allowed_exit is None:
             allowed_exit = [0]
@@ -272,7 +339,7 @@ class Shell(object):
             rc = subprocess.call(['/bin/sh', '-c', cmd], env=self.env)
         except OSError as e:
             logger.warning(
-                'Problem with shell command: %s, %s', e.errno, e.strerror)
+                    'Problem with shell command: %s, %s', e.errno, e.strerror)
             rc = 255
         return rc
 
