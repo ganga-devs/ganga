@@ -5,19 +5,22 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.util import unique
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Base.Proxy import isType, getName, stripProxy
+from Ganga.GPIDev.Base.Proxy import getName
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def mangle_job_name(app):
-    """ Create a safe job name to send to DIRAC """
-    job = stripProxy(app).getJobObject()
+    """ Create a safe job name to send to DIRAC (includes full fqid)
+    Args:
+        app (IApplication): This is the application belonging to the job of interest
+    """
+    job = app.getJobObject()
 
     jobName = job.name
     jobIndex = job.getStringFQID()
-    appName = str(getName(app))
+    appName = getName(app)
     appVersion = None
     if hasattr(app, 'version'):
         appVersion = str(app.version)
@@ -44,7 +47,10 @@ def mangle_job_name(app):
 
 
 def API_nullifier(item):
-    """ Return is item None or emtpy list"""
+    """ Return is item None or emtpy list
+    Args:
+        item (list): If this is an empty list return None, else return list, Dirac doesn't like empty lists
+    """
     if item is None or len(item) == 0:
         return None
     return item
@@ -54,9 +60,12 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
     This constructs the setOutputData such that the data will be sent to the chosen SE/Token
     In the case that the empty_SE_check is True it will raise an exception if the defaultSE is empty
     In the case that it's False an empty SE is allowed.
+    Args:
+        output_files (list): List of IGangaFile objects which are requested from job.outputfiles
+        empty_SE_check (bool): If this is True then throw exception if DiracFile objects don't have any defaultSE set
     """
 
-    _output_files = [this_file for this_file in output_files if isType(this_file, DiracFile)]
+    _output_files = [this_file for this_file in output_files if isinstance(this_file, DiracFile)]
 
     file_SE_dict = {}
 
@@ -87,7 +96,11 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
 
 
 def dirac_inputdata(app, hasOtherInputData=False):
-    """ Construct the JDL compoenent which requests the inputdata for a job """
+    """ Construct the JDL component which requests the inputdata for a job
+    Args:
+        app (IApplication): app which belongs to the job of interest
+        hasOtherInputData (bool): This is used to stop BannedSites being added to the JDL structure through backend.settings
+    """
     job = app.getJobObject()
     input_data = None
     parametricinput_data = None
@@ -97,14 +110,14 @@ def dirac_inputdata(app, hasOtherInputData=False):
     input_data = None
     parametricinput_data = None
 
-    if not job.inputdata and not job.master.inputdata:
+    if not job.inputdata and (not job.master or not job.master.inputdata):
         return input_data, parametricinput_data
 
     wanted_job = job
-    if not job.inputdata and job.master.inputdata:
+    if not job.inputdata and job.master and job.master.inputdata is not None and job.master.inputdata:
         wanted_job = job.master
 
-    inputLFNs = ['LFN:'+this_file.lfn for this_file in wanted_job.inputdata if isType(this_file, DiracFile)]
+    inputLFNs = ['LFN:'+this_file.lfn for this_file in wanted_job.inputdata if isinstance(this_file, DiracFile)]
 
     logger.info("LFNS: %s" % inputLFNs)
 
@@ -137,7 +150,10 @@ def dirac_inputdata(app, hasOtherInputData=False):
 
 
 def dirac_parametric_split(app):
-    """ Bulk job submission splitter. TODO document more """
+    """ Bulk job submission splitter. TODO document more
+    Args:
+        app (IApplication): Application belonging to the job in question
+    """
     data = app.getJobObject().inputdata
     splitter = app.getJobObject().splitter
 
@@ -148,7 +164,7 @@ def dirac_parametric_split(app):
     for dataset in split_data:
         this_dataset = []
         for this_file in dataset:
-            if isType(this_file, DiracFile):
+            if isinstance(this_file, DiracFile):
                 this_dataset.append(this_file.lfn)
             else:
                 raise SplitterError("ERROR: file: %s NOT of type DiracFile" % str(this_file) )
@@ -162,7 +178,11 @@ def dirac_parametric_split(app):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def dirac_ouputdata(app):
-    """ TODO work out if this is still called anywhere, returns the outputdata files as a tuple of files and location """
+    """ TODO work out if this is still called anywhere?
+    Returns the outputdata files as a tuple of files and location
+    Args:
+        app (IApplication): App for the job of interest
+    """
     job = app.getJobObject()
     if job.outputdata:
         return job.outputdata.files[:], job.outputdata.location
@@ -171,8 +191,7 @@ def dirac_ouputdata(app):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def diracAPI_script_template():
-    # NOTE setOutputData(replicate) replicate keyword only for LHCbDirac. must
-    # move there when get a chance.
+    """ Generate and return the DiracAPI job submission template """
 
     import inspect
     import os.path
@@ -191,8 +210,10 @@ def diracAPI_script_settings(app):
     """
     Set some additional setting on the diracAPI in the JDL making use of any custom parameters set in the backend object
     return JDL lines
+    Args:
+        app (IApplication): Application belonging to job of interest
     """
-    job = stripProxy(app).getJobObject()
+    job = app.getJobObject()
     diracAPI_line = ''
     if type(job.backend.settings) is not dict:
         raise ApplicationConfigurationError(
