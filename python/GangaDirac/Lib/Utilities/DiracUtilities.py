@@ -30,6 +30,11 @@ Dirac_Proxy_Lock = threading.Lock()
 
 
 def getDiracEnv(force=False):
+    """
+    Function to get and load the DIRAC env from disk and store it in a global cached dictionary
+    Args:
+        force (bool): Forces the (re)loading of the env from disk again
+    """
     global DIRAC_ENV
     with Dirac_Env_Lock:
         if DIRAC_ENV == {} or force:
@@ -59,6 +64,11 @@ def getDiracEnv(force=False):
 
 
 def getDiracCommandIncludes(force=False):
+    """
+    Function to get and load the DIRAC commands used to translate requests between ganga/DIRAC
+    Args:
+        force (bool): Forces the (re)loading of the code from disk again
+    """
     global DIRAC_INCLUDE
     if DIRAC_INCLUDE == '' or force:
         for fname in getConfig('DIRAC')['DiracCommandFiles']:
@@ -73,6 +83,13 @@ def getDiracCommandIncludes(force=False):
 
 
 def getValidDiracFiles(job, names=None):
+    """
+    This is a generator for all DiracFiles in a jobs outputfiles
+    TODO: Is this still called anywhere?
+    Args:
+        job (Job): The job which is having it's DiracFiles tested
+        names (list): list of strings of names to be matched to namePatterns in outputfiles
+    """
     from GangaDirac.Lib.Files.DiracFile import DiracFile
     from Ganga.GPIDev.Base.Proxy import isType
     if job.subjobs:
@@ -101,6 +118,11 @@ last_modified_valid = False
 
 
 def _dirac_check_proxy( renew = True):
+    """
+    Function to check the balidity of a DIRAC proxy
+    Args:
+        renew (bool): Will trigger the proxy to be regenerated if needed when True
+    """
     global last_modified_valid
     global proxy
     _isValid = proxy.isValid()
@@ -121,10 +143,19 @@ def _dirac_check_proxy( renew = True):
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 def _proxyValid():
+    """
+    Function to check if the proxy is valid without triggering it to be regenerated
+    """
     _checkProxy( renew = False )
     return last_modified_valid
 
 def _checkProxy( delay=60, renew = True ):
+    """
+    Check the validity of the DIRAC proxy. If it's marked as valid, check once every 'delay' seconds.
+    Args:
+        delay (int): number of seconds between calls to the tools to test the proxy
+        renew (bool): If True, trigger the regeneration of a valid proxy
+    """
     ## Handling mutable globals in a multi-threaded system to remember to LOCK
     with Dirac_Proxy_Lock:
         ## Function to check for a valid proxy once every 60( or n) seconds
@@ -153,6 +184,16 @@ def execute(command,
     Execute a command on the local DIRAC server.
 
     This function blocks until the server returns.
+    
+    Args:
+        command (str): The command to be executed
+        timeout (int): The time a command is given before it's assumed it may have timed out
+        env (dict): Optional dict in which the command is to be executed
+        cwd (str): Optional, the path where a command is to be run
+        shell (bool): Should we launch a new shell for these commands
+        python_setup (str): Unclear what this is used for TODO: DOCUMENT BETTER
+        eval_includes (None): Unclear what this is used for TODO: DOCUMENT BETTER
+        update_env (bool): Should the env passed to the function be updated after command has been run
     """
 
     if env is None:
@@ -175,6 +216,8 @@ def execute(command,
                                   eval_includes=eval_includes,
                                   update_env=update_env)
 
+    #TODO: can we just use deepcopy here on the returned object?
+
     # rcurrie I've seen problems with just returning this raw object,
     # expanding it to be sure that an instance remains in memory
     myObject = {}
@@ -192,6 +235,11 @@ def execute(command,
 
 
 def _expand_object(myobj):
+    """
+    An attempt to go into children of a dict object and deepcopy the contents
+    Args:
+        myobj (dict): dictionary to be descended into and copied
+    """
     new_obj = {}
     if hasattr(myobj, 'keys'):
         for key in myobj.keys():
@@ -204,6 +252,11 @@ def _expand_object(myobj):
 
 
 def _expand_list(mylist):
+    """
+    An attempt to go into children of a list object and deepcopy the contents
+    Args:
+        mylist (list): list to be descended into and copied
+    """
     new_list = []
     for element in mylist:
         new_list.append(copy.deepcopy(element))
