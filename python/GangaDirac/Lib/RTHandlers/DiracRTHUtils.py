@@ -16,7 +16,7 @@ def mangle_job_name(app):
     Args:
         app (IApplication): This is the application belonging to the job of interest
     """
-    job = appt.getJobObject()
+    job = app.getJobObject()
 
     jobName = job.name
     jobIndex = job.getStringFQID()
