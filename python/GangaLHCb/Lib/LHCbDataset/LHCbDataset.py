@@ -11,7 +11,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
 from OutputData import OutputData
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory, getName
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
@@ -128,7 +128,7 @@ class LHCbDataset(GangaDataset):
         #this_file = self.files[i]
         # print type(this_file)
         # return this_file
-        # return GPIProxyObjectFactory(this_file)
+        # return this_file
         # return this_file
         if type(i) == type(slice(0)):
             ds = LHCbDataset(files=self.files[i])
@@ -391,7 +391,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return data
 
     def isSubset(self, other):
         '''Is every file in this data set in other?'''
@@ -411,7 +411,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return data
 
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
@@ -420,7 +420,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return data
 
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
@@ -429,7 +429,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return data
 
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '

@@ -12,7 +12,10 @@ logger = getLogger()
 
 
 def mangle_job_name(app):
-    """ Create a safe job name to send to DIRAC """
+    """ Create a safe job name to send to DIRAC (includes full fqid)
+    Args:
+        app (IApplication): This is the application belonging to the job of interest
+    """
     job = app.getJobObject()
 
     jobName = job.name
@@ -44,7 +47,10 @@ def mangle_job_name(app):
 
 
 def API_nullifier(item):
-    """ Return is item None or emtpy list"""
+    """ Return is item None or emtpy list
+    Args:
+        item (list): If this is an empty list return None, else return list, Dirac doesn't like empty lists
+    """
     if item is None or len(item) == 0:
         return None
     return item
@@ -54,6 +60,9 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
     This constructs the setOutputData such that the data will be sent to the chosen SE/Token
     In the case that the empty_SE_check is True it will raise an exception if the defaultSE is empty
     In the case that it's False an empty SE is allowed.
+    Args:
+        output_files (list): List of IGangaFile objects which are requested from job.outputfiles
+        empty_SE_check (bool): If this is True then throw exception if DiracFile objects don't have any defaultSE set
     """
 
     _output_files = [this_file for this_file in output_files if isinstance(this_file, DiracFile)]
@@ -87,7 +96,11 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
 
 
 def dirac_inputdata(app, hasOtherInputData=False):
-    """ Construct the JDL compoenent which requests the inputdata for a job """
+    """ Construct the JDL component which requests the inputdata for a job
+    Args:
+        app (IApplication): app which belongs to the job of interest
+        hasOtherInputData (bool): This is used to stop BannedSites being added to the JDL structure through backend.settings
+    """
     job = app.getJobObject()
     input_data = None
     parametricinput_data = None
@@ -137,7 +150,10 @@ def dirac_inputdata(app, hasOtherInputData=False):
 
 
 def dirac_parametric_split(app):
-    """ Bulk job submission splitter. TODO document more """
+    """ Bulk job submission splitter. TODO document more
+    Args:
+        app (IApplication): Application belonging to the job in question
+    """
     data = app.getJobObject().inputdata
     splitter = app.getJobObject().splitter
 
@@ -162,7 +178,11 @@ def dirac_parametric_split(app):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def dirac_ouputdata(app):
-    """ TODO work out if this is still called anywhere, returns the outputdata files as a tuple of files and location """
+    """ TODO work out if this is still called anywhere?
+    Returns the outputdata files as a tuple of files and location
+    Args:
+        app (IApplication): App for the job of interest
+    """
     job = app.getJobObject()
     if job.outputdata:
         return job.outputdata.files[:], job.outputdata.location
@@ -171,8 +191,7 @@ def dirac_ouputdata(app):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def diracAPI_script_template():
-    # NOTE setOutputData(replicate) replicate keyword only for LHCbDirac. must
-    # move there when get a chance.
+    """ Generate and return the DiracAPI job submission template """
 
     import inspect
     import os.path
@@ -191,6 +210,8 @@ def diracAPI_script_settings(app):
     """
     Set some additional setting on the diracAPI in the JDL making use of any custom parameters set in the backend object
     return JDL lines
+    Args:
+        app (IApplication): Application belonging to job of interest
     """
     job = app.getJobObject()
     diracAPI_line = ''

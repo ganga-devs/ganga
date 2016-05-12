@@ -546,7 +546,7 @@ class DiracBase(IBackend):
             DiracBase._getStateTime(job, 'completing')
             if job.status in ['removed', 'killed']:
                 return
-            if (job.master and job.master.status in ['removed', 'killed']):
+            elif (job.master and job.master.status in ['removed', 'killed']):
                 return  # user changed it under us
 
             job.updateStatus('completing')
@@ -734,11 +734,12 @@ class DiracBase(IBackend):
 
         # requeue existing completed job
         for j in requeue_jobs:
+            if j.been_queued:
+                continue
+
             if monitoring_component:
                 if monitoring_component.should_stop():
                     break
-            if j.been_queued:
-                continue
             getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                        args=(j, queueable_dirac_statuses[j.backend.status]),
                                                        priority=5, name="Job %s Finalizing" % j.fqid)
@@ -773,7 +774,7 @@ class DiracBase(IBackend):
         result = execute('status(%s, %s)' %( str(dirac_job_ids), repr(statusmapping)))
 
         if len(result) != len(ganga_job_status):
-            logger.warning('Dirac monitoring failed fro %s, result = %s' % (
+            logger.warning('Dirac monitoring failed for %s, result = %s' % (
                 str(dirac_job_ids), str(result)))
             return
 
@@ -783,6 +784,9 @@ class DiracBase(IBackend):
             if monitoring_component:
                 if monitoring_component.should_stop():
                     break
+
+            if job.been_queued:
+                continue
 
             job.backend.statusInfo = state[0]
             job.backend.status = state[1]
