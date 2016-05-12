@@ -2,7 +2,7 @@ import random
 import string
 import time
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.GPIDev.Lib.GangaList.GangaList import decorateListEntries
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError

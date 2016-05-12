@@ -321,7 +321,7 @@ class RegistrySlice(object):
             return addProxy(self.objects[this_id])
         except KeyError as err:
             logger.debug('Object id=%d not found' % this_id)
-            logger.deubg("%s" % err)
+            logger.debug("%s" % err)
             raise RegistryKeyError('Object id=%d not found' % this_id)
 
     def __iter__(self):
@@ -463,9 +463,9 @@ class RegistrySlice(object):
                     width = self._display_columns_width.get(item, default_width)
                     try:
                         if item == "fqid":
-                            vals.append(str(obj.getNodeIndexCache()[display_str]))
+                            vals.append(str(obj._index_cache[display_str]))
                         else:
-                            vals.append(str(obj.getNodeIndexCache()[display_str])[0:width])
+                            vals.append(str(obj._index_cache[display_str])[0:width])
                         continue
                     except KeyError as err:
                         logger.debug("_display KeyError: %s" % err)

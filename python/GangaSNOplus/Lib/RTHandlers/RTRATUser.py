@@ -300,7 +300,6 @@ output(result)
             OUTPUT_SANDBOX       = API_nullifier(outputsandbox),
             OUTPUTDATA           = '##API_nullifier(list(outputfiles))##',
             OUTPUT_PATH          = '##""##', # job.fqid,
-            OUTPUT_SE            = "##getConfig('DIRAC')['DiracOutputDataSE']##",
             SETTINGS             = diracAPI_script_settings(app),
             DIRAC_OPTS           = job.backend.diracOpts,
             #REPLICATE            = getConfig('DIRAC')['ReplicateOutputData'], # This option isn't even in the script!

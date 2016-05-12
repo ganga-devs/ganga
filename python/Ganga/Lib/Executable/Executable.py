@@ -65,9 +65,6 @@ class Executable(IPrepareApp):
     def __init__(self):
         super(Executable, self).__init__()
 
-    def __deepcopy__(self, memo):
-        return super(Executable, self).__deepcopy__(memo)
-
     def unprepare(self, force=False):
         """
         Revert an Executable() application back to it's unprepared state.

@@ -88,7 +88,6 @@ class GangaList(GangaObject):
                                      '_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),
                                     })
     _enable_config = 1
-    _data={}
 
     def __init__(self):
         self._is_a_ref = False
@@ -278,12 +277,12 @@ class GangaList(GangaObject):
         self.checkReadOnly()
         self.__delslice__(start, end)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo=None):
         """Bypass any checking when making the copy"""
         #logger.info("memo: %s" % str(memo))
         #logger.info("self.len: %s" % str(len(self._list)))
         if self._list != []:
-            return makeGangaListByRef(_list=copy.deepcopy(self._list), preparable=self._is_preparable)
+            return makeGangaListByRef(_list=copy.deepcopy(self._list, memo), preparable=self._is_preparable)
         else:
             new_list = GangaList()
             new_list._is_preparable = self._is_preparable
@@ -580,17 +579,17 @@ class GangaList(GangaObject):
 
         for (name, item) in self._schema.simpleItems():
             if name == "_list":
-                visitor.componentAttribute(self, "_list", self._getdata("_list"), 1)
+                visitor.componentAttribute(self, "_list", self._data["_list"], 1)
             elif item['visitable']:
-                visitor.simpleAttribute(self, name, self._getdata(name), item['sequence'])
+                visitor.simpleAttribute(self, name, getattr(self, name), item['sequence'])
 
         for (name, item) in self._schema.sharedItems():
             if item['visitable']:
-                visitor.sharedAttribute(self, name, self._getdata(name), item['sequence'])
+                visitor.sharedAttribute(self, name, getattr(self, name), item['sequence'])
 
         for (name, item) in self._schema.componentItems():
             if item['visitable']:
-                visitor.componentAttribute(self, name, self._getdata(name), item['sequence'])
+                visitor.componentAttribute(self, name, getattr(self, name), item['sequence'])
 
         visitor.nodeEnd(self)
 

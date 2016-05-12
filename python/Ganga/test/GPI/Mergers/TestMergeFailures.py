@@ -7,7 +7,7 @@ import pytest
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
 from Ganga.GPIDev.Base.Proxy import getProxyClass
 
-from ..GangaUnitTest import GangaUnitTest
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from .MergerTester import MergerTester
 from .CopySplitter import CopySplitter
 

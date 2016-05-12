@@ -366,13 +366,13 @@ class IUnit(GangaObject):
             j = stripProxy(job)
 
             # try to preserve lazy loading
-            if hasattr(j, 'getNodeIndexCache') and j.getNodeIndexCache() and 'subjobs:status' in j.getNodeIndexCache():
-                if len(j.getNodeIndexCache()['subjobs:status']) > 0:
-                    for sj_stat in j.getNodeIndexCache()['subjobs:status']:
+            if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
+                if len(j._index_cache['subjobs:status']) > 0:
+                    for sj_stat in j._index_cache['subjobs:status']:
                         if sj_stat in active_states:
                             tot_active += 1
                 else:
-                    if j.getNodeIndexCache()['status'] in active_states:
+                    if j._index_cache['status'] in active_states:
                         tot_active += 1
             else:
                 #logger.warning("WARNING: (active check) No index cache for job object %d" % jid)
@@ -403,13 +403,13 @@ class IUnit(GangaObject):
             j = stripProxy(job)
 
             # try to preserve lazy loading
-            if hasattr(j, 'getNodeIndexCache') and j.getNodeIndexCache() and 'subjobs:status' in j.getNodeIndexCache():
-                if len(j.getNodeIndexCache()['subjobs:status']) > 0:
-                    for sj_stat in j.getNodeIndexCache()['subjobs:status']:
+            if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
+                if len(j._index_cache['subjobs:status']) > 0:
+                    for sj_stat in j._index_cache['subjobs:status']:
                         if sj_stat == status:
                             tot_active += 1
                 else:
-                    if j.getNodeIndexCache()['status'] == status:
+                    if j._index_cache['status'] == status:
                         tot_active += 1
 
             else:
@@ -441,9 +441,9 @@ class IUnit(GangaObject):
             j = stripProxy(job)
 
             # try to preserve lazy loading
-            if hasattr(j, 'getNodeIndexCache') and j.getNodeIndexCache() and 'subjobs:status' in j.getNodeIndexCache():
-                if len(j.getNodeIndexCache()['subjobs:status']) != 0:
-                    total += len(j.getNodeIndexCache()['subjobs:status'])
+            if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
+                if len(j._index_cache['subjobs:status']) != 0:
+                    total += len(j._index_cache['subjobs:status'])
                 else:
                     total += 1
             else:
