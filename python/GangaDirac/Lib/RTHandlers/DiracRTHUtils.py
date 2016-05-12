@@ -16,7 +16,7 @@ def mangle_job_name(app):
     Args:
         app (IApplication): This is the application belonging to the job of interest
     """
-    job = app.getJobObject()
+    job = appt.getJobObject()
 
     jobName = job.name
     jobIndex = job.getStringFQID()
@@ -118,8 +118,6 @@ def dirac_inputdata(app, hasOtherInputData=False):
         wanted_job = job.master
 
     inputLFNs = ['LFN:'+this_file.lfn for this_file in wanted_job.inputdata if isinstance(this_file, DiracFile)]
-
-    logger.info("LFNS: %s" % inputLFNs)
 
     # master job with a splitter reaching prepare, hence bulk submit
     if not job.master and job.splitter:
