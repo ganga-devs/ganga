@@ -71,9 +71,6 @@ class TestGangaObject(unittest.TestCase):
     def testPrintTree(self):
         self.obj.printTree()
 
-    def testPrintPrepTree(self):
-        self.obj.printPrepTree()
-
     def testPrintSummaryTree(self):
         self.obj.printSummaryTree()
 
@@ -82,40 +79,6 @@ class TestGangaObject(unittest.TestCase):
 
     def test__ne__(self):
         self.obj != GangaObject()
-
-    def tearDown(self):
-        pass
-
-
-class TestNode(unittest.TestCase):
-
-    def setUp(self):
-        self.obj = Node(None)
-
-    def test__copy__(self):
-        temp = self.obj
-
-    def test_getParent(self):
-        self.obj._getParent()
-
-    def test_setParent(self):
-        self.obj._setParent(None)
-
-    def test_getRoot(self):
-        self.obj._getRoot()
-
-#    def testAccept(self):
-#        self.obj.accept(visitor)
-
-    def testClone(self):
-        temp = self.obj.clone()
-
-    def testCopyFrom(self):
-        temp = Node(None)
-        temp.copyFrom(self.obj)
-
-    def testPrintTree(self):
-        self.obj.printTree()
 
     def tearDown(self):
         pass

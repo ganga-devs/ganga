@@ -178,6 +178,15 @@ class IPrepareApp(IApplication):
             # the repository
             return digest.hexdigest() == self.hash
 
+    #printPrepTree is only ever run on applications, from within IPrepareApp.py
+    #if you (manually) try to run printPrepTree on anything other than an application, it will not work as expected
+    #see the relevant code in VPrinter to understand why
+    def printPrepTree(self, f=None, sel='preparable' ):
+        ## After fixing some bugs we are left with incompatible job hashes. This should be addressd before removing
+        ## This particular class!
+        from Ganga.GPIDev.Base.VPrinterOld import VPrinterOld
+        self.accept(VPrinterOld(f, sel))
+
     def incrementShareCounter(self, shared_directory_name):
         """
         Function which is used to increment the number of (sub)jobs which share the prepared sandbox
