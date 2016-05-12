@@ -14,7 +14,7 @@ import Ganga.Utility.execute as gexecute
 
 import time
 import math
-import copy
+from copy import deepcopy
 import inspect
 
 logger = getLogger()
@@ -189,14 +189,14 @@ def execute(command,
     This function blocks until the server returns.
     
     Args:
-        command (str): This is the command we're running within our DIRAC session
-        timeout (bool): This is the length of time that a DIRAC call has before it's decided some interaction has timed out
-        env (dict): an optional environment to execute the DIRAC code in
-        cwd (str): an optional string to a valid path where this code should be executed
-        shell (bool): Should this code be executed in a new shell environment
-        python_setup (str): Optional extra code to pass to python when executing
-        eval_incldes (???): TODO document me
-        update_env (bool): Should this modify the given env object with the env after the command has executed
+        command (str): The command to be executed
+        timeout (int): The time a command is given before it's assumed it may have timed out
+        env (dict): Optional dict in which the command is to be executed
+        cwd (str): Optional, the path where a command is to be run
+        shell (bool): Should we launch a new shell for these commands
+        python_setup (str): Unclear what this is used for TODO: DOCUMENT BETTER
+        eval_includes (None): Unclear what this is used for TODO: DOCUMENT BETTER
+        update_env (bool): Should the env passed to the function be updated after command has been run
     """
 
     if env is None:
@@ -219,8 +219,5 @@ def execute(command,
                                   eval_includes=eval_includes,
                                   update_env=update_env)
 
-    # TODO can we just deepcopy?
-
-    return copy.deepcopy(returnable)
-
+    return deepcopy(returnable)
 
