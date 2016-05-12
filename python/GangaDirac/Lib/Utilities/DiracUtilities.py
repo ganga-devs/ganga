@@ -87,10 +87,11 @@ def getDiracCommandIncludes(force=False):
 
 def getValidDiracFiles(job, names=None):
     """
-    This function is a generator for all DiracFile in a file... TODO work out where is this ever called???
+    This is a generator for all DiracFiles in a jobs outputfiles
+    TODO: Is this still called anywhere?
     Args:
-        job (Job): The job being used to look for DiracFiles
-        names (list): list of strings used to search for a given DiracFile in a given Job
+        job (Job): The job which is having it's DiracFiles tested
+        names (list): list of strings of names to be matched to namePatterns in outputfiles
     """
     from GangaDirac.Lib.Files.DiracFile import DiracFile
     from Ganga.GPIDev.Base.Proxy import isType
@@ -146,17 +147,17 @@ def _dirac_check_proxy( renew = True):
 
 def _proxyValid():
     """
-    This function is a wrapper for the _checkProxy with a default of False for renew. Returns teh last modified time global object
+    This function is a wrapper for the _checkProxy with a default of False for renew. Returns the last modified time global object
     """
     _checkProxy( renew = False )
     return last_modified_valid
 
 def _checkProxy( delay=60, renew = True ):
     """
-    This function checks the validity of a Dirac proxy with a delay of 'delay' secs between checks
+    Check the validity of the DIRAC proxy. If it's marked as valid, check once every 'delay' seconds.
     Args:
-        delay (int): seconds to wit between proxy validity checks
-        renew (bool): if True, renew proxy, if False throw exception on no valid proxy
+        delay (int): number of seconds between calls to the tools to test the proxy
+        renew (bool): If True, trigger the regeneration of a valid proxy
     """
     ## Handling mutable globals in a multi-threaded system to remember to LOCK
     with Dirac_Proxy_Lock:
@@ -194,7 +195,7 @@ def execute(command,
         cwd (str): an optional string to a valid path where this code should be executed
         shell (bool): Should this code be executed in a new shell environment
         python_setup (str): Optional extra code to pass to python when executing
-        eval_incldes (???): Todo document me
+        eval_incldes (???): TODO document me
         update_env (bool): Should this modify the given env object with the env after the command has executed
     """
 
@@ -220,48 +221,6 @@ def execute(command,
 
     # TODO can we just deepcopy?
 
-    # rcurrie I've seen problems with just returning this raw object,
-    # expanding it to be sure that an instance remains in memory
-    myObject = {}
-    if hasattr(returnable, 'keys'):
-        # Expand object(s) in dictionaries
-        myObject = _expand_object(returnable)
-    elif type(returnable) in[list, tuple]:
-        # Expand object(s) in lists
-        myObject = _expand_list(returnable)
-    else:
-        # Copy object(s) so thet they definately are in memory
-        myObject = copy.deepcopy(returnable)
+    return copy.deepcopy(returnable)
 
-    return myObject
-
-
-def _expand_object(myobj):
-    """
-    Performs an explicit recursive expansion on dicts of dicts that may be returned from within a list/tuple.
-    This is to avoid problems with the returned object potentially no longer existing on the next DIRAC call
-    Args:
-        myobj (object): This is the object to be deep copied with it's children deep copied
-    """
-    new_obj = {}
-    if hasattr(myobj, 'keys'):
-        for key in myobj.keys():
-            value = myobj.get(key)
-            if hasattr(value, 'keys'):
-                new_obj[key] = _expand_object(value)
-            else:
-                new_obj[key] = copy.deepcopy(value)
-    return new_obj
-
-
-def _expand_list(mylist):
-    """
-    This expands a list and deepcopies the elements
-    Args:
-        mylist (object): The object to be deepcopied
-    """
-    new_list = []
-    for element in mylist:
-        new_list.append(copy.deepcopy(element))
-    return new_list
 
