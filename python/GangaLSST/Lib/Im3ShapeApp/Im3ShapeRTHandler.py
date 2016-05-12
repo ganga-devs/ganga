@@ -12,7 +12,6 @@ from Ganga.GPIDev.Lib.File.File import File
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -48,7 +47,7 @@ class Im3ShapeDiracRTHandler(IRuntimeHandler):
         input_data,   parametricinput_data = dirac_inputdata(app, hasOtherInputData=True)
 
 
-        job = stripProxy(app).getJobObject()
+        job = app.getJobObject()
 
         # Construct the im3shape-script which is used by this job. i.e. the script and full command line to be used in this job
         exe_script_name = 'im3shape-script.py'
