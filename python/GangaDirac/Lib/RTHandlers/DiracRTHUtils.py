@@ -96,7 +96,7 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
 
 
 def dirac_inputdata(app, hasOtherInputData=False):
-    """ Construct the JDL compoenent which requests the inputdata for a job
+    """ Construct the JDL component which requests the inputdata for a job
     Args:
         app (IApplication): app which belongs to the job of interest
         hasOtherInputData (bool): This is used to stop BannedSites being added to the JDL structure through backend.settings
