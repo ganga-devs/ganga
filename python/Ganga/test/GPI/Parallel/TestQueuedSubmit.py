@@ -5,7 +5,7 @@ from Ganga.testlib.monitoring import run_until_completed
 
 import time
 
-global_num_threads = 20
+global_num_threads = 10
 global_num_jobs = global_num_threads*5
 
 
