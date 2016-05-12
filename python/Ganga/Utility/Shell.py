@@ -45,6 +45,13 @@ logger = Ganga.Utility.logging.getLogger()
 
 
 def expand_vars(env):
+    """
+    This function takes a raw dictionary which describes the environment and sanitizes it slightly
+    This makes some attempt to take multi-line aliases and functions and make then into single line strings.
+    At best we don't like bash functions being assigned to variables here but we shouldn't crash when some users have bad a env
+    Args:
+        env (dict): dictionary describing the environment which is to be sanitized
+    """
     tmp_dict = {}
     for k, v in env.iteritems():
         if not str(v).startswith('() {'):
@@ -149,7 +156,18 @@ class Shell(object):
         s = Shell()
         if 'NO_BAR' not in os.environ:
            assert s.env['FOO'] == '$NO_BAR'
+           
+        will store an env from:
+        
+        source setup setup_args[0] setup_args[1]
+        e.g.
+        source . && myCmd.sh someoption
+        source =  '.'
+        source_args = ['&&', 'myCmd.sh', 'someoption']
 
+        Args:
+            setup (str): typically a file or '.' being sourced in bash
+            setup_args (list): list of strings which are executed directly with a ' ' character spacing
         """
 
         if setup is not None:
@@ -164,7 +182,15 @@ class Shell(object):
 
     def pythonCmd(self, cmd, soutfile=None, allowed_exit=None,
             capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
-        "Execute a python command and captures the stderr and stdout which are returned in a file"
+        """Execute a python command and captures the stderr and stdout which are returned in a file
+        Args:
+            cmd (str): command to be executed in a shell
+            soutfile (str): filename of file to store the output in (optional)
+            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
+            capture_stderr (None): unused, kept for API compatability?
+            timeout (int): length of time (sec) that a command is expected to have finished by
+            mention_outputfile_on_errors (bool): Should we print warning pointing to output when something when something goes wrong
+        """
 
         if allowed_exit is None:
             allowed_exit = [0]
@@ -172,7 +198,15 @@ class Shell(object):
 
     def cmd(self, cmd, soutfile=None, allowed_exit=None,
             capture_stderr=False, timeout=None, mention_outputfile_on_errors=True, python=False):
-        "Execute an OS command and captures the stderr and stdout which are returned in a file"
+        """Execute an OS command and captures the stderr and stdout which are returned in a file
+        Args:
+            cmd (str): command to be executed in a shell
+            soutfile (str): filename of file to store the output in (optional)
+            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
+            capture_stderr (None): unused, kept for API compatability?
+            timeout (int): length of time (sec) that a command is expected to have finished by
+            mention_outputfile_on_errors (bool): Should we print warning pointing to output when something when something goes wrong
+        """
 
         if allowed_exit is None:
             allowed_exit = [0]
@@ -253,7 +287,16 @@ class Shell(object):
         return rc, soutfile, m is None
 
     def cmd1(self, cmd, allowed_exit=None, capture_stderr=False, timeout=None, python=False):
-        "Executes an OS command and captures the stderr and stdout which are returned as a string"
+        """Executes an OS command and captures the stderr and stdout which are returned as a string
+        Args:
+            cmd (str): command to be executed in a shell
+            soutfile (str): filename of file to store the output in (optional)
+            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
+            capture_stderr (None): unused, kept for API compatability?
+            timeout (int): length of time (sec) that a command is expected to have finished by
+            mention_outputfile_on_errors (bool): Should we print warning pointing to output when something when something goes wrong
+            python (bool): is a Python cmd?
+        """
 
         if allowed_exit is None:
             allowed_exit = [0]
@@ -278,6 +321,11 @@ class Shell(object):
         caputured and are passed on the caller.
 
         stderr_capture may specify a name of a file to which stderr is redirected.
+        
+        Args:
+            cmd (str): command to be executed in a shell
+            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
+            capture_stderr (None): unused, kept for API compatability?
         """
         if allowed_exit is None:
             allowed_exit = [0]
