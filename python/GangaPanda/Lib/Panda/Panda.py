@@ -53,19 +53,6 @@ except:
     logger.error("Failed to load AGIS info from http://atlas-agis-api.cern.ch/request/site/query/list/?json&state=ACTI\
 VE&rc_site_state=ACTIVE")
 
-##### fix by jschovan, use outputs of AGIS collector
-def load_json(filename):
-    result=None
-    f=open(filename, 'r')
-    result=json.loads(f.read())
-    f.close()
-    return result
-
-pandaresources_json = '/tmp/agis_pandaresources.json'
-pandaresources_list=load_json(pandaresources_json)
-pandaresources=dict([(x['name'], x) for x in pandaresources_list])
-##### fix by jschovan END
-
 def setChirpVariables():
     """Helper function to fill chirp config variables"""
     configPanda = getConfig('Panda')
@@ -146,36 +133,31 @@ def convertDQ2NamesToQueueName(locations):
         info[location] = sites
     return info
 
+
 def convertQueueNameToDQ2Names(queue):
 
-    ret=[pandaresources[x]['ddm'] for x in pandaresources if pandaresources[x]['name']==queue]
-    # logger.warning('(%s) ret:%s:' % (type(ret), ret))
-    try:
-        ret=ret[0]
-    except:
-        # logger.warning('oh well')
-        import traceback
-        logger.error('queue %s error %s'%(queue, str(traceback.print_exc() )))
-    return str(ret).split(',')
+    # check if we can load info from an AGIS JSON
+    # Code provided by jschovan (PR #470)
+    if not convertQueueNameToDQ2Names.pandaresources:
+        if not os.path.exists(config['AGISJSONFile']):
+            logger.warning("Cannot find AGIS file '%s' - falling back to using Panda Client" % config['AGISJSONFile'])
+        else:
+            with open(config['AGISJSONFile'], 'r') as agis_file:
+                convertQueueNameToDQ2Names.pandaresources = dict([(q['name'], q) for q in json.loads(agis_file.read())])
 
-    # refreshAGISSpecs()
-    # tokens = []
+    # if we have the AGIS info, use it. Otherwise fall back
+    if convertQueueNameToDQ2Names.pandaresources:
+        ddm_names = ''
+        for q in convertQueueNameToDQ2Names.pandaresources:
+            if convertQueueNameToDQ2Names.pandaresources[q]['name'] == queue:
+                ddm_names = convertQueueNameToDQ2Names.pandaresources[q]['ddm']
 
-    # for entry in agisinfos:
-    #     try:
-    #         temp_queuename = [i.keys() for i in entry['presources'].values() ]
-    #         queuename = [item for sublist in temp_queuename for item in sublist]
-    #     except:
-    #         queuename = []
-    #         pass
-    #     try:
-    #         tokens = entry['ddmendpoints'].keys()
-    #     except:
-    #         tokens = []
-    #     if queue in queuename:
-    #         tokens = [ i for i in tokens if not i in "TAPE" ]
-    #         if tokens:
-    #             return tokens
+        if not ddm_names:
+            logger.error("Could not find queue name '%s' in AGIS file or ddm info not present. "
+                         "Returning no sites" % queue)
+            return []
+
+        return ddm_names.split(',')
 
     # fallback to old code
     logger.debug("convertQueueNameToDQ2Names fall back")
@@ -191,6 +173,8 @@ def convertQueueNameToDQ2Names(queue):
             allowed_sites.append(site)
 
     return allowed_sites
+
+convertQueueNameToDQ2Names.pandaresources = {}
 
 def queueToAllowedSites(queue):
     #from pandatools import Client
@@ -1675,9 +1659,10 @@ class Panda(IBackend):
                 if (allowTape or not Client.isTapeSite(t)) and t.find("TZERO") == -1:
                     spacetokens.append(t)
 
-        if '' in spacetokens:
-            spacetokens.pop(spacetokens.index(''))
-        logger.warning('site %s spacetokens %s' % (self.site, spacetokens))
+        # Remove any empty strings
+        spacetokens = [t for t in spacetokens if t]
+        logger.debug('site %s spacetokens %s' % (self.site, spacetokens))
+
         return spacetokens
 
     def get_stats(self):
