@@ -92,33 +92,29 @@ def get_env_from_arg(this_arg, def_env_on_fail = True):
     output = pipe.communicate(command)
     rc = pipe.poll()
 
+    # When good output = ( "some_env_python_dict_repr", None )
+    # When bad = ( stdout, stderr )
+
     if rc:
+
         logger.warning('Unexpected rc %d from setup command %s', rc, setup)
 
         try:
-            env2 = expand_vars(eval(eval(str(output))[0]))
+            env2 = expand_vars(eval(output[0]))
         except Exception as err:
-            logger.debug("Err: %s" % str(err))
+            logger.debug("Err: %s" % err)
             env2 = None
             logger.error("Cannot construct environ:\n%s" % str(output))
             try:
-                logger.error("eval: %s" % str(eval(str(output))[0]))
+                logger.error("eval: %s" % str(output))
             except Exception as err2:
-                logger.debug("Err2: %s" % str(err2))
-                pass
-            try:
-                logger.error("eval(eval): %s" % eval(eval(str(output))[0]))
-            except Exception as err3:
-                logger.debug("Err3: %s" % str(err3))
-                pass
+                logger.debug("Err2: %s" % err2)
 
         if env2:
             env = env2
     else:
-        try:
-            env2 = expand_vars(eval(eval(str(output))[0]))
-        except Exception as err:
-            raise
+        
+        env2 = expand_vars(eval(output[0]))
 
         if env2:
             env = env2
@@ -274,7 +270,6 @@ class Shell(object):
             if err.errno != errno.ENOENT:
                 logger.debug("Err removing shell output: %s" % str(err))
                 raise err
-            pass
 
         return rc, output, m
 
