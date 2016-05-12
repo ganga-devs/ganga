@@ -80,12 +80,8 @@ class Im3ShapeApp(IPrepareApp):
         if (self.is_prepared is not None) and (force is not True):
             raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
 
-        # lets use the same criteria as the configure() method for checking file existence & sanity
-        # this will bail us out of prepare if there's somthing odd with the job config - like the executable
-        # file is unspecified, has a space or is a relative path
-        self.configure(self)
         logger.info('Preparing %s application.' % getName(self))
-        setattr(self, 'is_prepared', ShareDir())
+        self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
         try:
@@ -105,13 +101,7 @@ class Im3ShapeApp(IPrepareApp):
         except Exception as err:
             logger.debug("Err: %s" % str(err))
             self.unprepare()
-            raise err
+            raise
 
         return 1
-
-    def configure(self, masterappconfig):
-        """
-        This is a null-op effecitvely, we may add something here in the future but this function is stub
-        """
-        return (None, None)
 
