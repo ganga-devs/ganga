@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.monitoring import run_until_completed
 
 import time
 
@@ -61,14 +62,13 @@ class TestQueuedSubmit(GangaUnitTest):
 
     def test_d_Finished(self):
         from Ganga.GPI import jobs, queues
-        from GangaTest.Framework.utils import sleep_until_completed
 
         print('waiting on job', end=' ')
         for j in jobs:
             print(j.id, end=' ')
             import sys
             sys.stdout.flush()
-            assert sleep_until_completed(j), 'Timeout on job submission: job is still not finished'
+            assert run_until_completed(j, sleep_period=0.1), 'Timeout on job submission: job is still not finished'
             assert j.status == 'completed'
 
     def test_e_Cleanup(self):
