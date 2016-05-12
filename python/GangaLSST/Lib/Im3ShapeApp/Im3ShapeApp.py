@@ -105,3 +105,10 @@ class Im3ShapeApp(IPrepareApp):
 
         return 1
 
+    def configure(self, masterappconfig):
+        """
+        This is a null-op effecitvely, we may add something here in the future but this function is stub
+        This is required so that the job will submit
+        """
+        return (None, None)
+

@@ -119,8 +119,6 @@ def dirac_inputdata(app, hasOtherInputData=False):
 
     inputLFNs = ['LFN:'+this_file.lfn for this_file in wanted_job.inputdata if isinstance(this_file, DiracFile)]
 
-    logger.info("LFNS: %s" % inputLFNs)
-
     # master job with a splitter reaching prepare, hence bulk submit
     if not job.master and job.splitter:
         parametricinput_data = dirac_parametric_split(app)
