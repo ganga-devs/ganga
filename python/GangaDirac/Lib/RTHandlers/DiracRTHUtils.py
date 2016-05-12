@@ -5,7 +5,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.util import unique
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Base.Proxy import isType, getName, stripProxy
+from Ganga.GPIDev.Base.Proxy import getName
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -13,11 +13,11 @@ logger = getLogger()
 
 def mangle_job_name(app):
     """ Create a safe job name to send to DIRAC """
-    job = stripProxy(app).getJobObject()
+    job = app.getJobObject()
 
     jobName = job.name
     jobIndex = job.getStringFQID()
-    appName = str(getName(app))
+    appName = getName(app)
     appVersion = None
     if hasattr(app, 'version'):
         appVersion = str(app.version)
@@ -56,7 +56,7 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
     In the case that it's False an empty SE is allowed.
     """
 
-    _output_files = [this_file for this_file in output_files if isType(this_file, DiracFile)]
+    _output_files = [this_file for this_file in output_files if isinstance(this_file, DiracFile)]
 
     file_SE_dict = {}
 
@@ -97,14 +97,14 @@ def dirac_inputdata(app, hasOtherInputData=False):
     input_data = None
     parametricinput_data = None
 
-    if not job.inputdata and not job.master.inputdata:
+    if not job.inputdata and (not job.master or not job.master.inputdata):
         return input_data, parametricinput_data
 
     wanted_job = job
-    if not job.inputdata and job.master.inputdata:
+    if not job.inputdata and job.master and job.master.inputdata is not None and job.master.inputdata:
         wanted_job = job.master
 
-    inputLFNs = ['LFN:'+this_file.lfn for this_file in wanted_job.inputdata if isType(this_file, DiracFile)]
+    inputLFNs = ['LFN:'+this_file.lfn for this_file in wanted_job.inputdata if isinstance(this_file, DiracFile)]
 
     logger.info("LFNS: %s" % inputLFNs)
 
@@ -148,7 +148,7 @@ def dirac_parametric_split(app):
     for dataset in split_data:
         this_dataset = []
         for this_file in dataset:
-            if isType(this_file, DiracFile):
+            if isinstance(this_file, DiracFile):
                 this_dataset.append(this_file.lfn)
             else:
                 raise SplitterError("ERROR: file: %s NOT of type DiracFile" % str(this_file) )
@@ -192,7 +192,7 @@ def diracAPI_script_settings(app):
     Set some additional setting on the diracAPI in the JDL making use of any custom parameters set in the backend object
     return JDL lines
     """
-    job = stripProxy(app).getJobObject()
+    job = app.getJobObject()
     diracAPI_line = ''
     if type(job.backend.settings) is not dict:
         raise ApplicationConfigurationError(
