@@ -59,8 +59,6 @@ class Im3ShapeDiracRTHandler(IRuntimeHandler):
 
         full_cmd = app.exe_name + ' ' + im3shape_args
 
-        job.outputfiles.append(DiracFile(namePattern=output_filename))
-
         outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
         inputsandbox.append(FileBuffer( name=exe_script_name,
