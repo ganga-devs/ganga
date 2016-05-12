@@ -48,7 +48,7 @@ class Im3ShapeApp(IPrepareApp):
         'blacklist': GangaFileItem(defvalue=None, doc="Blacklist file for running Im3Shape"),
         'rank': SimpleItem(defvalue=0, doc="Rank in the split of the tile from splitting"),
         'size': SimpleItem(defvalue=200, doc="Size of the splitting of the tile from splitting"),
-        'catalog': SimpleItem(defvalue='all', types=[IGangaFile, str], doc="Catalog which is used to describe what is processed"),
+        'catalog': SimpleItem(defvalue='all', types=[str], doc="Catalog which is used to describe what is processed"),
         'run_dir': SimpleItem(defvalue='im3shape-grid', types=[str], doc="Directory on the WN where the binary is"),
         ## Below is needed for prepared state stuff
         'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
