@@ -7,6 +7,7 @@ ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 * Adding individual postprocessors to jobs has been fixed #402
 * Condor jobs can split by dataset #390
+* Minor monitoring fix when there are strange errors from the Condor backend
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -14,6 +15,17 @@ ganga/python/GangaDirac
 --------------------------------------------------------------------------------------------------------------
 * Dirac has gained the option to set the default output SE for files
 * Some performance improvements with communicating with the DIRAC server
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLSST
+--------------------------------------------------------------------------------------------------------------
+* Ignore comments in files input for --inPfnListFile
+* Added the output_loc_to_input option to AthenaSplitterJob to map input files to output dirs
+* --inPfnListFile now takes a comma separated list and uses output_loc_to_input to 
+    direct the different outputs to appropriate dirs
+* Patches from HammerCloud to set homepackage correctly and use AGIS JSON file for queue/DDM mapping
+* Some Atlas code cleanup
 
 
 --------------------------------------------------------------------------------------------------------------
