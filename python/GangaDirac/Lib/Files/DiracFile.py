@@ -200,7 +200,7 @@ class DiracFile(IGangaFile):
                 lfn = namePattern
                 namePattern = ""
 
-        if lfn != "" and lfn is not None:
+        if lfn:
             if len(lfn) > 3 and lfn[0:4].upper() == "LFN:":
                 lfn = lfn[4:]
 
