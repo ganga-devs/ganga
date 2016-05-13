@@ -10,7 +10,6 @@ ganga/python/Ganga
 * Minor monitoring fix when there are strange errors from the Condor backend
 * Fixed some minor bugs in preparing some jobs
 * GangaDataset made more user friendly
-* 
 
 
 --------------------------------------------------------------------------------------------------------------
