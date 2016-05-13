@@ -26,6 +26,8 @@ class TestDataFiles(GangaUnitTest):
 
     @external
     def testDataFilesExternal(self):
+        from Ganga.GPI import DiracFile
+        
         # Methods
         lfn = DiracFile(lfn='/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000326_1.dimuon.dst')
         assert lfn.getReplicas()
