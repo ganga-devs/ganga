@@ -180,7 +180,6 @@ p.add_option('--useAthenaPackages', action='store_true', help='Enable to setup A
 
 p.add_option('--transferredDS', action='store', type='string', dest='transferredDS', help='Specify a comma-separated list of patterns so that only datasets which match the given patterns are transferred when --outputlocation is set. Either \ or "" is required when a wildcard is used. If omitted, all datasets are transferred')
 
-
 opt, args = p.parse_args()
 
 # make panda the default backend
@@ -233,7 +232,6 @@ else:
 
 
 # Start job configuration
-
 j = Job()
 
 # job object
@@ -366,7 +364,33 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
             # decide where to get input info from: locallocation or inDS
             if opt.input_pfnlistfile:
                 j.inputdata = ATLASLocalDataset()
-                j.inputdata.get_dataset_from_list(opt.input_pfnlistfile, no_dir_check=True)
+
+                # check for multiple PFN lists
+                if opt.input_pfnlistfile.find(",") == -1:
+                    j.inputdata.get_dataset_from_list(opt.input_pfnlistfile, no_dir_check=True)
+                else:
+                    # first set the local splitter
+                    j.splitter = AthenaSplitterJob()
+
+                    # now loop over the PFNs and add all the input files with the PFN name
+                    for pfn_list in opt.input_pfnlistfile.split(','):
+
+                        pfn_list = pfn_list.strip()
+                        if not os.path.exists(pfn_list):
+                           logger.error('File %s does not exist',pfn_list)
+                           sys.exit(1)
+
+                        f = open(pfn_list)
+                        pfn_list = os.path.basename(pfn_list)
+                        j.splitter.output_loc_to_input[pfn_list] = []
+                        for ln in f.readlines():
+                            # ignore comments and blank lines
+                            if not ln.strip() or ln.strip()[0] == '#':
+                                continue
+
+                            j.inputdata.names.append(ln.strip())
+                            j.splitter.output_loc_to_input[pfn_list].append(ln.strip())
+
             elif opt.locallocation:
                 for loc in opt.locallocation:
                     for loc_dir in loc[0].split(","):
@@ -518,6 +542,13 @@ if True:
             j.outputdata.outputdata = opt.outputdata.split('\n')
     if opt.output_location:
         j.outputdata.location = opt.output_location
+
+        # prepend local location for maps input data -> output location
+        if j.splitter and j.splitter.output_loc_to_input:
+            for f in list(j.splitter.output_loc_to_input):
+                j.splitter.output_loc_to_input[os.path.join(opt.output_location, f)] = j.splitter.output_loc_to_input[f]
+                del j.splitter.output_loc_to_input[f]
+
     if opt.output_local_location:
         j.outputdata.local_location = opt.output_local_location
 #    if opt.use_datasetname:
@@ -545,12 +576,14 @@ if opt.numsubjobs > 0:
 	    j.splitter.attribute='comment'
             j.splitter.values=[str(i) for i in xrange(0,opt.numsubjobs)]
     else:
-        j.splitter = AthenaSplitterJob()
+        # splitter could have been created above for input data -> output location mapping
+        if not j.splitter:
+            j.splitter = AthenaSplitterJob()
         j.splitter.numsubjobs = opt.numsubjobs
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass
+        pass
 elif opt.numfiles_subjob>0:
     if (opt.backend in [ 'lcg' ] or opt.glite or (opt.backend in ['sge'] and config.Athena.ENABLE_SGE_DQ2JOBSPLITTER)):
         j.splitter = DQ2JobSplitter()
@@ -559,12 +592,15 @@ elif opt.numfiles_subjob>0:
         j.splitter = DQ2JobSplitter()
         j.splitter.numfiles = opt.numfiles_subjob
     else:
-        j.splitter = AthenaSplitterJob()
+        # splitter could have been created above for input data -> output location mapping
+        if not j.splitter:
+            j.splitter = AthenaSplitterJob()
+
         j.splitter.numfiles_subjob = opt.numfiles_subjob
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass
+        pass
 
 elif opt.filesize>0:
     if (opt.backend in [ 'lcg' ] or opt.glite or (opt.backend in ['sge'] and config.Athena.ENABLE_SGE_DQ2JOBSPLITTER)):
@@ -576,15 +612,18 @@ elif opt.filesize>0:
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass
+        pass
 
 if opt.match_subjobs_files:
-    j.splitter = AthenaSplitterJob()
+    # splitter could have been created above for input data -> output location mapping
+    if not j.splitter:
+        j.splitter = AthenaSplitterJob()
+
     j.splitter.match_subjobs_files = True
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass	
+        pass
 
 if opt.noblacklist:
     if j.splitter and j.splitter.__class__.__name__=='DQ2JobSplitter':

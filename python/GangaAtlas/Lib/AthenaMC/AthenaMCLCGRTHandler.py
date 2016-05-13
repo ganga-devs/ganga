@@ -31,16 +31,6 @@ from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import extractFileNumber, matchFil
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
-# the config file may have a section
-# aboout monitoring
-
-mc = getConfig('MonitoringServices')
-
-# None by default
-
-mc.addOption('AthenaMC', None, 'FIXME')
-mc.addOption('AthenaMC/LCG', None, 'FIXME')
-
 _defaultSite='CERN-PROD_SCRATCHDISK'
 
 class AthenaMCLCGRTHandler(IRuntimeHandler):
