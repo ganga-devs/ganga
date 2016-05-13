@@ -26,6 +26,7 @@ if not _after_bootstrap:
     config.addOption( 'baseURL', '' , 'Expert only.' )  
     config.addOption( 'baseURLSSL', '' , 'Expert only.' )
     config.addOption( 'AllowDirectSubmission', False, 'Deprecated. Please use the Jedi backend' )
+    config.addOption('AGISJSONFile', '/tmp/agis_pandaresources.json', 'Local AGIS JSON file for queue -> site mapping')
 
     # -------------------------------------------------
     # Jedi Options
