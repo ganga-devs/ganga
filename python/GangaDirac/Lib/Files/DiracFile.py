@@ -85,7 +85,7 @@ class DiracFile(IGangaFile):
         super(DiracFile, self).__init__()
         self.locations = []
 
-        self._setLFNnamePattern(_lfn=lfn, _namePattern = namePattern)
+        self._setLFNnamePattern(lfn, namePattern)
 
         if localDir is not None:
             self.localDir = expandfilename(localDir)
@@ -113,21 +113,21 @@ class DiracFile(IGangaFile):
         # LFN ONLY
         if len(args) == 1 and type(args[0]) == type(''):
             if str(str(args[0]).upper()[0:4]) == str("LFN:"):
-                self._setLFNnamePattern(_lfn=args[0][4:], _namePattern="")
+                self._setLFNnamePattern(lfn=args[0][4:], namePattern="")
             else:
-                self._setLFNnamePattern(_lfn="", _namePattern=args[0])
+                self._setLFNnamePattern(lfn="", namePattern=args[0])
 
         # NAMEPATTERN AND LFN
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
             self.namePattern = args[0]
-            self._setLFNnamePattern(_lfn='', _namePattern=self.namePattern)
+            self._setLFNnamePattern(lfn='', namePattern=self.namePattern)
             self.localDir = expandfilename(args[1])
 
         # NAMEPATTERN AND LFN AND LOCALDIR
         elif len(args) == 3 and type(args[0]) == type('') and type(args[1]) == type('') and type(args[2]) == type(''):
             self.namePattern = args[0]
             self.lfn = args[2]
-            self._setLFNnamePattern(_lfn=self.lfn, _namePattern=self.namePattern)
+            self._setLFNnamePattern(lfn=self.lfn, namePattern=self.namePattern)
             self.localDir = expandfilename(args[1])
 
         # NAMEPATTERN AND LFN AND LOCALDIR AND REMOTEDIR
@@ -135,7 +135,7 @@ class DiracFile(IGangaFile):
                 and type(args[2]) == type('') and type(args[3]) == type(''):
             self.namePattern = args[0]
             self.lfn = args[2]
-            self._setLFNnamePattern(_lfn=lfn, _namePattern=namePattern)
+            self._setLFNnamePattern(lfn=lfn, namePattern=namePattern)
             self.localDir = expandfilename(args[1])
             self.remoteDir = args[3]
 
@@ -188,10 +188,7 @@ class DiracFile(IGangaFile):
 
         return self.locations
 
-    def _setLFNnamePattern(self, _lfn="", _namePattern=""):
-
-        lfn = _lfn
-        namePattern = _namePattern
+    def _setLFNnamePattern(self, lfn="", namePattern=""):
 
         if self.defaultSE != "":
             ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
