@@ -18,7 +18,7 @@ ganga/python/GangaDirac
 
 
 --------------------------------------------------------------------------------------------------------------
-ganga/python/GangaLSST
+ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 * Ignore comments in files input for --inPfnListFile
 * Added the output_loc_to_input option to AthenaSplitterJob to map input files to output dirs
