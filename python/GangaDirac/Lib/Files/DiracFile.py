@@ -190,8 +190,8 @@ class DiracFile(IGangaFile):
 
     def _setLFNnamePattern(self, _lfn="", _namePattern=""):
 
-        lfn = copy.deepcopy(_lfn)
-        namePattern = copy.deepcopy(_namePattern)
+        lfn = _lfn
+        namePattern = _namePattern
 
         if self.defaultSE != "":
             ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
