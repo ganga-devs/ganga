@@ -13,6 +13,7 @@ Attributes:
 import time
 
 # Ganga Imports
+from Ganga.Utility.Decorators import static_variable
 from Ganga.Core.exceptions import GangaException, ApplicationConfigurationError, \
     BackendError, RepositoryError, BulkOperationRepositoryError, \
     IncompleteJobSubmissionError, IncompleteKillError, JobManagerError, \
@@ -22,9 +23,6 @@ from Ganga.Core.exceptions import GangaException, ApplicationConfigurationError,
 
 # Globals
 monitoring_component = None
-
-# internal helper variable for interactive shutdown
-t_last = None
 
 
 def start_jobregistry_monitor(reg_slice):
@@ -88,21 +86,21 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
         
 
+@static_variable('t_last')
 def should_wait_interactive_cb(t_total, critical_thread_ids, non_critical_thread_ids):
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
-    global t_last
-    if t_last is None:
-        t_last = -time.time()
+    if should_wait_interactive_cb.t_last is None:
+        should_wait_interactive_cb.t_last = -time.time()
     # if there are critical threads then prompt user or wait depending on
     # configuration
     if critical_thread_ids:
-        if ((t_last < 0 and time.time() + t_last > config['forced_shutdown_first_prompt_time']) or
-                (t_last > 0 and time.time() - t_last > config['forced_shutdown_prompt_time'])):
+        if ((should_wait_interactive_cb.t_last < 0 and time.time() + should_wait_interactive_cb.t_last > config['forced_shutdown_first_prompt_time']) or
+                (should_wait_interactive_cb.t_last > 0 and time.time() - should_wait_interactive_cb.t_last > config['forced_shutdown_prompt_time'])):
             msg = """Job status update or output download still in progress (shutdown not completed after %d seconds).
 %d background thread(s) still running: %s.
 Do you want to force the exit (y/[n])? """ % (t_total, len(critical_thread_ids), critical_thread_ids)
             resp = raw_input(msg)
-            t_last = time.time()
+            should_wait_interactive_cb.t_last = time.time()
             return resp.lower() != 'y'
         else:
             return True
