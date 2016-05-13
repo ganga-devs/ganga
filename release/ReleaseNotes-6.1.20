@@ -8,13 +8,26 @@ ganga/python/Ganga
 * Adding individual postprocessors to jobs has been fixed #402
 * Condor jobs can split by dataset #390
 * Minor monitoring fix when there are strange errors from the Condor backend
+* Fixed some minor bugs in preparing some jobs
+* GangaDataset made more user friendly
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaDirac
 --------------------------------------------------------------------------------------------------------------
-* Dirac has gained the option to set the default output SE for files
-* Some performance improvements with communicating with the DIRAC server
+* Dirac has gained the option to set the default output SE for files (optional)
+* Some performance improvements with communicating with the DIRAC server (reduced Dirac calls/reduced code fluff in Ganga)
+* Some older configuration settings have been deprecated, some new configuration options have been added.
+  (This effects the handling of defaultSE but also means the DIRAC/Ganga job state mapping and the defaultSE can be changed)
+* Can now use the bashrc directly from dirac-ui and elsewhere so don't need a Ganga specific env conig file
+* DIRAC 'Completed' jobs are now considered to be 'running' due to the transfer of output data
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* All new DIRAC settings have been made configurable within LHCb config
+* LHCb config now managed LHCb specific settings
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -31,6 +44,8 @@ ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLSST
 --------------------------------------------------------------------------------------------------------------
-* New plugin for the LSST experiment. Still in the early stages.
+* New plugin for the LSST experiment. DIRAC RTHandler finsihed so grid jobs work and have been tested.
+
+
 
 **************************************************************************************************************
