@@ -3,27 +3,20 @@ Core package defines the fundamental subsystems of Ganga Architecture.
 Subsystems are autonomous components (such as a remote services) which may be independetly deployed.
 Subsystems may also be created as local objects in the Ganga Client process.
 """
-from __future__ import absolute_import
 
+# System Imports
 import time
 
-from .exceptions import GangaException, ApplicationConfigurationError, \
+# Ganga Imports
+from Ganga.Core.exceptions import GangaException, ApplicationConfigurationError, \
     BackendError, RepositoryError, BulkOperationRepositoryError, \
     IncompleteJobSubmissionError, IncompleteKillError, JobManagerError, \
     GangaAttributeError, GangaValueError, ProtectedAttributeError, \
     ReadOnlyObjectError, TypeMismatchError, SchemaError, ApplicationPrepareError, \
     GangaIOError, SplitterError
 
+# Globals
 monitoring_component = None
-
-
-def set_autostart_policy(interactive_session):
-    """
-    Change the default value of autostart of the monitoring, depending if the session is interactive or batch.
-    The autostart value may be overriden in the config file, so warn if it differs from the default.
-    This function should be called
-    """
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
 
 # internal helper variable for interactive shutdown
 t_last = None
