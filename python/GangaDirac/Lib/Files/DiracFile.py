@@ -85,9 +85,6 @@ class DiracFile(IGangaFile):
         super(DiracFile, self).__init__()
         self.locations = []
 
-        if len(namePattern) >= 4 and str(namePattern).upper()[0:4] == "LFN:" and lfn == '':
-            self._setLFNnamePattern(_lfn=namePattern[4:], _namePattern='')
-
         self._setLFNnamePattern(_lfn=lfn, _namePattern = namePattern)
 
         if localDir is not None:
@@ -193,35 +190,38 @@ class DiracFile(IGangaFile):
 
     def _setLFNnamePattern(self, _lfn="", _namePattern=""):
 
-        ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
-        # Check for /lhcb/some/path or /gridpp/some/path
-        if _namePattern.split(os.pathsep)[0] == self.defaultSE \
-            or (len(_lfn) > 3 and _lfn[0:4] == "LFN:" and len(_namePattern.split(os.pathsep)) >= 1\
-                    and _namePattern.split(os.pathsep)[1] == self.defaultSE):
-            # Check for LFN:/gridpp/some/path or others...
-            temp = _lfn
-            _lfn = _namePattern
-            _namePattern = temp
+        lfn = copy.deepcopy(_lfn)
+        namePattern = copy.deepcopy(_namePattern)
 
-        if _lfn != "" and _lfn is not None:
-            if len(_lfn) > 3 and _lfn[0:4] == "LFN:":
-                _lfn = _lfn[4:]
+        if self.defaultSE != "":
+            ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
+            # Check for /lhcb/some/path or /gridpp/some/path
+            if namePattern.split(os.pathsep)[0] == self.defaultSE \
+                or (len(namePattern) > 3 and namePattern[0:4].upper() == "LFN:"\
+                    or len(namePattern.split(os.pathsep)) > 1 and namePattern.split(os.pathsep)[1] == self.defaultSE):
+                # Check for LFN:/gridpp/some/path or others...
+                lfn = namePattern
+                namePattern = ""
 
-        if _lfn != "" and _namePattern != "":
-            self.lfn = _lfn
-            self.remoteDir = os.path.dirname(_lfn)
-            self.namePattern = os.path.basename(_namePattern)
-            self.localDir = os.path.dirname(expandfilename(_namePattern))
+        if lfn != "" and lfn is not None:
+            if len(lfn) > 3 and lfn[0:4].upper() == "LFN:":
+                lfn = lfn[4:]
 
-        elif _lfn != "" and _namePattern == "":
-            self.lfn = _lfn
+        if lfn != "" and namePattern != "":
+            self.lfn = lfn
+            self.remoteDir = os.path.dirname(lfn)
+            self.namePattern = os.path.basename(namePattern)
+            self.localDir = os.path.dirname(expandfilename(namePattern))
+
+        elif lfn != "" and namePattern == "":
+            self.lfn = lfn
             self.remoteDir = os.path.dirname(self.lfn)
             self.namePattern = os.path.basename(self.lfn)
             self.localDir = ""
 
-        elif _namePattern != "" and _lfn == "":
-            self.namePattern = os.path.basename(_namePattern)
-            self.localDir = os.path.dirname(expandfilename(_namePattern))
+        elif namePattern != "" and lfn == "":
+            self.namePattern = os.path.basename(namePattern)
+            self.localDir = os.path.dirname(expandfilename(namePattern))
             self.remoteDir = ""
             self.lfn = ""
 
