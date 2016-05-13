@@ -14,7 +14,7 @@ import Ganga.Utility.execute as gexecute
 
 import time
 import math
-import copy
+from copy import deepcopy
 import inspect
 
 logger = getLogger()
@@ -219,8 +219,5 @@ def execute(command,
                                   eval_includes=eval_includes,
                                   update_env=update_env)
 
-    # TODO can we just deepcopy?
-
-    return copy.deepcopy(returnable)
-
+    return deepcopy(returnable)
 
