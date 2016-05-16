@@ -25,14 +25,6 @@ from Ganga.Core.exceptions import GangaException, ApplicationConfigurationError,
 monitoring_component = None
 
 
-def start_jobregistry_monitor(reg_slice):
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor
-    # start the monitoring loop
-    global monitoring_component
-    monitoring_component = JobRegistry_Monitor(reg_slice)
-    monitoring_component.start()
-
-
 def bootstrap(reg_slice, interactive_session, my_interface=None):
     """
     Create local subsystems. In the future this procedure should be enhanced to connect to remote subsystems.
@@ -43,6 +35,7 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     """
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor, config
     from Ganga.Utility.logging import getLogger
+    global monitoring_component
 
     logger = getLogger()
 
@@ -59,7 +52,9 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     #            if hasattr(j.backend,'setup'): # protect: EmptyGangaObject does not have setup() method
     #                j.backend.setup()
 
-    start_jobregistry_monitor(reg_slice)
+    # start the monitoring loop
+    monitoring_component = JobRegistry_Monitor(reg_slice)
+    monitoring_component.start()
 
     # register the MC shutdown hook
 
