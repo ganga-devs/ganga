@@ -1,4 +1,4 @@
-from GangaLHCb.test import *
+from GangaLHCb.old_test import *
 
 ap = DaVinci()
 j = Job(application=ap, backend=DiracTestSubmitter())

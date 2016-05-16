@@ -108,7 +108,7 @@ case `whoami` in
     gangaat )
         export LOAD_PACKAGES='GangaTest:GangaAtlas' ;;
     gangalb )
-        export LOAD_PACKAGES='GangaTest:GangaLHCb' ;;
+        export LOAD_PACKAGES='GangaDirac:GangaGaudi:GangaLHCb:GangaTest' ;;
 esac
 
 GANGA_TEST='Ganga/old_test/Schema/Test'

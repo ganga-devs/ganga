@@ -4,7 +4,7 @@ from GangaTest.Framework.utils import sleep_until_completed
 
 import Ganga.Utility.Config.Config
 
-from GangaLHCb.test import getDiracAppPlatform
+from GangaLHCb.old_test import getDiracAppPlatform
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
