@@ -155,7 +155,7 @@ def getWNCodeForOutputSandbox(job, files, jobid):
                 patternsToSandbox.append(outputFile.namePattern)
 
     insertScript = """\n
-from Ganga.Utility.files import recursive_copy
+from files import recursive_copy
 import glob
 import os
 
