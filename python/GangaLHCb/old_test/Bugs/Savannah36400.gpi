@@ -1,4 +1,4 @@
-from GangaLHCb.test import *
+from GangaLHCb.old_test import *
 addDiracTestSubmitter()
 
 #set a version that does't exist in the config
