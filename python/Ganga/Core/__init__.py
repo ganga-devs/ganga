@@ -6,7 +6,7 @@ Subsystems may also be created as local objects in the Ganga Client process.
 
 Attributes:
     monitoring_component (JobRegistry_Monitor): Global variable that is set to the single global monitoring thread. Set
-        in start_jobregistry_monitor called from bootstrap.
+        in the bootstrap function.
 """
 
 # System Imports
