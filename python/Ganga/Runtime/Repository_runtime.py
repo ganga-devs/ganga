@@ -2,7 +2,7 @@
 Internal initialization of the repositories.
 """
 
-from Ganga.Utility.Config import getConfig, setConfigOption
+import Ganga.Utility.Config
 from Ganga.Utility.logging import getLogger
 import os.path
 from Ganga.Utility.files import expandfilename, fullpath
@@ -10,7 +10,7 @@ from Ganga.Core.GangaRepository import getRegistries
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.exceptions import GangaException
 
-config = getConfig('Configuration')
+config = Ganga.Utility.Config.getConfig('Configuration')
 logger = getLogger()
 
 _runtime_interface = None
@@ -135,12 +135,6 @@ def bootstrap():
         logger.debug("started " + registry.info(full=False))
         if registry.name == "prep":
             registry.print_other_sessions()
-
-            if registry.other_session_active():
-                logger.warning("Multiple Ganga sessions detected. The Monitoring Thread is being disabled.")
-                logger.warning("Type 'enableMonitoring' to restart")
-                setConfigOption('PollThread', 'autostart', False)
-
         started_registries.append(registry.name)
         proxied_registry_slice = registry.getProxy()
         retval.append((registry.name, proxied_registry_slice, registry.doc))
