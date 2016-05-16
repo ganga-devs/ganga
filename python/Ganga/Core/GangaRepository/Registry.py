@@ -997,9 +997,17 @@ class Registry(object):
                 s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
         return s
 
+    def other_session_active(self):
+        """ Returns a True/False for if other sessions have been detected from the Repository """
+        if self.repository.get_other_sessions():
+            return True
+        else:
+            return False
+
     def print_other_sessions(self):
-        other_sessions = self.repository.get_other_sessions()
-        if len(other_sessions) > 0:
+        """ Prints a warning if other active sessions have been detected """
+        if self.other_session_active():
+            other_sessions = self.repository.get_other_sessions()
             logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
 
     def has_loaded(self, obj):
