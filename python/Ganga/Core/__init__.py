@@ -42,6 +42,7 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor
     from Ganga.Utility.Config import getConfig
     from Ganga.Runtime.GPIexport import exportToInterface
+    from Ganga.Utility.logging import getLogger
     global monitoring_component
 
     # start the monitoring loop
@@ -57,8 +58,6 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
 
     # has the user changed monitoring autostart from the default? if so, warn them
     if config['autostart'] != interactive_session:
-        # must import logger here to avoid circular import
-        from Ganga.Utility.logging import getLogger
         if config['autostart']:
             getLogger().warning('Monitoring loop enabled (the default setting for a batch session is disabled)')
         else:
