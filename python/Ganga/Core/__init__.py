@@ -26,47 +26,53 @@ monitoring_component = None
 
 
 def bootstrap(reg_slice, interactive_session, my_interface=None):
-    """
-    Create local subsystems. In the future this procedure should be enhanced to connect to remote subsystems.
-    FIXME: this procedure should be moved to the Runtime package.
+    """Create local subsystems.
 
-    This function will change the default value of autostart of the monitoring, depending if the session is interactive or batch.
-    The autostart value may be overriden in the config file, so warn if it differs from the default.
+    This function will change the default value of autostart of the monitoring, depending if the session is interactive
+    or batch. The autostart value may be overridden in the config file, so warn if it differs from the default.
+
+    Args:
+        reg_slice (RegistrySlice): A registry slice encompassing the Registry to monitor,
+            e.g. from getRegistrySlice('jobs') -> JobRegistry.getSlice()
+        interactive_session (bool): Flag indicating an interactive session or not
+        my_interface (Optional[module]): Public interface to add the runMonitoring function to, None (default) will set
+            it to Ganga.GPI
     """
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor, config
-    from Ganga.Utility.logging import getLogger
+    # Must do some Ganga imports here to avoid circular importing
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor
+    from Ganga.Utility.Config import getConfig
+    from Ganga.Runtime.GPIexport import exportToInterface
     global monitoring_component
-
-    logger = getLogger()
-
-    from Ganga.Core.GangaThread import GangaThreadPool
 
     # start the monitoring loop
     monitoring_component = JobRegistry_Monitor(reg_slice)
     monitoring_component.start()
 
     # register the MC shutdown hook
-
     change_atexitPolicy(interactive_session)
 
-    # export to GPI moved to Runtime bootstrap
+    # override the default monitoring autostart value with the setting from interactive session
+    config = getConfig("PollThread")
+    config.overrideDefaultValue('autostart', interactive_session)
 
-    autostart_default = interactive_session
-    config.overrideDefaultValue('autostart', bool(autostart_default))
+    # has the user changed monitoring autostart from the default? if so, warn them
+    if config['autostart'] != interactive_session:
+        # must import logger here to avoid circular import
+        from Ganga.Utility.logging import getLogger
+        if config['autostart']:
+            getLogger().warning('Monitoring loop enabled (the default setting for a batch session is disabled)')
+        else:
+            getLogger().warning('Monitoring loop disabled (the default setting for an interactive session is enabled)')
 
-    if config['autostart'] is not autostart_default:
-        msg = 'monitoring loop %s (the default setting for %s session is %s)'
-        val = {True: ('enabled', 'batch', 'disabled'),
-               False: ('disabled', 'interactive', 'enabled')}
-        logger.warning(msg % val[config['autostart']])
-
+    # Enable job monitoring if requested
     if config['autostart']:
         monitoring_component.enableMonitoring()
 
+    # export the runMonitoring function to the public interface
     if not my_interface:
         import Ganga.GPI
         my_interface = Ganga.GPI
-    from Ganga.Runtime.GPIexport import exportToInterface
+
     exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
         
 
