@@ -8,6 +8,7 @@ from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 import errno
 import copy
 import threading
+from os import listdir, path, stat
 
 logger = getLogger()
 
@@ -117,9 +118,8 @@ class SubJobXMLList(GangaObject):
 
     def load_subJobIndex(self):
         """Load the index from all sujobs ynto _subjobIndexData or empty it is an error occurs"""
-        import os
-        index_file = os.path.join(self._jobDirectory, self._subjob_master_index_name )
-        if os.path.isfile( index_file ):
+        index_file = path.join(self._jobDirectory, self._subjob_master_index_name )
+        if path.isfile( index_file ):
             index_file_obj = None
             try:
                 from Ganga.Core.GangaRepository.PickleStreamer import from_file
@@ -139,7 +139,7 @@ class SubJobXMLList(GangaObject):
                         #if index_data is not None and 'modified' in index_data:
                         #    mod_time = index_data['modified']
                         #    disk_location = self.__get_dataFile(str(subjob_id))
-                        #    disk_time = os.stat(disk_location).st_ctime
+                        #    disk_time = stat(disk_location).st_ctime
                         #    diff = disk_time - mod_time
                         #    if disk_time > mod_time and (diff*diff < 9.):
                         #        logger.warning("objs: %s" % self._cachedJobs.keys())
@@ -176,7 +176,6 @@ class SubJobXMLList(GangaObject):
 
     def __really_writeIndex(self):
         """Do the actual work of writing the index for all subjobs"""
-        import os
 
         all_caches = {}
         for sj_id in range(len(self)):
@@ -184,7 +183,7 @@ class SubJobXMLList(GangaObject):
                 this_cache = self._registry.getIndexCache(self.__getitem__(sj_id))
                 all_caches[sj_id] = this_cache
                 disk_location = self.__get_dataFile(sj_id)
-                all_caches[sj_id]['modified'] = os.stat(disk_location).st_ctime
+                all_caches[sj_id]['modified'] = stat(disk_location).st_ctime
             else:
                 if sj_id in self._subjobIndexData.keys():
                     all_caches[sj_id] = self._subjobIndexData[sj_id]
@@ -192,11 +191,11 @@ class SubJobXMLList(GangaObject):
                     this_cache = self._registry.getIndexCache(self.__getitem__(sj_id))
                     all_caches[sj_id] = this_cache
                     disk_location = self.__get_dataFile(sj_id)
-                    all_caches[sj_id]['modified'] = os.stat(disk_location).st_ctime
+                    all_caches[sj_id]['modified'] = stat(disk_location).st_ctime
 
         try:
             from Ganga.Core.GangaRepository.PickleStreamer import to_file
-            index_file = os.path.join(self._jobDirectory, self._subjob_master_index_name)
+            index_file = path.join(self._jobDirectory, self._subjob_master_index_name)
             index_file_obj = open(index_file, "w")
             to_file(all_caches, index_file_obj)
             index_file_obj.close()
@@ -218,8 +217,7 @@ class SubJobXMLList(GangaObject):
         if index_str in self._cached_filenames:
             return self._cached_filenames[index_str]
 
-        import os.path
-        subjob_data = os.path.join(self._jobDirectory, str(index), self._dataFileName)
+        subjob_data = path.join(self._jobDirectory, str(index), self._dataFileName)
         if backup_decision is True:
             subjob_data = subjob_data + '~'
 
@@ -228,9 +226,8 @@ class SubJobXMLList(GangaObject):
 
     def __len__(self):
         """ return length or lookup the last modified time compare against self._stored_len[0] and if nothings changed return self._stored_len[1]"""
-        import os
         try:
-            this_time = os.stat(self._jobDirectory).st_ctime
+            this_time = stat(self._jobDirectory).st_ctime
         except OSError:
             return 0
 
@@ -240,29 +237,10 @@ class SubJobXMLList(GangaObject):
                 return self._stored_len[1]
 
         subjob_count = 0
-        from os import listdir, path
         if not path.isdir( self._jobDirectory ):
             return 0
 
-        jobDirectoryList = listdir( self._jobDirectory )
-
-        import os.path
-        subjob_count=0
-        while True:
-            if str(subjob_count) in jobDirectoryList:
-                expected_folder = os.path.join(self._jobDirectory, str(subjob_count))
-                if os.path.isdir(expected_folder):
-                    subjob_count=subjob_count+1
-                    continue
-                else:
-                    break
-            else:
-                break
-            #subjob_data = self.__get_dataFile(str(i))
-            #import os.path
-            #if os.path.isfile(subjob_data)):
-            #    subjob_count = subjob_count + 1
-            #i += 1
+        subjob_count = SubJobXMLList.countSubJobDirs(self._jobDirectory)
 
         if len(self._stored_len) != 2:
             self._stored_len = []
@@ -517,3 +495,45 @@ class SubJobXMLList(GangaObject):
             ds += markup(this_format % tuple(vals), colour)
 
         return ds
+
+    @staticmethod
+    def JobHasChildrenTest(jobDirectory):
+        """ Return True/False if given (job?) object has children associated with it
+        Args:
+            jobDirectory (str): name of folder to be examined
+        """
+
+        count = SubJobXMLList.countSubJobDirs(jobDirectory)
+        if count:
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def countSubJobDirs(jobDirectory):
+        """ I'm a function which returns a number, my number corresponds to the amount of sequentially listed numerically named folders exiting within 'jobDirectory'
+        Args:
+            jobDirectory (str): name of folder to be examined
+        """
+
+        jobDirectoryList = listdir( jobDirectory )
+
+        subjob_count=0
+        while True:
+            if str(subjob_count) in jobDirectoryList:
+                expected_folder = path.join(jobDirectory, str(subjob_count))
+                if path.isdir(expected_folder):
+                    subjob_count=subjob_count+1
+                    continue
+                else:
+                    break
+            else:
+                break
+
+            #subjob_data = self.__get_dataFile(str(i))
+            #if path.isfile(subjob_data)):
+            #    subjob_count = subjob_count + 1
+            #i += 1
+
+        return subjob_count
+
