@@ -24,7 +24,7 @@ from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 
 from Ganga.GPIDev.Base.Objects import Node
-from Ganga.Core.GangaRepository import SubJobXMLList
+from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 
@@ -225,7 +225,7 @@ class GangaRepositoryLocal(GangaRepository):
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
-        for k in self._fully_loaded.keys():
+        for k in [_k for _k in self._fully_loaded.keys() if _k not in self.incomplete_objects]:
             self.index_write(k, shutdown=True)
         self._write_master_cache(True)
         self.sessionlock.shutdown()
@@ -293,6 +293,8 @@ class GangaRepositoryLocal(GangaRepository):
         """ write an index file for this object (must be locked).
             Should not raise any Errors,
             shutdown=True causes this to always be written regardless of any checks"""
+        if this_id in self.incomplete_objects:
+            return
         logger.debug("Writing index: %s" % this_id)
         obj = self.objects[this_id]
         try:
@@ -352,11 +354,12 @@ class GangaRepositoryLocal(GangaRepository):
                 with open(_master_idx, 'r') as input_f:
                     this_master_cache = pickle_from_file(input_f)[0]
                 for this_cache in this_master_cache:
-                    this_id = this_cache[0]
-                    self._cache_load_timestamp[this_id] = this_cache[1]
-                    self._cached_cat[this_id] = this_cache[2]
-                    self._cached_cls[this_id] = this_cache[3]
-                    self._cached_obj[this_id] = this_cache[4]
+                    if this_cache[4] >= 0:
+                        this_id = this_cache[0]
+                        self._cache_load_timestamp[this_id] = this_cache[1]
+                        self._cached_cat[this_id] = this_cache[2]
+                        self._cached_cls[this_id] = this_cache[3]
+                        self._cached_obj[this_id] = this_cache[4]
             else:
                 logger.debug("Not Reading Master Index")
         except Exception as err:
@@ -396,7 +399,8 @@ class GangaRepositoryLocal(GangaRepository):
             for k, v in items_to_save:
                 try:
                     #logger.info("Examining: %s" % k)
-                    if k in self._fully_loaded.keys():
+                    # Object NOT loaded and DEFINATELY NOT in the incomplete_objects list
+                    if k in [_k for _k in self._fully_loaded.keys() if not _k in self.incomplete_objects]:
                         # Check and write index first
                         obj = v#self.objects[k]
                         new_index = None
@@ -418,11 +422,16 @@ class GangaRepositoryLocal(GangaRepository):
             #cached_list = []
             iterables = self._cache_load_timestamp.iteritems()
             for k, v in iterables:
+                if k in self.incomplete_objects:
+                    continue
                 cached_list = []
                 cached_list.append(k)
                 try:
                     fn = self.get_idxfn(k)
-                    time = os.stat(fn).st_ctime
+                    if os.path.isfile(fn):
+                        time = os.stat(fn).st_ctime
+                    else:
+                        time = -1
                 except OSError as err:
                     logger.debug("_write_master_cache: %s" % err)
                     logger.debug("_cache_load_timestamp: %s" % self._cache_load_timestamp)
@@ -431,6 +440,7 @@ class GangaRepositoryLocal(GangaRepository):
                         time = -1
                     else:
                         raise
+
                 if time > 0:
                     cached_list.append(time)
                     cached_list.append(self._cached_cat[k])
@@ -513,7 +523,8 @@ class GangaRepositoryLocal(GangaRepository):
                     changed_ids.append(this_id)
                     # Write out a new index if the file can be locked
                     if len(self.lock([this_id])) != 0:
-                        self.index_write(this_id)
+                        if this_id not in self.incomplete_objects:
+                            self.index_write(this_id)
                         self.unlock([this_id])
                 except KeyError as err:
                     logger.debug("update Error: %s" % err)
@@ -646,7 +657,6 @@ class GangaRepositoryLocal(GangaRepository):
                                 logger.debug("Using Folder: %s" % os.path.dirname(sfn))
                             safe_save(sfn, split_cache[i], self.to_file)
                             split_cache[i]._setFlushed()
-                    from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
                     # Now generate an index file to take advantage of future non-loading goodness
                     tempSubJList = SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False, parent=obj)
                     ## equivalent to for sj in job.subjobs
@@ -673,7 +683,8 @@ class GangaRepositoryLocal(GangaRepository):
                 for idn in os.listdir(os.path.dirname(fn)):
                     if idn.isdigit():
                         rmrf(os.path.join(os.path.dirname(fn), idn))
-            self.index_write(this_id)
+            if this_id not in self.incomplete_objects:
+                self.index_write(this_id)
             obj._setFlushed()
         else:
             raise RepositoryError(self, "Cannot flush an Empty object for ID: %s" % this_id)
@@ -690,6 +701,9 @@ class GangaRepositoryLocal(GangaRepository):
         #import traceback
         #traceback.print_stack()
         for this_id in ids:
+            if this_id in self.incomplete_objects:
+                logger.debug("Should NEVER re-flush an incomplete object, it's now 'bad' respect this!")
+                continue
             try:
                 logger.debug("safe_flush")
                 self._safe_flush_xml(this_id)
@@ -754,7 +768,8 @@ class GangaRepositoryLocal(GangaRepository):
             logger.debug("OLD: %s" % obj._index_cache)
             # index is wrong! Try to get read access - then we can fix this
             if len(self.lock([this_id])) != 0:
-                self.index_write(this_id)
+                if this_id not in self.incomplete_objects:
+                    self.index_write(this_id)
                 # self.unlock([this_id])
 
                 old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache.iteritems())
@@ -791,7 +806,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         if has_children:
         #    logger.info("Adding children")
-            obj.setSchemaAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
+            obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
         else:
             obj.setSchemaAttribute(self.sub_split, None)
 
@@ -821,7 +836,6 @@ class GangaRepositoryLocal(GangaRepository):
 
         if (self._load_timestamp.get(this_id, 0) != os.fstat(fobj.fileno()).st_ctime):
 
-            import time
             b4=time.time()
             tmpobj, errs = self.from_file(fobj)
             a4=time.time()
@@ -832,6 +846,7 @@ class GangaRepositoryLocal(GangaRepository):
                 raise InaccessibleObjectError(self, this_id, errs[0])
 
             has_children = (self.sub_split is not None) and hasattr(tmpobj, self.sub_split) and len(getattr(tmpobj, self.sub_split)) == 0
+            has_children = has_children or SubJobXMLList.JobHasChildrenTest(path.dirname(fn))
 
             if this_id in self.objects:
                 self._must_actually_load_xml(fn, this_id, load_backup, has_children, tmpobj)
