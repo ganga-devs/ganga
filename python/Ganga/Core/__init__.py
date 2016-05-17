@@ -13,7 +13,7 @@ Attributes:
 import time
 
 # Ganga Imports
-from Ganga.Utility.Decorators import static_variable
+from Ganga.Utility.Decorators import static_vars
 from Ganga.Core.exceptions import GangaException, ApplicationConfigurationError, \
     BackendError, RepositoryError, BulkOperationRepositoryError, \
     IncompleteJobSubmissionError, IncompleteKillError, JobManagerError, \
@@ -75,7 +75,7 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
         
 
-@static_variable('t_last')
+@static_vars(t_last=None)
 def should_wait_interactive_cb(t_total, critical_thread_ids, non_critical_thread_ids):
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
     if should_wait_interactive_cb.t_last is None:
