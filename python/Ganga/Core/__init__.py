@@ -41,17 +41,6 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
 
     from Ganga.Core.GangaThread import GangaThreadPool
 
-    # start the internal services coordinator
-    from Ganga.Core.InternalServices import Coordinator
-    Coordinator.bootstrap()
-
-    # backend-specific setup (e.g. Remote: setup any remote ssh pipes)
-    # for j in reg_slice:
-    #    if hasattr(j,'status') and j.status in ['submitted','running']:
-    #        if hasattr(j,'backend'): # protect: EmptyGangaObject does not have backend either
-    #            if hasattr(j.backend,'setup'): # protect: EmptyGangaObject does not have setup() method
-    #                j.backend.setup()
-
     # start the monitoring loop
     monitoring_component = JobRegistry_Monitor(reg_slice)
     monitoring_component.start()
