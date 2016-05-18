@@ -12,7 +12,7 @@ class TestAutostartMonitoring(GangaUnitTest):
         from Ganga.GPI import Job, jobs
 
         j = Job()
-        self.assertEqual(len(jobs), 1)
+        assert len(jobs) == 1
 
         j.submit()
-        self.assertNotEqual(j.status, 'new')
+        assert j.status != 'new'
