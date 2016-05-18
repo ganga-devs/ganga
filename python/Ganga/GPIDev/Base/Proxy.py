@@ -781,14 +781,13 @@ def GPIProxyClassFactory(name, pluginclass):
 
         instance._auto__init__()
 
-        from Ganga.GPIDev.Base.Objects import do_not_copy
         ## All objects with an _auto__init__ method need to have that method called and we set the various node attributes here based upon the schema
         for key, _val in stripProxy(self)._schema.allItems():
-            if not _val['protected'] and not _val['hidden'] and isType(_val, ComponentItem) and key not in do_not_copy:
+            if not _val['protected'] and not _val['hidden'] and isType(_val, ComponentItem):
                 val = stripProxy(getattr(self, key))
                 if isinstance(val, GangaObject):
                     val._auto__init__()
-                instance.setNodeAttribute(key, instance._attribute_filter__set__(key, stripProxy(val)))
+                instance.setSchemaAttribute(key, instance._attribute_filter__set__(key, stripProxy(val)))
 
 
         ## THIRD(?) CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
@@ -831,7 +830,7 @@ def GPIProxyClassFactory(name, pluginclass):
                         this_arg._auto__init__()
 
                 if type(this_arg) is str:
-                    raw_self.setNodeAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
+                    raw_self.setSchemaAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
                     continue
                 else:
                     item = pluginclass._schema.getItem(k)
@@ -856,7 +855,7 @@ def GPIProxyClassFactory(name, pluginclass):
                     if hasattr(this_arg, '_auto__init__'):
                         this_arg._auto__init__()
 
-                    raw_self.setNodeAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
+                    raw_self.setSchemaAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 

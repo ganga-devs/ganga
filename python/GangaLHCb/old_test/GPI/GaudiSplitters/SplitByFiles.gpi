@@ -1,6 +1,6 @@
 # Test the SplitByFiles algorithm using the TestSubmitter
 
-from GangaLHCb.test import *
+from GangaLHCb.old_test import *
 
 addLocalTestSubmitter()
 

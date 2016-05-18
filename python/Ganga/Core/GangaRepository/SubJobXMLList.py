@@ -92,29 +92,19 @@ class SubJobXMLList(GangaObject):
     ## THIS CLASS DOES NOT MAKE USE OF THE SCHEMA TO STORE INFORMATION AS TRANSIENT OR UNCOPYABLE
     ## THIS CLASS CONTAINS A LOT OF OBJECT REFERENCES WHICH SHOULD NOT BE DEEPCOPIED!!!
     def __deepcopy__(self, memo=None):
-        if not isType(self, SubJobXMLList):
-            logger.error("CANNOT COPY A SUBJOBXMLLIST FROM ANOTHER CLASS TYPE!!!")
-            return
-        cls = self.__class__
-        obj = cls()
-        new_dict = {}
-        for dict_key, dict_value in self.__dict__.iteritems():
+        obj = super(SubJobXMLList, self).__deepcopy__(memo)
 
-            ## Copy objects where it's sane to
-            if dict_key not in ['_cachedJobs', '_definedParent', '_registry', '_parent', '_load_lock']:
-                new_dict[dict_key] = deepcopy(dict_value)
-
-            ## Assign by reference objects where it's sane to
-            elif dict_key in ['_registry']:
-                new_dict[dict_key] = dict_value
-
-            else:
-                new_dict[dict_key] = dict_value
+        obj._subjobIndexData = copy.deepcopy(self._subjobIndexData, memo)
+        obj._jobDirectory = copy.deepcopy(self._jobDirectory, memo)
+        obj._registry = self._registry
+        obj._dataFileName = copy.deepcopy(self._dataFileName, memo)
+        obj._load_backup = copy.deepcopy(self._load_backup, memo)
+        obj._cached_filenames = copy.deepcopy(self._cached_filenames, memo)
+        obj._stored_len = copy.deepcopy(self._stored_len, memo)
 
         ## Manually define unsafe/uncopyable objects
-        new_dict['_definedParent'] = None
-        new_dict['_cachedJobs'] = {}
-        obj.__dict__ = new_dict
+        obj._definedParent = None
+        obj._cachedJobs = {}
         return obj
 
     def _reset_cachedJobs(self, obj):
