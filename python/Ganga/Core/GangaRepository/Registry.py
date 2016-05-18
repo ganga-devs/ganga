@@ -89,7 +89,10 @@ class RegistryIndexError(RegistryError, IndexError):
 
 
 def makeRepository(registry):
-    """Factory that selects, imports and instantiates the correct GangaRepository"""
+    """Factory that selects, imports and instantiates the correct GangaRepository
+    Args:
+        registry (Registry): This maps the Registry type to the correct Repository
+    """
     if registry.type in ["LocalXML", "LocalPickle"]:
         from Ganga.Core.GangaRepository.GangaRepositoryXML import GangaRepositoryLocal
         return GangaRepositoryLocal(registry)
@@ -118,11 +121,21 @@ class IncompleteObject(GangaObject):
     _exportmethods = ['reload', 'remove', '__repr__']
 
     def __init__(self, registry, this_id):
+        """
+        This constructs an object which is placed into the objects dict when a repo fails to load an object due to some error
+        Args:
+            registry (Registry): This is the registry the object belongs to
+            this_id (int): This is the registry/repo id of the object in the objects dict
+        """
         super(IncompleteObject, self).__init__()
         self.registry = registry
         self.id = this_id
 
     def reload(self):
+        """
+        This will trigger a re-load of the object from disk which is useful if the object was locked but accessible by Ganga
+        TODO work ouf if this is still called anywhere
+        """
         self.registry._lock.acquire()
         try:
 
@@ -138,6 +151,10 @@ class IncompleteObject(GangaObject):
             self.registry._lock.release()
 
     def remove(self):
+        """
+        This will trigger a delete of the the object itself from within the given Repository but not registry
+        TODO work out if this is safe and still called
+        """
         self.registry._lock.acquire()
         try:
             if len(self.registry.repository.lock([self.id])) == 0:
@@ -154,6 +171,9 @@ class IncompleteObject(GangaObject):
             self.registry._lock.release()
 
     def __repr__(self):
+        """
+        This returns a repr of the object in question as inaccessible
+        """
         return "Incomplete object in '%s', ID %i. Try reload() or remove()." % (self.registry.name, self.id)
 
 
@@ -161,9 +181,14 @@ def synchronised(f):
     """
     This decorator must be attached to a method on a ``Registry``
     It uses the object's lock to make sure that the object is held for the duration of the decorated function
+    Args:
+        f (function): Function in question being wrapped
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
+        # This is the Registry RLock
+        # It it safe in principle to re-enter the registry through other lockable methods in the active lock-holding thread
+        # However, the registry will decide through the use of the transaction locks as to whether it should actually do any work as a result
         with self._lock:
             return f(self, *args, **kwargs)
     return decorated
@@ -176,6 +201,13 @@ class RegistryFlusher(threading.Thread):
     lost if Ganga is shut down abruptly.
     """
     def __init__(self, registry, *args, **kwargs):
+        """
+        This inits the RegistryFlusher and makes use of threading events
+        Args:
+            registry (Registry): The registry this Registry Flusher is flushing
+            args (list): Args passed to the constructor of a new RegistryFlusher thread
+            kwargs (dict): Kwds passed to the constructor of a new RegistryFlusher thread
+        """
         super(RegistryFlusher, self).__init__(*args, **kwargs)
         self.registry = registry
         self._stop = threading.Event()
@@ -189,9 +221,18 @@ class RegistryFlusher(threading.Thread):
 
     @property
     def stopped(self):
+        """
+        Returns if the flusher has stopped as a boolean?
+        """
         return self._stop.isSet()
 
     def join(self, *args, **kwargs):
+        """
+        Not clear if this is called anywhere
+        Args:
+            args (list): Args passed to the constructor of a new RegistryFlusher thread
+            kwargs (dict) : Kwds passed to the constructor of a new RegistryFlusher thread
+        """
         self.stop()
         super(RegistryFlusher, self).join(*args, **kwargs)
 
@@ -208,11 +249,11 @@ class RegistryFlusher(threading.Thread):
                 time.sleep(1/sleeps_per_second)
                 if self.stopped:
                     return
-            # We want this to be a non-blocking lock to avoid this
-            # interfering with interactive work or monitoring. It
-            # will try again in a while anyway.
+            # This will trigger a flush on all dirty objects in the repo,
+            # It will lock all objects dirty as a result of the nature of the flush command
             logger.debug('Auto-flushing: %s', self.registry.name)
             self.registry.flush_all()
+        logger.debug("Auto-Flusher shutting down for Registry: %s" % self.registry.name)
 
 
 class Registry(object):
@@ -222,7 +263,15 @@ class Registry(object):
     """
 
     def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
-        """Registry constructor, giving public name and documentation"""
+        """Registry constructor, giving public name and documentation
+        Args:
+            name (str): Name of teh registry e.g. 'jobs', 'box', 'prep'
+            doc (str): This is the doc string of the registry describing it's use and contents
+            dirty_flush_counter (int): This is no longer used
+            update_index_time (int): This is no longer used
+            dirty_max_timeout (int): This is no longer used
+            dirty_min_timeout (int): This is no longer used
+        """
         self.name = name
         self.doc = doc
         self._hasStarted = False
@@ -265,9 +314,19 @@ class Registry(object):
 #        self.releaseThread.start()
 
     def hasStarted(self):
+        """
+        Wrapper function to return _hasStarted boolen
+        TODO is this needed over accessing the boolean, should the boolean be 'public'
+        """
         return self._hasStarted
 
     def lock_transaction(self, this_id, action):
+        """
+        This creates a threading Lock on the repo which allows the repo to ignore transient repo actions and pause repo actions which modify the object
+        Args:
+            this_id (int): This is the python id of a given object, i.e. id(object) which is having a repo transaction performed on it
+            action (str): This is a string which represents the transaction (useful for debugging collisions)
+        """
         while this_id in self._inprogressDict.keys():
             logger.debug("Getting item being operated on: %s" % this_id)
             logger.debug("Currently in state: %s" % self._inprogressDict[this_id])
@@ -282,6 +341,9 @@ class Registry(object):
         self.hard_lock[this_id].acquire()
 
     def unlock_transaction(self, this_id):
+        """
+        This releases the threading Lock in the repo lock_transaction which re-allows all repo actions on the object in question
+        """
         self._inprogressDict[this_id] = False
         del self._inprogressDict[this_id]
         self.hard_lock[this_id].release()
@@ -289,7 +351,10 @@ class Registry(object):
     # Methods intended to be called from ''outside code''
     def __getitem__(self, this_id):
         """ Returns the Ganga Object with the given id.
-            Raise RegistryKeyError"""
+            Raise RegistryKeyError
+        Args:
+            this_id (int): This is the key of an object in the object dictionary
+        """
         logger.debug("__getitem__")
         try:
             return self._objects[this_id]
@@ -308,15 +373,27 @@ class Registry(object):
 
     @synchronised
     def __contains__(self, this_id):
-        """ Returns True if the given ID is in the registry """
+        """ Returns True if the given ID is in the registry
+        Args:
+            this_id (int): This is the key of an object in the object dictionary
+        """
         logger.debug("__contains__")
         return this_id in self._objects
 
     def updateLocksNow(self):
+        """
+        Update the registry locks now. This is explicitly called from a method which can cause Ganga to pause for a long time
+        TODO: determine if this is still valid
+        """
         logger.debug("updateLocksNow")
         self.repository.updateLocksNow()
 
     def trackandRelease(self):
+        """
+        This method was intended to release an object when it has been flushed more than n sec ago...
+
+        TODO: This would be nice to re-implement to release clean objects which haven't been flushed in > n sec
+        """
 
         while self.shouldReleaseRun is True:
 
@@ -342,21 +419,38 @@ class Registry(object):
             time.sleep(0.5)
 
     def turnOffAutoFlushing(self):
+        """
+        Unused This turns off the auto-flushing
+        """
         self._autoFlush = False
 
     def turnOnAutoFlushing(self):
+        """
+        Unused This turns on the auto-flushing
+        """
         self._autoFlush = True
 
     def isAutoFlushEnabled(self):
+        """
+        Unused This returns True/False as to whether this Registry has auto-flushing enabled
+        """
         return self._autoFlush
 
     def checkDirtyFlushtimes(self, timeNow):
+        """
+        Unused, was used for flushing the repo based upon n dirty hits
+        Args:
+            timeNow (time): No longer used
+        """
         self._dirtyModTime = timeNow
         if self._flushLastTime is None:
             self._flushLastTime = timeNow
 
     @synchronised
     def checkShouldFlush(self):
+        """
+        Unused, was used for flushing the repo once every n dirty hits
+        """
         logger.debug("checkShouldFlush")
 
         timeNow = time.time()
@@ -398,6 +492,7 @@ class Registry(object):
         return decision
 
     def _getObjects(self):
+        """ Get a raw ref to the _objects within the Registry/Repository """
         logger.debug("_getObjects")
         returnable = self._objects
         return returnable
@@ -443,6 +538,9 @@ class Registry(object):
         return returnable
 
     def _checkObjects(self):
+        """
+        This is a method which checks the object in the registry for having consistent id and reg id
+        """
         for key, _obj in self._objects.iteritems():
             summary = "found: "
             try:
@@ -473,13 +571,17 @@ class Registry(object):
         return returnable
 
     def __iter__(self):
+        """ Return an iterator for the self.values list """
         logger.debug("__iter__")
         returnable = iter(self.values())
         return returnable
 
     def find(self, _obj):
         """Returns the id of the given object in this registry, or 
-        Raise ObjectNotInRegistryError if the Object is not found"""
+        Raise ObjectNotInRegistryError if the Object is not found
+        Args:
+            _obj (GangaObject): This is the object we want to match in the objects repo
+        """
     
         obj = stripProxy(_obj)
         try:
@@ -491,7 +593,10 @@ class Registry(object):
     def clean(self, force=False):
         """Deletes all elements of the registry, if no other sessions are present.
         if force == True it removes them regardless of other sessions.
-        Returns True on success, False on failure."""
+        Returns True on success, False on failure.
+        Args:
+            force (bool): This will force a clean action to be performed even if there are other active Ganga sessions, EXTREMELY UNFRIENDLY!!!
+        """
         logger.debug("clean")
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot clean a disconnected repository!")
@@ -514,6 +619,12 @@ class Registry(object):
 
     @synchronised
     def __safe_add(self, obj, force_index=None):
+        """
+        Method which calls the underlying add function in the Repo for a given object
+        Args:
+            obj  (GangaObject): This is th object which is to be added to this Registy/Repo
+            force_index (int, None): This is the index which we will give the object, None = auto-assign
+        """
         logger.debug("__safe_add")
         if force_index is None:
             ids = self.repository.add([obj])
@@ -552,7 +663,11 @@ class Registry(object):
     def _add(self, _obj, force_index=None):
         """ Add an object to the registry and assigns an ID to it. 
         use force_index to set the index (for example for metadata). This overwrites existing objects!
-        Raises RepositoryError"""
+        Raises RepositoryError
+        Args:
+            _obj (GangaObject): This is th object which is to be added to this Registy/Repo
+            force_index (int): This is the index which we will give the object, None = auto-assign
+        """
         logger.debug("_add")
         obj = stripProxy(_obj)
 
@@ -587,7 +702,11 @@ class Registry(object):
         Raise RepositoryError
         Raise RegistryAccessError
         Raise RegistryLockError
-        Raise ObjectNotInRegistryError"""
+        Raise ObjectNotInRegistryError
+        Args:
+            _obj (GangaObject): The object which we want to remove from the Repo/Registry
+            auto_removed (int, bool): True/False for if the object can be auto-removed by the base Repository method
+        """
         logger.debug("_remove")
         obj = stripProxy(_obj)
         try:
@@ -604,6 +723,12 @@ class Registry(object):
             raise
 
     def __reg_remove(self, obj, auto_removed=0):
+        """
+        This Method Performs the actual removal of the object from the Repo
+        Args:
+            obj (GangaObject): The object which we want to remove from the Repo/Registry
+            auto_removed (0/1): True/False for if the object can be auto-removed by the base Repository method
+        """
 
         logger.debug("_reg_remove")
         u_id = self.find(obj)
@@ -649,7 +774,7 @@ class Registry(object):
         Only those objects passed in will be flushed and only if they are dirty.
 
         Args:
-            objs: a list of objects to flush
+            objs (list): a list of objects to flush
         """
         logger.debug("_flush")
 
@@ -696,7 +821,11 @@ class Registry(object):
         """Obtain read access on a given object.
         sub-obj is the object the read access is actually desired (ignored at the moment)
         Raise RegistryAccessError
-        Raise RegistryKeyError"""
+        Raise RegistryKeyError
+        Args:
+            _obj (GangaObject): The object which we want to get read access to and lock on disk
+            sub_obj (GangaObject):  Ignored under the current model
+        """
         logger.debug("_read_access")
         obj_id = id(stripProxy(_obj))
         if obj_id in self._inprogressDict.keys():
@@ -707,6 +836,11 @@ class Registry(object):
 
     @synchronised
     def _updateIndexCache(self, _obj):
+        """
+        TODO work out if this is still valid given the index cache is now dynamically generated. I suspect not
+        Args:
+            _obj (GangaObject): This is the repo which we want to update the index cache for.
+        """
         logger.debug("_updateIndexCache")
         obj = stripProxy(_obj)
         if id(obj) in self._inprogressDict.keys():
@@ -716,6 +850,11 @@ class Registry(object):
 
     @synchronised
     def _load(self, obj_ids):
+        """
+        Fully load an object from a Repo/disk into memory
+        Args:
+            obj_ids (list): This is the list of id which we want to fully load objects for according to object dict
+        """
         logger.debug("_load")
         these_ids = []
         for obj_id in obj_ids:
@@ -749,7 +888,13 @@ class Registry(object):
             for obj_id in these_ids:
                 self.unlock_transaction(obj_id)
 
-    def __safe_read_access(self,  _obj, sub_obj):
+    def __safe_read_access(self, _obj, sub_obj):
+        """
+        This method will attempt to load an unloaded object from disk and acquire a file lock to prevent other Ganga sessions modifying it
+        Args:
+            _obj (GangaObject): The object which we want to get read access to and lock on disk
+            sub_obj (str): Ignored under the current model
+        """
         logger.debug("_safe_read_access")
         obj = stripProxy(_obj)
         if id(obj) in self._inprogressDict.keys():
@@ -789,7 +934,10 @@ class Registry(object):
         Raise RepositoryError
         Raise RegistryAccessError
         Raise RegistryLockError
-        Raise ObjectNotInRegistryError (via self.find())"""
+        Raise ObjectNotInRegistryError (via self.find())
+        Args:
+            _obj (GangaObject): This is the object we want to get write access to and lock on disk
+        """
         logger.debug("_write_access")
         obj = stripProxy(_obj)
         obj_id = id(_obj)
@@ -800,6 +948,11 @@ class Registry(object):
             self.__write_access(obj)
 
     def __write_access(self, _obj):
+        """
+        This actually performs the file locks and gets access to the object
+        Args:
+            _obj (GangaObject): This is the object we want to get write access to and lock on disk
+        """
         logger.debug("__write_acess")
         obj = stripProxy(_obj)
         this_id = id(obj)
@@ -856,7 +1009,10 @@ class Registry(object):
         """Release the lock on a given object.
         Raise RepositoryError
         Raise RegistryAccessError
-        Raise ObjectNotInRegistryError"""
+        Raise ObjectNotInRegistryError
+        Args:
+            obj (GangaObject): This is the object we want to release the file lock for
+        """
 
         try:
             self.__release_lock(obj)
@@ -867,6 +1023,11 @@ class Registry(object):
             raise
 
     def __release_lock(self, _obj):
+        """
+        Actually perform the release of the file and cleanup any file locks
+        Args:
+            _obj (GangaObject): This is the object we want to release the file lock for
+        """
         logger.debug("_release_lock")
         obj = stripProxy(_obj)
 
@@ -893,7 +1054,8 @@ class Registry(object):
     def pollChangedJobs(self, name):
         """Returns a list of job ids that changed since the last call of this function.
         On first invocation returns a list of all ids.
-        "name" should be a unique identifier of the user of this information."""
+        Args:
+            name (str): should be a unique identifier of the user of this information."""
         logger.debug("pollChangedJobs")
         if self.hasStarted() is True and\
                 (time.time() > self._update_index_timer + self.update_index_time):
@@ -906,7 +1068,7 @@ class Registry(object):
         return res
 
     def getIndexCache(self, obj):
-        """Returns a dictionary to be put into obj._index_cache
+        """Returns a dictionary to be put into obj._index_cache (is this valid)
         This can and should be overwritten by derived Registries to provide more index values."""
         return {}
 
@@ -998,6 +1160,9 @@ class Registry(object):
         return s
 
     def print_other_sessions(self):
+        """
+        Print information about how many other sessions are currently active as a warning
+        """
         other_sessions = self.repository.get_other_sessions()
         if len(other_sessions) > 0:
             logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
@@ -1006,7 +1171,10 @@ class Registry(object):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!
         This ONLY applies to master jobs as the Registry has no apriori knowledge of the subjob structure.
-        Consult SubJobXMLList for a more fine grained loaded/not-loaded info/test."""
+        Consult SubJobXMLList for a more fine grained loaded/not-loaded info/test.
+        Args:
+            obj (GangaObject): Object which we want to look for in this repo
+        """
         try:
             index = self.find(obj)
         except ObjectNotInRegistryError:

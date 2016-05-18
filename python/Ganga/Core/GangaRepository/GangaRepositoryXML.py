@@ -33,7 +33,10 @@ logger = Ganga.Utility.logging.getLogger()
 save_all_history = False
 
 def check_app_hash(obj):
-    """Writes a file safely, raises IOError on error"""
+    """Writes a file safely, raises IOError on error
+    Args:
+        obj (GangaObject): This is an object which has a prepared application
+    """
 
     isVerifiableApp = False
     isVerifiableAna = False
@@ -71,7 +74,13 @@ def check_app_hash(obj):
             logger.warning('https://github.com/ganga-devs/ganga/issues/')
 
 def safe_save(fn, _obj, to_file, ignore_subs=''):
-    """Try to save the XML for this object in as safe a way as possible"""
+    """Try to save the XML for this object in as safe a way as possible
+    Args:
+        fn (str): This is the name of the file we are to save the object to
+        _obj (GangaObject): This is the object which we want to save to the file
+        to_file (str): This is the method we want to use to save the to the file
+        ignore_subs (str): This is the name(s) of the attribute of _obj we want to ignore in writing to disk
+    """
 
     # Add a global lock to make absolutely sure we don't have multiple threads writing files
     # See Github Issue 185
@@ -106,6 +115,8 @@ def rmrf(name, count=0):
     """
     Safely recursively remove a file/folder from disk by first moving it then removing it
     calls self and will only attempt to move/remove a file 3 times before giving up
+    Args:
+        count (int): This function calls itself recursively 3 times then gives up, this increments on each call
     """
 
     if count != 0:
@@ -178,6 +189,8 @@ class GangaRepositoryLocal(GangaRepository):
     def __init__(self, registry):
         """
         Initialize a Repository from within a Registry and keep a reference to the Registry which 'owns' it
+        Args:
+            Registry (Registry): This is the registry which manages this Repo
         """
         super(GangaRepositoryLocal, self).__init__(registry)
         self.dataFileName = "data"
@@ -225,19 +238,25 @@ class GangaRepositoryLocal(GangaRepository):
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
-        for k in [_k for _k in self._fully_loaded.keys() if _k not in self.incomplete_objects]:
+        for k in k in self._fully_loaded:
             self.index_write(k, shutdown=True)
         self._write_master_cache(True)
         self.sessionlock.shutdown()
 
     def get_fn(self, this_id):
-        """ Returns the file name where the data for this object id is saved"""
+        """ Returns the file name where the data for this object id is saved
+        Args:
+            this_id (int): This is the object id we want the XML filename for
+        """
         if this_id not in self.saved_paths:
             self.saved_paths[this_id] = os.path.join(self.root, "%ixxx" % int(this_id * 0.001), "%i" % this_id, self.dataFileName)
         return self.saved_paths[this_id]
 
     def get_idxfn(self, this_id):
-        """ Returns the file name where the data for this object id is saved"""
+        """ Returns the file name where the data for this object id is saved
+        Args:
+            this_id (int): This is the object id we want the index filename for
+        """
         if this_id not in self.saved_idxpaths:
             self.saved_idxpaths[this_id] = os.path.join(self.root, "%ixxx" % int(this_id * 0.001), "%i.index" % this_id)
         return self.saved_idxpaths[this_id]
@@ -248,7 +267,10 @@ class GangaRepositoryLocal(GangaRepository):
             Returns True if this object has been changed, False if not
             Raise IOError on access or unpickling error 
             Raise OSError on stat error
-            Raise PluginManagerError if the class name is not found"""
+            Raise PluginManagerError if the class name is not found
+        Args:
+            this_id (int): This is the id for which we want to load the index file from disk
+        """
         #logger.debug("Loading index %s" % this_id)
         fn = self.get_idxfn(this_id)
         # index timestamp changed
@@ -292,7 +314,9 @@ class GangaRepositoryLocal(GangaRepository):
     def index_write(self, this_id, shutdown=False):
         """ write an index file for this object (must be locked).
             Should not raise any Errors,
-            shutdown=True causes this to always be written regardless of any checks"""
+        Args:
+            this_id (int): This is the index for which we want to write the index to disk
+            shutdown (bool): True causes this to always be written regardless of any checks"""
         if this_id in self.incomplete_objects:
             return
         logger.debug("Writing index: %s" % this_id)
@@ -384,7 +408,8 @@ class GangaRepositoryLocal(GangaRepository):
     def _write_master_cache(self, shutdown=False):
         """
         write a master index cache once per 300sec
-        shutdown=True causes this to be written now
+        Args:
+            shutdown (boool): True causes this to be written now
         """
         #logger.info("Updating master index: %s" % self.registry.name)
         try:
@@ -399,8 +424,7 @@ class GangaRepositoryLocal(GangaRepository):
             for k, v in items_to_save:
                 try:
                     #logger.info("Examining: %s" % k)
-                    # Object NOT loaded and DEFINATELY NOT in the incomplete_objects list
-                    if k in [_k for _k in self._fully_loaded.keys() if not _k in self.incomplete_objects]:
+                    if k in k in self._fully_loaded:
                         # Check and write index first
                         obj = v#self.objects[k]
                         new_index = None
@@ -472,7 +496,13 @@ class GangaRepositoryLocal(GangaRepository):
 
     def update_index(self, this_id=None, verbose=False, firstRun=False):
         """ Update the list of available objects
-        Raise RepositoryError"""
+        Raise RepositoryError
+        TODO avoid updating objects which haven't changed as this causes un-needed I/O
+        Args:
+            this_id (int): This is the id we want to explicitly check the index on disk for
+            verbose (bool): Should we be verbose
+            firstRun (bool): If this is the call from the Repo startup then load the master index for perfomance boost
+        """
         # First locate and load the index files
         logger.debug("updating index...")
         objs = self.get_index_listing()
@@ -584,7 +614,11 @@ class GangaRepositoryLocal(GangaRepository):
 
     def add(self, objs, force_ids=None):
         """ Add the given objects to the repository, forcing the IDs if told to.
-        Raise RepositoryError"""
+        Raise RepositoryError
+        Args:
+            objs (list): GangaObject-s which we want to add to the Repo
+            force_ids (list, None): IDs to assign to object, None for auto-assign
+        """
 
         logger.debug("add")
 
@@ -624,6 +658,8 @@ class GangaRepositoryLocal(GangaRepository):
         """
         Flush XML to disk whilst checking for relavent SubJobXMLList which handles subjobs now
         flush for "this_id" in the self.objects list
+        Args:
+            this_id (int): This is the id of the object we want to flush to disk
         """
 
         fn = self.get_fn(this_id)
@@ -695,6 +731,9 @@ class GangaRepositoryLocal(GangaRepository):
     def flush(self, ids):
         """
         flush the set of "ids" to disk and write the XML representing said objects in self.objects
+        NB: This adds the given objects corresponding to ids to the _fully_loaded dict
+        Args:
+            ids (list): List of integers, used as keys to objects in the self.objects dict
         """
         logger.debug("Flushing: %s" % ids)
 
@@ -729,6 +768,8 @@ class GangaRepositoryLocal(GangaRepository):
         """
         Has "this_id" been loaded from disk already
         Check self.objects for the ._data sttribute
+        Args:
+            this_id (int): This is the id we want to check has been fully loaded from disk
         """
         return (this_id in self.objects) and (self.objects[this_id]._data is not None)
 
@@ -736,6 +777,8 @@ class GangaRepositoryLocal(GangaRepository):
         """
         Count the number of nodes in "this_id" of self.objects"
         Is this used any more?
+        Args:
+            this_id (int): This is the ID we will look for all subnodes of on disk, i.e. subjobs, etc
         """
         node_count = 0
         fn = self.get_fn(this_id)
@@ -754,6 +797,8 @@ class GangaRepositoryLocal(GangaRepository):
         """
         Return if "this_id" is in the _full_loaded dictionary of objects loaded from XML by this class
         This is different to is_loaded as it checks for actual read operations
+        Args:
+            this_id (int): This is an integer corresponding to a key in the _fully_loaded dict (possibly objects too)
         """
         return this_id in self._fully_loaded.keys()
 
@@ -761,6 +806,10 @@ class GangaRepositoryLocal(GangaRepository):
         """
         Checks the index cache of "this_id" against the index cache generated from the "obj"ect
         If there is a problem then the object is unloaded from memory but will not do anything if everything agrees here
+        TODO CHECK IF THIS IS VALID GIVEN WE DYNAMICALLY GENERATE INDEX FOR LOADED OBJECTS
+        Args:
+            obj (GangaObject): This is the object which we've loaded from disk
+            this_id (int): This is the object id which is the objects key in the objects dict
         """
         new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
         if new_idx_cache != obj._index_cache:
@@ -796,6 +845,12 @@ class GangaRepositoryLocal(GangaRepository):
         This replaces the attrs of "objects[this_id]" with the attrs from tmpobj
         If there are children then a SubJobXMLList is created to manage them.
         The fn of the job is passed to the SubbJobXMLList and there is some knowledge of if we should be loading the backup passed as well
+        Args:
+            fn (str): This is the path to the data file for this object in the XML
+            this_id (int): This is the integer key of the object in the self.objects dict
+            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
+            has_children (bool): This contains the result of the decision as to whether this object actually has children
+            tmpobj (GangaObject): This contains the object which has been read in from the fn file
         """
         obj = self.objects[this_id]
         for key, val in tmpobj._data.items():
@@ -829,6 +884,11 @@ class GangaRepositoryLocal(GangaRepository):
         """
         This is the method which will load the job from fn using the fobj using the self.from_file method and _must_actually_load_xml is called to replace the
         self.objects[this_id] with the correct attributes. We also preseve knowledge of if we're being asked to load a backup or not
+        Args:
+            fobj (file handler): This is the file handler for the fn
+            fn (str): fn This is the name of the file which contains the XML data
+            this_id (int): This is the key of the object in the objects dict where the output will be stored
+            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
         """
         #print("ACTUALLY LOAD")
 
@@ -869,6 +929,10 @@ class GangaRepositoryLocal(GangaRepository):
     def _open_xml_file(self, fn, this_id, _copy_backup=False):
         """
         This loads the XML for the job "this_id" in self.objects using the file "fn" and knowing whether we want the file or the backup by _copy_backup
+        Args:
+            fn (str): This is the full XML filename for the given id
+            this_id (int): This is the key for the object in the objects dict
+            _copy_backup (bool): Should we use the backup file 'data~' (True) or the 'data' file (False)
         """
         fobj = None
 
@@ -916,6 +980,9 @@ class GangaRepositoryLocal(GangaRepository):
         Load the following "ids" from disk
         If we want to load the backup files for these ids then use _copy_backup
         Correctly loaded objects are dirty, Objects loaded from backups for whatever reason are marked dirty
+        Args:
+            ids (list): The object keys which we want to iterate over from the objects dict
+            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
         """
         #print("load: %s " % ids)
         #import traceback
@@ -984,6 +1051,11 @@ class GangaRepositoryLocal(GangaRepository):
         """
         This method does a lot of the handling of an exception thrown from the load method
         We will return True/False here, True if the error can be correctly caught and False if this is terminal and we couldn't load the object
+        Args:
+            err (exception): This is the original exception loading the XML data from disk
+            fn (str): This is the filename which was used to load the file from disk
+            this_id (int): This is the key of the object in the objects dict
+            load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
         """
         if isType(err, XMLFileError):
             logger.error("XML File failed to load for Job id: %s" % this_id)
@@ -1022,6 +1094,8 @@ class GangaRepositoryLocal(GangaRepository):
     def delete(self, ids):
         """
         This is the method to 'delete' an object from disk, it's written in python and starts with the indexes first
+        Args:
+            ids (list): The object keys which we want to iterate over from the objects dict
         """
         for this_id in ids:
             # First remove the index, so that it is gone if we later have a
@@ -1041,12 +1115,16 @@ class GangaRepositoryLocal(GangaRepository):
     def lock(self, ids):
         """
         Request a session lock for the following ids
+        Args:
+            ids (list): The object keys which we want to iterate over from the objects dict
         """
         return self.sessionlock.lock_ids(ids)
 
     def unlock(self, ids):
         """
         Unlock (release file locks of) the following ids
+        Args:
+            ids (list): The object keys which we want to iterate over from the objects dict
         """
         released_ids = self.sessionlock.release_ids(ids)
         if len(released_ids) < len(ids):
@@ -1056,6 +1134,8 @@ class GangaRepositoryLocal(GangaRepository):
         """get_lock_session(id)
         Tries to determine the session that holds the lock on id for information purposes, and return an informative string.
         Returns None on failure
+        Args:
+            this_id (int): Get the id of the session which has a lock on the object with this id
         """
         return self.sessionlock.get_lock_session(this_id)
 
@@ -1083,6 +1163,9 @@ class GangaRepositoryLocal(GangaRepository):
     def updateIndexCache(self, obj):
         """
         This method should be obsoleted fairly soon as it's no longer needed. We now handle caches correctly
+        TODO remove me
+        Args:
+            obj (GangaObject): The object for which the index cache is updated
         """
         pass
 
