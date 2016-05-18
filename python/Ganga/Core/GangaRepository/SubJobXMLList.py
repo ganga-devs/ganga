@@ -240,7 +240,7 @@ class SubJobXMLList(GangaObject):
         if not path.isdir( self._jobDirectory ):
             return 0
 
-        subjob_count = SubJobXMLList.countSubJobDirs(self._jobDirectory)
+        subjob_count = SubJobXMLList.countSubJobDirs(self._jobDirectory, self._dataFileName)
 
         if len(self._stored_len) != 2:
             self._stored_len = []
@@ -497,23 +497,26 @@ class SubJobXMLList(GangaObject):
         return ds
 
     @staticmethod
-    def JobHasChildrenTest(jobDirectory):
+    def jobHasChildrenTest(jobDirectory, datafileName):
         """ Return True/False if given (job?) object has children associated with it
         Args:
             jobDirectory (str): name of folder to be examined
+            datafileName (str): name of the files containing the xml, i.e. 'data' by convention
         """
 
-        count = SubJobXMLList.countSubJobDirs(jobDirectory)
-        if count:
-            return True
-        else:
+        if not path.isdir(jobDirectory):
             return False
+        else:
+            return bool(SubJobXMLList.countSubJobDirs(jobDirectory, datafileName, True))
 
     @staticmethod
-    def countSubJobDirs(jobDirectory):
+    def countSubJobDirs(jobDirectory, datafileName, checkDataFiles):
         """ I'm a function which returns a number, my number corresponds to the amount of sequentially listed numerically named folders exiting within 'jobDirectory'
+            This (optionally) checks for the existance of all of the XML files. This is useful during a call to 'jobHasChildrenTest' but not when calling __len__ repeatedly
         Args:
             jobDirectory (str): name of folder to be examined
+            datafileName (str): name of the files containing the xml, i.e. 'data' by convention
+            checkDataFiles (bool): if True check for the existance of all of the data files and check this against the numerically named folders
         """
 
         jobDirectoryList = listdir( jobDirectory )
@@ -523,17 +526,20 @@ class SubJobXMLList(GangaObject):
             if str(subjob_count) in jobDirectoryList:
                 expected_folder = path.join(jobDirectory, str(subjob_count))
                 if path.isdir(expected_folder):
-                    subjob_count=subjob_count+1
+                    if checkDataFiles:
+                        data_file_path = path.join(jobDirectory, subjob_count, datafileName)
+                        if path.isfile(data_file_path):
+                            subjob_count=subjob_count+1
+                    else:
+                        subjob_count=subjob_count+1
                     continue
                 else:
                     break
             else:
                 break
 
-            #subjob_data = self.__get_dataFile(str(i))
-            #if path.isfile(subjob_data)):
-            #    subjob_count = subjob_count + 1
-            #i += 1
-
-        return subjob_count
+        if not checkDataFiles or subjob_count == len([_folder for _folder in jobDirectoryList if _folder.isdigit()]):
+            return subjob_count
+        else:
+            raise GangaException("Missing subjobs data file in %s" % jobDirectory)
 

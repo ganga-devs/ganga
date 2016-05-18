@@ -354,7 +354,7 @@ class GangaRepositoryLocal(GangaRepository):
                 with open(_master_idx, 'r') as input_f:
                     this_master_cache = pickle_from_file(input_f)[0]
                 for this_cache in this_master_cache:
-                    if this_cache[4] >= 0:
+                    if this_cache[1] >= 0:
                         this_id = this_cache[0]
                         self._cache_load_timestamp[this_id] = this_cache[1]
                         self._cached_cat[this_id] = this_cache[2]
@@ -846,7 +846,7 @@ class GangaRepositoryLocal(GangaRepository):
                 raise InaccessibleObjectError(self, this_id, errs[0])
 
             has_children = (self.sub_split is not None) and hasattr(tmpobj, self.sub_split) and len(getattr(tmpobj, self.sub_split)) == 0
-            has_children = has_children or SubJobXMLList.JobHasChildrenTest(path.dirname(fn))
+            has_children = has_children or SubJobXMLList.jobHasChildrenTest(os.path.dirname(fn), self.dataFileName)
 
             if this_id in self.objects:
                 self._must_actually_load_xml(fn, this_id, load_backup, has_children, tmpobj)
