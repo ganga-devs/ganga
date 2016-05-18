@@ -139,7 +139,7 @@ class Executable(IPrepareApp):
         except Exception as err:
             logger.debug("Err: %s" % str(err))
             self.unprepare()
-            raise err
+            raise
 
         return 1
 
