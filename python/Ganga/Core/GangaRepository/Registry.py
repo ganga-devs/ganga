@@ -890,7 +890,7 @@ class Registry(object):
         return res
 
     def getIndexCache(self, obj):
-        """Returns a dictionary to be put into obj._index_cache through setNodeIndexCache
+        """Returns a dictionary to be put into obj._index_cache
         This can and should be overwritten by derived Registries to provide more index values."""
         return {}
 

@@ -1,0 +1,55 @@
+**************************************************************************************************************
+6.1.20 (2016/05/13)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Adding individual postprocessors to jobs has been fixed #402
+* Condor jobs can split by dataset #390
+* Minor monitoring fix when there are strange errors from the Condor backend
+* Fixed some minor bugs in preparing some jobs
+* GangaDataset made more user friendly
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Dirac has gained the option to set the default output SE for files (optional)
+* Some performance improvements with communicating with the DIRAC server (reduced Dirac calls/reduced code fluff in Ganga)
+* Some older configuration settings have been deprecated, some new configuration options have been added.
+    Removed: DiracOutputDataSE, load_default_Dirac_backend, DiracDefaultSE
+    Added: RequireDefaultSE, statusmapping (for devs), queueable_dirac_statuses (for devs), userVO
+* Can now use the bashrc directly from dirac-ui and elsewhere so don't need a Ganga specific env conig file
+* DIRAC 'Completed' jobs are now considered to be 'running' due to the transfer of output data
+* Fixed bugs where files vanished during jobs completing and jobs reverting status within DIRAC fixed
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* All new DIRAC settings have been made configurable within LHCb config
+* LHCb config now managed LHCb specific settings (RequireDefaultSE, DiracCommandFiles, userVO, allDiracSE)
+* LHCb now inherits more closely from vanilla DIRAC in Ganga even though all code is executed against an LHCbDIRAC instance
+* Added initial support for LHCb specific integration tests
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Ignore comments in files input for --inPfnListFile
+* Added the output_loc_to_input option to AthenaSplitterJob to map input files to output dirs
+* --inPfnListFile now takes a comma separated list and uses output_loc_to_input to 
+    direct the different outputs to appropriate dirs
+* Patches from HammerCloud to set homepackage correctly and use AGIS JSON file for queue/DDM mapping
+* Some Atlas code cleanup
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLSST
+--------------------------------------------------------------------------------------------------------------
+* New plugin for the LSST experiment. DIRAC RTHandler finsihed so grid jobs work and have been tested.
+
+
+
+**************************************************************************************************************

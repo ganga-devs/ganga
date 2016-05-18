@@ -63,7 +63,7 @@ def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
             return getattr(this_job, this_attr)
 
     lzy_loading_str = 'display:'+ this_attr
-    job_index_cache = this_job.getNodeIndexCache()
+    job_index_cache = this_job._index_cache
     if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache.keys():
         obj_name = job_index_cache[lzy_loading_str]
         if obj_name is not None and do_eval:
@@ -951,7 +951,7 @@ class Job(GangaObject):
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
             ## This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
-            return self.getInputWorkspace(create=stripProxy(self).getNodeAttribute('status') != 'removed').getPath()
+            return self.getInputWorkspace(create=stripProxy(self).status != 'removed').getPath()
         else:
             return self.getInputWorkspace(create=False).getPath()
 
@@ -961,7 +961,7 @@ class Job(GangaObject):
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
             ## This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
-            return self.getOutputWorkspace(create=stripProxy(self).getNodeAttribute('status') != 'removed').getPath()
+            return self.getOutputWorkspace(create=stripProxy(self).status != 'removed').getPath()
         else:
             return self.getOutputWorkspace(create=False).getPath()
 
