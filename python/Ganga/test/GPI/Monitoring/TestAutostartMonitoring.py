@@ -1,18 +1,5 @@
-from __future__ import absolute_import
-
-import time
-
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
-master_timeout = 300.
-
-def dummySleep(someJob):
-    my_timeout = 0.
-    while someJob.status not in ['completed', 'failed', 'killed', 'removed'] and my_timeout < master_timeout:
-        time.sleep(1.)
-        my_timeout+=1.
-
-    return
 
 class TestAutostartMonitoring(GangaUnitTest):
 
@@ -25,9 +12,7 @@ class TestAutostartMonitoring(GangaUnitTest):
         from Ganga.GPI import Job, jobs
 
         j = Job()
-
         self.assertEqual(len(jobs), 1)
 
         j.submit()
-
         self.assertNotEqual(j.status, 'new')
