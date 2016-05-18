@@ -240,7 +240,7 @@ class SubJobXMLList(GangaObject):
         if not path.isdir( self._jobDirectory ):
             return 0
 
-        subjob_count = SubJobXMLList.countSubJobDirs(self._jobDirectory, self._dataFileName)
+        subjob_count = SubJobXMLList.countSubJobDirs(self._jobDirectory, self._dataFileName, False)
 
         if len(self._stored_len) != 2:
             self._stored_len = []
