@@ -511,6 +511,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
                     jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
                 else:
+                    # set the home package if we can otherwise the pilot won't set things up properly
+                    if self.cacheVer:
+                        jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer
+
                     # cmt config
                     jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
 

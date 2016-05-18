@@ -534,7 +534,7 @@ class Condor(IBackend):
                             exitLine = lineList[-1]
                             exitCode = exitLine.strip().split()[-1]
                         except IndexError:
-                            exitCode = -1
+                            exitCode = '-1'
 
                         if exitCode.isdigit():
                             jobStatus = "completed"
