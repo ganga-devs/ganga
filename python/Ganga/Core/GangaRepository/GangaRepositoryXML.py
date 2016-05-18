@@ -238,7 +238,7 @@ class GangaRepositoryLocal(GangaRepository):
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
-        for k in k in self._fully_loaded:
+        for k in self._fully_loaded:
             self.index_write(k, shutdown=True)
         self._write_master_cache(True)
         self.sessionlock.shutdown()
