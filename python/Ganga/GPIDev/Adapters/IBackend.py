@@ -410,8 +410,8 @@ class IBackend(GangaObject):
         updateMonitoringInformation().
         """
 
-        ## Have to import here so it's actually defined
         from Ganga.Core import monitoring_component
+        was_monitoring_running = monitoring_component and monitoring_component.isEnabled(False)
 
         logger.debug("Running Monitoring for Jobs: %s" % [j.getFQID('.') for j in jobs])
 
@@ -476,7 +476,8 @@ class IBackend(GangaObject):
 
                 for this_block in monitorable_blocks:
 
-                    if monitoring_component and not monitoring_component.isEnabled(False) or not monitoring_component:
+                    # If the monitoring function was running at the start of the function but has since stopped, break.
+                    if was_monitoring_running and monitoring_component and not monitoring_component.isEnabled(False) or not monitoring_component:
                         break
 
                     try:

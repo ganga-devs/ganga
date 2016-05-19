@@ -1,13 +1,13 @@
 from __future__ import absolute_import
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.monitoring import run_until_completed
 
 
 class TestFileChecker(GangaUnitTest):
     def setUp(self):
         super(TestFileChecker, self).setUp()
         from Ganga.GPI import Job, FileChecker, Executable, Local
-        from GangaTest.Framework.utils import sleep_until_completed
 
         self.c = FileChecker()
         self.jobslice = []
@@ -20,7 +20,7 @@ class TestFileChecker(GangaUnitTest):
 
         for j in self.jobslice:
             j.submit()
-            self.assertTrue(sleep_until_completed(j), 'Timeout on job submission: job is still not finished')
+            assert run_until_completed(j), 'Timeout on job submission: job is still not finished'
             self.assertEqual(j.status, 'completed')
 
     def checkFail(self, message):
