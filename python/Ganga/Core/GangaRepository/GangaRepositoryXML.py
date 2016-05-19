@@ -905,8 +905,7 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.error("#%s Error(s) Loading File: %s" % (len(errs), fobj.name))
                 raise InaccessibleObjectError(self, this_id, errs[0])
 
-            has_children = (self.sub_split is not None) and hasattr(tmpobj, self.sub_split) and len(getattr(tmpobj, self.sub_split)) == 0
-            has_children = has_children or SubJobXMLList.jobHasChildrenTest(os.path.dirname(fn), self.dataFileName)
+            has_children = SubJobXMLList.jobHasChildrenTest(os.path.dirname(fn), self.dataFileName)
 
             if this_id in self.objects:
                 self._must_actually_load_xml(fn, this_id, load_backup, has_children, tmpobj)

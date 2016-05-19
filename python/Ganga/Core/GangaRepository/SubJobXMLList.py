@@ -527,7 +527,7 @@ class SubJobXMLList(GangaObject):
                 expected_folder = path.join(jobDirectory, str(subjob_count))
                 if path.isdir(expected_folder):
                     if checkDataFiles:
-                        data_file_path = path.join(jobDirectory, subjob_count, datafileName)
+                        data_file_path = path.join(expected_folder, datafileName)
                         if path.isfile(data_file_path):
                             subjob_count=subjob_count+1
                     else:
@@ -538,7 +538,9 @@ class SubJobXMLList(GangaObject):
             else:
                 break
 
-        if not checkDataFiles or subjob_count == len([_folder for _folder in jobDirectoryList if _folder.isdigit()]):
+        logger.debug("count: %s len: %s" % (subjob_count, len([_folder for _folder in jobDirectoryList if _folder.isdigit()])))
+
+        if subjob_count == len([_folder for _folder in jobDirectoryList if _folder.isdigit()]):
             return subjob_count
         else:
             raise GangaException("Missing subjobs data file in %s" % jobDirectory)
