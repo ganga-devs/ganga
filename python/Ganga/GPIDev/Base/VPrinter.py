@@ -9,7 +9,7 @@ from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod, stripProxy
 from Ganga.GPIDev.Base.Objects import GangaObject
 
 from inspect import isclass
-from io import StringIO
+from io import BytesIO
 
 def quoteValue(value, interactive=False):
     """A quoting function. Used to get consistent formatting"""
@@ -197,7 +197,7 @@ class VSummaryPrinter(VPrinter):
         return function_pointer_available
 
     def _CallPrintSummaryTree(self, obj):
-        sio = StringIO()
+        sio = BytesIO()
         if not hasattr(stripProxy(obj), 'printSummaryTree'):
             print("%s" % str(obj), file=self.out)
         else:
@@ -277,7 +277,7 @@ def full_print(obj, out=None, interactive=False):
             count = 0
             for x in obj:
                 if isType(x, GangaObject):
-                    sio = StringIO()
+                    sio = BytesIO()
                     stripProxy(x).printTree(sio, interactive)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
@@ -294,7 +294,7 @@ def full_print(obj, out=None, interactive=False):
         return
 
     if isProxy(obj) and isType(_obj, GangaObject):
-        sio = StringIO()
+        sio = BytesIO()
         runProxyMethod(obj, 'printTree', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)
     else:
@@ -319,7 +319,7 @@ def summary_print(obj, out=None, interactive=False):
             count = 0
             for x in _obj:
                 if isType(x, GangaObject):
-                    sio = StringIO()
+                    sio = BytesIO()
                     stripProxy(x).printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
@@ -336,7 +336,7 @@ def summary_print(obj, out=None, interactive=False):
         return
 
     if isProxy(obj) and isType(_obj, GangaObject):
-        sio = StringIO()
+        sio = BytesIO()
         runProxyMethod(obj, 'printSummaryTree', 0, 0, '', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)
     else:

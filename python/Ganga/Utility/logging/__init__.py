@@ -20,7 +20,7 @@ from __future__ import print_function, absolute_import
 #  - special functions:
 #       - log_user_exception() allows to format nicely exception messages
 
-from io import StringIO
+from io import BytesIO
 import logging
 import logging.handlers
 import os.path
@@ -523,7 +523,7 @@ def force_global_level(level):
 
 def log_user_exception(logger=None, debug=False):
     """ Log a user exception based upon a given position in the code. This is used internally despite the name and is not exposed to usersi """
-    buf = StringIO()
+    buf = BytesIO()
     traceback.print_exc(file=buf)
     banner = 10 * '-' + ' error in user/extension code ' + 10 * '-'
     if not logger:
