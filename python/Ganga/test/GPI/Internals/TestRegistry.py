@@ -101,7 +101,6 @@ class HammerThread(threading.Thread):
             # self.logger.info('stripped: %s' % stripProxy(self.owned_objs[_id]))
             self.logger.info('name: %s' % self.reg[_id].name)
             self.logger.info('Wanting: %s' % _id)
-            self.logger.info('Loaded: %s' % self.reg._loaded_ids)
             assert self.reg[_id].name.startswith('HT')
             if _id in self.owned_ids:
                 assert self.reg[_id].name == 'HT%i' % self.id, '{0} == {1}'.format(self.reg[_id].name, 'HT%i' % self.id)
@@ -166,14 +165,6 @@ class HammerThread(threading.Thread):
                 if _id not in self.reg._objects:
                     self.logger.info('LOCKED ID DELETED: ' + str(_id))
                     assert False
-
-            self.logger.info('\n\nChecking Object consistency')
-            try:
-                self.reg._checkObjects()
-                self.logger.info('PASSED')
-            except:
-                self.logger.error('FAILED')
-                raise
 
         self.done = True
 
