@@ -17,9 +17,6 @@ from Ganga.Utility.Config import getConfig
 
 logger = getLogger()
 
-_reg_id_str = '_registry_id'
-_id_str = 'id'
-
 class RegistryError(GangaException):
 
     def __init__(self, what=''):
@@ -142,7 +139,7 @@ class IncompleteObject(GangaObject):
             if self.registry.checkShouldFlush():
                 self.registry.repository.flush([self.registry._objects[self.id]])
                 self.registry._load([self.id])
-            if self.id not in self.registry_loaded_ids:
+            if self.has_loaded(self._registry._objects[self.id]):
                 self.registry._load([self.id])
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
             for d in self.registry.changed_ids.itervalues():
@@ -285,8 +282,6 @@ class Registry(object):
         self.hard_lock = {}
         self.changed_ids = {}
         self._autoFlush = True
-
-        self._loaded_ids = []
 
         self._parent = None
 
@@ -537,24 +532,6 @@ class Registry(object):
         returnable = self.items()
         return returnable
 
-    def _checkObjects(self):
-        """
-        This is a method which checks the object in the registry for having consistent id and reg id
-        """
-        for key, _obj in self._objects.iteritems():
-            summary = "found: "
-            try:
-                if hasattr(_obj, _id_str):
-                    summary = summary + "%s = '%s'" % (_id_str, getattr(_obj, _id_str))
-                    assert(getattr(_obj, _id_str) == key)
-                if hasattr(_obj, _reg_id_str):
-                    summary = summary + " %s = '%s'" % (_reg_id_str, getattr(_obj, _reg_id_str))
-                    assert(getattr(_obj, _reg_id_str) == key)
-            except:
-                logger.error(summary)
-                raise
-        return
-
     @synchronised
     def keys(self):
         """ Returns the list of ids of this registry """
@@ -644,12 +621,6 @@ class Registry(object):
             for this_v in self.changed_ids.itervalues():
                 this_v.update(ids)
 
-            for _id in ids:
-                if hasattr(self._objects[_id], _reg_id_str):
-                    assert(getattr(self._objects[_id], _reg_id_str) == _id)
-                if hasattr(self._objects[_id], _id_str):
-                    assert(getattr(self._objects[_id], _id_str) == _id)
-
             logger.debug("_add-ed as: %s" % ids)
         finally:
             self.unlock_transaction(this_id)
@@ -679,15 +650,11 @@ class Registry(object):
 
         try:
             returnable_id = self.__safe_add(obj, force_index)
-            ## Add to list of loaded jobs in memory
-            self._loaded_ids.append(returnable_id)
         except RepositoryError as err:
             raise
         except Exception as err:
             logger.debug("Unknown Add Error: %s" % err)
             raise
-
-        self._updateIndexCache(obj)
 
         return returnable_id
 
@@ -714,8 +681,8 @@ class Registry(object):
         except ObjectNotInRegistryError as err:
             try:
                 ## Actually  make sure we've removed the object from the repo 
-                if hasattr(obj, _reg_id_str):
-                    del self._objects[getattr(obj, _reg_id_str)]
+                if self.find(obj):
+                    del self._objects[self.find(obj)]
             except Exception as err:
                 pass
             pass
@@ -791,17 +758,14 @@ class Registry(object):
             if not obj._dirty:
                 continue
 
-            if hasattr(obj, _reg_id_str):
-                obj_id = getattr(obj, _reg_id_str)
-                if obj_id not in self._loaded_ids:
-                    continue
-            else:
+            if not self.has_loaded(obj):
                 continue
 
             with obj.const_lock:
                 # flush the object. Need to call _getWriteAccess for consistency reasons
                 # TODO: getWriteAccess should only 'get write access', as that's not needed should it be called here?
                 obj._getWriteAccess()
+                obj_id = self.find(obj)
                 self.repository.flush([obj_id])
                 obj._setFlushed()
 
@@ -835,20 +799,6 @@ class Registry(object):
             self.__safe_read_access(_obj, sub_obj)
 
     @synchronised
-    def _updateIndexCache(self, _obj):
-        """
-        TODO work out if this is still valid given the index cache is now dynamically generated. I suspect not
-        Args:
-            _obj (GangaObject): This is the repo which we want to update the index cache for.
-        """
-        logger.debug("_updateIndexCache")
-        obj = stripProxy(_obj)
-        if id(obj) in self._inprogressDict.keys():
-            return
-
-        self.repository.updateIndexCache(obj)
-
-    @synchronised
     def _load(self, obj_ids):
         """
         Fully load an object from a Repo/disk into memory
@@ -872,14 +822,10 @@ class Registry(object):
         try:
             for obj_id in obj_ids:
                 self.repository.load([obj_id])
-                ## Track the objects we've loaded into memory
-                self._loaded_ids.append(obj_id)
         except Exception as err:
             logger.error("Error Loading Jobs! '%s'" % obj_ids)
             ## Cleanup aftr ourselves if an error occured
             for obj_id in obj_ids:
-                if obj_id in self._loaded_ids:
-                    del self._loaded_ids[obj_id]
                 ## Didn't load mark as clean so it's not flushed
                 if obj_id in self._objects:
                     self._objects[obj_id]._setFlushed()
@@ -908,9 +854,9 @@ class Registry(object):
         assert not hasattr(obj, "_registry_refresh")
 
         try:
-            this_id = self.find(obj)
             try:
-                if this_id not in self._loaded_ids:
+                if self.has_loaded(obj):
+                    this_id = self.find(obj)
                     self._load([this_id])
             except KeyError as err:
                 logger.error("_read_access KeyError %s" % err)
@@ -984,7 +930,7 @@ class Registry(object):
                     raise
                 finally:  # try to load even if lock fails
                     try:
-                        if this_id not in self._loaded_ids:
+                        if self.has_loaded(obj):
                             self._load([this_id])
                             if hasattr(obj, "_registry_refresh"):
                                 delattr(obj, "_registry_refresh")
@@ -1142,8 +1088,6 @@ class Registry(object):
                 obj._registry_locked = False
             self.repository.shutdown()
 
-            self._loaded_ids = []
-
             self.metadata = None
 
         finally:
@@ -1180,8 +1124,5 @@ class Registry(object):
         except ObjectNotInRegistryError:
             return False
 
-        if index in self._loaded_ids:
-            return True
-        else:
-            return False
+        return self.repository.isObjectLoaded(obj)
 
