@@ -96,65 +96,11 @@ def _ganga_run_exitfuncs():
     _purge_actions_queue()
     stop_and_free_thread_pool()
 
-    def priority_cmp(f1, f2):
-        """
-        Sort the exit functions based on priority in reversed order
-        """
-        # extract the priority number from the function element
-        p1 = f1[0][0]
-        p2 = f2[0][0]
-        # sort in reversed order
-        return cmp(p2, p1)
-
-    def add_priority(x):
-        """
-        add a default priority to the functions not defining one (default priority=sys.maxint)
-        return a list containg ((priority,func),*targs,*kargs) elements
-        """
-        import sys
-        func = x[0]
-        if isinstance(func, tuple) and len(x[0]) == 2:
-            return x
-        else:
-            new = [(sys.maxsize, func)]
-            new.extend(x[1:])
-            return new
-
-    atexit._exithandlers = map(add_priority, atexit._exithandlers)
-    atexit._exithandlers.sort(priority_cmp)
-
     logger.info("Stopping Job processing before shutting down Repositories")
 
     from Ganga.Core.GangaThread.WorkerThreads import _global_queues
     if _global_queues:
         _global_queues.freeze()
-
-    import inspect
-    while atexit._exithandlers:
-        (priority, func), targs, kargs = atexit._exithandlers.pop()
-        try:
-            if hasattr(func, 'im_class'):
-                for cls in inspect.getmro(func.__self__.__class__):
-                    if getName(func) in cls.__dict__:
-                        logger.debug(getName(cls) + " : " + getName(func))
-                func(*targs, **kargs)
-            else:
-                logger.debug("noclass : " + getName(func))
-                #print("%s" % str(func))
-                #print("%s" % str(inspect.getsourcefile(func)))
-                #func(*targs, **kargs)
-                ## This attempts to check for and remove externally defined shutdown functions which may interfere with the next steps!
-                if str(inspect.getsourcefile(func)).find('Ganga') != -1:
-                    func(*targs, **kargs)
-        except Exception as err:
-            s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (getName(func), str(err))
-            logger.debug(s)
-            try:
-                import os
-                logger.debug("%s" % os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(func)))) )
-                logger.debug("\n%s" % inspect.getsource(func))
-            except Exception as err2:
-                logger.debug("Error getting source code and failure reason: %s" % str(err2))
 
     from Ganga.Core.GangaThread.WorkerThreads import shutDownQueues
     shutDownQueues()
