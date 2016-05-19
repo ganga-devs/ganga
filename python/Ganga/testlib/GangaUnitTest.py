@@ -113,6 +113,11 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     if missing_cred:
         raise Exception("Failed due to missing credentials %s" % str(missing_cred))
 
+    # Make sure that all the config options are really set.
+    # Some from plugins may not have taken during startup
+    for opt in default_opts + extra_opts:
+        setConfigOption(*opt)
+
     logger.info("Passing to Unittest")
 
 def emptyRepositories():
