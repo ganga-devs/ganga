@@ -173,8 +173,6 @@ class TestRegistry(GangaUnitTest):
 
     def setUp(self):
         super(TestRegistry, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def test_pass1(self):
         t = testReg(1)

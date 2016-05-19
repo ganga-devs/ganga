@@ -764,10 +764,10 @@ class GangaRepositoryLocal(GangaRepository):
                     self._fully_loaded[this_id] = self.objects[this_id]
 
                 subobj_attr = getattr(self.objects[this_id], self.sub_split, None)
-                sub_attr_dirty = getattr(subjob_attr, '_dirty', False)
+                sub_attr_dirty = getattr(subobj_attr, '_dirty', False)
                 if sub_attr_dirty:
-                    if hasattr(subjob_attr, 'flush'):
-                        subjob_attr.flush()
+                    if hasattr(subobj_attr, 'flush'):
+                        subobj_attr.flush()
 
                 self.objects[this_id]._setFlushed()
 
