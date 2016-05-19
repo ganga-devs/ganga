@@ -48,6 +48,7 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         ('Configuration', 'gangadir', gangadir_for_test),
         ('Configuration', 'user', 'testframework'),
         ('Configuration', 'repositorytype', 'LocalXML'),
+        ('Configuration', 'UsageMonitoringMSG', False),  # Turn off spyware
         ('TestingFramework', 'ReleaseTesting', True),
         ('Queues', 'NumWorkerThreads', 2),
     ]

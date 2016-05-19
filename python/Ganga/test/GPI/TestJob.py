@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.monitoring import run_until_completed
 
 from Ganga.GPIDev.Base.Proxy import stripProxy
 
@@ -15,6 +16,13 @@ class TestJob(GangaUnitTest):
         from Ganga.GPI import Job
         j = Job()
         j.submit()
+
+    def testJobCompleted(self):
+        from Ganga.GPI import Job
+        j = Job()
+        j.submit()
+        run_until_completed(j)
+        assert j.status == 'completed'
 
     def testJobAssignment(self):
         """Test assignment of all job properties"""
