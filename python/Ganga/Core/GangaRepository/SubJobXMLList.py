@@ -42,7 +42,7 @@ class SubJobXMLList(GangaObject):
 
     _schema = Schema(Version(1, 0), {})
 
-    def __init__(self, jobDirectory='', registry=None, dataFileName='data', load_backup=False, parent=None ):
+    def __init__(self, jobDirectory='', registry=None, dataFileName='data', load_backup=False, parent=None):
         """jobDirectory: dir on disk which contains subjob folders
         registry: the registry managing me,
         dataFileName: incase it ever changes,
@@ -65,7 +65,7 @@ class SubJobXMLList(GangaObject):
             return
 
         self._subjobIndexData = {}
-        if parent is not None:
+        if parent:
             self._setParent(parent)
         self.load_subJobIndex()
 
@@ -123,11 +123,13 @@ class SubJobXMLList(GangaObject):
             index_file_obj = None
             try:
                 from Ganga.Core.GangaRepository.PickleStreamer import from_file
+
                 try:
-                    index_file_obj = open( index_file, "r" )
+                    index_file_obj = open(index_file, "r" )
                     self._subjobIndexData = from_file( index_file_obj )[0]
                 except IOError as err:
                     self._subjobIndexData = None
+                    self._setDirty()
 
                 if self._subjobIndexData is None:
                     self._subjobIndexData = {}
@@ -156,18 +158,24 @@ class SubJobXMLList(GangaObject):
                             continue
                         #self._subjobIndexData = {}
             except Exception as err:
-                logger.error( "Subjob Index file open, error: %s" % err )
+                logger.debug( "Subjob Index file open, error: %s" % err )
                 self._subjobIndexData = {}
+                self._setDirty()
             finally:
                 if index_file_obj is not None:
                     index_file_obj.close()
                 if self._subjobIndexData is None:
                     self._subjobIndexData = {}
+        else:
+            self._setDirty()
         return
 
     def write_subJobIndex(self):
         """interface for writing the index which captures errors and alerts the user vs throwing uncaught exception"""
         try:
+            #import traceback
+            #traceback.print_stack()
+            #print("\n")
             self.__really_writeIndex()
         ## Once It's known what te likely exceptions here are they'll be added
         except (IOError,) as err:
@@ -352,7 +360,7 @@ class SubJobXMLList(GangaObject):
                         sj_file = self._loadSubJobFromDisk(subjob_data)
                         has_loaded_backup = True
                     except (IOError, XMLFileError) as err:
-                        logger.error("Error loading subjob XML:\n%s" % err)
+                        logger.debug("Error loading subjob XML:\n%s" % err)
 
                         if isinstance(x, IOError) and x.errno == errno.ENOENT:
                             raise IOError("Subobject %s not found: %s" % (index, x))
@@ -481,7 +489,7 @@ class SubJobXMLList(GangaObject):
             vals = []
             for item in reg_slice._display_columns:
                 display_str = "display:" + str(item)
-                #logger.info("Looking for : %s" % display_str)
+                #logger.debug("Looking for : %s" % display_str)
                 width = reg_slice._display_columns_width.get(item, default_width)
                 try:
                     if item == 'fqid':
