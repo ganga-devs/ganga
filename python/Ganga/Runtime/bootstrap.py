@@ -836,7 +836,7 @@ under certain conditions; type license() for details.
 
         logger.debug("Installing Shutdown Manager")
         import atexit
-        from Ganga.Core.InternalServices import _ganga_run_exitfuncs
+        from Ganga.Core.InternalServices.ShutdownManager import _ganga_run_exitfuncs
         atexit.register(_ganga_run_exitfuncs)
 
         import Ganga.Utility.Config
