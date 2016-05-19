@@ -41,88 +41,111 @@ Extend the behaviour of the default *atexit* module to support:
 # System imports
 import atexit
 
+# Ganga imports
+from Ganga.Core.GangaThread import GangaThreadPool
+from Ganga.Core.GangaThread.WorkerThreads import _global_queues, shutDownQueues
+from Ganga.Core import at_exit_should_wait_cb, monitoring_component
+from Ganga.Core.InternalServices import Coordinator
+from Ganga.Runtime import Repository_runtime, bootstrap
 from Ganga.Utility import stacktracer
+from Ganga.Utility.logging import getLogger, requires_shutdown, final_shutdown
+from Ganga.Utility.Config import setConfigOption
+from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace, _purge_actions_queue,\
+    stop_and_free_thread_pool
+from Ganga.GPIDev.Lib.Tasks import stopTasks
+from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
+
+# Globals
+logger = getLogger()
 
 
 def _ganga_run_exitfuncs():
-    """run any registered exit functions
+    """Run all exit functions from plugins and internal services in the correct order
 
-    atexit._exithandlers is traversed based on the priority.
-    If no priority was registered for a given function
-    than the lowest priority is assumed (LIFO policy)
-
-    We keep the same functionality as in *atexit* bare module but
-    we run each exit handler inside a try..catch block to be sure all
-    the registered handlers are executed
+    Go over all plugins and internal services and call the appropriate shutdown functions in the correct order. Because
+    we want each shutdown function to be run (e.g. to make sure flushing is done) we put each call into a try..except
+    and report to the user before continuing.
     """
 
-    from Ganga.GPIDev.Base.Proxy import getName
-
     # shutdown the threads in the GangaThreadPool
-    from Ganga.Core.GangaThread import GangaThreadPool
-    from Ganga.Core import at_exit_should_wait_cb
-    GangaThreadPool.getInstance().shutdown(should_wait_cb=at_exit_should_wait_cb)
+    try:
+        GangaThreadPool.getInstance().shutdown(should_wait_cb=at_exit_should_wait_cb)
+    except Exception as err:
+        logger.warning("Exception raised during shutdown of GangaThreadPool: %s" % err)
 
-    #print("Shutting Down Ganga Repositories")
-    from Ganga.Runtime import Repository_runtime
-    Repository_runtime.flush_all()
+    # Flush everything
+    try:
+        Repository_runtime.flush_all()
+    except Exception as err:
+        logger.warning("Exception raised during Registry flushing: %s" % err)
 
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
-
-    # Set the disk timeout to 1 sec, sacrifice stability for quick-er exit
-    from Ganga.Utility.Config import setConfigOption
+    # Set the disk timeout to 1 sec, sacrifice stability for quicker exit
     setConfigOption('Configuration', 'DiskIOTimeout', 1)
 
-    ## Stop the Mon loop from iterating further!
-    from Ganga.Core import monitoring_component
+    # Stop the monitoring loop from iterating further
     if monitoring_component is not None:
-        from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
-        getStackTrace()
-        if monitoring_component.alive:
-            monitoring_component.disableMonitoring()
-            monitoring_component.stop()
-            monitoring_component.join()
+        try:
+            getStackTrace()
+            if monitoring_component.alive:
+                monitoring_component.disableMonitoring()
+                monitoring_component.stop()
+                monitoring_component.join()
+        except Exception as err:
+            logger.warning("Exception raised while stopping the monitoring: %s" % err)
 
-    ## Stop the tasks system from running it's GangaThread before we get to the GangaThread shutdown section!
-    from Ganga.GPIDev.Lib.Tasks import stopTasks
-    stopTasks()
+    # Stop the tasks system from running
+    try:
+        stopTasks()
+    except Exception as err:
+        logger.warning("Exception raised while stopping Tasks: %s" % err)
 
-    # Set the disk timeout to 3 sec, sacrifice stability for quick-er exit
-    #from Ganga.Utility.Config import setConfigOption
-    #setConfigOption('Configuration', 'DiskIOTimeout', 3)
+    # purge the monitoring queues
+    try:
+        _purge_actions_queue()
+        stop_and_free_thread_pool()
+    except Exception as err:
+        logger.warning("Exception raised while purging monitoring queues: %s" % err)
 
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
-    _purge_actions_queue()
-    stop_and_free_thread_pool()
+    # Shutdown queues
+    try:
+        logger.info("Stopping Job processing before shutting down Repositories")
+        if _global_queues:
+            _global_queues.freeze()
+        shutDownQueues()
+    except Exception as err:
+        logger.warning("Exception raised while purging shutting down queues: %s" % err)
 
-    logger.info("Stopping Job processing before shutting down Repositories")
+    # shutdown the repositories
+    try:
+        logger.info("Shutting Down Ganga Repositories")
+        Repository_runtime.shutdown()
+    except Exception as err:
+        logger.warning("Exception raised while shutting down repositories: %s" % err)
 
-    from Ganga.Core.GangaThread.WorkerThreads import _global_queues
-    if _global_queues:
-        _global_queues.freeze()
-
-    from Ganga.Core.GangaThread.WorkerThreads import shutDownQueues
-    shutDownQueues()
-
-    logger.info("Shutting Down Ganga Repositories")
-    from Ganga.Runtime import Repository_runtime
-    Repository_runtime.shutdown()
-
-    from Ganga.Core.InternalServices import Coordinator
+    # label services as disabled
     Coordinator.servicesEnabled = False
 
-    from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
-    removeGlobalSessionFileHandlers()
-    removeGlobalSessionFiles()
+    # shutdown SessionLock
+    try:
+        removeGlobalSessionFileHandlers()
+        removeGlobalSessionFiles()
+    except Exception as err:
+        logger.warning("Exception raised while shutting down SessionLocks: %s" % err)
 
+    # Shutdown stacktracer
     if stacktracer._tracer:
-        stacktracer.trace_stop()
+        try:
+            stacktracer.trace_stop()
+        except Exception as err:
+            logger.warning("Exception raised while stopping stack tracer: %s" % err)
 
-    from Ganga.Utility.logging import requires_shutdown, final_shutdown
+    # do final shutdown
     if requires_shutdown is True:
-        final_shutdown()
+        try:
+            final_shutdown()
+        except Exception as err:
+            logger.warning("Exception raised while doing final shutdown: %s" % err)
 
-    from Ganga.Runtime import bootstrap
+    # show any open files after everything's shutdown
     if bootstrap.DEBUGFILES or bootstrap.MONITOR_FILES:
         bootstrap.printOpenFiles()
