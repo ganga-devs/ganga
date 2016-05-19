@@ -10,6 +10,8 @@ import time
 import uuid
 import sys
 
+from future.utils import raise_
+
 import Ganga.Core.FileWorkspace
 import Ganga.GPIDev.MonitoringServices
 from Ganga.Core import GangaException, IncompleteJobSubmissionError, JobManagerError, Sandbox
@@ -645,7 +647,7 @@ class Job(GangaObject):
         except Exception as x:
             self.status = saved_status
             log_user_exception()
-            raise JobStatusError(x), None, sys.exc_info()[2]
+            raise_(JobStatusError(x), None, sys.exc_info()[2])
         # useful for debugging
         #finally:
         #    pass
@@ -1669,7 +1671,7 @@ class Job(GangaObject):
                 # revert to the new status
                 logger.error('%s ... reverting job %s to the new status', err, self.getFQID('.'))
                 self.updateStatus('new')
-                raise JobError("Error: %s" % err), None, sys.exc_info()[2]
+                raise_(JobError("Error: %s" % err), None, sys.exc_info()[2])
 
         # This appears to be done by the backend now in a way that handles sub-jobs,
         # in the case of a master job however we need to still perform this

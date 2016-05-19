@@ -28,7 +28,7 @@ import time
 import re
 import atexit
 
-from future.utils import exec_
+from future.utils import exec_, raise_
 
 from Ganga import _gangaVersion, _gangaPythonPath
 from Ganga.Utility.Config.Config import getConfig
@@ -851,7 +851,7 @@ under certain conditions; type license() for details.
         except Exception as x:
             logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', x)
             logger.exception(x)
-            raise GangaException(x), None, sys.exc_info()[2]
+            raise_(GangaException(x), None, sys.exc_info()[2])
 
         # initialize runtime packages, they are registered in allRuntimes
         # dictionary automatically
