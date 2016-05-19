@@ -201,6 +201,15 @@ class GangaRepository(object):
         """
         pass
 
+    def isObjectLoaded(self, obj):
+        """
+        Returns if an object is loaded into memory
+        Args:
+            obj (GangaObject): object we want to know if it's in memory or not
+        """
+        raise NotImplementedError
+
+
 # Optional but suggested functions
     def get_lock_session(self, id):
         """get_lock_session(id)
@@ -359,4 +368,12 @@ class GangaRepositoryTransient(object):
             ids (list): The object keys which we want to iterate over from the objects dict
         """
         pass
+
+    def isObjectLoaded(self, obj):
+        """
+        Returns if an object is loaded into memory
+        Args:
+            obj (GangaObject): object we want to know if it's in memory or not
+        """
+        return True
 
