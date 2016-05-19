@@ -125,7 +125,6 @@ def _ganga_run_exitfuncs():
 
     import inspect
     while atexit._exithandlers:
-
         (priority, func), targs, kargs = atexit._exithandlers.pop()
         try:
             if hasattr(func, 'im_class'):
@@ -188,11 +187,3 @@ def install():
     # override the default exit function
     import sys
     sys.exitfunc = atexit._run_exitfuncs
-
-#
-#$Log: not supported by cvs2svn $
-# Revision 1.2  2007/07/27 14:31:56  moscicki
-# credential and clean shutdown updates from Adrian (from Ganga-4-4-0-dev-branch)
-#
-# Revision 1.1.2.2  2007/07/27 13:03:17  amuraru
-#*** empty log message ***
