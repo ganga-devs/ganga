@@ -38,6 +38,7 @@ Extend the behaviour of the default *atexit* module to support:
   registers the function with the lowest priority (sys.maxint)
 """
 
+# System imports
 import atexit
 
 from Ganga.Utility import stacktracer
@@ -174,16 +175,3 @@ def _ganga_run_exitfuncs():
     from Ganga.Runtime import bootstrap
     if bootstrap.DEBUGFILES or bootstrap.MONITOR_FILES:
         bootstrap.printOpenFiles()
-
-
-def install():
-    """
-    Install a new shutdown manager, by overriding methods from atexit module
-    """
-    # override the atexit exit function
-    atexit._run_exitfuncs = _ganga_run_exitfuncs
-    #del atexit
-
-    # override the default exit function
-    import sys
-    sys.exitfunc = atexit._run_exitfuncs
