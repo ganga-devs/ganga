@@ -58,6 +58,11 @@ def _ganga_run_exitfuncs():
 
     from Ganga.GPIDev.Base.Proxy import getName
 
+    # shutdown the threads in the GangaThreadPool
+    from Ganga.Core.GangaThread import GangaThreadPool
+    from Ganga.Core import at_exit_should_wait_cb
+    GangaThreadPool.getInstance().shutdown(should_wait_cb=at_exit_should_wait_cb)
+
     #print("Shutting Down Ganga Repositories")
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.flush_all()
