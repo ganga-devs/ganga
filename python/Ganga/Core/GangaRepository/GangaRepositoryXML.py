@@ -672,8 +672,7 @@ class GangaRepositoryLocal(GangaRepository):
         if not isType(obj, EmptyGangaObject):
             split_cache = None
 
-            has_children = (not self.sub_split is None) and\
-                    (self.sub_split in obj._data) and hasattr(obj, self.sub_split) and len(getattr(obj, self.sub_split)) > 0
+            has_children = SubJobXMLList.jobHasChildrenTest(os.path.dirname(fn), self.dataFileName)
 
             if has_children:
 
@@ -765,9 +764,10 @@ class GangaRepositoryLocal(GangaRepository):
                     self._fully_loaded[this_id] = self.objects[this_id]
 
                 subobj_attr = getattr(self.objects[this_id], self.sub_split, None)
-                sub_attr_dirty = getattr(subobj_attr, '_dirty', False)
+                sub_attr_dirty = getattr(subjob_attr, '_dirty', False)
                 if sub_attr_dirty:
-                    getattr(self.objects[this_id], self.sub_split).flush()
+                    if hasattr(subjob_attr, 'flush'):
+                        subjob_attr.flush()
 
                 self.objects[this_id]._setFlushed()
 
