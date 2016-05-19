@@ -6,13 +6,12 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 master_timeout = 300.
 
+
 def dummySleep(someJob):
     my_timeout = 0.
     while someJob.status not in ['completed', 'failed', 'killed', 'removed'] and my_timeout < master_timeout:
         time.sleep(1.)
-        my_timeout+=1.
-
-    return
+        my_timeout += 1.
 
 class TestMonitoring(GangaUnitTest):
 
@@ -88,8 +87,6 @@ class TestMonitoring(GangaUnitTest):
         disableMonitoring()
         j=Job()
         j.submit()
-
-        time.sleep(20.)
 
         self.assertEqual(j.status, 'submitted')
 

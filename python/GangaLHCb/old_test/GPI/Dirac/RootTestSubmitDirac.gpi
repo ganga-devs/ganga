@@ -1,4 +1,4 @@
-from GangaLHCb.test import *
+from GangaLHCb.old_test import *
 
 ganga_path = os.path.abspath(os.path.dirname(__file__))
 script_file = ganga_path + '/../python/GangaLHCb/old_test/GPI/Dirac/test.C'

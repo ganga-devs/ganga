@@ -48,13 +48,6 @@ if not _after_bootstrap:
     config = makeConfig('AthenaMC', 'AthenaMC configuration options')
 
     # -------------------------------------------------
-    # Athen RT Options
-    mc = getConfig('MonitoringServices')
-    mc.addOption('Athena/LCG', 'Ganga.Lib.MonitoringServices.ARDADashboard.LCG.ARDADashboardLCGAthena.ARDADashboardLCGAthena,Ganga.Lib.MonitoringServices.MSGMS.MSGMS,Ganga.Lib.MonitoringServices.Dashboard.LCGAthenaMS.LCGAthenaMS', 'sets job monitoring service for Athena/LCG jobs')
-    mc.addOption('Athena/CREAM', 'Ganga.Lib.MonitoringServices.ARDADashboard.LCG.ARDADashboardLCGAthena.ARDADashboardLCGAthena,Ganga.Lib.MonitoringServices.MSGMS.MSGMS,Ganga.Lib.MonitoringServices.Dashboard.LCGAthenaMS.LCGAthenaMS', 'sets job monitoring service for Athena/CREAM jobs')
-    mc.addOption('Athena', None, 'FIXME')
-
-    # -------------------------------------------------
     # DQ2 Options
     config = makeConfig('DQ2', 'DQ2 configuration options')
 

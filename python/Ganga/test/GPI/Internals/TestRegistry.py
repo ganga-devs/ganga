@@ -148,7 +148,7 @@ class HammerThread(threading.Thread):
         self.logger.info(str(self.id) + ' unlock(%s) done!' % _id)
 
     def run(self):
-        for i in range(100):
+        for i in range(50):
             choices = []
             choices.extend([self.updown] * 1)
             choices.extend([self.uindex] * 1)
