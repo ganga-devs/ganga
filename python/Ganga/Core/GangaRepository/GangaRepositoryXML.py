@@ -274,13 +274,15 @@ class GangaRepositoryLocal(GangaRepository):
         #logger.debug("Loading index %s" % this_id)
         fn = self.get_idxfn(this_id)
         # index timestamp changed
-        if self._cache_load_timestamp.get(this_id, 0) != os.stat(fn).st_ctime:
-            logger.debug("%s != %s" % (self._cache_load_timestamp.get(this_id, 0), os.stat(fn).st_ctime))
+        fn_ctime = os.stat(fn).st_ctime
+        cache_time = self._cache_load_timestamp.get(this_id, 0)
+        if cache_time != fn_ctime:
+            logger.debug("%s != %s" % (cache_time, fn_ctime))
             try:
                 with open(fn, 'r') as fobj:
                     cat, cls, cache = pickle_from_file(fobj)[0]
             except Exception as x:
-                logger.debug("index_load Exception: %s" % x)
+                logger.warning("index_load Exception: %s" % x)
                 raise IOError("Error on unpickling: %s %s" %(getName(x), x))
             if this_id in self.objects:
                 obj = self.objects[this_id]
@@ -296,7 +298,7 @@ class GangaRepositoryLocal(GangaRepository):
                 this_data[k] = v
             #obj.setNodeData(this_data)
             obj._index_cache = cache
-            self._cache_load_timestamp[this_id] = os.stat(fn).st_ctime
+            self._cache_load_timestamp[this_id] = fn_ctime
             self._cached_cat[this_id] = cat
             self._cached_cls[this_id] = cls
             self._cached_obj[this_id] = cache
@@ -391,6 +393,8 @@ class GangaRepositoryLocal(GangaRepository):
             logger.debug("Master Index corrupt, ignoring it")
             logger.debug("Exception: %s" % err)
             self._clear_stored_cache()
+        finally:
+            rmrf(os.path.join(self.root, 'master.idx'))
 
     def _clear_stored_cache(self):
         """
@@ -411,7 +415,6 @@ class GangaRepositoryLocal(GangaRepository):
         Args:
             shutdown (boool): True causes this to be written now
         """
-        #logger.info("Updating master index: %s" % self.registry.name)
         try:
             _master_idx = os.path.join(self.root, 'master.idx')
             this_master_cache = []
@@ -420,10 +423,10 @@ class GangaRepositoryLocal(GangaRepository):
                     return
 
             items_to_save = self.objects.iteritems()
-            #logger.info("Updating Items: %s" % self.objects.keys())
             for k, v in items_to_save:
+                if k in self.incomplete_objects:
+                    continue
                 try:
-                    #logger.info("Examining: %s" % k)
                     if k in k in self._fully_loaded:
                         # Check and write index first
                         obj = v#self.objects[k]
@@ -549,6 +552,7 @@ class GangaRepositoryLocal(GangaRepository):
             # Try to load it!
             if not this_id in self.objects:
                 try:
+                    logger.debug("Loading disk based Object: %s from %s as indexes were missing" % (this_id, self.registry.name))
                     self.load([this_id])
                     changed_ids.append(this_id)
                     # Write out a new index if the file can be locked
@@ -721,7 +725,6 @@ class GangaRepositoryLocal(GangaRepository):
                         rmrf(os.path.join(os.path.dirname(fn), idn))
             if this_id not in self.incomplete_objects:
                 self.index_write(this_id)
-            obj._setFlushed()
         else:
             raise RepositoryError(self, "Cannot flush an Empty object for ID: %s" % this_id)
 
@@ -744,7 +747,7 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("Should NEVER re-flush an incomplete object, it's now 'bad' respect this!")
                 continue
             try:
-                logger.debug("safe_flush")
+                logger.debug("safe_flush: %s" % this_id)
                 self._safe_flush_xml(this_id)
 
                 self._cache_load_timestamp[this_id] = time.time()
@@ -760,6 +763,13 @@ class GangaRepositoryLocal(GangaRepository):
 
                 if this_id not in self._fully_loaded.keys():
                     self._fully_loaded[this_id] = self.objects[this_id]
+
+                subobj_attr = getattr(self.objects[this_id], self.sub_split, None)
+                sub_attr_dirty = getattr(subobj_attr, '_dirty', False)
+                if sub_attr_dirty:
+                    getattr(self.objects[this_id], self.sub_split).flush()
+
+                self.objects[this_id]._setFlushed()
 
             except (OSError, IOError, XMLFileError) as x:
                 raise RepositoryError(self, "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x))
@@ -852,15 +862,27 @@ class GangaRepositoryLocal(GangaRepository):
             has_children (bool): This contains the result of the decision as to whether this object actually has children
             tmpobj (GangaObject): This contains the object which has been read in from the fn file
         """
+
+        # If this_id is not in the objects add the object we got from reading the XML
+        need_to_copy = True
+        if this_id not in self.objects:
+            self.objects[this_id] = tmpobj
+            need_to_copy = False
+
         obj = self.objects[this_id]
-        for key, val in tmpobj._data.items():
-            obj.setSchemaAttribute(key, val)
-        for attr_name, attr_val in obj._schema.allItems():
-            if attr_name not in tmpobj._data:
-                obj.setSchemaAttribute(attr_name, obj._schema.getDefaultValue(attr_name))
+
+        # If the object was already in the objects (i.e. cache object, replace the schema content wilst avoiding R/O checks and such
+        # The end goal is to keep the object at this_id the same object in memory but to make it closer to tmpobj.
+        # TODO investigate changing this to copyFrom
+        if need_to_copy:
+            for key, val in tmpobj._data.items():
+                obj.setSchemaAttribute(key, val)
+            for attr_name, attr_val in obj._schema.allItems():
+                if attr_name not in tmpobj._data:
+                    obj.setSchemaAttribute(attr_name, obj._schema.getDefaultValue(attr_name))
 
         if has_children:
-        #    logger.info("Adding children")
+            logger.debug("Adding children")
             obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
         else:
             obj.setSchemaAttribute(self.sub_split, None)
@@ -890,38 +912,30 @@ class GangaRepositoryLocal(GangaRepository):
             this_id (int): This is the key of the object in the objects dict where the output will be stored
             load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
         """
-        #print("ACTUALLY LOAD")
 
-        tmpobj = None
+        b4=time.time()
+        tmpobj, errs = self.from_file(fobj)
+        a4=time.time()
+        logger.debug("Loading XML file for ID: %s took %s sec" % (this_id, a4-b4))
 
-        if (self._load_timestamp.get(this_id, 0) != os.fstat(fobj.fileno()).st_ctime):
+        if len(errs) > 0:
+            logger.error("#%s Error(s) Loading File: %s" % (len(errs), fobj.name))
+            raise InaccessibleObjectError(self, this_id, errs[0])
 
-            b4=time.time()
-            tmpobj, errs = self.from_file(fobj)
-            a4=time.time()
-            logger.debug("Loading XML file for ID: %s took %s sec" % (this_id, a4-b4))
+        logger.debug("Testing children: %s" % str(this_id))
 
-            if len(errs) > 0:
-                logger.error("#%s Error(s) Loading File: %s" % (len(errs), fobj.name))
-                raise InaccessibleObjectError(self, this_id, errs[0])
+        has_children = SubJobXMLList.jobHasChildrenTest(os.path.dirname(fn), self.dataFileName)
 
-            has_children = SubJobXMLList.jobHasChildrenTest(os.path.dirname(fn), self.dataFileName)
+        logger.debug("Found children: %s" % str(has_children))
 
-            if this_id in self.objects:
-                self._must_actually_load_xml(fn, this_id, load_backup, has_children, tmpobj)
+        self._must_actually_load_xml(fn, this_id, load_backup, has_children, tmpobj)
 
-            else:
-                self._internal_setitem__(this_id, tmpobj)
+        if hasattr(self.objects[this_id], self.sub_split):
+            sub_attr = getattr(self.objects[this_id], self.sub_split)
+            if sub_attr is not None and hasattr(sub_attr, '_setParent'):
+                sub_attr._setParent(self.objects[this_id])
 
-            if hasattr(self.objects[this_id], self.sub_split):
-                sub_attr = getattr(self.objects[this_id], self.sub_split)
-                if sub_attr is not None and hasattr(sub_attr, '_setParent'):
-                    sub_attr._setParent(self.objects[this_id])
-
-            self._load_timestamp[this_id] = os.fstat(fobj.fileno()).st_ctime
-
-        else:
-            logger.debug("Didn't Load Job ID: %s" % this_id)
+        self._load_timestamp[this_id] = os.fstat(fobj.fileno()).st_ctime
 
         logger.debug("Finished Loading XML")
 
@@ -1038,10 +1052,16 @@ class GangaRepositoryLocal(GangaRepository):
             finally:
                 fobj.close()
 
+            subobj_attr = getattr(self.objects[this_id], self.sub_split, None)
+            sub_attr_dirty = getattr(subobj_attr, '_dirty', False)
+
             if has_loaded_backup:
                 self.objects[this_id]._setDirty()
             else:
                 self.objects[this_id]._setFlushed()
+
+            if sub_attr_dirty:
+                getattr(self.objects[this_id], self.sub_split)._setDirty()
 
         logger.debug("Finished 'load'-ing of: %s" % ids)
 
@@ -1159,12 +1179,11 @@ class GangaRepositoryLocal(GangaRepository):
         rmrf(self.root)
         self.startup()
 
-    def updateIndexCache(self, obj):
+    def isObjectLoaded(self, obj):
         """
-        This method should be obsoleted fairly soon as it's no longer needed. We now handle caches correctly
-        TODO remove me
+        This will return a true false if an object has been fully loaded into memory
         Args:
-            obj (GangaObject): The object for which the index cache is updated
+            obj (GangaObject): The object we want to know if it was loaded into memory
         """
-        pass
+        return id(obj) in [id(loaded_obj) for loaded_obj in self._fully_loaded.values()]
 
