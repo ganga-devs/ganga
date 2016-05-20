@@ -233,9 +233,8 @@ class VStreamer(object):
             if sequence:
                 self.level += 1
                 print(self.indent(), '<sequence>', file=self.out)
-                if subnode:
-                    for s in subnode:
-                        self.acceptOptional(s)
+                for s in subnode:
+                    self.acceptOptional(s)
                 print(self.indent(), '</sequence>', file=self.out)
                 self.level -= 1
             else:
