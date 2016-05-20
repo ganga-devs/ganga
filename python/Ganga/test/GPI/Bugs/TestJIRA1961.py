@@ -1,42 +1,38 @@
 from __future__ import absolute_import
 
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.decorators import add_config
 
 
-class TestJIRA1961(GangaUnitTest):
+@add_config([('Preparable', 'unprepare_on_copy', 'True')])
+def test_unprepareTrue(gpi):
+    from Ganga.GPI import Job, Executable
+    j = Job(application=Executable(exe='/bin/echo', args=['hello']))
+    j.submit()
 
-    def test_unprepareTrue(self):
+    assert j.application.is_prepared is not None
 
-        from Ganga.Utility.Config import setConfigOption
-        from Ganga.GPI import Job, Executable
-        setConfigOption('Preparable', 'unprepare_on_copy', 'True')
-        j = Job(application=Executable(exe='/bin/echo', args=['hello']))
-        j.submit()
+    j2 = j.copy()
 
-        assert(j.application.is_prepared != None)
+    assert j2.application.is_prepared is None
 
-        j2 = j.copy()
+    j3 = Job(j)
 
-        assert(j2.application.is_prepared == None)
+    assert j3.application.is_prepared is None
 
-        j3 = Job(j)
 
-        assert(j3.application.is_prepared == None)
+@add_config([('Preparable', 'unprepare_on_copy', 'False')])
+def test_unprepareFalse(gpi):
 
-    def test_unprepareFalse(self):
+    from Ganga.GPI import Job, Executable
+    k = Job(application=Executable(exe='/bin/echo', args=['hello']))
+    k.submit()
 
-        from Ganga.Utility.Config import setConfigOption
-        from Ganga.GPI import Job, Executable
-        setConfigOption('Preparable', 'unprepare_on_copy', 'False')
-        k = Job(application=Executable(exe='/bin/echo', args=['hello']))
-        k.submit()
+    assert k.application.is_prepared is not None
 
-        assert(k.application.is_prepared != None)
+    k2 = k.copy()
 
-        k2 = k.copy()
+    assert k2.application.is_prepared is not None
 
-        assert(k2.application.is_prepared != None)
+    k3 = Job(k)
 
-        k3 = Job(k)
-
-        assert(k.application.is_prepared != None)
+    assert k.application.is_prepared is not None

@@ -6,6 +6,7 @@ import tempfile
 import pytest
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.monitoring import run_until_completed
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 
 
@@ -43,12 +44,11 @@ class TestStructure(GangaUnitTest):
             self.jobslice.append(j)
 
     def runJobSlice(self):
-        from GangaTest.Framework.utils import sleep_until_completed
 
         for j in self.jobslice:
             j.submit()
         for j in self.jobslice:
-            assert sleep_until_completed(j, timeout=10, verbose=True), 'Timeout on job submission: job is still not finished'
+            assert run_until_completed(j, timeout=10), 'Timeout on job submission: job is still not finished'
             print('# upcoming status')
             print("Status 3: %s" % j.status)
             print('# printed status')

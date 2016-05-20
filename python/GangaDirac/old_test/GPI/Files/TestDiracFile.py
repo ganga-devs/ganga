@@ -4,7 +4,7 @@ from GangaTest.Framework.tests import GangaGPITestCase
 #from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
 #from Ganga.Core.exceptions                         import ApplicationConfigurationError, GangaException
 from Ganga.GPI import *
-from Ganga.test import generateUniqueTempFile
+from Ganga.old_test import generateUniqueTempFile
 #import GangaDirac.Lib.Server.DiracServer as DiracServer
 # GangaTest.Framework.utils defines some utility methods
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
