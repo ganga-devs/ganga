@@ -28,7 +28,7 @@ class SchemaVersionError(GangaException):
     def __init__(self, what=''):
         """
         Args:
-            what (str):
+            what (str): This is a string of what went wrong
         """
         super(SchemaVersionError, self).__init__(what)
         self.what = what
