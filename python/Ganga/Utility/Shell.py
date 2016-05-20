@@ -115,6 +115,7 @@ class Shell(object):
         """
 
         if setup is not None:
+            self.env = {}
             execute('source {0} {1}'.format(setup," ".join(setup_args)), shell=True, env=self.env, update_env=True)
 
         else:
