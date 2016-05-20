@@ -200,6 +200,10 @@ class GangaUnitTest(unittest.TestCase):
         """
         return os.path.join(os.path.expanduser('~'), 'gangadir_testing', cls.__name__)
 
+    @classmethod
+    def setUpClass(cls):
+        shutil.rmtree(cls.gangadir(), ignore_errors=True)
+
     def setUp(self, extra_opts=[]):
         unittest.TestCase.setUp(self)
         # Start ganga and internal services
