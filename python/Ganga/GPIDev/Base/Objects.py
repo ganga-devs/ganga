@@ -386,54 +386,26 @@ class Descriptor(object):
         return v_copy
 
     @synchronised_set_descriptor
-    def __set__(self, _obj, _val):
+    def __set__(self, obj, val):
         """
         Set method
         TODO: explain why/how this is different to a get/set or fits in with the GangaObject
         TODO: Is this needed if flush per n dirty calls has been dropped. This was a major change in usage btw
         self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
-        _obj: parent class which 'owns' the attribute
-        _val: value of the attribute which we're about to set
+        obj: parent class which 'owns' the attribute
+        val: value of the attribute which we're about to set
         """
 
-        obj_reg = None
-        obj_prevState = None
-        obj = _obj
-        if isinstance(obj, GangaObject):
-            obj_reg = obj._getRegistry()
-            if obj_reg is not None and hasattr(obj_reg, 'isAutoFlushEnabled'):
-                obj_prevState = obj_reg.isAutoFlushEnabled()
-                if obj_prevState is True and hasattr(obj_reg, 'turnOffAutoFlushing'):
-                    obj_reg.turnOffAutoFlushing()
-
-        val_reg = None
-        val_prevState = None
-        val = _val
-        if isinstance(val, GangaObject):
-            val_reg = val._getRegistry()
-            if val_reg is not None and hasattr(val_reg, 'isAutoFlushEnabled'):
-                val_prevState = val_reg.isAutoFlushEnabled()
-                if val_prevState is True and hasattr(val_reg, 'turnOffAutoFlushing'):
-                    val_reg.turnOffAutoFlushing()
-
-        if type(_val) is str:
+        if isinstance(val, str):
             from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
-            new_val = stripProxy(runtimeEvalString(_obj, _getName(self), _val))
+            new_val = stripProxy(runtimeEvalString(obj, _getName(self), val))
         else:
-            new_val = _val
+            new_val = val
 
-        self.__atomic_set__(_obj, new_val)
+        self.__atomic_set__(obj, new_val)
 
         if isinstance(new_val, Node):
             val._setDirty()
-
-        if val_reg is not None:
-            if val_prevState is True and hasattr(val_reg, 'turnOnAutoFlushing'):
-                val_reg.turnOnAutoFlushing()
-
-        if obj_reg is not None:
-            if obj_prevState is True and hasattr(obj_reg, 'turnOnAutoFlushing'):
-                obj_reg.turnOnAutoFlushing()
 
     def __atomic_set__(self, _obj, _val):
         """
