@@ -672,7 +672,7 @@ class GangaRepositoryLocal(GangaRepository):
         if not isType(obj, EmptyGangaObject):
             split_cache = None
 
-            has_children = hasattr(obj, self.sub_split) and getattr(obj, self.sub_split)
+            has_children = getattr(obj, self.sub_split, False)
 
             if has_children:
 
