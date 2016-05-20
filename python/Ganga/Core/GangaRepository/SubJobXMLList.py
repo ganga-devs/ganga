@@ -92,29 +92,19 @@ class SubJobXMLList(GangaObject):
     ## THIS CLASS DOES NOT MAKE USE OF THE SCHEMA TO STORE INFORMATION AS TRANSIENT OR UNCOPYABLE
     ## THIS CLASS CONTAINS A LOT OF OBJECT REFERENCES WHICH SHOULD NOT BE DEEPCOPIED!!!
     def __deepcopy__(self, memo=None):
-        if not isType(self, SubJobXMLList):
-            logger.error("CANNOT COPY A SUBJOBXMLLIST FROM ANOTHER CLASS TYPE!!!")
-            return
-        cls = self.__class__
-        obj = cls()
-        new_dict = {}
-        for dict_key, dict_value in self.__dict__.iteritems():
+        obj = super(SubJobXMLList, self).__deepcopy__(memo)
 
-            ## Copy objects where it's sane to
-            if dict_key not in ['_cachedJobs', '_definedParent', '_registry', '_parent', '_load_lock']:
-                new_dict[dict_key] = deepcopy(dict_value)
-
-            ## Assign by reference objects where it's sane to
-            elif dict_key in ['_registry']:
-                new_dict[dict_key] = dict_value
-
-            else:
-                new_dict[dict_key] = dict_value
+        obj._subjobIndexData = copy.deepcopy(self._subjobIndexData, memo)
+        obj._jobDirectory = copy.deepcopy(self._jobDirectory, memo)
+        obj._registry = self._registry
+        obj._dataFileName = copy.deepcopy(self._dataFileName, memo)
+        obj._load_backup = copy.deepcopy(self._load_backup, memo)
+        obj._cached_filenames = copy.deepcopy(self._cached_filenames, memo)
+        obj._stored_len = copy.deepcopy(self._stored_len, memo)
 
         ## Manually define unsafe/uncopyable objects
-        new_dict['_definedParent'] = None
-        new_dict['_cachedJobs'] = {}
-        obj.__dict__ = new_dict
+        obj._definedParent = None
+        obj._cachedJobs = {}
         return obj
 
     def _reset_cachedJobs(self, obj):
@@ -123,7 +113,7 @@ class SubJobXMLList(GangaObject):
 
     def isLoaded(self, subjob_id):
         """Has the subjob been loaded? True/False"""
-        return subjob_id in self._cachedJobs.keys()
+        return subjob_id in self._cachedJobs
 
     def load_subJobIndex(self):
         """Load the index from all sujobs ynto _subjobIndexData or empty it is an error occurs"""
@@ -142,7 +132,7 @@ class SubJobXMLList(GangaObject):
                 if self._subjobIndexData is None:
                     self._subjobIndexData = {}
                 else:
-                    for subjob_id in self._subjobIndexData.keys():
+                    for subjob_id in self._subjobIndexData:
                         index_data = self._subjobIndexData.get(subjob_id)
                         ## CANNOT PERFORM REASONABLE DISK CHECKING ON AFS
                         ## SLOW FILE ACCESS WRITE AND METADATA MEANS FILE DATA DOES NOT MATCH MOD TIME
@@ -190,13 +180,13 @@ class SubJobXMLList(GangaObject):
 
         all_caches = {}
         for sj_id in range(len(self)):
-            if sj_id in self._cachedJobs.keys():
+            if sj_id in self._cachedJobs:
                 this_cache = self._registry.getIndexCache(self.__getitem__(sj_id))
                 all_caches[sj_id] = this_cache
                 disk_location = self.__get_dataFile(sj_id)
                 all_caches[sj_id]['modified'] = os.stat(disk_location).st_ctime
             else:
-                if sj_id in self._subjobIndexData.keys():
+                if sj_id in self._subjobIndexData:
                     all_caches[sj_id] = self._subjobIndexData[sj_id]
                 else:
                     this_cache = self._registry.getIndexCache(self.__getitem__(sj_id))
@@ -249,7 +239,6 @@ class SubJobXMLList(GangaObject):
             if this_time == last_time:
                 return self._stored_len[1]
 
-        subjob_count = 0
         from os import listdir, path
         if not path.isdir( self._jobDirectory ):
             return 0
@@ -268,11 +257,6 @@ class SubJobXMLList(GangaObject):
                     break
             else:
                 break
-            #subjob_data = self.__get_dataFile(str(i))
-            #import os.path
-            #if os.path.isfile(subjob_data)):
-            #    subjob_count = subjob_count + 1
-            #i += 1
 
         if len(self._stored_len) != 2:
             self._stored_len = []
@@ -302,8 +286,6 @@ class SubJobXMLList(GangaObject):
                 job_obj = self._getParent()
             except Exception as err:
                 job_obj = None
-        #finally:
-        #    pass
         return job_obj
 
     def getMasterID(self):
@@ -356,8 +338,7 @@ class SubJobXMLList(GangaObject):
         (_cached_subjobs) for future use"""
         logger.debug("Requesting subjob: #%s" % index)
 
-        subjob_data = None
-        if not index in self._cachedJobs.keys():
+        if index not in self._cachedJobs:
 
             logger.debug("Attempting to load subjob: #%s from disk" % index)
 
@@ -394,7 +375,6 @@ class SubJobXMLList(GangaObject):
                 from Ganga.Core.GangaRepository.VStreamer import from_file
 
                 # load the subobject into a temporary object
-                loaded_sj = None
                 try:
                     loaded_sj = from_file(sj_file)[0]
                 except (IOError, XMLFileError) as err:
@@ -430,14 +410,14 @@ class SubJobXMLList(GangaObject):
             parent_name = "None"
         logger.debug('Setting Parent: %s' % parent_name)
 
-        super(SubJobXMLList, self)._setParent( parentObj )
+        super(SubJobXMLList, self)._setParent(parentObj)
 
         if self._definedParent is not parentObj:
             self._definedParent = parentObj
 
         if not hasattr(self, '_cachedJobs'):
             return
-        for k in self._cachedJobs.keys():
+        for k in self._cachedJobs:
             if self._cachedJobs[k]._getParent() is not self._definedParent:
                 self._cachedJobs[k]._setParent( parentObj )
 
@@ -446,7 +426,7 @@ class SubJobXMLList(GangaObject):
         if index > len(self) or index < 0:
             return None
 
-        if index in self._subjobIndexData.keys():
+        if index in self._subjobIndexData:
             if self.isLoaded(index):
                 return self._registry.getIndexCache( self.__getitem__(index) )
             else:
@@ -459,8 +439,8 @@ class SubJobXMLList(GangaObject):
     def getAllCachedData(self):
         """Get the cached data from the index for all subjobs"""
         cached_data = []
-        #logger.debug("Cache: %s" % self._subjobIndexData.keys())
-        if len(self._subjobIndexData.keys()) == len(self):
+        #logger.debug("Cache: %s" % self._subjobIndexData)
+        if len(self._subjobIndexData) == len(self):
             for i in range(len(self)):
                 if self.isLoaded(i):
                     cached_data.append( self._registry.getIndexCache( self.__getitem__(i) ) )
@@ -479,7 +459,7 @@ class SubJobXMLList(GangaObject):
         from Ganga.Core.GangaRepository.VStreamer import to_file
 
         for index in range(len(self)):
-            if index in self._cachedJobs.keys():
+            if index in self._cachedJobs:
                 ## If it ain't dirty skip it
                 if not self._cachedJobs[index]._dirty:
                     continue
@@ -493,11 +473,10 @@ class SubJobXMLList(GangaObject):
                 safe_save( subjob_data, subjob_obj, to_file )
 
         self.write_subJobIndex()
-        return
 
     def _setFlushed(self):
         """ Like Node only descend into objects which aren't in the Schema"""
-        for index in self._cachedJobs.keys():
+        for index in self._cachedJobs:
             self._cachedJobs[index]._setFlushed()
         super(SubJobXMLList, self)._setFlushed()
 

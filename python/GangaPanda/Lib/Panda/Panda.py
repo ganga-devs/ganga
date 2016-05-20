@@ -7,6 +7,7 @@
 
 import os, sys, time, commands, re, tempfile, exceptions, urllib, fnmatch
 import cPickle as pickle
+import json
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IBackend import IBackend
@@ -132,26 +133,31 @@ def convertDQ2NamesToQueueName(locations):
         info[location] = sites
     return info
 
+
 def convertQueueNameToDQ2Names(queue):
 
-    # refreshAGISSpecs()
-    # tokens = []
+    # check if we can load info from an AGIS JSON
+    # Code provided by jschovan (PR #470)
+    if not convertQueueNameToDQ2Names.pandaresources:
+        if not os.path.exists(config['AGISJSONFile']):
+            logger.warning("Cannot find AGIS file '%s' - falling back to using Panda Client" % config['AGISJSONFile'])
+        else:
+            with open(config['AGISJSONFile'], 'r') as agis_file:
+                convertQueueNameToDQ2Names.pandaresources = dict([(q['name'], q) for q in json.loads(agis_file.read())])
 
-    # for entry in agisinfos:
-    #     try:
-    #         temp_queuename = [i.keys() for i in entry['presources'].values() ]
-    #         queuename = [item for sublist in temp_queuename for item in sublist]
-    #     except:
-    #         queuename = []
-    #         pass
-    #     try:
-    #         tokens = entry['ddmendpoints'].keys()
-    #     except:
-    #         tokens = []
-    #     if queue in queuename:
-    #         tokens = [ i for i in tokens if not i in "TAPE" ]
-    #         if tokens:
-    #             return tokens
+    # if we have the AGIS info, use it. Otherwise fall back
+    if convertQueueNameToDQ2Names.pandaresources:
+        ddm_names = ''
+        for q in convertQueueNameToDQ2Names.pandaresources:
+            if convertQueueNameToDQ2Names.pandaresources[q]['name'] == queue:
+                ddm_names = convertQueueNameToDQ2Names.pandaresources[q]['ddm']
+
+        if not ddm_names:
+            logger.error("Could not find queue name '%s' in AGIS file or ddm info not present. "
+                         "Returning no sites" % queue)
+            return []
+
+        return ddm_names.split(',')
 
     # fallback to old code
     logger.debug("convertQueueNameToDQ2Names fall back")
@@ -167,6 +173,8 @@ def convertQueueNameToDQ2Names(queue):
             allowed_sites.append(site)
 
     return allowed_sites
+
+convertQueueNameToDQ2Names.pandaresources = {}
 
 def queueToAllowedSites(queue):
     #from pandatools import Client
@@ -1650,6 +1658,10 @@ class Panda(IBackend):
             for t in tokens:
                 if (allowTape or not Client.isTapeSite(t)) and t.find("TZERO") == -1:
                     spacetokens.append(t)
+
+        # Remove any empty strings
+        spacetokens = [t for t in spacetokens if t]
+        logger.debug('site %s spacetokens %s' % (self.site, spacetokens))
 
         return spacetokens
 

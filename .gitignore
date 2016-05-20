@@ -1,6 +1,7 @@
 *.pyc
 *.pyo
 __pycache__
+python/ganga.egg-info
 doc/_build
 .idea
 doc/API/Ganga*

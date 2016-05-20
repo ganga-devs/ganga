@@ -20,6 +20,7 @@ logger = getLogger()
 _reg_id_str = '_registry_id'
 _id_str = 'id'
 
+
 class RegistryError(GangaException):
 
     def __init__(self, what=''):
@@ -126,10 +127,7 @@ class IncompleteObject(GangaObject):
         self.registry._lock.acquire()
         try:
 
-            if self.registry.checkShouldFlush():
-                self.registry.repository.flush([self.registry._objects[self.id]])
-                self.registry._load([self.id])
-            if self.id not in self.registry_loaded_ids:
+            if self.id not in self.registry._loaded_ids:
                 self.registry._load([self.id])
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
             for d in self.registry.changed_ids.itervalues():
@@ -259,10 +257,6 @@ class Registry(object):
         self.shouldReleaseRun = True
 
         self.flush_thread = None
-
-#        self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
-#        self.releaseThread.daemon = True
-#        self.releaseThread.start()
 
     def hasStarted(self):
         return self._hasStarted
@@ -599,14 +593,12 @@ class Registry(object):
                     del self._objects[getattr(obj, _reg_id_str)]
             except Exception as err:
                 pass
-            pass
         except Exception as err:
             raise
 
     def __reg_remove(self, obj, auto_removed=0):
 
         logger.debug("_reg_remove")
-        u_id = self.find(obj)
 
         obj_id = id(obj)
 
@@ -772,8 +764,6 @@ class Registry(object):
                 raise RegistryKeyError("Read: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
             except InaccessibleObjectError as err:
                 raise RegistryKeyError("Read: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, err))
-            #finally:
-            #    pass
             for this_d in self.changed_ids.itervalues():
                 this_d.add(this_id)
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
@@ -781,8 +771,6 @@ class Registry(object):
         except Exception as err:
             logger.debug("Unknown read access Error: %s" % err)
             raise
-        #finally:
-        #    pass
 
     def _write_access(self, _obj):
         """Obtain write access on a given object.
@@ -840,15 +828,11 @@ class Registry(object):
                         raise RegistryKeyError("Write: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
                     except InaccessibleObjectError as err:
                         raise RegistryKeyError("Write: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, err))
-                    #finally:
-                    #    pass
                     for this_d in self.changed_ids.itervalues():
                         this_d.add(this_id)
                 obj._registry_locked = True
             except Exception as err:
                 raise
-            #finally:
-            #    pass
 
         return True
 
@@ -906,7 +890,7 @@ class Registry(object):
         return res
 
     def getIndexCache(self, obj):
-        """Returns a dictionary to be put into obj._index_cache through setNodeIndexCache
+        """Returns a dictionary to be put into obj._index_cache
         This can and should be overwritten by derived Registries to provide more index values."""
         return {}
 

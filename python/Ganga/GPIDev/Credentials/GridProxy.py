@@ -205,7 +205,9 @@ class GridProxy(ICredential):
         """
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         if self.voms:
-            self.command = VomsCommand()
+            # Make sure we don't overwrite a VomsCommand if it's already there
+            if not isinstance(self.command, VomsCommand):
+                self.command = VomsCommand()
         else:
             self.command = GridCommand()
 

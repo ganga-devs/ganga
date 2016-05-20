@@ -13,7 +13,7 @@ from Ganga.Utility.logic import implies
 
 import Ganga.Utility.Config
 
-from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError
+from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError, GangaException
 
 from Ganga.Utility.Plugin import allPlugins
 
