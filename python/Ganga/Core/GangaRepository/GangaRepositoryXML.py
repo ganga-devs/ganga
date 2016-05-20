@@ -874,16 +874,18 @@ class GangaRepositoryLocal(GangaRepository):
         # If the object was already in the objects (i.e. cache object, replace the schema content wilst avoiding R/O checks and such
         # The end goal is to keep the object at this_id the same object in memory but to make it closer to tmpobj.
         # TODO investigate changing this to copyFrom
+        # The temp object is from disk so all contents have correctly passed through sanitising via setattr at least once by now so this is safe
         if need_to_copy:
             for key, val in tmpobj._data.items():
-                setattr(obj, key, val)
+                obj.setSchemaAttribute(key, val)
             for attr_name, attr_val in obj._schema.allItems():
                 if attr_name not in tmpobj._data:
-                    setattr(obj, attr_name, obj._schema.getDefaultValue(attr_name))
+                    obj.setSchemaAttribute(attr_name, obj._schema.getDefaultValue(attr_name))
 
         if has_children:
             logger.debug("Adding children")
-            setattr(obj, self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
+            # NB Keep be a SetSchemaAttribute to bypass the list manipulation which will put this into a list in some cases 
+            obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
         else:
             if obj._schema.hasAttribute(self.sub_split):
                 setattr(obj, self.sub_split, obj._schema.getDefaultValue(self.sub_split))
@@ -1041,7 +1043,7 @@ class GangaRepositoryLocal(GangaRepository):
                 raise
 
             except Exception as err:
-
+                raise
                 should_continue = self._handle_load_exception(err, fn, this_id, load_backup)
 
                 if should_continue is True:
