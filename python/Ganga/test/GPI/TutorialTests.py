@@ -106,6 +106,7 @@ j.submit()
         # -- JOBMANIPULATION JOBSLICING STOP
 
         # -- JOBMANIPULATION RESUBMIT START
+        jobs(0).kill()
         jobs(0).resubmit()
         # -- JOBMANIPULATION RESUBMIT STOP
 
