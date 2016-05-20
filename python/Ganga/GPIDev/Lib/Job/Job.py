@@ -409,9 +409,6 @@ class Job(GangaObject):
         logger.debug("Intercepted __deepcopy__")
         return c
 
-    def clone(self):
-        return self.__deepcopy__()
-
     def _attribute_filter__get__(self, name):
 
         #logger.debug( "Intercepting _attribute_filter__get__" )
