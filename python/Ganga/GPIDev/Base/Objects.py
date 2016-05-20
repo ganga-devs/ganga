@@ -415,16 +415,6 @@ class Descriptor(object):
         _val: value of the attribute which we're about to set
         """
 
-        #if hasattr(_obj, _getName(self)):
-        #    if not isinstance(getattr(_obj, _getName(self)), GangaObject):
-        #        if type( getattr(_obj, _getName(self)) ) == type(_val):
-        #            object.__setattr__(_obj, _getName(self), deepcopy(_val))
-        #            return
-#
-#        if not isinstance(_obj, GangaObject) and type(_obj) == type(_val):
-#            _obj = deepcopy(_val)
-#            return
-
         obj = _obj
         temp_val = _val
 
@@ -445,8 +435,6 @@ class Descriptor(object):
 
         # LOCKING
         obj._getWriteAccess()
-
-        #self._check_getter()
 
         item = obj._schema[_getName(self)]
 
@@ -948,7 +936,7 @@ class GangaObject(Node):
                     logger.info("Waiting on Write access to registry: %s" % reg.name)
                     logger.debug("err: %s" % x)
                     err = x
-                _counter = _counter + 1
+                _counter += 1
                 # Sleep 2 sec longer than the time taken to bail out
                 if _counter * _sleep_size >= _timeOut + 2:
                     logger.error("Failed to get access to registry: %s. Reason: %s" % (reg.name, err))
