@@ -1043,7 +1043,7 @@ class GangaRepositoryLocal(GangaRepository):
                 raise
 
             except Exception as err:
-                raise
+                
                 should_continue = self._handle_load_exception(err, fn, this_id, load_backup)
 
                 if should_continue is True:
