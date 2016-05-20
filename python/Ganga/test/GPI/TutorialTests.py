@@ -105,8 +105,8 @@ j.submit()
         jobs['copy2']
         # -- JOBMANIPULATION JOBSLICING STOP
 
-        # -- JOBMANIPULATION RESUBMIT START
         jobs(0).kill()
+        # -- JOBMANIPULATION RESUBMIT START
         jobs(0).resubmit()
         # -- JOBMANIPULATION RESUBMIT STOP
 
