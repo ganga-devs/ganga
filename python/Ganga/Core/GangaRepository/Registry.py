@@ -139,7 +139,7 @@ class IncompleteObject(GangaObject):
             if self.registry.checkShouldFlush():
                 self.registry.repository.flush([self.registry._objects[self.id]])
                 self.registry._load([self.id])
-            if self.has_loaded(self._registry._objects[self.id]):
+            if not self.has_loaded(self._registry._objects[self.id]):
                 self.registry._load([self.id])
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
             for d in self.registry.changed_ids.itervalues():
@@ -562,7 +562,7 @@ class Registry(object):
     
         obj = stripProxy(_obj)
         try:
-            return next(id for id, o in self._objects.items() if o is obj)
+            return next(id_ for id_, o in self._objects.items() if o is obj)
         except StopIteration:
             raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
 
@@ -855,13 +855,14 @@ class Registry(object):
 
         try:
             try:
-                if self.has_loaded(obj):
+                if not self.has_loaded(obj):
                     this_id = self.find(obj)
                     self._load([this_id])
             except KeyError as err:
                 logger.error("_read_access KeyError %s" % err)
                 raise RegistryKeyError("Read: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
             except InaccessibleObjectError as err:
+                raise
                 raise RegistryKeyError("Read: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, err))
             #finally:
             #    pass
@@ -930,7 +931,7 @@ class Registry(object):
                     raise
                 finally:  # try to load even if lock fails
                     try:
-                        if self.has_loaded(obj):
+                        if not self.has_loaded(obj):
                             self._load([this_id])
                             if hasattr(obj, "_registry_refresh"):
                                 delattr(obj, "_registry_refresh")
@@ -1111,6 +1112,7 @@ class Registry(object):
         if len(other_sessions) > 0:
             logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
 
+    @synchronised
     def has_loaded(self, obj):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!

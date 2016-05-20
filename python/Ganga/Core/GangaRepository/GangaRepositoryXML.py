@@ -427,7 +427,7 @@ class GangaRepositoryLocal(GangaRepository):
                 if k in self.incomplete_objects:
                     continue
                 try:
-                    if k in k in self._fully_loaded:
+                    if k in self._fully_loaded:
                         # Check and write index first
                         obj = v#self.objects[k]
                         new_index = None
@@ -645,7 +645,7 @@ class GangaRepositoryLocal(GangaRepository):
             self._internal_setitem__(ids[i], objs[i])
 
             # Set subjobs dirty - they will not be flushed if they are not.
-            if self.sub_split and self.sub_split in objs[i]._data:
+            if self.sub_split and hasattr(objs[i], self.sub_split):
                 try:
                     sj_len = len(getattr(objs[i], self.sub_split))
                     if sj_len > 0:
@@ -672,7 +672,7 @@ class GangaRepositoryLocal(GangaRepository):
         if not isType(obj, EmptyGangaObject):
             split_cache = None
 
-            has_children = SubJobXMLList.jobHasChildrenTest(os.path.dirname(fn), self.dataFileName)
+            has_children = hasattr(obj, self.sub_split) and getattr(obj, self.sub_split)
 
             if has_children:
 
@@ -704,7 +704,7 @@ class GangaRepositoryLocal(GangaRepository):
                     for sj in getattr(obj, self.sub_split):
                         job_dict[sj.id] = stripProxy(sj)
                     tempSubJList._reset_cachedJobs(job_dict)
-                    tempSubJList.flush()
+                    tempSubJList.flush(ignore_disk=True)
                     del tempSubJList
 
                 safe_save(fn, obj, self.to_file, self.sub_split)
@@ -876,16 +876,17 @@ class GangaRepositoryLocal(GangaRepository):
         # TODO investigate changing this to copyFrom
         if need_to_copy:
             for key, val in tmpobj._data.items():
-                obj.setSchemaAttribute(key, val)
+                setattr(obj, key, val)
             for attr_name, attr_val in obj._schema.allItems():
                 if attr_name not in tmpobj._data:
-                    obj.setSchemaAttribute(attr_name, obj._schema.getDefaultValue(attr_name))
+                    setattr(obj, attr_name, obj._schema.getDefaultValue(attr_name))
 
         if has_children:
             logger.debug("Adding children")
-            obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
+            setattr(obj, self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
         else:
-            obj.setSchemaAttribute(self.sub_split, None)
+            if obj._schema.hasAttribute(self.sub_split):
+                setattr(obj, self.sub_split, obj._schema.getDefaultValue(self.sub_split))
 
         from Ganga.GPIDev.Base.Objects import do_not_copy
         for node_key, node_val in obj._data.items():
@@ -923,6 +924,8 @@ class GangaRepositoryLocal(GangaRepository):
             raise InaccessibleObjectError(self, this_id, errs[0])
 
         logger.debug("Testing children: %s" % str(this_id))
+	#logger.debug("Testing in: %s" % os.path.dirname(fn))
+	#logger.debug("found: %s" % os.listdir(os.path.dirname(fn)))
 
         has_children = SubJobXMLList.jobHasChildrenTest(os.path.dirname(fn), self.dataFileName)
 
@@ -1185,5 +1188,9 @@ class GangaRepositoryLocal(GangaRepository):
         Args:
             obj (GangaObject): The object we want to know if it was loaded into memory
         """
-        return id(obj) in [id(loaded_obj) for loaded_obj in self._fully_loaded.values()]
+        try:
+            _id = next(id_ for id_, o in self._fully_loaded.items() if o is obj)
+            return True
+        except StopIteration:
+            return False
 
