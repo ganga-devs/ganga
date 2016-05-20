@@ -1,21 +1,20 @@
 from __future__ import absolute_import, print_function
 
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.monitoring import run_until_completed
-
 import time
+
+import pytest
+
+from Ganga.testlib.decorators import add_config
+from Ganga.testlib.monitoring import run_until_completed
 
 global_num_threads = 5
 global_num_jobs = global_num_threads*5
 
 
-class TestQueuedSJSubmit(GangaUnitTest):
-
-    def setUp(self):
-        extra_opts = [('Queues', 'NumWorkerThreads', global_num_threads)]
-        super(TestQueuedSJSubmit, self).setUp(extra_opts=extra_opts)
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
+@add_config([('TestingFramework', 'AutoCleanup', False),
+             ('Queues', 'NumWorkerThreads', global_num_threads)])
+@pytest.mark.usefixtures('gpi')
+class TestQueuedSJSubmit(object):
 
     def test_a_TestNumThreads(self):
         from Ganga.GPI import queues
@@ -25,13 +24,6 @@ class TestQueuedSJSubmit(GangaUnitTest):
 
     def test_b_SetupJobs(self):
         from Ganga.GPI import Job, jobs, Executable, ArgSplitter
-
-        # Just in-case, I know this shouldn't be here, but if the repo gets polluted this is a sane fix
-        for j in jobs:
-            try:
-                j.remove()
-            except:
-                pass
 
         for i in range(global_num_jobs):
             print('creating job', end=' ')
@@ -70,12 +62,3 @@ class TestQueuedSJSubmit(GangaUnitTest):
             sys.stdout.flush()
             assert run_until_completed(j, sleep_period=0.1), 'Timeout on job submission: job is still not finished'
             assert j.status == 'completed'
-
-    def test_e_Cleanup(self):
-        from Ganga.GPI import jobs
-
-        for j in jobs:
-            try:
-                j.remove()
-            except:
-                pass
