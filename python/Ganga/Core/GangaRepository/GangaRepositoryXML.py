@@ -136,7 +136,6 @@ def rmrf(name, count=0):
             if err.errno != errno.ENOENT:
                 logger.debug("rmrf Err: %s" % err)
                 logger.debug("name: %s" % name)
-                remove_name = name
                 raise
             return
 
@@ -446,7 +445,6 @@ class GangaRepositoryLocal(GangaRepository):
                     logger.debug("Failed to update index: %s on startup/shutdown" % k)
                     logger.debug("Reason: %s" % err)
 
-            #cached_list = []
             iterables = self._cache_load_timestamp.iteritems()
             for k, v in iterables:
                 if k in self.incomplete_objects:
@@ -573,9 +571,6 @@ class GangaRepositoryLocal(GangaRepository):
                     ## we can't reasonably write all possible exceptions here!
                     logger.debug("update_index: Failed to load id %i: %s" % (this_id, x))
                     summary.append((this_id, x))
-                    
-                #finally:
-                #    pass
 
         logger.debug("Iterated over Items")
 
@@ -888,7 +883,12 @@ class GangaRepositoryLocal(GangaRepository):
             obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
         else:
             if obj._schema.hasAttribute(self.sub_split):
-                setattr(obj, self.sub_split, obj._schema.getDefaultValue(self.sub_split))
+                # Infinite loop if we use setattr btw
+                def_val = obj._schema.getDefaultValue(self.sub_split)
+                if def_val == []:
+                    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+                    def_val = GangaList()
+                obj.setSchemaAttribute(self.sub_split, def_val)
 
         from Ganga.GPIDev.Base.Objects import do_not_copy
         for node_key, node_val in obj._data.items():
@@ -1021,8 +1021,6 @@ class GangaRepositoryLocal(GangaRepository):
             else:
                 has_loaded_backup = False
 
-            fobj = None
-
             try:
                 fobj, has_loaded_backup2 = self._open_xml_file(fn, this_id, _copy_backup=True)
                 if has_loaded_backup2:
@@ -1098,8 +1096,6 @@ class GangaRepositoryLocal(GangaRepository):
             return True
         except Exception as err2:
             logger.debug("Exception when loading backup: %s" % err2 )
-        #finally:
-        #    pass
 
         logger.error("XML File failed to load for Job id: %s" % this_id)
         logger.error("Actual Error was:\n%s" % err2)

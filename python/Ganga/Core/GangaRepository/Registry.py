@@ -136,9 +136,6 @@ class IncompleteObject(GangaObject):
         self.registry._lock.acquire()
         try:
 
-            if self.registry.checkShouldFlush():
-                self.registry.repository.flush([self.registry._objects[self.id]])
-                self.registry._load([self.id])
             if not self.has_loaded(self._registry._objects[self.id]):
                 self.registry._load([self.id])
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
@@ -213,6 +210,7 @@ class RegistryFlusher(threading.Thread):
         """
         Ask the thread to stop what it is doing and it will finish
         the next chance it gets.
+        TODO, does this need to be exposed as a method if only used internally?
         """
         self._stop.set()
 
@@ -225,7 +223,7 @@ class RegistryFlusher(threading.Thread):
 
     def join(self, *args, **kwargs):
         """
-        Not clear if this is called anywhere
+        Called on thread shutdown to stop the active thread
         Args:
             args (list): Args passed to the constructor of a new RegistryFlusher thread
             kwargs (dict) : Kwds passed to the constructor of a new RegistryFlusher thread
@@ -259,21 +257,16 @@ class Registry(object):
     Base class providing a dict-like locked and lazy-loading interface to a Ganga repository
     """
 
-    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
+    def __init__(self, name, doc, update_index_time=30):
         """Registry constructor, giving public name and documentation
         Args:
             name (str): Name of teh registry e.g. 'jobs', 'box', 'prep'
             doc (str): This is the doc string of the registry describing it's use and contents
-            dirty_flush_counter (int): This is no longer used
-            update_index_time (int): This is no longer used
-            dirty_max_timeout (int): This is no longer used
-            dirty_min_timeout (int): This is no longer used
+            update_index_time (int): This is used to determine how long to wait between updating the index in the repo
         """
         self.name = name
         self.doc = doc
         self._hasStarted = False
-        self.dirty_flush_counter = dirty_flush_counter
-        self.dirty_hits = 0
         self.update_index_time = update_index_time
         self._update_index_timer = 0
         self._needs_metadata = False
@@ -281,7 +274,6 @@ class Registry(object):
         self._lock = threading.RLock()
         self.hard_lock = {}
         self.changed_ids = {}
-        self._autoFlush = True
 
         self._parent = None
 
@@ -289,24 +281,10 @@ class Registry(object):
         self._objects = None
         self._incomplete_objects = None
 
-        ## Record the last dirty and flush times to determine whether an idividual flush command should flush
-        ## Logc to use these is implemented in checkShouldFlush()
-        self._dirtyModTime = None
-        self._flushLastTime = None
-        self._dirty_max_timeout = dirty_max_timeout
-        self._dirty_min_timeout = dirty_min_timeout
-
         ## Id's id(obj) of objects undergoing a transaction such as flush, remove, add, etc.
         self._inprogressDict = {}
 
-
-        self.shouldReleaseRun = True
-
         self.flush_thread = None
-
-#        self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
-#        self.releaseThread.daemon = True
-#        self.releaseThread.start()
 
     def hasStarted(self):
         """
@@ -382,115 +360,6 @@ class Registry(object):
         """
         logger.debug("updateLocksNow")
         self.repository.updateLocksNow()
-
-    def trackandRelease(self):
-        """
-        This method was intended to release an object when it has been flushed more than n sec ago...
-
-        TODO: This would be nice to re-implement to release clean objects which haven't been flushed in > n sec
-        """
-
-        while self.shouldReleaseRun is True:
-
-            ## Needed import for shutdown
-            import time
-            timeNow = time.time()
-
-            modTime = self._dirtyModTime
-            if modTime is None:
-                modTime = timeNow
-            dirtyTime = self._flushLastTime
-            if dirtyTime is None:
-                dirtyTime = timeNow
-
-            delta_1 = abs(timeNow - modTime)
-            delta_2 = abs(timeNow - dirtyTime)
-
-            if delta_1 > self._dirty_max_timeout and delta_2 > self._dirty_max_timeout:
-
-                 flush_thread = threading.Thread(target=self._flush, args=())
-                 flush_thread.run()
-    
-            time.sleep(0.5)
-
-    def turnOffAutoFlushing(self):
-        """
-        Unused This turns off the auto-flushing
-        """
-        self._autoFlush = False
-
-    def turnOnAutoFlushing(self):
-        """
-        Unused This turns on the auto-flushing
-        """
-        self._autoFlush = True
-
-    def isAutoFlushEnabled(self):
-        """
-        Unused This returns True/False as to whether this Registry has auto-flushing enabled
-        """
-        return self._autoFlush
-
-    def checkDirtyFlushtimes(self, timeNow):
-        """
-        Unused, was used for flushing the repo based upon n dirty hits
-        Args:
-            timeNow (time): No longer used
-        """
-        self._dirtyModTime = timeNow
-        if self._flushLastTime is None:
-            self._flushLastTime = timeNow
-
-    @synchronised
-    def checkShouldFlush(self):
-        """
-        Unused, was used for flushing the repo once every n dirty hits
-        """
-        logger.debug("checkShouldFlush")
-
-        timeNow = time.time()
-
-        self.checkDirtyFlushtimes(timeNow)
-
-        timeDiff = (self._dirtyModTime - self._flushLastTime)
-
-        if timeDiff > self._dirty_min_timeout:
-            hasMinTimedOut = True
-        else:
-            hasMinTimedOut = False
-
-        if timeDiff > self._dirty_max_timeout:
-            hasMaxTimedOut = True
-        else:
-            hasMaxTimedOut = False
-
-        if self.dirty_hits > self.dirty_flush_counter:
-            countLimitReached = True
-        else:
-            countLimitReached = False
-
-        # THIS IS THE MAIN DECISION ABOUT WHETHER TO FLUSH THE OBJECT TO DISK!!!
-        # if the minimum amount of time has passed __AND__ we meet a sensible condition for wanting to flush to disk
-        decision = hasMinTimedOut and (hasMaxTimedOut or countLimitReached)
-       
-        ## This gives us the ability to automatically turn off the automatic flushing externally if required
-        decision = decision and self._autoFlush
-
-        ## Can't autosave if a flush is in progress. Wait until next time.
-        if len(self._inprogressDict.keys()) != 0:
-            decision = False
-
-        if decision is True:
-            self._flushLastTime = timeNow
-            self.dirty_hits = 0
-
-        return decision
-
-    def _getObjects(self):
-        """ Get a raw ref to the _objects within the Registry/Repository """
-        logger.debug("_getObjects")
-        returnable = self._objects
-        return returnable
 
     @synchronised
     def ids(self):
@@ -585,7 +454,6 @@ class Registry(object):
                     return False
             self.repository.reap_locks()
             self.repository.delete(self._objects.keys())
-            self.dirty_hits = 0
             self.changed_ids = {}
             self.repository.clean()
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
@@ -645,9 +513,6 @@ class Registry(object):
         if self.hasStarted() is not True:
             raise RepositoryError("Cannot add objects to a disconnected repository!")
 
-        this_id = None
-        returnable_id = None
-
         try:
             returnable_id = self.__safe_add(obj, force_index)
         except RepositoryError as err:
@@ -685,7 +550,6 @@ class Registry(object):
                     del self._objects[self.find(obj)]
             except Exception as err:
                 pass
-            pass
         except Exception as err:
             raise
 
@@ -698,7 +562,6 @@ class Registry(object):
         """
 
         logger.debug("_reg_remove")
-        u_id = self.find(obj)
 
         obj_id = id(obj)
 
@@ -864,8 +727,6 @@ class Registry(object):
             except InaccessibleObjectError as err:
                 raise
                 raise RegistryKeyError("Read: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, err))
-            #finally:
-            #    pass
             for this_d in self.changed_ids.itervalues():
                 this_d.add(this_id)
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
@@ -873,8 +734,6 @@ class Registry(object):
         except Exception as err:
             logger.debug("Unknown read access Error: %s" % err)
             raise
-        #finally:
-        #    pass
 
     def _write_access(self, _obj):
         """Obtain write access on a given object.
@@ -940,15 +799,11 @@ class Registry(object):
                         raise RegistryKeyError("Write: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
                     except InaccessibleObjectError as err:
                         raise RegistryKeyError("Write: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, err))
-                    #finally:
-                    #    pass
                     for this_d in self.changed_ids.itervalues():
                         this_d.add(this_id)
                 obj._registry_locked = True
             except Exception as err:
                 raise
-            #finally:
-            #    pass
 
         return True
 
@@ -1032,7 +887,7 @@ class Registry(object):
             if self._needs_metadata:
                 t2 = time.time()
                 if self.metadata is None:
-                    self.metadata = Registry(self.name + ".metadata", "Metadata repository for %s" % self.name, dirty_flush_counter=self.dirty_flush_counter, update_index_time=self.update_index_time)
+                    self.metadata = Registry(self.name + ".metadata", "Metadata repository for %s" % self.name, update_index_time=self.update_index_time)
                     self.metadata.type = self.type
                     self.metadata.location = self.location
                     setattr(self.metadata, '_parent', self) ## rcurrie Registry has NO '_parent' Object so don't understand this is this used for JobTree?

@@ -18,17 +18,15 @@ from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
-from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import addProxy, getName, getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
-from Ganga.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys, File
+from Ganga.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
 from Ganga.GPIDev.Schema import ComponentItem, FileItem, GangaFileItem, Schema, SimpleItem, Version
 from Ganga.Runtime.spyware import ganga_job_submitted
 from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
-from Ganga.GPIDev.Lib.Dataset import Dataset
 
 from .JobTime import JobTime
 
@@ -400,11 +398,6 @@ class Job(GangaObject):
                     c.inputfiles = []
                 else:
                     logger.debug("Keeping own inputsandbox")
-            # else:
-            #    logger.debug( "There was an error copying the input data for this job" )
-            #    logger.debug( "Please Check the inputsandbox and/or inputfiles are consistent" )
-            #    c.inputfiles = []
-            #    c.inputsandbox = []
 
         logger.debug("Intercepted __deepcopy__")
         return c
@@ -450,9 +443,6 @@ class Job(GangaObject):
                 else:
                     files2.append(f)
 
-            currentOutputFiles = files
-            currenUnCopyableOutputFiles = files2
-
             files3 = GangaList()
             for f in files:
                 files3.append(f)
@@ -465,24 +455,6 @@ class Job(GangaObject):
         if name == 'inputfiles':
 
             return object.__getattribute__(self, name)
-            #return self.__getattribute__(name)
-
-            #currentInputFiles = object.__getattribute__(self, name)
-            #currentInputFiles = self.__getattribute__(name)
-            #
-            #regex = re.compile('[*?\[\]]')
-            #files = GangaList()
-            #
-            #for f in currentInputFiles:
-            #    f.processWildcardMatches()  # Expand out subfiles
-            #    if regex.search(f.namePattern) and hasattr(stripProxy(f), 'subfiles') and stripProxy(f).subfiles:
-            #        files.extend(makeGangaListByRef(stripProxy(f).subfiles))
-            #    else:
-            #        files.append(f)
-            #
-            #currentInputFiles = files
-            #
-            #return addProxy(currentInputFiles)
 
         if name == 'subjobs':
             return self._subjobs_proxy()
@@ -507,7 +479,7 @@ class Job(GangaObject):
         if hasattr(self, 'status'):
             oldstat = self.status
         else:
-           oldstat = None
+            oldstat = None
 
         logger.debug('job %s "%s" setting raw status to "%s"', id, oldstat, value)
 
@@ -747,7 +719,7 @@ class Job(GangaObject):
                 if validOutputFiles is False:
                     return (validOutputFiles, errorMsg)
 
-        return (True, '')
+        return True, ''
 
     def outputFilesFailures(self):
 
@@ -762,12 +734,12 @@ class Job(GangaObject):
 
         # check for failure reasons
         for outputfile in self.outputfiles:
-            if (hasattr(outputfile, 'failureReason') and outputfile.failureReason != ''):
+            if hasattr(outputfile, 'failureReason') and outputfile.failureReason != '':
                 logger.warning("Job %s OutputFile failed for file: %s" % (self.getFQID('.'), outputfile.namePattern))
                 postprocessFailure = True
             else:
                 for subfile in outputfile.subfiles:
-                    if (hasattr(subfile, 'failureReason') and subfile.failureReason != ''):
+                    if hasattr(subfile, 'failureReason') and subfile.failureReason != '':
                         logger.warning("Job%s OutputFile failed due to reason: %s" % (self.getFQID('.'), outputfile.namePattern))
                         postprocessFailure = True
 
@@ -1537,7 +1509,6 @@ class Job(GangaObject):
 
         rtHandler = self._getRuntimeHandler()
 
-
         try:
 
             logger.info("submitting job %s", self.getFQID('.'))
@@ -1554,7 +1525,6 @@ class Job(GangaObject):
                 logger.error(msg)
                 self.status = 'new'
                 raise JobError(msg)
-
 
             self.getDebugWorkspace(create=False).remove(preserve_top=True)
 
@@ -1695,8 +1665,6 @@ class Job(GangaObject):
 
         return 1
 
-
-
     def rollbackToNewState(self):
         """
         Rollback the job to the "new" state if submitting of job failed:
@@ -1753,13 +1721,6 @@ class Job(GangaObject):
             logger.info(msg)
             raise JobError(msg)
 
-        #try:
-        #    self._getWriteAccess()
-        #except RegistryKeyError:
-        #    if self._registry:
-        #        self._registry._remove(self, auto_removed=1)
-        #    return
-
         if getConfig('Output')['AutoRemoveFilesWithJob']:
             def removeFiles(this_file):
                 if getName(this_file) in getConfig('Output')['AutoRemoveFileTypes'] and hasattr(this_file, '_auto_remove'):
@@ -1805,7 +1766,6 @@ class Job(GangaObject):
                 stripProxy(self.application).transition_update('removed')
                 for sj in self.subjobs:
                     stripProxy(sj.application).transition_update('removed')
-
 
         if self._registry:
             self._registry._remove(self, auto_removed=1)
@@ -1863,7 +1823,7 @@ class Job(GangaObject):
                 if hasattr(self.application, 'is_prepared') and self.application.__getattribute__('is_prepared'):
                     if self.application.is_prepared is not True:
                         stripProxy(self.application).decrementShareCounter(stripProxy(self.application).is_prepared.name)
-                        for sj in self.subjobs:
+                        for _ in self.subjobs:
                             stripProxy(self.application).decrementShareCounter(stripProxy(self.application).is_prepared.name)
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
@@ -2164,34 +2124,12 @@ class Job(GangaObject):
         # TODO This function should force a flush. However it is currently used everywhere which causes too many flushes.
         self._getRoot()._setDirty()
 
-
-#    def _attribute_filter__set__(self,n,v):
-        # a workaround for bug #8111
-# if n == 'name':
-# if len(v)>0 and not v.isalnum():
-# raise ValueError('%s: the job name may contain only numbers and letters
-# (a temporary workaround for bug #8111)'%v)
-
-#        return v
-
     def _repr(self):
         if self.id is None:
             id = "None"
         else:
             id = self.getFQID('.')
-            #id = self.fully_qualified_id()
-            #if len(id)==1: id = id[0]
-            #id = str(id)
-            #id = id.replace(' ','')
         return "%s#%s" % (getName(self), id)
-
-# def fully_qualified_id(j):
-##         index = []
-# while j:
-# index.append(j.id)
-##             j = j.master
-# index.reverse()
-# return tuple(index)
 
     def _subjobs_proxy(self):
 
@@ -2210,7 +2148,7 @@ class Job(GangaObject):
                 subjob_slice = stripProxy(self._stored_subjobs_proxy)
                 #First clear the dictionary
                 if subjob_slice.objects:
-                    del subjobs_slice.objects[:]
+                    del subjob_slice.objects[:]
                 #Not put the objects back in
                 for sj in self.subjobs:
                     subjob_slice.objects[sj.id] = sj
@@ -2253,11 +2191,6 @@ class Job(GangaObject):
             super(Job, self).__setattr__(attr, uniqueValues)
 
         elif attr == 'inputfiles':
-
-            # if value != []:
-            #    if not getConfig('Output')['ForbidLegacyInput']:
-            #        logger.error('Use of job.inputfiles is forbidden, please use job.inputsandbox')
-            #        raise GangaException( 'Use of job.inputfiles is forbidden, please use job.inputsandbox' )
 
             super(Job, self).__setattr__(attr, value)
 
@@ -2333,20 +2266,13 @@ class Job(GangaObject):
                 super(Job, self).__setattr__('backend', new_value)
             else:
                 new_value = stripProxy(runtimeEvalString(self, attr, value))
-                #from Ganga.GPIDev.Base.Objects import Node
                 super(Job, self).__setattr__('backend', new_value)
-        #elif attr == 'postprocessors':
-        #    super(Job, self).__setattr__('postprocessors', GangaList())
         elif attr.startswith('_'):
             # If it's an internal attribute then just pass it on
             super(Job, self).__setattr__(attr, value)
         else:
             new_value = stripProxy(runtimeEvalString(self, attr, value))
-            #from Ganga.GPIDev.Base.Objects import Node
             super(Job, self).__setattr__(attr, new_value)
-
-        #if hasattr(getattr(self, attr), '_getParent'):
-        #    logger.debug("attr: %s parent: %s" % (attr, getattr(self, attr)._getParent()))
 
 
 class JobTemplate(Job):

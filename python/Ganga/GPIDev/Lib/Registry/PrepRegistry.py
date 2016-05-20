@@ -14,14 +14,9 @@ logger = Ganga.Utility.logging.getLogger()
 
 class PrepRegistry(Registry):
 
-    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
+    def __init__(self, name, doc, update_index_time=30):
 
-        super(PrepRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
-
-        self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
-        self.releaseThread.daemon = True
-        self.releaseThread.start()
-
+        super(PrepRegistry, self).__init__(name, doc, update_index_time)
 
     def startup(self):
         self._needs_metadata = True

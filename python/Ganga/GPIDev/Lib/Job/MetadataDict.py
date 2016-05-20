@@ -20,9 +20,6 @@ class MetadataDict(GangaObject):
     def __init__(self):
         super(MetadataDict, self).__init__()
 
-# def __str__(self):
-# return str(self.data)
-
     def __getitem__(self, key):
         import copy
         return addProxy(copy.deepcopy(self.data[key]))
@@ -38,10 +35,6 @@ class MetadataDict(GangaObject):
         if isinstance(value, GangaObject):
             raise GangaAttributeError(
                 'Metadata doesn\'t support nesting of GangaObjects at the moment')
-# if type(value) is not type(''):
-##             raise GangaAttributeError('Metadata only supports string values at the moment')
-# if type(value) is list or type(value) is tuple or type(value) is dict:
-##             raise GangaAttributeError('Metadata doesn\'t support nesting data structures at the moment, values of type \'list\', \'tuple\' or \'dict\' are forbidden')
 
         self.data[key] = value
         self._setDirty()
