@@ -41,7 +41,6 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     logger.info("Parsing Command Line options")
     this_argv = [
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
-        '--no-rexec',  # Don't re-exec Ganga when running tests
     ]
 
     # These are the default options for all test instances
