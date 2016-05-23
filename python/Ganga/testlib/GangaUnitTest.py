@@ -8,11 +8,14 @@ try:
 except ImportError:
     import unittest
 
+def _getGangaPath():
+    file_path = os.path.dirname(os.path.realpath(__file__))
+    ganga_python_dir = os.path.join(file_path, '..', '..')
+    ganga_python_dir = os.path.realpath(ganga_python_dir)
+    return ganga_python_dir
 
 def _setupGangaPath():
-    file_path = os.path.dirname(os.path.realpath(__file__))
-    ganga_python_dir = os.path.join(file_path, '..', '..', '..')
-    ganga_python_dir = os.path.realpath(ganga_python_dir)
+    ganga_python_dir = _getGangaPath()
     if len(sys.path) >= 1 and ganga_python_dir != sys.path[0]:
         sys.path.insert(0, ganga_python_dir)
 
@@ -198,7 +201,11 @@ class GangaUnitTest(unittest.TestCase):
         """
         Return the directory that this test should store its registry and repository in
         """
-        return os.path.join(os.path.expanduser('~'), 'gangadir_testing', cls.__name__)
+        return os.path.join(_getGangaPath(), 'gangadir_testing', cls.__name__)
+
+    @classmethod
+    def setUpClass(cls):
+        shutil.rmtree(cls.gangadir(), ignore_errors=True)
 
     def setUp(self, extra_opts=[]):
         unittest.TestCase.setUp(self)
@@ -208,6 +215,7 @@ class GangaUnitTest(unittest.TestCase):
         gangadir = self.gangadir()
         if not os.path.isdir(gangadir):
             os.makedirs(gangadir)
+        print("Starting Ganga in: %s" % gangadir)
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
 
     def tearDown(self):
