@@ -10,7 +10,7 @@ except ImportError:
 
 def _getGangaPath():
     file_path = os.path.dirname(os.path.realpath(__file__))
-    ganga_python_dir = os.path.join(file_path, '..', '..', '..')
+    ganga_python_dir = os.path.join(file_path, '..', '..')
     ganga_python_dir = os.path.realpath(ganga_python_dir)
     return ganga_python_dir
 
