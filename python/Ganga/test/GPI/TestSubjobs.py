@@ -32,12 +32,12 @@ class TestSubjobs(GangaUnitTest):
         Test that the parents are set correctly on load
         """
         from Ganga.GPI import jobs, queues, Executable, Local
-        from Ganga.GPIDev.Base.Proxy import isType
+        from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 
         def flush_full_job():
             mj = jobs(0)
             mj.comment = "Make sure I'm dirty " + ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-            mj._impl._getRegistry()._flush([j])
+            stripProxy(mj)._getRegistry()._flush([j])
 
         # Make sure the main job is fully loaded
         j = jobs(0)
@@ -56,4 +56,5 @@ class TestSubjobs(GangaUnitTest):
             assert isType(sj.backend, Local)
             assert sj.application.exe == "sleep"
             assert sj.application.args == ['400']
-            assert sj._impl._getRoot() is j._impl
+            assert stripProxy(sj)._getRoot() is stripProxy(j)
+            assert stripProxy(sj.application)._getRoot() is stripProxy(j)
