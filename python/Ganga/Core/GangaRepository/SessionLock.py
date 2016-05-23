@@ -43,7 +43,7 @@ except ConfigError, err:
 
 session_lock_refresher = None
 
-def getGlobalLockRef(session_name, sdir, gfn, _on_afs):
+def setupGlobalLockRef(session_name, sdir, gfn, _on_afs):
     global session_lock_refresher
     if session_lock_refresher is None:
         try:
@@ -404,9 +404,9 @@ class SessionLockManager(object):
                 logger.debug("Startup Session Exception: %s" % err)
                 raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.fn, err))
 
-            local_session_lock_refresher = getGlobalLockRef(self.session_name, self.sdir, self.gfn, self.afs)
+            setupGlobalLockRef(self.session_name, self.sdir, self.gfn, self.afs)
 
-            local_session_lock_refresher.addRepo(self.fn, self.repo)
+            session_lock_refresher.addRepo(self.fn, self.repo)
             self.session_write()
         finally:
             self.global_lock_release()

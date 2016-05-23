@@ -134,9 +134,11 @@ def bootstrap():
         registry.startup()
         logger.debug("started " + registry.info(full=False))
         if registry.name == "prep":
-            registry.print_other_sessions()
+            # Get a list of strings describing other running sessions
+            other_sessions = registry.get_other_sessions()
 
-            if registry.other_session_active():
+            if other_sessions:
+                logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
                 logger.warning("Multiple Ganga sessions detected. The Monitoring Thread is being disabled.")
                 logger.warning("Type 'enableMonitoring' to restart")
                 setConfigOption('PollThread', 'autostart', False)
