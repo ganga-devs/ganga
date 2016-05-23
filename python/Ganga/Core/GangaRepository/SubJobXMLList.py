@@ -558,7 +558,7 @@ class SubJobXMLList(GangaObject):
         return ds
 
     @staticmethod
-    def jobHasChildrenTest(jobDirectory, datafileName):
+    def checkJobHasChildren(jobDirectory, datafileName):
         """ Return True/False if given (job?) object has children associated with it
         This function will test for the presence of all of the subjob XML in the appropriate folders and will trigger an exception
         if/when some of the xml files are missing. This is subtly different to the default countSubJobDirs behaviour.
@@ -593,10 +593,9 @@ class SubJobXMLList(GangaObject):
                         data_file_path = path.join(sj_dir, datafileName)
                         if path.isfile(data_file_path):
                             subjob_count+=1
-                        else:
-                            if path.isfile(data_file_path+'~'):
-                                logger.warning("Reverting to backup due to missing XML: %s" % data_file_path)
-                                subjob_count+=1
+                        elif path.isfile(data_file_path+'~'):
+                            logger.warning("Reverting to backup due to missing XML: %s" % data_file_path)
+                            subjob_count+=1
                     else:
                         subjob_count+=1
 

@@ -925,11 +925,11 @@ class GangaRepositoryLocal(GangaRepository):
             logger.error("#%s Error(s) Loading File: %s" % (len(errs), fobj.name))
             raise InaccessibleObjectError(self, this_id, errs[0])
 
-        logger.debug("Testing children: %s" % str(this_id))
-	#logger.debug("Testing in: %s" % os.path.dirname(fn))
+        logger.debug("Checking children: %s" % str(this_id))
+	#logger.debug("Checking in: %s" % os.path.dirname(fn))
 	#logger.debug("found: %s" % os.listdir(os.path.dirname(fn)))
 
-        has_children = SubJobXMLList.jobHasChildrenTest(os.path.dirname(fn), self.dataFileName)
+        has_children = SubJobXMLList.checkJobHasChildren(os.path.dirname(fn), self.dataFileName)
 
         logger.debug("Found children: %s" % str(has_children))
 
