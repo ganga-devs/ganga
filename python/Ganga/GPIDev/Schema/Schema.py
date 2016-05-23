@@ -303,15 +303,7 @@ class Schema(object):
 
         # make a copy of the default value (to avoid strange effects if the
         # original modified)
-        try:
-            from Ganga.GPIDev.Base.Proxy import isType, getRuntimeGPIObject, stripProxy, getName
-            from Ganga.GPIDev.Base.Objects import Node
-            if isinstance(defvalue, Node):
-                return allPlugins.find(item['category'], getName(defvalue))()
-            else:
-                return copy.deepcopy(defvalue)
-        except ImportError:
-            return copy.deepcopy(defvalue)
+        return copy.deepcopy(defvalue)
 
 
 # Items in schema may be either Components,Simples, Files or BindingItems.
