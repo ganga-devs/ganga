@@ -38,9 +38,6 @@ Extend the behaviour of the default *atexit* module to support:
   registers the function with the lowest priority (sys.maxint)
 """
 
-# System imports
-import atexit
-
 # Ganga imports
 from Ganga.Core.GangaThread import GangaThreadPool
 from Ganga.Core.GangaThread.WorkerThreads import _global_queues, shutDownQueues
@@ -66,12 +63,6 @@ def _ganga_run_exitfuncs():
     we want each shutdown function to be run (e.g. to make sure flushing is done) we put each call into a try..except
     and report to the user before continuing.
     """
-
-    # shutdown the threads in the GangaThreadPool
-    try:
-        GangaThreadPool.getInstance().shutdown(should_wait_cb=at_exit_should_wait_cb)
-    except Exception as err:
-        logger.warning("Exception raised during shutdown of GangaThreadPool: %s" % err)
 
     # Flush everything
     try:
@@ -106,11 +97,22 @@ def _ganga_run_exitfuncs():
     except Exception as err:
         logger.warning("Exception raised while purging monitoring queues: %s" % err)
 
+    # Freeze queues
+    try:
+        if _global_queues:
+            _global_queues.freeze()
+    except Exception as err:
+        logger.warning("Exception raised during freeze of Global Queues: %s" % err)
+
+    # shutdown the threads in the GangaThreadPool
+    try:
+        GangaThreadPool.getInstance().shutdown(should_wait_cb=at_exit_should_wait_cb)
+    except Exception as err:
+        logger.warning("Exception raised during shutdown of GangaThreadPool: %s" % err)
+
     # Shutdown queues
     try:
         logger.info("Stopping Job processing before shutting down Repositories")
-        if _global_queues:
-            _global_queues.freeze()
         shutDownQueues()
     except Exception as err:
         logger.warning("Exception raised while purging shutting down queues: %s" % err)
