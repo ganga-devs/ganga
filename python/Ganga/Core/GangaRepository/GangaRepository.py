@@ -27,6 +27,7 @@ class SchemaVersionError(GangaException):
 
     def __init__(self, what=''):
         """
+        This is the error thrown when the Schema version in XML doesn't match what's in the code. This may be dropped in a future release
         Args:
             what (str): This is a string of what went wrong
         """
