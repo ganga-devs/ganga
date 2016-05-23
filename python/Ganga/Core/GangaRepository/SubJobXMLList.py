@@ -270,7 +270,6 @@ class SubJobXMLList(GangaObject):
             if this_time == last_time:
                 return self._stored_len[1]
 
-        subjob_count = 0
         if not path.isdir( self._jobDirectory ):
             return 0
 
