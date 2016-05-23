@@ -21,8 +21,8 @@ if doConfig:
     #from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
     #from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
     from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-    from GangaLHCb.test import addDiracTestSubmitter
-    GangaLHCb.test.addDiracTestSubmitter()
+    from GangaLHCb.old_test import addDiracTestSubmitter
+    GangaLHCb.old_test.addDiracTestSubmitter()
 
 # LFNs = [ 'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000919_1.dimuon.dst',
 #         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000922_1.dimuon.dst',

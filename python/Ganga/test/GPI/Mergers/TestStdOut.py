@@ -4,6 +4,7 @@ import os
 import tempfile
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.monitoring import run_until_completed
 
 
 class TestStdOut(GangaUnitTest):
@@ -40,11 +41,9 @@ class TestStdOut(GangaUnitTest):
             self.jobslice.append(j)
 
     def runJobSlice(self):
-        from GangaTest.Framework.utils import sleep_until_completed
-
         for j in self.jobslice:
             j.submit()
-            assert sleep_until_completed(j, timeout=60), 'Timeout on job submission: job is still not finished'
+            assert run_until_completed(j, timeout=60), 'Timeout on job submission: job is still not finished'
             assert j.status == 'completed'
 
     def testCanSetStdOutMerge(self):

@@ -1,97 +1,80 @@
 from __future__ import absolute_import
 
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
+import pytest
 
-class TestLazyLoading(GangaUnitTest):
+from Ganga.GPIDev.Base.Proxy import stripProxy
 
-    def setUp(self):
-        """Make sure that the Job object isn't destroyed between tests"""
-        super(TestLazyLoading, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
+from Ganga.testlib.decorators import add_config
+
+
+@add_config([('TestingFramework', 'AutoCleanup', 'False')])
+@pytest.mark.usefixtures('gpi')
+class TestLazyLoading(object):
 
     def test_a_JobConstruction(self):
-        """ First construct the Job object (singular)"""
-        from Ganga.Utility.Config import getConfig
-        self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
+        """ First construct the Job object"""
 
         from Ganga.GPI import Job, jobs
-        j=Job()
-        self.assertEqual(len(jobs), 1) # Don't really gain anything from assertEqual...
+
+        from Ganga.Utility.Config import getConfig
+        assert not getConfig('TestingFramework')['AutoCleanup']
+
+        j = Job()
+        assert len(jobs) == 1
 
     def test_b_JobNotLoaded(self):
-        """ Second get the job and check that getting it via jobs doesn't cause it to be loaded"""
+        """S econd get the job and check that getting it via jobs doesn't cause it to be loaded"""
+
         from Ganga.GPI import jobs
 
-        self.assertEqual(len(jobs), 1)
-
-        print("len: %s" % str(len(jobs)))
+        assert len(jobs) == 1
 
         j = jobs(0)
 
-        from Ganga.GPIDev.Base.Proxy import stripProxy
         raw_j = stripProxy(j)
 
         has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
 
-        self.assertFalse(has_loaded_job)
+        assert not has_loaded_job
 
     def test_c_JobLoaded(self):
         """ Third do something to trigger a loading of a Job and then test if it's loaded"""
+
         from Ganga.GPI import jobs
 
-        self.assertEqual(len(jobs), 1)
+        assert len(jobs) == 1
 
         j = jobs(0)
 
-        from Ganga.GPIDev.Base.Proxy import stripProxy
         raw_j = stripProxy(j)
 
-        ## ANY COMMAND TO LOAD A JOB CAN BE USED HERE
+        # Any command to load a job can be used here
         raw_j.printSummaryTree()
 
         has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
 
-        self.assertTrue(has_loaded_job)
+        assert has_loaded_job
 
     def test_d_GetNonSchemaAttr(self):
         """ Don't load a job looking at non-Schema objects"""
+
         from Ganga.GPI import jobs
-        from Ganga.GPIDev.Base.Proxy import stripProxy
 
         raw_j = stripProxy(jobs(0))
 
-        assert raw_j._getRegistry().has_loaded(raw_j) is False
+        assert not raw_j._getRegistry().has_loaded(raw_j)
 
         dirty_status = raw_j._dirty
 
-        assert dirty_status is False
+        assert not dirty_status
 
-        assert raw_j._getRegistry().has_loaded(raw_j) is False
+        assert not raw_j._getRegistry().has_loaded(raw_j)
 
-        try:
-            non_object = jobs(0)._dirty
-            raise Exception("Shouldn't be here")
-        except AttributeError:
-            pass
+        with pytest.raises(AttributeError):
+            _ = jobs(0)._dirty
 
-        assert raw_j._getRegistry().has_loaded(raw_j) is False
+        assert not raw_j._getRegistry().has_loaded(raw_j)
 
         raw_j.printSummaryTree()
 
-        assert  raw_j._getRegistry().has_loaded(raw_j) is True
-
-    def test_e_JobRemoval(self):
-        """ Fourth make sure that we get rid of the jobs safely"""
-        from Ganga.GPI import jobs
-
-        self.assertEqual(len(jobs), 1)
-
-        jobs(0).remove()
-
-        self.assertEqual(len(jobs), 0)
-
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'True')
-
-
+        assert raw_j._getRegistry().has_loaded(raw_j)

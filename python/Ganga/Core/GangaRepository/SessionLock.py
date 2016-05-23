@@ -118,7 +118,7 @@ def getGlobalSessionFiles():
 class SessionLockRefresher(GangaThread):
 
     def __init__(self, session_name, sdir, fn, repo, afs):
-        GangaThread.__init__(self, name='SessionLockRefresher', critical=True)
+        super(SessionLockRefresher, self).__init__(name='SessionLockRefresher', critical=True)
         self.session_name = session_name
         self.sdir = sdir
         self.fns = [fn]
@@ -138,7 +138,7 @@ class SessionLockRefresher(GangaThread):
             except OSError as x:
                 # print "fail"
                 value = None
-                i = i + 1
+                i += 1
                 time.sleep(0.1)
                 if i >= 60:  # 3000:
                     raise x
@@ -160,8 +160,9 @@ class SessionLockRefresher(GangaThread):
                 for i in range(int(sleeptime * 200)):
                     if not self.should_stop():
                         time.sleep(0.05 + random.random() * 0.05)
+                    else:
+                        break
         finally:
-            #logger.debug("Finishing Monitoring Loop")
             self.unregister()
 
     def checkAndReap(self):
@@ -339,7 +340,6 @@ class SessionLockManager(object):
         realpath = os.path.realpath(root)
         # Use the hostname (os.uname()[1])  and the current time in ms to construct the session filename.
         # TODO: Perhaps put the username here?
-        global session_lock_refresher
         if session_lock_refresher is None:
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
@@ -424,15 +424,14 @@ class SessionLockManager(object):
                 logger.debug("Startup Session Exception: %s" % err)
                 raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.fn, err))
 
-            session_lock_refresher = getGlobalLockRef(self.session_name, self.sdir, self.gfn, self.afs)
+            local_session_lock_refresher = getGlobalLockRef(self.session_name, self.sdir, self.gfn, self.afs)
 
-            session_lock_refresher.addRepo(self.fn, self.repo)
+            local_session_lock_refresher.addRepo(self.fn, self.repo)
             self.session_write()
         finally:
             self.global_lock_release()
 
     def updateNow(self):
-        global session_lock_refresher
         session_lock_refresher.updateNow()
 
     @synchronised
@@ -443,7 +442,8 @@ class SessionLockManager(object):
         self.locked = set()
         try:
             global session_lock_refresher
-            session_lock_refresher.stop()
+            if session_lock_refresher and not session_lock_refresher.should_stop():
+                session_lock_refresher.stop()
             if session_lock_refresher is not None:
                 # try:
                 session_lock_refresher.removeRepo(self.fn, self.repo)
@@ -811,7 +811,6 @@ class SessionLockManager(object):
         _diff = abs(session_lock_last - this_time)
         if _diff > session_expiration_timeout * 0.5 or _diff < 1:
             session_expiration_timeout = this_time
-            global session_lock_refresher
             if session_lock_refresher is not None:
                 session_lock_refresher.checkAndReap()
             else:
