@@ -57,4 +57,4 @@ class TestSubjobs(GangaUnitTest):
             assert sj.application.exe == "sleep"
             assert sj.application.args == ['400']
             assert stripProxy(sj)._getRoot() is stripProxy(j)
-            assert stripPRoxy(sj.application)._getRoot() is stripProxy(j)
+            assert stripProxy(sj.application)._getRoot() is stripProxy(j)
