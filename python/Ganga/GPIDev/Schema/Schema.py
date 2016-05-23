@@ -307,7 +307,7 @@ class Schema(object):
             from Ganga.GPIDev.Base.Proxy import isType, getRuntimeGPIObject, stripProxy, getName
             from Ganga.GPIDev.Base.Objects import Node
             if isinstance(defvalue, Node):
-                return stripProxy(getRuntimeGPIObject(getName(defvalue)))
+                return allPlugins.find(item['category'], getName(defvalue))()
             else:
                 return copy.deepcopy(defvalue)
         except ImportError:
