@@ -28,28 +28,8 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config.Config import getConfig, ConfigError
 from Ganga.GPIDev.Base.Proxy import getName
 
-try:
-    from Ganga.Core.GangaThread import GangaThread
-    from Ganga.Core.GangaRepository import RepositoryError
-except ImportError:
-    from threading import Thread
-
-    print("IMPORT ERROR SHOULD NOT OCCUR IN PRODUCTION CODE!!!!!!!!!!!!!!!!!!!!!!")
-    
-
-    class GangaThread(Thread):
-    
-        def __init__(self, name):
-            self.name = name
-            super(GangaThread, self).__init__()
-
-        def should_stop(self):
-            return False
-
-
-    class RepositoryError(Exception):
-        pass
-
+from Ganga.Core.GangaThread import GangaThread
+from Ganga.Core.GangaRepository import RepositoryError
 
 logger = getLogger()
 
