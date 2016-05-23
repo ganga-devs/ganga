@@ -133,23 +133,21 @@ def bootstrap():
         logger.debug("Loc: %s" % registry.location)
         registry.startup()
         logger.debug("started " + registry.info(full=False))
-        if registry.name == "prep":
-            # Get a list of strings describing other running sessions
-            other_sessions = registry.get_other_sessions()
-
-            if other_sessions:
-                logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
-                logger.warning("Multiple Ganga sessions detected. The Monitoring Thread is being disabled.")
-                logger.warning("Type 'enableMonitoring' to restart")
-                setConfigOption('PollThread', 'autostart', False)
 
         started_registries.append(registry.name)
         proxied_registry_slice = registry.getProxy()
         retval.append((registry.name, proxied_registry_slice, registry.doc))
 
-    #import atexit
-    #atexit.register(shutdown)
-    #logger.debug("Registries: %s" % started_registries)
+    # Assuming all registries are started for all instances of Ganga atm
+    # Avoid ever, ever, calling the repository from behind the registry. This allows for all forms of bad behaviour.
+    other_sessions = bootstrap_getreg()[0].repository.get_other_sessions()
+    if other_sessions:
+        # Just print this from 1 repo only so chose the zeorth, nothing special
+        logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
+        logger.warning("Multiple Ganga sessions detected. The Monitoring Thread is being disabled.")
+        logger.warning("Type 'enableMonitoring' to restart")
+        setConfigOption('PollThread', 'autostart', False)
+
     return retval
 
 

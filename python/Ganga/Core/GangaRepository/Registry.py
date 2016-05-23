@@ -959,12 +959,6 @@ class Registry(object):
                 s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
         return s
 
-    def get_other_sessions(self):
-        """
-        Returns a list of information describing other sessions which are currently active
-        """
-        return self.repository.get_other_sessions()
-
     @synchronised
     def has_loaded(self, obj):
         """Returns True/False for if a given object has been fully loaded by the Registry.

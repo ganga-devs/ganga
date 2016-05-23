@@ -422,8 +422,7 @@ class SessionLockManager(object):
         self.locked = set()
         try:
             global session_lock_refresher
-            if session_lock_refresher and not session_lock_refresher.should_stop():
-                session_lock_refresher.stop()
+            session_lock_refresher.stop()
             if session_lock_refresher is not None:
                 # try:
                 session_lock_refresher.removeRepo(self.fn, self.repo)
