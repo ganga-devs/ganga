@@ -2,13 +2,11 @@ import os
 import Ganga.Utility.logging
 import Ganga.Utility.Config
 
-def getEnvironment( config = {} ):
-   import sys
-   import os.path
-   import PACKAGE
+def standardSetup():
 
+   import PACKAGE
    PACKAGE.standardSetup()
-   return
+
 
 def loadPlugins( config = {} ):
    import Lib.Applications

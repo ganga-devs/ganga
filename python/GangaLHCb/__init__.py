@@ -126,13 +126,10 @@ if not _after_bootstrap:
     _store_root_version()
 
 
-def getEnvironment(config=None):
-    import sys
-    import os.path
-    import PACKAGE
+def standardSetup():
 
+    import PACKAGE
     PACKAGE.standardSetup()
-    return {}
 
 
 def loadPlugins(config=None):

@@ -80,13 +80,11 @@ if not _after_bootstrap:
                                                  'Unknown: No status for Job': 'failed'},
                                                 "Mapping of Dirac to Ganga Job statuses used to construct a queue to finalize a given job, i.e. final statues in 'statusmapping'")
 
-def getEnvironment(config=None):
-    import sys
-    import os.path
-    import PACKAGE
+def standardSetup():
 
+    import PACKAGE
     PACKAGE.standardSetup()
-    return
+
 
 
 def loadPlugins(config=None):
