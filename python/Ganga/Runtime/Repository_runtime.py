@@ -139,7 +139,9 @@ def bootstrap():
         retval.append((registry.name, proxied_registry_slice, registry.doc))
 
     # Assuming all registries are started for all instances of Ganga atm
-    # Avoid ever, ever, calling the repository from behind the registry. This allows for all forms of bad behaviour.
+    # Avoid ever, ever, calling the repository from behind the registry. This allows for all forms of bad behaviour
+    # This is a form of trade off but still is something which should be strongly discouraged!
+    # TODO investigate putting access to the repository behind a getter/setter which keeps the registry locked
     other_sessions = bootstrap_getreg()[0].repository.get_other_sessions()
     if other_sessions:
         # Just print this from 1 repo only so chose the zeorth, nothing special
