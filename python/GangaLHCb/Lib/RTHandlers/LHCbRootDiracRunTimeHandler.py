@@ -13,7 +13,7 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import isType
-from GangaDirac.Lib.Files import DiracFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
