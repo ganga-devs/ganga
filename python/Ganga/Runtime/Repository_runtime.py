@@ -169,6 +169,10 @@ def shutdown():
     logger.info('Registry Shutdown')
     #import traceback
     #traceback.print_stack()
+
+    # Flush all repos before we shut them down
+    flush_all()
+
     # shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
     # method to perform actions on the box and/or job registries.
     logger.debug(started_registries)
