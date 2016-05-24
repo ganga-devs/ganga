@@ -9,7 +9,7 @@
 
 _external_packages = {
     'panda-client' : { 'version' : '0.5.39', 
-                    'PYTHONPATH':['lib/python2.4/site-packages'],
+                    'syspath':['lib/python2.4/site-packages'],
                     'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                     'PANDA_SYS':'.',
                     'noarch':True
@@ -22,7 +22,10 @@ setup = PackageSetup(_external_packages)
 
 def standardSetup(setup=setup):
     for p in setup.packages:
-        setup.prependPath(p,'PYTHONPATH')
         setup.prependPath(p,'LD_LIBRARY_PATH')
         setup.prependPath(p,'PATH')
         setup.setPath(p,'PANDA_SYS')
+
+    # update the syspath and PYTHONPATH for the packages
+    for name in setup.packages:
+        setup.setSysPath(name)

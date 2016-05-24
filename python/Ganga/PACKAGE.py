@@ -43,7 +43,7 @@ _defaultExternalHome = None
 _externalPackages = {
     'ipython': {'version': '1.2.1',
                 'noarch': True,
-                'PYTHONPATH': 'lib/python'},
+                'syspath': 'lib/python'},
 #    'paramiko': {'version': '1.7.3',
 #                 'noarch': True,
 #                 'syspath': 'lib/python2.3/site-packages'},

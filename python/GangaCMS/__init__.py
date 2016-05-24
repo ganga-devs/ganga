@@ -26,8 +26,9 @@ configMetrics.addOption('location','%s/GangaCMS/metrics.ini'%(ganga_pythonpath),
 dscrpt = 'The version CRAB used for job submission.'
 configCMSSW.addOption('CRAB_VERSION','CRAB_2_7_5',dscrpt)
 
-def getEnvironment( config = {} ):
-    import sys
+
+def standardSetup():
+
     import os.path
     import PACKAGE
 
@@ -59,8 +60,6 @@ def getEnvironment( config = {} ):
 #    shell = Shell(cmssw_setup_script)   
 
     logger.info('GangaCMS> [INFO] getEnvironment : done')
-#    return shell.env
-    return {}
 
 def loadPlugins( config = {} ):
     import Lib.CRABTools

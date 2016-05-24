@@ -8,9 +8,6 @@ from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 
 
 # Global Functions
-def getEnvironment(config = None):
-    return {}
-
 def getLCGRootPath():
 
     lcg_release_areas = {'afs' : '/afs/cern.ch/sw/lcg/releases/LCG_79',

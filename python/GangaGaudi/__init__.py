@@ -17,13 +17,11 @@ if not _after_bootstrap:
     dscrpt = 'Levels below InstallArea/[<platform>]/python to decend when looking for .py files to include'
     configGaudi.addOption('pyFileCollectionDepth', 2, dscrpt)
 
-def getEnvironment(config=None):
-    import sys
-    import os.path
-    import PACKAGE
 
+def standardSetup():
+
+    import PACKAGE
     PACKAGE.standardSetup()
-    return
 
 
 def loadPlugins(config=None):

@@ -41,7 +41,6 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     logger.info("Parsing Command Line options")
     this_argv = [
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
-        '--no-rexec',  # Don't re-exec Ganga when running tests
     ]
 
     # These are the default options for all test instances
@@ -81,7 +80,7 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         logger.info("Parsing Configuration Options")
         Ganga.Runtime._prog.configure()
         logger.info("Initializing")
-        Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
+        Ganga.Runtime._prog.initEnvironment()
     else:
         from Ganga.Runtime.Repository_runtime import startUpRegistries
         from Ganga.Utility.Config import getConfig
