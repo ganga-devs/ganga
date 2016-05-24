@@ -3,10 +3,12 @@ from __future__ import absolute_import
 import os
 import tempfile
 
-from GangaTest.Framework.utils import sleep_until_completed, file_contains, write_file
+
+from GangaTest.Framework.utils import file_contains, write_file
 from Ganga.Lib.Mergers.Merger import findFilesToMerge
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.monitoring import run_until_completed
 
 
 class TestSmartMerger(GangaUnitTest):
@@ -46,7 +48,7 @@ class TestSmartMerger(GangaUnitTest):
 
         for j in self.jobslice:
             j.submit()
-            assert sleep_until_completed(j), 'Timeout on job submission: job is still not finished'
+            assert run_until_completed(j), 'Timeout on job submission: job is still not finished'
             assert j.status == 'completed'
 
     def tearDown(self):

@@ -3,6 +3,7 @@ import string
 import time
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.monitoring import run_until_completed
 from Ganga.GPIDev.Lib.GangaList.GangaList import decorateListEntries
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError
@@ -243,12 +244,11 @@ class TestMutableMethods(GangaUnitTest):
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
         from Ganga.GPIDev.Base.Proxy import isType
 
-        j = Job(application=Executable(), backend=TestSubmitter())
+        j = Job(application=Executable(), backend=TestSubmitter(time=1))
         j.splitter = ArgSplitter(args=[['A'], ['B'], ['C']])
 
-        from GangaTest.Framework.utils import sleep_until_completed
         j.submit()
-        assert sleep_until_completed(j), 'Job must complete'
+        assert run_until_completed(j), 'Job must complete'
         assert len(j.subjobs) == 3, 'splitting must occur'
         assert j.status == 'completed', 'Job must complete'
         for jj in j.subjobs:
