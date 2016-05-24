@@ -111,7 +111,7 @@ def execute(command,
         # note the exec gets around the problem of indent and base64 gets
         # around the \n
         command_update, envread, envwrite = env_update_script()
-        command += ''';python -c ""from __future__ import print_function;import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(command_update)
+        command += ''';python -c "from __future__ import print_function;import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(command_update)
 
     if env is None and not update_env:
         pipe = subprocess.Popen('python -c "from __future__ import print_function;import os;print(os.environ)"',
