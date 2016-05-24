@@ -107,6 +107,11 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         jspec.AtlasRelease = 'Atlas-%s' % app.atlas_release
         jspec.homepackage = app.home_package
         jspec.transformation = app.transformation
+
+        # set the transfer type (e.g. for directIO tests)
+        if job.backend.requirements.transfertype != '':
+            jspec.transferType = job.backend.requirements.transfertype
+
         jspec.destinationDBlock = job.outputdata.datasetname
         if job.outputdata.location:
             jspec.destinationSE = job.outputdata.location
