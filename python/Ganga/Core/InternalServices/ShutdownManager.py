@@ -64,12 +64,6 @@ def _ganga_run_exitfuncs():
     and report to the user before continuing.
     """
 
-    # Flush everything
-    try:
-        Repository_runtime.flush_all()
-    except Exception as err:
-        logger.warning("Exception raised during Registry flushing: %s" % err)
-
     # Set the disk timeout to 1 sec, sacrifice stability for quicker exit
     setConfigOption('Configuration', 'DiskIOTimeout', 1)
 

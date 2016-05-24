@@ -1,8 +1,8 @@
 
-def getEnvironment(c = None):
+def standardSetup():
     import PACKAGE
     PACKAGE.standardSetup()
-    return {}
+
 
 def loadPlugins( config = None ):
     import Lib.GListApp

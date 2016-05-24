@@ -5,6 +5,7 @@ import copy
 import threading
 from Ganga.Core.GangaRepository.Registry import Registry
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Objects import synchronised
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 import Ganga.Utility.Config
@@ -115,6 +116,7 @@ class ShareRef(GangaObject):
             self.name = {}
         return self.name
 
+    @synchronised
     def increase(self, shareddir, force=False):
         """Increase the reference counter for a given shared directory by 1. If the directory
         doesn't currently have a reference counter, one is initialised with a value of 1.
@@ -147,6 +149,7 @@ class ShareRef(GangaObject):
         self._setDirty()
         self._releaseWriteAccess()
 
+    @synchronised
     def decrease(self, shareddir, remove=0):
         """Reduce the reference counter for a given shared directory by 1. If the current value
         of the counter is 0, the shared object will be removed from the metadata, and the files within

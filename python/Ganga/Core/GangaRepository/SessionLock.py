@@ -28,28 +28,8 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config.Config import getConfig, ConfigError
 from Ganga.GPIDev.Base.Proxy import getName
 
-try:
-    from Ganga.Core.GangaThread import GangaThread
-    from Ganga.Core.GangaRepository import RepositoryError
-except ImportError:
-    from threading import Thread
-
-    print("IMPORT ERROR SHOULD NOT OCCUR IN PRODUCTION CODE!!!!!!!!!!!!!!!!!!!!!!")
-    
-
-    class GangaThread(Thread):
-    
-        def __init__(self, name):
-            self.name = name
-            super(GangaThread, self).__init__()
-
-        def should_stop(self):
-            return False
-
-
-    class RepositoryError(Exception):
-        pass
-
+from Ganga.Core.GangaThread import GangaThread
+from Ganga.Core.GangaRepository import RepositoryError
 
 logger = getLogger()
 
@@ -63,7 +43,7 @@ except ConfigError, err:
 
 session_lock_refresher = None
 
-def getGlobalLockRef(session_name, sdir, gfn, _on_afs):
+def setupGlobalLockRef(session_name, sdir, gfn, _on_afs):
     global session_lock_refresher
     if session_lock_refresher is None:
         try:
@@ -118,7 +98,7 @@ def getGlobalSessionFiles():
 class SessionLockRefresher(GangaThread):
 
     def __init__(self, session_name, sdir, fn, repo, afs):
-        GangaThread.__init__(self, name='SessionLockRefresher', critical=True)
+        super(SessionLockRefresher, self).__init__(name='SessionLockRefresher', critical=True)
         self.session_name = session_name
         self.sdir = sdir
         self.fns = [fn]
@@ -160,8 +140,9 @@ class SessionLockRefresher(GangaThread):
                 for i in range(int(sleeptime * 200)):
                     if not self.should_stop():
                         time.sleep(0.05 + random.random() * 0.05)
+                    else:
+                        break
         finally:
-            #logger.debug("Finishing Monitoring Loop")
             self.unregister()
 
     def checkAndReap(self):
@@ -339,7 +320,6 @@ class SessionLockManager(object):
         realpath = os.path.realpath(root)
         # Use the hostname (os.uname()[1])  and the current time in ms to construct the session filename.
         # TODO: Perhaps put the username here?
-        global session_lock_refresher
         if session_lock_refresher is None:
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
@@ -424,7 +404,7 @@ class SessionLockManager(object):
                 logger.debug("Startup Session Exception: %s" % err)
                 raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.fn, err))
 
-            session_lock_refresher = getGlobalLockRef(self.session_name, self.sdir, self.gfn, self.afs)
+            setupGlobalLockRef(self.session_name, self.sdir, self.gfn, self.afs)
 
             session_lock_refresher.addRepo(self.fn, self.repo)
             self.session_write()
@@ -432,7 +412,6 @@ class SessionLockManager(object):
             self.global_lock_release()
 
     def updateNow(self):
-        global session_lock_refresher
         session_lock_refresher.updateNow()
 
     @synchronised
@@ -811,7 +790,6 @@ class SessionLockManager(object):
         _diff = abs(session_lock_last - this_time)
         if _diff > session_expiration_timeout * 0.5 or _diff < 1:
             session_expiration_timeout = this_time
-            global session_lock_refresher
             if session_lock_refresher is not None:
                 session_lock_refresher.checkAndReap()
             else:

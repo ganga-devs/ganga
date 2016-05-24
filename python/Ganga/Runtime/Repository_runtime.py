@@ -2,7 +2,7 @@
 Internal initialization of the repositories.
 """
 
-import Ganga.Utility.Config
+from Ganga.Utility.Config import getConfig, setConfigOption
 from Ganga.Utility.logging import getLogger
 import os.path
 from Ganga.Utility.files import expandfilename, fullpath
@@ -10,7 +10,7 @@ from Ganga.Core.GangaRepository import getRegistries
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.exceptions import GangaException
 
-config = Ganga.Utility.Config.getConfig('Configuration')
+config = getConfig('Configuration')
 logger = getLogger()
 
 _runtime_interface = None
@@ -133,15 +133,23 @@ def bootstrap():
         logger.debug("Loc: %s" % registry.location)
         registry.startup()
         logger.debug("started " + registry.info(full=False))
-        if registry.name == "prep":
-            registry.print_other_sessions()
+
         started_registries.append(registry.name)
         proxied_registry_slice = registry.getProxy()
         retval.append((registry.name, proxied_registry_slice, registry.doc))
 
-    #import atexit
-    #atexit.register(shutdown)
-    #logger.debug("Registries: %s" % started_registries)
+    # Assuming all registries are started for all instances of Ganga atm
+    # Avoid ever, ever, calling the repository from behind the registry. This allows for all forms of bad behaviour
+    # This is a form of trade off but still is something which should be strongly discouraged!
+    # TODO investigate putting access to the repository behind a getter/setter which keeps the registry locked
+    other_sessions = bootstrap_getreg()[0].repository.get_other_sessions()
+    if other_sessions:
+        # Just print this from 1 repo only so chose the zeorth, nothing special
+        logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
+        logger.warning("Multiple Ganga sessions detected. The Monitoring Thread is being disabled.")
+        logger.warning("Type 'enableMonitoring' to restart")
+        setConfigOption('PollThread', 'autostart', False)
+
     return retval
 
 
@@ -161,6 +169,10 @@ def shutdown():
     logger.info('Registry Shutdown')
     #import traceback
     #traceback.print_stack()
+
+    # Flush all repos before we shut them down
+    flush_all()
+
     # shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
     # method to perform actions on the box and/or job registries.
     logger.debug(started_registries)

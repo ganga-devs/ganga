@@ -1,10 +1,7 @@
-def getEnvironment( config = {} ):
-   import sys
-   import os.path
+def standardSetup():
    import PACKAGE
-
    PACKAGE.standardSetup()
-   return
+
 
 def loadPlugins( config = {} ):
    import Lib.SAGA
