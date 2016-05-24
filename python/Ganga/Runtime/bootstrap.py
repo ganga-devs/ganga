@@ -764,7 +764,7 @@ under certain conditions; type license() for details.
         syscfg.attachUserHandler(deny_modification, None)
         syscfg.attachSessionHandler(deny_modification, None)
 
-        Ganga.Utility.Config.configure(config_files, system_vars)
+        Ganga.Utility.Config.setSessionValuesFromFiles(config_files, system_vars)
 
         # set the system variables to the [System] module
         # syscfg.setDefaultOptions(system_vars,reset=1)

@@ -1,10 +1,11 @@
+import os
+
 # Bootstrap all of ganga, setup GPI, registries, etc.
 from Ganga.Utility.Runtime import allRuntimes
-import Ganga.Utility.Config
+from Ganga.Utility.Config import getConfig, setSessionValuesFromFiles
 from Ganga.Utility.logging import getLogger
 from Ganga import _gangaPythonPath
 import Ganga.Core
-from Ganga.Core.GangaRepository import getRegistry
 
 logger = getLogger(modulename=True)
 
@@ -21,9 +22,9 @@ from Ganga.Core.InternalServices import ShutdownManager
 ShutdownManager.install()
 
 system_vars = {}
-for opt in Ganga.Utility.Config.getConfig('System'):
-    system_vars[opt] = Ganga.Utility.Config.getConfig('System')[opt]
-Ganga.Utility.Config.configure([os.path.expanduser('~/.gangarc')], system_vars)
+for opt in getConfig('System'):
+    system_vars[opt] = getConfig('System')[opt]
+setSessionValuesFromFiles([os.path.expanduser('~/.gangarc')], system_vars)
 
 import ganga
 from Ganga.Runtime import plugins

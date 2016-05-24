@@ -939,7 +939,7 @@ def setSessionValue(config_name, option_name, value):
 _configured = False
 
 
-def configure(filenames, system_vars):
+def setSessionValuesFromFiles(filenames, system_vars):
     """ Sets session values for all options in all configuration units
     defined in the sequence of config files.  Initialize config parser
     object with system variables (such as GANGA_TOP, GANGA_VERSION and
