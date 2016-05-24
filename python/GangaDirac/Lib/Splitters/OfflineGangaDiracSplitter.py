@@ -201,25 +201,12 @@ def lookUpLFNReplicas(inputs, allLFNData):
 
 
 def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData, inputs):
-    from Ganga.GPIDev.Base.Proxy import stripProxy, isType
-    from Ganga.GPIDev.Base.Objects import GangaObject
-
-    myRegistry = {}
-    for this_LFN in inputs:
-        if isType(this_LFN, GangaObject):
-            myRegistry[this_LFN.lfn] = stripProxy(this_LFN)._getRegistry()
-            if myRegistry[this_LFN.lfn] is not None:
-                myRegistry[this_LFN.lfn].turnOffAutoFlushing()
 
     try:
         return _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData)
     except Exception as err:
         logger.debug("Sorting Exception: %s" % str(err))
         raise err
-    finally:
-        for this_LFN in myRegistry.keys():
-            if myRegistry[this_LFN] is not None:
-                myRegistry[this_LFN].turnOnAutoFlushing()
 
 def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
 

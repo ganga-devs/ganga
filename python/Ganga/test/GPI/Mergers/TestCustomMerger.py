@@ -5,11 +5,12 @@ import tempfile
 
 import pytest
 
-from GangaTest.Framework.utils import sleep_until_completed, write_file
+from GangaTest.Framework.utils import write_file
 from Ganga.GPIDev.Base.Proxy import getProxyClass
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.monitoring import run_until_completed, run_until_state
 from .CopySplitter import CopySplitter
 
 CopySplitter = getProxyClass(CopySplitter)
@@ -47,11 +48,9 @@ class TestCustomMerger(GangaUnitTest):
             self.jobslice.append(j)
 
     def runJobSlice(self):
-
         for j in self.jobslice:
             j.submit()
-
-            assert sleep_until_completed(j), 'Timeout on job submission: job is still not finished'
+            assert run_until_completed(j), 'Timeout on job submission: job is still not finished'
 
     def tearDown(self):
         for j in self.jobslice:
@@ -109,5 +108,5 @@ def mergefiles(file_list, output_file):
         j.postprocessors = cm
         j.submit()
 
-        sleep_until_completed(j)
+        run_until_state(j, state='failed')
         assert j.status == 'failed'

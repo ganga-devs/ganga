@@ -105,6 +105,7 @@ j.submit()
         jobs['copy2']
         # -- JOBMANIPULATION JOBSLICING STOP
 
+        jobs(0).kill()
         # -- JOBMANIPULATION RESUBMIT START
         jobs(0).resubmit()
         # -- JOBMANIPULATION RESUBMIT STOP
@@ -432,7 +433,7 @@ j.submit()
         queues
 
         # -- QUEUES EXAMPLE START
-        for i in range(1, 20):
+        for i in range(1, 10):
             j = Job()
             queues.add(j.submit)
         # -- QUEUES EXAMPLE STOP
@@ -448,7 +449,7 @@ j.submit()
         j = Job()
         j.splitter = GenericSplitter()
         j.splitter.attribute = 'application.args'
-        j.splitter.values = [i for i in range(0, 50)]
+        j.splitter.values = [i for i in range(0, 10)]
         j.parallel_submit = True
         j.submit()
         # -- QUEUES SPLIT STOP
