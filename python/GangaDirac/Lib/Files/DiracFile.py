@@ -629,23 +629,22 @@ class DiracFile(IGangaFile):
         logger.error("Error in getting file '%s' : %s" % (self.lfn, str(stdout)))
         return stdout
 
-    def replicate(self, destSE):
+    def replicate(self, destSE, sourceSE=''):
         """
-        Replicate this file from self.locations[0] to destSE
+        Replicate an LFN to another SE
+
+        Args:
+            destSE (str): the SE to replicate the file to
+            sourceSE (str): the se to use as a cource for the file
         """
-        if not self.locations:
-            if self.lfn != '':
-                self.getReplicas()
-            else:
-                raise GangaException('Can\'t replicate a file if it isn\'t already on a DIRAC SE, upload it first')
-        if self.lfn == '':
+
+        if not self.lfn:
             raise GangaException('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, self.locations[0]))
+        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE))
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
             self.locations.append(destSE)
-            self.getReplicas(forceRefresh=True)
             return
         logger.error("Error in replicating file '%s' : %s" % (self.lfn, stdout))
         return stdout
