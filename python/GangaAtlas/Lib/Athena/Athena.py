@@ -1551,8 +1551,7 @@ class AthenaSplitterJob(ISplitter):
         inputguids=[]
         if job.inputdata:
 
-            if (job.inputdata._name == 'ATLASCastorDataset') or \
-                   (job.inputdata._name == 'ATLASLocalDataset'):
+            if job.inputdata._name == 'ATLASLocalDataset':
                 inputnames = []
                 outputnames = []
                 numfiles = len(job.inputdata.get_dataset_filenames())

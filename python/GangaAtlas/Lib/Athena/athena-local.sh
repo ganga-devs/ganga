@@ -187,7 +187,7 @@ then
         export PATH=$PATH_BACKUP
         export PYTHONPATH=$PYTHONPATH_BACKUP
 
-    # ATLASDataset, ATLASCastorDataset, ATLASLocalDataset
+    # ATLASDataset, ATLASLocalDataset
     elif [ -e ganga-stagein.py ]
     then
 	chmod +x ganga-stagein.py

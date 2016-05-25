@@ -641,7 +641,7 @@ stage_inputs () {
 	    export PATH=$PATH_BACKUP
 	    export PYTHONPATH=$PYTHONPATH_BACKUP
 	    
-        # ATLASDataset, ATLASCastorDataset, ATLASLocalDataset
+        # ATLASDataset, ATLASLocalDataset
 	elif [ -e ganga-stagein-lfc.py ]; then 
 	    chmod +x ganga-stagein-lfc.py
 	    ./ganga-stagein-lfc.py -v -i input_files; echo $? > retcode.tmp
