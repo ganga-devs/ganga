@@ -49,9 +49,12 @@ def getDiracEnv(force=False):
             if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(absolute_path):
 
                 env_dict = {}
-                execute('source {0}'.format(absolute_path), shell=True, env=env_dict, update_env=True)
+                with open(absolute_path) as env_file:
+                    for line in env_file:
+                        varval = line.strip().split('=')
+                        env_dict[varval[0]] = ''.join(varval[1:])
 
-                if env_dict is not None:
+                if env_dict:
                     DIRAC_ENV = env_dict
                 else:
                     logger.error("Error determining DIRAC environment")
