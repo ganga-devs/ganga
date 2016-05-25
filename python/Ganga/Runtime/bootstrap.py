@@ -593,6 +593,114 @@ under certain conditions; type license() for details.
                     opts.append((section, rpat.group('option'), rpat.group('value')))
         return opts
 
+    @staticmethod
+    def get_config_files(config_file, config_path=None):
+        # type: (str, str) -> List[str]
+        """
+        Get the list of the config files to read. They are in order
+        of increasing precedence so those later in the list have a
+        higher priority.
+
+        Args:
+            config_file (str): the user config file
+            config_path (str): the path to the config directory
+
+        Returns:
+            a list of strings of the filenames of the config files
+        """
+        from Ganga.Utility.logging import getLogger
+
+        try:
+            with open(config_file) as cf:
+                first_line = cf.readline()
+                r = re.compile('# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
+                this_logger = getLogger("Configure")
+                if not r:
+                    this_logger.error('file %s does not seem to be a Ganga config file', config_file)
+                    this_logger.error('try -g option to create valid ~/.gangarc')
+                else:
+                    cv = r.group('version').split('-')  #Version number is in Ganga-x-y-z format
+                    if len(cv) == 1:
+                        cv = new_version_format_to_old(cv[0]).split('-')
+                    if cv[1] != '6':
+                        this_logger.error('file %s was created by a development release (%s)', config_file, r.group('version'))
+                        this_logger.error('try -g option to create valid ~/.gangarc')
+        except IOError as x:
+            # ignore all I/O errors (e.g. file does not exist), this is just an
+            # advisory check
+            this_logger = getLogger("Configure")
+            this_logger.debug("Config File Exception: %s" % x)
+
+        if config_path is None:
+            try:
+                config_path = os.environ['GANGA_CONFIG_PATH']
+            except KeyError:
+                config_path = ''
+            if config_path is None:
+                config_path = ''
+
+        import Ganga.Utility.files
+        import Ganga.Utility.util
+        import inspect
+        GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
+
+        if config_path:
+            config_path = Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath, config_path))
+
+        # check if the specified config options are different from the defaults
+        # and set session values appropriately
+        syscfg = getConfig("System")
+        if config_path != syscfg['GANGA_CONFIG_PATH']:
+            syscfg.setSessionValue('GANGA_CONFIG_PATH', config_path)
+        if config_file != syscfg['GANGA_CONFIG_FILE']:
+            syscfg.setSessionValue('GANGA_CONFIG_FILE', config_file)
+
+        # all relative names in the path are resolved wrt the _gangaPythonPath
+        # the list order is reversed so that A:B maintains the typical path precedence: A overrides B
+        # because the user config file is put at the end it always may override
+        # everything else
+        config_files = Ganga.Utility.Config.expandConfigPath(config_path, _gangaPythonPath)
+        config_files.reverse()
+
+        def _createpath(dir):
+
+            def _accept(fname, p=re.compile('.*\.ini$')):
+                return (os.path.isfile(fname) or os.path.islink(fname)) and p.match(fname)
+
+            files = []
+            if dir and os.path.exists(dir) and os.path.isdir(dir):
+                files = [os.path.join(dir, f) for f in os.listdir(dir) if
+                         _accept(os.path.join(dir, f))]
+            return string.join(files, os.pathsep)
+
+        def _versionsort(s, p=re.compile(r'^(\d+)-(\d+)-*(\d*)')):
+            m = p.match(s)
+            if m:
+                if m.group(3) == '':
+                    return int(m.group(1)), int(m.group(2)), 0
+                else:
+                    return int(m.group(1)), int(m.group(2)), int(m.group(3))
+            if s == 'SVN':
+                return 'SVN'
+            return None
+
+        if "GANGA_SITE_CONFIG_AREA" in os.environ:
+            this_dir = os.environ['GANGA_SITE_CONFIG_AREA']
+            if os.path.exists(this_dir) and os.path.isdir(this_dir):
+                dirlist = sorted(os.listdir(this_dir), key=_versionsort)
+                dirlist.reverse()
+                gangaver = _versionsort(new_version_format_to_old(_gangaVersion).lstrip('Ganga-'))  # Site config system expects x-y-z version encoding
+                for d in dirlist:
+                    vsort = _versionsort(d)
+                    if vsort and ((vsort <= gangaver) or (gangaver is 'SVN')):
+                        select = os.path.join(this_dir, d)
+                        config_files.append(_createpath(select))
+                        break
+        if os.path.exists(config_file):
+            config_files.append(config_file)
+
+        return config_files
+
     # configuration procedure: read the configuration files, configure and
     # bootstrap logging subsystem
     def configure(self, logLevel=None):
@@ -618,8 +726,9 @@ under certain conditions; type license() for details.
         # Say Hello
         if logLevel:
             self.options.force_loglevel = logLevel
+
         if self.options.force_loglevel in (None, 'DEBUG'):
-            sys.stdout.write(str(self.hello_string)+'\n')
+            sys.stdout.write(str(self.hello_string) + '\n')
 
         if self.options.config_file is None or self.options.config_file == '':
             self.options.config_file = self.default_config_file
@@ -631,83 +740,15 @@ under certain conditions; type license() for details.
 
         force_global_level(self.options.force_loglevel)
 
-        try:
-            with open(self.options.config_file) as cf:
-                first_line = cf.readline()
-                r = re.compile('# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
-                this_logger = getLogger("Configure")
-                if not r:
-                    this_logger.error('file %s does not seem to be a Ganga config file', self.options.config_file)
-                    this_logger.error('try -g option to create valid ~/.gangarc')
-                else:
-                    cv = r.group('version').split('-')  #Version number is in Ganga-x-y-z format
-                    if len(cv) == 1:
-                        cv = new_version_format_to_old(cv[0]).split('-')
-                    if cv[1] != '6':
-                        this_logger.error('file %s was created by a development release (%s)', self.options.config_file, r.group('version'))
-                        this_logger.error('try -g option to create valid ~/.gangarc')
-        except IOError as x:
-            # ignore all I/O errors (e.g. file does not exist), this is just an
-            # advisory check
-            this_logger = getLogger("Configure")
-            this_logger.debug("Config File Exception: %s" % x)
-
-        if self.options.config_path is None:
-            try:
-                self.options.config_path = os.environ['GANGA_CONFIG_PATH']
-            except KeyError, err:
-                self.options.config_path = ''
-            if self.options.config_path is None:
-                self.options.config_path = ''
-
-        import Ganga.Utility.files
-        import Ganga.Utility.util
-        import inspect
-        GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
-
-        if self.options.config_path:
-            self.options.config_path = Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath, self.options.config_path))
-
-        # check if the specified config options are different from the defaults
-        # and set session values appropriately
-        syscfg = getConfig("System")
-        if self.options.config_path != syscfg['GANGA_CONFIG_PATH']:
-            syscfg.setSessionValue('GANGA_CONFIG_PATH', self.options.config_path)
-        if self.options.config_file != syscfg['GANGA_CONFIG_FILE']:
-            syscfg.setSessionValue('GANGA_CONFIG_FILE', self.options.config_file)
-
-        def deny_modification(name, x):
-            raise Ganga.Utility.Config.ConfigError(
-                'Cannot modify [System] settings (attempted %s=%s)' % (name, x))
-        syscfg.attachUserHandler(deny_modification, None)
-        syscfg.attachSessionHandler(deny_modification, None)
-
-        config = getConfig("Configuration")
-
-        # detect default user (equal to unix user name)
-        import getpass
-        try:
-            config.options['user'].default_value = getpass.getuser()
-        except Exception as x:
-            raise Ganga.Utility.Config.ConfigError('Cannot get default user name %s' % x)
-
-        # import configuration from spyware
-        from Ganga.Runtime import spyware
-
-        monConfig = getConfig("MSGMS")
-
         # prevent modification during the interactive ganga session
         def deny_modification(name, x):
             raise Ganga.Utility.Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))
-        monConfig.attachUserHandler(deny_modification, None)
+        getConfig("MSGMS").attachUserHandler(deny_modification, None)
 
+        # Assemble the list of config files to read
+        config_files = self.get_config_files(self.options.config_file)
 
-        # all relative names in the path are resolved wrt the _gangaPythonPath
-        # the list order is reversed so that A:B maintains the typical path precedence: A overrides B
-        # because the user config file is put at the end it always may override
-        # everything else
-        config_files = Ganga.Utility.Config.expandConfigPath(self.options.config_path, _gangaPythonPath)
-        config_files.reverse()
+        syscfg = getConfig("System")
 
         # read-in config files
 
@@ -717,42 +758,13 @@ under certain conditions; type license() for details.
         for opt in syscfg:
             system_vars[opt] = syscfg[opt]
 
-        def _createpath(dir):
+        def deny_modification(name, x):
+            raise Ganga.Utility.Config.ConfigError(
+                'Cannot modify [System] settings (attempted %s=%s)' % (name, x))
+        syscfg.attachUserHandler(deny_modification, None)
+        syscfg.attachSessionHandler(deny_modification, None)
 
-            def _accept(fname, p=re.compile('.*\.ini$')):
-                return (os.path.isfile(fname) or os.path.islink(fname)) and p.match(fname)
-            files = []
-            if dir and os.path.exists(dir) and os.path.isdir(dir):
-                files = [os.path.join(dir, f) for f in os.listdir(dir) if
-                         _accept(os.path.join(dir, f))]
-            return string.join(files, os.pathsep)
-
-        def _versionsort(s, p=re.compile(r'^(\d+)-(\d+)-*(\d*)')):
-            m = p.match(s)
-            if m:
-                if m.group(3) == '':
-                    return int(m.group(1)), int(m.group(2)), 0
-                else:
-                    return int(m.group(1)), int(m.group(2)), int(m.group(3))
-            if s == 'SVN':
-                return 'SVN'
-            return None
-
-        if "GANGA_SITE_CONFIG_AREA" in os.environ:
-            this_dir = os.environ['GANGA_SITE_CONFIG_AREA']
-            if os.path.exists(this_dir) and os.path.isdir(this_dir):
-                dirlist = sorted(os.listdir(this_dir), key=_versionsort)
-                dirlist.reverse()
-                gangaver = _versionsort(new_version_format_to_old(_gangaVersion).lstrip('Ganga-')) #Site config system expects x-y-z version encoding
-                for d in dirlist:
-                    vsort = _versionsort(d)
-                    if vsort and ((vsort <= gangaver) or (gangaver is 'SVN')):
-                        select = os.path.join(this_dir, d)
-                        config_files.append(_createpath(select))
-                        break
-        if os.path.exists(self.options.config_file):
-            config_files.append(self.options.config_file)
-        Ganga.Utility.Config.configure(config_files, system_vars)
+        Ganga.Utility.Config.setSessionValuesFromFiles(config_files, system_vars)
 
         # set the system variables to the [System] module
         # syscfg.setDefaultOptions(system_vars,reset=1)
@@ -765,11 +777,8 @@ under certain conditions; type license() for details.
         if not self.options.monitoring:
             self.options.cmdline_options.append('[PollThread]autostart=False')
 
-        from Ganga.Utility.logging import getLogger
-
         logger = getLogger()
 
-        logger.debug('default user name is %s', config['user'])
         logger.debug('user specified cmdline_options: %s', self.options.cmdline_options)
 
         # override the config options from the command line arguments
@@ -809,6 +818,8 @@ under certain conditions; type license() for details.
             # change the stdout/err
             sys.stdout.flush()
             sys.stderr.flush()
+
+            config = getConfig("Configuration")
 
             # create a server dir
             if not os.path.exists(os.path.join(config['gangadir'], "server")):
