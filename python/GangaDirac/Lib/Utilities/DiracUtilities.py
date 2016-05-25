@@ -49,6 +49,7 @@ def getDiracEnv(force=False):
             if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(absolute_path):
 
                 env_dict = {}
+                logger.debug("Executing command: %s" % 'source {0}'.format(absolute_path))
                 execute('source {0}'.format(absolute_path), shell=True, env=env_dict, update_env=True)
 
                 if env_dict is not None:
