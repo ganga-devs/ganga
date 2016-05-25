@@ -169,16 +169,7 @@ def change_atexitPolicy(interactive_session=True, new_policy=None):
                 should_wait_cb = should_wait_batch_cb
 
     global at_exit_should_wait_cb
-    if at_exit_should_wait_cb is None:
-        at_exit_should_wait_cb = should_wait_cb
-        import atexit
-        from Ganga.Core.GangaThread import GangaThreadPool
-        # create generic Ganga thread pool
-        thread_pool = GangaThreadPool.getInstance()
-        atexit.register(thread_pool.shutdown, should_wait_cb=at_exit_should_wait_cb)
-    else:
-        at_exit_should_wait_cb = should_wait_cb
-
+    at_exit_should_wait_cb = should_wait_cb
 
     global current_shutdown_policy
     current_shutdown_policy = forced_shutdown_policy

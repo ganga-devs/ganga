@@ -4,6 +4,7 @@ import time
 
 import pytest
 
+from Ganga.testlib.mark import nocoverage
 from Ganga.testlib.decorators import add_config
 from Ganga.testlib.monitoring import run_until_completed
 
