@@ -860,7 +860,7 @@ class GangaObject(Node):
         """
         true_parent = self._getParent()
         ## This triggers a read of the job from disk
-        #self._getReadAccess()
+        self._getReadAccess()
         cls = self.__class__
 
         self_copy = cls()
