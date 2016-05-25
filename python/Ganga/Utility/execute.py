@@ -145,7 +145,7 @@ def execute(command,
     timed_out = threading.Event()
     timer = threading.Timer(timeout, __timeout_func,
                             args=(p, timed_out))
-    timer.deamon = True
+    timer.daemon = True
     started_threads = []
     if timeout is not None:
         timer.start()
@@ -156,7 +156,7 @@ def execute(command,
         ti = threading.Thread(target=__reader,
                               args=(pkl_read, pkl_write,
                                     thread_output, 'pkl_output'))
-        ti.deamon = True
+        ti.daemon = True
         ti.start()
         started_threads.append(ti)
 
@@ -164,7 +164,7 @@ def execute(command,
         ev = threading.Thread(target=__reader,
                               args=(envread, envwrite,
                                     thread_output, 'env_output'))
-        ev.deamon = True
+        ev.daemon = True
         ev.start()
         started_threads.append(ev)
 
