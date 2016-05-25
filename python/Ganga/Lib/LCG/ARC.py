@@ -1109,10 +1109,6 @@ sys.exit(0)
 
         ick = False
 
-        # delegate proxy to ARC CE
-        if not grids['GLITE'].arc_proxy_delegation(self.CE):
-            logger.warning('proxy delegation to %s failed' % self.CE)
-
         if not job.master and len(job.subjobs) == 0:
             # case 1: master job normal resubmission
             logger.debug('rjobs: %s' % str(rjobs))
