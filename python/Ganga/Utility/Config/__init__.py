@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from .Config import getConfig, makeConfig, ConfigError, configure, allConfigs, setConfigOption, expandConfigPath, config_scope, setSessionValue, getFlavour
+from .Config import getConfig, makeConfig, ConfigError, setSessionValuesFromFiles, allConfigs, setConfigOption, expandConfigPath, config_scope, setSessionValue, getFlavour
 import os.path
 
 ## from Config import getConfigDict
