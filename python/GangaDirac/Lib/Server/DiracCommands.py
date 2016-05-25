@@ -63,7 +63,7 @@ def getFile(lfns, destDir=''):
     output(dirac.getFile(lfns, destDir=destDir))
 
 
-def replicateFile(lfn, destSE, srcSE, locCache=''):
+def replicateFile(lfn, destSE, srcSE='', locCache=''):
     ''' Replicate a given LFN from a srcSE to a destSE'''
     res = dirac.replicateFile(lfn, destSE, srcSE, locCache)
     output(res)

@@ -5,7 +5,7 @@ import shutil
 
 import pytest
 
-from Ganga.testlib.GangaUnitTest import start_ganga, stop_ganga
+from Ganga.testlib.GangaUnitTest import start_ganga, stop_ganga, _getGangaPath
 
 
 def gangadir(request):
@@ -19,7 +19,7 @@ def gangadir(request):
         str: the name of the gangadir directory to use
 
     """
-    return os.path.join(os.path.expanduser('~'), 'gangadir_testing', request.module.__name__)
+    return os.path.join(_getGangaPath(), 'gangadir_testing', request.module.__name__)
 
 
 @pytest.yield_fixture(scope='module')
