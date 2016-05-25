@@ -433,9 +433,6 @@ class Descriptor(object):
         else:
             val = temp_val
 
-        # LOCKING
-        obj._getWriteAccess()
-
         item = obj._schema[_getName(self)]
 
         def cloneVal(v):
