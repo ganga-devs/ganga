@@ -12,7 +12,6 @@ global_num_threads = 10
 global_num_jobs = global_num_threads*5
 
 
-@nocoverage
 @add_config([('TestingFramework', 'AutoCleanup', False),
              ('Queues', 'NumWorkerThreads', global_num_threads)])
 @pytest.mark.usefixtures('gpi')
