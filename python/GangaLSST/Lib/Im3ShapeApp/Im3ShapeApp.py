@@ -20,7 +20,7 @@ import os
 import shutil
 from Ganga.Utility.files import expandfilename
 
-from GangaDirac.Lib.Files import DiracFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Lib.File import LocalFile
 
 logger = getLogger()

@@ -191,7 +191,7 @@ def execute(command,
     
     Args:
         command (str): This is the command we're running within our DIRAC session
-        timeout (bool): This is the length of time that a DIRAC call has before it's decided some interaction has timed out
+        timeout (int): This is the length of time that a DIRAC call has before it's decided some interaction has timed out
         env (dict): an optional environment to execute the DIRAC code in
         cwd (str): an optional string to a valid path where this code should be executed
         shell (bool): Should this code be executed in a new shell environment
