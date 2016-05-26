@@ -153,6 +153,21 @@ def start_timer(p, timeout):
     return timer, timed_out
 
 
+def update_thread(pipes, thread_output, output_key):
+    """ Functon to contrust and return background thread used to read a pickled object into the thread_output for updating
+        the environment after executing a users code
+        Args:
+            started_threads (list): List containing background threads which have been started
+            pipes (tuple): Tuple containing (read_pipe, write_pipe) which is the pipe the pickled obj is written to
+            thread_output (dict): Dictionary containing the thread outputs which are used after executing the command
+            output_key (str): Used to know where in the thread_output to store the output of this thread
+    """
+    ev = threading.Thread(target=__reader, args=(pipes, thread_output, output_key))
+    ev.daemon = True
+    ev.start()
+    return ev
+
+
 def execute(command,
             timeout=None,
             env=None,
@@ -208,6 +223,13 @@ def execute(command,
     # Start the timer thread used to kill commands which have likely stalled
     timer, timed_out = start_timer(p, timeout)
 
+    if update_env:
+        env_output_key = 'env_output'
+        update_env_thread = update_thread(env_file_pipes, thread_output, env_output_key)
+    if not shell:
+        pkl_output_key = 'pkl_output'
+        update_pkl_thread = update_thread(pkl_file_pipes, thread_output, pkl_output_key)
+
     # Execute the main command of interest
     logger.debug("Executing Command:\n'%s'" % str(command))
     stdout, stderr = p.communicate(command)
@@ -219,6 +241,10 @@ def execute(command,
     timer.cancel()
     if timeout is not None:
         timer.join()
+    if update_env:
+        update_env_thread.join()
+    if not shell:
+        update_pkl_thread.join()
 
     # Finish up and decide what to return
     if stderr != '':
@@ -231,30 +257,24 @@ def execute(command,
 
     # Decode any pickled objects from disk
     if update_env:
-        try:
-            env_output_key = 'env_output'
-            __reader(env_file_pipes, thread_output, env_output_key)
-        except Exception as err:
-            logger.error("Failed to Update Env after command: %s" % command)
-            logger.error("Error was: %s" % err)
-            logger.error("stdout was: %s" % stdout)
-            logger.error("stderr was: %s" % stderr)
-            raise
         if env_output_key in thread_output:
             env.update(thread_output[env_output_key])
+        else:
+            logger.error("Expected to find the updated env after running a command")
+            logger.error("Command: %s" % command)
+            logger.error("stdout: %s" % stdout)
+            logger.error("stderr: %s" % stderr)
+            raise Exception("Missing update env after running command")
 
     if not shell:
-        try:
-            pkl_output_key = 'pkl_output'
-            __reader(pkl_file_pipes, thread_output, pkl_output_key)
-        except Exception as err:
-            logger.error("Failed to Pickle output from command: %s" % command)
-            logger.error("Error was: %s" % err)
-            logger.error("stdout was: %s" % stdout)
-            logger.error("stderr was: %s" % stderr)
-            raise
         if pkl_output_key in thread_output:
             return thread_output[pkl_output_key]
+        else:
+            logger.error("Expected to find the pickled output after running a command")
+            logger.error("Command: %s" % command)
+            logger.error("stdout: %s" % stdout)
+            logger.error("stderr: %s" % stderr)
+            raise Exception("Missing pickled output after running command")
 
     try:
         if isinstance(stdout, str) and stdout != '':
