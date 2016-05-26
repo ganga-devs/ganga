@@ -199,10 +199,10 @@ def execute(command,
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
         return_code (int): This is the returned code from the command which is executed
     """
+    shouldDeleteCWD=False
     if cwd is None:
-        cwd_ = tempfile.mkdtemp()
-    else:
-        cwd_ = cwd
+        shouldDeteCWD=True
+        cwd = tempfile.mkdtemp()
 
     if update_env and env is None:
         raise GangaException('Cannot update the environment if None given.')
@@ -226,7 +226,7 @@ def execute(command,
         env = get_env()
 
     # Construct the object which will contain the environment we want to run the command in
-    p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd_, preexec_fn=os.setsid,
+    p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     # This is where we store the output
@@ -263,8 +263,8 @@ def execute(command,
     if timed_out.isSet():
         return 'Command timed out!'
 
-    if cwd is None:
-        shutil.rmtree(cwd_, ignore_errors=True)
+    if shouldDeleteCWD:
+        shutil.rmtree(cwd, ignore_errors=True)
 
     # Decode any pickled objects from disk
     if update_env:
