@@ -184,7 +184,7 @@ def execute(command,
     env_file_pipes = None
 
     if not shell:
-        # We want to run a pyhton command inside a small Python wrapper
+        # We want to run a python command inside a small Python wrapper
         stream_command = 'python -'
         command, pkl_file_pipes, env_file_pipes = python_wrapper(command, python_setup, update_env)
     else:
