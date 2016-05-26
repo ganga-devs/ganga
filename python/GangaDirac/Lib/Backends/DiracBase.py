@@ -22,7 +22,7 @@ configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
 
-SHOULD_FORK = configDirac['serializeBackend']
+SHOULD_FORK = not configDirac['serializeBackend']
 
 class DiracBase(IBackend):
 
@@ -564,14 +564,10 @@ class DiracBase(IBackend):
             output_path = job.getOutputWorkspace().getPath()
 
             # Contact dirac which knows about the job
-            logger.info("Getting Job: %s output" % job.getFQID())
             job.backend.normCPUTime, getSandboxResult, file_info_dict, completeTimeResult = execute("finished_job(%d, '%s')" % (job.backend.id, output_path))
-            logger.info("Processing output")
-
-            logger.info("time: %s" % completeTimeResult)
 
             now = time.time()
-            logger.debug('Job ' + job.fqid + ' Time for Dirac metadata : ' + str(now - start))
+            logger.debug('%0.2fs taken to download output from DIRAC for Job %s' % ((now - start), job.fqid))
 
             #logger.info('Job ' + job.fqid + ' OutputDataInfo: ' + str(file_info_dict))
             #logger.info('Job ' + job.fqid + ' OutputSandbox: ' + str(getSandboxResult))
