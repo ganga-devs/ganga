@@ -8,6 +8,7 @@ import shutil
 import tempfile
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
+from Ganga.Core.exceptions import RuntimeError
 logger = getLogger()
 
 
@@ -277,8 +278,7 @@ def execute(command,
             logger.error("stdout: %s" % stdout)
             logger.error("stderr: %s" % stderr)
             # Too specific? Hopefully we'll never know
-            from Ganga.Core.exceptions import RuntimeException
-            raise RuntimeException("Missing update env after running command")
+            raise RuntimeError("Missing update env after running command")
 
     if not shell:
         update_pkl_thread.join()
@@ -290,8 +290,7 @@ def execute(command,
             logger.error("stdout: %s" % stdout)
             logger.error("stderr: %s" % stderr)
             # Too specific? Hopefully we'll never know
-            from Ganga.Core.exceptions import RuntimeException
-            raise RuntimeException("Missing pickled output after running command")
+            raise RuntimeError("Missing pickled output after running command")
 
     try:
         if stdout:
