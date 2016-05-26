@@ -489,24 +489,6 @@ class SessionLockManager(object):
             except OSError as x:
                 raise RepositoryError(self.repo, "Could not open lock file '%s': %s" % (self.lockfn, x))
 
-    @staticmethod
-    def delay_lock_mod(lockfd, lock_mod):
-        i = 0
-        num_tries = 35
-        while i <= num_tries:
-            try:
-                fcntl.lockf(lockfd, lock_mod)
-            except IOError as x:
-                time.sleep(0.1)
-                i += 1
-                if i == num_tries:  # If we're on the last try
-                    raise x
-                else:
-                    continue
-            else:
-                break
-        return
-
     def global_lock_acquire(self):
         try:
             if self.afs:
@@ -539,7 +521,7 @@ class SessionLockManager(object):
                     time.sleep(0.01)
 
             else:
-                self.delay_lock_mod(self.lockfd, fcntl.LOCK_EX)
+                fcntl.lockf(self.lockfd, fcntl.LOCK_EX)
 
             #logger.debug("global capture")
         except IOError as x:
@@ -551,7 +533,7 @@ class SessionLockManager(object):
                 lock_path = str(self.lockfn) + '.afs'
                 os.system("fs setacl %s %s rlidwka" % (lock_path, getpass.getuser()))
             else:
-                self.delay_lock_mod(self.lockfd, fcntl.LOCK_UN)
+                fcntl.lockf(self.lockfd, fcntl.LOCK_UN)
 
             #logger.debug("global release")
         except IOError as x:

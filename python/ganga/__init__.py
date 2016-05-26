@@ -1,8 +1,10 @@
+import os
+
 # Bootstrap all of ganga, setup GPI, registries, etc.
 import atexit
 
 from Ganga.Utility.Runtime import allRuntimes
-from Ganga.Utility.Config import getConfig
+from Ganga.Utility.Config import getConfig, setSessionValuesFromFiles
 from Ganga.Utility.logging import getLogger
 from Ganga import _gangaPythonPath
 import Ganga.Core
@@ -22,8 +24,10 @@ def ganga_license():
 # Setup the shutdown manager
 atexit.register(_ganga_run_exitfuncs)
 
-## TODO need to implement loading of the config system properly here.
-## loadPlugins and autoPopulateGPI will take this into account when loading objects
+system_vars = {}
+for opt in getConfig('System'):
+    system_vars[opt] = getConfig('System')[opt]
+setSessionValuesFromFiles([os.path.expanduser('~/.gangarc')], system_vars)
 
 import ganga
 from Ganga.Runtime import plugins
