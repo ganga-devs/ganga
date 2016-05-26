@@ -180,9 +180,6 @@ def execute(command,
     if update_env and env is None:
         raise GangaException('Cannot update the environment if None given.')
 
-    pkl_file_pipes = None
-    env_file_pipes = None
-
     if not shell:
         # We want to run a python command inside a small Python wrapper
         stream_command = 'python -'
