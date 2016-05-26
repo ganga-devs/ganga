@@ -959,7 +959,6 @@ class Registry(object):
                 s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
         return s
 
-    @synchronised
     def has_loaded(self, obj):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!
@@ -968,10 +967,16 @@ class Registry(object):
         Args:
             obj (GangaObject): Object which we want to look for in this repo
         """
+        obj_id = id(obj)
+        self.lock_transaction(obj_id, 'has_loaded')
         try:
-            index = self.find(obj)
-        except ObjectNotInRegistryError:
-            return False
+            try:
+                index = self.find(obj)
+            except ObjectNotInRegistryError:
+                return False
 
-        return self.repository.isObjectLoaded(obj)
+            return self.repository.isObjectLoaded(obj)
+        finally:
+            self.unlock_transaction(obj_id)
+
 
