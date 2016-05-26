@@ -22,7 +22,6 @@ configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
 
-SHOULD_FORK = not configDirac['serializeBackend']
 
 class DiracBase(IBackend):
 
@@ -750,7 +749,7 @@ class DiracBase(IBackend):
             if monitoring_component:
                 if monitoring_component.should_stop():
                     break
-            if SHOULD_FORK:
+            if not configDirac['serializeBackend']:
                 getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                            args=(j, queueable_dirac_statuses[j.backend.status]),
                                                            priority=5, name="Job %s Finalizing" % j.fqid)
@@ -835,7 +834,7 @@ class DiracBase(IBackend):
                 if job.been_queued:
                     continue
 
-                if SHOULD_FORK:
+                if not configDirac['serializeBackend']:
                     getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                                args=(job, updated_dirac_status),
                                                                priority=5, name="Job %s Finalizing" % job.fqid)
