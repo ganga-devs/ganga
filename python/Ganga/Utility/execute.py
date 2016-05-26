@@ -8,7 +8,7 @@ import shutil
 import tempfile
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
-from Ganga.Core.exceptions import RuntimeError
+from exceptions import RuntimeError
 logger = getLogger()
 
 
