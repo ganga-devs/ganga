@@ -253,10 +253,6 @@ def execute(command,
     timer.cancel()
     if timeout is not None:
         timer.join()
-    if update_env:
-        update_env_thread.join()
-    if not shell:
-        update_pkl_thread.join()
 
     # Finish up and decide what to return
     if stderr != '':
@@ -272,6 +268,7 @@ def execute(command,
 
     # Decode any pickled objects from disk
     if update_env:
+        update_env_thread.join()
         if env_output_key in thread_output:
             env.update(thread_output[env_output_key])
         else:
@@ -284,6 +281,7 @@ def execute(command,
             raise RuntimeException("Missing update env after running command")
 
     if not shell:
+        update_pkl_thread.join()
         if pkl_output_key in thread_output:
             return thread_output[pkl_output_key]
         else:

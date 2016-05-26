@@ -80,6 +80,8 @@ if not _after_bootstrap:
                                                  'Unknown: No status for Job': 'failed'},
                                                 "Mapping of Dirac to Ganga Job statuses used to construct a queue to finalize a given job, i.e. final statues in 'statusmapping'")
 
+    configDirac.addOption('serializeBackend', False, 'Developer option to serialize Dirac code for profiling/debugging')
+
 def standardSetup():
 
     import PACKAGE
