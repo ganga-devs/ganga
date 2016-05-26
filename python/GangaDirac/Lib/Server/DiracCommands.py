@@ -113,23 +113,22 @@ def addFile(lfn, file, diracSE, guid):
     output(dirac.addFile(lfn, file, diracSE, guid))
 
 
-def getOutputSandbox(id, outputDir=os.getcwd(), oversized=False, noJobDir=True, pipe_out=True):
+def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True, pipe_out=True):
     '''
     Get the outputsandbox and return the output from Dirac to the calling function
     id: the DIRAC jobid of interest
     outputDir: output directory locall on disk to use
     oversized: is this output sandbox oversized this will be modified
-    noJobDir: should we create a folder with the DIRAC job ID?
     output: should I output the Dirac output or should I return a python object (False)'''
-    result = dirac.getOutputSandbox(id, outputDir, oversized, noJobDir)
+    result = dirac.getOutputSandbox(id, outputDir, oversized)
     if result is not None and result.get('OK', False):
+        tmpdir = os.path.join(outputDir, str(id))
+        os.system('mv -f %s/* %s/.' % (tmpdir, outputDir))
+        os.system('rm -rf %s' % tmpdir)
+        ganga_logs = glob.glob('%s/*_Ganga_*.log' % outputDir)
 
-        if not noJobDir:
-            tmpdir = os.path.join(outputDir, str(id))
-            os.system('mv -f %s/* %s/. ; rm -rf %s' % (tmpdir, outputDir, tmpdir))
-        
-        os.system('for file in $(ls %s/*_Ganga_*.log); do ln -s ${file} %s/stdout; break; done' % (outputDir, outputDir))
-
+        if ganga_logs:
+            os.system('ln -s %s %s/stdout' % (ganga_logs[0], outputDir))
     if pipe_out:
         output(result)
     else:
@@ -218,14 +217,13 @@ def normCPUTime(id, pipe_out=True):
         return ncput
 
 
-def finished_job(id, outputDir=os.getcwd(), oversized=True, noJobDir=True):
+def finished_job(id, outputDir=os.getcwd(), oversized=True):
     ''' Nesting function to reduce number of calls made against DIRAC when finalising a job, takes arguments such as getOutputSandbox
     Returns the CPU time of the job as a dict, the output sandbox information in another dict and a dict of the LFN of any uploaded data'''
     out_cpuTime = normCPUTime(id, pipe_out=False)
-    out_sandbox = getOutputSandbox(id, outputDir, oversized, noJobDir, pipe_out=False)
+    out_sandbox = getOutputSandbox(id, outputDir, oversized, pipe_out=False)
     out_dataInfo = getOutputDataInfo(id, pipe_out=False)
-    outStateTime = {'completed' : getStateTime(id, 'completed', pipe_out=False)}
-    output((out_cpuTime, out_sandbox, out_dataInfo, outStateTime))
+    output((out_cpuTime, out_sandbox, out_dataInfo))
 
 
 def status(job_ids, statusmapping):
@@ -265,15 +263,12 @@ def status(job_ids, statusmapping):
     output(status_list)
 
 
-def getStateTime(id, statusi, pipe_out=True):
+def getStateTime(id, status):
     ''' Return the state time from DIRAC corresponding to DIRACJob tranasitions'''
     log = dirac.loggingInfo(id)
     if 'Value' not in log:
-        if pipe_out:
-            output(None)
-            return
-        else:
-            return None
+        output(None)
+        return
     L = log['Value']
     checkstr = ''
 
@@ -294,16 +289,11 @@ def getStateTime(id, statusi, pipe_out=True):
 
     for l in L:
         if checkstr in l[0]:
-            T = datetime.datetime(*(time.strptime(l[3], "%Y-%m-%d %H:%M:%S")[0:6]))
-            if pipe_out:
-                output(T)
-                return
-            else:
-                return T
-    if pipe_out:
-        output(None)
-    else:
-        return None
+            T = datetime.datetime(
+                *(time.strptime(l[3], "%Y-%m-%d %H:%M:%S")[0:6]))
+            output(T)
+            return
+    output(None)
 
 
 def timedetails(id):
@@ -323,7 +313,8 @@ def getJobPilotOutput(id, dir):
     pwd = os.getcwd()
     try:
         os.chdir(dir)
-        os.system('rm -f pilot_%d/std.out && rmdir pilot_%d ' % (id, id))
+        os.system('rm -f pilot_%d/std.out' % id)
+        os.system('rmdir pilot_%d' % id)
         result = DiracAdmin().getJobPilotOutput(id)
     finally:
         os.chdir(pwd)
