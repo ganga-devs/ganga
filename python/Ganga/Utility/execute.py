@@ -4,12 +4,10 @@ import subprocess
 import threading
 import pickle
 import signal
-from tempfile import NamedTemporaryFile
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
-#execute_lock = threading.RLock()
 
 def env_update_script(indent=''):
     """ This function creates an extension to a python script, or just a python script to be run at the end of the
@@ -19,23 +17,21 @@ def env_update_script(indent=''):
     Args:
         indent (str): This is the indent to apply to the script if this script is to be appended to a python file
     """
-    this_env_file = NamedTemporaryFile(delete=False)
-    with open(this_env_file.name, 'w') as some_file:
-        pass
+    fdread, fdwrite= os.pipe()
     this_script = '''
 import os, pickle
-with open('###TEMP_WRITE###','w') as envpipe:
+os.close(###FD_READ###)
+with os.fdopen(###FD_WRITE###,'wb') as envpipe:
     pickle.dump(os.environ, envpipe)
 '''
     from Ganga.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
-    script =  script.replace('###INDENT###'    , indent            )\
-                    .replace('###TEMP_WRITE###', this_env_file.name)
+    script =  script.replace('###INDENT###'  , indent      )\
+                    .replace('###FD_READ###' , str(fdread) )\
+                    .replace('###FD_WRITE###', str(fdwrite))
 
-    return script, this_env_file
-
-# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+    return script, (fdread, fdwrite)
 
 
 def python_wrapper(command, python_setup='', update_env=False, indent=''):
@@ -49,13 +45,12 @@ def python_wrapper(command, python_setup='', update_env=False, indent=''):
         indent (str): This allows for an indent to be applied to the script so it can be placed inside other python scripts
     This returns the NamedTemporaryFile objects for the env_update_script, the python wrapper itself and the script which has been generated to be run
     """
-    this_pkl_file = NamedTemporaryFile(delete=False)
-    with open(this_pkl_file.name, 'w') as some_file:
-        pass
+    fdread, fdwrite = os.pipe()
     this_script = '''
 from __future__ import print_function
 import os, sys, pickle, traceback
-with open('###TEMP_WRITE###', 'w') as PICKLE_STREAM:
+os.close(###PKL_FDREAD###)
+with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     def output(data):
         print(pickle.dumps(data), file=PICKLE_STREAM)
     local_ns = {'pickle'        : pickle,
@@ -74,34 +69,30 @@ with open('###TEMP_WRITE###', 'w') as PICKLE_STREAM:
     script =  script.replace('###INDENT###'     , indent              )\
                     .replace('###SETUP###'      , python_setup.strip())\
                     .replace('###COMMAND###'    , command.strip()     )\
-                    .replace('###TEMP_WRITE###' , this_pkl_file.name  )
-    this_env_file = None
+                    .replace('###PKL_FDREAD###' , str(fdread)         )\
+                    .replace('###PKL_FDWRITE###', str(fdwrite)        )
+    env_file_pipes = None
     if update_env:
-        update_script, this_env_file = env_update_script()
+        update_script, env_file_pipes = env_update_script()
         script += update_script
-    return script, this_pkl_file, this_env_file
+    return script, (fdread, fdwrite), env_file_pipes
 
-# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
-def __reader(temp_file, output_ns, output_var):
+def __reader(pipes, output_ns, output_var):
     """ This function un-pickles a pickle from a file and return it as an element in a dictionary
     Args:
-        temp_file (str): This is the name of the file containing the pickle
+        pipes (tuple): This is a tuple containing the (read_pipe, write_pipe) from os.pipes containing the pickled object
         output_ns (dict): This is the dictionary we should put the un-pickled object
         outptu_var (str): This is the key we should use to determine where to put the object in the output_ns
     """
-    logger.debug("Accessing: %s" % temp_file)
-    with open(temp_file, 'r') as read_file:
-        data = read_file.read()
+    os.close(pipes[1])
+    with os.fdopen(pipes[0], 'rb') as read_file:
+        try:
+            output_ns.update({output_var: pickle.load(read_file)})
+        except Exception as err:
+            logger.error("Err: %s" % str(err))
+            raise  # EOFError triggered if command killed with timeout
 
-    try:
-        data = pickle.loads(data)
-        output_ns.update({output_var: data})
-    except Exception as err:
-        logger.error("Err: %s" % str(err))
-        raise  # EOFError triggered if command killed with timeout
-
-# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 
 def __timeout_func(process, timed_out):
@@ -119,12 +110,48 @@ def __timeout_func(process, timed_out):
         except Exception as e:
             logger.error("Exception trying to kill process: %s" % e)
 
-# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+
+def get_env():
+    """ Function to return a clean copy of the env that we're currently running in """
+
+    # If we're not updating the environment, and the environment ie empty we need to create a new environment to be use by the command
+    pipe = subprocess.Popen('python -c "from __future__ import print_function;import os;print(os.environ)"',
+                            env=None, cwd=None, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    output = pipe.communicate()
+    env = eval(output[0])
+
+    if env:
+        for k, v in env.iteritems():
+            if not str(v).startswith('() {'):
+                env[k] = os.path.expandvars(v)
+            # Be careful with exported bash functions!
+            else:
+                this_string = str(v).split('\n')
+                final_str = ""
+                for line in this_string:
+                    final_str += str(os.path.expandvars(line)).strip()
+                    if not final_str.endswith(';'):
+                        final_str += " ;"
+                final_str += " "
+                env[k] = final_str
+
+    return env
 
 
-#def execute(command, timeout=None,env=None,cwd=None,shell=True,python_setup='',eval_includes=None,update_env=False,return_code=None):
-#    with execute_lock:
-#        return _execute(command, timeout, env, cwd, shell, python_setup, eval_includes, update_env, return_code)
+def start_timer(p, timeout):
+    """ Function to construct and return the timer thread and timed_out
+    Args:
+        p (object): This is the subprocess object which will be used to run the command of interest
+        timeout (int): This is the timeout in seconds after which the command will be killed
+    """
+    # Start the background thread to catch timeout events
+    timed_out = threading.Event()
+    timer = threading.Timer(timeout, __timeout_func, args=(p, timed_out))
+    timer.daemon = True
+    if timeout is not None:
+        timer.start()
+    return timer, timed_out
+
 
 def execute(command,
             timeout=None,
@@ -145,7 +172,7 @@ def execute(command,
         cwd (str): This is the cwd the command is to be executed within.
         shell (bool): True for a bash command to be executed, False for a command to be executed within Python
         python_setup (str): A python command to be executed beore the main command is
-        eval_includes (str): A string to be executed in the namespace of the output of the command
+        eval_includes (str): An string used to construct an environment which, if passed, is used to eval the stdout into a python object
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
         return_code (int): This is the returned code from the command which is executed
     """
@@ -153,13 +180,13 @@ def execute(command,
     if update_env and env is None:
         raise GangaException('Cannot update the environment if None given.')
 
-    temp_pkl_file = None
-    temp_env_file = None
+    pkl_file_pipes = None
+    env_file_pipes = None
 
     if not shell:
         # We want to run a pyhton command inside a small Python wrapper
         stream_command = 'python -'
-        command, temp_pkl_file, temp_env_file = python_wrapper(command, python_setup, update_env)
+        command, pkl_file_pipes, env_file_pipes = python_wrapper(command, python_setup, update_env)
     else:
         # We want to run a shell command inside a _NEW_ shell environment.
         # i.e. What I run here I expect to behave in the same way from the command line after I exit Ganga
@@ -167,52 +194,22 @@ def execute(command,
         if update_env:
             # note the exec gets around the problem of indent and base64 gets
             # around the \n
-            command_update, temp_env_file = env_update_script()
+            command_update, env_file_pipes = env_update_script()
             command += ''';python -c "import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(command_update)
 
-    # TODO make this into a small support function not in execute
+    # Some minor changes to cleanup the getting of the env
     if env is None and not update_env:
-        # If we're not updating the environment, and the environment ie empty we need to create a new environment to be use by the command
-        pipe = subprocess.Popen('python -c "from __future__ import print_function;import os;print(os.environ)"',
-                                env=None, cwd=None, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        output = pipe.communicate()
-        env = eval(output[0])
-
-        if env:
-            for k, v in env.iteritems():
-                if not str(v).startswith('() {'):
-                    env[k] = os.path.expandvars(v)
-                # Be careful with exported bash functions!
-                else:
-                    this_string = str(v).split('\n')
-                    final_str = ""
-                    for line in this_string:
-                        final_str += str(os.path.expandvars(line)).strip()
-                    if not final_str.endswith(';'):
-                        final_str += " ;"
-                    final_str += " "
+        env = get_env()
 
     # Construct the class which will contain the environment we want to run the command in
-    p = subprocess.Popen(stream_command,
-                         shell=True,
-                         env=env,
-                         cwd=cwd,
-                         preexec_fn=os.setsid,
-                         stdin=subprocess.PIPE,
-                         stdout=subprocess.PIPE,
-                         stderr=subprocess.PIPE)
-
-    # Start the background thread to catch timeout events
-    timed_out = threading.Event()
-    timer = threading.Timer(timeout, __timeout_func, args=(p, timed_out))
-    timer.daemon = True
-    started_threads = []
-    if timeout is not None:
-        timer.start()
-        started_threads.append(timer)
+    p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
+                         stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     # This is where we store the output
     thread_output = {}
+
+    # Start the timer thread used to kill commands which have likely stalled
+    timer, timed_out = start_timer(p, timeout)
 
     # Execute the main command of interest
     logger.debug("Executing Command:\n'%s'" % str(command))
@@ -221,39 +218,9 @@ def execute(command,
     # Close the timeout watching thread
     logger.debug("stdout: %s" % stdout)
     logger.debug("stderr: %s" % stderr)
+
     timer.cancel()
-    for t in started_threads:
-        t.join()
-
-
-    # Decode any pickled objects from disk
-    if update_env:
-        try:
-            __reader(temp_env_file.name, thread_output, 'env_output')
-        except Exception as err:
-            logger.error("Failed to Update Env after command:")# %s" % command)
-            logger.error("Error was: %s" % err)
-            logger.error("The pickle we tried to read was in: %s" % temp_env_file.name)
-            logger.error("stdout was: %s" % stdout)
-            logger.error("stderr was: %s" % stderr)
-            raise
-                                                        
-    if not shell:
-        try:
-            __reader(temp_pkl_file.name, thread_output, 'pkl_output')
-        except Exception as err:
-            logger.error("Failed to Pickle output from command: %s" % command)
-            logger.error("Error was: %s" % err)
-            logger.error("The pickle we tried to read was in: %s" % temp_pkl_file.name)
-            logger.error("stdout was: %s" % stdout)
-            logger.error("stderr was: %s" % stderr)
-            raise
-
-    # Cleanup after ourselves
-    for file_ in [temp_env_file, temp_pkl_file]:
-        if file_:
-            os.unlink(file_.name)
-
+    timer.join()
 
     # Finish up and decide what to return
     if stderr != '':
@@ -264,24 +231,50 @@ def execute(command,
     if timed_out.isSet():
         return 'Command timed out!'
 
-    if update_env and 'env_output' in thread_output:
-        env.update(thread_output['env_output'])
+    # Decode any pickled objects from disk
+    if update_env:
+        try:
+            env_output_key = 'env_output'
+            __reader(env_file_pipes, thread_output, env_output_key)
+        except Exception as err:
+            logger.error("Failed to Update Env after command: %s" % command)
+            logger.error("Error was: %s" % err)
+            logger.error("stdout was: %s" % stdout)
+            logger.error("stderr was: %s" % stderr)
+            raise
+        if env_output_key in thread_output:
+            env.update(thread_output[env_output_key])
 
-    if not shell and 'pkl_output' in thread_output:
-        return thread_output['pkl_output']
+    if not shell:
+        try:
+            pkl_output_key = 'pkl_output'
+            __reader(pkl_file_pipes, thread_output, pkl_output_key)
+        except Exception as err:
+            logger.error("Failed to Pickle output from command: %s" % command)
+            logger.error("Error was: %s" % err)
+            logger.error("stdout was: %s" % stdout)
+            logger.error("stderr was: %s" % stderr)
+            raise
+        if pkl_output_key in thread_output:
+            return thread_output[pkl_output_key]
 
     try:
-        stdout = pickle.loads(stdout)
+        if isinstance(stdout, str) and stdout != '':
+            stdout = pickle.loads(stdout)
     except Exception as err:
-        logger.debug("Err: %s" % str(err))
+        logger.error("Err: %s" % str(err))
         local_ns = {}
         if isinstance(eval_includes, str):
-            exec(eval_includes, {}, local_ns)
-        try:
-            stdout = eval(stdout, {}, local_ns)
-        except Exception as err2:
-            logger.debug("Err2: %s" % str(err2))
-            pass
+            try:
+                exec(eval_includes, {}, local_ns)
+            except:
+                logger.error("Failed to eval the env, can't eval stdout")
+                pass
+            try:
+                stdout = eval(stdout, {}, local_ns)
+            except Exception as err2:
+                logger.error("Err2: %s" % str(err2))
+                pass
 
     return_code = p.returncode
     return stdout
