@@ -13,7 +13,7 @@ def env_update_script(indent=''):
     """ This function creates an extension to a python script, or just a python script to be run at the end of the
     piece of code we're interedted in.
     This piece of code will dump the environment after the execution has taken place into a temporary file.
-    This returns a tuple of the script it's generated and the NamedTemporaryFile that will be used to store the env
+    This returns a tuple of the script it's generated and the pipes file handlers used to store the end in memory
     Args:
         indent (str): This is the indent to apply to the script if this script is to be appended to a python file
     """
@@ -43,7 +43,7 @@ def python_wrapper(command, python_setup='', update_env=False, indent=''):
         python_setup (str): This is some python code to be executed before the python code in question (aka a script header.
         update_env (bool): Contol whether we want to capture the env after running
         indent (str): This allows for an indent to be applied to the script so it can be placed inside other python scripts
-    This returns the NamedTemporaryFile objects for the env_update_script, the python wrapper itself and the script which has been generated to be run
+    This returns the file handler objects for the env_update_script, the python wrapper itself and the script which has been generated to be run
     """
     fdread, fdwrite = os.pipe()
     this_script = '''
@@ -83,7 +83,7 @@ def __reader(pipes, output_ns, output_var):
     Args:
         pipes (tuple): This is a tuple containing the (read_pipe, write_pipe) from os.pipes containing the pickled object
         output_ns (dict): This is the dictionary we should put the un-pickled object
-        outptu_var (str): This is the key we should use to determine where to put the object in the output_ns
+        output_var (str): This is the key we should use to determine where to put the object in the output_ns
     """
     os.close(pipes[1])
     with os.fdopen(pipes[0], 'rb') as read_file:
