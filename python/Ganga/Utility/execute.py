@@ -217,7 +217,8 @@ def execute(command,
     logger.debug("stderr: %s" % stderr)
 
     timer.cancel()
-    timer.join()
+    if timeout is not None:
+        timer.join()
 
     # Finish up and decide what to return
     if stderr != '':
