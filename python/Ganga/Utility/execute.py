@@ -17,7 +17,7 @@ def env_update_script(indent=''):
     Args:
         indent (str): This is the indent to apply to the script if this script is to be appended to a python file
     """
-    fdread, fdwrite= os.pipe()
+    fdread, fdwrite = os.pipe()
     this_script = '''
 import os, pickle
 os.close(###FD_READ###)
