@@ -225,7 +225,7 @@ def execute(command,
     if env is None and not update_env:
         env = get_env()
 
-    # Construct the class which will contain the environment we want to run the command in
+    # Construct the object which will contain the environment we want to run the command in
     p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd_, preexec_fn=os.setsid,
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
