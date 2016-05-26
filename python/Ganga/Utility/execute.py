@@ -2,8 +2,10 @@ import os
 import base64
 import subprocess
 import threading
-import pickle
+import cPickle as pickle
 import signal
+import shutil
+import tempfile
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -19,7 +21,8 @@ def env_update_script(indent=''):
     """
     fdread, fdwrite = os.pipe()
     this_script = '''
-import os, pickle
+import os
+import cPickle as pickle
 os.close(###FD_READ###)
 with os.fdopen(###FD_WRITE###,'wb') as envpipe:
     pickle.dump(os.environ, envpipe)
@@ -48,8 +51,10 @@ def python_wrapper(command, python_setup='', update_env=False, indent=''):
     fdread, fdwrite = os.pipe()
     this_script = '''
 from __future__ import print_function
-import os, sys, pickle, traceback
+import os, sys, traceback
+import cPickle as pickle
 os.close(###PKL_FDREAD###)
+import time
 with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     def output(data):
         print(pickle.dumps(data), file=PICKLE_STREAM)
@@ -59,9 +64,11 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     try:
         full_command = """###SETUP### """
         full_command += """ \n###COMMAND### """
+        full_command += """\nimport sys; sys.exit(0)"""
         exec(full_command, local_ns)
     except:
         print(pickle.dumps(traceback.format_exc()), file=PICKLE_STREAM)
+
 '''
     from Ganga.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
@@ -75,6 +82,7 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     if update_env:
         update_script, env_file_pipes = env_update_script()
         script += update_script
+    script += "\nimport sys; sys.exit(0)"
     return script, (fdread, fdwrite), env_file_pipes
 
 
@@ -191,6 +199,10 @@ def execute(command,
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
         return_code (int): This is the returned code from the command which is executed
     """
+    if cwd is None:
+        cwd_ = tempfile.mkdtemp()
+    else:
+        cwd_ = cwd
 
     if update_env and env is None:
         raise GangaException('Cannot update the environment if None given.')
@@ -214,7 +226,7 @@ def execute(command,
         env = get_env()
 
     # Construct the class which will contain the environment we want to run the command in
-    p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
+    p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd_, preexec_fn=os.setsid,
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     # This is where we store the output
@@ -255,6 +267,9 @@ def execute(command,
     if timed_out.isSet():
         return 'Command timed out!'
 
+    if cwd is None:
+        shutil.rmtree(cwd_, ignore_errors=True)
+
     # Decode any pickled objects from disk
     if update_env:
         if env_output_key in thread_output:
@@ -264,7 +279,9 @@ def execute(command,
             logger.error("Command: %s" % command)
             logger.error("stdout: %s" % stdout)
             logger.error("stderr: %s" % stderr)
-            raise Exception("Missing update env after running command")
+            # Too specific? Hopefully we'll never know
+            from Ganga.Core.exceptions import RuntimeException
+            raise RuntimeException("Missing update env after running command")
 
     if not shell:
         if pkl_output_key in thread_output:
@@ -274,10 +291,12 @@ def execute(command,
             logger.error("Command: %s" % command)
             logger.error("stdout: %s" % stdout)
             logger.error("stderr: %s" % stderr)
-            raise Exception("Missing pickled output after running command")
+            # Too specific? Hopefully we'll never know
+            from Ganga.Core.exceptions import RuntimeException
+            raise RuntimeException("Missing pickled output after running command")
 
     try:
-        if isinstance(stdout, str) and stdout != '':
+        if stdout:
             stdout = pickle.loads(stdout)
     except Exception as err:
         logger.error("Err: %s" % str(err))
