@@ -644,7 +644,8 @@ class DiracFile(IGangaFile):
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
         stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE))
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
-            self.locations.append(destSE)
+            if destSE not in self.locations:
+                self.locations.append(destSE)
             return
         logger.error("Error in replicating file '%s' : %s" % (self.lfn, stdout))
         return stdout
