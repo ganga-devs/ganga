@@ -11,7 +11,7 @@ logger = getLogger()
 
 def env_update_script(indent=''):
     """ This function creates an extension to a python script, or just a python script to be run at the end of the
-    piece of code we're interedted in.
+    piece of code we're interested in.
     This piece of code will dump the environment after the execution has taken place into a temporary file.
     This returns a tuple of the script it's generated and the pipes file handlers used to store the end in memory
     Args:
@@ -39,7 +39,7 @@ def python_wrapper(command, python_setup='', update_env=False, indent=''):
     Optionally we can also append to the end of this file a script to allow us to extract the environment after we've
     finished executing our command.
     Args:
-        command (str): This is the pthon code to be executed (can be multi-line)
+        command (str): This is the python code to be executed (can be multi-line)
         python_setup (str): This is some python code to be executed before the python code in question (aka a script header.
         update_env (bool): Contol whether we want to capture the env after running
         indent (str): This allows for an indent to be applied to the script so it can be placed inside other python scripts
@@ -167,7 +167,7 @@ def execute(command,
     This will execute an external python command when shell=False or an external bash command when shell=True
     Args:
         command (str): This is the command that we want to execute in string format
-        timeout (int): This is the timeout which we want to assign to a funtion and it will be killed if it runs for longer than n seconds
+        timeout (int): This is the timeout which we want to assign to a function and it will be killed if it runs for longer than n seconds
         env (dict): This is the environment to use for launching the new command
         cwd (str): This is the cwd the command is to be executed within.
         shell (bool): True for a bash command to be executed, False for a command to be executed within Python
