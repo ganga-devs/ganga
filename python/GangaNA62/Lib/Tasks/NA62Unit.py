@@ -1,4 +1,4 @@
-from Ganga.GPIDev.Lib.Tasks.common import *
+from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
@@ -25,7 +25,7 @@ class NA62Unit(IUnit):
       
    def createNewJob(self):
       """Create any jobs required for this unit"""      
-      j = GPI.Job()
+      j = makeRegisteredJob()
       j._impl.backend = self._getParent().backend.clone()
       j._impl.application = self._getParent().application.clone()
       j.application.run_number = j.application._impl.getNextRunNumber()
@@ -36,8 +36,8 @@ class NA62Unit(IUnit):
       if (status == "running") and (self.status == "new") and len(self.active_job_ids) != 0:
          ins_fields = "run,description,decay_type,radcor,mc_version,seed,events,output_name,jdl,mac,exe,stderr,stdout,status_url,submitter,submitted_on,status"
          #(submitted_on format is "2013-MM-DD HH:mm:ss")
-         app = GPI.jobs(self.active_job_ids[0]).application
-         ins_vals = "%d, '%s production job', %d, %d, %d, %d, %d, '%s_v%d_r%d.root', '__jdlfile__', '%s', '%s', 'na62run%d.err', 'na62run%d.out', '%s', 'ganga', '%s', 'SUBMITTED'" % (app.run_number, app.decay_name, app.decay_type, app.radcor, app.mc_version, app.run_number, app.num_events, app.file_prefix, app.mc_version, app.run_number, app._impl.getMACFileName(), app.script_name, app.run_number, app.run_number, GPI.jobs(self.active_job_ids[0]).backend.id, datetime.now().strftime("%Y-%m-%d %H:%m:%S"))
+         app = getJobByID(self.active_job_ids[0]).application
+         ins_vals = "%d, '%s production job', %d, %d, %d, %d, %d, '%s_v%d_r%d.root', '__jdlfile__', '%s', '%s', 'na62run%d.err', 'na62run%d.out', '%s', 'ganga', '%s', 'SUBMITTED'" % (app.run_number, app.decay_name, app.decay_type, app.radcor, app.mc_version, app.run_number, app.num_events, app.file_prefix, app.mc_version, app.run_number, app._impl.getMACFileName(), app.script_name, app.run_number, app.run_number, getJobByID(self.active_job_ids[0]).backend.id, datetime.now().strftime("%Y-%m-%d %H:%m:%S"))
 
          nec_file = ".gpytho"
          work_dir = "/clusterhome/home/protopop"

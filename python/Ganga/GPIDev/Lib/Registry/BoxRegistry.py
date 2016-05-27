@@ -30,7 +30,7 @@ class BoxMetadataObject(GangaObject):
 
     """Internal object to store names"""
     _schema = Schema(Version(1, 0), {"name": SimpleItem(
-        defvalue="", copyable=1, doc='the name of this object', typelist=["str"])})
+        defvalue="", copyable=1, doc='the name of this object', typelist=[str])})
     _name = "BoxMetadataObject"
     _category = "internal"
     _enable_plugin = True
@@ -39,8 +39,8 @@ class BoxMetadataObject(GangaObject):
 
 class BoxRegistry(Registry):
 
-    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
-        super(BoxRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
+    def __init__(self, name, doc, update_index_time=30):
+        super(BoxRegistry, self).__init__(name, doc, update_index_time)
 
         self.stored_slice = BoxRegistrySlice(self.name)
         self.stored_slice.objects = self
@@ -71,9 +71,6 @@ class BoxRegistry(Registry):
         cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:
-            #if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
-            #    c[cv] = obj.getNodeIndexCache()[cv]
-            #else:
             try:
                 c[cv] = getattr(obj, cv)
             except AttributeError as err:

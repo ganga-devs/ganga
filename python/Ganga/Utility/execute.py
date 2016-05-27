@@ -6,7 +6,6 @@ import pickle
 import signal
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Lib.File.FileUtils import indentScript
 logger = getLogger()
 
 def env_update_script(indent=''):
@@ -17,6 +16,7 @@ os.close(###FD_READ###)
 with os.fdopen(###FD_WRITE###,'wb') as envpipe:
     pickle.dump(os.environ, envpipe)
 '''
+    from Ganga.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
     script =  script.replace('###INDENT###'  , indent      )\
@@ -46,6 +46,7 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     except:
         print(pickle.dumps(traceback.format_exc()), file=PICKLE_STREAM)
 '''
+    from Ganga.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
     script =  script.replace('###INDENT###'     , indent              )\
@@ -110,7 +111,7 @@ def execute(command,
         # note the exec gets around the problem of indent and base64 gets
         # around the \n
         command_update, envread, envwrite = env_update_script()
-        command += ''';python -c ""from __future__ import print_function;import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(command_update)
+        command += ''';python -c "from __future__ import print_function;import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(command_update)
 
     if env is None and not update_env:
         pipe = subprocess.Popen('python -c "from __future__ import print_function;import os;print(os.environ)"',

@@ -5,41 +5,47 @@ import copy
 
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Lib.File import FileUtils
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 
-"""
-Checks if the output files of a given job(we are interested in the backend) 
-should be postprocessed on the WN, depending on job.backend_output_postprocess dictionary
-"""
-
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
 
 def outputFilePostProcessingOnWN(job, outputFileClassName):
-    backendClassName = getName(job.backend)
-    
-    backend_output_postprocess = stripProxy(job).getBackendOutputPostprocessDict()
-    if backendClassName in backend_output_postprocess:
-        if outputFileClassName in backend_output_postprocess[backendClassName]:
-            if backend_output_postprocess[backendClassName][outputFileClassName] == 'WN':
-                return True
-
-    return False
-
-
-"""
-Checks if the output files of a given job(we are interested in the backend) 
-should be postprocessed on the client, depending on job.backend_output_postprocess dictionary
-"""
+    """
+    Checks if the output files of a given job(we are interested in the backend) 
+    should be postprocessed on the WN, depending on job.backend_output_postprocess dictionary
+    """
+    return outputFilePostProcessingTestForWhen(job, outputFileClassName, 'WN')
 
 
 def outputFilePostProcessingOnClient(job, outputFileClassName):
+    """
+    Checks if the output files of a given job(we are interested in the backend) 
+    should be postprocessed on the client, depending on job.backend_output_postprocess dictionary
+    """
+    return outputFilePostProcessingTestForWhen(job, outputFileClassName, 'client')
+
+
+def outputFilePostProxessingOnSubmit(job, outputFileClassName):
+    """
+    Checks if the output files of a given job(we are interested in the backend)
+    should have been postprocessed on job submission, depending on job.backend_output_postprocess dictionary
+    """
+    return outputFilePostProcessingTestForWhen(job, outputFileClassName, 'submit')
+
+
+def outputFilePostProcessingTestForWhen(job, outputFileClassName, when):
+    """
+    Checks if the output files of a given job(we are interested in the backend)
+    should be postprocessed 'when', depending on job.backend_output_postprocess dictionary
+    """
     backendClassName = getName(job.backend)
 
     backend_output_postprocess = stripProxy(job).getBackendOutputPostprocessDict()
     if backendClassName in backend_output_postprocess:
         if outputFileClassName in backend_output_postprocess[backendClassName]:
-            if backend_output_postprocess[backendClassName][outputFileClassName] == 'client':
+            if backend_output_postprocess[backendClassName][outputFileClassName] == when:
                 return True
 
     return False
@@ -227,6 +233,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
 for f in ###FILELIST###:
    os.symlink(f, os.path.basename(f)) 
 """
+                    from Ganga.GPIDev.Lib.File import FileUtils
                     shortScript = FileUtils.indentScript(shortScript, '###INDENT####')
 
                     insertScript += shortScript
@@ -282,8 +289,13 @@ def getWNCodeForOutputPostprocessing(job, indent):
                 outputFilesProcessedOnWN[outputfileClassName] = []
 
             if outputFilePostProcessingOnWN(job, outputfileClassName):
-                outputFilesProcessedOnWN[
-                    outputfileClassName].append(outputFile)
+                outputFilesProcessedOnWN[outputfileClassName].append(outputFile)
+
+    if not patternsToZip:
+        if not any(outputFilesProcessedOnWN.values()):
+            return ""
+
+    logger.debug("Process: '%s' on WN" % str(outputFilePostProcessingOnWN))
 
     shortScript = """\n
 import os, glob
@@ -294,6 +306,7 @@ for patternToZip in ###PATTERNSTOZIP###:
 postprocesslocations = file(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFILENAME###'), 'w')  
 """
 
+    from Ganga.GPIDev.Lib.File import FileUtils
     shortScript = FileUtils.indentScript(shortScript, '###INDENT###')
 
     insertScript = shortScript

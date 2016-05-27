@@ -113,8 +113,8 @@ class LCG(IBackend):
         'requirements': ComponentItem('LCGRequirements', doc='Requirements for the resource selection'),
         'sandboxcache': ComponentItem('GridSandboxCache', copyable=1, doc='Interface for handling oversized input sandbox'),
         'parent_id': SimpleItem(defvalue='', protected=1, copyable=0, hidden=1, doc='Middleware job identifier for its parent job'),
-        'id': SimpleItem(defvalue='', typelist=['str', 'list'], protected=1, copyable=0, doc='Middleware job identifier'),
-        'status': SimpleItem(defvalue='', typelist=['str', 'dict'], protected=1, copyable=0, doc='Middleware job status'),
+        'id': SimpleItem(defvalue='', typelist=[str, list], protected=1, copyable=0, doc='Middleware job identifier'),
+        'status': SimpleItem(defvalue='', typelist=[str, dict], protected=1, copyable=0, doc='Middleware job status'),
         'middleware': SimpleItem(defvalue='GLITE', protected=0, copyable=1, doc='Middleware type', checkset='__checkset_middleware__'),
         'exitcode': SimpleItem(defvalue='', protected=1, copyable=0, doc='Application exit code'),
         'exitcode_lcg': SimpleItem(defvalue='', protected=1, copyable=0, doc='Middleware exit code'),
@@ -181,9 +181,11 @@ class LCG(IBackend):
         self.sandboxcache.middleware = self.middleware.upper()
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
-        try:
-            from Ganga.GPI import DQ2SandboxCache
-        except ImportError:
+        # Should this __really__ be in Core?
+        from Ganga.GPIDev.Base.Proxy import getProxyInterface
+        if 'DQ2SandboxCache' in getProxyInterface.__dict__.keys():
+            DQ2SandboxCache = getProxyInterface()['DQ2SandboxCache']
+        else:
             DQ2SandboxCache = None
 
         from Ganga.Lib.LCG.LCGSandboxCache import LCGSandboxCache

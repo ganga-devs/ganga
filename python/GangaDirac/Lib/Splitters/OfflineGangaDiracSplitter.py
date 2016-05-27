@@ -127,8 +127,8 @@ def calculateSiteSEMapping(file_replicas, wanted_common_site, uniqueSE, site_to_
             sitez.add(replica)
             if not replica in found:
 
-                from Ganga.GPI import queues
-                queues._monitoring_threadpool.add_function(addToMapping, (str(replica), site_to_SE_mapping))
+                from Ganga.Core.GangaThread.WorkerThreads import getQueues
+                getQueues()._monitoring_threadpool.add_function(addToMapping, (str(replica), site_to_SE_mapping))
 
                 maps_size = maps_size + 1
                 found.append(replica)
@@ -187,8 +187,8 @@ def lookUpLFNReplicas(inputs, allLFNData):
     global limit_divide_one
     for i in range(int(math.ceil(float(len(allLFNs)) * limit_divide_one))):
 
-        from Ganga.GPI import queues
-        queues._monitoring_threadpool.add_function(getLFNReplicas, (allLFNs, i, allLFNData))
+        from Ganga.Core.GangaThread.WorkerThreads import getQueues
+        getQueues()._monitoring_threadpool.add_function(getLFNReplicas, (allLFNs, i, allLFNData))
 
     while len(allLFNData) != int(math.ceil(float(len(allLFNs)) * limit_divide_one)):
         import time
@@ -201,25 +201,12 @@ def lookUpLFNReplicas(inputs, allLFNData):
 
 
 def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData, inputs):
-    from Ganga.GPIDev.Base.Proxy import stripProxy, isType
-    from Ganga.GPIDev.Base.Objects import GangaObject
-
-    myRegistry = {}
-    for this_LFN in inputs:
-        if isType(this_LFN, GangaObject):
-            myRegistry[this_LFN.lfn] = stripProxy(this_LFN)._getRegistry()
-            if myRegistry[this_LFN.lfn] is not None:
-                myRegistry[this_LFN.lfn].turnOffAutoFlushing()
 
     try:
         return _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData)
     except Exception as err:
         logger.debug("Sorting Exception: %s" % str(err))
         raise err
-    finally:
-        for this_LFN in myRegistry.keys():
-            if myRegistry[this_LFN] is not None:
-                myRegistry[this_LFN].turnOnAutoFlushing()
 
 def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
 

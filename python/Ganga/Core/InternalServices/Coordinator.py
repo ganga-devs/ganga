@@ -52,17 +52,17 @@ def isCredentialRequired(credObj):
         return Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken()
 
     if getName(credObj) == 'GridProxy':
-        from Ganga.GPI import jobs, typename
+        from Ganga.Core.GangaRepository import getRegistryProxy
+        from Ganga.Runtime.GPIFunctions import typename
         from Ganga.GPIDev.Base.Proxy import stripProxy
-        for j in jobs:
+        from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobStatus
+        for j in getRegistryProxy('jobs'):
             ji = stripProxy(j)
-            if ji.status in ['submitted', 'running', 'completing']:
-                if ji.getNodeIndexCache() is not None and 'display:backend' in ji.getNodeIndexCache().keys():
-                    if ji.getNodeIndexCache()['display:backend'] == 'LCG':
-                        return True
-                else:
-                    if getName(ji.backend) == 'LCG':
-                        return True
+            this_status = lazyLoadJobStatus(ji)
+            if this_status in ['submitted', 'running', 'completing']:
+                this_backend = lazyLoadJobBackend(ji)
+                if getName(this_backend) == 'LCG':
+                    return True
         return False
 
     log.warning("Unknown credential object : %s" % credObj)

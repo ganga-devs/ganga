@@ -137,6 +137,8 @@ class DQ2JobSplitter(ISplitter):
 
         faxSites = []
 
+        logger.debug('job.inputdata.dataset %s job.backend.site %s ' % (job.inputdata.dataset, job.backend.site))
+
         if not job.inputdata:
             if (job.application.options.find("%SKIPEVENTS") != 0) or (job.application.options.find("%RNDM") != 0):
 
@@ -350,31 +352,6 @@ class DQ2JobSplitter(ISplitter):
         additional_datasets = {}
         local_tag = False
         grid_tag = False
-
-        if job.inputdata.tag_files:
-            # find tag refs for these TAG files -  use the TagPrepare code
-            logger.info("Attempting to find references in given tag files...")
-            from GangaAtlas.Lib.TagPrepare.get_tag_info2 import *
-            
-            app = job.application
-            for f in job.inputdata.tag_files:
-                if not os.path.exists(f):
-                    raise ApplicationConfigurationError(None, "Couldn't find tag file '%s'." % f)
-
-                ref = ''
-                if 'collRefName' not in app.atlas_run_config['input'] or not app.atlas_run_config['input']['collRefName'] in ['StreamAOD_ref', 'StreamESD_ref', 'StreamRAW_ref']:
-                    if job.inputdata.tag_coll_ref in ['AOD', 'ESD', 'RAW']:
-                        ref = job.inputdata.tag_coll_ref
-                    else:
-                        raise ApplicationConfigurationError(None, "No valid Collection Referenece in job options. Maybe use inputdata.tag_coll_ref?")
-                else:
-                    ref = app.atlas_run_config['input']['collRefName'][6:9]
-                    
-                tag_info = createTagInfo(ref, [f])
-                if len(tag_info) == 0:
-                    raise ApplicationConfigurationError(None, "Couldn't find tag info for file '%s'." % f)
-                
-                job.inputdata.tag_info.update(tag_info)
 
         # check for complete TAG mapping between files
         if job.inputdata.tag_info:
@@ -768,6 +745,7 @@ class DQ2JobSplitter(ISplitter):
         #print "%10s %20s %10s %10s %10s %10s %10s %10s %10s "  %("nrjob", "guid", "nevents", "skip_events", "max_events", "unused_evts", "id_lower", "id_upper", "counter")
 
         for dataset, siteinfo in siteinfos.iteritems():
+            logger.debug('dataset [%s] siteinfo [%s]' % (dataset, siteinfo))
 
             self.numfiles = orig_numfiles
             self.numsubjobs = orig_numsubjobs
@@ -1228,6 +1206,7 @@ class DQ2JobSplitter(ISplitter):
 
         if not subjobs:
             logger.error('DQ2JobSplitter did not produce any subjobs! Either the dataset is not present in the cloud or at the site or all chosen sites are black-listed for the moment.')
+            logger.error('job.inputdata.dataset %s job.backend.site %s ' % (job.inputdata.dataset, job.backend.site))
             raise ApplicationConfigurationError(None,'!!! Stopping submission now !!!')
 
         # reset missing files in case of a previous submission attempt

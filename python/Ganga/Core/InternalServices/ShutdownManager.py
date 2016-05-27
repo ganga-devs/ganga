@@ -57,10 +57,6 @@ def _ganga_run_exitfuncs():
 
     from Ganga.GPIDev.Base.Proxy import getName
 
-    #print("Shutting Down Ganga Repositories")
-    from Ganga.Runtime import Repository_runtime
-    Repository_runtime.flush_all()
-
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
 
@@ -73,7 +69,10 @@ def _ganga_run_exitfuncs():
     if monitoring_component is not None:
         from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
         getStackTrace()
-        monitoring_component.disableMonitoring()
+        if monitoring_component.alive:
+            monitoring_component.disableMonitoring()
+            monitoring_component.stop()
+            monitoring_component.join()
 
     ## Stop the tasks system from running it's GangaThread before we get to the GangaThread shutdown section!
     from Ganga.GPIDev.Lib.Tasks import stopTasks

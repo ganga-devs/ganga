@@ -13,7 +13,7 @@ from Ganga.Utility.logic import implies
 
 import Ganga.Utility.Config
 
-from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError
+from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError, GangaException
 
 from Ganga.Utility.Plugin import allPlugins
 
@@ -113,6 +113,9 @@ class Schema(object):
     def name(self):
         from Ganga.GPIDev.Base.Proxy import getName
         return getName(self._pluginclass)
+
+    def allItemNames(self):
+        return self.datadict.keys()
 
     def allItems(self):
         if self.datadict is None: return zip()
@@ -237,6 +240,8 @@ class Schema(object):
         from Ganga.Utility.Config import Config
         is_finalized = Config._after_bootstrap
 
+        useDefVal = False
+
         try:
             # Attempt to get the relevant config section
             config = Config.getConfig(def_name, create=False)
@@ -244,13 +249,19 @@ class Schema(object):
             if is_finalized and stored_attr_key in _found_attrs and not config.hasModified():
                 defvalue = _found_attrs[stored_attr_key]
             else:
-                defvalue = config[attr]
-                from Ganga.GPIDev.Base.Proxy import isProxy
-                if isProxy(defvalue):
-                    raise GangaException("(1)Proxy found where it shouldn't be in the Config: %s" % stored_attr_key)
-                ## Just in case a developer puts the proxied object into the default value!
-                _found_attrs[stored_attr_key] = defvalue
+                if attr in config.getEffectiveOptions():
+                    defvalue = config[attr]
+                    from Ganga.GPIDev.Base.Proxy import isProxy
+                    if isProxy(defvalue):
+                        raise GangaException("(1)Proxy found where it shouldn't be in the Config: %s" % stored_attr_key)
+                    ## Just in case a developer puts the proxied object into the default value!
+                    _found_attrs[stored_attr_key] = defvalue
+                else:
+                    useDefVal = True
         except (KeyError, Config.ConfigError):
+            useDefVal = True
+
+        if useDefVal:
             # hidden, protected and sequence values are not represented in config
             defvalue = item['defvalue']
             from Ganga.GPIDev.Base.Proxy import isProxy
@@ -292,15 +303,7 @@ class Schema(object):
 
         # make a copy of the default value (to avoid strange effects if the
         # original modified)
-        try:
-            from Ganga.GPIDev.Base.Proxy import isType, getRuntimeGPIObject, stripProxy, getName
-            from Ganga.GPIDev.Base.Objects import Node
-            if isinstance(defvalue, Node):
-                return stripProxy(getRuntimeGPIObject(getName(defvalue)))
-            else:
-                return copy.deepcopy(defvalue)
-        except ImportError:
-            return copy.deepcopy(defvalue)
+        return copy.deepcopy(defvalue)
 
 
 # Items in schema may be either Components,Simples, Files or BindingItems.
@@ -342,6 +345,7 @@ class Schema(object):
 # Metaproperties of SimpleItems
 #
 # typelist  : a list of type names (strings) indicating allowed types of the property (e.g. ["str","int","Ganga.GPIDev.Lib.File.File.File"]), see: http://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaTypes
+#     please consider not using strings in future, we can support the type objects correctly
 #
 #
 # Metaproperties of ComponentItems:

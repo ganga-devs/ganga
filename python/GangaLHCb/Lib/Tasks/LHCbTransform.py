@@ -1,5 +1,6 @@
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.Core.exceptions import GangaException
+from Ganga.GPIDev.Lib.Tasks.common import getJobByID
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
@@ -10,9 +11,9 @@ from Ganga.GPIDev.Base.Proxy import isType
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-import Ganga.GPI as GPI
-from Ganga.GPIDev.Lib.Tasks.common import logger
+from Ganga.Utility.logging import getLogger
 
+logger = getLogger()
 
 class LHCbTransform(ITransform):
     _schema = Schema(Version(1, 0), dict(ITransform._schema.datadict.items() + {
@@ -71,7 +72,7 @@ class LHCbTransform(ITransform):
             for jid in unit.prev_job_ids:
                 try:
                     logger.warning("Removing data from job '%d'..." % jid)
-                    job = GPI.jobs(jid)
+                    job = getJobByID(jid)
 
                     jlist = []
                     if len(job.subjobs) > 0:
@@ -150,7 +151,7 @@ class LHCbTransform(ITransform):
 
             if len(self.units) == 0:
                 # check for appropriate splitter
-                from GPI import GaussSplitter
+                from GangaLHCb.Lib.Splitters.GaussSplitter import GaussSplitter
                 if not self.splitter or isType(self.splitter, GaussSplitter):
                     logger.warning("No GaussSplitter specified - first event info ignored")
 
@@ -175,7 +176,7 @@ class LHCbTransform(ITransform):
                 return None
 
             for inds in self.inputdata:
-                from Ganga.GPI import TaskChainInput
+                from Ganga.GPIDev.Lib.Tasks.TaskChainInput import TaskChainInput
                 if isType(inds, TaskChainInput) and inds.input_trf_id == parent._getParent().getID():
                     incl_pat_list += inds.include_file_mask
                     excl_pat_list += inds.exclude_file_mask
@@ -185,7 +186,7 @@ class LHCbTransform(ITransform):
         flist = []
         import re
         for parent in parent_units:
-            job = GPI.jobs(parent.active_job_ids[0])
+            job = getJobByID(parent.active_job_ids[0])
             if job.subjobs:
                 job_list = job.subjobs
             else:
@@ -269,7 +270,7 @@ class LHCbTransform(ITransform):
                     if f in unit.inputdata.files:
 
                         # kill the job
-                        job = GPI.jobs(unit.active_job_ids[0])
+                        job = getJobByID(unit.active_job_ids[0])
                         if job.status in ['submitted', 'running']:
                             job.kill()
 

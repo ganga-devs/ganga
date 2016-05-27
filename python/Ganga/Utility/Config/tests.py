@@ -1,5 +1,5 @@
 from __future__ import print_function
-from Ganga.Utility.Config import getConfig, configure
+from Ganga.Utility.Config import getConfig, setSessionValuesFromFiles
 
 if __name__ == "__main__":
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     print('path=', sys.path[0])
 
-    configure([sys.path[0] + '/ConfigTest.ini'])
+    setSessionValuesFromFiles([sys.path[0] + '/ConfigTest.ini'])
 
     print("C1")
     print(c1.getEffectiveOptions())
@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     c = getConfig('hierarchy')
 
-    configure([sys.path[0] + '/A.ini', sys.path[0] + '/B.ini'])
+    setSessionValuesFromFiles([sys.path[0] + '/A.ini', sys.path[0] + '/B.ini'])
 
     print(c.getEffectiveOptions())
 

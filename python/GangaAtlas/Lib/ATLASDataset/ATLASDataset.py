@@ -325,27 +325,31 @@ class ATLASLocalDataset(Dataset):
         super(ATLASLocalDataset, self).__init__()
         
     def get_dataset_from_list(self,list_file,no_dir_check = False):
-       """Get the dataset files as listed in a text file"""
+        """Get the dataset files as listed in a text file"""
 
-       logger.info('Reading list file %s ...',list_file)
+        logger.info('Reading list file %s ...', list_file)
 
-       if not os.path.exists(list_file):
-           logger.error('File %s does not exist',list_file)
-           return
+        if not os.path.exists(list_file):
+            logger.error('File %s does not exist', list_file)
+            return
 
-       f = open( list_file )
-       for ln in f.readlines():
+        f = open( list_file )
+        for ln in f.readlines():
 
-           # if no_dir_check then just copy the list of files
-           if no_dir_check:
-               self.names.append(ln.strip())
-               continue
+            # ignore comments and blank lines
+            if not ln.strip() or ln.strip()[0] == '#':
+                continue
 
-           # split the directory from the file and call get_dataset
-           if os.path.isdir(ln.strip()):
-               self.get_dataset( ln.strip() )
-           else:
-               self.get_dataset( os.path.dirname(ln.strip()), os.path.basename( ln.strip() ) )
+            # if no_dir_check then just copy the list of files
+            if no_dir_check:
+                self.names.append(ln.strip())
+                continue
+
+            # split the directory from the file and call get_dataset
+            if os.path.isdir(ln.strip()):
+                self.get_dataset( ln.strip() )
+            else:
+                self.get_dataset( os.path.dirname(ln.strip()), os.path.basename( ln.strip() ) )
            
     def get_dataset(self,directory,filter=None):
        """Get the actual files of a dataset"""
@@ -365,7 +369,7 @@ class ATLASLocalDataset(Dataset):
 
        self.names.extend( new_names )
 
-       self._setDirty(1)
+       self._setDirty()
 
     def get_dataset_filenames(self):
         """Get filenames"""

@@ -2,7 +2,7 @@
 Internal initialization of the repositories.
 """
 
-import Ganga.Utility.Config
+from Ganga.Utility.Config import getConfig, setConfigOption
 from Ganga.Utility.logging import getLogger
 import os.path
 from Ganga.Utility.files import expandfilename, fullpath
@@ -10,7 +10,7 @@ from Ganga.Core.GangaRepository import getRegistries
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.exceptions import GangaException
 
-config = Ganga.Utility.Config.getConfig('Configuration')
+config = getConfig('Configuration')
 logger = getLogger()
 
 _runtime_interface = None
@@ -68,7 +68,7 @@ def checkDiskQuota():
         if fullpath(data_partition, True).find('/afs') == 0:
             quota = subprocess.Popen(['fs', 'quota', '%s' % data_partition], stdout=subprocess.PIPE)
             output = quota.communicate()[0]
-            logger.debug("fs quota %s:\t%s" % (str(data_partition), str(output)))
+            logger.debug("fs quota %s:\t%s" % (data_partition, output))
         else:
             df = subprocess.Popen(["df", '-Pk', data_partition], stdout=subprocess.PIPE)
             output = df.communicate()[0]
@@ -79,17 +79,17 @@ def checkDiskQuota():
             quota_percent = output.split('%')[0]
             if int(quota_percent) >= partition_warning:
                 logger.warning("WARNING: You're running low on disk space, Ganga may stall on launch or fail to download job output")
-                logger.warning("WARNING: Please free some disk space on: %s" % str(data_partition))
+                logger.warning("WARNING: Please free some disk space on: %s" % data_partition)
             if int(quota_percent) >= partition_critical and config['force_start'] is False:
                 logger.error("You are crtitically low on disk space!")
                 logger.error("To prevent repository corruption and data loss we won't start Ganga.")
                 logger.error("Either set your config variable 'force_start' in .gangarc to enable starting and ignore this check.")
-                logger.error("Or, make sure you have more than %s percent free disk space on: %s" %(str(100-partition_critical), str(data_partition)))
+                logger.error("Or, make sure you have more than %s percent free disk space on: %s" %(100-partition_critical, data_partition))
                 raise GangaException("Not Enough Disk Space!!!")
         except GangaException as err:
-            raise err
+            raise
         except Exception as err:
-            logger.debug("Error checking disk partition: %s" % str(err))
+            logger.debug("Error checking disk partition: %s" % err)
 
     return
 
@@ -118,9 +118,9 @@ def bootstrap():
     try:
         checkDiskQuota()
     except GangaException as err:
-        raise err
+        raise
     except Exception as err:
-        logger.error("Disk quota check failed due to: %s" % str(err))
+        logger.error("Disk quota check failed due to: %s" % err)
 
     for registry in bootstrap_getreg():
         if registry.name in started_registries:
@@ -133,15 +133,23 @@ def bootstrap():
         logger.debug("Loc: %s" % registry.location)
         registry.startup()
         logger.debug("started " + registry.info(full=False))
-        if registry.name == "prep":
-            registry.print_other_sessions()
+
         started_registries.append(registry.name)
         proxied_registry_slice = registry.getProxy()
         retval.append((registry.name, proxied_registry_slice, registry.doc))
 
-    #import atexit
-    #atexit.register(shutdown)
-    #logger.debug("Registries: %s" % str(started_registries))
+    # Assuming all registries are started for all instances of Ganga atm
+    # Avoid ever, ever, calling the repository from behind the registry. This allows for all forms of bad behaviour
+    # This is a form of trade off but still is something which should be strongly discouraged!
+    # TODO investigate putting access to the repository behind a getter/setter which keeps the registry locked
+    other_sessions = bootstrap_getreg()[0].repository.get_other_sessions()
+    if other_sessions:
+        # Just print this from 1 repo only so chose the zeorth, nothing special
+        logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
+        logger.warning("Multiple Ganga sessions detected. The Monitoring Thread is being disabled.")
+        logger.warning("Type 'enableMonitoring' to restart")
+        setConfigOption('PollThread', 'autostart', False)
+
     return retval
 
 
@@ -161,6 +169,10 @@ def shutdown():
     logger.info('Registry Shutdown')
     #import traceback
     #traceback.print_stack()
+
+    # Flush all repos before we shut them down
+    flush_all()
+
     # shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
     # method to perform actions on the box and/or job registries.
     logger.debug(started_registries)
@@ -174,7 +186,7 @@ def shutdown():
             # in case this is called repeatedly, only call shutdown once
             started_registries.remove(registry.name)
     except Exception as err:
-        logger.debug("Err: %s" % str(err))
+        logger.debug("Err: %s" % err)
         logger.error("Failed to Shutdown prep Repository!!! please check for stale lock files")
         logger.error("Trying to shutdown cleanly regardless")
     #finally:
@@ -191,7 +203,7 @@ def shutdown():
             registry.shutdown()  # flush and release locks
         except Exception as x:
             logger.error("Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
-            logger.error("%s" % str(x))
+            logger.error("%s" % x)
             logger.error("Trying to Shutdown cleanly regardless")
         #finally:
         #    pass
@@ -230,8 +242,8 @@ def flush_all():
                 logger.debug("Flushing: %s" % thisName)
                 registry.flush_all()
         except Exception as err:
-            logger.debug("Failed to flush: %s" % str(thisName))
-            logger.debug("Err: %s" % str(err))
+            logger.debug("Failed to flush: %s" % thisName)
+            logger.debug("Err: %s" % err)
 
 
 def startUpRegistries(my_interface=None):

@@ -29,8 +29,8 @@ logger = Ganga.Utility.logging.getLogger()
 
 class JobRegistry(Registry):
 
-    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
-        super(JobRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
+    def __init__(self, name, doc, update_index_time=30):
+        super(JobRegistry, self).__init__(name, doc, update_index_time)
         self.stored_slice = JobRegistrySlice(self.name)
         self.stored_slice.objects = self
         self.stored_proxy = JobRegistrySliceProxy(self.stored_slice)
@@ -47,9 +47,6 @@ class JobRegistry(Registry):
         cache = {}
         for cv in cached_values:
             #print("cv: %s" % str(cv))
-            #if obj.getNodeIndexCache() and cv in obj.getNodeIndexCache():
-            #    cache[cv] = obj.getNodeIndexCache()[cv]
-            #else:
             cache[cv] = getattr(obj, cv)
             #logger.info("Setting: %s = %s" % (str(cv), str(cache[cv])))
         this_slice = JobRegistrySlice("jobs")
@@ -122,10 +119,8 @@ class JobRegistrySlice(RegistrySlice):
 
     def _getColour(self, obj):
         if isType(obj, Job):
-            if stripProxy(obj).getNodeIndexCache():
-                status_attr = stripProxy(obj).getNodeIndexCache()['display:status']
-            else:
-                status_attr = obj.status
+            from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus
+            status_attr = lazyLoadJobStatus(stripProxy(obj))
         elif isType(obj, str):
             status_attr = obj
         elif isType(obj, dict):

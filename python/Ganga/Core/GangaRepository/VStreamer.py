@@ -40,7 +40,7 @@ class XMLFileError(GangaException):
 
     def __str__(self):
         if self.excpt:
-            err = '(%s:%s)' % (str(type(self.excpt)), str(self.excpt))
+            err = '(%s:%s)' % (type(self.excpt), self.excpt)
         else:
             err = ''
         return "XMLFileError: %s %s" % (self.message, err)
@@ -59,7 +59,7 @@ def to_file(j, fobj=None, ignore_subs=[]):
     try:
         _raw_to_file(j, fobj, _ignore_subs)
     except Exception as err:
-        logger.error("XML to-file error for file:\n%s" % (str(err)))
+        logger.error("XML to-file error for file:\n%s" % (err))
         raise XMLFileError(err, "to-file error")
 
 # Faster, but experimental version of to_file without accept()
@@ -90,7 +90,7 @@ def from_file(f):
     try:
         return _raw_from_file(f)
     except Exception as err:
-        logger.error("XML from-file error for file:\n%s" % str(err))
+        logger.error("XML from-file error for file:\n%s" % err)
         raise XMLFileError(err, "from-file error")
 
 ##########################################################################
@@ -121,7 +121,7 @@ def fastXML(obj, indent='', ignore_subs=''):
     elif hasattr(obj, '_data'):
         v = obj._schema.version
         sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (getName(obj), v.major, v.minor, obj._category)]
-        for k, o in obj.getNodeData().iteritems():
+        for k, o in obj._data.items():
             if k != ignore_subs:
                 try:
                     if not obj._schema[k]._meta["transient"]:
@@ -130,7 +130,7 @@ def fastXML(obj, indent='', ignore_subs=''):
                         sl.extend(fastXML(o, indent + '  ', ignore_subs))
                         sl.append('</attribute>\n')
                 except KeyError as err:
-                    logger.debug("KeyError: %s" % str(err))
+                    logger.debug("KeyError: %s" % err)
                     pass
         sl.append(indent)
         sl.append('</class>')
@@ -352,8 +352,8 @@ class Loader(object):
                 aname = self.stack.pop()
                 obj = self.stack[-1]
                 # update the object's attribute
-                obj.setNodeAttribute(aname, value)
-                #logger.info("Setting: %s = %s" % (str(aname), str(value)))
+                obj.setSchemaAttribute(aname, value)
+                #logger.info("Setting: %s = %s" % (aname, value))
 
             # when </value> is seen the value_construct buffer (CDATA) should
             # be a python expression (e.g. quoted string)
@@ -381,13 +381,13 @@ class Loader(object):
             if name == 'class':
                 obj = self.stack[-1]
                 for attr, item in obj._schema.allItems():
-                    if not attr in obj.getNodeData():
+                    if not attr in obj._data:
                         #logger.info("Opening: %s" % attr)
                         if item._meta["sequence"] == 1:
-                            obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
+                            obj.setSchemaAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
                             #setattr(obj, attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
                         else:
-                            obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr))
+                            obj.setSchemaAttribute(attr, obj._schema.getDefaultValue(attr))
                             #setattr(obj, attr, obj._schema.getDefaultValue(attr))
 
                 #print("Constructed: %s" % getName(obj))
@@ -414,11 +414,11 @@ class Loader(object):
 
         obj = self.stack[-1]
 
-        #logger.info("obj.__dict__: %s" % str(obj.__dict__))
+        #logger.info("obj.__dict__: %s" % obj.__dict__)
 
         # Raise Exception if object is incomplete
         for attr, item in obj._schema.allItems():
-            if not attr in obj.getNodeData():
+            if not attr in obj._data:
                 raise AssertionError("incomplete XML file")
         return obj, self.errors
 
