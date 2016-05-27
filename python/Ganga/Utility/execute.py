@@ -199,10 +199,6 @@ def execute(command,
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
         return_code (int): This is the returned code from the command which is executed
     """
-    shouldDeleteCWD=False
-    if cwd is None:
-        shouldDeteCWD=True
-        cwd = tempfile.mkdtemp()
 
     if update_env and env is None:
         raise GangaException('Cannot update the environment if None given.')
@@ -262,9 +258,6 @@ def execute(command,
 
     if timed_out.isSet():
         return 'Command timed out!'
-
-    if shouldDeleteCWD:
-        shutil.rmtree(cwd, ignore_errors=True)
 
     # Decode any pickled objects from disk
     if update_env:
