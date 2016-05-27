@@ -113,7 +113,7 @@ def addFile(lfn, file, diracSE, guid):
     output(dirac.addFile(lfn, file, diracSE, guid))
 
 
-def getOutputSandbox(id, outputDir=os.getcwd(), oversized=False, noJobDir=True, pipe_out=True):
+def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True, noJobDir=True, pipe_out=True):
     '''
     Get the outputsandbox and return the output from Dirac to the calling function
     id: the DIRAC jobid of interest
