@@ -159,7 +159,7 @@ def start_timer(p, timeout):
 
 
 def update_thread(pipes, thread_output, output_key):
-    """ Function to contruct and return background thread used to read a pickled object into the thread_output for updating
+    """ Function to construct and return background thread used to read a pickled object into the thread_output for updating
         the environment after executing a users code
         Args:
             started_threads (list): List containing background threads which have been started
