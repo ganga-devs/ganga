@@ -4,8 +4,6 @@ import subprocess
 import threading
 import cPickle as pickle
 import signal
-import shutil
-import tempfile
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -30,9 +28,9 @@ with os.fdopen(###FD_WRITE###,'wb') as envpipe:
     from Ganga.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
-    script =  script.replace('###INDENT###'  , indent      )\
-                    .replace('###FD_READ###' , str(fdread) )\
-                    .replace('###FD_WRITE###', str(fdwrite))
+    script = script.replace('###INDENT###'  , indent      )\
+                   .replace('###FD_READ###' , str(fdread) )\
+                   .replace('###FD_WRITE###', str(fdwrite))
 
     return script, (fdread, fdwrite)
 
@@ -73,11 +71,11 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     from Ganga.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
-    script =  script.replace('###INDENT###'     , indent              )\
-                    .replace('###SETUP###'      , python_setup.strip())\
-                    .replace('###COMMAND###'    , command.strip()     )\
-                    .replace('###PKL_FDREAD###' , str(fdread)         )\
-                    .replace('###PKL_FDWRITE###', str(fdwrite)        )
+    script = script.replace('###INDENT###'     , indent              )\
+                   .replace('###SETUP###'      , python_setup.strip())\
+                   .replace('###COMMAND###'    , command.strip()     )\
+                   .replace('###PKL_FDREAD###' , str(fdread)         )\
+                   .replace('###PKL_FDWRITE###', str(fdwrite)        )
     env_file_pipes = None
     if update_env:
         update_script, env_file_pipes = env_update_script()
@@ -100,7 +98,6 @@ def __reader(pipes, output_ns, output_var):
         except Exception as err:
             logger.error("Err: %s" % str(err))
             raise  # EOFError triggered if command killed with timeout
-
 
 
 def __timeout_func(process, timed_out):
@@ -162,7 +159,7 @@ def start_timer(p, timeout):
 
 
 def update_thread(pipes, thread_output, output_key):
-    """ Functon to contrust and return background thread used to read a pickled object into the thread_output for updating
+    """ Function to construct and return background thread used to read a pickled object into the thread_output for updating
         the environment after executing a users code
         Args:
             started_threads (list): List containing background threads which have been started
@@ -199,10 +196,6 @@ def execute(command,
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
         return_code (int): This is the returned code from the command which is executed
     """
-    if cwd is None:
-        cwd_ = tempfile.mkdtemp()
-    else:
-        cwd_ = cwd
 
     if update_env and env is None:
         raise GangaException('Cannot update the environment if None given.')
@@ -226,7 +219,7 @@ def execute(command,
         env = get_env()
 
     # Construct the object which will contain the environment we want to run the command in
-    p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd_, preexec_fn=os.setsid,
+    p = subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, preexec_fn=os.setsid,
                          stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     # This is where we store the output
@@ -263,9 +256,6 @@ def execute(command,
     if timed_out.isSet():
         return 'Command timed out!'
 
-    if cwd is None:
-        shutil.rmtree(cwd_, ignore_errors=True)
-
     # Decode any pickled objects from disk
     if update_env:
         update_env_thread.join()
@@ -276,9 +266,7 @@ def execute(command,
             logger.error("Command: %s" % command)
             logger.error("stdout: %s" % stdout)
             logger.error("stderr: %s" % stderr)
-            # Too specific? Hopefully we'll never know
-            from Ganga.Core.exceptions import RuntimeException
-            raise RuntimeException("Missing update env after running command")
+            raise RuntimeError("Missing update env after running command")
 
     if not shell:
         update_pkl_thread.join()
@@ -289,9 +277,7 @@ def execute(command,
             logger.error("Command: %s" % command)
             logger.error("stdout: %s" % stdout)
             logger.error("stderr: %s" % stderr)
-            # Too specific? Hopefully we'll never know
-            from Ganga.Core.exceptions import RuntimeException
-            raise RuntimeException("Missing pickled output after running command")
+            raise RuntimeError("Missing pickled output after running command")
 
     try:
         if stdout:
