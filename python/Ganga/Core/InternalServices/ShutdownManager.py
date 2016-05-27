@@ -1,41 +1,8 @@
-##########################################################################
-# Ganga - a computational task management tool for easy access to Grid resources
-# http://cern.ch/ganga
-#
-# $Id: ShutdownManager.py,v 1.1 2008-07-17 16:40:50 moscicki Exp $
-#
-# Copyright (C) 2003-2007 The Ganga Project
-#
-# This file is part of Ganga.
-#
-# Ganga is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# Ganga is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-##########################################################################
 """
-Extend the behaviour of the default *atexit* module to support:
+Shutdown all Ganga services in the correct order
 
- 1) automatically catching of the (possible) exceptions thrown by exit function
- 
- 2) exit function prioritization (lower value means higher priority) 
-  E.g:
-    import atexit
-    atexit.register((<PRIORITY>,myfunc),args)  
-   
-  The backward-compatibility is kept so the existing code using :
-    import atexit
-    atexit.register(myfunc,args)
-  registers the function with the lowest priority (sys.maxint)
+Attributes:
+    logger (logger): Logger for the shutdown manager
 """
 
 # Ganga imports
@@ -76,47 +43,47 @@ def _ganga_run_exitfuncs():
                 monitoring_component.stop()
                 monitoring_component.join()
         except Exception as err:
-            logger.warning("Exception raised while stopping the monitoring: %s" % err)
+            logger.exception("Exception raised while stopping the monitoring: %s" % err)
 
     # Stop the tasks system from running
     try:
         stopTasks()
     except Exception as err:
-        logger.warning("Exception raised while stopping Tasks: %s" % err)
+        logger.exception("Exception raised while stopping Tasks: %s" % err)
 
     # purge the monitoring queues
     try:
         _purge_actions_queue()
         stop_and_free_thread_pool()
     except Exception as err:
-        logger.warning("Exception raised while purging monitoring queues: %s" % err)
+        logger.exception("Exception raised while purging monitoring queues: %s" % err)
 
     # Freeze queues
     try:
         if _global_queues:
             _global_queues.freeze()
     except Exception as err:
-        logger.warning("Exception raised during freeze of Global Queues: %s" % err)
+        logger.exception("Exception raised during freeze of Global Queues: %s" % err)
 
     # shutdown the threads in the GangaThreadPool
     try:
         GangaThreadPool.getInstance().shutdown(should_wait_cb=at_exit_should_wait_cb)
     except Exception as err:
-        logger.warning("Exception raised during shutdown of GangaThreadPool: %s" % err)
+        logger.exception("Exception raised during shutdown of GangaThreadPool: %s" % err)
 
     # Shutdown queues
     try:
         logger.info("Stopping Job processing before shutting down Repositories")
         shutDownQueues()
     except Exception as err:
-        logger.warning("Exception raised while purging shutting down queues: %s" % err)
+        logger.exception("Exception raised while purging shutting down queues: %s" % err)
 
     # shutdown the repositories
     try:
         logger.info("Shutting Down Ganga Repositories")
         Repository_runtime.shutdown()
     except Exception as err:
-        logger.warning("Exception raised while shutting down repositories: %s" % err)
+        logger.exception("Exception raised while shutting down repositories: %s" % err)
 
     # label services as disabled
     Coordinator.servicesEnabled = False
@@ -126,21 +93,21 @@ def _ganga_run_exitfuncs():
         removeGlobalSessionFileHandlers()
         removeGlobalSessionFiles()
     except Exception as err:
-        logger.warning("Exception raised while shutting down SessionLocks: %s" % err)
+        logger.exception("Exception raised while shutting down SessionLocks: %s" % err)
 
     # Shutdown stacktracer
     if stacktracer._tracer:
         try:
             stacktracer.trace_stop()
         except Exception as err:
-            logger.warning("Exception raised while stopping stack tracer: %s" % err)
+            logger.exception("Exception raised while stopping stack tracer: %s" % err)
 
     # do final shutdown
     if requires_shutdown is True:
         try:
             final_shutdown()
         except Exception as err:
-            logger.warning("Exception raised while doing final shutdown: %s" % err)
+            logger.exception("Exception raised while doing final shutdown: %s" % err)
 
     # show any open files after everything's shutdown
     if bootstrap.DEBUGFILES or bootstrap.MONITOR_FILES:
