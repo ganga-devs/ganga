@@ -4,8 +4,6 @@ import subprocess
 import threading
 import cPickle as pickle
 import signal
-import shutil
-import tempfile
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -30,9 +28,9 @@ with os.fdopen(###FD_WRITE###,'wb') as envpipe:
     from Ganga.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
-    script =  script.replace('###INDENT###'  , indent      )\
-                    .replace('###FD_READ###' , str(fdread) )\
-                    .replace('###FD_WRITE###', str(fdwrite))
+    script = script.replace('###INDENT###'  , indent      )\
+                   .replace('###FD_READ###' , str(fdread) )\
+                   .replace('###FD_WRITE###', str(fdwrite))
 
     return script, (fdread, fdwrite)
 
@@ -73,11 +71,11 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     from Ganga.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
 
-    script =  script.replace('###INDENT###'     , indent              )\
-                    .replace('###SETUP###'      , python_setup.strip())\
-                    .replace('###COMMAND###'    , command.strip()     )\
-                    .replace('###PKL_FDREAD###' , str(fdread)         )\
-                    .replace('###PKL_FDWRITE###', str(fdwrite)        )
+    script = script.replace('###INDENT###'     , indent              )\
+                   .replace('###SETUP###'      , python_setup.strip())\
+                   .replace('###COMMAND###'    , command.strip()     )\
+                   .replace('###PKL_FDREAD###' , str(fdread)         )\
+                   .replace('###PKL_FDWRITE###', str(fdwrite)        )
     env_file_pipes = None
     if update_env:
         update_script, env_file_pipes = env_update_script()
@@ -100,7 +98,6 @@ def __reader(pipes, output_ns, output_var):
         except Exception as err:
             logger.error("Err: %s" % str(err))
             raise  # EOFError triggered if command killed with timeout
-
 
 
 def __timeout_func(process, timed_out):
@@ -162,7 +159,7 @@ def start_timer(p, timeout):
 
 
 def update_thread(pipes, thread_output, output_key):
-    """ Functon to contrust and return background thread used to read a pickled object into the thread_output for updating
+    """ Function to contruct and return background thread used to read a pickled object into the thread_output for updating
         the environment after executing a users code
         Args:
             started_threads (list): List containing background threads which have been started
