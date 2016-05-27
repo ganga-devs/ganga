@@ -859,8 +859,6 @@ class GangaObject(Node):
         Perform a deep copy of the GangaObject class
         """
         true_parent = self._getParent()
-        ## This triggers a read of the job from disk
-        self._getReadAccess()
         cls = self.__class__
 
         self_copy = cls()
