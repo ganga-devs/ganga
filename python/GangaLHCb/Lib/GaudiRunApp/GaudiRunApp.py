@@ -44,16 +44,15 @@ class GaudiRun(IPrepareApp):
         New GaudiApp for LHCb apps written/constructed making use of the new CMake application
     """
     _schema = Schema(Version(1, 0), {
-        'directory':    SimpleItem(preparable=1, defvalue='$HOME/MyProjectPath', typelist=['str'], comparable=1,
+        'directory':    SimpleItem(preparable=1, defvalue='$HOME/~/DaVinciDev_v40r2', typelist=[str], comparable=1,
             doc='A path to the project that you\'re wanting to run.'),
-        'build_opts':   SimpleItem(defvalue=["Hello World"], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File', 'int'], sequence=1, strict_sequence=0,
+        'build_opts':   SimpleItem(defvalue=[""], typelist=[str], sequence=1, strict_sequence=0,
             doc="Options to be passed to 'make ganga-input-sandbox'"),
-        'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=['type(None)', 'bool', ShareDir], protected=0, comparable=1,
+        'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1,
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash':         SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=0,
+        'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=0,
             doc='MD5 hash of the string representation of applications preparable attributes'),
-        'arch':         SimpleItem(defvalue="x86_64-slc6-gcc49-opt", typelist=['str'], doc='Arch the application was built for'),
-        'build_target': SimpleItem(defvalue='', typelist=['str'], doc='Target which is to be added to the prepared state of an application', hidden=1, preparable=1),
+        'arch':         SimpleItem(defvalue="x86_64-slc6-gcc49-opt", typelist=[str], doc='Arch the application was built for'),
         })
     _category = 'applications'
     _name = 'GaudiRun'
@@ -82,7 +81,7 @@ class GaudiRun(IPrepareApp):
         setattr(self, 'is_prepared', ShareDir())
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
-        self.build_target = self.buildGangaTarget()
+        build_target = self.buildGangaTarget()
 
         try:
             # copy any 'preparable' objects into the shared directory
@@ -90,6 +89,8 @@ class GaudiRun(IPrepareApp):
             # add the newly created shared directory into the metadata system
             # if the app is associated with a persisted object
             self.checkPreparedHasParent(self)
+
+            self.copyIntoPrepDir(build_target)
             self.post_prepare()
 
         except Exception as err:
@@ -146,7 +147,4 @@ class GaudiRun(IPrepareApp):
 
         logger.info("Built %s" % wantedTargetFile)
         return wantedTargetFile
-
-    def get_prepared_files(self):
-        return [File(self.build_target)]
 

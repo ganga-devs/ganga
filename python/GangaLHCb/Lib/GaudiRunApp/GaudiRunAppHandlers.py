@@ -41,7 +41,7 @@ class GaudiRunRTHandler(IRuntimeHandler):
         print("appmasterconfig: %s" % str(appmasterconfig))
         print("jobmasterconfig: %s" % str(jobmasterconfig))
 
-        prepared_files = app.get_prepared_files()
+        prepared_files = []
 
         job_command = 'ls'
         job_args = ['-l']
@@ -53,15 +53,10 @@ class GaudiRunRTHandler(IRuntimeHandler):
         c = StandardJobConfig(job_command, input_sand, job_args, output_sand)
         return c
 
-allHandlers.add('GaudiRun', 'LSF', GaudiRunRTHandler)
 allHandlers.add('GaudiRun', 'Local', GaudiRunRTHandler)
-allHandlers.add('GaudiRun', 'PBS', GaudiRunRTHandler)
-allHandlers.add('GaudiRun', 'SGE', GaudiRunRTHandler)
-allHandlers.add('GaudiRun', 'Condor', GaudiRunRTHandler)
-allHandlers.add('GaudiRun', 'TestSubmitter', GaudiRunRTHandler)
-allHandlers.add('GaudiRun', 'Interactive', GaudiRunRTHandler)
-allHandlers.add('GaudiRun', 'Batch', GaudiRunRTHandler)
-allHandlers.add('GaudiRun', 'Cronus', GaudiRunRTHandler)
+#allHandlers.add('GaudiRun', 'Condor', GaudiRunRTHandler)
+#allHandlers.add('GaudiRun', 'Interactive', GaudiRunRTHandler)
+#allHandlers.add('GaudiRun', 'Batch', GaudiRunRTHandler)
 
 class GaudiRunDiracRTHandler(IRuntimeHandler):
 
