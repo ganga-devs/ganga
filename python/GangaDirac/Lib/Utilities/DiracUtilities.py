@@ -4,18 +4,16 @@ import subprocess
 import threading
 import pickle
 import signal
+import tempfile
+import shutil
+import time
+from copy import deepcopy
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.execute import execute
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Credentials import getCredential
 import Ganga.Utility.execute as gexecute
-
-
-import time
-import math
-from copy import deepcopy
-import inspect
 
 logger = getLogger()
 proxy = getCredential('GridProxy', '')
@@ -212,14 +210,25 @@ def execute(command,
     #logger.debug("python_setup:\n'%s'" % str(python_setup))
     #logger.debug("eval_includes:\n'%s'" % str(eval_includes))
 
+    if cwd is None:
+        # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
+        # If we are we do NOT want to execute commands which will involve any I/O on the system that isn't needed
+        cwd_ = tempfile.mkdtemp()
+    else:
+        # We know were whe want to run, lets just run there
+        cwd_ = cwd
+
     returnable = gexecute.execute(command,
                                   timeout=timeout,
                                   env=env,
-                                  cwd=cwd,
+                                  cwd=cwd_,
                                   shell=shell,
                                   python_setup=python_setup,
                                   eval_includes=eval_includes,
                                   update_env=update_env)
+
+    if cwd is None:
+        shutil.rmtree(cwd_, ignore_errors=True)
 
     return deepcopy(returnable)
 
