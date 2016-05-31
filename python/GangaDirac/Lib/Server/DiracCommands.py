@@ -265,7 +265,7 @@ def status(job_ids, statusmapping):
     output(status_list)
 
 
-def getStateTime(id, statusi, pipe_out=True):
+def getStateTime(id, status, pipe_out=True):
     ''' Return the state time from DIRAC corresponding to DIRACJob tranasitions'''
     log = dirac.loggingInfo(id)
     if 'Value' not in log:
@@ -305,6 +305,16 @@ def getStateTime(id, statusi, pipe_out=True):
     else:
         return None
 
+def getBulkStateTime(job_ids, status, pipe_out=True):
+    ''' Function to repeatedly call getStateTime for multiple Dirac Job id and return the result in a dictionary '''
+    result = {}
+    for this_id in job_ids:
+        result[this_id] = getStateTime(this_id, status, pipe_out=False)
+
+    if pipe_out:
+        output(result)
+    else:
+        return result
 
 def timedetails(id):
     ''' Function to return the loggingInfo for a DIRAC Job of id'''
