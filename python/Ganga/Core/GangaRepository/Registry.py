@@ -959,7 +959,6 @@ class Registry(object):
                 s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
         return s
 
-    @synchronised
     def has_loaded(self, obj):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!
