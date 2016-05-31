@@ -520,17 +520,22 @@ class DiracBase(IBackend):
             logger.error(result.get('Message', ''))
 
     @staticmethod
-    def _bulk_updateStateTime( jobStateDict ):
+    def _bulk_updateStateTime(jobStateDict, bulk_time_lookup={} ):
         """ This performs the same as the _getStateTime method but loops over a list of job ids within the DIRAC namespace (much faster)
         Args:
             jobStateDict (dict): This is a dict of {job.backend.id : job_status, } elements
+            bulk_time_lookup (dict): Dict of result of multiple calls to getBulkStateTime, performed in advance
         """
-        for this_state in jobStateDict:
-            bulk_result = execute("getBulkStateTime(%s,\'%s\')" %
-                                    (repr([job.backend.id for job in jobStateDict[this_state]]), this_state))
+        for this_state, these_jobs in jobStateDict.iteritems():
+            if bulk_time_lookup == {} or this_state not in bulk_time_lookup:
+                bulk_result = execute("getBulkStateTime(%s,\'%s\')" %
+                                        (repr([j.backend.id for j in these_jobs]), this_state))
+            else:
+                bulk_result = bulk_time_lookup[this_state]
             for this_job in jobStateDict[this_state]:
-                if this_job.backend.id in bulk_result and bulk_result[this_job.backend.id]:
-                    DiracBase._getStateTime(this_job, this_state, bulk_result[this_job.backend.id])
+                backend_id = this_job.backend.id
+                if backend_id in bulk_result and bulk_result[backend_id]:
+                    DiracBase._getStateTime(this_job, this_state, {this_state : bulk_result[backend_id]})
                 else:
                     DiracBase._getStateTime(this_job, this_state)
 
@@ -833,10 +838,14 @@ class DiracBase(IBackend):
 
         statusmapping = configDirac['statusmapping']
 
-        result = execute('status(%s, %s)' %( str(dirac_job_ids), repr(statusmapping)))
+        result, bulk_state_result = execute('getStatusAndStateTime(%s, %s)' %( repr(dirac_job_ids), repr(statusmapping)))
+
+        #result = results[0]
+        #bulk_state_result = results[1]
 
         if len(result) != len(ganga_job_status):
             logger.warning('Dirac monitoring failed for %s, result = %s' % (str(dirac_job_ids), str(result)))
+            logger.warning("Results: %s" % str(results))
             return
 
         from Ganga.Core import monitoring_component
@@ -899,11 +908,11 @@ class DiracBase(IBackend):
                         if job.master not in master_jobs_to_update:
                             master_jobs_to_update.append(job.master)
 
-        DiracBase._bulk_updateStateTime(jobStateDict)
+        DiracBase._bulk_updateStateTime(jobStateDict, bulk_state_result)
 
         for status in jobs_to_update:
             for job in jobs_to_update[status]:
-                job.updateStatus(status)
+                job.updateStatus(status, update_master=False)
 
         for j in master_jobs_to_update:
             j.updateMasterJobStatus()

@@ -228,14 +228,17 @@ def finished_job(id, outputDir=os.getcwd(), oversized=True, noJobDir=True):
     output((out_cpuTime, out_sandbox, out_dataInfo, outStateTime))
 
 
-def status(job_ids, statusmapping):
+def status(job_ids, statusmapping, pipe_out=True):
     '''Function to check the statuses and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
 
     result = dirac.status(job_ids)
     if not result['OK']:
-        output(result)
-        return
+        if pipe_out:
+            output(result)
+            return
+        else:
+            return result
     status_list = []
     bulk_status = result['Value']
     for _id in job_ids:
@@ -262,8 +265,10 @@ def status(job_ids, statusmapping):
         status_list.append([minor_status, dirac_status, dirac_site,
                             ganga_status, app_status])
 
-    output(status_list)
-
+    if pipe_out:
+        output(status_list)
+    else:
+        return status_list
 
 def getStateTime(id, status, pipe_out=True):
     ''' Return the state time from DIRAC corresponding to DIRACJob tranasitions'''
@@ -315,6 +320,26 @@ def getBulkStateTime(job_ids, status, pipe_out=True):
         output(result)
     else:
         return result
+
+def getStatusAndStateTime(job_ids, status_mapping, pipe_out=True):
+    ''' This combines 'status' and 'getBulkStateTime' into 1 function call for monitoring
+    '''
+    status_info = status(job_ids, status_mapping, pipe_out=False)
+    state_job_status = {}
+    for job_id, this_stat_info in zip(job_ids, status_info):
+        if this_stat_info:
+            update_status = this_stat_info[3]
+            if update_status not in state_job_status:
+                state_job_status[update_status] = []
+            state_job_status[update_status].append(job_id)
+    state_info = {}
+    for this_status, these_jobs in state_job_status.iteritems():
+        state_info[this_status] = getBulkStateTime(these_jobs, this_status, pipe_out=False)
+
+    if pipe_out:
+        output((status_info, state_info))
+    else:
+        return (status_info, state_info)
 
 def timedetails(id):
     ''' Function to return the loggingInfo for a DIRAC Job of id'''
