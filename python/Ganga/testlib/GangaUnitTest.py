@@ -8,11 +8,14 @@ try:
 except ImportError:
     import unittest
 
+def _getGangaPath():
+    file_path = os.path.dirname(os.path.realpath(__file__))
+    ganga_python_dir = os.path.join(file_path, '..', '..')
+    ganga_python_dir = os.path.realpath(ganga_python_dir)
+    return ganga_python_dir
 
 def _setupGangaPath():
-    file_path = os.path.dirname(os.path.realpath(__file__))
-    ganga_python_dir = os.path.join(file_path, '..', '..', '..')
-    ganga_python_dir = os.path.realpath(ganga_python_dir)
+    ganga_python_dir = _getGangaPath()
     if len(sys.path) >= 1 and ganga_python_dir != sys.path[0]:
         sys.path.insert(0, ganga_python_dir)
 
@@ -38,7 +41,6 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     logger.info("Parsing Command Line options")
     this_argv = [
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
-        '--no-rexec',  # Don't re-exec Ganga when running tests
     ]
 
     # These are the default options for all test instances
@@ -48,6 +50,7 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         ('Configuration', 'gangadir', gangadir_for_test),
         ('Configuration', 'user', 'testframework'),
         ('Configuration', 'repositorytype', 'LocalXML'),
+        ('Configuration', 'UsageMonitoringMSG', False),  # Turn off spyware
         ('TestingFramework', 'ReleaseTesting', True),
         ('Queues', 'NumWorkerThreads', 2),
     ]
@@ -77,7 +80,7 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         logger.info("Parsing Configuration Options")
         Ganga.Runtime._prog.configure()
         logger.info("Initializing")
-        Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
+        Ganga.Runtime._prog.initEnvironment()
     else:
         from Ganga.Runtime.Repository_runtime import startUpRegistries
         from Ganga.Utility.Config import getConfig
@@ -111,6 +114,11 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
 
     if missing_cred:
         raise Exception("Failed due to missing credentials %s" % str(missing_cred))
+
+    # Make sure that all the config options are really set.
+    # Some from plugins may not have taken during startup
+    for opt in default_opts + extra_opts:
+        setConfigOption(*opt)
 
     logger.info("Passing to Unittest")
 
@@ -192,7 +200,11 @@ class GangaUnitTest(unittest.TestCase):
         """
         Return the directory that this test should store its registry and repository in
         """
-        return os.path.join(os.path.expanduser('~'), 'gangadir_testing', cls.__name__)
+        return os.path.join(_getGangaPath(), 'gangadir_testing', cls.__name__)
+
+    @classmethod
+    def setUpClass(cls):
+        shutil.rmtree(cls.gangadir(), ignore_errors=True)
 
     def setUp(self, extra_opts=[]):
         unittest.TestCase.setUp(self)
@@ -202,6 +214,7 @@ class GangaUnitTest(unittest.TestCase):
         gangadir = self.gangadir()
         if not os.path.isdir(gangadir):
             os.makedirs(gangadir)
+        print("Starting Ganga in: %s" % gangadir)
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
 
     def tearDown(self):

@@ -8,9 +8,6 @@ from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 
 
 # Global Functions
-def getEnvironment(config = None):
-    return {}
-
 def getLCGRootPath():
 
     lcg_release_areas = {'afs' : '/afs/cern.ch/sw/lcg/releases/LCG_79',
@@ -28,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.1.19 $'
+_gangaVersion = '$Name: 6.1.20 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)

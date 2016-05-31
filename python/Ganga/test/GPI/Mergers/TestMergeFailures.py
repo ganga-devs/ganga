@@ -4,7 +4,8 @@ import os
 
 import pytest
 
-from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
+from GangaTest.Framework.utils import sleep_until_state
+from Ganga.testlib.monitoring import run_until_completed, run_until_state
 from Ganga.GPIDev.Base.Proxy import getProxyClass
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
@@ -29,7 +30,7 @@ class TestMergeFailures(GangaUnitTest):
 
         j.submit()
 
-        sleep_until_completed(j, 60)
+        run_until_completed(j, timeout=60)
         assert j.status == 'failed'
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
@@ -45,7 +46,7 @@ class TestMergeFailures(GangaUnitTest):
 
         j.submit()
 
-        sleep_until_completed(j, 60)
+        run_until_completed(j, timeout=60)
         assert j.status == 'failed'
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
@@ -61,7 +62,7 @@ class TestMergeFailures(GangaUnitTest):
 
         j.submit()
 
-        sleep_until_completed(j, 60)
+        run_until_completed(j, timeout=60)
         assert j.status == 'failed'
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
@@ -78,7 +79,7 @@ class TestMergeFailures(GangaUnitTest):
 
         j.submit()
 
-        sleep_until_completed(j, 60)
+        run_until_completed(j, timeout=60)
         assert j.status == 'failed'
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
@@ -101,7 +102,7 @@ class TestMergeFailures(GangaUnitTest):
         j.postprocessors[0].wait = 10
 
         j.submit()
-        sleep_until_state(j, state='running')
+        run_until_state(j, state='running')
         j.remove()
 
         with pytest.raises(KeyError):

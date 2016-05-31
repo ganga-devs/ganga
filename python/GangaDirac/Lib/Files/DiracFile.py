@@ -14,6 +14,7 @@ from Ganga.Utility.files import expandfilename
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
+config = getConfig('Configuration')
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
@@ -628,23 +629,23 @@ class DiracFile(IGangaFile):
         logger.error("Error in getting file '%s' : %s" % (self.lfn, str(stdout)))
         return stdout
 
-    def replicate(self, destSE):
+    def replicate(self, destSE, sourceSE=''):
         """
-        Replicate this file from self.locations[0] to destSE
+        Replicate an LFN to another SE
+
+        Args:
+            destSE (str): the SE to replicate the file to
+            sourceSE (str): the se to use as a cource for the file
         """
-        if not self.locations:
-            if self.lfn != '':
-                self.getReplicas()
-            else:
-                raise GangaException('Can\'t replicate a file if it isn\'t already on a DIRAC SE, upload it first')
-        if self.lfn == '':
+
+        if not self.lfn:
             raise GangaException('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, self.locations[0]))
+        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE))
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
-            self.locations.append(destSE)
-            self.getReplicas(forceRefresh=True)
+            if destSE not in self.locations:
+                self.locations.append(destSE)
             return
         logger.error("Error in replicating file '%s' : %s" % (self.lfn, stdout))
         return stdout
@@ -734,7 +735,7 @@ class DiracFile(IGangaFile):
             import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+            self.lfn = os.path.join(DiracFile.diracLFNBase(), 'GangaFiles_%s' % this_date)
             selfConstructedLFN = True
 
         if self.remoteDir[:4] == 'LFN:':
@@ -902,11 +903,11 @@ for f in glob.glob('###NAME_PATTERN###'):
             import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+            self.lfn = os.path.join(DiracFile.diracLFNBase(), 'GangaFiles_%s' % this_date)
             selfConstructedLFNs = True
 
         if self.remoteDir == '' and self.lfn != '':
-            self.remoteDir = configDirac['DiracLFNBase']
+            self.remoteDir = DiracFile.diracLFNBase()
 
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
@@ -955,6 +956,17 @@ for f in glob.glob('###NAME_PATTERN###'):
         else:
             logger.error("Failed to Match file:\n%s" % str(self))
             return False
+
+    @staticmethod
+    def diracLFNBase():
+        """
+        Compute a sensible default LFN base name
+        If ``DiracLFNBase`` has been defined, use that.
+        Otherwise, construct one from the user name and the user VO
+        """
+        if configDirac['DiracLFNBase']:
+            return configDirac['DiracLFNBase']
+        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], config['user'][0], config['user'])
 
 # add DiracFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate DiracFile() objects via config file)

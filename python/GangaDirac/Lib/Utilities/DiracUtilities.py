@@ -6,7 +6,7 @@ import pickle
 import signal
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Shell import get_env_from_arg
+from Ganga.Utility.execute import execute
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Credentials import getCredential
 import Ganga.Utility.execute as gexecute
@@ -48,7 +48,8 @@ def getDiracEnv(force=False):
                 absolute_path = config_file
             if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(absolute_path):
 
-                env_dict = get_env_from_arg(this_arg = absolute_path, def_env_on_fail = False)
+                env_dict = {}
+                execute('source {0}'.format(absolute_path), shell=True, env=env_dict, update_env=True)
 
                 if env_dict is not None:
                     DIRAC_ENV = env_dict
@@ -190,7 +191,7 @@ def execute(command,
     
     Args:
         command (str): This is the command we're running within our DIRAC session
-        timeout (bool): This is the length of time that a DIRAC call has before it's decided some interaction has timed out
+        timeout (int): This is the length of time that a DIRAC call has before it's decided some interaction has timed out
         env (dict): an optional environment to execute the DIRAC code in
         cwd (str): an optional string to a valid path where this code should be executed
         shell (bool): Should this code be executed in a new shell environment

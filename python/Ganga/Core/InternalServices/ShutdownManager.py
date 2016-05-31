@@ -57,10 +57,6 @@ def _ganga_run_exitfuncs():
 
     from Ganga.GPIDev.Base.Proxy import getName
 
-    #print("Shutting Down Ganga Repositories")
-    from Ganga.Runtime import Repository_runtime
-    Repository_runtime.flush_all()
-
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
 

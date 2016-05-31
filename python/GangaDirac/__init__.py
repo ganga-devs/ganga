@@ -42,10 +42,7 @@ if not _after_bootstrap:
     ## TODO this would be nice to move from here once the credentials branch is up and running
     configDirac.addOption('userVO', '', 'The name of the VO that the user belongs to')
 
-    # Problem if installing Ganga as config isn't setup properly
-    if 'user' in config:
-        configDirac.addOption('DiracLFNBase', '/%s/user/%s/%s' % (configDirac['userVO'], config['user'][0], config['user']),
-                          "Base dir appended to create LFN name from DiracFile('name')")
+    configDirac.addOption('DiracLFNBase', '', "Base dir prepended to create LFN name from DiracFile('name'). If this is unset then it will default to /[userVO]/user/[first letter of user name]/[user name]")
 
     configDirac.addOption('ReplicateOutputData', False,
                       'Determines whether outputdata stored on Dirac is replicated')
@@ -83,13 +80,11 @@ if not _after_bootstrap:
                                                  'Unknown: No status for Job': 'failed'},
                                                 "Mapping of Dirac to Ganga Job statuses used to construct a queue to finalize a given job, i.e. final statues in 'statusmapping'")
 
-def getEnvironment(config=None):
-    import sys
-    import os.path
-    import PACKAGE
+def standardSetup():
 
+    import PACKAGE
     PACKAGE.standardSetup()
-    return
+
 
 
 def loadPlugins(config=None):
