@@ -46,7 +46,7 @@ def get_result(command,
             logger.debug("Sleeping for 5 additional seconds to reduce possible overloading")
             time.sleep(5.)
             if retries == retry_limit - 1:
-                raise x
+                raise
             retries = retries + 1
             logger.error("An Error Occured: %s" % str(x))
             logger.error("Retrying: %s / %s " % (str(retries + 1), str(retry_limit)))
