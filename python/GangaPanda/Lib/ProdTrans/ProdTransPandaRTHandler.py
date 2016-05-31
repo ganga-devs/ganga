@@ -126,7 +126,10 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         else:
             jspec.prodSourceLabel = configPanda['prodSourceLabelRun']
         jspec.processingType = configPanda['processingType']
-        jspec.specialHandling = configPanda['specialHandling']
+        if job.backend.requirements.specialHandling:
+            jspec.specialHandling = job.backend.requirements.specialHandling
+        else:
+            jspec.specialHandling = configPanda['specialHandling']
         jspec.computingSite = job.backend.site
         jspec.cloud = job.backend.requirements.cloud
         jspec.cmtConfig = app.atlas_cmtconfig

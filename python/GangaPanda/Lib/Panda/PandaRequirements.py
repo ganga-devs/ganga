@@ -27,6 +27,7 @@ class PandaRequirements(GangaObject):
         'overwriteQueuedata'     : SimpleItem(defvalue = False,protected=0,copyable=1,doc='Expert option: overwriteQueuedata.'),
         'overwriteQueuedataConfig'     : SimpleItem(defvalue = '',protected=0,copyable=1,doc='Expert option: overwriteQueuedataConfig.'),
         'transfertype'     : SimpleItem(defvalue = '',protected=0,copyable=1,doc='Expert option: transfertype.'),
+        'specialHandling'  : SimpleItem(defvalue = '', protected=0, copyable=1, doc='Expert option: specialHandling.'),
     })
 
     _category = 'PandaRequirements'
