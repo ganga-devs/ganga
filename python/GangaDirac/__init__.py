@@ -72,7 +72,7 @@ if not _after_bootstrap:
                                             'Stalled': 'running',
                                             'Waiting': 'submitted'}, "Mapping between Dirac Job Major Status and Ganga Job Status")
 
-    configDirac.addOption('queueable_dirac_statuses',
+    configDirac.addOption('finalised_statuses',
                                                 {'Done': 'completed',
                                                  'Failed': 'failed',
                                                  'Killed': 'killed',
@@ -81,6 +81,7 @@ if not _after_bootstrap:
                                                 "Mapping of Dirac to Ganga Job statuses used to construct a queue to finalize a given job, i.e. final statues in 'statusmapping'")
 
     configDirac.addOption('serializeBackend', False, 'Developer option to serialize Dirac code for profiling/debugging')
+
 
 def standardSetup():
 
