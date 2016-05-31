@@ -98,7 +98,7 @@ class DiracBase(IBackend):
 
     def _setup_subjob_dataset(self, dataset):
         """
-        Unknown what this ethod does other than return None:
+        This method is used for constructing datasets on a per subjob basis when submitting parametric jobs
         Args:
             Dataset (Dataset): This is a GangaDataset object, todo check this isn't a list
         """
@@ -106,7 +106,7 @@ class DiracBase(IBackend):
 
     def _setup_bulk_subjobs(self, dirac_ids, dirac_script):
         """
-        This is the old bulk submit method which is used to construct the subjobs for a paraetric job
+        This is the old bulk submit method which is used to construct the subjobs for a parametric job
         Args:
             dirac_ids (list): This is a list of the Dirac ids which have been created
             dirac_script (str): Name of the dirac script which contains the job jdl
