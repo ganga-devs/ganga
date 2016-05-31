@@ -518,9 +518,9 @@ class JobRegistry_Monitor(GangaThread):
 
     def isEnabled( self, useRunning = True ):
         if useRunning:
-            return self.enabled or self.__isInProgress()
+            return self.enabled or self.__isInProgress() and not self.steps
         else:
-            return self.enabled
+            return self.enabled and not self.steps
 
     def run(self):
         """
