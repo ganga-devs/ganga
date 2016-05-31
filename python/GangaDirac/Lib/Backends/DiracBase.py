@@ -526,10 +526,10 @@ class DiracBase(IBackend):
             jobStateDict (dict): This is a dict of {job.backend.id : job_status, } elements
         """
         for this_state in jobStateDict:
-            bulk_result = execute("getBulkStateTime(\'%s\',\'%s\')" %
+            bulk_result = execute("getBulkStateTime(%s,\'%s\')" %
                                     (repr([job.backend.id for job in jobStateDict[this_state]]), this_state))
             for this_job in jobStateDict[this_state]:
-                if bulk_result[this_job.backend.id]:
+                if this_job.backend.id in bulk_result and bulk_result[this_job.backend.id]:
                     DiracBase._getStateTime(this_job, this_state, bulk_result[this_job.backend.id])
                 else:
                     DiracBase._getStateTime(this_job, this_state)
@@ -844,6 +844,9 @@ class DiracBase(IBackend):
         requeue_job_list = []
         jobStateDict = {}
 
+        jobs_to_update = {}
+        master_jobs_to_update = []
+
         thread_handled_states = ['completed', 'failed']
         for job, state, old_state in zip(monitor_jobs, result, ganga_job_status):
             if monitoring_component:
@@ -864,9 +867,9 @@ class DiracBase(IBackend):
                 pass
             logger.debug('Job status vector  : ' + job.fqid + ' : ' + repr(state))
 
-            if job.status not in jobStateDict:
-                jobStateDict[job.status] = []
-            jobStateDict[job.status].append(job)
+            if updated_dirac_status not in jobStateDict:
+                jobStateDict[updated_dirac_status] = []
+            jobStateDict[updated_dirac_status].append(job)
 
             if job.backend.status in finalised_statuses:
                 if job.status != 'running':
@@ -875,9 +878,12 @@ class DiracBase(IBackend):
                     elif (job.master and job.master.status in ['removed', 'killed']):
                         continue  # user changed it under us
                     else:
-                        job.updateStatus('running')
+                        if 'running' not in jobs_to_update:
+                            jobs_to_update['running'] = []
+                        jobs_to_update['running'].append(job)
                         if job.master:
-                            job.master.updateMasterJobStatus()
+                            if job.master not in master_jobs_to_update:
+                                master_jobs_to_update.append(job.master)
                         requeue_job_list.append(job)
 
             else:
@@ -886,11 +892,22 @@ class DiracBase(IBackend):
                 if (job.master and job.master.status in ['removed', 'killed']):
                     continue  # user changed it under us
                 if job.status != updated_dirac_status:
-                    job.updateStatus(updated_dirac_status)
+                    if updated_dirac_status not in jobs_to_update:
+                        jobs_to_update[updated_dirac_status] = []
+                    jobs_to_update[updated_dirac_status].append(job)
                     if job.master:
-                        job.master.updateMasterJobStatus()
+                        if job.master not in master_jobs_to_update:
+                            master_jobs_to_update.append(job.master)
 
         DiracBase._bulk_updateStateTime(jobStateDict)
+
+        for status in jobs_to_update:
+            for job in jobs_to_update[status]:
+                job.updateStatus(status)
+
+        for j in master_jobs_to_update:
+            j.updateMasterJobStatus()
+
         DiracBase.requeue_dirac_finished_jobs(requeue_job_list, finalised_statuses)
 
     @staticmethod
@@ -909,7 +926,7 @@ class DiracBase(IBackend):
 
         # make sure proxy is valid
         if not _proxyValid():
-            if DiracBase.dirac_monitoring_is_active:
+            if DiracBase.dirac_monitoring_is_active is True:
                 logger.warning('DIRAC monitoring inactive (no valid proxy found).')
                 DiracBase.dirac_monitoring_is_active = False
             return
