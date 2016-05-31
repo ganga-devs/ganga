@@ -531,7 +531,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 jspec.prodSourceLabel   = configPanda['prodSourceLabelBuild']
                 jspec.processingType    = configPanda['processingType']
                 jspec.assignedPriority  = configPanda['assignedPriorityBuild']
-                jspec.specialHandling   = configPanda['specialHandling']
+                if job.backend.requirements.specialHandling:
+                    jspec.specialHandling = job.backend.requirements.specialHandling
+                else:
+                    jspec.specialHandling = configPanda['specialHandling']
                 jspec.computingSite     = bjsite
                 jspec.cloud             = Client.PandaSites[bjsite]['cloud']
                 jspec.jobParameters     = '-o %s' % (self.libraries[bjsite])
@@ -680,7 +683,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec.prodSourceLabel   = configPanda['prodSourceLabelRun']
         jspec.processingType    = configPanda['processingType']
         jspec.assignedPriority  = configPanda['assignedPriorityRun']
-        jspec.specialHandling   = configPanda['specialHandling']
+        if job.backend.requirements.specialHandling:
+            jspec.specialHandling = job.backend.requirements.specialHandling
+        else:
+            jspec.specialHandling = configPanda['specialHandling']
         jspec.cloud             = job.backend.requirements.cloud
         jspec.computingSite     = job.backend.site
         if job.backend.requirements.memory != -1:
