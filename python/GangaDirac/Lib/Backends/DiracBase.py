@@ -863,7 +863,7 @@ class DiracBase(IBackend):
             try:
                 job.backend.extraInfo = state[4]
             except Exception as err:
-                logger.debug("gxecption: %s" % str(err))
+                logger.debug("gexception: %s" % str(err))
                 pass
             logger.debug('Job status vector  : ' + job.fqid + ' : ' + repr(state))
 
