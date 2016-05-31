@@ -1008,7 +1008,7 @@ class GangaRepositoryLocal(GangaRepository):
         for this_id in ids:
 
             if this_id in self.incomplete_objects:
-                raise RepositoryError(self.registry, "Trying to re-load a corrupt repository id: %s" % this_id)
+                raise RepositoryError(self, "Trying to re-load a corrupt repository id: %s" % this_id)
 
             fn = self.get_fn(this_id)
             if load_backup:
