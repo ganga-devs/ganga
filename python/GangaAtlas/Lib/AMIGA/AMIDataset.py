@@ -1,20 +1,27 @@
-##############################################################################
-# Ganga Project. http://cern.ch/ganga
-#
-# $Id: $
-###############################################################################
-# A DQ2 dataset superclass, with AMI connection and search capability
+"""A DQ2Dataset that implements an AMI Search interface
 
+This module contains an AMIDatset that can fill a DQ2Dataset with information from an AMI search.
+
+Attributes:
+    logger (Logger): The overall logger for this module
+    config (PackageConfig): The AMIDatset config section
+
+"""
+
+# System imports
+import os
+
+# Ganga imports
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, listDatasets
 from Ganga.GPIDev.Schema.Schema import SimpleItem
 from Ganga.GPIDev.Schema.Schema import FileItem
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Config import getConfig, ConfigError
+from Ganga.Utility.Config import getConfig
 
-import os
-
+# Globals
 logger = getLogger()
 config = getConfig('AMIDataset')
+
 
 try:
     from pyAMI.pyAMI import AMI as AMIClient
