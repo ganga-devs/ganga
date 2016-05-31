@@ -126,7 +126,6 @@ def loadPlugins( config = {} ):
    import Lib.AthenaMC
    import Lib.AtlasLCGRequirements
    import Lib.Tasks
-   import Lib.AMIGA
    
    return None
 
