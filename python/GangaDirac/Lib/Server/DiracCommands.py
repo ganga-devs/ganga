@@ -321,7 +321,7 @@ def getBulkStateTime(job_ids, status, pipe_out=True):
     else:
         return result
 
-def getStatusAndStateTime(job_ids, status_mapping, pipe_out=True):
+def monitorJobs(job_ids, status_mapping, pipe_out=True):
     ''' This combines 'status' and 'getBulkStateTime' into 1 function call for monitoring
     '''
     status_info = status(job_ids, status_mapping, pipe_out=False)

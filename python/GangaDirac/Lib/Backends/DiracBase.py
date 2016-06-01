@@ -838,7 +838,7 @@ class DiracBase(IBackend):
 
         statusmapping = configDirac['statusmapping']
 
-        result, bulk_state_result = execute('getStatusAndStateTime(%s, %s)' %( repr(dirac_job_ids), repr(statusmapping)))
+        result, bulk_state_result = execute('monitorJobs(%s, %s)' %( repr(dirac_job_ids), repr(statusmapping)))
 
         #result = results[0]
         #bulk_state_result = results[1]
