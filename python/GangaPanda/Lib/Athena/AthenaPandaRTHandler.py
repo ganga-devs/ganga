@@ -15,7 +15,7 @@ from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
-from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibFileSpecFromLibDS
 from Ganga.Core import BackendError
 

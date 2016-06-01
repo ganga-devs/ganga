@@ -15,7 +15,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 
-from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname

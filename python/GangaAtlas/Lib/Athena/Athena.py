@@ -1778,7 +1778,6 @@ class ATLASTier3Splitter(ISplitter):
 from Ganga.GPIDev.Adapters.IMerger import IMerger
 from commands import getstatusoutput    
 import threading
-from GangaAtlas.Lib.ATLASDataset import Download
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import filecheck
 
 class AthenaOutputMerger(IMerger):
