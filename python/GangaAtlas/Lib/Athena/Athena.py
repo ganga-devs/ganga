@@ -23,7 +23,7 @@ from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from GangaAtlas.Lib.ATLASDataset import filecheck, ATLASOutputDataset
+from GangaAtlas.Lib.ATLASDataset.ATLASDataset import filecheck, ATLASOutputDataset
 
 from Ganga.Lib.Mergers.Merger import *
 from Ganga.Core.GangaRepository import getRegistry
@@ -1779,7 +1779,7 @@ from Ganga.GPIDev.Adapters.IMerger import IMerger
 from commands import getstatusoutput    
 import threading
 from GangaAtlas.Lib.ATLASDataset import Download
-from GangaAtlas.Lib.ATLASDataset import filecheck
+from GangaAtlas.Lib.ATLASDataset.ATLASDataset import filecheck
 
 class AthenaOutputMerger(IMerger):
     """Athena handler for output merging"""

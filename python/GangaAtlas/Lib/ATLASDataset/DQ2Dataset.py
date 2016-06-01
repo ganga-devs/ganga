@@ -1738,7 +1738,7 @@ class DQ2OutputDataset(Dataset):
         and fill output variable"""
 
         from Ganga.GPIDev.Lib.Job import Job
-        from GangaAtlas.Lib.ATLASDataset import filecheck
+        from GangaAtlas.Lib.ATLASDataset.ATLASDataset import filecheck
 
         job = self._getParent()
 
