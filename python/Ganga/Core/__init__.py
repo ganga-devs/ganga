@@ -120,27 +120,40 @@ Do you want to force the exit (y/[n])? """ % (t_total, len(critical_thread_ids),
 
 
 def should_wait_batch_cb(t_total, critical_thread_ids, non_critical_thread_ids):
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
+    """Function to wait for appropriate time before forcing quit
+
+    This callback is used in the GangaThreadPool.shutdown function. If there are critical threads, it will wait until
+    [PollThread]forced_shutdown_first_prompt_time secs before prompting to force quit. After that, it will just quit.
+    If there are only non-critical threads it will wait for [PollThread]forced_shutdown_first_prompt_time secs before
+    forcing the exit.
+
+    Args:
+        t_total (float): Total amount of time passed while waiting for threads to stop
+        critical_thread_ids (list): A list of the critical thread ids still running
+        non_critical_thread_ids (list): A list of the non-critical thread ids still running
+    """
+    from Ganga.Utility.Config import getConfig
     from Ganga.Utility.logging import getLogger
-    # if there are critical threads then wait or shutdown depending on
-    # configuration
+    config = getConfig("PollThread")
+
     if critical_thread_ids:
+        # if there are critical threads then wait or shutdown depending on configuration
         if t_total < config['forced_shutdown_timeout']:
             return True
         else:
-            getLogger().warning('Shutdown was forced after waiting for %d seconds for background activities to finish\
-(monitoring, output download, etc). This may result in some jobs being corrupted.', t_total)
+            getLogger().warning('Shutdown was forced after waiting for %d seconds for background activities to finish '
+                                '(monitoring, output download, etc). This may result in some jobs being corrupted.',
+                                t_total)
             return False
-    # if there are non-critical threads then wait or shutdown depending on
-    # configuration
     elif non_critical_thread_ids:
+        # if there are non-critical threads then wait or shutdown depending on configuration
         if t_total < config['forced_shutdown_first_prompt_time']:
             return True
         else:
             return False
-    # if there are no threads then shutdown
-    else:
-        return False
+
+    # otherwise just shutdown
+    return False
 
 at_exit_should_wait_cb = None
 
