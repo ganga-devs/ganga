@@ -120,7 +120,7 @@ last_modified_valid = False
 ############################
 
 
-def _dirac_check_proxy( renew = True):
+def _dirac_check_proxy( renew = True, shouldRaise = True):
     """
     This function checks the validity of the DIRAC proxy
     Args:
@@ -134,7 +134,8 @@ def _dirac_check_proxy( renew = True):
             proxy.renew()
             if not proxy.isValid():
                 last_modified_valid = False
-                raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
+                if shouldRaise:
+                    raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
             else:
                 last_modified_valid = True
         else:
@@ -145,14 +146,14 @@ def _dirac_check_proxy( renew = True):
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
-def _proxyValid():
+def _proxyValid(shouldRenew = True, shouldRaise = True):
     """
     This function is a wrapper for the _checkProxy with a default of False for renew. Returns the last modified time global object
     """
-    _checkProxy( renew = False )
+    _checkProxy( renew = shouldRenew, shouldRaise = shouldRaise )
     return last_modified_valid
 
-def _checkProxy( delay=60, renew = True ):
+def _checkProxy( delay=60, renew = True, shouldRaise = True, force = False ):
     """
     Check the validity of the DIRAC proxy. If it's marked as valid, check once every 'delay' seconds.
     Args:
@@ -166,12 +167,12 @@ def _checkProxy( delay=60, renew = True ):
         if last_modified_time is None:
             # This will move/change when new credential system in place
             ############################
-            _dirac_check_proxy( True )
+            _dirac_check_proxy( renew, shouldRaise )
             ############################
             last_modified_time = time.time()
 
-        if abs(last_modified_time - time.time()) > int(delay):
-            _dirac_check_proxy( renew )
+        if (time.time() - last_modified_time) > int(delay) or not last_modified_valid or force:
+            _dirac_check_proxy( renew, shouldRaise )
             last_modified_time = time.time()
 
 
@@ -182,7 +183,8 @@ def execute(command,
             shell=False,
             python_setup='',
             eval_includes=None,
-            update_env=False):
+            update_env=False,
+            renew=False):
     """
     Execute a command on the local DIRAC server.
 
@@ -204,7 +206,8 @@ def execute(command,
     if python_setup == '':
         python_setup = getDiracCommandIncludes()
 
-    _checkProxy()
+    # We're about to perform an expensive operation so being safe before we run it shouldn't cost too much
+    _checkProxy(force = True, renew = renew)
 
     #logger.info("Executing command:\n'%s'" % str(command))
     #logger.debug("python_setup:\n'%s'" % str(python_setup))
@@ -218,6 +221,11 @@ def execute(command,
         # We know were whe want to run, lets just run there
         cwd_ = cwd
 
+    global last_modified_valid
+    if not last_modified_valid:
+        return None
+
+    return_code = 0
     returnable = gexecute.execute(command,
                                   timeout=timeout,
                                   env=env,
@@ -225,7 +233,12 @@ def execute(command,
                                   shell=shell,
                                   python_setup=python_setup,
                                   eval_includes=eval_includes,
-                                  update_env=update_env)
+                                  update_env=update_env,
+                                  return_code=return_code)
+
+    ## Command failed, lets check to see if it was due to the proxy or not
+    if return_code:
+        last_modified_valid = False
 
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
