@@ -540,7 +540,7 @@ under certain conditions; type license() for details.
             # the user actually sees this message last
             time.sleep(3.)
             yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')
-            if yes == '' or yes[0:1].upper() == 'Y':
+            if yes.lower() in ['', 'y']:
                 self.generate_config_file(default_config)
                 raw_input('Press <Enter> to continue.\n')
         elif self.new_version():

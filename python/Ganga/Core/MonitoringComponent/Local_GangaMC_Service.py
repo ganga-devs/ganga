@@ -518,9 +518,9 @@ class JobRegistry_Monitor(GangaThread):
 
     def isEnabled( self, useRunning = True ):
         if useRunning:
-            return self.enabled or self.__isInProgress()
+            return self.enabled or self.__isInProgress() and not self.steps
         else:
-            return self.enabled
+            return self.enabled and not self.steps
 
     def run(self):
         """
@@ -629,7 +629,7 @@ class JobRegistry_Monitor(GangaThread):
         self.__updateTimeStamp = time.time()
         self.__sleepCounter = config['base_poll_rate']
 
-    def runMonitoring(self, jobs=None, steps=1, timeout=60, _loadCredentials=False):
+    def runMonitoring(self, jobs=None, steps=1, timeout=300, _loadCredentials=False):
         """
         Enable/Run the monitoring loop and wait for the monitoring steps completion.
         Parameters:

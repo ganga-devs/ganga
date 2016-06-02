@@ -564,11 +564,7 @@ class GangaRepositoryLocal(GangaRepository):
                     if this_id in self.objects:
                         self._internal_del__(this_id)
                         changed_ids.append(this_id)
-                except Exception as x:
-                    ## WE DO NOT CARE what type of error occured here and it can be
-                    ## due to corruption so could be one of MANY exception types
-                    ## If the job is not accessible this should NOT cause the loading of ganga to fail!
-                    ## we can't reasonably write all possible exceptions here!
+                except (InaccessibleObjectError, ) as x:
                     logger.debug("update_index: Failed to load id %i: %s" % (this_id, x))
                     summary.append((this_id, x))
 
@@ -1012,7 +1008,7 @@ class GangaRepositoryLocal(GangaRepository):
         for this_id in ids:
 
             if this_id in self.incomplete_objects:
-                raise RepositoryError(self.repo, "Trying to re-load a corrupt repository id: %s" % this_id)
+                raise RepositoryError(self, "Trying to re-load a corrupt repository id: %s" % this_id)
 
             fn = self.get_fn(this_id)
             if load_backup:
