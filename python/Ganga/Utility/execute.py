@@ -64,9 +64,10 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
         full_command += """ \n###COMMAND### """
         full_command += """\nimport sys; sys.exit(0)"""
         exec(full_command, local_ns)
+        sys.exit(0)
     except:
         print(pickle.dumps(traceback.format_exc()), file=PICKLE_STREAM)
-
+        sys.exit(-1000)
 '''
     from Ganga.GPIDev.Lib.File.FileUtils import indentScript
     script = indentScript(this_script, '###INDENT###')
