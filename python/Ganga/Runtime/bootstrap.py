@@ -1041,10 +1041,6 @@ under certain conditions; type license() for details.
         if runs_script:
             if not self.interactive:
                 session_type = 'batch'
-                from Ganga.Utility.Config import setConfigOption
-                setConfigOption('PollThread', 'forced_shutdown_policy', 'batch')
-                from Ganga.Core import change_atexitPolicy
-                change_atexitPolicy(False, 'batch')
             else:
                 session_type += 'startup_script'
 
