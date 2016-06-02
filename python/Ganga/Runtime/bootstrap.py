@@ -1216,7 +1216,7 @@ under certain conditions; type license() for details.
 
         import IPython
 
-	ipver = IPython.__version__
+        ipver = IPython.__version__
         ipver_major = int(ipver[0])
 
         # Based on examples/Embedding/embed_class_long.py from the IPython source tree
