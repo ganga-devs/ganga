@@ -1240,7 +1240,7 @@ under certain conditions; type license() for details.
         from IPython.terminal.embed import InteractiveShellEmbed
 
         ## Check which version of IPython we're running
-        if ipver_major > 2:
+        if ipver_major >= 2:
             ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
         else:
             ipshell = InteractiveShellEmbed(config=cfg, banner1=banner, exit_msg=exit_msg)
