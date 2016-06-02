@@ -225,7 +225,7 @@ def execute(command,
     if not last_modified_valid:
         return None
 
-    return_code = 0
+    return_code = [0]
     returnable = gexecute.execute(command,
                                   timeout=timeout,
                                   env=env,
@@ -237,7 +237,7 @@ def execute(command,
                                   return_code=return_code)
 
     ## Command failed, lets check to see if it was due to the proxy or not
-    if return_code:
+    if return_code[0] != 0:
         last_modified_valid = False
 
     if cwd is None:

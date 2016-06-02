@@ -195,7 +195,7 @@ def execute(command,
         python_setup (str): A python command to be executed beore the main command is
         eval_includes (str): An string used to construct an environment which, if passed, is used to eval the stdout into a python object
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
-        return_code (int): This is the returned code from the command which is executed
+        return_code (list): This has element 0 modified to be the returned code from the command which is executed
     """
 
     if update_env and env is None:
@@ -255,7 +255,8 @@ def execute(command,
         logger.debug(stderr)
 
     if timed_out.isSet():
-        return_code = -9999
+        if return_code:
+            return_code[0] = -9999
         return 'Command timed out!'
 
     # Decode any pickled objects from disk
@@ -273,7 +274,8 @@ def execute(command,
     if not shell:
         update_pkl_thread.join()
         if pkl_output_key in thread_output:
-            return_code = p.returncode
+            if return_code:
+                return_code[0] = p.returncode
             return thread_output[pkl_output_key]
         else:
             logger.error("Expected to find the pickled output after running a command")
@@ -299,7 +301,7 @@ def execute(command,
             except Exception as err2:
                 logger.error("Err2: %s" % str(err2))
                 pass
-
-    return_code = p.returncode
+    if return_code:
+        return_code[0] = p.returncode
     return stdout
 
