@@ -254,6 +254,7 @@ def execute(command,
         logger.debug(stderr)
 
     if timed_out.isSet():
+        return_code = -9999
         return 'Command timed out!'
 
     # Decode any pickled objects from disk
@@ -271,6 +272,7 @@ def execute(command,
     if not shell:
         update_pkl_thread.join()
         if pkl_output_key in thread_output:
+            return_code = p.returncode
             return thread_output[pkl_output_key]
         else:
             logger.error("Expected to find the pickled output after running a command")
