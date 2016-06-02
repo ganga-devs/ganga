@@ -581,8 +581,6 @@ class Job(GangaObject):
             else:
                 raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"' % (fqid, self.status, newstatus))
 
-        self._getWriteAccess()
-
         saved_status = self.status
         try:
             if state.hook:
@@ -608,7 +606,6 @@ class Job(GangaObject):
 
             # move to the new state AFTER hooks are called
             self.status = newstatus
-            self._commit()
             logger.debug("Status changed from '%s' to '%s'" % (saved_status, self.status))
 
         except Exception as x:
@@ -637,7 +634,7 @@ class Job(GangaObject):
 
         # Propagate transition updates to applications
         if self.application:
-            stripProxy(self.application).transition_update(new_status)
+            self.application.transition_update(new_status)
         return new_status
 
     def getBackendOutputPostprocessDict(self):
@@ -1441,7 +1438,6 @@ class Job(GangaObject):
 
                 rjobs = self.subjobs
                 logger.info('submitting %s subjobs', len(rjobs))
-                self._commit()
             else:
                 rjobs = [self]
         else:
@@ -1514,16 +1510,6 @@ class Job(GangaObject):
             # prevent other sessions from submitting this job concurrently.
             # Also calls _getWriteAccess
             self.updateStatus('submitting')
-
-            try:
-                # NOTE: this commit is redundant if updateStatus() is used on
-                # the line above
-                self._commit()
-            except Exception as x:
-                msg = 'cannot commit the job %s, submission aborted' % self.getFQID('.')
-                logger.error(msg)
-                self.status = 'new'
-                raise JobError(msg)
 
             self.getDebugWorkspace(create=False).remove(preserve_top=True)
 
@@ -1644,11 +1630,6 @@ class Job(GangaObject):
         #if self.master is not None:
         self.updateStatus('submitted')
 
-        # make sure that the status change goes to the repository, NOTE:
-        # this commit is redundant if updateStatus() is used on the line
-        # above
-        self._commit()
-
         # send job submission message
         if len(self.subjobs) == 0:
             ganga_job_submitted(getName(self.application), getName(self.backend), "1", "0", "0")
@@ -1684,7 +1665,6 @@ class Job(GangaObject):
             sj.application.transition_update("removed")
         # delete subjobs
         self.subjobs = GangaList()
-        self._commit()
 
     def remove(self, force=False):
         """Remove the job.
@@ -1922,8 +1902,6 @@ class Job(GangaObject):
                     #
                     ############
 
-                    self._commit()
-
                     return True
                 else:
                     msg = "backend.master_kill() returned False"
@@ -2033,14 +2011,6 @@ class Job(GangaObject):
 
         self.updateStatus('submitting')
 
-        try:
-            self._commit()
-        except Exception, x:
-            msg = 'cannot commit the job %s, resubmission aborted' % self.getFQID('.')
-            logger.error(msg)
-            self.status = oldstatus
-            raise JobError(msg)
-
         self.getDebugWorkspace().remove(preserve_top=True)
 
         try:
@@ -2090,8 +2060,6 @@ class Job(GangaObject):
             # FIXME: if job is not split, then default implementation of
             # backend.master_submit already have set status to "submitted"
             self.status = 'submitted'
-            # make sure that the status change goes to the repository
-            self._commit()
 
             # send job submission message
             # if resubmit on subjob
@@ -2114,14 +2082,7 @@ class Job(GangaObject):
             logger.error("failed to resubmit job, %s" % x)
             logger.warning('reverting job %s to the %s status', fqid, oldstatus)
             self.status = oldstatus
-            self._commit()  # PENDING: what to do if this fails?
             raise
-
-    def _commit(self, objects=None):
-        """ Helper method to unconditionally commit to the repository. The 'objects' list specifies objects
-        to be commited (for example the subjobs). If objects are not specified then just the self is commited """
-        # TODO This function should force a flush. However it is currently used everywhere which causes too many flushes.
-        self._getRoot()._setDirty()
 
     def _repr(self):
         if self.id is None:
