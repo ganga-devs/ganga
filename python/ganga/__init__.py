@@ -1,11 +1,15 @@
 import os
 
 # Bootstrap all of ganga, setup GPI, registries, etc.
+import atexit
+
 from Ganga.Utility.Runtime import allRuntimes
 from Ganga.Utility.Config import getConfig, setSessionValuesFromFiles
 from Ganga.Utility.logging import getLogger
 from Ganga import _gangaPythonPath
 import Ganga.Core
+from Ganga.Core.GangaRepository import getRegistry
+from Ganga.Core.InternalServices.ShutdownManager import _ganga_run_exitfuncs
 
 logger = getLogger(modulename=True)
 
@@ -18,8 +22,7 @@ def ganga_license():
 
 # ------------------------------------------------------------------------------------
 # Setup the shutdown manager
-from Ganga.Core.InternalServices import ShutdownManager
-ShutdownManager.install()
+atexit.register(_ganga_run_exitfuncs)
 
 system_vars = {}
 for opt in getConfig('System'):

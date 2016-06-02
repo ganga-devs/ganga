@@ -15,78 +15,10 @@
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.Plugin import allPlugins
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import SchemaVersionError, RepositoryError
 from Ganga.GPIDev.Base.Proxy import getName
 
 logger = getLogger()
-
-# Error raised on schema version error
-
-
-class SchemaVersionError(GangaException):
-
-    def __init__(self, what=''):
-        """
-        This is the error thrown when the Schema version in XML doesn't match what's in the code. This may be dropped in a future release
-        Args:
-            what (str): This is a string of what went wrong
-        """
-        super(SchemaVersionError, self).__init__(what)
-        self.what = what
-
-    def __str__(self):
-        return "SchemaVersionError: %s" % self.what
-
-
-class InaccessibleObjectError(GangaException):
-
-    def __init__(self, repo=None, id='', orig=None):
-        """
-        This is an error in accessing an object in the repo
-        Args:
-            repo (GangaRepository): The repository the error happened in
-            id (int): The key of the object in the objects dict where this happened
-            orig (exception): The original exception
-        """
-        super(InaccessibleObjectError, self).__init__("Inaccessible Object: %s" % id)
-        self.repo = repo
-        self.id = id
-        self.orig = orig
-
-    def __str__(self):
-        if str(self.orig).find('comments') > -1:
-            return "Please restart Ganga in order to reload the object"
-        else:
-            return "Repository '%s' object #%s is not accessible because of an %s: %s" % (self.repo.registry.name, self.id, getName(self.orig), str(self.orig))
-
-
-class RepositoryError(GangaException):
-
-    """ This error is raised if there is a fatal error in the repository."""
-
-    def __init__(self, repo=None, what=''):
-        """
-        This is a fatal repo error
-        Args:
-            repo (GangaRepository): The repository the error happened in
-            what (str): The original exception/error/description
-        """
-        super(RepositoryError, self).__init__(self, what)
-        self.what = what
-        self.repository = repo
-        logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))
-        logger.error('If you believe the problem has been solved, type "reactivate()" to re-enable ')
-        try:
-            from Ganga.Core.InternalServices.Coordinator import disableInternalServices
-            disableInternalServices()
-            from Ganga.Core.GangaThread.WorkerThreads import shutdownQueues
-            shutdownQueues()
-            logger.error("Shutting Down Repository_runtime")
-            from Ganga.Runtime import Repository_runtime
-            Repository_runtime.shutdown()
-        except:
-            logger.error("Unable to disable Internal services, they may have already been disabled!")
-
 
 class GangaRepository(object):
 

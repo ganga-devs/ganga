@@ -540,7 +540,7 @@ under certain conditions; type license() for details.
             # the user actually sees this message last
             time.sleep(3.)
             yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')
-            if yes == '' or yes[0:1].upper() == 'Y':
+            if yes.lower() in ['', 'y']:
                 self.generate_config_file(default_config)
                 raw_input('Press <Enter> to continue.\n')
         elif self.new_version():
@@ -843,8 +843,9 @@ under certain conditions; type license() for details.
         logger = getLogger()
 
         logger.debug("Installing Shutdown Manager")
-        from Ganga.Core.InternalServices import ShutdownManager
-        ShutdownManager.install()
+        import atexit
+        from Ganga.Core.InternalServices.ShutdownManager import _ganga_run_exitfuncs
+        atexit.register(_ganga_run_exitfuncs)
 
         import Ganga.Utility.Config
         from Ganga.Utility.Runtime import RuntimePackage, allRuntimes
@@ -1247,7 +1248,7 @@ under certain conditions; type license() for details.
         from Ganga.Utility.logging import enableCaching
         enableCaching()
 
-        ipshell.set_hook("pre_prompt_hook", ganga_prompt)
+        ipshell.set_hook("pre_run_code_hook", ganga_prompt)
 
         from Ganga.Runtime.IPythonMagic import magic_ganga
         ipshell.define_magic('ganga', magic_ganga)

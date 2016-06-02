@@ -4,18 +4,16 @@ import subprocess
 import threading
 import pickle
 import signal
+import tempfile
+import shutil
+import time
+from copy import deepcopy
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.execute import execute
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Credentials import getCredential
 import Ganga.Utility.execute as gexecute
-
-
-import time
-import math
-from copy import deepcopy
-import inspect
 
 logger = getLogger()
 proxy = getCredential('GridProxy', '')
@@ -49,6 +47,7 @@ def getDiracEnv(force=False):
             if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(absolute_path):
 
                 env_dict = {}
+                logger.debug("Executing command: %s" % 'source {0}'.format(absolute_path))
                 execute('source {0}'.format(absolute_path), shell=True, env=env_dict, update_env=True)
 
                 if env_dict is not None:
@@ -121,7 +120,7 @@ last_modified_valid = False
 ############################
 
 
-def _dirac_check_proxy( renew = True):
+def _dirac_check_proxy( renew = True, shouldRaise = True):
     """
     This function checks the validity of the DIRAC proxy
     Args:
@@ -135,7 +134,8 @@ def _dirac_check_proxy( renew = True):
             proxy.renew()
             if not proxy.isValid():
                 last_modified_valid = False
-                raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
+                if shouldRaise:
+                    raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
             else:
                 last_modified_valid = True
         else:
@@ -146,14 +146,14 @@ def _dirac_check_proxy( renew = True):
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
-def _proxyValid():
+def _proxyValid(shouldRenew = True, shouldRaise = True):
     """
     This function is a wrapper for the _checkProxy with a default of False for renew. Returns the last modified time global object
     """
-    _checkProxy( renew = False )
+    _checkProxy( renew = shouldRenew, shouldRaise = shouldRaise )
     return last_modified_valid
 
-def _checkProxy( delay=60, renew = True ):
+def _checkProxy( delay=60, renew = True, shouldRaise = True, force = False ):
     """
     Check the validity of the DIRAC proxy. If it's marked as valid, check once every 'delay' seconds.
     Args:
@@ -167,12 +167,12 @@ def _checkProxy( delay=60, renew = True ):
         if last_modified_time is None:
             # This will move/change when new credential system in place
             ############################
-            _dirac_check_proxy( True )
+            _dirac_check_proxy( renew, shouldRaise )
             ############################
             last_modified_time = time.time()
 
-        if abs(last_modified_time - time.time()) > int(delay):
-            _dirac_check_proxy( renew )
+        if (time.time() - last_modified_time) > int(delay) or not last_modified_valid or force:
+            _dirac_check_proxy( renew, shouldRaise )
             last_modified_time = time.time()
 
 
@@ -183,7 +183,8 @@ def execute(command,
             shell=False,
             python_setup='',
             eval_includes=None,
-            update_env=False):
+            update_env=False,
+            renew=False):
     """
     Execute a command on the local DIRAC server.
 
@@ -205,20 +206,39 @@ def execute(command,
     if python_setup == '':
         python_setup = getDiracCommandIncludes()
 
-    _checkProxy()
+    # We're about to perform an expensive operation so being safe before we run it shouldn't cost too much
+    _checkProxy(force = True, renew = renew)
 
-    #logger.info("Executing command:\n'%s'" % str(command))
+    #logger.debug("Executing command:\n'%s'" % str(command))
     #logger.debug("python_setup:\n'%s'" % str(python_setup))
     #logger.debug("eval_includes:\n'%s'" % str(eval_includes))
+
+    if cwd is None:
+        # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
+        # If we are we do NOT want to execute commands which will involve any I/O on the system that isn't needed
+        cwd_ = tempfile.mkdtemp()
+    else:
+        # We know were whe want to run, lets just run there
+        cwd_ = cwd
+
+    global last_modified_valid
+    if not last_modified_valid:
+        return None
 
     returnable = gexecute.execute(command,
                                   timeout=timeout,
                                   env=env,
-                                  cwd=cwd,
+                                  cwd=cwd_,
                                   shell=shell,
                                   python_setup=python_setup,
                                   eval_includes=eval_includes,
                                   update_env=update_env)
+
+    # TODO we would like some way of working out if the code has been executed correctly
+    # Most commands will be OK now that we've added the check for the valid proxy before executing commands here
+
+    if cwd is None:
+        shutil.rmtree(cwd_, ignore_errors=True)
 
     return deepcopy(returnable)
 
