@@ -414,10 +414,10 @@ class DiracFile(IGangaFile):
             logger.info("I have a local DiracFile, however you're requesting it's location on the grid")
             logger.info("Shall I upload it to the grid before I continue?")
             decision = raw_input('[y] / n:')
-            while not (decision in ['y', 'n'] or decision == ''):
+            while not (decision.lower() in ['y', 'n'] or decision.lower() == ''):
                 decision = raw_input('[y] / n:')
 
-            if decision == 'y' or decision == '':
+            if decision.lower() in ['y', '']:
                 # upload namePattern to grid
                 logger.debug("Uploading the file first")
                 self.put()
@@ -679,10 +679,10 @@ class DiracFile(IGangaFile):
         if self.lfn != "" and force == False and lfn == '':
             logger.warning("Warning you're about to 'put' this DiracFile: %s on the grid as it already has an lfn: %s" % (self.namePattern, self.lfn))
             decision = raw_input('y / [n]:')
-            while not (decision in ['y', 'n'] or decision == ''):
+            while not (decision.lower() in ['y', 'n'] or decision.lower() == ''):
                 decision = raw_input('y / [n]:')
 
-            if decision == 'y':
+            if decision.lower() == 'y':
                 pass
             else:
                 return
@@ -692,10 +692,10 @@ class DiracFile(IGangaFile):
             logger.warning("It currently has an LFN associated with it: %s" % self.lfn)
             logger.warning("Do you want to continue and attempt to upload to: %s" % lfn)
             decision = raw_input('y / [n]:')
-            while not (decision in ['y', 'n', '']):
+            while not (decision.lower() in ['y', 'n', '']):
                 decision = raw_input('y / [n]:')
 
-            if decision == 'y':
+            if decision.lower() == 'y':
                 pass
             else:
                 return
