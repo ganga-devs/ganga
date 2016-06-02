@@ -209,7 +209,7 @@ def execute(command,
     # We're about to perform an expensive operation so being safe before we run it shouldn't cost too much
     _checkProxy(force = True, renew = renew)
 
-    #logger.info("Executing command:\n'%s'" % str(command))
+    #logger.debug("Executing command:\n'%s'" % str(command))
     #logger.debug("python_setup:\n'%s'" % str(python_setup))
     #logger.debug("eval_includes:\n'%s'" % str(eval_includes))
 
@@ -225,7 +225,6 @@ def execute(command,
     if not last_modified_valid:
         return None
 
-    return_code = [0]
     returnable = gexecute.execute(command,
                                   timeout=timeout,
                                   env=env,
@@ -233,12 +232,10 @@ def execute(command,
                                   shell=shell,
                                   python_setup=python_setup,
                                   eval_includes=eval_includes,
-                                  update_env=update_env,
-                                  return_code=return_code)
+                                  update_env=update_env)
 
-    ## Command failed, lets check to see if it was due to the proxy or not
-    if return_code[0] != 0:
-        last_modified_valid = False
+    # TODO we would like some way of working out if the code has been executed correctly
+    # Most commands will be OK now that we've added the check for the valid proxy before executing commands here
 
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
