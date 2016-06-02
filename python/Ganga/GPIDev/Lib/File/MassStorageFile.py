@@ -484,9 +484,9 @@ class MassStorageFile(IGangaFile):
 
                 while keyin is None:
                     keyin = raw_input("Do you want to delete file %s at Location: %s ? [y/n] " % (str(self.namePattern), str(i)))
-                    if keyin == 'y':
+                    if keyin.lower() == 'y':
                         _delete_this = True
-                    elif keyin == 'n':
+                    elif keyin.lower() == 'n':
                         _delete_this = False
                     else:
                         logger.warning("y/n please!")
@@ -520,11 +520,10 @@ class MassStorageFile(IGangaFile):
 
                     keyin = None
                     while keyin is None:
-                        keyin = raw_input(
-                            "Do you want to remove the local File: %s ? ([y]/n) " % str(_localFile))
-                        if keyin in ['y', '']:
+                        keyin = raw_input("Do you want to remove the local File: %s ? ([y]/n) " % str(_localFile))
+                        if keyin.lower() in ['y', '']:
                             _actual_delete = True
-                        elif keyin == 'n':
+                        elif keyin.lower() == 'n':
                             _actual_delete = False
                         else:
                             logger.warning("y/n please!")
