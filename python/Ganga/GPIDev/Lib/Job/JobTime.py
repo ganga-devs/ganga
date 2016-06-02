@@ -282,13 +282,12 @@ class JobTime(GangaObject):
                 # ask whether user really wants to print timedetails for all
                 # their jobs:
                 while keyin is None:
-                    keyin = raw_input(
-                        "Are you sure you want details for ALL %d subjobs(y/n)?" % len(j.subjobs))
+                    keyin = raw_input("Are you sure you want details for ALL %d subjobs(y/n)?" % len(j.subjobs))
                     # if yes carry on at for loop
-                    if keyin == 'y':
+                    if keyin.lower() == 'y':
                         pass
                     # if no return None. Doesn't execute rest of method
-                    elif keyin == 'n':
+                    elif keyin.lower() == 'n':
                         return None
                     # if something else - asks again
                     else:
