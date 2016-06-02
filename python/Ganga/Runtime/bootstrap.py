@@ -1248,7 +1248,7 @@ under certain conditions; type license() for details.
         from Ganga.Utility.logging import enableCaching
         enableCaching()
 
-        ipshell.set_hook("pre_prompt_hook", ganga_prompt)
+        ipshell.set_hook("pre_run_code_hook", ganga_prompt)
 
         from Ganga.Runtime.IPythonMagic import magic_ganga
         ipshell.define_magic('ganga', magic_ganga)
