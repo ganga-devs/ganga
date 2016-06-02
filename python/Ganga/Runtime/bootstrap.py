@@ -1216,10 +1216,16 @@ under certain conditions; type license() for details.
 
         import IPython
 
+	ipver = IPython.__version__
+        ipver_major = int(ipver[0])
+
         # Based on examples/Embedding/embed_class_long.py from the IPython source tree
 
         # First we set up the prompt
-        from IPython.config.loader import Config
+        if ipver_major > 3:
+             from traitlets.config.loader import Config
+        else:
+             from IPython.config.loader import Config
         cfg = Config()
         cfg.TerminalInteractiveShell.colors = 'LightBG'
         cfg.TerminalInteractiveShell.autocall = 0
@@ -1234,8 +1240,6 @@ under certain conditions; type license() for details.
         from IPython.terminal.embed import InteractiveShellEmbed
 
         ## Check which version of IPython we're running
-        ipver = IPython.__version__
-        ipver_major = int(ipver[0])
         if ipver_major > 2:
             ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
         else:
@@ -1248,7 +1252,10 @@ under certain conditions; type license() for details.
         from Ganga.Utility.logging import enableCaching
         enableCaching()
 
-        ipshell.set_hook("pre_run_code_hook", ganga_prompt)
+        if ipver_major > 2:
+            ipshell.events.register("post_execute", ganga_prompt)
+        else:
+            ipshell.set_hook("pre_run_code_hook", ganga_prompt)
 
         from Ganga.Runtime.IPythonMagic import magic_ganga
         ipshell.define_magic('ganga', magic_ganga)
