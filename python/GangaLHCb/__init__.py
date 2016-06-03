@@ -12,6 +12,7 @@ from optparse import OptionParser, OptionValueError
 
 from Ganga.Utility.Config.Config import _after_bootstrap
 from Ganga.Utility.logging import getLogger
+from Ganga.Utility.execute import execute
 logger = getLogger()
 
 if not _after_bootstrap:
@@ -88,13 +89,13 @@ def _store_dirac_environment():
     from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache, get_env
     diracversion = _guess_version('LHCBDIRAC')
     platform = os.environ['CMTOPT']
-    setup_script = 'SetupProject.sh'
     fdir = os.path.join(os.path.expanduser("~/.cache/Ganga/GangaLHCb"), platform)
     fname = os.path.join(fdir, diracversion)
     if not os.path.exists(fname) or not os.path.getsize(fname):
         logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
-        cmd = '%s LHCBDIRAC %s ROOT' % (setup_script, diracversion)
-        env = get_env(cmd)
+        cmd = 'lb-run LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
+        env = execute(cmd)  # grab the stdout text
+        env = eval(env)  # env is a string so convert it to a dict
         write_env_cache(env, fname)
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
