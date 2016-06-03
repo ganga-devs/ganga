@@ -1,19 +1,18 @@
 
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 
 from Ganga.Utility.Config import getConfig
 
-from Ganga.GPIDev.Lib.File import File, ShareDir
+from Ganga.GPIDev.Lib.File.File import File, ShareDir
 from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
 
 from Ganga.Utility.logging import getLogger
 
 from Ganga.GPIDev.Base.Proxy import getName, isType, stripProxy
 
-from os import rename
-from os.path import join, isdir, isfile, abspath, expanduser, expandvars, split, isabs, basename, exists
+from os import rename, path
 import shutil
 from Ganga.Utility.files import expandfilename
 
@@ -25,6 +24,7 @@ logger = getLogger()
 cmake_sandbox_name = 'cmake-input-sandbox.tgz'
 build_target = 'ganga-input-sandbox'
 build_dest = 'input-sandbox.tgz'
+defDir = '$HOME/cmtuser'
 
 def _exec_cmd(cmd, cwdir):
     pipe = subprocess.Popen(cmd,
@@ -38,16 +38,57 @@ def _exec_cmd(cmd, cwdir):
         time.sleep(0.5)
     return pipe.returncode, stdout, stderr
 
+def prepare_cmake_app(myApp, myVer, myPath=defDir):
+    """
+    Short helper function for setting up minimal application environments on disk for job submission
+    """
+    full_path = expandfilename(myPath)
+    if not path.exists(full_path):
+        os.makedirs(full_path)
+    os.chdir(full_path)
+    _exec_cmd('lb-dev %s %s' % (myApp, myVer), myPath)
+
+
 class GaudiRun(IPrepareApp):
 
     """
-        New GaudiApp for LHCb apps written/constructed making use of the new CMake application
+    Welcome to the new GaudiApp for LHCb apps written/constructed making use of the new CMake framework
+
+    Before submitting jobs with this application you will need to run something similar to the following:
+
+    cd $SOMEPATH
+    lb-dev DaVinci v40r2
+    cd $SOMEPATH/DaVinciDev_v40r2
+    getpack 
+
+    This program will perform the following command to `prepare` the application before submission:
+        make ganga-input-sandbox
+
+    This application needs to be configured with the absolute directory of the project and the options you want to pass to gaudirun.py
+
+    e.g.
+
+    j=Job()
+    myApp = GaudiRun()
+    myApp.directory = "$SOMEPATH/DaVinciDev_v40r2"
+    myApp.myOpts = "$SOMEPATH/DaVinciDev_v40r2/myDaVinciOpts.py"
+    j.application = myApp
+    j.submit()
+
+    To setup a minimal application you can also run the helper function:
+
+    prepare_cmake_app(myApp, myVer, myPath)
+
     """
     _schema = Schema(Version(1, 0), {
-        'directory':    SimpleItem(preparable=1, defvalue='$HOME/~/DaVinciDev_v40r2', typelist=[str], comparable=1,
+        # Options created for constructing/submitting this app
+        'directory':    SimpleItem(preparable=1, defvalue='$HOME/DaVinciDev_v40r2', typelist=[str], comparable=1,
             doc='A path to the project that you\'re wanting to run.'),
         'build_opts':   SimpleItem(defvalue=[""], typelist=[str], sequence=1, strict_sequence=0,
             doc="Options to be passed to 'make ganga-input-sandbox'"),
+        'myOpts':       GangaFileItem(defvalue=None, doc='File which contains the extra opts I want to pass to gaudirun.py'),
+
+        # Prepared job object
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1,
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=0,
@@ -69,6 +110,9 @@ class GaudiRun(IPrepareApp):
         self.hash = None
 
     def prepare(self, force=False):
+        """
+        This method creates a set of prepared files for the application to pass to the RTHandler
+        """
 
         if (self.is_prepared is not None) and (force is not True):
             raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
@@ -101,15 +145,25 @@ class GaudiRun(IPrepareApp):
         return 1
 
     def configure(self, masterappconfig):
-
+        """
+        Required even though nothing is done in this step for this App
+        """
         return (None, None)
 
     def getDir(self):
+        """
+        This function returns a sanitized absolute path of the self.directory method from user input
+        """
         myDir = self.directory
-        myDir = abspath(expanduser(expandvars(myDir)))
+        myDir = path.abspath(expanduser(expandvars(myDir)))
         return myDir
 
     def exec_cmd(self, cmd):
+        """
+        This method exectutes a command within the namespace of the project. The cmd is placed in a bash script which is executed within the env
+        Args:
+            cmd (str): This is the command(s) which are to be executed within the project environment and directory
+        """
 
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
 
@@ -129,20 +183,23 @@ class GaudiRun(IPrepareApp):
             raise GangaException("Failed to Execute command")
 
     def buildGangaTarget(self):
-
+        """
+        This builds the ganga target 'ganga-input-sandbox' for the project defined by self.directory
+        This returns the absolute path to the file after it has been created. It will fail if things go wrong or the file fails to generate
+        """
         logger.info("Make-ing target '%s'" % build_target)
         self.exec_cmd('make clean && make %s' % build_target)
 
-        targetPath = join(self.getDir(), 'build.%s' % self.arch, 'ganga')
-        if not isdir(targetPath):
+        targetPath = path.join(self.getDir(), 'build.%s' % self.arch, 'ganga')
+        if not path.isdir(targetPath):
             raise GangaException("Target Path: %s NOT found!" % targetPath)
         sandbox_str = '%s' % build_dest
-        targetFile = join(targetPath, sandbox_str)
-        if not isfile(targetFile):
+        targetFile = path.join(targetPath, sandbox_str)
+        if not path.isfile(targetFile):
             raise GangaException("Target File: %s NOT found!" % targetFile)
-        wantedTargetFile = join(targetPath, cmake_sandbox_name)
+        wantedTargetFile = path.join(targetPath, cmake_sandbox_name)
         rename(targetFile, wantedTargetFile)
-        if not isfile(wantedTargetFile):
+        if not path.isfile(wantedTargetFile):
             raise GangaException("Wanted Target File: %s NOT found" % wantedTargetFile)
 
         logger.info("Built %s" % wantedTargetFile)
