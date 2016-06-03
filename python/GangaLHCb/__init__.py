@@ -85,7 +85,7 @@ def _store_root_version():
 
 
 def _store_dirac_environment():
-    from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache
+    from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache, get_env
     diracversion = _guess_version('LHCBDIRAC')
     platform = os.environ['CMTOPT']
     setup_script = 'SetupProject.sh'
@@ -94,7 +94,8 @@ def _store_dirac_environment():
     if not os.path.exists(fname) or not os.path.getsize(fname):
         logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
         cmd = '%s LHCBDIRAC %s ROOT' % (setup_script, diracversion)
-        write_env_cache(cmd, fname)
+        env = get_env(cmd)
+        write_env_cache(env, fname)
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
 if not _after_bootstrap:
