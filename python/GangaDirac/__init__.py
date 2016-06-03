@@ -23,8 +23,10 @@ if not _after_bootstrap:
     if "GANGADIRACENVIRONMENT" in os.environ:
         diracenv = os.environ["GANGADIRACENVIRONMENT"]
 
-    configDirac.addOption('DiracEnvFile', diracenv,
-                      'Ganga environment file for DIRAC environment (do not change unless you are sure you know what you are doing).')
+    configDirac.addOption('DiracEnvFile', diracenv, 'DEPRECATED. Ganga environment file for DIRAC environment (do not change unless you are sure you know what you are doing).')
+
+    configDirac.addOption('DiracEnvSource', None, 'File to be sourced to provide the DIRAC environment. E.g. /cvmfs/ganga.cern.ch/dirac_ui/bashrc')
+    configDirac.addOption('DiracEnvJSON', None, 'A JSON file containing the environment for DIRAC. Overrides DiracEnvSource')
 
     configDirac.addOption('DiracCommandFiles', [os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracDefinition.py'),
                                                 os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracCommands.py')],
