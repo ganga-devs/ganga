@@ -95,6 +95,8 @@ class GangaThreadPool(object):
         shutdown_thread.start()
 
         t_start = time.time()
+
+        # Note that this is negative for the logic below to work
         t_last = -t_start
 
         def __cnt_alive_threads__(_all_threads):
