@@ -138,7 +138,7 @@ class GangaThreadPool(object):
                         break
                 else:
                     break
-            else GangaThreadPool.shutdown_policy == 'interactive':
+            else:
                 # we have interactive shutdown policy so for critical threads, wait until
                 # PollThread.forced_shutdown_first_prompt_time before asking every
                 # PollThread.forced_shutdown_prompt_time before asking to force exit. For non-critical threads wait
