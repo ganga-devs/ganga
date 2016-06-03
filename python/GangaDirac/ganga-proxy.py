@@ -3,6 +3,7 @@
 from __future__ import print_function
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+import json
 import os
 import sys
 import time
@@ -21,10 +22,10 @@ if "GANGADIRACENVIRONMENT" not in os.environ:
 dirac_env_cache_file = os.environ["GANGADIRACENVIRONMENT"]
 if not os.path.exists(dirac_env_cache_file):
     raise IOError('DIRAC env cache file does not exist.')
-env_file = open(dirac_env_cache_file)
-for line in env_file.readlines():
-    varval = line.strip().split('=')
-    os.environ[varval[0]] = ''.join(varval[1:])
+with open(dirac_env_cache_file, 'r') as env_file:
+    env = json.load(env_file)
+for entry in env.items():
+    os.environ[entry[0].encode('utf-8')] = entry[1].encode('utf-8')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
