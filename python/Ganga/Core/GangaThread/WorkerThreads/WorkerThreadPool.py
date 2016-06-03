@@ -222,6 +222,14 @@ class WorkerThreadPool(object):
         """
         return [(w.gangaName, w._command, w._timeout) for w in self.__worker_threads]
 
+    def threads_matching(self, name_str):
+        """
+        Returns a list of all threads matching the given string at the start of their name
+        Args:
+            name_str (str): String to be used in the starts_with comparison of the worker_threads
+        """
+        return [w for w in self.__worker_threads if w.gangaName.startswith(name_str)]
+
     def _stop_worker_threads(self, shutdown=False):
         self._shutdown = shutdown
         for w in self.__worker_threads:
