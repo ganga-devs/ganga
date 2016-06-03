@@ -175,7 +175,7 @@ makeConfig("Shell", "configuration parameters for internal Shell utility.")
 # Queues
 queues_config = makeConfig("Queues", "configuration section for the queues")
 queues_config.addOption('Timeout', None, 'default timeout for queue generated processes')
-queues_config.addOption('NumWorkerThreads', 3, 'default number of worker threads in the queues system')
+queues_config.addOption('NumWorkerThreads', 5, 'default number of worker threads in the queues system')
 
 # ------------------------------------------------
 # MSGMS
@@ -232,7 +232,7 @@ poll_config.addOption('creds_poll_rate', 30, "The frequency in seconds for crede
 poll_config.addOption('diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
 poll_config.addOption('DiskSpaceChecker', "", "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
 poll_config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
-poll_config.addOption('numParallelJobs', 50, 'Number of Jobs to update the status for in parallel')
+poll_config.addOption('numParallelJobs', 25, 'Number of Jobs to update the status for in parallel')
 
 poll_config.addOption('forced_shutdown_policy', 'session_type',
                  'If there are remaining background activities at exit such as monitoring, output download Ganga will attempt to wait for the activities to complete. You may select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the system waits on a timeout without questions ("timeout"). The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')
