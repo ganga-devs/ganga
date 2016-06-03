@@ -35,14 +35,13 @@ def getDiracEnv():
     with Dirac_Env_Lock:
         if not DIRAC_ENV:
             cache_file = getConfig('DIRAC')['DiracEnvJSON']
+            source_command = getConfig('DIRAC')['DiracEnvSource']
             if cache_file:
                 DIRAC_ENV = read_env_cache(cache_file)
+            elif source_command:
+                DIRAC_ENV = get_env(source_command)
             else:
-                source_command = getConfig('DIRAC')['DiracEnvSource']
-                if source_command:
-                    DIRAC_ENV = get_env(source_command)
-                else:
-                    logger.error("'DiracEnvSource' config variable empty")
+                logger.error("'DiracEnvSource' config variable empty")
     return DIRAC_ENV
 
 
