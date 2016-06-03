@@ -169,7 +169,7 @@ while True:
         logger.info("###Server command completed###")
 
         # grab the logger results
-        stdout = open( os.path.join(config["Configuration"]["gangadir"], "server", "server-%s.stderr" % os.uname()[1]) ).read()
+        stdout = open( os.path.join(config["Configuration"]["gangadir"], "server", "server-%s.stdout" % os.uname()[1]) ).read()
         start_pos = stdout.find("###Server command started %d ###" % tstamp)
         end_pos = stdout.find("###Server command completed###", start_pos)
         msg = stdout[start_pos + len("###Server command started %d ###" % tstamp):end_pos]

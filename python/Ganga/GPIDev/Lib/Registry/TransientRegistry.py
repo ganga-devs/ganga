@@ -10,11 +10,10 @@ logger = getLogger()
 
 class TransientRegistry(Registry):
 
-    def __init__(self, name, filebase, doc, file_ext='tpl', pickle_files=False, dirty_flush_counter=10, update_index_time=30):
+    def __init__(self, name, filebase, doc, file_ext='tpl', pickle_files=False, update_index_time=30):
 
         super(TransientRegistry, self).__init__(name,
                                                 doc,
-                                                dirty_flush_counter,
                                                 update_index_time)
         self.type = "ImmutableTransient"
         self.location = filebase
