@@ -69,17 +69,16 @@ def get_env(env_source):
     return env
 
 
-def write_env_cache(env_source, cache_filename):
+def write_env_cache(env, cache_filename):
     """
     Given a command and a file path, source the command and store it
     in the file
 
     Args:
-        env_source: a command which can be sourced, providing the desired environment
+        env (dict): the environment
         cache_filename: a full path to a file to store the cache in
 
     """
-    env = get_env(env_source)
     cache_dir = os.path.dirname(cache_filename)
     if not os.path.exists(cache_dir):
         os.makedirs(cache_dir)
