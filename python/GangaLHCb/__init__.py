@@ -117,6 +117,19 @@ def _store_dirac_environment():
         if count == 0:
             msg = 'Tried to setup Dirac version %s. For some reason this did not setup the DIRAC environment.' % diracversion
             raise OptionValueError(msg)
+            
+        # Now manipulate the file to make it cleanly sourceable
+        os.rename(fname, fname+'_tmp')
+        with open(fname+'_tmp') as env_file:
+            with open(fname, 'w') as new_env_file:
+                for line in env_file:
+                    line = line.strip()
+                    line = 'export ' + line
+                    line = line.replace('=', '="', 1)
+                    line += '"\n'
+                    new_env_file.write(line)
+        os.remove(fname+'_tmp')
+            
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
 if not _after_bootstrap:
