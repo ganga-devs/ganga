@@ -203,8 +203,10 @@ with open(doc_dir+'/GPI/functions.rst', 'w') as ff:
 ## EXITING GANGA ##
 from Ganga.Core.InternalServices import ShutdownManager
 
-import Ganga.Core
-Ganga.Core.change_atexitPolicy(interactive_session=False, new_policy='batch')
+# make sure we don't have an interactive shutdown policy
+from Ganga.Core.GangaThread import GangaThreadPool
+GangaThreadPool.shutdown_policy = 'batch'
+
 # This should now be safe
 ShutdownManager._ganga_run_exitfuncs()
 
