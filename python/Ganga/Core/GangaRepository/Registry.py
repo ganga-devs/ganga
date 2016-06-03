@@ -922,23 +922,15 @@ class Registry(object):
         try:
             self._hasStarted = True
             try:
-                if not self.metadata is None:
-                    try:
-                        self.flush_all()
-                    except Exception, err:
-                        logger.debug("shutdown _flush Exception: %s" % err)
-                    self.metadata.shutdown()
-            except Exception as err:
-                logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, err)
-            #finally:
-            #    pass
-            try:
                 self.flush_all()
             except Exception as err:
                 logger.error("Exception on flushing '%s' registry: %s", self.name, err)
-                #raise
-            #finally:
-            #    pass
+            try:
+                if self.metadata is not None:
+                    self.metadata.shutdown()
+            except Exception as err:
+                logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, err)
+                raise
             for obj in self._objects.values():
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
