@@ -26,17 +26,14 @@ Dirac_Proxy_Lock = threading.Lock()
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 
-def getDiracEnv(force=False):
+def getDiracEnv():
     """
     Returns the dirac environment stored in a global dictionary by Ganga.
     Once loaded and stored this is used for executing all DIRAC code in future
-
-    Args:
-        force (bool): This triggers a compulsory reload of the env from disk
     """
     global DIRAC_ENV
     with Dirac_Env_Lock:
-        if not DIRAC_ENV or force:
+        if not DIRAC_ENV:
             cache_file = getConfig('DIRAC')['DiracEnvJSON']
             if cache_file:
                 DIRAC_ENV = read_env_cache(cache_file)
