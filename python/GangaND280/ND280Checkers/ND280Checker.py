@@ -204,7 +204,7 @@ class ND280RDP_Checker(IFileChecker):
             self.TRIGTYPE = 'spill'
         elif self.trig == 'COSMIC':
             self.TRIGTYPE = 'cosmic'
-        elif self.trig == 'MCP':
+        elif self.trig == 'MCP' or self.trig == 'MCSAND':
             self.TRIGTYPE = 'spill'
             IsMC = 1
         elif self.trig == 'MCCOS':
@@ -274,6 +274,15 @@ class ND280RDP_Checker(IFileChecker):
                 logger.error('%s\n%s',self.line,"Midas file probably missing")
                 self.ReturnCode = -1
                 self.STAGE = "cali"
+                self.send_status()
+                self.InStage = 0
+                break
+
+            elif self.find('Starting job for neutMC.'):
+                # neutMC logs are filled by Fluka, they are huge and seems useless
+                logger.info(self.line+" The rest of log is ignored.")
+                self.ReturnCode = 1
+                self.STAGE = "neutMC"
                 self.send_status()
                 self.InStage = 0
                 break
@@ -481,6 +490,7 @@ class ND280RDP_Checker(IFileChecker):
             jout = 'stdout'
             
         task = {'*_g4mc_*.root':'g4mc','*_elmc_*.root':'elmc','*_cstr_*.root':'cstr',
+                '*_numc_*.root':'numc','*_sand_*.root':'sand',
                 '*_cali_*.root':'cali','*_reco_*.root':'reco','*_anal_*.root':'anal',
                 '*.log':'logf','*catalogue.dat':'cata','stdout':'jobOutput'}
         if self.ReturnCode != 1 or not ok:
@@ -501,8 +511,8 @@ class ND280RDP_Checker(IFileChecker):
                 if p == 'stdout':
                     shutil.move(os.path.join(odir,p),os.path.join(odir,jout))
 
-                # "leave" symlink for _cstr_ files in job output directory
+                # "leave" symlink for _cstr_ or _numc_ files in job output directory
                 # for possible transform chain
-                if task[p] == 'cstr':
+                if task[p] == 'cstr' or task[p] == 'numc':
                     os.symlink(os.path.join(odir,os.path.basename(f)),f)
 
