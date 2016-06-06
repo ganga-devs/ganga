@@ -39,7 +39,7 @@ Ganga.Runtime._prog.parseOptions()
 
 # Perform the configuration and bootstrap steps in ganga
 Ganga.Runtime._prog.configure()
-Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
+Ganga.Runtime._prog.initEnvironment()
 Ganga.Runtime._prog.bootstrap(interactive=False)
 ## FINISHED LOADING GANGA ##
 

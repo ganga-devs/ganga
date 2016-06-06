@@ -12,6 +12,9 @@ import inspect
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from Ganga.GPIDev.Schema import *
+from Ganga.Utility.logging import getLogger
+
+logger = getLogger()
 
 # First define the functions that can be used here or in the transforms
 def splitCSVFile(csvfile, nbevents):
