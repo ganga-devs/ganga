@@ -71,10 +71,6 @@ class MassStorageFile(IGangaFile):
             self.namePattern = _namePattern
             self.localDir = _localDir
 
-        print self.namePattern
-        import traceback
-        traceback.print_stack()
-
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
         if getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
