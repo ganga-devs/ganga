@@ -10,6 +10,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Core.exceptions import GangaException
+from Ganga.Utility.decorators import static_vars
 from Ganga.Utility.files import expandfilename
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute
 from Ganga.Utility.Config import getConfig
@@ -19,26 +20,23 @@ configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
 
-global stored_list_of_sites
-stored_list_of_sites = []
 
+@static_vars(stored_list_of_sites=[])
+def all_se_list(first_se='', default_se=''):
 
-def all_SE_list(first_SE = '', defaultSE = ''):
-
-    global stored_list_of_sites
-    if stored_list_of_sites != []:
-        return stored_list_of_sites
+    if all_se_list.stored_list_of_sites:
+        return all_se_list.stored_list_of_sites
 
     all_storage_elements = configDirac['allDiracSE']
-    if first_SE == '':
-        default_SE = defaultSE
-    else:
-        default_SE = first_SE
+    default_SE = first_se or default_se
 
-    all_storage_elements.pop(all_storage_elements.index(default_SE))
+    # If default_SE is in the list, move it to the front, if it's
+    # not, then insert it at the front
+    if default_SE in all_storage_elements:
+        all_storage_elements.remove(default_SE)
     all_storage_elements.insert(0, default_SE)
 
-    stored_list_of_sites = all_storage_elements
+    all_se_list.stored_list_of_sites = all_storage_elements
 
     return all_storage_elements
 
@@ -473,7 +471,7 @@ class DiracFile(IGangaFile):
                         raise err
                 else:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
-                    raise GangaError("Couldn't find replicas for: %s" % str(self.lfn))
+                    raise GangaException("Couldn't find replicas for: %s" % str(self.lfn))
                 logger.debug("getReplicas: %s" % str(self._storedReplicas))
 
                 if self.lfn in self._storedReplicas.keys():
@@ -744,9 +742,9 @@ class DiracFile(IGangaFile):
             lfn_base = self.remoteDir
 
         if uploadSE != "":
-            storage_elements = all_SE_list(uploadSE, self.defaultSE)
+            storage_elements = all_se_list(uploadSE, self.defaultSE)
         else:
-            storage_elements = all_SE_list(self.defaultSE, self.defaultSE)
+            storage_elements = all_se_list(self.defaultSE, self.defaultSE)
 
         outputFiles = GangaList()
         backup_lfn = self.lfn
