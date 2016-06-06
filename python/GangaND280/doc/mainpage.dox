@@ -30,7 +30,8 @@ such as T2KSRM at TRIUMF.
   - \ref GangaND280.ND280Skimmer.ND280Skimmer.ND280RecoSkimmer "ND280Skimmer": to skim from reco files a set of events listed in a CSV file.
   - \ref GangaND280.ND280Control.runND280RDP.runND280RDP "ND280RDP": as ND280Control but takes ND280 Config file options as input rather than a Config file itself
   - \ref GangaND280.ND280Control.runND280Kin.runND280Kin "ND280Kin": to generate KIN files (by atmPitSim package).
-  - \ref GangaND280.ND280Control.runND280CosMC.runND280CosMC "ND280CosMC": to generate and process Cosmic MC statistics. Since it is usually a two stage procedure (generation of MC statistics, then processing it) Chained Transforms are recommended to be used as shown in tskGenKin.gpi example  macro.
+  - \ref GangaND280.ND280Control.runND280CosMC.runND280CosMC "ND280CosMC": to generate and process Cosmic MC statistics. Since it is usually a two stage procedure (generation of MC statistics, then processing it) Chained Transforms are recommended to be used as shown in tskCosMC.gpi example macro.
+  - \ref GangaND280.ND280Control.runND280SandMC.runND280SandMC "ND280SandMC": to generate and process Sand MC statistics. Since it is usually a two stage procedure (generation of NEUT vectors, then the rest of processing) Chained Transforms are recommended to be used as shown in tskSandMC.gpi example macro.
 
   A set of <b>splitter</b> classes designed to split ND280 applications into subjobs are
 available in the ND280Splitter module:
@@ -42,9 +43,9 @@ available in the ND280Splitter module:
   - \ref GangaND280.ND280Splitter.ND280Splitter.ND280SplitCSVByNbEvt "ND280SplitCSVByNbEvt": to split a job into a number of subjobs such that each
     subjob has a CSV file with N events.
 
-  A <b>Postprocessor</b> class \ref GangaND280.ND280Checkers.ND280Checker.ND280RDP_Checker "ND280RDP_Checker" was designed with the Real Data Processing (RDP) procedure in mind but can be also used for Cosmic MC. It is supposed to run after runND280 finishes and:
+  A <b>Postprocessor</b> class \ref GangaND280.ND280Checkers.ND280Checker.ND280RDP_Checker "ND280RDP_Checker" was designed with the Real Data Processing (RDP) procedure in mind but can be also used for MC type of procedures. It is supposed to run after runND280 finishes and:
   - check a .log file in a comprehensive way,
-  - post results to processing DB (not for Cosmic MC),
+  - post results to processing DB (not for MC types),
   - move output files to their predefined destinations.
 
   Class \ref GangaND280.ND280Checkers.ND280Checker.ND280Kin_Checker "ND280Kin_Checker" performs similar function and used with ND280Kin application:
@@ -59,5 +60,6 @@ It also gives and example of ND280DCacheDataset, MassStorageFile, and the splitt
   - %runND280RDP.py: Example to run nd280 with an automatically created Config file.
   - %tskGenKin.gpi: Example to use ND280Kin application to generate KIN files.
   - %tskCosMC.gpi: Example to use ND280CosMC application to generate and process Cosmic MC statistics.
+  - %tskSandMC.gpi: Example to use ND280SandMC application to generate and process Sand MC statistics.
 */
 
