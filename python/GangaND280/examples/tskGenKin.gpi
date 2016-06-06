@@ -1,0 +1,43 @@
+# headers
+ver='v10r11p21'						    # version of ND280 Software used
+prfx='/neut/data19/vavilov'				    # output files destination prefix
+path='production005/F/mcp/cosmic'		            # output files path
+fluxfile='/neut/data19/vavilov/360DegOutputNew10MFlux.kin'  # input file
+nev='3500000'						    # number events to generate
+
+
+t   = ND280Task()
+t.name = 'GenKin'
+trf = ND280Transform()
+
+
+# Transform application
+a = runND280Kin()
+#a.cmtsetup = ['/home/t2k/t2k-software/Run_At_Start_T2k_'+ver+'.sh','/home/t2k/t2k-software/work-'+ver+'/nd280Control/*/cmt/setup.sh']
+a.cmtsetup = ['/home/trt2kmgr/ND280Soft/setup_'+ver+'.sh','/home/trt2kmgr/ND280Soft/'+ver+'/atmPitSim/*/cmt/setup.sh']
+a.confopts = {'nd280ver':ver,
+	      'fluxfile':fluxfile,
+              'nev':nev}
+trf.application = a
+
+
+# Input files. The application doesn't need any input file. The get_kin_range function just 
+# produce a range of numbers which the application interpret as MC run numbers to generate.
+d=ND280LocalDataset()
+d.get_kin_range(70000001,70010000) # will generate MC runs in the range [70000001,70010000]
+trf.addInputData(d)
+
+
+# Backend
+trf.backend = PBS(queue='srvq', extraopts='-l walltime=1:12:00,mem=2000mb -j oe')
+
+
+# Postprocessing. A simple check on a presence of .kin file is done, output files are moved to
+# a structure with a root at prfx/path/.
+trf.postprocessors=ND280Kin_Checker(prfx=prfx,path=path)
+
+
+#  set the task going
+t.appendTransform(trf)
+t.float = 500
+t.run()
