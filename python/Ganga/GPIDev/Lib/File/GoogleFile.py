@@ -116,7 +116,7 @@ class GoogleFile(IGangaFile):
             except:
                 deny = raw_input(
                     'An incorrect code was entered. Have you denied Ganga access to your GoogleDrive (y/[n])?')
-                if deny == '' or deny[0:1].upper() == 'N':
+                if deny.lower() in ['', 'n']:
                     pass
                 elif deny[0:1].upper() == 'Y':
                     return None

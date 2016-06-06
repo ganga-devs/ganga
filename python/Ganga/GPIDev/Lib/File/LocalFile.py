@@ -203,9 +203,9 @@ class LocalFile(IGangaFile):
             keyin = None
             while keyin is None:
                 keyin = raw_input("Do you want to remove the LocalFile: %s ? ([y]/n) " % this_file)
-                if keyin in ['y', '']:
+                if keyin.lower() in ['y', '']:
                     _actual_delete = True
-                elif keyin == 'n':
+                elif keyin.lower() == 'n':
                     _actual_delete = False
                 else:
                     logger.warning("y/n please!")

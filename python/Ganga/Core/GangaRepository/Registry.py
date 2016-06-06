@@ -914,31 +914,26 @@ class Registry(object):
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         from Ganga.Utility.logging import getLogger
-#        self.shouldReleaseRun = False
-#        self.releaseThread.stop()
         logger = getLogger()
         logger.debug("Shutting Down Registry")
         logger.debug("shutdown")
         try:
             self._hasStarted = True
-            try:
-                if not self.metadata is None:
-                    try:
-                        self.flush_all()
-                    except Exception, err:
-                        logger.debug("shutdown _flush Exception: %s" % err)
-                    self.metadata.shutdown()
-            except Exception as err:
-                logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, err)
-            #finally:
-            #    pass
+            # NB flush_all by definition relies on both the metadata repo and the repo to be fully initialized
             try:
                 self.flush_all()
             except Exception as err:
                 logger.error("Exception on flushing '%s' registry: %s", self.name, err)
-                #raise
-            #finally:
-            #    pass
+
+            # Now we can safely shutdown the metadata repo if one is loaded
+            try:
+                if self.metadata is not None:
+                    self.metadata.shutdown()
+            except Exception as err:
+                logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, err)
+                raise
+
+            # Now we can release locks on the objects we have
             for obj in self._objects.values():
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
@@ -959,7 +954,6 @@ class Registry(object):
                 s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
         return s
 
-    @synchronised
     def has_loaded(self, obj):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!
