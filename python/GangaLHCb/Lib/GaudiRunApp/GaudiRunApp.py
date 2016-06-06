@@ -16,6 +16,9 @@ from os import rename, path
 import shutil
 from Ganga.Utility.files import expandfilename
 
+from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
+
 import tempfile
 import time
 import subprocess
@@ -38,7 +41,7 @@ def _exec_cmd(cmd, cwdir):
         time.sleep(0.5)
     return pipe.returncode, stdout, stderr
 
-def prepare_cmake_app(myApp, myVer, myPath=defDir):
+def prepare_cmake_app(myApp, myVer, myPath=defDir, myGetpack=None):
     """
     Short helper function for setting up minimal application environments on disk for job submission
     """
@@ -47,6 +50,9 @@ def prepare_cmake_app(myApp, myVer, myPath=defDir):
         os.makedirs(full_path)
     os.chdir(full_path)
     _exec_cmd('lb-dev %s %s' % (myApp, myVer), myPath)
+    if myGetpack:
+        os.chdir(path.join(full_path, myApp + 'Dev_' + myVer))
+        _exec_cmd('getpack %s' % myGetpack)
 
 
 class GaudiRun(IPrepareApp):
@@ -77,12 +83,12 @@ class GaudiRun(IPrepareApp):
 
     To setup a minimal application you can also run the helper function:
 
-    prepare_cmake_app(myApp, myVer, myPath)
+    prepare_cmake_app(myApp, myVer, myPath, myGetpack)
 
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
-        'directory':    SimpleItem(preparable=1, defvalue='$HOME/DaVinciDev_v40r2', typelist=[str], comparable=1,
+        'directory':    SimpleItem(preparable=1, defvalue=None, typelist=[None, str], comparable=1,
             doc='A path to the project that you\'re wanting to run.'),
         'build_opts':   SimpleItem(defvalue=[""], typelist=[str], sequence=1, strict_sequence=0,
             doc="Options to be passed to 'make ganga-input-sandbox'"),
@@ -135,12 +141,21 @@ class GaudiRun(IPrepareApp):
             self.checkPreparedHasParent(self)
 
             self.copyIntoPrepDir(build_target)
+            opts_file = self.getOptsFile()
+            if isinstance(opts_file, LocalFile):
+                #opts_file = path.basename(opts_file.namePattern)
+                #full_path = opts_file.localDir + 'opts_file'
+                full_path = opts_file.namePattern
+                ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
+                self.copyIntoPrepDir(path.abspath(expandfilename(full_path)))
+            elif not isinstance(opts_file, DiracFile):
+                raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
             self.post_prepare()
 
         except Exception as err:
             logger.debug("Err: %s" % str(err))
             self.unprepare()
-            raise err
+            raise
 
         return 1
 
@@ -148,15 +163,28 @@ class GaudiRun(IPrepareApp):
         """
         Required even though nothing is done in this step for this App
         """
+        # Lets test the inputs
+        opt_file = self.getOptsFile()
+        dir_name = self.getDir()
         return (None, None)
+
+    def getOptsFile(self):
+        """
+        This function rweturns a sanitized absolute path to the self.myOpts file from user input
+        """
+        if self.myOpts:
+            return self.myOpts
+        else:
+            raise ApplicationConfigurationError("No Opts File has been specified, please provide one!")
 
     def getDir(self):
         """
         This function returns a sanitized absolute path of the self.directory method from user input
         """
-        myDir = self.directory
-        myDir = path.abspath(expanduser(expandvars(myDir)))
-        return myDir
+        if self.directory:
+            return path.abspath(expandfilename(self.directory))
+        else:
+            raise ApplicationConfigurationError("No Opts File has been specified, please provide one!")
 
     def exec_cmd(self, cmd):
         """

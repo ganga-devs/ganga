@@ -32,9 +32,32 @@ from Ganga.Utility.util import unique
 
 logger = getLogger()
 
+def genDataFiles(job):
+    ### Generating a data.py file which contains the data we want gaudirun to use ###
+    logger.debug("Doing XML Catalog stuff")
+
+    inputsandbox = []
+
+    data = job.inputdata
+    data_str = ''
+    if data:
+        logger.debug("Returning options String")
+        data_str = data.optionsString()
+        if data.hasLFNs():
+            logger.debug("Returning Catalogue")
+            inputsandbox.append(FileBuffer('catalog.xml', data.getCatalog()))
+            cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
+            data_str += cat_opts
+
+    inputsandbox.append(FileBuffer('data.py', data_str))
+
+    return inputsandbox
+
 class GaudiRunRTHandler(IRuntimeHandler):
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
+
+        job = app.getJobObject()
 
         print("app: %s" % app)
         print("appconf: %s" % appconfig)
@@ -48,7 +71,9 @@ class GaudiRunRTHandler(IRuntimeHandler):
         input_sand = stripProxy(app).getJobObject().inputsandbox
         output_sand = stripProxy(app).getJobObject().outputsandbox
 
-        input_sand = unique(input_sand + prepared_files)
+        data_files = genDataFiles(job)
+
+        input_sand = unique(input_sand + prepared_files + data_files)
 
         c = StandardJobConfig(job_command, input_sand, job_args, output_sand)
         return c
