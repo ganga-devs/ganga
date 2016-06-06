@@ -222,7 +222,7 @@ def execute(command,
             python_setup='',
             eval_includes=None,
             update_env=False,
-            renew=False):
+            ):
     """
     Execute a command on the local DIRAC server.
 
@@ -235,7 +235,7 @@ def execute(command,
         cwd (str): an optional string to a valid path where this code should be executed
         shell (bool): Should this code be executed in a new shell environment
         python_setup (str): Optional extra code to pass to python when executing
-        eval_incldes (???): TODO document me
+        eval_includes (???): TODO document me
         update_env (bool): Should this modify the given env object with the env after the command has executed
     """
 
@@ -245,7 +245,7 @@ def execute(command,
         python_setup = getDiracCommandIncludes()
 
     # We're about to perform an expensive operation so being safe before we run it shouldn't cost too much
-    _checkProxy(force = True, renew = renew)
+    _checkProxy(force = True)
 
     #logger.debug("Executing command:\n'%s'" % str(command))
     #logger.debug("python_setup:\n'%s'" % str(python_setup))
