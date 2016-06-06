@@ -83,6 +83,9 @@ inputfile =
         elif self.cfgtype == 'raw':
             self.options.update(self.raw_options)
             self.options_ignore.update(self.raw_options_ignore)
+        elif self.cfgtype == 'cosmicmc':
+            self.options.update(self.cosmicmc_options)
+            self.options_ignore.update(self.cosmicmc_options_ignore)
         elif self.cfgtype == 'gncp':
             self.options.update(self.gncp_options)
         elif self.cfgtype == 'MC':
@@ -136,6 +139,27 @@ inputfile =
                         'num_events':'',
                         'production':'',
                         'save_geometry':''}
+
+    cosmicmc_options={   'stage':'base',
+                         'nd280ver':'v11r31',
+                         'module_list':'cosmic nd280MC elecSim oaCalibMC oaCosmicTrigger',
+                         'run_number':'0',
+                         'subrun':'0',
+                         'baseline':'2010-11',
+                         'p0d_water_fill':'1',
+                         'replace_comment':'1',
+                         'comment':'basecosmiccorsika5F',
+                         'mc_type':'Cosmic',
+                         'random_seed':'123456789',
+                         'num_events':'1000000000',
+                         'mc_full_spill':'0',
+                         'mc_position':'Free',
+                         'kinfile':'REPLACE_KINFILE',
+                         'inputfile':'REPLACE_INPUTFILE',
+                         'randomize_kinfile':'false',
+                         'save_digits':'true' }
+
+    cosmicmc_options_ignore={'random_seed':''}
 
     #### MC
     mc_options={'module_list':'nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
@@ -252,7 +276,8 @@ inputfile =
     def CreateConfig(self):
         map = {
             'gnsetup' : self.CreateGENIEsetupCF,
-            'raw'     : self.CreateRawCF
+            'raw'     : self.CreateRawCF,
+            'cosmicmc': self.CreateCosmicMCCF
             }
         if map.get(self.cfgtype):
             creator = map[self.cfgtype]
@@ -352,5 +377,80 @@ inputfile =
 
         #print configfile
         return configfile
+
+    ######################## Base Cosmic Processing Config file
+    def CreateCosmicMCCF(self):
+
+        if not self.CheckOptions():
+            print 'ERROR please make sure all options stated above are entered'
+            return ''
+
+        if not self.options['stage'] in ['base','fgd','tript','all']:
+            print 'ERROR "stage" options should be one of',['base','fgd','tript','all']
+            return ''
+        
+        configfile = ''
+        configfile += "# Automatically generated config file\n\n"
+
+
+        ### Software Setup
+        configfile += "[software]\n"
+        configfile += "cmtpath = " + self.options['cmtpath'] + "\n"
+        configfile += "cmtroot = " + self.options['cmtroot'] + "\n"
+        configfile += "nd280ver = " + self.options['nd280ver'] + "\n\n"
+
+        ### Module list
+        configfile += "[configuration]\n"
+        if self.options['stage'] != 'base':
+            configfile += "module_list = oaRecon oaAnalysis\n"
+            configfile += "inputfile = " +  self.options['inputfile'] + "\n\n"
+        else:
+            configfile += "module_list = " + self.options['module_list'] + "\n\n"
+
+        ### File naming
+        if not  self.options['comment']:
+             self.options['comment'] =  self.options['nd280ver']
+        configfile += "[filenaming]\n"
+        configfile += "run_number = " + self.options['run_number'] + "\n"
+        configfile += "subrun = " + self.options['subrun'] + "\n"
+        configfile += "replace_comment = " + self.options['replace_comment'] + "\n"
+        configfile += "comment = " + self.options['stage'] + "cosmiccorsika5F\n\n"
+
+
+        ### Geometry
+        configfile += "[geometry]\n"
+        configfile += "baseline = " + self.options['baseline'] + "\n"
+        configfile += "p0d_water_fill = " + self.options['p0d_water_fill'] + "\n\n"
+
+        ### nd280mc
+        configfile += "[nd280mc]\n"
+        configfile += "mc_type = " + self.options['mc_type'] + "\n"
+        configfile += "random_seed = " + str(random.randint(1,999999999)) + "\n"
+        configfile += "num_events = " + self.options['num_events'] + "\n"
+        configfile += "mc_full_spill = " + self.options['mc_full_spill'] + "\n"
+        configfile += "mc_position = " + self.options['mc_position'] + "\n\n"
+
+        ### Cosmic
+        configfile += "[cosmics]\n"
+        configfile += "kinfile = " + self.options['kinfile'] + "\n"
+        configfile += "randomize_kinfile = " + self.options['randomize_kinfile'] + "\n\n"
+
+        ### Electronics
+        configfile += "[electronics]\n"
+        configfile += "random_seed = " + str(random.randint(1,999999999)) + "\n\n"
+
+         ### Calibrate
+        configfile += "[calibrate]\n"
+        configfile += "save_digits = " + self.options['save_digits'] + "\n\n"
+
+         ### Reconstruction
+        configfile += "[reconstruction]\n"
+        if  self.options['stage'] != 'all':
+            configfile += "event_select = " + self.options['stage'] + "cosmic\n"
+        else:
+            configfile += "event_select = all\n"
+
+        return configfile
+        
 
     ########################################################################################################################
