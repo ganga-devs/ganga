@@ -24,19 +24,6 @@ logger = getLogger()
 config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
 
-def flatten(l, ltypes=(list, tuple)):
-    """Helper routine to flatten arrays"""
-    i = 0
-    # len(l) is eval'd each time --
-    # no need for maxint with
-    # try...except, just run to
-    # the dynamic size of the list
-    while (i < len(l)):
-        while (isinstance(l[i], ltypes)):
-            l[i:i+1] = list(l[i])
-        i += 1
-    return l
-
 def filecheck(filename):
     """Check if filename exists and return filesize"""
 
@@ -532,98 +519,6 @@ class ATLASOutputDataset(Dataset):
 #       Output files 
         outputfiles = job.outputdata.outputdata
         
-#       Search output_guid files from LCG jobs in outputsandbox
-        if (job.backend._name == 'LCG' ):
-            threads = []
-            outputnew = flatten(self.output)
-             
-            for iguid in outputnew:
-                cmd = None
-                if iguid[0:5]=="guid:":
-                    cmd = "lcg-lr --vo atlas "+iguid
-                if cmd:
-                    thread = Download.download_lcglr(cmd)
-                    thread.setDaemon(True)
-                    thread.start()
-                    threads.append(thread)
-                
-            for thread in threads:
-                thread.join()
-
-            logger.debug('output %s', outputnew)
-            logger.debug('lfns %s', Download.lfns)
-#        Download the lfns of every subjob to local outputlocation subdirectory
-            threads = []
-            if (len(Download.lfns)!=0):
-                logger.info("Please be patient - background downloading files from remote SE.")
-                # Master job retrieve
-                pfnid = []
-                if not job.master and job.subjobs and outputlocation=='':
-                    for subjob in job.subjobs:
-                        id = "%d/%d" % (job._getRoot().id,subjob.id)
-                        pfnid.append(id)
-                elif not job.master and job.subjobs and outputlocation != job.outputdir:
-                    for subjob in job.subjobs:
-                        id = "%d/%d" % (job._getRoot().id, subjob.id)
-                        pfnid.append(id)
-                        try:
-                            os.makedirs(outputlocation+"/"+id)
-                        except OSError:
-                            pass
-                else:
-                    if outputlocation=='':
-                        id = "%d/%d" % (job._getRoot().id,job.id)
-                        pfnid.append(id)
-                    elif outputlocation != job.outputdir:
-                        if job._getRoot().subjobs:
-                            id = "%d/%d" % (job._getRoot().id, job.id)
-                        else:
-                            id = "%d" % job.id
-                        try:
-                            os.makedirs(outputlocation+"/"+id)
-                        except OSError:
-                            pass
-
-                for ilfn in range(len(Download.lfns)):
-                    for ifile in xrange(len(outputfiles)):
-                        # Find correct jobid
-                        for ipfnid in pfnid:
-                            ipfnid = re.sub('/','.',ipfnid)
-                            if (Download.lfns[ilfn]).find(ipfnid)>0:
-                                
-                                ipfnid = re.sub('\.','/',ipfnid)
-                                id = ipfnid
-
-                        print id, pfnid, Download.lfns
-                        
-                        if (Download.lfns[ilfn]).find(outputfiles[ifile])>0:
-                            if outputlocation == '':
-                                if job.subjobs:
-                                    tempid = int(id.split('/')[1])
-                                    pfn = job.subjobs[tempid].outputdir+outputfiles[ifile]
-                                else:
-                                    pfn = job.outputdir+outputfiles[ifile]
-                                    
-                            elif outputlocation != job.outputdir:
-                                pfn = outputlocation+"/"+id+"/"+outputfiles[ifile]
-                            else:
-                                pfn = outputlocation+outputfiles[ifile]
-                            
-                            logger.info("Downloading %s", pfn)
-                            cmd = "lcg-cp --vo atlas "+Download.lfns[ilfn]+" file:"+pfn
-                            thread = Download.download_lcgcp(cmd,ifile,pfn)
-                            thread.setDaemon(True)
-                            thread.start()
-                            threads.append(thread)
-
-#                for thread in threads:
-#                    thread.join()
-#                logger.info("Downloading finished.")
-
-            Download.lfns = []
-
-
-#        logger.debug('Download.rootfile %s', Download.rootfile)
 
 
 #$Log: not supported by cvs2svn $
