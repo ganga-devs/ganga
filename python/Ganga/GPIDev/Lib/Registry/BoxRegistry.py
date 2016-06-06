@@ -59,7 +59,6 @@ class BoxRegistry(Registry):
 
     def _getName(self, obj):
         nobj = self.metadata[self.find(obj)]
-        nobj._getReadAccess()
         return nobj.name
 
     def _remove(self, obj, auto_removed=0):
@@ -75,9 +74,9 @@ class BoxRegistry(Registry):
                 c[cv] = getattr(obj, cv)
             except AttributeError as err:
                 c[cv] = None
-        slice = BoxRegistrySlice("tmp")
-        for dpv in slice._display_columns:
-            c["display:" + dpv] = slice._get_display_value(obj, dpv)
+        this_slice = BoxRegistrySlice("tmp")
+        for dpv in this_slice._display_columns:
+            c["display:" + dpv] = this_slice._get_display_value(obj, dpv)
         return c
 
 # Methods for the "box" proxy (but not for slice proxies)
@@ -128,8 +127,6 @@ class BoxRegistry(Registry):
         nobj.name = name
         self._add(obj)
         self.metadata._add(nobj, self.find(obj))
-        nobj._setDirty()
-        obj._setDirty()
 
     def proxy_rename(self, obj_id, name):
         """

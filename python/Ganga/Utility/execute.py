@@ -207,7 +207,7 @@ def execute(command,
     else:
         # We want to run a shell command inside a _NEW_ shell environment.
         # i.e. What I run here I expect to behave in the same way from the command line after I exit Ganga
-        stream_command = "bash -i "
+        stream_command = "bash "
         if update_env:
             # note the exec gets around the problem of indent and base64 gets
             # around the \n
@@ -283,7 +283,7 @@ def execute(command,
         if stdout:
             stdout = pickle.loads(stdout)
     except Exception as err:
-        logger.error("Err: %s" % str(err))
+        logger.error("Err: %s", err)
         local_ns = {}
         if isinstance(eval_includes, str):
             try:
