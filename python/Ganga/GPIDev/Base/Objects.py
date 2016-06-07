@@ -73,6 +73,7 @@ class Node(object):
     thread-safe usage.
     """
     __metaclass__ = abc.ABCMeta
+    __slots__ = ('_index_cache_dict', '_parent', '_read_lock', '_write_lock', '_dirty', '_registry', '_data_dict')
 
     def __init__(self, parent=None):
         super(Node, self).__init__()
@@ -544,6 +545,8 @@ class ObjectMetaclass(abc.ABCMeta):
 
         this_schema = cls._schema
 
+        cls.__slots__ = ('__dict__', '_proxyObject')
+
         # Add all class members of type `Schema.Item` to the _schema object
         # TODO: We _could_ add base class's Items here by going through `bases` as well.
         # We can't just yet because at this point the base class' Item has been overwritten with a Descriptor
@@ -615,18 +618,19 @@ class GangaObject(Node):
         """
         super(GangaObject, self).__init__(None)
 
-        self._data_dict = {}
         self._index_cache_dict = {}
         self._registry = None
 
         #Node.__init__(self, None)
 
         if self._schema is not None and hasattr(self._schema, 'allItems'):
+            self._data_dict = dict.fromkeys(self._schema.datadict.keys())
             for attr, item in self._schema.allItems():
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
                     setattr(self, attr, self._schema.getDefaultValue(attr, make_copy=False))
-
+        else:
+            self._data_dict = {}
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
