@@ -195,7 +195,7 @@ class VStreamer(object):
                 self.level += 1
                 print(file=self.out)
                 print(self.indent(), '<sequence>', file=self.out)
-                map(self.acceptOptional, value)
+                all(map(self.acceptOptional, value))
                 print(self.indent(), '</sequence>', file=self.out)
                 self.level -= 1
                 print(self.indent(), '</attribute>', file=self.out)
@@ -221,7 +221,7 @@ class VStreamer(object):
                 stripProxy(s).accept(self)
             elif isType(s, (list, tuple, GangaList)):
                 print(self.indent(), '<sequence>', file=self.out)
-                map(self.acceptOptional, s)
+                all(map(self.acceptOptional, s))
                 print(self.indent(), '</sequence>', file=self.out)
             else:
                 self.print_value(stripProxy(s))
@@ -234,7 +234,7 @@ class VStreamer(object):
             if sequence:
                 self.level += 1
                 print(self.indent(), '<sequence>', file=self.out)
-                map(self.acceptOptional, subnode)
+                all(map(self.acceptOptional, subnode))
                 print(self.indent(), '</sequence>', file=self.out)
                 self.level -= 1
             else:
