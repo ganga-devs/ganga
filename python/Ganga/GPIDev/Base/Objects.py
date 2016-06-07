@@ -16,13 +16,12 @@
 import abc
 import threading
 from contextlib import contextmanager
-from functools import wraps
+import functools
 
 from Ganga.Utility.logging import getLogger
 
 from copy import deepcopy, copy
 from inspect import isclass
-from functools import partial
 
 from Ganga.GPIDev.Schema import Schema, Item, ComponentItem, SharedItem
 
@@ -57,7 +56,7 @@ def synchronised(f):
     This decorator must be attached to a method on a ``Node`` subclass
     It uses the object's lock to make sure that the object is held for the duration of the decorated function
     """
-    @wraps(f)
+    @functools.wraps(f)
     def decorated(self, *args, **kwargs):
         with self.const_lock:
             return f(self, *args, **kwargs)
@@ -204,7 +203,7 @@ def synchronised_get_descriptor(get_function):
     """
     This decorator should only be used on ``__get__`` method of the ``Descriptor``.
     """
-    @wraps(get_function)
+    @functools.wraps(get_function)
     def decorated(self, obj, type_or_value):
         if obj is None:
             return get_function(self, obj, type_or_value)
@@ -912,7 +911,7 @@ class GangaObject(Node):
                     self_copy.__dict__[k] = deepcopy(v)
                 except:
                     self_copy.__dict__[k] = v
-        map(partial(performCopy, self_copy=self_copy), self.__dict__.keys())
+        map(functools.partial(performCopy, self_copy=self_copy), self.__dict__.keys())
 
         if true_parent is not None:
             self._setParent(true_parent)
