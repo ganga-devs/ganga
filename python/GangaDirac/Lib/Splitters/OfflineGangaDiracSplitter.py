@@ -384,7 +384,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
         # NB: Can't modify this list and iterate over it directly in python
         LFN_instances = site_dict.keys()
         # Already used LFN
-        chosen_lfns = set([])
+        chosen_lfns = set()
 
         for iterating_LFN in LFN_instances:
 
