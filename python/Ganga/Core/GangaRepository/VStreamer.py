@@ -124,7 +124,7 @@ def fastXML(obj, indent='', ignore_subs=''):
     elif hasattr(obj, '_data'):
         v = obj._schema.version
         sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (getName(obj), v.major, v.minor, obj._category)]
-        for k, o in obj.getNodeData().iteritems():
+        for k, o in obj._data.items():
             if k != ignore_subs:
                 try:
                     if not obj._schema[k]._meta["transient"]:
@@ -352,7 +352,7 @@ class Loader(object):
                 aname = self.stack.pop()
                 obj = self.stack[-1]
                 # update the object's attribute
-                obj.setNodeAttribute(aname, value)
+                obj.setSchemaAttribute(aname, value)
                 #logger.info("Setting: %s = %s" % (aname, value))
 
             # when </value> is seen the value_construct buffer (CDATA) should
@@ -391,7 +391,7 @@ class Loader(object):
                             obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr, make_copy=False)))
                         else:
                             obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr, make_copy=False))
-                map(partial(schema_assign, obj=obj), obj._schema.allItems())
+                all(map(partial(schema_assign, obj=obj), obj._schema.allItems()))
                 #print("Constructed: %s" % getName(obj))
 
         def char_data(data):
@@ -420,7 +420,7 @@ class Loader(object):
 
         # Raise Exception if object is incomplete
         for attr, item in obj._schema.allItems():
-            if not attr in obj.getNodeData():
+            if not attr in obj._data:
                 raise AssertionError("incomplete XML file")
         return obj, self.errors
 

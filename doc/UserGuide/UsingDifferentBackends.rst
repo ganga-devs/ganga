@@ -6,7 +6,7 @@ backends) by only changing one or two lines in your scripts. Though there are of
 for each backend, Ganga tries to hide this as much as possible. We'll cover the main options in Ganga Core below but
 to get a full list, use:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- USINGDIFFERENTBACKENDS PLUGINS START
     :end-before: # -- USINGDIFFERENTBACKENDS PLUGINS STOP
     :dedent: 8
@@ -17,7 +17,7 @@ Local Backend
 This is the default and refers to the machine that Ganga is running on. The job will be spawned as a separate process,
 independent of Ganga. Typical usage is:
 
-.. literalinclude:: ../../python/Ganga/new_tests/GPI/TutorialTests.py
+.. literalinclude:: ../../python/Ganga/test/GPI/TutorialTests.py
     :start-after: # -- USINGDIFFERENTBACKENDS LOCAL START
     :end-before: # -- USINGDIFFERENTBACKENDS LOCAL STOP
     :dedent: 8
@@ -101,16 +101,9 @@ If don't have access to CVMFS then you will need to install and configure the Di
 is done will depend somewhat on your Dirac instance but for the one hosted by GridPP, first follow the
 installation instructions `here <https://www.gridpp.ac.uk/wiki/Quick_Guide_to_Dirac>`_
 
-After successfully doing this, go through the following steps to configure Ganga:
+After successfully doing this, do the following steps to configure Ganga:
 
-* Setup the DIRAC client and export the environment to a file for Ganga to use:
-
-.. code-block:: bash
-
-    source ~/dirac_ui/bashrc
-    env > ~/dirac_ui/envfile
-
-* Now edit your ``.gangarc`` file and set the following options:
+* Edit your ``.gangarc`` file and set the following options:
 
 .. code-block:: python
 
@@ -122,7 +115,7 @@ After successfully doing this, go through the following steps to configure Ganga
     GLITE_SETUP = /home/<username>/dirac_ui/bashrc
 
     [DIRAC]
-    DiracEnvFile = /home/<username>/dirac_ui/envfile
+    DiracEnvSource = /home/<username>/dirac_ui/bashrc
 
     [defaults_GridCommand]
     info = dirac-proxy-info

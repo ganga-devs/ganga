@@ -145,7 +145,6 @@ class ShareDir(GangaObject):
     _category = 'shareddirs'
     _exportmethods = ['add', 'ls']
     _name = "ShareDir"
-    _data = None
 #    def _readonly(self):
 #        return True
 
@@ -178,9 +177,6 @@ class ShareDir(GangaObject):
         #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         # shareref.increase(self.name)
         # shareref.decrease(self.name)
-
-    def __deepcopy__(self, memo):
-        return super(ShareDir, self).__deepcopy__(memo)
 
     def add(self, input):
         from Ganga.Core.GangaRepository import getRegistry

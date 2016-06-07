@@ -144,7 +144,7 @@ class LHCbDataset(GangaDataset):
         #this_file = self.files[i]
         # print type(this_file)
         # return this_file
-        # return addProxy(this_file)
+        # return this_file
         # return this_file
         if type(i) == type(slice(0)):
             ds = LHCbDataset(files=self.files[i])
@@ -407,7 +407,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return addProxy(data)
+        return data
 
     def isSubset(self, other):
         '''Is every file in this data set in other?'''
@@ -427,7 +427,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return addProxy(data)
+        return data
 
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
@@ -436,7 +436,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return addProxy(data)
+        return data
 
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
@@ -445,7 +445,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return addProxy(data)
+        return data
 
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '

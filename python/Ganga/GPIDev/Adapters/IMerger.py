@@ -60,7 +60,7 @@ class IMerger(IPostProcessor):
     _name = 'IMerger'
     _hidden = 1
     _schema = Schema(Version(1, 0), {
-        'files': SimpleItem(defvalue=[], typelist=['str'], sequence=1, doc='A list of files to merge.'),
+        'files': SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='A list of files to merge.'),
         'ignorefailed': SimpleItem(defvalue=False, doc='Jobs that are in the failed or killed states will be excluded from the merge when this flag is set to True.'),
         'overwrite': SimpleItem(defvalue=False, doc='The default behaviour for this Merger object. Will overwrite output files.'),
     })

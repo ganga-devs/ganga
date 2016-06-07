@@ -15,10 +15,3 @@ external_packages = {
 from Ganga.Utility.Setup import PackageSetup
 
 setup = PackageSetup(external_packages)
-
-def standardSetup(setup=setup):
-    for p in setup.packages:
-        pass
-        #setup.prependPath(p,'PYTHONPATH')
-        #setup.prependPath(p,'LD_LIBRARY_PATH')
-        #setup.prependPath(p,'PATH')  

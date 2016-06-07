@@ -30,7 +30,7 @@ class BoxMetadataObject(GangaObject):
 
     """Internal object to store names"""
     _schema = Schema(Version(1, 0), {"name": SimpleItem(
-        defvalue="", copyable=1, doc='the name of this object', typelist=["str"])})
+        defvalue="", copyable=1, doc='the name of this object', typelist=[str])})
     _name = "BoxMetadataObject"
     _category = "internal"
     _enable_plugin = True
@@ -39,8 +39,8 @@ class BoxMetadataObject(GangaObject):
 
 class BoxRegistry(Registry):
 
-    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
-        super(BoxRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
+    def __init__(self, name, doc, update_index_time=30):
+        super(BoxRegistry, self).__init__(name, doc, update_index_time)
 
         self.stored_slice = BoxRegistrySlice(self.name)
         self.stored_slice.objects = self
@@ -59,7 +59,6 @@ class BoxRegistry(Registry):
 
     def _getName(self, obj):
         nobj = self.metadata[self.find(obj)]
-        nobj._getReadAccess()
         return nobj.name
 
     def _remove(self, obj, auto_removed=0):
@@ -75,9 +74,9 @@ class BoxRegistry(Registry):
                 c[cv] = getattr(obj, cv)
             except AttributeError as err:
                 c[cv] = None
-        slice = BoxRegistrySlice("tmp")
-        for dpv in slice._display_columns:
-            c["display:" + dpv] = slice._get_display_value(obj, dpv)
+        this_slice = BoxRegistrySlice("tmp")
+        for dpv in this_slice._display_columns:
+            c["display:" + dpv] = this_slice._get_display_value(obj, dpv)
         return c
 
 # Methods for the "box" proxy (but not for slice proxies)
@@ -128,8 +127,6 @@ class BoxRegistry(Registry):
         nobj.name = name
         self._add(obj)
         self.metadata._add(nobj, self.find(obj))
-        nobj._setDirty()
-        obj._setDirty()
 
     def proxy_rename(self, obj_id, name):
         """

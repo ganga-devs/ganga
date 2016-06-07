@@ -14,6 +14,7 @@ logger = Ganga.Utility.logging.getLogger()
 
 
 def jobid_as_string(job):
+    """ Return the string representation of the job, should be same as job.getFQID() """
     jstr = ''
     if job.master:
         jstr = str(job.master.id) + os.sep + str(job.id)
@@ -22,8 +23,9 @@ def jobid_as_string(job):
     return jstr
 
 def lhcbdirac_outputfile_jdl(output_files):
+    """ Construct the setOutputFile section of the JDL for this job"""
 
-    DiracScript = dirac_outputfile_jdl(output_files)
+    DiracScript = dirac_outputfile_jdl(output_files, False)
 
     DiracScript = DiracScript.replace('###OUTPUT_SE###', '###OUTPUT_SE###,replicate=\'###REPLICATE###\'')
 
@@ -32,12 +34,9 @@ def lhcbdirac_outputfile_jdl(output_files):
     return DiracScript
 
 def lhcbdiracAPI_script_template():
+    """ Create a template LHCbDirac LHCbJob by taking the Dirac Job and making some modifications to teh template"""
 
     DiracScript = diracAPI_script_template()
-
-##  Old Probably deprecated additionsl options
-#    j.setRootMacro('###ROOT_VERSION###', '###ROOT_MACRO###', ###ROOT_ARGS###, '###ROOT_LOG_FILE###', systemConfig='###PLATFORM###')
-#    j.setRootPythonScript('###ROOTPY_VERSION###', '###ROOTPY_SCRIPT###', ###ROOTPY_ARGS###, '###ROOTPY_LOG_FILE###', systemConfig='###PLATFORM###')
 
     DiracLHCb_Options = """
 j.setApplicationScript('###APP_NAME###', '###APP_VERSION###', '###APP_SCRIPT###', logFile='###APP_LOG_FILE###', systemConfig='###PLATFORM###')
@@ -55,19 +54,14 @@ j.setAncestorDepth(###ANCESTOR_DEPTH###)
 
 
 def is_gaudi_child(app):
+    """ Does this app inherit from Gaudi True/False"""
     if isType(app, Gaudi):
         return True
-
-    if isType(app, TaskApplication):
-        from GangaLHCb.Lib.Applications import GaudiPythonTask, BenderTask
-        if not isType(app, GaudiPythonTask) and not isType(app, BenderTask):
-            return True
-
     return False
 
 
 class filenameFilter:
-
+    """ class for returning a given filename as a filter"""
     def __init__(self, filename):
         self.filename = filename
 
@@ -98,7 +92,7 @@ def getXMLSummaryScript(indent=''):
 
 
 def create_runscript(useCmake=False):
-
+    """ Returna run script for Gaudi Apps """
     from GangaLHCb.Lib.Applications.EnvironFunctions import construct_run_environ
     environ_script = construct_run_environ(useCmake)
 

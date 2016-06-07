@@ -13,7 +13,7 @@ from Ganga.Utility.logic import implies
 
 import Ganga.Utility.Config
 
-from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError
+from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError, GangaException
 
 from Ganga.Utility.Plugin import allPlugins
 
@@ -301,18 +301,7 @@ class Schema(object):
 
         # make a copy of the default value (to avoid strange effects if the
         # original modified)
-        try:
-            from Ganga.GPIDev.Base.Proxy import isType, getRuntimeGPIObject, stripProxy, getName
-            from Ganga.GPIDev.Base.Objects import Node
-            if isinstance(defvalue, Node):
-                objName = getName(defvalue)
-                if objName not in _found_eval:
-                    _found_eval[objName] = stripProxy(getRuntimeGPIObject(getName(defvalue)))
-                return _found_eval[objName]
-            else:
-                return defvalue
-        except ImportError:
-            return defvalue
+        return copy.deepcopy(defvalue)
 
 
 # Items in schema may be either Components,Simples, Files or BindingItems.
@@ -354,6 +343,7 @@ class Schema(object):
 # Metaproperties of SimpleItems
 #
 # typelist  : a list of type names (strings) indicating allowed types of the property (e.g. ["str","int","Ganga.GPIDev.Lib.File.File.File"]), see: http://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaTypes
+#     please consider not using strings in future, we can support the type objects correctly
 #
 #
 # Metaproperties of ComponentItems:

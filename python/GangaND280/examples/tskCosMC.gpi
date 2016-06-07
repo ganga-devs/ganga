@@ -1,0 +1,76 @@
+# headers
+ver='v11r31'                                              # version of ND280 Software used
+prfx='/neut/data19/vavilov'                               # output file destination prefix
+path='production006/B/mcp/cosmic/2010-11-water/corsika5F' # output files path
+site='neut'                                               # only used in ganga reports in case of Cosmic MC
+nev='5000'						  # number of events to process (at each stage)
+
+
+t   = ND280Task()
+t.name = 'GenCosMC'
+
+# Transform 1
+trf = ND280Transform()
+
+# Transform application
+a = runND280CosMC()
+#a.cmtsetup = ['/home/t2k/t2k-software/Run_At_Start_T2k_'+ver+'.sh','/home/t2k/t2k-software/work-'+ver+'/nd280Control/*/cmt/setup.sh']
+a.cmtsetup = ['/home/trt2kmgr/ND280Soft/setup_'+ver+'.sh','/home/trt2kmgr/ND280Soft/'+ver+'/nd280Control/*/cmt/setup.sh']
+a.confopts = {'stage':'base', # IMPORTANT: let the application know that this is generation stage: g4mc+elmc+cali+cstr
+	      'nd280ver':ver,
+              'num_events':nev}
+trf.application = a
+
+# Input files
+d=ND280LocalDataset()
+d.get_dataset('/neut/datasrv2a/vavilov','*.kin') # location of KIN files
+trf.addInputData(d)
+
+
+# Backend
+trf.backend = PBS(queue='srvq', extraopts='-l walltime=12:12:00,mem=2000mb -j oe')
+
+# Postprocessing, a log file is checked, output files are moved to a structure with a root at
+# prfx/path/basecosmic/ 
+trf.postprocessors=ND280RDP_Checker(prfx=prfx,path=path+'/basecosmic',trig='MCCOS',site=site)
+
+t.appendTransform(trf)
+trf1 = trf
+
+# After statistic is generated there is a choice of processing one or more triggers. Chained transforms should be one of the
+# following stages: 'fgd' - FGD trigger event processing, 'tript' - TRIPT trigger events, 'all' - all triggers.
+# All stages above assume reco+anal processing
+for stage in ['fgd']: # the list can be as long as ['fgd','tript','all']
+  trf = ND280Transform()
+
+  # Transform app
+  a = runND280CosMC()
+  a.cmtsetup = ['/home/trt2kmgr/ND280Soft/setup_'+ver+'.sh','/home/trt2kmgr/ND280Soft/'+ver+'/nd280Control/*/cmt/setup.sh']
+  a.confopts = {'stage':stage,
+                'nd280ver':ver,
+                'num_events':nev}
+  trf.application = a
+
+  # Input files
+  d=TaskChainInput()                     # Chain Input is declared
+  d.input_trf_id = trf1.getID()          # source transform
+  d.use_copy_output = False;
+  d.include_file_mask=['*_cstr_*.root']  # which files from job output directories to use as input
+  trf.addInputData(d)
+
+  # Backend
+  trf.backend = PBS(queue='srvq', extraopts='-l walltime=12:12:00,mem=2000mb -j oe')
+
+  # Postprocessing, a log file is checked, output files are moved to a structure with a root at
+  # prfx/path/stage'cosmic', e.g. /neut/data19/vavilov/production006/B/mcp/cosmic/2010-11-water/corsika5F/fgdcosmic
+  trf.postprocessors=ND280RDP_Checker(prfx=prfx,path=path+'/'+stage+'cosmic',trig='MCCOS',site=site)
+
+  # Add it
+  t.appendTransform(trf)
+
+
+#  set the task going
+t.float = 500
+t.run()
+
+

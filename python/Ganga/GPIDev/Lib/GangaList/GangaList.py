@@ -92,7 +92,6 @@ class GangaList(GangaObject):
                                      '_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),
                                     })
     _enable_config = 1
-    _data={}
 
     def __init__(self):
         self._is_a_ref = False
@@ -283,12 +282,12 @@ class GangaList(GangaObject):
         self.checkReadOnly()
         self.__delslice__(start, end)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo=None):
         """Bypass any checking when making the copy"""
         #logger.info("memo: %s" % str(memo))
         #logger.info("self.len: %s" % str(len(self._list)))
         if self._list != []:
-            return makeGangaListByRef(_list=copy.deepcopy(self._list), preparable=self._is_preparable)
+            return makeGangaListByRef(_list=copy.deepcopy(self._list, memo), preparable=self._is_preparable)
         else:
             new_list = GangaList()
             new_list._is_preparable = self._is_preparable
@@ -382,7 +381,7 @@ class GangaList(GangaObject):
 
     def __ne__(self, obj_list):
         if obj_list is self:  # identity check
-            return True
+            return False
         result = True
         if self.is_list(obj_list):
             result = self._list.__ne__(self.strip_proxy_list(obj_list))
@@ -589,21 +588,21 @@ class GangaList(GangaObject):
             name = _tuple[0]
             item = _tuple[1]
             if name == "_list":
-                visitor.componentAttribute(self, "_list", self._getdata("_list"), 1)
+                visitor.componentAttribute(self, "_list", self._data["_list"], 1)
             elif item['visitable']:
-                visitor.simpleAttribute(self, name, self._getdata(name), item['sequence'])
+                visitor.simpleAttribute(self, name, getattr(self, name), item['sequence'])
 
         def sharedFunc(_tuple):
             name = _tuple[0]
             item = _tuple[1]
             if item['visitable']:
-                visitor.sharedAttribute(self, name, self._getdata(name), item['sequence'])
+                visitor.sharedAttribute(self, name, getattr(self, name), item['sequence'])
 
         def componentFunc(_tuple):
             name = _tuple[0]
             item = _tuple[1]
             if item['visitable']:
-                visitor.componentAttribute(self, name, self._getdata(name), item['sequence'])
+                visitor.componentAttribute(self, name, getattr(self, name), item['sequence'])
 
         map(simpleFunc, self._schema.simpleItems())
 

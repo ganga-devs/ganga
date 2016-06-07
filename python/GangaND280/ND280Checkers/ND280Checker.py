@@ -8,9 +8,9 @@ from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Adapters.IChecker import IChecker, IFileChecker
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
 from Ganga.Utility.Plugin import allPlugins
-from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.Utility.logging import getLogger
+
 import commands
 import copy
 import os
@@ -20,11 +20,6 @@ import shutil
 # Simon's post_status - communicates to processing DB
 import post_status
 import urllib2
-
-# later that will taken from Job.Application DVtmp
-site = 'wg-bugaboo'
-trig = 'SPILL'
-
 
 logger = getLogger()
 
@@ -66,6 +61,68 @@ class FileCheckeR(IFileChecker):
         return self.result 
 
 
+class ND280Kin_Checker(IFileChecker):
+    """
+    o Checks .log file (not impl. yet)
+    o Checks if .kin file is present and non-zero
+    o Moves output files to their destinations
+    """
+    _schema = IFileChecker._schema.inherit_copy()
+    _schema.datadict['prfx'] = SimpleItem(defvalue = None, typelist=['str','type(None)'], doc='Path prefix to store output files')
+    _schema.datadict['path'] = SimpleItem(defvalue = None, typelist=['str','type(None)'], doc='Middle path to store output files')
+    _category = 'postprocessor'
+    _name = 'ND280Kin_Checker'
+    _exportmethods = ['check']
+
+    def check(self,job):
+        """
+        Checks if .kin file is present and non-zero
+        """
+
+        logger.info("Checking/moving outputs of run "+job.name)
+        
+        self.files = ['*.kin']
+        filepaths = self.findFiles(job)
+        if len(filepaths) != 1:
+            logger.error('Something wrong with kin file(s) '+filepaths+'. CANNOT CONTINUE')
+            self.move_output(job,ok=False)
+            return False
+
+        kinf = filepaths[0]
+        if os.stat(kinf).st_size == 0:
+            logger.error('Zero kin file '+kinf+'. CANNOT CONTINUE')
+            self.move_output(job,ok=False)
+            return False
+
+        logger.info('OK')
+        self.move_output(job,ok=True)
+        return True    
+
+        
+    def move_output(self,job,ok=True):
+        dest = os.path.join(self.prfx,self.path)
+        jout = 'KIN_'+job.name
+            
+        task = {'*.kin':'kin','*.root':'kin','*.txt':'aux','*.conf':'aux','stdout':'jobOutput'}
+        if not ok:
+            task = {'*.kin':'errors','*.root':'errors','*.txt':'errors','*.conf':'errors','stdout':'errors'}
+            
+        for p in task.keys():
+            odir = os.path.join(dest,task[p])
+
+            self.files = [p]
+            filepaths = self.findFiles(job)
+            for f in filepaths:
+                if not os.path.isdir(odir):
+                    os.makedirs(odir)
+
+                shutil.move(f,odir)
+
+                # rename stdout in odir
+                if p == 'stdout':
+                    shutil.move(os.path.join(odir,p),os.path.join(odir,jout))
+
+
 class ND280RDP_Checker(IFileChecker):
     """
     o Checks .log file in a comprehensive way
@@ -98,6 +155,8 @@ class ND280RDP_Checker(IFileChecker):
         self.RUN = ''
         self.SUBRUN = ''
         self.TRIGTYPE = None
+
+        self.range = 1 # if to add 0000X000_0000X999 to paths (yes by default)
         
     def find(self,str):
         return self.line.find(str)>=0
@@ -113,6 +172,8 @@ class ND280RDP_Checker(IFileChecker):
     def send_status(self):
         logger.info('Result for %s %s %s %s is: %s, %s, %s, %s, %s' %  (self.RUN,self.SUBRUN,self.TRIGTYPE,self.STAGE,self.site,self.ReturnCode,self.Time,self.EventsIn,self.EventsOut))
 
+        if self.range == 0: return # no remote status report for CosMC
+        
         if not self.path:
             logger.error("No monitoring info sent because MONDIR is not defined")
             return
@@ -143,12 +204,12 @@ class ND280RDP_Checker(IFileChecker):
             self.TRIGTYPE = 'spill'
         elif self.trig == 'COSMIC':
             self.TRIGTYPE = 'cosmic'
-        elif self.trig == 'MCP':
+        elif self.trig == 'MCP' or self.trig == 'MCSAND':
             self.TRIGTYPE = 'spill'
-            isMC = 1
+            IsMC = 1
         elif self.trig == 'MCCOS':
             self.TRIGTYPE = 'all'
-            isMC = 1
+            IsMC = 1
         else:
             #print "Unknown type of data: "+self.trig
             #self.move_outs(job,ok=False)
@@ -195,6 +256,9 @@ class ND280RDP_Checker(IFileChecker):
                 logger.info("This is a GENIE MC log file")
                 IsGenie = 1
 
+        if IsMC == 1:
+            self.range = 0 # no range added to paths
+
 
         #print "Starting to scan file "+filename
         #print "for run %s, subrun %s, type %s" % (self.RUN,self.SUBRUN,self.trig)
@@ -210,6 +274,15 @@ class ND280RDP_Checker(IFileChecker):
                 logger.error('%s\n%s',self.line,"Midas file probably missing")
                 self.ReturnCode = -1
                 self.STAGE = "cali"
+                self.send_status()
+                self.InStage = 0
+                break
+
+            elif self.find('Starting job for neutMC.'):
+                # neutMC logs are filled by Fluka, they are huge and seems useless
+                logger.info(self.line+" The rest of log is ignored.")
+                self.ReturnCode = 1
+                self.STAGE = "neutMC"
                 self.send_status()
                 self.InStage = 0
                 break
@@ -293,14 +366,6 @@ class ND280RDP_Checker(IFileChecker):
                     #print self.line
                     logger.error(self.line)
                     self.ReturnCode = -8
-                    self.InStage = 0
-                    self.send_status()
-                    break
-
-                elif self.find('No pass through information could be found'):
-                    #print self.line
-                    logger.error(self.line)
-                    self.ReturnCode = -10
                     self.InStage = 0
                     self.send_status()
                     break
@@ -416,24 +481,38 @@ class ND280RDP_Checker(IFileChecker):
     def move_output(self,job,ok=True):
         if ok:
             rang = self.RUN[:5]+'000_'+self.RUN[:5]+'999'
-            dest = os.path.join(self.prfx,self.path,rang)
+            dest = os.path.join(self.prfx,self.path)
+            if self.range:
+                dest = os.path.join(self.prfx,self.path,rang)
             jout = self.trig+'_'+self.RUN+'_'+self.SUBRUN
         else:
             dest = os.path.join(self.prfx,self.path)
             jout = 'stdout'
             
-        task = {'*.log':'logf','*_cali_*.root':'cali','*_reco_*.root':'reco','*_anal_*.root':'anal','*catalogue.dat':'cata','stdout':'jobOutput'}
+        task = {'*_g4mc_*.root':'g4mc','*_elmc_*.root':'elmc','*_cstr_*.root':'cstr',
+                '*_numc_*.root':'numc','*_sand_*.root':'sand',
+                '*_cali_*.root':'cali','*_reco_*.root':'reco','*_anal_*.root':'anal',
+                '*.log':'logf','*catalogue.dat':'cata','stdout':'jobOutput'}
         if self.ReturnCode != 1 or not ok:
             task = {'*.log':'errors','*.root':'errors','*catalogue.dat':'errors','stdout':'errors'}
         for p in task.keys():
             odir = os.path.join(dest,task[p])
-            if not os.path.isdir(odir):
-                os.makedirs(odir)
 
             self.files = [p]
             filepaths = self.findFiles(job)
             for f in filepaths:
-                shutil.move(f,odir)
+                if not os.path.isdir(odir):
+                    os.makedirs(odir)
 
+                shutil.move(f,odir)
+                #os.symlink(f,os.path.join(odir,os.path.basename(f)))
+
+                # rename stdout in odir
                 if p == 'stdout':
                     shutil.move(os.path.join(odir,p),os.path.join(odir,jout))
+
+                # "leave" symlink for _cstr_ or _numc_ files in job output directory
+                # for possible transform chain
+                if task[p] == 'cstr' or task[p] == 'numc':
+                    os.symlink(os.path.join(odir,os.path.basename(f)),f)
+

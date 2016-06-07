@@ -3,7 +3,7 @@ from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from Ganga.Utility.Config import getConfig
-from GangaDirac.Lib.Files import DiracFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 

@@ -23,9 +23,9 @@ str_bad = markup("bad", overview_colours["bad"])
 
 class TaskRegistry(Registry):
 
-    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30):
+    def __init__(self, name, doc, update_index_time=30):
 
-        super(TaskRegistry, self).__init__( name, doc, dirty_flush_counter=dirty_flush_counter, update_index_time=update_index_time )
+        super(TaskRegistry, self).__init__( name, doc, update_index_time=update_index_time)
 
         self._main_thread = None
 
@@ -40,13 +40,13 @@ class TaskRegistry(Registry):
         return self.stored_proxy
 
     def getIndexCache(self, obj):
-        if obj.getNodeData() is None:
+        if obj._data is None:
             raise Exception("Currently don't support Index Caching")
         cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:
-            if cv in obj.getNodeData():
-                c[cv] = obj.getNodeAttribute(cv)
+            if cv in obj._data:
+                c[cv] = getattr(obj, cv)
         this_slice = TaskRegistrySlice("tmp")
         for dpv in this_slice._display_columns:
             c["display:" + dpv] = this_slice._get_display_value(obj, dpv)
@@ -84,7 +84,7 @@ class TaskRegistry(Registry):
         while self._main_thread is not None and not self._main_thread.should_stop():
 
             # If monitoring is enabled (or forced for Tasks) loop over each one and update
-            if config['ForceTaskMonitoring'] or monitoring_component.enabled:
+            if (config['ForceTaskMonitoring'] or monitoring_component.enabled) and not config['disableTaskMon']:
                 for tid in self.ids():
 
                     logger.debug("Running over tid: %s" % str(tid))

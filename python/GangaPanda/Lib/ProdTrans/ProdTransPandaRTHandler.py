@@ -107,6 +107,11 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         jspec.AtlasRelease = 'Atlas-%s' % app.atlas_release
         jspec.homepackage = app.home_package
         jspec.transformation = app.transformation
+
+        # set the transfer type (e.g. for directIO tests)
+        if job.backend.requirements.transfertype != '':
+            jspec.transferType = job.backend.requirements.transfertype
+
         jspec.destinationDBlock = job.outputdata.datasetname
         if job.outputdata.location:
             jspec.destinationSE = job.outputdata.location
@@ -121,7 +126,10 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         else:
             jspec.prodSourceLabel = configPanda['prodSourceLabelRun']
         jspec.processingType = configPanda['processingType']
-        jspec.specialHandling = configPanda['specialHandling']
+        if job.backend.requirements.specialHandling:
+            jspec.specialHandling = job.backend.requirements.specialHandling
+        else:
+            jspec.specialHandling = configPanda['specialHandling']
         jspec.computingSite = job.backend.site
         jspec.cloud = job.backend.requirements.cloud
         jspec.cmtConfig = app.atlas_cmtconfig
@@ -180,6 +188,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 randomized_lfn = lfn + ('.%s.%d.%s' % (job.backend.site, int(time.time()), commands.getoutput('uuidgen 2> /dev/null')[:4] ) )
             else:
                 randomized_lfn = lfn
+
             ofspec.lfn = randomized_lfn
             randomized_lfns.append(randomized_lfn)
             ofspec.destinationDBlock = jspec.destinationDBlock
@@ -187,10 +196,15 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             ofspec.dataset = jspec.destinationDBlock
             ofspec.type = 'output'
             jspec.addFile(ofspec)
+
+            # remove the first section of the file name if it matches the file type
+            if len(randomized_lfn.split('.')) > 1 and randomized_lfn.split('.')[0].find(lfntype) != -1:
+                randomized_lfn = '.'.join(randomized_lfn.split('.')[1:])
+
             if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
-                jspec.jobParameters += ' --output%sFile %s' % (lfntype, randomized_lfns[ilfn])
+                jspec.jobParameters += ' --output%sFile %s' % (lfntype, randomized_lfn)
             else:
-                jspec.jobParameters += ' output%sFile=%s' % (lfntype, randomized_lfns[ilfn])
+                jspec.jobParameters += ' output%sFile=%s' % (lfntype, randomized_lfn)
             ilfn=ilfn+1
 
         # Input files.

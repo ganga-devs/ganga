@@ -12,6 +12,8 @@ import time
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
 import sys
 import traceback
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
+from Ganga.GPIDev.Lib.File.File import File
 
 logger = getLogger()
 
@@ -21,27 +23,27 @@ def formatTraceback():
 
 class IUnit(GangaObject):
     _schema = Schema(Version(1, 0), {
-        'status': SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=["str"]),
-        'name': SimpleItem(defvalue='Simple Unit', doc='Name of the unit (cosmetic)', typelist=["str"]),
+        'status': SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=[str]),
+        'name': SimpleItem(defvalue='Simple Unit', doc='Name of the unit (cosmetic)', typelist=[str]),
         'application': ComponentItem('applications', defvalue=None, optional=1, load_default=False, doc='Application of the Transform.'),
         'inputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Input dataset'),
         'outputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Output dataset'),
         'active': SimpleItem(defvalue=False, hidden=1, doc='Is this unit active'),
-        'active_job_ids': SimpleItem(defvalue=[], typelist=['int'], sequence=1, hidden=1, doc='Active job ids associated with this unit'),
-        'prev_job_ids': SimpleItem(defvalue=[], typelist=['int'], sequence=1,  hidden=1, doc='Previous job ids associated with this unit'),
+        'active_job_ids': SimpleItem(defvalue=[], typelist=[int], sequence=1, hidden=1, doc='Active job ids associated with this unit'),
+        'prev_job_ids': SimpleItem(defvalue=[], typelist=[int], sequence=1,  hidden=1, doc='Previous job ids associated with this unit'),
         'minor_resub_count': SimpleItem(defvalue=0, hidden=1, doc='Number of minor resubmits'),
         'major_resub_count': SimpleItem(defvalue=0, hidden=1, doc='Number of major resubmits'),
-        'req_units': SimpleItem(defvalue=[], typelist=['str'], sequence=1, hidden=1, doc='List of units that must complete for this to start (format TRF_ID:UNIT_ID)'),
+        'req_units': SimpleItem(defvalue=[], typelist=[str], sequence=1, hidden=1, doc='List of units that must complete for this to start (format TRF_ID:UNIT_ID)'),
         'start_time': SimpleItem(defvalue=0, hidden=1, doc='Start time for this unit. Allows a delay to be put in'),
         'copy_output': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, doc='The dataset to copy the output of this unit to, e.g. Grid dataset -> Local Dataset'),
         'merger': ComponentItem('mergers', defvalue=None, load_default=0, optional=1, doc='Merger to be run after this unit completes.'),
         'splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter used on each unit of the Transform.'),
         'postprocessors': ComponentItem('postprocessor', defvalue=None, doc='list of postprocessors to run after job has finished'),
-        'inputsandbox': FileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
-        'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
-        'outputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
-        'info' : SimpleItem(defvalue=[],typelist=['str'],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
-        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Unit', typelist=["int"]),
+        'inputsandbox': FileItem(defvalue=[], sequence=1, doc="list of File objects shipped to the worker node "),
+        'inputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects that will act as input files for a job"),
+        'outputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
+        'info' : SimpleItem(defvalue=[],typelist=[str],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
+        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Unit', typelist=[int]),
     })
 
     _category = 'units'
@@ -364,13 +366,13 @@ class IUnit(GangaObject):
             j = stripProxy(job)
 
             # try to preserve lazy loading
-            if hasattr(j, 'getNodeIndexCache') and j.getNodeIndexCache() and 'subjobs:status' in j.getNodeIndexCache():
-                if len(j.getNodeIndexCache()['subjobs:status']) > 0:
-                    for sj_stat in j.getNodeIndexCache()['subjobs:status']:
+            if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
+                if len(j._index_cache['subjobs:status']) > 0:
+                    for sj_stat in j._index_cache['subjobs:status']:
                         if sj_stat in active_states:
                             tot_active += 1
                 else:
-                    if j.getNodeIndexCache()['status'] in active_states:
+                    if j._index_cache['status'] in active_states:
                         tot_active += 1
             else:
                 #logger.warning("WARNING: (active check) No index cache for job object %d" % jid)
@@ -401,13 +403,13 @@ class IUnit(GangaObject):
             j = stripProxy(job)
 
             # try to preserve lazy loading
-            if hasattr(j, 'getNodeIndexCache') and j.getNodeIndexCache() and 'subjobs:status' in j.getNodeIndexCache():
-                if len(j.getNodeIndexCache()['subjobs:status']) > 0:
-                    for sj_stat in j.getNodeIndexCache()['subjobs:status']:
+            if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
+                if len(j._index_cache['subjobs:status']) > 0:
+                    for sj_stat in j._index_cache['subjobs:status']:
                         if sj_stat == status:
                             tot_active += 1
                 else:
-                    if j.getNodeIndexCache()['status'] == status:
+                    if j._index_cache['status'] == status:
                         tot_active += 1
 
             else:
@@ -439,9 +441,9 @@ class IUnit(GangaObject):
             j = stripProxy(job)
 
             # try to preserve lazy loading
-            if hasattr(j, 'getNodeIndexCache') and j.getNodeIndexCache() and 'subjobs:status' in j.getNodeIndexCache():
-                if len(j.getNodeIndexCache()['subjobs:status']) != 0:
-                    total += len(j.getNodeIndexCache()['subjobs:status'])
+            if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
+                if len(j._index_cache['subjobs:status']) != 0:
+                    total += len(j._index_cache['subjobs:status'])
                 else:
                     total += 1
             else:

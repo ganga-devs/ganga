@@ -17,7 +17,7 @@ class GangaDatasetSplitter(ISplitter):
     """ Split job based on files given in GangaDataset inputdata field """
     _name = "GangaDatasetSplitter"
     _schema = Schema(Version(1, 0), {
-        'files_per_subjob': SimpleItem(defvalue=5, doc='the number of files per subjob', typelist=["int"]),
+        'files_per_subjob': SimpleItem(defvalue=5, doc='the number of files per subjob', typelist=[int]),
     })
 
     def split(self, job):

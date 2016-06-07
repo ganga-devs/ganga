@@ -24,6 +24,8 @@ from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
 from Ganga.GPIDev.Base.Proxy import getName
 
+config = getConfig('LCG')
+
 class ARC(IBackend):
 
     '''ARC backend - direct job submission to an ARC CE'''
@@ -32,8 +34,8 @@ class ARC(IBackend):
         'jobtype': SimpleItem(defvalue='Normal', doc='Job type: Normal, MPICH'),
         'requirements': ComponentItem('LCGRequirements', doc='Requirements for the resource selection'),
         'sandboxcache': ComponentItem('GridSandboxCache', copyable=1, doc='Interface for handling oversized input sandbox'),
-        'id': SimpleItem(defvalue='', typelist=['str', 'list'], protected=1, copyable=0, doc='Middleware job identifier'),
-        'status': SimpleItem(defvalue='', typelist=['str', 'dict'], protected=1, copyable=0, doc='Middleware job status'),
+        'id': SimpleItem(defvalue='', typelist=[str, list], protected=1, copyable=0, doc='Middleware job identifier'),
+        'status': SimpleItem(defvalue='', typelist=[str, dict], protected=1, copyable=0, doc='Middleware job status'),
         'exitcode': SimpleItem(defvalue='', protected=1, copyable=0, doc='Application exit code'),
         'exitcode_arc': SimpleItem(defvalue='', protected=1, copyable=0, doc='Middleware exit code'),
         'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='The ARC CE where the job actually runs.'),
@@ -1106,10 +1108,6 @@ sys.exit(0)
         job = self.getJobObject()
 
         ick = False
-
-        # delegate proxy to ARC CE
-        if not grids['GLITE'].arc_proxy_delegation(self.CE):
-            logger.warning('proxy delegation to %s failed' % self.CE)
 
         if not job.master and len(job.subjobs) == 0:
             # case 1: master job normal resubmission

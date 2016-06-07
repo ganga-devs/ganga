@@ -154,13 +154,13 @@ class RuntimePackage(object):
         except ImportError as x:
             logger.warning("cannot import runtime package %s: %s", self.name, str(x))
 
-    def getEnvironment(self):
-        # FIXME: pass the configuration object
-        g = importName(self.name, 'getEnvironment')
+    def standardSetup(self):
+        """Perform any standard setup for the package"""
+        g = importName(self.name, 'standardSetup')
         if g:
-            return g(self.config)
+            return g()
         else:
-            logger.debug("no environment defined for runtime package %s", self.name)
+            logger.debug("no standard setup defined for runtime package %s", self.name)
             return {}
 
     def loadPlugins(self):
