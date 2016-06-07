@@ -665,7 +665,7 @@ class Grid(object):
         rc, output, m = self.shell.cmd1('%s%s' % (
             self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
-        match = re.search('directory:\n\s*(\S+)\s*\n', output)
+        match = re.search('directory:\n\s*(.+)\s*\n', output)
 
         if not match:
             logger.warning('Job output fetch failed.')
