@@ -192,7 +192,7 @@ RecoToDST-07/90000000/DST" ,
         #    new_files.append(DiracFile(lfn=f))
             #ds.extend([DiracFile(lfn = f)])
 
-        logger.debug("Creating Dataset")
+        logger.info("Constructing LHCbDataset")
 
         from GangaLHCb.Lib.LHCbDataset import LHCbDataset
         logger.debug("Imported LHCbDataset")

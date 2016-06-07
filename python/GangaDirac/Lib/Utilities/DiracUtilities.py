@@ -278,5 +278,5 @@ def execute(command,
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
 
-    return deepcopy(returnable)
+    return returnable
 

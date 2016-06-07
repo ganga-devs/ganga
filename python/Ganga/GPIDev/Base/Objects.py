@@ -901,7 +901,7 @@ class GangaObject(Node):
                     self_copy.__dict__[k] = deepcopy(v)
                 except:
                     self_copy.__dict__[k] = v
-        all(map(functools.partial(performCopy, self_copy=self_copy), self.__dict__.keys()))
+        map(functools.partial(performCopy, self_copy=self_copy), self.__dict__.keys())
 
         if true_parent is not None:
             self._setParent(true_parent)
