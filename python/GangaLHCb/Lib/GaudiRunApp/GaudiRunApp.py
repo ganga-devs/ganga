@@ -215,7 +215,7 @@ class GaudiRun(IPrepareApp):
         This builds the ganga target 'ganga-input-sandbox' for the project defined by self.directory
         This returns the absolute path to the file after it has been created. It will fail if things go wrong or the file fails to generate
         """
-        logger.info("Make-ing target '%s'" % build_target)
+        logger.info("Make-ing target '%s'     (This may take a few minutes depending on the size of your project)" % build_target)
         self.exec_cmd('make clean && make %s' % build_target)
 
         targetPath = path.join(self.getDir(), 'build.%s' % self.arch, 'ganga')

@@ -8,7 +8,7 @@ from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File.File import File, ShareDir
 import os
 import shutil
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
@@ -72,15 +72,24 @@ class IPrepareApp(IApplication):
             self.is_prepared = None
         self.hash = None
 
+    def getSharedPath(self):
+        """
+        Return the full path of the shared directory where files are placed
+        """
+        if isinstance(self.is_prepared, ShareDir):
+            share_folder = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+            return os.path.join(shared_path, self.is_prepared.name)
+        else:
+            return os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+
     def copyIntoPrepDir(self, obj2copy):
         """
         Method for actually copying the "obj2copy" object to the prepared state dir of this application
         Args:
             obj2copy (bool): is a string (local) address of a file to be copied as it's passed to shutil.copy2
         """
-        shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+        shr_dir = self.getSharedPath()
 
-        shr_dir = os.path.join(shared_path, self.is_prepared.name)
         if not os.path.isdir(shr_dir):
             os.makedirs(shr_dir)
         shutil.copy2(obj2copy, shr_dir)

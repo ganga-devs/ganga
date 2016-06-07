@@ -44,14 +44,35 @@ def genDataFiles(job):
         logger.debug("Returning options String")
         data_str = data.optionsString()
         if data.hasLFNs():
+            logger.info("Generating Data catalog for job: %s" % job.fqid)
             logger.debug("Returning Catalogue")
             inputsandbox.append(FileBuffer('catalog.xml', data.getCatalog()))
             cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
             data_str += cat_opts
 
-    inputsandbox.append(FileBuffer('data.py', data_str))
+        inputsandbox.append(FileBuffer('data.py', data_str))
 
     return inputsandbox
+
+def generateWNScript(commandline, job):
+    exe_script_name = 'gaudiRun-script.py'
+
+    return FileBuffer(name=exe_script_name, contents=script_generator(exe_script_template(), COMMAND=commandline,
+                                                                    OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
+                      executable=True)
+
+def collectPreparedFiles(app):
+    if not isinstance(app.is_prepared, SharedDir):
+        raise ApplicationConfigurationError('Failed to prepare Application Correctly')
+    shared_dir = app.getSharedPath()
+    input_files, input_folders = [], []
+    for root, dirs, files in os.walk(shared_dir, topdown=True):
+        for name in files:
+            input_files.append(os.path.join(root, name))
+        for name in dirs:
+            input_folders.append(os.path.join(root, name))
+    return input_files, input_folders
+
 
 class GaudiRunRTHandler(IRuntimeHandler):
 
@@ -59,21 +80,29 @@ class GaudiRunRTHandler(IRuntimeHandler):
 
         job = app.getJobObject()
 
-        print("app: %s" % app)
-        print("appconf: %s" % appconfig)
-        print("appmasterconfig: %s" % str(appmasterconfig))
-        print("jobmasterconfig: %s" % str(jobmasterconfig))
-
         prepared_files = []
 
         job_command = 'ls'
         job_args = ['-l']
-        input_sand = stripProxy(app).getJobObject().inputsandbox
-        output_sand = stripProxy(app).getJobObject().outputsandbox
+        input_sand = job.inputsandbox
+        output_sand = job.outputsandbox
 
         data_files = genDataFiles(job)
 
         input_sand = unique(input_sand + prepared_files + data_files)
+
+        scriptToRun = generateWNScript('ls -l', job)
+        input_sand.append(scriptToRun)
+
+        input_sand.append(job.application)
+
+        input_files, input_folders = collectPreparedFiles(app)
+
+        if input_folders:
+            raise ApplicationConfigurationError('Prepared folders not supported yet, please fix this in future')
+        else:
+            for f in input_files:
+                input_sand.append(File(f))
 
         c = StandardJobConfig(job_command, input_sand, job_args, output_sand)
         return c
@@ -87,18 +116,18 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
 
     """The runtime handler to run plain executables on the Dirac backend"""
 
-    def master_prepare(self, app, appmasterconfig):
-        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
-        if type(app.exe) == File:
-            input_dir = app.getJobObject().getInputWorkspace().getPath()
-            exefile = os.path.join(input_dir, os.path.basename(app.exe.name))
-            if not os.path.exists(exefile):
-                msg = 'Executable: "%s" must exist!' % str(exefile)
-                raise ApplicationConfigurationError(None, msg)
+    #def master_prepare(self, app, appmasterconfig):
+    #    inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
+    #    if type(app.exe) == File:
+    #        input_dir = app.getJobObject().getInputWorkspace().getPath()
+    #        exefile = os.path.join(input_dir, os.path.basename(app.exe.name))
+    #        if not os.path.exists(exefile):
+    #            msg = 'Executable: "%s" must exist!' % str(exefile)
+    #            raise ApplicationConfigurationError(None, msg)
 
-            os.system('chmod +x %s' % exefile)
-        return StandardJobConfig(inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
+    #        os.system('chmod +x %s' % exefile)
+    #    return StandardJobConfig(inputbox=unique(inputsandbox),
+    #                             outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
@@ -115,14 +144,8 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         commandline += ' '.join([str(arg) for arg in app.args])
         logger.debug('Command line: %s: ', commandline)
 
-        exe_script_name = 'exe-script.py'
-
-        inputsandbox.append(FileBuffer(name=exe_script_name,
-                            contents=script_generator(exe_script_template(),
-                                                    COMMAND=commandline,
-                                                    OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
-                                                    ),
-                                       executable=True))
+        scriptToRun = generateWNScript(commandline, job)
+        inputfiles.append(scriptToRun)
 
         dirac_outputfiles = dirac_outputfile_jdl(outputfiles)
 
@@ -134,7 +157,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                                         DIRAC_OBJECT='Dirac()',
                                         JOB_OBJECT='Job()',
                                         NAME=mangle_job_name(app),
-                                        EXE=exe_script_name,
+                                        EXE=scriptToRun.name,
                                         EXE_ARG_STR='',
                                         EXE_LOG_FILE='Ganga_Executable.log',
                                         ENVIRONMENT=None,  # app.env,
@@ -164,18 +187,21 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
 def exe_script_template():
     script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
-from os import system, environ, pathsep, getcwd
+from os import listdir, system, environ, pathsep, getcwd
+from mimetypes import guess_types
 import sys
+
+def extractAllTarFiles():
+    for f in listdir():
+        if guess_type(f)[1] in ['gzip', 'bzip2']:
+            with closing(tarfile.open(f, "r:*")) as tf:
+                tf.extractall('.')
 
 # Main
 if __name__ == '__main__':
 
-    environ['PATH'] = getcwd() + (pathsep + environ['PATH'])
-    if path.isfile('./###TAR_FILE###'):
-        rc = system('tar -zxf ###TAR_FILE### -C .')
-        if rc !=0:
-            print("COULD NOT EXTRACT: %s" % str('###TAR_FILE###'))
-            sys.exit(rc)
+    extractAllTarFiles()
+
     rc = system('###COMMAND###')
 
     ###OUTPUTFILESINJECTEDCODE###

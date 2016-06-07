@@ -17,11 +17,10 @@ logger = getLogger()
 
 
 def get_share_path(app=None):
-    if app is None or not isType(app.is_prepared, ShareDir):
+    if not isinstance(app, IPrepareApp):
         return os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
-    #elif isType(app, ShareDir):
     else:
-        return os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'], app.is_prepared.name)
+        return app.getSharedPath()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
