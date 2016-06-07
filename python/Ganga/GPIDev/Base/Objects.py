@@ -89,7 +89,7 @@ class Node(object):
         def internal_deepcopyMethod(elem):
             if elem not in do_not_copy:
                 this_dict[elem] = deepcopy(this_dict[elem], memo)
-        all(ap(internal_deepcopyMethod, this_dict.keys())
+        map(internal_deepcopyMethod, this_dict.keys())
 
         obj.__dict__ = this_dict
         if self._getParent() is not None:
