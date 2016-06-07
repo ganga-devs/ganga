@@ -77,7 +77,7 @@ def runtimeEvalString(this_obj, attr_name, val):
     """
 
     ## Don't check or try to auto-eval non-string objects
-    if type(val) != str:
+    if not isinstance(val, str):
         return val
 
     raw_obj = stripProxy(this_obj)
@@ -214,7 +214,7 @@ def isType(_obj, type_or_seq):
     if isinstance(type_or_seq, getKnownLists()):
         clean_list = []
         for type_obj in type_or_seq:
-            str_type = type('')
+            str_type = str
             if type_obj != str_type and type(type_obj) != type(str_type) and (not isclass(type_obj)):
                 clean_list.append(type(stripProxy(type_obj)))
             elif isclass(type_obj):
@@ -452,7 +452,7 @@ class ProxyDataDescriptor(object):
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                 shareref.increase(val.name)
 
-        if type(val) is str:
+        if isinstance(val, str):
             logger.error("Setting string type to 'is_prepared'")
             #import traceback
             #traceback.print_stack()
@@ -523,7 +523,7 @@ class ProxyDataDescriptor(object):
         if not isinstance(_val, str) and (isType(_val, getKnownLists()) or\
                 (hasattr(stripProxy(_val), '__len__') and hasattr(stripProxy(_val), '__getitem__'))):
             val = stripProxy(_val).__class__()
-            if type(val) is dict:
+            if isinstance(val, dict):
                 for _key, elem in _val.iteritems():
                     if isType(_key, GangaObject):
                         key = stripProxy(_key)
@@ -788,7 +788,7 @@ def GPIProxyClassFactory(name, pluginclass):
                 val = stripProxy(getattr(self, key))
                 if isinstance(val, GangaObject):
                     val._auto__init__()
-                ProxyDataDescriptor.__set__(instance, key, val)
+                instance.setSchemaAttribute(key, instance._attribute_filter__set__(key, stripProxy(val)))
 
 
         ## THIRD(?) CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
@@ -825,13 +825,13 @@ def GPIProxyClassFactory(name, pluginclass):
 
                 raw_self = stripProxy(self)
 
-                if type(this_arg) is str:
+                if isinstance(this_arg, str):
                     this_arg = stripProxy(runtimeEvalString(raw_self, k, this_arg))
                     if hasattr(this_arg, '_auto__init__'):
                         this_arg._auto__init__()
 
-                if type(this_arg) is str:
-                    ProxyDataDescriptor.__set__(raw_self, k, this_arg)
+                if isinstance(this_arg, str):
+                    raw_self.setSchemaAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
                     continue
                 else:
                     item = pluginclass._schema.getItem(k)
@@ -856,7 +856,7 @@ def GPIProxyClassFactory(name, pluginclass):
                     if hasattr(this_arg, '_auto__init__'):
                         this_arg._auto__init__()
 
-                    ProxyDataDescriptor.__set__(raw_self, k, this_arg)
+                    raw_self.setSchemaAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 

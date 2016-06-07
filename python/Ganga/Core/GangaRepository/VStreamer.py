@@ -385,12 +385,12 @@ class Loader(object):
                 def schema_assign(_tuple, obj):
                     attr = _tuple[0]
                     item = _tuple[1]
-                    if not attr in obj.getNodeData():
+                    if not attr in obj._data:
                         #logger.info("Opening: %s" % attr)
                         if item._meta["sequence"] == 1:
-                            obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr, make_copy=False)))
+                            obj.setSchemaAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr, make_copy=False)))
                         else:
-                            obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr, make_copy=False))
+                            obj.setSchemaAttribute(attr, obj._schema.getDefaultValue(attr, make_copy=False))
                 all(map(partial(schema_assign, obj=obj), obj._schema.allItems()))
                 #print("Constructed: %s" % getName(obj))
 

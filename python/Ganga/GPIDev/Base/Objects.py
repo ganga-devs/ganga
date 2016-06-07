@@ -168,10 +168,17 @@ class Node(object):
     def accept(self, visitor):
         pass
 
+    # mark object as "dirty" and inform the registry about it
+    # the registry is always associated with the root object
+    def _setDirty(self):
+        """ Set the dirty flag all the way up to the parent"""
+        self._dirty = True
+        parent = self._getParent()
+        if parent is not None:
+            parent._setDirty()
+
     def _setFlushed(self):
         self._dirty = False
-
-
 
     def printTree(self, f=None, sel=''):
         from Ganga.GPIDev.Base.VPrinter import VPrinter
