@@ -326,7 +326,7 @@ class Grid(object):
         else:
             cmd += submit_opt
 
-        cmd = '%s --noint %s' % (cmd, jdlpath)
+        cmd = '%s --noint "%s"' % (cmd, jdlpath)
 
         logger.debug('job list match command: %s' % cmd)
 
@@ -382,7 +382,7 @@ class Grid(object):
         if ce:
             cmd = cmd + ' -r %s' % ce
 
-        cmd = '%s --nomsg %s < /dev/null' % (cmd, jdlpath)
+        cmd = '%s --nomsg "%s" < /dev/null' % (cmd, jdlpath)
 
         logger.debug('job submit command: %s' % cmd)
 
@@ -953,7 +953,7 @@ class Grid(object):
 
         cmd = cmd + ' -r %s' % ce
 
-        cmd = '%s --nomsg %s < /dev/null' % (cmd, jdlpath)
+        cmd = '%s --nomsg "%s" < /dev/null' % (cmd, jdlpath)
 
         logger.debug('job submit command: %s' % cmd)
 
@@ -1274,7 +1274,7 @@ class Grid(object):
         if ce:
             cmd = cmd + ' -c %s' % ce
 
-        cmd = '%s %s < /dev/null' % (cmd, jdlpath)
+        cmd = '%s "%s" < /dev/null' % (cmd, jdlpath)
 
         logger.debug('job submit command: %s' % cmd)
 
