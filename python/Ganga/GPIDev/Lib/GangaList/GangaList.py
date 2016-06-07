@@ -429,7 +429,7 @@ class GangaList(GangaObject):
         #traceback.print_stack()
         containsObj = False
         for elem in self._list:
-            if isinstane(elem, GangaObject):
+            if isinstance(elem, GangaObject):
                 containsObj = True
                 break
         if containsObj is False:
