@@ -301,7 +301,7 @@ class Schema(object):
 
         # make a copy of the default value (to avoid strange effects if the
         # original modified)
-        return copy.deepcopy(defvalue)
+        return defvalue
 
 
 # Items in schema may be either Components,Simples, Files or BindingItems.
