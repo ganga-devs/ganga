@@ -658,7 +658,7 @@ class Grid(object):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return (False, None)
 
-        cmd = '%s --noint --dir %s %s' % (cmd, directory, jobid)
+        cmd = '%s --noint --dir "%s" %s' % (cmd, directory, jobid)
 
         logger.debug('job get output command: %s' % cmd)
 
