@@ -556,8 +556,13 @@ class GangaRepositoryLocal(GangaRepository):
                     # Write out a new index if the file can be locked
                     if len(self.lock([this_id])) != 0:
                         if this_id not in self.incomplete_objects:
-                            self.index_write(this_id)
-                        self.unlock([this_id])
+                            # If object is loaded mark it dirty so next flush will regenerate XML,
+                            # otherwise just go about fixing it
+                            if not self.isObjectLoaded(self.objects[this_id]):
+                                self.index_write(this_id)
+                            else:
+                                self.objects(this_id)._setDirty()
+                        #self.unlock([this_id])
                 except KeyError as err:
                     logger.debug("update Error: %s" % err)
                     # deleted job
@@ -819,7 +824,11 @@ class GangaRepositoryLocal(GangaRepository):
             # index is wrong! Try to get read access - then we can fix this
             if len(self.lock([this_id])) != 0:
                 if this_id not in self.incomplete_objects:
-                    self.index_write(this_id)
+                    # Mark as dirty if loaded, otherwise load and fix
+                    if not self.isObjectLoaded(self.objects[this_id]):
+                        self.index_write(this_id)
+                    else:
+                        self.objects[this_id]._setDirty()
                 # self.unlock([this_id])
 
                 old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache.iteritems())
