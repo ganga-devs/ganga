@@ -283,8 +283,6 @@ class Descriptor(object):
         if self._getter_name:
             return self._bind_method(obj, self._getter_name)()
 
-        name = _getName(self)
-
         # First we want to try to get the information without prompting a load from disk
 
         # ._data takes priority ALWAYS over ._index_cache
@@ -627,7 +625,7 @@ class GangaObject(Node):
             for attr, item in self._schema.allItems():
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
-                    setattr(self, attr, self._schema.getDefaultValue(attr))
+                    setattr(self, attr, self._schema.getDefaultValue(attr, make_copy=False))
 
 
         # Overwrite default values with any config values specified

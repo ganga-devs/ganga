@@ -329,7 +329,7 @@ def summary_print(obj, out=None, interactive=False):
             outString = '['
             outStringList = []
             def print_x(x, outStringList, obj_len):
-                if isinstance(x, str, int, float, bool, type):
+                if isinstance(x,(str, int, float, bool, type)):
                     outStringList.append(str(x).rstrip())
                 elif isType(x, GangaObject):
                     sio =StringIO()

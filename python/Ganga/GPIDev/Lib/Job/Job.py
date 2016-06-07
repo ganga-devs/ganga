@@ -256,8 +256,6 @@ class Job(GangaObject):
 
     def __construct__(self, args):
 
-        stripProxy(self)._getWriteAccess()
-
         self.status = "new"
         logger.debug("Intercepting __construct__")
 
@@ -306,8 +304,6 @@ class Job(GangaObject):
         else:
             # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
             super(Job, self).__construct__(args)
-
-        stripProxy(self)._setDirty()
 
     def _readonly(self):
         return self.status != 'new'
@@ -856,8 +852,6 @@ class Job(GangaObject):
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
             self._init_workspace()
-
-        self._setDirty()
 
         super(Job, self)._auto__init__()
         stripProxy(self.info).uuid = str(uuid.uuid4())
@@ -1810,7 +1804,6 @@ class Job(GangaObject):
                 pass
 
         try:
-            self._setDirty()
             self._releaseWriteAccess()
         except Exception as err:
             logger.debug("Remove Err: %s" % err)
@@ -1872,7 +1865,6 @@ class Job(GangaObject):
         """Private helper. Kill the job. Raise JobError exception on error.
         """
         try:
-            self._getWriteAccess()
             # make sure nobody writes to the cache during this operation
             # job._registry.cache_writers_mutex.lock()
 
@@ -2196,9 +2188,6 @@ class Job(GangaObject):
         elif attr == 'comment':
 
             super(Job, self).__setattr__(attr, value)
-            # if a comment is added mark the job as dirty
-            if value != '':
-                self._setDirty()
 
         elif attr == 'backend':
 
