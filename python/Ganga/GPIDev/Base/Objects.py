@@ -74,6 +74,7 @@ class Node(object):
     """
     __metaclass__ = abc.ABCMeta
 
+    def __init__(self, parent=None):
         super(Node, self).__init__()
         self._parent = parent
         self._read_lock = threading.RLock()  # Don't read out of thread whilst we're making a change
