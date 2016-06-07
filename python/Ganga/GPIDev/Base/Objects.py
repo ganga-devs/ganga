@@ -312,12 +312,12 @@ class Descriptor(object):
 
         raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
 
-    def __cloneVal(self, v, obj):
+    @staticmethod
+    def __cloneVal(v, obj, _clone_name):
         """
         Clone v using knowledge of the obj the attr is being set on and the name of self is the attribute name
         return a new instance of v equal to v
         """
-        _clone_name = _getName(self)
         item = obj._schema[_clone_name]
 
         if v is None:
@@ -337,7 +337,7 @@ class Descriptor(object):
         elif isinstance(v, dict):
             new_dict = {}
             for key, item in new_dict.iteritems():
-                new_dict[key] = self.__cloneVal(v, obj)
+                new_dict[key] = Descriptor.__cloneVal(v, obj, _clone_name)
             return new_dict
         else:
             if not isinstance(v, Node) and isinstance(v, (list, tuple)):
@@ -347,7 +347,7 @@ class Descriptor(object):
                 except ImportError:
                     new_v = []
                 for elem in v:
-                    new_v.append(self.__cloneVal(elem, obj))
+                    new_v.append(Descriptor.__cloneVal(elem, obj, _clone_name))
                 #return new_v
             elif not isinstance(v, Node):
                 if isclass(v):
@@ -358,18 +358,17 @@ class Descriptor(object):
                     logger.error("v: %s" % v)
                     raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (v, type(v)))
                 else:
-                    new_v = self.__copyNodeObject(new_v, obj)
+                    new_v = Descriptor.__copyNodeObject(new_v, obj, _clone_name)
             else:
-                new_v = self.__copyNodeObject(v, obj)
+                new_v = Descriptor.__copyNodeObject(v, obj, _clone_name)
 
             return new_v
 
-    def __copyNodeObject(self, v, obj):
+    @staticmethod
+    def __copyNodeObject(v, obj, _clone_name):
         """This deals with the actual deepcopy of an object which has inherited from Node class"""
 
-        _copy_name = _getName(self)
-
-        item = obj._schema[_copy_name]
+        item = obj._schema[_clone_name]
         GangaList = _getGangaList()
         if isinstance(v, GangaList):
             categories = v.getCategory()
@@ -421,8 +420,6 @@ class Descriptor(object):
         _val: value of the attribute which we're about to set
         """
 
-        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
-
         if hasattr(obj, '_checkset_name'):
             checkSet = self._bind_method(obj, self._checkset_name)
             if checkSet is not None:
@@ -441,17 +438,17 @@ class Descriptor(object):
 
         _set_name = _getName(self)
 
-        item = obj._schema[_set_name]
+        new_value = Descriptor.cleanValue(obj, val, _set_name)
 
-        def cloneVal(v):
-            GangaList = _getGangaList()
-            if isinstance(v, (list, tuple, GangaList)):
-                new_v = GangaList()
-                for elem in v:
-                    new_v.append(self.__cloneVal(elem, obj))
-                return new_v
-            else:
-                return self.__cloneVal(v, obj)
+        obj.setSchemaAttribute(_set_name, new_value)
+        obj._setDirty()
+
+    @staticmethod
+    def cleanValue(obj, val, name):
+
+        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
+
+        item = obj._schema[name]
 
         ## If the item has been defined as a sequence great, let's continue!
         if item['sequence']:
@@ -461,7 +458,7 @@ class Descriptor(object):
                 new_val = GangaList()
             else:
                 if isinstance(item, ComponentItem):
-                    new_val = makeGangaList(val, Descriptor.cloneVal, parent=obj, preparable=_preparable, extra_args=(self, obj))
+                    new_val = makeGangaList(val, Descriptor.cloneVal, parent=obj, preparable=_preparable, extra_args=(name, obj))
                 else:
                     new_val = makeGangaList(val, parent=obj, preparable=_preparable)
         else:
@@ -474,9 +471,9 @@ class Descriptor(object):
                         new_val = []
                     else:
                         new_val = GangaList()
-                    Descriptor.__createNewList(new_val, val, Descriptor.cloneVal, (self, obj))
+                    Descriptor.__createNewList(new_val, val, Descriptor.cloneVal, (name, obj))
                 else:
-                    new_val = Descriptor.cloneVal(val, (self, obj))
+                    new_val = Descriptor.cloneVal(val, (name, obj))
             else:
                 new_val = val
                 pass
@@ -485,21 +482,20 @@ class Descriptor(object):
         if isinstance(new_val, Node):
             new_val._setParent(obj)
 
-        obj.setSchemaAttribute(_set_name, new_val)
-        obj._setDirty()
+        return new_val
 
     @staticmethod
     def cloneVal(v, extra_args):
         GangaList = _getGangaList()
-        self=extra_args[0]
+        name=extra_args[0]
         obj=extra_args[1]
         if isinstance(v, (list, tuple, GangaList)):
             new_v = GangaList()
             for elem in v:
-                new_v.append(self.__cloneVal(elem, obj))
+                new_v.append(Descriptor.__cloneVal(elem, obj, name))
             return new_v
         else:
-            return self.__cloneVal(v, obj)
+            return Descriptor.__cloneVal(v, obj, name)
 
     def __delete__(self, obj):
         """
@@ -628,7 +624,9 @@ class GangaObject(Node):
             for attr, item in self._schema.allItems():
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
-                    setattr(self, attr, self._schema.getDefaultValue(attr, make_copy=False))
+                    self._data_dict[attr] = Descriptor.cleanValue(self, self._schema.getDefaultValue(attr, make_copy=True), attr)
+                    #Descriptor(attr, item).__set__(self, self._schema.getDefaultValue(attr, make_copy=True))
+                    #setattr(self, attr, self._schema.getDefaultValue(attr, make_copy=True))
         else:
             self._data_dict = {}
 
@@ -746,13 +744,13 @@ class GangaObject(Node):
             if not self._schema.hasAttribute(name):
                 #raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(_getName(_srcobj), _getName(self)))
                 if not hasattr(self, name):
-                    setattr(self, name, self._schema.getDefaultValue(name, make_copy=False))
+                    setattr(self, name, self._schema.getDefaultValue(name, make_copy=True))
                 this_attr = getattr(self, name)
                 if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
             elif not item['copyable']: ## Default of '1' instead of True...
                 if not hasattr(self, name):
-                    setattr(self, name, self._schema.getDefaultValue(name, make_copy=False))
+                    setattr(self, name, self._schema.getDefaultValue(name, make_copy=True))
                 this_attr = getattr(self, name)
                 if isinstance(this_attr, Node) and name not in do_not_copy:
                     this_attr._setParent(self)
@@ -882,12 +880,12 @@ class GangaObject(Node):
         if self._schema is not None:
             for name, item in self._schema.allItems():
                 if not item['copyable'] or name in do_not_copy:
-                    setattr(self_copy, name, self._schema.getDefaultValue(name, make_copy=False))
+                    setattr(self_copy, name, self._schema.getDefaultValue(name, make_copy=True))
                 else:
                     if hasattr(self, name):
                         setattr(self_copy, name, deepcopy(getattr(self, name)))
                     else:
-                        setattr(self_copy, name, self._schema.getDefaultValue(name, make_copy=False))
+                        setattr(self_copy, name, self._schema.getDefaultValue(name, make_copy=True))
 
                 this_attr = getattr(self_copy, name)
                 if isinstance(this_attr, Node):
