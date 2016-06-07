@@ -9,7 +9,7 @@ def test_job_complete(gpi):
     j = Job()
     j.backend = LCG()
     j.submit()
-    assert run_until_completed(j, timeout=600, sleep_period=10), 'Timeout on job submission: job is still not finished'
+    assert run_until_completed(j, timeout=1200, sleep_period=10), 'Timeout on job submission: job is still not finished'
 
 
 #@external
