@@ -385,10 +385,6 @@ class Descriptor(object):
         return v_copy
 
     @synchronised_set_descriptor
-    def __set__(self, obj, _val):
-        ## self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
-        ## obj: parent class which 'owns' the attribute
-        ## _val: value of the attribute which we're about to set
     def __set__(self, obj, val):
         """
         Set method
@@ -398,20 +394,6 @@ class Descriptor(object):
         obj: parent class which 'owns' the attribute
         val: value of the attribute which we're about to set
         """
-        obj_flushing_dectivated = False
-        if isinstance(obj, GangaObject):
-            if obj._getRegistry() is not None and\
-                    obj._getRegistry().isAutoFlushEnabled() is True:
-                obj._getRegistry().turnOffAutoFlushing()
-                obj_flushing_deactivated = True
-
-        val_flushing_dectivated = False
-        val = _val
-        if isinstance(val, GangaObject):
-            if val._getRegistry() is not None and\
-                    val._getRegistry().isAutoFlushEnabled() is True:
-                val._getRegistry().turnOffAutoFlushing()
-                val_flushing_dectivated = True
 
         if isinstance(val, str):
             from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
@@ -911,7 +893,7 @@ class GangaObject(Node):
                     self_copy.__dict__[k] = deepcopy(v)
                 except:
                     self_copy.__dict__[k] = v
-        map(functools.partial(performCopy, self_copy=self_copy), self.__dict__.keys())
+        all(map(functools.partial(performCopy, self_copy=self_copy), self.__dict__.keys()))
 
         if true_parent is not None:
             self._setParent(true_parent)
