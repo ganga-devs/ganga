@@ -300,7 +300,7 @@ def full_print(obj, out=None, interactive=False):
                 if (len(outStringList)+1) != 2*obj_len:
                     outStringList.append(', ')
             for this_obj in _obj:
-                print_x(this_obj, outStrinList, obj_len)
+                print_x(this_obj, outStringList, obj_len)
             outString += ''.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)

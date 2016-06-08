@@ -29,7 +29,7 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False, extra_
         if extra_args is None:
             _list = [mapfunction(l) for l in _list]
         else:
-            _list = [partial(l, extra_args=extra_args) for l in _list]
+            _list = [partial(mapfunction, l, extra_args=extra_args) for l in _list]
 
     result = GangaList()
     result._list.extend([stripProxy(l) for l in _list])
