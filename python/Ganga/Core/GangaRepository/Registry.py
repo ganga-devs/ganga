@@ -296,9 +296,6 @@ class Registry(object):
         self._objects = None
         self._incomplete_objects = None
 
-        ## Id's id(obj) of objects undergoing a transaction such as flush, remove, add, etc.
-        self._inprogressDict = {}
-
         self.flush_thread = None
 
     def hasStarted(self):
@@ -630,8 +627,6 @@ class Registry(object):
         """
         logger.debug("_read_access")
         obj_id = id(stripProxy(_obj))
-        if obj_id in self._inprogressDict.keys():
-            return
 
         with _obj.const_lock:
             self.__safe_read_access(_obj, sub_obj)
@@ -677,8 +672,6 @@ class Registry(object):
         """
         logger.debug("_safe_read_access")
         obj = stripProxy(_obj)
-        if id(obj) in self._inprogressDict.keys():
-            return
 
         if self.hasStarted() is not True:
             raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
@@ -718,8 +711,6 @@ class Registry(object):
         logger.debug("_write_access")
         obj = stripProxy(_obj)
         obj_id = id(_obj)
-        if obj_id in self._inprogressDict.keys():
-            return
 
         with obj.const_lock:
             self.__write_access(obj)
@@ -733,10 +724,6 @@ class Registry(object):
         logger.debug("__write_acess")
         obj = stripProxy(_obj)
         this_id = id(obj)
-        if this_id in self._inprogressDict.keys():
-            for this_d in self.changed_ids.itervalues():
-                this_d.add(self.find(obj))
-            return
 
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot get write access to a disconnected repository!")
@@ -803,9 +790,6 @@ class Registry(object):
         """
         logger.debug("_release_lock")
         obj = stripProxy(_obj)
-
-        if id(obj) in self._inprogressDict.keys():
-            return
 
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot manipulate locks of a disconnected repository!")
