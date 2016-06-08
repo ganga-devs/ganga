@@ -171,22 +171,36 @@ class IncompleteObject(GangaObject):
         return "Incomplete object in '%s', ID %i. Try reload() or remove()." % (self.registry.name, self.id)
 
 
-def synchronised(f):
+def synchronised_flush_lock(f):
     """
-    This decorator must be attached to a method on a ``Registry``
-    It uses the object's lock to make sure that the object is held for the duration of the decorated function
-    Args:
-        f (function): Function in question being wrapped
+    Specific flush lock as flushing can take a long time to make sure no changes occur while flushing though reads can.
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
-        # This is the Registry RLock
-        # It it safe in principle to re-enter the registry through other lockable methods in the active lock-holding thread
-        # However, the registry will decide through the use of the transaction locks as to whether it should actually do any work as a result
-        with self._lock:
+        with self._flush_lock:
             return f(self, *args, **kwargs)
     return decorated
 
+def synchronised_read_lock(f):
+    """
+    General read lock for quick functions that won't take a while.
+    """
+    @functools.wraps(f)
+    def decorated(self, *args, **kwargs):
+        with self._read_lock:
+            return f(self, *args, **kwargs)
+    return decorated
+
+def synchronised_complete_lock(f):
+    """
+    Entirely lock the registry. Make sure locks are acquired in the right order!
+    """
+    @functools.wraps(f)
+    def decorated(self, *args, **kwargs):
+        with self._flush_lock:
+            with self._read_lock:
+                return f(self, *args, **kwargs)
+    return decorated
 
 class RegistryFlusher(threading.Thread):
     """
@@ -272,6 +286,8 @@ class Registry(object):
         self._needs_metadata = False
         self.metadata = None
         self._lock = threading.RLock()
+        self._read_lock = threading.RLock()
+        self._flush_lock = threading.RLock()
         self.hard_lock = {}
         self.changed_ids = {}
 
@@ -338,13 +354,13 @@ class Registry(object):
                 return IncompleteObject(self, this_id)
             raise RegistryKeyError("Could not find object #%s" % this_id)
 
-    @synchronised
+    @synchronised_read_lock
     def __len__(self):
         """ Returns the current number of root objects """
         logger.debug("__len__")
         return len(self._objects)
 
-    @synchronised
+    @synchronised_read_lock
     def __contains__(self, this_id):
         """ Returns True if the given ID is in the registry
         Args:
@@ -361,7 +377,7 @@ class Registry(object):
         logger.debug("updateLocksNow")
         self.repository.updateLocksNow()
 
-    @synchronised
+    @synchronised_read_lock
     def ids(self):
         """ Returns the list of ids of this registry """
         logger.debug("ids")
@@ -377,7 +393,7 @@ class Registry(object):
 
         return sorted(self._objects.keys())
 
-    @synchronised
+    @synchronised_read_lock
     def items(self):
         """ Return the items (ID,obj) in this registry. 
         Recommended access for iteration, since accessing by ID can fail if the ID iterator is old"""
@@ -401,14 +417,14 @@ class Registry(object):
         returnable = self.items()
         return returnable
 
-    @synchronised
+    @synchronised_read_lock
     def keys(self):
         """ Returns the list of ids of this registry """
         logger.debug("keys")
         returnable = self.ids()
         return returnable
 
-    @synchronised
+    @synchronised_read_lock
     def values(self):
         """ Return the objects in this registry, in order of ID.
         Besides items() this is also recommended for iteration."""
@@ -435,7 +451,7 @@ class Registry(object):
         except StopIteration:
             raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
 
-    @synchronised
+    @synchronised_complete_lock
     def clean(self, force=False):
         """Deletes all elements of the registry, if no other sessions are present.
         if force == True it removes them regardless of other sessions.
@@ -462,7 +478,7 @@ class Registry(object):
             logger.debug("Clean Unknown Err: %s" % err)
             raise
 
-    @synchronised
+    @synchronised_complete_lock
     def __safe_add(self, obj, force_index=None):
         """
         Method which calls the underlying add function in the Repo for a given object
@@ -498,7 +514,7 @@ class Registry(object):
     # if the dirty objects list is modified, the methods must be locked by self._lock
     # all accesses to the repository must also be locked!
 
-    @synchronised
+    @synchronised_complete_lock
     def _add(self, _obj, force_index=None):
         """ Add an object to the registry and assigns an ID to it. 
         use force_index to set the index (for example for metadata). This overwrites existing objects!
@@ -523,7 +539,7 @@ class Registry(object):
 
         return returnable_id
 
-    @synchronised
+    @synchronised_complete_lock
     def _remove(self, _obj, auto_removed=0):
         """ Private method removing the obj from the registry. This method always called.
         This method may be overriden in the subclass to trigger additional actions on the removal.
@@ -596,7 +612,7 @@ class Registry(object):
 
             self.unlock_transaction(obj_id)
 
-    @synchronised
+    @synchronised_flush_lock
     def _flush(self, objs):
         """
         Flush a set of objects to the persistency layer immediately
@@ -661,7 +677,7 @@ class Registry(object):
         with _obj.const_lock:
             self.__safe_read_access(_obj, sub_obj)
 
-    @synchronised
+    @synchronised_complete_lock
     def _load(self, obj_ids):
         """
         Fully load an object from a Repo/disk into memory
@@ -852,7 +868,7 @@ class Registry(object):
             logger.debug("Err: %s" % err)
             raise
 
-    @synchronised
+    @synchronised_read_lock
     def pollChangedJobs(self, name):
         """Returns a list of job ids that changed since the last call of this function.
         On first invocation returns a list of all ids.
@@ -874,7 +890,7 @@ class Registry(object):
         This can and should be overwritten by derived Registries to provide more index values."""
         return {}
 
-    @synchronised
+    @synchronised_complete_lock
     def startup(self):
         """Connect the repository to the registry. Called from Repository_runtime.py"""
         try:
@@ -910,7 +926,7 @@ class Registry(object):
         #finally:
         #    pass
 
-    @synchronised
+    @synchronised_complete_lock
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         from Ganga.Utility.logging import getLogger
