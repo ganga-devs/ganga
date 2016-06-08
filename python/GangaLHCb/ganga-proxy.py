@@ -28,32 +28,11 @@ except:
 
 global_env = None
 
-
-def get_env():
-    global global_env
-    if global_env is None:
-        global_env = {}
-        for k, v in os.environ.iteritems():
-            if not str(v).startswith('() {'):
-                global_env[k] = v
-            else:
-                this_string = str(v).split('\n')
-                final_str = ""
-                for line in this_string:
-                    final_str += str(os.path.expandvars(line)).strip()
-                    if not final_str.endswith(';'):
-                        final_str += " ;"
-                    final_str += " "
-                global_env[k] = final_str
-
-    return global_env
-
-if "GANGADIRACENVIRONMENT" not in get_env():
+if "GANGADIRACENVIRONMENT" not in os.environ:
     e = Exception()
     e.args = ('DIRAC env cache file does not exist.',)
     raise e
-temp_env = get_env()
-dirac_env_cache_file = temp_env["GANGADIRACENVIRONMENT"]
+dirac_env_cache_file = os.environ["GANGADIRACENVIRONMENT"]
 if not os.path.exists(dirac_env_cache_file):
     e = Exception()
     e.args = ('DIRAC env cache file does not exist.',)
@@ -68,7 +47,7 @@ for entry in env.items():
 
 def get_stdout(cmd):
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                            stderr=open('/dev/null'), env=get_env())
+                            stderr=open('/dev/null'), env=global_env)
     proc.wait()
     if proc.poll() == 0:
         return proc.communicate()[0]
@@ -81,7 +60,7 @@ def exec_command(cmd, argv):
     command_list = [cmd]
     for arg in argv:
         command_list.append(arg)
-    rc = subprocess.call(command_list, env=get_env())
+    rc = subprocess.call(command_list, env=global_env)
     return rc
 
 
