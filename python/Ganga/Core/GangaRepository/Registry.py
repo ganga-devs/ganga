@@ -349,34 +349,12 @@ class Registry(object):
     def ids(self):
         """ Returns the list of ids of this registry """
         logger.debug("ids")
-        if self.hasStarted() is True and\
-                (time.time() > self._update_index_timer + self.update_index_time):
-            try:
-                changed_ids = self.repository.update_index()
-                for this_d in self.changed_ids.itervalues():
-                    this_d.update(changed_ids)
-            except Exception as err:
-                pass
-            self._update_index_timer = time.time()
-
         return sorted(self._objects.keys())
 
     @synchronised_read_lock
     def items(self):
         """ Return the items (ID,obj) in this registry. 
         Recommended access for iteration, since accessing by ID can fail if the ID iterator is old"""
-        logger.debug("items")
-        if self.hasStarted() is True and\
-                (time.time() > self._update_index_timer + self.update_index_time):
-            try:
-                changed_ids = self.repository.update_index()
-                for this_d in self.changed_ids.itervalues():
-                    this_d.update(changed_ids)
-            except Exception as err:
-                pass
-
-            self._update_index_timer = time.time()
-
         return sorted(self._objects.items())
 
     def iteritems(self):
@@ -806,23 +784,6 @@ class Registry(object):
             logger.debug("un-known registry release lock err!")
             logger.debug("Err: %s" % err)
             raise
-
-    @synchronised_read_lock
-    def pollChangedJobs(self, name):
-        """Returns a list of job ids that changed since the last call of this function.
-        On first invocation returns a list of all ids.
-        Args:
-            name (str): should be a unique identifier of the user of this information."""
-        logger.debug("pollChangedJobs")
-        if self.hasStarted() is True and\
-                (time.time() > self._update_index_timer + self.update_index_time):
-            changed_ids = self.repository.update_index()
-            for this_d in self.changed_ids.itervalues():
-                this_d.update(changed_ids)
-            self._update_index_timer = time.time()
-        res = self.changed_ids.get(name, set(self.ids()))
-        self.changed_ids[name] = set()
-        return res
 
     def getIndexCache(self, obj):
         """Returns a dictionary to be put into obj._index_cache (is this valid)
