@@ -339,7 +339,7 @@ class GangaList(GangaObject):
     def __hash__(self):
         logger.info("hash")
         result = 0
-        hashes = hash(elem) for elem in self:
+        hashes = [hash(elem) for elem in self]
         for element in hashes:
             result ^= element
         return result
