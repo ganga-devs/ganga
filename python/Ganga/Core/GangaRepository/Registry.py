@@ -285,7 +285,6 @@ class Registry(object):
         self._update_index_timer = 0
         self._needs_metadata = False
         self.metadata = None
-        self._lock = threading.RLock()
         self._read_lock = threading.RLock()
         self._flush_lock = threading.RLock()
         self.hard_lock = {}
@@ -308,34 +307,6 @@ class Registry(object):
         TODO is this needed over accessing the boolean, should the boolean be 'public'
         """
         return self._hasStarted
-
-    def lock_transaction(self, this_id, action):
-        """
-        This creates a threading Lock on the repo which allows the repo to ignore transient repo actions and pause repo actions which modify the object
-        Args:
-            this_id (int): This is the python id of a given object, i.e. id(object) which is having a repo transaction performed on it
-            action (str): This is a string which represents the transaction (useful for debugging collisions)
-        """
-        while this_id in self._inprogressDict.keys():
-            logger.debug("Getting item being operated on: %s" % this_id)
-            logger.debug("Currently in state: %s" % self._inprogressDict[this_id])
-            #import traceback
-            #traceback.print_stack()
-            #import sys
-            #sys.exit(-1)
-            #time.sleep(0.05)
-        self._inprogressDict[this_id] = action
-        if this_id not in self.hard_lock.keys():
-            self.hard_lock[this_id] = threading.Lock()
-        self.hard_lock[this_id].acquire()
-
-    def unlock_transaction(self, this_id):
-        """
-        This releases the threading Lock in the repo lock_transaction which re-allows all repo actions on the object in question
-        """
-        self._inprogressDict[this_id] = False
-        del self._inprogressDict[this_id]
-        self.hard_lock[this_id].release()
 
     # Methods intended to be called from ''outside code''
     def __getitem__(self, this_id):
@@ -498,16 +469,11 @@ class Registry(object):
         obj._registry_locked = True
 
         this_id = self.find(obj)
-        try:
-            self.lock_transaction(this_id, "_add")
+        self.repository.flush(ids)
+        for this_v in self.changed_ids.itervalues():
+            this_v.update(ids)
 
-            self.repository.flush(ids)
-            for this_v in self.changed_ids.itervalues():
-                this_v.update(ids)
-
-            logger.debug("_add-ed as: %s" % ids)
-        finally:
-            self.unlock_transaction(this_id)
+        logger.debug("_add-ed as: %s" % ids)
         return ids[0]
 
     # Methods that can be called by derived classes or Ganga-internal classes like Job
@@ -581,36 +547,29 @@ class Registry(object):
 
         obj_id = id(obj)
 
-        try:
-            self.lock_transaction(obj_id, "_remove")
-
-
-            if self.hasStarted() is not True:
-                raise RegistryAccessError("Cannot remove objects from a disconnected repository!")
-            if not auto_removed and hasattr(obj, "remove"):
-                obj.remove()
-            else:
-                this_id = self.find(obj)
-                try:
-                    self._write_access(obj)
-                except RegistryKeyError as err:
-                    logger.debug("Registry KeyError: %s" % err)
-                    logger.warning("double delete: Object #%i is not present in registry '%s'!" % (this_id, self.name))
-                    return
-                logger.debug('deleting the object %d from the registry %s', this_id, self.name)
-                try:
-                    self.repository.delete([this_id])
-                    del obj
-                    for this_v in self.changed_ids.itervalues():
-                        this_v.add(this_id)
-                except (RepositoryError, RegistryAccessError, RegistryLockError) as err:
-                    raise
-                except Exception as err:
-                    logger.debug("unknown Remove Error: %s" % err)
-                    raise
-        finally:
-
-            self.unlock_transaction(obj_id)
+        if self.hasStarted() is not True:
+            raise RegistryAccessError("Cannot remove objects from a disconnected repository!")
+        if not auto_removed and hasattr(obj, "remove"):
+            obj.remove()
+        else:
+            this_id = self.find(obj)
+            try:
+                self._write_access(obj)
+            except RegistryKeyError as err:
+                logger.debug("Registry KeyError: %s" % err)
+                logger.warning("double delete: Object #%i is not present in registry '%s'!" % (this_id, self.name))
+                return
+            logger.debug('deleting the object %d from the registry %s', this_id, self.name)
+            try:
+                self.repository.delete([this_id])
+                del obj
+                for this_v in self.changed_ids.itervalues():
+                    this_v.add(this_id)
+            except (RepositoryError, RegistryAccessError, RegistryLockError) as err:
+                raise
+            except Exception as err:
+                logger.debug("unknown Remove Error: %s" % err)
+                raise
 
     @synchronised_flush_lock
     def _flush(self, objs):
@@ -689,7 +648,6 @@ class Registry(object):
         for obj_id in obj_ids:
             this_id = id(self[obj_id])
             these_ids.append(this_id)
-            self.lock_transaction(this_id, "_load")
 
         ## Record dirty status before flushing
         ## Just in case we've requested loading over the job in memory
@@ -709,9 +667,6 @@ class Registry(object):
                 if obj_id in self._objects:
                     self._objects[obj_id]._setFlushed()
             raise
-        finally:
-            for obj_id in these_ids:
-                self.unlock_transaction(obj_id)
 
     def __safe_read_access(self, _obj, sub_obj):
         """
