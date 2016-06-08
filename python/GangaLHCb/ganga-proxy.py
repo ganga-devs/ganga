@@ -28,12 +28,11 @@ except:
 
 global_env = None
 
-temp_env = os.environ()
-if "GANGADIRACENVIRONMENT" not in temp_env:
+if "GANGADIRACENVIRONMENT" not in os.environ:
     e = Exception()
     e.args = ('DIRAC env cache file does not exist.',)
     raise e
-dirac_env_cache_file = temp_env["GANGADIRACENVIRONMENT"]
+dirac_env_cache_file = os.environ["GANGADIRACENVIRONMENT"]
 if not os.path.exists(dirac_env_cache_file):
     e = Exception()
     e.args = ('DIRAC env cache file does not exist.',)
