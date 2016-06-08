@@ -19,6 +19,8 @@ from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 
+from GangaDirac.Lib.Backends.DiracBase import DiracBase
+
 import tempfile
 import time
 import subprocess
@@ -93,6 +95,7 @@ class GaudiRun(IPrepareApp):
         'build_opts':   SimpleItem(defvalue=[""], typelist=[str], sequence=1, strict_sequence=0,
             doc="Options to be passed to 'make ganga-input-sandbox'"),
         'myOpts':       GangaFileItem(defvalue=None, doc='File which contains the extra opts I want to pass to gaudirun.py'),
+        'uploadedInput': GangaFileItem(defvalue=None, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
 
         # Prepared job object
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1,
@@ -143,12 +146,11 @@ class GaudiRun(IPrepareApp):
             self.copyIntoPrepDir(build_target)
             opts_file = self.getOptsFile()
             if isinstance(opts_file, LocalFile):
-                #opts_file = path.basename(opts_file.namePattern)
-                #full_path = opts_file.localDir + 'opts_file'
-                full_path = opts_file.namePattern
-                ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
-                self.copyIntoPrepDir(path.abspath(expandfilename(full_path)))
-            elif not isinstance(opts_file, DiracFile):
+                self.copyIntoPrepDir(path.join( opts_file.localDir, path.basename(opts_file.namePattern) ))
+            elif isinstance(opts_file, DiracFile) and self.master and not isinstance(self.getJobObject().backend, DiracBase):
+                # NB safe to put it here as should have expressly setup a path for this job by now
+                opts_file.get(localPath=self.getSharedPath())
+            else:
                 raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
             self.post_prepare()
 
@@ -173,7 +175,17 @@ class GaudiRun(IPrepareApp):
         This function rweturns a sanitized absolute path to the self.myOpts file from user input
         """
         if self.myOpts:
-            return self.myOpts
+            if isinstance(self.myOpts, LocalFile):
+                ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
+                full_path = expandfilename(path.join(self.myOpts.localDir, path.basename(self.myOpts.namePattern)), force=True)
+                if not path.exists(full_path):
+                    raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!")
+                self.myOpts = LocalFile(namePattern=path.basename(full_path), localDir=path.dirname(full_path))
+                return self.myOpts
+            elif isinstance(self.myOpts, DiracFile):
+                return self.myOpts
+            else:
+                raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(self.myOpts))
         else:
             raise ApplicationConfigurationError("No Opts File has been specified, please provide one!")
 

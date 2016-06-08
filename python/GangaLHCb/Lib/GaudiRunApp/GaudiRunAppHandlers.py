@@ -16,10 +16,14 @@ from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
 
 from Ganga.Utility.logging import getLogger
 
-from Ganga.GPIDev.Base.Proxy import getName, isType, stripProxy
+from Ganga.GPIDev.Base.Proxy import getName
 
 import os
 import shutil
+from datetime import datetime
+import tempfile
+import tarfile
+import random
 from Ganga.Utility.files import expandfilename
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
@@ -30,12 +34,31 @@ from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.util import unique
+from Ganga.Utility.Config import getConfig
+
+from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 
 logger = getLogger()
+
+data_file = 'data.py'
+
+def add_timeStampFile(path):
+    """
+    This creates a file in this directory given called __timestamp__ which contains the time so that the final file is unique
+    Args:
+        path (str): Path which we want to create the timestamp within
+
+    """
+    fmt = '%Y-%m-%d-%H-%M-%S'
+    with os.open(path.join(path, '__timestamp__'), 'w') as time_file:
+        time_file.write(datetime.now().strftime(fmt))
 
 def genDataFiles(job):
     """
     Generating a data.py file which contains the data we want gaudirun to use
+    Args:
+        job (Job): This is the job object which contains everything useful for generating the code
     """
     logger.debug("Doing XML Catalog stuff")
 
@@ -53,13 +76,16 @@ def genDataFiles(job):
             cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
             data_str += cat_opts
 
-        inputsandbox.append(FileBuffer('data.py', data_str))
+        inputsandbox.append(FileBuffer(data_file, data_str))
 
     return inputsandbox
 
 def generateWNScript(commandline, job):
     """
     Generate the script as a file buffer and return it
+    Args:
+        commandline (str): This is the command-line argument the script is wrapping
+        job (Job): This is the job object which contains everything useful for generating the code
     """
     exe_script_name = 'gaudiRun-script.py'
 
@@ -70,6 +96,8 @@ def generateWNScript(commandline, job):
 def collectPreparedFiles(app):
     """
     Collect the files from the Application in the prepared state
+    Args:
+        app (GaudiRun): This expects only the GaudiRun app
     """
     if not isinstance(app.is_prepared, ShareDir):
         raise ApplicationConfigurationError('Failed to prepare Application Correctly')
@@ -82,6 +110,22 @@ def collectPreparedFiles(app):
             input_folders.append(os.path.join(root, name))
     return input_files, input_folders
 
+def prepareCommand(app):
+    """
+    Returns the command which is to be run on the worker node
+    Args:
+        app (GaudiRun): This expects only the GaudiRun app
+    """
+    opts_file = app.getOptsFile()
+    if isinstance(opts_file, (LocalFile, DiracFile)):
+        # Ideally this would NOT need the basename, however LocalFile is special in this regard.
+        # TODO Fix this after fixing LocalFile
+        opts_name = os.path.basename(opts_file.namePattern)
+    else:
+        raise ApplicationConfigurationError("The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
+                                            getName(opts_file))
+    full_cmd = "./run gaudirun.py %s %s" % (opts_name, data_file)
+    return full_cmd
 
 class GaudiRunRTHandler(IRuntimeHandler):
 
@@ -90,82 +134,116 @@ class GaudiRunRTHandler(IRuntimeHandler):
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
         """
         Prepare the job in order to submit to the Local backend
+        Args:
+            app (GaudiRun): This application is only expected to handle GaudiRun Applications here
+            appconfig (unknown): Output passed from the application configuration call
+            appmasterconfig (unknown): Output passed from the application master_configure call
+            jobmasterconfig (tuple): Output from the master job prepare step
         """
 
         job = app.getJobObject()
 
         prepared_files = []
 
-        job_command = 'ls'
-        job_args = ['-l']
+        # Setup the command which to be run and the input and output
         input_sand = job.inputsandbox
         output_sand = job.outputsandbox
-
         data_files = genDataFiles(job)
 
         input_sand = unique(input_sand + prepared_files + data_files)
 
-        scriptToRun = generateWNScript('ls -l', job)
+        job_command = prepareCommand(app)
+
+        # Generate the script which is to be executed for us on the WN
+        scriptToRun = generateWNScript(job_command, job)
         input_sand.append(scriptToRun)
 
-        
-        #input_sand.append(job.application)
-
+        # Collect all of the prepared files which we want to pass along to this job
         input_files, input_folders = collectPreparedFiles(app)
-
         if input_folders:
             raise ApplicationConfigurationError('Prepared folders not supported yet, please fix this in future')
         else:
             for f in input_files:
                 input_sand.append(File(f))
 
-        print("command: %s" % scriptToRun.name)
-        print("Args: %s" % [])
-
-        c = StandardJobConfig(scriptToRun.name, input_sand, [], output_sand)
+        # It's this authors opinion that the script should be in the PATH on the WN
+        # As it stands policy is that is isn't so we have to call it in a relative way, hence "./"
+        c = StandardJobConfig('./'+scriptToRun.name, input_sand, [], output_sand)
         return c
 
 allHandlers.add('GaudiRun', 'Local', GaudiRunRTHandler)
 #allHandlers.add('GaudiRun', 'Condor', GaudiRunRTHandler)
-#allHandlers.add('GaudiRun', 'Interactive', GaudiRunRTHandler)
-#allHandlers.add('GaudiRun', 'Batch', GaudiRunRTHandler)
+allHandlers.add('GaudiRun', 'Interactive', GaudiRunRTHandler)
+allHandlers.add('GaudiRun', 'Batch', GaudiRunRTHandler)
 
 class GaudiRunDiracRTHandler(IRuntimeHandler):
 
     """The runtime handler to run plain executables on the Dirac backend"""
 
-    #def master_prepare(self, app, appmasterconfig):
-    #    inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
-    #    if type(app.exe) == File:
-    #        input_dir = app.getJobObject().getInputWorkspace().getPath()
-    #        exefile = os.path.join(input_dir, os.path.basename(app.exe.name))
-    #        if not os.path.exists(exefile):
-    #            msg = 'Executable: "%s" must exist!' % str(exefile)
-    #            raise ApplicationConfigurationError(None, msg)
+    def master_prepare(self, app, appmasterconfig):
+        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
-    #        os.system('chmod +x %s' % exefile)
-    #    return StandardJobConfig(inputbox=unique(inputsandbox),
-    #                             outputbox=unique(outputsandbox))
+        if not app.uploadedInput:
+            input_files, input_folders = collectPreparedFiles(app)
+
+            compressed_file = None
+            if input_folders:
+                raise ApplicationConfigurationError('Prepared folders not supported yet, please fix this in future')
+            else:
+                prep_dir = app.getSharedPath()
+                add_timeStampFile(prep_dir)
+                prep_file = prep_dir + '.tgz'
+                compressed_file = path.join(tempfile.gettempdir(), path.basename(prep_dir) + ".tgz")
+                with tarfile.open( compressed_file + ".tgz", "w:gz" ) as tar_file:
+                    for name in input_files:
+                        tar.add(name)
+                shutil.move(compressed_file, prep_dir)
+
+            job = app.getJobObject()
+
+            new_df = DiracFile(namePattern = path.basename(compressed_file), localDir = app.getSharedPath(),
+                                remoteDir = path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid) )
+            random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
+            new_df.put(uploadSE = randomSE)
+
+            app.uploadedInput = new_df
+
+        return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
+
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         """
         Prepare the job in order to submit to the Dirac backend
+        Args:
+            app (GaudiRun): This application is only expected to handle GaudiRun Applications here
+            appconfig (unknown): Output passed from the application configuration call
+            appmasterconfig (unknown): Output passed from the application master_configure call
+            jobmasterconfig (tuple): Output from the master job prepare step
         """
+
+        # Get the inputdata and input/output sandbox in a sorted way
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app)
 
-        job = stripProxy(app).getJobObject()
-        outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
+        job = app.getJobObject()
 
-        commandline = app.exe
-        if isType(app.exe, File):
-            inputsandbox.append(app.exe)
-            commandline = os.path.basename(app.exe.name)
-        commandline += ' '
-        commandline += ' '.join([str(arg) for arg in app.args])
+        opts_file = app.getOptsFile()
+
+        if isinstance(opts_file, DiracFile):
+            inputsandbox += ['LFN:'+opts_file.lfn]
+
+        uploaded_Input = app.uploadedInput
+
+        if isinstance(uploaded_Input, DiracFile):
+            inputsandbox += ['LFN:'+uploaded_Input.lfn]
+
+        outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
+
+        # Prepare the command which is to be run on the worker node
+        job_command = prepareCommand(app)
         logger.debug('Command line: %s: ', commandline)
 
-        scriptToRun = generateWNScript(commandline, job)
+        scriptToRun = generateWNScript(job_command, job)
         inputfiles.append(scriptToRun)
 
         dirac_outputfiles = dirac_outputfile_jdl(outputfiles)
@@ -197,6 +275,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                                         INPUT_SANDBOX='##INPUT_SANDBOX##'
                                         )
 
+        # Return the output needed for the backend to submit this job
         return StandardJobConfig(dirac_script,
                                  inputbox=unique(inputsandbox),
                                  outputbox=unique(outputsandbox))
