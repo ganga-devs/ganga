@@ -76,11 +76,11 @@ class IPrepareApp(IApplication):
         """
         Return the full path of the shared directory where files are placed
         """
+        share_folder = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
         if isinstance(self.is_prepared, ShareDir):
-            share_folder = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
-            return os.path.join(shared_path, self.is_prepared.name)
+            return os.path.join(share_folder, self.is_prepared.name)
         else:
-            return os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+            return share_folder
 
     def copyIntoPrepDir(self, obj2copy):
         """

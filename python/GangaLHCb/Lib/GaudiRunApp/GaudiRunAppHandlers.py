@@ -10,7 +10,8 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 from Ganga.Utility.Config import getConfig
 
-from Ganga.GPIDev.Lib.File import File, ShareDir, FileBuffer
+from Ganga.GPIDev.Lib.File.File import File, ShareDir
+from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
 
 from Ganga.Utility.logging import getLogger
@@ -33,7 +34,9 @@ from Ganga.Utility.util import unique
 logger = getLogger()
 
 def genDataFiles(job):
-    ### Generating a data.py file which contains the data we want gaudirun to use ###
+    """
+    Generating a data.py file which contains the data we want gaudirun to use
+    """
     logger.debug("Doing XML Catalog stuff")
 
     inputsandbox = []
@@ -55,6 +58,9 @@ def genDataFiles(job):
     return inputsandbox
 
 def generateWNScript(commandline, job):
+    """
+    Generate the script as a file buffer and return it
+    """
     exe_script_name = 'gaudiRun-script.py'
 
     return FileBuffer(name=exe_script_name, contents=script_generator(exe_script_template(), COMMAND=commandline,
@@ -62,7 +68,10 @@ def generateWNScript(commandline, job):
                       executable=True)
 
 def collectPreparedFiles(app):
-    if not isinstance(app.is_prepared, SharedDir):
+    """
+    Collect the files from the Application in the prepared state
+    """
+    if not isinstance(app.is_prepared, ShareDir):
         raise ApplicationConfigurationError('Failed to prepare Application Correctly')
     shared_dir = app.getSharedPath()
     input_files, input_folders = [], []
@@ -76,7 +85,12 @@ def collectPreparedFiles(app):
 
 class GaudiRunRTHandler(IRuntimeHandler):
 
+    """The runtime handler to run plain executables on the Local backend"""
+
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
+        """
+        Prepare the job in order to submit to the Local backend
+        """
 
         job = app.getJobObject()
 
@@ -94,7 +108,8 @@ class GaudiRunRTHandler(IRuntimeHandler):
         scriptToRun = generateWNScript('ls -l', job)
         input_sand.append(scriptToRun)
 
-        input_sand.append(job.application)
+        
+        #input_sand.append(job.application)
 
         input_files, input_folders = collectPreparedFiles(app)
 
@@ -104,7 +119,10 @@ class GaudiRunRTHandler(IRuntimeHandler):
             for f in input_files:
                 input_sand.append(File(f))
 
-        c = StandardJobConfig(job_command, input_sand, job_args, output_sand)
+        print("command: %s" % scriptToRun.name)
+        print("Args: %s" % [])
+
+        c = StandardJobConfig(scriptToRun.name, input_sand, [], output_sand)
         return c
 
 allHandlers.add('GaudiRun', 'Local', GaudiRunRTHandler)
@@ -130,6 +148,9 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
     #                             outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
+        """
+        Prepare the job in order to submit to the Dirac backend
+        """
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app)
 
@@ -187,22 +208,30 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
 def exe_script_template():
     script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
+from __future__ import print_function
 from os import listdir, system, environ, pathsep, getcwd
-from mimetypes import guess_types
+from mimetypes import guess_type
+from contextlib import closing
+import tarfile
 import sys
 
-def extractAllTarFiles():
-    for f in listdir():
+def extractAllTarFiles(path):
+    for f in listdir(path):
+        print("examining: %s" % f )
         if guess_type(f)[1] in ['gzip', 'bzip2']:
             with closing(tarfile.open(f, "r:*")) as tf:
+                print("Extracting: %s" % tf.name)
                 tf.extractall('.')
 
 # Main
 if __name__ == '__main__':
 
-    extractAllTarFiles()
+    extractAllTarFiles('.')
 
     rc = system('###COMMAND###')
+
+    print("hello")
+
 
     ###OUTPUTFILESINJECTEDCODE###
     sys.exit(rc)
