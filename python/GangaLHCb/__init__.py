@@ -101,8 +101,6 @@ def _store_dirac_environment():
 
 if not _after_bootstrap:
     _store_dirac_environment()
-    configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
-
     _store_root_version()
 
 
@@ -134,6 +132,10 @@ def loadPlugins(config=None):
     logger.debug("Importing LHCbTasks")
     import Lib.Tasks
     logger.debug("Finished Importing")
+
+
+def postBootstrapHook():
+    configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
 
 from Ganga.GPIDev.Lib.File.Configure import outputconfig
 
