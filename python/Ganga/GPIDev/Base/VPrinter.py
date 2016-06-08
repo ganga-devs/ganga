@@ -27,7 +27,7 @@ def quoteValue(value, interactive=False):
             return repr(value)
     try:
         # If it's an iterable like a list or a GangaList then quote each element
-        quoted_list = map(partial(quoteValue, interactive=interactive), value)
+        quoted_list = [quoteValue(val, interactive) for val in value]
         string_of_list = '[' + ', '.join(quoted_list) + ']'
         return string_of_list
     except TypeError:
@@ -163,7 +163,8 @@ class VPrinter(object):
                     print(self.indent(), file=self.out)
                     self.acceptOptional(s)
                     print(',', end='', file=self.out)
-                map(subnode_print, subnode)
+                for sn in subnode:
+                    subnode_print(sn)
                 self.level-=1
                 print(']', end='', file=self.out)
             else:
@@ -298,7 +299,8 @@ def full_print(obj, out=None, interactive=False):
                     outStringList.append(str(x).rstrip())
                 if (len(outStringList)+1) != 2*obj_len:
                     outStringList.append(', ')
-            map(partial(print_x, outStringList=outStringList, obj_len=obj_len), _obj)
+            for this_obj in _obj:
+                print_x(this_obj, outStrinList, obj_len)
             outString += ''.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)
@@ -343,7 +345,8 @@ def summary_print(obj, out=None, interactive=False):
                     outStringList.append(str(x).rstrip())
                 if len(outStringList)+1 != 2*obj_len:
                     outStringList.append(', ')
-            map(partial(print_x, outStringList=outStringList, obj_len=obj_len), obj)
+            for this_obj in obj:
+                print_x(this_obj, outStringList, obj_len)
             outString += ''.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)

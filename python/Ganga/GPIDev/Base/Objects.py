@@ -90,7 +90,8 @@ class Node(object):
         def internal_deepcopyMethod(elem):
             if elem not in do_not_copy:
                 this_dict[elem] = deepcopy(this_dict[elem], memo)
-        map(internal_deepcopyMethod, this_dict.keys())
+        for k in this_dict.keys():
+            internal_deepcopyMethod(k)
 
         obj.__dict__ = this_dict
         if self._getParent() is not None:
@@ -901,7 +902,8 @@ class GangaObject(Node):
                     self_copy.__dict__[k] = deepcopy(v)
                 except:
                     self_copy.__dict__[k] = v
-        map(functools.partial(performCopy, self_copy=self_copy), self.__dict__.keys())
+        for k in self.__dict__.keys():
+            performCopy(k, self_copy)
 
         if true_parent is not None:
             self._setParent(true_parent)

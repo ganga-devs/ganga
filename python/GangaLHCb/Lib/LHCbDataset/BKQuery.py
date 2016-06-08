@@ -183,9 +183,7 @@ RecoToDST-07/90000000/DST" ,
         #GangaObject.__createNewList(new_files, files, _createDiracLFN)
 
         logger.debug("Creating new list")
-        def myDiracFileFunc(lfn):
-            return DiracFile(lfn=lfn)
-        new_files = map(myDiracFileFunc, files)
+        new_files = [DiracFile(lfn=f) for f in files]
 
         #new_files = [DiracFile(lfn=_file) for _file in files]
         #for f in files:
@@ -287,9 +285,7 @@ class BKQueryDict(GangaObject):
                 files = files['LFNs'].keys()
 
         from GangaDirac.Lib.Files.DiracFile import DiracFile
-        def myDiracFileFunc(lfn):
-            return DiracFile(lfn=lfn)
-        this_list = map(myDiracFileFunc, files)
+        this_list = [DiracFile(lfn=f) for f in files]
 
         from GangaLHCb.Lib.LHCbDataset import LHCbDataset
         ds = LHCbDataset(files=this_list, fromRef=True)

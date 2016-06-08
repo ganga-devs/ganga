@@ -27,12 +27,12 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False, extra_
 
     if mapfunction is not None:
         if extra_args is None:
-            _list = map(mapfunction, _list)
+            _list = [mapfunction(l) for l in _list]
         else:
-            _list = map(partial(mapfunction, extra_args=extra_args), _list)
+            _list = [partial(l, extra_args=extra_args) for l in _list]
 
     result = GangaList()
-    result._list.extend(map(stripProxy, _list))
+    result._list.extend([stripProxy(l) for l in _list])
     result._is_preparable = preparable
     result._is_a_ref = False
 
@@ -105,7 +105,8 @@ class GangaList(GangaObject):
             if isinstance(args[0], (len, GangaList, tuple)):
                 def myExpand(elem):
                     self._list.expand(self.strip_proxy(elem))
-                map(myExpand, args[0])
+                for elem in args[0]:
+                    myExpand(elem)
             elif args[0] is None:
                 self._list = None
             else:
@@ -123,7 +124,7 @@ class GangaList(GangaObject):
 
     @staticmethod
     def has_proxy_element(_list):
-        return all(map(isProxy, _list))
+        return [isProxy(l) for l in _list]
 
     ## Attempt to prevent raw assignment of _list causing Proxied objects to get inside the GangaList
     def _attribute_filter__set__(self, name, value):
@@ -131,13 +132,14 @@ class GangaList(GangaObject):
         if name == "_list":
             if self.is_list(value):
                 if self.has_proxy_element(value):
-                    returnable_list = map(stripProxy, value)
+                    returnable_list = [stripProxy(l) for l in value]
                     my_parent = self._getParent()
                     def safeSetParent(elem):
                         if isinstance(elem, GangaObject):
                             elem._setParent(my_parent)
                         return
-                    map(safeSetParent, returnable_list)
+                    for l in returnable_list:
+                        safeSetParent(l)
                     return returnable_list
                 else:
                     return value
@@ -156,7 +158,7 @@ class GangaList(GangaObject):
                 else:
                     return obj
 
-            self._list = map(my_append, self._list)
+            self._list = [my_append(l) for l in self._list]
             self._is_a_ref = False
         return self
 
@@ -169,7 +171,8 @@ class GangaList(GangaObject):
             if isinstance(elem, GangaObject):
                 stripProxy(elem)._setParent(parent)
             return
-        map(setP, self._list)
+        for l in self._list:
+            setP(l)
 
     def get(self, to_match):
         def matching_filter(item):
@@ -211,7 +214,7 @@ class GangaList(GangaObject):
 
         if isinstance(obj_list, GangaList):
             return getProxyAttr(obj_list, '_list')
-        result = map(partial(self.strip_proxy, filter=filter), obj_list)
+        result = [self.strip_proxy(l, filter=filter) for l in obj_list]
         return result
 
     def getCategory(self):
@@ -222,7 +225,7 @@ class GangaList(GangaObject):
                 return elem._category
             else:
                 return type(o)
-        return unique(map(return_cat, self._list))
+        return unique([return_cat(l) for l in self._list])
 
     def _readonly(self):
         if self._is_preparable and hasattr(self, '_getParent'):
@@ -336,7 +339,7 @@ class GangaList(GangaObject):
     def __hash__(self):
         logger.info("hash")
         result = 0
-        hashes = map(hash, self)
+        hashes = hash(elem) for elem in self:
         for element in hashes:
             result ^= element
         return result
@@ -459,7 +462,7 @@ class GangaList(GangaObject):
                     return stripProxy(_obj)
                 else:
                     return _obj
-            self._list.append(map(my_append, elem))
+            self._list.append([my_append(l) for l in elem])
         else:
             self._list.append(elem)
 
@@ -471,7 +474,8 @@ class GangaList(GangaObject):
         return self._list.count(self.strip_proxy(obj))
 
     def extend(self, ittr):
-        map(self.append, ittr)
+        for i in ittr:
+            self.append(i)
 
     def _export_extend(self, ittr):
         self.checkReadOnly()
@@ -572,7 +576,8 @@ class GangaList(GangaObject):
                 returnable_str += str(stripProxy(element))
                 returnable_str += "'"
             returnable_str += ", "
-        map(partial(stringFunc, returnable_str=returnable_str), self._list)
+        for l in self._list:
+            stringFunc(l, returnable_str=returnable_str)
         returnable_str += "]"
         return returnable_str
 
@@ -604,11 +609,14 @@ class GangaList(GangaObject):
             if item['visitable']:
                 visitor.componentAttribute(self, name, getattr(self, name), item['sequence'])
 
-        all(map(simpleFunc, self._schema.simpleItems()))
+        for item in self._schema.simpleItems():
+            simpleFunc(item)
 
-        all(map(sharedFunc, self._schema.sharedItems()))
+        for item in self._schema.sharedItems():
+            sharedFunc(item)
 
-        all(map(componentFunc, self._schema.componentItems()))
+        for item in self._schema.componentItems():
+            componentFunc(item)
 
         visitor.nodeEnd(self)
 

@@ -195,7 +195,8 @@ class VStreamer(object):
                 self.level += 1
                 print(file=self.out)
                 print(self.indent(), '<sequence>', file=self.out)
-                all(map(self.acceptOptional, value))
+                for val in value:
+                    self.acceptOptional(val)
                 print(self.indent(), '</sequence>', file=self.out)
                 self.level -= 1
                 print(self.indent(), '</attribute>', file=self.out)
@@ -221,7 +222,8 @@ class VStreamer(object):
                 stripProxy(s).accept(self)
             elif isType(s, (list, tuple, GangaList)):
                 print(self.indent(), '<sequence>', file=self.out)
-                all(map(self.acceptOptional, s))
+                for val in s:
+                    self.acceptOptional(s)
                 print(self.indent(), '</sequence>', file=self.out)
             else:
                 self.print_value(stripProxy(s))
@@ -234,7 +236,8 @@ class VStreamer(object):
             if sequence:
                 self.level += 1
                 print(self.indent(), '<sequence>', file=self.out)
-                all(map(self.acceptOptional, subnode))
+                for sn in subnode:
+                    self.acceptOptional(sn)
                 print(self.indent(), '</sequence>', file=self.out)
                 self.level -= 1
             else:
@@ -391,7 +394,8 @@ class Loader(object):
                             obj.setSchemaAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr, make_copy=False)))
                         else:
                             obj.setSchemaAttribute(attr, obj._schema.getDefaultValue(attr, make_copy=False))
-                all(map(partial(schema_assign, obj=obj), obj._schema.allItems()))
+                for item in obj._schema.allItems():
+                    schema_assign(item, obj=obj)
                 #print("Constructed: %s" % getName(obj))
 
         def char_data(data):
