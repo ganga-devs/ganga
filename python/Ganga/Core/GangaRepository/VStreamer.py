@@ -223,7 +223,7 @@ class VStreamer(object):
             elif isType(s, (list, tuple, GangaList)):
                 print(self.indent(), '<sequence>', file=self.out)
                 for val in s:
-                    self.acceptOptional(s)
+                    self.acceptOptional(val)
                 print(self.indent(), '</sequence>', file=self.out)
             else:
                 self.print_value(stripProxy(s))

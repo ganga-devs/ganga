@@ -29,7 +29,8 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False, extra_
         if extra_args is None:
             _list = [mapfunction(l) for l in _list]
         else:
-            _list = [partial(mapfunction, l, extra_args=extra_args) for l in _list]
+            new_mapfunction = partial(mapfunction, extra_args=extra_args)
+            _list = [new_mapfunction(l) for l in _list]
 
     result = GangaList()
     result._list.extend([stripProxy(l) for l in _list])
@@ -102,7 +103,7 @@ class GangaList(GangaObject):
         #super(GangaList, self).__construct__(args)
 
         if len(args) == 1:
-            if isinstance(args[0], (len, GangaList, tuple)):
+            if isType(args[0], (len, GangaList, tuple)):
                 def myExpand(elem):
                     self._list.expand(self.strip_proxy(elem))
                 for elem in args[0]:
@@ -119,7 +120,7 @@ class GangaList(GangaObject):
     # convenience methods
     @staticmethod
     def is_list(obj):
-        result = (obj is not None) and isinstance(obj, (GangaList, list, tuple))
+        result = (obj is not None) and isType(obj, (GangaList, list, tuple))
         return result
 
     @staticmethod
@@ -169,7 +170,7 @@ class GangaList(GangaObject):
         super(GangaList, self)._setParent(parent)
         def setP(elem):
             if isinstance(elem, GangaObject):
-                stripProxy(elem)._setParent(parent)
+                elem._setParent(parent)
             return
         for l in self._list:
             setP(l)
@@ -212,7 +213,7 @@ class GangaList(GangaObject):
 
     def strip_proxy_list(self, obj_list, filter=False):
 
-        if isinstance(obj_list, GangaList):
+        if isType(obj_list, GangaList):
             return getProxyAttr(obj_list, '_list')
         result = [self.strip_proxy(l, filter=filter) for l in obj_list]
         return result
@@ -225,7 +226,7 @@ class GangaList(GangaObject):
                 return elem._category
             else:
                 return type(o)
-        return unique([return_cat(l) for l in self._list])
+        return unique([return_cat(elem) for elem in self._list])
 
     def _readonly(self):
         if self._is_preparable and hasattr(self, '_getParent'):
@@ -304,7 +305,7 @@ class GangaList(GangaObject):
 
         # setup up the list correctly
         tmp_list = input_list
-        if isinstance(input_list, GangaList):
+        if isType(input_list, GangaList):
             # GangaLists should never contain proxied objects so just return the list
             return stripProxy(input_list)._list
         elif isinstance(input_list, tuple):
@@ -339,7 +340,7 @@ class GangaList(GangaObject):
     def __hash__(self):
         logger.info("hash")
         result = 0
-        hashes = [hash(elem) for elem in self]
+        hashes = [hash(l) for l in self._list]
         for element in hashes:
             result ^= element
         return result
@@ -446,18 +447,18 @@ class GangaList(GangaObject):
         return self.toString()
 
     def append(self, obj, my_filter=True):
-        if isinstance(obj, GangaList):
+        if isType(obj, GangaList):
             self._list.append(stripProxy(obj))
             return
         elem = self.strip_proxy(obj, my_filter)
         list_objs = (list, tuple)
-        if isinstance(elem, GangaObject):
+        if isType(elem, GangaObject):
             stripProxy(elem)._setParent(self._getParent())
             self._list.append(elem)
-        elif isinstance(elem, list_objs):
+        elif isType(elem, list_objs):
             new_list = []
             def my_append(_obj):
-                if isinstance(_obj, GangaObject):
+                if isType(_obj, GangaObject):
                     stripProxy(_obj)._setParent(self._getParent())
                     return stripProxy(_obj)
                 else:
@@ -485,7 +486,7 @@ class GangaList(GangaObject):
         return self._list.index(self.strip_proxy(obj))
 
     def insert(self, index, obj):
-        if isinstance(obj, GangaObject):
+        if isType(obj, GangaObject):
             stripProxy(obj)._setParent(stripProxy(self)._getParent())
         self._list.insert(index, self.strip_proxy(obj, True))
 
@@ -569,7 +570,7 @@ class GangaList(GangaObject):
         """Returns a simple str of the _list."""
         returnable_str = "["
         def stringFunc(element, returnable_str):
-            if isinstance(element, GangaObject):
+            if isType(element, GangaObject):
                 returnable_str += repr(stripProxy(element))
             else:
                 returnable_str += "'"
