@@ -49,7 +49,7 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False, extra_
 def stripGangaList(_list):
     """Gets the underlying list of non-proxy objects"""
     result = _list
-    if isinstance(_list, GangaList):
+    if isType(_list, GangaList):
         result = getProxyAttr(_list, '_list')
     return result
 
@@ -57,6 +57,8 @@ def stripGangaList(_list):
 def makeGangaListByRef(_list, preparable=False):
     """Faster version of makeGangaList. Does not make a copy of _list but use it by reference."""
     result = GangaList()
+    # Subvert tests and modify the ._list here ourselves
+    # This is potentially DANGEROUS is proxies aren't correctly stripped
     result._list.extend(_list)
     result._is_a_ref = True
     result._is_preparable = preparable
@@ -155,13 +157,14 @@ class GangaList(GangaObject):
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         if self._is_a_ref is True:
-            def my_append(obj):
-                if hasattr(obj, '_on_attribute__set__'):
-                    return obj._on_attribute__set__(obj_type, attrib_name)
+            new_list = []
+            for i in self._list:
+                if hasattr(i, '_on_attribute__set__'):
+                    new_list.append(i._on_attribute__set__(obj_type, attrib_name))
                 else:
-                    return obj
+                    new_list.append(i)
 
-            self._list = [my_append(l) for l in self._list]
+            self._list = new_list
             self._is_a_ref = False
         return self
 
@@ -170,12 +173,9 @@ class GangaList(GangaObject):
 
     def _setParent(self, parent):
         super(GangaList, self)._setParent(parent)
-        def setP(elem):
+        for elem in self._list:
             if isinstance(elem, GangaObject):
                 elem._setParent(parent)
-            return
-        for l in self._list:
-            setP(l)
 
     def get(self, to_match):
         def matching_filter(item):

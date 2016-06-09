@@ -561,7 +561,7 @@ class GangaRepositoryLocal(GangaRepository):
                             if not self.isObjectLoaded(self.objects[this_id]):
                                 self.index_write(this_id)
                             else:
-                                self.objects(this_id)._setDirty()
+                                self.objects[this_id]._setDirty()
                         #self.unlock([this_id])
                 except KeyError as err:
                     logger.debug("update Error: %s" % err)

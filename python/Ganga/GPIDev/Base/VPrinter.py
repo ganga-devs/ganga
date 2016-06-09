@@ -159,12 +159,10 @@ class VPrinter(object):
             if sequence:
                 print('[', end='', file=self.out)
                 self.level+=1
-                def subnode_print(s):
+                for s in subnode:
                     print(self.indent(), file=self.out)
                     self.acceptOptional(s)
                     print(',', end='', file=self.out)
-                for sn in subnode:
-                    subnode_print(sn)
                 self.level-=1
                 print(']', end='', file=self.out)
             else:

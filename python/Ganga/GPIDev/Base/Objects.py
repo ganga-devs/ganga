@@ -33,7 +33,7 @@ def _getName(obj):
     """ Return the name of an object based on what we prioritise"""
     returnable = getattr(obj, '_name', getattr(obj, '__name__', None))
     if returnable is None:
-        returnable = getattr(getattr(obj, '__class__', None), '__name__', None)))
+        returnable = getattr(getattr(obj, '__class__', None), '__name__', None)
     if returnable is None:
         return str(obj)
     else:
@@ -88,8 +88,7 @@ class Node(object):
         cls = self.__class__
         obj = cls()
         this_dict = copy(self.__dict__)
-        global do_not_copy
-        for elem in this_dict.kets():
+        for elem in this_dict.keys():
             if elem not in do_not_copy:
                 this_dict[elem] = deepcopy(this_dict[elem], memo)
 
@@ -894,9 +893,8 @@ class GangaObject(Node):
                 if item.isA(SharedItem):
                     self.__incrementShareRef(self_copy, name)
 
-        for k in self.__dict__.keys():
+        for k, v in self.__dict__.iteritems():
             if k not in do_not_copy:
-                v = self.__dict__[k]
                 try:
                     self_copy.__dict__[k] = deepcopy(v)
                 except:
