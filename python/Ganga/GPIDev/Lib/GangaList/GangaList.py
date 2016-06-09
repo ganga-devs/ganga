@@ -124,7 +124,7 @@ class GangaList(GangaObject):
 
     @staticmethod
     def has_proxy_element(_list):
-        return [isProxy(l) for l in _list]
+        return all([isProxy(l) for l in _list])
 
     ## Attempt to prevent raw assignment of _list causing Proxied objects to get inside the GangaList
     def _attribute_filter__set__(self, name, value):

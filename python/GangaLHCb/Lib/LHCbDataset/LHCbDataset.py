@@ -70,7 +70,7 @@ class LHCbDataset(GangaDataset):
         elif isinstance(files, GangaList):
             def isFileTest(_file):
                 return isinstance(_file, IGangaFile)
-            areFiles = all([ifFileTest(f) for f in files._list])
+            areFiles = all([isFileTest(f) for f in files._list])
             if areFiles:
                 self.file._list.extend(files._list)
                 process_files = False
