@@ -139,8 +139,6 @@ class IncompleteObject(GangaObject):
             if not self.has_loaded(self._registry._objects[self.id]):
                 self.registry._load([self.id])
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
-            for d in self.registry.changed_ids.itervalues():
-                d.add(self.id)
         finally:
             self.registry._lock.release()
 
@@ -159,8 +157,6 @@ class IncompleteObject(GangaObject):
                     logger.debug("Remove Lock error: %s" % err)
                 raise RegistryLockError(errstr)
             self.registry.repository.delete([self.id])
-            for d in self.registry.changed_ids.itervalues():
-                d.add(self.id)
         finally:
             self.registry._lock.release()
 
@@ -288,7 +284,6 @@ class Registry(object):
         self._read_lock = threading.RLock()
         self._flush_lock = threading.RLock()
         self.hard_lock = {}
-        self.changed_ids = {}
 
         self._parent = None
 
@@ -416,7 +411,6 @@ class Registry(object):
                     return False
             self.repository.reap_locks()
             self.repository.delete(self._objects.keys())
-            self.changed_ids = {}
             self.repository.clean()
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
             raise
@@ -445,8 +439,6 @@ class Registry(object):
 
         this_id = self.find(obj)
         self.repository.flush(ids)
-        for this_v in self.changed_ids.itervalues():
-            this_v.update(ids)
 
         logger.debug("_add-ed as: %s" % ids)
         return ids[0]
@@ -538,8 +530,6 @@ class Registry(object):
             try:
                 self.repository.delete([this_id])
                 del obj
-                for this_v in self.changed_ids.itervalues():
-                    this_v.add(this_id)
             except (RepositoryError, RegistryAccessError, RegistryLockError) as err:
                 raise
             except Exception as err:
@@ -669,8 +659,6 @@ class Registry(object):
             except InaccessibleObjectError as err:
                 raise
                 raise RegistryKeyError("Read: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, err))
-            for this_d in self.changed_ids.itervalues():
-                this_d.add(this_id)
         except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
             raise
         except Exception as err:
@@ -735,8 +723,6 @@ class Registry(object):
                         raise RegistryKeyError("Write: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
                     except InaccessibleObjectError as err:
                         raise RegistryKeyError("Write: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, err))
-                    for this_d in self.changed_ids.itervalues():
-                        this_d.add(this_id)
                 obj._registry_locked = True
             except Exception as err:
                 raise
@@ -815,8 +801,6 @@ class Registry(object):
             logger.debug("repo startup")
             #self.hasStarted() = True
             self.repository.startup()
-            # All Ids could have changed
-            self.changed_ids = {}
             t1 = time.time()
             logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
         except Exception as err:
