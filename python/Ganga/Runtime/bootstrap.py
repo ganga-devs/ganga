@@ -181,10 +181,6 @@ def manualExportToGPI(my_interface=None):
     from Ganga.GPIDev.Lib.Registry.JobRegistry import jobSlice
     exportToInterface(my_interface, "jobSlice", jobSlice, "Functions")
 
-    """Needed for the JobTime if we plan to use the interface to eval the XML as well"""
-    import datetime
-    exportToInterface(my_interface, "datetime", datetime, 'Classes')
-
 class GangaProgram(object):
 
     """ High level API to create instances of Ganga programs and configure/run it """
@@ -367,7 +363,7 @@ under certain conditions; type license() for details.
                     hasLoaded_newer = True
         
         old_dir = os.path.expanduser('~/.ipython-ganga')
-        if 'IPYTHONDIR' in os.environ.keys():
+        if 'IPYTHONDIR' in os.environ:
             old_dir = os.path.abspath(os.path.expanduser(os.environ['IPYTHONDIR']))
 
         single_pass_file = os.path.join(old_dir, '.have_migrated')
@@ -1159,7 +1155,7 @@ under certain conditions; type license() for details.
 
         not_exist = False
 
-        if 'IPYTHONDIR' in os.environ.keys():
+        if 'IPYTHONDIR' in os.environ:
             ipyth_dir = os.environ['IPYTHONDIR']
             os.environ['IPYTHONDIR'] = os.path.abspath(os.path.expanduser(os.environ['IPYTHONDIR']))
             #logger.warning('Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands', ipyth_dir)

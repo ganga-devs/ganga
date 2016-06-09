@@ -5,7 +5,8 @@ from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
-from Ganga.GPIDev.Base.Proxy import getProxyInterface
+# config_scope is namespace used for evaluating simple objects (e.g. File, datetime, SharedDir)
+from Ganga.Utility.Config import config_scope
 
 from Ganga.Utility.Plugin import PluginManagerError, allPlugins
 
@@ -365,9 +366,11 @@ class Loader(object):
                 s = unescape(self.value_construct)
                 #logger.debug('string value: %s',s)
                 if s not in _cached_eval_strings:
-                    # Cannot make use of the Plugin system here as we're evaluating all objects including 'datetime' which is required for JobTime
-                    # TODO, add 'datetime' to the Plugins somwhow instead?
-                    _cached_eval_strings[s] = eval(s, getProxyInterface().__dict__)
+                    # This is ugly and classes which use this are bad, but this needs to be fixed in another PR
+                    # TODO Make the scope of objects a lot better than whatever is in the config
+                    # This is a dictionary constructed from eval-ing things in the Config. Why does should it do this?
+                    # Anyway, lets save the result for speed
+                    _cached_eval_strings[s] = eval(s, config_scope)
                 val = copy.deepcopy(_cached_eval_strings[s])
                 #logger.debug('evaled value: %s type=%s',repr(val),type(val))
                 self.stack.append(val)

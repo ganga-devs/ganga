@@ -75,7 +75,7 @@ class Node(object):
     thread-safe usage.
     """
     __metaclass__ = abc.ABCMeta
-    __slots__ = ('_index_cache_dict', '_parent', '_read_lock', '_write_lock', '_dirty', '_registry', '_data_dict')
+    __slots__ = ('_parent', '_read_lock', '_write_lock', '_dirty')
 
     def __init__(self, parent=None):
         super(Node, self).__init__()
@@ -540,7 +540,10 @@ class ObjectMetaclass(abc.ABCMeta):
 
         this_schema = cls._schema
 
-        cls.__slots__ = ('__dict__', '_proxyObject')
+        # This reduces the memory footprint
+        # TODO explore migrating the _data_dict object to a non-dictionary type as it's a fixed size and we can potentially save big here!
+        # Adding the __dict__ here is an acknowledgement that we don't control all Ganga classes higher up.
+        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject')
 
         # Add all class members of type `Schema.Item` to the _schema object
         # TODO: We _could_ add base class's Items here by going through `bases` as well.
@@ -550,7 +553,7 @@ class ObjectMetaclass(abc.ABCMeta):
                 this_schema.datadict[member_name] = member
 
         # sanity checks for schema...
-        if '_schema' not in this_dict.keys():
+        if '_schema' not in this_dict:
             s = "Class %s must _schema (it cannot be silently inherited)" % (name,)
             logger.error(s)
             raise ValueError(s)
@@ -619,7 +622,7 @@ class GangaObject(Node):
         #Node.__init__(self, None)
 
         if self._schema is not None and hasattr(self._schema, 'allItems'):
-            self._data_dict = dict.fromkeys(self._schema.datadict.keys())
+            self._data_dict = dict.fromkeys(self._schema.datadict)
             for attr, item in self._schema.allItems():
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:

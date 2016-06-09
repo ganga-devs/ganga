@@ -490,11 +490,11 @@ class IBackend(GangaObject):
 
             else:
                 backend_name = getName(j.backend)
-                if backend_name not in simple_jobs.keys():
+                if backend_name not in simple_jobs:
                     simple_jobs[backend_name] = []
                 simple_jobs[backend_name].append(j)
 
-        if len(simple_jobs.keys()) > 0:
+        if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
 

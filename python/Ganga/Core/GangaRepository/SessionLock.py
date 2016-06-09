@@ -168,7 +168,7 @@ class SessionLockRefresher(GangaThread):
     def updateLocks(self, index):
 
         this_index_file = self.fns[index]
-        if this_index_file in self.FileCheckTimes.keys():
+        if this_index_file in self.FileCheckTimes:
             if abs(self.FileCheckTimes[this_index_file]-time.time()) >= 3:
                 now = self._reallyUpdateLocks(index)
                 self.FileCheckTimes[this_index_file] = now

@@ -26,7 +26,7 @@ class MetadataDict(GangaObject):
 
     def __setitem__(self, key, value):
         from Ganga.GPIDev.Lib.Job.Job import Job
-        if key in Job._schema.datadict.keys():
+        if key in Job._schema.datadict:
             raise GangaAttributeError(
                 '\'%s\' is a reserved key name and cannot be used in the metadata' % key)
         if not isinstance(key, str):

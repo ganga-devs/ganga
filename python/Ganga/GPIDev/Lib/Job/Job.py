@@ -64,7 +64,7 @@ def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
 
     lzy_loading_str = 'display:'+ this_attr
     job_index_cache = this_job._index_cache
-    if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache.keys():
+    if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache:
         obj_name = job_index_cache[lzy_loading_str]
         if obj_name is not None and do_eval:
             job_obj = getRuntimeGPIObject(obj_name, True)
@@ -644,7 +644,7 @@ class Job(GangaObject):
         for key in keys:
             try:
                 for configEntry in getConfig('Output')[key]['backendPostprocess']:
-                    if configEntry not in backend_output_postprocess.keys():
+                    if configEntry not in backend_output_postprocess:
                         backend_output_postprocess[configEntry] = {}
 
                     backend_output_postprocess[configEntry][key] = getConfig('Output')[key]['backendPostprocess'][configEntry]

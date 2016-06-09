@@ -723,7 +723,7 @@ class GangaRepositoryLocal(GangaRepository):
         else:
             raise RepositoryError(self, "Cannot flush an Empty object for ID: %s" % this_id)
 
-        if this_id not in self._fully_loaded.keys():
+        if this_id not in self._fully_loaded:
             self._fully_loaded[this_id] = obj
 
     def flush(self, ids):
@@ -756,7 +756,7 @@ class GangaRepositoryLocal(GangaRepository):
                     logger.debug("Index write failed")
                     pass
 
-                if this_id not in self._fully_loaded.keys():
+                if this_id not in self._fully_loaded:
                     self._fully_loaded[this_id] = self.objects[this_id]
 
                 subobj_attr = getattr(self.objects[this_id], self.sub_split, None)
@@ -806,7 +806,7 @@ class GangaRepositoryLocal(GangaRepository):
         Args:
             this_id (int): This is an integer corresponding to a key in the _fully_loaded dict (possibly objects too)
         """
-        return this_id in self._fully_loaded.keys()
+        return this_id in self._fully_loaded
 
     def _check_index_cache(self, obj, this_id):
         """
@@ -907,7 +907,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         obj._index_cache = {}
 
-        if this_id not in self._fully_loaded.keys():
+        if this_id not in self._fully_loaded:
             self._fully_loaded[this_id] = obj
 
     def _actually_load_xml(self, fobj, fn, this_id, load_backup):
@@ -1132,7 +1132,7 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("Delete Error: %s" % err)
             self._internal_del__(this_id)
             rmrf(os.path.dirname(fn))
-            if this_id in self._fully_loaded.keys():
+            if this_id in self._fully_loaded:
                 del self._fully_loaded[this_id]
             if this_id in self.objects:
                 del self.objects[this_id]

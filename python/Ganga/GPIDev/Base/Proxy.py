@@ -55,7 +55,7 @@ def getRuntimeGPIObject(obj_name, silent=False):
        If it doesn't exist attempt to evaluate the obj_name as a string like a standard python object
        If it's none of the above then return 'None' rather than the object string which was input"""
     interface = getProxyInterface()
-    if obj_name in interface.__dict__.keys():
+    if obj_name in interface.__dict__:
         this_obj = interface.__dict__[obj_name]
         if isclass(this_obj):
             return this_obj()
@@ -341,7 +341,7 @@ class ProxyDataDescriptor(object):
         try:
             val = getattr(stripProxy(obj), getName(self))
         except Exception as err:
-            if getName(self) in stripProxy(obj).__dict__.keys():
+            if getName(self) in stripProxy(obj).__dict__:
                 val = stripProxy(obj).__dict__[getName(self)]
             else:
                 val = getattr(stripProxy(obj), getName(self))
@@ -667,7 +667,7 @@ _proxyClassDict={}
 def addProxyClass(some_class):
     ## CANNOT USE THE ._name (hence getName) HERE DUE TO REQUIREMENTS OF THE OBJECT IN GPI BEING SANE!!!
     class_name = some_class.__name__
-    if class_name not in _proxyClassDict.keys():
+    if class_name not in _proxyClassDict:
         _proxyClassDict[class_name] = GPIProxyClassFactory(class_name, some_class)    
     setattr(some_class, proxyClass, _proxyClassDict[class_name])
 
@@ -682,7 +682,7 @@ def getProxyClass(some_class):
     proxy_class = getattr(some_class, proxyClass, None)
     ## It's possible we ourselves have added a proxy to the base class which we're now inheriting here.
     ## To avoid giving a proxy from Dataset to LHCbDataset and equivalent we'll check against our list of already-found class names.
-    if proxy_class is None or class_name not in _proxyClassDict.keys():
+    if proxy_class is None or class_name not in _proxyClassDict:
         addProxyClass(some_class)
         proxy_class = getattr(some_class, proxyClass)
     return proxy_class
@@ -757,7 +757,7 @@ def GPIProxyClassFactory(name, pluginclass):
         ## If we're only constructing a raw Proxy to wrap an existing object lets wrap that and return
         proxy_obj_str = '_proxy_impl_obj_to_wrap'
 
-        if proxy_obj_str in kwds.keys():
+        if proxy_obj_str in kwds:
             instance = kwds[proxy_obj_str]
             ## Even if we're wrapping something such as here make sure we set all of the proxy related attributes correctly.
             ## Setting of these attributes shold be done here within this class and should probably be properly be done on proxy construction. aka. here
@@ -773,7 +773,7 @@ def GPIProxyClassFactory(name, pluginclass):
         ## Need to avoid any setter methods for GangaObjects
         ## Would be very nice to remove this entirely as I'm not sure a GangaObject should worry about it's proxy (if any)
 
-        if proxy_obj_str in kwds.keys():
+        if proxy_obj_str in kwds:
             # wrapping not constructing so can exit after determining that the proxy attributes are setup correctly
             return
 
@@ -1030,7 +1030,7 @@ def GPIProxyClassFactory(name, pluginclass):
         elif not stripProxy(self)._schema.hasAttribute(x):
             from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
             if hasattr(stripProxy(self), 'metadata') and isType(stripProxy(self).metadata, MetadataDict):
-                if x in stripProxy(self).metadata.data.keys():
+                if x in stripProxy(self).metadata.data:
                     raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)
 
             if x != implRef:
@@ -1112,7 +1112,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
                 exported_methods.append(k)  # Add all @export'd methods
             if k in exported_methods:
                 internal_name = "_export_" + k
-                if internal_name not in dct.keys():
+                if internal_name not in dct:
                     internal_name = k
                 try:
                     method = dct[internal_name]

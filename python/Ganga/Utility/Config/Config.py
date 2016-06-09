@@ -548,11 +548,11 @@ class PackageConfig(object):
         option.defineOption(default_value, docstring, **meta)
         self.options[option.name] = option
 
-        if self.name in allConfigFileValues.keys():
+        if self.name in allConfigFileValues:
             conf_value = allConfigFileValues[self.name]
         else:
             msg = "Error getting ConfigFileValue Option: %s" % str(self.name)
-            if 'logger' in locals().keys() and logger is not None:
+            if 'logger' in locals() and logger is not None:
                 logger.debug("dbg: %s"%msg)
             else:
                 ##uncomment for debugging
@@ -560,14 +560,14 @@ class PackageConfig(object):
                 pass
             conf_value = dict()
 
-        if option.name in conf_value.keys():
+        if option.name in conf_value:
             session_value = conf_value[option.name]
             try:
                 option.setSessionValue(session_value)
                 del conf_value[option.name]
             except Exception as err:
                 msg = "Error Setting Session Value: %s" % str(err)
-                if 'logger' in locals().keys() and logger is not None:
+                if 'logger' in locals() and logger is not None:
                     logger.debug("dbg: %s"%msg)
                 else:
                     ##uncomment for debugging
@@ -863,7 +863,7 @@ def read_ini_files(filenames, system_vars):
                         logger.debug("err: %s" % str(err))
 
                 # do not put the DEFAULTS into the sections (no need)
-                if name in cc.defaults().keys():
+                if name in cc.defaults():
                     continue
 
                 # special rules (NOT APPLIED IN DEFAULT SECTION):
@@ -957,7 +957,7 @@ def setSessionValuesFromFiles(filenames, system_vars):
         for o in cfg.options(name):
             # Important: do not put the options from the DEFAULTS section into
             # the configuration units!
-            if o in cfg.defaults().keys():
+            if o in cfg.defaults():
                 continue
             try:
                 v = cfg.get(name, o)
