@@ -464,51 +464,20 @@ class Registry(object):
         """
         logger.debug("_remove")
         obj = stripProxy(_obj)
-        try:
-            self.__reg_remove(obj, auto_removed)
-        except ObjectNotInRegistryError as err:
-            try:
-                ## Actually  make sure we've removed the object from the repo 
-                if self.find(obj):
-                    del self._objects[self.find(obj)]
-            except Exception as err:
-                pass
-        except Exception as err:
-            raise
-
-    def __reg_remove(self, obj, auto_removed=0):
-        """
-        This Method Performs the actual removal of the object from the Repo
-        Args:
-            obj (GangaObject): The object which we want to remove from the Repo/Registry
-            auto_removed (0/1): True/False for if the object can be auto-removed by the base Repository method
-        """
-
-        logger.debug("_reg_remove")
-
         obj_id = id(obj)
 
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot remove objects from a disconnected repository!")
+
         if not auto_removed and hasattr(obj, "remove"):
             obj.remove()
         else:
             this_id = self.find(obj)
-            try:
-                self._write_access(obj)
-            except RegistryKeyError as err:
-                logger.debug("Registry KeyError: %s" % err)
-                logger.warning("double delete: Object #%i is not present in registry '%s'!" % (this_id, self.name))
-                return
+            self._write_access(obj)
+
             logger.debug('deleting the object %d from the registry %s', this_id, self.name)
-            try:
-                self.repository.delete([this_id])
-                del obj
-            except (RepositoryError, RegistryAccessError, RegistryLockError) as err:
-                raise
-            except Exception as err:
-                logger.debug("unknown Remove Error: %s" % err)
-                raise
+            self.repository.delete([this_id])
+            del obj
 
     @synchronised_flush_lock
     def _flush(self, objs):
