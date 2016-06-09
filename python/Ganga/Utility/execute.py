@@ -181,7 +181,7 @@ def execute(command,
             python_setup='',
             eval_includes=None,
             update_env=False,
-            return_code=None):
+            ):
     """
     Execute an external command.
     This will execute an external python command when shell=False or an external bash command when shell=True
@@ -194,7 +194,6 @@ def execute(command,
         python_setup (str): A python command to be executed beore the main command is
         eval_includes (str): An string used to construct an environment which, if passed, is used to eval the stdout into a python object
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
-        return_code (int): This is the returned code from the command which is executed
     """
 
     if update_env and env is None:
@@ -297,6 +296,4 @@ def execute(command,
                 logger.error("Err2: %s" % str(err2))
                 pass
 
-    return_code = p.returncode
     return stdout
-
