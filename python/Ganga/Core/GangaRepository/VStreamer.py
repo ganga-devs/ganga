@@ -365,6 +365,8 @@ class Loader(object):
                 s = unescape(self.value_construct)
                 #logger.debug('string value: %s',s)
                 if s not in _cached_eval_strings:
+                    # Cannot make use of the Plugin system here as we're evaluating all objects including 'datetime' which is required for JobTime
+                    # TODO, add 'datetime' to the Plugins somwhow instead?
                     _cached_eval_strings[s] = eval(s, getProxyInterface().__dict__)
                 val = copy.deepcopy(_cached_eval_strings[s])
                 #logger.debug('evaled value: %s type=%s',repr(val),type(val))
@@ -385,7 +387,7 @@ class Loader(object):
             # is a root object)
             if name == 'class':
                 obj = self.stack[-1]
-                def schema_assign(_tuple, obj):
+                for item in obj._schema.allItems():
                     attr = _tuple[0]
                     item = _tuple[1]
                     if not attr in obj._data:
@@ -394,8 +396,6 @@ class Loader(object):
                             obj.setSchemaAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr, make_copy=False)))
                         else:
                             obj.setSchemaAttribute(attr, obj._schema.getDefaultValue(attr, make_copy=False))
-                for item in obj._schema.allItems():
-                    schema_assign(item, obj=obj)
                 #print("Constructed: %s" % getName(obj))
 
         def char_data(data):

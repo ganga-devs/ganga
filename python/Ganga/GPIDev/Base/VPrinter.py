@@ -285,10 +285,8 @@ def full_print(obj, out=None, interactive=False):
         else:
             outString = '['
             outStringList = []
-            def print_x(x, outStringList, obj_len):
-                if isinstance(x, (str, int, float, bool, type)):
-                    outStringList.append(str(x).rstrip())
-                elif isType(x, GangaObject):
+            for x in _obj:
+                if isType(x, GangaObject):
                     sio = StringIO()
                     stripProxy(x).printTree(sio, interactive)
                     result = sio.getvalue()
@@ -297,10 +295,9 @@ def full_print(obj, out=None, interactive=False):
                 else:
                     # remove trailing whitespace and newlines
                     outStringList.append(str(x).rstrip())
+                # Check if we're at the last element or not and add commas
                 if (len(outStringList)+1) != 2*obj_len:
                     outStringList.append(', ')
-            for this_obj in _obj:
-                print_x(this_obj, outStringList, obj_len)
             outString += ''.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)
@@ -330,10 +327,8 @@ def summary_print(obj, out=None, interactive=False):
         else:
             outString = '['
             outStringList = []
-            def print_x(x, outStringList, obj_len):
-                if isinstance(x,(str, int, float, bool, type)):
-                    outStringList.append(str(x).rstrip())
-                elif isType(x, GangaObject):
+            for x in obj:
+                if isType(x, GangaObject):
                     sio =StringIO()
                     #logger.debug("summary_print: printSummaryTree")
                     stripProxy(x).printSummaryTree(0, 0, '', out=sio)
@@ -343,6 +338,7 @@ def summary_print(obj, out=None, interactive=False):
                 else:
                     # remove trailing whitespace and newlines
                     outStringList.append(str(x).rstrip())
+                # Check if we're at the last element or not and add commas
                 if len(outStringList)+1 != 2*obj_len:
                     outStringList.append(', ')
             for this_obj in obj:

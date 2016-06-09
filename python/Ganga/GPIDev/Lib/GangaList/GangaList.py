@@ -33,6 +33,8 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False, extra_
             _list = [new_mapfunction(l) for l in _list]
 
     result = GangaList()
+    # Subvert tests and modify the ._list here ourselves
+    # This is potentially DANGEROUS is proxies aren't correctly stripped
     result._list.extend([stripProxy(l) for l in _list])
     result._is_preparable = preparable
     result._is_a_ref = False
@@ -340,8 +342,7 @@ class GangaList(GangaObject):
     def __hash__(self):
         logger.info("hash")
         result = 0
-        hashes = [hash(l) for l in self._list]
-        for element in hashes:
+        for element in [hash(l) for l in self._list]:
             result ^= element
         return result
         # return self._list.__hash__()

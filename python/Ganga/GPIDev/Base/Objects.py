@@ -31,7 +31,9 @@ from Ganga.Utility.Plugin import allPlugins
 
 def _getName(obj):
     """ Return the name of an object based on what we prioritise"""
-    returnable = getattr(obj, '_name', getattr(obj, '__name__', getattr(getattr(obj, '__class__', None), '__name__', None)))
+    returnable = getattr(obj, '_name', getattr(obj, '__name__', None))
+    if returnable is None:
+        returnable = getattr(getattr(obj, '__class__', None), '__name__', None)))
     if returnable is None:
         return str(obj)
     else:
@@ -87,11 +89,9 @@ class Node(object):
         obj = cls()
         this_dict = copy(self.__dict__)
         global do_not_copy
-        def internal_deepcopyMethod(elem):
+        for elem in this_dict.kets():
             if elem not in do_not_copy:
                 this_dict[elem] = deepcopy(this_dict[elem], memo)
-        for k in this_dict.keys():
-            internal_deepcopyMethod(k)
 
         obj.__dict__ = this_dict
         if self._getParent() is not None:
@@ -279,7 +279,6 @@ class Descriptor(object):
 
         # If obj is None then the getter was called on the class so return the Item
         if obj is None:
-            name = _getName(self)
             return cls._schema[name]
 
         if self._getter_name:
@@ -895,15 +894,13 @@ class GangaObject(Node):
                 if item.isA(SharedItem):
                     self.__incrementShareRef(self_copy, name)
 
-        def performCopy(k, self_copy):
+        for k in self.__dict__.keys():
             if k not in do_not_copy:
                 v = self.__dict__[k]
                 try:
                     self_copy.__dict__[k] = deepcopy(v)
                 except:
                     self_copy.__dict__[k] = v
-        for k in self.__dict__.keys():
-            performCopy(k, self_copy)
 
         if true_parent is not None:
             self._setParent(true_parent)
