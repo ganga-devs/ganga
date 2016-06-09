@@ -183,7 +183,7 @@ class SessionLockRefresher(GangaThread):
         now = None
         try:
             oldnow = self.delayread(this_index_file)
-            os.system('touch %s' % this_index_file)
+            os.system('touch "%s"' % this_index_file)
             now = self.delayread(this_index_file) # os.stat(self.fn).st_ctime
         except OSError as x:
             if x.errno != errno.ENOENT:

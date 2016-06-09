@@ -326,7 +326,7 @@ class Grid(object):
         else:
             cmd += submit_opt
 
-        cmd = '%s --noint %s' % (cmd, jdlpath)
+        cmd = '%s --noint "%s"' % (cmd, jdlpath)
 
         logger.debug('job list match command: %s' % cmd)
 
@@ -382,7 +382,7 @@ class Grid(object):
         if ce:
             cmd = cmd + ' -r %s' % ce
 
-        cmd = '%s --nomsg %s < /dev/null' % (cmd, jdlpath)
+        cmd = '%s --nomsg "%s" < /dev/null' % (cmd, jdlpath)
 
         logger.debug('job submit command: %s' % cmd)
 
@@ -658,14 +658,14 @@ class Grid(object):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return (False, None)
 
-        cmd = '%s --noint --dir %s %s' % (cmd, directory, jobid)
+        cmd = '%s --noint --dir "%s" %s' % (cmd, directory, jobid)
 
         logger.debug('job get output command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
             self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
-        match = re.search('directory:\n\s*(\S+)\s*\n', output)
+        match = re.search('directory:\n\s*([^\t\n\r\f\v]+)\s*\n', output)
 
         if not match:
             logger.warning('Job output fetch failed.')
@@ -685,7 +685,7 @@ class Grid(object):
         jid_hash = urlparse.urlparse(jobid)[2][1:]
 
         if outdir.count(jid_hash):
-            if self.shell.system('mv %s/* %s' % (outdir, directory)) == 0:
+            if self.shell.system('mv "%s"/* "%s"' % (outdir, directory)) == 0:
                 try:
                     os.rmdir(outdir)
                 except Exception as msg:
@@ -953,7 +953,7 @@ class Grid(object):
 
         cmd = cmd + ' -r %s' % ce
 
-        cmd = '%s --nomsg %s < /dev/null' % (cmd, jdlpath)
+        cmd = '%s --nomsg "%s" < /dev/null' % (cmd, jdlpath)
 
         logger.debug('job submit command: %s' % cmd)
 
@@ -1274,7 +1274,7 @@ class Grid(object):
         if ce:
             cmd = cmd + ' -c %s' % ce
 
-        cmd = '%s %s < /dev/null' % (cmd, jdlpath)
+        cmd = '%s "%s" < /dev/null' % (cmd, jdlpath)
 
         logger.debug('job submit command: %s' % cmd)
 
