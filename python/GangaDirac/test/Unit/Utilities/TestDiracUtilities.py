@@ -18,6 +18,12 @@ def config_files():
     clear_config()
 
 
+def test_output():
+    """Test that ``print`` and ``output`` both work as expected"""
+    assert execute('print("foo")').strip() == 'foo'
+    assert execute('output("foo")').strip() == 'foo'
+
+
 def test_execute():
 
     # Test shell vs python mode
