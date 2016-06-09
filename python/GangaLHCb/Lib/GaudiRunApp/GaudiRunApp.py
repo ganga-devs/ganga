@@ -117,6 +117,7 @@ class GaudiRun(IPrepareApp):
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
         self.hash = None
+        self.uploadedInput = None
 
     def prepare(self, force=False):
         """

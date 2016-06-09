@@ -11,6 +11,7 @@ from Ganga.Utility.util import unique
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
 from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

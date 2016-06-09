@@ -24,6 +24,7 @@ from datetime import datetime
 import tempfile
 import tarfile
 import random
+import threading
 from Ganga.Utility.files import expandfilename
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
@@ -43,15 +44,19 @@ logger = getLogger()
 
 data_file = 'data.py'
 
-def add_timeStampFile(path):
+prep_lock = threading.Lock()
+
+def add_timeStampFile(given_path):
     """
     This creates a file in this directory given called __timestamp__ which contains the time so that the final file is unique
     Args:
-        path (str): Path which we want to create the timestamp within
+        given_path (str): Path which we want to create the timestamp within
 
     """
     fmt = '%Y-%m-%d-%H-%M-%S'
-    with os.open(path.join(path, '__timestamp__'), 'w') as time_file:
+    time_filename = os.path.join(given_path, '__timestamp__')
+    logger.info("Constructing: %s" % time_filename)
+    with open(time_filename, 'a+') as time_file:
         time_file.write(datetime.now().strftime(fmt))
 
 def genDataFiles(job):
@@ -89,7 +94,7 @@ def generateWNScript(commandline, job):
     """
     exe_script_name = 'gaudiRun-script.py'
 
-    return FileBuffer(name=exe_script_name, contents=script_generator(exe_script_template(), COMMAND=commandline,
+    return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
                                                                     OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
                       executable=True)
 
@@ -176,6 +181,38 @@ allHandlers.add('GaudiRun', 'Local', GaudiRunRTHandler)
 allHandlers.add('GaudiRun', 'Interactive', GaudiRunRTHandler)
 allHandlers.add('GaudiRun', 'Batch', GaudiRunRTHandler)
 
+def generateDiracInput(app):
+
+    input_files, input_folders = collectPreparedFiles(app)
+
+    job = app.getJobObject()
+
+    compressed_file = None
+    if input_folders:
+        raise ApplicationConfigurationError('Prepared folders not supported yet, please fix this in future')
+    else:
+        prep_dir = app.getSharedPath()
+        add_timeStampFile(prep_dir)
+        prep_file = prep_dir + '.tgz'
+        compressed_file = os.path.join(tempfile.gettempdir(), os.path.basename(prep_dir) + ".tgz")
+
+        wnScript = generateWNScript(prepareCommand(app), job)
+        script_name = os.path.join(tempfile.gettempdir(), wnScript.name)
+        wnScript.create(script_name)
+
+        with tarfile.open( compressed_file + ".tgz", "w:gz" ) as tar_file:
+            for name in input_files:
+                tar.add(name, arcname=os.path.basename(name))
+            tar.add(script_name, arcname=os.path.basename(script_name))
+        shutil.move(compressed_file, prep_dir)
+
+    new_df = DiracFile(namePattern = os.path.basename(compressed_file), localDir = app.getSharedPath(),
+                       remoteDir = os.path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid) )
+    random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
+    new_df.put(uploadSE = randomSE)
+
+    app.uploadedInput = new_df
+
 class GaudiRunDiracRTHandler(IRuntimeHandler):
 
     """The runtime handler to run plain executables on the Dirac backend"""
@@ -184,29 +221,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
         if not app.uploadedInput:
-            input_files, input_folders = collectPreparedFiles(app)
-
-            compressed_file = None
-            if input_folders:
-                raise ApplicationConfigurationError('Prepared folders not supported yet, please fix this in future')
-            else:
-                prep_dir = app.getSharedPath()
-                add_timeStampFile(prep_dir)
-                prep_file = prep_dir + '.tgz'
-                compressed_file = path.join(tempfile.gettempdir(), path.basename(prep_dir) + ".tgz")
-                with tarfile.open( compressed_file + ".tgz", "w:gz" ) as tar_file:
-                    for name in input_files:
-                        tar.add(name)
-                shutil.move(compressed_file, prep_dir)
-
-            job = app.getJobObject()
-
-            new_df = DiracFile(namePattern = path.basename(compressed_file), localDir = app.getSharedPath(),
-                                remoteDir = path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid) )
-            random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
-            new_df.put(uploadSE = randomSE)
-
-            app.uploadedInput = new_df
+            generateDiracInput(app)
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
@@ -232,21 +247,27 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         if isinstance(opts_file, DiracFile):
             inputsandbox += ['LFN:'+opts_file.lfn]
 
-        uploaded_Input = app.uploadedInput
+        if not app.uploadedInput:
+            with prep_lock:
+                if job.master:
+                    if not job.master.app.uploadedInput:
+                        generateDiracInput(job.master.app)
+                        app.uploadedInput = job.master.app.uploadedInput
+                else:
+                    generateDiracInput(app)
 
-        if isinstance(uploaded_Input, DiracFile):
-            inputsandbox += ['LFN:'+uploaded_Input.lfn]
+        inputsandbox += ['LFN:'+app.uploadedInput.lfn]
 
         outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
         # Prepare the command which is to be run on the worker node
         job_command = prepareCommand(app)
-        logger.debug('Command line: %s: ', commandline)
+        logger.debug('Command line: %s: ', job_command)
 
         scriptToRun = generateWNScript(job_command, job)
-        inputfiles.append(scriptToRun)
+        # Already added to sandbox uploaded as LFN
 
-        dirac_outputfiles = dirac_outputfile_jdl(outputfiles)
+        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, False)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
@@ -265,7 +286,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                                         OUTPUT_SANDBOX=API_nullifier(outputsandbox),
                                         OUTPUTFILESSCRIPT=dirac_outputfiles,
                                         OUTPUT_PATH="",  # job.fqid,
-                                        OUTPUT_SE=getConfig('DIRAC')['DiracOutputDataSE'],
+                                        OUTPUT_SE=[],
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
                                         REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
@@ -284,7 +305,10 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
-def exe_script_template():
+def gaudiRun_script_template():
+    """
+    Script to return the contents of the command to be executed on the worker node
+    """
     script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
 from __future__ import print_function
@@ -308,9 +332,6 @@ if __name__ == '__main__':
     extractAllTarFiles('.')
 
     rc = system('###COMMAND###')
-
-    print("hello")
-
 
     ###OUTPUTFILESINJECTEDCODE###
     sys.exit(rc)
