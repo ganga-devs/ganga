@@ -33,26 +33,24 @@ from Ganga.Utility.Shell import Shell
 from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 
-_allShells = {}
+shell_cache = None
 
 
 def getShell(force=False):
     """
     Utility function for getting Grid Shell.
-    Caller should take responsiblity of credential checking if proxy is needed.
+    Caller should take responsibility of credential checking if proxy is needed.
 
-    Argumennts:
-
-     force      - False : if the shell already exists in local cache return the previous created instance
-                  True  : recreate the shell and if not None update the cache
+    Arguments:
+       force (bool): False: if the shell already exists in local cache return the previous created instance ; True: recreate the shell and if not None update the cache
     """
+
+    global shell_cache
 
     logger = getLogger()
 
-    middleware = 'GLITE'
-
-    if middleware in _allShells.keys() and not force:
-        return _allShells[middleware]
+    if shell_cache is not None and not force:
+        return shell_cache
 
     values = {}
     for key in ['X509_USER_PROXY', 'X509_CERT_DIR', 'X509_VOMS_DIR']:
@@ -61,43 +59,26 @@ def getShell(force=False):
         except KeyError:
             pass
 
-    configname = 'LCG'
-
-    config = None
     try:
-        config = getConfig(configname)
+        config = getConfig('LCG')
     except:
-        logger.warning(
-            '[%s] configuration section not found. Cannot set up a proper grid shell.' % configname)
+        logger.warning('[LCG] configuration section not found. Cannot set up a proper grid shell.')
         return None
 
     s = None
 
-    key = '%s_SETUP' % middleware
+    # 1. check if the GLITE_SETUP is changed by user -> take the user's value as session value
+    # 2. else check if GLITE_LOCATION is defined as env. variable -> do nothing (ie. create shell without any lcg setup)
+    # 3. else take the default GLITE_SETUP as session value
 
-    # 1. check if the *_SETUP is changed by user -> take the user's value as session value
-    # 2. else check if *_LOCATION is defined as env. variable -> do nothing (ie. create shell without any lcg setup)
-    # 3. else take the default *_SETUP as session value
-
-    MIDDLEWARE_LOCATION = '%s_LOCATION' % middleware
-
-    if config.getEffectiveLevel(key) == 2 and MIDDLEWARE_LOCATION in os.environ:
+    if config.getEffectiveLevel('GLITE_SETUP') == 2 and 'GLITE_LOCATION' in os.environ:
         s = Shell()
     else:
-        if os.path.exists(config[key]):
-            # FIXME: Hardcoded rule for ARC middleware setup (pass explicitly
-            # the $ARC_LOCATION as argument), this is hardcoded to maintain
-            # backwards compatibility (and avoid any side effects) for EDG and
-            # GLITE setup scripts which did not take any arguments
-            if key.startswith('ARC') and MIDDLEWARE_LOCATION in os.environ:
-                s = Shell(
-                    config[key], setup_args=[os.environ[MIDDLEWARE_LOCATION]])
-            else:
-                s = Shell(config[key])
+        if os.path.exists(config['GLITE_SETUP']):
+            s = Shell(config['GLITE_SETUP'])
         else:
-            logger.warning("Configuration of %s for %s: " %
-                           (middleware, configname))
-            logger.warning("File not found: %s" % config[key])
+            logger.warning("Configuration of GLITE for LCG: ")
+            logger.warning("File not found: %s" % config['GLITE_SETUP'])
 
     if s:
         for key, val in values.items():
@@ -119,6 +100,6 @@ def getShell(force=False):
         if 'LFC_CONRETRYINT' not in s.env:
             s.env['LFC_CONRETRYINT'] = '1'
 
-        _allShells[middleware] = s
+        shell_cache = s
 
     return s
