@@ -23,9 +23,9 @@ str_bad = markup("bad", overview_colours["bad"])
 
 class TaskRegistry(Registry):
 
-    def __init__(self, name, doc, update_index_time=30):
+    def __init__(self, name, doc):
 
-        super(TaskRegistry, self).__init__( name, doc, update_index_time=update_index_time)
+        super(TaskRegistry, self).__init__( name, doc )
 
         self._main_thread = None
 

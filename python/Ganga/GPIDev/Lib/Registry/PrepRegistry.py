@@ -15,9 +15,9 @@ logger = Ganga.Utility.logging.getLogger()
 
 class PrepRegistry(Registry):
 
-    def __init__(self, name, doc, update_index_time=30):
+    def __init__(self, name, doc):
 
-        super(PrepRegistry, self).__init__(name, doc, update_index_time)
+        super(PrepRegistry, self).__init__(name, doc)
 
     def startup(self):
         self._needs_metadata = True

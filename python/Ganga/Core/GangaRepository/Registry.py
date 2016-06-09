@@ -267,23 +267,19 @@ class Registry(object):
     Base class providing a dict-like locked and lazy-loading interface to a Ganga repository
     """
 
-    def __init__(self, name, doc, update_index_time=30):
+    def __init__(self, name, doc):
         """Registry constructor, giving public name and documentation
         Args:
             name (str): Name of teh registry e.g. 'jobs', 'box', 'prep'
             doc (str): This is the doc string of the registry describing it's use and contents
-            update_index_time (int): This is used to determine how long to wait between updating the index in the repo
         """
         self.name = name
         self.doc = doc
         self._hasStarted = False
-        self.update_index_time = update_index_time
-        self._update_index_timer = 0
         self._needs_metadata = False
         self.metadata = None
         self._read_lock = threading.RLock()
         self._flush_lock = threading.RLock()
-        self.hard_lock = {}
 
         self._parent = None
 
@@ -308,13 +304,16 @@ class Registry(object):
             this_id (int): This is the key of an object in the object dictionary
         """
         logger.debug("__getitem__")
+        # Is this an Incomplete Object?
+        if this_id in self._incomplete_objects:
+            return IncompleteObject(self, this_id)
+
+        # Nope, so try to find it and raise an exception if not
         try:
             return self._objects[this_id]
         except KeyError as err:
             logger.debug("Repo KeyError: %s" % err)
             logger.debug("Keys: %s id: %s" % (self._objects.keys(), this_id))
-            if this_id in self._incomplete_objects:
-                return IncompleteObject(self, this_id)
             raise RegistryKeyError("Could not find object #%s" % this_id)
 
     @synchronised_read_lock
@@ -403,45 +402,15 @@ class Registry(object):
         logger.debug("clean")
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot clean a disconnected repository!")
-        try:
-            if not force:
-                other_sessions = self.repository.get_other_sessions()
-                if len(other_sessions) > 0:
-                    logger.error("The following other sessions are active and have blocked the clearing of the repository: \n * %s" % ("\n * ".join(other_sessions)))
-                    return False
-            self.repository.reap_locks()
-            self.repository.delete(self._objects.keys())
-            self.repository.clean()
-        except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-            raise
-        except Exception as err:
-            logger.debug("Clean Unknown Err: %s" % err)
-            raise
 
-    @synchronised_complete_lock
-    def __safe_add(self, obj, force_index=None):
-        """
-        Method which calls the underlying add function in the Repo for a given object
-        Args:
-            obj  (GangaObject): This is th object which is to be added to this Registy/Repo
-            force_index (int, None): This is the index which we will give the object, None = auto-assign
-        """
-        logger.debug("__safe_add")
-        if force_index is None:
-            ids = self.repository.add([obj])
-        else:
-            if len(self.repository.lock([force_index])) == 0:
-                raise RegistryLockError("Could not lock '%s' id #%i for a new object!" % (self.name, force_index))
-            ids = self.repository.add([obj], [force_index])
-
-        obj._setRegistry(self)
-        obj._registry_locked = True
-
-        this_id = self.find(obj)
-        self.repository.flush(ids)
-
-        logger.debug("_add-ed as: %s" % ids)
-        return ids[0]
+        if not force:
+            other_sessions = self.repository.get_other_sessions()
+            if len(other_sessions) > 0:
+                logger.error("The following other sessions are active and have blocked the clearing of the repository: \n * %s" % ("\n * ".join(other_sessions)))
+                return False
+        self.repository.reap_locks()
+        self.repository.delete(self._objects.keys())
+        self.repository.clean()
 
     # Methods that can be called by derived classes or Ganga-internal classes like Job
     # if the dirty objects list is modified, the methods must be locked by self._lock
@@ -462,15 +431,20 @@ class Registry(object):
         if self.hasStarted() is not True:
             raise RepositoryError("Cannot add objects to a disconnected repository!")
 
-        try:
-            returnable_id = self.__safe_add(obj, force_index)
-        except RepositoryError as err:
-            raise
-        except Exception as err:
-            logger.debug("Unknown Add Error: %s" % err)
-            raise
+        if force_index is None:
+            ids = self.repository.add([obj])
+        else:
+            if len(self.repository.lock([force_index])) == 0:
+                raise RegistryLockError("Could not lock '%s' id #%i for a new object!" % (self.name, force_index))
+            ids = self.repository.add([obj], [force_index])
 
-        return returnable_id
+        obj._setRegistry(self)
+        obj._registry_locked = True
+
+        this_id = self.find(obj)
+        self.repository.flush(ids)
+
+        return ids[0]
 
     @synchronised_complete_lock
     def _remove(self, _obj, auto_removed=0):
@@ -789,7 +763,7 @@ class Registry(object):
             if self._needs_metadata:
                 t2 = time.time()
                 if self.metadata is None:
-                    self.metadata = Registry(self.name + ".metadata", "Metadata repository for %s" % self.name, update_index_time=self.update_index_time)
+                    self.metadata = Registry(self.name + ".metadata", "Metadata repository for %s" % self.name)
                     self.metadata.type = self.type
                     self.metadata.location = self.location
                     setattr(self.metadata, '_parent', self) ## rcurrie Registry has NO '_parent' Object so don't understand this is this used for JobTree?
