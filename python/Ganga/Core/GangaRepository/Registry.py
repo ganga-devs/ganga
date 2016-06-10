@@ -618,38 +618,16 @@ class Registry(object):
             obj (GangaObject): This is the object we want to release the file lock for
         """
 
-        try:
-            self.__release_lock(obj)
-        except ObjectNotInRegistryError as err:
-            pass
-        except Exception as err:
-            logger.debug("Unknown exception %s" % err)
-            raise
-
-    def __release_lock(self, _obj):
-        """
-        Actually perform the release of the file and cleanup any file locks
-        Args:
-            _obj (GangaObject): This is the object we want to release the file lock for
-        """
-        logger.debug("_release_lock")
         obj = stripProxy(_obj)
 
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot manipulate locks of a disconnected repository!")
         logger.debug("Reg: %s _release_lock(%s)" % (self.name, self.find(obj)))
-        try:
-            if hasattr(obj, '_registry_locked') and obj._registry_locked:
-                oid = self.find(obj)
-                self.repository.flush([oid])
-                obj._registry_locked = False
-                self.repository.unlock([oid])
-        except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-            raise
-        except Exception as err:
-            logger.debug("un-known registry release lock err!")
-            logger.debug("Err: %s" % err)
-            raise
+        if hasattr(obj, '_registry_locked') and obj._registry_locked:
+            oid = self.find(obj)
+            self.repository.flush([oid])
+            obj._registry_locked = False
+            self.repository.unlock([oid])
 
     def getIndexCache(self, obj):
         """Returns a dictionary to be put into obj._index_cache (is this valid)
