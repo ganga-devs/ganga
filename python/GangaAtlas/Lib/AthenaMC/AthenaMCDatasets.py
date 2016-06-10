@@ -27,7 +27,7 @@ from Ganga.Utility.GridShell import getShell
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
 _refreshToACache()
-gridshell = getShell("EDG")
+gridshell = getShell()
 _writeTokens=["SCRATCHDISK","LOCALGROUPDISK"] # have to include LOCALGROUPDISK because direct subscription does not work.
 
 
