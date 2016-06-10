@@ -311,12 +311,16 @@ class Descriptor(object):
         raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
 
     @staticmethod
-    def __cloneVal(v, obj, _clone_name):
+    def cloneObject(v, obj, name):
         """
         Clone v using knowledge of the obj the attr is being set on and the name of self is the attribute name
         return a new instance of v equal to v
+        Args:
+            v (unknown): This is the object we want to clone
+            obj (GangaObject): This is the parent object of the attribute
+            name (str): This is the name of the attribute we want to assign the value of v to
         """
-        item = obj._schema[_clone_name]
+        item = obj._schema[name]
 
         if v is None:
             if item.hasProperty('category'):
@@ -325,7 +329,7 @@ class Descriptor(object):
                 assertion = item['optional']
             #assert(assertion)
             if assertion is False:
-                logger.warning("Item: '%s'. of class type: '%s'. Has a Default value of 'None' but is NOT optional!!!" % (_clone_name, type(obj)))
+                logger.warning("Item: '%s'. of class type: '%s'. Has a Default value of 'None' but is NOT optional!!!" % (name, type(obj)))
                 logger.warning("Please contact the developers and make sure this is updated!")
             return None
         elif isinstance(v, str):
@@ -335,7 +339,7 @@ class Descriptor(object):
         elif isinstance(v, dict):
             new_dict = {}
             for key, item in new_dict.iteritems():
-                new_dict[key] = Descriptor.__cloneVal(v, obj, _clone_name)
+                new_dict[key] = Descriptor.cloneObject(v, obj, name)
             return new_dict
         else:
             if not isinstance(v, Node) and isinstance(v, (list, tuple)):
@@ -345,7 +349,7 @@ class Descriptor(object):
                 except ImportError:
                     new_v = []
                 for elem in v:
-                    new_v.append(Descriptor.__cloneVal(elem, obj, _clone_name))
+                    new_v.append(Descriptor.cloneObject(elem, obj, name))
                 #return new_v
             elif not isinstance(v, Node):
                 if isclass(v):
@@ -356,17 +360,23 @@ class Descriptor(object):
                     logger.error("v: %s" % v)
                     raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (v, type(v)))
                 else:
-                    new_v = Descriptor.__copyNodeObject(new_v, obj, _clone_name)
+                    new_v = Descriptor.cloneNodeObject(new_v, obj, name)
             else:
-                new_v = Descriptor.__copyNodeObject(v, obj, _clone_name)
+                new_v = Descriptor.cloneNodeObject(v, obj, name)
 
             return new_v
 
     @staticmethod
-    def __copyNodeObject(v, obj, _clone_name):
-        """This deals with the actual deepcopy of an object which has inherited from Node class"""
+    def cloneNodeObject(v, obj, name):
+        """This copies objects inherited from Node class
+        This is a call to deepcopy after testing to see if the object can be copied to the attribute
+        Args:
+            v (GangaObject): This is the value which we want to copy from
+            obj (GangaObject): This is the object which controls the attribute we want to assign
+            name (str): This is th name of the attribute which we're setting
+        """
 
-        item = obj._schema[_clone_name]
+        item = obj._schema[name]
         GangaList = _getGangaList()
         if isinstance(v, GangaList):
             categories = v.getCategory()
@@ -374,17 +384,13 @@ class Descriptor(object):
             if (len_cat > 1) or ((len_cat == 1) and (categories[0] != item['category'])) and item['category'] != 'internal':
                 # we pass on empty lists, as the catagory is yet to be defined
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
-                raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (_clone_name, v, item['category']))
+                raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (name, v, item['category']))
         else:
             if v._category not in [item['category'], 'internal'] and item['category'] != 'internal':
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
-                raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s found cat: %s"' % (_clone_name, v, item['category'], v._category))
-
+                raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s found cat: %s"' % (name, v, item['category'], v._category))
 
         v_copy = deepcopy(v)
-
-        #logger.info("Cloned Object Parent: %s" % v_copy._getParent())
-        #logger.info("Original: %s" % v_copy._getParent())
 
         return v_copy
 
@@ -401,22 +407,7 @@ class Descriptor(object):
 
         if isinstance(val, str):
             from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
-            new_val = stripProxy(runtimeEvalString(obj, _getName(self), val))
-        else:
-            new_val = val
-
-        self.__atomic_set__(obj, new_val)
-
-        if isinstance(new_val, Node):
-            val._setDirty()
-
-    def __atomic_set__(self, obj, _val):
-        """
-        Set the attribute now that the registry flushng has been turned off
-        self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
-        _obj: parent class which 'owns' the attribute
-        _val: value of the attribute which we're about to set
-        """
+            val = stripProxy(runtimeEvalString(obj, _getName(self), val))
 
         if hasattr(obj, '_checkset_name'):
             checkSet = self._bind_method(obj, self._checkset_name)
@@ -426,10 +417,6 @@ class Descriptor(object):
             this_filter = self._bind_method(obj, self._filter_name)
             if this_filter:
                 val = this_filter(_val)
-            else:
-                val = _val
-        else:
-            val = _val
 
         # LOCKING
         obj._getWriteAccess()
@@ -441,22 +428,33 @@ class Descriptor(object):
         obj.setSchemaAttribute(_set_name, new_value)
         obj._setDirty()
 
+        if isinstance(val, Node):
+            val._setDirty()
+
+
     @staticmethod
     def cleanValue(obj, val, name):
-
+        """
+        This returns a new instance of the value which has been correctly copied if needed so we can assign it to the attribute of the class
+        Args:
+            obj (GangaObject): This is the parent object of the attribute which is being set
+            val (unknown): This is the value we want to assign to the attribute
+            name (str): This is the name of the attribute which we're changing
+        """
         from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
         item = obj._schema[name]
 
         ## If the item has been defined as a sequence great, let's continue!
         if item['sequence']:
+            # These objects are lists
             _preparable = True if item['preparable'] else False
             if len(val) == 0:
                 GangaList = _getGangaList()
                 new_val = GangaList()
             else:
                 if isinstance(item, ComponentItem):
-                    new_val = makeGangaList(val, Descriptor.cloneVal, parent=obj, preparable=_preparable, extra_args=(name, obj))
+                    new_val = makeGangaList(val, Descriptor.cloneListOrObject, parent=obj, preparable=_preparable, extra_args=(name, obj))
                 else:
                     new_val = makeGangaList(val, parent=obj, preparable=_preparable)
         else:
@@ -469,13 +467,14 @@ class Descriptor(object):
                         new_val = []
                     else:
                         new_val = GangaList()
-                    Descriptor.__createNewList(new_val, val, Descriptor.cloneVal, (name, obj))
+                    # Still don't know if val list of object here
+                    Descriptor.createNewList(new_val, val, Descriptor.cloneListOrObject, extra_args=(name, obj))
                 else:
-                    new_val = Descriptor.cloneVal(val, (name, obj))
+                    # Still don't know if val list of object here
+                    new_val = Descriptor.cloneListOrObject(val, (name, obj))
             else:
                 new_val = val
                 pass
-            #val = deepcopy(val)
 
         if isinstance(new_val, Node):
             new_val._setParent(obj)
@@ -483,17 +482,25 @@ class Descriptor(object):
         return new_val
 
     @staticmethod
-    def cloneVal(v, extra_args):
+    def cloneListOrObject(v, extra_args):
+        """
+        This clones the value v by determining if the value of v is a list or not.
+        If v is a list then a new list is returned with elements copied via cloneObject
+        if v is not a list then a new instance of the list is copied via cloneObject
+        Args:
+            v (unknown): Object we want a new copy of
+            extra_args (tuple): Contains the name of the attribute being copied and the object which owns the object being copied
+        """
         GangaList = _getGangaList()
         name=extra_args[0]
         obj=extra_args[1]
         if isinstance(v, (list, tuple, GangaList)):
             new_v = GangaList()
             for elem in v:
-                new_v.append(Descriptor.__cloneVal(elem, obj, name))
+                new_v.append(Descriptor.cloneObject(elem, obj, name))
             return new_v
         else:
-            return Descriptor.__cloneVal(v, obj, name)
+            return Descriptor.cloneObject(v, obj, name)
 
     def __delete__(self, obj):
         """
@@ -502,21 +509,16 @@ class Descriptor(object):
         del obj._data[_getName(self)]
 
     @staticmethod
-    def __createNewList(_final_list, _input_elements, action=None, extra_args=None):
+    def createNewList(_final_list, _input_elements, action=None, extra_args=None):
         """ Create a new list object which contains the old object with a possible action parsing the elements before they're added"""
 
-        def addToList(_input_elements, _final_list, action=None):
-            if action is not None:
-                for element in _input_elements:
-                    _final_list.append(action(element))
-            else:
-                for element in _input_elements:
-                    _final_list.append(element)
-            return
+        if action is not None:
+            for element in _input_elements:
+                _final_list.append(action(element))
+        else:
+            for element in _input_elements:
+                _final_list.append(element)
 
-        ## This makes it stick to 1 thread, useful for debugging problems
-        addToList(input_elements, final_list, action)
-        return
 
 class ObjectMetaclass(abc.ABCMeta):
     _descriptor = Descriptor

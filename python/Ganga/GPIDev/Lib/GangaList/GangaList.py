@@ -338,10 +338,9 @@ class GangaList(GangaObject):
     def __hash__(self):
         logger.info("hash")
         result = 0
-        for element in [hash(l) for l in self._list]:
-            result ^= element
+        for element in result:
+            result ^= hash(element)
         return result
-        # return self._list.__hash__()
 
     def __iadd__(self, obj_list):
         self._list.__iadd__(self.strip_proxy_list(obj_list, True))
