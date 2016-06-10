@@ -285,11 +285,11 @@ def full_print(obj, out=None, interactive=False):
                     stripProxy(x).printTree(sio, interactive)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
-                    outStringList.append(', '.join(result.rstrip()))
+                    outStringList.append(result.rstrip())
                 else:
                     # remove trailing whitespace and newlines
-                    outStringList.append(', '.join(str(x).rstrip()))
-            outString += ''.join(outStringList)
+                    outStringList.append(str(x).rstrip())
+            outString += ', '.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)
         return
@@ -324,11 +324,11 @@ def summary_print(obj, out=None, interactive=False):
                     stripProxy(x).printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
-                    outStringList.append(', '.join(result.rstrip()))
+                    outStringList.append(result.rstrip())
                 else:
                     # remove trailing whitespace and newlines
-                    outStringList.append(', '.join(str(x).rstrip()))
-            outString += ''.join(outStringList)
+                    outStringList.append(str(x).rstrip())
+            outString += ', '.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)
         return

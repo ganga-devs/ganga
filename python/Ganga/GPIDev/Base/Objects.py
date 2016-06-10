@@ -620,14 +620,11 @@ class GangaObject(Node):
         self._index_cache_dict = {}
         self._registry = None
 
-        if self._schema is not None and hasattr(self._schema, 'allItems'):
-            self._data_dict = dict.fromkeys(self._schema.datadict)
-            for attr, item in self._schema.allItems():
-                ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
-                if item.getProperties()['getter'] is None:
-                    setattr(self, attr, self._schema.getDefaultValue(attr))
-        else:
-            self._data_dict = {}
+        self._data_dict = dict.fromkeys(self._schema.datadict)
+        for attr, item in self._schema.allItems():
+            ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
+            if item.getProperties()['getter'] is None:
+                setattr(self, attr, self._schema.getDefaultValue(attr))
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
