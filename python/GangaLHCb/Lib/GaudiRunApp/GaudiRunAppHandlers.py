@@ -340,6 +340,7 @@ if __name__ == '__main__':
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-allHandlers.add('GaudiRun', 'Dirac', GaudiRunDiracRTHandler)
+# Not enabled for 6.1.20 release - rcurrie
+#from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+#allHandlers.add('GaudiRun', 'Dirac', GaudiRunDiracRTHandler)
 
