@@ -150,7 +150,7 @@ def manualExportToGPI(my_interface=None):
     # At this point we expect to have the GridProxy already created
     # by one of the Grid plugins (LCG/NG/etc) so we search for it in creds
     # cache
-    credential = getCredential(name='GridProxy', create=False)
+    credential = getCredential(name='GridProxy')
     if credential:
         exportToInterface(my_interface, 'gridProxy', credential, 'Objects', 'Grid proxy management object.')
 
