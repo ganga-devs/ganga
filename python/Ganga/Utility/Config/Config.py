@@ -474,10 +474,6 @@ class PackageConfig(object):
         # sanity check to force using makeConfig()
         self._config_made = False
 
-        if _configured and self.is_open:
-            logger = getLogger()
-            logger.error('cannot define open configuration section %s after configure() step', self.name)
-
         self._hasModified = False
 
     def setModified(self, val):
@@ -905,9 +901,6 @@ def setSessionValue(config_name, option_name, value):
     unknownConfigFileValues[config_name][option_name] = value
 
 
-_configured = False
-
-
 def setSessionValuesFromFiles(filenames, system_vars):
     """ Sets session values for all options in all configuration units
     defined in the sequence of config files.  Initialize config parser
@@ -935,8 +928,6 @@ def setSessionValuesFromFiles(filenames, system_vars):
                 logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (str(name), str(o)))
                 v = cfg.get(name, o, raw=True)
             setSessionValue(name, o, v)
-
-    _configured = True
 
 
 def load_user_config(filename, system_vars):
