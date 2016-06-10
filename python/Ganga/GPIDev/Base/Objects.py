@@ -35,9 +35,8 @@ def _getName(obj):
     if returnable is None:
         returnable = getattr(getattr(obj, '__class__', None), '__name__', None)
     if returnable is None:
-        return str(obj)
-    else:
-        return returnable
+        returnable = str(obj)
+    return returnable
 
 logger = getLogger(modulename=1)
 
