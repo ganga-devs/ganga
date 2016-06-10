@@ -617,8 +617,7 @@ class Registry(object):
         Args:
             obj (GangaObject): This is the object we want to release the file lock for
         """
-
-        obj = stripProxy(_obj)
+        obj = stripProxy(obj)
 
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot manipulate locks of a disconnected repository!")
