@@ -590,56 +590,24 @@ class Registry(object):
         """
         logger.debug("_write_access")
         obj = stripProxy(_obj)
-        obj_id = id(_obj)
 
         with obj.const_lock:
-            self.__write_access(obj)
 
-    def __write_access(self, _obj):
-        """
-        This actually performs the file locks and gets access to the object
-        Args:
-            _obj (GangaObject): This is the object we want to get write access to and lock on disk
-        """
-        logger.debug("__write_acess")
-        obj = stripProxy(_obj)
-        this_id = id(obj)
+            if self.hasStarted() is not True:
+                raise RegistryAccessError("Cannot get write access to a disconnected repository!")
 
-        if self.hasStarted() is not True:
-            raise RegistryAccessError("Cannot get write access to a disconnected repository!")
-        if not hasattr(obj, '_registry_locked') or not obj._registry_locked:
-            try:
+            if not hasattr(obj, '_registry_locked') or not obj._registry_locked:
                 this_id = self.find(obj)
-                try:
-                    if len(self.repository.lock([this_id])) == 0:
-                        errstr = "Could not lock '%s' object #%i!" % (self.name, this_id)
-                        try:
-                            errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(this_id)
-                        except RegistryLockError as err:
-                            raise
-                        except Exception as err:
-                            logger.debug( "Unknown Locking Exception: %s" % err)
-                            raise
-                        raise RegistryLockError(errstr)
-                except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-                    raise
-                except Exception as err:
-                    logger.debug("Unknown write access Error: %s" % err)
-                    raise
-                finally:  # try to load even if lock fails
-                    try:
-                        if not self.has_loaded(obj):
-                            self._load([this_id])
-                    except KeyError, err:
-                        logger.debug("_write_access KeyError %s" % err)
-                        raise RegistryKeyError("Write: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
-                    except InaccessibleObjectError as err:
-                        raise RegistryKeyError("Write: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, err))
-                obj._registry_locked = True
-            except Exception as err:
-                raise
+                if len(self.repository.lock([this_id])) == 0:
+                    errstr = "Could not lock '%s' object #%i!" % (self.name, this_id)
+                    errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(this_id)
+                    raise RegistryLockError(errstr)
 
-        return True
+                # try to load even if lock fails
+                if not self.has_loaded(obj):
+                    self._load([this_id])
+
+                obj._registry_locked = True
 
     def _release_lock(self, obj):
         """Release the lock on a given object.
