@@ -10,8 +10,6 @@ from cStringIO import StringIO
 
 from inspect import isclass
 
-from functools import partial
-
 from Ganga.Utility.logging import getLogger
 
 logger = getLogger()
@@ -204,11 +202,9 @@ class VSummaryPrinter(VPrinter):
 
     def _CallPrintSummaryTree(self, obj):
         sio = StringIO()
-        #logger.debug("_CallPrintSummaryTree")
         if not hasattr(stripProxy(obj), 'printSummaryTree'):
             print("%s" % str(obj), file=self.out)
         else:
-            #logger.debug("calling printSummaryTree")
             runProxyMethod(obj, 'printSummaryTree', self.level, self.verbosity_level, self.indent(), sio, self.selection, self._interactive)
         result = sio.getvalue()
         if result.endswith('\n'):
@@ -328,7 +324,6 @@ def summary_print(obj, out=None, interactive=False):
             for x in obj:
                 if isType(x, GangaObject):
                     sio =StringIO()
-                    #logger.debug("summary_print: printSummaryTree")
                     stripProxy(x).printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
@@ -339,8 +334,6 @@ def summary_print(obj, out=None, interactive=False):
                 # Check if we're at the last element or not and add commas
                 if len(outStringList)+1 != 2*obj_len:
                     outStringList.append(', ')
-            for this_obj in obj:
-                print_x(this_obj, outStringList, obj_len)
             outString += ''.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)

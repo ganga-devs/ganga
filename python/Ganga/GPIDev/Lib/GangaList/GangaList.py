@@ -34,7 +34,7 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False, extra_
 
     result = GangaList()
     # Subvert tests and modify the ._list here ourselves
-    # This is potentially DANGEROUS is proxies aren't correctly stripped
+    # This is potentially DANGEROUS if proxies aren't correctly stripped
     result._list.extend([stripProxy(l) for l in _list])
     result._is_preparable = preparable
     result._is_a_ref = False
@@ -108,10 +108,8 @@ class GangaList(GangaObject):
 
         if len(args) == 1:
             if isType(args[0], (len, GangaList, tuple)):
-                def myExpand(elem):
-                    self._list.expand(self.strip_proxy(elem))
                 for elem in args[0]:
-                    myExpand(elem)
+                    self._list.expand(self.strip_proxy(elem))
             elif args[0] is None:
                 self._list = None
             else:
@@ -139,12 +137,10 @@ class GangaList(GangaObject):
                 if self.has_proxy_element(value):
                     returnable_list = [stripProxy(l) for l in value]
                     my_parent = self._getParent()
-                    def safeSetParent(elem):
+                    for elem in returnable_list:
                         if isinstance(elem, GangaObject):
                             elem._setParent(my_parent)
                         return
-                    for l in returnable_list:
-                        safeSetParent(l)
                     return returnable_list
                 else:
                     return value
@@ -227,8 +223,8 @@ class GangaList(GangaObject):
             if hasattr(elem, 'category'):
                 return elem._category
             else:
-                return type(o)
-        return unique([return_cat(elem) for elem in self._list])
+                return type(elem)
+        return unique([return_cat(l) for l in self._list])
 
     def _readonly(self):
         if self._is_preparable and hasattr(self, '_getParent'):
@@ -570,7 +566,7 @@ class GangaList(GangaObject):
     def toString(self):
         """Returns a simple str of the _list."""
         returnable_str = "["
-        def stringFunc(element, returnable_str):
+        for element in self._list:
             if isType(element, GangaObject):
                 returnable_str += repr(stripProxy(element))
             else:
@@ -578,8 +574,6 @@ class GangaList(GangaObject):
                 returnable_str += str(stripProxy(element))
                 returnable_str += "'"
             returnable_str += ", "
-        for l in self._list:
-            stringFunc(l, returnable_str=returnable_str)
         returnable_str += "]"
         return returnable_str
 
@@ -591,34 +585,19 @@ class GangaList(GangaObject):
     def accept(self, visitor):
         visitor.nodeBegin(self)
 
-        def simpleFunc(_tuple):
-            name = _tuple[0]
-            item = _tuple[1]
+        for (name, item) in self._schema.simpleItems():
             if name == "_list":
                 visitor.componentAttribute(self, "_list", self._data["_list"], 1)
             elif item['visitable']:
                 visitor.simpleAttribute(self, name, getattr(self, name), item['sequence'])
 
-        def sharedFunc(_tuple):
-            name = _tuple[0]
-            item = _tuple[1]
+        for (name, item) in self._schema.sharedItems():
             if item['visitable']:
                 visitor.sharedAttribute(self, name, getattr(self, name), item['sequence'])
 
-        def componentFunc(_tuple):
-            name = _tuple[0]
-            item = _tuple[1]
+        for (name, item) in self._schema.componentItems():
             if item['visitable']:
                 visitor.componentAttribute(self, name, getattr(self, name), item['sequence'])
-
-        for item in self._schema.simpleItems():
-            simpleFunc(item)
-
-        for item in self._schema.sharedItems():
-            sharedFunc(item)
-
-        for item in self._schema.componentItems():
-            componentFunc(item)
 
         visitor.nodeEnd(self)
 
