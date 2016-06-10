@@ -53,7 +53,7 @@ _voidCredentials = {}
 logger = getLogger()
 
 
-def getCredential(name="", middleware="", create=True):
+def getCredential(name="", create=True):
     """
     Function to return credential object of requested type
 
@@ -77,7 +77,7 @@ def getCredential(name="", middleware="", create=True):
         if ( not name in _allCredentials.keys() ) and \
            ( not name in _voidCredentials.keys() ) and \
            (create is True):
-            credential = _credentialPlugins[name](middleware)
+            credential = _credentialPlugins[name]()
             if credential.isAvailable():
                 _allCredentials[name] = credential
             else:
