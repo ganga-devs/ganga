@@ -47,22 +47,22 @@ class PrepRegistry(Registry):
         #logger.info("Geting id: %s" %  self.metadata.ids()[-1])
         self.shareref = self.metadata._objects[self.metadata.ids()[-1]]
         #logger.info("ShareRef: %s" % getName(self.shareref))
-        self._lock.acquire()
-        ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
-        ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
-        try:
-            stripProxy(self.shareref).closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
-        except Exception as err:
-            logger.error("Shutdown Error in ShareRef")
-            logger.error("Err: %s" % err)
+        with self.registry._flush_lock:
+            with self.registry._read_lock:
+                ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
+                ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
+                try:
+                    stripProxy(self.shareref).closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
+                except Exception as err:
+                    logger.error("Shutdown Error in ShareRef")
+                    logger.error("Err: %s" % err)
 
-        try:
-            self._safe_shutdown()
-        except Exception as err:
-            logger.debug("Shutdown Error: %s" % err)
-        finally:
-            self._hasStarted = False
-            self._lock.release()
+                try:
+                    self._safe_shutdown()
+                except Exception as err:
+                    logger.debug("Shutdown Error: %s" % err)
+
+                self._hasStarted = False
 
         self.metadata = None
 

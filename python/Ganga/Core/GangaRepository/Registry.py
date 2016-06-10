@@ -133,32 +133,27 @@ class IncompleteObject(GangaObject):
         This will trigger a re-load of the object from disk which is useful if the object was locked but accessible by Ganga
         TODO work ouf if this is still called anywhere
         """
-        self.registry._lock.acquire()
-        try:
-
-            if not self.has_loaded(self._registry._objects[self.id]):
-                self.registry._load([self.id])
-            logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
-        finally:
-            self.registry._lock.release()
+        with self.registry._flush_lock:
+            with self.registry._read_lock:
+                if not self.has_loaded(self._registry._objects[self.id]):
+                    self.registry._load([self.id])
+                logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
 
     def remove(self):
         """
         This will trigger a delete of the the object itself from within the given Repository but not registry
         TODO work out if this is safe and still called
         """
-        self.registry._lock.acquire()
-        try:
-            if len(self.registry.repository.lock([self.id])) == 0:
-                errstr = "Could not lock '%s' object #%i!" % (self.registry.name, self.id)
-                try:
-                    errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(self.id)
-                except Exception as err:
-                    logger.debug("Remove Lock error: %s" % err)
-                raise RegistryLockError(errstr)
-            self.registry.repository.delete([self.id])
-        finally:
-            self.registry._lock.release()
+        with self.registry._flush_lock:
+            with self.registry._read_lock:
+                if len(self.registry.repository.lock([self.id])) == 0:
+                    errstr = "Could not lock '%s' object #%i!" % (self.registry.name, self.id)
+                    try:
+                        errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(self.id)
+                    except Exception as err:
+                        logger.debug("Remove Lock error: %s" % err)
+                    raise RegistryLockError(errstr)
+                self.registry.repository.delete([self.id])
 
     def __repr__(self):
         """
