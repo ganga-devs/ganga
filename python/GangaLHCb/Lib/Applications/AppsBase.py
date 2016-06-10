@@ -10,7 +10,7 @@ from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps, guess_versi
 from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, activeSummaryItems
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import SimpleItem
-from GangaLHCb.Lib.LHCbDataset import LHCbDataset, OutputData
+from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from Ganga.Utility.Shell import Shell
 from PythonOptionsParser import PythonOptionsParser
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
