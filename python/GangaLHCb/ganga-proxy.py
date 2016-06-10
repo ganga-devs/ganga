@@ -26,7 +26,7 @@ except:
     e = Exception()
     raise e
 
-global_env = None
+global_env = {}
 
 if "GANGADIRACENVIRONMENT" not in os.environ:
     e = Exception()
