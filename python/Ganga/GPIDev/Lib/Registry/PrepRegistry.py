@@ -47,8 +47,8 @@ class PrepRegistry(Registry):
         #logger.info("Geting id: %s" %  self.metadata.ids()[-1])
         self.shareref = self.metadata._objects[self.metadata.ids()[-1]]
         #logger.info("ShareRef: %s" % getName(self.shareref))
-        with self.registry._flush_lock:
-            with self.registry._read_lock:
+        with self._flush_lock:
+            with self._read_lock:
                 ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
                 ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
                 try:
