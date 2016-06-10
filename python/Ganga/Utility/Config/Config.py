@@ -146,7 +146,7 @@ allConfigs = {}
 # configuration session buffer
 # this dictionary contains the value for the options which are defined in the configuration file and which have
 # not yet been defined
-allConfigFileValues = {}
+unknownConfigFileValues = {}
 
 translated_names = {}
 # helper function which helps migrating the names from old naming convention
@@ -544,8 +544,8 @@ class PackageConfig(object):
         option.defineOption(default_value, docstring, **meta)
         self.options[option.name] = option
 
-        if self.name in allConfigFileValues:
-            conf_value = allConfigFileValues[self.name]
+        if self.name in unknownConfigFileValues:
+            conf_value = unknownConfigFileValues[self.name]
         else:
             msg = "Error getting ConfigFileValue Option: %s" % str(self.name)
             if 'logger' in locals() and logger is not None:
@@ -929,8 +929,8 @@ def setSessionValue(config_name, option_name, value):
 
     # put value in the buffer, it will be removed from the buffer when option
     # is added
-    allConfigFileValues.setdefault(config_name, {})
-    allConfigFileValues[config_name][option_name] = value
+    unknownConfigFileValues.setdefault(config_name, {})
+    unknownConfigFileValues[config_name][option_name] = value
 
 
 _configured = False
@@ -1045,8 +1045,8 @@ def sanityCheck():
         if not c._config_made:
             logger.error("sanity check failed: %s: no makeConfig() found in the code", c.name)
 
-    for name in allConfigFileValues:
-        opts = allConfigFileValues[name]
+    for name in unknownConfigFileValues:
+        opts = unknownConfigFileValues[name]
         if name in allConfigs:
             cfg = allConfigs[name]
         else:
