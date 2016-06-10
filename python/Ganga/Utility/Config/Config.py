@@ -168,9 +168,7 @@ def _migrate_name(name):
             logger.warning('obsolete config name found: replaced "%s" -> "%s"' % (name, name3))
             logger.warning('config names must be python identifiers, please correct your usage in the future ')
             translated_names[name] = name3
-    elif name in translated_names:
-        pass
-    else:
+    elif name not in translated_names:
         translated_names[name] = name
 
     return translated_names[name]

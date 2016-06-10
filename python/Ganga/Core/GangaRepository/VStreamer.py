@@ -16,8 +16,6 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
 from .GangaRepository import SchemaVersionError
 
-from functools import partial
-
 import xml.sax.saxutils
 import copy
 

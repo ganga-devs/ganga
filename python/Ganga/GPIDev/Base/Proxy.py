@@ -214,8 +214,7 @@ def isType(_obj, type_or_seq):
     if isinstance(type_or_seq, getKnownLists()):
         clean_list = []
         for type_obj in type_or_seq:
-            str_type = str
-            if type_obj != str_type and type(type_obj) != type(str_type) and (not isclass(type_obj)):
+            if type_obj != str and type(type_obj) != type(str) and (not isclass(type_obj)):
                 clean_list.append(type(stripProxy(type_obj)))
             elif isclass(type_obj):
                 clean_list.append(type_obj)

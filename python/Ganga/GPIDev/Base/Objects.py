@@ -619,16 +619,12 @@ class GangaObject(Node):
         self._index_cache_dict = {}
         self._registry = None
 
-        #Node.__init__(self, None)
-
         if self._schema is not None and hasattr(self._schema, 'allItems'):
             self._data_dict = dict.fromkeys(self._schema.datadict)
             for attr, item in self._schema.allItems():
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
-                    self._data_dict[attr] = Descriptor.cleanValue(self, self._schema.getDefaultValue(attr, make_copy=True), attr)
-                    #Descriptor(attr, item).__set__(self, self._schema.getDefaultValue(attr, make_copy=True))
-                    #setattr(self, attr, self._schema.getDefaultValue(attr, make_copy=True))
+                    setattr(self, attr, self._schema.getDefaultValue(attr, make_copy=True))
         else:
             self._data_dict = {}
 
