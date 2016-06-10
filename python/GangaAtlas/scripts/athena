@@ -649,8 +649,6 @@ elif opt.backend == 'lcg' or opt.glite:
         j.backend.requirements.cloud=opt.cloud 
     if opt.glite: 
         j.backend.middleware = 'GLITE'
-    elif opt.edg: 
-        j.backend.middleware = 'EDG' 
 elif opt.backend == 'cream':
     j.backend = CREAM()
     j.backend.requirements=AtlasCREAMRequirements()

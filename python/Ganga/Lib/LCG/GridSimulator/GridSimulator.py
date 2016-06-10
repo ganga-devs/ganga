@@ -50,13 +50,10 @@ class GridSimulator(object):
 
     '''Simulator of LCG interactions'''
 
-    middleware = 'GLITE'
-
     credential = None
 
-    def __init__(self, middleware='GLITE'):
+    def __init__(self):
         self.active = True
-        self.middleware = middleware.upper()
         self.credential = ICredential()  # FIXME: or the real one
         #import Ganga.Core.FileWorkspace
         #basedir = Ganga.Core.FileWorkspace.gettop()
