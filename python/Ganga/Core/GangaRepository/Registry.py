@@ -441,7 +441,6 @@ class Registry(object):
         obj._setRegistry(self)
         obj._registry_locked = True
 
-        this_id = self.find(obj)
         self.repository.flush(ids)
 
         return ids[0]
@@ -464,7 +463,6 @@ class Registry(object):
         """
         logger.debug("_remove")
         obj = stripProxy(_obj)
-        obj_id = id(obj)
 
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot remove objects from a disconnected repository!")
@@ -477,7 +475,6 @@ class Registry(object):
 
             logger.debug('deleting the object %d from the registry %s', this_id, self.name)
             self.repository.delete([this_id])
-            del obj
 
     @synchronised_flush_lock
     def _flush(self, objs):
@@ -537,10 +534,18 @@ class Registry(object):
             sub_obj (GangaObject):  Ignored under the current model
         """
         logger.debug("_read_access")
-        obj_id = id(stripProxy(_obj))
 
         with _obj.const_lock:
-            self.__safe_read_access(_obj, sub_obj)
+            obj = stripProxy(_obj)
+
+            if self.hasStarted() is not True:
+                raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is "
+                                          "disconnected! Type 'reactivate()' if you want to reconnect." %
+                                          (self.find(obj), self.name))
+
+            if not self.has_loaded(obj):
+                this_id = self.find(obj)
+                self._load([this_id])
 
     @synchronised_complete_lock
     def _load(self, obj_ids):
@@ -572,40 +577,6 @@ class Registry(object):
                 ## Didn't load mark as clean so it's not flushed
                 if obj_id in self._objects:
                     self._objects[obj_id]._setFlushed()
-            raise
-
-    def __safe_read_access(self, _obj, sub_obj):
-        """
-        This method will attempt to load an unloaded object from disk and acquire a file lock to prevent other Ganga sessions modifying it
-        Args:
-            _obj (GangaObject): The object which we want to get read access to and lock on disk
-            sub_obj (str): Ignored under the current model
-        """
-        logger.debug("_safe_read_access")
-        obj = stripProxy(_obj)
-
-        if self.hasStarted() is not True:
-            raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
-
-        if hasattr(obj, "_registry_refresh"):
-            delattr(obj, "_registry_refresh")
-        assert not hasattr(obj, "_registry_refresh")
-
-        try:
-            try:
-                if not self.has_loaded(obj):
-                    this_id = self.find(obj)
-                    self._load([this_id])
-            except KeyError as err:
-                logger.error("_read_access KeyError %s" % err)
-                raise RegistryKeyError("Read: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
-            except InaccessibleObjectError as err:
-                raise
-                raise RegistryKeyError("Read: The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, err))
-        except (RepositoryError, RegistryAccessError, RegistryLockError, ObjectNotInRegistryError) as err:
-            raise
-        except Exception as err:
-            logger.debug("Unknown read access Error: %s" % err)
             raise
 
     def _write_access(self, _obj):
@@ -659,8 +630,6 @@ class Registry(object):
                     try:
                         if not self.has_loaded(obj):
                             self._load([this_id])
-                            if hasattr(obj, "_registry_refresh"):
-                                delattr(obj, "_registry_refresh")
                     except KeyError, err:
                         logger.debug("_write_access KeyError %s" % err)
                         raise RegistryKeyError("Write: The object #%i in registry '%s' was deleted!" % (this_id, self.name))
