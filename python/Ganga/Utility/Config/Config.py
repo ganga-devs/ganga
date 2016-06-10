@@ -100,7 +100,6 @@ class ConfigError(GangaException):
     """
 
     def __init__(self, what=''):
-        # GangaException.__init__(self)
         super(ConfigError, self).__init__()
         self.what = what
 
@@ -128,7 +127,7 @@ def getLogger():
         logger = Ganga.Utility.logging.getLogger()
         return logger
     except AttributeError as err:
-        print("AttributeError: %s" % str(err))
+        print("AttributeError: %s" % err)
         # in such a case we return a mock proxy object which ignore all calls
         # such as logger.info()...
         class X(object):
@@ -177,8 +176,6 @@ def makeConfig(name, docstring, **kwds):
     """
 
     if _after_bootstrap:
-        #import traceback
-        #traceback.print_stack()
         raise ConfigError(
             'attempt to create a configuration section [%s] after bootstrap' % name)
 
@@ -189,12 +186,6 @@ def makeConfig(name, docstring, **kwds):
             setattr(c, k, kwds[k])
     except KeyError:
         c = allConfigs[name] = PackageConfig(name, docstring, **kwds)
-
-# _after_bootstrap flag solves chicken-egg problem between logging and config modules
-# if _after_bootstrap:
-# make the GPI proxy
-##          from Ganga.GPIDev.Lib.Config.Config import createSectionProxy
-# createSectionProxy(name)
 
     c._config_made = True
     return c
@@ -256,10 +247,6 @@ class ConfigOption(object):
         # try:
         if self.filter:
             session_value = self.filter(self, session_value)
-        # except Exception as x:
-        #    import  Ganga.Utility.logging
-        #    logger = Ganga.Utility.logging.getLogger()
-        #    logger.warning('problem with option filter: %s: %s',self.name,x)
 
         if hasattr(self, 'session_value'):
             session_value = self.transform_PATH_option(session_value, self.session_value)
@@ -383,8 +370,7 @@ class ConfigOption(object):
 
         new_value = value
 
-        #optdesc = 'while setting option [%s]%s = %s ' % (self.name,o,str(value))
-        optdesc = 'while setting option [.]%s = %s ' % (self.name, str(value))
+        optdesc = 'while setting option [.]%s = %s ' % (self.name, value)
 
         # eval string values only if the cast_type is not exactly a string
         if isinstance(value, str) and cast_type is not str:
@@ -395,7 +381,7 @@ class ConfigOption(object):
                 logger.debug('ignored failed eval(%s): %s (%s)', value, x, optdesc)
 
         # check the type of the value unless the cast_type is not NoneType
-        logger.debug('checking value type: %s (%s)', str(cast_type), optdesc)
+        logger.debug('checking value type: %s (%s)', cast_type, optdesc)
 
         def check_type(x, t):
             return isinstance(x, t) or x is t
@@ -412,8 +398,7 @@ class ConfigOption(object):
 
         from Ganga.Utility.logic import implies
         if not implies(not cast_type is type(None), type_matched):
-            raise ConfigError('type mismatch: expected %s got %s (%s)' % (
-                str(cast_type), str(type(new_value)), optdesc))
+            raise ConfigError('type mismatch: expected %s got %s (%s)' % (cast_type, type(new_value), optdesc))
 
         setattr(self, x_name, new_value)
 
@@ -515,12 +500,10 @@ class PackageConfig(object):
         if self.name in unknownConfigFileValues:
             conf_value = unknownConfigFileValues[self.name]
         else:
-            msg = "Error getting ConfigFileValue Option: %s" % str(self.name)
-            if 'logger' in locals() and logger is not None:
-                logger.debug("dbg: %s"%msg)
+            msg = "Error getting ConfigFileValue Option: %s" % self.name
+            if locals().get('logger') is not None:
+                locals().get('logger').debug("dbg: %s"%msg)
             else:
-                ##uncomment for debugging
-                ##print("%s" % msg)
                 pass
             conf_value = dict()
 
@@ -530,19 +513,11 @@ class PackageConfig(object):
                 option.setSessionValue(session_value)
                 del conf_value[option.name]
             except Exception as err:
-                msg = "Error Setting Session Value: %s" % str(err)
-                if 'logger' in locals() and logger is not None:
-                    logger.debug("dbg: %s"%msg)
+                msg = "Error Setting Session Value: %s" % err
+                if locals().get('logger') is not None:
+                    locals().get('logger').debug("dbg: %s" % msg)
                 else:
-                    ##uncomment for debugging
-                    ##print("%s" % msg)
                     pass
-
-
-# set the GPI proxy object if already created, if not it will be created by bootstrap() function in the GPI Config module
-# if _after_bootstrap:
-##             from Ganga.GPIDev.Lib.Config.Config import createOptionProxy
-# createOptionProxy(self.name,name)
 
     def setSessionValue(self, name, value, raw=0):
         """  Add or  override options  as a  part of  second  phase of
@@ -575,10 +550,10 @@ class PackageConfig(object):
             except Exception as err:
                 import traceback
                 traceback.print_stack()
-                logger.error("h[1]: %s" % str(h[1]))
+                logger.error("h[1]: %s" % h[1])
                 logger.error("Error in Setting Session Value!")
-                logger.error("Name: %s Value: '%s'" % (str(name), str(value)))
-                logger.error("Err:\n%s" % str(err))
+                logger.error("Name: %s Value: '%s'" % (name, value))
+                logger.error("Err:\n%s" % err)
                 raise err
             finally:
                 pass
@@ -651,11 +626,6 @@ class PackageConfig(object):
         if name in self.options:
             return self.options[name].value
         else:
-            #logger = getLogger()
-            #logger.debug("Effective Option %s NOT FOUND, Effective Options are:" % (name))
-            opts = self.getEffectiveOptions()
-            #for k, v in opts.iteritems():
-            #    logger.debug("\n\t%s:%s" % (str(k), str(v)))
             raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name))
 
     def getEffectiveLevel(self, name):
@@ -759,12 +729,6 @@ def transform_PATH_option(name, new_value, current_value):
             ret_value = new_value  # [3:]
             new_value = ":::"
 
-        # remove duplicate path entries
-        #if ret_value[:3] == ':::':
-        #    new_value = ":::"
-        #else:
-        #    new_value = ""
-
         for tok in ret_value.strip(":").split(":"):
             if new_value.find(tok) == -1 or tok == "":
                 new_value += "%s:" % tok
@@ -783,7 +747,7 @@ def read_ini_files(filenames, system_vars):
 
     logger = getLogger()
 
-    logger.debug('reading ini files: %s', str(filenames))
+    logger.debug('reading ini files: %s', filenames)
 
     main = make_config_parser(system_vars)
 
@@ -802,7 +766,7 @@ def read_ini_files(filenames, system_vars):
             with open(f) as file_f:
                 cc.readfp(file_f)
         except Exception as x:
-            logger.warning('Exception reading config file %s', str(x))
+            logger.warning('Exception reading config file %s', x)
 
         for sec in cc.sections():
             if not main.has_section(sec):
@@ -812,7 +776,7 @@ def read_ini_files(filenames, system_vars):
                 try:
                     value = cc.get(sec, name)
                 except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
-                    logger.debug("Parse Error!:\n  %s" % str(err))
+                    logger.debug("Parse Error!:\n  %s" % err)
                     value = cc.get(sec, name, raw=True)
                     #raise err
 
@@ -824,7 +788,7 @@ def read_ini_files(filenames, system_vars):
                         Ganga.Utility.logging.log_unknown_exception()
                         logger.debug('The variable \"' + localvarstripped + '\" is referenced but not defined in the ')
                         logger.debug('[' + sec + '] configuration section of ' + f)
-                        logger.debug("err: %s" % str(err))
+                        logger.debug("err: %s" % err)
 
                 # do not put the DEFAULTS into the sections (no need)
                 if name in cc.defaults():
@@ -837,8 +801,8 @@ def read_ini_files(filenames, system_vars):
                 except ConfigParser.NoOptionError:
                     current_value = None
                 except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
-                    logger.debug("Parse Error!:\n  %s" % str(err))
-                    logger.debug("Failed to expand, Importing value %s:%s as raw" % (str(sec), str(name)))
+                    logger.debug("Parse Error!:\n  %s" % err)
+                    logger.debug("Failed to expand, Importing value %s:%s as raw" % (sec, name))
                     current_value = main.get(sec, name, raw=True)
                     current_value = current_value.replace('%', '%%')
                     #raise err
@@ -874,11 +838,11 @@ def read_ini_files(filenames, system_vars):
                     main.set(sec, name, value)
                 except Exception as err:
                     value = value.replace('%', '%%')
-                    logger.debug("Error Setting %s" % str(err))
+                    logger.debug("Error Setting %s" % err)
                     try:
                         main.set(sec, name, value)
                     except Exception as err2:
-                        logger.debug("Error setting #2: %s" % str(err2))
+                        logger.debug("Error setting #2: %s" % err2)
                         raise err
 
     return main
@@ -924,8 +888,8 @@ def setSessionValuesFromFiles(filenames, system_vars):
                 v = cfg.get(name, o)
             except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
                 logger = getLogger()
-                logger.debug("Parse Error!:\n  %s" % str(err))
-                logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (str(name), str(o)))
+                logger.debug("Parse Error!:\n  %s" % err)
+                logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (name, o))
                 v = cfg.get(name, o, raw=True)
             setSessionValue(name, o, v)
 
@@ -952,8 +916,8 @@ def load_user_config(filename, system_vars):
             try:
                 v = new_cfg.get(name, o)
             except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
-                logger.debug("Parse Error!:\n  %s" % str(err))
-                logger.debug("Failed to expand %s:%s, loading it as raw" % (str(name), str(o)))
+                logger.debug("Parse Error!:\n  %s" % err)
+                logger.debug("Failed to expand %s:%s, loading it as raw" % (name, o))
                 v = new_cfg.get(name, o, raw=True)
             current_cfg_section.setUserValue(o, v)
 
@@ -980,8 +944,7 @@ def setConfigOption(section="", item="", value=""):
             if item in config.getEffectiveOptions():
                 config.setSessionValue(item, value)
         except Exception as err:
-            logger.debug("Error setting Option: %s = %s  :: %s" % (str(item), str(value), str(err)))
-            pass
+            logger.debug("Error setting Option: %s = %s  :: %s" % (item, value, err))
 
     return None
 # KH 050725: End of addition
