@@ -21,7 +21,7 @@ for i in range(100):
 
 j1 = Job(application=Executable(exe='/bin/echo'))
 j1.name = 'testLCG_multiple'
-j1.backend = LCG(middleware='GLITE')
+j1.backend = LCG()
 j1.splitter = GenericSplitter()
 j1.splitter.attribute = 'application.args'
 j1.splitter.values = args
