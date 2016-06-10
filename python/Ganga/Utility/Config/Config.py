@@ -148,35 +148,10 @@ allConfigs = {}
 # not yet been defined
 unknownConfigFileValues = {}
 
-translated_names = {}
-# helper function which helps migrating the names from old naming convention
-# to the stricter new one: spaces are removed, colons replaced by underscored
-# returns a valid name or raises a ValueError
-
-
-def _migrate_name(name):
-    import Ganga.Utility.strings as strings
-
-    if (name not in translated_names) and (not strings.is_identifier(name)):
-        name2 = strings.drop_spaces(name)
-        name3 = name2.replace(':', '_')
-
-        if not strings.is_identifier(name3):
-            raise ValueError('config name %s is not a valid python identifier' % name)
-        else:
-            logger = getLogger()
-            logger.warning('obsolete config name found: replaced "%s" -> "%s"' % (name, name3))
-            logger.warning('config names must be python identifiers, please correct your usage in the future ')
-            translated_names[name] = name3
-    elif name not in translated_names:
-        translated_names[name] = name
-
-    return translated_names[name]
 
 def getConfig(name):
     """
     Get an existing PackageConfig.
-    Temporary name migration conversion applies -- see _migrate_name().
     Principle is the same as for getLogger() -- the config instances may
     be easily shared between different parts of the program.
 
@@ -190,7 +165,6 @@ def getConfig(name):
         KeyError: if the config is not found
     """
 
-    name = _migrate_name(name)
     try:
         return allConfigs[name]
     except KeyError:
@@ -208,7 +182,6 @@ def makeConfig(name, docstring, **kwds):
         raise ConfigError(
             'attempt to create a configuration section [%s] after bootstrap' % name)
 
-    name = _migrate_name(name)
     try:
         c = allConfigs[name]
         c.docstring = docstring
@@ -479,12 +452,11 @@ class PackageConfig(object):
     def __init__(self, name, docstring, **meta):
         """ Arguments:
          - name may not contain blanks and should be a valid python identifier otherwise ValueError is raised
-         - temporary name migration conversion applies -- see _migrate_name()
          meta args have the same meaning as for the ConfigOption:
           - hidden
           - cfile
         """
-        self.name = _migrate_name(name)
+        self.name = name
         self.options = {}  # {'name':Option('name',default_value,docstring)}
         self.docstring = docstring
         self.hidden = False
