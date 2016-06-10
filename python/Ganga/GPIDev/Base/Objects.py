@@ -297,7 +297,7 @@ class Descriptor(object):
         # Since we couldn't find the information in the cache, we will need to fully load the object
 
         # Guarantee that the object is now loaded from disk
-        obj._getReadAccess()
+        obj._loadObject()
 
         # First try to load the object from the attributes on disk
         if name in obj._data:
@@ -951,7 +951,7 @@ class GangaObject(Node):
             logger.debug("Releasing: %s" % (reg.name))
             reg._release_lock(root)
 
-    def _getReadAccess(self):
+    def _loadObject(self):
         """ makes sure the objects _data is there and the object itself has a recent state.
         Raise RepositoryError"""
         root = self._getRoot()

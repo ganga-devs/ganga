@@ -135,8 +135,7 @@ class IncompleteObject(GangaObject):
         """
         with self.registry._flush_lock:
             with self.registry._read_lock:
-                if not self.has_loaded(self._registry._objects[self.id]):
-                    self.registry._load([self.id])
+                self.registry._load(self)
                 logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
 
     def remove(self):
@@ -519,59 +518,27 @@ class Registry(object):
         if self.metadata and self.metadata.hasStarted():
             self.metadata.flush_all()
 
-    def _read_access(self, _obj, sub_obj=None):
-        """Obtain read access on a given object.
-        sub-obj is the object the read access is actually desired (ignored at the moment)
-        Raise RegistryAccessError
-        Raise RegistryKeyError
-        Args:
-            _obj (GangaObject): The object which we want to get read access to and lock on disk
-            sub_obj (GangaObject):  Ignored under the current model
-        """
-        logger.debug("_read_access")
-
-        with _obj.const_lock:
-            obj = stripProxy(_obj)
-
-            if self.hasStarted() is not True:
-                raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is "
-                                          "disconnected! Type 'reactivate()' if you want to reconnect." %
-                                          (self.find(obj), self.name))
-
-            if not self.has_loaded(obj):
-                this_id = self.find(obj)
-                self._load([this_id])
-
     @synchronised_complete_lock
-    def _load(self, obj_ids):
+    def _load(self, obj):
         """
         Fully load an object from a Repo/disk into memory
         Args:
-            obj_ids (list): This is the list of id which we want to fully load objects for according to object dict
+            obj (GangaObject): This is the object we want to fully load
         """
         logger.debug("_load")
-        these_ids = []
-        for obj_id in obj_ids:
-            this_id = id(self[obj_id])
-            these_ids.append(this_id)
 
-        ## Record dirty status before flushing
-        ## Just in case we've requested loading over the job in memory
-        prior_status = {}
-        for obj_id in obj_ids:
-            if obj_id in self._objects:
-                prior_status[obj_id] = self._objects[obj_id]._dirty
+        # find the object ID
+        obj_id = self.find(obj)
 
         try:
-            for obj_id in obj_ids:
+            if not self.repository.isObjectLoaded(obj):
                 self.repository.load([obj_id])
         except Exception as err:
             logger.error("Error Loading Jobs! '%s'" % obj_ids)
-            ## Cleanup aftr ourselves if an error occured
-            for obj_id in obj_ids:
-                ## Didn't load mark as clean so it's not flushed
-                if obj_id in self._objects:
-                    self._objects[obj_id]._setFlushed()
+            ## Cleanup after ourselves if an error occured
+            ## Didn't load mark as clean so it's not flushed
+            if obj_id in self._objects:
+                self._objects[obj_id]._setFlushed()
             raise
 
     def _write_access(self, _obj):
@@ -599,8 +566,7 @@ class Registry(object):
                     raise RegistryLockError(errstr)
 
                 # try to load even if lock fails
-                if not self.has_loaded(obj):
-                    self._load([this_id])
+                self._load(obj)
 
                 obj._registry_locked = True
 
