@@ -285,13 +285,10 @@ def full_print(obj, out=None, interactive=False):
                     stripProxy(x).printTree(sio, interactive)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
-                    outStringList.append(result.rstrip())
+                    outStringList.append(', '.join(result.rstrip()))
                 else:
                     # remove trailing whitespace and newlines
-                    outStringList.append(str(x).rstrip())
-                # Check if we're at the last element or not and add commas
-                if (len(outStringList)+1) != 2*obj_len:
-                    outStringList.append(', ')
+                    outStringList.append(', '.join(str(x).rstrip()))
             outString += ''.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)
@@ -327,13 +324,10 @@ def summary_print(obj, out=None, interactive=False):
                     stripProxy(x).printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
-                    outStringList.append(result.rstrip())
+                    outStringList.append(', '.join(result.rstrip()))
                 else:
                     # remove trailing whitespace and newlines
-                    outStringList.append(str(x).rstrip())
-                # Check if we're at the last element or not and add commas
-                if len(outStringList)+1 != 2*obj_len:
-                    outStringList.append(', ')
+                    outStringList.append(', '.join(str(x).rstrip()))
             outString += ''.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)
@@ -341,7 +335,6 @@ def summary_print(obj, out=None, interactive=False):
 
     if isProxy(obj) and isinstance(_obj, GangaObject):
         sio = StringIO()
-        #logger.debug("#2 printSummaryTree")
         runProxyMethod(obj, 'printSummaryTree', 0, 0, '', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)
     else:
