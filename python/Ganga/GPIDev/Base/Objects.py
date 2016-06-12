@@ -30,7 +30,12 @@ from Ganga.Core.exceptions import GangaValueError, GangaException
 from Ganga.Utility.Plugin import allPlugins
 
 def _getName(obj):
-    """ Return the name of an object based on what we prioritise"""
+    """ Return the name of an object based on what we prioritise 
+    Name is defined as the first in the list of:
+    obj._name, obj.__name__, obj.__class__.__name__ or str(obj)
+    Args:
+        obj (unknown):
+    """
     returnable = getattr(obj, '_name', getattr(obj, '__name__', None))
     if returnable is None:
         returnable = getattr(getattr(obj, '__class__', None), '__name__', None)
@@ -45,6 +50,9 @@ _imported_GangaList = None
 do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data_dict', '_read_lock', '_write_lock', '_proxyObject']
 
 def _getGangaList():
+    """
+    This method gets around the problem that GangaList can't be imported at a module level here
+    """
     global _imported_GangaList
     if _imported_GangaList is None:
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
@@ -56,6 +64,8 @@ def synchronised(f):
     """
     This decorator must be attached to a method on a ``Node`` subclass
     It uses the object's lock to make sure that the object is held for the duration of the decorated function
+    Args:
+        f (function): This is the function which we want to wrap
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
@@ -97,11 +107,19 @@ class Node(object):
         return obj
 
     def _getParent(self):
+        """
+        This gets the parent object defined for this Node
+        """
         # type: () -> Node
         return self._parent
 
     @synchronised  # This will lock the _current_ (soon to be _old_) root object
     def _setParent(self, parent):
+        """
+        This sets the parent of this Node to be a new object
+        Args:
+            parent (GangaObject): This is the GangaObject to be taken as the objects new parent
+        """
         # type: (Node) -> None
         if parent is None:
             setattr(self, '_parent', parent)
@@ -166,6 +184,9 @@ class Node(object):
     # accept a visitor pattern
     @abc.abstractmethod
     def accept(self, visitor):
+        """
+        This can probably be removed if it doesn't do anything, only GangaObjet should inherit from Node
+        """
         pass
 
     # mark object as "dirty" and inform the registry about it
@@ -178,30 +199,46 @@ class Node(object):
             parent._setDirty()
 
     def _setFlushed(self):
+        """
+        This returns whether this object has been marked as dirty or not
+        """
         self._dirty = False
 
     def printTree(self, f=None, sel=''):
+        """
+        This method will print a full tree which contains a full description of the class which of interest
+        Args:
+            f (stream): file-like output stream
+            sel (str): Selection to display 
+        """
         from Ganga.GPIDev.Base.VPrinter import VPrinter
         self.accept(VPrinter(f, sel))
 
     def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection='', interactive=False):
         """If this method is overridden, the following should be noted:
 
-        level: the hierachy level we are currently at in the object tree.
-        verbosity_level: How verbose the print should be. Currently this is always 0.
-        whitespace_marker: If printing on multiple lines, this allows the default indentation to be replicated.
-                           The first line should never use this, as the substitution is 'name = %s' % printSummaryTree()
-        out: An output stream to print to. The last line of output should be printed without a newline.'
-        selection: See VPrinter for an explaintion of this.
+        Args:
+            level: the hierachy level we are currently at in the object tree.
+            verbosity_level: How verbose the print should be. Currently this is always 0.
+            whitespace_marker: If printing on multiple lines, this allows the default indentation to be replicated.
+                               The first line should never use this, as the substitution is 'name = %s' % printSummaryTree()
+            out: An output stream to print to. The last line of output should be printed without a newline.'
+            selection: See VPrinter for an explaintion of this.
         """
         from Ganga.GPIDev.Base.VPrinter import VSummaryPrinter
         self.accept(VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection, interactive))
 
     @abc.abstractmethod
     def __eq__(self, node):
+        """
+        This can probably be removed if it doesn't do anything, only GangaObjet should inherit from Node
+        """
         pass
 
     def __ne__(self, node):
+        """
+        This can probably be removed if it doesn't do anything, only GangaObjet should inherit from Node
+        """
         return not self.__eq__(node)
 
 ##########################################################################
@@ -249,7 +286,6 @@ class Descriptor(object):
         """
         self._name = name
         self._item = item
-        self._getter_name = None
         self._checkset_name = None
         self._filter_name = None
 
@@ -400,9 +436,10 @@ class Descriptor(object):
         Set method
         TODO: explain why/how this is different to a get/set or fits in with the GangaObject
         TODO: Is this needed if flush per n dirty calls has been dropped. This was a major change in usage btw
-        self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
-        obj: parent class which 'owns' the attribute
-        val: value of the attribute which we're about to set
+        Args:
+            self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
+            obj (GanagObject): parent class which 'owns' the attribute
+            val (unknown): value of the attribute which we're about to set
         """
 
         if isinstance(val, str):
@@ -418,7 +455,7 @@ class Descriptor(object):
             if this_filter:
                 val = this_filter(_val)
 
-        # LOCKING
+        # ON-DISK LOCKING
         obj._getWriteAccess()
 
         _set_name = _getName(self)
@@ -504,25 +541,37 @@ class Descriptor(object):
 
     def __delete__(self, obj):
         """
-        Delete an attribute from teh Descriptor(?) and Node
+        Delete an attribute from the Descriptor(?) and Node
+        Args:
+            obj (GangaObject): This is the object which wants to have an attribute removed from it
         """
         del obj._data[_getName(self)]
 
     @staticmethod
     def createNewList(_final_list, _input_elements, action=None, extra_args=None):
-        """ Create a new list object which contains the old object with a possible action parsing the elements before they're added"""
+        """ Create a new list object which contains the old object with a possible action parsing the elements before they're added
+        Args:
+            _final_list (list): The list object which is to have the new elements appended to it
+            _input_elements (list): This is a list of the objects which are to be used to create new objects in _final_list
+            action (function): A function which is to be called to create new objects for a list
+            extra_args (tuple): Contains the name of the attribute being copied and the object which owns the object being copied
+        """
+
+        if extra_args:
+            new_action = partial(action, extra_args=extra_args)
 
         if action is not None:
             for element in _input_elements:
-                _final_list.append(action(element))
+                if extra_args:
+                    _final_list.append(new_action(element))
+                else:
+                    _final_list.append(action(element))
         else:
             for element in _input_elements:
                 _final_list.append(element)
 
 
 class ObjectMetaclass(abc.ABCMeta):
-    _descriptor = Descriptor
-
     """
     This is a MetaClass...
     TODO explain what this does"""
@@ -559,6 +608,12 @@ class ObjectMetaclass(abc.ABCMeta):
             logger.error(s)
             raise ValueError(s)
 
+        attrs_to_add = []
+        for attr, item in this_schema.allItems():
+            attrs_to_add.append(attr)
+
+        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject') + tuple(attrs_to_add)
+
         # If a class has not specified a '_name' then default to using the class '__name__'
         if not cls.__dict__.get('_name'):
             cls._name = name
@@ -567,8 +622,9 @@ class ObjectMetaclass(abc.ABCMeta):
             logger.warning('Possible schema clash in class %s between %s and %s', name, _getName(cls), _getName(this_schema._pluginclass))
 
         # export visible properties... do not export hidden properties
+        # This constructs one Descriptor for each attribute which can be set for this class
         for attr, item in this_schema.allItems():
-            setattr(cls, attr, cls._descriptor(attr, item))
+            setattr(cls, attr, Descriptor(attr, item))
 
         # additional check of type
         # bugfix #40220: Ensure that default values satisfy the declared types
@@ -590,7 +646,7 @@ class ObjectMetaclass(abc.ABCMeta):
 
 
 class GangaObject(Node):
-    __metaclass__ = ObjectMetaclass
+    __metaclass__ = ObjectMetaclass # This overloads the default metaclass so we can do some clever stuff
     _schema = None  # obligatory, specified in the derived classes
     _category = None  # obligatory, specified in the derived classes
     _exportmethods = []  # optional, specified in the derived classes
@@ -658,6 +714,11 @@ class GangaObject(Node):
 
     @synchronised
     def accept(self, visitor):
+        """
+        This accepts a VPrinter or VStreamer class instance visitor which is used to display the contents of the object according the Schema
+        Args:
+            visitor (VPrinter, VStreamer): An instance which will produce a display of this contents of this object
+        """
 
         if not hasattr(self, '_schema'):
             return
@@ -688,6 +749,9 @@ class GangaObject(Node):
         copy all the properties recursively from the srcobj
         if schema of self and srcobj are not compatible raises a ValueError
         ON FAILURE LEAVES SELF IN INCONSISTENT STATE
+        Args:
+            srcobj (GangaObject): This is the ganga object which is to have it's contents from
+            _ignore_atts (list): This is a list of attribute names which are to not be copied
         """
 
         if _ignore_atts is None:
@@ -755,6 +819,11 @@ class GangaObject(Node):
                 setattr(self, name, copy_obj)
 
     def __eq__(self, obj):
+        """
+        Compare this object to an other object obj
+        Args:
+            obj (unknown): Compare which self is to be compared to
+        """
         if self is obj:
             return True
 
@@ -781,11 +850,21 @@ class GangaObject(Node):
 
     @property
     def _data(self):
+        """
+        This returns the internal data dictionary of this class
+        This should be treated as strictly internal and shouldn't be modified outside of Ganga.GPIDev.Base or Ganga.Core.GangaRegistry
+        """
         # type: () -> Dict[str, Any]
         return self._data_dict
 
     @_data.setter
     def _data(self, new_data):
+        """
+        Set the ._data attribute correctly for this object
+        This should be treated as strictly internal and shouldn't be modified outside of Ganga.GPIDev.Base or Ganga.Core.GangaRegistry
+        Args:
+            new_data (dict): This is the external dictionary which is to be assigned to the internal dictionary
+        """
         # type: (Dict[str, Any]) -> None
         for v in new_data.values():
             if isinstance(v, Node):
@@ -798,9 +877,8 @@ class GangaObject(Node):
         This sets the value of a schema attribute directly by circumventing the descriptor
 
         Args:
-            attrib_name: the name of the schema attribute
-            attrib_value: the value to set it to
-
+            attrib_name (str): the name of the schema attribute
+            attrib_value (unknown): the value to set it to
         """
         self._data[attrib_name] = attrib_value
         if isinstance(attrib_value, Node):
@@ -808,6 +886,11 @@ class GangaObject(Node):
 
     @property
     def _index_cache(self):
+        """
+        This returns the index cache.
+        If this object has been fully loaded into memory and has a Registry assoicated with it it's created dynamically
+        If this object isn't fully loaded or has no Registry associated with it the index_cache should be returned whatever it is
+        """
         if self._fullyLoadedFromDisk():
             if self._getRegistry() is not None:
                 # Fully loaded so lets regenerate this on the fly to avoid losing data
@@ -820,6 +903,12 @@ class GangaObject(Node):
 
     @_index_cache.setter
     def _index_cache(self, new_index_cache):
+        """
+        Set the index cache to have some new value which is defined externally.
+        (This should __NEVER__ be done on live in-memory objects
+        Args:
+            new_inde_cache (dict): Dict of new entries for the new_index_cache
+        """
         if self._fullyLoadedFromDisk():
             logger.debug("Warning: Setting IndexCache data on live object, please avoid!")
         self._index_cache_dict = new_index_cache
@@ -835,6 +924,9 @@ class GangaObject(Node):
     def __incrementShareRef(obj, attr_name):
         """
         This increments the shareRef of the prep registry according to the attr_name.name
+        Args:
+            obj (GangaObject): This is the object which has the attr_name attribute
+            attr_name (str): This is the name of the attribute which contains a SharedDir
         """
         shared_dir = getattr(obj, attr_name)
 
@@ -866,6 +958,8 @@ class GangaObject(Node):
     def __deepcopy__(self, memo=None):
         """
         Perform a deep copy of the GangaObject class
+        Args:
+            memo (unknown): Used to track infinite loops etc in the deep-copy of objects
         """
         true_parent = self._getParent()
         cls = self.__class__
@@ -987,6 +1081,8 @@ class GangaObject(Node):
     def _setRegistry(self, registry):
         """
         Set the Registry of the GangaObject which will manage it
+        Args:
+            registry (GangaRegistry): This is a Ganga Registry object
         """
         assert self._getParent() is None
         self._registry = registry
@@ -1046,6 +1142,7 @@ class GangaObject(Node):
     def getJobObject(self):
         """
         Return the parent Job which manages this object or throw an AssertionError is non exists
+        Unknown: Why is this a GangaObject method and not a Node method?
         """
         from Ganga.GPIDev.Lib.Job import Job
         r = self._getRoot(cond=lambda o: isinstance(o, Job))

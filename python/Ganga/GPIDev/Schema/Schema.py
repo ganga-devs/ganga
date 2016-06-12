@@ -27,7 +27,6 @@ logger = Ganga.Utility.logging.getLogger()
 _found_components = {}
 _found_configs = {}
 _found_attrs = {}
-_found_eval = {}
 _stored_defaults = {}
 
 #
@@ -299,8 +298,7 @@ class Schema(object):
                         _found_components[category] = allPlugins.find(category, defvalue)
                     return _found_components[category]()
 
-        # make a copy of the default value (to avoid strange effects if the
-        # original modified)
+        # If needed/requested make a copy of the function elsewhwre
         return defvalue
 
 
