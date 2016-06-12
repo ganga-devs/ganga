@@ -1,5 +1,6 @@
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
+from . import Grid
 
 logger = getLogger()
 
@@ -10,10 +11,9 @@ class LCGOutputDownloadTask(object):
     Class for defining a data object for each output downloading task.
     """
 
-    _attributes = ('gridObj', 'jobObj', 'use_wms_proxy')
+    _attributes = ('jobObj', 'use_wms_proxy')
 
-    def __init__(self, gridObj, jobObj, use_wms_proxy):
-        self.gridObj = gridObj
+    def __init__(self, jobObj, use_wms_proxy):
         self.jobObj = jobObj
         self.use_wms_proxy = use_wms_proxy
 
@@ -46,7 +46,6 @@ class LCGOutputDownloadAlgorithm(Algorithm):
 
         pps_check = (True, None)
 
-        grid = item.gridObj
         job = item.jobObj
         wms_proxy = item.use_wms_proxy
 
@@ -65,8 +64,7 @@ class LCGOutputDownloadAlgorithm(Algorithm):
         job.updateStatus('completing')
         outw = job.getOutputWorkspace()
 
-        pps_check = grid.get_output(
-            job.backend.id, outw.getPath(), wms_proxy=wms_proxy)
+        pps_check = Grid.get_output(job.backend.id, outw.getPath(), wms_proxy=wms_proxy)
 
         if pps_check[0]:
             job.updateStatus('completed')
@@ -108,9 +106,9 @@ class LCGOutputDownloader(MTRunner):
 
         return self.__cnt_alive_threads__()
 
-    def addTask(self, grid, job, use_wms_proxy):
+    def addTask(self, job, use_wms_proxy):
 
-        task = LCGOutputDownloadTask(grid, job, use_wms_proxy)
+        task = LCGOutputDownloadTask(job, use_wms_proxy)
 
         logger.debug('add output downloading task: job %s' % job.getFQID('.'))
 
