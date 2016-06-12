@@ -12,11 +12,11 @@ from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.File.File import File
-from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
+from Ganga.Core import ApplicationConfigurationError
 
 from Ganga.Utility.logging import getLogger
 
-from Ganga.GPIDev.Base.Proxy import getName, isType, stripProxy
+from Ganga.GPIDev.Base.Proxy import getName, stripProxy
 
 import os
 import shutil
@@ -55,7 +55,7 @@ class Executable(IPrepareApp):
         'exe': SimpleItem(preparable=1, defvalue='echo', typelist=[str, File], comparable=1, doc='A path (string) or a File object specifying an executable.'),
         'args': SimpleItem(defvalue=["Hello World"], typelist=[str, File, int], sequence=1, strict_sequence=0, doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
         'env': SimpleItem(defvalue={}, typelist=[str], doc='Dictionary of environment variables that will be replaced in the running environment.'),
-       'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+       'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes')
     })
     _category = 'applications'
@@ -106,7 +106,7 @@ class Executable(IPrepareApp):
         # file is unspecified, has a space or is a relative path
         self.configure(self)
         logger.info('Preparing %s application.' % getName(self))
-        setattr(self, 'is_prepared', ShareDir())
+        self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
         try:
@@ -119,9 +119,9 @@ class Executable(IPrepareApp):
             # [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
             self.post_prepare()
 
-            if isType(self.exe, File):
+            if isinstance(self.exe, File):
                 source = self.exe.name
-            elif isType(self.exe, str):
+            elif isinstance(self.exe, str):
                 source = self.exe
             
             if not os.path.exists(source):
@@ -230,7 +230,7 @@ class RTHandler(IRuntimeHandler):
                 # transport anything to the sharedir
                 else:
                     prepared_exe = app.exe
-            elif isType(app.exe, File):
+            elif isinstance(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (app.is_prepared.name))
                 prepared_exe = File(os.path.join(
                     os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
@@ -259,7 +259,7 @@ class LCGRTHandler(IRuntimeHandler):
                 # transport anything to the sharedir
                 else:
                     prepared_exe = app.exe
-            elif isType(app.exe, File):
+            elif isinstance(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
                 prepared_exe = File(os.path.join(
@@ -288,7 +288,7 @@ class gLiteRTHandler(IRuntimeHandler):
                 # transport anything to the sharedir
                 else:
                     prepared_exe = app.exe
-            elif isType(app.exe, File):
+            elif isinstance(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
                 prepared_exe = File(os.path.join(os.path.join(
