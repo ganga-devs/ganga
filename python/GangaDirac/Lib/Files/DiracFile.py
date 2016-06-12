@@ -250,7 +250,7 @@ class DiracFile(IGangaFile):
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "DiracFile(namePattern='%s', lfn='%s')" % (self.namePattern, self.lfn)
+        return "DiracFile(namePattern='%s', lfn='%s', localDir='%s')" % (self.namePattern, self.lfn, self.localDir)
 
     def getSubFiles(self):
         """
