@@ -117,7 +117,6 @@ class Download:
         super(Download, self).__init__()
 
     lfns = []
-    prefix_hack = ''
     #rootfile = []
     lock = threading.RLock()
 
@@ -127,7 +126,7 @@ class Download:
             GangaThread.GangaThread.__init__(self,'download_lcglr')
 
         def run(self):
-            gridshell = getShell(middleware=Download.prefix_hack)
+            gridshell = getShell()
 
             gridshell.env['LFC_HOST'] = config['ATLASOutputDatasetLFC']
             gridshell.env['LCG_CATALOG_TYPE'] = 'lfc'
@@ -150,7 +149,7 @@ class Download:
             GangaThread.GangaThread.__init__(self,'download_lcgcp')
             
         def run(self):
-            gridshell = getShell(middleware=Download.prefix_hack)
+            gridshell = getShell()
             gridshell.env['LFC_HOST'] = config['ATLASOutputDatasetLFC']
             gridshell.env['LCG_CATALOG_TYPE'] = 'lfc'
             rc, out, m = gridshell.cmd1(self.cmd,allowed_exit=[0,255])
@@ -170,7 +169,7 @@ class Download:
             GangaThread.GangaThread.__init__(self,'download_dq2')
             
         def run(self):
-            gridshell = getShell(middleware=Download.prefix_hack)
+            gridshell = getShell()
             gridshell.env['DQ2_URL_SERVER']=configDQ2['DQ2_URL_SERVER']
             gridshell.env['DQ2_URL_SERVER_SSL']=configDQ2['DQ2_URL_SERVER_SSL']
             gridshell.env['DQ2_LOCAL_ID']=''
@@ -507,12 +506,6 @@ class ATLASOutputDataset(Dataset):
         except AttributeError:
             logger.error('job.outputdata error')
             return 1
-
-        if job.backend._name == 'LCG':
-            Download.prefix_hack = job.backend.middleware
-            
-        else:
-            Download.prefix_hack = 'EDG'
 
         local_location = options.get('local_location')
 
