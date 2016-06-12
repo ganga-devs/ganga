@@ -283,7 +283,10 @@ def execute(command,
         if stdout:
             stdout = pickle.loads(stdout)
     except Exception as err:
-        logger.error("Err: %s", err)
+        if not shell:
+            logger.error("Execute Err: %s", err)
+        else:
+            logger.debug("Execute Err: %s", err)
         local_ns = {}
         if isinstance(eval_includes, str):
             try:
