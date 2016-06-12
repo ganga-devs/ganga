@@ -1,18 +1,9 @@
-##########################################################################
-# Ganga Project. http://cern.ch/ganga
-#
-# $Id: Executable.py,v 1.1 2008-07-17 16:40:57 moscicki Exp $
-##########################################################################
 
-from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-
-from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.File.File import File, ShareDir
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
-from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
+from Ganga.Core import ApplicationConfigurationError
 
 from Ganga.Utility.logging import getLogger
 
@@ -29,10 +20,9 @@ from Ganga.Utility.files import expandfilename
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
-from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
+from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
-from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.util import unique
 from Ganga.Utility.Config import getConfig
@@ -42,22 +32,21 @@ from GangaDirac.Lib.Files.DiracFile import DiracFile
 
 logger = getLogger()
 
-data_file = 'data.py'
-
 prep_lock = threading.Lock()
 
 def add_timeStampFile(given_path):
     """
     This creates a file in this directory given called __timestamp__ which contains the time so that the final file is unique
+    I also add 20 unique characters from the ascii and digits pool from SystemRandom which may reduce the risk of collisions between users
     Args:
         given_path (str): Path which we want to create the timestamp within
-
     """
     fmt = '%Y-%m-%d-%H-%M-%S'
     time_filename = os.path.join(given_path, '__timestamp__')
     logger.info("Constructing: %s" % time_filename)
     with open(time_filename, 'a+') as time_file:
         time_file.write(datetime.now().strftime(fmt))
+        time_file.write('\n'+''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(20)))
 
 def genDataFiles(job):
     """
@@ -81,7 +70,7 @@ def genDataFiles(job):
             cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
             data_str += cat_opts
 
-        inputsandbox.append(FileBuffer(data_file, data_str))
+        inputsandbox.append(FileBuffer(GaudiRunDiracRTHandler.data_file, data_str))
 
     return inputsandbox
 
@@ -105,7 +94,7 @@ def collectPreparedFiles(app):
         app (GaudiRun): This expects only the GaudiRun app
     """
     if not isinstance(app.is_prepared, ShareDir):
-        raise ApplicationConfigurationError('Failed to prepare Application Correctly')
+        raise ApplicationConfigurationError(None, 'Failed to prepare Application Correctly')
     shared_dir = app.getSharedPath()
     input_files, input_folders = [], []
     for root, dirs, files in os.walk(shared_dir, topdown=True):
@@ -127,9 +116,9 @@ def prepareCommand(app):
         # TODO Fix this after fixing LocalFile
         opts_name = os.path.basename(opts_file.namePattern)
     else:
-        raise ApplicationConfigurationError("The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
+        raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                             getName(opts_file))
-    full_cmd = "./run gaudirun.py %s %s" % (opts_name, data_file)
+    full_cmd = "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
     return full_cmd
 
 class GaudiRunRTHandler(IRuntimeHandler):
@@ -166,7 +155,7 @@ class GaudiRunRTHandler(IRuntimeHandler):
         # Collect all of the prepared files which we want to pass along to this job
         input_files, input_folders = collectPreparedFiles(app)
         if input_folders:
-            raise ApplicationConfigurationError('Prepared folders not supported yet, please fix this in future')
+            raise ApplicationConfigurationError(None, 'Prepared folders not supported yet, please fix this in future')
         else:
             for f in input_files:
                 input_sand.append(File(f))
@@ -182,6 +171,12 @@ allHandlers.add('GaudiRun', 'Interactive', GaudiRunRTHandler)
 allHandlers.add('GaudiRun', 'Batch', GaudiRunRTHandler)
 
 def generateDiracInput(app):
+    """
+    Construct a DIRAC input which must be unique to each job to have unique checksum.
+    This generates a unique file, uploads it to DRIAC and then stores the LFN in app.uploadedInput
+    Args:
+        app (GaudiRun): This expects a GaudiRun app to be passed so that the constructed
+    """
 
     input_files, input_folders = collectPreparedFiles(app)
 
@@ -189,27 +184,28 @@ def generateDiracInput(app):
 
     compressed_file = None
     if input_folders:
-        raise ApplicationConfigurationError('Prepared folders not supported yet, please fix this in future')
+        raise ApplicationConfigurationError(None, 'Prepared folders not supported yet, please fix this in future')
     else:
         prep_dir = app.getSharedPath()
         add_timeStampFile(prep_dir)
         prep_file = prep_dir + '.tgz'
-        compressed_file = os.path.join(tempfile.gettempdir(), os.path.basename(prep_dir) + ".tgz")
+        compressed_file = os.path.join(tempfile.gettempdir(), '__'+os.path.basename(prep_file))
 
         wnScript = generateWNScript(prepareCommand(app), job)
         script_name = os.path.join(tempfile.gettempdir(), wnScript.name)
         wnScript.create(script_name)
 
-        with tarfile.open( compressed_file + ".tgz", "w:gz" ) as tar_file:
+        with tarfile.open( compressed_file, "w:gz" ) as tar_file:
             for name in input_files:
-                tar.add(name, arcname=os.path.basename(name))
-            tar.add(script_name, arcname=os.path.basename(script_name))
+                tar_file.add(name, arcname=os.path.basename(name))
+            tar_file.add(script_name, arcname=os.path.basename(script_name))
         shutil.move(compressed_file, prep_dir)
 
-    new_df = DiracFile(namePattern = os.path.basename(compressed_file), localDir = app.getSharedPath(),
-                       remoteDir = os.path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid) )
+    new_df = DiracFile(namePattern = os.path.basename(compressed_file), localDir = app.getSharedPath())
     random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
-    new_df.put(uploadSE = randomSE)
+    logger.info("new File: %s" % new_df)
+    new_lfn = os.path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid, os.path.basename(compressed_file))
+    new_df.put(uploadSE = random_SE, lfn=new_lfn)
 
     app.uploadedInput = new_df
 
@@ -217,10 +213,18 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
 
     """The runtime handler to run plain executables on the Dirac backend"""
 
+    data_file = 'data.py'
+
     def master_prepare(self, app, appmasterconfig):
+        """
+        Prepare the RTHandler for the master job so that applications to be submitted
+        Args:
+            app (GaudiRun): This application is only expected to handle GaudiRun Applications here
+            appmasterconfig (unknown): Output passed from the application master configuration call
+        """
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
-        if not app.uploadedInput:
+        if not isinstance(app.uploadedInput, DiracFile):
             generateDiracInput(app)
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
@@ -228,7 +232,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         """
-        Prepare the job in order to submit to the Dirac backend
+        Prepare the RTHandler in order to submit to the Dirac backend
         Args:
             app (GaudiRun): This application is only expected to handle GaudiRun Applications here
             appconfig (unknown): Output passed from the application configuration call
@@ -247,7 +251,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         if isinstance(opts_file, DiracFile):
             inputsandbox += ['LFN:'+opts_file.lfn]
 
-        if not app.uploadedInput:
+        if not isinstance(app.uploadedInput, DiracFile):
             with prep_lock:
                 if job.master:
                     if not job.master.app.uploadedInput:
@@ -256,7 +260,13 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                 else:
                     generateDiracInput(app)
 
-        inputsandbox += ['LFN:'+app.uploadedInput.lfn]
+        logger.info("uploadedInput: %s" % app.uploadedInput)
+
+        rep_data = app.uploadedInput.getReplicas()
+
+        logger.info("Replica info: %s" % rep_data)
+
+        logger.info("input_data: %s" % input_data)
 
         outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
@@ -272,14 +282,14 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
         dirac_script = script_generator(diracAPI_script_template(),
-                                        DIRAC_IMPORT='from DIRAC.Interfaces.API.Dirac import Dirac',
-                                        DIRAC_JOB_IMPORT='from DIRAC.Interfaces.API.Job import Job',
-                                        DIRAC_OBJECT='Dirac()',
-                                        JOB_OBJECT='Job()',
+                                        DIRAC_IMPORT='from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
+                                        DIRAC_JOB_IMPORT='from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
+                                        DIRAC_OBJECT='DiracLHCb()',
+                                        JOB_OBJECT='LHCbJob()',
                                         NAME=mangle_job_name(app),
                                         EXE=scriptToRun.name,
                                         EXE_ARG_STR='',
-                                        EXE_LOG_FILE='Ganga_Executable.log',
+                                        EXE_LOG_FILE='Ganga_GaudiRun.log',
                                         ENVIRONMENT=None,  # app.env,
                                         INPUTDATA=input_data,
                                         PARAMETRIC_INPUTDATA=parametricinput_data,
@@ -293,13 +303,11 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
-                                        INPUT_SANDBOX='##INPUT_SANDBOX##'
+                                        INPUT_SANDBOX=repr('LFN:'+app.uploadedInput.lfn),
                                         )
 
         # Return the output needed for the backend to submit this job
-        return StandardJobConfig(dirac_script,
-                                 inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox))
+        return StandardJobConfig(dirac_script, inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -334,13 +342,13 @@ if __name__ == '__main__':
     rc = system('###COMMAND###')
 
     ###OUTPUTFILESINJECTEDCODE###
+
     sys.exit(rc)
 """
     return script_template
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-# Not enabled for 6.1.20 release - rcurrie
-#from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-#allHandlers.add('GaudiRun', 'Dirac', GaudiRunDiracRTHandler)
+from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+allHandlers.add('GaudiRun', 'Dirac', GaudiRunDiracRTHandler)
 

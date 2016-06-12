@@ -1,18 +1,15 @@
 
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 
-from Ganga.Utility.Config import getConfig
-
-from Ganga.GPIDev.Lib.File.File import File, ShareDir
-from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
+from Ganga.GPIDev.Lib.File.File import ShareDir
+from Ganga.Core import ApplicationConfigurationError, GangaException
 
 from Ganga.Utility.logging import getLogger
 
-from Ganga.GPIDev.Base.Proxy import getName, isType, stripProxy
+from Ganga.GPIDev.Base.Proxy import getName
 
-from os import rename, path
+from os import rename, path, makedirs, chdir
 import shutil
 from Ganga.Utility.files import expandfilename
 
@@ -26,10 +23,6 @@ import time
 import subprocess
 
 logger = getLogger()
-cmake_sandbox_name = 'cmake-input-sandbox.tgz'
-build_target = 'ganga-input-sandbox'
-build_dest = 'input-sandbox.tgz'
-defDir = '$HOME/cmtuser'
 
 def _exec_cmd(cmd, cwdir):
     pipe = subprocess.Popen(cmd,
@@ -43,18 +36,18 @@ def _exec_cmd(cmd, cwdir):
         time.sleep(0.5)
     return pipe.returncode, stdout, stderr
 
-def prepare_cmake_app(myApp, myVer, myPath=defDir, myGetpack=None):
+def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
     """
     Short helper function for setting up minimal application environments on disk for job submission
     """
     full_path = expandfilename(myPath)
     if not path.exists(full_path):
-        os.makedirs(full_path)
-    os.chdir(full_path)
+        makedirs(full_path)
+    chdir(full_path)
     _exec_cmd('lb-dev %s %s' % (myApp, myVer), myPath)
     if myGetpack:
-        os.chdir(path.join(full_path, myApp + 'Dev_' + myVer))
-        _exec_cmd('getpack %s' % myGetpack)
+        dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
+        _exec_cmd('getpack %s' % myGetpack, dev_dir)
 
 
 class GaudiRun(IPrepareApp):
@@ -71,6 +64,9 @@ class GaudiRun(IPrepareApp):
 
     This program will perform the following command to `prepare` the application before submission:
         make ganga-input-sandbox
+    NB:
+    The output from this command can be quite large and Ganga will save it to disk and store it at least once per (master) job
+    If your build target is large I would advise that you consider placing your gangadir in your AFS workspace where there is more storage available
 
     This application needs to be configured with the absolute directory of the project and the options you want to pass to gaudirun.py
 
@@ -108,6 +104,10 @@ class GaudiRun(IPrepareApp):
     _name = 'GaudiRun'
     _exportmethods = ['prepare', 'unprepare', 'exec_cmd', 'getDir']
 
+    cmake_sandbox_name = 'cmake-input-sandbox.tgz'
+    build_target = 'ganga-input-sandbox'
+    build_dest = 'input-sandbox.tgz'
+
     def __init__(self):
         super(GaudiRun, self).__init__()
 
@@ -117,6 +117,8 @@ class GaudiRun(IPrepareApp):
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
         self.hash = None
+        ## FIXME Add some configurable object which controls whether a file should be removed from storage
+        ## Here if the is_prepared count reaches zero
         self.uploadedInput = None
 
     def prepare(self, force=False):
@@ -132,10 +134,10 @@ class GaudiRun(IPrepareApp):
         # file is unspecified, has a space or is a relative path
         self.configure(self)
         logger.info('Preparing %s application.' % getName(self))
-        setattr(self, 'is_prepared', ShareDir())
+        self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
-        build_target = self.buildGangaTarget()
+        this_build_target = self.buildGangaTarget()
 
         try:
             # copy any 'preparable' objects into the shared directory
@@ -144,7 +146,7 @@ class GaudiRun(IPrepareApp):
             # if the app is associated with a persisted object
             self.checkPreparedHasParent(self)
 
-            self.copyIntoPrepDir(build_target)
+            self.copyIntoPrepDir(this_build_target)
             opts_file = self.getOptsFile()
             if isinstance(opts_file, LocalFile):
                 self.copyIntoPrepDir(path.join( opts_file.localDir, path.basename(opts_file.namePattern) ))
@@ -152,7 +154,7 @@ class GaudiRun(IPrepareApp):
                 # NB safe to put it here as should have expressly setup a path for this job by now
                 opts_file.get(localPath=self.getSharedPath())
             else:
-                raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
+                raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
             self.post_prepare()
 
         except Exception as err:
@@ -180,15 +182,15 @@ class GaudiRun(IPrepareApp):
                 ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
                 full_path = expandfilename(path.join(self.myOpts.localDir, path.basename(self.myOpts.namePattern)), force=True)
                 if not path.exists(full_path):
-                    raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!")
+                    raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!")
                 self.myOpts = LocalFile(namePattern=path.basename(full_path), localDir=path.dirname(full_path))
                 return self.myOpts
             elif isinstance(self.myOpts, DiracFile):
                 return self.myOpts
             else:
-                raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(self.myOpts))
+                raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(self.myOpts))
         else:
-            raise ApplicationConfigurationError("No Opts File has been specified, please provide one!")
+            raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")
 
     def getDir(self):
         """
@@ -197,7 +199,7 @@ class GaudiRun(IPrepareApp):
         if self.directory:
             return path.abspath(expandfilename(self.directory))
         else:
-            raise ApplicationConfigurationError("No Opts File has been specified, please provide one!")
+            raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")
 
     def exec_cmd(self, cmd):
         """
@@ -228,17 +230,17 @@ class GaudiRun(IPrepareApp):
         This builds the ganga target 'ganga-input-sandbox' for the project defined by self.directory
         This returns the absolute path to the file after it has been created. It will fail if things go wrong or the file fails to generate
         """
-        logger.info("Make-ing target '%s'     (This may take a few minutes depending on the size of your project)" % build_target)
-        self.exec_cmd('make clean && make %s' % build_target)
+        logger.info("Make-ing target '%s'     (This may take a few minutes depending on the size of your project)" % GaudiRun.build_target)
+        self.exec_cmd('make clean && make %s' % GaudiRun.build_target)
 
         targetPath = path.join(self.getDir(), 'build.%s' % self.arch, 'ganga')
         if not path.isdir(targetPath):
             raise GangaException("Target Path: %s NOT found!" % targetPath)
-        sandbox_str = '%s' % build_dest
+        sandbox_str = '%s' % GaudiRun.build_dest
         targetFile = path.join(targetPath, sandbox_str)
         if not path.isfile(targetFile):
             raise GangaException("Target File: %s NOT found!" % targetFile)
-        wantedTargetFile = path.join(targetPath, cmake_sandbox_name)
+        wantedTargetFile = path.join(targetPath, GaudiRun.cmake_sandbox_name)
         rename(targetFile, wantedTargetFile)
         if not path.isfile(wantedTargetFile):
             raise GangaException("Wanted Target File: %s NOT found" % wantedTargetFile)
