@@ -197,7 +197,7 @@ class GaudiRun(IPrepareApp):
 
     def exec_cmd(self, cmd):
         """
-        This method exectutes a command within the namespace of the project. The cmd is placed in a bash script which is executed within the env
+        This method executes a command within the namespace of the project. The cmd is placed in a bash script which is executed within the env
         Args:
             cmd (str): This is the command(s) which are to be executed within the project environment and directory
         """
