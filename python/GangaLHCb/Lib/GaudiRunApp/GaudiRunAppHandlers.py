@@ -54,7 +54,6 @@ def genDataFiles(job):
     inputsandbox = []
 
     data = job.inputdata
-    data_str = ''
     if data:
         logger.debug("Returning options String")
         data_str = data.optionsString()
@@ -175,7 +174,6 @@ def generateDiracInput(app):
 
     job = app.getJobObject()
 
-    compressed_file = None
     if input_folders:
         raise ApplicationConfigurationError(None, 'Prepared folders not supported yet, please fix this in future')
     else:
