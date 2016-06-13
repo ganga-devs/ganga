@@ -98,7 +98,7 @@ class Executable(IPrepareApp):
         See help(shareref) for further information.
         """
 
-        if (self.is_prepared is not None) and (force is not True):
+        if (self.is_prepared is not None) and not force:
             raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
 
         # lets use the same criteria as the configure() method for checking file existence & sanity
