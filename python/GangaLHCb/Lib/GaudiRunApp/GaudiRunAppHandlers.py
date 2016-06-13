@@ -1,14 +1,3 @@
-
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-
-from Ganga.GPIDev.Lib.File.File import File, ShareDir
-from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
-from Ganga.Core import ApplicationConfigurationError
-
-from Ganga.Utility.logging import getLogger
-
-from Ganga.GPIDev.Base.Proxy import getName
-
 import os
 import shutil
 from datetime import datetime
@@ -16,19 +5,24 @@ import tempfile
 import tarfile
 import random
 import threading
-from Ganga.Utility.files import expandfilename
 
+from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-
-from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
-from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
+from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Utility.util import unique
-from Ganga.Utility.Config import getConfig
-
+from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Lib.File.File import File, ShareDir
+from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
+from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
+from Ganga.Utility.Config import getConfig
+from Ganga.Utility.files import unique
+from Ganga.Utility.logging import getLogger
+
 from GangaDirac.Lib.Files.DiracFile import DiracFile
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
+from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
+
 
 logger = getLogger()
 
@@ -84,7 +78,7 @@ def generateWNScript(commandline, job):
     exe_script_name = 'gaudiRun-script.py'
 
     return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
-                                                                    OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
+                                                                      OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
                       executable=True)
 
 def collectPreparedFiles(app):
@@ -137,14 +131,12 @@ class GaudiRunRTHandler(IRuntimeHandler):
 
         job = app.getJobObject()
 
-        prepared_files = []
-
         # Setup the command which to be run and the input and output
         input_sand = job.inputsandbox
         output_sand = job.outputsandbox
         data_files = genDataFiles(job)
 
-        input_sand = unique(input_sand + prepared_files + data_files)
+        input_sand = unique(input_sand + data_files)
 
         job_command = prepareCommand(app)
 
@@ -195,17 +187,17 @@ def generateDiracInput(app):
         script_name = os.path.join(tempfile.gettempdir(), wnScript.name)
         wnScript.create(script_name)
 
-        with tarfile.open( compressed_file, "w:gz" ) as tar_file:
+        with tarfile.open(compressed_file, "w:gz") as tar_file:
             for name in input_files:
                 tar_file.add(name, arcname=os.path.basename(name))
             tar_file.add(script_name, arcname=os.path.basename(script_name))
         shutil.move(compressed_file, prep_dir)
 
-    new_df = DiracFile(namePattern = os.path.basename(compressed_file), localDir = app.getSharedPath())
+    new_df = DiracFile(namePattern=os.path.basename(compressed_file), localDir=app.getSharedPath())
     random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
     logger.info("new File: %s" % new_df)
     new_lfn = os.path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid, os.path.basename(compressed_file))
-    new_df.put(uploadSE = random_SE, lfn=new_lfn)
+    new_df.put(uploadSE=random_SE, lfn=new_lfn)
 
     app.uploadedInput = new_df
 

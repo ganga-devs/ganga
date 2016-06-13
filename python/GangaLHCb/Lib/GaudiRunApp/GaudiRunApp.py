@@ -1,26 +1,20 @@
-
-from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
-
-from Ganga.GPIDev.Lib.File.File import ShareDir
-from Ganga.Core import ApplicationConfigurationError, GangaException
-
-from Ganga.Utility.logging import getLogger
-
-from Ganga.GPIDev.Base.Proxy import getName
-
-from os import rename, path, makedirs, chdir
-import shutil
-from Ganga.Utility.files import expandfilename
-
-from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
-from GangaDirac.Lib.Files.DiracFile import DiracFile
-
-from GangaDirac.Lib.Backends.DiracBase import DiracBase
-
+from os import rename, path, makedirs, chdir, unlink
 import tempfile
 import time
 import subprocess
+
+from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
+from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Lib.File.File import ShareDir
+from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
+from Ganga.Utility.logging import getLogger
+from Ganga.Utility.files import expandfilename
+
+from GangaDirac.Lib.Files.DiracFile import DiracFile
+from GangaDirac.Lib.Backends.DiracBase import DiracBase
+
 
 logger = getLogger()
 
@@ -175,7 +169,7 @@ class GaudiRun(IPrepareApp):
 
     def getOptsFile(self):
         """
-        This function rweturns a sanitized absolute path to the self.myOpts file from user input
+        This function returns a sanitized absolute path to the self.myOpts file from user input
         """
         if self.myOpts:
             if isinstance(self.myOpts, LocalFile):
@@ -218,6 +212,8 @@ class GaudiRun(IPrepareApp):
         script_run = 'bash %s' % cmd_file.name
 
         rc, stdout, stderr = _exec_cmd(script_run, self.getDir())
+
+        unlink(cmd_file.name)
 
         if rc != 0:
             logger.error("Failed to execute command: %s" % script_run)
