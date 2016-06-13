@@ -629,9 +629,7 @@ class ObjectMetaclass(abc.ABCMeta):
             logger.error(s)
             raise ValueError(s)
 
-        attrs_to_add = []
-        for attr, item in this_schema.allItems():
-            attrs_to_add.append(attr)
+        attrs_to_add = [ attr for attr, item in this_schema.allItems()]
 
         cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject') + tuple(attrs_to_add)
 
@@ -667,7 +665,7 @@ class ObjectMetaclass(abc.ABCMeta):
 
 
 class GangaObject(Node):
-    __metaclass__ = ObjectMetaclass # This overloads the default metaclass so we can do some clever stuff
+    __metaclass__ = ObjectMetaclass # Change standard Python metaclass object
     _schema = None  # obligatory, specified in the derived classes
     _category = None  # obligatory, specified in the derived classes
     _exportmethods = []  # optional, specified in the derived classes
