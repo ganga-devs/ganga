@@ -209,7 +209,7 @@ class SubJobXMLList(GangaObject):
             range_limit = range(len(self))
 
         for sj_id in range_limit:
-            if sj_id in self._cachedJobs.keys():
+            if sj_id in self._cachedJobs:
                 this_cache = self._registry.getIndexCache(self.__getitem__(sj_id))
                 all_caches[sj_id] = this_cache
                 disk_location = self.__get_dataFile(sj_id)
@@ -502,7 +502,7 @@ class SubJobXMLList(GangaObject):
             range_limit = range(len(self))
 
         for index in range_limit:
-            if index in self._cachedJobs.keys():
+            if index in self._cachedJobs:
                 ## If it ain't dirty skip it
                 if not self._cachedJobs[index]._dirty:
                     continue

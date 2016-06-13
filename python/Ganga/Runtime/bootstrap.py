@@ -363,7 +363,7 @@ under certain conditions; type license() for details.
                     hasLoaded_newer = True
         
         old_dir = os.path.expanduser('~/.ipython-ganga')
-        if 'IPYTHONDIR' in os.environ.keys():
+        if 'IPYTHONDIR' in os.environ:
             old_dir = os.path.abspath(os.path.expanduser(os.environ['IPYTHONDIR']))
 
         single_pass_file = os.path.join(old_dir, '.have_migrated')
@@ -1155,7 +1155,7 @@ under certain conditions; type license() for details.
 
         not_exist = False
 
-        if 'IPYTHONDIR' in os.environ.keys():
+        if 'IPYTHONDIR' in os.environ:
             ipyth_dir = os.environ['IPYTHONDIR']
             os.environ['IPYTHONDIR'] = os.path.abspath(os.path.expanduser(os.environ['IPYTHONDIR']))
             #logger.warning('Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands', ipyth_dir)

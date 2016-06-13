@@ -124,9 +124,9 @@ class JobRegistrySlice(RegistrySlice):
         elif isType(obj, str):
             status_attr = obj
         elif isType(obj, dict):
-            if 'display:status' in obj.keys():
+            if 'display:status' in obj:
                 status_attr = obj['display:status']
-            elif 'status' in obj.keys():
+            elif 'status' in obj:
                 status_attr = obj['status']
             else:
                 status_attr = None

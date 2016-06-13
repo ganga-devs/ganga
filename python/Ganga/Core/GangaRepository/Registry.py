@@ -300,7 +300,7 @@ class Registry(object):
             this_id (int): This is the python id of a given object, i.e. id(object) which is having a repo transaction performed on it
             action (str): This is a string which represents the transaction (useful for debugging collisions)
         """
-        while this_id in self._inprogressDict.keys():
+        while this_id in self._inprogressDict:
             logger.debug("Getting item being operated on: %s" % this_id)
             logger.debug("Currently in state: %s" % self._inprogressDict[this_id])
             #import traceback
@@ -309,7 +309,7 @@ class Registry(object):
             #sys.exit(-1)
             #time.sleep(0.05)
         self._inprogressDict[this_id] = action
-        if this_id not in self.hard_lock.keys():
+        if this_id not in self.hard_lock:
             self.hard_lock[this_id] = threading.Lock()
         self.hard_lock[this_id].acquire()
 
@@ -655,7 +655,7 @@ class Registry(object):
         """
         logger.debug("_read_access")
         obj_id = id(stripProxy(_obj))
-        if obj_id in self._inprogressDict.keys():
+        if obj_id in self._inprogressDict:
             return
 
         with _obj.const_lock:
@@ -706,7 +706,7 @@ class Registry(object):
         """
         logger.debug("_safe_read_access")
         obj = stripProxy(_obj)
-        if id(obj) in self._inprogressDict.keys():
+        if id(obj) in self._inprogressDict:
             return
 
         if self.hasStarted() is not True:
@@ -747,7 +747,7 @@ class Registry(object):
         logger.debug("_write_access")
         obj = stripProxy(_obj)
         obj_id = id(_obj)
-        if obj_id in self._inprogressDict.keys():
+        if obj_id in self._inprogressDict:
             return
 
         with obj.const_lock:
@@ -762,7 +762,7 @@ class Registry(object):
         logger.debug("__write_acess")
         obj = stripProxy(_obj)
         this_id = id(obj)
-        if this_id in self._inprogressDict.keys():
+        if this_id in self._inprogressDict:
             for this_d in self.changed_ids.itervalues():
                 this_d.add(self.find(obj))
             return
@@ -833,7 +833,7 @@ class Registry(object):
         logger.debug("_release_lock")
         obj = stripProxy(_obj)
 
-        if id(obj) in self._inprogressDict.keys():
+        if id(obj) in self._inprogressDict:
             return
 
         if self.hasStarted() is not True:
