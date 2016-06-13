@@ -1,10 +1,10 @@
 from __future__ import absolute_import
 
-import pytest
-from Ganga.testlib.mark import external
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from os import makedirs, path
 from tempfile import gettempdir
+import shutil
 
 class TestGaudiRun(GangaUnitTest):
 
@@ -14,6 +14,7 @@ class TestGaudiRun(GangaUnitTest):
 
         tmp_fol = gettempdir()
         gaudi_testFol = path.join(tmp_fol, 'GaudiRunTest')
+        shutil.rmtree(gaudi_testFol, ignore_errors=True)
         makedirs(gaudi_testFol)
         gaudi_testOpts = path.join(gaudi_testFol, 'testOpts.py')
         with open(gaudi_testOpts, 'w+') as temp_opt:
@@ -21,12 +22,12 @@ class TestGaudiRun(GangaUnitTest):
 
         gr = GaudiRun(directory=gaudi_testFol, myOpts=LocalFile(gaudi_testOpts))
 
-        assert isinstance(gr.getOptsFile(), LocalFile)
-        assert gr.getDir()
+        assert isinstance(stripProxy(gr).getOptsFile(), stripProxy(LocalFile))
+        assert stripProxy(gr).getDir()
 
-        assert open(path.join(gr.getOptsFile().namePattern, gr.getOptsFile().localDir)).read() == "print('hello')"
+        assert open(path.join(stripProxy(gr).getOptsFile().localDir, stripProxy(gr).getOptsFile().namePattern)).read() == "print('hello')"
 
-        assert gr.getDir() == gaudi_testFol
+        assert stripProxy(gr).getDir() == gaudi_testFol
 
         j=Job()
         j.application = gr
@@ -37,5 +38,7 @@ class TestGaudiRun(GangaUnitTest):
 
         gr.myOpts = df
 
-        assert gr.myOpts == df
+        assert gr.myOpts.lfn == df.lfn
+
+        shutil.rmtree(gaudi_testFol, ignore_errors=True)
 
