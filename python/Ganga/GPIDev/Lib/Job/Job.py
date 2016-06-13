@@ -11,7 +11,7 @@ import uuid
 import sys
 
 import Ganga.Core.FileWorkspace
-import Ganga.GPIDev.MonitoringServices
+from Ganga.GPIDev.MonitoringServices import getMonitoringObject
 from Ganga.Core import GangaException, IncompleteJobSubmissionError, JobManagerError, Sandbox
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
@@ -64,7 +64,7 @@ def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
 
     lzy_loading_str = 'display:'+ this_attr
     job_index_cache = this_job._index_cache
-    if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache.keys():
+    if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache:
         obj_name = job_index_cache[lzy_loading_str]
         if obj_name is not None and do_eval:
             job_obj = getRuntimeGPIObject(obj_name, True)
@@ -256,8 +256,6 @@ class Job(GangaObject):
 
     def __construct__(self, args):
 
-        stripProxy(self)._getWriteAccess()
-
         self.status = "new"
         logger.debug("Intercepting __construct__")
 
@@ -306,8 +304,6 @@ class Job(GangaObject):
         else:
             # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
             super(Job, self).__construct__(args)
-
-        stripProxy(self)._setDirty()
 
     def _readonly(self):
         return self.status != 'new'
@@ -648,7 +644,7 @@ class Job(GangaObject):
         for key in keys:
             try:
                 for configEntry in getConfig('Output')[key]['backendPostprocess']:
-                    if configEntry not in backend_output_postprocess.keys():
+                    if configEntry not in backend_output_postprocess:
                         backend_output_postprocess[configEntry] = {}
 
                     backend_output_postprocess[configEntry][key] = getConfig('Output')[key]['backendPostprocess'][configEntry]
@@ -780,7 +776,7 @@ class Job(GangaObject):
         j.updateStatus(new_stat)
 
     def getMonitoringService(self):
-        return Ganga.GPIDev.MonitoringServices.getMonitoringObject(self)
+        return getMonitoringObject(self)
 
     def monitorPrepare_hook(self, subjobconfig):
         """Let monitoring services work with the subjobconfig after it's prepared"""
@@ -856,8 +852,6 @@ class Job(GangaObject):
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
             self._init_workspace()
-
-        self._setDirty()
 
         super(Job, self)._auto__init__()
         stripProxy(self.info).uuid = str(uuid.uuid4())
@@ -1810,7 +1804,6 @@ class Job(GangaObject):
                 pass
 
         try:
-            self._setDirty()
             self._releaseWriteAccess()
         except Exception as err:
             logger.debug("Remove Err: %s" % err)
@@ -1872,7 +1865,6 @@ class Job(GangaObject):
         """Private helper. Kill the job. Raise JobError exception on error.
         """
         try:
-            self._getWriteAccess()
             # make sure nobody writes to the cache during this operation
             # job._registry.cache_writers_mutex.lock()
 
@@ -2196,9 +2188,6 @@ class Job(GangaObject):
         elif attr == 'comment':
 
             super(Job, self).__setattr__(attr, value)
-            # if a comment is added mark the job as dirty
-            if value != '':
-                self._setDirty()
 
         elif attr == 'backend':
 

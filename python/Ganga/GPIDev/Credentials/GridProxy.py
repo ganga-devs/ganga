@@ -184,11 +184,9 @@ class GridProxy(ICredential):
     _exportmethods = ["create", "destroy", "identity", "info", "isAvailable",
                       "isValid", "location", "renew", "timeleft", "voname", "fullIdentity"]
 
-    def __init__(self, middleware="EDG"):
+    def __init__(self):
         super(GridProxy, self).__init__()
-        self.middleware = middleware
-        if self.middleware:
-            self.shell = getShell(self.middleware)
+        self.shell = getShell()
         self.chooseCommandSet()
         return
 

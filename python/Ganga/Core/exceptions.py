@@ -219,6 +219,8 @@ class RepositoryError(GangaException):
         super(RepositoryError, self).__init__(self, what)
         self.what = what
         self.repository = repo
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
         logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))
         logger.error('If you believe the problem has been solved, type "reactivate()" to re-enable ')
         try:
