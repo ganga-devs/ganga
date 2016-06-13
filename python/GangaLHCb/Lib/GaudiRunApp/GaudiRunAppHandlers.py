@@ -6,6 +6,7 @@ import tarfile
 import random
 import threading
 import uuid
+import shutil
 
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
@@ -17,8 +18,8 @@ from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
 from Ganga.Utility.Config import getConfig
-from Ganga.Utility.files import unique
 from Ganga.Utility.logging import getLogger
+from Ganga.Utility.util import unique
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
@@ -41,7 +42,7 @@ def add_timeStampFile(given_path):
     logger.info("Constructing: %s" % time_filename)
     with open(time_filename, 'a+') as time_file:
         time_file.write(datetime.now().strftime(fmt))
-        time_file.write('\n'+uuid.uuid4())
+        time_file.write('\n'+str(uuid.uuid4()))
 
 def genDataFiles(job):
     """
@@ -64,6 +65,10 @@ def genDataFiles(job):
             cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
             data_str += cat_opts
 
+        #input_data_filename = os.path.join(job.getStringInputDir(), GaudiRunDiracRTHandler.data_file)
+        #with open(input_data_filename, 'w+') as input_d_file:
+        #    input_d_file.write(data_str)
+        #inputsandbox.append(LocalFile(namePattern=GaudiRunDiracRTHandler.data_file, localDir=job.getStringInputDir()))
         inputsandbox.append(FileBuffer(GaudiRunDiracRTHandler.data_file, data_str))
 
     return inputsandbox
@@ -132,11 +137,12 @@ class GaudiRunRTHandler(IRuntimeHandler):
         job = app.getJobObject()
 
         # Setup the command which to be run and the input and output
-        input_sand = job.inputsandbox
-        output_sand = job.outputsandbox
-        data_files = genDataFiles(job)
+        input_sand = genDataFiles(job)
+        output_sand = []
 
-        input_sand = unique(input_sand + data_files)
+        # NB with inputfiles the mechanics of getting the inputfiled to the input of the Localhost backend is taken care of for us
+        # We don't have to do anything to get our files when we start running
+        # Also we don't manage the outputfiles here!
 
         job_command = prepareCommand(app)
 
@@ -151,6 +157,8 @@ class GaudiRunRTHandler(IRuntimeHandler):
         else:
             for f in input_files:
                 input_sand.append(File(f))
+
+        logger.info("input_sand: %s" % input_sand)
 
         # It's this authors opinion that the script should be in the PATH on the WN
         # As it stands policy is that is isn't so we have to call it in a relative way, hence "./"
@@ -231,16 +239,32 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
             jobmasterconfig (tuple): Output from the master job prepare step
         """
 
+        # NB this needs to be removed safely
         # Get the inputdata and input/output sandbox in a sorted way
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app)
 
+        # We know we don't need this one
+        inputsandbox = []
+
         job = app.getJobObject()
+
+        # We can support inputfiles and opts_file here. Locally should be submitted once, remotely can be referenced.
 
         opts_file = app.getOptsFile()
 
         if isinstance(opts_file, DiracFile):
             inputsandbox += ['LFN:'+opts_file.lfn]
+
+        # Sort out inputfiles we support
+        for file_ in job.inputfiles:
+            if isinstance(file_, DiracFile):
+                inputsandbox += ['LFN:'+file_.lfn]
+            elif isinstance(file_, LocalFile):
+                shutil.copyfile(file_.localDir + os.path.basename(file_.namePattern), app.getSharedPath())
+            else:
+                logger.error("Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
+                raise ApplicationConfigurationError(None, "Unsupported filetype: %s with DIRAC backend" % getName(file_))
 
         if not isinstance(app.uploadedInput, DiracFile):
             with prep_lock:
@@ -251,11 +275,14 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                 else:
                     generateDiracInput(app)
 
+
         logger.info("uploadedInput: %s" % app.uploadedInput)
 
         rep_data = app.uploadedInput.getReplicas()
 
         logger.info("Replica info: %s" % rep_data)
+
+        inputsandbox += ['LFN:'+app.uploadedInput.lfn]
 
         logger.info("input_data: %s" % input_data)
 
@@ -268,6 +295,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         scriptToRun = generateWNScript(job_command, job)
         # Already added to sandbox uploaded as LFN
 
+        # This code deals with the outputfiles as outputsandbox and outputdata for us
         dirac_outputfiles = dirac_outputfile_jdl(outputfiles, False)
 
         # NOTE special case for replicas: replicate string must be empty for no
@@ -294,11 +322,14 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
-                                        INPUT_SANDBOX=repr('LFN:'+app.uploadedInput.lfn),
+                                        INPUT_SANDBOX=repr([f for f in inputsandbox]),
                                         )
 
+        # NB
+        # inputsandbox here isn't used by the DIRAC backend as we explicitly define the INPUT_SANDBOX here!
+
         # Return the output needed for the backend to submit this job
-        return StandardJobConfig(dirac_script, inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
+        return StandardJobConfig(dirac_script, inputbox=[], outputbox=[])
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
