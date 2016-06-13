@@ -218,12 +218,13 @@ class Node(object):
         """If this method is overridden, the following should be noted:
 
         Args:
-            level: the hierachy level we are currently at in the object tree.
-            verbosity_level: How verbose the print should be. Currently this is always 0.
-            whitespace_marker: If printing on multiple lines, this allows the default indentation to be replicated.
+            level (int): the hierachy level we are currently at in the object tree.
+            verbosity_level (int): How verbose the print should be. Currently this is always 0.
+            whitespace_marker (str): If printing on multiple lines, this allows the default indentation to be replicated.
                                The first line should never use this, as the substitution is 'name = %s' % printSummaryTree()
-            out: An output stream to print to. The last line of output should be printed without a newline.'
-            selection: See VPrinter for an explaintion of this.
+            out (stream): An output stream to print to. The last line of output should be printed without a newline.'
+            selection (str): See VPrinter for an explaintion of this.
+            interactive (bool): Is this being printed to the interactive prompt
         """
         from Ganga.GPIDev.Base.VPrinter import VSummaryPrinter
         self.accept(VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection, interactive))
@@ -247,6 +248,8 @@ class Node(object):
 def synchronised_get_descriptor(get_function):
     """
     This decorator should only be used on ``__get__`` method of the ``Descriptor``.
+    Args:
+        get_function (function): Function we intend to wrap with the soft/read lock
     """
     @functools.wraps(get_function)
     def decorated(self, obj, type_or_value):
@@ -262,6 +265,8 @@ def synchronised_get_descriptor(get_function):
 def synchronised_set_descriptor(set_function):
     """
     This decorator should only be used on ``__set__`` method of the ``Descriptor``.
+    Args:
+        set_function (function): Function we intend to wrap with the hard/write lock
     """
     def decorated(self, obj, type_or_value):
         if obj is None:
@@ -276,13 +281,17 @@ def synchronised_set_descriptor(set_function):
 class Descriptor(object):
 
     """
-    This is a Descriptor.
-    TODO: explain in more detail how the Descriptor fits in in this context other than providing get/set methods in some cases and thread/locking
+    This is the Descriptor class used to deal with object assignment ot attribtues of the GangaObject.
+    This class handles the lazy-loading of an object from disk when needed to resturn a value stored in the Registry
+    This class also handles thread-locking of a class including both the getter and setter methods to ensure object consistency
     """
 
     def __init__(self, name, item):
         """
         Lets build a descriptor for this item with this name
+        Args:
+            name (str): Name of the attribute being wrapped
+            item (Item): The Schema entry describing this attribute (Not currently used atm)
         """
         self._name = name
         self._item = item
@@ -295,11 +304,19 @@ class Descriptor(object):
 
     @staticmethod
     def _bind_method(obj, name):
+        """
+        Method which returns the value for a given attribute of a name
+        Args:
+            name (str): This is the name of the attribute of interest
+        """
         if name is None:
             return None
         return getattr(obj, name)
 
     def _check_getter(self):
+        """
+        This attribute checks to see if a getter has been assigned to an attribute or not to avoid it's assignment
+        """
         if self._getter_name:
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
@@ -307,7 +324,10 @@ class Descriptor(object):
     def __get__(self, obj, cls):
         """
         Get method of Descriptor
-        TODO, explain why/how this is different to a get method on a standard object
+        This wraps the object in question with a read-lock which ensures object onsistency across multiple threads
+        Args:
+            obj (GangaObject): This is the object which controls the attribute of interest
+            cls (class): This is the class of the Ganga Object which is being called
         """
         name = _getName(self)
 
@@ -434,8 +454,7 @@ class Descriptor(object):
     def __set__(self, obj, val):
         """
         Set method
-        TODO: explain why/how this is different to a get/set or fits in with the GangaObject
-        TODO: Is this needed if flush per n dirty calls has been dropped. This was a major change in usage btw
+        This wraps the given object with a lock preventing both read+write until this transaction is complete for consistency
         Args:
             self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
             obj (GanagObject): parent class which 'owns' the attribute
@@ -454,6 +473,8 @@ class Descriptor(object):
             this_filter = self._bind_method(obj, self._filter_name)
             if this_filter:
                 val = this_filter(_val)
+
+        self._check_getter()
 
         # ON-DISK LOCKING
         obj._getWriteAccess()

@@ -591,13 +591,15 @@ class GangaList(GangaObject):
     def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=sys.stdout, selection='', interactive=False):
         """
         This funtion displays a summary of the contents of this file.
+        (Docs from Gaga.GPIDev.Base.Objects # TODO determine how mch of this may be duplicated from there)
         Args:
-            level (int): 
-            verbosity_level (int): 
-            whitespace_marker (str): 
-            out (file handler): 
-            selection (str): 
-            interactive(bool): 
+            level (int): the hierachy level we are currently at in the object tree.
+            verbosity_level (int): How verbose the print should be. Currently this is always 0.
+            whitespace_marker (str): If printing on multiple lines, this allows the default indentation to be replicated.
+                                     The first line should never use this, as the substitution is 'name = %s' % printSummaryTree()
+            out (stream): An output stream to print to. The last line of output should be printed without a newline.'
+            selection: See VPrinter for an explaintion of this.
+            interactive (bool): Is this printing code being called from the interactive IPython prompt?
         """
         parent = self._getParent()
         schema_entry = self.findSchemaParentSchemaEntry(parent)
