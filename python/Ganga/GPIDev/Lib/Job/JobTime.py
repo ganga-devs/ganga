@@ -410,8 +410,8 @@ class JobTime(GangaObject):
     def duration(self, start, end):
         """Returns duration between two specified timestamps as timedelta object.
         """
-        if start in self.timestamps.keys():
-            if end in self.timestamps.keys():
+        if start in self.timestamps:
+            if end in self.timestamps:
                 s, e = self.timestamps[start], self.timestamps[end]
                 s_micro, e_micro = datetime.timedelta(
                     0, 0, s.microsecond), datetime.timedelta(0, 0, e.microsecond)

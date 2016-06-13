@@ -175,6 +175,7 @@ def change_atexitPolicy(interactive_session=True, new_policy=None):
     current_shutdown_policy = forced_shutdown_policy
 
 def getCurrentShutdownPolicy():
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
     global current_shutdown_policy
     if current_shutdown_policy is None:
         current_shutdown_policy = config['forced_shutdown_policy']

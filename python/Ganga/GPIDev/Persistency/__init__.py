@@ -73,7 +73,7 @@ def stripped_export(item=None, filename="", mode="w"):
         "w": "write to new file",
         "a": "append to existing file"}
 
-    if mode not in modeDict.keys():
+    if mode not in modeDict:
         logger.info("'mode' must be one of:")
         for key in modeDict.keys():
             logger.info("   '%s' - %s" % (key, modeDict[key]))
