@@ -157,19 +157,18 @@ translated_names = {}
 def _migrate_name(name):
     import Ganga.Utility.strings as strings
 
-    if (name not in translated_names.keys()) and (not strings.is_identifier(name)):
+    if (name not in translated_names) and (not strings.is_identifier(name)):
         name2 = strings.drop_spaces(name)
-        name2 = name2.replace(':', '_')
+        name3 = name2.replace(':', '_')
 
-        if not strings.is_identifier(name2):
-            raise ValueError(
-                'config name %s is not a valid python identifier' % name)
+        if not strings.is_identifier(name3):
+            raise ValueError('config name %s is not a valid python identifier' % name)
         else:
             logger = getLogger()
-            logger.warning('obsolete config name found: replaced "%s" -> "%s"' % (name, name2))
+            logger.warning('obsolete config name found: replaced "%s" -> "%s"' % (name, name3))
             logger.warning('config names must be python identifiers, please correct your usage in the future ')
-            translated_names[name] = name2
-    else:
+            translated_names[name] = name3
+    elif name not in translated_names:
         translated_names[name] = name
 
     return translated_names[name]
@@ -547,11 +546,11 @@ class PackageConfig(object):
         option.defineOption(default_value, docstring, **meta)
         self.options[option.name] = option
 
-        if self.name in allConfigFileValues.keys():
+        if self.name in allConfigFileValues:
             conf_value = allConfigFileValues[self.name]
         else:
             msg = "Error getting ConfigFileValue Option: %s" % str(self.name)
-            if 'logger' in locals().keys() and logger is not None:
+            if 'logger' in locals() and logger is not None:
                 logger.debug("dbg: %s"%msg)
             else:
                 ##uncomment for debugging
@@ -559,14 +558,14 @@ class PackageConfig(object):
                 pass
             conf_value = dict()
 
-        if option.name in conf_value.keys():
+        if option.name in conf_value:
             session_value = conf_value[option.name]
             try:
                 option.setSessionValue(session_value)
                 del conf_value[option.name]
             except Exception as err:
                 msg = "Error Setting Session Value: %s" % str(err)
-                if 'logger' in locals().keys() and logger is not None:
+                if 'logger' in locals() and logger is not None:
                     logger.debug("dbg: %s"%msg)
                 else:
                     ##uncomment for debugging
@@ -862,7 +861,7 @@ def read_ini_files(filenames, system_vars):
                         logger.debug("err: %s" % str(err))
 
                 # do not put the DEFAULTS into the sections (no need)
-                if name in cc.defaults().keys():
+                if name in cc.defaults():
                     continue
 
                 # special rules (NOT APPLIED IN DEFAULT SECTION):
@@ -956,7 +955,7 @@ def setSessionValuesFromFiles(filenames, system_vars):
         for o in cfg.options(name):
             # Important: do not put the options from the DEFAULTS section into
             # the configuration units!
-            if o in cfg.defaults().keys():
+            if o in cfg.defaults():
                 continue
             try:
                 v = cfg.get(name, o)

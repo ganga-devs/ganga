@@ -182,17 +182,19 @@ RecoToDST-07/90000000/DST" ,
         #    return DiracFile(lfn = this_file)
         #GangaObject.__createNewList(new_files, files, _createDiracLFN)
 
-        new_files = [DiracFile(lfn=_file) for _file in files]
+        logger.debug("Creating new list")
+        new_files = [DiracFile(lfn=f) for f in files]
 
         #new_files = [DiracFile(lfn=_file) for _file in files]
         #for f in files:
         #    new_files.append(DiracFile(lfn=f))
             #ds.extend([DiracFile(lfn = f)])
 
-        logger.debug("Creating Dataset")
+        logger.info("Constructing LHCbDataset")
 
         from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-        ds = LHCbDataset(new_files)
+        logger.debug("Imported LHCbDataset")
+        ds = LHCbDataset(files=new_files, fromRef=True)
 
         logger.debug("Returning Dataset")
 
@@ -283,10 +285,10 @@ class BKQueryDict(GangaObject):
                 files = files['LFNs'].keys()
 
         from GangaDirac.Lib.Files.DiracFile import DiracFile
-        this_list = [DiracFile(lfn=_file) for _file in files]
+        this_list = [DiracFile(lfn=f) for f in files]
 
         from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-        ds = LHCbDataset(this_list)
+        ds = LHCbDataset(files=this_list, fromRef=True)
 
         return addProxy(ds)
 

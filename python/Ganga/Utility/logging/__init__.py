@@ -120,7 +120,7 @@ class ColourFormatter(logging.Formatter, object):
         except TypeError:
             print("%s" % str(record))
             return None
-        if record.levelno in self.colours.keys():
+        if record.levelno in self.colours:
             code = self.colours[record.levelno]
             return self.markup(s, code)
         else:
@@ -141,7 +141,7 @@ def _set_formatter(handler, this_format=None):
     this_format here overloads the default in the config (useful for --debug
     otherwise the format set by default in the config is used"""
     if config['_customFormat'] != "":
-        for k in _formats.keys():
+        for k in _formats:
             _formats[k] = config['_customFormat']
 
     if this_format is not None and this_format in _formats:
@@ -280,7 +280,7 @@ def _guess_module_logger_name(modulename, frame=None):
 
 
     this__file__ = None
-    if '__file__' in frame.f_globals.keys():
+    if '__file__' in frame.f_globals:
         this__file__ = frame.f_globals['__file__']
         if this__file__ in lookup_frame_names:
             del frame
