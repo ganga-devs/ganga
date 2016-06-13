@@ -5,6 +5,7 @@ import tempfile
 import tarfile
 import random
 import threading
+import uuid
 
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
@@ -40,7 +41,7 @@ def add_timeStampFile(given_path):
     logger.info("Constructing: %s" % time_filename)
     with open(time_filename, 'a+') as time_file:
         time_file.write(datetime.now().strftime(fmt))
-        time_file.write('\n'+''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(20)))
+        time_file.write('\n'+uuid.uuid4())
 
 def genDataFiles(job):
     """
