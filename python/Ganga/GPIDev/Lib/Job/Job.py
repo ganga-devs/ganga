@@ -67,7 +67,7 @@ def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
     if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache:
         obj_name = job_index_cache[lzy_loading_str]
         if obj_name is not None and do_eval:
-            job_obj = getRuntimeGPIObject(obj_name, True)
+            job_obj = stripProxy(getRuntimeGPIObject(obj_name, True))
             if job_obj is None:
                 job_obj = getattr(this_job, this_attr)
         elif not do_eval:
@@ -321,7 +321,7 @@ class Job(GangaObject):
 
         c = Job()
 
-        stripProxy(c.time).newjob()
+        c.time.newjob()
         c.backend = copy.deepcopy(self.backend)
         c.application = copy.deepcopy(self.application)
         c.inputdata = copy.deepcopy(self.inputdata)
@@ -432,14 +432,14 @@ class Job(GangaObject):
             files2 = GangaList()
 
             for f in currentOutputFiles:
-                if regex.search(f.namePattern) is not None and hasattr(stripProxy(f), 'subfiles') and stripProxy(f).subfiles:
-                    files.extend(makeGangaListByRef(stripProxy(f).subfiles))
+                if regex.search(f.namePattern) is not None and hasattr(f, 'subfiles') and f.subfiles:
+                    files.extend(makeGangaListByRef(f.subfiles))
                 else:
                     files.append(f)
 
             for f in currenUnCopyableOutputFiles:
-                if regex.search(f.namePattern) is not None and hasattr(stripProxy(f), 'subfiles') and stripProxy(f).subfiles:
-                    files2.extend(makeGangaListByRef(stripProxy(f).subfiles))
+                if regex.search(f.namePattern) is not None and hasattr(f, 'subfiles') and f.subfiles:
+                    files2.extend(makeGangaListByRef(f.subfiles))
                 else:
                     files2.append(f)
 
@@ -816,13 +816,13 @@ class Job(GangaObject):
 
     def postprocess_hook(self):
         logger.info("Job %s Running PostProcessor hook" % self.getFQID('.'))
-        stripProxy(self.application).postprocess()
+        self.application.postprocess()
         self.getMonitoringService().complete()
         self.postprocessoutput(self.outputfiles, self.outputdir)
 
     def postprocess_hook_failed(self):
         logger.info("Job %s PostProcessor Failed" % self.getFQID('.'))
-        stripProxy(self.application).postprocess_failed()
+        self.application.postprocess_failed()
         self.getMonitoringService().fail()
 
     def monitorFailed_hook(self):
@@ -863,7 +863,7 @@ class Job(GangaObject):
             self._init_workspace()
 
         super(Job, self)._auto__init__()
-        stripProxy(self.info).uuid = str(uuid.uuid4())
+        self.info.uuid = str(uuid.uuid4())
 
     def _init_workspace(self):
         logger.debug("Job %s Calling _init_workspace", self.getFQID('.'))
@@ -885,8 +885,8 @@ class Job(GangaObject):
 
         name = '_input_sandbox_' + self.getFQID('_') + '%s.tgz'
 
-        if master is True:
-            if self.master is not None:
+        if master:
+            if self.master:
                 name = '_input_sandbox_' + self.master.getFQID('_') + '%s.tgz'
             name = name % "_master"
         else:
@@ -900,7 +900,7 @@ class Job(GangaObject):
         logger.debug("Creating Packed InputSandbox %s" % name)
         logger.debug("With:")
         for f in files:
-            if hasattr(stripProxy(f), 'name'):
+            if hasattr(f, 'name'):
                 logger.debug("\t" + f.name)
             else:
                 logger.debug("\t" + f)
@@ -910,7 +910,7 @@ class Job(GangaObject):
         # the master sandbox has already been created so just look for it
         # else if it has not been prepared we need to construct it as usual
 
-        if master is True:
+        if master:
             logger.debug("Returning Master InputSandbox")
             if self.application.is_prepared is True:
                 logger.debug("Master Application is Prepared!")
@@ -947,7 +947,7 @@ class Job(GangaObject):
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
             ## This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
-            return self.getInputWorkspace(create=stripProxy(self).status != 'removed').getPath()
+            return self.getInputWorkspace(create=self.status != 'removed').getPath()
         else:
             return self.getInputWorkspace(create=False).getPath()
 
@@ -957,7 +957,7 @@ class Job(GangaObject):
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
             ## This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
-            return self.getOutputWorkspace(create=stripProxy(self).status != 'removed').getPath()
+            return self.getOutputWorkspace(create=self.status != 'removed').getPath()
         else:
             return self.getOutputWorkspace(create=False).getPath()
 
@@ -972,15 +972,15 @@ class Job(GangaObject):
         else:
             return None
 
-        if stripProxy(self).master is not None:
-            cur = stripProxy(self).master  # FIXME: or use master attribute?
+        if self.master is not None:
+            cur = self.master  # FIXME: or use master attribute?
         else:
             cur = None
 
         while cur is not None:
             fqid.append(cur.id)
-            if stripProxy(cur).master is not None:
-                cur = stripProxy(cur).master
+            if cur.master is not None:
+                cur = cur.master
             else:
                 cur = None
         fqid.reverse()
@@ -1175,7 +1175,7 @@ class Job(GangaObject):
             if appmasterconfig is None:
                 # I am going to generate the appmasterconfig now
                 logger.debug("Job %s Calling application.master_configure" % self.getFQID('.'))
-                appmasterconfig = stripProxy(self.application).master_configure()[1]
+                appmasterconfig = self.application.master_configure()[1]
                 self._storedAppMasterConfig = appmasterconfig
         else:
             # I am a sub-job, lets ask the master job what to do
@@ -1195,7 +1195,7 @@ class Job(GangaObject):
             if appsubconfig is None or len(appsubconfig) == 0:
                 appmasterconfig = self._getMasterAppConfig()
                 logger.debug("Job %s Calling application.configure %s times" % (self.getFQID('.'), len(self.subjobs)))
-                appsubconfig = [stripProxy(j.application).configure(appmasterconfig)[1] for j in subjobs]
+                appsubconfig = [j.application.configure(appmasterconfig)[1] for j in subjobs]
 
         else:
             #   I am a sub-job, lets just generate our own config
@@ -1203,7 +1203,7 @@ class Job(GangaObject):
             if appsubconfig is None or len(appsubconfig) == 0:
                 appmasterconfig = self._getMasterAppConfig()
                 logger.debug("Job %s Calling application.configure 1 times" % self.getFQID('.'))
-                appsubconfig = [stripProxy(self.application).configure(appmasterconfig)[1]]
+                appsubconfig = [self.application.configure(appmasterconfig)[1]]
 
         self._storedAppSubConfig = appsubconfig
 
@@ -1256,7 +1256,7 @@ class Job(GangaObject):
                 jobsubconfig = []
 
                 if self.parallel_submit is False:
-                    jobsubconfig = [rtHandler.prepare(stripProxy(sub_job.application), sub_conf, appmasterconfig, jobmasterconfig) for (sub_job, sub_conf) in zip(subjobs, appsubconfig)]
+                    jobsubconfig = [rtHandler.prepare(sub_job.application, sub_conf, appmasterconfig, jobmasterconfig) for (sub_job, sub_conf) in zip(subjobs, appsubconfig)]
                 else:
 
                     finished = {}
@@ -1264,7 +1264,7 @@ class Job(GangaObject):
                     from Ganga.Core.GangaThread.WorkerThreads import getQueues
                     index=0
                     for sub_j, sub_conf in zip(subjobs, appsubconfig):
-                        getQueues()._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, stripProxy(sub_j.application), sub_conf, appmasterconfig, jobmasterconfig, finished))
+                        getQueues()._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, sub_j.application, sub_conf, appmasterconfig, jobmasterconfig, finished))
                         index += 1
 
                     while len(finished) != len(subjobs):
@@ -1453,7 +1453,7 @@ class Job(GangaObject):
         # make sure nobody writes to the cache during this operation
         # job._registry.cache_writers_mutex.lock()
 
-        supports_keep_going = 'keep_going' in inspect.getargspec(stripProxy(self.backend).master_submit)[0]
+        supports_keep_going = 'keep_going' in inspect.getargspec(self.backend.master_submit)[0]
 
         if keep_going and not supports_keep_going:
             msg = 'job.submit(keep_going=True) is not supported by %s backend' % getName(self.backend)
@@ -1542,12 +1542,12 @@ class Job(GangaObject):
             # should call, not submit directly
 
             if supports_keep_going:
-                if 'parallel_submit' in inspect.getargspec(stripProxy(self.backend).master_submit)[0]:
-                    r = stripProxy(self.backend).master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going, self.parallel_submit)
+                if 'parallel_submit' in inspect.getargspec(self.backend.master_submit)[0]:
+                    r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going, self.parallel_submit)
                 else:
-                    r = stripProxy(self.backend).master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going)
+                    r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going)
             else:
-                r = stripProxy(self.backend).master_submit( rjobs, jobsubconfig, jobmasterconfig)
+                r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig)
 
             if not r:
                 raise JobManagerError('error during submit')
@@ -1555,7 +1555,7 @@ class Job(GangaObject):
             # This appears to be done by the backend now in a way that handles sub-jobs,
             # in the case of a master job however we need to still perform this
             if len(rjobs) != 1:
-                stripProxy(self.info).increment()
+                self.info.increment()
             if self.master is not None:
                 self.updateStatus('submitted')
             # make sure that the status change goes to the repository, NOTE:
@@ -1600,7 +1600,7 @@ class Job(GangaObject):
         # This appears to be done by the backend now in a way that handles sub-jobs,
         # in the case of a master job however we need to still perform this
         if len(rjobs) != 1:
-            stripProxy(self.info).increment()
+            self.info.increment()
         #if self.master is not None:
         self.updateStatus('submitted')
 
@@ -1705,20 +1705,20 @@ class Job(GangaObject):
 
             if backend_obj is not None:
                 if hasattr(backend_obj, 'remove'):
-                    stripProxy(self.backend).remove()
+                    self.backend.remove()
             else:
                 if hasattr(self.backend, 'remove'):
-                    stripProxy(self.backend).remove()
+                    self.backend.remove()
 
             if application_obj is not None:
                 if hasattr(application_obj, 'transition_update'):
-                    stripProxy(self.application).transition_update('removed')
+                    self.application.transition_update('removed')
                     for sj in self.subjobs:
-                        stripProxy(sj.application).transition_update('removed')
+                        sj.application.transition_update('removed')
             else:
-                stripProxy(self.application).transition_update('removed')
+                self.application.transition_update('removed')
                 for sj in self.subjobs:
-                    stripProxy(sj.application).transition_update('removed')
+                    sj.application.transition_update('removed')
 
         if self._registry:
             self._registry._remove(self, auto_removed=1)
@@ -1738,11 +1738,11 @@ class Job(GangaObject):
                             except OSError, err:
                                 logger.warning('cannot remove file workspace associated with the sub-job %s : %s', self.getFQID('.'), err)
 
-                        wsp_input = stripProxy(sj).getInputWorkspace(create=False)
+                        wsp_input = sj.getInputWorkspace(create=False)
                         doit_sj(wsp_input.remove)
-                        wsp_output = stripProxy(sj).getOutputWorkspace(create=False)
+                        wsp_output = sj.getOutputWorkspace(create=False)
                         doit_sj(wsp_output.remove)
-                        wsp_debug = stripProxy(sj).getDebugWorkspace(create=False)
+                        wsp_debug = sj.getDebugWorkspace(create=False)
                         doit_sj(wsp_debug.remove)
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
@@ -1775,9 +1775,9 @@ class Job(GangaObject):
                 # decrement the reference counter.
                 if hasattr(self.application, 'is_prepared') and self.application.__getattribute__('is_prepared'):
                     if self.application.is_prepared is not True:
-                        stripProxy(self.application).decrementShareCounter(stripProxy(self.application).is_prepared.name)
+                        self.application.decrementShareCounter(self.application.is_prepared.name)
                         for _ in self.subjobs:
-                            stripProxy(self.application).decrementShareCounter(stripProxy(self.application).is_prepared.name)
+                            self.application.decrementShareCounter(self.application.is_prepared.name)
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
@@ -1955,7 +1955,7 @@ class Job(GangaObject):
         # if the backend argument is identical (no attributes changed) then it is equivalent to None
         # the good side effect is that in this case we don't require any backend resubmit method to support
         # the extra backend argument
-        if stripProxy(backend) == stripProxy(self.backend):
+        if backend == self.backend:
             backend = None
 
         # check if the backend supports extra 'backend' argument for
@@ -2066,7 +2066,6 @@ class Job(GangaObject):
     def _subjobs_proxy(self):
 
         from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
-        from Ganga.GPIDev.Base.Proxy import stripProxy
         if not isType(self._stored_subjobs_proxy, JobRegistrySlice):
             subjob_slice = JobRegistrySlice('jobs(%s).subjobs' % self.id)
             self._stored_subjobs_proxy = _wrap(subjob_slice)
@@ -2075,16 +2074,16 @@ class Job(GangaObject):
 
             if isType(self.subjobs, SubJobXMLList):
                 subjob_slice.objects = self.subjobs
-                #self._stored_subjobs_proxy = _wrap(stripProxy(self._stored_subjobs_proxy))
+                #self._stored_subjobs_proxy = _wrap(self._stored_subjobs_proxy)
             elif isType(self.subjobs, (list, GangaList)):
-                subjob_slice = stripProxy(self._stored_subjobs_proxy)
+                subjob_slice = self._stored_subjobs_proxy
                 #First clear the dictionary
                 if subjob_slice.objects:
                     del subjob_slice.objects[:]
                 #Not put the objects back in
                 for sj in self.subjobs:
                     subjob_slice.objects[sj.id] = sj
-                #self._stored_subjobs_proxy = _wrap(stripProxy(self._stored_subjobs_proxy))
+                #self._stored_subjobs_proxy = _wrap(self._stored_subjobs_proxy)
             else:
                 raise GangaException("This should never arise, cannot understand subjob list")
 
