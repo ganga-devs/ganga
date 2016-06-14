@@ -78,6 +78,8 @@ class SubJobXMLList(GangaObject):
 
         self._cached_filenames = {}
         self._stored_len = []
+        # For caching a large list of integers, the key is the length of the list
+        self._storedKeys = {}
 
         # Lock to ensure only one load at a time
         self._load_lock = threading.Lock()
@@ -287,7 +289,10 @@ class SubJobXMLList(GangaObject):
 
     def keys(self):
         """Return keys to access subjobs"""
-        return [i for i in range(len(self))]
+        myLen = len(self)
+        if myLen not in self._storedKeys:
+            self._storedKeys[myLen] = [i for i in range(len(self))]
+        return self._storedKeys[myLen]
 
     def values(self):
         """Return the actual subjobs"""
