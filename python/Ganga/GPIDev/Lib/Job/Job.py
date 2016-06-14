@@ -746,7 +746,7 @@ class Job(GangaObject):
         if isinstance(self.subjobs, SubJobXMLList):
             stats = set(self.subjobs.getAllSJStatus())
         else:
-            stats = set([sj.status for sj in self.subjobs])
+            stats = set(sj.status for sj in self.subjobs)
 
 	return stats
 
