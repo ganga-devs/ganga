@@ -2076,7 +2076,7 @@ class Job(GangaObject):
                 subjob_slice.objects = self.subjobs
                 #self._stored_subjobs_proxy = _wrap(self._stored_subjobs_proxy)
             elif isType(self.subjobs, (list, GangaList)):
-                subjob_slice = self._stored_subjobs_proxy
+                subjob_slice = stripProxy(self._stored_subjobs_proxy)
                 #First clear the dictionary
                 if subjob_slice.objects:
                     del subjob_slice.objects[:]
