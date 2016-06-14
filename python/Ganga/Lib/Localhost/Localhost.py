@@ -268,9 +268,11 @@ class Localhost(IBackend):
         if config['remove_workdir']:
             import shutil
             try:
+                logger.info("removing: %s" % self.workdir)
                 shutil.rmtree(self.workdir)
             except OSError as x:
                 logger.warning('problem removing the workdir %s: %s', str(self.id), str(x))
+                shutil.rmtree(self.workdir, ignore_errors=True)
 
     @staticmethod
     def updateMonitoringInformation(jobs):
@@ -309,16 +311,14 @@ class Localhost(IBackend):
                 if j.status == 'submitted':
                     pid = get_pid(statusfile)
                     if pid:
-                        stripProxy(j.backend).id = pid
+                        j.backend.id = pid
                         #logger.info('Local job %s status changed to running, pid=%d',j.getFQID('.'),pid)
                         j.updateStatus('running')  # bugfix: 12194
                 exitcode = get_exit_code(statusfile)
                 with open(statusfile) as status_file:
-                    logger.debug(
-                        'status file: %s %s', statusfile, status_file.read())
+                    logger.debug('status file: %s %s', statusfile, status_file.read())
             except IOError as x:
-                logger.debug(
-                    'problem reading status file: %s (%s)', statusfile, str(x))
+                logger.debug('problem reading status file: %s (%s)', statusfile, str(x))
                 exitcode = None
             except Exception as x:
                 logger.critical('problem during monitoring: %s', str(x))
@@ -339,15 +339,14 @@ class Localhost(IBackend):
                     j.updateStatus('failed')
             except OSError as x:
                 if x.errno != errno.ECHILD:
-                    logger.warning(
-                        'cannot do waitpid for %d: %s', stripProxy(j.backend).wrapper_pid, str(x))
+                    logger.warning('cannot do waitpid for %d: %s', stripProxy(j.backend).wrapper_pid, str(x))
 
             # if the exit code was collected for the application get the exit
             # code back
 
             if not exitcode is None:
                 # status file indicates that the application finished
-                stripProxy(j.backend).exitcode = exitcode
+                j.backend.exitcode = exitcode
 
                 if exitcode == 0:
                     j.updateStatus('completed')
@@ -359,5 +358,5 @@ class Localhost(IBackend):
                 # if j.outputdata:
                 # j.outputdata.fill()
 
-                stripProxy(j.backend).remove_workdir()
+                j.backend.remove_workdir()
 
