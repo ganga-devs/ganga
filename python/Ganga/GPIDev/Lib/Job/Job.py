@@ -237,11 +237,15 @@ class Job(GangaObject):
         # Finished initializing 'special' objects which are used in getter methods and alike
         self.time.newjob()  # <-----------NEW: timestamp method
 
+        # These attributes are entirely transitory. They are not copyable or assumed picklable
+        # These are created to hold the result of calling prepare/configure on the application/RTHandler
+        # and are to make life easier in passing around objects
         self._storedRTHandler = None
         self._storedJobSubConfig = None
         self._storedAppSubConfig = None
         self._storedJobMasterConfig = None
         self._storedAppMasterConfig = None
+
         logger.debug("__init__")
 
         self._stored_subjobs_proxy = None
@@ -565,19 +569,18 @@ class Job(GangaObject):
         # For debugging to trace Failures and such
 
         fqid = self.getFQID('.')
-        logger.debug('attempt to change job %s status from "%s" to "%s"', fqid, self.status, newstatus)
+        initial_status = self.status
+        logger.debug('attempt to change job %s status from "%s" to "%s"', fqid, initial_status, newstatus)
 
         try:
-            myStatus = self.status
-            state = self.status_graph[myStatus][newstatus]
+            state = self.status_graph[initial_status][newstatus]
         except KeyError as err:
             # allow default transitions: s->s, no hook
-            if newstatus == self.status:
+            if newstatus == initial_status:
                 state = Job.State(newstatus)
             else:
-                raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"' % (fqid, self.status, newstatus))
+                raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"' % (fqid, initial_status, newstatus))
 
-        saved_status = self.status
         try:
             if state.hook:
                 try:
@@ -589,39 +592,37 @@ class Job(GangaObject):
                 # we call this even if there was a hook
                 newstatus = self.transition_update(newstatus)
 
-                if (newstatus == 'completed') and (self.status != 'completed') and (ignore_failures is not True):
+                if (newstatus == 'completed') and (initial_status != 'completed') and (ignore_failures is not True):
                     if self.outputFilesFailures():
                         logger.info("Job %s outputfile Failure" % self.getFQID('.'))
                         self.updateStatus('failed')
                         return
 
-            if self.status != newstatus:
+            if initial_status != newstatus:
                 self.time.timenow(newstatus)
             else:
-                logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", self.status, newstatus)
+                logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", initial_status, newstatus)
 
             # move to the new state AFTER hooks are called
             self.status = newstatus
-            logger.debug("Status changed from '%s' to '%s'" % (saved_status, self.status))
+            logger.debug("Status changed from '%s' to '%s'" % (initial_status, self.status))
 
         except Exception as x:
-            self.status = saved_status
+            self.status = initial_status
             log_user_exception()
             raise JobStatusError(x), None, sys.exc_info()[2]
-        # useful for debugging
-        #finally:
-        #    pass
 
-        if self.status != saved_status and self.master is None:
-            logger.info('job %s status changed to "%s"', self.getFQID('.'), self.status)
-            # TODO try to force a flush here maybe?
-        if update_master and self.master is not None:
+	final_status = self.status
+
+        if final_status != initial_status and self.master is None:
+            logger.info('job %s status changed to "%s"', self.getFQID('.'), final_status)
+        if update_master and self.master:
             self.master.updateMasterJobStatus()
 
     def transition_update(self, new_status):
         """Propagate status transitions"""
 
-        if new_status == 'completed' or new_status == 'failed' or new_status == 'killed':
+        if new_status in ['completed', 'failed', 'killed']:
             if len(self.postprocessors) > 0:
                 logger.info("Running postprocessor for Job %s" % self.getFQID('.'))
                 passed = self.postprocessors.execute(self, new_status)
@@ -737,27 +738,35 @@ class Job(GangaObject):
 
         return postprocessFailure
 
+    def getSubJobStatuses(self):
+        """
+        This returns a set of all of the different subjob statuses whilst respecting lazy loading
+        """
+        stats = set()
+
+        if isinstance(self.subjobs, SubJobXMLList):
+            sj_data_cache = self.subjobs.getAllCachedData()
+            for sj_id in range(len(self.subjobs)):
+                if self.subjobs.isLoaded(sj_id):
+                    stats.add(self.subjobs(sj_id).status)
+                else:
+                    stats.add(sj_data_cache[sj_id]['status'])
+        else:
+            for sj in self.subjobs:
+                stats.add(sj.status)
+
+	return stats
+
     def updateMasterJobStatus(self):
         """
         Update master job status based on the status of subjobs.
         This is an auxiliary method for implementing bulk subjob monitoring.
         """
 
-        j = self
-        stats = []
-
-        if isType(j.subjobs, SubJobXMLList):
-            for sj_id in range(len(j.subjobs)):
-                if j.subjobs.isLoaded(sj_id):
-                    stats.append(j.subjobs(sj_id).status)
-                else:
-                    stats.append(j.subjobs.getAllCachedData()[sj_id]['status'] )
-        else:
-            for sj in j.subjobs:
-                stats.append(sj.status)
+        stats = self.getSubJobStatuses()
 
         # ignore non-split jobs
-        if not stats and j.master is not None:
+        if not stats and self.master:
             logger.warning('ignoring master job status updated for job %s (NOT MASTER)', self.getFQID('.'))
             return
 
@@ -768,12 +777,12 @@ class Job(GangaObject):
                 new_stat = s
                 break
 
-        if new_stat == j.status:
+        if new_stat == self.status:
             return
 
         if not new_stat:
-            logger.critical('undefined state for job %s, status=%s', j.id, stats)
-        j.updateStatus(new_stat)
+            logger.critical('undefined state for job %s, status=%s', self.id, stats)
+        self.updateStatus(new_stat)
 
     def getMonitoringService(self):
         return getMonitoringObject(self)
@@ -1161,12 +1170,8 @@ class Job(GangaObject):
 
         appmasterconfig = None
         if self.master is None:
-            try:
-                appmasterconfig = self._storedAppMasterConfig
-            except AttributeError as err:
-                logger.debug("AttribErr: %s" % err)
-                pass
-
+            #   I am the master Job
+            appmasterconfig = self._storedAppMasterConfig
             if appmasterconfig is None:
                 # I am going to generate the appmasterconfig now
                 logger.debug("Job %s Calling application.master_configure" % self.getFQID('.'))
@@ -1186,12 +1191,7 @@ class Job(GangaObject):
         appsubconfig = []
         if self.master is None:
             #   I am the master Job
-            try:
-                appsubconfig = self._storedAppSubConfig
-            except Exception as err:
-                logger.debug("AppSub Err: %s" % err)
-                pass
-
+            appsubconfig = self._storedAppSubConfig
             if appsubconfig is None or len(appsubconfig) == 0:
                 appmasterconfig = self._getMasterAppConfig()
                 logger.debug("Job %s Calling application.configure %s times" % (self.getFQID('.'), len(self.subjobs)))
@@ -1199,12 +1199,7 @@ class Job(GangaObject):
 
         else:
             #   I am a sub-job, lets just generate our own config
-            try:
-                appsubconfig = self._storedAppSubConfig
-            except AttributeError as err:
-                logger.debug("Attr Err: %s" % err)
-                pass
-
+            appsubconfig = self._storedAppSubConfig
             if appsubconfig is None or len(appsubconfig) == 0:
                 appmasterconfig = self._getMasterAppConfig()
                 logger.debug("Job %s Calling application.configure 1 times" % self.getFQID('.'))
@@ -1220,12 +1215,7 @@ class Job(GangaObject):
         if self.master is None:
             #   I am the master Job
             #   I have saved the config previously as a transient
-            try:
-                jobmasterconfig = self._storedJobMasterConfig
-            except AttributeError as err:
-                logger.debug("Attr Err mConf: %s" % err)
-                pass
-
+            jobmasterconfig = self._storedJobMasterConfig
             if jobmasterconfig is None:
                 #   I am going to generate the config now
                 appmasterconfig = self._getMasterAppConfig()
@@ -1254,12 +1244,7 @@ class Job(GangaObject):
         jobsubconfig = None
         if self.master is None:
             #   I am the master Job
-            try:
-                jobsubconfig = self._storedJobSubConfig
-            except AttributeError as err:
-                logger.debug("Attr Err sConf: %s" % err)
-                pass
-
+            jobsubconfig = self._storedJobSubConfig
             if jobsubconfig is None:
                 rtHandler = self._getRuntimeHandler()
                 appmasterconfig = self._getMasterAppConfig()
@@ -1308,12 +1293,7 @@ class Job(GangaObject):
         rtHandler = None
         if self.master is None:
             #   I am the master Job
-            try:
-                rtHandler = self._storedRTHandler
-            except AttributeError as err:
-                logger.debug("AtErr RTH: %s" % err)
-                pass
-
+            rtHandler = self._storedRTHandler
             if rtHandler is None:
                 # select the runtime handler
                 try:
