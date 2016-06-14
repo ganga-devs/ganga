@@ -745,12 +745,7 @@ class Job(GangaObject):
         stats = set()
 
         if isinstance(self.subjobs, SubJobXMLList):
-            sj_data_cache = self.subjobs.getAllCachedData()
-            for sj_id in range(len(self.subjobs)):
-                if self.subjobs.isLoaded(sj_id):
-                    stats.add(self.subjobs(sj_id).status)
-                else:
-                    stats.add(sj_data_cache[sj_id]['status'])
+            stats = set(self.subjobs.getAllSJStatus())
         else:
             for sj in self.subjobs:
                 stats.add(sj.status)
