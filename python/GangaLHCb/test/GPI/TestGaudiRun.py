@@ -1,10 +1,11 @@
 from __future__ import absolute_import
 
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.GPIDev.Base.Proxy import stripProxy
 from os import makedirs, path
-from tempfile import gettempdir
 import shutil
+from tempfile import gettempdir
+
+from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 class TestGaudiRun(GangaUnitTest):
 
