@@ -1,3 +1,4 @@
+from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Job.Job import JobError
@@ -6,9 +7,12 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
 from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile
+from Ganga.Utility.Config import getConfig
 from ND280Unit import ND280Unit
-from modules.ND280Dataset.ND280Dataset import ND280LocalDataset, ND280DCacheDataset
-from modules.ND280Splitter.ND280Splitter import splitNbInputFile
+from GangaND280.ND280Dataset.ND280Dataset import ND280LocalDataset, ND280DCacheDataset
+from GangaND280.ND280Splitter.ND280Splitter import splitNbInputFile
+import Ganga.GPI as GPI
+
 import os
 
 class ND280Transform(ITransform):
@@ -103,20 +107,29 @@ class ND280Transform(ITransform):
          for parent in parent_units:
             # loop over the output files and add them to the ND280LocalDataset - THIS MIGHT NEED SOME WORK!
             job = GPI.jobs(parent.active_job_ids[0])
-            for f in job.outputfiles:
-               # should check for different file types and add them as appropriate to the dataset
-               # self.inputdata (== TaskChainInput).include/exclude_file_mask could help with this
-               # This will be A LOT easier with Ganga 6.1 as you can easily map outputfiles -> inputfiles!
-               # TODO: implement use of include/exclude_file_mask
-               #       
-               try:
-                 outputfilenameformat = f.outputfilenameformat
-               except:
-                 inputdir = job.outputdir
-               else:
-                 #### WARNING: The following will work only if the MassStorageFile puts the files in local directories !
-                 inputdir = '/'.join( [getConfig('Output')['MassStorageFile']['uploadOptions']['path'], f.outputfilenameformat.replace('{fname}','')])
-               unit.inputdata.get_dataset( inputdir, f.namePattern )
+
+            # if TaskChainInput.include_file_mask is not used go old way (see below)
+            # otherwise add all file matching include_file_mask(s) to the unit.inputdata. DV.
+            inc_file_mask = False
+            for p in self.inputdata[0].include_file_mask:
+               unit.inputdata.get_dataset(job.outputdir, p)
+               inc_file_mask = True
+
+            if not inc_file_mask:
+               for f in job.outputfiles:
+                  # should check for different file types and add them as appropriate to the dataset
+                  # self.inputdata (== TaskChainInput).include/exclude_file_mask could help with this
+                  # This will be A LOT easier with Ganga 6.1 as you can easily map outputfiles -> inputfiles!
+                  # TODO: implement use of include/exclude_file_mask
+                  #       
+                  try:
+                     outputfilenameformat = f.outputfilenameformat
+                  except:
+                     inputdir = job.outputdir
+                  else:
+                     #### WARNING: The following will work only if the MassStorageFile puts the files in local directories !
+                     inputdir = '/'.join( [getConfig('Output')['MassStorageFile']['uploadOptions']['path'], f.outputfilenameformat.replace('{fname}','')])
+                  unit.inputdata.get_dataset( inputdir, f.namePattern )
       else:
 
          unit = ND280Unit()

@@ -1,12 +1,11 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import print_function, absolute_import
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
-# config_scope is namespace used for evaluating simple objects (e.g. File)
+# config_scope is namespace used for evaluating simple objects (e.g. File, datetime, SharedDir)
 from Ganga.Utility.Config import config_scope
 
 from Ganga.Utility.Plugin import PluginManagerError, allPlugins
@@ -18,8 +17,11 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 from .GangaRepository import SchemaVersionError
 
 import xml.sax.saxutils
+import copy
 
 logger = getLogger()
+
+_cached_eval_strings = {}
 
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
@@ -40,7 +42,7 @@ class XMLFileError(GangaException):
 
     def __str__(self):
         if self.excpt:
-            err = '(%s:%s)' % (str(type(self.excpt)), str(self.excpt))
+            err = '(%s:%s)' % (type(self.excpt), self.excpt)
         else:
             err = ''
         return "XMLFileError: %s %s" % (self.message, err)
@@ -59,7 +61,7 @@ def to_file(j, fobj=None, ignore_subs=[]):
     try:
         _raw_to_file(j, fobj, _ignore_subs)
     except Exception as err:
-        logger.error("XML to-file error for file:\n%s" % (str(err)))
+        logger.error("XML to-file error for file:\n%s" % (err))
         raise XMLFileError(err, "to-file error")
 
 # Faster, but experimental version of to_file without accept()
@@ -90,7 +92,7 @@ def from_file(f):
     try:
         return _raw_from_file(f)
     except Exception as err:
-        logger.error("XML from-file error for file:\n%s" % str(err))
+        logger.error("XML from-file error for file:\n%s" % err)
         raise XMLFileError(err, "from-file error")
 
 ##########################################################################
@@ -121,7 +123,7 @@ def fastXML(obj, indent='', ignore_subs=''):
     elif hasattr(obj, '_data'):
         v = obj._schema.version
         sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (getName(obj), v.major, v.minor, obj._category)]
-        for k, o in obj.getNodeData().iteritems():
+        for k, o in obj._data.items():
             if k != ignore_subs:
                 try:
                     if not obj._schema[k]._meta["transient"]:
@@ -130,7 +132,7 @@ def fastXML(obj, indent='', ignore_subs=''):
                         sl.extend(fastXML(o, indent + '  ', ignore_subs))
                         sl.append('</attribute>\n')
                 except KeyError as err:
-                    logger.debug("KeyError: %s" % str(err))
+                    logger.debug("KeyError: %s" % err)
                     pass
         sl.append(indent)
         sl.append('</class>')
@@ -352,8 +354,8 @@ class Loader(object):
                 aname = self.stack.pop()
                 obj = self.stack[-1]
                 # update the object's attribute
-                obj.setNodeAttribute(aname, value)
-                #logger.info("Setting: %s = %s" % (str(aname), str(value)))
+                obj.setSchemaAttribute(aname, value)
+                #logger.info("Setting: %s = %s" % (aname, value))
 
             # when </value> is seen the value_construct buffer (CDATA) should
             # be a python expression (e.g. quoted string)
@@ -361,7 +363,13 @@ class Loader(object):
                 # unescape the special characters
                 s = unescape(self.value_construct)
                 #logger.debug('string value: %s',s)
-                val = eval(s, config_scope)
+                if s not in _cached_eval_strings:
+                    # This is ugly and classes which use this are bad, but this needs to be fixed in another PR
+                    # TODO Make the scope of objects a lot better than whatever is in the config
+                    # This is a dictionary constructed from eval-ing things in the Config. Why does should it do this?
+                    # Anyway, lets save the result for speed
+                    _cached_eval_strings[s] = eval(s, config_scope)
+                val = copy.deepcopy(_cached_eval_strings[s])
                 #logger.debug('evaled value: %s type=%s',repr(val),type(val))
                 self.stack.append(val)
                 self.value_construct = None
@@ -381,15 +389,12 @@ class Loader(object):
             if name == 'class':
                 obj = self.stack[-1]
                 for attr, item in obj._schema.allItems():
-                    if not attr in obj.getNodeData():
+                    if not attr in obj._data:
                         #logger.info("Opening: %s" % attr)
                         if item._meta["sequence"] == 1:
-                            obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
-                            #setattr(obj, attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
+                            obj.setSchemaAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr, make_copy=False)))
                         else:
-                            obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr))
-                            #setattr(obj, attr, obj._schema.getDefaultValue(attr))
-
+                            obj.setSchemaAttribute(attr, obj._schema.getDefaultValue(attr, make_copy=False))
                 #print("Constructed: %s" % getName(obj))
 
         def char_data(data):
@@ -414,11 +419,11 @@ class Loader(object):
 
         obj = self.stack[-1]
 
-        #logger.info("obj.__dict__: %s" % str(obj.__dict__))
+        #logger.info("obj.__dict__: %s" % obj.__dict__)
 
         # Raise Exception if object is incomplete
         for attr, item in obj._schema.allItems():
-            if not attr in obj.getNodeData():
+            if not attr in obj._data:
                 raise AssertionError("incomplete XML file")
         return obj, self.errors
 

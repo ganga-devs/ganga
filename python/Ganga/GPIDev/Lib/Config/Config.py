@@ -72,7 +72,6 @@ class ConfigProxy(object):
             markup = NoMarkup()
 
         fg = Foreground()
-        fx = Effects()
 
         display_config = getConfig('Display')
 
@@ -230,7 +229,6 @@ def config_file_as_text():
 
     sections = sorted(stripProxy(config).keys())
     INDENT = "#  "
-    INDENT_value = "# "
     for p in sections:
 
         sect = stripProxy(config)[p]
@@ -258,15 +256,15 @@ def config_file_as_text():
                 if sect.getEffectiveLevel(o) == 0:
                     value = sect[o]
                     def_value = sect.options[o].default_value
-                    try:
-                        lines = value.splitlines()
-                        def_lines = def_value.splitlines()
-                        if len(lines) > 1:
-                            value = "\n# ".join(lines)
-                            def_value = "\n# ".join(def_lines)
-                    except AttributeError as err:
-                        print("Attrib Err: %s" % str(err))
-                        pass
+                    if isinstance(value, str):
+                        try:
+                            lines = value.splitlines()
+                            def_lines = def_value.splitlines()
+                            if len(lines) > 1:
+                                value = "\n# ".join(lines)
+                                def_value = "\n# ".join(def_lines)
+                        except AttributeError as err:
+                            pass
                     text += '#%s = %s\n' % (o, def_value)
                     text += '%s = %s\n\n' % (o, value)
                 else:
@@ -321,20 +319,3 @@ def bootstrap():
     import Ganga.Utility.Config.Config
     Ganga.Utility.Config.Config._after_bootstrap = True
     Ganga.Utility.Config.Config.sanityCheck()
-
-# def bootstrap():
-# for name in stripProxy(config):
-# if stripProxy(config)[name].hidden:
-# continue
-##         d = {}
-##         cfg = stripProxy(config)[name]
-# for opt in cfg:
-# if not cfg.options[opt].hidden:
-##                 d[opt] = ConfigDescriptor(opt)
-
-##         proxy_class = type(name,(ConfigProxy,), d)
-# setattr(MainConfigProxy,name,proxy_class(stripProxy(config)name]))
-
-##     import Ganga.Utility.Config.Config
-
-##     Ganga.Utility.Config.Config._after_bootstrap = True

@@ -274,7 +274,6 @@ class Interactive(IBackend):
     def updateMonitoringInformation(jobs):
 
         for j in jobs:
-            stripProxy(j)._getWriteAccess()
 
             raw_backend = stripProxy(j.backend)
 

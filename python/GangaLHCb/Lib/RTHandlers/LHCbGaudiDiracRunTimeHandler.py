@@ -3,7 +3,6 @@ import os
 import pickle
 from Ganga.Core import BackendError
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
@@ -180,7 +179,6 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         OUTPUTFILESSCRIPT=lhcb_dirac_outputfiles,
                                         # job.fqid,#outputdata_path,
                                         OUTPUT_PATH="",
-                                        OUTPUT_SE=getConfig('DIRAC')['DiracOutputDataSE'],
                                         SETTINGS=diracAPI_script_settings(job.application),
                                         DIRAC_OPTS=job.backend.diracOpts,
                                         PLATFORM=app.platform,

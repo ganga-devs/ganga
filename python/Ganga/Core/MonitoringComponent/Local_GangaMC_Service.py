@@ -518,9 +518,9 @@ class JobRegistry_Monitor(GangaThread):
 
     def isEnabled( self, useRunning = True ):
         if useRunning:
-            return self.enabled or self.__isInProgress()
+            return self.enabled or self.__isInProgress() and not self.steps
         else:
-            return self.enabled
+            return self.enabled and not self.steps
 
     def run(self):
         """
@@ -629,7 +629,7 @@ class JobRegistry_Monitor(GangaThread):
         self.__updateTimeStamp = time.time()
         self.__sleepCounter = config['base_poll_rate']
 
-    def runMonitoring(self, jobs=None, steps=1, timeout=60, _loadCredentials=False):
+    def runMonitoring(self, jobs=None, steps=1, timeout=300, _loadCredentials=False):
         """
         Enable/Run the monitoring loop and wait for the monitoring steps completion.
         Parameters:
@@ -804,7 +804,7 @@ class JobRegistry_Monitor(GangaThread):
          fail_cb : if not None, this callback is called if a retry attempt is needed
         """
 
-        if not self.alive:
+        if not self.alive and ThreadPool != []:
             log.warning("Monitoring loop has already been stopped")
             return False
         else:
@@ -947,11 +947,11 @@ class JobRegistry_Monitor(GangaThread):
                 j = stripProxy(self.registry_slice(i))
 
                 job_status = lazyLoadJobStatus(j)
-                backend_obj = lazyLoadJobBackend(j)
-                backend_name = getName(backend_obj)
 
                 if job_status in ['submitted', 'running'] or (j.master and (job_status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
+                        backend_obj = lazyLoadJobBackend(j)
+                        backend_name = getName(backend_obj)
                         active_backends.setdefault(backend_name, [])
                         active_backends[backend_name].append(j)
             except RegistryKeyError as err:

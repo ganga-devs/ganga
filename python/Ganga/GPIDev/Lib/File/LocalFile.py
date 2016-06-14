@@ -11,7 +11,7 @@ from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
-from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File import FileBuffer
 
 import Ganga.Utility.logging
@@ -26,7 +26,6 @@ logger = Ganga.Utility.logging.getLogger()
 
 regex = re.compile('[*?\[\]]')
 
-
 class LocalFile(IGangaFile):
 
     """LocalFile represents base class for output files, such as MassStorageFile, LCGSEFile, etc 
@@ -34,9 +33,9 @@ class LocalFile(IGangaFile):
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
                                      'localDir': SimpleItem(defvalue="", doc='local dir where the file is stored, used from get and put methods'),
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
-                                                typelist=['Ganga.GPIDev.Lib.File.LocalFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
-                                     'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
-                                     #'output_location': SimpleItem(defvalue=None, typelist=['str', 'type(None)'], hidden=1, copyable=1, doc="path of output location on disk")
+                                                sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+                                     'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
+                                     #'output_location': SimpleItem(defvalue=None, typelist=[str, None], hidden=1, copyable=1, doc="path of output location on disk")
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"
@@ -61,18 +60,23 @@ class LocalFile(IGangaFile):
             self.namePattern = os.path.basename(namePattern.name)
             self.localDir = os.path.dirname(namePattern.name)
         else:
-            logger.error("Unkown type: %s . Cannot Create LocalFile from this!" % str(type(namePattern)))
+            logger.error("Unkown type: %s . Cannot Create LocalFile from this!" % type(namePattern))
 
         if isinstance(localDir, str):
             if localDir != '':
                 self.localDir = localDir
             else:
-                this_pwd = os.path.abspath('.')
-                self.tmp_pwd = this_pwd
+                if os.path.dirname(namePattern) != '':
+                    self.localDir = os.path.dirname(namePattern)
+                else:
+                    # Record the current pwd, assume this is true as we weren't told otherwise
+                    this_pwd = os.path.abspath('.')
+                    self.tmp_pwd = this_pwd
         else:
-            logger.error("Unkown type: %s . Cannot set LocalFile localDir using this!" % str(type(localDir)))
+            logger.error("Unkown type: %s . Cannot set LocalFile localDir using this!" % type(localDir))
 
     def __construct__(self, args):
+        # TODO GET RID OF ME, GET RID OF ME, GET RID OF ME!!!
 
         self.tmp_pwd = None
         self.output_location = None
@@ -82,6 +86,8 @@ class LocalFile(IGangaFile):
         from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
         if len(args) == 1 and isinstance(args[0], str):
             self.namePattern = args[0]
+            if os.path.dirname(self.namePattern) != '':
+                self.localDir = os.path.dirname(self.namePattern)
         elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
             self.namePattern = args[0]
             self.localDir = args[1]
@@ -95,7 +101,7 @@ class LocalFile(IGangaFile):
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "LocalFile(namePattern='%s')" % self.namePattern
+        return "LocalFile(namePattern='%s', localDir='%s')" % (self.namePattern, self.localDir)
 
     def location(self):
         return self.getFilenameList()
@@ -158,15 +164,15 @@ class LocalFile(IGangaFile):
             if self.localDir == '':
                 if os.path.exists(os.path.join(self.tmp_pwd, self.namePattern)):
                     self.localDir = self.tmp_pwd
-                    logger.debug("File: %s found, Setting localDir: %s" % (str(self.namePattern), self.localDir))
+                    logger.debug("File: %s found, Setting localDir: %s" % (self.namePattern, self.localDir))
                 else:
                     this_pwd = os.path.abspath('.')
                     now_tmp_pwd = this_pwd
                     if os.path.exists(os.path.join(now_tmp_pwd, self.namePattern)):
                         self.localDir = now_tmp_pwd
-                        logger.debug("File: %s found, Setting localDir: %s" % (str(self.namePattern), self.localDir))
+                        logger.debug("File: %s found, Setting localDir: %s" % (self.namePattern, self.localDir))
                     else:
-                        logger.debug("File: %s NOT found, NOT setting localDir: %s !!!" % (str(self.namePattern), self.localDir))
+                        logger.debug("File: %s NOT found, NOT setting localDir: %s !!!" % (self.namePattern, self.localDir))
 
             filelist.append(os.path.join(self.localDir, self.namePattern))
 
@@ -203,10 +209,10 @@ class LocalFile(IGangaFile):
             _actual_delete = False
             keyin = None
             while keyin is None:
-                keyin = raw_input("Do you want to remove the LocalFile: %s ? ([y]/n) " % str(this_file))
-                if keyin in ['y', '']:
+                keyin = raw_input("Do you want to remove the LocalFile: %s ? ([y]/n) " % this_file)
+                if keyin.lower() in ['y', '']:
                     _actual_delete = True
-                elif keyin == 'n':
+                elif keyin.lower() == 'n':
                     _actual_delete = False
                 else:
                     logger.warning("y/n please!")
@@ -230,7 +236,7 @@ class LocalFile(IGangaFile):
                         os.remove(remove_filename)
                     except OSError as err:
                         if err.errno != errno.ENOENT:
-                            logger.error("Error in removing file: %s" % str(remove_filename))
+                            logger.error("Error in removing file: %s" % remove_filename)
                             raise
                         pass
 
@@ -249,7 +255,7 @@ class LocalFile(IGangaFile):
 #        replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : 'cp %s .' % full_path}
 #
 #        for k, v in replace_dict.iteritems():
-#            script = script.replace(str(k), str(v))
+#            script = script.replace(k, v)
 #
 #        return script
 #
@@ -263,15 +269,15 @@ class LocalFile(IGangaFile):
 #
 #        for this_file in outputFiles:
 #            filename = this_file.namePattern
-#            cp_cmd = 'cp %s %s' % ( str(filename), str(self.output_location))
+#            cp_cmd = 'cp %s %s' % (filename, self.output_location)
 #
 #            this_cp = str(cp_template)
 #
 #            replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd}
 #
 #            for k, v in replace_dict.iteritems():
-#                print("Replace %s : %s" % (str(k), str(v)))
-#                this_cp = this_cp.replace(str(k), str(v))
+#                print("Replace %s : %s" % (k, v))
+#                this_cp = this_cp.replace(k, v)
 #
 #            script = this_cp
 #            break

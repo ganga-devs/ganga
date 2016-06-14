@@ -8,6 +8,7 @@ import copy
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -46,7 +47,7 @@ class ArgSplitter(ISplitter):
 """
     _name = "ArgSplitter"
     _schema = Schema(Version(1, 0), {
-        'args': SimpleItem(defvalue=[], typelist=['list', 'Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'], sequence=1, doc='A list of lists of arguments to pass to script')
+        'args': SimpleItem(defvalue=[], typelist=[list, GangaList], sequence=1, doc='A list of lists of arguments to pass to script')
     })
 
     def split(self, job):

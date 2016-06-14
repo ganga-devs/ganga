@@ -12,9 +12,9 @@ from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.files import expandfilename
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute
-from Ganga.GPI import queues
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
+config = getConfig('Configuration')
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
@@ -23,7 +23,7 @@ global stored_list_of_sites
 stored_list_of_sites = []
 
 
-def all_SE_list(first_SE = ''):
+def all_SE_list(first_SE = '', defaultSE = ''):
 
     global stored_list_of_sites
     if stored_list_of_sites != []:
@@ -31,7 +31,7 @@ def all_SE_list(first_SE = ''):
 
     all_storage_elements = configDirac['allDiracSE']
     if first_SE == '':
-        default_SE = configDirac['DiracDefaultSE']
+        default_SE = defaultSE
     else:
         default_SE = first_SE
 
@@ -41,9 +41,6 @@ def all_SE_list(first_SE = ''):
     stored_list_of_sites = all_storage_elements
 
     return all_storage_elements
-
-def getDefaultSE( ):
-    return configDirac['DiracDefaultSE']
 
 class DiracFile(IGangaFile):
 
@@ -89,10 +86,7 @@ class DiracFile(IGangaFile):
         super(DiracFile, self).__init__()
         self.locations = []
 
-        if len(namePattern) >= 4 and str(namePattern).upper()[0:4] == "LFN:" and lfn == '':
-            self._setLFNnamePattern(_lfn=namePattern[4:], _namePattern='')
-
-        self._setLFNnamePattern(_lfn=lfn, _namePattern = namePattern)
+        self._setLFNnamePattern(lfn, namePattern)
 
         if localDir is not None:
             self.localDir = expandfilename(localDir)
@@ -120,21 +114,21 @@ class DiracFile(IGangaFile):
         # LFN ONLY
         if len(args) == 1 and type(args[0]) == type(''):
             if str(str(args[0]).upper()[0:4]) == str("LFN:"):
-                self._setLFNnamePattern(_lfn=args[0][4:], _namePattern="")
+                self._setLFNnamePattern(lfn=args[0][4:], namePattern="")
             else:
-                self._setLFNnamePattern(_lfn="", _namePattern=args[0])
+                self._setLFNnamePattern(lfn="", namePattern=args[0])
 
         # NAMEPATTERN AND LFN
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
             self.namePattern = args[0]
-            self._setLFNnamePattern(_lfn='', _namePattern=self.namePattern)
+            self._setLFNnamePattern(lfn='', namePattern=self.namePattern)
             self.localDir = expandfilename(args[1])
 
         # NAMEPATTERN AND LFN AND LOCALDIR
         elif len(args) == 3 and type(args[0]) == type('') and type(args[1]) == type('') and type(args[2]) == type(''):
             self.namePattern = args[0]
             self.lfn = args[2]
-            self._setLFNnamePattern(_lfn=self.lfn, _namePattern=self.namePattern)
+            self._setLFNnamePattern(lfn=self.lfn, namePattern=self.namePattern)
             self.localDir = expandfilename(args[1])
 
         # NAMEPATTERN AND LFN AND LOCALDIR AND REMOTEDIR
@@ -142,7 +136,7 @@ class DiracFile(IGangaFile):
                 and type(args[2]) == type('') and type(args[3]) == type(''):
             self.namePattern = args[0]
             self.lfn = args[2]
-            self._setLFNnamePattern(_lfn=lfn, _namePattern=namePattern)
+            self._setLFNnamePattern(lfn=lfn, namePattern=namePattern)
             self.localDir = expandfilename(args[1])
             self.remoteDir = args[3]
 
@@ -152,34 +146,12 @@ class DiracFile(IGangaFile):
 
         return
 
-    def __deepcopy__(self, memo):
-
-        cls = type(stripProxy(self))
-        c = super(cls, cls).__new__(cls)
-        super(DiracFile, c).__init__()
-
-        c.lfn = self.lfn
-        c.localDir = self.lfn
-        c.remoteDir = self.remoteDir
-        c.namePattern = self.namePattern
-        c.compressed = self.compressed
-        c.locations = self.locations
-        c.guid = self.guid
-        c._storedReplicas = self._storedReplicas
-        c._remoteURLs = self._remoteURLs
-        c.failureReason = self.failureReason
-
-        c.subfiles = copy.deepcopy(self.subfiles)
-        c._have_copied = True
-        return c
-
     def _attribute_filter__set__(self, name, value):
 
         if value != "" and value is not None:
             #   Do some checking of the filenames in a subprocess
             if name == 'lfn':
-                if self.namePattern == '':
-                    self.namePattern = os.path.basename(value)
+                self.namePattern = os.path.basename(value)
                 self.remoteDir = os.path.dirname(value)
                 return value
 
@@ -196,28 +168,37 @@ class DiracFile(IGangaFile):
 
         return self.locations
 
-    def _setLFNnamePattern(self, _lfn="", _namePattern=""):
+    def _setLFNnamePattern(self, lfn="", namePattern=""):
 
-        if _lfn != "" and _lfn is not None:
-            if len(_lfn) > 3 and _lfn[0:4] == "LFN:":
-                _lfn = _lfn[4:]
+        if self.defaultSE != "":
+            ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
+            # Check for /lhcb/some/path or /gridpp/some/path
+            if namePattern.split(os.pathsep)[0] == self.defaultSE \
+                or (len(namePattern) > 3 and namePattern[0:4].upper() == "LFN:"\
+                    or len(namePattern.split(os.pathsep)) > 1 and namePattern.split(os.pathsep)[1] == self.defaultSE):
+                # Check for LFN:/gridpp/some/path or others...
+                lfn = namePattern
+                namePattern = ""
 
-        if _lfn != "" and _namePattern != "":
-            self.lfn = _lfn
-            self.remoteDir = os.path.dirname(_lfn)
-            self.namePattern = os.path.basename(_namePattern)
-            self.localDir = os.path.dirname(expandfilename(_namePattern))
+        if lfn:
+            if len(lfn) > 3 and lfn[0:4].upper() == "LFN:":
+                lfn = lfn[4:]
 
-        elif _lfn != "" and _namePattern == "":
-            self.lfn = _lfn
+        if lfn != "" and namePattern != "":
+            self.lfn = lfn
+            self.remoteDir = os.path.dirname(lfn)
+            self.namePattern = os.path.basename(namePattern)
+            self.localDir = os.path.dirname(expandfilename(namePattern))
+
+        elif lfn != "" and namePattern == "":
+            self.lfn = lfn
             self.remoteDir = os.path.dirname(self.lfn)
-            if self.namePattern != "":
-                self.namePattern = os.path.basename(self.lfn)
+            self.namePattern = os.path.basename(self.lfn)
             self.localDir = ""
 
-        elif _namePattern != "" and _lfn == "":
-            self.namePattern = os.path.basename(_namePattern)
-            self.localDir = os.path.dirname(expandfilename(_namePattern))
+        elif namePattern != "" and lfn == "":
+            self.namePattern = os.path.basename(namePattern)
+            self.localDir = os.path.dirname(expandfilename(namePattern))
             self.remoteDir = ""
             self.lfn = ""
 
@@ -248,7 +229,7 @@ class DiracFile(IGangaFile):
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "DiracFile(namePattern='%s', lfn='%s')" % (self.namePattern, self.lfn)
+        return "DiracFile(namePattern='%s', lfn='%s', localDir='%s')" % (self.namePattern, self.lfn, self.localDir)
 
     def getSubFiles(self):
         """
@@ -272,7 +253,8 @@ class DiracFile(IGangaFile):
         guid = tokens[3]
         try:
             locations = eval(tokens[2])
-        except:
+        except Exception as err:
+            logger.debug("line_process err: %s" % err)
             locations = tokens[2]
 
         if pattern == name:
@@ -306,6 +288,7 @@ class DiracFile(IGangaFile):
             return False
 
         else:
+            logger.debug("False")
             return False
 
     def setLocation(self):
@@ -326,12 +309,20 @@ class DiracFile(IGangaFile):
         try:
             postprocesslocations = open(postprocessLocationsPath, 'r')
             self.subfiles = []
-            for line in postprocesslocations.readlines():
+            ## NB remember only do this once at it leaves the 'cursor' at the end of the file - rcurrie
+            all_lines = postprocesslocations.readlines()
+            logger.debug("lines:\n%s" % all_lines)
+            for line in all_lines:
+                logger.debug("This line: %s" % line)
                 if line.startswith('DiracFile'):
                     if self.dirac_line_processor(line, self, os.path.dirname(postprocessLocationsPath)) and regex.search(self.namePattern) is None:
                         logger.error("Error processing line:\n%s\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern)))
+                    else:
+                        logger.debug("Parsed the Line")
+                else:
+                    logger.debug("Skipping the Line")
 
-        except Exception, err:
+        except Exception as err:
             logger.warning("unexpected Error: %s" % str(err))
         finally:
             if postprocesslocations is not None:
@@ -342,15 +333,14 @@ class DiracFile(IGangaFile):
         Remove called when job is removed as long as config option allows
         """
         if self.lfn != '':
-            queues.add(self.remove)
+            self.remove()
 
     def remove(self):
         """
         Remove this lfn and all replicas from DIRAC LFC/SEs
         """
         if self.lfn == "":
-            raise GangaException(
-                'Can\'t remove a  file from DIRAC SE without an LFN.')
+            raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
         stdout = execute('removeFile("%s")' % self.lfn)
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
@@ -403,10 +393,10 @@ class DiracFile(IGangaFile):
             logger.info("I have a local DiracFile, however you're requesting it's location on the grid")
             logger.info("Shall I upload it to the grid before I continue?")
             decision = raw_input('[y] / n:')
-            while not (decision in ['y', 'n'] or decision == ''):
+            while not (decision.lower() in ['y', 'n'] or decision.lower() == ''):
                 decision = raw_input('[y] / n:')
 
-            if decision == 'y' or decision == '':
+            if decision.lower() in ['y', '']:
                 # upload namePattern to grid
                 logger.debug("Uploading the file first")
                 self.put()
@@ -462,7 +452,7 @@ class DiracFile(IGangaFile):
                         raise err
                 else:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
-                    raise GangaError("Couldn't find replicas for: %s" % str(self.lfn))
+                    raise GangaException("Couldn't find replicas for: %s" % str(self.lfn))
                 logger.debug("getReplicas: %s" % str(self._storedReplicas))
 
                 if self.lfn in self._storedReplicas.keys():
@@ -528,7 +518,6 @@ class DiracFile(IGangaFile):
             self.getReplicas()
 
         # Now we have to match the replicas to find one at the
-        # DiracDefaultSE
         if len(self.subfiles) == 0:
 
             files_URLs = self._remoteURLs
@@ -619,23 +608,23 @@ class DiracFile(IGangaFile):
         logger.error("Error in getting file '%s' : %s" % (self.lfn, str(stdout)))
         return stdout
 
-    def replicate(self, destSE):
+    def replicate(self, destSE, sourceSE=''):
         """
-        Replicate this file from self.locations[0] to destSE
+        Replicate an LFN to another SE
+
+        Args:
+            destSE (str): the SE to replicate the file to
+            sourceSE (str): the se to use as a cource for the file
         """
-        if not self.locations:
-            if self.lfn != '':
-                self.getReplicas()
-            else:
-                raise GangaException('Can\'t replicate a file if it isn\'t already on a DIRAC SE, upload it first')
-        if self.lfn == '':
+
+        if not self.lfn:
             raise GangaException('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, self.locations[0]))
+        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE))
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
-            self.locations.append(destSE)
-            self.getReplicas(forceRefresh=True)
+            if destSE not in self.locations:
+                self.locations.append(destSE)
             return
         logger.error("Error in replicating file '%s' : %s" % (self.lfn, stdout))
         return stdout
@@ -669,10 +658,10 @@ class DiracFile(IGangaFile):
         if self.lfn != "" and force == False and lfn == '':
             logger.warning("Warning you're about to 'put' this DiracFile: %s on the grid as it already has an lfn: %s" % (self.namePattern, self.lfn))
             decision = raw_input('y / [n]:')
-            while not (decision in ['y', 'n'] or decision == ''):
+            while not (decision.lower() in ['y', 'n'] or decision.lower() == ''):
                 decision = raw_input('y / [n]:')
 
-            if decision == 'y':
+            if decision.lower() == 'y':
                 pass
             else:
                 return
@@ -682,10 +671,10 @@ class DiracFile(IGangaFile):
             logger.warning("It currently has an LFN associated with it: %s" % self.lfn)
             logger.warning("Do you want to continue and attempt to upload to: %s" % lfn)
             decision = raw_input('y / [n]:')
-            while not (decision in ['y', 'n', '']):
+            while not (decision.lower() in ['y', 'n', '']):
                 decision = raw_input('y / [n]:')
 
-            if decision == 'y':
+            if decision.lower() == 'y':
                 pass
             else:
                 return
@@ -725,10 +714,8 @@ class DiracFile(IGangaFile):
             import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+            self.lfn = os.path.join(DiracFile.diracLFNBase(), 'GangaFiles_%s' % this_date)
             selfConstructedLFN = True
-        #if self.remoteDir == '' and self.lfn != '':
-        #    self.remoteDir = configDirac['DiracLFNBase']
 
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
@@ -736,13 +723,16 @@ class DiracFile(IGangaFile):
             lfn_base = self.remoteDir
 
         if uploadSE != "":
-            storage_elements = all_SE_list(uploadSE)
+            storage_elements = all_SE_list(uploadSE, self.defaultSE)
         else:
-            storage_elements = all_SE_list(self.defaultSE)
+            storage_elements = all_SE_list(self.defaultSE, self.defaultSE)
 
         outputFiles = GangaList()
+        backup_lfn = self.lfn
         for this_file in glob.glob(os.path.join(sourceDir, self.namePattern)):
             name = this_file
+
+            self.lfn = backup_lfn
 
             if not os.path.exists(name):
                 if not self.compressed:
@@ -884,7 +874,7 @@ for f in glob.glob('###NAME_PATTERN###'):
         upload_script = FileUtils.loadScript(script_location, '')
 
         WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
-        script = FileUtils.loadScript(WNscript_location, '###INDENT###')
+        script = FileUtils.loadScript(WNscript_location, '')
 
         selfConstructedLFNs = False
 
@@ -892,11 +882,11 @@ for f in glob.glob('###NAME_PATTERN###'):
             import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+            self.lfn = os.path.join(DiracFile.diracLFNBase(), 'GangaFiles_%s' % this_date)
             selfConstructedLFNs = True
 
         if self.remoteDir == '' and self.lfn != '':
-            self.remoteDir = configDirac['DiracLFNBase']
+            self.remoteDir = DiracFile.diracLFNBase()
 
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
@@ -945,6 +935,17 @@ for f in glob.glob('###NAME_PATTERN###'):
         else:
             logger.error("Failed to Match file:\n%s" % str(self))
             return False
+
+    @staticmethod
+    def diracLFNBase():
+        """
+        Compute a sensible default LFN base name
+        If ``DiracLFNBase`` has been defined, use that.
+        Otherwise, construct one from the user name and the user VO
+        """
+        if configDirac['DiracLFNBase']:
+            return configDirac['DiracLFNBase']
+        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], config['user'][0], config['user'])
 
 # add DiracFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate DiracFile() objects via config file)

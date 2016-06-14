@@ -40,7 +40,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
     import tarfile
     import stat
 
-    logger.debug("Creating packed Sandbox with %s many sandbox files." % str(len(sandbox_files)))
+    logger.debug("Creating packed Sandbox with %s many sandbox files." % len(sandbox_files))
 
 #
 # Curent release with os module
@@ -98,7 +98,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
                 #   except AttributeError as err:         # File
                 # print "Getting File %s" % f.name
                 # tf.add(f.name,os.path.join(f.subdir,os.path.basename(f.name)))
-                logger.debug("Opening file for sandbox: %s" % str(f.name))
+                logger.debug("Opening file for sandbox: %s" % f.name)
                 try:
                     fileobj = open(f.name)
                 except Exception as err:

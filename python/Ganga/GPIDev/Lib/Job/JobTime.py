@@ -282,13 +282,12 @@ class JobTime(GangaObject):
                 # ask whether user really wants to print timedetails for all
                 # their jobs:
                 while keyin is None:
-                    keyin = raw_input(
-                        "Are you sure you want details for ALL %d subjobs(y/n)?" % len(j.subjobs))
+                    keyin = raw_input("Are you sure you want details for ALL %d subjobs(y/n)?" % len(j.subjobs))
                     # if yes carry on at for loop
-                    if keyin == 'y':
+                    if keyin.lower() == 'y':
                         pass
                     # if no return None. Doesn't execute rest of method
-                    elif keyin == 'n':
+                    elif keyin.lower() == 'n':
                         return None
                     # if something else - asks again
                     else:
@@ -411,8 +410,8 @@ class JobTime(GangaObject):
     def duration(self, start, end):
         """Returns duration between two specified timestamps as timedelta object.
         """
-        if start in self.timestamps.keys():
-            if end in self.timestamps.keys():
+        if start in self.timestamps:
+            if end in self.timestamps:
                 s, e = self.timestamps[start], self.timestamps[end]
                 s_micro, e_micro = datetime.timedelta(
                     0, 0, s.microsecond), datetime.timedelta(0, 0, e.microsecond)

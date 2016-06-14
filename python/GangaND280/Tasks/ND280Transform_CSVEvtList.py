@@ -1,3 +1,4 @@
+from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Job.Job import JobError
@@ -5,10 +6,15 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistryS
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
+from Ganga.Utility.logging import getLogger
 from ND280Unit_CSVEvtList import ND280Unit_CSVEvtList
-from modules.ND280Dataset.ND280Dataset import ND280LocalDataset, ND280DCacheDataset
-from modules.ND280Splitter.ND280Splitter import splitCSVFile
+from GangaND280.ND280Dataset.ND280Dataset import ND280LocalDataset
+from GangaND280.ND280Splitter.ND280Splitter import splitCSVFile
+import Ganga.GPI as GPI
+
 import os
+
+logger = getLogger()
 
 class ND280Transform_CSVEvtList(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {

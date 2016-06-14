@@ -73,7 +73,7 @@ def stripped_export(item=None, filename="", mode="w"):
         "w": "write to new file",
         "a": "append to existing file"}
 
-    if mode not in modeDict.keys():
+    if mode not in modeDict:
         logger.info("'mode' must be one of:")
         for key in modeDict.keys():
             logger.info("   '%s' - %s" % (key, modeDict[key]))
@@ -205,7 +205,8 @@ def load(filename="", returnList=True):
         item = item.strip()
         if item:
             try:
-                this_object = eval(str(item), Ganga.GPI.__dict__)
+                from Ganga.GPIDev.Base.Proxy import getProxyInterface
+                this_object = eval(str(item), getProxyInterface().__dict__)
                 objectList.append(this_object)
             except NameError as x:
                 logger.exception(x)

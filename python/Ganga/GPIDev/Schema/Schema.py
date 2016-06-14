@@ -13,7 +13,7 @@ from Ganga.Utility.logic import implies
 
 import Ganga.Utility.Config
 
-from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError
+from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError, GangaException
 
 from Ganga.Utility.Plugin import allPlugins
 
@@ -111,8 +111,11 @@ class Schema(object):
 
     @property
     def name(self):
-        from Ganga.GPIDev.Base.Proxy import getName
-        return getName(self._pluginclass)
+        from Ganga.GPIDev.Base.Objects import _getName
+        return _getName(self._pluginclass)
+
+    def allItemNames(self):
+        return self.datadict.keys()
 
     def allItems(self):
         if self.datadict is None: return zip()
@@ -159,8 +162,8 @@ class Schema(object):
     def createDefaultConfig(self):
         # create a configuration unit for default values of object properties
         # take the defaults from schema defaults
-        config = Ganga.Utility.Config.makeConfig(defaultConfigSectionName(self.name),
-                                                 "default attribute values for %s objects" % self.name)
+        _self_name = self.name
+        config = Ganga.Utility.Config.makeConfig(defaultConfigSectionName(_self_name), "default attribute values for %s objects" % _self_name)
 
         for name, item in self.allItems():
             # and not item['sequence']: #FIXME: do we need it or not??
@@ -180,16 +183,14 @@ class Schema(object):
                 if isinstance(item['defvalue'], dict):
                     if not types is None:
                         types.append('dict')
-                config.addOption(
-                    name, item['defvalue'], item['doc'], override=False, typelist=types)
+                config.addOption(name, item['defvalue'], item['doc'], override=False, typelist=types)
+
 
         def prehook(name, x):
             errmsg = "Cannot set %s=%s in [%s]: " % (name, repr(x), config.name)
 
             try:
                 item = self.getItem(name)
-            #except KeyError as x:
-            #    raise Ganga.Utility.Config.ConfigError(errmsg + "attribute not defined in the schema")
             except Exception as x:
                 raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
 
@@ -201,17 +202,9 @@ class Schema(object):
                 except Exception as err:
                     logger.info("Unexpected error: %s", err)
                     raise
-                    #Ganga.Utility.logging.log_unknown_exception()
-                    #raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
 
             if item['protected'] or item['hidden']:
                 raise Ganga.Utility.Config.ConfigError(errmsg + "protected or hidden property")
-
-            # FIXME: File() == 'x' triggers AttributeError
-            # try:
-            #    if x == '': x = None
-            # except AttributeError:
-            #    pass
 
             return x
 
@@ -219,10 +212,17 @@ class Schema(object):
         config.attachSessionHandler(prehook, None)
 
 
-    def getDefaultValue(self, attr):
+    def getDefaultValue(self, attr, make_copy=True):
         """ Get the default value of a schema item, both simple and component.
+        attr, some attribute name
+        self, myself a Schema
+        make_copy, should I return the default object of a deepcopy of it?
         """
-        return self._getDefaultValueInternal(attr)
+        returnable = self._getDefaultValueInternal(attr)
+        if make_copy and returnable is not None:
+            return copy.deepcopy(returnable)
+        else:
+            return returnable
 
     def _getDefaultValueInternal(self, attr, val=None, check=False):
         """ Get the default value of a schema item, both simple and component.
@@ -237,6 +237,8 @@ class Schema(object):
         from Ganga.Utility.Config import Config
         is_finalized = Config._after_bootstrap
 
+        useDefVal = False
+
         try:
             # Attempt to get the relevant config section
             config = Config.getConfig(def_name, create=False)
@@ -244,13 +246,19 @@ class Schema(object):
             if is_finalized and stored_attr_key in _found_attrs and not config.hasModified():
                 defvalue = _found_attrs[stored_attr_key]
             else:
-                defvalue = config[attr]
-                from Ganga.GPIDev.Base.Proxy import isProxy
-                if isProxy(defvalue):
-                    raise GangaException("(1)Proxy found where it shouldn't be in the Config: %s" % stored_attr_key)
-                ## Just in case a developer puts the proxied object into the default value!
-                _found_attrs[stored_attr_key] = defvalue
+                if attr in config.getEffectiveOptions():
+                    defvalue = config[attr]
+                    from Ganga.GPIDev.Base.Proxy import isProxy
+                    if isProxy(defvalue):
+                        raise GangaException("(1)Proxy found where it shouldn't be in the Config: %s" % stored_attr_key)
+                    ## Just in case a developer puts the proxied object into the default value!
+                    _found_attrs[stored_attr_key] = defvalue
+                else:
+                    useDefVal = True
         except (KeyError, Config.ConfigError):
+            useDefVal = True
+
+        if useDefVal:
             # hidden, protected and sequence values are not represented in config
             defvalue = item['defvalue']
             from Ganga.GPIDev.Base.Proxy import isProxy
@@ -290,17 +298,8 @@ class Schema(object):
                         _found_components[category] = allPlugins.find(category, defvalue)
                     return _found_components[category]()
 
-        # make a copy of the default value (to avoid strange effects if the
-        # original modified)
-        try:
-            from Ganga.GPIDev.Base.Proxy import isType, getRuntimeGPIObject, stripProxy, getName
-            from Ganga.GPIDev.Base.Objects import Node
-            if isinstance(defvalue, Node):
-                return stripProxy(getRuntimeGPIObject(getName(defvalue)))
-            else:
-                return copy.deepcopy(defvalue)
-        except ImportError:
-            return copy.deepcopy(defvalue)
+        # If needed/requested make a copy of the function elsewhwre
+        return defvalue
 
 
 # Items in schema may be either Components,Simples, Files or BindingItems.
@@ -342,6 +341,7 @@ class Schema(object):
 # Metaproperties of SimpleItems
 #
 # typelist  : a list of type names (strings) indicating allowed types of the property (e.g. ["str","int","Ganga.GPIDev.Lib.File.File.File"]), see: http://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaTypes
+#     please consider not using strings in future, we can support the type objects correctly
 #
 #
 # Metaproperties of ComponentItems:

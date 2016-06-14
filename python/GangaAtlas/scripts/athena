@@ -47,7 +47,7 @@ p.add_option('--inPfnListFile', action='store', type='string', dest='input_pfnli
 p.add_option('--inTagDS', action='store', type='string', dest='tag_input_dataset', metavar='TAGDATASETNAME', help='Name of the Tag DQ2 datasetname to process')
 p.add_option('--inTagFiles', action='store', type='string', dest='tag_input_files', help='Name of local TAG files to determine input data' )
 p.add_option('--tagCollRef', action='store', type='string', dest='tag_coll_ref', help='Directly specify the collection reference if not in JOs (e.g. TRF usage)' )
-p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['DQ2', 'ATLAS', 'Local', 'Castor'],  default='DQ2', help='Type of the input dataset: DQ2, ATLAS, Local, Castor, [default: DQ2]' )
+p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['', 'DQ2', 'Local', 'Castor'],  default='', help='Type of the input dataset: DQ2, Local, Castor' )
 p.add_option('--inputaccessmode', action='store', type='choice', dest='inputaccessmode', choices = ['DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'FILE_STAGER' ], default='DQ2_LOCAL',  help='Access mode of the DQ2/TAG input dataset: DQ2_LOCAL, FILE_STAGER, LFC, TAG, TAG_REC [default: DQ2_LOCAL]'  )
 p.add_option('--inputfailover', action='store_true', help='Use DQ2_COPY automatically if DQ2_LOCAL fails' )
 p.add_option('--inputaccessprotocol', action='store', type='string', dest='inputaccessprotocol', help='Access protocol on worker node, like Xrootd'  )
@@ -75,7 +75,7 @@ p.add_option('--create_poolfilecatalog', action='store_true', help='Create the P
 
 # Output dataset
 p.add_option('--outputdata', '-o', action='store', type='string', dest='outputdata', help='List of job output roottuples to be stored, separated by ":", e.g. AnalysisSekeleton.aan.root:Numbers.txt')
-p.add_option('--outputtype', action='store', type='choice', dest='outputtype', choices = ['DQ2', 'ATLAS'], default='DQ2', help='Type of the output dataset: DQ2, ATLAS, [default: DQ2]')
+p.add_option('--outputtype', action='store', type='choice', dest='outputtype', choices = ['', 'DQ2', 'ATLAS'], default='', help='Type of the output dataset: DQ2, ATLAS')
 p.add_option('--outDS', action='store', type='string', dest='output_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname for the job output, will be of the type: user.username.ganga.DATSETNAME')
 p.add_option('--outputlocation', action='store', type='string', dest='output_location', help='Location and path of the job output on the remote storage element for grid jobs or local path for local or batch jobs, e.g. sfn://castorgrid.cern.ch/castor/cern.ch/atlas/scratch/$USER/ganga or /path/to/storefiles/')
 p.add_option('--outputlocallocation', action='store', type='string', dest='output_local_location', help='Local path to store output that is transfered with retrieve() method')
@@ -99,6 +99,7 @@ p.add_option('--panda', action='store_const', const='panda', dest='backend', hel
 p.add_option('--jedi', action='store_const', const='jedi', dest='backend', help='Submit job(s) to jedi')
 p.add_option('--lsf', action='store_const', const='lsf', dest='backend', help='Submit job(s) to the local LSF batch system, e.g. on lxplus')
 p.add_option('--condor', action='store_const', const='condor', dest='backend', help='Submit job(s) to the local Condor batch system')
+p.add_option('--arch', action='store', type='string', dest='arch', help='Set the architecture. By default will be taken from CMT (only used by Condor backend at present)')
 p.add_option('--pbs', action='store_const', const='pbs', dest='backend', help='Submit job(s) to the local PBS batch system')
 p.add_option('--sge', action='store_const', const='sge', dest='backend', help='Submit job(s) to the local SGE batch system')
 p.add_option('--local', action='store_const', const='local', dest='backend', help='Execute job on the local desktop computer')
@@ -179,7 +180,6 @@ p.add_option('--useAthenaPackages', action='store_true', help='Enable to setup A
 
 p.add_option('--transferredDS', action='store', type='string', dest='transferredDS', help='Specify a comma-separated list of patterns so that only datasets which match the given patterns are transferred when --outputlocation is set. Either \ or "" is required when a wildcard is used. If omitted, all datasets are transferred')
 
-
 opt, args = p.parse_args()
 
 # make panda the default backend
@@ -232,7 +232,6 @@ else:
 
 
 # Start job configuration
-
 j = Job()
 
 # job object
@@ -345,35 +344,56 @@ if opt.useAthenaPackages:
 if opt.cmtConfig:
     j.application.atlas_cmtconfig=opt.cmtConfig
 
+# defaults for inputtype
+if not opt.inputtype:
+    if opt.backend in ['lcg', 'cream', 'panda', 'jedi']:
+        opt.inputtype = 'DQ2'
+    else:
+        opt.inputtype = 'Local'
 
 # inputdata
-
-if opt.input_pfnlistfile:
-    j.inputdata = ATLASTier3Dataset()
-    j.inputdata.pfnListFile = opt.input_pfnlistfile
-
 if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inputtype=='Local':
     #print opt.inputtype
     if opt.inputtype:
         if opt.inputtype=='DQ2':
             j.inputdata = DQ2Dataset()
-        if opt.inputtype=='ATLAS':
-            j.inputdata = ATLASDataset()
-            if opt.inputlfn:
-                 j.inputdata.lfn=opt.inputlfn.split(',')
-            else:
-                print >>sys.stderr, 'ERROR: No parameter --inputlfn for ATLASDataset given'
-                sys.exit(4)
-            if opt.inputlfc:
-                 j.inputdata.lfc=opt.inputlfc
 
         if opt.inputtype=='Local':
             j.inputdata = ATLASLocalDataset()
 
             # decide where to get input info from: locallocation or inDS
-            if opt.locallocation:
-		for loc in opt.locallocation:
-		    for loc_dir in loc[0].split(","):		        
+            if opt.input_pfnlistfile:
+                j.inputdata = ATLASLocalDataset()
+
+                # check for multiple PFN lists
+                if opt.input_pfnlistfile.find(",") == -1:
+                    j.inputdata.get_dataset_from_list(opt.input_pfnlistfile, no_dir_check=True)
+                else:
+                    # first set the local splitter
+                    j.splitter = AthenaSplitterJob()
+
+                    # now loop over the PFNs and add all the input files with the PFN name
+                    for pfn_list in opt.input_pfnlistfile.split(','):
+
+                        pfn_list = pfn_list.strip()
+                        if not os.path.exists(pfn_list):
+                           logger.error('File %s does not exist',pfn_list)
+                           sys.exit(1)
+
+                        f = open(pfn_list)
+                        pfn_list = os.path.basename(pfn_list)
+                        j.splitter.output_loc_to_input[pfn_list] = []
+                        for ln in f.readlines():
+                            # ignore comments and blank lines
+                            if not ln.strip() or ln.strip()[0] == '#':
+                                continue
+
+                            j.inputdata.names.append(ln.strip())
+                            j.splitter.output_loc_to_input[pfn_list].append(ln.strip())
+
+            elif opt.locallocation:
+                for loc in opt.locallocation:
+                    for loc_dir in loc[0].split(","):
                         print "Using locallocation for input: " + loc_dir + ", " +  loc[1]
                         j.inputdata.get_dataset(loc_dir,loc[1])
             elif opt.input_dataset:
@@ -489,6 +509,13 @@ if opt.pickevent:
             j.splitter = DQ2JobSplitter()
             j.splitter.numsubjobs = 1
 
+# defaults for outputtype
+if not opt.outputtype:
+    if opt.backend in ['lcg', 'cream', 'panda', 'jedi']:
+        opt.outputtype = 'DQ2'
+    else:
+        opt.outputtype = 'ATLAS'
+
 # outputdata
 
 # local backends can now run without specifying outputdata
@@ -515,6 +542,13 @@ if True:
             j.outputdata.outputdata = opt.outputdata.split('\n')
     if opt.output_location:
         j.outputdata.location = opt.output_location
+
+        # prepend local location for maps input data -> output location
+        if j.splitter and j.splitter.output_loc_to_input:
+            for f in list(j.splitter.output_loc_to_input):
+                j.splitter.output_loc_to_input[os.path.join(opt.output_location, f)] = j.splitter.output_loc_to_input[f]
+                del j.splitter.output_loc_to_input[f]
+
     if opt.output_local_location:
         j.outputdata.local_location = opt.output_local_location
 #    if opt.use_datasetname:
@@ -542,16 +576,14 @@ if opt.numsubjobs > 0:
 	    j.splitter.attribute='comment'
             j.splitter.values=[str(i) for i in xrange(0,opt.numsubjobs)]
     else:
-        j.splitter = AthenaSplitterJob()
+        # splitter could have been created above for input data -> output location mapping
+        if not j.splitter:
+            j.splitter = AthenaSplitterJob()
         j.splitter.numsubjobs = opt.numsubjobs
-
-    if opt.input_pfnlistfile:
-        j.splitter = ATLASTier3Splitter()
-        j.splitter.numjobs = opt.numsubjobs
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass
+        pass
 elif opt.numfiles_subjob>0:
     if (opt.backend in [ 'lcg' ] or opt.glite or (opt.backend in ['sge'] and config.Athena.ENABLE_SGE_DQ2JOBSPLITTER)):
         j.splitter = DQ2JobSplitter()
@@ -560,16 +592,15 @@ elif opt.numfiles_subjob>0:
         j.splitter = DQ2JobSplitter()
         j.splitter.numfiles = opt.numfiles_subjob
     else:
-        j.splitter = AthenaSplitterJob()
-        j.splitter.numfiles_subjob = opt.numfiles_subjob
+        # splitter could have been created above for input data -> output location mapping
+        if not j.splitter:
+            j.splitter = AthenaSplitterJob()
 
-    if opt.input_pfnlistfile:
-        j.splitter = ATLASTier3Splitter()
-        j.splitter.numfiles = opt.numfiles_subjob
+        j.splitter.numfiles_subjob = opt.numfiles_subjob
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass
+        pass
 
 elif opt.filesize>0:
     if (opt.backend in [ 'lcg' ] or opt.glite or (opt.backend in ['sge'] and config.Athena.ENABLE_SGE_DQ2JOBSPLITTER)):
@@ -581,15 +612,18 @@ elif opt.filesize>0:
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass
+        pass
 
 if opt.match_subjobs_files:
-    j.splitter = AthenaSplitterJob()
+    # splitter could have been created above for input data -> output location mapping
+    if not j.splitter:
+        j.splitter = AthenaSplitterJob()
+
     j.splitter.match_subjobs_files = True
 
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
-	pass	
+        pass
 
 if opt.noblacklist:
     if j.splitter and j.splitter.__class__.__name__=='DQ2JobSplitter':
@@ -615,8 +649,6 @@ elif opt.backend == 'lcg' or opt.glite:
         j.backend.requirements.cloud=opt.cloud 
     if opt.glite: 
         j.backend.middleware = 'GLITE'
-    elif opt.edg: 
-        j.backend.middleware = 'EDG' 
 elif opt.backend == 'cream':
     j.backend = CREAM()
     j.backend.requirements=AtlasCREAMRequirements()
@@ -630,6 +662,13 @@ elif opt.backend == 'cream':
 
 elif opt.backend == 'condor':
     j.backend = Condor()
+
+    # set the condor arch requirements from --arch or CMT if available
+    if opt.arch:
+        j.backend.requirements.arch = opt.arch
+    elif j.application.atlas_cmtconfig:
+        j.backend.requirements.arch = j.application.atlas_cmtconfig.split('-')[0].upper()
+
     if opt.queue: j.backend.queue = opt.queue        
 elif opt.backend == 'pbs':
     j.backend = PBS()

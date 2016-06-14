@@ -117,7 +117,6 @@ class Download:
         super(Download, self).__init__()
 
     lfns = []
-    prefix_hack = ''
     #rootfile = []
     lock = threading.RLock()
 
@@ -127,7 +126,7 @@ class Download:
             GangaThread.GangaThread.__init__(self,'download_lcglr')
 
         def run(self):
-            gridshell = getShell(middleware=Download.prefix_hack)
+            gridshell = getShell()
 
             gridshell.env['LFC_HOST'] = config['ATLASOutputDatasetLFC']
             gridshell.env['LCG_CATALOG_TYPE'] = 'lfc'
@@ -150,7 +149,7 @@ class Download:
             GangaThread.GangaThread.__init__(self,'download_lcgcp')
             
         def run(self):
-            gridshell = getShell(middleware=Download.prefix_hack)
+            gridshell = getShell()
             gridshell.env['LFC_HOST'] = config['ATLASOutputDatasetLFC']
             gridshell.env['LCG_CATALOG_TYPE'] = 'lfc'
             rc, out, m = gridshell.cmd1(self.cmd,allowed_exit=[0,255])
@@ -170,7 +169,7 @@ class Download:
             GangaThread.GangaThread.__init__(self,'download_dq2')
             
         def run(self):
-            gridshell = getShell(middleware=Download.prefix_hack)
+            gridshell = getShell()
             gridshell.env['DQ2_URL_SERVER']=configDQ2['DQ2_URL_SERVER']
             gridshell.env['DQ2_URL_SERVER_SSL']=configDQ2['DQ2_URL_SERVER_SSL']
             gridshell.env['DQ2_LOCAL_ID']=''
@@ -325,27 +324,31 @@ class ATLASLocalDataset(Dataset):
         super(ATLASLocalDataset, self).__init__()
         
     def get_dataset_from_list(self,list_file,no_dir_check = False):
-       """Get the dataset files as listed in a text file"""
+        """Get the dataset files as listed in a text file"""
 
-       logger.info('Reading list file %s ...',list_file)
+        logger.info('Reading list file %s ...', list_file)
 
-       if not os.path.exists(list_file):
-           logger.error('File %s does not exist',list_file)
-           return
+        if not os.path.exists(list_file):
+            logger.error('File %s does not exist', list_file)
+            return
 
-       f = open( list_file )
-       for ln in f.readlines():
+        f = open( list_file )
+        for ln in f.readlines():
 
-           # if no_dir_check then just copy the list of files
-           if no_dir_check:
-               self.names.append(ln.strip())
-               continue
+            # ignore comments and blank lines
+            if not ln.strip() or ln.strip()[0] == '#':
+                continue
 
-           # split the directory from the file and call get_dataset
-           if os.path.isdir(ln.strip()):
-               self.get_dataset( ln.strip() )
-           else:
-               self.get_dataset( os.path.dirname(ln.strip()), os.path.basename( ln.strip() ) )
+            # if no_dir_check then just copy the list of files
+            if no_dir_check:
+                self.names.append(ln.strip())
+                continue
+
+            # split the directory from the file and call get_dataset
+            if os.path.isdir(ln.strip()):
+                self.get_dataset( ln.strip() )
+            else:
+                self.get_dataset( os.path.dirname(ln.strip()), os.path.basename( ln.strip() ) )
            
     def get_dataset(self,directory,filter=None):
        """Get the actual files of a dataset"""
@@ -365,7 +368,7 @@ class ATLASLocalDataset(Dataset):
 
        self.names.extend( new_names )
 
-       self._setDirty(1)
+       self._setDirty()
 
     def get_dataset_filenames(self):
         """Get filenames"""
@@ -503,12 +506,6 @@ class ATLASOutputDataset(Dataset):
         except AttributeError:
             logger.error('job.outputdata error')
             return 1
-
-        if job.backend._name == 'LCG':
-            Download.prefix_hack = job.backend.middleware
-            
-        else:
-            Download.prefix_hack = 'EDG'
 
         local_location = options.get('local_location')
 

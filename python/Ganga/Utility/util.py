@@ -148,14 +148,22 @@ def execute_once():
 
 def hostname():
     """ Try to get the hostname in the most possible reliable way as described in the Python LibRef."""
-    import socket
-    try:
-        return socket.gethostbyaddr(socket.gethostname())[0]
-    # [bugfix #20333]:
-    # while working offline and with an improper /etc/hosts configuration
-    # the localhost cannot be resolved
-    except:
-        return 'localhost'
+
+    # cache the result to prevent lockups in gethostbyaddr calls with queues
+    if hostname._hostname_cache == '':
+        import socket
+        try:
+            hostname._hostname_cache = socket.gethostbyaddr(hostname_tmp)[0]
+        # [bugfix #20333]:
+        # while working offline and with an improper /etc/hosts configuration
+        # the localhost cannot be resolved
+        except:
+            hostname._hostname_cache = 'localhost'
+
+    return hostname._hostname_cache
+
+hostname._hostname_cache = ''
+
 # ------------------------
 
 
@@ -260,7 +268,7 @@ def importName(modulename, name):
         import sys
         sys.stderr.write("importName, ImportError: %s\n" % str(err))
         return None
-    if name in vars(module).keys():
+    if name in vars(module):
         return vars(module)[name]
     else:
         return None

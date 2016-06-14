@@ -75,8 +75,6 @@ import subprocess
 import tarfile
 
 fullenvironment = os.environ.copy()
-for key,value in environment.iteritems():
-    fullenvironment[key] = value
 
 outfile=open('stdout','w')
 errorfile=open('stderr','w')
@@ -91,11 +89,12 @@ import time #datetime #disabled for python2.2 compatiblity
 try:
     child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)
 except OSError as x:
-    errfile = open( 'tt', 'w' )
+    errfile = open( 'stderr', 'w' )
     errfile.close()
     print('EXITCODE: %d'%-9999, file=statusfile)
     print('FAILED: %s'%time.strftime('%a %b %d %H:%M:%S %Y'), file=statusfile) #datetime.datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
-    print('PROBLEM STARTING THE APPLICATION SCRIPT: %s %s'%(appscriptpath,str(x)), file=statusfile)
+    print('PROBLEM STARTING THE APPLICATION SCRIPT: \'%s\' \'%s\''%(appscriptpath,str(x)), file=statusfile)
+    print('FILES FOUND ARE: %s' % os.listdir('.'), file=statusfile)
     statusfile.close()
     sys.exit()
 

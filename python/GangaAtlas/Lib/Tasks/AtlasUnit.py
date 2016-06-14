@@ -20,6 +20,9 @@ import Ganga.GPI as GPI
 from Ganga.Utility.Config import getConfig
 configDQ2 = getConfig('DQ2')
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
 import os
 import threading
 

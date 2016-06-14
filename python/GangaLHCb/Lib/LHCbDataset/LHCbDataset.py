@@ -10,8 +10,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
-from OutputData import OutputData
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory, getName
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
@@ -58,38 +57,54 @@ class LHCbDataset(GangaDataset):
                       'symmetricDifference', 'union', 'bkMetadata',
                       'isEmpty', 'hasPFNs', 'getPFNs']  # ,'pop']
 
-    def __init__(self, files=None, persistency=None, depth=0):
+    def __init__(self, files=None, persistency=None, depth=0, fromRef=False):
         super(LHCbDataset, self).__init__()
         if files is None:
             files = []
-        new_files = GangaList()
-        if isType(files, LHCbDataset):
-            for this_file in files:
-                new_files.append(deepcopy(this_file))
-        elif isType(files, IGangaFile):
-            new_files.append(deepcopy(this_file))
-        elif isType(files, (list, tuple, GangaList)):
-            new_list = []
-            for this_file in files:
-                if type(this_file) is str:
-                    new_file = string_datafile_shortcut_lhcb(this_file, None)
-                elif isType(this_file, IGangaFile):
-                    new_file = this_file
-                else:
-                    new_file = strToDataFile(this_file)
-                new_list.append(stripProxy(new_file))
-            stripProxy(new_files)._list = new_list
-        elif type(files) is str:
-            new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
-        else:
-            raise GangaException("Unknown object passed to LHCbDataset constructor!")
-        new_files._setParent(self)
+        self.files = GangaList()
+        process_files = True
+        if fromRef:
+            self.files._list.extend(files)
+            process_files = False
+        elif isinstance(files, GangaList):
+            def isFileTest(_file):
+                return isinstance(_file, IGangaFile)
+            areFiles = all([isFileTest(f) for f in files._list])
+            if areFiles:
+                self.file._list.extend(files._list)
+                process_files = False
+        elif isinstance(files, LHCbDataset):
+            self.files._list.extend(files.files._list)
+            process_files = False
+
+        if process_files:
+            if isType(files, LHCbDataset):
+                for this_file in files:
+                    self.files.append(deepcopy(this_file))
+            elif isType(files, IGangaFile):
+                self.files.append(deepcopy(this_file))
+            elif isType(files, (list, tuple, GangaList)):
+                new_list = []
+                for this_file in files:
+                    if type(this_file) is str:
+                        new_file = string_datafile_shortcut_lhcb(this_file, None)
+                    elif isType(this_file, IGangaFile):
+                        new_file = stripProxy(this_file)
+                    else:
+                        new_file = strToDataFile(this_file)
+                    new_list.append(new_file)
+                self.files.extend(new_list)
+            elif type(files) is str:
+                self.files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+            else:
+                raise GangaException("Unknown object passed to LHCbDataset constructor!")
+
+        self.files._setParent(self)
 
         logger.debug("Processed inputs, assigning files")
 
         # Feel free to turn this on again for debugging but it's potentially quite expensive
-        #logger.debug( "Creating dataset with:\n%s" % files )
-        self.files = new_files
+        #logger.debug( "Creating dataset with:\n%s" % self.files )
         
         logger.debug("Assigned files")
 
@@ -123,23 +138,12 @@ class LHCbDataset(GangaDataset):
         #logger.debug( "Constructing dataset len: %s\n%s" % (str(len(self.files)), str(self.files) ) )
         logger.debug("Constructing dataset len: %s" % str(len(self.files)))
 
-    def __len__(self):
-        """The number of files in the dataset."""
-        result = 0
-        if self.files:
-            result = len(self.files)
-        return result
-
-    def __nonzero__(self):
-        """This is always True, as with an object."""
-        return True
-
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
         #this_file = self.files[i]
         # print type(this_file)
         # return this_file
-        # return GPIProxyObjectFactory(this_file)
+        # return this_file
         # return this_file
         if type(i) == type(slice(0)):
             ds = LHCbDataset(files=self.files[i])
@@ -148,8 +152,6 @@ class LHCbDataset(GangaDataset):
             return ds
         else:
             return self.files[i]
-
-    def isEmpty(self): return not bool(self.files)
 
     def getReplicas(self):
         'Returns the replicas for all files in the dataset.'
@@ -203,9 +205,6 @@ class LHCbDataset(GangaDataset):
                 msg = '2nd replication attempt failed for file %s. (will not retry)' % f.lfn
                 logger.warning(msg)
                 logger.warning(str(err))
-
-    def append(self, input_file):
-        self.extend([input_file])
 
     def extend(self, files, unique=False):
         '''Extend the dataset. If unique, then only add files which are not
@@ -286,22 +285,6 @@ class LHCbDataset(GangaDataset):
             if isPFN(f):
                 pfns.append(f.namePattern)
         return pfns
-
-    def getFileNames(self):
-        'Returns a list of the names of all files stored in the dataset.'
-        names = []
-        from GangaDirac.Lib.Files.DiracFile import DiracFile
-        for i in self.files:
-            if isType(i, DiracFile):
-                names.append(i.lfn)
-            else:
-                try:
-                    names.append(i.namePattern)
-                except:
-                    logger.warning("Cannot determine filename for: %s " % i)
-                    raise GangaException("Cannot Get File Name")
-
-        return names
 
     def getFullFileNames(self):
         'Returns all file names w/ PFN or LFN prepended.'
@@ -423,7 +406,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return data
 
     def isSubset(self, other):
         '''Is every file in this data set in other?'''
@@ -443,7 +426,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return data
 
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
@@ -452,7 +435,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return data
 
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
@@ -461,7 +444,7 @@ class LHCbDataset(GangaDataset):
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
-        return GPIProxyObjectFactory(data)
+        return data
 
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '
@@ -546,8 +529,8 @@ def string_dataset_shortcut(files, item):
     # This clever change mirrors that in IPostprocessor (see there)
     # essentially allows for dynamic extensions to JobTemplate
     # such as LHCbJobTemplate etc.
-
-    inputdataList = [stripProxy(i)._schema.datadict['inputdata'] for i in Ganga.GPI.__dict__.values()
+    from Ganga.GPIDev.Base.Proxy import getProxyInterface
+    inputdataList = [stripProxy(i)._schema.datadict['inputdata'] for i in getProxyInterface().__dict__.values()
                      if isinstance(stripProxy(i), ObjectMetaclass)
                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))
                      and 'inputdata' in stripProxy(i)._schema.datadict]

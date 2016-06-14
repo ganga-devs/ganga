@@ -13,7 +13,7 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import isType
-from GangaDirac.Lib.Files import DiracFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -62,7 +62,6 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                   'OUTPUT_SANDBOX': API_nullifier(outputsandbox),
                   'OUTPUTFILESSCRIPT' : lhcb_dirac_outputfiles,
                   'OUTPUT_PATH': "",  # job.fqid,
-                  'OUTPUT_SE': getConfig('DIRAC')['DiracOutputDataSE'],
                   'SETTINGS': diracAPI_script_settings(app),
                   'DIRAC_OPTS': job.backend.diracOpts,
                   'PLATFORM': getConfig('ROOT')['arch'],

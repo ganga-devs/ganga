@@ -8,14 +8,13 @@ Ganga module to control the input files.
 It relies on the basic ND280Dataset class which is used through inheritance in other more specific classes.
 """
 
+from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Lib.Dataset import Dataset
+from Ganga.Utility.Config import getConfig
+from Ganga.Utility.logging import getLogger
 
 import os, re, fnmatch
 import commands
-
-from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.GPIDev.Schema import *
-
-from Ganga.Utility.logging import getLogger
 
 logger = getLogger()
 
@@ -39,29 +38,6 @@ class ND280Dataset(Dataset):
     def __init__(self):
         super(ND280Dataset, self).__init__()
         
-    def get_raw_from_list(self,prfx,list_file):
-       """Get the dataset of raw files as listed in a text file as run/subrun combinations."""
-
-       logger.info('Reading list file %s ...',list_file)
-
-       if not os.path.isdir(prfx):
-           logger.error('Directory $s does not exist',prfx)
-           return
-
-       if not os.path.exists(list_file):
-           logger.error('File %s does not exist',list_file)
-           return
-
-       f = open( list_file )
-       for ln in f.readlines():
-
-           chunks = ln.split()
-           run = "%08d" % int(chunks[0])
-           sub = "%04d" % int(chunks[1])
-           rang = run[:5]+'000_'+run[:5]+'999'
-           file = 'nd280_'+run+'_'+sub+'.daq.mid.gz'
-           self.get_dataset( os.path.join(prfx,rang), file)
-
     def get_dataset_from_list(self,list_file):
        """Get the dataset files as listed in a text file."""
 
@@ -154,7 +130,7 @@ class ND280LocalDataset(ND280Dataset):
     _category = 'datasets'
     _name = 'ND280LocalDataset'
 
-    _exportmethods = ['get_dataset', 'get_dataset_filenames', 'get_dataset_from_list', 'get_raw_from_list', 'set_dataset_into_list', 'set_dataset_filenames' ]
+    _exportmethods = ['get_dataset', 'get_dataset_filenames', 'get_dataset_from_list', 'get_raw_from_list', 'get_kin_range','set_dataset_into_list', 'set_dataset_filenames']
 
     _GUIPrefs = [ { 'attribute' : 'names',  'attribute' :  'String_List' } ]
    
@@ -181,7 +157,37 @@ class ND280LocalDataset(ND280Dataset):
 
        self.names.extend( new_names )
 
-       self._setDirty(1)
+       self._setDirty()
+
+    def get_raw_from_list(self,prfx,list_file):
+       """Get the dataset of raw files as listed in a text file as run/subrun combinations."""
+
+       logger.info('Reading list file %s ...',list_file)
+
+       if not os.path.isdir(prfx):
+           logger.error('Directory $s does not exist',prfx)
+           return
+
+       if not os.path.exists(list_file):
+           logger.error('File %s does not exist',list_file)
+           return
+
+       f = open( list_file )
+       for ln in f.readlines():
+
+           chunks = ln.split()
+           run = "%08d" % int(chunks[0])
+           sub = "%04d" % int(chunks[1])
+           rang = run[:5]+'000_'+run[:5]+'999'
+           file = 'nd280_'+run+'_'+sub+'.daq.mid.gz'
+           self.get_dataset( os.path.join(prfx,rang), file)
+
+    def get_kin_range(self,fr,to):
+        """Get the dataset of kin file numbers"""
+
+        logger.info('Producing a list of kin file numbers in the range from %s to %s.',fr,to)
+
+        self.names.extend([j for j in range(fr,to+1)])
 
 
 class ND280DCacheDataset(ND280Dataset):
@@ -203,9 +209,9 @@ class ND280DCacheDataset(ND280Dataset):
 
     _GUIPrefs = [ { 'attribute' : 'names',  'attribute' :  'server',  'widget' : 'String_List' } ]
 
-    _commandstr = {'TRIUMF' : '#######'}  #TODO: Put this in a config
-    _filebasepath = {'TRIUMF' : '#######'} #TODO: Put this in a config
-   
+    _commandstr = getConfig('ND280')['ND280DCacheDatasetCommandStr']
+    _filebasepath = getConfig('ND280')['ND280DCacheDatasetFileBasePath']
+
     def __init__(self):
         super(ND280DCacheDataset, self).__init__()
 
@@ -237,4 +243,4 @@ class ND280DCacheDataset(ND280Dataset):
 
       self.names.extend( new_names )
 
-      self._setDirty(1)
+      self._setDirty()

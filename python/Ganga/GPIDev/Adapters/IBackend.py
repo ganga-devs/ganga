@@ -73,11 +73,11 @@ class IBackend(GangaObject):
 
             #from Ganga.Core.exceptions import GangaException
             #if isinstance(err, GangaException):
-            #    logger.error(str(err))
+            #    logger.error("%s" % err)
             #    #log_user_exception(logger, debug=True)
             #else:
             #    #log_user_exception(logger, debug=False)
-            logger.error("Parallel Job Submission Failed: %s" % str(err))
+            logger.error("Parallel Job Submission Failed: %s" % err)
         finally:
             pass
 
@@ -142,9 +142,9 @@ class IBackend(GangaObject):
 
         if parallel_submit:
 
-            from Ganga.GPI import queues
+            from Ganga.Core.GangaThread.WorkerThreads import getQueues
 
-            threads_before = queues.totalNumIntThreads()
+            threads_before = getQueues().totalNumIntThreads()
 
             for sc, sj in zip(subjobconfigs, rjobs):
 
@@ -152,9 +152,7 @@ class IBackend(GangaObject):
                 b = sj.backend
                 # FIXME would be nice to move this to the internal threads not user ones
                 #from Ganga.GPIDev.Base.Proxy import stripProxy
-                #all_queues = stripProxy(queues)
-                #all_queues._addSystem( self._parallel_submit, ( b, sj, sc, master_input_sandbox, fqid, logger ) )
-                queues._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
+                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
 
             def subjob_status_check(rjobs):
                 has_submitted = True
@@ -191,7 +189,7 @@ class IBackend(GangaObject):
             except Exception as x:
                 #sj.updateStatus('new')
                 if isType(x, GangaException):
-                    logger.error(str(x))
+                    logger.error("%s" % x)
                     log_user_exception(logger, debug=True)
                 else:
                     log_user_exception(logger, debug=False)
@@ -412,10 +410,10 @@ class IBackend(GangaObject):
         updateMonitoringInformation().
         """
 
-        ## Have to import here so it's actually defined
         from Ganga.Core import monitoring_component
+        was_monitoring_running = monitoring_component and monitoring_component.isEnabled(False)
 
-        logger.debug("Running Monitoring for Jobs: %s" % str([j.getFQID('.') for j in jobs]))
+        logger.debug("Running Monitoring for Jobs: %s" % [j.getFQID('.') for j in jobs])
 
         ## Only process 10 files from the backend at once
         #blocks_of_size = 10
@@ -424,7 +422,7 @@ class IBackend(GangaObject):
             blocks_of_size = getConfig('PollThread')['numParallelJobs']
         except Exception as err:
             logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
-            logger.debug("Error: %s" % str(err))
+            logger.debug("Error: %s" % err)
             blocks_of_size = 5
         ## Separate different backends implicitly
         simple_jobs = {}
@@ -454,12 +452,10 @@ class IBackend(GangaObject):
                         if sj.status in ['submitted', 'running']:
                             monitorable_subjob_ids.append(sj.id)
 
-                #logger.info('Monitoring subjobs: %s', str(monitorable_subjob_ids)
+                #logger.info('Monitoring subjobs: %s', monitorable_subjob_ids)
 
                 if not monitorable_subjob_ids:
                     continue
-
-                stripProxy(j)._getWriteAccess()
 
                 #logger.info("Dividing")
 
@@ -478,36 +474,31 @@ class IBackend(GangaObject):
 
                 for this_block in monitorable_blocks:
 
-                    if monitoring_component and not monitoring_component.isEnabled(False) or not monitoring_component:
+                    # If the monitoring function was running at the start of the function but has since stopped, break.
+                    if was_monitoring_running and monitoring_component and not monitoring_component.isEnabled(False) or not monitoring_component:
                         break
 
                     try:
                         subjobs_to_monitor = []
                         for sj_id in this_block:
                             subjobs_to_monitor.append(j.subjobs[sj_id])
-                        stripProxy(j.backend).updateMonitoringInformation(subjobs_to_monitor)
+                        j.backend.updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
-                        logger.error("Monitoring Error: %s" % str(err))
-                    j.updateMasterJobStatus()
+                        logger.error("Monitoring Error: %s" % err)
 
-                ## NB ONLY THE MASTER JOB IS KNOWN TO THE JOB REPO!!!
-                stripProxy(j)._setDirty()
+                j.updateMasterJobStatus()
+
             else:
                 backend_name = getName(j.backend)
-                if backend_name not in simple_jobs.keys():
+                if backend_name not in simple_jobs:
                     simple_jobs[backend_name] = []
                 simple_jobs[backend_name].append(j)
 
-        if len(simple_jobs.keys()) > 0:
+        if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
 
-                for this_job in simple_jobs[this_backend]:
-                    stripProxy(this_job)._getWriteAccess()
                 stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
-
-                for this_job in simple_jobs[this_backend]:
-                    stripProxy(this_job)._setDirty()
 
         logger.debug("Finished Monitoring request")
 

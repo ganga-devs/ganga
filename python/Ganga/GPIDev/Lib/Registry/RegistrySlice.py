@@ -2,7 +2,6 @@ import sys
 import Ganga.Utility.logging
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError
-from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 import fnmatch
 import collections
 
@@ -50,8 +49,7 @@ class RegistrySlice(object):
             raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
                 self.name, keep_going, method))
         result = []
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
-        for _id in id_list:
+        for _id in self.objects.keys():
             obj = self.objects[_id]
             try:
                 if isinstance(method, str):
@@ -67,7 +65,7 @@ class RegistrySlice(object):
                 if not keep_going:
                     raise
             except Exception as x:
-                logger.exception('%s %s %s: %s %s', doc, self.name, _id, getName(x), str(x))
+                logger.exception('%s %s %s: %s %s', doc, self.name, _id, getName(x), x)
                 if not keep_going:
                     raise
         return result
@@ -79,11 +77,6 @@ class RegistrySlice(object):
         if minid is None:
             minid = 0
         return [k for k in self.objects.keys() if minid <= k <= maxid]
-        #ids = []
-        # def callback(j):
-        #    ids.append(j.id)
-        # self.do_select(callback,minid,maxid)
-        # return ids
 
     def clean(self, confirm=False, force=False):
         """Cleans the repository only if this slice represents the repository
@@ -122,18 +115,18 @@ class RegistrySlice(object):
         logger = getLogger()
 
         this_repr = repr.Repr()
-        from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+        from Ganga.GPIDev.Base.Proxy import addProxy
         attrs_str = ""
         ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
-        ## Reuired to flatten the additional arguments into a flat string in attrs_str
+        ## Required to flatten the additional arguments into a flat string in attrs_str
         for a in attrs:
             from inspect import isclass
             if isclass(attrs[a]):
-                this_attr = GPIProxyObjectFactory(attrs[a]())
+                this_attr = addProxy(attrs[a]())
             else:
                 from Ganga.GPIDev.Base.Objects import GangaObject
                 if isType(attrs[a], GangaObject):
-                    this_attr = GPIProxyObjectFactory(attrs[a])
+                    this_attr = addProxy(attrs[a])
                 else:
                     if type(attrs[a]) is str:
                         from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
@@ -145,10 +138,10 @@ class RegistrySlice(object):
             for line in split_str:
                 line = line.strip()
             flat_str = ''.join(split_str)
-            attrs_str += ", %s=\"%s\"" % (str(a), flat_str)
+            attrs_str += ", %s=\"%s\"" % (a, flat_str)
 
-        logger.debug("Attrs_Str: %s" % str(attrs_str))
-        logger.debug("Constructing slice: %s" % str("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str)))
+        logger.debug("Attrs_Str: %s" % attrs_str)
+        logger.debug("Constructing slice: %s" % ("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str)))
         this_slice = self.__class__("%s.select(minid='%s', maxid='%s'%s)" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str))
 
         def append(id, obj):
@@ -183,7 +176,7 @@ class RegistrySlice(object):
                 else:
                     attrs[k] = new_val
 
-        logger.debug("do_select: attrs: %s" % str(attrs))
+        logger.debug("do_select: attrs: %s" % attrs)
 
         def select_by_list(this_id):
             return this_id in ids
@@ -203,13 +196,11 @@ class RegistrySlice(object):
                 maxid = sys.maxsize
             select = select_by_range
 
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
-
-        for this_id in id_list:
+        for this_id in self.objects.keys():
             obj = self.objects[this_id]
-            logger.debug("id, obj: %s, %s" % (str(this_id), str(obj)))
+            logger.debug("id, obj: %s, %s" % (this_id, obj))
             if select(int(this_id)):
-                logger.debug("Selected: %s" % str(this_id))
+                logger.debug("Selected: %s" % this_id)
                 selected = True
                 for a in attrs:
                     if self.name == 'box':
@@ -233,7 +224,7 @@ class RegistrySlice(object):
                         else:
                             from Ganga.GPIDev.Base import GangaAttributeError
                             raise GangaAttributeError(
-                                'undefined select attribute: %s' % str(a))
+                                'undefined select attribute: %s' % a)
                     else:
 
                         if a == 'ids':
@@ -243,14 +234,18 @@ class RegistrySlice(object):
                         else:
                             try:
                                 item = obj._schema.getItem(a)
+                                logger.debug("Here: %s, is item: %s" % (a, type(item)))
                             except KeyError as err:
                                 from Ganga.GPIDev.Base import GangaAttributeError
-                                logger.debug("KeyError getting item: '%s' from schema" % str(a))
-                                raise GangaAttributeError('undefined select attribute: %s' % str(a))
+                                logger.debug("KeyError getting item: '%s' from schema" % a)
+                                raise GangaAttributeError('undefined select attribute: %s' % a)
                             else:
                                 attrvalue = attrs[a]
 
                                 if item.isA(ComponentItem):
+                                    ## TODO we need to distinguish between passing a Class type and a defined class instance
+                                    ## If we passed a class type to select it should look only for classes which are of this type
+                                    ## If we pass a class instance a compartison of the internal attributes should be performed
                                     from Ganga.GPIDev.Base.Filters import allComponentFilters
 
                                     cfilter = allComponentFilters[item['category']]
@@ -273,20 +268,20 @@ class RegistrySlice(object):
                                         if not reobj.match(str(getattr(obj, a))):
                                             selected = False
                                     else:
-                                        ## We will want to use this if we ever want to select by:
-                                        # jobs.select(application=Executable(exe='myExe')) rather than by jobs.select(application=Exectuable())
-                                        #if getattr(obj, a) != attrvalue:
-                                        ## Changed for 6.1.14 rcurrie
-                                        if not isType(getattr(obj, a), type(attrvalue)):
+                                        if getattr(obj, a) != attrvalue:
                                             selected = False
                                             break
                 if selected:
+                    logger.debug("Actually Selected")
                     callback(this_id, obj)
+                else:
+                    logger.debug("NOT Actually Selected")
+            else:
+                logger.debug("NOT Selected: %s" % this_id)
 
     def copy(self, keep_going):
         this_slice = self.__class__("copy of %s" % self.name)
-        id_list = self.objects.keys() if not isType(self.objects, SubJobXMLList) else [_id for _id in range(len(self.objects))]
-        for _id in id_list:
+        for _id in self.objects.keys():
             obj = self.objects[_id]
             #obj = _unwrap(obj)
             copy = obj.clone()
@@ -326,7 +321,7 @@ class RegistrySlice(object):
             return addProxy(self.objects[this_id])
         except KeyError as err:
             logger.debug('Object id=%d not found' % this_id)
-            logger.deubg("%s" % str(err))
+            logger.debug("%s" % err)
             raise RegistryKeyError('Object id=%d not found' % this_id)
 
     def __iter__(self):
@@ -407,15 +402,15 @@ class RegistrySlice(object):
                 else:
                     val = self._getatr(obj, item.split('.'))
             except KeyError as err:
-                logger.debug("_get_display_value KeyError: %s" % str(err))
-                logger.debug("item: \"%s\"" % str(item))
-                #logger.debug("func: %s" % str(config[self._display_prefix + '_columns_functions']))
+                logger.debug("_get_display_value KeyError: %s" % err)
+                logger.debug("item: \"%s\"" % item)
+                #logger.debug("func: %s" % config[self._display_prefix + '_columns_functions'])
                 #val = self._getatr(obj, item.split('.'))
                 val = ""
             if not val and not item in self._display_columns_show_empty:
                 val = ""
         except AttributeError as err:
-            logger.debug("AttibErr: %s" % str(err))
+            logger.debug("AttibErr: %s" % err)
             val = ""
         finally:
             pass
@@ -449,43 +444,38 @@ class RegistrySlice(object):
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
 
-        for obj_i in self.objects.keys():
+        if hasattr(self.objects, '_private_display'):
+            ds += self.objects._private_display(self, this_format, default_width, markup)
 
-            cached_data = None
+        else:
+            for obj_i in self.objects.keys():
 
-            if isType(self.objects, SubJobXMLList):
-                cached_data = self.objects.getCachedData(obj_i)
-                colour = self._getColour( cached_data )
-            else:
-                obj = stripProxy(self.objects[obj_i])
+                cached_data = None
+
+                reg_object = self.objects[obj_i]
+                obj = stripProxy(reg_object)
                 colour = self._getColour(obj)
 
-            vals = []
-            for item in self._display_columns:
-                display_str = "display:" + str(item)
-                #logger.info("Looking for : %s" % display_str)
-                width = self._display_columns_width.get(item, default_width)
-                try:
-                    if not isType(self.objects, SubJobXMLList):
-                        obj = stripProxy(self.objects[obj_i])
+                vals = []
+                for item in self._display_columns:
+                    display_str = "display:" + str(item)
+                    #logger.info("Looking for : %s" % display_str)
+                    width = self._display_columns_width.get(item, default_width)
+                    try:
                         if item == "fqid":
-                            vals.append(str(stripProxy(obj).getNodeIndexCache()[display_str]))
+                            vals.append(str(obj._index_cache[display_str]))
                         else:
-                            vals.append(str(stripProxy(obj).getNodeIndexCache()[display_str])[0:width])
-                    else:
-                        if item == 'fqid':
-                            vals.append(str(cached_data[display_str]))
+                            vals.append(str(obj._index_cache[display_str])[0:width])
+                        continue
+                    except KeyError as err:
+                        logger.debug("_display KeyError: %s" % err)
+                        #pass
+                        if item == "fqid":
+                            vals.append(self._get_display_value(obj, item))
                         else:
-                            vals.append(str(cached_data[display_str])[0:width])
-                    continue
-                except KeyError as err:
-                    logger.debug("_display KeyError: %s" % str(err))
-                    pass
-                if item == "fqid":
-                    vals.append(self._get_display_value(obj, item))
-                else:
-                    vals.append(self._get_display_value(obj, item)[0:width])
-            ds += markup(this_format % tuple(vals), colour)
+                            vals.append(self._get_display_value(obj, item)[0:width])
+                ds += markup(this_format % tuple(vals), colour)
+
         return ds
 
     __str__ = _display

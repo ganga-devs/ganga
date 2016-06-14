@@ -2,15 +2,12 @@
 import os
 import re
 import inspect
-
+import getpass
 
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 
 
 # Global Functions
-def getEnvironment(config = None):
-    return {}
-
 def getLCGRootPath():
 
     lcg_release_areas = {'afs' : '/afs/cern.ch/sw/lcg/releases/LCG_79',
@@ -28,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.1.18 $'
+_gangaVersion = '$Name: 6.1.20 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -127,8 +124,7 @@ conf_config.addOption(
     'repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
 conf_config.addOption('workspacetype', 'LocalFilesystem',
                  'Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
-
-conf_config.addOption('user', '',
+conf_config.addOption('user', getpass.getuser(),
     'User name. The same person may have different roles (user names) and still use the same gangadir. Unless explicitly set this option defaults to the real user name.')
 conf_config.addOption('resubmitOnlyFailedSubjobs', True,
                  'If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs. Note that the auto_resubmit mechanism will only ever resubmit FAILED subjobs.')
@@ -179,7 +175,7 @@ makeConfig("Shell", "configuration parameters for internal Shell utility.")
 # Queues
 queues_config = makeConfig("Queues", "configuration section for the queues")
 queues_config.addOption('Timeout', None, 'default timeout for queue generated processes')
-queues_config.addOption('NumWorkerThreads', 3, 'default number of worker threads in the queues system')
+queues_config.addOption('NumWorkerThreads', 5, 'default number of worker threads in the queues system')
 
 # ------------------------------------------------
 # MSGMS
@@ -236,7 +232,7 @@ poll_config.addOption('creds_poll_rate', 30, "The frequency in seconds for crede
 poll_config.addOption('diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
 poll_config.addOption('DiskSpaceChecker', "", "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
 poll_config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
-poll_config.addOption('numParallelJobs', 5, 'Number of Jobs to update the status for in parallel')
+poll_config.addOption('numParallelJobs', 25, 'Number of Jobs to update the status for in parallel')
 
 poll_config.addOption('forced_shutdown_policy', 'session_type',
                  'If there are remaining background activities at exit such as monitoring, output download Ganga will attempt to wait for the activities to complete. You may select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the system waits on a timeout without questions ("timeout"). The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')
@@ -303,10 +299,10 @@ lcg_config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
 
 # set default values for the configuration parameters
 lcg_config.addOption(
-    'EDG_ENABLE', False, 'enables/disables the support of the EDG middleware')
+    'EDG_ENABLE', False, 'DEPRECATED enables/disables the support of the EDG middleware')
 
 lcg_config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                 'sets the LCG-UI environment setup script for the EDG middleware',
+                 'DEPRECATED sets the LCG-UI environment setup script for the EDG middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption(
@@ -319,7 +315,7 @@ lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_e
 lcg_config.addOption('VirtualOrganisation', 'dteam',
                  'sets the name of the grid virtual organisation')
 
-lcg_config.addOption('ConfigVO', '', 'sets the VO-specific LCG-UI configuration script for the EDG resource broker',
+lcg_config.addOption('ConfigVO', '', 'DEPRECATED sets the VO-specific LCG-UI configuration script for the EDG resource broker',
                  filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
@@ -647,9 +643,9 @@ output_config.addOption('LCGSEFile',
                        LCGSEFileExt)
 
 # DiracFile
-
+## TODO MOVE ME TO GANGADIRAC!!!
 # Should this be in Core or elsewhere?
-diracBackPost = {'Dirac': 'WN', 'LSF': 'WN', 'PBS': 'WN', 'LCG': 'WN',
+diracBackPost = {'Dirac': 'submit', 'LSF': 'WN', 'PBS': 'WN', 'LCG': 'WN',
                  'CREAM': 'WN', 'ARC': 'WN', 'Localhost': 'WN', 'Interactive': 'WN'}
 diracFileExts = docstr_Ext % ('DIRAC', 'DIRAC')
 
@@ -822,6 +818,7 @@ disp_config.addOption(
 tasks_config = makeConfig('Tasks', 'Tasks configuration options')
 tasks_config.addOption('TaskLoopFrequency', 60., "Frequency of Task Monitoring loop in seconds")
 tasks_config.addOption('ForceTaskMonitoring', False, "Monitor tasks even if the monitoring loop isn't enabled")
+tasks_config.addOption('disableTaskMon', False, "Should I disable the Task Monitoring loop?")
 
 # ------------------------------------------------
 # MonitoringServices

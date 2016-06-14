@@ -184,13 +184,9 @@ class GridProxy(ICredential):
     _exportmethods = ["create", "destroy", "identity", "info", "isAvailable",
                       "isValid", "location", "renew", "timeleft", "voname", "fullIdentity"]
 
-    def __init__(self, middleware="EDG"):
+    def __init__(self):
         super(GridProxy, self).__init__()
-        self.middleware = middleware
-        if self.middleware:
-            self.shell = getShell(self.middleware)
-        self.gridCommand = GridCommand()
-        self.vomsCommand = VomsCommand()
+        self.shell = getShell()
         self.chooseCommandSet()
         return
 
@@ -206,12 +202,12 @@ class GridProxy(ICredential):
         Return value: None
         """
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-        if "ICommandSet" == self.command._name or isType(self.command, GangaList):
-            if self.voms:
-                self.command = self.vomsCommand
-            else:
-                self.command = self.gridCommand
-        return None
+        if self.voms:
+            # Make sure we don't overwrite a VomsCommand if it's already there
+            if not isinstance(self.command, VomsCommand):
+                self.command = VomsCommand()
+        else:
+            self.command = GridCommand()
 
     # Populate the self.command.currentOpts dictionary with
     # GridProxy specific options.
@@ -336,7 +332,7 @@ class GridProxy(ICredential):
                 except IndexError:
                     pass
         except Exception as err:
-            logger.debug("Err: %s" % str(err))
+            logger.debug("Err: %s" % err)
             pass
 
         id = "".join(cn.split())
