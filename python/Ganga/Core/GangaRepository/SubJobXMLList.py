@@ -78,6 +78,8 @@ class SubJobXMLList(GangaObject):
 
         self._cached_filenames = {}
         self._stored_len = []
+        # For caching a large list of integers, the key is the length of the list
+        self._storedKeys = {}
 
         # Lock to ensure only one load at a time
         self._load_lock = threading.Lock()
@@ -128,7 +130,7 @@ class SubJobXMLList(GangaObject):
         Args:
             subjob_id (int): This is the id of the job that we're interested in
         """
-        return subjob_id in self._cachedJobs.keys()
+        return subjob_id in self._cachedJobs
 
     def load_subJobIndex(self):
         """Load the index from all sujobs ynto _subjobIndexData or empty it is an error occurs"""
@@ -287,7 +289,10 @@ class SubJobXMLList(GangaObject):
 
     def keys(self):
         """Return keys to access subjobs"""
-        return [i for i in range(len(self))]
+        myLen = len(self)
+        if myLen not in self._storedKeys:
+            self._storedKeys[myLen] = [i for i in range(len(self))]
+        return self._storedKeys[myLen]
 
     def values(self):
         """Return the actual subjobs"""
@@ -486,6 +491,22 @@ class SubJobXMLList(GangaObject):
                 cached_data.append(self._registry.getIndexCache( self.__getitem__(i) ) )
 
         return cached_data
+
+    def getAllSJStatus(self):
+        """
+        Returns the cached statuses of the subjobs whilst respecting the Lazy loading
+        """
+        sj_statuses = []
+        if len(self._subjobIndexData) == len(self):
+            for i in range(len(self)):
+                if self.isLoaded(i):
+                    sj_statuses.append(self.__getitem__(i).status)
+                else:
+                    sj_statuses.append(self._subjobIndexData[i]['status'])
+        else:
+            for i in range(len(self)):
+                sj_statuses.append(self.__getitem__(i).status)
+        return sj_statuses
 
     def flush(self, ignore_disk=False):
         """Flush all subjobs to disk using XML methods
