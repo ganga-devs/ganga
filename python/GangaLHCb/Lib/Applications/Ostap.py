@@ -11,19 +11,21 @@
 # At least one 'script' or non-empty list of commands is required 
 #
 # The application executes the following line:
-#    
+# @code   
 # % ostap {scripts} {arguments} --import {imports} --no-color --batch
-#    
+# @endcode    
 # e.g.
+# @code 
 # % bender script.py  --with-context -p5 --no-color --no-canvas --batch
+# @endcode
 #
+# 
 # @code
 # my_script  = "~/cmtuser/tests/my_batch.py"
 # my_app     = Ostap (
 #    version      = 'v28r3'       ,
 #    scripts      =   my_script   ,
 #    arguments    = [
-#      '--with-context'           , ## execute the script files ``with-context''
 #      ] , 
 #    commands     = [ 'print dir()']
 #      ) 
@@ -50,7 +52,7 @@ The application executes the following line:
 % ostap {scripts} {arguments} --import {imports} --no-color --batch
 
 e.g.
-% bender script.py  --with-context -p5 --no-color --no-canvas --batch
+% ostap script.py  --with-context -p5 --no-color --no-canvas --batch
 
 >>> my_script  = '~/cmtuser/tests/my_batch.py'
 >>> my_app     = Ostap (
@@ -68,39 +70,30 @@ __date__    = '2016-03-16'
 __version__ = '$Revision:$'
 __author__  = 'Vladimir ROMANOVSKY, Vanya BELYAEV'
 # =============================================================================
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
-import tempfile
-import pprint
-import shutil
-from os.path import split, join
-from Ganga.GPIDev.Schema.Schema import FileItem, SimpleItem
-import Ganga.Utility.logging
-from Ganga.GPIDev.Lib.File import File
-from Ganga.Utility.util import unique
-from Ganga.Core import ApplicationConfigurationError
-from Ganga.GPIDev.Lib.File import ShareDir
-from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
-from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
-from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
-from Ganga.Utility.files import expandfilename, fullpath
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.Shell import Shell
-from AppsBaseUtils import guess_version
-from Ganga.GPIDev.Base.Proxy import isType
+from   os.path import split, join
+from   Ganga.GPIDev.Schema.Schema             import FileItem, SimpleItem
+from   Ganga.GPIDev.Lib.File                  import File
+from   Ganga.Utility.util                     import unique
+from   Ganga.Core                             import ApplicationConfigurationError
+from   Ganga.GPIDev.Lib.File.FileBuffer       import FileBuffer
+from   GangaGaudi.Lib.Applications.GaudiBase  import GaudiBase
+from   GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
+from   Ganga.Utility.files                    import expandfilename, fullpath
+from   Ganga.Utility.Config                   import getConfig
+from   AppsBaseUtils                          import guess_version
 #
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
 # Added for XML PostProcessing
-from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript
 from GangaLHCb.Lib.Applications import XMLPostProcessor
 
+import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 # =============================================================================
 ## the actual wrapper script to execute 
+# =============================================================================
 layout = """#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # =============================================================================
@@ -135,11 +128,13 @@ execfile(ostap_script)
 # At least one 'script' or 'import' file is required.
 #
 # The application executes the following line:
-#    
+# @code    
 # % ostap {scripts} {arguments} --no-color --no-castor --batch
-#    
+# @endcodce    
 # e.g.
-# % bender script1.py  --no-color --batch
+# @code 
+# % ostap script1.py  --no-color --batch
+# @endcode 
 #
 # @author Vladimir ROMANOVSKY  Vladimir.Romanovskiy@cern.ch
 # @author Vanya BELYAEV        Ivan.Belyaev@itep.ru 
@@ -157,14 +152,14 @@ class Ostap(GaudiBase):
     % ostap {scripts} {arguments} --import {imports} --no-color --batch
     
     e.g.
-    % bender script.py  --with-context -p5 --no-color --no-canvas --batch
+    % ostap script.py -p5 --no-color --no-canvas --batch
     
     >>> my_script  = '~/cmtuser/tests/my_batch.py'
     >>> my_app     = Ostap (
-    ...    version      = 'v28r3'       ,
+    ...    project      = 'Analysis'    , ## 
+    ...    version      = 'v16r1'       , ## version of Analysis
     ...    scripts      =   my_script   ,
     ...    arguments    = [
-    ...      '--with-context'           , ## execute the script files ``with-context''
     ...      '--no-canvas'              , ## do not create canvas 
     ...      ] , 
     ...    commands     = [ 'print dir()']
@@ -177,7 +172,7 @@ class Ostap(GaudiBase):
     _exportmethods += ['prepare', 'unprepare']
     
     _schema = GaudiBase._schema.inherit_copy()
-    
+
     _schema.datadict['package'] = SimpleItem(
         defvalue = None,
         typelist = ['str', 'type(None)'],
@@ -235,16 +230,6 @@ class Ostap(GaudiBase):
         """
         )
     
-    _schema.datadict['project'] = SimpleItem(
-        preparable = 1          ,
-        defvalue   = 'Analysis' ,
-        hidden     = 1          ,
-        protected  = 1          ,
-        typelist   = ['str']    ,
-        doc        = """The name of the Gaudi project (Analysis)
-        """
-        )
-    
     _schema.version.major += 2
     _schema.version.minor += 0
     
@@ -252,10 +237,7 @@ class Ostap(GaudiBase):
         return guess_version(self, gaudi_app)
 
     def _auto__init__(self):
-        if (not self.appname) and (not self.project):
-            self.project = 'Bender'  # default
-        if (not self.appname):
-            self.appname = self.project
+        if not self.appname : self.appname = 'Bender'  # default
         self._init()
 
     def _getshell(self):
@@ -280,8 +262,8 @@ class Ostap(GaudiBase):
         input_sandbox_tgz = os.path.join ( share_dir , 'inputsandbox',
                                            '_input_sandbox_%s.tgz' % self.is_prepared.name ) 
         
-        fillPackedSandbox ( self.scripts      , input_sandbox_tar  ) 
-        gzipFile          ( input_sandbox_tar , input_sandbox_tgz , True     )
+        fillPackedSandbox ( self.scripts      , input_sandbox_tar        ) 
+        gzipFile          ( input_sandbox_tar , input_sandbox_tgz , True )
         
         # add the newly created shared directory into the metadata system if
         # the app is associated with a persisted object
@@ -330,8 +312,9 @@ class Ostap(GaudiBase):
     def postprocess(self):
         XMLPostProcessor.postprocess(self, logger)
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+# =============================================================================
 # Associate the correct run-time handlers to GaudiPython for various backends.
+# =============================================================================
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
@@ -341,7 +324,6 @@ for backend in ['LSF', 'Interactive', 'PBS', 'SGE', 'Local', 'Condor', 'Remote']
     allHandlers.add('Ostap', backend, LHCbGaudiRunTimeHandler)
 allHandlers.add('Ostap', 'Dirac', LHCbGaudiDiracRunTimeHandler)
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 # =============================================================================
 if '__main__' == __name__ :
