@@ -169,6 +169,7 @@ allHandlers.add('GaudiRun', 'Local', GaudiRunRTHandler)
 #allHandlers.add('GaudiRun', 'Condor', GaudiRunRTHandler)
 allHandlers.add('GaudiRun', 'Interactive', GaudiRunRTHandler)
 allHandlers.add('GaudiRun', 'Batch', GaudiRunRTHandler)
+allHandlers.add('GaudiRun', 'LSF', GaudiRunRTHandler)
 
 def generateDiracInput(app):
     """
@@ -261,7 +262,8 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
             if isinstance(file_, DiracFile):
                 inputsandbox += ['LFN:'+file_.lfn]
             elif isinstance(file_, LocalFile):
-                shutil.copyfile(file_.localDir + os.path.basename(file_.namePattern), app.getSharedPath())
+                base_name = os.path.basename(file_.namePattern)
+                shutil.copyfile(os.path.join(file_.localDir, base_name), os.path.join(app.getSharedPath(), base_name))
             else:
                 logger.error("Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
                 raise ApplicationConfigurationError(None, "Unsupported filetype: %s with DIRAC backend" % getName(file_))
