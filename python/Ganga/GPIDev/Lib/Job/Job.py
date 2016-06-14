@@ -742,13 +742,11 @@ class Job(GangaObject):
         """
         This returns a set of all of the different subjob statuses whilst respecting lazy loading
         """
-        stats = set()
 
         if isinstance(self.subjobs, SubJobXMLList):
             stats = set(self.subjobs.getAllSJStatus())
         else:
-            for sj in self.subjobs:
-                stats.add(sj.status)
+            status = set([sj.status for sj in self.subjobs])
 
 	return stats
 
