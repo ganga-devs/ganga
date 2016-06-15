@@ -120,9 +120,30 @@ def prepareCommand(app):
     full_cmd = "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
     return full_cmd
 
+
+def WarnUsers():
+    """ A quick method for warning users about the in-development status of the app """
+    print("\n\n")
+    logger.warning("This GaudiRun Application is still in the testing phase.")
+    logger.warning("There is no guarantee that any jobs submitted with it wil remain compatible with the next release of Ganga")
+    raw_input("Please Hit the return key to continue with your Job submission\n")
+
 class GaudiRunRTHandler(IRuntimeHandler):
 
     """The runtime handler to run plain executables on the Local backend"""
+
+    def master_prepare(self, app, appmasterconfig):
+        """
+        Prepare the RTHandler for the master job so that applications to be submitted
+        Args:
+            app (GaudiRun): This application is only expected to handle GaudiRun Applications here
+            appmasterconfig (unknown): Output passed from the application master configuration call
+        """
+
+        WarnUsers()
+
+        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
+        return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
         """
@@ -222,6 +243,9 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
             app (GaudiRun): This application is only expected to handle GaudiRun Applications here
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
+
+        WarnUsers()
+
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
         if not isinstance(app.uploadedInput, DiracFile):
