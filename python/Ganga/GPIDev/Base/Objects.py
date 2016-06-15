@@ -274,9 +274,8 @@ def synchronised_set_descriptor(set_function):
         if obj is None:
             return set_function(self, obj, type_or_value)
 
-        with obj._internal_lock:
-            with obj.const_lock:
-                return set_function(self, obj, type_or_value)
+        with obj.const_lock:
+            return set_function(self, obj, type_or_value)
     return decorated
 
 
