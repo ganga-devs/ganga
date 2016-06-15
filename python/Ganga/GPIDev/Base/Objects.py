@@ -357,12 +357,13 @@ class Descriptor(object):
         # Guarantee that the object is now loaded from disk
         obj._getReadAccess()
 
+        # If we've loaded from disk then the data dict has changed. If we're constructing an object
+        # Then we need to rely on the factory
+        if name in obj._schema.allItemNames():
+            return obj._data_dict[name]
+
         if obj._fullyLoadedFromDisk():
             # If we loaded from disk everything could have changed (including corrupt index updated!)
-
-            # First try to load the object from the attributes on disk
-            if name in obj._schema.allItemNames():
-                return obj._data_dict[name]
 
             # Finally, get the default value from the schema
             if obj._schema.hasItem(name):
