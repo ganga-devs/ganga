@@ -133,7 +133,7 @@ class GangaRepositorySQLite(GangaRepository):
                 obj = self.objects[_id]
             if _id not in self._fully_loaded:
                 new_data = pickle.loads(e[3])
-                for k, v in new_data
+                for k, v in new_data:
                     setattr(obj, k, v)
             self._fully_loaded[_id] = obj
             ids.remove(_id)
