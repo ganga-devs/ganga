@@ -340,10 +340,12 @@ class Descriptor(object):
 
         # First we want to try to get the information without prompting a load from disk
 
+        obj_in_schema = name in cls._schema.datadict
+
         if obj._fullyLoadedFromDisk():
             # schema data takes priority ALWAYS over ._index_cache
             # This access should not cause the object to be loaded
-            if name in cls._schema.allItemNames():
+            if obj_in_schema:
                 # NB we check for schema entries as this will have problem when object not in Schema
                 return obj._data_dict[name]
 
@@ -359,15 +361,14 @@ class Descriptor(object):
 
         # If we've loaded from disk then the data dict has changed. If we're constructing an object
         # Then we need to rely on the factory
-        if name in obj._schema.allItemNames():
+        if obj_in_schema:
             return obj._data_dict[name]
 
         if obj._fullyLoadedFromDisk():
             # If we loaded from disk everything could have changed (including corrupt index updated!)
-
-            # Finally, get the default value from the schema
-            if obj._schema.hasItem(name):
-                return obj._schema.getDefaultValue(name)
+            obj_index = obj._index_cache
+            if name in obj_index:
+                return obj_index[name]
 
             raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
         else:
