@@ -154,10 +154,12 @@ class Node(object):
         but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
+        root._read_lock.acquire()
         root._write_lock.acquire()
         try:
             yield
         finally:
+            root._read_lock.release()
             root._write_lock.release()
 
     def _getRoot(self, cond=None):
@@ -272,8 +274,8 @@ def synchronised_set_descriptor(set_function):
         if obj is None:
             return set_function(self, obj, type_or_value)
 
-        with obj.const_lock:
-            with obj._internal_lock:
+        with obj._internal_lock:
+            with obj.const_lock:
                 return set_function(self, obj, type_or_value)
     return decorated
 
@@ -346,6 +348,8 @@ class Descriptor(object):
             # schema data takes priority ALWAYS over ._index_cache
             # This access should not cause the object to be loaded
             if obj_in_schema:
+                if name not in obj._data_dict:
+                    self.__set__(obj, obj._schema.getDefaultValue(name))
                 # NB we check for schema entries as this will have problem when object not in Schema
                 return obj._data_dict[name]
 
@@ -362,6 +366,8 @@ class Descriptor(object):
         # If we've loaded from disk then the data dict has changed. If we're constructing an object
         # Then we need to rely on the factory
         if obj_in_schema:
+            if name not in obj._data_dict:
+                self.__set__(obj, obj._schema.getDefaultValue(name))
             return obj._data_dict[name]
 
         if obj._fullyLoadedFromDisk():
@@ -614,7 +620,7 @@ class ObjectMetaclass(abc.ABCMeta):
         # This reduces the memory footprint
         # TODO explore migrating the _data_dict object to a non-dictionary type as it's a fixed size and we can potentially save big here!
         # Adding the __dict__ here is an acknowledgement that we don't control all Ganga classes higher up.
-        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject')
+        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject', '_inMemory')
 
         # Add all class members of type `Schema.Item` to the _schema object
         # TODO: We _could_ add base class's Items here by going through `bases` as well.
@@ -663,35 +669,6 @@ class ObjectMetaclass(abc.ABCMeta):
         if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
             this_schema.createDefaultConfig()
 
-class gangaDataDict(dict):
-    """
-    This is a slightly modified version of the dict class which overloads the __missing__ method
-    with a piece of generator code.
-    """
-
-    _classRef = 'classRef'
-
-    def __init__(self, *args, **kwds):
-        """
-        Construct this gangaDataDict class
-        Args:
-            args (list): List of args which are silently passed to dict
-            kwds (dict): Dictionary of named args which 'should' contain a 'classRef' key which allows this to work
-        """
-
-        if gangaDataDict._classRef not in kwds:
-            raise GangaException("Require a Class Reference to use this Dictionary with a Factory")
-        else:
-            self.classRef = kwds[gangaDataDict._classRef]
-            del kwds[gangaDataDict._classRef]
-
-        super(gangaDataDict, self).__init__(*args, **kwds)
-
-    def __missing__(self, key):
-        value = Descriptor.cleanValue(self.classRef, self.classRef._schema.getDefaultValue(key), key)
-        self[key] = value
-        return self[key]
-
 
 class GangaObject(Node):
     __metaclass__ = ObjectMetaclass # Change standard Python metaclass object
@@ -724,7 +701,9 @@ class GangaObject(Node):
         self._index_cache_dict = {}
         self._registry = None
 
-        self._data_dict = gangaDataDict(**{gangaDataDict._classRef: self})
+        self._data_dict = dict()#.fromkeys(self._schema.datadict.keys())
+
+        self._inMemory = True
 
     def __construct__(self, args):
         # type: (Sequence) -> None
@@ -934,9 +913,7 @@ class GangaObject(Node):
     def _fullyLoadedFromDisk(self):
         # type: () -> bool
         """This returns a boolean. and it's related to if self has_loaded in the Registry of this object"""
-        if self._getRegistry():
-            return self._getRegistry().has_loaded(self)
-        return True
+        return self._inMemory
 
     @staticmethod
     def __incrementShareRef(obj, attr_name):

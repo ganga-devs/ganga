@@ -182,6 +182,7 @@ class GangaRepository(object):
             self._found_classes[compound_name] = cls
         cls = self._found_classes[compound_name]
         obj = cls()
+        obj._inMemory = False
 
         obj._setFlushed()
         self._internal_setitem__(this_id, obj)
