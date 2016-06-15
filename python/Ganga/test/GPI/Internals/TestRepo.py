@@ -12,8 +12,7 @@ class FakeRegistry(object):
         self.repo = None
 
     def _read_access(self, root, obj):
-        if not obj._data:
-            self.repo.load([root._registry_id])
+        self.repo.load([root._registry_id])
 
     def _write_access(self, root):
         self.repo.load([root._registry_id])

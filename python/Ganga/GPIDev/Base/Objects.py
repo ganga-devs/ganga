@@ -342,9 +342,8 @@ class Descriptor(object):
 
         # ._data takes priority ALWAYS over ._index_cache
         # This access should not cause the object to be loaded
-        obj_data = obj._data
-        if name in obj_data:
-            return obj_data[name]
+        if name in obj._data_dict:
+            return obj._data_dict[name]
 
         # Then try to get it from the index cache
         obj_index = obj._index_cache
@@ -357,8 +356,8 @@ class Descriptor(object):
         obj._getReadAccess()
 
         # First try to load the object from the attributes on disk
-        if name in obj._data:
-            return obj._data[name]
+        if name in obj._data_dict:
+            return obj._data_dict[name]
 
         # Finally, get the default value from the schema
         if obj._schema.hasItem(name):
@@ -559,14 +558,6 @@ class Descriptor(object):
             return new_v
         else:
             return Descriptor.cloneObject(v, obj, name)
-
-    def __delete__(self, obj):
-        """
-        Delete an attribute from the Descriptor(?) and Node
-        Args:
-            obj (GangaObject): This is the object which wants to have an attribute removed from it
-        """
-        del obj._data[_getName(self)]
 
     @staticmethod
     def createNewList(_final_list, _input_elements, action=None, extra_args=None):
@@ -867,29 +858,6 @@ class GangaObject(Node):
 
         return True
 
-    @property
-    def _data(self):
-        """
-        This returns the internal data dictionary of this class
-        This should be treated as strictly internal and shouldn't be modified outside of Ganga.GPIDev.Base or Ganga.Core.GangaRegistry
-        """
-        # type: () -> Dict[str, Any]
-        return self._data_dict
-
-    @_data.setter
-    def _data(self, new_data):
-        """
-        Set the ._data attribute correctly for this object
-        This should be treated as strictly internal and shouldn't be modified outside of Ganga.GPIDev.Base or Ganga.Core.GangaRegistry
-        Args:
-            new_data (dict): This is the external dictionary which is to be assigned to the internal dictionary
-        """
-        # type: (Dict[str, Any]) -> None
-        for v in new_data.values():
-            if isinstance(v, Node):
-                v._setParent(self)
-        self._data_dict = new_data
-
     def setSchemaAttribute(self, attrib_name, attrib_value):
         # type: (str, Any) -> None
         """
@@ -899,9 +867,9 @@ class GangaObject(Node):
             attrib_name (str): the name of the schema attribute
             attrib_value (unknown): the value to set it to
         """
-        self._data[attrib_name] = attrib_value
+        self._data_dict[attrib_name] = attrib_value
         if isinstance(attrib_value, Node):
-            self._data[attrib_name]._setParent(self)
+            self._data_dict[attrib_name]._setParent(self)
 
     @property
     def _index_cache(self):

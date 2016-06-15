@@ -770,15 +770,6 @@ class GangaRepositoryLocal(GangaRepository):
             except (OSError, IOError, XMLFileError) as x:
                 raise RepositoryError(self, "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x))
 
-    def is_loaded(self, this_id):
-        """
-        Has "this_id" been loaded from disk already
-        Check self.objects for the ._data sttribute
-        Args:
-            this_id (int): This is the id we want to check has been fully loaded from disk
-        """
-        return (this_id in self.objects) and (self.objects[this_id]._data is not None)
-
     def count_nodes(self, this_id):
         """
         Count the number of nodes in "this_id" of self.objects"
@@ -798,15 +789,6 @@ class GangaRepositoryLocal(GangaRepository):
             i += 1
 
         return node_count
-
-    def _actually_loaded(self, this_id):
-        """
-        Return if "this_id" is in the _full_loaded dictionary of objects loaded from XML by this class
-        This is different to is_loaded as it checks for actual read operations
-        Args:
-            this_id (int): This is an integer corresponding to a key in the _fully_loaded dict (possibly objects too)
-        """
-        return this_id in self._fully_loaded
 
     def _check_index_cache(self, obj, this_id):
         """
@@ -876,11 +858,9 @@ class GangaRepositoryLocal(GangaRepository):
         # TODO investigate changing this to copyFrom
         # The temp object is from disk so all contents have correctly passed through sanitising via setattr at least once by now so this is safe
         if need_to_copy:
-            for key, val in tmpobj._data.items():
-                obj.setSchemaAttribute(key, val)
-            for attr_name, attr_val in obj._schema.allItems():
-                if attr_name not in tmpobj._data:
-                    obj.setSchemaAttribute(attr_name, obj._schema.getDefaultValue(attr_name))
+            for attr_name, attr in tmpobj._schema.allItems():
+                if not attr['getter']:
+                    setattr(obj, attr_name, getattr(tmpobj, attr_name))
 
         if has_children:
             logger.debug("Adding children")
@@ -894,12 +874,6 @@ class GangaRepositoryLocal(GangaRepository):
                     from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
                     def_val = GangaList()
                 obj.setSchemaAttribute(self.sub_split, def_val)
-
-        from Ganga.GPIDev.Base.Objects import do_not_copy
-        for node_key, node_val in obj._data.items():
-            if isType(node_val, Node):
-                if node_key not in do_not_copy:
-                    node_val._setParent(obj)
 
         # Check if index cache; if loaded; was valid:
         if obj._index_cache not in [{}]:

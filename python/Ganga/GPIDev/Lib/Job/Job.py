@@ -39,7 +39,7 @@ def lazyLoadJobFQID(this_job):
 
 
 def lazyLoadJobStatus(this_job):
-    return lazyLoadJobObject(this_job, 'status', do_eval=True)
+    return lazyLoadJobObject(this_job, 'status', do_eval=False)
 
 
 def lazyLoadJobBackend(this_job):
