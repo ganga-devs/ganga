@@ -638,7 +638,9 @@ class GangaRepositoryLocal(GangaRepository):
             except OSError as e:
                 if e.errno != errno.EEXIST:
                     raise RepositoryError( self, "OSError on mkdir: %s" % (e))
+
             self._internal_setitem__(ids[i], objs[i])
+            self._fully_loaded[ids[i]] = objs[i]
 
             # Set subjobs dirty - they will not be flushed if they are not.
             if self.sub_split and hasattr(objs[i], self.sub_split):

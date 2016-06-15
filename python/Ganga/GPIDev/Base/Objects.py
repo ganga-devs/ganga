@@ -340,10 +340,12 @@ class Descriptor(object):
 
         # First we want to try to get the information without prompting a load from disk
 
-        # ._data takes priority ALWAYS over ._index_cache
-        # This access should not cause the object to be loaded
-        if name in obj._data_dict:
-            return obj._data_dict[name]
+        if obj._fullyLoadedFromDisk():
+            # schema data takes priority ALWAYS over ._index_cache
+            # This access should not cause the object to be loaded
+            if name in cls._schema.allItemNames():
+                # NB we check for schema entries as this will have problem when object not in Schema
+                return obj._data_dict[name]
 
         # Then try to get it from the index cache
         obj_index = obj._index_cache
@@ -355,15 +357,20 @@ class Descriptor(object):
         # Guarantee that the object is now loaded from disk
         obj._getReadAccess()
 
-        # First try to load the object from the attributes on disk
-        if name in obj._data_dict:
-            return obj._data_dict[name]
+        if obj._fullyLoadedFromDisk():
+            # If we loaded from disk everything could have changed (including corrupt index updated!)
 
-        # Finally, get the default value from the schema
-        if obj._schema.hasItem(name):
-            return obj._schema.getDefaultValue(name)
+            # First try to load the object from the attributes on disk
+            if name in obj._schema.allItemNames():
+                return obj._data_dict[name]
 
-        raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
+            # Finally, get the default value from the schema
+            if obj._schema.hasItem(name):
+                return obj._schema.getDefaultValue(name)
+
+            raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
+        else:
+            raise GangaException('Failed to load object from disk to get attribute "%s" of class: "%s"' % (name, _getName(obj)))
 
     @staticmethod
     def cloneObject(v, obj, name):
@@ -654,6 +661,35 @@ class ObjectMetaclass(abc.ABCMeta):
         if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
             this_schema.createDefaultConfig()
 
+class gangaDataDict(dict):
+    """
+    This is a slightly modified version of the dict class which overloads the __missing__ method
+    with a piece of generator code.
+    """
+
+    _classRef = 'classRef'
+
+    def __init__(self, *args, **kwds):
+        """
+        Construct this gangaDataDict class
+        Args:
+            args (list): List of args which are silently passed to dict
+            kwds (dict): Dictionary of named args which 'should' contain a 'classRef' key which allows this to work
+        """
+
+        if gangaDataDict._classRef not in kwds:
+            raise GangaException("Require a Class Reference to use this Dictionary with a Factory")
+        else:
+            self.classRef = kwds[gangaDataDict._classRef]
+            del kwds[gangaDataDict._classRef]
+
+        super(gangaDataDict, self).__init__(*args, **kwds)
+
+    def __missing__(self, key):
+        value = Descriptor.cleanValue(self.classRef, self.classRef._schema.getDefaultValue(key), key)
+        self[key] = value
+        return self[key]
+
 
 class GangaObject(Node):
     __metaclass__ = ObjectMetaclass # Change standard Python metaclass object
@@ -686,14 +722,7 @@ class GangaObject(Node):
         self._index_cache_dict = {}
         self._registry = None
 
-        self._data_dict = dict.fromkeys(self._schema.datadict)
-        for attr, item in self._schema.allItems():
-            ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
-            if item.getProperties()['getter'] is None:
-                setattr(self, attr, self._schema.getDefaultValue(attr))
-
-        # Overwrite default values with any config values specified
-        # self.setPropertiesFromConfig()
+        self._data_dict = gangaDataDict(**{gangaDataDict._classRef: self})
 
     def __construct__(self, args):
         # type: (Sequence) -> None
@@ -903,7 +932,7 @@ class GangaObject(Node):
     def _fullyLoadedFromDisk(self):
         # type: () -> bool
         """This returns a boolean. and it's related to if self has_loaded in the Registry of this object"""
-        if self._getRegistry() is not None:
+        if self._getRegistry():
             return self._getRegistry().has_loaded(self)
         return True
 
