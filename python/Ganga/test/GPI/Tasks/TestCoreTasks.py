@@ -141,3 +141,9 @@ class TestCoreTasks(GangaUnitTest):
         assert len(new_t.transforms) == 0
         # transforms are marked (for now?) uncopyable
 
+        new_tr = tasks(0).transforms[0].copy()
+
+        assert tasks(0).transforms[0].status != 'new'
+        assert new_tr.status == 'new'
+
+
