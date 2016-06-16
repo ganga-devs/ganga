@@ -477,6 +477,13 @@ class Descriptor(object):
             val (unknown): value of the attribute which we're about to set
         """
 
+        if val == "new":
+            import traceback
+            #traceback.print_stack()
+            for i in traceback.extract_stack():
+                print i
+            print "\n\n\n"
+
         if isinstance(val, str):
             from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
             val = stripProxy(runtimeEvalString(obj, _getName(self), val))
@@ -967,9 +974,12 @@ class GangaObject(Node):
         global do_not_copy
         if self._schema is not None:
             for name, item in self._schema.allItems():
-                if not item['copyable'] or name in do_not_copy:
+                if (not item['copyable'] or name in do_not_copy) and\
+                        not (item['protected'] or item['getter']):
                     setattr(self_copy, name, self._schema.getDefaultValue(name))
-                else:
+                elif item['protected'] and not item['getter']:
+                    setattr(self_copy, name, deepcopy(getattr(self, name)))
+                elif not item['getter']:
                     if hasattr(self, name):
                         setattr(self_copy, name, deepcopy(getattr(self, name)))
                     else:
