@@ -498,8 +498,12 @@ def bootstrap(internal=False, handler=None):
 
 def final_shutdown():
     """ Shutdown the logging system via a call here as we don't want to do this in the wrong place in the shutdown method """
+
     private_logger.debug('shutting down logsystem')
     logging.shutdown()
+    for handler in main_logger.handlers:
+        main_logger.removeHandler(handler)
+    main_logger.addHandler(default_handler)
 
 
 # do the initial bootstrap automatically at import -> this will bootstrap
