@@ -126,3 +126,18 @@ class TestCoreTasks(GangaUnitTest):
                 assert t.transforms[0].unit_splitter.values == TestCoreTasks.argList
                 assert t.float == 20
 
+    def test_g_TaskCopyTest(self):
+        """Test copied task looks sane"""
+
+        from Ganga.GPI import tasks
+
+        assert len(tasks)
+
+        assert tasks(0).status != 'new'
+
+        new_t = tasks(0).copy()
+
+        assert new_t.status == 'new'
+        assert len(new_t.transforms) == 0
+        # transforms are marked (for now?) uncopyable
+

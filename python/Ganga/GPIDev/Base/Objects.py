@@ -477,13 +477,6 @@ class Descriptor(object):
             val (unknown): value of the attribute which we're about to set
         """
 
-        if val == "new":
-            import traceback
-            #traceback.print_stack()
-            for i in traceback.extract_stack():
-                print i
-            print "\n\n\n"
-
         if isinstance(val, str):
             from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
             val = stripProxy(runtimeEvalString(obj, _getName(self), val))
@@ -711,7 +704,7 @@ class GangaObject(Node):
         self._index_cache_dict = {}
         self._registry = None
 
-        self._data_dict = dict()#.fromkeys(self._schema.datadict.keys())
+        self._data_dict = {}
 
         self._inMemory = True
 
@@ -973,13 +966,12 @@ class GangaObject(Node):
 
         if self._schema is not None:
             for name, item in self._schema.allItems():
-                is_copyable = item['copyable']
-                is_protected = item['protected']
-                has_getter = item['getter']
-                if (not is_copyable or name in do_not_copy) and\
-                        not (is_protected or has_getter):
+                if item['getter']:
+                    continue
+
+                if (not item['copyable']) or name in do_not_copy:
                     setattr(self_copy, name, self._schema.getDefaultValue(name))
-                elif not has_getter:
+                else:
                     if hasattr(self, name):
                         setattr(self_copy, name, deepcopy(getattr(self, name)))
                     else:
@@ -997,7 +989,6 @@ class GangaObject(Node):
                 try:
                     self_copy.__dict__[k] = deepcopy(v)
                 except:
-                    #self_copy.__dict__[k] = v
                     pass
 
         if true_parent is not None:
