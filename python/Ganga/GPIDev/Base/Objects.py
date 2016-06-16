@@ -979,8 +979,6 @@ class GangaObject(Node):
                 if (not is_copyable or name in do_not_copy) and\
                         not (is_protected or has_getter):
                     setattr(self_copy, name, self._schema.getDefaultValue(name))
-                elif is_protected and not has_getter:
-                    setattr(self_copy, name, deepcopy(getattr(self, name)))
                 elif not has_getter:
                     if hasattr(self, name):
                         setattr(self_copy, name, deepcopy(getattr(self, name)))
