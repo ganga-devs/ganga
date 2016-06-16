@@ -359,25 +359,28 @@ class Descriptor(object):
 
         # Since we couldn't find the information in the cache, we will need to fully load the object
 
-        # Guarantee that the object is now loaded from disk
-        obj._getReadAccess()
+        if not obj._inMemory:
+            # Guarantee that the object is now loaded from disk
+            obj._getReadAccess()
 
-        # If we've loaded from disk then the data dict has changed. If we're constructing an object
-        # Then we need to rely on the factory
-        if obj_in_schema:
-            if name not in obj._data_dict:
-                self.__set__(obj, obj._schema.getDefaultValue(name))
-            return obj._data_dict[name]
+            # If we've loaded from disk then the data dict has changed. If we're constructing an object
+            # Then we need to rely on the factory
+            if obj_in_schema:
+                if name not in obj._data_dict:
+                    self.__set__(obj, obj._schema.getDefaultValue(name))
+                return obj._data_dict[name]
 
-        if obj._fullyLoadedFromDisk():
-            # If we loaded from disk everything could have changed (including corrupt index updated!)
-            obj_index = obj._index_cache
-            if name in obj_index:
-                return obj_index[name]
+            if obj._fullyLoadedFromDisk():
+                # If we loaded from disk everything could have changed (including corrupt index updated!)
+                obj_index = obj._index_cache
+                if name in obj_index:
+                    return obj_index[name]
 
-            raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
+                raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
+            else:
+                raise GangaException('Failed to load object from disk to get attribute "%s" of class: "%s"' % (name, _getName(obj)))
         else:
-            raise GangaException('Failed to load object from disk to get attribute "%s" of class: "%s"' % (name, _getName(obj)))
+            raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
 
     @staticmethod
     def cloneObject(v, obj, name):
@@ -490,7 +493,8 @@ class Descriptor(object):
         self._check_getter()
 
         # ON-DISK LOCKING
-        obj._getWriteAccess()
+        if not obj._inMemory:
+            obj._getWriteAccess()
 
         _set_name = _getName(self)
 
