@@ -971,15 +971,17 @@ class GangaObject(Node):
 
         self_copy = cls()
 
-        global do_not_copy
         if self._schema is not None:
             for name, item in self._schema.allItems():
-                if (not item['copyable'] or name in do_not_copy) and\
-                        not (item['protected'] or item['getter']):
+                is_copyable = item['copyable']
+                is_protected = item['protected']
+                has_getter = item['getter']
+                if (not is_copyable or name in do_not_copy) and\
+                        not (is_protected or has_getter):
                     setattr(self_copy, name, self._schema.getDefaultValue(name))
-                elif item['protected'] and not item['getter']:
+                elif is_protected and not has_getter:
                     setattr(self_copy, name, deepcopy(getattr(self, name)))
-                elif not item['getter']:
+                elif not has_getter:
                     if hasattr(self, name):
                         setattr(self_copy, name, deepcopy(getattr(self, name)))
                     else:
@@ -997,7 +999,8 @@ class GangaObject(Node):
                 try:
                     self_copy.__dict__[k] = deepcopy(v)
                 except:
-                    self_copy.__dict__[k] = v
+                    #self_copy.__dict__[k] = v
+                    pass
 
         if true_parent is not None:
             self._setParent(true_parent)
