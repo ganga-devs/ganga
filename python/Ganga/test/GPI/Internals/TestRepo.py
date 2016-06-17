@@ -7,9 +7,11 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class FakeRegistry(object):
+
     def __init__(self, name):
         self.name = name
         self.repo = None
+        self._lock = threading.RLock()
 
     def _read_access(self, root, obj):
         self.repo.load([root._registry_id])
