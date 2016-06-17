@@ -243,13 +243,8 @@ def synchronised_get_descriptor(get_function):
         if obj is None:
             return get_function(self, obj, type_or_value)
 
-        if obj._getRegistry():
-            with obj._getRegistry()._lock:
-                with obj._read_lock:
-                    return get_function(self, obj, type_or_value)
-        else:
-            with obj._read_lock:
-                return get_function(self, obj, type_or_value)
+        with obj._read_lock:
+            return get_function(self, obj, type_or_value)
 
     return decorated
 
