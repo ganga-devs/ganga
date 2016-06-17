@@ -238,8 +238,9 @@ class RegistryFlusher(threading.Thread):
         will wait for a fixed period of time.
         """
         sleeps_per_second = 10  # This changes the granularity of the sleep.
+        regConf = getConfig('Registry')
         while not self.stopped:
-            sleep_period = getConfig('Registry')['AutoFlusherWaitTime']
+            sleep_period = regConf['AutoFlusherWaitTime']
             for i in range(sleep_period*sleeps_per_second):
                 time.sleep(1/sleeps_per_second)
                 if self.stopped:
@@ -247,7 +248,8 @@ class RegistryFlusher(threading.Thread):
             # This will trigger a flush on all dirty objects in the repo,
             # It will lock all objects dirty as a result of the nature of the flush command
             logger.debug('Auto-flushing: %s', self.registry.name)
-            self.registry.flush_all()
+            if regConf['EnableAutoFlush']:
+                self.registry.flush_all()
         logger.debug("Auto-Flusher shutting down for Registry: %s" % self.registry.name)
 
 
@@ -632,6 +634,7 @@ class Registry(object):
                 self.repository.flush([obj_id])
                 obj._setFlushed()
 
+    @synchronised
     def flush_all(self):
         """
         This will attempt to flush all the jobs in the registry.
@@ -644,6 +647,7 @@ class Registry(object):
         if self.metadata and self.metadata.hasStarted():
             self.metadata.flush_all()
 
+    @synchronised
     def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.
         sub-obj is the object the read access is actually desired (ignored at the moment)
@@ -735,6 +739,7 @@ class Registry(object):
             logger.debug("Unknown read access Error: %s" % err)
             raise
 
+    @synchronised
     def _write_access(self, _obj):
         """Obtain write access on a given object.
         Raise RepositoryError
@@ -954,6 +959,7 @@ class Registry(object):
                 s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
         return s
 
+    @synchronised
     def has_loaded(self, obj):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!
