@@ -972,7 +972,6 @@ class GangaObject(Node):
 
         self_copy = cls()
 
-<<<<<<< HEAD
         global do_not_copy
         for name, obj in self._data_dict.iteritems():
             item = self._schema.getItem(name)
@@ -981,15 +980,6 @@ class GangaObject(Node):
             else:
                 if hasattr(self, name):
                     setattr(self_copy, name, deepcopy(obj))
-=======
-        if self._schema is not None:
-            for name, item in self._schema.allItems():
-                if item['getter']:
-                    continue
-
-                if (not item['copyable']) or name in do_not_copy:
-                    setattr(self_copy, name, self._schema.getDefaultValue(name))
->>>>>>> 810af8a2d9814c06cf45748f63dc2c9f24ca8da9
                 else:
                    setattr(self_copy, name, self._schema.getDefaultValue(name))
 
