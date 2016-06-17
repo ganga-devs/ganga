@@ -139,9 +139,6 @@ class Node(object):
         but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
-        this_reg = root._getRegistry()
-        if this_reg:
-            this_reg._lock.acquire()
         root._read_lock.acquire()
         root._write_lock.acquire()
         try:
@@ -149,8 +146,6 @@ class Node(object):
         finally:
             root._write_lock.release()
             root._read_lock.release()
-            if this_reg:
-                this_reg._lock.release()
 
     def _getRoot(self, cond=None):
         # type: () -> Node
@@ -337,10 +332,14 @@ class Descriptor(object):
 
         # First we want to try to get the information without prompting a load from disk
 
-        if obj._fullyLoadedFromDisk():
+        obj_in_schema = name in cls._schema.datadict
+
+        if self._inMemory_fullyLoadedFromDisk():
             # schema data takes priority ALWAYS over ._index_cache
             # This access should not cause the object to be loaded
-            if name in cls._schema.allItemNames():
+            if obj_in_schema:
+                if name not in obj._data_dict:
+                    self.__set__(obj, obj._schema.getDefaultValue(name))
                 # NB we check for schema entries as this will have problem when object not in Schema
                 return obj._data_dict[name]
 
@@ -355,21 +354,24 @@ class Descriptor(object):
             # Guarantee that the object is now loaded from disk
             obj._getReadAccess()
 
-        # If we've loaded from disk then the data dict has changed. If we're constructing an object
-        # Then we need to rely on the factory
-        if name in obj._schema.allItemNames():
-            return obj._data_dict[name]
+            # If we've loaded from disk then the data dict has changed. If we're constructing an object
+            # Then we need to rely on the factory
+            if obj_in_schema:
+                if name not in obj._data_dict:
+                    self.__set__(obj, obj._schema.getDefaultValue(name))
+                return obj._data_dict[name]
 
-        if obj._fullyLoadedFromDisk():
-            # If we loaded from disk everything could have changed (including corrupt index updated!)
+            if obj._fullyLoadedFromDisk():
+                # If we loaded from disk everything could have changed (including corrupt index updated!)
+                obj_index = obj._index_cache
+                if name in obj_index:
+                    return obj_index[name]
 
-            # Finally, get the default value from the schema
-            if obj._schema.hasItem(name):
-                return obj._schema.getDefaultValue(name)
-
-            raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
+                raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
+            else:
+                raise GangaException('Failed to load object from disk to get attribute "%s" of class: "%s"' % (name, _getName(obj)))
         else:
-            raise GangaException('Failed to load object from disk to get attribute "%s" of class: "%s"' % (name, _getName(obj)))
+            raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
 
     @staticmethod
     def cloneObject(v, input_tuple):
@@ -487,7 +489,8 @@ class Descriptor(object):
         self._check_getter()
 
         # ON-DISK LOCKING
-        obj._getWriteAccess()
+        if not obj._fullyLoadedFromDisk():
+            obj._getWriteAccess()
 
         _set_name = _getName(self)
 
@@ -611,7 +614,7 @@ class ObjectMetaclass(abc.ABCMeta):
         # This reduces the memory footprint
         # TODO explore migrating the _data_dict object to a non-dictionary type as it's a fixed size and we can potentially save big here!
         # Adding the __dict__ here is an acknowledgement that we don't control all Ganga classes higher up.
-        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject')
+        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject', '_inMemory')
 
         # Add all class members of type `Schema.Item` to the _schema object
         # TODO: We _could_ add base class's Items here by going through `bases` as well.
@@ -660,35 +663,6 @@ class ObjectMetaclass(abc.ABCMeta):
         if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
             this_schema.createDefaultConfig()
 
-class gangaDataDict(dict):
-    """
-    This is a slightly modified version of the dict class which overloads the __missing__ method
-    with a piece of generator code.
-    """
-
-    _classRef = 'classRef'
-
-    def __init__(self, *args, **kwds):
-        """
-        Construct this gangaDataDict class
-        Args:
-            args (list): List of args which are silently passed to dict
-            kwds (dict): Dictionary of named args which 'should' contain a 'classRef' key which allows this to work
-        """
-
-        if gangaDataDict._classRef not in kwds:
-            raise GangaException("Require a Class Reference to use this Dictionary with a Factory")
-        else:
-            self.classRef = kwds[gangaDataDict._classRef]
-            del kwds[gangaDataDict._classRef]
-
-        super(gangaDataDict, self).__init__(*args, **kwds)
-
-    def __missing__(self, key):
-        value = Descriptor.cleanValue(self.classRef, self.classRef._schema.getDefaultValue(key), key)
-        self[key] = value
-        return self[key]
-
 
 class GangaObject(Node):
     __metaclass__ = ObjectMetaclass # Change standard Python metaclass object
@@ -721,7 +695,9 @@ class GangaObject(Node):
         self._index_cache_dict = {}
         self._registry = None
 
-        self._data_dict = gangaDataDict(**{gangaDataDict._classRef: self})
+        self._data_dict = {}
+
+        self._inMemory = True
 
     def __construct__(self, args):
         # type: (Sequence) -> None
@@ -952,9 +928,7 @@ class GangaObject(Node):
     def _fullyLoadedFromDisk(self):
         # type: () -> bool
         """This returns a boolean. and it's related to if self has_loaded in the Registry of this object"""
-        if self._getRegistry() is not None:
-            return self._getRegistry().has_loaded(self)
-        return True
+        return self._inMemory
 
     @staticmethod
     def __incrementShareRef(obj, attr_name):
@@ -1003,6 +977,7 @@ class GangaObject(Node):
 
         self_copy = cls()
 
+<<<<<<< HEAD
         global do_not_copy
         for name, obj in self._data_dict.iteritems():
             item = self._schema.getItem(name)
@@ -1011,6 +986,15 @@ class GangaObject(Node):
             else:
                 if hasattr(self, name):
                     setattr(self_copy, name, deepcopy(obj))
+=======
+        if self._schema is not None:
+            for name, item in self._schema.allItems():
+                if item['getter']:
+                    continue
+
+                if (not item['copyable']) or name in do_not_copy:
+                    setattr(self_copy, name, self._schema.getDefaultValue(name))
+>>>>>>> 810af8a2d9814c06cf45748f63dc2c9f24ca8da9
                 else:
                    setattr(self_copy, name, self._schema.getDefaultValue(name))
 
@@ -1022,7 +1006,7 @@ class GangaObject(Node):
                 try:
                     self_copy.__dict__[k] = deepcopy(v)
                 except:
-                    self_copy.__dict__[k] = v
+                    pass
 
         if true_parent is not None:
             self._setParent(true_parent)

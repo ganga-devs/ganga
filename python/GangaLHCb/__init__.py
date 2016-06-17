@@ -13,11 +13,11 @@ from optparse import OptionParser, OptionValueError
 from Ganga.Utility.Config.Config import _after_bootstrap
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.execute import execute
+
 logger = getLogger()
 
 if not _after_bootstrap:
     configLHCb = Ganga.Utility.Config.makeConfig('LHCb', 'Parameters for LHCb')
-    configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 
     # Set default values for the LHCb config section.
     dscrpt = 'The name of the local site to be used for resolving LFNs into PFNs.'
@@ -46,11 +46,6 @@ if not _after_bootstrap:
     configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
                      'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
                       options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
-
-    configDirac.overrideDefaultValue('userVO', 'lhcb')
-    configDirac.overrideDefaultValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
-    configDirac.overrideDefaultValue('noInputDataBannedSites', ['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
-    configDirac.overrideDefaultValue('RequireDefaultSE', False)
 
 
 def _guess_version(name):
@@ -137,11 +132,16 @@ def loadPlugins(config=None):
 
 
 def postBootstrapHook():
+    configDirac = Ganga.Utility.Config.getConfig('DIRAC')
+    configOutput = Ganga.Utility.Config.getConfig('Output')
     configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
 
-from Ganga.GPIDev.Lib.File.Configure import outputconfig
+    configDirac.setSessionValue('userVO', 'lhcb')
+    configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
+    configDirac.setSessionValue('noInputDataBannedSites', ['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
+    configDirac.setSessionValue('RequireDefaultSE', False)
 
-outputconfig.overrideDefaultValue('FailJobIfNoOutputMatched', 'False')
+    configOutput.setSessionValue('FailJobIfNoOutputMatched', 'False')
 
 
 # This is being dropped from 6.1.0 due to causing some bug in loading large numbers of jobs
@@ -149,7 +149,7 @@ outputconfig.overrideDefaultValue('FailJobIfNoOutputMatched', 'False')
 # This will be nice to re-add once there is lazy loading support passed to the display for the 'jobs' command 09/2015 rcurrie
 #
 #from Ganga.GPIDev.Lib.Registry.JobRegistry import config as display_config
-#display_config.overrideDefaultValue( 'jobs_columns', ('fqid', 'status', 'name', 'subjobs', 'application', 'backend', 'backend.actualCE', 'backend.extraInfo', 'comment') )
-#display_config.overrideDefaultValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
-#display_config.overrideDefaultValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
+#display_config.setSessionValue( 'jobs_columns', ('fqid', 'status', 'name', 'subjobs', 'application', 'backend', 'backend.actualCE', 'backend.extraInfo', 'comment') )
+#display_config.setSessionValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
+#display_config.setSessionValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
 

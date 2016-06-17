@@ -641,6 +641,7 @@ class GangaRepositoryLocal(GangaRepository):
 
             self._internal_setitem__(ids[i], objs[i])
             self._fully_loaded[ids[i]] = objs[i]
+            objs[i]._inMemory = True
 
             # Set subjobs dirty - they will not be flushed if they are not.
             if self.sub_split and hasattr(objs[i], self.sub_split):
@@ -710,7 +711,11 @@ class GangaRepositoryLocal(GangaRepository):
                 for idn in os.listdir(os.path.dirname(fn)):
                     split_cache = getattr(obj, self.sub_split)
                     if idn.isdigit() and int(idn) >= len(split_cache):
-                        rmrf(os.path.join(os.path.dirname(fn), idn))
+                        try:
+                            rmrf(os.path.join(os.path.dirname(fn), idn))
+                        except Exception as err:
+                            logger.warning("Couldn't remove a file: %s" % err)
+                            pass
             else:
 
                 logger.debug("not has_children")
@@ -719,7 +724,11 @@ class GangaRepositoryLocal(GangaRepository):
                 # clean files leftover from sub_split
                 for idn in os.listdir(os.path.dirname(fn)):
                     if idn.isdigit():
-                        rmrf(os.path.join(os.path.dirname(fn), idn))
+                        try:
+                            rmrf(os.path.join(os.path.dirname(fn), idn))
+                        except Exception as err:
+                            logger.warning("Couldn't remove a file: %s" % err)
+                            pass
             if this_id not in self.incomplete_objects:
                 self.index_write(this_id)
         else:
@@ -727,6 +736,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         if this_id not in self._fully_loaded:
             self._fully_loaded[this_id] = obj
+            obj._inMemory = True
 
     def flush(self, ids):
         """
@@ -760,6 +770,7 @@ class GangaRepositoryLocal(GangaRepository):
 
                 if this_id not in self._fully_loaded:
                     self._fully_loaded[this_id] = self.objects[this_id]
+                    self.objects[this_id]._inMemory = True
 
                 subobj_attr = getattr(self.objects[this_id], self.sub_split, None)
                 sub_attr_dirty = getattr(subobj_attr, '_dirty', False)
@@ -855,6 +866,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         obj = self.objects[this_id]
 
+        obj._inMemory = True
         # If the object was already in the objects (i.e. cache object, replace the schema content wilst avoiding R/O checks and such
         # The end goal is to keep the object at this_id the same object in memory but to make it closer to tmpobj.
         # TODO investigate changing this to copyFrom
@@ -885,6 +897,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         if this_id not in self._fully_loaded:
             self._fully_loaded[this_id] = obj
+            obj._inMemory = True
 
     def _actually_load_xml(self, fobj, fn, this_id, load_backup):
         """
@@ -1007,9 +1020,9 @@ class GangaRepositoryLocal(GangaRepository):
                 if has_loaded_backup2:
                     has_loaded_backup = has_loaded_backup2
             except Exception as err:
-                logger.debug("XML load: Failed to load XML file: %s" % fn)
-                logger.debug("Error was:\n%s" % err)
-                logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                logger.error("XML load: Failed to load XML file: %s" % fn)
+                logger.error("Error was:\n%s" % err)
+                logger.error("1) Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
                 self.incomplete_objects.append(this_id)
                 raise
 
@@ -1017,7 +1030,7 @@ class GangaRepositoryLocal(GangaRepository):
                 self._actually_load_xml(fobj, fn, this_id, load_backup)
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % err)
-                logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                logger.error("2) Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
                 self.incomplete_objects.append(this_id)
                 raise
 
@@ -1029,7 +1042,7 @@ class GangaRepositoryLocal(GangaRepository):
                     has_loaded_backup = True
                     continue
                 else:
-                    logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                    logger.error("3) Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
                     self.incomplete_objects.append(this_id)
                     raise
 
@@ -1109,6 +1122,7 @@ class GangaRepositoryLocal(GangaRepository):
             self._internal_del__(this_id)
             rmrf(os.path.dirname(fn))
             if this_id in self._fully_loaded:
+                self._fully_loaded[this_id]._inMemory = False
                 del self._fully_loaded[this_id]
             if this_id in self.objects:
                 del self.objects[this_id]

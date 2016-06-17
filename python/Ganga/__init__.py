@@ -246,6 +246,8 @@ poll_config.addOption('forced_shutdown_first_prompt_time', 5,
 import sys
 poll_config.addOption('HeartBeatTimeOut', sys.maxint, 'Time before the user gets the warning that a thread has locked up due to failing to update the heartbeat attribute')
 
+poll_config.addOption('autoCheckCredentials', False, 'Check credentials using the monitoring loop')
+
 # ------------------------------------------------
 # Feedback
 feedback_config = makeConfig('Feedback', 'Settings for the Feedback plugin. Cannot be changed during the interactive Ganga session.')
