@@ -139,6 +139,9 @@ class Node(object):
         but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
+        reg = root._getRegistry()
+        if reg:
+            reg._lock.acquire()
         root._read_lock.acquire()
         root._write_lock.acquire()
         try:
@@ -146,6 +149,8 @@ class Node(object):
         finally:
             root._write_lock.release()
             root._read_lock.release()
+            if reg:
+                reg._lock.release()
 
     def _getRoot(self, cond=None):
         # type: () -> Node
