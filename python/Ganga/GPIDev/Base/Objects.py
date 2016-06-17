@@ -329,7 +329,7 @@ class Descriptor(object):
 
         obj_in_schema = name in cls._schema.datadict
 
-        if self._inMemory_fullyLoadedFromDisk():
+        if obj._fullyLoadedFromDisk():
             # schema data takes priority ALWAYS over ._index_cache
             # This access should not cause the object to be loaded
             if obj_in_schema:
