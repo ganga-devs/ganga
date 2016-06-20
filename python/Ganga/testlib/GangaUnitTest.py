@@ -10,6 +10,9 @@ except ImportError:
 
 
 def _getGangaPath():
+    """
+    Determine what the path of the Ganga code is based upon where this file is in the repo
+    """
     file_path = os.path.dirname(os.path.realpath(__file__))
     ganga_python_dir = os.path.join(file_path, '..', '..')
     ganga_python_dir = os.path.realpath(ganga_python_dir)
@@ -17,6 +20,9 @@ def _getGangaPath():
 
 
 def _setupGangaPath():
+    """
+    Add the path of the Ganga to the PYTHONDIR upon import
+    """
     ganga_python_dir = _getGangaPath()
     if len(sys.path) >= 1 and ganga_python_dir != sys.path[0]:
         sys.path.insert(0, ganga_python_dir)
@@ -27,6 +33,12 @@ _setupGangaPath()
 
 
 def start_ganga(gangadir_for_test, extra_opts=[]):
+    """
+    Startup Ganga by calling the same set of 'safe' functions each time
+    Args:
+        gangadir_for_test (str): This is the directory which the GangaUnitTest is to be run, creates a new gangadir per test to avoid collisions
+        extra_opts (list): A list of tuples which are used to pass command line style options to Ganga
+    """
 
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()
@@ -70,6 +82,11 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     for opt in default_opts + extra_opts:
         setConfigOption(*opt)
 
+    # The configuration is currently created at module import and hence can't be
+    # regenerated.
+    # The values read in from any .ini file or from command line will change this
+    # but the configuration can't be obliterated and re-created. (yet, 16.06.16)
+
     # Perform the configuration and bootstrap steps in ganga
     logger.info("Parsing Configuration Options")
     Ganga.Runtime._prog.configure()
@@ -110,6 +127,10 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
 
 
 def emptyRepositories():
+    """
+    A method which attempts to remove jobs from various repositories in a sane manner,
+    This is preferred to just shutting down and runnning rm -fr ... as it catches a few errors hard to test for
+    """
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     # empty repository so we start again at job 0 when we restart
@@ -140,6 +161,11 @@ def emptyRepositories():
 
 
 def stop_ganga():
+    """
+    This test stops Ganga and shuts it down
+
+    Most of the logic is weapped in ShutdownManager._ganga_run_exitfuncs but additional code is used to cleanup repos and such between tests
+    """
 
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
@@ -185,6 +211,9 @@ def stop_ganga():
 
 
 class GangaUnitTest(unittest.TestCase):
+    """
+    This class is the class which all new-style Ganga tests should inherit from
+    """
 
     @classmethod
     def gangadir(cls):
@@ -195,9 +224,18 @@ class GangaUnitTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """
+        This removes all trace of any previous tests on disk
+        TODO, would it be better to move the folder first, then remove it incase of broken locks etc,?
+        """
         shutil.rmtree(cls.gangadir(), ignore_errors=True)
 
     def setUp(self, extra_opts=[]):
+        """
+        Setup the unit test which is about to run
+        Args:
+            extra_opts (list): This is a list of tuples which are similar to command line arguments passed to Ganga
+        """
         unittest.TestCase.setUp(self)
         # Start ganga and internal services
         # This is called before each unittest
@@ -209,6 +247,9 @@ class GangaUnitTest(unittest.TestCase):
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
 
     def tearDown(self):
+        """
+        This tears down Ganga in a nice way at the end of each test
+        """
         unittest.TestCase.tearDown(self)
         # Stop ganga and mimick an exit to shutdown all internal processes
         stop_ganga()
@@ -216,4 +257,9 @@ class GangaUnitTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(cls.gangadir(), ignore_errors=True)
+        """
+        This is used for cleaning up anything at a module level of higher
+        """
+        # NB maybe we shouldn't delete tests here as failed tests require debugging
+        #    this is better cleaned prior to running the next job
+        #shutil.rmtree(cls.gangadir(), ignore_errors=True)
