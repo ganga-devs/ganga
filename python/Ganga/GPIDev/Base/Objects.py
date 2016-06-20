@@ -140,8 +140,6 @@ class Node(object):
         """
         root = self._getRoot()
         reg = root._getRegistry()
-        if reg:
-            reg._lock.acquire()
         root._read_lock.acquire()
         root._write_lock.acquire()
         try:
@@ -149,8 +147,6 @@ class Node(object):
         finally:
             root._write_lock.release()
             root._read_lock.release()
-            if reg:
-                reg._lock.release()
 
     def _getRoot(self, cond=None):
         # type: () -> Node
@@ -327,6 +323,7 @@ class Descriptor(object):
         if obj is None:
             return cls._schema[name]
 
+        # If this class has an associated getter method make use of that
         if self._getter_name:
             return self._bind_method(obj, self._getter_name)()
 
@@ -334,6 +331,8 @@ class Descriptor(object):
 
         obj_in_schema = name in cls._schema.datadict
 
+        # If we're laded from disk inspect the _data_dict and generate a default if needed
+        # If we're not loaded from disk, we should _by definition_ NOT look here for objects in memory as they should NEVER be here
         if obj._fullyLoadedFromDisk():
             # schema data takes priority ALWAYS over ._index_cache
             # This access should not cause the object to be loaded
@@ -344,6 +343,7 @@ class Descriptor(object):
                 return obj._data_dict[name]
 
         # Then try to get it from the index cache
+        # NB Can we remove this yet? This allows access to index items asif they're in the schema. They are normally not.
         obj_index = obj._index_cache
         if name in obj_index:
             return obj_index[name]
@@ -355,7 +355,7 @@ class Descriptor(object):
             obj._getReadAccess()
 
             # If we've loaded from disk then the data dict has changed. If we're constructing an object
-            # Then we need to rely on the factory
+            # then we need to rely on the factory
             if obj_in_schema:
                 if name not in obj._data_dict:
                     self.__set__(obj, obj._schema.getDefaultValue(name))
@@ -367,11 +367,18 @@ class Descriptor(object):
                 if name in obj_index:
                     return obj_index[name]
 
-                raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
+                
+                # NB DO NOT, EVER explicitly rely on the full string representation of the class here as you could 
+                # very easily end up in a circular loop here back at the getter for an attribute not correctly setup
+                # _Try_ at least to just get the object name. The _getName method will result in performing a full string rep
+                # but this method will only do that if it ABSOLUTELY NEEDS TO
+                raise AttributeError('Could not find attribute "{0}" in "{1}"'.format(name, _getName(obj)))
             else:
+                # GangaException as something has really gone wrong here (repo error or worse!)
                 raise GangaException('Failed to load object from disk to get attribute "%s" of class: "%s"' % (name, _getName(obj)))
         else:
-            raise AttributeError('Could not find attribute {0} in {1}'.format(name, obj))
+            # Please read the above for what we can/can't make strings out of!
+            raise AttributeError('Could not find attribute "{0}" in "{1}"'.format(name, _getName(obj)))
 
     @staticmethod
     def cloneObject(v, input_tuple):
@@ -494,13 +501,12 @@ class Descriptor(object):
 
         _set_name = _getName(self)
 
+        # This returns a reference or new object as appropriate
         new_value = Descriptor.cleanValue(obj, val, _set_name)
 
+        # This sets the object and assigns the parent correctly
         obj.setSchemaAttribute(_set_name, new_value)
         obj._setDirty()
-
-        if isinstance(val, Node):
-            val._setDirty()
 
 
     @staticmethod
