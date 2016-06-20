@@ -1,7 +1,12 @@
 import subprocess
 import time
 from Ganga.Core.exceptions import GangaException
-from GangaLHCb.Lib.Applications import PythonOptionsParser
+from Ganga.Runtime.GPIexport import exportToGPI
+from Ganga.Utility.logging import getLogger
+from Ganga.Core.exceptions import ApplicationConfigurationError
+from .PythonOptsCmakeParser import PythonOptsCmakeParser
+
+logger = getLogger()
 
 def readInputData(optsfiles, app):
     '''Returns a LHCbDataSet object from a list of options files. The
@@ -15,7 +20,7 @@ def readInputData(optsfiles, app):
     This is also called behind the scenes for j.readInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"])
 
     '''
-    if not isinstance(optsfiles, []):
+    if not isinstance(optsfiles, list):
         optsfiles = [optsfiles]
 
     # use a dummy file to keep the parser happy
@@ -26,7 +31,7 @@ def readInputData(optsfiles, app):
         parser = PythonOptsCmakeParser(optsfiles, app)
     except Exception as err:
         msg = 'Unable to parse the job options. Please check options files and extraopts.'
-        logger.error("PythonOptionsParserError:\n%s" % str(err))
+        logger.error("PythonOptsCmakeParserError:\n%s" % str(err))
         raise ApplicationConfigurationError(None, msg)
 
     return parser.get_input_data()

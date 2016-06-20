@@ -9,7 +9,6 @@ from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Lib.File.File import ShareDir
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
-from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.files import expandfilename
 
@@ -73,7 +72,7 @@ class GaudiRun(IPrepareApp):
         })
     _category = 'applications'
     _name = 'GaudiRun'
-    _exportmethods = ['prepare', 'unprepare', 'exec_cmd', 'getDir']
+    _exportmethods = ['prepare', 'unprepare', 'exec_cmd', 'getDir', 'readInputData']
 
     cmake_sandbox_name = 'cmake-input-sandbox.tgz'
     build_target = 'ganga-input-sandbox'
@@ -204,6 +203,8 @@ class GaudiRun(IPrepareApp):
             logger.error("StdErr: %s" % str(stderr))
             raise GangaException("Failed to Execute command")
 
+        return rc, stdout, stderr
+
     def buildGangaTarget(self):
         """
         This builds the ganga target 'ganga-input-sandbox' for the project defined by self.directory
@@ -239,7 +240,7 @@ class GaudiRun(IPrepareApp):
         except:
             raise GangaException("This makes no sense without first belonging to a job object as I can't assign input data!")
 
-        if job.inputdata:
+        if job.inputdata is not None and len(job.inputdata) > 0:
             logger.warning("Warning Job %s already contained inputdata, overwriting" % job.fqid)
 
         job.inputdata = input_dataset

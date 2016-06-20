@@ -4,6 +4,7 @@ from Ganga.GPIDev.Lib.File import LocalFile
 import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from Ganga.Core import ApplicationConfigurationError
+from Ganga.Utility.files import expandfilename
 logger = Ganga.Utility.logging.getLogger()
 
 def readInputData(optsfiles, app):
@@ -27,9 +28,10 @@ def readInputData(optsfiles, app):
     try:
         parser = PythonOptsCmakeParser(optsfiles, app)
     except Exception as err:
-         msg = 'Unable to parse the job options. Please check options files and extraopts.'
+        msg = 'Unable to parse the job options. Please check options files and extraopts.'
         logger.error("PythonOptionsParserError:\n%s" % str(err))
-        raise ApplicationConfigurationError(None, msg)
+        #raise ApplicationConfigurationError(None, msg)
+        raise
 
     return parser.get_input_data()
 
@@ -121,8 +123,8 @@ class PythonOptsCmakeParser(object):
             opts_input = self.opts_dict['EventSelector']['Input']
             data = [f for f in opts_input]
         except KeyError as err:
-            logger.debug('No inputdata has been defined in the options file.')
-            logger.debug("%s" % str(err))
+            logger.error('No inputdata has been defined in the options file.')
+            logger.error("%s" % str(err))
 
         from Ganga.GPIDev.Base.Filters import allComponentFilters
         file_filter = allComponentFilters['gangafiles']
