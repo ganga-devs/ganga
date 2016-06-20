@@ -3,8 +3,13 @@ from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
+from GangaDirac.Lib.Utilities.DiracUtilities import execute
+from Ganga.Core.GangaThread.WorkerThreads import getQueues
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 from copy import deepcopy
 import random
+import time
+import math
 
 configDirac = getConfig('DIRAC')
 logger = getLogger()
@@ -14,9 +19,20 @@ global_random = random
 LFN_parallel_limit = 250
 limit_divide_one = 1. / float(LFN_parallel_limit)
 
+def wrapped_execute(command, expected_type):
+    """
+    A wrapper around execute to protect us from commands which had errors
+    """
+    try:
+        result = execute(command)
+        assert isinstance(result, expected_type)
+    except AssertionError:
+        raise SplittingError("Output from DIRAC expected to be of type: '%s', we got the following: '%s'" % (expected_type, result))
+    return result
+
+
 # Find a random element from a python list that isn't in a given banned list
 # This is used for selecting a site element but it doesn't matter which is used
-
 
 def find_random_site(original_SE_list, banned_SE):
     input_list = deepcopy(original_SE_list)
@@ -39,8 +55,7 @@ def find_random_site(original_SE_list, banned_SE):
 
 def addToMapping(SE, site_to_SE_mapping):
 
-    from GangaDirac.Lib.Utilities.DiracUtilities import execute
-    result = execute('getSitesForSE("%s")' % str(SE))
+    result = wrapped_execute('getSitesForSE("%s")' % str(SE), dict)
     if result.get('OK') != True:
         logger.error("Error getting SE's for site: %s" % str(SE))
         site_to_SE_mapping[SE] = []
@@ -67,8 +82,7 @@ def getLFNReplicas(allLFNs, index, allLFNData):
     for toy_num in range(5):
 
         try:
-            from GangaDirac.Lib.Utilities.DiracUtilities import execute
-            output = execute('getReplicas(%s)' % str(allLFNs[this_min:this_max]))
+            output = wrapped_execute('getReplicas(%s)' % str(allLFNs[this_min:this_max]), dict)
             these_values = output.get('Value').get('Successful')
             break
         except Exception, err:
@@ -127,7 +141,6 @@ def calculateSiteSEMapping(file_replicas, wanted_common_site, uniqueSE, site_to_
             sitez.add(replica)
             if not replica in found:
 
-                from Ganga.Core.GangaThread.WorkerThreads import getQueues
                 getQueues()._monitoring_threadpool.add_function(addToMapping, (str(replica), site_to_SE_mapping))
 
                 maps_size = maps_size + 1
@@ -137,7 +150,6 @@ def calculateSiteSEMapping(file_replicas, wanted_common_site, uniqueSE, site_to_
 
     # Doing this in parallel so wait for it to finish
     while len(site_to_SE_mapping) != maps_size:
-        import time
         time.sleep(0.1)
 
     # Now calculate the 'inverse' dictionary of site for each SE
@@ -181,16 +193,12 @@ def lookUpLFNReplicas(inputs, allLFNData):
 
     # Request the replicas for all LFN 'LFN_parallel_limit' at a time to not overload the
     # server and give some feedback as this is going on
-    from GangaDirac.Lib.Utilities.DiracUtilities import execute
-    import math
     global limit_divide_one
     for i in range(int(math.ceil(float(len(allLFNs)) * limit_divide_one))):
 
-        from Ganga.Core.GangaThread.WorkerThreads import getQueues
         getQueues()._monitoring_threadpool.add_function(getLFNReplicas, (allLFNs, i, allLFNData))
 
     while len(allLFNData) != int(math.ceil(float(len(allLFNs)) * limit_divide_one)):
-        import time
         time.sleep(1.)
         # This can take a while so lets protect any repo locks
         import Ganga.Runtime.Repository_runtime
@@ -208,9 +216,6 @@ def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData, input
         raise err
 
 def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
-
-    import math
-    from Ganga.GPIDev.Base.Proxy import stripProxy
 
     errors = []
 
@@ -302,8 +307,6 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
     else:
         inputs = _inputs
 
-    from GangaDirac.Lib.Files.DiracFile import DiracFile
-    from Ganga.GPIDev.Adapters.ISplitter import SplittingError
     # First FIND ALL LFN REPLICAS AND SE<->SITE MAPPINGS AND STORE THIS IN MEMORY
     # THIS IS DONE IN PARALLEL TO AVOID OVERLOADING DIRAC WITH THOUSANDS OF
     # REQUESTS AT ONCE ON ONE CONNECTION
@@ -374,7 +377,6 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
 
     logger.info("Calculating best data subsets")
 
-    import math
     iterations = 0
     # Loop over all LFNs
     while len(site_dict.keys()) > 0:
