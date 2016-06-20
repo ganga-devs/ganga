@@ -380,10 +380,10 @@ class Item(object):
 
     def __init__(self):
         super(Item, self).__init__()
-        self._meta = Item._metaproperties.copy()
+        self._meta = copy.deepcopy(Item._metaproperties)
 
     def __construct(self, args):
-        self._meta = Item._metaproperties.copy()
+        self._meta = copy.deepcopy(Item._metaproperties)
 
     def __getitem__(self, key):
         return self._meta[key]

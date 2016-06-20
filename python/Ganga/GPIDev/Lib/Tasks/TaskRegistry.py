@@ -40,12 +40,10 @@ class TaskRegistry(Registry):
         return self.stored_proxy
 
     def getIndexCache(self, obj):
-        if obj._data is None:
-            raise Exception("Currently don't support Index Caching")
         cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:
-            if cv in obj._data:
+            if hasattr(obj, cv):
                 c[cv] = getattr(obj, cv)
         this_slice = TaskRegistrySlice("tmp")
         for dpv in this_slice._display_columns:
