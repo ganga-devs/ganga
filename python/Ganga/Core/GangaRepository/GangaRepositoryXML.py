@@ -129,9 +129,11 @@ def rmrf(name, count=0):
     if os.path.isdir(name):
 
         try:
-            remove_name = name + "_" + str(time.time()) + '__to_be_deleted_'
-            os.rename(name, remove_name)
-            #logger.debug("Move completed")
+            remove_name = name
+            if not remove_name.endswith('__to_be_deleted'):
+                remove_name = name + "_" + str(time.time()) + '__to_be_deleted_'
+                os.rename(name, remove_name)
+                #logger.debug("Move completed")
         except OSError as err:
             if err.errno != errno.ENOENT:
                 logger.debug("rmrf Err: %s" % err)
