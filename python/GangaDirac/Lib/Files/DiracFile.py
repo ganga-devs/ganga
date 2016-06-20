@@ -4,6 +4,7 @@ import datetime
 import hashlib
 import re
 import os.path
+import random
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory, isType, getName
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
@@ -22,25 +23,6 @@ regex = re.compile('[*?\[\]]')
 global stored_list_of_sites
 stored_list_of_sites = []
 
-
-def all_SE_list(first_SE = '', defaultSE = ''):
-
-    global stored_list_of_sites
-    if stored_list_of_sites != []:
-        return stored_list_of_sites
-
-    all_storage_elements = configDirac['allDiracSE']
-    if first_SE == '':
-        default_SE = defaultSE
-    else:
-        default_SE = first_SE
-
-    all_storage_elements.pop(all_storage_elements.index(default_SE))
-    all_storage_elements.insert(0, default_SE)
-
-    stored_list_of_sites = all_storage_elements
-
-    return all_storage_elements
 
 class DiracFile(IGangaFile):
 
@@ -455,7 +437,7 @@ class DiracFile(IGangaFile):
                     raise GangaException("Couldn't find replicas for: %s" % str(self.lfn))
                 logger.debug("getReplicas: %s" % str(self._storedReplicas))
 
-                if self.lfn in self._storedReplicas.keys():
+                if self.lfn in self._storedReplicas:
                     self._updateRemoteURLs(self._storedReplicas)
 
                     these_replicas = [self._storedReplicas[self.lfn]]
@@ -474,7 +456,7 @@ class DiracFile(IGangaFile):
             for i in self.subfiles:
                 i._updateRemoteURLs(reps)
         else:
-            if self.lfn not in reps.keys():
+            if self.lfn not in reps:
                 return
             if self.locations != reps[self.lfn].keys():
                 self.locations = reps[self.lfn].keys()
@@ -722,10 +704,18 @@ class DiracFile(IGangaFile):
         else:
             lfn_base = self.remoteDir
 
-        if uploadSE != "":
-            storage_elements = all_SE_list(uploadSE, self.defaultSE)
+        if uploadSE == "":
+            if self.defaultSE != "":
+                storage_elements = [self.defaultSE]
+            else:
+                if configDirac['allDiracSE']:
+                    storage_elements = [random.choice(configDirac['allDiracSE'])]
+                else:
+                    raise GangaException("Can't upload a file without a valid defaultSE or storageSE, please provide one")
+        elif isinstance(uploadSE, list):
+            storage_elements = uploadSE
         else:
-            storage_elements = all_SE_list(self.defaultSE, self.defaultSE)
+            storage_elements = [uploadSE]
 
         outputFiles = GangaList()
         backup_lfn = self.lfn
@@ -761,10 +751,10 @@ class DiracFile(IGangaFile):
             d.localDir = sourceDir
             stderr = ''
             stdout = ''
-            logger.info('Uploading file %s to %s as %s' % (name, storage_elements[0], lfn))
+            logger.info('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
             stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
             if type(stdout) == str:
-                logger.warning("Couldn't upload file '%s': %s" % (os.path.basename(name), stdout))
+                logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), stdout))
                 continue
             if stdout.get('OK', False) and lfn in stdout.get('Value', {'Successful': {}})['Successful']:
                 # when doing the two step upload delete the temp file

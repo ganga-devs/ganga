@@ -27,6 +27,7 @@ class GangaRepositorySQLite(GangaRepository):
         """ Starts an repository and reads in a directory structure."""
         self._load_timestamp = {}
         self._cache_load_timestamp = {}
+        self._fully_loaded = {}
         self.known_bad_ids = []
         self.root = os.path.join(
             self.registry.location, "0.1", self.registry.name)
@@ -72,6 +73,13 @@ class GangaRepositorySQLite(GangaRepository):
             obj._index_cache = pickle.loads(e[3])
         logger.debug("updated index done")
 
+    def constructDataDict(self, obj):
+        data_dict = {}
+        for attr_name, attr in obj._schema.allItems():
+            if not attr['getter']:
+                data_dict[attr_name] = getattr(obj, attr_name)
+        return data_dict
+
     def add(self, objs, force_ids=None):
         """ Add the given objects to the repository, forcing the IDs if told to.
         Raise RepositoryError"""
@@ -86,7 +94,7 @@ class GangaRepositorySQLite(GangaRepository):
             cls = objs[i]._name
             cat = objs[i]._category
             objs[i]._index_cache = self.registry.getIndexCache(objs[i])
-            data = pickle.dumps(objs[i]._data).replace("'", "''")
+            data = pickle.dumps(self.constructDataDict(obj)).replace("'", "''")
             idx = pickle.dumps(objs[i]._index_cache).replace("'", "''")
             if force_ids is None:
                 self.cur.execute("INSERT INTO objects (id,classname,category,idx,data) VALUES (NULL,'%s','%s','%s','%s')" % (
@@ -104,7 +112,7 @@ class GangaRepositorySQLite(GangaRepository):
             obj = self.objects[id]
             if obj._name != "EmptyGangaObject":
                 obj._index_cache = self.registry.getIndexCache(obj)
-                data = pickle.dumps(obj._data).replace("'", "''")
+                data = pickle.dumps(self.constructDataDict(obj)).replace("'", "''")
                 idx = pickle.dumps(obj._index_cache).replace("'", "''")
                 self.cur.execute(
                     "UPDATE objects SET idx='%s',data='%s' WHERE id=%s" % (idx, data, id))
@@ -116,16 +124,19 @@ class GangaRepositorySQLite(GangaRepository):
             ",".join(map(str, ids))))
         for e in self.cur:
             # print "load: ",e
-            id = int(e[0])
+            _id = int(e[0])
             if e[1] is None:  # deleted object
                 continue
-            if not id in self.objects:
-                obj = self._make_empty_object_(id, e[2], e[1])
+            if not _id in self.objects:
+                obj = self._make_empty_object_(_id, e[2], e[1])
             else:
-                obj = self.objects[id]
-            if obj._data is None:
-                obj._data = pickle.loads(e[3])
-            ids.remove(id)
+                obj = self.objects[_id]
+            if _id not in self._fully_loaded:
+                new_data = pickle.loads(e[3])
+                for k, v in new_data:
+                    setattr(obj, k, v)
+            self._fully_loaded[_id] = obj
+            ids.remove(_id)
         if len(ids) > 0:
             raise KeyError(ids[0])
 
