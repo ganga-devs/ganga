@@ -134,8 +134,9 @@ def loadPlugins(config=None):
 def postBootstrapHook():
     configDirac = Ganga.Utility.Config.getConfig('DIRAC')
     configOutput = Ganga.Utility.Config.getConfig('Output')
+    configPoll = Ganga.Utility.Config.getConfig('Poll')
+    
     configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
-
     configDirac.setSessionValue('userVO', 'lhcb')
     configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
     configDirac.setSessionValue('noInputDataBannedSites', ['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
@@ -143,6 +144,7 @@ def postBootstrapHook():
 
     configOutput.setSessionValue('FailJobIfNoOutputMatched', 'False')
 
+    configPoll.setSessionValue('autoCheckCredentials', False)
 
 # This is being dropped from 6.1.0 due to causing some bug in loading large numbers of jobs
 #
