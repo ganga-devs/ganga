@@ -174,10 +174,9 @@ def calculateSiteSEMapping(file_replicas, wanted_common_site, uniqueSE, site_to_
 
 def lookUpLFNReplicas(inputs, allLFNData):
     # Build a useful dictionary and list
-    allLFNs = []
-    LFNdict = {}
+    allLFNs = [_lfn.lfn for _lfn in inputs]
+    LFNdict = dict().fromkeys(allLFNs)
     for _lfn in inputs:
-        allLFNs.append(_lfn.lfn)
         LFNdict[_lfn.lfn] = _lfn
 
     # Request the replicas for all LFN 'LFN_parallel_limit' at a time to not overload the
