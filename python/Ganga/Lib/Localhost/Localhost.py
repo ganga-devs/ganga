@@ -54,20 +54,23 @@ class Localhost(IBackend):
         job = self.getJobObject()
         import shutil
 
+        if self.workdir == '':
+            import tempfile
+            self.workdir = tempfile.mkdtemp(dir=config['location'])
+
         try:
             shutil.rmtree(self.workdir)
         except OSError as x:
             import errno
             if x.errno != errno.ENOENT:
-                logger.error(
-                    'problem cleaning the workdir %s, %s', self.workdir, str(x))
+                logger.error('problem cleaning the workdir %s, %s', self.workdir, str(x))
                 return 0
         try:
             os.mkdir(self.workdir)
         except Exception as x:
-            logger.error(
-                'cannot make the workdir %s, %s', self.workdir, str(x))
-            return 0
+            if not os.path.isdir(self.workdir):
+                logger.error('cannot make the workdir %s, %s', self.workdir, str(x))
+                return 0
         return self.run(job.getInputWorkspace().getPath('__jobscript__'))
 
     def run(self, scriptpath):
