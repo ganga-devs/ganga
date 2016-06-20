@@ -123,7 +123,9 @@ def fastXML(obj, indent='', ignore_subs=''):
     elif hasattr(obj, '_data'):
         v = obj._schema.version
         sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (getName(obj), v.major, v.minor, obj._category)]
-        for k, o in obj._data.items():
+        for attr_name in obj._schema.allItemNames():
+            k = attr_name
+            o = getattr(obj, k)
             if k != ignore_subs:
                 try:
                     if not obj._schema[k]._meta["transient"]:
@@ -387,15 +389,7 @@ class Loader(object):
             # the object stays on the stack (will be removed by </attribute> or
             # is a root object)
             if name == 'class':
-                obj = self.stack[-1]
-                for attr, item in obj._schema.allItems():
-                    if not attr in obj._data:
-                        #logger.info("Opening: %s" % attr)
-                        if item._meta["sequence"] == 1:
-                            obj.setSchemaAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr, make_copy=False)))
-                        else:
-                            obj.setSchemaAttribute(attr, obj._schema.getDefaultValue(attr, make_copy=False))
-                #print("Constructed: %s" % getName(obj))
+                pass
 
         def char_data(data):
             # char_data may be called many times in one CDATA section so we need to build up
@@ -423,7 +417,7 @@ class Loader(object):
 
         # Raise Exception if object is incomplete
         for attr, item in obj._schema.allItems():
-            if not attr in obj._data:
+            if not hasattr(obj, attr):
                 raise AssertionError("incomplete XML file")
         return obj, self.errors
 
