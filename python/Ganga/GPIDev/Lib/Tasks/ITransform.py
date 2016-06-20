@@ -21,7 +21,7 @@ logger = getLogger()
 
 class ITransform(GangaObject):
     _schema = Schema(Version(1, 0), {
-        'status': SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=[str]),
+        'status': SimpleItem(defvalue='new', protected=1, copyable=1, doc='Status - running, pause or completed', typelist=[str]),
         'name': SimpleItem(defvalue='Simple Transform', doc='Name of the transform (cosmetic)', typelist=[str]),
         'application': ComponentItem('applications', defvalue=None, optional=1, load_default=False, doc='Application of the Transform.'),
         'inputsandbox': FileItem(defvalue=[], sequence=1, doc="list of File objects shipped to the worker node "),
@@ -128,6 +128,9 @@ class ITransform(GangaObject):
         super(ITransform, self).__init__()
         self.initialize()
 
+    def _auto__init__(self):
+        self.status = 'new'
+
     def _readonly(self):
         """A transform is read-only if the status is not new."""
         if self.status == "new":
@@ -137,7 +140,6 @@ class ITransform(GangaObject):
     def initialize(self):
         from Ganga.Lib.Localhost.Localhost import Localhost
         self.backend = Localhost()
-        self.updateStatus("new")
 
     def check(self):
         """Check this transform has valid data, etc. and has the correct units"""
