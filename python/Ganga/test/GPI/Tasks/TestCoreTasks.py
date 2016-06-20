@@ -6,15 +6,13 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 class TestCoreTasks(GangaUnitTest):
     """A set of tests to cover both ITask and CoreTask plus related objects"""
 
-    argList = ['300', '300', '300']
-
     def setUp(self):
         """Make sure that the Tasks object isn't destroyed between tests"""
         super(TestCoreTasks, self).setUp()
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
         setConfigOption('Tasks', 'TaskLoopFrequency', 1)
-        self._numTasks = 25
+        self._numTasks = 50
 
     def createTask(self):
         """create a task with some defaults"""
@@ -22,10 +20,10 @@ class TestCoreTasks(GangaUnitTest):
         t = CoreTask()
 
         trf = CoreTransform()
-        trf.application = Executable(exe='sleep')
+        trf.application = Executable()
         trf.unit_splitter = GenericSplitter()
         trf.unit_splitter.attribute = "application.args"
-        trf.unit_splitter.values = TestCoreTasks.argList
+        trf.unit_splitter.values = ['arg 1', 'arg 2', 'arg 3']
 
         t.appendTransform(trf)
         t.float = 20
@@ -49,7 +47,7 @@ class TestCoreTasks(GangaUnitTest):
         assert isType(t.transforms[0].application, Executable)
         assert isType(t.transforms[0].unit_splitter, GenericSplitter)
         assert t.transforms[0].unit_splitter.attribute == "application.args"
-        assert t.transforms[0].unit_splitter.values == TestCoreTasks.argList
+        assert t.transforms[0].unit_splitter.values == ['arg 1', 'arg 2', 'arg 3']
         assert t.float == 20
 
     def test_b_TaskPersistency(self):
@@ -69,7 +67,7 @@ class TestCoreTasks(GangaUnitTest):
         assert isType(t.transforms[0].application, Executable)
         assert isType(t.transforms[0].unit_splitter, GenericSplitter)
         assert t.transforms[0].unit_splitter.attribute == "application.args"
-        assert t.transforms[0].unit_splitter.values == TestCoreTasks.argList
+        assert t.transforms[0].unit_splitter.values == ['arg 1', 'arg 2', 'arg 3']
         assert t.float == 20
 
     def test_c_TaskRunning(self):
@@ -79,7 +77,6 @@ class TestCoreTasks(GangaUnitTest):
         assert len(tasks) == 1
 
         t = tasks(0)
-
         t.run()
 
         assert t.status == "running"
@@ -123,27 +120,6 @@ class TestCoreTasks(GangaUnitTest):
                 assert isType(t.transforms[0].application, Executable)
                 assert isType(t.transforms[0].unit_splitter, GenericSplitter)
                 assert t.transforms[0].unit_splitter.attribute == "application.args"
-                assert t.transforms[0].unit_splitter.values == TestCoreTasks.argList
+                assert t.transforms[0].unit_splitter.values == ['arg 1', 'arg 2', 'arg 3']
                 assert t.float == 20
-
-    def test_g_TaskCopyTest(self):
-        """Test copied task looks sane"""
-
-        from Ganga.GPI import tasks
-
-        assert len(tasks)
-
-        assert tasks(0).status != 'new'
-
-        new_t = tasks(0).copy()
-
-        assert new_t.status == 'new'
-        assert len(new_t.transforms) == 0
-        # transforms are marked (for now?) uncopyable
-
-        new_tr = tasks(0).transforms[0].copy()
-
-        assert tasks(0).transforms[0].status != 'new'
-        assert new_tr.status == 'new'
-
 
