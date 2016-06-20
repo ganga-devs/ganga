@@ -23,7 +23,7 @@ def formatTraceback():
 
 class IUnit(GangaObject):
     _schema = Schema(Version(1, 0), {
-        'status': SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=[str]),
+        'status': SimpleItem(defvalue='new', protected=1, doc='Status - running, pause or completed', typelist=[str]),
         'name': SimpleItem(defvalue='Simple Unit', doc='Name of the unit (cosmetic)', typelist=[str]),
         'application': ComponentItem('applications', defvalue=None, optional=1, load_default=False, doc='Application of the Transform.'),
         'inputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Input dataset'),
@@ -54,6 +54,8 @@ class IUnit(GangaObject):
 # Special methods:
     def __init__(self):
         super(IUnit, self).__init__()
+        
+    def _auto__init__(self):
         self.updateStatus("new")
 
     def _readonly(self):
