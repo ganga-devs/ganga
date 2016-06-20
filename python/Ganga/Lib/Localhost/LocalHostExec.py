@@ -89,7 +89,7 @@ import time #datetime #disabled for python2.2 compatiblity
 try:
     child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)
 except OSError as x:
-    errfile = open( 'tt', 'w' )
+    errfile = open( 'stderr', 'w' )
     errfile.close()
     print('EXITCODE: %d'%-9999, file=statusfile)
     print('FAILED: %s'%time.strftime('%a %b %d %H:%M:%S %Y'), file=statusfile) #datetime.datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')

@@ -1,0 +1,108 @@
+from Ganga.Core import ApplicationConfigurationError
+
+# headers start ----------------------------------------------------------------------------------------------------------------
+ver = 'v11r31'		# nd280 Software version
+generator = 'anti-neut' # possible values: old-neut, neut, anti-neut, genie?
+baseline  =  '2010-11'  # geometry parameter
+p0d_water_fill = 0	# geometry parameter
+beam      = 'beamc'	# abbreviated beam specification, beam "C"
+site = 'neut'           # not used if processingdb info is not updated
+
+# Do not proceed if conditions are different from "anti-neutrino with 2010-11-air geometry"
+# This header parameters are in complex relationships and should be carefully checked before proceeding in new conditions.
+# Eventually the relationships  will be coded via "if" statement in this script.
+# Also the runND280SandMC application itself was not tested for other conditions, although, supposed to work.
+if not (baseline=='2010-11' and p0d_water_fill==0 and generator=='anti-neut'):
+  mess = "\nThis is a reminder that parameters in the header should be in self agreement."
+  mess+= "\nNow they are not for anti-neutrino with 2010-11-air geometry and you can not proceed until ensure the new agreement."
+  raise ApplicationConfigurationError(None,mess)
+
+comment   = 'prod6sand201011airrun3'
+neut_setup_script = '/neut/data19/vavilov/sand_production/aux_files/neut_setup.sh'   # set up a particular version of NEUT package
+neut_card =   '/neut/data19/vavilov/sand_production/aux_files/neut_mod.card' 	     # the NEUT readin "card"
+flux_file =   '/neut/data19/vavilov/sand_production/aux_files/fluka_13a_nom_nd13_m250ka_iseq0-199_fix.root'  # flux file
+maxint_file = '/neut/data19/vavilov/sand_production/aux_files/nubar.nd13_world_setup_flukain.0-199_neut5.3.2_evtrate_2010-11-air_prod6a.root' # event rate file
+
+# [nd280mc] parameters, calculated separately for different conditions  
+interactions_per_spill = '34.6'
+pot_per_spill = '9.463e+13'
+
+# Output structure parameters
+prfx='/neut/data19/vavilov'
+path='production006/B/mcp/'+generator+'/2010-11-air/sand/run3'
+# headers end   ----------------------------------------------------------------------------------------------------------------
+
+t   = ND280Task()
+t.name = 'SandMC'
+
+## Transform 1 is neutMC stage
+trf = ND280Transform()
+
+# Transform application
+a = runND280SandMC()
+#a.cmtsetup = ['/home/t2k/t2k-software/Run_At_Start_T2k_'+ver+'.sh','/home/t2k/t2k-software/work-'+ver+'/nd280Control/*/cmt/setup.sh']
+a.cmtsetup = ['/home/trt2kmgr/ND280Soft/setup_'+ver+'.sh','/home/trt2kmgr/ND280Soft/'+ver+'/nd280/*/cmt/setup.sh']
+a.confopts = {'stage':'neutMC', # IMPORTANT: let the application know that this is NEUT vector generation stage: neutMC
+	      'nd280ver':ver,
+              'generator':generator, 'beam':beam,
+              'comment':comment,
+              'neut_setup_script':neut_setup_script,
+              'neut_card':neut_card,
+              'flux_file':flux_file,
+              'maxint_file':maxint_file}
+trf.application = a
+
+# Input files
+d=ND280LocalDataset()
+d.get_kin_range(1,10)  # runs 80317001-80317010 are generated
+trf.addInputData(d)
+
+# Backend
+trf.backend = PBS(queue='srvq', extraopts='-l walltime=23:00:00,mem=2000mb -j oe')
+
+# Postprocessing, a log file is checked, output files are moved to a structure with a root at prfx/path
+trf.postprocessors=ND280RDP_Checker(prfx=prfx,path=path,trig='MCSAND',site=site)
+
+t.appendTransform(trf)
+trf1 = trf
+
+
+## Transform 2 is the rest of processing: sandPropagate nd280MC elecSim oaCalibMC  oaRecon oaAnalysis
+## historically called 'g4anal'
+for stage in ['g4anal']:
+  trf = ND280Transform()
+
+  # Transform app.
+  a = runND280SandMC()
+  a.cmtsetup = ['/home/trt2kmgr/ND280Soft/setup_'+ver+'.sh','/home/trt2kmgr/ND280Soft/'+ver+'/nd280/*/cmt/setup.sh']
+  a.confopts = {'stage':stage,
+                'nd280ver':ver,
+                'generator':generator, 'beam':beam,
+                'comment':comment,
+                'pot_per_spill':pot_per_spill,
+                'interactions_per_spill':interactions_per_spill}
+
+  trf.application = a
+
+  # Input files
+  d=TaskChainInput()			# Chain Input is declared
+  d.input_trf_id = trf1.getID()		# source transform
+  d.use_copy_output = False;
+  d.include_file_mask=['*_numc_*.root'] # which files from job output directories to use as input
+  trf.addInputData(d)
+
+  # Backend
+  trf.backend = PBS(queue='srvq', extraopts='-l walltime=10:00:00,mem=2000mb -j oe')
+
+  # Postprocessing, a log file is checked, output files are moved to a structure with a root at prfx/path
+  trf.postprocessors=ND280RDP_Checker(prfx=prfx,path=path,trig='MCP',site=site)
+
+  # Add it
+  t.appendTransform(trf)
+
+
+#  set the task going
+t.float = 470
+t.run()
+
+

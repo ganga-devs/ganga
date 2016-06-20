@@ -238,8 +238,9 @@ class RegistryFlusher(threading.Thread):
         will wait for a fixed period of time.
         """
         sleeps_per_second = 10  # This changes the granularity of the sleep.
+        regConf = getConfig('Registry')
         while not self.stopped:
-            sleep_period = getConfig('Registry')['AutoFlusherWaitTime']
+            sleep_period = regConf['AutoFlusherWaitTime']
             for i in range(sleep_period*sleeps_per_second):
                 time.sleep(1/sleeps_per_second)
                 if self.stopped:
@@ -247,7 +248,8 @@ class RegistryFlusher(threading.Thread):
             # This will trigger a flush on all dirty objects in the repo,
             # It will lock all objects dirty as a result of the nature of the flush command
             logger.debug('Auto-flushing: %s', self.registry.name)
-            self.registry.flush_all()
+            if regConf['EnableAutoFlush']:
+                self.registry.flush_all()
         logger.debug("Auto-Flusher shutting down for Registry: %s" % self.registry.name)
 
 
@@ -300,7 +302,7 @@ class Registry(object):
             this_id (int): This is the python id of a given object, i.e. id(object) which is having a repo transaction performed on it
             action (str): This is a string which represents the transaction (useful for debugging collisions)
         """
-        while this_id in self._inprogressDict.keys():
+        while this_id in self._inprogressDict:
             logger.debug("Getting item being operated on: %s" % this_id)
             logger.debug("Currently in state: %s" % self._inprogressDict[this_id])
             #import traceback
@@ -309,7 +311,7 @@ class Registry(object):
             #sys.exit(-1)
             #time.sleep(0.05)
         self._inprogressDict[this_id] = action
-        if this_id not in self.hard_lock.keys():
+        if this_id not in self.hard_lock:
             self.hard_lock[this_id] = threading.Lock()
         self.hard_lock[this_id].acquire()
 
@@ -655,7 +657,7 @@ class Registry(object):
         """
         logger.debug("_read_access")
         obj_id = id(stripProxy(_obj))
-        if obj_id in self._inprogressDict.keys():
+        if obj_id in self._inprogressDict:
             return
 
         with _obj.const_lock:
@@ -706,7 +708,7 @@ class Registry(object):
         """
         logger.debug("_safe_read_access")
         obj = stripProxy(_obj)
-        if id(obj) in self._inprogressDict.keys():
+        if id(obj) in self._inprogressDict:
             return
 
         if self.hasStarted() is not True:
@@ -747,7 +749,7 @@ class Registry(object):
         logger.debug("_write_access")
         obj = stripProxy(_obj)
         obj_id = id(_obj)
-        if obj_id in self._inprogressDict.keys():
+        if obj_id in self._inprogressDict:
             return
 
         with obj.const_lock:
@@ -762,7 +764,7 @@ class Registry(object):
         logger.debug("__write_acess")
         obj = stripProxy(_obj)
         this_id = id(obj)
-        if this_id in self._inprogressDict.keys():
+        if this_id in self._inprogressDict:
             for this_d in self.changed_ids.itervalues():
                 this_d.add(self.find(obj))
             return
@@ -833,7 +835,7 @@ class Registry(object):
         logger.debug("_release_lock")
         obj = stripProxy(_obj)
 
-        if id(obj) in self._inprogressDict.keys():
+        if id(obj) in self._inprogressDict:
             return
 
         if self.hasStarted() is not True:
@@ -914,31 +916,26 @@ class Registry(object):
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         from Ganga.Utility.logging import getLogger
-#        self.shouldReleaseRun = False
-#        self.releaseThread.stop()
         logger = getLogger()
         logger.debug("Shutting Down Registry")
         logger.debug("shutdown")
         try:
             self._hasStarted = True
-            try:
-                if not self.metadata is None:
-                    try:
-                        self.flush_all()
-                    except Exception, err:
-                        logger.debug("shutdown _flush Exception: %s" % err)
-                    self.metadata.shutdown()
-            except Exception as err:
-                logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, err)
-            #finally:
-            #    pass
+            # NB flush_all by definition relies on both the metadata repo and the repo to be fully initialized
             try:
                 self.flush_all()
             except Exception as err:
                 logger.error("Exception on flushing '%s' registry: %s", self.name, err)
-                #raise
-            #finally:
-            #    pass
+
+            # Now we can safely shutdown the metadata repo if one is loaded
+            try:
+                if self.metadata is not None:
+                    self.metadata.shutdown()
+            except Exception as err:
+                logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, err)
+                raise
+
+            # Now we can release locks on the objects we have
             for obj in self._objects.values():
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False

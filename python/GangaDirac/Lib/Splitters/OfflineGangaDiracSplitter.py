@@ -174,10 +174,9 @@ def calculateSiteSEMapping(file_replicas, wanted_common_site, uniqueSE, site_to_
 
 def lookUpLFNReplicas(inputs, allLFNData):
     # Build a useful dictionary and list
-    allLFNs = []
-    LFNdict = {}
+    allLFNs = [_lfn.lfn for _lfn in inputs]
+    LFNdict = dict().fromkeys(allLFNs)
     for _lfn in inputs:
-        allLFNs.append(_lfn.lfn)
         LFNdict[_lfn.lfn] = _lfn
 
     # Request the replicas for all LFN 'LFN_parallel_limit' at a time to not overload the
@@ -384,7 +383,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
         # NB: Can't modify this list and iterate over it directly in python
         LFN_instances = site_dict.keys()
         # Already used LFN
-        chosen_lfns = []
+        chosen_lfns = set()
 
         for iterating_LFN in LFN_instances:
 
@@ -429,7 +428,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
                 for lfn in _this_subset:
                     site_dict.pop(lfn)
                     allChosenSets.pop(lfn)
-                    chosen_lfns.append(lfn)
+                    chosen_lfns.add(lfn)
 
         # Lets keep track of how many times we've tried this
         iterations = iterations + 1

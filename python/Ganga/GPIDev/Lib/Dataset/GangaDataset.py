@@ -76,7 +76,7 @@ class GangaDataset(Dataset):
         'Returns a list of the names of all files stored in the dataset.'
         names = []
         for i in self.files:
-            if hasattr(i, lfn):
+            if hasattr(i, 'lfn'):
                 names.append(i.lfn)
             else:
                 try:

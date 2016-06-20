@@ -1,13 +1,11 @@
 import os
-import base64
-import subprocess
 import threading
-import pickle
-import signal
 import tempfile
 import shutil
+import json
 import time
 from copy import deepcopy
+
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.execute import execute
@@ -16,7 +14,7 @@ from Ganga.GPIDev.Credentials import getCredential
 import Ganga.Utility.execute as gexecute
 
 logger = getLogger()
-proxy = getCredential('GridProxy', '')
+proxy = None
 
 # Cache
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -28,39 +26,77 @@ Dirac_Proxy_Lock = threading.Lock()
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 
-def getDiracEnv(force=False):
+def getDiracEnv():
     """
     Returns the dirac environment stored in a global dictionary by Ganga.
-    This is expected to be stored as some form of 'source'-able file on disk which can be used to get the printenv after sourcing
-    Once loaded and stored his is used for executing all DIRAC code in future
-    Args:
-        force (bool): This triggers a compulsory reload of the env from disk
+    Once loaded and stored this is used for executing all DIRAC code in future
     """
     global DIRAC_ENV
     with Dirac_Env_Lock:
-        if DIRAC_ENV == {} or force:
-            config_file = getConfig('DIRAC')['DiracEnvFile']
-            if not os.path.exists(config_file):
-                absolute_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../../..', config_file)
+        if not DIRAC_ENV:
+            cache_file = getConfig('DIRAC')['DiracEnvJSON']
+            source_command = getConfig('DIRAC')['DiracEnvSource']
+            if cache_file:
+                DIRAC_ENV = read_env_cache(cache_file)
+            elif source_command:
+                DIRAC_ENV = get_env(source_command)
             else:
-                absolute_path = config_file
-            if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(absolute_path):
-
-                env_dict = {}
-                logger.debug("Executing command: %s" % 'source {0}'.format(absolute_path))
-                execute('source {0}'.format(absolute_path), shell=True, env=env_dict, update_env=True)
-
-                if env_dict is not None:
-                    DIRAC_ENV = env_dict
-                else:
-                    logger.error("Error determining DIRAC environment")
-                    raise GangaException("Error determining DIRAC environment")
-
-            else:
-                logger.error("'DiracEnvFile' config variable empty or file not present")
-                logger.error("Tried looking in : '%s' Please check your config" % absolute_path) 
-    logger.debug("Dirac Env: %s" % DIRAC_ENV)
+                logger.error("'DiracEnvSource' config variable empty")
     return DIRAC_ENV
+
+
+def get_env(env_source):
+    """
+    Given a source command, return the DIRAC environment that the
+    command created.
+
+    Args:
+        env_source: a command which can be sourced, providing the desired environment
+
+    Returns:
+        dict: the environment
+
+    """
+    logger.debug('Running DIRAC source command %s', env_source)
+    env = dict(os.environ)
+    execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
+    if not any(key.startswith('DIRAC') for key in env):
+        raise RuntimeError("'DIRAC*' not found in environment")
+    return env
+
+
+def write_env_cache(env, cache_filename):
+    """
+    Given a command and a file path, source the command and store it
+    in the file
+
+    Args:
+        env (dict): the environment
+        cache_filename: a full path to a file to store the cache in
+
+    """
+    cache_dir = os.path.dirname(cache_filename)
+    if not os.path.exists(cache_dir):
+        os.makedirs(cache_dir)
+    with open(cache_filename, 'w') as cache_file:
+        json.dump(env, cache_file)
+
+
+def read_env_cache(cache_filename):
+    """
+    Args:
+        cache_filename: a full path to a file to store the cache in
+
+    Returns:
+        dict: the cached environment
+
+    """
+    logger.debug('Reading DIRAC cache file at %s', cache_filename)
+    with open(cache_filename, 'r') as cache_file:
+        env = json.load(cache_file)
+    # Convert unicode strings to byte strings
+    env = dict((k.encode('utf-8'), v.encode('utf-8')) for k, v in env.items())
+    return env
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
@@ -128,6 +164,8 @@ def _dirac_check_proxy( renew = True, shouldRaise = True):
     """
     global last_modified_valid
     global proxy
+    if proxy is None:
+        proxy = getCredential('GridProxy', '')
     _isValid = proxy.isValid()
     if not _isValid:
         if renew is True:
@@ -184,7 +222,7 @@ def execute(command,
             python_setup='',
             eval_includes=None,
             update_env=False,
-            renew=False):
+            ):
     """
     Execute a command on the local DIRAC server.
 
@@ -197,7 +235,7 @@ def execute(command,
         cwd (str): an optional string to a valid path where this code should be executed
         shell (bool): Should this code be executed in a new shell environment
         python_setup (str): Optional extra code to pass to python when executing
-        eval_incldes (???): TODO document me
+        eval_includes (???): TODO document me
         update_env (bool): Should this modify the given env object with the env after the command has executed
     """
 
@@ -207,7 +245,7 @@ def execute(command,
         python_setup = getDiracCommandIncludes()
 
     # We're about to perform an expensive operation so being safe before we run it shouldn't cost too much
-    _checkProxy(force = True, renew = renew)
+    _checkProxy(force = True)
 
     #logger.debug("Executing command:\n'%s'" % str(command))
     #logger.debug("python_setup:\n'%s'" % str(python_setup))
@@ -240,5 +278,5 @@ def execute(command,
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
 
-    return deepcopy(returnable)
+    return returnable
 

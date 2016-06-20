@@ -1,5 +1,4 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import print_function, absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -7,9 +6,14 @@ from __future__ import absolute_import
 ##########################################################################
 from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod, stripProxy
 from Ganga.GPIDev.Base.Objects import GangaObject
+from cStringIO import StringIO
 
 from inspect import isclass
-from cStringIO import StringIO
+
+from Ganga.Utility.logging import getLogger
+
+logger = getLogger()
+
 
 def quoteValue(value, interactive=False):
     """A quoting function. Used to get consistent formatting"""
@@ -21,7 +25,7 @@ def quoteValue(value, interactive=False):
             return repr(value)
     try:
         # If it's an iterable like a list or a GangaList then quote each element
-        quoted_list = [quoteValue(s, interactive) for s in value]
+        quoted_list = [quoteValue(val, interactive) for val in value]
         string_of_list = '[' + ', '.join(quoted_list) + ']'
         return string_of_list
     except TypeError:
@@ -264,36 +268,33 @@ def full_print(obj, out=None, interactive=False):
     if out == None:
         out = sys.stdout
 
-    from Ganga.GPIDev.Lib.GangaList import GangaList
+    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
     _obj = stripProxy(obj)
 
-    if isType(_obj, GangaList.GangaList):
+    if isType(_obj, GangaList):
         obj_len = len(_obj)
         if obj_len == 0:
             print('[]', end=' ', file=out)
         else:
             outString = '['
-            count = 0
-            for x in obj:
+            outStringList = []
+            for x in _obj:
                 if isType(x, GangaObject):
                     sio = StringIO()
                     stripProxy(x).printTree(sio, interactive)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
-                    outString += result.rstrip()
+                    outStringList.append(result.rstrip())
                 else:
-                    result = str(x)
                     # remove trailing whitespace and newlines
-                    outString += result.rstrip()
-                count += 1
-                if count != obj_len:
-                    outString += ', '
+                    outStringList.append(str(x).rstrip())
+            outString += ', '.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)
         return
 
-    if isProxy(obj) and isType(_obj, GangaObject):
+    if isProxy(obj) and isinstance(_obj, GangaObject):
         sio = StringIO()
         runProxyMethod(obj, 'printTree', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)
@@ -316,26 +317,23 @@ def summary_print(obj, out=None, interactive=False):
             print('[]', end=' ', file=out)
         else:
             outString = '['
-            count = 0
-            for x in _obj:
+            outStringList = []
+            for x in obj:
                 if isType(x, GangaObject):
-                    sio = StringIO()
+                    sio =StringIO()
                     stripProxy(x).printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
-                    outString += result.rstrip()
+                    outStringList.append(result.rstrip())
                 else:
-                    result = str(x)
                     # remove trailing whitespace and newlines
-                    outString += result.rstrip()
-                count += 1
-                if count != obj_len:
-                    outString += ', '
+                    outStringList.append(str(x).rstrip())
+            outString += ', '.join(outStringList)
             outString += ']'
             print(outString, end=' ', file=out)
         return
 
-    if isProxy(obj) and isType(_obj, GangaObject):
+    if isProxy(obj) and isinstance(_obj, GangaObject):
         sio = StringIO()
         runProxyMethod(obj, 'printSummaryTree', 0, 0, '', sio, interactive)
         print(sio.getvalue(), end=' ', file=out)

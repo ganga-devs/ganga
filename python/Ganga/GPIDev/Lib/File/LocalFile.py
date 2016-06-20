@@ -66,12 +66,17 @@ class LocalFile(IGangaFile):
             if localDir != '':
                 self.localDir = localDir
             else:
-                this_pwd = os.path.abspath('.')
-                self.tmp_pwd = this_pwd
+                if os.path.dirname(namePattern) != '':
+                    self.localDir = os.path.dirname(namePattern)
+                else:
+                    # Record the current pwd, assume this is true as we weren't told otherwise
+                    this_pwd = os.path.abspath('.')
+                    self.tmp_pwd = this_pwd
         else:
             logger.error("Unkown type: %s . Cannot set LocalFile localDir using this!" % type(localDir))
 
     def __construct__(self, args):
+        # TODO GET RID OF ME, GET RID OF ME, GET RID OF ME!!!
 
         self.tmp_pwd = None
         self.output_location = None
@@ -81,6 +86,8 @@ class LocalFile(IGangaFile):
         from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
         if len(args) == 1 and isinstance(args[0], str):
             self.namePattern = args[0]
+            if os.path.dirname(self.namePattern) != '':
+                self.localDir = os.path.dirname(self.namePattern)
         elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
             self.namePattern = args[0]
             self.localDir = args[1]
@@ -94,7 +101,7 @@ class LocalFile(IGangaFile):
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "LocalFile(namePattern='%s')" % self.namePattern
+        return "LocalFile(namePattern='%s', localDir='%s')" % (self.namePattern, self.localDir)
 
     def location(self):
         return self.getFilenameList()

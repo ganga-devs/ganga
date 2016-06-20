@@ -89,7 +89,7 @@ class LCGSandboxCache(GridSandboxCache):
         Uploads multiple files to a remote grid storage.
         """
 
-        shell = getShell(self.middleware)
+        shell = getShell()
 
         if self.lfc_host:
             shell.env['LFC_HOST'] = self.lfc_host
@@ -188,7 +188,7 @@ class LCGSandboxCache(GridSandboxCache):
             def __init__(self, cacheObj):
                 Algorithm.__init__(self)
                 self.cacheObj = cacheObj
-                self.shell = getShell(self.cacheObj.middleware)
+                self.shell = getShell()
 
             def process(self, file):
 
@@ -239,7 +239,7 @@ class LCGSandboxCache(GridSandboxCache):
             def __init__(self, cacheObj):
                 Algorithm.__init__(self)
                 self.cacheObj = cacheObj
-                self.shell = getShell(self.cacheObj.middleware)
+                self.shell = getShell()
 
             def process(self, file):
 
