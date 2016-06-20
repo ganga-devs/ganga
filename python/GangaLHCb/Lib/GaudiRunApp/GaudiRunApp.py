@@ -16,49 +16,10 @@ from Ganga.Utility.files import expandfilename
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 
+from .GaudiRunAppUtils import readInputData, _exec_cmd
+
 logger = getLogger()
 
-def _exec_cmd(cmd, cwdir):
-    """
-    This is taken from the code which runs SetupProject
-    TODO: Replace me with a correct call to execute once the return code is known to work
-    
-    Args:
-        cmd (str): This is the full command which is to be executed
-        cwdir (str): The folder the command is to be run in
-    """
-    pipe = subprocess.Popen(cmd,
-            shell=True,
-            env=None,
-            cwd=cwdir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
-    stdout, stderr = pipe.communicate()
-    while pipe.poll() is None:
-        time.sleep(0.5)
-    return pipe.returncode, stdout, stderr
-
-def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
-    """
-    Short helper function for setting up minimal application environments on disk for job submission
-    Args:
-        myApp (str): This is the name of the app to pass to lb-dev
-        myVer (str): This is the version of 'myApp' to pass tp lb-dev
-        myPath (str): This is where lb-dev will be run
-        myGepPack (str): This is a getpack which will be run once the lb-dev has executed
-    """
-    full_path = expandfilename(myPath, True)
-    if not path.exists(full_path):
-        makedirs(full_path)
-    chdir(full_path)
-    _exec_cmd('lb-dev %s %s' % (myApp, myVer), full_path)
-    logger.info("Set up App Env at: %s" % full_path)
-    if myGetpack:
-        dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
-        _exec_cmd('getpack %s' % myGetpack, dev_dir)
-        logger.info("Ran Getpack: %s" % myGetpack)
-
-exportToGPI('prepare_cmake_app', prepare_cmake_app, 'Functions')
 
 class GaudiRun(IPrepareApp):
 
@@ -265,4 +226,21 @@ class GaudiRun(IPrepareApp):
 
         logger.info("Built %s" % wantedTargetFile)
         return wantedTargetFile
+
+    def readInputData(self, opts):
+        """
+        This reads the inputdata from a file and assigns it to the inputdata field of the parent job.
+
+        Or you can use BKQuery and the box repo to save having to do this over and over
+        """
+        input_dataset = readInputData(opts, self)
+        try:
+            job = self.getJobObject()
+        except:
+            raise GangaException("This makes no sense without first belonging to a job object as I can't assign input data!")
+
+        if job.inputdata:
+            logger.warning("Warning Job %s already contained inputdata, overwriting" % job.fqid)
+
+        job.inputdata = input_dataset
 
