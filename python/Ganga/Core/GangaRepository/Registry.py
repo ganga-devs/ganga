@@ -634,7 +634,6 @@ class Registry(object):
                 self.repository.flush([obj_id])
                 obj._setFlushed()
 
-    @synchronised
     def flush_all(self):
         """
         This will attempt to flush all the jobs in the registry.
@@ -647,7 +646,6 @@ class Registry(object):
         if self.metadata and self.metadata.hasStarted():
             self.metadata.flush_all()
 
-    @synchronised
     def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.
         sub-obj is the object the read access is actually desired (ignored at the moment)
@@ -739,7 +737,6 @@ class Registry(object):
             logger.debug("Unknown read access Error: %s" % err)
             raise
 
-    @synchronised
     def _write_access(self, _obj):
         """Obtain write access on a given object.
         Raise RepositoryError
@@ -959,7 +956,6 @@ class Registry(object):
                 s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
         return s
 
-    @synchronised
     def has_loaded(self, obj):
         """Returns True/False for if a given object has been fully loaded by the Registry.
         Returns False on the object not being in the Registry!
