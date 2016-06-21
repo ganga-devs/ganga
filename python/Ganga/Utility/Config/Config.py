@@ -198,7 +198,7 @@ def getConfig(name, create=True):
         return allConfigs[name]
     else:
         if create:
-            logger.debug('Creating "%s" config in getConfig', name)
+            logger.warning('Creating "%s" config in getConfig', name)
             allConfigs[name] = PackageConfig(name, 'Documentation not available')
             return allConfigs[name]
         else:
@@ -283,6 +283,9 @@ class ConfigOption(object):
 
     def setSessionValue(self, session_value):
 
+        if not hasattr(self, 'docstring'):
+            raise ConfigError('Can\'t set a session value without a docstring!')
+
         self.setModified(True)
 
         # try:
@@ -307,6 +310,9 @@ class ConfigOption(object):
         self.convert_type('session_value')
 
     def setUserValue(self, user_value):
+
+        if not hasattr(self, 'docstring'):
+            raise ConfigError('Can\'t set a user value without a docstring!')
 
         self.setModified(True)
         try:
