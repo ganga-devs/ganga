@@ -661,7 +661,7 @@ class GangaList(GangaObject):
 
         for (name, item) in self._schema.simpleItems():
             if name == "_list":
-                visitor.componentAttribute(self, "_list", self._data["_list"], 1)
+                visitor.componentAttribute(self, name, getattr(self, name), 1)
             elif item['visitable']:
                 visitor.simpleAttribute(self, name, getattr(self, name), item['sequence'])
 
