@@ -99,17 +99,17 @@ To install locally run one of the following:
 * For the official Ganga releases:
 .. code-block:: bash
 
-        ./lhcb-prepare -v v601r14
+        ./lhcb-prepare v601r14
 
 * For an 'in development' release:
 .. code-block:: bash
 
-        ./lhcb-prepare -v -p v601r15
+        ./lhcb-prepare -p v601r15
 
 * To keep the git history of the project so that you can develop patches and branches etc:
 .. code-block:: bash
 
-        ./lhcb-prepare -k -t -v v601r15
+        ./lhcb-prepare -k -t v601r15
 
 You now have Ganga installed in ``$HOME/cmtuser/GANGA/GANGA_v601r15``
 
