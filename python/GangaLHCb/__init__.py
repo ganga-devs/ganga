@@ -134,7 +134,7 @@ def loadPlugins(config=None):
 def postBootstrapHook():
     configDirac = Ganga.Utility.Config.getConfig('DIRAC')
     configOutput = Ganga.Utility.Config.getConfig('Output')
-    configPoll = Ganga.Utility.Config.getConfig('Poll')
+    configPoll = Ganga.Utility.Config.getConfig('PollThread')
     
     configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
     configDirac.setSessionValue('userVO', 'lhcb')
