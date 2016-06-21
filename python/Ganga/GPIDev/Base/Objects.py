@@ -1090,15 +1090,19 @@ class GangaObject(Node):
         else:
             return r._readonly()
 
-    # set the registry for this object (assumes this object is a root object)
     def _setRegistry(self, registry):
         """
-        Set the Registry of the GangaObject which will manage it
+        Set the Registry of the GangaObject which will manage it. This can only
+        set the registry *to* or *from* None and never from one registry to
+        another.
         Args:
             registry (GangaRegistry): This is a Ganga Registry object
         """
-        assert self._getParent() is None
-        self._registry = registry
+        assert self._getParent() is None, 'Can only set the registry of a root object'
+        if registry is None or self._registry is None:
+            self._registry = registry
+        elif registry is not self._registry:
+            raise RuntimeError('Cannot set registry of {0} to {1} if one is already set ({2}).'.format(type(self), registry, self._registry))
 
     # get the registry for the object by getting the registry associated with
     # the root object (if any)
