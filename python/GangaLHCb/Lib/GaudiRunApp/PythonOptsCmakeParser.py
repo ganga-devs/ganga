@@ -7,34 +7,6 @@ from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 logger = Ganga.Utility.logging.getLogger()
 
-def readInputData(optsfiles, app):
-    '''Returns a LHCbDataSet object from a list of options files. The
-       optional argument extraopts will decide if the extraopts string inside
-       the application is considered or not.
-
-       Usage examples:
-       # Create an LHCbDataset object with the data found in the optionsfile
-       l=DaVinci(version='v22r0p2').readInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"])
-       # Get the data from an options file and assign it to the jobs inputdata field
-       j.inputdata = j.application.readInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"])
-
-    '''
-    if not isinstance(optsfiles, []):
-        optsfiles = [optsfiles]
-
-    if len(optsfiles) == 0:
-        raise ApplicationConfigurationError(None, "Need a file to parse to call this method")
-
-    try:
-        parser = PythonOptsCmakeParser(optsfiles, app)
-    except Exception as err:
-        msg = 'Unable to parse the job options. Please check options files and extraopts.'
-        logger.error("PythonOptionsParserError:\n%s" % str(err))
-        #raise ApplicationConfigurationError(None, msg)
-        raise
-
-    return parser.get_input_data()
-
 ## Due to a bug in Gaudi at some point we need this equivalence here: see #204
 DataObjectDescriptorCollection = str
 

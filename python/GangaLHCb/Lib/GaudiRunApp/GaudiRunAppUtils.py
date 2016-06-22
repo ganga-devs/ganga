@@ -8,14 +8,14 @@ from .PythonOptsCmakeParser import PythonOptsCmakeParser
 
 logger = getLogger()
 
-def readInputData(optsfiles, app):
+def getGaudiRunInputData(optsfiles, app):
     '''Returns a LHCbDataSet object from a list of options files. The
        optional argument extraopts will decide if the extraopts string inside
        the application is considered or not.
 
     Usage example:
     # Get the data from an options file and assign it to the jobs inputdata field
-    j.inputdata = readInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"], j.application)
+    j.inputdata = getGaudiRunInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"], j.application)
 
     This is also called behind the scenes for j.readInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"])
 
@@ -36,7 +36,7 @@ def readInputData(optsfiles, app):
 
     return parser.get_input_data()
 
-exportToGPI('GetGaudiRunInputData', readInputData, 'Functions')
+exportToGPI('getGaudiRunInputData', getGaudiRunInputData, 'Functions')
 
 def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
     """

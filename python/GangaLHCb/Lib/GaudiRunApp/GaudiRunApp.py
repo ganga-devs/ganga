@@ -15,7 +15,7 @@ from Ganga.Utility.files import expandfilename
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 
-from .GaudiRunAppUtils import readInputData, _exec_cmd
+from .GaudiRunAppUtils import getGaudiRunInputData, _exec_cmd
 
 logger = getLogger()
 
@@ -234,7 +234,7 @@ class GaudiRun(IPrepareApp):
 
         Or you can use BKQuery and the box repo to save having to do this over and over
         """
-        input_dataset = readInputData(opts, self)
+        input_dataset = getGaudiRunInputData(opts, self)
         try:
             job = self.getJobObject()
         except:
