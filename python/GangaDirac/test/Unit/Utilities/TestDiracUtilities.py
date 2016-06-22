@@ -27,8 +27,8 @@ def test_output():
 def test_execute():
 
     # Test shell vs python mode
-    assert execute('import os\nprint(os.getcwd())').strip() == os.getcwd()
-    assert execute('cd {0}; pwd'.format(os.getcwd()), shell=True).strip() == os.getcwd()
+    assert execute('import os\nprint(os.getcwd())', cwd=os.getcwd()).strip() == os.getcwd()
+    assert execute('cd {0}; pwd'.format(os.getcwd()), shell=True, cwd=os.getcwd()).strip() == os.getcwd()
 
 
 def test_execute_timeouts():
@@ -38,12 +38,21 @@ def test_execute_timeouts():
     assert execute('while True: pass', timeout=1) == 'Command timed out!'
 
     # Test timeout doesn't hinder a normal command
-    assert execute('import os\nprint(os.getcwd())', timeout=10).strip() == os.getcwd()
-    assert execute('cd {0}; pwd'.format(os.getcwd()), shell=True, timeout=10).strip() == os.getcwd()
+    assert execute('import os\nprint(os.getcwd())', timeout=10, cwd=os.getcwd()).strip() == os.getcwd()
+    assert execute('cd {0}; pwd'.format(os.getcwd()), shell=True, timeout=10, cwd=os.getcwd()).strip() == os.getcwd()
 
     # Test timeout doesn't delay normal command
-    assert timeit.timeit('''from GangaDirac.Lib.Utilities.DiracUtilities import execute\nexecute('import os\\nprint(os.getcwd())',timeout=10)''', number=1) < 10
-    assert timeit.timeit('''from GangaDirac.Lib.Utilities.DiracUtilities import execute\nexecute('cd {0}; pwd',shell=True, timeout=10)'''.format(os.getcwd()), number=1) < 10
+    assert timeit.timeit(
+        '''
+        import os
+        from GangaDirac.Lib.Utilities.DiracUtilities import execute
+        execute('import os\\nprint(os.getcwd())',timeout=10, cwd=os.getcwd())
+        ''', number=1) < 10
+    assert timeit.timeit(
+        '''
+        from GangaDirac.Lib.Utilities.DiracUtilities import execute
+        execute('cd {0}; pwd',shell=True, timeout=10)
+        '''.format(os.getcwd()), number=1) < 10
 
 
 def test_execute_cwd():
