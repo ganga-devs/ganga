@@ -395,7 +395,10 @@ class GangaRepositoryLocal(GangaRepository):
             logger.debug("Exception: %s" % err)
             self._clear_stored_cache()
         finally:
-            rmrf(os.path.join(self.root, 'master.idx'))
+            try:
+                rmrf(os.path.join(self.root, 'master.idx'))
+            except OSError:
+            	pass
 
     def _clear_stored_cache(self):
         """
@@ -715,7 +718,7 @@ class GangaRepositoryLocal(GangaRepository):
                     if idn.isdigit() and int(idn) >= len(split_cache):
                         try:
                             rmrf(os.path.join(os.path.dirname(fn), idn))
-                        except Exception as err:
+                        except OSError as err:
                             logger.warning("Couldn't remove a file: %s" % err)
                             pass
             else:
@@ -728,9 +731,8 @@ class GangaRepositoryLocal(GangaRepository):
                     if idn.isdigit():
                         try:
                             rmrf(os.path.join(os.path.dirname(fn), idn))
-                        except Exception as err:
+                        except OSError as err:
                             logger.warning("Couldn't remove a file: %s" % err)
-                            pass
             if this_id not in self.incomplete_objects:
                 self.index_write(this_id)
         else:
