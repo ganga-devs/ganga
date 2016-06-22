@@ -46,7 +46,7 @@ def test__attribute_filter__set__(df):
 
 
 def test__repr__(df):
-    assert repr(df) == "DiracFile(namePattern='%s', lfn='%s')" % (df.namePattern, df.lfn)
+    assert repr(df) == "DiracFile(namePattern='%s', lfn='%s', localDir='%s')" % (df.namePattern, df.lfn, df.localDir)
 
 
 def test__auto_remove(df):
