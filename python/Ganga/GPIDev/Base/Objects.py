@@ -329,18 +329,15 @@ class Descriptor(object):
 
         # First we want to try to get the information without prompting a load from disk
 
-        obj_in_schema = name in cls._schema.datadict
-
         # If we're laded from disk inspect the _data and generate a default if needed
         # If we're not loaded from disk, we should _by definition_ NOT look here for objects in memory as they should NEVER be here
         if obj._fullyLoadedFromDisk():
             # schema data takes priority ALWAYS over ._index_cache
             # This access should not cause the object to be loaded
-            if obj_in_schema:
-                if name not in obj._data:
-                    self.__set__(obj, obj._schema.getDefaultValue(name))
-                # NB we check for schema entries as this will have problem when object not in Schema
-                return obj._data[name]
+            if name not in obj._data:
+                self.__set__(obj, obj._schema.getDefaultValue(name))
+            # NB we check for schema entries as this will have problem when object not in Schema
+            return obj._data[name]
 
         # Then try to get it from the index cache
         # NB Can we remove this yet? This allows access to index items asif they're in the schema. They are normally not.
@@ -356,10 +353,9 @@ class Descriptor(object):
 
             # If we've loaded from disk then the data dict has changed. If we're constructing an object
             # then we need to rely on the factory
-            if obj_in_schema:
-                if name not in obj._data:
-                    self.__set__(obj, obj._schema.getDefaultValue(name))
-                return obj._data[name]
+            if name not in obj._data:
+                self.__set__(obj, obj._schema.getDefaultValue(name))
+            return obj._data[name]
 
             if obj._fullyLoadedFromDisk():
                 # If we loaded from disk everything could have changed (including corrupt index updated!)
