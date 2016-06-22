@@ -47,7 +47,7 @@ logger = getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_dict', '_read_lock', '_write_lock', '_proxyObject']
+do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data', '_read_lock', '_write_lock', '_proxyObject']
 
 def _getGangaList():
     """
@@ -331,16 +331,16 @@ class Descriptor(object):
 
         obj_in_schema = name in cls._schema.datadict
 
-        # If we're laded from disk inspect the _dict and generate a default if needed
+        # If we're laded from disk inspect the _data and generate a default if needed
         # If we're not loaded from disk, we should _by definition_ NOT look here for objects in memory as they should NEVER be here
         if obj._fullyLoadedFromDisk():
             # schema data takes priority ALWAYS over ._index_cache
             # This access should not cause the object to be loaded
             if obj_in_schema:
-                if name not in obj._dict:
+                if name not in obj._data:
                     self.__set__(obj, obj._schema.getDefaultValue(name))
                 # NB we check for schema entries as this will have problem when object not in Schema
-                return obj._dict[name]
+                return obj._data[name]
 
         # Then try to get it from the index cache
         # NB Can we remove this yet? This allows access to index items asif they're in the schema. They are normally not.
@@ -357,9 +357,9 @@ class Descriptor(object):
             # If we've loaded from disk then the data dict has changed. If we're constructing an object
             # then we need to rely on the factory
             if obj_in_schema:
-                if name not in obj._dict:
+                if name not in obj._data:
                     self.__set__(obj, obj._schema.getDefaultValue(name))
-                return obj._dict[name]
+                return obj._data[name]
 
             if obj._fullyLoadedFromDisk():
                 # If we loaded from disk everything could have changed (including corrupt index updated!)
@@ -617,11 +617,6 @@ class ObjectMetaclass(abc.ABCMeta):
 
         this_schema = cls._schema
 
-        # This reduces the memory footprint
-        # TODO explore migrating the _dict object to a non-dictionary type as it's a fixed size and we can potentially save big here!
-        # Adding the __dict__ here is an acknowledgement that we don't control all Ganga classes higher up.
-        cls.__slots__ = ('_index_cache_dict', '_registry', '_dict', '__dict__', '_proxyObject', '_inMemory')
-
         # Add all class members of type `Schema.Item` to the _schema object
         # TODO: We _could_ add base class's Items here by going through `bases` as well.
         # We can't just yet because at this point the base class' Item has been overwritten with a Descriptor
@@ -637,7 +632,10 @@ class ObjectMetaclass(abc.ABCMeta):
 
         attrs_to_add = tuple( attr for attr, item in this_schema.allItems())
 
-        cls.__slots__ = ('_index_cache_dict', '_registry', '_dict', '__dict__', '_proxyObject') + attrs_to_add
+        # This reduces the memory footprint
+        # TODO explore migrating the _data object to a non-dictionary type as it's a fixed size and we can potentially save big here!
+        # Adding the __dict__ here is an acknowledgement that we don't control all Ganga classes higher up.
+        cls.__slots__ = ('_index_cache_dict', '_registry', '_data', '__dict__', '_proxyObject', '_inMemory') + attrs_to_add
 
         # If a class has not specified a '_name' then default to using the class '__name__'
         if not cls.__dict__.get('_name'):
@@ -701,7 +699,7 @@ class GangaObject(Node):
         self._index_cache_dict = {}
         self._registry = None
 
-        self._dict = {}
+        self._data = {}
 
         self._inMemory = True
 
@@ -751,21 +749,21 @@ class GangaObject(Node):
 
         for (name, item) in self._schema.simpleItems():
             if item['visitable']:
-                if name in self._dict:
+                if name in self._data:
                     visitor.simpleAttribute(self, name, getattr(self, name), item['sequence'])
                 else:
                     visitor.simpleAttribute(self, name, self._schema.getDefaultValue(name, False), item['sequence'])
 
         for (name, item) in self._schema.sharedItems():
             if item['visitable']:
-                if name in self._dict:
+                if name in self._data:
                     visitor.sharedAttribute(self, name, getattr(self, name), item['sequence'])
                 else:
                     visitor.sharedAttribute(self, name, self._schema.getDefaultValue(name, False), item['sequence'])
 
         for (name, item) in self._schema.componentItems():
             if item['visitable']:
-                if name in self._dict:
+                if name in self._data:
                     visitor.componentAttribute(self, name, getattr(self, name), item['sequence'])
                 else:
                     visitor.componentAttribute(self, name, self._schema.getDefaultValue(name, False), item['sequence'])
@@ -821,7 +819,7 @@ class GangaObject(Node):
     def _actually_copyFrom(self, _srcobj, _ignore_atts):
         # type: (GangaObject, Optional[Sequence[str]]) -> None
 
-        for name, obj in _srcobj._dict.iteritems():
+        for name, obj in _srcobj._data.iteritems():
             item = self._schema.getItem(name)
             if name in _ignore_atts:
                 continue
@@ -870,7 +868,7 @@ class GangaObject(Node):
             return False  # Both have _schema but do not match
 
         # Check each schema item in turn and check for equality
-        for (name, dict_obj) in self._dict.iteritems():
+        for (name, dict_obj) in self._data.iteritems():
             item = self._schema.getItem(name)
             if item['comparable']:
                 #logger.info("testing: %s::%s" % (_getName(self), name))
@@ -878,7 +876,7 @@ class GangaObject(Node):
                     #logger.info( "diff: %s::%s" % (_getName(self), name))
                     return False
 
-        not_defined = set(self._schema.allItemNames()) - set(self._dict.keys())
+        not_defined = set(self._schema.allItemNames()) - set(self._data.keys())
 
         for name in not_defined:
             if obj._schema.hasItem(name):
@@ -898,9 +896,9 @@ class GangaObject(Node):
             attrib_name (str): the name of the schema attribute
             attrib_value (unknown): the value to set it to
         """
-        self._dict[attrib_name] = attrib_value
+        self._data[attrib_name] = attrib_value
         if isinstance(attrib_value, Node):
-            self._dict[attrib_name]._setParent(self)
+            self._data[attrib_name]._setParent(self)
 
     @property
     def _index_cache(self):
@@ -984,7 +982,7 @@ class GangaObject(Node):
         self_copy = cls()
 
         global do_not_copy
-        for name, obj in self._dict.iteritems():
+        for name, obj in self._data.iteritems():
             item = self._schema.getItem(name)
             if not item['copyable'] or name in do_not_copy:
                 setattr(self_copy, name, self._schema.getDefaultValue(name))
