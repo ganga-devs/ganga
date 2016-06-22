@@ -88,7 +88,7 @@ def generateWNScript(commandline, job):
     if job.application.runWithPython:
 
         return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline, WN_SCRIPT_NAME=WN_script_name,
-                                                                          SCRIPT_NAME = os.path.basename(j.application.getOptsFile().namePattern),
+                                                                          SCRIPT_NAME = os.path.basename(job.application.getOptsFile().namePattern),
                                                                           OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
                           executable=True)
     else:
@@ -128,7 +128,7 @@ def prepareCommand(app):
         raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                             getName(opts_file))
     if app.runWithPython:
-        command = './run python %s' %(WN_script_name)
+        full_cmd = './run python %s' %(WN_script_name)
     else:
         full_cmd = "./run gaudirun.py %s %s" % (command, opts_name, GaudiRunDiracRTHandler.data_file)
     return full_cmd
@@ -398,7 +398,12 @@ def extractAllTarFiles(path):
                 system("tar -jxf %s" % f)
 
 def pythonScript(scriptName):
-    return "\nfrom Gaudi.Configuration import *\nimportOptions('data.py')\nexecfile('./%s')\n" % scriptName
+    script = '''
+from Gaudi.Configuration import *
+importOptions('data.py')
+execfile('./%s')
+''' % scriptName
+    return script
 
 def generatePythonScript(scriptName):
     with open('###WN_SCRIPT_NAME###', 'w') as WN_script:
