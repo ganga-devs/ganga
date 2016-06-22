@@ -36,7 +36,7 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     """
     Startup Ganga by calling the same set of 'safe' functions each time
     Args:
-        gangadir_for_test (str): This is the directory which the GangaUnitTest is to be run, creates a new gangadir per test to avoid collisions
+        gangadir_for_test (str): This is the directory which the GangaUnitTest is to be run, a new gangadir has been created per test to avoid collisions
         extra_opts (list): A list of tuples which are used to pass command line style options to Ganga
     """
 
