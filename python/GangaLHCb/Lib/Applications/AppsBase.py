@@ -12,7 +12,7 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import SimpleItem
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from Ganga.Utility.Shell import Shell
-from PythonOptionsParser import PythonOptionsParser
+from GangaLHCb.Lib.Applications.PythonOptionsParser import PythonOptionsParser
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
