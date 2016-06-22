@@ -131,7 +131,7 @@ def rmrf(name, count=0):
         try:
             remove_name = name
             if not remove_name.endswith('__to_be_deleted'):
-                remove_name += '_%s__to_be_deleted_' % str(time.time())
+                remove_name += '_%s__to_be_deleted_' % time.time()
                 os.rename(name, remove_name)
                 #logger.debug("Move completed")
         except OSError as err:
