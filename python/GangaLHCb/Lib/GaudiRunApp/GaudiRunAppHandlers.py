@@ -130,7 +130,7 @@ def prepareCommand(app):
     if app.runWithPython:
         full_cmd = './run python %s' %(WN_script_name)
     else:
-        full_cmd = "./run gaudirun.py %s %s" % (command, opts_name, GaudiRunDiracRTHandler.data_file)
+        full_cmd = "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
     return full_cmd
 
 
