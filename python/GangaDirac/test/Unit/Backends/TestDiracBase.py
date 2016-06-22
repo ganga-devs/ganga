@@ -197,11 +197,7 @@ def test__resubmit(db):
     j = Job()
     j.id = 1
     j.backend = db
-    j.master = masterj
-
-    # problem as keeps finding job 0 in main repository which has this
-    # 'dirac-script' file
-    db._parent = masterj
+    db._setParent(masterj)
 
     with patch.object(db, '_common_submit', return_value='_common_submit run ok'):
         with pytest.raises(BackendError):
@@ -314,7 +310,7 @@ def test_removeOutputData(db):
 
         j.subjobs = [Job(), Job(), Job()]
         for sj in j.subjobs:
-            sj.master = j
+            sj._setParent(j)
 
         subjob = True
         assert db.removeOutputData() is None
@@ -374,7 +370,7 @@ def test_getOutputData(db):
         j.subjobs = [Job(), Job(), Job()]
         i = 0
         for sj in j.subjobs:
-            sj.master = j
+            sj._setParent(j)
             sj.id = i
             i += 1
 
@@ -416,7 +412,7 @@ def test_getOutputDataLFNs(db):
 
         j.subjobs = [Job(), Job(), Job()]
         for sj in j.subjobs:
-            sj.master = j
+            sj._setParent(j)
 
         subjob = True
         assert db.getOutputDataLFNs() == ['a', 'b', 'c'] * 3
