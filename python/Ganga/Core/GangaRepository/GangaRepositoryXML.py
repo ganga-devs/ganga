@@ -202,7 +202,6 @@ class GangaRepositoryLocal(GangaRepository):
         self.saved_idxpaths = {}
         self._cache_load_timestamp = {}
         self.printed_explanation = False
-        self._fully_loaded = {}
 
     def startup(self):
         """ Starts a repository and reads in a directory structure.
@@ -239,8 +238,9 @@ class GangaRepositoryLocal(GangaRepository):
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
-        for k in self._fully_loaded:
-            self.index_write(k, shutdown=True)
+        for k in self.objects:
+            if self.objects[k]._inMemory:
+                self.index_write(k, shutdown=True)
         self._write_master_cache(True)
         self.sessionlock.shutdown()
 
@@ -431,7 +431,7 @@ class GangaRepositoryLocal(GangaRepository):
                 if k in self.incomplete_objects:
                     continue
                 try:
-                    if k in self._fully_loaded:
+                    if v._inMemory:
                         # Check and write index first
                         obj = v#self.objects[k]
                         new_index = None
@@ -563,7 +563,7 @@ class GangaRepositoryLocal(GangaRepository):
                         if this_id not in self.incomplete_objects:
                             # If object is loaded mark it dirty so next flush will regenerate XML,
                             # otherwise just go about fixing it
-                            if not self.isObjectLoaded(self.objects[this_id]):
+                            if not self.objects[this_id]._inMemory:
                                 self.index_write(this_id)
                             else:
                                 self.objects[this_id]._setDirty()
@@ -645,7 +645,6 @@ class GangaRepositoryLocal(GangaRepository):
                     raise RepositoryError( self, "OSError on mkdir: %s" % (e))
 
             self._internal_setitem__(ids[i], objs[i])
-            self._fully_loaded[ids[i]] = objs[i]
             objs[i]._inMemory = True
 
             # Set subjobs dirty - they will not be flushed if they are not.
@@ -738,14 +737,13 @@ class GangaRepositoryLocal(GangaRepository):
         else:
             raise RepositoryError(self, "Cannot flush an Empty object for ID: %s" % this_id)
 
-        if this_id not in self._fully_loaded:
-            self._fully_loaded[this_id] = obj
+        if not obj._inMemory:
             obj._inMemory = True
 
     def flush(self, ids):
         """
         flush the set of "ids" to disk and write the XML representing said objects in self.objects
-        NB: This adds the given objects corresponding to ids to the _fully_loaded dict
+        NB: This sets the _inMemory attribute to GangaObjects
         Args:
             ids (list): List of integers, used as keys to objects in the self.objects dict
         """
@@ -772,8 +770,7 @@ class GangaRepositoryLocal(GangaRepository):
                     logger.debug("Index write failed")
                     pass
 
-                if this_id not in self._fully_loaded:
-                    self._fully_loaded[this_id] = self.objects[this_id]
+                if not self.objects[this_id]._inMemory:
                     self.objects[this_id]._inMemory = True
 
                 subobj_attr = getattr(self.objects[this_id], self.sub_split, None)
@@ -824,7 +821,7 @@ class GangaRepositoryLocal(GangaRepository):
             if len(self.lock([this_id])) != 0:
                 if this_id not in self.incomplete_objects:
                     # Mark as dirty if loaded, otherwise load and fix
-                    if not self.isObjectLoaded(self.objects[this_id]):
+                    if not self.objects[this_id]._inMemory:
                         self.index_write(this_id)
                     else:
                         self.objects[this_id]._setDirty()
@@ -899,8 +896,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         obj._index_cache = {}
 
-        if this_id not in self._fully_loaded:
-            self._fully_loaded[this_id] = obj
+        if not obj._inMemory:
             obj._inMemory = True
 
     def _actually_load_xml(self, fobj, fn, this_id, load_backup):
@@ -1125,9 +1121,8 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("Delete Error: %s" % err)
             self._internal_del__(this_id)
             rmrf(os.path.dirname(fn))
-            if this_id in self._fully_loaded:
-                self._fully_loaded[this_id]._inMemory = False
-                del self._fully_loaded[this_id]
+            if self.objects[this_id]._inMemory:
+                self.objects[this_id]._inMemory = False
             if this_id in self.objects:
                 del self.objects[this_id]
 
@@ -1179,15 +1174,4 @@ class GangaRepositoryLocal(GangaRepository):
         rmrf(self.root)
         self.startup()
 
-    def isObjectLoaded(self, obj):
-        """
-        This will return a true false if an object has been fully loaded into memory
-        Args:
-            obj (GangaObject): The object we want to know if it was loaded into memory
-        """
-        try:
-            _id = next(id_ for id_, o in self._fully_loaded.items() if o is obj)
-            return True
-        except StopIteration:
-            return False
 
