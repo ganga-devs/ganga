@@ -563,7 +563,7 @@ class GangaRepositoryLocal(GangaRepository):
                         if this_id not in self.incomplete_objects:
                             # If object is loaded mark it dirty so next flush will regenerate XML,
                             # otherwise just go about fixing it
-                            if not self.objects[this_id]._inMemory:
+                            if this_id not in self.objects or not self.objects[this_id]._inMemory:
                                 self.index_write(this_id)
                             else:
                                 self.objects[this_id]._setDirty()
@@ -1121,9 +1121,9 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("Delete Error: %s" % err)
             self._internal_del__(this_id)
             rmrf(os.path.dirname(fn))
-            if self.objects[this_id]._inMemory:
-                self.objects[this_id]._inMemory = False
             if this_id in self.objects:
+                if self.objects[this_id]._inMemory:
+                    self.objects[this_id]._inMemory = False
                 del self.objects[this_id]
 
     def lock(self, ids):
