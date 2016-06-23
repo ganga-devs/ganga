@@ -347,34 +347,30 @@ class Descriptor(object):
 
         # Since we couldn't find the information in the cache, we will need to fully load the object
 
-        if not obj._fullyLoadedFromDisk():
-            # Guarantee that the object is now loaded from disk
-            obj._getReadAccess()
+        # Guarantee that the object is now loaded from disk
+        obj._getReadAccess()
 
-            # If we've loaded from disk then the data dict has changed. If we're constructing an object
-            # then we need to rely on the factory
-            if name not in obj._data:
-                self.__set__(obj, obj._schema.getDefaultValue(name))
-            return obj._data[name]
+        # If we've loaded from disk then the data dict has changed. If we're constructing an object
+        # then we need to rely on the factory
+        if name not in obj._data:
+            self.__set__(obj, obj._schema.getDefaultValue(name))
+        return obj._data[name]
 
-            if obj._fullyLoadedFromDisk():
-                # If we loaded from disk everything could have changed (including corrupt index updated!)
-                obj_index = obj._index_cache
-                if name in obj_index:
-                    return obj_index[name]
+        if obj._fullyLoadedFromDisk():
+            # If we loaded from disk everything could have changed (including corrupt index updated!)
+            obj_index = obj._index_cache
+            if name in obj_index:
+                return obj_index[name]
 
                 
-                # NB DO NOT, EVER explicitly rely on the full string representation of the class here as you could 
-                # very easily end up in a circular loop here back at the getter for an attribute not correctly setup
-                # _Try_ at least to just get the object name. The _getName method will result in performing a full string rep
-                # but this method will only do that if it ABSOLUTELY NEEDS TO
-                raise AttributeError('Could not find attribute "{0}" in "{1}"'.format(name, _getName(obj)))
-            else:
-                # GangaException as something has really gone wrong here (repo error or worse!)
-                raise GangaException('Failed to load object from disk to get attribute "%s" of class: "%s"' % (name, _getName(obj)))
-        else:
-            # Please read the above for what we can/can't make strings out of!
+            # NB DO NOT, EVER explicitly rely on the full string representation of the class here as you could 
+            # very easily end up in a circular loop here back at the getter for an attribute not correctly setup
+            # _Try_ at least to just get the object name. The _getName method will result in performing a full string rep
+            # but this method will only do that if it ABSOLUTELY NEEDS TO
             raise AttributeError('Could not find attribute "{0}" in "{1}"'.format(name, _getName(obj)))
+        else:
+            # GangaException as something has really gone wrong here (repo error or worse!)
+            raise GangaException('Failed to load object from disk to get attribute "%s" of class: "%s"' % (name, _getName(obj)))
 
     @staticmethod
     def cloneObject(v, input_tuple):
