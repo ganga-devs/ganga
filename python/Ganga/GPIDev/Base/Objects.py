@@ -626,7 +626,7 @@ class ObjectMetaclass(abc.ABCMeta):
             logger.error(s)
             raise ValueError(s)
 
-        attrs_to_add = tuple( attr for attr, item in this_schema.allItems())
+        attrs_to_add = tuple(attr for attr, item in this_schema.allItems())
 
         # This reduces the memory footprint
         # TODO explore migrating the _data object to a non-dictionary type as it's a fixed size and we can potentially save big here!
@@ -791,14 +791,6 @@ class GangaObject(Node):
 
         if not hasattr(self, '_schema'):
             logger.debug("No Schema found for myself")
-            return
-
-        if self._schema is None and _srcobj._schema is None:
-            logger.debug("Schema object for one of these classes is None!")
-            return
-
-        if _srcobj._schema is None:
-            self._schema = None
             return
 
         self._actually_copyFrom(_srcobj, _ignore_atts)
@@ -1119,16 +1111,17 @@ class GangaObject(Node):
             logger.debug("_getRegistryID Exception: %s" % err)
             return None
 
+    @synchronised
     def _setFlushed(self):
         """Un-Set the dirty flag all of the way down the schema."""
-        if self._schema:
-            for k in self._schema.allItemNames():
-                ## Avoid attributes the likes of job.master which crawl back up the tree
-                if not self._schema[k].getProperties()['visitable'] or self._schema[k].getProperties()['transient']:
-                    continue
-                this_attr = getattr(self, k)
-                if isinstance(this_attr, Node):
-                    this_attr._setFlushed()
+        for k in self._data.keys():
+            ## Avoid attributes the likes of job.master which crawl back up the tree
+            properties = self._schema[k].getProperties()
+            if not properties['visitable'] or properties['transient']:
+                continue
+            this_attr = getattr(self, k)
+            if isinstance(this_attr, Node):
+                this_attr._setFlushed()
         super(GangaObject, self)._setFlushed()
 
     # post __init__ hook automatically called by GPI Proxy __init__
