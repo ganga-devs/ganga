@@ -30,6 +30,8 @@ logger = getLogger()
 
 prep_lock = threading.Lock()
 
+WN_script_name = 'GaudiRun_Python_WN_script.py'
+
 def add_timeStampFile(given_path):
     """
     This creates a file in this directory given called __timestamp__ which contains the time so that the final file is unique
@@ -80,11 +82,19 @@ def generateWNScript(commandline, job):
         commandline (str): This is the command-line argument the script is wrapping
         job (Job): This is the job object which contains everything useful for generating the code
     """
+
     exe_script_name = 'gaudiRun-script.py'
 
-    return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
-                                                                      OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
-                      executable=True)
+    if job.application.runWithPython:
+
+        return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline, WN_SCRIPT_NAME=WN_script_name,
+                                                                          SCRIPT_NAME = os.path.basename(job.application.getOptsFile().namePattern),
+                                                                          OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
+                          executable=True)
+    else:
+        return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline, WN_SCRIPT_NAME=WN_script_name,
+                                                                          OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
+                          executable=True)
 
 def collectPreparedFiles(app):
     """
@@ -117,7 +127,10 @@ def prepareCommand(app):
     else:
         raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                             getName(opts_file))
-    full_cmd = "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
+    if app.runWithPython:
+        full_cmd = './run python %s' %(WN_script_name)
+    else:
+        full_cmd = "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
     return full_cmd
 
 
@@ -179,7 +192,7 @@ class GaudiRunRTHandler(IRuntimeHandler):
             for f in input_files:
                 input_sand.append(File(f))
 
-        logger.info("input_sand: %s" % input_sand)
+        logger.debug("input_sand: %s" % input_sand)
 
         # It's this authors opinion that the script should be in the PATH on the WN
         # As it stands policy is that is isn't so we have to call it in a relative way, hence "./"
@@ -371,21 +384,41 @@ from __future__ import print_function
 from os import listdir, system, environ, pathsep, getcwd
 from mimetypes import guess_type
 from contextlib import closing
-import tarfile
 import sys
 
 def extractAllTarFiles(path):
     for f in listdir(path):
         print("examining: %s" % f )
-        if guess_type(f)[1] in ['gzip', 'bzip2']:
-            with closing(tarfile.open(f, "r:*")) as tf:
-                print("Extracting: %s" % tf.name)
-                tf.extractall('.')
+        file_type = guess_type(f)[1]
+        if file_type in ['gzip', 'bzip2']:
+            print("Extracting: %s" % f)
+            if file_type == 'gzip':
+                system("tar -zxf %s" % f)
+            elif file_type == 'bzip2':
+                system("tar -jxf %s" % f)
+
+def pythonScript(scriptName):
+    script = '''
+from Gaudi.Configuration import *
+importOptions('data.py')
+execfile('./%s')
+''' % scriptName
+    return script
+
+def generatePythonScript(scriptName):
+    with open('###WN_SCRIPT_NAME###', 'w') as WN_script:
+        WN_script.write(pythonScript(scriptName))
 
 # Main
 if __name__ == '__main__':
 
+    print("Arrived at workernode: %s" % getcwd())
+
     extractAllTarFiles('.')
+
+    generatePythonScript('###SCRIPT_NAME###')
+
+    print("Executing: %s" % '###COMMAND###')
 
     rc = system('###COMMAND###')
 

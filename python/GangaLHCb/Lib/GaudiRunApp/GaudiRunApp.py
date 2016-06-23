@@ -21,7 +21,6 @@ logger = getLogger()
 
 
 class GaudiRun(IPrepareApp):
-
     """
     Welcome to the new GaudiApp for LHCb apps written/constructed making use of the new CMake framework
 
@@ -53,6 +52,19 @@ class GaudiRun(IPrepareApp):
 
     prepare_cmake_app(myApp, myVer, myPath, myGetpack)
 
+    For GaudiPython style of running:
+
+    The actual command run on the WN is:
+
+        ./run gaudirun.py myOptsFile.py data.py
+
+    If you would prefer to have your optsfile run as a python application then set 'job.application.runWithPython = True'
+    This then changes the command run on the WN to be:
+
+        ./run python OptsFileWrapper.py
+
+        Here the OptsFileWrapper script imports the data.py describing the data to be run over and executes myOpts with 'execfile'
+
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
@@ -62,6 +74,7 @@ class GaudiRun(IPrepareApp):
             doc="Options to be passed to 'make ganga-input-sandbox'"),
         'myOpts':       GangaFileItem(defvalue=None, doc='File which contains the extra opts I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
+        'runWithPython':SimpleItem(defvalue=False, doc='Should \'myOpts\' be run as "python myOpts.py data.py" rather than "gaudirun.py myOpts.py data.py"'),
 
         # Prepared job object
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1,
