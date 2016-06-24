@@ -3,7 +3,7 @@ import timeit
 
 import pytest
 
-from GangaDirac.Lib.Utilities.DiracUtilities import execute
+from GangaDirac.Lib.Utilities.DiracUtilities import execute, getDiracEnv
 
 from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
 
@@ -16,6 +16,11 @@ def config_files():
     load_config_files()
     yield
     clear_config()
+
+
+def test_dirac_env():
+    env = getDiracEnv()
+    assert any(key.startswith('DIRAC') for key in env)
 
 
 def test_output():
