@@ -518,10 +518,18 @@ class Registry(object):
         if self.metadata and self.metadata.hasStarted():
             self.metadata.flush_all()
 
-    @synchronised_complete_lock
     def _load(self, obj):
         """
-        Fully load an object from a Repo/disk into memory
+        Use this function to load an object from disk as it will check if the object is already loaded *outside*
+         of the lock for when the actual load takes place in _locked_load
+        """
+        if not self.repository.isObjectLoaded(obj):
+            self._locked_load(obj)
+
+    @synchronised_complete_lock
+    def _locked_load(self, obj):
+        """
+        Fully load an object from a Repo/disk into memory. Should only ever be called from _load!
         Args:
             obj (GangaObject): This is the object we want to fully load
         """
@@ -531,8 +539,7 @@ class Registry(object):
         obj_id = self.find(obj)
 
         try:
-            if not self.repository.isObjectLoaded(obj):
-                self.repository.load([obj_id])
+            self.repository.load([obj_id])
         except Exception as err:
             logger.error("Error Loading Jobs! '%s'" % obj_ids)
             ## Cleanup after ourselves if an error occured
