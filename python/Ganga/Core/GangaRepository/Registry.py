@@ -886,6 +886,7 @@ class Registry(object):
         self.changed_ids[name] = set()
         return res
 
+    @synchronised
     def getIndexCache(self, obj):
         """Returns a dictionary to be put into obj._index_cache (is this valid)
         This can and should be overwritten by derived Registries to provide more index values."""

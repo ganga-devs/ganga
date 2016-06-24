@@ -112,13 +112,15 @@ class Node(object):
         # type: () -> Node
         return self._parent
 
-    @synchronised  # This will lock the _current_ (soon to be _old_) root object
+    #@synchronised  # This will lock the _current_ (soon to be _old_) root object
     def _setParent(self, parent):
         """
         This sets the parent of this Node to be a new object
         Args:
             parent (GangaObject): This is the GangaObject to be taken as the objects new parent
         """
+        setattr(self, '_parent', parent)
+        return
         # type: (Node) -> None
         if parent is None:
             setattr(self, '_parent', parent)
