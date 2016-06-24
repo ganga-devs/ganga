@@ -18,9 +18,6 @@ class TestGangaObject(unittest.TestCase):
     def setUp(self):
         self.obj = GangaObject()
 
-    def test_getReadAccess(self):
-        self.obj._getReadAccess()
-
     def test_getWriteAccess(self):
         self.obj._getWriteAccess()
 

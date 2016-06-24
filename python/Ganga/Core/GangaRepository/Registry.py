@@ -558,14 +558,17 @@ class Registry(object):
             if self.hasStarted() is not True:
                 raise RegistryAccessError("Cannot get write access to a disconnected repository!")
 
-            this_id = self.find(obj)
-            if len(self.repository.lock([this_id])) == 0:
-                errstr = "Could not lock '%s' object #%i!" % (self.name, this_id)
-                errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(this_id)
-                raise RegistryLockError(errstr)
+            if not hasattr(obj, '_registry_locked') or not obj._registry_locked:
+                this_id = self.find(obj)
+                if len(self.repository.lock([this_id])) == 0:
+                    errstr = "Could not lock '%s' object #%i!" % (self.name, this_id)
+                    errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(this_id)
+                    raise RegistryLockError(errstr)
 
-            # try to load even if lock fails
-            self._load(obj)
+                # try to load even if lock fails
+                self._load(obj)
+
+                obj._registry_locked = True
 
     def _release_lock(self, obj):
         """Release the lock on a given object.
