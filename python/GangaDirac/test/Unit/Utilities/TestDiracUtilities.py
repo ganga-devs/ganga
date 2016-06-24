@@ -52,12 +52,12 @@ def test_execute_timeouts():
         import os
         from GangaDirac.Lib.Utilities.DiracUtilities import execute
         execute('import os\\nprint(os.getcwd())',timeout=10, cwd=os.getcwd())
-        ''', number=1) < 10
+        ''', number=1) < 11
     assert timeit.timeit(
         '''
         from GangaDirac.Lib.Utilities.DiracUtilities import execute
         execute('cd {0}; pwd',shell=True, timeout=10)
-        '''.format(os.getcwd()), number=1) < 10
+        '''.format(os.getcwd()), number=1) < 11
 
 
 def test_execute_cwd():
