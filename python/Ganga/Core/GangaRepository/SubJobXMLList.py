@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from Ganga.GPIDev.Schema.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
@@ -337,12 +338,12 @@ class SubJobXMLList(GangaObject):
         #print("\n\n\n")
         #import sys
         #sys.exit(-1)
-        job_obj = self.getSafeJob()
-        if job_obj is not None:
-            fqid = self.getMasterID()
-            logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
-        else:
-            logger.debug( "Loading subjob at: %s" % subjob_data )
+        #job_obj = self.getSafeJob()
+        #if job_obj is not None:
+        #    fqid = self.getMasterID()
+        #    logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
+        #else:
+        #    logger.debug( "Loading subjob at: %s" % subjob_data )
         sj_file = open(subjob_data, "r")
         return sj_file
 

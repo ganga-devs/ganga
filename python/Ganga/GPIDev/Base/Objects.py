@@ -47,7 +47,7 @@ logger = getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data', '_read_lock', '_write_lock', '_proxyObject']
+do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data', '_const_lock', '_proxyObject']
 
 def _getGangaList():
     """
@@ -84,13 +84,12 @@ class Node(object):
     thread-safe usage.
     """
     __metaclass__ = abc.ABCMeta
-    __slots__ = ('_parent', '_read_lock', '_write_lock', '_dirty')
+    __slots__ = ('_parent', '_const_lock', '_dirty')
 
     def __init__(self, parent=None):
         super(Node, self).__init__()
         self._parent = parent
-        self._read_lock = threading.RLock()  # Don't read out of thread whilst we're making a change
-        self._write_lock = threading.RLock()  # Don't write from out of thread when modifying an object
+        self._const_lock = threading.RLock()  # Don't write from out of thread when modifying an object
         self._dirty = False  # dirty flag is true if the object has been modified locally and its contents is out-of-sync with its repository
 
     def __deepcopy__(self, memo=None):
@@ -139,14 +138,11 @@ class Node(object):
         but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
-        reg = root._getRegistry()
-        root._read_lock.acquire()
-        root._write_lock.acquire()
+        root._const_lock.acquire()
         try:
             yield
         finally:
-            root._write_lock.release()
-            root._read_lock.release()
+            root._const_lock.release()
 
     def _getRoot(self, cond=None):
         # type: () -> Node
@@ -233,24 +229,7 @@ class Node(object):
 ##########################################################################
 
 
-def synchronised_get_descriptor(get_function):
-    """
-    This decorator should only be used on ``__get__`` method of the ``Descriptor``.
-    Args:
-        get_function (function): Function we intend to wrap with the soft/read lock
-    """
-    @functools.wraps(get_function)
-    def decorated(self, obj, type_or_value):
-        if obj is None:
-            return get_function(self, obj, type_or_value)
-
-        with obj._read_lock:
-            return get_function(self, obj, type_or_value)
-
-    return decorated
-
-
-def synchronised_set_descriptor(set_function):
+def synchronised_descriptor(set_function):
     """
     This decorator should only be used on ``__set__`` method of the ``Descriptor``.
     Args:
@@ -261,8 +240,7 @@ def synchronised_set_descriptor(set_function):
             return set_function(self, obj, type_or_value)
 
         with obj.const_lock:
-            with obj._read_lock:
-                return set_function(self, obj, type_or_value)
+            return set_function(self, obj, type_or_value)
     return decorated
 
 
@@ -308,7 +286,7 @@ class Descriptor(object):
         if self._getter_name:
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
-    @synchronised_get_descriptor
+    @synchronised_descriptor
     def __get__(self, obj, cls):
         """
         Get method of Descriptor
@@ -348,7 +326,9 @@ class Descriptor(object):
         # Since we couldn't find the information in the cache, we will need to fully load the object
 
         # Guarantee that the object is now loaded from disk
-        obj._getReadAccess()
+        reg = obj._getRegistry()
+        if reg:
+            reg._load([obj._id])
 
         # If we've loaded from disk then the data dict has changed. If we're constructing an object
         # then we need to rely on the factory
@@ -461,7 +441,7 @@ class Descriptor(object):
 
         return v_copy
 
-    @synchronised_set_descriptor
+    @synchronised_descriptor
     def __set__(self, obj, val):
         """
         Set method
@@ -1110,7 +1090,7 @@ class GangaObject(Node):
     @synchronised
     def _setFlushed(self):
         """Un-Set the dirty flag all of the way down the schema."""
-        for k in self._data.keys():
+        for k in self._schema.allItemNames():
             ## Avoid attributes the likes of job.master which crawl back up the tree
             properties = self._schema[k].getProperties()
             if not properties['visitable'] or properties['transient']:

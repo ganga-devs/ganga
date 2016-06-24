@@ -27,7 +27,6 @@ class GangaRepositorySQLite(GangaRepository):
         """ Starts an repository and reads in a directory structure."""
         self._load_timestamp = {}
         self._cache_load_timestamp = {}
-        self._fully_loaded = {}
         self.known_bad_ids = []
         self.root = os.path.join(
             self.registry.location, "0.1", self.registry.name)
@@ -131,11 +130,11 @@ class GangaRepositorySQLite(GangaRepository):
                 obj = self._make_empty_object_(_id, e[2], e[1])
             else:
                 obj = self.objects[_id]
-            if _id not in self._fully_loaded:
+            if not self.objects[_id]._inMemory:
                 new_data = pickle.loads(e[3])
                 for k, v in new_data:
                     setattr(obj, k, v)
-            self._fully_loaded[_id] = obj
+            self.objects[_id]._inMemory = True
             ids.remove(_id)
         if len(ids) > 0:
             raise KeyError(ids[0])

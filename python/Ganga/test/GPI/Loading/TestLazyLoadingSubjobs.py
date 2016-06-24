@@ -44,7 +44,7 @@ class TestLazyLoadingSubjobs(GangaUnitTest):
         from Ganga.GPIDev.Base.Proxy import stripProxy
         raw_j = stripProxy(j)
 
-        has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+        has_loaded_job = raw_j._inMemory
 
         self.assertFalse(has_loaded_job)
 
@@ -62,7 +62,7 @@ class TestLazyLoadingSubjobs(GangaUnitTest):
         ## ANY COMMAND TO LOAD A JOB CAN BE USED HERE
         raw_j.printSummaryTree()
 
-        has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+        has_loaded_job = raw_j._inMemory
 
         for i in range(len(j.subjobs)):
             self.assertFalse(raw_j.subjobs.isLoaded(i))

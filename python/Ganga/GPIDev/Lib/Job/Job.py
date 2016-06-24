@@ -58,9 +58,8 @@ def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
 
     this_job = stripProxy(raw_job)
 
-    if this_job._getRegistry() is not None:
-        if this_job._getRegistry().has_loaded(this_job):
-            return getattr(this_job, this_attr)
+    if this_job._inMemory:
+        return getattr(this_job, this_attr)
 
     lzy_loading_str = 'display:'+ this_attr
     job_index_cache = this_job._index_cache

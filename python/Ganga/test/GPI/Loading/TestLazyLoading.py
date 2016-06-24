@@ -33,7 +33,7 @@ class TestLazyLoading(object):
 
         raw_j = stripProxy(j)
 
-        has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+        has_loaded_job = raw_j._inMemory
 
         assert not has_loaded_job
 
@@ -51,7 +51,7 @@ class TestLazyLoading(object):
         # Any command to load a job can be used here
         raw_j.printSummaryTree()
 
-        has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+        has_loaded_job = raw_j._inMemory
 
         assert has_loaded_job
 
@@ -62,19 +62,19 @@ class TestLazyLoading(object):
 
         raw_j = stripProxy(jobs(0))
 
-        assert not raw_j._getRegistry().has_loaded(raw_j)
+        assert not raw_j._inMemory
 
         dirty_status = raw_j._dirty
 
         assert not dirty_status
 
-        assert not raw_j._getRegistry().has_loaded(raw_j)
+        assert not raw_j._inMemory
 
         with pytest.raises(AttributeError):
             _ = jobs(0)._dirty
 
-        assert not raw_j._getRegistry().has_loaded(raw_j)
+        assert not raw_j._inMemory
 
         raw_j.printSummaryTree()
 
-        assert raw_j._getRegistry().has_loaded(raw_j)
+        assert raw_j._inMemory
