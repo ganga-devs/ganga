@@ -244,16 +244,19 @@ def synchronised_descriptor(set_function):
         if obj is None:
             return set_function(self, obj, type_or_value)
 
-        # Load an object from disk if it's not been loaded already
-        obj_root = obj._getRoot()
-        reg = obj_root._getRegistry()
-        if reg is not None and not obj._inMemory:
-            reg._load([obj._id])
-
         with obj.const_lock:
             return set_function(self, obj, type_or_value)
     return decorated
 
+def load_object(obj):
+    """
+    Wrapper for loading an object from disk using the Registry
+    """
+
+    obj_root = obj._getRoot()
+    reg = obj_root._getRegistry()
+    if reg is not None:
+        reg._load([obj_root._id])
 
 class Descriptor(object):
 
@@ -316,15 +319,26 @@ class Descriptor(object):
         if self._getter_name:
             return self._bind_method(obj, self._getter_name)()
 
-
-        # schema data takes priority ALWAYS over ._index_cache
-        # This access should not cause the object to be loaded
-        if name not in obj._data:
-            self.__set__(obj, obj._schema.getDefaultValue(name))
-        return obj._data[name]
+        if obj._inMemory:
+            # schema data takes priority ALWAYS over ._index_cache
+            # This access should not cause the object to be loaded
+            if name not in obj._data:
+                self.__set__(obj, obj._schema.getDefaultValue(name))
+            return obj._data[name]
 
         # Then try to get it from the index cache
         # NB Can we remove this yet? This allows access to index items asif they're in the schema. They are normally not.
+        obj_index = obj._index_cache
+        if name in obj_index:
+            return obj_index[name]
+
+        load_object(obj)
+
+        if name not in obj._data:
+            self.__set__(obj, obj._schema.getDefaultValue(name))
+        if name in obj._data:
+            return obj._data[name]
+
         obj_index = obj._index_cache
         if name in obj_index:
             return obj_index[name]
@@ -451,6 +465,8 @@ class Descriptor(object):
         self._check_getter()
 
         _set_name = _getName(self)
+
+        load_object(obj)
 
         # This returns a reference or new object as appropriate
         new_value = Descriptor.cleanValue(obj, val, _set_name)
