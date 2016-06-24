@@ -141,7 +141,6 @@ class Node(object):
         but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
-        reg = root._getRegistry()
         root._read_lock.acquire()
         root._write_lock.acquire()
         try:
@@ -235,24 +234,7 @@ class Node(object):
 ##########################################################################
 
 
-def synchronised_get_descriptor(get_function):
-    """
-    This decorator should only be used on ``__get__`` method of the ``Descriptor``.
-    Args:
-        get_function (function): Function we intend to wrap with the soft/read lock
-    """
-    @functools.wraps(get_function)
-    def decorated(self, obj, type_or_value):
-        if obj is None:
-            return get_function(self, obj, type_or_value)
-
-        with obj._read_lock:
-            return get_function(self, obj, type_or_value)
-
-    return decorated
-
-
-def synchronised_set_descriptor(set_function):
+def synchronised_get_set_descriptor(set_function):
     """
     This decorator should only be used on ``__set__`` method of the ``Descriptor``.
     Args:
@@ -262,9 +244,8 @@ def synchronised_set_descriptor(set_function):
         if obj is None:
             return set_function(self, obj, type_or_value)
 
-        with obj._read_lock:
-            with obj.const_lock:
-                return set_function(self, obj, type_or_value)
+        with obj.const_lock:
+            return set_function(self, obj, type_or_value)
     return decorated
 
 
@@ -310,7 +291,7 @@ class Descriptor(object):
         if self._getter_name:
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
-    @synchronised_get_descriptor
+    @synchronised_get_set_descriptor
     def __get__(self, obj, cls):
         """
         Get method of Descriptor
@@ -465,7 +446,7 @@ class Descriptor(object):
 
         return v_copy
 
-    @synchronised_set_descriptor
+    @synchronised_get_set_descriptor
     def __set__(self, obj, val):
         """
         Set method
