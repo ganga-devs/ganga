@@ -28,6 +28,8 @@ from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 
+from Ganga.Core.exceptions import GangaException
+
 logger = Ganga.Utility.logging.getLogger()
 
 save_all_history = False
@@ -123,7 +125,6 @@ def rmrf(name, count=0):
         logger.debug("Trying again to remove: %s" % name)
         if count == 3:
             logger.error("Tried 3 times to remove file/folder: %s" % name)
-            from Ganga.Core.exceptions import GangaException
             raise GangaException("Failed to remove file/folder: %s" % name)
 
     if os.path.isdir(name):
@@ -365,7 +366,7 @@ class GangaRepositoryLocal(GangaRepository):
                         try:
                             rmrf(self.get_idxfn(this_id))
                             logger.warning("Deleted index file without data file: %s" % self.get_idxfn(this_id))
-                        except OSError as err:
+                        except (OSError, GangaException) as err:
                             logger.debug("get_index_listing delete Exception: %s" % err)
         return objs
 
@@ -397,7 +398,7 @@ class GangaRepositoryLocal(GangaRepository):
         finally:
             try:
                 rmrf(os.path.join(self.root, 'master.idx'))
-            except OSError:
+            except (OSError, GangaException):
             	pass
 
     def _clear_stored_cache(self):
@@ -717,7 +718,7 @@ class GangaRepositoryLocal(GangaRepository):
                     if idn.isdigit() and int(idn) >= len(split_cache):
                         try:
                             rmrf(os.path.join(os.path.dirname(fn), idn))
-                        except OSError as err:
+                        except (OSError, GangaException) as err:
                             logger.warning("Couldn't remove a file: %s" % err)
                             pass
             else:
@@ -730,7 +731,7 @@ class GangaRepositoryLocal(GangaRepository):
                     if idn.isdigit():
                         try:
                             rmrf(os.path.join(os.path.dirname(fn), idn))
-                        except OSError as err:
+                        except (OSError, GangaException) as err:
                             logger.warning("Couldn't remove a file: %s" % err)
             if this_id not in self.incomplete_objects:
                 self.index_write(this_id)
@@ -968,7 +969,7 @@ class GangaRepositoryLocal(GangaRepository):
                     # remove internal representation
                     self._internal_del__(this_id)
                     rmrf(os.path.dirname(fn) + ".index")
-                except OSError as err:
+                except (OSError, GangaException) as err:
                     logger.debug("load unlink Error: %s" % err)
                     pass
                 raise KeyError(this_id)
