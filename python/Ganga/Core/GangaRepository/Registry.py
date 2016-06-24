@@ -699,6 +699,7 @@ class Registry(object):
                 loading_id = obj_id
                 self._objects[obj_id]._inMemory = True
                 self.repository.load([obj_id])
+                self._objects[obj_id]._inMemory = True
                 loading_id = None
         except Exception as err:
             logger.error("Error Loading Jobs! '%s'" % obj_ids)

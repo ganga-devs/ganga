@@ -69,7 +69,7 @@ def synchronised(f):
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
-        with self.const_lock:
+        with self._const_lock:
             return f(self, *args, **kwargs)
     return decorated
 
@@ -122,7 +122,7 @@ class Node(object):
         if parent is None:
             setattr(self, '_parent', parent)
         else:
-            with parent.const_lock: # This will lock the _new_ root object
+            with parent._const_lock: # This will lock the _new_ root object
                 setattr(self, '_parent', parent)
             # Finally the new and then old root objects will be unlocked
 
@@ -138,10 +138,15 @@ class Node(object):
         but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
+        reg = root._getRegistry()
+        if reg is not None:
+            reg._lock.acquire()
         root._const_lock.acquire()
         try:
             yield
         finally:
+            if reg is not None:
+                reg._lock.release()
             root._const_lock.release()
 
     def _getRoot(self, cond=None):
@@ -239,6 +244,12 @@ def synchronised_descriptor(set_function):
         if obj is None:
             return set_function(self, obj, type_or_value)
 
+        # Load an object from disk if it's not been loaded already
+        obj_root = obj._getRoot()
+        reg = obj_root._getRegistry()
+        if reg is not None and not obj._inMemory:
+            reg._load([obj._id])
+
         with obj.const_lock:
             return set_function(self, obj, type_or_value)
     return decorated
@@ -305,17 +316,12 @@ class Descriptor(object):
         if self._getter_name:
             return self._bind_method(obj, self._getter_name)()
 
-        # First we want to try to get the information without prompting a load from disk
 
-        # If we're laded from disk inspect the _data and generate a default if needed
-        # If we're not loaded from disk, we should _by definition_ NOT look here for objects in memory as they should NEVER be here
-        if obj._inMemory:
-            # schema data takes priority ALWAYS over ._index_cache
-            # This access should not cause the object to be loaded
-            if name not in obj._data:
-                self.__set__(obj, obj._schema.getDefaultValue(name))
-            # NB we check for schema entries as this will have problem when object not in Schema
-            return obj._data[name]
+        # schema data takes priority ALWAYS over ._index_cache
+        # This access should not cause the object to be loaded
+        if name not in obj._data:
+            self.__set__(obj, obj._schema.getDefaultValue(name))
+        return obj._data[name]
 
         # Then try to get it from the index cache
         # NB Can we remove this yet? This allows access to index items asif they're in the schema. They are normally not.
@@ -323,35 +329,11 @@ class Descriptor(object):
         if name in obj_index:
             return obj_index[name]
 
-        # Since we couldn't find the information in the cache, we will need to fully load the object
-
-        # Guarantee that the object is now loaded from disk
-        obj_root = obj._getRoot()
-        reg = obj_root._getRegistry()
-        if reg:
-            reg._load([obj_root._id])
-
-        # If we've loaded from disk then the data dict has changed. If we're constructing an object
-        # then we need to rely on the factory
-        if name not in obj._data:
-            self.__set__(obj, obj._schema.getDefaultValue(name))
-        return obj._data[name]
-
-        if obj._inMemory:
-            # If we loaded from disk everything could have changed (including corrupt index updated!)
-            obj_index = obj._index_cache
-            if name in obj_index:
-                return obj_index[name]
-
-                
-            # NB DO NOT, EVER explicitly rely on the full string representation of the class here as you could 
-            # very easily end up in a circular loop here back at the getter for an attribute not correctly setup
-            # _Try_ at least to just get the object name. The _getName method will result in performing a full string rep
-            # but this method will only do that if it ABSOLUTELY NEEDS TO
-            raise AttributeError('Could not find attribute "{0}" in "{1}"'.format(name, _getName(obj)))
-        else:
-            # GangaException as something has really gone wrong here (repo error or worse!)
-            raise GangaException('Failed to load object from disk to get attribute "%s" of class: "%s"' % (name, _getName(obj)))
+        # NB DO NOT, EVER explicitly rely on the full string representation of the class here as you could 
+        # very easily end up in a circular loop here back at the getter for an attribute not correctly setup
+        # _Try_ at least to just get the object name. The _getName method will result in performing a full string rep
+        # but this method will only do that if it ABSOLUTELY NEEDS TO
+        raise AttributeError('Could not find attribute "{0}" in "{1}"'.format(name, _getName(obj)))
 
     @staticmethod
     def cloneObject(v, input_tuple):
@@ -467,12 +449,6 @@ class Descriptor(object):
                 val = this_filter(_val)
 
         self._check_getter()
-
-        # ON-DISK LOCKING
-        obj_root = obj._getRoot()
-        reg = obj_root._getRegistry()
-        if reg:
-            reg._load([obj_root._id])
 
         _set_name = _getName(self)
 
