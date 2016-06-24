@@ -47,7 +47,7 @@ logger = getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data', '_read_lock', '_write_lock', '_proxyObject']
+do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data', '_const_lock', '_proxyObject']
 
 def _getGangaList():
     """
@@ -84,13 +84,12 @@ class Node(object):
     thread-safe usage.
     """
     __metaclass__ = abc.ABCMeta
-    __slots__ = ('_parent', '_read_lock', '_write_lock', '_dirty')
+    __slots__ = ('_parent', '_const_lock', '_dirty')
 
     def __init__(self, parent=None):
         super(Node, self).__init__()
         self._parent = parent
-        self._read_lock = threading.RLock()  # Don't read out of thread whilst we're making a change
-        self._write_lock = threading.RLock()  # Don't write from out of thread when modifying an object
+        self._const_lock = threading.RLock()  # Don't write from out of thread when modifying an object
         self._dirty = False  # dirty flag is true if the object has been modified locally and its contents is out-of-sync with its repository
 
     def __deepcopy__(self, memo=None):
@@ -112,15 +111,13 @@ class Node(object):
         # type: () -> Node
         return self._parent
 
-    #@synchronised  # This will lock the _current_ (soon to be _old_) root object
+    @synchronised  # This will lock the _current_ (soon to be _old_) root object
     def _setParent(self, parent):
         """
         This sets the parent of this Node to be a new object
         Args:
             parent (GangaObject): This is the GangaObject to be taken as the objects new parent
         """
-        setattr(self, '_parent', parent)
-        return
         # type: (Node) -> None
         if parent is None:
             setattr(self, '_parent', parent)
@@ -141,13 +138,11 @@ class Node(object):
         but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
-        root._read_lock.acquire()
-        root._write_lock.acquire()
+        root._const_lock.acquire()
         try:
             yield
         finally:
-            root._write_lock.release()
-            root._read_lock.release()
+            root._const_lock.release()
 
     def _getRoot(self, cond=None):
         # type: () -> Node
@@ -234,7 +229,7 @@ class Node(object):
 ##########################################################################
 
 
-def synchronised_get_set_descriptor(set_function):
+def synchronised_descriptor(set_function):
     """
     This decorator should only be used on ``__set__`` method of the ``Descriptor``.
     Args:
@@ -291,7 +286,7 @@ class Descriptor(object):
         if self._getter_name:
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
-    @synchronised_get_set_descriptor
+    @synchronised_descriptor
     def __get__(self, obj, cls):
         """
         Get method of Descriptor
@@ -446,7 +441,7 @@ class Descriptor(object):
 
         return v_copy
 
-    @synchronised_get_set_descriptor
+    @synchronised_descriptor
     def __set__(self, obj, val):
         """
         Set method
