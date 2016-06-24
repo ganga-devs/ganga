@@ -329,7 +329,7 @@ class Descriptor(object):
         obj_root = obj._getRoot()
         reg = obj_root._getRegistry()
         if reg:
-            reg._load([obj_root_id])
+            reg._load([obj_root._id])
 
         # If we've loaded from disk then the data dict has changed. If we're constructing an object
         # then we need to rely on the factory
