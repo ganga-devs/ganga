@@ -470,7 +470,7 @@ class Descriptor(object):
         # ON-DISK LOCKING
         reg = obj._getRegistry()
         if reg:
-            reg._load([obj.id])
+            reg._load([obj._id])
 
         _set_name = _getName(self)
 
