@@ -260,8 +260,8 @@ def synchronised_set_descriptor(set_function):
         if obj is None:
             return set_function(self, obj, type_or_value)
 
-        with obj.const_lock:
-            with obj._read_lock:
+        with obj._read_lock:
+            with obj.const_lock:
                 return set_function(self, obj, type_or_value)
     return decorated
 
@@ -348,10 +348,9 @@ class Descriptor(object):
         # Since we couldn't find the information in the cache, we will need to fully load the object
 
         # Guarantee that the object is now loaded from disk
-        if not self._inMemory:
-            reg = obj._getRegistry()
-            if reg:
-                reg._load([self.id])
+        reg = obj._getRegistry()
+        if reg:
+            reg._load([obj._id])
 
         # If we've loaded from disk then the data dict has changed. If we're constructing an object
         # then we need to rely on the factory

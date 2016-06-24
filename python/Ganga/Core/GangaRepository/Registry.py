@@ -305,10 +305,10 @@ class Registry(object):
         while this_id in self._inprogressDict:
             logger.debug("Getting item being operated on: %s" % this_id)
             logger.debug("Currently in state: %s" % self._inprogressDict[this_id])
-            #import traceback
-            #traceback.print_stack()
-            #import sys
-            #sys.exit(-1)
+            import traceback
+            traceback.print_stack()
+            import sys
+            sys.exit(-1)
             #time.sleep(0.05)
         self._inprogressDict[this_id] = action
         if this_id not in self.hard_lock:
@@ -670,6 +670,13 @@ class Registry(object):
         Args:
             obj_ids (list): This is the list of id which we want to fully load objects for according to object dict
         """
+
+        already_loaded = True
+        for obj_id in obj_ids:
+            already_loaded = already_loaded & self._objects[obj_id]._inMemory
+        if already_loaded:
+            return
+
         logger.debug("_load")
         these_ids = []
         for obj_id in obj_ids:
@@ -684,9 +691,15 @@ class Registry(object):
             if obj_id in self._objects:
                 prior_status[obj_id] = self._objects[obj_id]._dirty
 
+        loading_id = None
         try:
             for obj_id in obj_ids:
+                if self._objects[obj_id]._inMemory:
+                    continue
+                loading_id = obj_id
+                self._objects[obj_id]._inMemory = True
                 self.repository.load([obj_id])
+                loading_id = None
         except Exception as err:
             logger.error("Error Loading Jobs! '%s'" % obj_ids)
             ## Cleanup aftr ourselves if an error occured
@@ -694,6 +707,8 @@ class Registry(object):
                 ## Didn't load mark as clean so it's not flushed
                 if obj_id in self._objects:
                     self._objects[obj_id]._setFlushed()
+                if obj_id == loading_id:
+                    self._objects[obj_id]._inMemory = False
             raise
         finally:
             for obj_id in these_ids:
