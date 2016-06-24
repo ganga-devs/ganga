@@ -326,9 +326,10 @@ class Descriptor(object):
         # Since we couldn't find the information in the cache, we will need to fully load the object
 
         # Guarantee that the object is now loaded from disk
-        reg = obj._getRegistry()
+        obj_root = obj._getRoot()
+        reg = obj_root._getRegistry()
         if reg:
-            reg._load([obj._id])
+            reg._load([obj_root_id])
 
         # If we've loaded from disk then the data dict has changed. If we're constructing an object
         # then we need to rely on the factory
@@ -468,9 +469,10 @@ class Descriptor(object):
         self._check_getter()
 
         # ON-DISK LOCKING
-        reg = obj._getRegistry()
+        obj_root = obj._getRoot()
+        reg = obj_root._getRegistry()
         if reg:
-            reg._load([obj._id])
+            reg._load([obj_root._id])
 
         _set_name = _getName(self)
 
