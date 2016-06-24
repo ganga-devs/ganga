@@ -954,10 +954,9 @@ class GangaObject(Node):
     def _loadObject(self):
         """ makes sure the objects _data is there and the object itself has a recent state.
         Raise RepositoryError"""
-        root = self._getRoot()
-        reg = root._getRegistry()
+        reg = self._getRoot()._getRegistry()
         if reg is not None:
-            reg._read_access(root, self)
+            reg._load(self)
 
     # define when the object is read-only (for example a job is read-only in
     # the states other than new)
