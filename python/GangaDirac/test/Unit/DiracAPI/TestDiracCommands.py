@@ -257,13 +257,12 @@ class TestDiracCommands(object):
         confirm_remove = execute('removeFile("%s")' % new_lfn)
         assert confirm_remove['OK'], 'Command not executed successfully'
 
-    def test_addFile(self, dirac_job):
+    def test_addFile(self, dirac_job, tmpdir):
         new_lfn = '%s_add_file' % os.path.dirname(dirac_job.get_file_lfn)
         location = 'UKI-SOUTHGRID-RALPP-disk'
-        add_file = open('add_file', 'w')
-        add_file.write(random_str())
-        add_file.close()
-        confirm = execute('addFile("%s","add_file","%s","")' % (new_lfn, location))
+        temp_file = tmpdir.join('add_file')
+        temp_file.write(random_str())
+        confirm = execute('addFile("%s","%s","%s","")' % (new_lfn, temp_file, location))
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
         confirm_remove = execute('removeFile("%s")' % new_lfn)
