@@ -309,7 +309,7 @@ class Descriptor(object):
 
         # If we're laded from disk inspect the _data and generate a default if needed
         # If we're not loaded from disk, we should _by definition_ NOT look here for objects in memory as they should NEVER be here
-        if obj._fullyLoadedFromDisk():
+        if obj._inMemory:
             # schema data takes priority ALWAYS over ._index_cache
             # This access should not cause the object to be loaded
             if name not in obj._data:
@@ -336,7 +336,7 @@ class Descriptor(object):
             self.__set__(obj, obj._schema.getDefaultValue(name))
         return obj._data[name]
 
-        if obj._fullyLoadedFromDisk():
+        if obj._inMemory:
             # If we loaded from disk everything could have changed (including corrupt index updated!)
             obj_index = obj._index_cache
             if name in obj_index:
@@ -468,8 +468,9 @@ class Descriptor(object):
         self._check_getter()
 
         # ON-DISK LOCKING
-        if not obj._fullyLoadedFromDisk():
-            obj._getWriteAccess()
+        reg = obj._getRegistry()
+        if reg:
+            reg._load([obj.id])
 
         _set_name = _getName(self)
 
@@ -871,7 +872,7 @@ class GangaObject(Node):
         If this object has been fully loaded into memory and has a Registry assoicated with it it's created dynamically
         If this object isn't fully loaded or has no Registry associated with it the index_cache should be returned whatever it is
         """
-        if self._fullyLoadedFromDisk():
+        if self._inMemory:
             if self._getRegistry() is not None:
                 # Fully loaded so lets regenerate this on the fly to avoid losing data
                 return self._getRegistry().getIndexCache(self)
@@ -889,14 +890,9 @@ class GangaObject(Node):
         Args:
             new_inde_cache (dict): Dict of new entries for the new_index_cache
         """
-        if self._fullyLoadedFromDisk():
+        if self._inMemory:
             logger.debug("Warning: Setting IndexCache data on live object, please avoid!")
         self._index_cache_dict = new_index_cache
-
-    def _fullyLoadedFromDisk(self):
-        # type: () -> bool
-        """This returns a boolean. and it's related to if self has_loaded in the Registry of this object"""
-        return self._inMemory
 
     @staticmethod
     def __incrementShareRef(obj, attr_name):
