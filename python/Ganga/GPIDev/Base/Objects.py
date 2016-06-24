@@ -1114,7 +1114,7 @@ class GangaObject(Node):
     @synchronised
     def _setFlushed(self):
         """Un-Set the dirty flag all of the way down the schema."""
-        for k in self._data.keys():
+        for k in self._schema.allItemNames():
             ## Avoid attributes the likes of job.master which crawl back up the tree
             properties = self._schema[k].getProperties()
             if not properties['visitable'] or properties['transient']:
