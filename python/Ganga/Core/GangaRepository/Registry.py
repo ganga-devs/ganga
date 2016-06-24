@@ -305,11 +305,11 @@ class Registry(object):
         while this_id in self._inprogressDict:
             logger.debug("Getting item being operated on: %s" % this_id)
             logger.debug("Currently in state: %s" % self._inprogressDict[this_id])
-            import traceback
-            traceback.print_stack()
-            import sys
-            sys.exit(-1)
-            #time.sleep(0.05)
+            #import traceback
+            #traceback.print_stack()
+            #import sys
+            #sys.exit(-1)
+            time.sleep(0.1)
         self._inprogressDict[this_id] = action
         if this_id not in self.hard_lock:
             self.hard_lock[this_id] = threading.Lock()
