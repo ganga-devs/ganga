@@ -316,7 +316,7 @@ def test_removeOutputData(db):
         assert db.removeOutputData() is None
 
 
-def test_getOutputData(db):
+def test_getOutputData(db, tmpdir):
     j = Job()
     j.id = 0
     j.backend = db
@@ -363,7 +363,7 @@ def test_getOutputData(db):
                 assert not hasattr(f, 'localDir')
                 assert not hasattr(f, 'check')
         assert db.getOutputData(None, ['alpha', 'charlie']) == ['a', 'c']
-        assert db.getOutputData(os.path.expanduser('~/gangadir_testing'), ['alpha', 'charlie']) == ['a', 'c']
+        assert db.getOutputData(tmpdir.dirname, ['alpha', 'charlie']) == ['a', 'c']
 
         # subjobs
         ########################
@@ -377,10 +377,10 @@ def test_getOutputData(db):
         subjob = True
         assert db.getOutputData() == ['a', 'b', 'c'] * 3
         assert db.getOutputData(None, ['beta']) == ['b'] * 3
-        assert db.getOutputData(os.path.expanduser('~/gangadir_testing'), ['alpha', 'charlie']) == ['a', 'c'] * 3
+        assert db.getOutputData(tmpdir.dirname, ['alpha', 'charlie']) == ['a', 'c'] * 3
         for i in range(3):
-            assert os.path.isdir(os.path.join(os.path.expanduser('~/gangadir_testing'), '0.%d' % i))
-            os.rmdir(os.path.join(os.path.expanduser('~/gangadir_testing'), '0.%d' % i))
+            assert os.path.isdir(os.path.join(tmpdir.dirname, '0.%d' % i))
+            os.rmdir(os.path.join(tmpdir.dirname, '0.%d' % i))
 
 
 def test_getOutputDataLFNs(db):
