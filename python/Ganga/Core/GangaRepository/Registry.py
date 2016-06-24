@@ -136,7 +136,7 @@ class IncompleteObject(GangaObject):
         self.registry._lock.acquire()
         try:
 
-            if not self.has_loaded(self._registry._objects[self.id]):
+            if not self._registry._objects[self.id]._inMemory:
                 self.registry._load([self.id])
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
             for d in self.registry.changed_ids.itervalues():
@@ -623,7 +623,7 @@ class Registry(object):
             if not obj._dirty:
                 continue
 
-            if not self.has_loaded(obj):
+            if not obj._inMemory:
                 continue
 
             with obj.const_lock:
@@ -735,7 +735,7 @@ class Registry(object):
 
         try:
             try:
-                if not self.has_loaded(obj):
+                if not obj._inMemory:
                     this_id = self.find(obj)
                     self._load([this_id])
             except KeyError as err:
@@ -807,7 +807,7 @@ class Registry(object):
                     raise
                 finally:  # try to load even if lock fails
                     try:
-                        if not self.has_loaded(obj):
+                        if not obj._inMemory:
                             self._load([this_id])
                             if hasattr(obj, "_registry_refresh"):
                                 delattr(obj, "_registry_refresh")
@@ -970,19 +970,4 @@ class Registry(object):
             if len(other_sessions) > 0:
                 s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
         return s
-
-    def has_loaded(self, obj):
-        """Returns True/False for if a given object has been fully loaded by the Registry.
-        Returns False on the object not being in the Registry!
-        This ONLY applies to master jobs as the Registry has no apriori knowledge of the subjob structure.
-        Consult SubJobXMLList for a more fine grained loaded/not-loaded info/test.
-        Args:
-            obj (GangaObject): Object which we want to look for in this repo
-        """
-        try:
-            index = self.find(obj)
-        except ObjectNotInRegistryError:
-            return False
-
-        return self.repository.isObjectLoaded(obj)
 

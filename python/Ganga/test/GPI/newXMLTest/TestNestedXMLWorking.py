@@ -51,7 +51,7 @@ class TestNestedXMLWorking(GangaUnitTest):
         from Ganga.GPIDev.Base.Proxy import stripProxy
         raw_j = stripProxy(j)
 
-        has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+        has_loaded_job = raw_j._inMemory
 
         assert not has_loaded_job
 
@@ -69,7 +69,7 @@ class TestNestedXMLWorking(GangaUnitTest):
         ## ANY COMMAND TO LOAD A JOB CAN BE USED HERE
         raw_j.printSummaryTree()
 
-        has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+        has_loaded_job = raw_j._inMemory
 
         assert has_loaded_job
 

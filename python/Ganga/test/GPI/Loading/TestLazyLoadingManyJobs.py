@@ -41,7 +41,7 @@ class TestLazyLoadingManyJobs(GangaUnitTest):
             if j.id != 9:
                 raw_j = stripProxy(j)
 
-                has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+                has_loaded_job = raw_j._inMemory
 
                 self.assertFalse(has_loaded_job)
 
@@ -57,7 +57,7 @@ class TestLazyLoadingManyJobs(GangaUnitTest):
                 stat = lazyLoadJobStatus(raw_j)
                 fq = lazyLoadJobFQID(raw_j)
 
-                has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+                has_loaded_job = raw_j._inMemory
 
                 self.assertFalse(has_loaded_job)
 
@@ -75,7 +75,7 @@ class TestLazyLoadingManyJobs(GangaUnitTest):
         ## ANY COMMAND TO LOAD A JOB CAN BE USED HERE
         raw_j.printSummaryTree()
 
-        has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+        has_loaded_job = raw_j._inMemory
 
         self.assertTrue(has_loaded_job)
 
