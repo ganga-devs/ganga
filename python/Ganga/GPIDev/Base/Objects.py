@@ -784,34 +784,43 @@ class GangaObject(Node):
     def _actually_copyFrom(self, _srcobj, _ignore_atts):
         # type: (GangaObject, Optional[Sequence[str]]) -> None
 
-        for name, item in _srcobj._schema.allItems():
+        if hasattr(_srcobj, '_read_lock'):
+            _srcobj._read_lock.acquire()
 
-            if name in _ignore_atts:
-                continue
+        try:
 
-            obj = getattr(_srcobj, name)
+            for name, obj in _srcobj._data.iteritems():
 
-            #logger.debug("Copying: %s : %s" % (name, item))
-            if name == 'application' and hasattr(_srcobj.application, 'is_prepared'):
-                _app = _srcobj.application
-                if _app.is_prepared not in [None, True]:
-                    _app.incrementShareCounter(_app.is_prepared.name)
+                if name in _ignore_atts:
+                    continue
 
-            if not self._schema.hasAttribute(name):
-                if not hasattr(self, name):
-                    setattr(self, name, self._schema.getDefaultValue(name))
-                this_attr = obj
-                if isinstance(this_attr, Node) and name not in do_not_copy:
-                    this_attr._setParent(self)
-            elif not item['copyable']: ## Default of '1' instead of True...
-                if not hasattr(self, name):
-                    setattr(self, name, self._schema.getDefaultValue(name))
-                this_attr = obj
-                if isinstance(this_attr, Node) and name not in do_not_copy:
-                    this_attr._setParent(self)
-            else:
-                copy_obj = deepcopy(getattr(_srcobj, name))
-                setattr(self, name, copy_obj)
+                item = _srcobj._schema.getItem(name)
+
+                #logger.debug("Copying: %s : %s" % (name, item))
+                if name == 'application' and hasattr(_srcobj.application, 'is_prepared'):
+                    _app = _srcobj.application
+                    if _app.is_prepared not in [None, True]:
+                        _app.incrementShareCounter(_app.is_prepared.name)
+
+                if not self._schema.hasAttribute(name):
+                    if not hasattr(self, name):
+                        setattr(self, name, self._schema.getDefaultValue(name))
+                    this_attr = obj
+                    if isinstance(this_attr, Node) and name not in do_not_copy:
+                        this_attr._setParent(self)
+                elif not item['copyable']: ## Default of '1' instead of True...
+                    if not hasattr(self, name):
+                        setattr(self, name, self._schema.getDefaultValue(name))
+                    this_attr = obj
+                    if isinstance(this_attr, Node) and name not in do_not_copy:
+                        this_attr._setParent(self)
+                else:
+                    copy_obj = deepcopy(getattr(_srcobj, name))
+                    setattr(self, name, copy_obj)
+
+        finally:
+            if hasattr(_srcobj, '_read_lock'):
+                _srcobj._read_lock.release()
 
     @synchronised
     def __eq__(self, obj):
