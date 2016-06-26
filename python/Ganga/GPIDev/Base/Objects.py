@@ -784,10 +784,12 @@ class GangaObject(Node):
     def _actually_copyFrom(self, _srcobj, _ignore_atts):
         # type: (GangaObject, Optional[Sequence[str]]) -> None
 
-        for name, obj in _srcobj._data.iteritems():
-            item = self._schema.getItem(name)
+        for name, item in _srcobj._schema.allItems():
+
             if name in _ignore_atts:
                 continue
+
+            obj = getattr(_srcobj, name)
 
             #logger.debug("Copying: %s : %s" % (name, item))
             if name == 'application' and hasattr(_srcobj.application, 'is_prepared'):
