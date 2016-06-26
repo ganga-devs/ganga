@@ -722,21 +722,21 @@ class GangaObject(Node):
 
         for (name, item) in self._schema.simpleItems():
             if item['visitable']:
-                if name in self._data:
+                if name in self._data or hasattr(item, '_getter_name') and item._getter_name:
                     visitor.simpleAttribute(self, name, getattr(self, name), item['sequence'])
                 else:
                     visitor.simpleAttribute(self, name, self._schema.getDefaultValue(name, False), item['sequence'])
 
         for (name, item) in self._schema.sharedItems():
             if item['visitable']:
-                if name in self._data:
+                if name in self._data or hasattr(item, '_getter_name') and item._getter_name:
                     visitor.sharedAttribute(self, name, getattr(self, name), item['sequence'])
                 else:
                     visitor.sharedAttribute(self, name, self._schema.getDefaultValue(name, False), item['sequence'])
 
         for (name, item) in self._schema.componentItems():
             if item['visitable']:
-                if name in self._data:
+                if name in self._data or hasattr(item, '_getter_name') and item._getter_name:
                     visitor.componentAttribute(self, name, getattr(self, name), item['sequence'])
                 else:
                     visitor.componentAttribute(self, name, self._schema.getDefaultValue(name, False), item['sequence'])
@@ -1086,7 +1086,7 @@ class GangaObject(Node):
     @synchronised
     def _setFlushed(self):
         """Un-Set the dirty flag all of the way down the schema."""
-        for k in self._schema.allItemNames():
+        for k in self._data.keys():
             ## Avoid attributes the likes of job.master which crawl back up the tree
             properties = self._schema[k].getProperties()
             if not properties['visitable'] or properties['transient']:
