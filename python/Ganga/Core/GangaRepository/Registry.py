@@ -663,7 +663,6 @@ class Registry(object):
         with _obj.const_lock:
             self.__safe_read_access(_obj, sub_obj)
 
-    @synchronised
     def _load(self, obj_ids):
         """
         Fully load an object from a Repo/disk into memory

@@ -47,7 +47,7 @@ logger = getLogger(modulename=1)
 
 _imported_GangaList = None
 
-do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data', '_const_lock', '_proxyObject']
+do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data', '_write_lock', '_read_lock', '_proxyObject']
 
 def _getGangaList():
     """
@@ -69,7 +69,7 @@ def synchronised(f):
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
-        with self._const_lock:
+        with self._write_lock:
             return f(self, *args, **kwargs)
     return decorated
 
@@ -84,12 +84,13 @@ class Node(object):
     thread-safe usage.
     """
     __metaclass__ = abc.ABCMeta
-    __slots__ = ('_parent', '_const_lock', '_dirty')
+    __slots__ = ('_parent', '_write_lock', '_dirty')
 
     def __init__(self, parent=None):
         super(Node, self).__init__()
         self._parent = parent
-        self._const_lock = threading.RLock()  # Don't write from out of thread when modifying an object
+        self._read_lock = threading.RLock()
+        self._write_lock = threading.RLock()  # Don't write from out of thread when modifying an object
         self._dirty = False  # dirty flag is true if the object has been modified locally and its contents is out-of-sync with its repository
 
     def __deepcopy__(self, memo=None):
@@ -122,7 +123,7 @@ class Node(object):
         if parent is None:
             setattr(self, '_parent', parent)
         else:
-            with parent._const_lock: # This will lock the _new_ root object
+            with parent._write_lock: # This will lock the _new_ root object
                 setattr(self, '_parent', parent)
             # Finally the new and then old root objects will be unlocked
 
@@ -138,16 +139,14 @@ class Node(object):
         but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
-        reg = root._getRegistry()
-        if reg is not None:
-            reg._lock.acquire()
-        root._const_lock.acquire()
+        root._read_lock.acquire()
+        root._write_lock.acquire()
+        root_reg = root._getRegistry()
         try:
             yield
         finally:
-            if reg is not None:
-                reg._lock.release()
-            root._const_lock.release()
+            root._write_lock.release()
+            root._read_lock.release()
 
     def _getRoot(self, cond=None):
         # type: () -> Node
@@ -233,8 +232,15 @@ class Node(object):
 
 ##########################################################################
 
+def synchronised_set_descriptor(set_function):
+    def decorated(self, obj, type_):
+        if obj is None:
+            return set_function(self, obj, type_)
+        with obj.const_lock:
+            return set_function(self, obj, type_)
+    return decorated
 
-def synchronised_descriptor(set_function):
+def synchronised_get_descriptor(set_function):
     """
     This decorator should only be used on ``__set__`` method of the ``Descriptor``.
     Args:
@@ -244,7 +250,7 @@ def synchronised_descriptor(set_function):
         if obj is None:
             return set_function(self, obj, type_or_value)
 
-        with obj.const_lock:
+        with obj._read_lock:
             return set_function(self, obj, type_or_value)
     return decorated
 
@@ -300,7 +306,7 @@ class Descriptor(object):
         if self._getter_name:
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % _getName(self))
 
-    @synchronised_descriptor
+    @synchronised_get_descriptor
     def __get__(self, obj, cls):
         """
         Get method of Descriptor
@@ -438,7 +444,7 @@ class Descriptor(object):
 
         return v_copy
 
-    @synchronised_descriptor
+    @synchronised_set_descriptor
     def __set__(self, obj, val):
         """
         Set method
