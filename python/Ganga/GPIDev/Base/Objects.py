@@ -793,14 +793,15 @@ class GangaObject(Node):
 
                 setattr(self, name, deepcopy(getattr(_srcobj, name)))
 
-            elif self._schema.hasAttribute(name):
-                if not hasattr(self, name):
-                    setattr(self, name, self._schema.getDefaultValue(name))
             elif not item['copyable']: ## Default of '1' instead of True...
                 if not hasattr(self, name):
                     setattr(self, name, self._schema.getDefaultValue(name))
             else:
                 setattr(self, name, deepcopy(getattr(_srcobj, name)))
+
+        for name in set(self._data.keys()) - set(_srcobj._data.keys()):
+
+            setattr(self, name, self._schema.getDefaultValue(name))
 
     @synchronised
     def __eq__(self, obj):
