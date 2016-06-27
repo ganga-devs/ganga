@@ -1978,13 +1978,17 @@ class Job(GangaObject):
         self.getDebugWorkspace().remove(preserve_top=True)
 
         try:
+            rjobs = []
+            can_add_self = True
             config_resubOFS = config['resubmitOnlyFailedSubjobs']
             if config_resubOFS is True:
                 rjobs = [s for s in self.subjobs if s.status in ['failed']]
+                if not rjobs:
+                    can_add_self = False
             else:
                 rjobs = self.subjobs
 
-            if not rjobs:
+            if not rjobs and can_add_self:
                 rjobs = [self]
             elif auto_resubmit:  # get only the failed jobs for auto resubmit
                 rjobs = [s for s in rjobs if s.status in ['failed']]
@@ -1996,15 +2000,18 @@ class Job(GangaObject):
                     # before resubmitting it
                     sjs.getOutputWorkspace().remove(preserve_top=True)
 
+            if not rjobs:
+                raise JobError('Nothing to do in resubmitting Job: %s' % self.getFQID('.'))
+
             try:
                 if auto_resubmit:
                     result = self.backend.master_auto_resubmit(rjobs)
                 else:
+                    logger.info("Resubmitting: %s" % rjobs)
                     if backend is None:
                         result = self.backend.master_resubmit(rjobs)
                     else:
-                        result = self.backend.master_resubmit(
-                            rjobs, backend=backend)
+                        result = self.backend.master_resubmit(rjobs, backend=backend)
 
                 if not result:
                     raise JobManagerError('error during submit')
