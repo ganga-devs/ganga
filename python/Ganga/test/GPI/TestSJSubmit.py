@@ -1,7 +1,5 @@
 from __future__ import absolute_import
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
-import random
-import string
 
 
 class TestSJSubmit(GangaUnitTest):
