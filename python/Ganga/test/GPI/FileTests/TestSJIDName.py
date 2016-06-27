@@ -11,6 +11,7 @@ class TestSJIDName(GangaUnitTest):
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
         setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'False')
+        setConfigOption('Output', 'FailJobIfNoOutputMatched', 'True')
 
     def test_a_jobSubmit(self):
         """here for testing a submit"""

@@ -241,8 +241,14 @@ class GangaRepositoryLocal(GangaRepository):
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
         for k in self.objects:
             if self.objects[k]._inMemory:
-                self.index_write(k, shutdown=True)
-        self._write_master_cache(True)
+                try:
+                    self.index_write(k, shutdown=True)
+                except Exception as err:
+                    logger.error("Warning: problem writing index object with id %s" % k)
+        try:
+            self._write_master_cache(True)
+        except Exception as err:
+            logger.warning("Warning: Failed to write master index due to: %s" % err)
         self.sessionlock.shutdown()
 
     def get_fn(self, this_id):
@@ -1172,7 +1178,10 @@ class GangaRepositoryLocal(GangaRepository):
         Clear EVERYTHING in this repository, counter, all jobs, etc.
         WARNING: This is not nice."""
         self.shutdown()
-        rmrf(self.root)
+        try:
+            rmrf(self.root)
+        except Exception as err:
+           logger.error("Failed to correctly clean repository due to: %s" % err)
         self.startup()
 
 
