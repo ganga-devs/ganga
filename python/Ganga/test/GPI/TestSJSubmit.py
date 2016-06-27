@@ -1,8 +1,5 @@
 from __future__ import absolute_import
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
-import random
-import string
-
 
 class TestSJSubmit(GangaUnitTest):
 
@@ -14,7 +11,7 @@ class TestSJSubmit(GangaUnitTest):
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('Output', 'FailJobIfNoOutputMatched', 'True')
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
-	setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'True')
+        setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'True')
 
     @staticmethod
     def _getSplitter():
@@ -66,24 +63,24 @@ class TestSJSubmit(GangaUnitTest):
         from GangaTest.Framework.utils import sleep_until_completed
         sleep_until_completed(jobs(0))
 
-	jobs(0).subjobs(0).force_status('failed')
+        jobs(0).subjobs(0).force_status('failed')
 
-	jobs(0).subjobs(0).resubmit()
+        jobs(0).subjobs(0).resubmit()
 
         sleep_until_completed(jobs(0))
 
-	jobs(0).subjobs(0).force_status('failed')
+        jobs(0).subjobs(0).force_status('failed')
 
-	jobs(0).resubmit()
+        jobs(0).resubmit()
 
         sleep_until_completed(jobs(0))
 
     def test_d_SJResubmit_FailNotRequired(self):
         """
         Resubmit when jobs are not required to have failed 
-	"""
-	from Ganga.Utility.Config import setConfigOption
-	setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'False')
+        """
+        from Ganga.Utility.Config import setConfigOption
+        setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'False')
 
         from Ganga.GPI import jobs
 
