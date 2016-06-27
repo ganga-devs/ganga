@@ -227,7 +227,7 @@ class GangaRepositoryLocal(GangaRepository):
             raise RepositoryError(self.repo, "Unknown Repository type: %s" % self.registry.type)
         self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
         self.sessionlock.startup()
-        # Load the Ganga/Core/GangaRepository/GangaRepositoryXML.pylist of files, this time be verbose and print out a summary
+        # Load the list of files, this time be verbose and print out a summary
         # of errors
         self.update_index(verbose=True, firstRun=True)
         logger.debug("GangaRepositoryLocal Finished Startup")
@@ -243,7 +243,7 @@ class GangaRepositoryLocal(GangaRepository):
             try:
                 self.index_write(k, shutdown=True)
             except Exception as err:
-                logger.error("Warning: problem writing exception for %s" % k._id)
+                logger.error("Warning: problem writing index object with id %s" % k)
         try:
             self._write_master_cache(True)
         except Exception as err:
@@ -1190,7 +1190,10 @@ class GangaRepositoryLocal(GangaRepository):
         Clear EVERYTHING in this repository, counter, all jobs, etc.
         WARNING: This is not nice."""
         self.shutdown()
-        rmrf(self.root)
+        try:
+            rmrf(self.root)
+        except Exception as err:
+           logger.error("Failed to correctly clean repository due to: %s" % err)
         self.startup()
 
     def isObjectLoaded(self, obj):

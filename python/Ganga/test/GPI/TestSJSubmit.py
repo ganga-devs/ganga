@@ -101,3 +101,52 @@ class TestSJSubmit(GangaUnitTest):
 
         sleep_until_completed(jobs(0))
 
+    def test_e_testInMemory(self):
+        """
+        Test the resubmit on a job in memory vs a job which has been loaded from disk
+        """
+        from Ganga.GPI import Job, Local
+
+        j=Job()
+        j.splitter = self._getSplitter()
+        j.backend = Local()
+        j.submit()
+
+        from GangaTest.Framework.utils import sleep_until_completed
+        sleep_until_completed(j)
+
+        from Ganga.Utility.Config import setConfigOption
+        setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'True')
+
+        j.resubmit()
+
+        sleep_until_completed(j)
+
+        j.subjobs(0).force_status('failed')
+
+        j.resubmit()
+
+        sleep_until_completed(j)
+
+        j.subjobs(0).resubmit()
+
+        sleep_until_completed(j)
+
+        j.subjobs(0).force_status('failed')
+
+        j.subjobs(0).resubmit()
+
+        sleep_until_completed(j)
+
+        setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'False')
+
+        j.resubmit()
+
+        sleep_until_completed(j)
+
+        j.subjobs(0).force_status('failed')
+
+        j.resubmit()
+
+        sleep_until_completed(j)
+
