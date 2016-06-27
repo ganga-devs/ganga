@@ -18,6 +18,9 @@ class FakeRegistry(object):
     def _write_access(self, root):
         self.repo.load([root._registry_id])
 
+    def _load(self, root):
+        self.repo.load([root._registry_id])
+
     def getIndexCache(self, obj):
         return {}
 

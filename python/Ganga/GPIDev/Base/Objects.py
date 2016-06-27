@@ -295,15 +295,13 @@ class Descriptor(object):
             return obj_index[name]
 
         # Since we couldn't find the information in the cache, we will need to fully load the object
-
-        # Guarantee that the object is now loaded from disk
         obj._loadObject()
 
-        # First try to load the object from the attributes on disk
+        # Do we have the attribute now?
         if name in obj._data:
             return obj._data[name]
 
-        # Finally, get the default value from the schema
+        # Last option: get the default value from the schema
         if obj._schema.hasItem(name):
             return obj._schema.getDefaultValue(name)
 
@@ -433,8 +431,8 @@ class Descriptor(object):
         else:
             val = temp_val
 
-        # LOCKING
-        obj._getWriteAccess()
+        # make sure the object is loaded if it's attached to a registry
+        obj._loadObject()
 
         item = obj._schema[_getName(self)]
 
@@ -954,9 +952,8 @@ class GangaObject(Node):
     def _loadObject(self):
         """ makes sure the objects _data is there and the object itself has a recent state.
         Raise RepositoryError"""
-        reg = self._getRoot()._getRegistry()
-        if reg is not None:
-            reg._load(self)
+        if self._registry is not None:
+            self._registry._load(self)
 
     # define when the object is read-only (for example a job is read-only in
     # the states other than new)
@@ -988,8 +985,7 @@ class GangaObject(Node):
         Get the registry which is managing this GangaObject
         The registry is only managing a root object so it gets this first
         """
-        r = self._getRoot()
-        return r._registry
+        return self._getRoot()._registry
 
     def _getRegistryID(self):
         """
