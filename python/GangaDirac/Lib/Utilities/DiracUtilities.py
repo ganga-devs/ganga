@@ -165,7 +165,7 @@ def _dirac_check_proxy( renew = True, shouldRaise = True):
     global last_modified_valid
     global proxy
     if proxy is None:
-        proxy = getCredential('GridProxy', '')
+        proxy = getCredential('GridProxy')
     _isValid = proxy.isValid()
     if not _isValid:
         if renew is True:
