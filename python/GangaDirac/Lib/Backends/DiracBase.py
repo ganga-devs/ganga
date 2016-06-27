@@ -130,7 +130,6 @@ class DiracBase(IBackend):
             j.status = 'submitted'
             j.time.timenow('submitted')
             master_job.subjobs.append(j)
-        master_job._commit()
         return True
 
     def _common_submit(self, dirac_script):
