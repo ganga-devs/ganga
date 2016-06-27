@@ -1714,7 +1714,10 @@ class Job(GangaObject):
                     sj.application.transition_update('removed')
 
         if self._registry:
-            self._registry._remove(self, auto_removed=1)
+            try:
+                self._registry._remove(self, auto_removed=1)
+            except GangaException as err:
+                logger.warning("Error trying to fully remove Job #'%s':: %s" % (self.getFQID('.'), err))
 
         self.status = 'removed'
 

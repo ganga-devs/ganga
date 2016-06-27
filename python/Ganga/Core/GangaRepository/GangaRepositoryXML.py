@@ -227,7 +227,7 @@ class GangaRepositoryLocal(GangaRepository):
             raise RepositoryError(self.repo, "Unknown Repository type: %s" % self.registry.type)
         self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
         self.sessionlock.startup()
-        # Load the list of files, this time be verbose and print out a summary
+        # Load the Ganga/Core/GangaRepository/GangaRepositoryXML.pylist of files, this time be verbose and print out a summary
         # of errors
         self.update_index(verbose=True, firstRun=True)
         logger.debug("GangaRepositoryLocal Finished Startup")
@@ -240,8 +240,14 @@ class GangaRepositoryLocal(GangaRepository):
         logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
         for k in self._fully_loaded:
-            self.index_write(k, shutdown=True)
-        self._write_master_cache(True)
+            try:
+                self.index_write(k, shutdown=True)
+            except Exception as err:
+                logger.error("Warning: problem writing exception for %s" % k._id)
+        try:
+            self._write_master_cache(True)
+        except Exception as err:
+            logger.warning("Warning: Failed to write master index due to: %s" % err)
         self.sessionlock.shutdown()
 
     def get_fn(self, this_id):

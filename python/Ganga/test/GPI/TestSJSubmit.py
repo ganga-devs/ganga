@@ -16,7 +16,8 @@ class TestSJSubmit(GangaUnitTest):
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 	setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'True')
 
-    def _getSplitter(self):
+    @staticmethod
+    def _getSplitter():
         """
         Setup and return splitter
         """
