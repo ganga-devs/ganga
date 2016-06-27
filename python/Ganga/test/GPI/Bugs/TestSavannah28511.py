@@ -13,11 +13,15 @@ class TestSavannah28511(GangaUnitTest):
         j.submit()
         assert run_until_completed(j, timeout=20), 'Job is not completed'
 
+        j.force_status('failed')
+        assert run_until_state(j, timeout=20, state='failed'), 'Job is not failed'
+
         j.resubmit()
         assert run_until_completed(j, timeout=30), 'Job is not completed after fail during resubmit'
 
-        j._impl.updateStatus('failed')
+        j.force_status('failed')
         assert run_until_state(j, timeout=20, state='failed'), 'Job is not failed'
 
+        assert j.status == 'failed'
         j.resubmit()
         assert run_until_completed(j, timeout=20), 'Job is not completed after resubmit'

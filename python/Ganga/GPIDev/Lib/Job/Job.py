@@ -1980,11 +1980,13 @@ class Job(GangaObject):
         try:
             rjobs = []
             can_add_self = True
-            config_resubOFS = config['resubmitOnlyFailedSubjobs']
-            if config_resubOFS is True:
-                rjobs = [s for s in self.subjobs if s.status in ['failed']]
-                if not rjobs:
-                    can_add_self = False
+            if config['resubmitOnlyFailedSubjobs']:
+                if len(self.subjobs) > 0:
+                    rjobs = [s for s in self.subjobs if s.status in ['failed']]
+                else:
+                    if oldstatus in ['failed']:
+                        rjobs = [self]
+                can_add_self = False
             else:
                 rjobs = self.subjobs
 
@@ -2000,7 +2002,7 @@ class Job(GangaObject):
                     # before resubmitting it
                     sjs.getOutputWorkspace().remove(preserve_top=True)
 
-            if not rjobs:
+            if len(rjobs) == 0:
                 raise JobError('Nothing to do in resubmitting Job: %s' % self.getFQID('.'))
 
             try:
@@ -2030,7 +2032,7 @@ class Job(GangaObject):
 
             # FIXME: if job is not split, then default implementation of
             # backend.master_submit already have set status to "submitted"
-            self.status = 'submitted'
+            self.updateStatus('submitted')
 
             # send job submission message
             # if resubmit on subjob
