@@ -16,7 +16,8 @@ class TestSubjobs(GangaUnitTest):
         """
         Create lots of subjobs and submit it
         """
-        from Ganga.GPI import Job, GenericSplitter, Local
+        from Ganga.GPI import Job, GenericSplitter, Local, Executable
+        from Ganga.GPIDev.Base.Proxy import stripProxy
         j = Job()
         j.application.exe = "sleep"
         j.splitter = GenericSplitter()
@@ -26,6 +27,15 @@ class TestSubjobs(GangaUnitTest):
         j.submit()
 
         assert len(j.subjobs) == 20
+
+        for sj in j.subjobs:
+            assert sj.splitter is None
+            assert isinstance(sj.application, Executable)
+            assert isinstance(sj.backend, Local)
+            assert sj.application.exe == "sleep"
+            assert sj.application.args == ['400']
+            assert stripProxy(sj)._getRoot() is stripProxy(j)
+            assert stripProxy(sj.application)._getRoot() is stripProxy(j)
 
     def testSetParentOnLoad(self):
         """
@@ -58,3 +68,4 @@ class TestSubjobs(GangaUnitTest):
             assert sj.application.args == ['400']
             assert stripProxy(sj)._getRoot() is stripProxy(j)
             assert stripProxy(sj.application)._getRoot() is stripProxy(j)
+
