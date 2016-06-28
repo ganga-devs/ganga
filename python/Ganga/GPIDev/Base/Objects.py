@@ -1018,23 +1018,20 @@ class GangaObject(Node):
         return _timeOut
 
     def _getSessionLock(self):
-        """Acquires the session lock on this object
-        Raise LockingError (or so) on fail """
+        """Acquires the session lock on this object"""
         reg = self._getRegistry()
         if reg is not None:
             reg._acquire_session_lock(self._getRoot())
 
     def _releaseSessionLock(self):
         """ Releases the session lock for this object
-        Raise LockingError (or so) on fail
         Please use only if the object is expected to be used by other sessions"""
         reg = self._getRegistry()
         if reg is not None:
             reg._release_session_lock(self._getRoot())
 
     def _loadObject(self):
-        """ makes sure the objects _data is there and the object itself has a recent state.
-        Raise RepositoryError"""
+        """If there's an attached registry then ask it to load this object"""
         if self._registry is not None:
             self._registry._load(self)
 

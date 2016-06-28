@@ -163,7 +163,10 @@ class IncompleteObject(GangaObject):
 
 def synchronised_flush_lock(f):
     """
-    Specific flush lock as flushing can take a long time to make sure no changes occur while flushing though reads can.
+    Specific flush lock as flushing can take a long time. This ensures no changes occur while flushing though reads can.
+
+    Args:
+        f (func): Function to decorate
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
@@ -173,7 +176,10 @@ def synchronised_flush_lock(f):
 
 def synchronised_read_lock(f):
     """
-    General read lock for quick functions that won't take a while.
+    General read lock for quick functions that won't take a while but won't change anything either
+
+    Args:
+        f (func): Function to decorate
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
@@ -184,6 +190,9 @@ def synchronised_read_lock(f):
 def synchronised_complete_lock(f):
     """
     Entirely lock the registry. Make sure locks are acquired in the right order!
+
+    Args:
+        f (func): Function to decorate
     """
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):
