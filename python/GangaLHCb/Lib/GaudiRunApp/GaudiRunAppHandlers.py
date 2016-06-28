@@ -337,7 +337,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         # Already added to sandbox uploaded as LFN
 
         # This code deals with the outputfiles as outputsandbox and outputdata for us
-        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, False)
+        lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
@@ -357,6 +357,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                                         OUTPUTFILESSCRIPT=lhcbdirac_outputfiles,
                                         OUTPUT_PATH="",  # job.fqid,
                                         OUTPUT_SE=[],
+                                        PLATFORM=app.platform,
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
                                         REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
@@ -383,12 +384,16 @@ def gaudiRun_script_template():
     script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
 from __future__ import print_function
-from os import listdir, system, environ, pathsep, getcwd
+from os import listdir, environ, pathsep, getcwd, system
 from mimetypes import guess_type
 from contextlib import closing
 import sys
+import subprocess
 
 def extractAllTarFiles(path):
+    '''
+    This extracts all extractable (g/b)zip files found in the top level dir of the WN
+    '''
     for f in listdir(path):
         print("examining: %s" % f )
         file_type = guess_type(f)[1]
@@ -400,6 +405,9 @@ def extractAllTarFiles(path):
                 system("tar -jxf %s" % f)
 
 def pythonScript(scriptName):
+    '''
+    This is the actual code in thr GaudiPython-like script
+    '''
     script = '''
 from Gaudi.Configuration import *
 importOptions('data.py')
@@ -408,23 +416,63 @@ execfile('./%s')
     return script
 
 def generatePythonScript(scriptName):
+    '''
+    Generate the Python script file for the GaudiPython-like running
+    '''
     with open('###WN_SCRIPT_NAME###', 'w') as WN_script:
         WN_script.write(pythonScript(scriptName))
 
+def flush_streams(pipe):
+    '''
+    This flushes the stdout/stderr streams to the stdout/stderr correctly
+    '''
+    with pipe.stdout or pipe.stderr:
+        if pipe.stdout:
+            for next_line in iter(pipe.stdout.readline, b''):
+                print("%s" % next_line, file=sys.stdout, end='')
+                sys.stdout.flush()
+        if pipe.stderr:
+            for next_line in iter(pipe.stderr.readline, b''):
+                print("%s" % next_line, file=sys.stderr, end='')
+                sys.stderr.flush()
+
 # Main
 if __name__ == '__main__':
-
+    '''
+    Main section of code for the GaudiRun script run on the WN
+    '''
+    # Opening pleasantries
+    print("Hello from GaudiRun")
     print("Arrived at workernode: %s" % getcwd())
+    print("#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
+    print("")
 
+    # Extract any/_all_ (b/g)zip files on the WN
     extractAllTarFiles('.')
 
+    # In the case we're wanting to run the Python script here, generate it on the WN and use it there
     generatePythonScript('###SCRIPT_NAME###')
 
-    print("Executing: %s" % '###COMMAND###')
 
-    rc = system('###COMMAND###')
+    print("Executing: %s" % '###COMMAND###')
+    # Execute the actual command on the WN
+    # NB os.system caued the entire stream to be captured before being streamed in some cases
+    pipe = subprocess.Popen('###COMMAND###', shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    # Flush the stdout/stderr as the process is running correctly
+    flush_streams(pipe)
+
+    # Wait for the process to finish executing
+    pipe.wait()
+
+    rc = pipe.returncode
 
     ###OUTPUTFILESINJECTEDCODE###
+
+    # Final pleasantries
+    print("")
+    print("#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
+    print("Goodbye from GaudiRun")
 
     sys.exit(rc)
 """

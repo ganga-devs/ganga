@@ -1,4 +1,4 @@
-from os import rename, path, makedirs, chdir, unlink
+from os import rename, path, makedirs, chdir, unlink, listdir
 import tempfile
 import time
 import subprocess
@@ -150,7 +150,24 @@ class GaudiRun(IPrepareApp):
             self.unprepare()
             raise
 
-        shutil.rmtree(path.dirname(this_build_target), ignore_errors=True)
+        self.cleanGangaTargetArea(this_build_target)
+
+    def cleanGangaTargetArea(self, this_build_target):
+        """
+        Method to remove the build target and other files not needed to reproduce the same build target again
+        """
+        logger.debug("Cleaning up area after prepare")
+
+        # Don't delete these
+        preserved_set = set(['run'])
+
+        build_dir = path.dirname(this_build_target)
+        for obj in set(listdir(build_dir)) - preserved_set:
+            logger.debug("del: %s of %s" %(obj, set(listdir(build_dir)) - preserved_set))
+            if path.isfile(path.join(build_dir, obj)):
+                unlink(path.join(build_dir, obj))
+            elif path.isdir(path.join(build_dir, obj)):
+                shutil.rmtree(path.join(build_dir, obj), ignore_errors=True)
 
         return 1
 
@@ -174,7 +191,7 @@ class GaudiRun(IPrepareApp):
                 ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
                 full_path = expandfilename(path.join(self.myOpts.localDir, path.basename(self.myOpts.namePattern)), force=True)
                 if not path.exists(full_path):
-                    raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!")
+                    raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
                 self.myOpts = LocalFile(namePattern=path.basename(full_path), localDir=path.dirname(full_path))
                 return self.myOpts
             elif isinstance(self.myOpts, DiracFile):
