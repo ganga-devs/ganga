@@ -40,17 +40,7 @@ def _getName(obj):
 
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
-_imported_GangaList = None
-
 do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data_dict', '_read_lock', '_write_lock', '_proxyObject']
-
-def _getGangaList():
-    global _imported_GangaList
-    if _imported_GangaList is None:
-        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-        _imported_GangaList = GangaList
-    return _imported_GangaList
-
 
 def synchronised(f):
     """
@@ -336,7 +326,8 @@ class Descriptor(object):
         else:
             if not isinstance(v, Node) and isinstance(v, (list, tuple)):
                 try:
-                    GangaList = _getGangaList()
+                    # must import here as will fail at the top
+                    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
                     new_v = GangaList()
                 except ImportError:
                     new_v = []
@@ -361,8 +352,10 @@ class Descriptor(object):
     def __copyNodeObject(self, v, obj):
         """This deals with the actual deepcopy of an object which has inherited from Node class"""
 
+        # must import here as will fail at the top
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+
         item = obj._schema[_getName(self)]
-        GangaList = _getGangaList()
         if isinstance(v, GangaList):
             categories = v.getCategory()
             len_cat = len(categories)
@@ -393,54 +386,32 @@ class Descriptor(object):
         obj: parent class which 'owns' the attribute
         val: value of the attribute which we're about to set
         """
+        # must import here as will fail at the top
+        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList, GangaList
 
         if isinstance(val, str):
             from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
-            new_val = stripProxy(runtimeEvalString(obj, _getName(self), val))
-        else:
-            new_val = val
-
-        self.__atomic_set__(obj, new_val)
-
-        if isinstance(new_val, Node):
-            val._setDirty()
-
-    def __atomic_set__(self, _obj, _val):
-        """
-        Set the attribute now that the registry flushng has been turned off
-        self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
-        _obj: parent class which 'owns' the attribute
-        _val: value of the attribute which we're about to set
-        """
-
-        obj = _obj
-        temp_val = _val
-
-        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
+            val = stripProxy(runtimeEvalString(obj, _getName(self), val))
 
         # call any 'checkset' function on this schema item
         # Probably going to be removed soon (see issue #616)
         if hasattr(obj, '_checkset_name'):
             checkSet = self._bind_method(obj, self._checkset_name)
             if checkSet is not None:
-                checkSet(temp_val)
+                checkSet(val)
 
         # call any 'filter' function on this schema item
         # Probably going to be removed soon (see issue #616)
         if hasattr(obj, '_filter_name'):
             this_filter = self._bind_method(obj, self._filter_name)
             if this_filter:
-                val = this_filter(temp_val)
-            else:
-                val = temp_val
-        else:
-            val = temp_val
+                val = this_filter(val)
 
         # make sure the object is loaded if it's attached to a registry
         obj._loadObject()
 
+        # deal with GangaLists correctly
         def cloneVal(v):
-            GangaList = _getGangaList()
             if isinstance(v, (list, tuple, GangaList)):
                 new_v = GangaList()
                 for elem in v:
@@ -453,40 +424,35 @@ class Descriptor(object):
         if self._item['sequence']:
             _preparable = True if self._item['preparable'] else False
             if len(val) == 0:
-                GangaList = _getGangaList()
-                new_val = GangaList()
+                val = GangaList()
             else:
                 if isinstance(self._item, Schema.ComponentItem):
-                    new_val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
+                    val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
                 else:
-                    new_val = makeGangaList(val, parent=obj, preparable=_preparable)
+                    val = makeGangaList(val, parent=obj, preparable=_preparable)
         else:
             ## Else we need to work out what we've got.
             if isinstance(self._item, Schema.ComponentItem):
-                GangaList = _getGangaList()
                 if isinstance(val, (list, tuple, GangaList)):
                     ## Can't have a GangaList inside a GangaList easily so lets not
-                    if isinstance(_obj, GangaList):
+                    if isinstance(obj, GangaList):
                         newListObj = []
                     else:
                         newListObj = GangaList()
 
                     Descriptor.__createNewList(newListObj, val, cloneVal)
-                    #for elem in val:
-                    #    newListObj.append(cloneVal(elem))
-                    new_val = newListObj
+                    val = newListObj
                 else:
-                    new_val = cloneVal(val)
-            else:
-                new_val = val
-                pass
-            #val = deepcopy(val)
+                    val = self.__cloneVal(val, obj)
 
-        if isinstance(new_val, Node):
-            new_val._setParent(obj)
+        # set the value
+        name = _getName(self)
+        obj._data[name] = val
+        if isinstance(val, Node):
+            obj._data[name]._setParent(obj)
+            obj._data[name]._setDirty()
 
-        obj.setSchemaAttribute(_getName(self), new_val)
-
+        # finally, set this object as dirty
         obj._setDirty()
 
     def __delete__(self, obj):
