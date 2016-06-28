@@ -22,9 +22,10 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
-
+from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
+from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 
 logger = getLogger()
 
@@ -67,11 +68,9 @@ def genDataFiles(job):
             cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
             data_str += cat_opts
 
-        #input_data_filename = os.path.join(job.getStringInputDir(), GaudiRunDiracRTHandler.data_file)
-        #with open(input_data_filename, 'w+') as input_d_file:
-        #    input_d_file.write(data_str)
-        #inputsandbox.append(LocalFile(namePattern=GaudiRunDiracRTHandler.data_file, localDir=job.getStringInputDir()))
         inputsandbox.append(FileBuffer(GaudiRunDiracRTHandler.data_file, data_str))
+    else:
+        inputsandbox.append(FileBuffer(GaudiRunDiracRTHandler.data_file, '#dummy_data_file\n'+LHCbDataset().optionsString()))
 
     return inputsandbox
 
@@ -127,10 +126,13 @@ def prepareCommand(app):
     else:
         raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                             getName(opts_file))
+
+    sourceEnv = app.getEnvScript()
+        
     if app.runWithPython:
-        full_cmd = './run python %s' %(WN_script_name)
+        full_cmd = sourceEnv + './run python %s' %(WN_script_name)
     else:
-        full_cmd = "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
+        full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
     return full_cmd
 
 
@@ -339,7 +341,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
-        dirac_script = script_generator(diracAPI_script_template(),
+        dirac_script = script_generator(lhcbdiracAPI_script_template(),
                                         DIRAC_IMPORT='from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
                                         DIRAC_JOB_IMPORT='from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
                                         DIRAC_OBJECT='DiracLHCb()',
@@ -352,7 +354,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                                         INPUTDATA=input_data,
                                         PARAMETRIC_INPUTDATA=parametricinput_data,
                                         OUTPUT_SANDBOX=API_nullifier(outputsandbox),
-                                        OUTPUTFILESSCRIPT=dirac_outputfiles,
+                                        OUTPUTFILESSCRIPT=lhcbdirac_outputfiles,
                                         OUTPUT_PATH="",  # job.fqid,
                                         OUTPUT_SE=[],
                                         SETTINGS=diracAPI_script_settings(app),
