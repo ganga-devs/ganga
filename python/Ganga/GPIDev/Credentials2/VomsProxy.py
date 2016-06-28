@@ -11,9 +11,7 @@ from Ganga.Utility.Config import getConfig
 
 import os
 
-import subprocess
 from datetime import datetime, timedelta
-from getpass import getpass
 
 
 class VomsProxyInfo(ICredentialInfo):
@@ -46,12 +44,11 @@ class VomsProxyInfo(ICredentialInfo):
         logger.debug(voms_command)
         command = 'voms-proxy-init -pwstdin -out %s %s' % (self.location, voms_command)
         logger.debug(command)
-        process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdoutdata, stderrdata = process.communicate(getpass('Grid password: '))
-        if process.returncode == 0:
+        rc = self.shell.system(command)
+        if rc == 0:
             logger.debug('Grid proxy {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
         else:
-            raise CredentialRenewalError(stderrdata)
+            raise CredentialRenewalError('Failed to create VOMS proxy')
     
     def destroy(self):
         self.shell.cmd1("voms-proxy-destroy -file %s" % self.location, allowed_exit=[0, 1])
