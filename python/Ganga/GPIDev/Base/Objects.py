@@ -5,13 +5,6 @@
 ##########################################################################
 # NOTE: Make sure that _data and __dict__ of any GangaObject are only referenced
 # here - this is necessary for write locking and lazy loading!
-# IN THIS FILE:
-# * Make sure every time _data or __dict__ is accessed that _data is not None. If yes, do:
-#    obj._getReadAccess()
-# * Make sure every write access is preceded with:
-#    obj._getWriteAccess()
-#   and followed by
-#    obj._setDirty()
 
 import abc
 import threading
@@ -409,6 +402,9 @@ class Descriptor(object):
 
         # make sure the object is loaded if it's attached to a registry
         obj._loadObject()
+
+        # make sure we have the session lock
+        obj._getSessionLock()
 
         # deal with GangaLists correctly
         def cloneVal(v):
@@ -876,47 +872,20 @@ class GangaObject(Node):
             _timeOut = 5. # 5sec hardcoded default
         return _timeOut
 
-    def _getWriteAccess(self):
-        """ tries to get write access to the object.
+    def _getSessionLock(self):
+        """Acquires the session lock on this object
         Raise LockingError (or so) on fail """
-        root = self._getRoot()
-        reg = root._getRegistry()
+        reg = self._getRegistry()
         if reg is not None:
-            _haveLocked = False
-            _counter = 1
-            _sleep_size = 1
-            _timeOut = self._getIOTimeOut()
-            while not _haveLocked:
-                err = None
-                from Ganga.Core.GangaRepository.Registry import RegistryLockError, RegistryAccessError
-                reg._write_access(root)
-                try:
-                    reg._write_access(root)
-                    _haveLocked = True
-                except (RegistryLockError, RegistryAccessError) as x:
-                    #import traceback
-                    #traceback.print_stack()
-                    from time import sleep
-                    sleep(_sleep_size)  # Sleep 2 sec between tests
-                    logger.info("Waiting on Write access to registry: %s" % reg.name)
-                    logger.debug("err: %s" % x)
-                    err = x
-                _counter += 1
-                # Sleep 2 sec longer than the time taken to bail out
-                if _counter * _sleep_size >= _timeOut + 2:
-                    logger.error("Failed to get access to registry: %s. Reason: %s" % (reg.name, err))
-                    if err is not None:
-                        raise err
+            reg._acquire_session_lock(self._getRoot())
 
-    def _releaseWriteAccess(self):
-        """ releases write access to the object.
+    def _releaseSessionLock(self):
+        """ Releases the session lock for this object
         Raise LockingError (or so) on fail
         Please use only if the object is expected to be used by other sessions"""
-        root = self._getRoot()
-        reg = root._getRegistry()
+        reg = self._getRegistry()
         if reg is not None:
-            logger.debug("Releasing: %s" % (reg.name))
-            reg._release_lock(root)
+            reg._release_session_lock(self._getRoot())
 
     def _loadObject(self):
         """ makes sure the objects _data is there and the object itself has a recent state.

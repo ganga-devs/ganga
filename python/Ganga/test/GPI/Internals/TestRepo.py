@@ -15,8 +15,8 @@ class FakeRegistry(object):
         if not obj._data:
             self.repo.load([root._registry_id])
 
-    def _write_access(self, root):
-        self.repo.load([root._registry_id])
+    def _acquire_session_lock(self, root):
+        pass
 
     def _load(self, root):
         self.repo.load([root._registry_id])

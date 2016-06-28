@@ -120,7 +120,7 @@ class HammerThread(threading.Thread):
             self.logger.info('Getting Read, Write access: %s' % _id)
             from Ganga.GPIDev.Base.Proxy import stripProxy
             stripProxy(self.reg[_id])._loadObject()
-            stripProxy(self.reg[_id])._getWriteAccess()
+            stripProxy(self.reg[_id])._getSessionLock()
             self.logger.info('Got Access: %s' % _id)
             self.logger.info('Name: %s' % self.reg[_id].name)
             assert self.reg[_id].name.startswith('HT')
@@ -143,7 +143,7 @@ class HammerThread(threading.Thread):
         assert obj_to_unlock.name.startswith('HT')
         # self.reg[_id].name = 'HT-unlocked'
         # self.owned_ids.remove(_id)
-        self.reg._release_lock(self.reg[_id])
+        self.reg._release_session_lock(self.reg[_id])
         self.logger.info(str(self.id) + ' unlock(%s) done!' % _id)
 
     def run(self):

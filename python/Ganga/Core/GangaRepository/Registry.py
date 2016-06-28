@@ -465,7 +465,7 @@ class Registry(object):
             obj.remove()
         else:
             this_id = self.find(obj)
-            self._write_access(obj)
+            self._acquire_session_lock(obj)
 
             logger.debug('deleting the object %d from the registry %s', this_id, self.name)
             self.repository.delete([this_id])
@@ -499,9 +499,7 @@ class Registry(object):
                 continue
 
             with obj.const_lock:
-                # flush the object. Need to call _getWriteAccess for consistency reasons
-                # TODO: getWriteAccess should only 'get write access', as that's not needed should it be called here?
-                obj._getWriteAccess()
+                # flush the object
                 obj_id = self.find(obj)
                 self.repository.flush([obj_id])
                 obj._setFlushed()
@@ -548,7 +546,7 @@ class Registry(object):
                 self._objects[obj_id]._setFlushed()
             raise
 
-    def _write_access(self, _obj):
+    def _acquire_session_lock(self, obj):
         """Obtain write access on a given object.
         Raise RepositoryError
         Raise RegistryAccessError
@@ -557,27 +555,21 @@ class Registry(object):
         Args:
             _obj (GangaObject): This is the object we want to get write access to and lock on disk
         """
-        logger.debug("_write_access")
-        obj = stripProxy(_obj)
+        obj = stripProxy(obj)
 
-        with obj.const_lock:
+        if self.hasStarted() is not True:
+            raise RegistryAccessError("Cannot get write access to a disconnected repository!")
 
-            if self.hasStarted() is not True:
-                raise RegistryAccessError("Cannot get write access to a disconnected repository!")
+        if not hasattr(obj, '_registry_locked') or not obj._registry_locked:
+            this_id = self.find(obj)
+            if len(self.repository.lock([this_id])) == 0:
+                errstr = "Could not lock '%s' object #%i!" % (self.name, this_id)
+                errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(this_id)
+                raise RegistryLockError(errstr)
 
-            if not hasattr(obj, '_registry_locked') or not obj._registry_locked:
-                this_id = self.find(obj)
-                if len(self.repository.lock([this_id])) == 0:
-                    errstr = "Could not lock '%s' object #%i!" % (self.name, this_id)
-                    errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(this_id)
-                    raise RegistryLockError(errstr)
+            obj._registry_locked = True
 
-                # try to load even if lock fails
-                self._load(obj)
-
-                obj._registry_locked = True
-
-    def _release_lock(self, obj):
+    def _release_session_lock(self, obj):
         """Release the lock on a given object.
         Raise RepositoryError
         Raise RegistryAccessError
@@ -592,9 +584,8 @@ class Registry(object):
         logger.debug("Reg: %s _release_lock(%s)" % (self.name, self.find(obj)))
         if hasattr(obj, '_registry_locked') and obj._registry_locked:
             oid = self.find(obj)
-            self.repository.flush([oid])
-            obj._registry_locked = False
             self.repository.unlock([oid])
+            obj._registry_locked = False
 
     def getIndexCache(self, obj):
         """Returns a dictionary to be put into obj._index_cache (is this valid)

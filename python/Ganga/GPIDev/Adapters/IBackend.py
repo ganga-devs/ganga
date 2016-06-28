@@ -457,7 +457,8 @@ class IBackend(GangaObject):
                 if not monitorable_subjob_ids:
                     continue
 
-                stripProxy(j)._getWriteAccess()
+                # make sure we have the session lock
+                stripProxy(j)._getSessionLock()
 
                 #logger.info("Dividing")
 
@@ -503,7 +504,7 @@ class IBackend(GangaObject):
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
 
                 for this_job in simple_jobs[this_backend]:
-                    stripProxy(this_job)._getWriteAccess()
+                    stripProxy(this_job)._getSessionLock()
                 stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
 
                 for this_job in simple_jobs[this_backend]:

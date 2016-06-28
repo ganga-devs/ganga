@@ -51,8 +51,8 @@ class BoxRegistry(Registry):
 
     def _setName(self, obj, name):
         nobj = self.metadata[self.find(obj)]
-        obj._getWriteAccess()
-        nobj._getWriteAccess()
+        obj._getSessionLock()
+        nobj._getSessionLock()
         nobj.name = name
         nobj._setDirty()
         obj._setDirty()

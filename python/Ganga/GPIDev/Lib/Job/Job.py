@@ -256,7 +256,7 @@ class Job(GangaObject):
 
     def __construct__(self, args):
 
-        stripProxy(self)._getWriteAccess()
+        stripProxy(self)._getSessionLock()
 
         self.status = "new"
         logger.debug("Intercepting __construct__")
@@ -1508,7 +1508,6 @@ class Job(GangaObject):
 
             logger.info("submitting job %s", self.getFQID('.'))
             # prevent other sessions from submitting this job concurrently.
-            # Also calls _getWriteAccess
             self.updateStatus('submitting')
 
             self.getDebugWorkspace(create=False).remove(preserve_top=True)
@@ -1811,7 +1810,7 @@ class Job(GangaObject):
 
         try:
             self._setDirty()
-            self._releaseWriteAccess()
+            self._releaseSessionLock()
         except Exception as err:
             logger.debug("Remove Err: %s" % err)
             pass
@@ -1872,7 +1871,6 @@ class Job(GangaObject):
         """Private helper. Kill the job. Raise JobError exception on error.
         """
         try:
-            self._getWriteAccess()
             # make sure nobody writes to the cache during this operation
             # job._registry.cache_writers_mutex.lock()
 

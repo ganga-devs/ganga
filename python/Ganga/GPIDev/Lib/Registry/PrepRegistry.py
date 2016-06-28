@@ -125,7 +125,7 @@ class ShareRef(GangaObject):
         be discovered by calling 'shareref'.
         """
         logger.debug("running increase() in prepregistry")
-        self._getWriteAccess()
+        self._getSessionLock()
 
 
         from Ganga.GPIDev.Lib.File import getSharedPath
@@ -147,7 +147,7 @@ class ShareRef(GangaObject):
             logger.error('Directory %s does not exist' % shareddir)
 
         self._setDirty()
-        self._releaseWriteAccess()
+        self._releaseSessionLock()
 
     @synchronised
     def decrease(self, shareddir, remove=0):
@@ -156,7 +156,7 @@ class ShareRef(GangaObject):
         the shared object directory deleted when Ganga exits. If the optional remove parameter is specified
         the shared directory is removed from the table.
         """
-        self._getWriteAccess()
+        self._getSessionLock()
 
         from Ganga.GPIDev.Lib.File import getSharedPath
         shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
@@ -175,7 +175,7 @@ class ShareRef(GangaObject):
             self.__getName()[basedir] = 0
 
         self._setDirty()
-        self._releaseWriteAccess()
+        self._releaseSessionLock()
 
     def lookup(self, sharedir, unprepare=False):
         """
@@ -279,7 +279,7 @@ class ShareRef(GangaObject):
         Otherwise, it will be added to the shareref table with a reference count of zero; 
         this results in the directory being deleted upon Ganga exit.
         """
-        self._getWriteAccess()
+        self._getSessionLock()
         # clear the shareref table
         self.name = {}
         lookup_input = []
@@ -343,7 +343,7 @@ class ShareRef(GangaObject):
                 shutil.rmtree(os.path.join(getSharedPath(), this_dir))
 
         self._setDirty()
-        self._releaseWriteAccess()
+        self._releaseSessionLock()
 
 
     @staticmethod
@@ -438,7 +438,7 @@ class ShareRef(GangaObject):
                 cleanup_list.append(shareddir)
             ## DISABLED BY RCURRIE
 
-        self._getWriteAccess()
+        self._getSessionLock()
         for element in cleanup_list:
             del self.name[element]
         allnames = copy.deepcopy(self.__getName())

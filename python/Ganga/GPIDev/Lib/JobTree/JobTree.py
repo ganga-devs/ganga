@@ -241,7 +241,7 @@ class JobTree(GangaObject):
         """Adds job to the job tree into the current folder.
         If path to a folder is provided as a parameter than adds job to that folder.
         """
-        self._getWriteAccess()
+        self._getSessionLock()
         try:
             job = stripProxy(job)
 
@@ -263,13 +263,13 @@ class JobTree(GangaObject):
             logger.error("Error: %s" % err)
             raise
         finally:
-            self._releaseWriteAccess()
+            self._releaseSessionLock()
 
     def rm(self, path):
         """Removes folder or job in the path.
         To clean all use /* as a path.
         """
-        self._getWriteAccess()
+        self._getSessionLock()
         try:
             path = str(path)
             pp = self.__get_path(path)
@@ -288,29 +288,29 @@ class JobTree(GangaObject):
                 raise TreeError(3, "Can not delete the root directory")
             self._setDirty()
         finally:
-            self._releaseWriteAccess()
+            self._releaseSessionLock()
 
     def mkdir(self, path):
         """Makes a folder. If any folders in the path are missing they will be created as well.
         """
-        self._getWriteAccess()
+        self._getSessionLock()
         try:
             self.__make_dir(path)
             self._setDirty()
         finally:
-            self._releaseWriteAccess()
+            self._releaseSessionLock()
 
     def cd(self, path=os.sep):
         """Changes current directory.
         If path is not provided, than switches to the root folder.
         """
-        self._getWriteAccess()
+        self._getSessionLock()
         try:
             self.__select_dir(path)
             self.cwd(self.__get_path(path))
             self._setDirty()
         finally:
-            self._releaseWriteAccess()
+            self._releaseSessionLock()
 
     def ls(self, path=None):
         """Lists content of current folder or folder in the path if the latter is provided.
@@ -437,7 +437,7 @@ class JobTree(GangaObject):
                             j = registry[int(jid[0])].subjobs[int(jid[1])]
                     except RegistryKeyError, ObjectNotInRegistryError:
                         #try:
-                        self._getWriteAccess()
+                        self._getSessionLock()
                         self.__remove_dir(path=path, dir=i)
                         self._setDirty()
                         #except ObjectNotInRegistryError as err:
@@ -447,7 +447,7 @@ class JobTree(GangaObject):
                             pass
                         finally:
                             try:
-                                self._releaseWriteAccess()
+                                self._releaseSessionLock()
                             except ObjectNotInRegistryError as err:
                                 logger.debug("Object: %s Not in Reg: %s" % (_id, err))
                                 pass
