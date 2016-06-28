@@ -195,10 +195,6 @@ def execute(command,
         # We know were whe want to run, lets just run there
         cwd_ = cwd
 
-    global last_modified_valid
-    if not last_modified_valid:
-        return None
-
     returnable = gexecute.execute(command,
                                   timeout=timeout,
                                   env=env,

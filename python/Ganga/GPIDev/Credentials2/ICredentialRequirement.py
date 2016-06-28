@@ -1,4 +1,4 @@
-from Ganga.GPIDev.Base.Objects import GangaObject, ObjectMetaABC
+from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 from Ganga.GPIDev.Base.Proxy import addProxy
@@ -12,7 +12,6 @@ class ICredentialRequirement(GangaObject):
     
     All subclasses must specify ``_infoClass`` as well as all abstract methods
     """
-    __metaclass__ = ObjectMetaABC
     
     _schema = Schema(Version(1, 0), {
         'location': SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Path to the proxy file"),
