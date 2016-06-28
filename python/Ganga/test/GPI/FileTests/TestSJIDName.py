@@ -9,6 +9,7 @@ class TestSJIDName(GangaUnitTest):
         super(TestSJIDName, self).setUp()
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
+        setConfigOption('Output', 'FailJobIfNoOutputMatched', 'True')
 
     def test_a_jobSubmit(self):
         """here for testing a submit"""
