@@ -21,10 +21,10 @@ class TestSJSubmit(GangaUnitTest):
         from Ganga.GPI import GenericSplitter
         splitter = GenericSplitter()
         splitter.attribute = 'application.args'
-        splitter.values = [['2'] for _ in range(0, TestSJSubmit.n_subjobs)]
+        splitter.values = [['1'] for _ in range(0, TestSJSubmit.n_subjobs)]
         return splitter
 
-    def test_a_LargeJobSubmission(self):
+    def test_a_JobSubmission(self):
         """
         Create lots of subjobs and submit it
         """
@@ -34,6 +34,8 @@ class TestSJSubmit(GangaUnitTest):
         j.splitter = self._getSplitter()
         j.backend = Local()
         j.submit()
+
+        # Test we can submit a job and we're going to check the sj are created
 
         assert len(j.subjobs) == TestSJSubmit.n_subjobs
 
@@ -52,6 +54,8 @@ class TestSJSubmit(GangaUnitTest):
         for sj in jobs(0).subjobs:
             assert sj.status in ['completed']
 
+        # Check that we can load the subjobs and that they are now in a complete status
+
     def test_c_SJResubmit_FailRequired(self):
         """
         Resubmit the subjobs when the required status is needed to do something
@@ -60,20 +64,36 @@ class TestSJSubmit(GangaUnitTest):
 
         jobs(0).resubmit()
 
+        # Test that resubmitting a job with SubJobXMLList subjobs doesn't stall
+        # Test them with all subjobs completed and resubmitOnlyFailedSubjobs = True
+
         from GangaTest.Framework.utils import sleep_until_completed
         sleep_until_completed(jobs(0))
+
+        # Test that resubmitting a subjob from SubJobXMLList that subjob doesn't stall
+        jobs(0).subjobs(0).resubmit()
 
         jobs(0).subjobs(0).force_status('failed')
 
         jobs(0).subjobs(0).resubmit()
 
+        # Test that we can resubmit 1 subjob from the subjob itself when the subjob is failed
+        # resubmitOnlyFailedSubjobs = True
+
         sleep_until_completed(jobs(0))
+
+        assert jobs(0).subjobs(0).status == 'completed'
 
         jobs(0).subjobs(0).force_status('failed')
 
         jobs(0).resubmit()
 
+        # Test that we can resubmit 1 subjob from the master job when the subjob is failed
+        # resubmitOnlyFailedSubjobs = True
+
         sleep_until_completed(jobs(0))
+
+        assert jobs(0).subjobs(0).status == 'completed'
 
     def test_d_SJResubmit_FailNotRequired(self):
         """
@@ -84,10 +104,16 @@ class TestSJSubmit(GangaUnitTest):
 
         from Ganga.GPI import jobs
 
+        # Test that resubmitting a job with SubJobXMLList subjobs doesn't stall
+        # Test them with all subjobs completed and resubmitOnlyFailedSubjobs = False
+
         jobs(0).resubmit()
 
         from GangaTest.Framework.utils import sleep_until_completed
         sleep_until_completed(jobs(0))
+
+        # Test that resubmitting a subjob from SubJobXMLList that subjob doesn't stall
+        jobs(0).subjobs(0).resubmit()
 
         jobs(0).subjobs(0).force_status('failed')
 
@@ -95,11 +121,21 @@ class TestSJSubmit(GangaUnitTest):
 
         sleep_until_completed(jobs(0))
 
+        assert jobs(0).subjobs(0).status == 'completed'
+
+        # Test that we can resubmit 1 subjob from the subjob itself when the subjob is failed
+        # resubmitOnlyFailedSubjobs = False
+
         jobs(0).subjobs(0).force_status('failed')
 
         jobs(0).resubmit()
 
         sleep_until_completed(jobs(0))
+
+        assert jobs(0).subjobs(0).status == 'completed'
+
+        # Test that we can resubmit 1 subjob from the master job when the subjob is failed
+        # resubmitOnlyFailedSubjobs = False
 
     def test_e_testInMemory(self):
         """
@@ -115,6 +151,8 @@ class TestSJSubmit(GangaUnitTest):
         from GangaTest.Framework.utils import sleep_until_completed
         sleep_until_completed(j)
 
+        # Job has ben created, split, run and now exists in Memory (NOT SJXML)
+
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'True')
 
@@ -122,21 +160,29 @@ class TestSJSubmit(GangaUnitTest):
 
         sleep_until_completed(j)
 
+        j.subjobs(0).resubmit()
+
+        # We should get here if calling resubmit doesn't stall
+
         j.subjobs(0).force_status('failed')
 
         j.resubmit()
 
         sleep_until_completed(j)
 
-        j.subjobs(0).resubmit()
+        assert j.subjobs(0).status == 'completed'
 
-        sleep_until_completed(j)
+        # Test resubmit from the master job worked
 
         j.subjobs(0).force_status('failed')
 
         j.subjobs(0).resubmit()
 
         sleep_until_completed(j)
+
+        assert j.subjobs(0).status == 'completed'
+
+        # Test that the resubmit from the subjob worked
 
         setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'False')
 
@@ -149,4 +195,6 @@ class TestSJSubmit(GangaUnitTest):
         j.resubmit()
 
         sleep_until_completed(j)
+
+        # Test that this works when resubmitOnlyFailedSubjobs = False
 
