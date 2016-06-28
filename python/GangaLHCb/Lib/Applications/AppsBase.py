@@ -161,7 +161,7 @@ class AppName(Gaudi):
         """Performs a getpack on the package given within the environment
            of the application. The unix exit code is returned
         """
-        import FileFunctions
+        import GangaLHCb.Lib.Applications.FileFunctions
         return FileFunctions.getpack(self, options)
 
     def make(self, argument=None):
@@ -169,7 +169,7 @@ class AppName(Gaudi):
            returned. Any arguments given are passed onto as in
            dv.make('clean').
         """
-        import FileFunctions
+        import GangaLHCb.Lib.Applications.FileFunctions
         return FileFunctions.make(self, argument)
 
     def cmt(self, command):
@@ -185,7 +185,7 @@ class AppName(Gaudi):
         return CMTscript(self, command)
 
     def _getshell(self):
-        import EnvironFunctions
+        import GangaLHCb.Lib.Applications.EnvironFunctions
         env = EnvironFunctions._getshell(self)
         return env
 

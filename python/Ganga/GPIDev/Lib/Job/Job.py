@@ -1714,7 +1714,10 @@ class Job(GangaObject):
                     sj.application.transition_update('removed')
 
         if self._registry:
-            self._registry._remove(self, auto_removed=1)
+            try:
+                self._registry._remove(self, auto_removed=1)
+            except GangaException as err:
+                logger.warning("Error trying to fully remove Job #'%s':: %s" % (self.getFQID('.'), err))
 
         self.status = 'removed'
 
@@ -1974,10 +1977,6 @@ class Job(GangaObject):
 
         oldstatus = self.status
 
-        self.updateStatus('submitting')
-
-        self.getDebugWorkspace().remove(preserve_top=True)
-
         try:
             config_resubOFS = config['resubmitOnlyFailedSubjobs']
             if config_resubOFS is True:
@@ -1985,7 +1984,7 @@ class Job(GangaObject):
             else:
                 rjobs = self.subjobs
 
-            if not rjobs:
+            if not rjobs and not self.subjobs:
                 rjobs = [self]
             elif auto_resubmit:  # get only the failed jobs for auto resubmit
                 rjobs = [s for s in rjobs if s.status in ['failed']]
@@ -1996,6 +1995,15 @@ class Job(GangaObject):
                     # bugfix: #31690: Empty the outputdir of the subjob just
                     # before resubmitting it
                     sjs.getOutputWorkspace().remove(preserve_top=True)
+            else:
+                logger.error('There is nothing to do for resubmit of Job: %s' % self.getFQID('.'))
+                logger.error('It\'s assumed all subjobs here have been completed, continuing silently')
+                self.updateStatus(oldstatus)
+                return
+
+            self.updateStatus('submitting')
+
+            self.getDebugWorkspace().remove(preserve_top=True)
 
             try:
                 if auto_resubmit:
@@ -2024,7 +2032,7 @@ class Job(GangaObject):
 
             # FIXME: if job is not split, then default implementation of
             # backend.master_submit already have set status to "submitted"
-            self.status = 'submitted'
+            self.updateStatus('submitted')
 
             # send job submission message
             # if resubmit on subjob
