@@ -1,7 +1,5 @@
 from .exceptions import CredentialsError
 
-from Ganga.GPIDev.Base.Proxy import stripProxy
-
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
@@ -66,8 +64,6 @@ class ICredentialInfo(object):
         super(ICredentialInfo, self).__init__()
 
         self.cache = {'mtime': 0}
-
-        requirements = stripProxy(requirements)
         
         if not requirements.location:
             # If we weren't given a location, assume the encoded location
@@ -146,7 +142,7 @@ class ICredentialInfo(object):
             ``True`` if we meet all requirements
             ``False`` if even one requirement is not met or if the credential is not valid
         """
-        return all(self.check_requirement(query, requirementName) for requirementName in stripProxy(query)._schema.datadict)
+        return all(self.check_requirement(query, requirementName) for requirementName in query._schema.datadict)
 
     def check_requirement(self, query, requirement_name):
         """

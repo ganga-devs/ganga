@@ -3,7 +3,6 @@ from copy import deepcopy
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
-from Ganga.GPIDev.Base.Proxy import stripProxy
 
 from .exceptions import CredentialsError
 from .ICredentialRequirement import ICredentialRequirement
@@ -47,7 +46,7 @@ class CredentialStore(GangaObject):
             The newly created ICredentialInfo object
         """
 
-        cred = stripProxy(query)._infoClass(query, check_file=check_file, create=create)
+        cred = query._infoClass(query, check_file=check_file, create=create)
         self.credentials.add(cred)
         return cred
     
@@ -79,7 +78,6 @@ class CredentialStore(GangaObject):
             KeyError: If it could not provide a credential
             TypeError: If query is of the wrong type
         """
-        query = stripProxy(query)
 
         if not isinstance(query, ICredentialRequirement):
             raise TypeError('Credential store query should be of type ICredentialRequirement')
@@ -137,7 +135,7 @@ class CredentialStore(GangaObject):
             query (ICredentialRequirement):
         """
 
-        return (cred for cred in self.credentials if type(cred) == stripProxy(query)._infoClass)
+        return (cred for cred in self.credentials if type(cred) == query._infoClass)
     
     def matches(self, query):
         """
