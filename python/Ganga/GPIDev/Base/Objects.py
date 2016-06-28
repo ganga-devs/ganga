@@ -418,10 +418,15 @@ class Descriptor(object):
 
         from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
+        # call any 'checkset' function on this schema item
+        # Probably going to be removed soon (see issue #616)
         if hasattr(obj, '_checkset_name'):
             checkSet = self._bind_method(obj, self._checkset_name)
             if checkSet is not None:
                 checkSet(temp_val)
+
+        # call any 'filter' function on this schema item
+        # Probably going to be removed soon (see issue #616)
         if hasattr(obj, '_filter_name'):
             this_filter = self._bind_method(obj, self._filter_name)
             if this_filter:
@@ -434,8 +439,6 @@ class Descriptor(object):
         # make sure the object is loaded if it's attached to a registry
         obj._loadObject()
 
-        item = obj._schema[_getName(self)]
-
         def cloneVal(v):
             GangaList = _getGangaList()
             if isinstance(v, (list, tuple, GangaList)):
@@ -447,19 +450,19 @@ class Descriptor(object):
                 return self.__cloneVal(v, obj)
 
         ## If the item has been defined as a sequence great, let's continue!
-        if item['sequence']:
-            _preparable = True if item['preparable'] else False
+        if self._item['sequence']:
+            _preparable = True if self._item['preparable'] else False
             if len(val) == 0:
                 GangaList = _getGangaList()
                 new_val = GangaList()
             else:
-                if isinstance(item, Schema.ComponentItem):
+                if isinstance(self._item, Schema.ComponentItem):
                     new_val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
                 else:
                     new_val = makeGangaList(val, parent=obj, preparable=_preparable)
         else:
             ## Else we need to work out what we've got.
-            if isinstance(item, Schema.ComponentItem):
+            if isinstance(self._item, Schema.ComponentItem):
                 GangaList = _getGangaList()
                 if isinstance(val, (list, tuple, GangaList)):
                     ## Can't have a GangaList inside a GangaList easily so lets not
