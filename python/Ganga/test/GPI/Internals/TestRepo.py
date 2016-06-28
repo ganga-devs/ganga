@@ -7,13 +7,14 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class FakeRegistry(object):
+
     def __init__(self, name):
         self.name = name
         self.repo = None
+        self._lock = threading.RLock()
 
     def _read_access(self, root, obj):
-        if not obj._data:
-            self.repo.load([root._registry_id])
+        self.repo.load([root._registry_id])
 
     def _acquire_session_lock(self, root):
         pass

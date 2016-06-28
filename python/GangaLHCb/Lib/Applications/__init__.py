@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 
 from Ganga.Runtime.GPIexport import exportToGPI
@@ -7,9 +8,11 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory
 from GangaLHCb.Lib.Applications import AppsBaseUtils
 from Ganga.Utility.logging import getLogger
 
-from GaudiPython import GaudiPython
+from .GaudiPython import GaudiPython
 
-from Bender import Bender
+from .Bender import Bender
+from .BenderScript import BenderScript
+from .Ostap import Ostap
 
 # Add any additional Packages required by the user in the .gangarc file
 from Ganga.Utility.Config import getConfig

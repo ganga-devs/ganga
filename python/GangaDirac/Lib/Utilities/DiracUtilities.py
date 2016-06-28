@@ -165,7 +165,7 @@ def _dirac_check_proxy( renew = True, shouldRaise = True):
     global last_modified_valid
     global proxy
     if proxy is None:
-        proxy = getCredential('GridProxy', '')
+        proxy = getCredential('GridProxy')
     _isValid = proxy.isValid()
     if not _isValid:
         if renew is True:
@@ -278,5 +278,5 @@ def execute(command,
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
 
-    return deepcopy(returnable)
+    return returnable
 

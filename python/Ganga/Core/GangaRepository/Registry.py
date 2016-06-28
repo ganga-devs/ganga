@@ -242,8 +242,9 @@ class RegistryFlusher(threading.Thread):
         will wait for a fixed period of time.
         """
         sleeps_per_second = 10  # This changes the granularity of the sleep.
+        regConf = getConfig('Registry')
         while not self.stopped:
-            sleep_period = getConfig('Registry')['AutoFlusherWaitTime']
+            sleep_period = regConf['AutoFlusherWaitTime']
             for i in range(sleep_period*sleeps_per_second):
                 time.sleep(1/sleeps_per_second)
                 if self.stopped:
@@ -251,7 +252,8 @@ class RegistryFlusher(threading.Thread):
             # This will trigger a flush on all dirty objects in the repo,
             # It will lock all objects dirty as a result of the nature of the flush command
             logger.debug('Auto-flushing: %s', self.registry.name)
-            self.registry.flush_all()
+            if regConf['EnableAutoFlush']:
+                self.registry.flush_all()
         logger.debug("Auto-Flusher shutting down for Registry: %s" % self.registry.name)
 
 
@@ -531,7 +533,7 @@ class Registry(object):
         Args:
             obj (GangaObject): This is the object we want to fully load
         """
-        logger.debug("_load")
+        logger.debug("_locked_load")
 
         # find the object ID
         obj_id = self.find(obj)
@@ -539,7 +541,7 @@ class Registry(object):
         try:
             self.repository.load([obj_id])
         except Exception as err:
-            logger.error("Error Loading Jobs! '%s'" % obj_ids)
+            logger.error("Error Loading Job! '%s'" % obj_id)
             ## Cleanup after ourselves if an error occured
             ## Didn't load mark as clean so it's not flushed
             if obj_id in self._objects:

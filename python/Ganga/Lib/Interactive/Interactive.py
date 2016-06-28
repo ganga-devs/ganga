@@ -274,8 +274,7 @@ class Interactive(IBackend):
     def updateMonitoringInformation(jobs):
 
         for j in jobs:
-            stripProxy(j)._getSessionLock()
-
+            
             raw_backend = stripProxy(j.backend)
 
             if not j.backend.id:

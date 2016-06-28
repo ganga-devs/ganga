@@ -457,9 +457,6 @@ class IBackend(GangaObject):
                 if not monitorable_subjob_ids:
                     continue
 
-                # make sure we have the session lock
-                stripProxy(j)._getSessionLock()
-
                 #logger.info("Dividing")
 
                 monitorable_blocks = []
@@ -491,24 +488,16 @@ class IBackend(GangaObject):
 
                 j.updateMasterJobStatus()
 
-                ## NB ONLY THE MASTER JOB IS KNOWN TO THE JOB REPO!!!
-                stripProxy(j)._setDirty()
             else:
                 backend_name = getName(j.backend)
-                if backend_name not in simple_jobs.keys():
+                if backend_name not in simple_jobs:
                     simple_jobs[backend_name] = []
                 simple_jobs[backend_name].append(j)
 
-        if len(simple_jobs.keys()) > 0:
+        if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
-
-                for this_job in simple_jobs[this_backend]:
-                    stripProxy(this_job)._getSessionLock()
                 stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
-
-                for this_job in simple_jobs[this_backend]:
-                    stripProxy(this_job)._setDirty()
 
         logger.debug("Finished Monitoring request")
 

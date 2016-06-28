@@ -4,6 +4,7 @@ import datetime
 import hashlib
 import re
 import os.path
+import random
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory, isType, getName
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
@@ -22,25 +23,6 @@ regex = re.compile('[*?\[\]]')
 global stored_list_of_sites
 stored_list_of_sites = []
 
-
-def all_SE_list(first_SE = '', defaultSE = ''):
-
-    global stored_list_of_sites
-    if stored_list_of_sites != []:
-        return stored_list_of_sites
-
-    all_storage_elements = configDirac['allDiracSE']
-    if first_SE == '':
-        default_SE = defaultSE
-    else:
-        default_SE = first_SE
-
-    all_storage_elements.pop(all_storage_elements.index(default_SE))
-    all_storage_elements.insert(0, default_SE)
-
-    stored_list_of_sites = all_storage_elements
-
-    return all_storage_elements
 
 class DiracFile(IGangaFile):
 
@@ -146,27 +128,6 @@ class DiracFile(IGangaFile):
 
         return
 
-    def __deepcopy__(self, memo=None):
-
-        cls = type(stripProxy(self))
-        c = super(cls, cls).__new__(cls)
-        super(DiracFile, c).__init__()
-
-        c.lfn = self.lfn
-        c.localDir = self.lfn
-        c.remoteDir = self.remoteDir
-        c.namePattern = self.namePattern
-        c.compressed = self.compressed
-        c.locations = self.locations
-        c.guid = self.guid
-        c._storedReplicas = self._storedReplicas
-        c._remoteURLs = self._remoteURLs
-        c.failureReason = self.failureReason
-
-        c.subfiles = copy.deepcopy(self.subfiles)
-        c._have_copied = True
-        return c
-
     def _attribute_filter__set__(self, name, value):
 
         if value != "" and value is not None:
@@ -250,7 +211,7 @@ class DiracFile(IGangaFile):
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "DiracFile(namePattern='%s', lfn='%s')" % (self.namePattern, self.lfn)
+        return "DiracFile(namePattern='%s', lfn='%s', localDir='%s')" % (self.namePattern, self.lfn, self.localDir)
 
     def getSubFiles(self):
         """
@@ -473,10 +434,10 @@ class DiracFile(IGangaFile):
                         raise err
                 else:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
-                    raise GangaError("Couldn't find replicas for: %s" % str(self.lfn))
+                    raise GangaException("Couldn't find replicas for: %s" % str(self.lfn))
                 logger.debug("getReplicas: %s" % str(self._storedReplicas))
 
-                if self.lfn in self._storedReplicas.keys():
+                if self.lfn in self._storedReplicas:
                     self._updateRemoteURLs(self._storedReplicas)
 
                     these_replicas = [self._storedReplicas[self.lfn]]
@@ -495,7 +456,7 @@ class DiracFile(IGangaFile):
             for i in self.subfiles:
                 i._updateRemoteURLs(reps)
         else:
-            if self.lfn not in reps.keys():
+            if self.lfn not in reps:
                 return
             if self.locations != reps[self.lfn].keys():
                 self.locations = reps[self.lfn].keys()
@@ -743,10 +704,18 @@ class DiracFile(IGangaFile):
         else:
             lfn_base = self.remoteDir
 
-        if uploadSE != "":
-            storage_elements = all_SE_list(uploadSE, self.defaultSE)
+        if uploadSE == "":
+            if self.defaultSE != "":
+                storage_elements = [self.defaultSE]
+            else:
+                if configDirac['allDiracSE']:
+                    storage_elements = [random.choice(configDirac['allDiracSE'])]
+                else:
+                    raise GangaException("Can't upload a file without a valid defaultSE or storageSE, please provide one")
+        elif isinstance(uploadSE, list):
+            storage_elements = uploadSE
         else:
-            storage_elements = all_SE_list(self.defaultSE, self.defaultSE)
+            storage_elements = [uploadSE]
 
         outputFiles = GangaList()
         backup_lfn = self.lfn
@@ -782,10 +751,10 @@ class DiracFile(IGangaFile):
             d.localDir = sourceDir
             stderr = ''
             stdout = ''
-            logger.info('Uploading file %s to %s as %s' % (name, storage_elements[0], lfn))
+            logger.info('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
             stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
             if type(stdout) == str:
-                logger.warning("Couldn't upload file '%s': %s" % (os.path.basename(name), stdout))
+                logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), stdout))
                 continue
             if stdout.get('OK', False) and lfn in stdout.get('Value', {'Successful': {}})['Successful']:
                 # when doing the two step upload delete the temp file

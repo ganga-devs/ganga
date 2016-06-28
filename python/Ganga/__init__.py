@@ -246,6 +246,8 @@ poll_config.addOption('forced_shutdown_first_prompt_time', 5,
 import sys
 poll_config.addOption('HeartBeatTimeOut', sys.maxint, 'Time before the user gets the warning that a thread has locked up due to failing to update the heartbeat attribute')
 
+poll_config.addOption('autoCheckCredentials', True, 'Check credentials using the monitoring loop')
+
 # ------------------------------------------------
 # Feedback
 feedback_config = makeConfig('Feedback', 'Settings for the Feedback plugin. Cannot be changed during the interactive Ganga session.')
@@ -299,10 +301,10 @@ lcg_config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
 
 # set default values for the configuration parameters
 lcg_config.addOption(
-    'EDG_ENABLE', False, 'enables/disables the support of the EDG middleware')
+    'EDG_ENABLE', False, 'DEPRECATED enables/disables the support of the EDG middleware')
 
 lcg_config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                 'sets the LCG-UI environment setup script for the EDG middleware',
+                 'DEPRECATED sets the LCG-UI environment setup script for the EDG middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption(
@@ -315,7 +317,7 @@ lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_e
 lcg_config.addOption('VirtualOrganisation', 'dteam',
                  'sets the name of the grid virtual organisation')
 
-lcg_config.addOption('ConfigVO', '', 'sets the VO-specific LCG-UI configuration script for the EDG resource broker',
+lcg_config.addOption('ConfigVO', '', 'DEPRECATED sets the VO-specific LCG-UI configuration script for the EDG resource broker',
                  filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
@@ -840,3 +842,4 @@ Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 # Registry Dirty Monitoring Services (not related to actual Job Monitoring)
 reg_config = makeConfig('Registry','')
 reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')
+reg_config.addOption('EnableAutoFlush', True, 'Enable Registry auto-flushing feature')

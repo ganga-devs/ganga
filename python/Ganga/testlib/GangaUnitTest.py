@@ -8,22 +8,62 @@ try:
 except ImportError:
     import unittest
 
+
 def _getGangaPath():
+    """
+    Determine what the path of the Ganga code is based upon where this file is in the repo
+    """
     file_path = os.path.dirname(os.path.realpath(__file__))
     ganga_python_dir = os.path.join(file_path, '..', '..')
     ganga_python_dir = os.path.realpath(ganga_python_dir)
     return ganga_python_dir
 
+
 def _setupGangaPath():
+    """
+    Add the path of the Ganga to the PYTHONDIR upon import
+    """
     ganga_python_dir = _getGangaPath()
     if len(sys.path) >= 1 and ganga_python_dir != sys.path[0]:
         sys.path.insert(0, ganga_python_dir)
 
         print("Adding: %s to Python Path\n" % ganga_python_dir)
 
+
+def load_config_files():
+    """
+    Load the config files as a normal Ganga session would, taking
+    into account environment variables etc.
+    """
+    from Ganga.Utility.Config import getConfig, setSessionValuesFromFiles
+    from Ganga.Runtime import GangaProgram
+    system_vars = {}
+    for opt in getConfig('System'):
+        system_vars[opt] = getConfig('System')[opt]
+    config_files = GangaProgram.get_config_files(os.path.expanduser('~/.gangarc'))
+    setSessionValuesFromFiles(config_files, system_vars)
+
+
+def clear_config():
+    """
+    Reset all the configs back to their default values
+    """
+    from Ganga.Utility.Config import allConfigs
+    for package in allConfigs.values():
+        package._user_handlers = []
+        package._session_handlers = []
+        package.revertToDefaultOptions()
+
 _setupGangaPath()
 
+
 def start_ganga(gangadir_for_test, extra_opts=[]):
+    """
+    Startup Ganga by calling the same set of 'safe' functions each time
+    Args:
+        gangadir_for_test (str): This is the directory which the GangaUnitTest is to be run, a new gangadir has been created per test to avoid collisions
+        extra_opts (list): A list of tuples which are used to pass command line style options to Ganga
+    """
 
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()
@@ -62,48 +102,36 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     Ganga.Runtime._prog = Ganga.Runtime.GangaProgram(argv=this_argv)
     Ganga.Runtime._prog.parseOptions()
 
-    # Determine if ganga has actually finished initializing...
-    # This is here to protect against the startGanga being called on an
-    # initialized ganga environment
-    try:
-        do_config = not Ganga.Utility.Config.Config._after_bootstrap
-    except:
-        do_config = True
-
     # For all the default and extra options, we set the session value
     from Ganga.Utility.Config import setConfigOption
     for opt in default_opts + extra_opts:
         setConfigOption(*opt)
 
-    if do_config:
-        # Perform the configuration and bootstrap steps in ganga
-        logger.info("Parsing Configuration Options")
-        Ganga.Runtime._prog.configure()
-        logger.info("Initializing")
-        Ganga.Runtime._prog.initEnvironment()
-    else:
-        from Ganga.Runtime.Repository_runtime import startUpRegistries
-        from Ganga.Utility.Config import getConfig
-        if getConfig('Configuration')['AutoStartReg']:
-            startUpRegistries()
+    # The configuration is currently created at module import and hence can't be
+    # regenerated.
+    # The values read in from any .ini file or from command line will change this
+    # but the configuration can't be obliterated and re-created. (yet, 16.06.16)
 
-        # The queues are shut down by the atexit handlers so we need to start them here
-        from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
-        startUpQueues()
+    # Perform the configuration and bootstrap steps in ganga
+    logger.info("Parsing Configuration Options")
+    Ganga.Runtime._prog.configure()
 
-        # We need to test if the internal services need to be reinitialized
-        from Ganga.Core.InternalServices import Coordinator
-        if not Coordinator.servicesEnabled:
-            # Start internal services
-            logger.info("InternalServices restarting")
-
-            from Ganga.Core.InternalServices.Coordinator import enableInternalServices
-            enableInternalServices()
-        else:
-            logger.info("InternalServices still running")
+    logger.info("Initializing")
+    Ganga.Runtime._prog.initEnvironment()
 
     logger.info("Bootstrapping")
     Ganga.Runtime._prog.bootstrap(interactive=False)
+
+    # We need to test if the internal services need to be reinitialized
+    from Ganga.Core.InternalServices import Coordinator
+    if not Coordinator.servicesEnabled:
+        # Start internal services
+        logger.info("InternalServices restarting")
+
+        from Ganga.Core.InternalServices.Coordinator import enableInternalServices
+        enableInternalServices()
+    else:
+        logger.info("InternalServices still running")
 
     # Adapted from the Coordinator class, check for the required credentials and stop if not found
     # Hopefully stops us falling over due to no AFS access of something similar
@@ -122,7 +150,12 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
 
     logger.info("Passing to Unittest")
 
+
 def emptyRepositories():
+    """
+    A method which attempts to remove jobs from various repositories in a sane manner,
+    This is preferred to just shutting down and runnning rm -fr ... as it catches a few errors hard to test for
+    """
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     # empty repository so we start again at job 0 when we restart
@@ -151,7 +184,13 @@ def emptyRepositories():
     if hasattr(tasks, 'clean'):
         tasks.clean(confirm=True, force=True)
 
+
 def stop_ganga():
+    """
+    This test stops Ganga and shuts it down
+
+    Most of the logic is weapped in ShutdownManager._ganga_run_exitfuncs but additional code is used to cleanup repos and such between tests
+    """
 
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
@@ -186,14 +225,16 @@ def stop_ganga():
     ShutdownManager._ganga_run_exitfuncs()
 
     # Undo any manual editing of the config and revert to defaults
-    from Ganga.Utility.Config import allConfigs
-    for package in allConfigs.values():
-        package.revertToDefaultOptions()
+    clear_config()
 
     # Finished
     logger.info("Test Finished")
 
+
 class GangaUnitTest(unittest.TestCase):
+    """
+    This class is the class which all new-style Ganga tests should inherit from
+    """
 
     @classmethod
     def gangadir(cls):
@@ -204,9 +245,18 @@ class GangaUnitTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        """
+        This removes all trace of any previous tests on disk
+        TODO, would it be better to move the folder first, then remove it incase of broken locks etc,?
+        """
         shutil.rmtree(cls.gangadir(), ignore_errors=True)
 
     def setUp(self, extra_opts=[]):
+        """
+        Setup the unit test which is about to run
+        Args:
+            extra_opts (list): This is a list of tuples which are similar to command line arguments passed to Ganga
+        """
         unittest.TestCase.setUp(self)
         # Start ganga and internal services
         # This is called before each unittest
@@ -218,6 +268,9 @@ class GangaUnitTest(unittest.TestCase):
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
 
     def tearDown(self):
+        """
+        This tears down Ganga in a nice way at the end of each test
+        """
         unittest.TestCase.tearDown(self)
         # Stop ganga and mimick an exit to shutdown all internal processes
         stop_ganga()
@@ -225,5 +278,9 @@ class GangaUnitTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(cls.gangadir(), ignore_errors=True)
-
+        """
+        This is used for cleaning up anything at a module level of higher
+        """
+        # NB maybe we shouldn't delete tests here as failed tests require debugging
+        #    this is better cleaned prior to running the next job
+        #shutil.rmtree(cls.gangadir(), ignore_errors=True)
