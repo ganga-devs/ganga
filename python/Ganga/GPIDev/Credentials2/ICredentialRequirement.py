@@ -35,8 +35,10 @@ class ICredentialRequirement(GangaObject):
         pass
 
     def __str__(self):
-        items = ((name, str(getattr(self, name))) for name in self._schema.allItemNames())
-        arg_strings = ('='.join(arg) for arg in items)
+        items = ((name, getattr(self, name)) for name in self._schema.allItemNames())
+        explicit_items = ((name, value) for name, value in items if value)
+        item_strings = ((name, repr(value)) for name, value in explicit_items)
+        arg_strings = ('='.join(arg) for arg in item_strings)
         arg_string = ', '.join(arg_strings)
         return '{name}({args})'.format(name=self.__class__.__name__, args=arg_string)
 
