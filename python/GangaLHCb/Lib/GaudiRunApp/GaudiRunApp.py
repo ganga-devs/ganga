@@ -1,7 +1,8 @@
-from os import rename, path, makedirs, chdir, unlink
+from os import rename, path, makedirs, chdir, unlink, listdir
 import tempfile
 import time
 import subprocess
+import shutil
 
 from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
@@ -75,13 +76,13 @@ class GaudiRun(IPrepareApp):
         'myOpts':       GangaFileItem(defvalue=None, doc='File which contains the extra opts I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'runWithPython':SimpleItem(defvalue=False, doc='Should \'myOpts\' be run as "python myOpts.py data.py" rather than "gaudirun.py myOpts.py data.py"'),
+        'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
 
         # Prepared job object
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1,
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=0,
             doc='MD5 hash of the string representation of applications preparable attributes'),
-        'arch':         SimpleItem(defvalue="x86_64-slc6-gcc49-opt", typelist=[str], doc='Arch the application was built for'),
         })
     _category = 'applications'
     _name = 'GaudiRun'
@@ -149,7 +150,26 @@ class GaudiRun(IPrepareApp):
             self.unprepare()
             raise
 
+        self.cleanGangaTargetArea(this_build_target)
+
         return 1
+
+    def cleanGangaTargetArea(self, this_build_target):
+        """
+        Method to remove the build target and other files not needed to reproduce the same build target again
+        """
+        logger.debug("Cleaning up area after prepare")
+
+        # Don't delete these
+        preserved_set = set(['run'])
+
+        build_dir = path.dirname(this_build_target)
+        for obj in set(listdir(build_dir)) - preserved_set:
+            logger.debug("del: %s of %s" %(obj, set(listdir(build_dir)) - preserved_set))
+            if path.isfile(path.join(build_dir, obj)):
+                unlink(path.join(build_dir, obj))
+            elif path.isdir(path.join(build_dir, obj)):
+                shutil.rmtree(path.join(build_dir, obj), ignore_errors=True)
 
     def configure(self, masterappconfig):
         """
@@ -171,7 +191,7 @@ class GaudiRun(IPrepareApp):
                 ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
                 full_path = expandfilename(path.join(self.myOpts.localDir, path.basename(self.myOpts.namePattern)), force=True)
                 if not path.exists(full_path):
-                    raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!")
+                    raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
                 self.myOpts = LocalFile(namePattern=path.basename(full_path), localDir=path.dirname(full_path))
                 return self.myOpts
             elif isinstance(self.myOpts, DiracFile):
@@ -190,6 +210,9 @@ class GaudiRun(IPrepareApp):
         else:
             raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")
 
+    def getEnvScript(self):
+        return 'export CMTCONFIG=%s; source LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+
     def exec_cmd(self, cmd):
         """
         This method executes a command within the namespace of the project. The cmd is placed in a bash script which is executed within the env
@@ -199,12 +222,17 @@ class GaudiRun(IPrepareApp):
 
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
 
-        cmd_wrapper = './run bash -c "%s"' % cmd
+        env_wrapper = self.getEnvScript()
+        cmd_wrapper = env_wrapper + 'make && ./run bash -c "%s"' % cmd
+
+        logger.info("full cmd: %s" % cmd_wrapper)
 
         cmd_file.write(cmd_wrapper)
         cmd_file.flush()
 
         script_run = 'bash %s' % cmd_file.name
+
+        logger.info("Running: %s" % script_run)
 
         rc, stdout, stderr = _exec_cmd(script_run, self.getDir())
 
@@ -224,9 +252,9 @@ class GaudiRun(IPrepareApp):
         This returns the absolute path to the file after it has been created. It will fail if things go wrong or the file fails to generate
         """
         logger.info("Make-ing target '%s'     (This may take a few minutes depending on the size of your project)" % GaudiRun.build_target)
-        self.exec_cmd('make clean && make %s' % GaudiRun.build_target)
+        self.exec_cmd('make %s' % GaudiRun.build_target)
 
-        targetPath = path.join(self.getDir(), 'build.%s' % self.arch, 'ganga')
+        targetPath = path.join(self.getDir(), 'build.%s' % self.platform, 'ganga')
         if not path.isdir(targetPath):
             raise GangaException("Target Path: %s NOT found!" % targetPath)
         sandbox_str = '%s' % GaudiRun.build_dest

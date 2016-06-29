@@ -22,9 +22,10 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
-
+from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
+from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 
 logger = getLogger()
 
@@ -67,11 +68,9 @@ def genDataFiles(job):
             cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
             data_str += cat_opts
 
-        #input_data_filename = os.path.join(job.getStringInputDir(), GaudiRunDiracRTHandler.data_file)
-        #with open(input_data_filename, 'w+') as input_d_file:
-        #    input_d_file.write(data_str)
-        #inputsandbox.append(LocalFile(namePattern=GaudiRunDiracRTHandler.data_file, localDir=job.getStringInputDir()))
         inputsandbox.append(FileBuffer(GaudiRunDiracRTHandler.data_file, data_str))
+    else:
+        inputsandbox.append(FileBuffer(GaudiRunDiracRTHandler.data_file, '#dummy_data_file\n'+LHCbDataset().optionsString()))
 
     return inputsandbox
 
@@ -127,10 +126,13 @@ def prepareCommand(app):
     else:
         raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                             getName(opts_file))
+
+    sourceEnv = app.getEnvScript()
+        
     if app.runWithPython:
-        full_cmd = './run python %s' %(WN_script_name)
+        full_cmd = sourceEnv + './run python %s' %(WN_script_name)
     else:
-        full_cmd = "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
+        full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
     return full_cmd
 
 
@@ -335,11 +337,11 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         # Already added to sandbox uploaded as LFN
 
         # This code deals with the outputfiles as outputsandbox and outputdata for us
-        dirac_outputfiles = dirac_outputfile_jdl(outputfiles, False)
+        lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
-        dirac_script = script_generator(diracAPI_script_template(),
+        dirac_script = script_generator(lhcbdiracAPI_script_template(),
                                         DIRAC_IMPORT='from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
                                         DIRAC_JOB_IMPORT='from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
                                         DIRAC_OBJECT='DiracLHCb()',
@@ -352,9 +354,10 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                                         INPUTDATA=input_data,
                                         PARAMETRIC_INPUTDATA=parametricinput_data,
                                         OUTPUT_SANDBOX=API_nullifier(outputsandbox),
-                                        OUTPUTFILESSCRIPT=dirac_outputfiles,
+                                        OUTPUTFILESSCRIPT=lhcbdirac_outputfiles,
                                         OUTPUT_PATH="",  # job.fqid,
                                         OUTPUT_SE=[],
+                                        PLATFORM=app.platform,
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
                                         REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
@@ -381,12 +384,16 @@ def gaudiRun_script_template():
     script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
 from __future__ import print_function
-from os import listdir, system, environ, pathsep, getcwd
+from os import listdir, environ, pathsep, getcwd, system
 from mimetypes import guess_type
 from contextlib import closing
 import sys
+import subprocess
 
 def extractAllTarFiles(path):
+    '''
+    This extracts all extractable (g/b)zip files found in the top level dir of the WN
+    '''
     for f in listdir(path):
         print("examining: %s" % f )
         file_type = guess_type(f)[1]
@@ -398,6 +405,9 @@ def extractAllTarFiles(path):
                 system("tar -jxf %s" % f)
 
 def pythonScript(scriptName):
+    '''
+    This is the actual code in the GaudiPython-like script
+    '''
     script = '''
 from Gaudi.Configuration import *
 importOptions('data.py')
@@ -406,23 +416,63 @@ execfile('./%s')
     return script
 
 def generatePythonScript(scriptName):
+    '''
+    Generate the Python script file for the GaudiPython-like running
+    '''
     with open('###WN_SCRIPT_NAME###', 'w') as WN_script:
         WN_script.write(pythonScript(scriptName))
 
+def flush_streams(pipe):
+    '''
+    This flushes the stdout/stderr streams to the stdout/stderr correctly
+    '''
+    with pipe.stdout or pipe.stderr:
+        if pipe.stdout:
+            for next_line in iter(pipe.stdout.readline, b''):
+                print("%s" % next_line, file=sys.stdout, end='')
+                sys.stdout.flush()
+        if pipe.stderr:
+            for next_line in iter(pipe.stderr.readline, b''):
+                print("%s" % next_line, file=sys.stderr, end='')
+                sys.stderr.flush()
+
 # Main
 if __name__ == '__main__':
-
+    '''
+    Main section of code for the GaudiRun script run on the WN
+    '''
+    # Opening pleasantries
+    print("Hello from GaudiRun")
     print("Arrived at workernode: %s" % getcwd())
+    print("#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
+    print("")
 
+    # Extract any/_all_ (b/g)zip files on the WN
     extractAllTarFiles('.')
 
+    # In the case we're wanting to run the Python script here, generate it on the WN and use it there
     generatePythonScript('###SCRIPT_NAME###')
 
-    print("Executing: %s" % '###COMMAND###')
 
-    rc = system('###COMMAND###')
+    print("Executing: %s" % '###COMMAND###')
+    # Execute the actual command on the WN
+    # NB os.system caued the entire stream to be captured before being streamed in some cases
+    pipe = subprocess.Popen('###COMMAND###', shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    # Flush the stdout/stderr as the process is running correctly
+    flush_streams(pipe)
+
+    # Wait for the process to finish executing
+    pipe.wait()
+
+    rc = pipe.returncode
 
     ###OUTPUTFILESINJECTEDCODE###
+
+    # Final pleasantries
+    print("")
+    print("#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
+    print("Goodbye from GaudiRun")
 
     sys.exit(rc)
 """
