@@ -11,6 +11,8 @@ ganga/python/Ganga
 * Fixed bug in IPython buffer flushing whilst typing multi-line functions
 * Fixed problem with Registry file locking
 * Improved shutdown code
+* New interactive sessions will stop the monitoring loop if existing sessions are discovered via lockfiles on disk
+   ** type `enableMonitoring()` to re-enable monitoring in these sessions if required (may be unsafe)
 * Various code cleanups
 
 
