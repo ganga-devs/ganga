@@ -121,6 +121,3 @@ class AfsToken(ICredentialRequirement):
 
     def encoded(self):
         return ''
-
-    def is_empty(self):
-        return True

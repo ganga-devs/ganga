@@ -134,6 +134,3 @@ class VomsProxy(ICredentialRequirement):
 
     def encoded(self):
         return ':'.join(requirement for requirement in [self.identity, self.vo, self.role, self.group] if requirement)  # filter out the empties
-
-    def is_empty(self):
-        return not (self.identity or self.vo or self.role or self.group)

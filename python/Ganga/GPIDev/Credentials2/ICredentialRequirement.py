@@ -30,14 +30,6 @@ class ICredentialRequirement(GangaObject):
         """
         pass
 
-    @abstractmethod
-    def is_empty(self):
-        """
-        Returns:
-        ``True`` if no explicit requirements were specified (ignoring the ``location``)
-        """
-        pass
-
     def __str__(self):
         items = ((name, str(getattr(self, name))) for name in self._schema.allItemNames())
         arg_strings = ('='.join(arg) for arg in items)
