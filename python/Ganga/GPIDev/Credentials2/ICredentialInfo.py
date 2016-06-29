@@ -1,14 +1,16 @@
-from .exceptions import CredentialsError
+from __future__ import absolute_import
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-
-from datetime import datetime, timedelta
 import copy
 import os
-import os.path
 from abc import ABCMeta, abstractmethod
+from datetime import datetime, timedelta
 from functools import wraps
+
+import Ganga.Utility.logging
+
+from .exceptions import CredentialsError
+
+logger = Ganga.Utility.logging.getLogger()
 
 
 def cache(method):
@@ -46,7 +48,7 @@ class ICredentialInfo(object):
     Each object covers one credential file exactly.
     The proxy/token is central to the object and all information is gathered from there.
     Everything is cached internally
-    
+
     These are only created by the store and should not be persisted.
     """
     __metaclass__ = ABCMeta
@@ -57,7 +59,7 @@ class ICredentialInfo(object):
             requirements (ICredentialRequirement): An object specifying the requirements
             check_file: Raise an exception if the file does not exist
             create: Create the credential file
-        
+
         Raises:
             IOError: If told to wrap a non-existent file
             CredentialsError: If this object cannot satisfy ``requirements``
@@ -67,24 +69,24 @@ class ICredentialInfo(object):
         self.cache = {'mtime': 0}
 
         self.initial_requirements = copy.deepcopy(requirements)  # Store the requirements that the object was created with. Used for creation
-        
+
         if check_file:
-            logger.debug("Trying to wrap {path}".format(path=self.location))
+            logger.debug('Trying to wrap {path}'.format(path=self.location))
             if not os.path.exists(self.location):
-                raise IOError("Proxy file {path} not found".format(path=self.location))
-            logger.debug("Wrapping existing file %s", self.location)
-            
+                raise IOError('Proxy file {path} not found'.format(path=self.location))
+            logger.debug('Wrapping existing file %s', self.location)
+
         if create:
-            logger.debug("Making a new one")
+            logger.debug('Making a new one')
             self.create()
 
         # If the proxy object does not satisfy the requirements then abort the construction
         if not self.check_requirements(requirements):
             raise CredentialsError('Proxy object cannot satisfy its own requirements')
-    
+
     def __str__(self):
         return '{class_name} at {file_path}'.format(class_name=type(self).__name__, file_path=self.location)
-    
+
     @property
     def location(self):
         """
@@ -111,7 +113,7 @@ class ICredentialInfo(object):
         Create a new credential file
         """
         pass
-    
+
     def renew(self):
         """
         Renew an existing credential file
@@ -138,14 +140,14 @@ class ICredentialInfo(object):
         """
         time_left = self.expiry_time() - datetime.now()
         return max(time_left, timedelta())
-    
+
     def check_requirements(self, query):
         """
         Args:
             query (ICredentialRequirement): The requirements to check ourself against
-        
+
         Checks all requirements.
-        
+
         Returns:
             ``True`` if we meet all requirements
             ``False`` if even one requirement is not met or if the credential is not valid
@@ -157,7 +159,7 @@ class ICredentialInfo(object):
         Args:
             query (ICredentialRequirement): 
             requirement_name (str): The requirement attribute to check
-        
+
         Returns:
             ``True`` if ``self`` matches ``query``'s ``requirement``.
         """

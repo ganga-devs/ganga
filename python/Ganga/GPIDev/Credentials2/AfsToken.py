@@ -1,20 +1,21 @@
-from Ganga.Utility.Shell import Shell
+from __future__ import absolute_import
+
+import datetime
+import os
+import re
+import subprocess
+from getpass import getpass
+from glob import glob
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+from Ganga.Utility.Shell import Shell
 
 from .ICredentialInfo import ICredentialInfo, cache
 from .ICredentialRequirement import ICredentialRequirement
 from .exceptions import CredentialRenewalError
 
-import os
+logger = Ganga.Utility.logging.getLogger()
 
-import subprocess
-import datetime
-from getpass import getpass
-from glob import glob
-
-import re
 info_pattern = re.compile(r"^User's \(AFS ID \d*\) tokens for (?P<id>\w*@\S*) \[Expires (?P<expires>.*)\]$", re.MULTILINE)
 
 
@@ -94,7 +95,7 @@ class AfsTokenInfo(ICredentialInfo):
         return expires
 
     def default_location(self):
-        krb_env_var = os.getenv("KRB5CCNAME", '')
+        krb_env_var = os.getenv('KRB5CCNAME', '')
         if krb_env_var.startswith('FILE:'):
             krb_env_var = krb_env_var[5:]
 
@@ -113,10 +114,10 @@ class AfsToken(ICredentialRequirement):
     """
     _schema = ICredentialRequirement._schema.inherit_copy()
 
-    _category = "CredentialRequirement"
-    _name = "AfsToken"
+    _category = 'CredentialRequirement'
+    _name = 'AfsToken'
 
-    _infoClass = AfsTokenInfo
+    info_class = AfsTokenInfo
 
     def encoded(self):
         return ''

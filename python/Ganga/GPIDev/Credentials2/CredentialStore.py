@@ -1,29 +1,31 @@
+from __future__ import absolute_import
+
 from datetime import timedelta
 
+import Ganga.Utility.logging
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 
 from .exceptions import CredentialsError
 from .ICredentialRequirement import ICredentialRequirement
 
-import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 
 class CredentialStore(GangaObject):
     """
     The central management for all credentials
-    
+
     It is not intended to store the credential objects between sessions,
     rather it will search the filesystem or create new credential files.
-    
+
     A single instance of this class makes most sense and should be created in the bootstrap and exported.
     """
 
     _schema = Schema(Version(1, 0), {})
-                                                                                
-    _category = "credentials2"
-    _name = "CredentialStore"
+
+    _category = 'credentials2'
+    _name = 'CredentialStore'
     _hidden = 1  # This class is hidden since we want a 'singleton' created in the bootstrap
 
     _exportmethods = ['__getitem__', '__iter__', 'renew', 'create']
@@ -31,24 +33,24 @@ class CredentialStore(GangaObject):
     def __init__(self):
         super(CredentialStore, self).__init__()
         self.credentials = set()
-    
+
     def create(self, query, create=True, check_file=False):
         """
         Create an ``ICredentialInfo`` for the query.
-        
+
         Args:
             query (ICredentialRequirement): 
             check_file: Raise an exception if the file does not exist
             create: Create the credential file
-        
+
         Returns:
             The newly created ICredentialInfo object
         """
 
-        cred = query._infoClass(query, check_file=check_file, create=create)
+        cred = query.info_class(query, check_file=check_file, create=create)
         self.credentials.add(cred)
         return cred
-    
+
     def remove(self, credential_object):
         """
         Args:
@@ -56,7 +58,7 @@ class CredentialStore(GangaObject):
         """
 
         self.credentials.remove(credential_object)
-    
+
     def __iter__(self):
         """Allow iterating over the store directly"""
         # yield from self.credentialList #In Python 3.3
@@ -122,15 +124,15 @@ class CredentialStore(GangaObject):
             query (ICredentialRequirement):
         """
 
-        return (cred for cred in self.credentials if type(cred) == query._infoClass)
-    
+        return (cred for cred in self.credentials if type(cred) == query.info_class)
+
     def matches(self, query):
         """
         Search the credentials in the store for all matches. They must match every condition exactly.
-        
+
         Args:
             query (ICredentialRequirement): 
-           
+
         Returns:
             iterator: An iterator of all matching objects
         """
@@ -140,10 +142,10 @@ class CredentialStore(GangaObject):
     def match(self, query):
         """
         Returns a single match from the store
-        
+
         Args:
             query (ICredentialRequirement):
-        
+
         Returns:
             ICredentialInfo: A single credential object. If more than one is found, the first is returned
         """
@@ -152,7 +154,7 @@ class CredentialStore(GangaObject):
         if len(matches) == 1:
             return matches[0]
         if len(matches) > 1:
-            logger.debug("More than one match...")
+            logger.debug('More than one match...')
             # If we have a specific object and a general one. Then we ask for a general one, what should we do.
             # Does it matter since they've only asked for a general proxy? What are the use cases?
             return matches[0]  # TODO For now just return the first one... Though perhaps we should merge them or something?
@@ -172,6 +174,12 @@ class CredentialStore(GangaObject):
                 self[cred_req].renew()
             except KeyError:
                 self.create(cred_req)
+
+    def clear(self):
+        """
+        Remove all credentials in the system
+        """
+        self.credentials = set()
 
 # This is a global 'singleton'
 credential_store = CredentialStore()
