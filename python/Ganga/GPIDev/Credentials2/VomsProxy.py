@@ -32,15 +32,15 @@ class VomsProxyInfo(ICredentialInfo):
             CredentialRenewalError: If the renewal process returns a non-zero value
         """
         voms_command = ""
-        logger.debug("require " + self.initialRequirements.vo)
-        if self.initialRequirements.vo:
-            voms_command = "-voms %s" % self.initialRequirements.vo
-            if self.initialRequirements.group or self.initialRequirements.role:
+        logger.debug("require " + self.initial_requirements.vo)
+        if self.initial_requirements.vo:
+            voms_command = "-voms %s" % self.initial_requirements.vo
+            if self.initial_requirements.group or self.initial_requirements.role:
                 voms_command += ":"
-                if self.initialRequirements.group:
-                    voms_command += "/%s" % self.initialRequirements.group
-                if self.initialRequirements.role:
-                    voms_command += "/%s" % self.initialRequirements.role
+                if self.initial_requirements.group:
+                    voms_command += "/%s" % self.initial_requirements.group
+                if self.initial_requirements.role:
+                    voms_command += "/%s" % self.initial_requirements.role
         logger.debug(voms_command)
         command = 'voms-proxy-init -pwstdin -out %s %s' % (self.location, voms_command)
         logger.debug(command)
@@ -108,16 +108,19 @@ class VomsProxyInfo(ICredentialInfo):
             return datetime.now()
         return datetime.now() + timedelta(seconds=int(output))
 
+    def default_location(self):
+        return os.getenv("X509_USER_PROXY") or "/tmp/x509up_u"+str(os.getuid())
+
 
 class VomsProxy(ICredentialRequirement):
     """
     An object specifying the requirements of a VOMS proxy file
     """
     _schema = ICredentialRequirement._schema.inherit_copy()
-    _schema.datadict["identity"] = SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Identity for the proxy")
-    _schema.datadict["vo"] = SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation")
-    _schema.datadict["role"] = SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Role that the proxy must have")
-    _schema.datadict["group"] = SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Group for the proxy - either 'group' or 'group/subgroup'")
+    _schema.datadict["identity"] = SimpleItem(defvalue=None, typelist=[str, None], doc="Identity for the proxy")
+    _schema.datadict["vo"] = SimpleItem(defvalue=None, typelist=[str, None], doc="Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation")
+    _schema.datadict["role"] = SimpleItem(defvalue=None, typelist=[str, None], doc="Role that the proxy must have")
+    _schema.datadict["group"] = SimpleItem(defvalue=None, typelist=[str, None], doc="Group for the proxy - either 'group' or 'group/subgroup'")
                                                                                 
     _category = "CredentialRequirement"
     _name = "VomsProxy"
@@ -126,14 +129,10 @@ class VomsProxy(ICredentialRequirement):
 
     def __init__(self):
         super(VomsProxy, self).__init__()
-        if not self.vo:
-            self.vo = getConfig('LCG')['VirtualOrganisation']
+        self.vo = getConfig('LCG')['VirtualOrganisation']
     
     def encoded(self):
         return ':'.join(requirement for requirement in [self.identity, self.vo, self.role, self.group] if requirement)  # filter out the empties
     
     def is_empty(self):
         return not (self.identity or self.vo or self.role or self.group)
-
-    def default_location(self):
-        return os.getenv("X509_USER_PROXY") or "/tmp/x509up_u"+str(os.getuid())

@@ -1,5 +1,4 @@
 from datetime import timedelta
-from copy import deepcopy
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
@@ -86,27 +85,15 @@ class CredentialStore(GangaObject):
         if match:
             return match
 
-        # Assemble the locations to try
-        if query.location:
-            location_list = [query.location]  # Just use the specified one if it exists
-        else:  # Otherwise try some default places
-            location_list = [query.default_location()]
-            if query.encoded():
-                location_list += ':'.join([query.default_location(), query.encoded()])
-
-        # For each location, try wrapping the file on disk
-        query = deepcopy(query)  # Make a copy so we don't edit the passed-in object
-        for location in location_list:
-            query.location = location
-            try:
-                cred = self.create(query, create=False, check_file=True)
-            except IOError as e:
-                logger.debug(e.strerror)
-            except CredentialsError as e:
-                logger.debug(str(e))
-            else:
-                self.credentials.add(cred)
-                return cred
+        try:
+            cred = self.create(query, create=False, check_file=True)
+        except IOError as e:
+            logger.debug(e.strerror)
+        except CredentialsError as e:
+            logger.debug(str(e))
+        else:
+            self.credentials.add(cred)
+            return cred
 
         raise KeyError('Matching credential [{query}] not found in store.'.format(query=query))
 

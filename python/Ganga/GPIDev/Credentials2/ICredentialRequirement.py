@@ -11,9 +11,7 @@ class ICredentialRequirement(GangaObject):
     All subclasses must specify ``_infoClass`` as well as all abstract methods
     """
     
-    _schema = Schema(Version(1, 0), {
-        'location': SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Path to the proxy file"),
-    })
+    _schema = Schema(Version(1, 0))
     
     _category = "CredentialRequirement"
     _name = "ICredentialRequirement"
@@ -29,16 +27,6 @@ class ICredentialRequirement(GangaObject):
         """
         Return a string which encoded all the requirements.
         This string will be appended to the filename so it should be filesystem-friendly.
-        """
-        pass
-
-    @abstractmethod
-    def default_location(self):
-        """
-        Returns the default location for the credential file.
-        This is the location that most tools will look for the file
-        or where the file is created without specifying anything.
-        TODO Should this return a list?
         """
         pass
 
