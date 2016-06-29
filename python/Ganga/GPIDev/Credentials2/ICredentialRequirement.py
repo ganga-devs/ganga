@@ -19,8 +19,12 @@ class ICredentialRequirement(GangaObject):
 
     info_class = None  # This attribute refers to the ICredentialInfo subclass which can satisfy the requirements
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         super(ICredentialRequirement, self).__init__()
+        for key, value in kwargs.items():
+            if key not in self._schema.allItemNames():
+                raise Exception()
+            setattr(self, key, value)
 
     @abstractmethod
     def encoded(self):
