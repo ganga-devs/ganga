@@ -1,8 +1,6 @@
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
-from Ganga.GPIDev.Base.Proxy import addProxy
-
 from abc import abstractmethod
 
 
@@ -53,7 +51,10 @@ class ICredentialRequirement(GangaObject):
         pass
 
     def __str__(self):
-        return str(addProxy(self)).replace(' ,\n', ',')
+        items = ((name, str(getattr(self, name))) for name in self._schema.allItemNames())
+        arg_strings = ('='.join(arg) for arg in items)
+        arg_string = ', '.join(arg_strings)
+        return '{name}({args})'.format(name=self.__class__.__name__, args=arg_string)
 
     def __hash__(self):
         return hash(self.encoded())
