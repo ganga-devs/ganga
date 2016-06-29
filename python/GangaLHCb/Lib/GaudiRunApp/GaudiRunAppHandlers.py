@@ -406,7 +406,7 @@ def extractAllTarFiles(path):
 
 def pythonScript(scriptName):
     '''
-    This is the actual code in thr GaudiPython-like script
+    This is the actual code in the GaudiPython-like script
     '''
     script = '''
 from Gaudi.Configuration import *
