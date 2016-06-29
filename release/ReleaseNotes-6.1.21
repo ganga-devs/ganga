@@ -29,7 +29,7 @@ ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 * Fixing some bugs in the construction of large Datasets from BKQuery
    ** (most time taken in executing a new large request against DIRAC)
-* Added intial (WORK IN PROGRESS) support for CMake projects via GaudiRun
+* Added intial (WORK IN PROGRESS) support for CMake projects via new `GaudiRun` Application
    ** Still doesn't fully support Gauss+GaussSplitter
    ** Initial functionality of old-style Gaudi and GaudiPython applications complete
    ** No support (yet) for MassStorageFile in the inputdata
