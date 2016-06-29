@@ -2120,6 +2120,10 @@ class LCGJobConfig(StandardJobConfig):
 
 logger.debug('LCG module initialization: begin')
 
+if config['GLITE_ENABLE'] and not config['VirtualOrganisation']:
+    logger.info('LCG config is not set. Please set [LCG]VirtualOrganisation to your VO (e.g. "gridpp") or disable LCG with [LCG]GLITE_ENABLE=False')
+    config.setSessionValue('GLITE_ENABLE', False)
+
 if config['GLITE_ENABLE']:
     active = Grid.check_proxy()
     config.setSessionValue('GLITE_ENABLE', active)
