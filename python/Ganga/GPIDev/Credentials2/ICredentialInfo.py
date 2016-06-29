@@ -4,6 +4,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 from datetime import datetime, timedelta
+import copy
 import os
 import os.path
 from abc import ABCMeta, abstractmethod
@@ -64,14 +65,8 @@ class ICredentialInfo(object):
         super(ICredentialInfo, self).__init__()
 
         self.cache = {'mtime': 0}
-        
-        if not requirements.location:
-            # If we weren't given a location, assume the encoded location
-            requirements.location = requirements.default_location()
-            if requirements.encoded():
-                requirements.location += ':'+requirements.encoded()
 
-        self.initialRequirements = requirements  # Store the requirements that the object was created with. Used for creation
+        self.initial_requirements = copy.deepcopy(requirements)  # Store the requirements that the object was created with. Used for creation
         
         if check_file:
             logger.debug("Trying to wrap {path}".format(path=self.location))
@@ -95,7 +90,20 @@ class ICredentialInfo(object):
         """
         The location of the file on disk
         """
-        return self.initialRequirements.location
+        location = self.default_location()
+        if self.initial_requirements.encoded():
+            location += ':' + self.initial_requirements.encoded()
+
+        return location
+
+    @abstractmethod
+    def default_location(self):
+        """
+        Returns the default location for the credential file.
+        This is the location that most tools will look for the file
+        or where the file is created without specifying anything.
+        """
+        pass
 
     @abstractmethod
     def create(self):
@@ -154,10 +162,10 @@ class ICredentialInfo(object):
             ``True`` if ``self`` matches ``query``'s ``requirement``.
         """
         requirement_value = getattr(query, requirement_name)
-        logger.debug('{name}: \t{cred} \t{requested}'.format(name=requirement_name, cred=getattr(self, requirement_name), requested=requirement_value))
         if requirement_value is None:
             # If this requirementName is unspecified then ignore it
             return True
+        logger.debug('{name}: \t{cred} \t{requested}'.format(name=requirement_name, cred=getattr(self, requirement_name), requested=requirement_value))
         return getattr(self,requirement_name) == requirement_value
 
     def __eq__(self, other):
