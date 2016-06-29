@@ -127,9 +127,12 @@ class CredentialStore(GangaObject, collections.Mapping):
         
         Args:
             query (ICredentialRequirement):
+
+        Returns:
+            list[ICredentialInfo]: An list of all matching objects
         """
 
-        return (cred for cred in self.credentials if type(cred) == query.info_class)
+        return [cred for cred in self.credentials if type(cred) == query.info_class]
 
     def matches(self, query):
         """
@@ -139,10 +142,10 @@ class CredentialStore(GangaObject, collections.Mapping):
             query (ICredentialRequirement): 
 
         Returns:
-            iterator: An iterator of all matching objects
+            list[ICredentialInfo]: An list of all matching objects
         """
 
-        return (cred for cred in self.get_all_matching_type(query) if cred.check_requirements(query))
+        return [cred for cred in self.get_all_matching_type(query) if cred.check_requirements(query)]
     
     def match(self, query):
         """
@@ -155,7 +158,7 @@ class CredentialStore(GangaObject, collections.Mapping):
             ICredentialInfo: A single credential object. If more than one is found, the first is returned
         """
 
-        matches = list(self.matches(query))
+        matches = self.matches(query)
         if len(matches) == 1:
             return matches[0]
         if len(matches) > 1:
