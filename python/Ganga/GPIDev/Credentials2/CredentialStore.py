@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import collections
 from datetime import timedelta
 
 import Ganga.Utility.logging
@@ -12,7 +13,7 @@ from .ICredentialRequirement import ICredentialRequirement
 logger = Ganga.Utility.logging.getLogger()
 
 
-class CredentialStore(GangaObject):
+class CredentialStore(GangaObject, collections.Mapping):
     """
     The central management for all credentials
 
@@ -63,6 +64,10 @@ class CredentialStore(GangaObject):
         """Allow iterating over the store directly"""
         # yield from self.credentialList #In Python 3.3
         return iter(self.credentials)
+
+    def __len__(self):
+        """How many credentials are known about in the system"""
+        return len(self.credentials)
 
     def __getitem__(self, query):
         """
