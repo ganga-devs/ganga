@@ -41,9 +41,9 @@ class ICredentialRequirement(GangaObject):
         return '{name}({args})'.format(name=self.__class__.__name__, args=arg_string)
 
     def __hash__(self):
-        return hash(self.encoded())
+        return hash(self.__class__.__name__ + self.encoded())
 
     def __eq__(self, other):
         if other is None:
             return False
-        return self.encoded() == other.encoded()
+        return type(self) is type(other) and self.encoded() == other.encoded()
