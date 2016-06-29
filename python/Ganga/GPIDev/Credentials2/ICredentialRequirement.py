@@ -1,27 +1,27 @@
-from Ganga.GPIDev.Base.Objects import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-
 from abc import abstractmethod
+
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Schema import Schema, Version
 
 
 class ICredentialRequirement(GangaObject):
     """
     Requirements objects specify what is needed by a particular object in Ganga
-    
-    All subclasses must specify ``_infoClass`` as well as all abstract methods
+
+    All subclasses must specify ``info_class`` as well as all abstract methods
     """
-    
+
     _schema = Schema(Version(1, 0))
-    
-    _category = "CredentialRequirement"
-    _name = "ICredentialRequirement"
+
+    _category = 'CredentialRequirement'
+    _name = 'ICredentialRequirement'
     _hidden = 1
 
-    _infoClass = None  # This attribute refers to the ICredentialInfo subclass which can satisfy the requirements
+    info_class = None  # This attribute refers to the ICredentialInfo subclass which can satisfy the requirements
 
     def __init__(self):
         super(ICredentialRequirement, self).__init__()
-    
+
     @abstractmethod
     def encoded(self):
         """
