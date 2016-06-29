@@ -128,9 +128,10 @@ class VomsProxy(ICredentialRequirement):
     
     info_class = VomsProxyInfo
 
-    def __init__(self):
-        super(VomsProxy, self).__init__()
-        self.vo = getConfig('LCG')['VirtualOrganisation']
+    def __init__(self, **kwargs):
+        super(VomsProxy, self).__init__(**kwargs)
+        if 'vo' not in kwargs:
+            self.vo = getConfig('LCG')['VirtualOrganisation']
 
     def encoded(self):
         return ':'.join(requirement for requirement in [self.identity, self.vo, self.role, self.group] if requirement)  # filter out the empties
