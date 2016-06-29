@@ -152,6 +152,8 @@ class GaudiRun(IPrepareApp):
 
         self.cleanGangaTargetArea(this_build_target)
 
+        return 1
+
     def cleanGangaTargetArea(self, this_build_target):
         """
         Method to remove the build target and other files not needed to reproduce the same build target again
@@ -168,8 +170,6 @@ class GaudiRun(IPrepareApp):
                 unlink(path.join(build_dir, obj))
             elif path.isdir(path.join(build_dir, obj)):
                 shutil.rmtree(path.join(build_dir, obj), ignore_errors=True)
-
-        return 1
 
     def configure(self, masterappconfig):
         """
