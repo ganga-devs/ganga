@@ -65,8 +65,6 @@ def getShell(force=False):
         logger.warning('[LCG] configuration section not found. Cannot set up a proper grid shell.')
         return None
 
-    if not config['GLITE_ENABLE']:
-        return None
 
     s = None
 
