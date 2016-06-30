@@ -130,7 +130,7 @@ class VomsProxy(ICredentialRequirement):
 
     def __init__(self, **kwargs):
         super(VomsProxy, self).__init__(**kwargs)
-        if 'vo' not in kwargs:
+        if 'vo' not in kwargs and getConfig('LCG')['VirtualOrganisation']:
             self.vo = getConfig('LCG')['VirtualOrganisation']
 
     def encoded(self):
