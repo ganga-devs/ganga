@@ -54,7 +54,7 @@ class VomsProxyInfo(ICredentialInfo):
     def destroy(self):
         self.shell.cmd1('voms-proxy-destroy -file %s' % self.location, allowed_exit=[0, 1])
 
-        if self.location:
+        if os.path.isfile(self.location):
             os.remove(self.location)
 
     @cache
