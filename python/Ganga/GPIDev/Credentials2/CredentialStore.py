@@ -29,7 +29,7 @@ class CredentialStore(GangaObject, collections.Mapping):
     _name = 'CredentialStore'
     _hidden = 1  # This class is hidden since we want a 'singleton' created in the bootstrap
 
-    _exportmethods = ['__getitem__', '__iter__', 'renew', 'create']
+    _exportmethods = ['__getitem__', '__iter__', '__len__', 'renew', 'create', 'clear']
 
     def __init__(self):
         super(CredentialStore, self).__init__()
