@@ -5,6 +5,12 @@ from __future__ import absolute_import
 # $Id: LocalFile.py,v 0.1 2011-09-29 15:40:00 idzhunov Exp $
 ##########################################################################
 
+import errno
+import re
+import os
+import os.path
+import copy
+
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -13,14 +19,9 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File import FileBuffer
+from Ganga.Utility.files import expandfilename
 
 import Ganga.Utility.logging
-
-import errno
-import re
-import os
-import os.path
-import copy
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -66,37 +67,23 @@ class LocalFile(IGangaFile):
             if localDir != '':
                 self.localDir = localDir
             else:
-                if os.path.dirname(namePattern) != '':
-                    self.localDir = os.path.dirname(namePattern)
-                else:
-                    # Record the current pwd, assume this is true as we weren't told otherwise
-                    this_pwd = os.path.abspath('.')
-                    self.tmp_pwd = this_pwd
+                self.localDir = os.path.dirname(namePattern)
         else:
             logger.error("Unkown type: %s . Cannot set LocalFile localDir using this!" % type(localDir))
 
-    def __construct__(self, args):
-        # TODO GET RID OF ME, GET RID OF ME, GET RID OF ME!!!
 
-        self.tmp_pwd = None
-        self.output_location = None
+    def __setattr__(self, attr, value):
 
-        self.localDir = ''
+        actual_value = value
+        if attr == 'namePattern':
+            this_dir = os.path.dirname(value)
+            super(LocalFile, self).__setattr__('localDir', this_dir)
+            actual_value = os.path.basename(value)
+        elif attr == 'localDir':
+            actual_value = os.path.abspath(expandfilename(value))
 
-        from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
-        if len(args) == 1 and isinstance(args[0], str):
-            self.namePattern = args[0]
-            if os.path.dirname(self.namePattern) != '':
-                self.localDir = os.path.dirname(self.namePattern)
-        elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
-            self.namePattern = args[0]
-            self.localDir = args[1]
-        elif len(args) == 1 and isinstance(args[0], SandboxFile):
-            super(LocalFile, self).__construct__(args)
-
-        if self.localDir == '' and self.namePattern != '':
-            this_pwd = os.path.abspath('.')
-            self.tmp_pwd = this_pwd
+        super(LocalFile, self).__setattr__(attr, actual_value)
+        
 
     def __repr__(self):
         """Get the representation of the file."""
@@ -165,14 +152,6 @@ class LocalFile(IGangaFile):
                 if os.path.exists(os.path.join(self.tmp_pwd, self.namePattern)):
                     self.localDir = self.tmp_pwd
                     logger.debug("File: %s found, Setting localDir: %s" % (self.namePattern, self.localDir))
-                else:
-                    this_pwd = os.path.abspath('.')
-                    now_tmp_pwd = this_pwd
-                    if os.path.exists(os.path.join(now_tmp_pwd, self.namePattern)):
-                        self.localDir = now_tmp_pwd
-                        logger.debug("File: %s found, Setting localDir: %s" % (self.namePattern, self.localDir))
-                    else:
-                        logger.debug("File: %s NOT found, NOT setting localDir: %s !!!" % (self.namePattern, self.localDir))
 
             filelist.append(os.path.join(self.localDir, self.namePattern))
 

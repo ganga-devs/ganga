@@ -16,7 +16,7 @@ from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObj
 import functools
 import os
 
-from inspect import isclass
+from inspect import isclass, getargspec
 
 import types
 
@@ -623,7 +623,7 @@ class ProxyDataDescriptor(object):
         ## Does not modify val?
         self._check_type(obj, final_val)
 
-        GangaObject.__setattr__(raw_obj, attr_name, final_val)
+        raw_obj.__setattr__(attr_name, final_val)
 
 
 def proxy_wrap(f):
@@ -763,7 +763,18 @@ def GPIProxyClassFactory(name, pluginclass):
         else:
             ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
             ## Object was not passed by construction so need to construct new object for internal use
-            instance = pluginclass()
+            if len(args) < len(getargspec(pluginclass.__init__)[0]):
+                clean_args = (stripProxy(arg) for arg in args)
+                instance = pluginclass(*clean_args)
+            else:
+                instance = pluginclass()
+                ## DOESN'T MAKE SENSE TO KEEP PROXIES HERE AS WE MAY BE PERFORMING A PSEUDO-COPY OP
+                clean_args = (stripProxy(arg) for arg in args)
+                raw_self = stripProxy(self)
+                if len(clean_args) < len(getargspec(pluginclass.__construct__)[0]):
+                    instance.__construct__(*clean_args)
+                else:
+                    instance.__construct__()
 
         ## Avoid intercepting any of the setter method associated with the implRef as they could trigger loading from disk
         setattr(self, implRef, instance)
@@ -790,19 +801,7 @@ def GPIProxyClassFactory(name, pluginclass):
                 instance.setSchemaAttribute(key, instance._attribute_filter__set__(key, stripProxy(val)))
 
 
-        ## THIRD(?) CONSTRUCT THE OBJECT USING THE ARGUMENTS WHICH HAVE BEEN PASSED
-        ## e.g. Job(application=exe, name='myJob', ...) or myJob2 = Job(myJob1)
-        ## THIS IS PRIMARILY FOR THE 2ND EXAMPLE ABOVE
-
-        ## DOESN'T MAKE SENSE TO KEEP PROXIES HERE AS WE MAY BE PERFORMING A PSEUDO-COPY OP
-        clean_args = [stripProxy(arg) for arg in args]
-        try:
-            stripProxy(self).__construct__(clean_args)
-        except TypeError:
-            stripProxy(self).__construct__([])
-
-
-        ## FOURTH ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN
+        ## THIRD ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN
         ## THIS IS MAINLY FOR THE FIRST EXAMPLE ABOVE
 
         ## THIS CORRECTLY APPLIES A PROXY TO ALL OBJECT ATTRIBUTES OF AN OBJECT CREATED WITHIN THE GPI
@@ -811,51 +810,8 @@ def GPIProxyClassFactory(name, pluginclass):
         for k in kwds:
             if stripProxy(self)._schema.hasAttribute(k):
                 this_arg = stripProxy(kwds[k])
-                if hasattr(this_arg, '_auto__init__'):
-                    this_arg._auto__init__()
-
-                ## Copying this from the __set__ method in the Proxy descriptor
-
-                if k == 'application':
-                    ProxyDataDescriptor.__app_set__(self, this_arg)
-                if k == 'is_prepared':
-                    ProxyDataDescriptor.__prep_set__(self, this_arg)
-
-
                 raw_self = stripProxy(self)
-
-                if isinstance(this_arg, str):
-                    this_arg = stripProxy(runtimeEvalString(raw_self, k, this_arg))
-                    if hasattr(this_arg, '_auto__init__'):
-                        this_arg._auto__init__()
-
-                if isinstance(this_arg, str):
-                    raw_self.setSchemaAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
-                    continue
-                else:
-                    item = pluginclass._schema.getItem(k)
-
-                    # unwrap proxy
-                    if item.isA(ComponentItem):
-                        from .Filters import allComponentFilters
-                        cfilter = allComponentFilters[item['category']]
-                        stripper = lambda v: stripComponentObject(v, cfilter, item)
-                    else:
-                        stripper = None
-
-                    if item['sequence']:
-                        this_arg = ProxyDataDescriptor.__sequence_set__(stripper, raw_self, this_arg, k)
-                    else:
-                        if stripper is not None:
-                            this_arg = stripper(this_arg)
-                    # apply attribute filter to component items
-                    if item.isA(ComponentItem):
-                        this_arg = ProxyDataDescriptor._stripAttribute(raw_self, this_arg, k)
-
-                    if hasattr(this_arg, '_auto__init__'):
-                        this_arg._auto__init__()
-
-                    raw_self.setSchemaAttribute(k, raw_self._attribute_filter__set__(k, this_arg))
+                ProxyDataDescriptor(k).__set__(raw_self, raw_self._attribute_filter__set__(k, this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
