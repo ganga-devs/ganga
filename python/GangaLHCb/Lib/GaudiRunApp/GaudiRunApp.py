@@ -45,7 +45,7 @@ class GaudiRun(IPrepareApp):
     j=Job()
     myApp = GaudiRun()
     myApp.directory = "$SOMEPATH/DaVinciDev_v40r2"
-    myApp.myOpts = "$SOMEPATH/DaVinciDev_v40r2/myDaVinciOpts.py"
+    myApp.options = "$SOMEPATH/DaVinciDev_v40r2/myDaVinciOpts.py"
     j.application = myApp
     j.submit()
 
@@ -57,14 +57,14 @@ class GaudiRun(IPrepareApp):
 
     The actual command run on the WN is:
 
-        ./run gaudirun.py myOptsFile.py data.py
+        ./run gaudirun.py optionsFile.py data.py
 
     If you would prefer to have your optsfile run as a python application then set 'job.application.runWithPython = True'
     This then changes the command run on the WN to be:
 
         ./run python OptsFileWrapper.py
 
-        Here the OptsFileWrapper script imports the data.py describing the data to be run over and executes myOpts with 'execfile'
+        Here the OptsFileWrapper script imports the data.py describing the data to be run over and executes options with 'execfile'
 
     """
     _schema = Schema(Version(1, 0), {
@@ -73,9 +73,9 @@ class GaudiRun(IPrepareApp):
             doc='A path to the project that you\'re wanting to run.'),
         'build_opts':   SimpleItem(defvalue=[""], typelist=[str], sequence=1, strict_sequence=0,
             doc="Options to be passed to 'make ganga-input-sandbox'"),
-        'myOpts':       GangaFileItem(defvalue=None, doc='File which contains the extra opts I want to pass to gaudirun.py'),
+        'options':       GangaFileItem(defvalue=None, doc='File which contains the extra opts I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
-        'runWithPython':SimpleItem(defvalue=False, doc='Should \'myOpts\' be run as "python myOpts.py data.py" rather than "gaudirun.py myOpts.py data.py"'),
+        'runWithPython':SimpleItem(defvalue=False, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
 
         # Prepared job object
@@ -184,20 +184,20 @@ class GaudiRun(IPrepareApp):
 
     def getOptsFile(self):
         """
-        This function returns a sanitized absolute path to the self.myOpts file from user input
+        This function returns a sanitized absolute path to the self.options file from user input
         """
-        if self.myOpts:
-            if isinstance(self.myOpts, LocalFile):
+        if self.options:
+            if isinstance(self.options, LocalFile):
                 ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
-                full_path = expandfilename(path.join(self.myOpts.localDir, path.basename(self.myOpts.namePattern)), force=True)
+                full_path = expandfilename(path.join(self.options.localDir, path.basename(self.options.namePattern)), force=True)
                 if not path.exists(full_path):
                     raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
-                self.myOpts = LocalFile(namePattern=path.basename(full_path), localDir=path.dirname(full_path))
-                return self.myOpts
-            elif isinstance(self.myOpts, DiracFile):
-                return self.myOpts
+                self.options = LocalFile(namePattern=path.basename(full_path), localDir=path.dirname(full_path))
+                return self.options
+            elif isinstance(self.options, DiracFile):
+                return self.options
             else:
-                raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(self.myOpts))
+                raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(self.options))
         else:
             raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")
 
