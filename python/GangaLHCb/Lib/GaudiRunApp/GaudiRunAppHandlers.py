@@ -32,6 +32,7 @@ logger = getLogger()
 prep_lock = threading.Lock()
 
 WN_script_name = 'GaudiRun_Python_WN_script.py'
+extra_args_name = 'extra_args.py'
 
 def add_timeStampFile(given_path):
     """
@@ -415,12 +416,15 @@ execfile('./%s')
 ''' % scriptName
     return script
 
-def generatePythonScript(scriptName):
+def generatePythonScript(scriptName, contents=None):
     '''
     Generate the Python script file for the GaudiPython-like running
     '''
     with open('###WN_SCRIPT_NAME###', 'w') as WN_script:
-        WN_script.write(pythonScript(scriptName))
+        if not contents:
+            WN_script.write(pythonScript(scriptName))
+        else:
+            WN_script.write(contents)
 
 def flush_streams(pipe):
     '''
@@ -453,6 +457,14 @@ if __name__ == '__main__':
     # In the case we're wanting to run the Python script here, generate it on the WN and use it there
     generatePythonScript('###SCRIPT_NAME###')
 
+    argv_dict = {}
+    for this_arg in sys.argv:
+        split_argv = this_arg.split(':')
+        if len(this_argv) == 2:
+            argv_dict[this_argv[0]] = this_argv[1]
+
+    if 'extraOpts' in argv_dict:
+        generatePythonScript('extra_args.py', argv_dict['extraOpts'])
 
     print("Executing: %s" % '###COMMAND###')
     # Execute the actual command on the WN

@@ -6,6 +6,7 @@ import shutil
 
 from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
+from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Lib.File.File import ShareDir
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
@@ -69,14 +70,13 @@ class GaudiRun(IPrepareApp):
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
-        'directory':    SimpleItem(preparable=1, defvalue=None, typelist=[None, str], comparable=1,
-            doc='A path to the project that you\'re wanting to run.'),
-        'build_opts':   SimpleItem(defvalue=[""], typelist=[str], sequence=1, strict_sequence=0,
-            doc="Options to be passed to 'make ganga-input-sandbox'"),
+        'directory':    SimpleItem(preparable=1, defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
+        'build_opts':   SimpleItem(defvalue=[""], typelist=[str], sequence=1, strict_sequence=0, doc="Options to be passed to 'make ganga-input-sandbox'"),
         'options':       GangaFileItem(defvalue=None, doc='File which contains the extra opts I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'runWithPython':SimpleItem(defvalue=False, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
+        'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
 
         # Prepared job object
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1,
@@ -86,11 +86,32 @@ class GaudiRun(IPrepareApp):
         })
     _category = 'applications'
     _name = 'GaudiRun'
-    _exportmethods = ['prepare', 'unprepare', 'exec_cmd', 'getDir', 'readInputData']
+    _exportmethods = ['prepare', 'unprepare', 'execCmd', 'readInputData']
 
     cmake_sandbox_name = 'cmake-input-sandbox.tgz'
     build_target = 'ganga-input-sandbox'
     build_dest = 'input-sandbox.tgz'
+
+    def __setattr__(self, attr, value):
+        """
+        This overloads the baseclass setter method and allows for dynamic evaluation of a parameter on assignment
+        Args:
+            attr (str): Name of the attribute which is being assigned for this class
+            value (unknown): The raw value which is being passed to this class for assigning to the attribute
+        """
+
+        actual_value = value
+        if attr == 'directory':
+            if value:
+                actual_value = self.cleanDir(value)
+        elif attr == 'options':
+            if isinstance(value, str):
+                new_file = allComponentFilters['gangafiles'](value, None)
+                actual_value = [ new_file ]
+            elif isinstance(value, IGangaFile):
+                actual_valye = [ value ]
+
+        super(GaudiRun, self).__setattr__(attr, actual_value)
 
     def unprepare(self, force=False):
         """
@@ -179,7 +200,7 @@ class GaudiRun(IPrepareApp):
         """
         # Lets test the inputs
         opt_file = self.getOptsFile()
-        dir_name = self.getDir()
+        dir_name = self.directory
         return (None, None)
 
     def getOptsFile(self):
@@ -201,21 +222,23 @@ class GaudiRun(IPrepareApp):
         else:
             raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")
 
-    def getDir(self):
+    def cleanDir(self, raw_dir):
         """
         This function returns a sanitized absolute path of the self.directory method from user input
         """
-        if self.directory:
-            return path.abspath(expandfilename(self.directory))
-        else:
-            raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")
+        return path.abspath(expandfilename(raw_dir))
 
     def getEnvScript(self):
+        """
+        Return the script which wraps the running command in a correct environment
+        """
         return 'export CMTCONFIG=%s; source LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
-    def exec_cmd(self, cmd):
+    def execCmd(self, cmd):
         """
         This method executes a command within the namespace of the project. The cmd is placed in a bash script which is executed within the env
+        This will adopt the platform associated with this application and all commands requiring to be run within the project env
+        will be required to be executed with the './run' explcitly called
         Args:
             cmd (str): This is the command(s) which are to be executed within the project environment and directory
         """
@@ -223,24 +246,21 @@ class GaudiRun(IPrepareApp):
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
 
         env_wrapper = self.getEnvScript()
-        cmd_wrapper = env_wrapper + 'make && ./run bash -c "%s"' % cmd
-
-        logger.info("full cmd: %s" % cmd_wrapper)
-
         cmd_file.write(cmd_wrapper)
         cmd_file.flush()
 
-        script_run = 'bash %s' % cmd_file.name
+        logger.debug("Running: %s" % cmd_file.name)
 
-        logger.info("Running: %s" % script_run)
+        # I would have preferred to execute all commands against inside `./run` so we have some sane behaviour
+        # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
 
-        rc, stdout, stderr = _exec_cmd(script_run, self.getDir())
+        rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
 
         unlink(cmd_file.name)
 
         if rc != 0:
             logger.error("Failed to execute command: %s" % script_run)
-            logger.error("Tried to execute command in: %s" % self.getDir())
+            logger.error("Tried to execute command in: %s" % self.directory)
             logger.error("StdErr: %s" % str(stderr))
             raise GangaException("Failed to Execute command")
 
@@ -252,9 +272,10 @@ class GaudiRun(IPrepareApp):
         This returns the absolute path to the file after it has been created. It will fail if things go wrong or the file fails to generate
         """
         logger.info("Make-ing target '%s'     (This may take a few minutes depending on the size of your project)" % GaudiRun.build_target)
-        self.exec_cmd('make %s' % GaudiRun.build_target)
+        # Up to the user to run something like make clean... (Although that would avoid some potential CMake problems)
+        self.execCmd('make %s' % GaudiRun.build_target)
 
-        targetPath = path.join(self.getDir(), 'build.%s' % self.platform, 'ganga')
+        targetPath = path.join(self.directory, 'build.%s' % self.platform, 'ganga')
         if not path.isdir(targetPath):
             raise GangaException("Target Path: %s NOT found!" % targetPath)
         sandbox_str = '%s' % GaudiRun.build_dest
@@ -274,6 +295,8 @@ class GaudiRun(IPrepareApp):
         This reads the inputdata from a file and assigns it to the inputdata field of the parent job.
 
         Or you can use BKQuery and the box repo to save having to do this over and over
+        Args:
+            opts (str):
         """
         input_dataset = getGaudiRunInputData(opts, self)
         try:
