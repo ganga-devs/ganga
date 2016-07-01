@@ -29,7 +29,7 @@ class CredentialStore(GangaObject, collections.Mapping):
     _name = 'CredentialStore'
     _hidden = 1  # This class is hidden since we want a 'singleton' created in the bootstrap
 
-    _exportmethods = ['__getitem__', '__iter__', '__len__', 'renew', 'create', 'clear']
+    _exportmethods = ['__getitem__', '__iter__', '__len__', '__str__', 'renew', 'create', 'clear']
 
     def __init__(self):
         super(CredentialStore, self).__init__()
@@ -59,6 +59,31 @@ class CredentialStore(GangaObject, collections.Mapping):
         """
 
         self.credentials.remove(credential_object)
+
+    def __str__(self, interactive=False):
+        headers = ['Type', 'Location', 'Valid', 'Time left']
+        cred_info = [[str(f) for f in (type(cred).__name__, cred.location, cred.is_valid(), cred.time_left())] for cred in self.credentials]
+        rows = [headers] + cred_info
+        column_widths = [
+            max(len(field) for field in column)
+            for column in zip(*rows)
+            ]
+
+        def list_to_strings(row, widths, filler=''):
+            return ['{field:{filler}<{width}}'.format(field=field[0], filler=filler, width=field[1]) for field in zip(row, widths)]
+
+        header_strings = list_to_strings(headers, column_widths)
+        divider_strings = list_to_strings('-' * len(headers), column_widths, filler='-')
+        row_strings = [list_to_strings(cred, column_widths) for cred in cred_info]
+
+        def strings_to_row(strings, spacer='|'):
+            return ' {0} '.format(spacer).join(strings)
+
+        header = strings_to_row(header_strings)
+        divider = strings_to_row(divider_strings, spacer='+')
+        body = '\n'.join(strings_to_row(cred) for cred in row_strings)
+
+        return '\n'.join([header, divider, body])
 
     def __iter__(self):
         """Allow iterating over the store directly"""
