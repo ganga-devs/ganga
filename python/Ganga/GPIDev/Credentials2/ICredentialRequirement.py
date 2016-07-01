@@ -35,11 +35,14 @@ class ICredentialRequirement(GangaObject):
         pass
 
     def __str__(self):
-        items = ((name, getattr(self, name)) for name in self._schema.allItemNames())
-        explicit_items = ((name, value) for name, value in items if value)
-        item_strings = ((name, repr(value)) for name, value in explicit_items)
-        arg_strings = ('='.join(arg) for arg in item_strings)
-        arg_string = ', '.join(arg_strings)
+        return repr(self)
+
+    def __repr__(self):
+        items = ((name, getattr(self, name)) for name in self._schema.allItemNames())  # Name,value pairs for all schema items
+        explicit_items = ((name, value) for name, value in items if value)  # Filter out any default values
+        item_strings = ((name, repr(value)) for name, value in explicit_items)  # Stringify the values
+        arg_strings = ('='.join(arg) for arg in item_strings)  # Make "name=value" strings
+        arg_string = ', '.join(arg_strings)  # Make a full "a=1, b=2" string
         return '{name}({args})'.format(name=self.__class__.__name__, args=arg_string)
 
     def __hash__(self):
