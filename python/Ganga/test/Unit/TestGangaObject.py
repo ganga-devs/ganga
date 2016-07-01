@@ -149,7 +149,7 @@ class MultiThreadedTestCase(unittest.TestCase):
     and any exception raised by the thread will be correctly propagated to the main thread with correct traceback for test failure reporting.
     """
 
-    def run_threads(self, functions=None, num_threads=50, timeout=60):
+    def run_threads(self, functions=None, num_threads=50, timeout=120):
         """
         Args:
             functions: a list of functions which will be randomly chosen to run in threads. They will take one argument which is an integer thread id

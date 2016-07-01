@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from Ganga.GPIDev.Schema.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
@@ -9,9 +10,26 @@ import errno
 import copy
 import threading
 import shutil
+import functools
 from os import listdir, path, stat
 
 logger = getLogger()
+
+def synchronised(f):
+    """
+    This decorator must be attached to a method on a SubJobXMLList
+    It uses the object's lock to make sure that the object is held for the duration of the decorated function
+    Args:
+        f (function): Function in question being wrapped
+    """
+    @functools.wraps(f)
+    def decorated(self, *args, **kwargs):
+        # This is the Registry RLock
+        # It it safe in principle to re-enter the registry through other lockable methods in the active lock-holding thread
+        # However, the registry will decide through the use of the transaction locks as to whether it should actually do any work as a result
+        with self._registry._lock:
+            return f(self, *args, **kwargs)
+    return decorated
 
 ##FIXME There has to be a better way of doing this?
 class SJXLIterator(object):
@@ -125,6 +143,7 @@ class SubJobXMLList(GangaObject):
         """
         self._cachedJobs = obj
 
+    @synchronised
     def isLoaded(self, subjob_id):
         """Has the subjob been loaded? True/False
         Args:
@@ -132,6 +151,7 @@ class SubJobXMLList(GangaObject):
         """
         return subjob_id in self._cachedJobs
 
+    @synchronised
     def load_subJobIndex(self):
         """Load the index from all sujobs ynto _subjobIndexData or empty it is an error occurs"""
         index_file = path.join(self._jobDirectory, self._subjob_master_index_name )
@@ -186,6 +206,7 @@ class SubJobXMLList(GangaObject):
             self._setDirty()
         return
 
+    @synchronised
     def write_subJobIndex(self, ignore_disk=False):
         """interface for writing the index which captures errors and alerts the user vs throwing uncaught exception
         Args:
@@ -239,6 +260,7 @@ class SubJobXMLList(GangaObject):
         """Return iterator for this class"""
         return SJXLIterator(self)
 
+    @synchronised
     def __get_dataFile(self, index, force_backup=False):
         """Get the filename for this file (with out without backup '~'. Store already determine combinations in _cached_filenames for speed
         Args:
@@ -260,6 +282,7 @@ class SubJobXMLList(GangaObject):
         self._cached_filenames[index_str] = subjob_data
         return subjob_data
 
+    @synchronised
     def __len__(self):
         """ return length or lookup the last modified time compare against self._stored_len[0] and if nothings changed return self._stored_len[1]"""
         try:
@@ -287,6 +310,7 @@ class SubJobXMLList(GangaObject):
 
         return subjob_count
 
+    @synchronised
     def keys(self):
         """Return keys to access subjobs"""
         myLen = len(self)
@@ -294,10 +318,12 @@ class SubJobXMLList(GangaObject):
             self._storedKeys[myLen] = [i for i in range(len(self))]
         return self._storedKeys[myLen]
 
+    @synchronised
     def values(self):
         """Return the actual subjobs"""
         return [self[i] for i in range(0, len(self))]
 
+    @synchronised
     def getSafeJob(self):
         """ Return the job object or None, no faffing around with throwing exceptions """
         try:
@@ -310,6 +336,7 @@ class SubJobXMLList(GangaObject):
                 job_obj = None
         return job_obj
 
+    @synchronised
     def getMasterID(self):
         """ Return a string corresponding to the parent job ID """
         job_obj = self.getSafeJob()
@@ -325,6 +352,7 @@ class SubJobXMLList(GangaObject):
             fqid = "unknown"
         return fqid
 
+    @synchronised
     def _loadSubJobFromDisk(self, subjob_data):
         """Load the subjob file 'subjob_data' from disk. No Parsing
         Args:
@@ -337,12 +365,12 @@ class SubJobXMLList(GangaObject):
         #print("\n\n\n")
         #import sys
         #sys.exit(-1)
-        job_obj = self.getSafeJob()
-        if job_obj is not None:
-            fqid = self.getMasterID()
-            logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
-        else:
-            logger.debug( "Loading subjob at: %s" % subjob_data )
+        #job_obj = self.getSafeJob()
+        #if job_obj is not None:
+        #    fqid = self.getMasterID()
+        #    logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
+        #else:
+        #    logger.debug( "Loading subjob at: %s" % subjob_data )
         sj_file = open(subjob_data, "r")
         return sj_file
 
@@ -364,6 +392,7 @@ class SubJobXMLList(GangaObject):
             logger.error("CANNOT LOAD SUBJOB INDEX: %s. Reason: %s" % (index, err))
             raise
 
+    @synchronised
     def _getItem(self, index):
         """Actual meat of loading the subjob from disk is required, parsing and storing a copy in memory
         (_cached_subjobs) for future use
@@ -433,6 +462,7 @@ class SubJobXMLList(GangaObject):
 
         return self._cachedJobs[index]
 
+    @synchronised
     def _setParent(self, parentObj):
         """Set the parent of self and any objects in memory we control
         Args:
@@ -458,6 +488,7 @@ class SubJobXMLList(GangaObject):
             if self._cachedJobs[k]._getParent() is not self._definedParent:
                 self._cachedJobs[k]._setParent( parentObj )
 
+    @synchronised
     def getCachedData(self, index):
         """Get the cached data from the index for one of the subjobs
         Args:
@@ -476,6 +507,7 @@ class SubJobXMLList(GangaObject):
 
         return None
 
+    @synchronised
     def getAllCachedData(self):
         """Get the cached data from the index for all subjobs"""
         cached_data = []
@@ -492,6 +524,7 @@ class SubJobXMLList(GangaObject):
 
         return cached_data
 
+    @synchronised
     def getAllSJStatus(self):
         """
         Returns the cached statuses of the subjobs whilst respecting the Lazy loading
@@ -508,6 +541,7 @@ class SubJobXMLList(GangaObject):
                 sj_statuses.append(self.__getitem__(i).status)
         return sj_statuses
 
+    @synchronised
     def flush(self, ignore_disk=False):
         """Flush all subjobs to disk using XML methods
         Args:
@@ -538,12 +572,14 @@ class SubJobXMLList(GangaObject):
 
         self.write_subJobIndex(ignore_disk)
 
+    @synchronised
     def _setFlushed(self):
         """ Like Node only descend into objects which aren't in the Schema"""
         for index in self._cachedJobs:
             self._cachedJobs[index]._setFlushed()
         super(SubJobXMLList, self)._setFlushed()
 
+    @synchronised
     def _private_display(self, reg_slice, this_format, default_width, markup):
         """ This is a private display method which makes use of the display slice as well as knowlede of the wanted format, default_width and markup to be used
         Given it's  display method this returns a displayable string. Given it's tied into the RegistrySlice it's similar to that

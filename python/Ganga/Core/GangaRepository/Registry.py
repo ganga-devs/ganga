@@ -136,7 +136,7 @@ class IncompleteObject(GangaObject):
         self.registry._lock.acquire()
         try:
 
-            if not self.has_loaded(self._registry._objects[self.id]):
+            if not self._registry._objects[self.id]._inMemory:
                 self.registry._load([self.id])
             logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name, self.id))
             for d in self.registry.changed_ids.itervalues():
@@ -309,7 +309,7 @@ class Registry(object):
             #traceback.print_stack()
             #import sys
             #sys.exit(-1)
-            #time.sleep(0.05)
+            time.sleep(0.1)
         self._inprogressDict[this_id] = action
         if this_id not in self.hard_lock:
             self.hard_lock[this_id] = threading.Lock()
@@ -623,7 +623,7 @@ class Registry(object):
             if not obj._dirty:
                 continue
 
-            if not self.has_loaded(obj):
+            if not obj._inMemory:
                 continue
 
             with obj.const_lock:
@@ -663,13 +663,19 @@ class Registry(object):
         with _obj.const_lock:
             self.__safe_read_access(_obj, sub_obj)
 
-    @synchronised
     def _load(self, obj_ids):
         """
         Fully load an object from a Repo/disk into memory
         Args:
             obj_ids (list): This is the list of id which we want to fully load objects for according to object dict
         """
+
+        already_loaded = True
+        for obj_id in obj_ids:
+            already_loaded = already_loaded & self._objects[obj_id]._inMemory
+        if already_loaded:
+            return
+
         logger.debug("_load")
         these_ids = []
         for obj_id in obj_ids:
@@ -684,9 +690,16 @@ class Registry(object):
             if obj_id in self._objects:
                 prior_status[obj_id] = self._objects[obj_id]._dirty
 
+        loading_id = None
         try:
             for obj_id in obj_ids:
+                if self._objects[obj_id]._inMemory:
+                    continue
+                loading_id = obj_id
+                self._objects[obj_id]._inMemory = True
                 self.repository.load([obj_id])
+                self._objects[obj_id]._inMemory = True
+                loading_id = None
         except Exception as err:
             logger.error("Error Loading Jobs! '%s'" % obj_ids)
             ## Cleanup aftr ourselves if an error occured
@@ -694,6 +707,8 @@ class Registry(object):
                 ## Didn't load mark as clean so it's not flushed
                 if obj_id in self._objects:
                     self._objects[obj_id]._setFlushed()
+                if obj_id == loading_id:
+                    self._objects[obj_id]._inMemory = False
             raise
         finally:
             for obj_id in these_ids:
@@ -720,7 +735,7 @@ class Registry(object):
 
         try:
             try:
-                if not self.has_loaded(obj):
+                if not obj._inMemory:
                     this_id = self.find(obj)
                     self._load([this_id])
             except KeyError as err:
@@ -792,7 +807,7 @@ class Registry(object):
                     raise
                 finally:  # try to load even if lock fails
                     try:
-                        if not self.has_loaded(obj):
+                        if not obj._inMemory:
                             self._load([this_id])
                             if hasattr(obj, "_registry_refresh"):
                                 delattr(obj, "_registry_refresh")
@@ -871,6 +886,7 @@ class Registry(object):
         self.changed_ids[name] = set()
         return res
 
+    @synchronised
     def getIndexCache(self, obj):
         """Returns a dictionary to be put into obj._index_cache (is this valid)
         This can and should be overwritten by derived Registries to provide more index values."""
@@ -955,19 +971,4 @@ class Registry(object):
             if len(other_sessions) > 0:
                 s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
         return s
-
-    def has_loaded(self, obj):
-        """Returns True/False for if a given object has been fully loaded by the Registry.
-        Returns False on the object not being in the Registry!
-        This ONLY applies to master jobs as the Registry has no apriori knowledge of the subjob structure.
-        Consult SubJobXMLList for a more fine grained loaded/not-loaded info/test.
-        Args:
-            obj (GangaObject): Object which we want to look for in this repo
-        """
-        try:
-            index = self.find(obj)
-        except ObjectNotInRegistryError:
-            return False
-
-        return self.repository.isObjectLoaded(obj)
 

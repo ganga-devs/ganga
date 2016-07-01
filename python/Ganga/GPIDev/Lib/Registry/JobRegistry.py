@@ -9,7 +9,7 @@ from __future__ import absolute_import
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 
 from Ganga.Core.exceptions import GangaException
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher, synchronised
 
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, addProxy
 
@@ -41,6 +41,7 @@ class JobRegistry(Registry):
     def getProxy(self):
         return self.stored_proxy
 
+    @synchronised
     def getIndexCache(self, obj):
 
         cached_values = ['status', 'id', 'name']

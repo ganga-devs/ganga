@@ -106,6 +106,7 @@ j.submit()
         # -- JOBMANIPULATION JOBSLICING STOP
 
         jobs(0).kill()
+        jobs(0).force_status('failed')
         # -- JOBMANIPULATION RESUBMIT START
         jobs(0).resubmit()
         # -- JOBMANIPULATION RESUBMIT STOP

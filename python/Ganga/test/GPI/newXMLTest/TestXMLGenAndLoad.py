@@ -128,6 +128,8 @@ class TestXMLGenAndLoad(GangaUnitTest):
         from tempfile import NamedTemporaryFile
 
         j = jobs(0)
+        assert j.splitter is None
+
         assert path.isfile(getXMLFile(j))
         with open(getXMLFile(j)) as handler:
             tmpobj, errs = from_file(handler)

@@ -28,6 +28,8 @@ from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 
+from Ganga.Core.exceptions import GangaException
+
 logger = Ganga.Utility.logging.getLogger()
 
 save_all_history = False
@@ -123,7 +125,6 @@ def rmrf(name, count=0):
         logger.debug("Trying again to remove: %s" % name)
         if count == 3:
             logger.error("Tried 3 times to remove file/folder: %s" % name)
-            from Ganga.Core.exceptions import GangaException
             raise GangaException("Failed to remove file/folder: %s" % name)
 
     if os.path.isdir(name):
@@ -202,7 +203,6 @@ class GangaRepositoryLocal(GangaRepository):
         self.saved_idxpaths = {}
         self._cache_load_timestamp = {}
         self.printed_explanation = False
-        self._fully_loaded = {}
 
     def startup(self):
         """ Starts a repository and reads in a directory structure.
@@ -239,11 +239,12 @@ class GangaRepositoryLocal(GangaRepository):
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
-        for k in self._fully_loaded:
-            try:
-                self.index_write(k, shutdown=True)
-            except Exception as err:
-                logger.error("Warning: problem writing index object with id %s" % k)
+        for k in self.objects:
+            if self.objects[k]._inMemory:
+                try:
+                    self.index_write(k, shutdown=True)
+                except Exception as err:
+                    logger.error("Warning: problem writing index object with id %s" % k)
         try:
             self._write_master_cache(True)
         except Exception as err:
@@ -371,7 +372,7 @@ class GangaRepositoryLocal(GangaRepository):
                         try:
                             rmrf(self.get_idxfn(this_id))
                             logger.warning("Deleted index file without data file: %s" % self.get_idxfn(this_id))
-                        except OSError as err:
+                        except (OSError, GangaException) as err:
                             logger.debug("get_index_listing delete Exception: %s" % err)
         return objs
 
@@ -401,7 +402,10 @@ class GangaRepositoryLocal(GangaRepository):
             logger.debug("Exception: %s" % err)
             self._clear_stored_cache()
         finally:
-            rmrf(os.path.join(self.root, 'master.idx'))
+            try:
+                rmrf(os.path.join(self.root, 'master.idx'))
+            except (OSError, GangaException):
+            	pass
 
     def _clear_stored_cache(self):
         """
@@ -434,7 +438,7 @@ class GangaRepositoryLocal(GangaRepository):
                 if k in self.incomplete_objects:
                     continue
                 try:
-                    if k in self._fully_loaded:
+                    if v._inMemory:
                         # Check and write index first
                         obj = v#self.objects[k]
                         new_index = None
@@ -566,7 +570,7 @@ class GangaRepositoryLocal(GangaRepository):
                         if this_id not in self.incomplete_objects:
                             # If object is loaded mark it dirty so next flush will regenerate XML,
                             # otherwise just go about fixing it
-                            if not self.isObjectLoaded(self.objects[this_id]):
+                            if this_id not in self.objects or not self.objects[this_id]._inMemory:
                                 self.index_write(this_id)
                             else:
                                 self.objects[this_id]._setDirty()
@@ -646,7 +650,9 @@ class GangaRepositoryLocal(GangaRepository):
             except OSError as e:
                 if e.errno != errno.EEXIST:
                     raise RepositoryError( self, "OSError on mkdir: %s" % (e))
+
             self._internal_setitem__(ids[i], objs[i])
+            objs[i]._inMemory = True
 
             # Set subjobs dirty - they will not be flushed if they are not.
             if self.sub_split and hasattr(objs[i], self.sub_split):
@@ -716,7 +722,11 @@ class GangaRepositoryLocal(GangaRepository):
                 for idn in os.listdir(os.path.dirname(fn)):
                     split_cache = getattr(obj, self.sub_split)
                     if idn.isdigit() and int(idn) >= len(split_cache):
-                        rmrf(os.path.join(os.path.dirname(fn), idn))
+                        try:
+                            rmrf(os.path.join(os.path.dirname(fn), idn))
+                        except (OSError, GangaException) as err:
+                            logger.warning("Couldn't remove a file: %s" % err)
+                            pass
             else:
 
                 logger.debug("not has_children")
@@ -725,19 +735,22 @@ class GangaRepositoryLocal(GangaRepository):
                 # clean files leftover from sub_split
                 for idn in os.listdir(os.path.dirname(fn)):
                     if idn.isdigit():
-                        rmrf(os.path.join(os.path.dirname(fn), idn))
+                        try:
+                            rmrf(os.path.join(os.path.dirname(fn), idn))
+                        except (OSError, GangaException) as err:
+                            logger.warning("Couldn't remove a file: %s" % err)
             if this_id not in self.incomplete_objects:
                 self.index_write(this_id)
         else:
             raise RepositoryError(self, "Cannot flush an Empty object for ID: %s" % this_id)
 
-        if this_id not in self._fully_loaded:
-            self._fully_loaded[this_id] = obj
+        if not obj._inMemory:
+            obj._inMemory = True
 
     def flush(self, ids):
         """
         flush the set of "ids" to disk and write the XML representing said objects in self.objects
-        NB: This adds the given objects corresponding to ids to the _fully_loaded dict
+        NB: This sets the _inMemory attribute to GangaObjects
         Args:
             ids (list): List of integers, used as keys to objects in the self.objects dict
         """
@@ -764,8 +777,8 @@ class GangaRepositoryLocal(GangaRepository):
                     logger.debug("Index write failed")
                     pass
 
-                if this_id not in self._fully_loaded:
-                    self._fully_loaded[this_id] = self.objects[this_id]
+                if not self.objects[this_id]._inMemory:
+                    self.objects[this_id]._inMemory = True
 
                 subobj_attr = getattr(self.objects[this_id], self.sub_split, None)
                 sub_attr_dirty = getattr(subobj_attr, '_dirty', False)
@@ -777,15 +790,6 @@ class GangaRepositoryLocal(GangaRepository):
 
             except (OSError, IOError, XMLFileError) as x:
                 raise RepositoryError(self, "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x))
-
-    def is_loaded(self, this_id):
-        """
-        Has "this_id" been loaded from disk already
-        Check self.objects for the ._data sttribute
-        Args:
-            this_id (int): This is the id we want to check has been fully loaded from disk
-        """
-        return (this_id in self.objects) and (self.objects[this_id]._data is not None)
 
     def count_nodes(self, this_id):
         """
@@ -807,15 +811,6 @@ class GangaRepositoryLocal(GangaRepository):
 
         return node_count
 
-    def _actually_loaded(self, this_id):
-        """
-        Return if "this_id" is in the _full_loaded dictionary of objects loaded from XML by this class
-        This is different to is_loaded as it checks for actual read operations
-        Args:
-            this_id (int): This is an integer corresponding to a key in the _fully_loaded dict (possibly objects too)
-        """
-        return this_id in self._fully_loaded
-
     def _check_index_cache(self, obj, this_id):
         """
         Checks the index cache of "this_id" against the index cache generated from the "obj"ect
@@ -833,7 +828,7 @@ class GangaRepositoryLocal(GangaRepository):
             if len(self.lock([this_id])) != 0:
                 if this_id not in self.incomplete_objects:
                     # Mark as dirty if loaded, otherwise load and fix
-                    if not self.isObjectLoaded(self.objects[this_id]):
+                    if not self.objects[this_id]._inMemory:
                         self.index_write(this_id)
                     else:
                         self.objects[this_id]._setDirty()
@@ -879,16 +874,15 @@ class GangaRepositoryLocal(GangaRepository):
 
         obj = self.objects[this_id]
 
+        obj._inMemory = True
         # If the object was already in the objects (i.e. cache object, replace the schema content wilst avoiding R/O checks and such
         # The end goal is to keep the object at this_id the same object in memory but to make it closer to tmpobj.
         # TODO investigate changing this to copyFrom
         # The temp object is from disk so all contents have correctly passed through sanitising via setattr at least once by now so this is safe
         if need_to_copy:
-            for key, val in tmpobj._data.items():
-                obj.setSchemaAttribute(key, val)
-            for attr_name, attr_val in obj._schema.allItems():
-                if attr_name not in tmpobj._data:
-                    obj.setSchemaAttribute(attr_name, obj._schema.getDefaultValue(attr_name))
+            for attr_name, attr in tmpobj._schema.allItems():
+                if not attr['getter']:
+                    setattr(obj, attr_name, getattr(tmpobj, attr_name))
 
         if has_children:
             logger.debug("Adding children")
@@ -903,20 +897,14 @@ class GangaRepositoryLocal(GangaRepository):
                     def_val = GangaList()
                 obj.setSchemaAttribute(self.sub_split, def_val)
 
-        from Ganga.GPIDev.Base.Objects import do_not_copy
-        for node_key, node_val in obj._data.items():
-            if isType(node_val, Node):
-                if node_key not in do_not_copy:
-                    node_val._setParent(obj)
-
         # Check if index cache; if loaded; was valid:
         if obj._index_cache not in [{}]:
             self._check_index_cache(obj, this_id)
 
         obj._index_cache = {}
 
-        if this_id not in self._fully_loaded:
-            self._fully_loaded[this_id] = obj
+        if not obj._inMemory:
+            obj._inMemory = True
 
     def _actually_load_xml(self, fobj, fn, this_id, load_backup):
         """
@@ -987,7 +975,7 @@ class GangaRepositoryLocal(GangaRepository):
                     # remove internal representation
                     self._internal_del__(this_id)
                     rmrf(os.path.dirname(fn) + ".index")
-                except OSError as err:
+                except (OSError, GangaException) as err:
                     logger.debug("load unlink Error: %s" % err)
                     pass
                 raise KeyError(this_id)
@@ -1039,9 +1027,9 @@ class GangaRepositoryLocal(GangaRepository):
                 if has_loaded_backup2:
                     has_loaded_backup = has_loaded_backup2
             except Exception as err:
-                logger.debug("XML load: Failed to load XML file: %s" % fn)
-                logger.debug("Error was:\n%s" % err)
-                logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                logger.error("XML load: Failed to load XML file: %s" % fn)
+                logger.error("Error was:\n%s" % err)
+                logger.error("1) Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
                 self.incomplete_objects.append(this_id)
                 raise
 
@@ -1049,7 +1037,7 @@ class GangaRepositoryLocal(GangaRepository):
                 self._actually_load_xml(fobj, fn, this_id, load_backup)
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % err)
-                logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                logger.error("2) Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
                 self.incomplete_objects.append(this_id)
                 raise
 
@@ -1061,7 +1049,7 @@ class GangaRepositoryLocal(GangaRepository):
                     has_loaded_backup = True
                     continue
                 else:
-                    logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
+                    logger.error("3) Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
                     self.incomplete_objects.append(this_id)
                     raise
 
@@ -1140,9 +1128,9 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("Delete Error: %s" % err)
             self._internal_del__(this_id)
             rmrf(os.path.dirname(fn))
-            if this_id in self._fully_loaded:
-                del self._fully_loaded[this_id]
             if this_id in self.objects:
+                if self.objects[this_id]._inMemory:
+                    self.objects[this_id]._inMemory = False
                 del self.objects[this_id]
 
     def lock(self, ids):
@@ -1196,15 +1184,4 @@ class GangaRepositoryLocal(GangaRepository):
            logger.error("Failed to correctly clean repository due to: %s" % err)
         self.startup()
 
-    def isObjectLoaded(self, obj):
-        """
-        This will return a true false if an object has been fully loaded into memory
-        Args:
-            obj (GangaObject): The object we want to know if it was loaded into memory
-        """
-        try:
-            _id = next(id_ for id_, o in self._fully_loaded.items() if o is obj)
-            return True
-        except StopIteration:
-            return False
 

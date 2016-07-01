@@ -58,9 +58,8 @@ def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
 
     this_job = stripProxy(raw_job)
 
-    if this_job._getRegistry() is not None:
-        if this_job._getRegistry().has_loaded(this_job):
-            return getattr(this_job, this_attr)
+    if this_job._inMemory:
+        return getattr(this_job, this_attr)
 
     lzy_loading_str = 'display:'+ this_attr
     job_index_cache = this_job._index_cache
@@ -1978,8 +1977,7 @@ class Job(GangaObject):
         oldstatus = self.status
 
         try:
-            config_resubOFS = config['resubmitOnlyFailedSubjobs']
-            if config_resubOFS is True:
+            if config['resubmitOnlyFailedSubjobs']:
                 rjobs = [s for s in self.subjobs if s.status in ['failed']]
             else:
                 rjobs = self.subjobs
@@ -2005,15 +2003,18 @@ class Job(GangaObject):
 
             self.getDebugWorkspace().remove(preserve_top=True)
 
+            if len(rjobs) == 0:
+                raise JobError('Nothing to do in resubmitting Job: %s' % self.getFQID('.'))
+
             try:
                 if auto_resubmit:
                     result = self.backend.master_auto_resubmit(rjobs)
                 else:
+                    logger.info("Resubmitting: %s" % rjobs)
                     if backend is None:
                         result = self.backend.master_resubmit(rjobs)
                     else:
-                        result = self.backend.master_resubmit(
-                            rjobs, backend=backend)
+                        result = self.backend.master_resubmit(rjobs, backend=backend)
 
                 if not result:
                     raise JobManagerError('error during submit')

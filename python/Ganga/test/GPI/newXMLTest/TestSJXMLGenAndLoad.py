@@ -142,7 +142,10 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
         from tempfile import NamedTemporaryFile
 
+        # Important if you plan to strip Proxy unless you know what you're doing
         j=jobs(0)
+        assert j.splitter is not None
+
         XMLFileName = getXMLFile(j)
         assert path.isfile(XMLFileName)
         with open(XMLFileName) as handler:
@@ -189,6 +192,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
             temp_name_a = new_temp_file_a.name
 
             j=jobs(0)
+            assert j.splitter is not None
             to_file(stripProxy(j), new_temp_file_a, ignore_subs)
             new_temp_file_a.flush()
 
@@ -196,6 +200,8 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
         for sj in j.subjobs:
             XMLFileName = getSJXMLFile(sj)
             assert path.isfile(XMLFileName)
+
+            assert sj.splitter is None
 
             with open(XMLFileName) as handler:
                 tmpobj, errs = from_file(handler)

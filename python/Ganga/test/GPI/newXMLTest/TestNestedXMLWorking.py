@@ -51,7 +51,7 @@ class TestNestedXMLWorking(GangaUnitTest):
         from Ganga.GPIDev.Base.Proxy import stripProxy
         raw_j = stripProxy(j)
 
-        has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+        has_loaded_job = raw_j._inMemory
 
         assert not has_loaded_job
 
@@ -69,7 +69,7 @@ class TestNestedXMLWorking(GangaUnitTest):
         ## ANY COMMAND TO LOAD A JOB CAN BE USED HERE
         raw_j.printSummaryTree()
 
-        has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
+        has_loaded_job = raw_j._inMemory
 
         assert has_loaded_job
 
@@ -82,13 +82,14 @@ class TestNestedXMLWorking(GangaUnitTest):
         from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
 
         from Ganga.GPI import jobs, Job, ArgSplitter
-        from Ganga.GPIDev.Base.Proxy import stripProxy
+        from Ganga.GPIDev.Base.Proxy import stripProxy, addProxy
 
         from tempfile import NamedTemporaryFile
 
         j = jobs(0)
         assert path.isfile(getXMLFile(j))
         with open(getXMLFile(j)) as handler:
+
             tmpobj, errs = from_file(handler)
 
             assert tmpobj.splitter
@@ -98,7 +99,7 @@ class TestNestedXMLWorking(GangaUnitTest):
 
             with NamedTemporaryFile(delete=False) as new_temp_file:
 
-                to_file(stripProxy(j), new_temp_file, ignore_subs)
+                to_file(tmpobj, new_temp_file, ignore_subs)
                 new_temp_file.flush()
 
             with NamedTemporaryFile(delete=False) as new_temp_file2:

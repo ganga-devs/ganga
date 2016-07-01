@@ -20,6 +20,7 @@ class TestSavannah77962(GangaUnitTest):
 
         self.assertTrue(sleep_until_completed(j), 'Timeout on job submission: job is still not finished')
 
+        j.force_status('failed')
         j.resubmit()
 
         self.assertEqual(j.info.submit_counter, 2)

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import time
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 class TestSJIDName(GangaUnitTest):
@@ -9,6 +10,7 @@ class TestSJIDName(GangaUnitTest):
         super(TestSJIDName, self).setUp()
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
+        setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'False')
         setConfigOption('Output', 'FailJobIfNoOutputMatched', 'True')
 
     def test_a_jobSubmit(self):
@@ -16,7 +18,7 @@ class TestSJIDName(GangaUnitTest):
         from Ganga.GPI import Job, Executable, ArgSplitter, MassStorageFile
 
         j=Job()
-        j.application=Executable(exe='touch')
+        j.application=Executable(exe='echo')
         j.splitter=ArgSplitter(args=[['abc.txt'], ['def.txt']])
         j.outputfiles=[MassStorageFile(outputfilenameformat = '/test/{sjid}-{fname}', namePattern = '*.txt')]
         j.submit()
@@ -30,6 +32,8 @@ class TestSJIDName(GangaUnitTest):
 
         jobs(0).resubmit()
 
+        assert jobs(0).status not in ['completed', 'failed', 'killed']
+
         from GangaTest.Framework.utils import sleep_until_completed
         sleep_until_completed(jobs(0))
 
@@ -38,7 +42,7 @@ class TestSJIDName(GangaUnitTest):
         from Ganga.GPI import Job, Executable, ArgSplitter, MassStorageFile
 
         j=Job()
-        j.application=Executable(exe='touch')
+        j.application=Executable(exe='echo')
         j.splitter=ArgSplitter(args=[['abc.txt'], ['def.txt']])
         j.outputfiles=[MassStorageFile(outputfilenameformat = '/test/{sjid}-{fname}', namePattern = '*.txt')]
 
