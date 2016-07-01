@@ -314,7 +314,7 @@ lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_e
                  'sets the LCG-UI environment setup script for the GLITE middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
-lcg_config.addOption('VirtualOrganisation', 'dteam',
+lcg_config.addOption('VirtualOrganisation', '',
                  'sets the name of the grid virtual organisation')
 
 lcg_config.addOption('ConfigVO', '', 'DEPRECATED sets the VO-specific LCG-UI configuration script for the EDG resource broker',
