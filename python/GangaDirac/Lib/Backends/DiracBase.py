@@ -17,7 +17,8 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Credentials2 import VomsProxy, require_credential, credential_store, needed_credentials
+from Ganga.GPIDev.Credentials2 import require_credential
+from Ganga.GPIDev.Credentials2.VomsProxy import VomsProxy
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.Core.GangaThread.WorkerThreads import getQueues
 configDirac = getConfig('DIRAC')

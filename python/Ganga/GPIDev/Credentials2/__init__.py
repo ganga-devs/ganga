@@ -1,17 +1,15 @@
 from __future__ import absolute_import
 
-from .CredentialStore import credential_store, needed_credentials, get_needed_credentials
-
-from .VomsProxy import VomsProxy
-
-from .AfsToken import AfsToken
-
-from .exceptions import CredentialsError
-
-from functools import wraps
 import threading
+from functools import wraps
 
 import Ganga.Utility.logging
+
+from .CredentialStore import credential_store, needed_credentials, get_needed_credentials
+from . import VomsProxy
+from . import AfsToken
+from . import exceptions
+
 logger = Ganga.Utility.logging.getLogger()
 
 
@@ -36,10 +34,10 @@ def require_credential(function):
                 logger.warning('Required credential [%s] not found in store', cred_req)
                 cred = credential_store.create(cred_req, create=True)
             else:
-                raise CredentialsError('Cannot get proxy which matches requirements')
+                raise exceptions.CredentialsError('Cannot get proxy which matches requirements')
 
         if not cred.is_valid():
-            raise CredentialsError('Proxy is invalid')
+            raise exceptions.CredentialsError('Proxy is invalid')
             
         return function(self, *args, **kwargs)
     return wrapped_function
