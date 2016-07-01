@@ -5,6 +5,8 @@ Attributes:
     logger (logger): Logger for the shutdown manager
 """
 
+import atexit
+
 # Ganga imports
 from Ganga.Core.GangaThread import GangaThreadPool
 from Ganga.Core.GangaThread.WorkerThreads import _global_queues, shutDownQueues
@@ -21,7 +23,17 @@ from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, rem
 
 # Globals
 logger = getLogger()
+_has_registered = False
 
+def register_exitfunc():
+    """
+    This registers the exit functiona and actually tracks that it's done so,
+    registereing this  300 times is just bad...
+    """
+    global _has_registered
+    if not _has_registered:
+        atexit.register(_ganga_run_exitfuncs)
+        _has_registered = True
 
 def _ganga_run_exitfuncs():
     """Run all exit functions from plugins and internal services in the correct order
