@@ -9,7 +9,8 @@ from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
 
 from Ganga.Utility.threads import SynchronisedObject
 
-from Ganga.GPIDev.Credentials2 import credential_store, AfsToken, get_needed_credentials
+from Ganga.GPIDev.Credentials2 import credential_store, get_needed_credentials
+from Ganga.GPIDev.Credentials2.AfsToken import AfsToken
 from Ganga.Core.InternalServices import Coordinator
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, getRuntimeGPIObject

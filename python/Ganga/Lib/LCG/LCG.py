@@ -36,7 +36,8 @@ from Ganga.Utility.logic import implies
 from Ganga.GPIDev.Base.Proxy import isType, getName
 from Ganga.Utility.GridShell import getShell
 
-from Ganga.GPIDev.Credentials2 import VomsProxy, require_credential, credential_store, needed_credentials
+from Ganga.GPIDev.Credentials2 import require_credential, credential_store, needed_credentials
+from Ganga.GPIDev.Credentials2.VomsProxy import VomsProxy
 
 from . import Grid
 

@@ -26,7 +26,8 @@ from Ganga.Lib.LCG import Grid
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
 from Ganga.GPIDev.Base.Proxy import getName
-from Ganga.GPIDev.Credentials2 import VomsProxy, require_credential, credential_store, needed_credentials
+from Ganga.GPIDev.Credentials2 import require_credential, credential_store, needed_credentials
+from Ganga.GPIDev.Credentials2.VomsProxy import VomsProxy
 config = getConfig('LCG')
 
 def __cream_resolveOSBList__(job, jdl):
