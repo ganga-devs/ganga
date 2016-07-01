@@ -12,7 +12,7 @@ import threading
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.GPIDev.Base.Proxy import isType, getName
 from Ganga.Utility.Config import getConfig
 
 logger = getLogger()
@@ -383,14 +383,12 @@ class Registry(object):
         returnable = iter(self.values())
         return returnable
 
-    def find(self, _obj):
+    def find(self, obj):
         """Returns the id of the given object in this registry, or 
         Raise ObjectNotInRegistryError if the Object is not found
         Args:
             _obj (GangaObject): This is the object we want to match in the objects repo
         """
-    
-        obj = stripProxy(_obj)
         try:
             return next(id_ for id_, o in self._objects.items() if o is obj)
         except StopIteration:
@@ -422,7 +420,7 @@ class Registry(object):
     # all accesses to the repository must also be locked!
 
     @synchronised_complete_lock
-    def _add(self, _obj, force_index=None):
+    def _add(self, obj, force_index=None):
         """ Add an object to the registry and assigns an ID to it. 
         use force_index to set the index (for example for metadata). This overwrites existing objects!
         Raises RepositoryError
@@ -431,7 +429,6 @@ class Registry(object):
             force_index (int): This is the index which we will give the object, None = auto-assign
         """
         logger.debug("_add")
-        obj = stripProxy(_obj)
 
         if self.hasStarted() is not True:
             raise RepositoryError("Cannot add objects to a disconnected repository!")
@@ -451,7 +448,7 @@ class Registry(object):
         return ids[0]
 
     @synchronised_complete_lock
-    def _remove(self, _obj, auto_removed=0):
+    def _remove(self, obj, auto_removed=0):
         """ Private method removing the obj from the registry. This method always called.
         This method may be overriden in the subclass to trigger additional actions on the removal.
         'auto_removed' is set to true if this method is called in the context of obj.remove() method to avoid recursion.
@@ -467,7 +464,6 @@ class Registry(object):
             auto_removed (int, bool): True/False for if the object can be auto-removed by the base Repository method
         """
         logger.debug("_remove")
-        obj = stripProxy(_obj)
 
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot remove objects from a disconnected repository!")
@@ -493,10 +489,8 @@ class Registry(object):
         """
         logger.debug("_flush")
 
-        if isType(objs, (list, tuple, GangaList)):
-            objs = [stripProxy(_obj) for _obj in objs]
-        else:
-            objs = [stripProxy(objs)]
+        if not isType(objs, (list, tuple, GangaList)):
+            objs = [objs]
 
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot flush to a disconnected repository!")
@@ -551,8 +545,8 @@ class Registry(object):
             self.repository.load([obj_id])
         except Exception as err:
             logger.error("Error Loading Job! '%s'" % obj_id)
-            ## Cleanup after ourselves if an error occured
-            ## Didn't load mark as clean so it's not flushed
+            # Cleanup after ourselves if an error occured
+            # Didn't load mark as clean so it's not flushed
             if obj_id in self._objects:
                 self._objects[obj_id]._setFlushed()
             raise
@@ -566,8 +560,6 @@ class Registry(object):
         Args:
             _obj (GangaObject): This is the object we want to get write access to and lock on disk
         """
-        obj = stripProxy(obj)
-
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot get write access to a disconnected repository!")
 
@@ -580,7 +572,7 @@ class Registry(object):
 
             obj._registry_locked = True
 
-    def _release_session_lock(self, obj):
+    def _release_session_lock_and_flush(self, obj):
         """Release the lock on a given object.
         Raise RepositoryError
         Raise RegistryAccessError
@@ -588,15 +580,14 @@ class Registry(object):
         Args:
             obj (GangaObject): This is the object we want to release the file lock for
         """
-        obj = stripProxy(obj)
-
         if self.hasStarted() is not True:
             raise RegistryAccessError("Cannot manipulate locks of a disconnected repository!")
         logger.debug("Reg: %s _release_lock(%s)" % (self.name, self.find(obj)))
         if hasattr(obj, '_registry_locked') and obj._registry_locked:
             oid = self.find(obj)
-            self.repository.unlock([oid])
+            self.repository.flush([oid])
             obj._registry_locked = False
+            self.repository.unlock([oid])
 
     def getIndexCache(self, obj):
         """Returns a dictionary to be put into obj._index_cache (is this valid)

@@ -460,11 +460,11 @@ class Descriptor(object):
 
         self._check_getter()
 
-        # make sure the object is loaded if it's attached to a registry
-        obj._loadObject()
-
         # make sure we have the session lock
         obj._getSessionLock()
+
+        # make sure the object is loaded if it's attached to a registry
+        obj._loadObject()
 
         _set_name = _getName(self)
 
@@ -1023,12 +1023,12 @@ class GangaObject(Node):
         if reg is not None:
             reg._acquire_session_lock(self._getRoot())
 
-    def _releaseSessionLock(self):
+    def _releaseSessionLockAndFlush(self):
         """ Releases the session lock for this object
         Please use only if the object is expected to be used by other sessions"""
         reg = self._getRegistry()
         if reg is not None:
-            reg._release_session_lock(self._getRoot())
+            reg._release_session_lock_and_flush(self._getRoot())
 
     def _loadObject(self):
         """If there's an attached registry then ask it to load this object"""

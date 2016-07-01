@@ -22,7 +22,7 @@ class TestGangaObject(unittest.TestCase):
         self.obj._getSessionLock()
 
     def test_releaseSessionLock(self):
-        self.obj._releaseSessionLock()
+        self.obj._releaseSessionLockAndFlush()
 
     def test_setRegistry(self):
         self.obj._setRegistry(None)

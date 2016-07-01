@@ -1779,7 +1779,7 @@ class Job(GangaObject):
                 pass
 
         try:
-            self._releaseSessionLock()
+            self._releaseSessionLockAndFlush()
         except Exception as err:
             logger.debug("Remove Err: %s" % err)
             pass

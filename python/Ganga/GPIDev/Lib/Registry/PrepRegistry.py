@@ -147,7 +147,7 @@ class ShareRef(GangaObject):
             logger.error('Directory %s does not exist' % shareddir)
 
         self._setDirty()
-        self._releaseSessionLock()
+        self._releaseSessionLockAndFlush()
 
     @synchronised
     def decrease(self, shareddir, remove=0):
@@ -175,7 +175,7 @@ class ShareRef(GangaObject):
             self.__getName()[basedir] = 0
 
         self._setDirty()
-        self._releaseSessionLock()
+        self._releaseSessionLockAndFlush()
 
     def lookup(self, sharedir, unprepare=False):
         """
@@ -343,7 +343,7 @@ class ShareRef(GangaObject):
                 shutil.rmtree(os.path.join(getSharedPath(), this_dir))
 
         self._setDirty()
-        self._releaseSessionLock()
+        self._releaseSessionLockAndFlush()
 
 
     @staticmethod

@@ -143,7 +143,7 @@ class HammerThread(threading.Thread):
         assert obj_to_unlock.name.startswith('HT')
         # self.reg[_id].name = 'HT-unlocked'
         # self.owned_ids.remove(_id)
-        self.reg._release_session_lock(self.reg[_id])
+        self.reg._release_session_lock_and_flush(self.reg[_id])
         self.logger.info(str(self.id) + ' unlock(%s) done!' % _id)
 
     def run(self):
