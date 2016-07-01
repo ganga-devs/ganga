@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import pytest
-from Ganga.testlib import external
+from Ganga.testlib.mark import external
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 

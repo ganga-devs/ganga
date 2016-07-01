@@ -22,7 +22,7 @@ logger = Ganga.Utility.logging.getLogger()
 ## Due to a bug in Gaudi at some point we need this equivalenc here: see #204
 DataObjectDescriptorCollection = str
 
-class PythonOptionsParser:
+class PythonOptionsParser(object):
 
 
     """ Parses job options file(s) w/ gaudirun.py to extract user's files"""
@@ -132,7 +132,8 @@ class PythonOptionsParser:
 
         from Ganga.GPIDev.Base.Filters import allComponentFilters
         file_filter = allComponentFilters['gangafiles']
-        ds = LHCbDataset()
+
+        all_files = []
         for d in data:
             p1 = d.find('DATAFILE=') + len('DATAFILE=')
             quote = d[p1]
@@ -141,7 +142,9 @@ class PythonOptionsParser:
             this_file = file_filter(f, None)
             if this_file is None:
                 this_file = LocalFile(name=f)
-            ds.files.append(this_file)
+            all_files.append(this_file)
+
+        ds = LHCbDataset(files=all_files, fromRef=True)
         return ds
 
     def get_output_files(self):

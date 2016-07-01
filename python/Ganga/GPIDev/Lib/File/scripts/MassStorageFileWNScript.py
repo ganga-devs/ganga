@@ -29,7 +29,7 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
 
     (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, pathToDirName))
     if exitcode != 0:
-        ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
+        ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\n' % (filenameWildChar, mystderr))
         continue
 
     directoryExists = False
@@ -44,7 +44,7 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
         (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
         if exitcode != 0:
             printError('Error while executing "%s %s" command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
-            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
+            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\n' % (filenameWildChar, mystderr))
             continue
 
     folderStructure = ''
@@ -77,7 +77,7 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
         (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS(command)
         if exitcode != 0:
             printError('Error while executing "%s" command, check if the ganga user has rights for creating directories in this folder' % command + os.linesep + mystderr)
-            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
+            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\n' % (filenameWildChar, mystderr))
             continue
 
 
@@ -91,9 +91,9 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
         (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, finalFilename)))
         if exitcode != 0:
             printError('Error while executing "%s %s %s" command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, finalFilename)) + os.linesep  + mystderr)
-            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
+            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\n' % (filenameWildChar, mystderr))
         else:
-            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, finalFilename)))
+            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s %s\n' % (filenameWildChar, os.path.join(path, finalFilename)))
             #remove file from output dir
             os.system('rm %s' % currentFile)
 

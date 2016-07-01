@@ -18,7 +18,7 @@ for S in ['4','5','6','7','8','9']:
 
 	# Input files
 	# This uses the DCache access to T2KSRM at TRIUMF from the neut cluster.
-	# See modules/ND280Dataset/ND280Dataset.py for other servers.
+	# See GangaND280/ND280Dataset/ND280Dataset.py for other servers.
 	D=ND280DCacheDataset()
 	D.server = 'TRIUMF'
 	# Only the spill files are analyzed as defined by the wildcard.

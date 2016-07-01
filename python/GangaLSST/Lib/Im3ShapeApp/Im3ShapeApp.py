@@ -20,7 +20,7 @@ import os
 import shutil
 from Ganga.Utility.files import expandfilename
 
-from GangaDirac.Lib.Files import DiracFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Lib.File import LocalFile
 
 logger = getLogger()
@@ -51,7 +51,7 @@ class Im3ShapeApp(IPrepareApp):
         'catalog': SimpleItem(defvalue='all', types=[str], doc="Catalog which is used to describe what is processed"),
         'run_dir': SimpleItem(defvalue='im3shape-grid', types=[str], doc="Directory on the WN where the binary is"),
         ## Below is needed for prepared state stuff
-        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes'),
     })
     _category = 'applications'

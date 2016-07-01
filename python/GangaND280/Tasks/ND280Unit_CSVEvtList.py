@@ -1,11 +1,16 @@
-from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
+from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from Ganga.Utility.logging import getLogger
+import Ganga.GPI as GPI
 
 import os
+
+logger = getLogger()
 
 class ND280Unit_CSVEvtList(IUnit):
    _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
@@ -22,7 +27,7 @@ class ND280Unit_CSVEvtList(IUnit):
       
    def createNewJob(self):
       """Create any jobs required for this unit"""      
-      j = makeRegisteredJob()
+      j = GPI.Job()
       j._impl.backend = self._getParent().backend.clone()
       j._impl.application = self._getParent().application.clone()
       j.inputdata = self.inputdata.clone()
@@ -98,7 +103,7 @@ class ND280Unit_CSVEvtList(IUnit):
    def copyOutput(self):
       """Copy the output data to local storage"""
 
-      job = getJobByID(self.active_job_ids[0])
+      job = GPI.jobs(self.active_job_ids[0])
       
       if self.copy_output._name != "TaskLocalCopy" or job.outputdata._impl._name != "DQ2OutputDataset":
          logger.error("Cannot transfer from DS type '%s' to '%s'. Please contact plugin developer." % (job.outputdata._name, self.copy_output._name))

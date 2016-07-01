@@ -7,13 +7,14 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class FakeRegistry(object):
+
     def __init__(self, name):
         self.name = name
         self.repo = None
+        self._lock = threading.RLock()
 
     def _read_access(self, root, obj):
-        if not obj._data:
-            self.repo.load([root._registry_id])
+        self.repo.load([root._registry_id])
 
     def _write_access(self, root):
         self.repo.load([root._registry_id])
@@ -134,7 +135,7 @@ class HammerThread(threading.Thread):
         self.logger.info(str(self.id) + ' delete(%s) done!' % ids)
 
     def run(self):
-        for i in range(100):
+        for i in range(50):
             choices = []
             choices.extend([self.updown] * 1)
             choices.extend([self.uindex] * 2)

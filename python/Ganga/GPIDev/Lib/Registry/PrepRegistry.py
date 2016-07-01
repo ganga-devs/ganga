@@ -5,6 +5,7 @@ import copy
 import threading
 from Ganga.Core.GangaRepository.Registry import Registry
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Objects import synchronised
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 import Ganga.Utility.Config
@@ -14,14 +15,9 @@ logger = Ganga.Utility.logging.getLogger()
 
 class PrepRegistry(Registry):
 
-    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
+    def __init__(self, name, doc, update_index_time=30):
 
-        super(PrepRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
-
-        self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
-        self.releaseThread.daemon = True
-        self.releaseThread.start()
-
+        super(PrepRegistry, self).__init__(name, doc, update_index_time)
 
     def startup(self):
         self._needs_metadata = True
@@ -120,6 +116,7 @@ class ShareRef(GangaObject):
             self.name = {}
         return self.name
 
+    @synchronised
     def increase(self, shareddir, force=False):
         """Increase the reference counter for a given shared directory by 1. If the directory
         doesn't currently have a reference counter, one is initialised with a value of 1.
@@ -135,13 +132,13 @@ class ShareRef(GangaObject):
         shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
         basedir = os.path.basename(shareddir)
         if os.path.isdir(shareddir) and force is False:
-            if basedir not in self.__getName().keys():
+            if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 1
             else:
                 self.__getName()[basedir] += 1
         elif not os.path.isdir(shareddir) and force is True and basedir is not '':
-            if basedir not in self.__getName().keys():
+            if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 0
             else:
@@ -152,6 +149,7 @@ class ShareRef(GangaObject):
         self._setDirty()
         self._releaseWriteAccess()
 
+    @synchronised
     def decrease(self, shareddir, remove=0):
         """Reduce the reference counter for a given shared directory by 1. If the current value
         of the counter is 0, the shared object will be removed from the metadata, and the files within
@@ -255,7 +253,7 @@ class ShareRef(GangaObject):
         from Ganga.GPIDev.Lib.File import getSharedPath
         shareddir = os.path.join(getSharedPath(), os.path.basename(this_object))
         logger.debug('Adding %s to the shareref table.' % shareddir)
-        if os.path.basename(this_object) in self.__getName().keys():
+        if os.path.basename(this_object) in self.__getName():
             self.__getName()[os.path.basename(this_object)] += 1
         else:
             self.__getName()[os.path.basename(this_object)] = 1
@@ -340,7 +338,7 @@ class ShareRef(GangaObject):
             if this_dir not in self.__getName().keys() and rmdir is False:
                 logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository." % this_dir)
                 self.__getName()[this_dir] = 0
-            elif this_dir not in self.__getName().keys() and rmdir is True:
+            elif this_dir not in self.__getName() and rmdir is True:
                 logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository. Removing directory." % this_dir)
                 shutil.rmtree(os.path.join(getSharedPath(), this_dir))
 
@@ -367,7 +365,7 @@ class ShareRef(GangaObject):
             answer = raw_input().lower()
             if answer == '':
                 return default
-            elif answer in valid.keys():
+            elif answer in valid:
                 return valid[answer]
             else:
                 logger.warn("Please respond with 'Yes/y', 'No/n', 'All' or 'None'")
@@ -476,7 +474,7 @@ class ShareRef(GangaObject):
         """Prints content of the shareref metadata in a well formatted way.
         """
 
-        if len(self.__getName().keys()) > 0:
+        if len(self.__getName()) > 0:
             from Ganga.GPIDev.Lib.File import getSharedPath
             fstring = " %48s | %20s |  %15s"
             disp_string = fstring % (

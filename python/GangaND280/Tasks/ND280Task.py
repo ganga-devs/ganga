@@ -1,9 +1,8 @@
+from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 import time
 from Ganga.GPIDev.Lib.Tasks import ITask
-
-from Ganga.Utility.Config import getConfig
 
 ########################################################################                                                                                                                                                                     
 

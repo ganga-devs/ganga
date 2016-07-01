@@ -29,8 +29,8 @@ logger = Ganga.Utility.logging.getLogger()
 
 class JobRegistry(Registry):
 
-    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
-        super(JobRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
+    def __init__(self, name, doc, update_index_time=30):
+        super(JobRegistry, self).__init__(name, doc, update_index_time)
         self.stored_slice = JobRegistrySlice(self.name)
         self.stored_slice.objects = self
         self.stored_proxy = JobRegistrySliceProxy(self.stored_slice)
@@ -124,9 +124,9 @@ class JobRegistrySlice(RegistrySlice):
         elif isType(obj, str):
             status_attr = obj
         elif isType(obj, dict):
-            if 'display:status' in obj.keys():
+            if 'display:status' in obj:
                 status_attr = obj['display:status']
-            elif 'status' in obj.keys():
+            elif 'status' in obj:
                 status_attr = obj['status']
             else:
                 status_attr = None

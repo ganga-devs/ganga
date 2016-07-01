@@ -8,9 +8,6 @@ from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 
 
 # Global Functions
-def getEnvironment(config = None):
-    return {}
-
 def getLCGRootPath():
 
     lcg_release_areas = {'afs' : '/afs/cern.ch/sw/lcg/releases/LCG_79',
@@ -28,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.1.20 $'
+_gangaVersion = '$Name: 6.1.21 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -178,7 +175,7 @@ makeConfig("Shell", "configuration parameters for internal Shell utility.")
 # Queues
 queues_config = makeConfig("Queues", "configuration section for the queues")
 queues_config.addOption('Timeout', None, 'default timeout for queue generated processes')
-queues_config.addOption('NumWorkerThreads', 3, 'default number of worker threads in the queues system')
+queues_config.addOption('NumWorkerThreads', 5, 'default number of worker threads in the queues system')
 
 # ------------------------------------------------
 # MSGMS
@@ -235,7 +232,7 @@ poll_config.addOption('creds_poll_rate', 30, "The frequency in seconds for crede
 poll_config.addOption('diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
 poll_config.addOption('DiskSpaceChecker', "", "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
 poll_config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
-poll_config.addOption('numParallelJobs', 50, 'Number of Jobs to update the status for in parallel')
+poll_config.addOption('numParallelJobs', 25, 'Number of Jobs to update the status for in parallel')
 
 poll_config.addOption('forced_shutdown_policy', 'session_type',
                  'If there are remaining background activities at exit such as monitoring, output download Ganga will attempt to wait for the activities to complete. You may select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the system waits on a timeout without questions ("timeout"). The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')
@@ -248,6 +245,8 @@ poll_config.addOption('forced_shutdown_first_prompt_time', 5,
 
 import sys
 poll_config.addOption('HeartBeatTimeOut', sys.maxint, 'Time before the user gets the warning that a thread has locked up due to failing to update the heartbeat attribute')
+
+poll_config.addOption('autoCheckCredentials', True, 'Check credentials using the monitoring loop')
 
 # ------------------------------------------------
 # Feedback
@@ -302,10 +301,10 @@ lcg_config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
 
 # set default values for the configuration parameters
 lcg_config.addOption(
-    'EDG_ENABLE', False, 'enables/disables the support of the EDG middleware')
+    'EDG_ENABLE', False, 'DEPRECATED enables/disables the support of the EDG middleware')
 
 lcg_config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                 'sets the LCG-UI environment setup script for the EDG middleware',
+                 'DEPRECATED sets the LCG-UI environment setup script for the EDG middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption(
@@ -315,10 +314,10 @@ lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_e
                  'sets the LCG-UI environment setup script for the GLITE middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
-lcg_config.addOption('VirtualOrganisation', 'dteam',
+lcg_config.addOption('VirtualOrganisation', '',
                  'sets the name of the grid virtual organisation')
 
-lcg_config.addOption('ConfigVO', '', 'sets the VO-specific LCG-UI configuration script for the EDG resource broker',
+lcg_config.addOption('ConfigVO', '', 'DEPRECATED sets the VO-specific LCG-UI configuration script for the EDG resource broker',
                  filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
@@ -843,3 +842,4 @@ Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 # Registry Dirty Monitoring Services (not related to actual Job Monitoring)
 reg_config = makeConfig('Registry','')
 reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')
+reg_config.addOption('EnableAutoFlush', True, 'Enable Registry auto-flushing feature')
