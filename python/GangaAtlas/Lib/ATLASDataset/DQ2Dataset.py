@@ -1,18 +1,10 @@
-
-##############################################################################
-# Ganga Project. http://cern.ch/ganga
-#
-# $Id: DQ2Dataset.py,v 1.38 2009-07-24 14:53:46 elmsheus Exp $
-###############################################################################
-# A DQ2 dataset
-
-import sys, os, re, urllib, commands, imp, threading, time, fnmatch
+import os, re, time, fnmatch
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
 from Ganga.Utility.files import expandfilename
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Config import getConfig, ConfigError
+from Ganga.Utility.Config import getConfig
 
 from dq2.common.DQException import *
 from dq2.info.TiersOfATLAS import ToACache, getSites
@@ -28,10 +20,6 @@ from dq2.repository.DQRepositoryException import DQFrozenDatasetException
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
-
-def cmpfun(a,b):
-    """helper function for sorting tuples"""
-    return cmp(a[1],b[1])
 
 def convertDQ2ToClient(dataset):
 
@@ -680,7 +668,12 @@ class DQ2Dataset(Dataset):
                 contents_checksum[guid] = info['checksum']
                 contents_scope[guid] = info['scope'] 
             contents = contents_new
+
             # Sort contents
+            def cmpfun(a,b):
+                """helper function for sorting tuples"""
+                return cmp(a[1],b[1])
+
             try:
                 contents.sort(cmp=cmpfun)
             except:
