@@ -103,7 +103,7 @@ class JobTree(GangaObject):
         ##  loop through elements in the path to get to the requested path from the user
         for _dir in path:
             ## catch thie exception
-            if _dir not in returnable_folder.keys():
+            if _dir not in returnable_folder:
                 clean_path = os.path.join(*path)
                 raise TreeError(1, "Directory %s does not exist in folder %s, accessing: %s" % (_dir, top_level, clean_path))
 
@@ -126,7 +126,7 @@ class JobTree(GangaObject):
 
         local_dir = _path[-1]
 
-        if local_dir not in returnable_folder.keys():
+        if local_dir not in returnable_folder:
             returnable_folder[local_dir] = {}
 
         if not isType(returnable_folder[local_dir], type({})):
@@ -140,7 +140,7 @@ class JobTree(GangaObject):
         if not hasattr(self, 'folders'):
             setattr(self, 'folders', {os.sep: {}})
         f = self.folders
-        if os.sep not in f.keys():
+        if os.sep not in f:
             f[os.sep] = {}
 
         return f
@@ -160,7 +160,7 @@ class JobTree(GangaObject):
         if path is None:
             path = self.__get_path()
         else:
-            if dir not in self.__get_folders()[path].keys():
+            if dir not in self.__get_folders()[path]:
                 return
             else:
                 del self.__get_folders()[path][dir]
@@ -217,7 +217,7 @@ class JobTree(GangaObject):
         try:
             folder = self.__folder_cd(_path[:-1])
             local_dir = path[-1]
-            if local_dir in path.keys():
+            if local_dir in path:
                 return True
             else:
                 return False
@@ -241,7 +241,6 @@ class JobTree(GangaObject):
         """Adds job to the job tree into the current folder.
         If path to a folder is provided as a parameter than adds job to that folder.
         """
-        self._getWriteAccess()
         try:
             job = stripProxy(job)
 
@@ -269,7 +268,6 @@ class JobTree(GangaObject):
         """Removes folder or job in the path.
         To clean all use /* as a path.
         """
-        self._getWriteAccess()
         try:
             path = str(path)
             pp = self.__get_path(path)
@@ -293,7 +291,6 @@ class JobTree(GangaObject):
     def mkdir(self, path):
         """Makes a folder. If any folders in the path are missing they will be created as well.
         """
-        self._getWriteAccess()
         try:
             self.__make_dir(path)
             self._setDirty()
@@ -304,7 +301,6 @@ class JobTree(GangaObject):
         """Changes current directory.
         If path is not provided, than switches to the root folder.
         """
-        self._getWriteAccess()
         try:
             self.__select_dir(path)
             self.cwd(self.__get_path(path))
@@ -423,7 +419,7 @@ class JobTree(GangaObject):
 
             #print("self._getRegistry(): %s" % stripProxy(self)._getRegistry())
 
-            for i in fc.keys():
+            for i in fc:
                 if isType(fc[i], type({})):
                     pass
                     self.cleanlinks(os.path.join(path, i))
@@ -437,7 +433,6 @@ class JobTree(GangaObject):
                             j = registry[int(jid[0])].subjobs[int(jid[1])]
                     except RegistryKeyError, ObjectNotInRegistryError:
                         #try:
-                        self._getWriteAccess()
                         self.__remove_dir(path=path, dir=i)
                         self._setDirty()
                         #except ObjectNotInRegistryError as err:

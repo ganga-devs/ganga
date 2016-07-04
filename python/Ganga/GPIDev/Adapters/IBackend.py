@@ -457,8 +457,6 @@ class IBackend(GangaObject):
                 if not monitorable_subjob_ids:
                     continue
 
-                stripProxy(j)._getWriteAccess()
-
                 #logger.info("Dividing")
 
                 monitorable_blocks = []
@@ -484,29 +482,23 @@ class IBackend(GangaObject):
                         subjobs_to_monitor = []
                         for sj_id in this_block:
                             subjobs_to_monitor.append(j.subjobs[sj_id])
-                        stripProxy(j.backend).updateMonitoringInformation(subjobs_to_monitor)
+                        j.backend.updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
                         logger.error("Monitoring Error: %s" % err)
-                    j.updateMasterJobStatus()
 
-                ## NB ONLY THE MASTER JOB IS KNOWN TO THE JOB REPO!!!
-                stripProxy(j)._setDirty()
+                j.updateMasterJobStatus()
+
             else:
                 backend_name = getName(j.backend)
-                if backend_name not in simple_jobs.keys():
+                if backend_name not in simple_jobs:
                     simple_jobs[backend_name] = []
                 simple_jobs[backend_name].append(j)
 
-        if len(simple_jobs.keys()) > 0:
+        if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
 
-                for this_job in simple_jobs[this_backend]:
-                    stripProxy(this_job)._getWriteAccess()
                 stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
-
-                for this_job in simple_jobs[this_backend]:
-                    stripProxy(this_job)._setDirty()
 
         logger.debug("Finished Monitoring request")
 

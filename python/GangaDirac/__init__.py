@@ -23,8 +23,10 @@ if not _after_bootstrap:
     if "GANGADIRACENVIRONMENT" in os.environ:
         diracenv = os.environ["GANGADIRACENVIRONMENT"]
 
-    configDirac.addOption('DiracEnvFile', diracenv,
-                      'Ganga environment file for DIRAC environment (do not change unless you are sure you know what you are doing).')
+    configDirac.addOption('DiracEnvFile', diracenv, 'DEPRECATED. Ganga environment file for DIRAC environment (do not change unless you are sure you know what you are doing).')
+
+    configDirac.addOption('DiracEnvSource', None, 'File to be sourced to provide the DIRAC environment. E.g. /cvmfs/ganga.cern.ch/dirac_ui/bashrc')
+    configDirac.addOption('DiracEnvJSON', None, 'A JSON file containing the environment for DIRAC. Overrides DiracEnvSource')
 
     configDirac.addOption('DiracCommandFiles', [os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracDefinition.py'),
                                                 os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracCommands.py')],
@@ -72,13 +74,16 @@ if not _after_bootstrap:
                                             'Stalled': 'running',
                                             'Waiting': 'submitted'}, "Mapping between Dirac Job Major Status and Ganga Job Status")
 
-    configDirac.addOption('queueable_dirac_statuses',
+    configDirac.addOption('finalised_statuses',
                                                 {'Done': 'completed',
                                                  'Failed': 'failed',
                                                  'Killed': 'killed',
                                                  'Deleted': 'failed',
                                                  'Unknown: No status for Job': 'failed'},
                                                 "Mapping of Dirac to Ganga Job statuses used to construct a queue to finalize a given job, i.e. final statues in 'statusmapping'")
+
+    configDirac.addOption('serializeBackend', False, 'Developer option to serialize Dirac code for profiling/debugging')
+
 
 def standardSetup():
 

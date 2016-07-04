@@ -144,7 +144,7 @@ class AfsToken (ICredential):
     _hidden = 1
     _enable_config = 1
 
-    def __init__(self, middleware=""):
+    def __init__(self):
         super(AfsToken, self).__init__()
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         if "ICommandSet" == self.command._name or isType(self.command, GangaList):

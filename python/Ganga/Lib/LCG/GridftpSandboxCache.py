@@ -70,7 +70,7 @@ class GridftpSandboxCache(GridSandboxCache):
         Uploads multiple files to a remote gridftp server.
         """
 
-        shell = getShell(self.middleware)
+        shell = getShell()
 
         # making the directory on remove storage at destURI
         dirname = self.__get_unique_fname__()
@@ -178,7 +178,7 @@ class GridftpSandboxCache(GridSandboxCache):
             dest_dir = os.getcwd()
         self.logger.debug('download file to: %s', dest_dir)
 
-        shell = getShell(self.middleware)
+        shell = getShell()
 
         # the algorithm of downloading one file to a local directory
         class MyAlgorithm(Algorithm):
@@ -221,7 +221,7 @@ class GridftpSandboxCache(GridSandboxCache):
         Deletes multiple files from remote gridftp server
         """
 
-        shell = getShell(self.middleware)
+        shell = getShell()
 
         # the algorithm of downloading one file to a local directory
         class MyAlgorithm(Algorithm):

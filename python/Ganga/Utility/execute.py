@@ -52,7 +52,6 @@ from __future__ import print_function
 import os, sys, traceback
 import cPickle as pickle
 os.close(###PKL_FDREAD###)
-import time
 with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     def output(data):
         print(pickle.dumps(data), file=PICKLE_STREAM)
@@ -62,7 +61,6 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     try:
         full_command = """###SETUP### """
         full_command += """ \n###COMMAND### """
-        full_command += """\nimport sys; sys.exit(0)"""
         exec(full_command, local_ns)
     except:
         print(pickle.dumps(traceback.format_exc()), file=PICKLE_STREAM)
@@ -80,24 +78,24 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     if update_env:
         update_script, env_file_pipes = env_update_script()
         script += update_script
-    script += "\nimport sys; sys.exit(0)"
     return script, (fdread, fdwrite), env_file_pipes
 
 
-def __reader(pipes, output_ns, output_var):
+def __reader(pipes, output_ns, output_var, require_output):
     """ This function un-pickles a pickle from a file and return it as an element in a dictionary
     Args:
         pipes (tuple): This is a tuple containing the (read_pipe, write_pipe) from os.pipes containing the pickled object
         output_ns (dict): This is the dictionary we should put the un-pickled object
         output_var (str): This is the key we should use to determine where to put the object in the output_ns
+        require_output (bool): Should the reader give a warning if the pickle stream is not readable
     """
     os.close(pipes[1])
     with os.fdopen(pipes[0], 'rb') as read_file:
         try:
             output_ns.update({output_var: pickle.load(read_file)})
         except Exception as err:
-            logger.error("Err: %s" % str(err))
-            raise  # EOFError triggered if command killed with timeout
+            if require_output:
+                logger.error('Error getting output stream from command: %s', err)
 
 
 def __timeout_func(process, timed_out):
@@ -158,7 +156,7 @@ def start_timer(p, timeout):
     return timer, timed_out
 
 
-def update_thread(pipes, thread_output, output_key):
+def update_thread(pipes, thread_output, output_key, require_output):
     """ Function to construct and return background thread used to read a pickled object into the thread_output for updating
         the environment after executing a users code
         Args:
@@ -166,8 +164,9 @@ def update_thread(pipes, thread_output, output_key):
             pipes (tuple): Tuple containing (read_pipe, write_pipe) which is the pipe the pickled obj is written to
             thread_output (dict): Dictionary containing the thread outputs which are used after executing the command
             output_key (str): Used to know where in the thread_output to store the output of this thread
+            require_output (bool): Does the reader require valid pickled output.
     """
-    ev = threading.Thread(target=__reader, args=(pipes, thread_output, output_key))
+    ev = threading.Thread(target=__reader, args=(pipes, thread_output, output_key, require_output))
     ev.daemon = True
     ev.start()
     return ev
@@ -181,7 +180,7 @@ def execute(command,
             python_setup='',
             eval_includes=None,
             update_env=False,
-            return_code=None):
+            ):
     """
     Execute an external command.
     This will execute an external python command when shell=False or an external bash command when shell=True
@@ -194,7 +193,6 @@ def execute(command,
         python_setup (str): A python command to be executed beore the main command is
         eval_includes (str): An string used to construct an environment which, if passed, is used to eval the stdout into a python object
         update_env (bool): Should we update the env being passed to what the env was after the command finished running
-        return_code (int): This is the returned code from the command which is executed
     """
 
     if update_env and env is None:
@@ -207,7 +205,7 @@ def execute(command,
     else:
         # We want to run a shell command inside a _NEW_ shell environment.
         # i.e. What I run here I expect to behave in the same way from the command line after I exit Ganga
-        stream_command = "bash -i "
+        stream_command = "bash "
         if update_env:
             # note the exec gets around the problem of indent and base64 gets
             # around the \n
@@ -230,10 +228,10 @@ def execute(command,
 
     if update_env:
         env_output_key = 'env_output'
-        update_env_thread = update_thread(env_file_pipes, thread_output, env_output_key)
+        update_env_thread = update_thread(env_file_pipes, thread_output, env_output_key, require_output=True)
     if not shell:
         pkl_output_key = 'pkl_output'
-        update_pkl_thread = update_thread(pkl_file_pipes, thread_output, pkl_output_key)
+        update_pkl_thread = update_thread(pkl_file_pipes, thread_output, pkl_output_key, require_output=False)
 
     # Execute the main command of interest
     logger.debug("Executing Command:\n'%s'" % str(command))
@@ -272,18 +270,15 @@ def execute(command,
         update_pkl_thread.join()
         if pkl_output_key in thread_output:
             return thread_output[pkl_output_key]
-        else:
-            logger.error("Expected to find the pickled output after running a command")
-            logger.error("Command: %s" % command)
-            logger.error("stdout: %s" % stdout)
-            logger.error("stderr: %s" % stderr)
-            raise RuntimeError("Missing pickled output after running command")
 
     try:
         if stdout:
             stdout = pickle.loads(stdout)
-    except Exception as err:
-        logger.error("Err: %s" % str(err))
+    except pickle.UnpicklingError as err:
+        if not shell:
+            logger.error("Execute Err: %s", err)
+        else:
+            logger.debug("Execute Err: %s", err)
         local_ns = {}
         if isinstance(eval_includes, str):
             try:
@@ -297,6 +292,4 @@ def execute(command,
                 logger.error("Err2: %s" % str(err2))
                 pass
 
-    return_code = p.returncode
     return stdout
-
