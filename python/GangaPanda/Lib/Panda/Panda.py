@@ -268,13 +268,6 @@ def runPandaBrokerage(job):
             if not dataset:
                 raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
 
-            fileList = []
-            try:
-                # RUCIO patch
-                #fileList  = Client.queryFilesInDataset(dataset,False)
-                fileList = convertDQ2ToClient(dataset)
-            except exceptions.SystemExit:
-                raise BackendError('Panda','Error in Client.queryFilesInDataset')
             try:
 
                 # RUCIO patch

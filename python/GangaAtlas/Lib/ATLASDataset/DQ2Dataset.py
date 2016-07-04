@@ -15,7 +15,7 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig, ConfigError
 
 from dq2.common.DQException import *
-from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, getSites
+from dq2.info.TiersOfATLAS import ToACache, getSites
 from dq2.repository.DQRepositoryException import DQUnknownDatasetException
 from dq2.location.DQLocationException import DQLocationExistsException
 from dq2.common.DQException import DQInvalidRequestException
@@ -28,8 +28,6 @@ from dq2.repository.DQRepositoryException import DQFrozenDatasetException
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
-
-_refreshToACache()
 
 def cmpfun(a,b):
     """helper function for sorting tuples"""
