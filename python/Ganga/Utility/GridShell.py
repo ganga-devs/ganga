@@ -65,6 +65,9 @@ def getShell(force=False):
         logger.warning('[LCG] configuration section not found. Cannot set up a proper grid shell.')
         return None
 
+    if not config['GLITE_ENABLE']:
+        return None
+
     s = None
 
     # 1. check if the GLITE_SETUP is changed by user -> take the user's value as session value
