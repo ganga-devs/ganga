@@ -50,7 +50,7 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
         if isinstance(_t, str):
             global found_types
 
-            if _t not in found_types.keys():
+            if _t not in found_types:
                 temp = safer_eval(_t)
                 if type(temp) != type(type('')):
                     temp = type(temp)
@@ -73,7 +73,7 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
         if isinstance(val, str):
             global found_values
 
-            if val not in found_values.keys():
+            if val not in found_values:
                 found_values[val] = safer_eval(val)
             _val = found_values[val]
         else:

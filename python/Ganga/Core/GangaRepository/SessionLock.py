@@ -168,7 +168,7 @@ class SessionLockRefresher(GangaThread):
     def updateLocks(self, index):
 
         this_index_file = self.fns[index]
-        if this_index_file in self.FileCheckTimes.keys():
+        if this_index_file in self.FileCheckTimes:
             if abs(self.FileCheckTimes[this_index_file]-time.time()) >= 3:
                 now = self._reallyUpdateLocks(index)
                 self.FileCheckTimes[this_index_file] = now
@@ -183,7 +183,7 @@ class SessionLockRefresher(GangaThread):
         now = None
         try:
             oldnow = self.delayread(this_index_file)
-            os.system('touch %s' % this_index_file)
+            os.system('touch "%s"' % this_index_file)
             now = self.delayread(this_index_file) # os.stat(self.fn).st_ctime
         except OSError as x:
             if x.errno != errno.ENOENT:

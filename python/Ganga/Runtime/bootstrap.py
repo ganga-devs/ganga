@@ -150,7 +150,7 @@ def manualExportToGPI(my_interface=None):
     # At this point we expect to have the GridProxy already created
     # by one of the Grid plugins (LCG/NG/etc) so we search for it in creds
     # cache
-    credential = getCredential(name='GridProxy', create=False)
+    credential = getCredential(name='GridProxy')
     if credential:
         exportToInterface(my_interface, 'gridProxy', credential, 'Objects', 'Grid proxy management object.')
 
@@ -363,7 +363,7 @@ under certain conditions; type license() for details.
                     hasLoaded_newer = True
         
         old_dir = os.path.expanduser('~/.ipython-ganga')
-        if 'IPYTHONDIR' in os.environ.keys():
+        if 'IPYTHONDIR' in os.environ:
             old_dir = os.path.abspath(os.path.expanduser(os.environ['IPYTHONDIR']))
 
         single_pass_file = os.path.join(old_dir, '.have_migrated')
@@ -540,7 +540,7 @@ under certain conditions; type license() for details.
             # the user actually sees this message last
             time.sleep(3.)
             yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')
-            if yes == '' or yes[0:1].upper() == 'Y':
+            if yes.lower() in ['', 'y']:
                 self.generate_config_file(default_config)
                 raw_input('Press <Enter> to continue.\n')
         elif self.new_version():
@@ -791,7 +791,7 @@ under certain conditions; type license() for details.
         if self.options.TEST:
             # FIXME: CONFIG CHECK
             # ?? config['RUNTIME_PATH'] = ''
-            config.setSessionValue('RUNTIME_PATH', 'GangaTest')
+            getConfig('Configuration').setSessionValue('RUNTIME_PATH', 'GangaTest')
 
         # ensure we're not interactive if daemonised
         if self.options.daemon and self.interactive:
@@ -1155,7 +1155,7 @@ under certain conditions; type license() for details.
 
         not_exist = False
 
-        if 'IPYTHONDIR' in os.environ.keys():
+        if 'IPYTHONDIR' in os.environ:
             ipyth_dir = os.environ['IPYTHONDIR']
             os.environ['IPYTHONDIR'] = os.path.abspath(os.path.expanduser(os.environ['IPYTHONDIR']))
             #logger.warning('Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands', ipyth_dir)
@@ -1215,32 +1215,62 @@ under certain conditions; type license() for details.
         """
 
         import IPython
+        ipver = IPython.__version__
+        ipver_major = int(ipver[0])
 
         # Based on examples/Embedding/embed_class_long.py from the IPython source tree
 
         # First we set up the prompt
-        from IPython.config.loader import Config
+        if ipver_major > 3:
+            # New as of IPython 4
+            from traitlets.config.loader import Config
+        else:
+            # 'Old' Config system
+            from IPython.config.loader import Config
         cfg = Config()
         cfg.TerminalInteractiveShell.colors = 'LightBG'
         cfg.TerminalInteractiveShell.autocall = 0
         cfg.PlainTextFormatter.pprint = True
         banner = exit_msg = ''
+
+
         prompt_config = cfg.PromptManager
-        prompt_config.in_template = '[{time}]\nGanga In [\\#]: '
+        # Here __flushCmd evaluates the object in the local_ns with this name to a str
+        # The magic function time here is the builtin time prompt This renders in the same way as:
+        #
+        # -------------------------------------
+        #
+        # [18:45:20]
+        # Ganga In [1]: if True:
+        #          ...:     print("Hello")
+        #          ...:
+        #               Hello
+        #
+        # [18:45:43]
+        # Ganga In [2]:
+        #
+        # -------------------------------------
+        prompt_config.in_template = '{__flushCmd}[{time}]\nGanga In [\\#]: '
         prompt_config.in2_template = '         .\\D.: '
         prompt_config.out_template = 'Ganga Out [\\#]: '
+
+        # Add the flush command into the local_ns
+        from Ganga.Utility.logging import flushAtIPythonPrompt
+        __flushCmd = flushAtIPythonPrompt()
+        local_ns['__flushCmd'] = __flushCmd
 
         # Import the embed function
         from IPython.terminal.embed import InteractiveShellEmbed
 
         ## Check which version of IPython we're running
-        ipver = IPython.__version__
-        ipver_major = int(ipver[0])
-        if ipver_major > 2:
+        if ipver_major >= 2:
             ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
+            ipshell.events.register("post_execute", ganga_prompt)
         else:
             ipshell = InteractiveShellEmbed(config=cfg, banner1=banner, exit_msg=exit_msg)
+            ipshell.set_hook("pre_run_code_hook", ganga_prompt)
 
+        # Add our custom error handler to ignore stack traces for GangaExceptions
         ipshell.set_custom_exc((Exception,), error_handler)
 
         # buffering of log messages from all threads called "GANGA_Update_Thread"
@@ -1248,14 +1278,13 @@ under certain conditions; type license() for details.
         from Ganga.Utility.logging import enableCaching
         enableCaching()
 
-        ipshell.set_hook("pre_prompt_hook", ganga_prompt)
-
+        # Magic ganga function for replacing 'execfile'
         from Ganga.Runtime.IPythonMagic import magic_ganga
         ipshell.define_magic('ganga', magic_ganga)
 
+        # Setting up the confirmation of exit on Ctrl+D this prompt annoys some users(developers)
         from Ganga.Utility.Config.Config import getConfig
         config = getConfig('Configuration')
-
         ipshell.confirm_exit = config['confirm_exit']
 
         # Launch embedded shell
@@ -1264,10 +1293,6 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def ganga_prompt(dummy=None):
-        from Ganga.Utility.logging import cached_screen_handler
-        if cached_screen_handler:
-            cached_screen_handler.flush()
-
         credentialsWarningPrompt = ''
         # alter the prompt only when the internal services are disabled
         from Ganga.Core.InternalServices import Coordinator

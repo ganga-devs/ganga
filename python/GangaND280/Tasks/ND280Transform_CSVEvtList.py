@@ -1,14 +1,20 @@
-from Ganga.GPIDev.Lib.Tasks.common import getJobByID
+from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
+from Ganga.Utility.logging import getLogger
 from ND280Unit_CSVEvtList import ND280Unit_CSVEvtList
-from modules.ND280Dataset.ND280Dataset import ND280LocalDataset, ND280DCacheDataset
-from modules.ND280Splitter.ND280Splitter import splitCSVFile
+from GangaND280.ND280Dataset.ND280Dataset import ND280LocalDataset
+from GangaND280.ND280Splitter.ND280Splitter import splitCSVFile
+import Ganga.GPI as GPI
+
 import os
+
+logger = getLogger()
 
 class ND280Transform_CSVEvtList(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
@@ -75,7 +81,7 @@ class ND280Transform_CSVEvtList(ITransform):
          unit.inputdata = ND280LocalDataset()
          for parent in parent_units:
             # loop over the output files and add them to the ND280LocalDataset - THIS MIGHT NEED SOME WORK!
-            job = getJobByID(parent.active_job_ids[0])
+            job = GPI.jobs(parent.active_job_ids[0])
             for f in job.outputfiles:
                # should check for different file types and add them as appropriate to the dataset
                # self.inputdata (== TaskChainInput).include/exclude_file_mask could help with this

@@ -73,48 +73,6 @@ class BackendError(GangaException):
         return "BackendError: %s (%s backend) " % (self.message, self.backend_name)
 
 
-# Exception raised by the Ganga Repository
-class RepositoryError(GangaException):
-
-    """
-    For non-bulk operations this exception may contain an original
-    exception 'e' raised by the DB client.
-    """
-
-    def __init__(self, err=None, msg=None, details=None):
-        if msg == None:
-            msg = "RepositoryError: %s" % str(err)
-        GangaException.__init__(self, msg)
-        self.err = err
-        self.details = details
-
-    def getOriginalMDError(self):
-        return self.err
-
-
-# Exception raised by the Ganga Repository
-class BulkOperationRepositoryError(RepositoryError):
-
-    """
-    For bulk operations this exception
-    have a non-empty dictionary 'details'
-    which contains ids of failed jobs as keys and 'original' exceptions as values.
-    """
-
-    def __init__(self, details=None, msg=None):
-        if msg == None:
-            msg = "RepositoryError: %s" % str(err)
-        RepositoryError.__init__(self, msg=msg, details=details)
-        if details == None:
-            self.details = {}
-
-    def listFailedJobs(self):
-        return self.details.keys()
-
-    def getOriginalJobError(self, id):
-        return self.details.get(id)
-
-
 class IncompleteJobSubmissionError(GangaException):
 
     def __init__(self, *args):
@@ -205,6 +163,100 @@ class SchemaError(GangaAttributeError):
 
     def __init__(self, *a, **k):
         GangaAttributeError.__init__(self, *a, **k)
+
+
+class SchemaVersionError(GangaException):
+    """
+    Error raised on schema version error
+    """
+    def __init__(self, what=''):
+        """
+        This is the error thrown when the Schema version in XML doesn't match what's in the code. This may be dropped in a future release
+        Args:
+            what (str): This is a string of what went wrong
+        """
+        super(SchemaVersionError, self).__init__(what)
+        self.what = what
+
+    def __str__(self):
+        return "SchemaVersionError: %s" % self.what
+
+
+class InaccessibleObjectError(GangaException):
+
+    def __init__(self, repo=None, id='', orig=None):
+        """
+        This is an error in accessing an object in the repo
+        Args:
+            repo (GangaRepository): The repository the error happened in
+            id (int): The key of the object in the objects dict where this happened
+            orig (exception): The original exception
+        """
+        super(InaccessibleObjectError, self).__init__("Inaccessible Object: %s" % id)
+        self.repo = repo
+        self.id = id
+        self.orig = orig
+
+    def __str__(self):
+        if str(self.orig).find('comments') > -1:
+            return "Please restart Ganga in order to reload the object"
+        else:
+            from Ganga.GPIDev.Base.Proxy import getName
+            return "Repository '%s' object #%s is not accessible because of an %s: %s" % (self.repo.registry.name, self.id, getName(self.orig), str(self.orig))
+
+
+class RepositoryError(GangaException):
+
+    """This error is raised if there is a fatal error in the repository."""
+
+    def __init__(self, repo=None, what=''):
+        """
+        This is a fatal repo error
+        Args:
+            repo (GangaRepository): The repository the error happened in
+            what (str): The original exception/error/description
+        """
+        super(RepositoryError, self).__init__(self, what)
+        self.what = what
+        self.repository = repo
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
+        logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))
+        logger.error('If you believe the problem has been solved, type "reactivate()" to re-enable ')
+        try:
+            from Ganga.Core.InternalServices.Coordinator import disableInternalServices
+            disableInternalServices()
+            from Ganga.Core.GangaThread.WorkerThreads import shutdownQueues
+            shutdownQueues()
+            logger.error("Shutting Down Repository_runtime")
+            from Ganga.Runtime import Repository_runtime
+            repository_runtime.shutdown()
+        except:
+            logger.error("Unable to disable Internal services, they may have already been disabled!")
+
+
+# Exception raised by the Ganga Repository
+class BulkOperationRepositoryError(RepositoryError):
+
+    """
+    For bulk operations this exception
+    have a non-empty dictionary 'details'
+    which contains ids of failed jobs as keys and 'original' exceptions as values.
+    """
+
+    def __init__(self, details=None, msg=None):
+        if msg == None:
+            msg = "RepositoryError: %s" % str(err)
+            RepositoryError.__init__(self, None, msg)
+            self.details = details
+            if details == None:
+                self.details = {}
+
+    def listFailedJobs(self):
+        return self.details.keys()
+
+    def getOriginalJobError(self, id):
+        return self.details.get(id)
 
 #
 #

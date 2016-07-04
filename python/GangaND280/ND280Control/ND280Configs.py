@@ -83,6 +83,12 @@ inputfile =
         elif self.cfgtype == 'raw':
             self.options.update(self.raw_options)
             self.options_ignore.update(self.raw_options_ignore)
+        elif self.cfgtype == 'cosmicmc':
+            self.options.update(self.cosmicmc_options)
+            self.options_ignore.update(self.cosmicmc_options_ignore)
+        elif self.cfgtype == 'sandmc':
+            self.options.update(self.sandmc_options)
+            self.options_ignore.update(self.sandmc_options_ignore)
         elif self.cfgtype == 'gncp':
             self.options.update(self.gncp_options)
         elif self.cfgtype == 'MC':
@@ -136,6 +142,67 @@ inputfile =
                         'num_events':'',
                         'production':'',
                         'save_geometry':''}
+
+    cosmicmc_options={   'stage':'base',
+                         'nd280ver':'v11r31',
+                         'module_list':'cosmic nd280MC elecSim oaCalibMC oaCosmicTrigger',
+                         'run_number':'0',
+                         'subrun':'0',
+                         'baseline':'2010-11',
+                         'p0d_water_fill':'1',
+                         'replace_comment':'1',
+                         'comment':'basecosmiccorsika5F',
+                         'mc_type':'Cosmic',
+                         'random_seed':'123456789',
+                         'num_events':'1000000000',
+                         'mc_full_spill':'0',
+                         'mc_position':'Free',
+                         'kinfile':'REPLACE_KINFILE',
+                         'inputfile':'REPLACE_INPUTFILE',
+                         'randomize_kinfile':'false',
+                         'save_digits':'true' }
+
+    cosmicmc_options_ignore={'random_seed':''}
+
+    #### Sand MC
+    sandmc_options={'stage':'neutMC',
+                'module_list':'sandPropagate nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
+                'neut_setup_script':'REPLACE_NEUTSETUP',
+                'neut_card':'REPLACE_NEUTCARD',
+                'flux_file':'REPLACE_FLUXFILE',
+                'maxint_file':'REPLACE_MAXINT',
+                'inputfile':'REPLACE_INPUTFILE',
+                'run_number':'0',
+                'subrun':'0',
+                'baseline':'2010-11',
+                'p0d_water_fill':'0',
+                'num_events':'10000000',
+                'mc_type':'Neut_RooTracker',
+                'nd280mc_random_seed':'3456532423',
+                #'nd280mc_random_seed':str(random.getrandbits(29)),
+                'pot':'2.5e17',
+                'neutrino_type':'beam',
+                'flux_region':'SAND',
+                'master_volume':'World',
+                'force_volume_name':'true',
+                'tpc_periods_to_activate':'runs2-3',
+                'ecal_periods_to_activate':'3-4',
+                'random_start':'1',
+                'nbunches':'8',
+                'interactions_per_spill':'1',
+                'pot_per_spill':'1',
+                'mc_full_spill':'1',
+                'time_offset':'50',
+                'count_type':'MEAN',
+		'mc_position':'free',
+                'bunch_duration':'19',
+                'elmc_random_seed':'317075105',
+                #'elmc_random_seed':str(random.getrandbits(28)),
+                'production':'True',
+                'save_geometry':'1',
+                'comment':'prod6sand201011airrun3'}
+    
+    sandmc_options_ignore={}
 
     #### MC
     mc_options={'module_list':'nd280MC elecSim oaCalibMC oaRecon oaAnalysis',
@@ -252,7 +319,9 @@ inputfile =
     def CreateConfig(self):
         map = {
             'gnsetup' : self.CreateGENIEsetupCF,
-            'raw'     : self.CreateRawCF
+            'raw'     : self.CreateRawCF,
+            'cosmicmc': self.CreateCosmicMCCF,
+            'sandmc': self.CreateSandMCCF
             }
         if map.get(self.cfgtype):
             creator = map[self.cfgtype]
@@ -351,6 +420,193 @@ inputfile =
             configfile += '\n'
 
         #print configfile
+        return configfile
+
+    ######################## Cosmic Processing Config file
+    def CreateCosmicMCCF(self):
+
+        if not self.CheckOptions():
+            print 'ERROR please make sure all options stated above are entered'
+            return ''
+
+        if not self.options['stage'] in ['base','fgd','tript','all']:
+            print 'ERROR "stage" options should be one of',['base','fgd','tript','all']
+            return ''
+        
+        configfile = ''
+        configfile += "# Automatically generated config file\n\n"
+
+
+        ### Software Setup
+        configfile += "[software]\n"
+        configfile += "cmtpath = " + self.options['cmtpath'] + "\n"
+        configfile += "cmtroot = " + self.options['cmtroot'] + "\n"
+        configfile += "nd280ver = " + self.options['nd280ver'] + "\n\n"
+
+        ### Module list
+        configfile += "[configuration]\n"
+        if self.options['stage'] != 'base':
+            configfile += "module_list = oaRecon oaAnalysis\n"
+            configfile += "inputfile = " +  self.options['inputfile'] + "\n\n"
+        else:
+            configfile += "module_list = " + self.options['module_list'] + "\n\n"
+
+        ### File naming
+        if not  self.options['comment']:
+             self.options['comment'] =  self.options['nd280ver']
+        configfile += "[filenaming]\n"
+        configfile += "run_number = " + self.options['run_number'] + "\n"
+        configfile += "subrun = " + self.options['subrun'] + "\n"
+        configfile += "replace_comment = " + self.options['replace_comment'] + "\n"
+        configfile += "comment = " + self.options['stage'] + "cosmiccorsika5F\n\n"
+
+
+        ### Geometry
+        configfile += "[geometry]\n"
+        configfile += "baseline = " + self.options['baseline'] + "\n"
+        configfile += "p0d_water_fill = " + self.options['p0d_water_fill'] + "\n\n"
+
+        ### nd280mc
+        configfile += "[nd280mc]\n"
+        configfile += "mc_type = " + self.options['mc_type'] + "\n"
+        configfile += "random_seed = " + str(random.randint(1,999999999)) + "\n"
+        configfile += "num_events = " + self.options['num_events'] + "\n"
+        configfile += "mc_full_spill = " + self.options['mc_full_spill'] + "\n"
+        configfile += "mc_position = " + self.options['mc_position'] + "\n\n"
+
+        ### Cosmic
+        configfile += "[cosmics]\n"
+        configfile += "kinfile = " + self.options['kinfile'] + "\n"
+        configfile += "randomize_kinfile = " + self.options['randomize_kinfile'] + "\n\n"
+
+        ### Electronics
+        configfile += "[electronics]\n"
+        configfile += "random_seed = " + str(random.randint(1,999999999)) + "\n\n"
+
+         ### Calibrate
+        configfile += "[calibrate]\n"
+        configfile += "save_digits = " + self.options['save_digits'] + "\n\n"
+
+         ### Reconstruction
+        configfile += "[reconstruction]\n"
+        if  self.options['stage'] != 'all':
+            configfile += "event_select = " + self.options['stage'] + "cosmic\n"
+        else:
+            configfile += "event_select = all\n"
+
+        return configfile
+
+    ######################## Sand MC Processing Config file
+    def CreateSandMCCF(self):
+
+        if not self.CheckOptions():
+            print 'ERROR please make sure all options stated above are entered'
+            return ''
+
+        if not self.options['stage'] in ['neutMC','g4anal','neutSetup']:
+            print 'ERROR "stage" options should be one of',['neutMC','g4anal','neutSetup']
+            return ''
+        
+        configfile = ''
+        configfile += "# Automatically generated config file\n\n"
+
+
+        ### Software Setup
+        configfile += "[software]\n"
+        configfile += "neut_setup_script = " + self.options['neut_setup_script'] + "\n\n"
+
+        ### Module list
+        configfile += "[configuration]\n"
+        if self.options['stage'] == 'g4anal':
+            configfile += "module_list = sandPropagate nd280MC elecSim oaCalibMC  oaRecon oaAnalysis\n"
+            configfile += "inputfile = " +  self.options['inputfile'] + "\n\n"
+        else:
+            #configfile += "module_list = " + self.options['module_list'] + "\n\n"
+            configfile += "module_list = neutMC\n\n"
+
+        ### File naming
+        if not  self.options['comment']:
+             self.options['comment'] =  self.options['nd280ver']
+        configfile += "[filenaming]\n"
+
+        thisrun = 90007000
+	if self.options['generator'] == "old-neut":
+            thisrun += 2000000
+	if self.options['generator'] == "anti-neut":
+            thisrun = 80007000
+        if self.options['generator'] == "genie" :
+            thisrun += 1000000
+
+        if self.options['beam'] == "beamc":
+            thisrun += 300000
+        else:
+            print "ERROR self.beam = " + self.beam + " is not supported!!!"
+            return ''
+
+        if self.options['p0d_water_fill']: # water
+            thisrun += 10000
+
+        configfile += "run_number = %d\n" % (thisrun+int(self.options['run_number']))
+        configfile += "subrun = " + self.options['subrun'] + "\n"
+        configfile += "comment = " + self.options['comment'] + "\n\n"
+
+
+        ### Geometry
+        configfile += "[geometry]\n"
+        configfile += "baseline = " + self.options['baseline'] + "\n"
+        configfile += "p0d_water_fill = " + self.options['p0d_water_fill'] + "\n\n"
+
+        ### Neutrino
+        configfile += "[neutrino]\n"
+        configfile += "neut_card = " + self.options['neut_card'] + "\n"
+        configfile += "flux_file = " + self.options['flux_file'] + "\n"
+        configfile += "maxint_file = " + self.options['maxint_file'] + "\n"
+        
+        configfile += "pot = " + self.options['pot'] + "\n"
+        #configfile += "num_events = 5000\n" # DVtmp
+        configfile += "neutrino_type = " + self.options['neutrino_type'] + "\n"
+        configfile += "flux_region = " + self.options['flux_region'] + "\n"
+        configfile += "master_volume = " + self.options['master_volume'] + "\n"
+        configfile += "force_volume_name = " + self.options['force_volume_name'] + "\n"
+        configfile += "random_start = " + self.options['random_start'] + "\n"
+        configfile += "random_seed = " + str(random.randint(1,999999999)) + "\n"
+        configfile += "neut_seed1 = "  + str(random.randint(1,999999999)) + "\n"
+        configfile += "neut_seed2 = "  + str(random.randint(1,999999999)) + "\n"
+        configfile += "neut_seed3 = "  + str(random.randint(1,999999999)) + "\n\n"
+
+        ### Dead channels
+        configfile += "[dead_channels]\n"
+        configfile += "tpc_periods_to_activate = " + self.options['tpc_periods_to_activate'] + "\n"
+        configfile += "ecal_periods_to_activate = " + self.options['ecal_periods_to_activate'] + "\n\n"
+
+        ### Sand propagate
+        configfile += "[sandPropagate]\n"
+        configfile += "num_events = " + self.options['num_events'] + "\n\n"
+
+        ### nd280mc
+        configfile += "[nd280mc]\n"
+        configfile += "num_events = " + self.options['num_events'] + "\n"
+        configfile += "mc_type = " + self.options['mc_type'] + "\n"
+        configfile += "nbunches = " + self.options['nbunches'] + "\n"
+
+        configfile += "interactions_per_spill = " + self.options['interactions_per_spill'] + "\n"
+        configfile += "pot_per_spill = " + self.options['pot_per_spill'] + "\n"
+        configfile += "bunch_duration = " + self.options['bunch_duration'] + "\n"
+        configfile += "mc_full_spill = " + self.options['mc_full_spill'] + "\n"
+        configfile += "time_offset = " + self.options['time_offset'] + "\n"
+        configfile += "count_type = " + self.options['count_type'] + "\n"
+        configfile += "mc_position = " + self.options['mc_position'] + "\n"
+        configfile += "random_seed = " + str(random.randint(1,999999999)) + "\n\n"
+
+        ### Electronics
+        configfile += "[electronics]\n"
+        configfile += "random_seed = " + str(random.randint(1,999999999)) + "\n\n"
+
+        ### Analysis
+        configfile += "[analysis]\n"
+        configfile += "production = " +  self.options['production'] + "\n"
+        configfile += "save_geometry = " +  self.options['save_geometry'] + "\n"
+
         return configfile
 
     ########################################################################################################################

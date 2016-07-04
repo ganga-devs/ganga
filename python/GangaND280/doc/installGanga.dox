@@ -34,9 +34,9 @@ cmt co nd280Ganga
 \endcode
 
 Now it's time to edit your .gangarc starting with RUNTIME_PATH.
-This tells Ganga where to find external modules like nd280Ganga so it should point to the modules directory in nd280Ganga:
+This tells Ganga where to find external modules like nd280Ganga so it should point to GangaND280:
 \code
-RUNTIME_PATH = /home/me/workspace/nd280Ganga/v0r0/modules
+RUNTIME_PATH = GangaND280
 \endcode
 
 All the other changes to .gangarc from this point on are optional but highly recommended.

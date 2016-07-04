@@ -1959,13 +1959,6 @@ class DQ2OutputDataset(Dataset):
             if blocking:
                 thread_pool.join()
             return
-       
-        if job.backend._name in [ 'LCG' ]:
-            Download.prefix_hack = job.backend.middleware
-        elif job.backend._name in [ 'CREAM']:
-            Download.prefix_hack = 'GLITE'
-        else:
-            Download.prefix_hack = 'EDG'
 
         os.environ['DQ2_URL_SERVER'] = config['DQ2_URL_SERVER']
         os.environ['DQ2_URL_SERVER_SSL'] = config['DQ2_URL_SERVER_SSL']
