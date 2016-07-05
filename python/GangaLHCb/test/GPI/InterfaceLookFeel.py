@@ -6,7 +6,9 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 class TestInterfaceLookFeel(GangaUnitTest):
 
     def testInterfaceLookFeel(self):
-
+        """
+        This test tests the Executable app and that the DaVinci are assignable
+        """
         from Ganga.GPI import Job, LSF, Executable, DaVinci
 
         j1 = Job(name='my',application='DaVinci')
@@ -25,4 +27,19 @@ class TestInterfaceLookFeel(GangaUnitTest):
         ap = Executable()
 
         j1.application = ap # deepcopy
+
+    def testGridInterface(self):
+        """
+        This tests that the gridProxy tool is available for everyone _ALWAYS_
+        """
+
+        # This should __NEVER__ fail for LHCb
+        from Ganga.GPI import gridProxy
+
+        # This too should always work
+        info_str = gridProxy.info()
+
+        # Cannot test these (ever?)
+        # gridProxy.renew()
+        # gridProxy.destroy()
 
