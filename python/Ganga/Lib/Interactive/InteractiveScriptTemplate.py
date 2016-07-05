@@ -40,6 +40,7 @@ os.chdir( '###WORKDIR###' )
 for inFile in ###IN_BOX###:
     if mimetypes.guess_type(inFile)[1] in ['gzip', 'bzip2']:
         getPackedInputSandbox( inFile )
+sys.path.insert(0, os.path.join(os.getcwd(), '_python'))
 
 ###WN_INPUTFILES###
 

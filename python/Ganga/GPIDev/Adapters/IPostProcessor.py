@@ -70,8 +70,8 @@ class MultiPostProcessor(IPostProcessor):
 
             if hasattr(self.process_objects, 'order'):
                 self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
-        else:
-            super(MultiPostProcessor, self).__construct__(args)
+        elif args and len(args) != 0:
+            raise GangaException("MultiPostProcessor error with arguments: '%s'" % str(args))
 
     def __str__(self):
         if not isType(self.process_objects, GangaObject):
@@ -153,13 +153,13 @@ def postprocessor_filter(value, item):
     if item in valid_jobtypes:
         ds = MultiPostProcessor()
         if isinstance(value, list) or isType(value, GangaList):
-            ds.__construct__(value)
+            for item_ in value:
+            	ds.append(item_)
         else:
-            ds.__construct__([value])
+            ds.append(value)
         return ds
     else:
-        raise PostProcessException(
-            "j.postprocessors only takes objects of category 'postprocessor'")
+        raise PostProcessException("j.postprocessors only takes objects of category 'postprocessor'")
 
 allComponentFilters['postprocessor'] = postprocessor_filter
 

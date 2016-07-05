@@ -20,6 +20,7 @@ from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import addProxy, getName, getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
+from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 from Ganga.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
@@ -627,6 +628,11 @@ class Job(GangaObject):
                         logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                         outputfile.put()
                         for f in glob.glob(os.path.join(self.outputdir, outputfile.namePattern)):
+                            # FIXME should this be controlled via some per filetype config?
+                            if isinstance(outputfile, LocalFile):
+                                if not self.subjobs:
+                                    outputfile.setLocation()
+                                continue
                             try:
                                 os.remove(f)
                             except OSError as err:
@@ -637,8 +643,8 @@ class Job(GangaObject):
                                 pass
 
                     elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':
-                        logger.info("Job %s Setting Location of %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                         if not self.subjobs:
+                            logger.info("Job %s Setting Location of %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                             outputfile.setLocation()
                     else:
                         try:

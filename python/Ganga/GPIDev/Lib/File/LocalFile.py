@@ -172,13 +172,12 @@ class LocalFile(IGangaFile):
 
         # check if single file exists (no locations field to try)
         job = self.getJobObject()
-        if job:
-            fname = self.namePattern
-            if self.compressed:
-                fname += ".gz"
+        fname = self.namePattern
+        if self.compressed:
+            fname += ".gz"
 
-            if os.path.isfile(os.path.join(job.getOutputWorkspace().getPath(), fname)):
-                return True
+        if os.path.isfile(os.path.join(job.getOutputWorkspace().getPath(), fname)):
+            return True
 
         return False
 
@@ -220,6 +219,12 @@ class LocalFile(IGangaFile):
                         pass
 
         return
+
+    def put(self):
+	"""
+        For the LocalFile it makes no sense to do anything here
+        """
+	pass
 
 
 ## rcurrie Attempted to implement for 6.1.9 but commenting out due to not being able to correctly make use of setLocation
@@ -263,11 +268,4 @@ class LocalFile(IGangaFile):
 #
 #        return script
 #
-#    def setLocation(self):
-#
-#        job = self.getJobObject()
-#
-#        self.output_location = job.getOutputWorkspace(create=True).getPath()
-#
-#        return
 
