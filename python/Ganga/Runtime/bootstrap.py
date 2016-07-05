@@ -790,7 +790,9 @@ under certain conditions; type license() for details.
         if self.options.TEST:
             # FIXME: CONFIG CHECK
             # ?? config['RUNTIME_PATH'] = ''
-            getConfig('Configuration').setSessionValue('RUNTIME_PATH', 'GangaTest')
+            config = getConfig('Configuration')
+            exiting = config['RUNTIME_PATH']
+            config.setSessionValue('RUNTIME_PATH', exiting + ':GangaTest')
 
         # ensure we're not interactive if daemonised
         if self.options.daemon and self.interactive:
