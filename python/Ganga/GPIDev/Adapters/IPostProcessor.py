@@ -55,10 +55,9 @@ class MultiPostProcessor(IPostProcessor):
         'process_objects': ComponentItem('postprocessor', defvalue=[], hidden=1, doc='A list of Processors to run', sequence=1)
     })
 
-    def __init__(self):
+    def __init__(self, *args):
         super(MultiPostProcessor, self).__init__()
 
-    def __construct__(self, args):
         if len(args) == 1 or len(args) > 1 and isType(args, (GangaList, list)):
             if isinstance(args, list) or isType(args, GangaList):
                 for process in args:

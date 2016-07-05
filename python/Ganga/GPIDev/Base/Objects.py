@@ -726,8 +726,6 @@ class GangaObject(Node):
         elif len(args) == 1:
             if not isinstance(args[0], type(self)):
                 logger.warning("Performing a copyFrom from: %s to: %s" % (type(args[0]), type(self)))
-                import traceback
-                traceback.print_stack()
             self.copyFrom(args[0])
         else:
             from Ganga.GPIDev.Base.Proxy import TypeMismatchError

@@ -297,8 +297,9 @@ valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(val, valTypeList, 
 
 class ProxyDataDescriptor(object):
 
-    def __init__(self, name):
+    def __init__(self, name, check_readOnly=True):
         self._name = name
+        self._check_readOnly = check_readOnly
 
     # apply object conversion or if it failes, make the wrapper proxy
     def disguiseComponentObject(self, v):
@@ -570,10 +571,11 @@ class ProxyDataDescriptor(object):
                 raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now' % (repr(obj), attr_name))
             
 
-        # mechanism for locking of preparable attributes
-        if item['preparable']:
-            ## Does not modify val
-            self.__preparable_set__(obj, val, attr_name)
+        if self._check_readOnly:
+            # mechanism for locking of preparable attributes
+            if item['preparable']:
+                ## Does not modify val
+                self.__preparable_set__(obj, val, attr_name)
 
         # if we set is_prepared to None in the GPI, that should effectively
         # unprepare the application
@@ -764,20 +766,31 @@ def GPIProxyClassFactory(name, pluginclass):
             ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
             ## Object was not passed by construction so need to construct new object for internal use
             if len(args) < len(getargspec(pluginclass.__init__)[0]):
-                clean_args = (stripProxy(arg) for arg in args)
-                instance = pluginclass(*clean_args)
+                if len(args) == 1 and isinstance(args[0], pluginclass):
+                    instance = deepcopy(stripProxy(args[0]))
+                elif len(args) == 1 and hasattr(args[0], '__len__') and not isinstance(args[0], str):
+                    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+                    instance = GangaList()
+                    instance.extend(stripProxy(i) for i in args[0])
+                else:
+                    clean_args = (stripProxy(arg) for arg in args)
+                    instance = pluginclass(*clean_args)
             else:
                 instance = pluginclass()
                 ## DOESN'T MAKE SENSE TO KEEP PROXIES HERE AS WE MAY BE PERFORMING A PSEUDO-COPY OP
                 clean_args = (stripProxy(arg) for arg in args)
                 raw_self = stripProxy(self)
-                if len(clean_args) < len(getargspec(pluginclass.__construct__)[0]):
-                    instance.__construct__(*clean_args)
+                if len(args) < len(getargspec(instance.__construct__)[0]):
+                    try:
+                        instance.__construct__(*clean_args)
+                    except TypeError:
+                        # This is bad, we should feel bad and this needs to die in flames
+                        instance.__construct__([])
                 else:
-                    instance.__construct__()
+                    instance.__construct__([])
 
         ## Avoid intercepting any of the setter method associated with the implRef as they could trigger loading from disk
-        setattr(self, implRef, instance)
+        self.__dict__[implRef] = instance
         instance.__dict__[proxyObject] = self
 
         ## Need to avoid any setter methods for GangaObjects
@@ -811,7 +824,7 @@ def GPIProxyClassFactory(name, pluginclass):
             if stripProxy(self)._schema.hasAttribute(k):
                 this_arg = stripProxy(kwds[k])
                 raw_self = stripProxy(self)
-                ProxyDataDescriptor(k).__set__(raw_self, raw_self._attribute_filter__set__(k, this_arg))
+                ProxyDataDescriptor(k, False).__set__(raw_self, raw_self._attribute_filter__set__(k, this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
