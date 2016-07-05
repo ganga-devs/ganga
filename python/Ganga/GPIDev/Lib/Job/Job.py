@@ -697,8 +697,6 @@ class Job(GangaObject):
                         except Exception as err:
                             logger.error("Error: %s" % err)
 
-            if outputfileClass == 'LocalFile':
-                outputfile.processOutputWildcardMatches()
 
         # leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)

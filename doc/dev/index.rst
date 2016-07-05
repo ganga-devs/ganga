@@ -64,31 +64,33 @@ IGangaFile
 
 All file types as of Ganga 6.1 inherit from ``IGangaFile``. This main exception to this is the ``File`` object which as of 05/05/2016 is used as it still has more features than the ``IGangaFile`` inheirted classes do.
 
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
-| Attribute         | Use/Doc                                                                                                | Return type   |
-+===================+=========================================================================================================+==============+
-| namePattern       | This is used to contain the namePattern or basename of the file in question                            | str           |
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
-| localDir          | This is the location where a file may be placed during a get() or sourced during a put()               | str           |
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
-| get()             | This function is the method used to place a file from some remote location into localDir               | bool          |
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
-| put()             | This function puts a file stored locally into some remote storage space                                | bool          |
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
-| location          | This is the remote location where the file is. DiracFile should return an LFN here and stop being bad? | str           |
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
-| workerDir         | This is where the file should be placed on the working dir on the WN where the job script executes     | str           |
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
-| remove()          | Removes a file on the remote storage (and asks the user if they want to remove a local one             | bool          |
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
-| accessURL()       | Provides an address (inc protocol) for accessing a file which is stored locally but is 'streamable'    | str           |
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
-| hasMatchedFiles() | Has this file matches any wildcards to subfiles?                                                       | bool          |
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
-| setLocation()     | This function triggers the code to 'match' the file based upon ''__postprocesslocations__''            | bool          |
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
-| _auto_remove()    | Called when a job is removed, by default is calls remove() to remove a remote file                     | bool          |
-+-------------------+--------------------------------------------------------------------------------------------------------+---------------+
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| Attribute            | Use/Doc                                                                                                | Return type   |
++======================+=========================================================================================================+==============+
+| namePattern          | This is used to contain the namePattern or basename of the file in question                            | str           |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| localDir             | This is the location where a file may be placed during a get() or sourced during a put()               | str           |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| get()                | This function is the method used to place a file from some remote location into localDir               | bool          |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| put()                | This function puts a file stored locally into some remote storage space                                | bool          |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| location             | This is the remote location where the file is. DiracFile should return an LFN here and stop being bad? | str           |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| workerDir            | This is where the file should be placed on the working dir on the WN where the job script executes     | str           |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| remove()             | Removes a file on the remote storage (and asks the user if they want to remove a local one             | bool          |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| accessURL()          | Provides an address (inc protocol) for accessing a file which is stored locally but is 'streamable'    | str           |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| hasMatchedFiles()    | Has this file matches any wildcards to subfiles?                                                       | bool          |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| setLocation()        | This function triggers the code to 'match' the file based upon ''__postprocesslocations__''            | bool          |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| _auto_remove()       | Called when a job is removed, by default is calls remove() to remove a remote file                     | bool          |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
+| outputfilenameformat | This allows for the intelligent renaming of the output file to have a name which contains job ids etc  | str           |
++----------------------+--------------------------------------------------------------------------------------------------------+---------------+
 
 
 +----------------------------+---------------------------------------------------------------------------------------------------------------------+

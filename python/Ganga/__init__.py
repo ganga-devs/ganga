@@ -618,17 +618,14 @@ backendPostprocess:defines where postprocessing should be done (WN/client) on di
 uploadOptions:config values needed for the actual %s upload'
 
 # LocalFile
-#    LocalPost = {'Localhost': 'WN', 'Interactive': 'WN', 'CREAM': 'client', 'Dirac': 'client'}
-#
-#    LocalUpOpt = {}
-#
-#    LocalFileExt = docstr_Ext % ('Local', 'Local')
-#
-#    outputconfig.addOption('LocalFile',
-#                            {'fileExtensions': ['*.txt'],
-#                             'backendPostprocess' : LocalPost,
-#                             'uploadOptions' : LocalUpOpt},
-#                            LocalFileExt)
+LocalPost = {'Localhost': 'client', 'Interactive': 'client', 'CREAM': 'client', 'Dirac': 'client'}
+LocalUpOpt = {}
+LocalFileExt = docstr_Ext % ('Local', 'Local')
+output_config.addOption('LocalFile',
+                           {'fileExtensions': ['*.txt'],
+                             'backendPostprocess' : LocalPost,
+                             'uploadOptions' : LocalUpOpt},
+                            LocalFileExt)
 
 
 # LCGSEFILE

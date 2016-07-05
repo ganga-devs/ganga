@@ -40,7 +40,7 @@ class LocalFile(IGangaFile):
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"
-    _exportmethods = ["location", "remove", "accessURL", "processOutputWildcardMatches", "hasMatchedFiles"]
+    _exportmethods = ["location", "remove", "accessURL"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
@@ -99,7 +99,7 @@ class LocalFile(IGangaFile):
             URLs.append('file://' + os.path.join(os.sep, file))
         return URLs
 
-    def processOutputWildcardMatches(self):
+    def setLocation(self):
         """This collects the subfiles for wildcarded output LocalFile"""
         import glob
 
