@@ -25,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.1.20 $'
+_gangaVersion = '$Name: 6.1.21 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -314,7 +314,7 @@ lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_e
                  'sets the LCG-UI environment setup script for the GLITE middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
-lcg_config.addOption('VirtualOrganisation', 'dteam',
+lcg_config.addOption('VirtualOrganisation', '',
                  'sets the name of the grid virtual organisation')
 
 lcg_config.addOption('ConfigVO', '', 'DEPRECATED sets the VO-specific LCG-UI configuration script for the EDG resource broker',
