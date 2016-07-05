@@ -146,10 +146,8 @@ class LocalFile(IGangaFile):
             for f in self.subfiles:
                 filelist.append(path.join(f.localDir, f.namePattern))
         else:
-            if self.localDir == '':
-                if path.exists(path.join(self.tmp_pwd, self.namePattern)):
-                    self.localDir = self.tmp_pwd
-                    logger.debug("File: %s found, Setting localDir: %s" % (self.namePattern, self.localDir))
+            if path.exists(path.join(self.localDir, self.namePattern)):
+                logger.debug("File: %s found, Setting localDir: %s" % (self.namePattern, self.localDir))
 
             filelist.append(path.join(self.localDir, self.namePattern))
 

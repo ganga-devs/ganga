@@ -93,15 +93,12 @@ class GangaListIter(object):
 
     """Simple wrapper around the listiterator"""
 
-    def __init__(self, it, parent):
+    def __init__(self, it):
         self.it = it
-        self._parent = parent
 
     def next(self):
         # TODO determine if this is correct or needed?
-        returnable = next(self.it)
-        returnable._setParent(self._parent)
-        return returnable
+        return addProxy(next(self.it))
 
     def __iter__(self):
         return self
@@ -392,7 +389,7 @@ class GangaList(GangaObject):
         return self._list.__iter__()
 
     def _export___iter__(self):
-        return GangaListIter(iter(self._list), parent=self._getParent())
+        return GangaListIter(iter(self._list))
 
     def __le__(self, obj_list):
         return self._list.__le__(self.strip_proxy_list(obj_list))
@@ -422,7 +419,7 @@ class GangaList(GangaObject):
         return reversed(self._list)
 
     def _export___reversed__(self):
-        return GangaListIter(self.__reversed__(), parent=self._getParent())
+        return GangaListIter(self.__reversed__())
 
     def __radd__(self, obj):
         return obj + self._list
