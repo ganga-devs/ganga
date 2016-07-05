@@ -75,41 +75,6 @@ class DiracFile(IGangaFile):
         if remoteDir is not None:
             self.remoteDir = remoteDir
 
-        # LFN ONLY
-        if len(args) == 1 and type(args[0]) == type(''):
-            if str(str(args[0]).upper()[0:4]) == str("LFN:"):
-                self._setLFNnamePattern(lfn=args[0][4:], namePattern="")
-            else:
-                self._setLFNnamePattern(lfn="", namePattern=args[0])
-
-        # NAMEPATTERN AND LFN
-        elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
-            self.namePattern = args[0]
-            self._setLFNnamePattern(lfn='', namePattern=self.namePattern)
-            self.localDir = expandfilename(args[1])
-
-        # NAMEPATTERN AND LFN AND LOCALDIR
-        elif len(args) == 3 and type(args[0]) == type('') and type(args[1]) == type('') and type(args[2]) == type(''):
-            self.namePattern = args[0]
-            self.lfn = args[2]
-            self._setLFNnamePattern(lfn=self.lfn, namePattern=self.namePattern)
-            self.localDir = expandfilename(args[1])
-
-        # NAMEPATTERN AND LFN AND LOCALDIR AND REMOTEDIR
-        elif len(args) == 4 and type(args[0]) == type('') and type(args[1]) == type('')\
-                and type(args[2]) == type('') and type(args[3]) == type(''):
-            self.namePattern = args[0]
-            self.lfn = args[2]
-            self._setLFNnamePattern(lfn=lfn, namePattern=namePattern)
-            self.localDir = expandfilename(args[1])
-            self.remoteDir = args[3]
-
-        # OTHER
-        else:
-            super(DiracFile, self).__construct__(args)
-
-        return
-
     def __setattr__(self, attr, value):
 
         actual_value = value

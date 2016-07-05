@@ -8,14 +8,13 @@ from __future__ import absolute_import
 import errno
 import re
 import os
-import os.path
+from os import path
 import copy
+import shutil
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File import FileBuffer
@@ -54,40 +53,35 @@ class LocalFile(IGangaFile):
         if isinstance(namePattern, str):
             self.namePattern = namePattern
         elif isinstance(namePattern, File):
-            self.namePattern = os.path.basename(namePattern.name)
-            self.localDir = os.path.dirname(namePattern.name)
+            self.namePattern = path.basename(namePattern.name)
+            self.localDir = path.dirname(namePattern.name)
         elif isinstance(namePattern, FileBuffer):
             namePattern.create()
-            self.namePattern = os.path.basename(namePattern.name)
-            self.localDir = os.path.dirname(namePattern.name)
+            self.namePattern = path.basename(namePattern.name)
+            self.localDir = path.dirname(namePattern.name)
         else:
             logger.error("Unkown type: %s . Cannot Create LocalFile from this!" % type(namePattern))
-
-        if isinstance(localDir, str):
-            if localDir != '':
-                self.localDir = localDir
-            else:
-                self.localDir = os.path.dirname(namePattern)
-        else:
-            logger.error("Unkown type: %s . Cannot set LocalFile localDir using this!" % type(localDir))
 
 
     def __setattr__(self, attr, value):
 
         actual_value = value
         if attr == 'namePattern':
-            this_dir = os.path.dirname(value)
-            super(LocalFile, self).__setattr__('localDir', this_dir)
-            actual_value = os.path.basename(value)
+            if len(value.split(os.sep)) > 1:
+                this_dir = path.dirname(value)
+                super(LocalFile, self).__setattr__('localDir', this_dir)
+            actual_value = path.basename(value)
         elif attr == 'localDir':
-            actual_value = os.path.abspath(expandfilename(value))
+            if value:
+                new_value = path.abspath(expandfilename(value))
+                if path.exists(new_value):
+                    actual_value = new_value
 
         super(LocalFile, self).__setattr__(attr, actual_value)
         
 
     def __repr__(self):
         """Get the representation of the file."""
-
         return "LocalFile(namePattern='%s', localDir='%s')" % (self.namePattern, self.localDir)
 
     def location(self):
@@ -96,7 +90,7 @@ class LocalFile(IGangaFile):
     def accessURL(self):
         URLs = []
         for file in self.location():
-            URLs.append('file://' + os.path.join(os.sep, file))
+            URLs.append('file://' + path.join(os.sep, file))
         return URLs
 
     def setLocation(self):
@@ -109,14 +103,18 @@ class LocalFile(IGangaFile):
             fileName = '%s.gz' % self.namePattern
 
         sourceDir = self.getJobObject().outputdir
-        if regex.search(fileName) is not None:
+        
+        if self.localDir:
+            fileName = path.join(self.localDir, fileName)
 
-            for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
+        for currentFile in glob.glob(path.join(sourceDir, fileName)):
 
-                d = LocalFile(namePattern=os.path.basename(currentFile))
-                d.compressed = self.compressed
+            base_name = path.basename(currentFile)
 
-                self.subfiles.append(GPIProxyObjectFactory(d))
+            d = LocalFile(base_name)
+            d.compressed = self.compressed
+
+            self.subfiles.append(d)
 
     def processWildcardMatches(self):
 
@@ -133,12 +131,12 @@ class LocalFile(IGangaFile):
         sourceDir = self.localDir
 
         if regex.search(fileName) is not None:
-            for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-                d = LocalFile(namePattern=os.path.basename(
-                    currentFile), localDir=os.path.dirname(currentFile))
+            for currentFile in glob.glob(path.join(sourceDir, fileName)):
+                d = LocalFile(namePattern=path.basename(
+                    currentFile), localDir=path.dirname(currentFile))
                 d.compressed = self.compressed
 
-                self.subfiles.append(GPIProxyObjectFactory(d))
+                self.subfiles.append(d)
 
     def getFilenameList(self):
         """Return the files referenced by this LocalFile"""
@@ -146,14 +144,14 @@ class LocalFile(IGangaFile):
         self.processWildcardMatches()
         if self.subfiles:
             for f in self.subfiles:
-                filelist.append(os.path.join(f.localDir, f.namePattern))
+                filelist.append(path.join(f.localDir, f.namePattern))
         else:
             if self.localDir == '':
-                if os.path.exists(os.path.join(self.tmp_pwd, self.namePattern)):
+                if path.exists(path.join(self.tmp_pwd, self.namePattern)):
                     self.localDir = self.tmp_pwd
                     logger.debug("File: %s found, Setting localDir: %s" % (self.namePattern, self.localDir))
 
-            filelist.append(os.path.join(self.localDir, self.namePattern))
+            filelist.append(path.join(self.localDir, self.namePattern))
 
         return filelist
 
@@ -176,7 +174,7 @@ class LocalFile(IGangaFile):
         if self.compressed:
             fname += ".gz"
 
-        if os.path.isfile(os.path.join(job.getOutputWorkspace().getPath(), fname)):
+        if path.isfile(path.join(job.getOutputWorkspace().getPath(), fname)):
             return True
 
         return False
@@ -196,7 +194,7 @@ class LocalFile(IGangaFile):
                     logger.warning("y/n please!")
                     keyin = None
             if _actual_delete:
-                if not os.path.exists(this_file):
+                if not path.exists(this_file):
                     logger.warning(
                         "File %s did not exist, can't delete" % this_file)
                 else:
@@ -224,7 +222,20 @@ class LocalFile(IGangaFile):
 	"""
         For the LocalFile it makes no sense to do anything here
         """
-	pass
+        if self.localDir:
+            try:
+                job = self.getJobObject()
+            except AssertionError as err:
+                return
+
+            # Copy to 'desitnation'
+
+            if path.isfile(path.join(job.outputdir, self.namePattern)):
+                if not path.exists(path.join(job.outputdir, self.localDir)):
+                    os.makedirs(path.join(job.outputdir, self.localDir))
+                shutil.copy(path.join(job.outputdir, self.namePattern),
+                            path.join(job.outputdir, self.localDir, self.namePattern))
+           
 
 
 ## rcurrie Attempted to implement for 6.1.9 but commenting out due to not being able to correctly make use of setLocation
@@ -235,7 +246,7 @@ class LocalFile(IGangaFile):
 ####INDENT###os.system('###CP_COMMAND')
 #
 #"""
-#        full_path = os.path.join(self.localDir, self.namePattern)
+#        full_path = path.join(self.localDir, self.namePattern)
 #        replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : 'cp %s .' % full_path}
 #
 #        for k, v in replace_dict.iteritems():

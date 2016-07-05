@@ -21,6 +21,7 @@ import Ganga.Utility.logging
 import Ganga.Utility.Config
 
 from Ganga.GPIDev.Base.Proxy import getName, stripProxy
+from Ganga.GPIDev.Base.Objects import Descriptor
 
 logger = Ganga.Utility.logging.getLogger()
 config = Ganga.Utility.Config.getConfig('Local')

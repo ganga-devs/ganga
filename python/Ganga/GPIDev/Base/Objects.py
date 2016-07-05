@@ -170,16 +170,17 @@ class Node(object):
         """
         if self._getParent() is None:
             return self
-        root = None
         obj = self
         cond_test = cond is not None
-        while obj is not None:
-            root = obj
+        while True:
             if cond_test:
-                if cond(root):
+                if cond(obj):
                     break
-            obj = obj._getParent()
-        return root
+            if obj._getParent() is not None:
+                obj = obj._getParent()
+            else:
+                break
+        return obj
 
     # accept a visitor pattern
     @abc.abstractmethod
@@ -450,6 +451,21 @@ class Descriptor(object):
 
         return v_copy
 
+    @staticmethod
+    def check_parents(obj, attr_name):
+        attr_item = obj._schema.getItem(attr_name)
+        this_attr = getattr(obj, attr_name)
+        if hasattr(attr_item, '_getter_name') and attr_item._getter_name:
+            return
+        if isinstance(this_attr, Node):
+            if hasattr(this_attr, '__len__'):
+                for item in this_attr:
+                    if isinstance(item, Node):
+                        for this_attr in item._schema.allItemNames():
+                            Descriptor.check_parents(item, this_attr)
+            else:
+                assert this_attr._getParent() is obj
+
     @synchronised_set_descriptor
     def __set__(self, obj, val):
         """
@@ -484,10 +500,10 @@ class Descriptor(object):
         new_value = Descriptor.cleanValue(obj, val, _set_name)
 
         obj.setSchemaAttribute(_set_name, new_value)
+
         obj._setDirty()
 
-        if isinstance(val, Node):
-            val._setDirty()
+        Descriptor.check_parents(obj, _set_name)
 
 
     @staticmethod
@@ -536,6 +552,10 @@ class Descriptor(object):
 
         if isinstance(new_val, Node):
             new_val._setParent(obj)
+            if hasattr(new_val, '__len__'):
+		for item in new_val:
+                    if isinstance(item, Node):
+		    	item._setParent(obj)
 
         return new_val
 
@@ -703,33 +723,6 @@ class GangaObject(Node):
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
-
-    def __construct__(self, args):
-        # type: (Sequence) -> None
-        """
-        This acts like a secondary constructor for proxy objects.
-        Any positional (non-keyword) arguments are passed to this function to construct the object.
-
-        This default implementation performs a copy if there was only one item in the list
-        and raises an exception if there is more than one.
-
-        Args:
-            args: a list of objects
-
-        Raises:
-            TypeMismatchError: if there is more than one item in the list
-        """
-        # FIXME: This should probably be move to Proxy.py
-
-        if len(args) == 0:
-            return
-        elif len(args) == 1:
-            if not isinstance(args[0], type(self)):
-                logger.warning("Performing a copyFrom from: %s to: %s" % (type(args[0]), type(self)))
-            self.copyFrom(args[0])
-        else:
-            from Ganga.GPIDev.Base.Proxy import TypeMismatchError
-            raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
 
     @synchronised
     def accept(self, visitor):
@@ -1168,10 +1161,15 @@ class GangaObject(Node):
         Unknown: Why is this a GangaObject method and not a Node method?
         """
         from Ganga.GPIDev.Lib.Job import Job
-        r = self._getRoot(cond=lambda o: isinstance(o, Job))
-        if not isinstance(r, Job):
-            raise AssertionError('no job associated with object ' + repr(self))
-        return r
+        if self._getParent():
+            r = self._getRoot(cond=lambda o: isinstance(o, Job))
+            if not isinstance(r, Job):
+                raise AssertionError('No Job associated with object instead root=\'%s\' for \'%s\'' % (repr(self), type(r)))
+            return r
+        else:
+            if isinstance(self, Job):
+                return self
+        raise AssertionError('No Parent associated with object instead root=\'%s\' for \'%s\'' % (repr(self), str(None)))
 
     # Customization of the GPI attribute assignment: Attribute Filters
     #

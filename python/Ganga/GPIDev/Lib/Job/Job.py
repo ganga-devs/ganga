@@ -374,6 +374,8 @@ class Job(GangaObject):
 
         if name == 'outputfiles':
 
+            # THIS IS IMMENSELY FUGLY AND STUPID WHY FOR THE LOVE OF GOD WHY!
+
             currentOutputFiles = object.__getattribute__(self, name)
             currenUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
 
@@ -398,6 +400,8 @@ class Job(GangaObject):
                 files3.append(f)
             for f in files2:
                 files3.append(f)
+
+            files3._setParent(self)
 
             return addProxy(files3)
 
@@ -516,6 +520,8 @@ class Job(GangaObject):
         Such default transitions do not have hooks.
         """
 
+	self._getReadAccess()
+
         # For debugging to trace Failures and such
 
         fqid = self.getFQID('.')
@@ -621,10 +627,11 @@ class Job(GangaObject):
                     for currentFile in glob.glob(os.path.join(outputdir, outputfile.namePattern)):
                         os.system("gzip %s" % currentFile)
 
+
             backend_output_postprocess = self.getBackendOutputPostprocessDict()
             if backendClass in backend_output_postprocess:
                 if outputfileClass in backend_output_postprocess[backendClass]:
-                    if backend_output_postprocess[backendClass][outputfileClass] == 'client':
+                    if backend_output_postprocess[backendClass][outputfileClass].lower() == 'client':
                         logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                         outputfile.put()
                         for f in glob.glob(os.path.join(self.outputdir, outputfile.namePattern)):
@@ -2065,13 +2072,12 @@ class Job(GangaObject):
             uniqueValues = []
 
             for val in value:
-                key = '%s%s' % (getName(val), val.namePattern)
+                key = '%s%s' % (getName(val), os.path.join(val.localDir, val.namePattern))
                 if key not in uniqueValuesDict:
                     uniqueValuesDict.append(key)
                     uniqueValues.append(val)
                 elif getName(val) == 'LCGSEFile':
                     uniqueValues.append(val)
-
 
             super(Job, self).__setattr__(attr, uniqueValues)
 
@@ -2087,7 +2093,7 @@ class Job(GangaObject):
                     logger.error('Use of job.outputsandbox is forbidden, please use job.outputfiles')
                     return
 
-                if self.outputfiles != []:
+                if self.outputfiles:
                     logger.error('job.outputfiles is set, you can\'t set job.outputsandbox')
                     return
 
@@ -2113,7 +2119,7 @@ class Job(GangaObject):
                     logger.error('Use of job.outputdata is forbidden, please use job.outputfiles')
                     return
 
-                if self.outputfiles != []:
+                if self.outputfiles:
                     logger.error('job.outputfiles is set, you can\'t set job.outputdata')
                     return
             super(Job, self).__setattr__(attr, value)

@@ -93,12 +93,15 @@ class GangaListIter(object):
 
     """Simple wrapper around the listiterator"""
 
-    def __init__(self, it):
+    def __init__(self, it, parent):
         self.it = it
+        self._parent = parent
 
     def next(self):
         # TODO determine if this is correct or needed?
-        return addProxy(next(self.it))
+        returnable = next(self.it)
+        returnable._setParent(self._parent)
+        return returnable
 
     def __iter__(self):
         return self
@@ -345,7 +348,10 @@ class GangaList(GangaObject):
         return self._list.__ge__(self.__getListToCompare(obj_list))
 
     def __getitem__(self, index):
-        return self._list.__getitem__(index)
+        returnable = self._list.__getitem__(index)
+        if isinstance(returnable, Node):
+            returnable._setParent(self._getParent())
+        return returnable
 
     def _export___getitem__(self, index):
         return addProxy(self.__getitem__(index))
@@ -386,7 +392,7 @@ class GangaList(GangaObject):
         return self._list.__iter__()
 
     def _export___iter__(self):
-        return GangaListIter(iter(self._list))
+        return GangaListIter(iter(self._list), parent=self._getParent())
 
     def __le__(self, obj_list):
         return self._list.__le__(self.strip_proxy_list(obj_list))
@@ -416,7 +422,7 @@ class GangaList(GangaObject):
         return reversed(self._list)
 
     def _export___reversed__(self):
-        return GangaListIter(self.__reversed__())
+        return GangaListIter(self.__reversed__(), parent=self._getParent())
 
     def __radd__(self, obj):
         return obj + self._list
@@ -468,19 +474,23 @@ class GangaList(GangaObject):
 
     def append(self, obj, my_filter=True):
         if isType(obj, GangaList):
-            self._list.append(stripProxy(obj))
+            stripped_o = stripProxy(obj)
+            stripped_o._setParent(self._getParent())
+            self._list.append(stripped_o)
             return
         elem = self.strip_proxy(obj, my_filter)
         list_objs = (list, tuple)
         if isType(elem, GangaObject):
-            stripProxy(elem)._setParent(self._getParent())
-            self._list.append(elem)
+            stripped_e = stripProxy(elem)
+            stripped_e._setParent(self._getParent())
+            self._list.append(stripped_e)
         elif isType(elem, list_objs):
             new_list = []
             def my_append(_obj):
                 if isType(_obj, GangaObject):
-                    stripProxy(_obj)._setParent(self._getParent())
-                    return stripProxy(_obj)
+                    stripped_o = stripProxy(_obj)
+                    stripped_o._setParent(self._getParent())
+                    return stripped_o
                 else:
                     return _obj
             self._list.append([my_append(l) for l in elem])

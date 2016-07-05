@@ -777,17 +777,6 @@ def GPIProxyClassFactory(name, pluginclass):
                     instance = pluginclass(*clean_args)
             else:
                 instance = pluginclass()
-                ## DOESN'T MAKE SENSE TO KEEP PROXIES HERE AS WE MAY BE PERFORMING A PSEUDO-COPY OP
-                clean_args = (stripProxy(arg) for arg in args)
-                raw_self = stripProxy(self)
-                if len(args) < len(getargspec(instance.__construct__)[0]):
-                    try:
-                        instance.__construct__(*clean_args)
-                    except TypeError:
-                        # This is bad, we should feel bad and this needs to die in flames
-                        instance.__construct__([])
-                else:
-                    instance.__construct__([])
 
         ## Avoid intercepting any of the setter method associated with the implRef as they could trigger loading from disk
         self.__dict__[implRef] = instance

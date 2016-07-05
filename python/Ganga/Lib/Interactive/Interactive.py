@@ -158,8 +158,7 @@ class Interactive(IBackend):
         try:
             shutil.rmtree(self.workdir)
         except OSError as x:
-            logger.warning("Problem removing workdir %s: %s", self.workdir,
-                    str(x))
+            logger.warning("Problem removing workdir %s: %s", self.workdir, str(x))
 
             return None
 

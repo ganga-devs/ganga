@@ -618,7 +618,7 @@ backendPostprocess:defines where postprocessing should be done (WN/client) on di
 uploadOptions:config values needed for the actual %s upload'
 
 # LocalFile
-LocalPost = {'Localhost': 'client', 'Interactive': 'client', 'CREAM': 'client', 'Dirac': 'client'}
+LocalPost = {'Local': 'client', 'Interactive': 'client', 'CREAM': 'client', 'Dirac': 'client'}
 LocalUpOpt = {}
 LocalFileExt = docstr_Ext % ('Local', 'Local')
 output_config.addOption('LocalFile',
@@ -631,7 +631,7 @@ output_config.addOption('LocalFile',
 # LCGSEFILE
 
 LCGSEBakPost = {'LSF': 'client', 'PBS': 'client', 'LCG': 'WN', 'CREAM': 'WN',
-                'ARC': 'WN', 'Localhost': 'WN', 'Interactive': 'WN'}
+                'ARC': 'WN', 'Local': 'WN', 'Interactive': 'WN'}
 LCGSEUpOpt = {'LFC_HOST': 'lfc-dteam.cern.ch', 'dest_SRM': 'srm-public.cern.ch'}
 LCGSEFileExt = docstr_Ext % ('LCG SE', 'LCG')
 
@@ -645,7 +645,7 @@ output_config.addOption('LCGSEFile',
 ## TODO MOVE ME TO GANGADIRAC!!!
 # Should this be in Core or elsewhere?
 diracBackPost = {'Dirac': 'submit', 'LSF': 'WN', 'PBS': 'WN', 'LCG': 'WN',
-                 'CREAM': 'WN', 'ARC': 'WN', 'Localhost': 'WN', 'Interactive': 'WN'}
+                 'CREAM': 'WN', 'ARC': 'WN', 'Local': 'WN', 'Interactive': 'WN'}
 diracFileExts = docstr_Ext % ('DIRAC', 'DIRAC')
 
 output_config.addOption('DiracFile',
@@ -658,7 +658,7 @@ output_config.addOption('DiracFile',
 # GoogleFile
 
 GoogleFileBackPost = {'Dirac': 'client', 'LSF': 'client', 'PBS': 'client', 'LCG': 'client',
-                      'CREAM': 'client', 'ARC': 'client', 'Localhost': 'client', 'Interactive': 'client'}
+                      'CREAM': 'client', 'ARC': 'client', 'Local': 'client', 'Interactive': 'client'}
 GoogleFileExts = docstr_Ext % ('GoogleDrive', 'Google')
 
 output_config.addOption('GoogleFile',
@@ -718,7 +718,7 @@ massStorageUploadOptions = {'mkdir_cmd': prefix + 'mkdir', 'cp_cmd':
 massStorageFileExt = docstr_Ext % ('Mass Storage', 'EOS')
 
 massStorageBackendPost = {'LSF': 'WN', 'PBS': 'WN', 'LCG': 'client', 'CREAM': 'client',
-                          'ARC': 'client', 'Localhost': 'WN', 'Interactive': 'client', 'Dirac': 'client'}
+                          'ARC': 'client', 'Local': 'WN', 'Interactive': 'client', 'Dirac': 'client'}
 
 output_config.addOption('MassStorageFile',
                        {'fileExtensions': [''],
