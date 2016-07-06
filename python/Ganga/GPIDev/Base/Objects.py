@@ -273,8 +273,8 @@ def synchronised_set_descriptor(set_function):
         if obj is None:
             return set_function(self, obj, type_or_value)
 
-        with obj.const_lock:
-            with obj._internal_lock:
+        with obj._internal_lock:
+            with obj.const_lock:
                 return set_function(self, obj, type_or_value)
     return decorated
 
@@ -337,10 +337,8 @@ class Descriptor(object):
             return cls._schema[name]
 
         if self._getter_name:
-            returnable = self._bind_method(obj, self._getter_name)()
-            if isinstance(returnable, Node):
-                returnable._setParent(obj)
-            return returnable
+            # Fixme set the parent of Node objects?!?!
+            return self._bind_method(obj, self._getter_name)()
 
         # First we want to try to get the information without prompting a load from disk
 
