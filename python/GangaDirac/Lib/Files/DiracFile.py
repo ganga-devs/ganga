@@ -89,8 +89,9 @@ class DiracFile(IGangaFile):
                 if os.path.exists(new_value):
                     actual_value = new_value
         elif attr == 'lfn':
-            this_name = os.path.basename(value)
-            super(DiracFile, self).__setattr__('namePattern', this_name)
+            if value:
+                this_name = os.path.basename(value)
+                super(DiracFile, self).__setattr__('namePattern', this_name)
         elif attr == 'remoteDir':
             if value:
                 this_lfn = os.path.join(value, self.lfn)
@@ -135,6 +136,9 @@ class DiracFile(IGangaFile):
         if lfn:
             if len(lfn) > 3 and lfn[0:4].upper() == "LFN:":
                 lfn = lfn[4:]
+        elif namePattern:
+            if len(namePattern) > 3 and namePattern[0:4].upper() == 'LFN:':
+                lfn = namePattern[4:]
 
         if lfn != "" and namePattern != "":
             self.lfn = lfn
@@ -144,7 +148,7 @@ class DiracFile(IGangaFile):
             self.lfn = lfn
 
         elif namePattern != "" and lfn == "":
-            self.namePattern = os.path.basename(namePattern)
+            self.namePattern = namePattern
 
     def _attribute_filter__get__(self, name):
 
