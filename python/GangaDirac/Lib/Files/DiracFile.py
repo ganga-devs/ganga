@@ -138,10 +138,10 @@ class DiracFile(IGangaFile):
 
         if lfn != "" and namePattern != "":
             self.lfn = lfn
+            self.namePattern = namePattern
 
         elif lfn != "" and namePattern == "":
             self.lfn = lfn
-            self.namePattern = os.path.basename(self.lfn)
 
         elif namePattern != "" and lfn == "":
             self.namePattern = os.path.basename(namePattern)
