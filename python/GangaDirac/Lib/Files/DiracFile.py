@@ -138,21 +138,13 @@ class DiracFile(IGangaFile):
 
         if lfn != "" and namePattern != "":
             self.lfn = lfn
-            self.remoteDir = os.path.dirname(lfn)
-            self.namePattern = os.path.basename(namePattern)
-            self.localDir = os.path.dirname(expandfilename(namePattern))
 
         elif lfn != "" and namePattern == "":
             self.lfn = lfn
-            self.remoteDir = os.path.dirname(self.lfn)
             self.namePattern = os.path.basename(self.lfn)
-            self.localDir = ""
 
         elif namePattern != "" and lfn == "":
             self.namePattern = os.path.basename(namePattern)
-            self.localDir = os.path.dirname(expandfilename(namePattern))
-            self.remoteDir = ""
-            self.lfn = ""
 
     def _attribute_filter__get__(self, name):
 
