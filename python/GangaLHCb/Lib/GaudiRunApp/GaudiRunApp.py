@@ -3,8 +3,11 @@ import tempfile
 import time
 import subprocess
 import shutil
+import tarfile
+import threading
 
 from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import getName
@@ -12,15 +15,16 @@ from Ganga.GPIDev.Lib.File.File import ShareDir
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.files import expandfilename
+from Ganga.Utility.files import expandfilename, fullpath
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 
-from .GaudiRunAppUtils import getGaudiRunInputData, _exec_cmd
+from .GaudiRunAppUtils import getGaudiRunInputData, _exec_cmd, add_timeStampFile
 
 logger = getLogger()
 
+prep_lock = threading.Lock()
 
 class GaudiRun(IPrepareApp):
     """
@@ -60,8 +64,8 @@ class GaudiRun(IPrepareApp):
 
         ./run gaudirun.py optionsFile.py data.py
 
-    If you would prefer to have your optsfile run as a python application then set 'job.application.runWithPython = True'
-    This then changes the command run on the WN to be:
+    If you would prefer to have your optsfile run as a python application then set 'job.application.useGaudiRun = False'
+    This then changes the command run on the WN to bu:
 
         ./run python OptsFileWrapper.py
 
@@ -71,18 +75,17 @@ class GaudiRun(IPrepareApp):
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
         'directory':    SimpleItem(preparable=1, defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
-        'build_opts':   SimpleItem(defvalue=[""], typelist=[str], sequence=1, strict_sequence=0, doc="Options to be passed to 'make ganga-input-sandbox'"),
         'options':       GangaFileItem(defvalue=None, doc='File which contains the extra opts I want to pass to gaudirun.py'),
-        'uploadedInput': GangaFileItem(defvalue=None, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
-        'runWithPython':SimpleItem(defvalue=False, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
+        'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
+        'sharedOptsInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the extra-opts for all (sub)jobs which are uploaded as 1 archive'),
+        'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
 
         # Prepared job object
-        'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1,
+        'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=0,
-            doc='MD5 hash of the string representation of applications preparable attributes'),
+        'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
         })
     _category = 'applications'
     _name = 'GaudiRun'
@@ -91,6 +94,7 @@ class GaudiRun(IPrepareApp):
     cmake_sandbox_name = 'cmake-input-sandbox.tgz'
     build_target = 'ganga-input-sandbox'
     build_dest = 'input-sandbox.tgz'
+    sharedOptsFile_name = 'sharedExtraOpts.tar'
 
     def __setattr__(self, attr, value):
         """
@@ -102,8 +106,10 @@ class GaudiRun(IPrepareApp):
 
         actual_value = value
         if attr == 'directory':
+            logger.info("HEllo")
             if value:
-                actual_value = self.cleanDir(value)
+                actual_value = path.abspath(fullpath(expandfilename(raw_dir)))
+            logger.info("Here: %s" % actual_value)
         elif attr == 'options':
             if isinstance(value, str):
                 new_file = allComponentFilters['gangafiles'](value, None)
@@ -126,6 +132,8 @@ class GaudiRun(IPrepareApp):
         self.hash = None
         ## FIXME Add some configurable object which controls whether a file should be removed from storage
         ## Here if the is_prepared count reaches zero
+        if self.uploadedInput:
+            self.uploadedInput.remove()
         self.uploadedInput = None
 
     def prepare(self, force=False):
@@ -173,7 +181,45 @@ class GaudiRun(IPrepareApp):
 
         self.cleanGangaTargetArea(this_build_target)
 
+        try:
+            job = self.getJobObject()
+        except AssertionError:
+            return 1
+
+        if self.extraOpts:
+            constructExtraOptsFile( job )
+
         return 1
+
+    def constructExtraOptsFile(self, job):
+        """
+        This constructs or appends to an uncompressed archive containing all of the opts files which are required to run on the grid
+        Args:
+            job (Job): The parent job of this application, we don't care if it's unique or not
+        """
+
+        df = job.master.application.sharedOptsInput
+
+        folder_dir = job.inputdir
+
+        with prep_lock:
+            if not df:
+                add_timeStampFile(folder_dir)
+                job.master.application.sharedOptsInput = DiracFile(namePattern=GaudiRun.sharedOptsFile_name, localDir=folder_dir)
+                with tarfile.open(path.join(folder_dir, GaudiRun.sharedOptsFile_name), "a:+") as tar_file:
+                    tar_file.add('__timestamp__')
+
+            extra_opts_file = 'extra_opts_%s_.py' % job.id
+
+            opts_file_path = path.join(folder_dir, extra_opts_file)
+
+            with open(opts_file_path, 'w+') as _opts_file:
+                _opts_file.write(self.extraOpts)
+
+            with tarfile.open(path.join(folder_dir, GaudiRun.sharedOptsFile_name), "a:+") as tar_file:
+                tar_file.add(opts_file_path)
+
+            unlink(opts_file_path)
 
     def cleanGangaTargetArea(self, this_build_target):
         """
@@ -222,12 +268,6 @@ class GaudiRun(IPrepareApp):
         else:
             raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")
 
-    def cleanDir(self, raw_dir):
-        """
-        This function returns a sanitized absolute path of the self.directory method from user input
-        """
-        return path.abspath(expandfilename(raw_dir))
-
     def getEnvScript(self):
         """
         Return the script which wraps the running command in a correct environment
@@ -246,7 +286,7 @@ class GaudiRun(IPrepareApp):
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
 
         env_wrapper = self.getEnvScript()
-        cmd_file.write(cmd_wrapper)
+        cmd_file.write(cmd)
         cmd_file.flush()
 
         logger.debug("Running: %s" % cmd_file.name)

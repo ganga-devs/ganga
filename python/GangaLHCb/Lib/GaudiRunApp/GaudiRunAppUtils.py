@@ -8,6 +8,21 @@ from .PythonOptsCmakeParser import PythonOptsCmakeParser
 
 logger = getLogger()
 
+def add_timeStampFile(given_path, fileName='__timestamp__'):
+    """
+    This creates a file in this directory given called __timestamp__ which contains the time so that the final file is unique
+    I also add a unique UUID which reduces the risk of collisions between users
+    Args:
+        given_path (str): Path which we want to create the timestamp within
+    """
+    fmt = '%Y-%m-%d-%H-%M-%S'
+    time_filename = os.path.join(given_path, fileName)
+    logger.debug("Constructing: %s" % time_filename)
+    with open(time_filename, 'a+') as time_file:
+        time_file.write(datetime.now().strftime(fmt))
+        time_file.write('\n'+str(uuid.uuid4()))
+
+
 def getGaudiRunInputData(optsfiles, app):
     '''Returns a LHCbDataSet object from a list of options files. The
        optional argument extraopts will decide if the extraopts string inside

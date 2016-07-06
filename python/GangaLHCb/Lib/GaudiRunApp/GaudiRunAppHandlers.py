@@ -26,6 +26,7 @@ from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouput
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
+from .GaudiRunAppUtils import add_timeStampFile
 
 logger = getLogger()
 
@@ -34,19 +35,6 @@ prep_lock = threading.Lock()
 WN_script_name = 'GaudiRun_Python_WN_script.py'
 extra_args_name = 'extra_args.py'
 
-def add_timeStampFile(given_path):
-    """
-    This creates a file in this directory given called __timestamp__ which contains the time so that the final file is unique
-    I also add 20 unique characters from the ascii and digits pool from SystemRandom which may reduce the risk of collisions between users
-    Args:
-        given_path (str): Path which we want to create the timestamp within
-    """
-    fmt = '%Y-%m-%d-%H-%M-%S'
-    time_filename = os.path.join(given_path, '__timestamp__')
-    logger.info("Constructing: %s" % time_filename)
-    with open(time_filename, 'a+') as time_file:
-        time_file.write(datetime.now().strftime(fmt))
-        time_file.write('\n'+str(uuid.uuid4()))
 
 def genDataFiles(job):
     """
@@ -85,7 +73,7 @@ def generateWNScript(commandline, job):
 
     exe_script_name = 'gaudiRun-script.py'
 
-    if job.application.runWithPython:
+    if not job.application.useGaudiRun:
 
         return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline, WN_SCRIPT_NAME=WN_script_name,
                                                                           SCRIPT_NAME = os.path.basename(job.application.getOptsFile().namePattern),
@@ -130,7 +118,7 @@ def prepareCommand(app):
 
     sourceEnv = app.getEnvScript()
         
-    if app.runWithPython:
+    if not app.useGaudiRun:
         full_cmd = sourceEnv + './run python %s' %(WN_script_name)
     else:
         full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
