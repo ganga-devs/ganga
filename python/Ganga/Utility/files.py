@@ -12,6 +12,8 @@ import os
 
 def expandfilename(filename, force=False):
     """expand a path or filename in a standard way so that it may contain ~ and ${VAR} strings"""
+    if not filename:
+        return filename
     expanded_path = os.path.expandvars(os.path.expanduser(filename))
     if os.path.exists(expanded_path) or force:
         return expanded_path
@@ -23,6 +25,8 @@ def expandfilename(filename, force=False):
 
 def fullpath(path, force=False):
     """expandfilename() and additionally: strip leading and trailing whitespaces and expand symbolic links"""
+    if not path:
+        return path
     full_path = os.path.realpath(expandfilename(path.strip(), True))
     if os.path.exists(full_path) or force:
         return full_path

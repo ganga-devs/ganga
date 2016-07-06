@@ -520,8 +520,6 @@ class Job(GangaObject):
         Such default transitions do not have hooks.
         """
 
-	self._getReadAccess()
-
         # For debugging to trace Failures and such
 
         fqid = self.getFQID('.')

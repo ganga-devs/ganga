@@ -588,7 +588,7 @@ class GangaRepositoryLocal(GangaRepository):
             self._internal_del__(this_id)
             changed_ids.append(this_id)
         if len(deleted_ids) > 0:
-            logger.warning("Registry '%s': Job %s externally deleted." % (self.registry.name, ",".join(map(str, list(deleted_ids)))))
+            logger.warning("Registry '%s': Object %s externally deleted." % (self.registry.name, ",".join(map(str, list(deleted_ids)))))
 
         if len(summary) > 0:
             cnt = {}
@@ -978,7 +978,7 @@ class GangaRepositoryLocal(GangaRepository):
                         from shutil import copyfile
                         copyfile(fn+'~', fn)
                     except:
-                        logger.warning("Error Recovering the backup file! loading of Job may Fail!")
+                        logger.warning("Error Recovering the backup file! loading of Object may Fail!")
             fobj = open(fn, "r")
         except IOError as x:
             if x.errno == errno.ENOENT:
@@ -1093,7 +1093,7 @@ class GangaRepositoryLocal(GangaRepository):
             load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
         """
         if isType(err, XMLFileError):
-            logger.error("XML File failed to load for Job id: %s" % this_id)
+            logger.error("XML File failed to load for Object id: %s" % this_id)
             logger.error("Actual Error was:\n%s" % err)
 
         if load_backup:
@@ -1110,7 +1110,7 @@ class GangaRepositoryLocal(GangaRepository):
         except Exception as err2:
             logger.debug("Exception when loading backup: %s" % err2 )
 
-        logger.error("XML File failed to load for Job id: %s" % this_id)
+        logger.error("XML File failed to load for Object id: %s" % this_id)
         logger.error("Actual Error was:\n%s" % err2)
 
         # add object to incomplete_objects

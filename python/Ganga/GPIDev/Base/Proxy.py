@@ -765,17 +765,15 @@ def GPIProxyClassFactory(name, pluginclass):
         else:
             ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
             ## Object was not passed by construction so need to construct new object for internal use
-            if len(args) < len(getargspec(pluginclass.__init__)[0]):
-                if len(args) == 1 and isinstance(args[0], pluginclass):
-                    instance = deepcopy(stripProxy(args[0]))
-                elif len(args) == 1 and hasattr(args[0], '__len__') and not isinstance(args[0], str):
-                    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-                    instance = GangaList()
-                    instance.extend(stripProxy(i) for i in args[0])
-                else:
-                    clean_args = (stripProxy(arg) for arg in args)
-                    instance = pluginclass(*clean_args)
+            # Case 1 j = Job(myExistingJob)            # We want to perform a deepcopy
+            if len(args) == 1 and isinstance(args[0], pluginclass):
+                instance = deepcopy(stripProxy(args[0]))
+            # Case 2 file_ = LocalFile('myFile.txt')   # We need to pass the (stripped) arguments to the constructor only if the 
+            elif len(args) < len(getargspec(pluginclass.__init__)[0]):
+                clean_args = (stripProxy(arg) for arg in args)
+                instance = pluginclass(*clean_args)
             else:
+                logger.warning("Cannot use arguments: '%s' for constructing class type '%s'. Ignoring." % (args, getName(pluginclass)))
                 instance = pluginclass()
 
         ## Avoid intercepting any of the setter method associated with the implRef as they could trigger loading from disk

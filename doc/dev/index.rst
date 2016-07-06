@@ -112,10 +112,28 @@ All file types as of Ganga 6.1 inherit from ``IGangaFile``. This main exception 
 | '_list_get__match__()' | IGangaFile, performs a type match on file objects. can we remove this?| bool          |
 +------------------------+-----------------------------------------------------------------------+---------------+
 
-+---------------------------+
-| Issues                  |
-+===========================+
-|                    |
-+---------------------------+
+Current on-going issues for the IGangaFile system:
+
++-----------------------------------------------------------------------+
+| Issues                                                                |
++=======================================================================+
+| Need to port outputfilenameformat to other file types than MassStorage|
++-----------------------------------------------------------------------+
+| Need to implement workerDir for all filetypes                         |
++-----------------------------------------------------------------------+
+| Need to document scripts used to generate WN (or on them)             |
++-----------------------------------------------------------------------+
+| Need to make MassStorageFile non-CERN centric                         |
++-----------------------------------------------------------------------+
+| Need to make generic file type for MassStorage like behaviour         |
++-----------------------------------------------------------------------+
+| Need to make the accessURL work for all filetypes                     |
++-----------------------------------------------------------------------+
+| Move DiracFile code out of Core                                       |
++-----------------------------------------------------------------------+
+| Remove dependence on filters now that __construct__ has been removed  |
++-----------------------------------------------------------------------+
+| Make get/put return booleans                                          |
++-----------------------------------------------------------------------+
 
 

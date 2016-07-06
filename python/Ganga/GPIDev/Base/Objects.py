@@ -337,7 +337,10 @@ class Descriptor(object):
             return cls._schema[name]
 
         if self._getter_name:
-            return self._bind_method(obj, self._getter_name)()
+            returnable = self._bind_method(obj, self._getter_name)()
+            if isinstance(returnable, Node):
+                returnable._setParent(obj)
+            return returnable
 
         # First we want to try to get the information without prompting a load from disk
 
@@ -452,7 +455,13 @@ class Descriptor(object):
         return v_copy
 
     @staticmethod
-    def check_parents(obj, attr_name):
+    def check_inheritance(obj, attr_name):
+        """
+        This function crawls down the given attr_name for a given obj and checks that the parents are set correctly
+        Args:
+            obj (GangaObject): This is the object which controls the attribute we're examining
+            attr_name (str): This is the name of the attribute which we're going ot examine to find it's parents
+        """
         attr_item = obj._schema.getItem(attr_name)
         this_attr = getattr(obj, attr_name)
         if hasattr(attr_item, '_getter_name') and attr_item._getter_name:
@@ -503,7 +512,8 @@ class Descriptor(object):
 
         obj._setDirty()
 
-        Descriptor.check_parents(obj, _set_name)
+        # This is currently disabled due to bad interaction with the GangaDirac tests
+        #Descriptor.check_inheritance(obj, _set_name)
 
 
     @staticmethod
@@ -552,10 +562,6 @@ class Descriptor(object):
 
         if isinstance(new_val, Node):
             new_val._setParent(obj)
-            if hasattr(new_val, '__len__'):
-		for item in new_val:
-                    if isinstance(item, Node):
-		    	item._setParent(obj)
 
         return new_val
 

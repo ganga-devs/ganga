@@ -83,13 +83,15 @@ class DiracFile(IGangaFile):
             this_dir = os.path.dirname(value)
             super(DiracFile, self).__setattr__('localDir', this_dir)
         elif attr == 'localDir':
-            actual_value = os.path.abspath(expandfilename(value))
+            if value:
+                actual_value = os.path.abspath(expandfilename(value))
         elif attr == 'lfn':
             this_name = os.path.basename(value)
             super(DiracFile, self).__setattr__('namePattern', this_name)
         elif attr == 'remoteDir':
-            this_lfn = os.path.join(value, self.lfn)
-            super(DiracFile, self).__setattr__('lfn', this_lfn)
+            if value:
+                this_lfn = os.path.join(value, self.lfn)
+                super(DiracFile, self).__setattr__('lfn', this_lfn)
 
         super(DiracFile, self).__setattr__(attr, actual_value)
 
