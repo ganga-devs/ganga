@@ -71,7 +71,7 @@ class DiracFile(IGangaFile):
         self._setLFNnamePattern(lfn, namePattern)
 
         if localDir is not None:
-            self.localDir = expandfilename(localDir)
+            self.localDir = localDir
         if remoteDir is not None:
             self.remoteDir = remoteDir
 
@@ -81,10 +81,13 @@ class DiracFile(IGangaFile):
         if attr == "namePattern":
             actual_value = os.path.basename(value)
             this_dir = os.path.dirname(value)
-            super(DiracFile, self).__setattr__('localDir', this_dir)
+            if this_dir:
+                super(DiracFile, self).__setattr__('localDir', this_dir)
         elif attr == 'localDir':
             if value:
-                actual_value = os.path.abspath(expandfilename(value))
+                new_value = os.path.abspath(expandfilename(value))
+                if os.path.exists(new_value):
+                    actual_value = new_value
         elif attr == 'lfn':
             this_name = os.path.basename(value)
             super(DiracFile, self).__setattr__('namePattern', this_name)
