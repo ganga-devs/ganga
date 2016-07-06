@@ -44,7 +44,7 @@ class GaudiXMLSummary(GangaObject):
     _name = "GaudiXMLSummary"
     _exportmethods = ['create', 'summary']
 
-    def __init__(self, job, file)
+    def __init__(self, job, file):
         super(GaudiXMLSummary, self).__init__()
         self.data = None
         self.create(job, file)
