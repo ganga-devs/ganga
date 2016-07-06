@@ -3,9 +3,10 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-if [ $# -eq 0]
+if [ $# -eq 0 ]
 then
     echo "Please provide a version string e.g. 6.1.2"
+    exit
 fi
 
 if [ -z "$1" ]
