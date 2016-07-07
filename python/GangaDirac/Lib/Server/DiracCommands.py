@@ -55,7 +55,7 @@ def getMetadata(lfn):
 
 def getReplicas(lfns):
     ''' Return  the locations of the replicas of a given LFN in a dict format, SE: location '''
-    output(dirac.getReplicas(lfns))
+    output(dirac.getReplicas(lfns, active=True, preferDisk = True))
 
 
 def getFile(lfns, destDir=''):

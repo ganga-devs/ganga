@@ -1,0 +1,41 @@
+**************************************************************************************************************
+6.1.21 (2016/06/29)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Performance improvements when handling large lists of GangaObjects
+* Removed Ganga re-exec during launch
+* `runMonitoring` now has default timeout of 5min (300s) to allow long jobs to correctly monitor and update subjobs on backends
+* Fixed bug in IPython buffer flushing whilst typing multi-line functions
+* Fixed problem with Registry file locking
+* Improved shutdown code
+* New interactive sessions will stop the monitoring loop if existing sessions are discovered via lockfiles on disk
+   ** type `enableMonitoring()` to re-enable monitoring in these sessions if required (may be unsafe)
+* Various code cleanups
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Added `monitorJobs` and `getBulkStateTime` to Ganga<->(LHCb)Dirac interface
+* Significantly reduced number of calls to DIRAC backend for job monitoring/completion
+* Slightly better handling of missing/invalid DIRAC proxy whilst running
+* Bugfixes around Offline file Splitter and optimisations around extremely large numbers of LFN (list->set)
+* General performance improvements
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Fixing some bugs in the construction of large Datasets from BKQuery
+   ** (most time taken in executing a new large request against DIRAC)
+* Added intial (WORK IN PROGRESS) support for CMake projects via new `GaudiRun` Application
+   ** Still doesn't fully support Gauss+GaussSplitter
+   ** Initial functionality of old-style Gaudi and GaudiPython applications complete
+   ** No support (yet) for MassStorageFile in the inputdata
+   ** No support (yes) for unique inputfiles per subjob via a splitter
+* Improved handling of LHCbDirac environment caching
+
+**************************************************************************************************************
