@@ -7,6 +7,7 @@ import random
 import threading
 import uuid
 import shutil
+import mimetypes
 
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
@@ -192,6 +193,9 @@ class GaudiRunRTHandler(IRuntimeHandler):
             raise ApplicationConfigurationError(None, 'Prepared folders not supported yet, please fix this in future')
         else:
             for f in input_files:
+              if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+                continue
+              else:
                 input_sand.append(File(f))
 
         logger.debug("input_sand: %s" % input_sand)
