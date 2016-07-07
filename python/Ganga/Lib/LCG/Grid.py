@@ -1083,7 +1083,7 @@ def arc_submit(jdlpath, ce, verbose):
 
     # write to a temporary XML file as otherwise can't submit in parallel
     tmpstr = '/tmp/' + randomString() + '.arcsub.xml'
-    cmd = 'arcsub %s -S org.nordugridftpjob -j %s' % (
+    cmd = 'arcsub %s -S org.nordugrid.gridftpjob -j %s' % (
         __arc_get_config_file_arg__(), tmpstr)
     exec_bin = True
 
