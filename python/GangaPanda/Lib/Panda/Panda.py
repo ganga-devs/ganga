@@ -24,7 +24,7 @@ from Ganga.Utility.logging import getLogger
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import convertDQ2ToClient, getLocations, getDatasets, getElementsFromContainer
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getScopeAndDSName, getLocations, getDatasets, getElementsFromContainer
 
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 
@@ -443,46 +443,36 @@ def uploadSources(path,sources):
 
 
 def getLibFileSpecFromLibDS(libDS):
-    #from pandatools import Client
+    from rucio.client import Client
     from taskbuffer.FileSpec import FileSpec
 
     # query files in lib dataset to reuse libraries
     logger.info("query files in %s" % libDS)
-    # RUCIO patch
-    #tmpList = Client.queryFilesInDataset(libDS,False)
-    tmpList = convertDQ2ToClient(libDS)
 
     tmpFileList = []
     tmpGUIDmap = {}
     tmpMD5Sum  = None
     tmpFSize   = None
     tmpScope   = None
-    for fileName in tmpList.keys():
+    scope_dsname = getScopeAndDSName(libDS)
+    for fileDict in Client().list_files(scope_dsname[0], scope_dsname[1]):
+        fileName = fileDict['name']
+
         # ignore log file
-        if len(re.findall('.log.tgz.\d+$',fileName)) or len(re.findall('.log.tgz$',fileName)):
+        if len(re.findall('.log.tgz.\d+$', fileName)) or len(re.findall('.log.tgz$', fileName)):
             continue
         tmpFileList.append(fileName)
-        tmpGUIDmap[fileName] = tmpList[fileName]['guid'] 
-        tmpMD5Sum  = tmpList[fileName]['md5sum']
-        tmpFSize   = tmpList[fileName]['fsize']
-        tmpScope   = tmpList[fileName]['scope']
-    # incomplete libDS
-    if tmpFileList == []:
-        # query files in dataset from Panda
-        status,tmpMap = Client.queryLastFilesInDataset([libDS],False)
-        # look for lib.tgz
-        for fileName in tmpMap[libDS]:
-            # ignore log file
-            if len(re.findall('.log.tgz.\d+$',fileName)) or len(re.findall('.log.tgz$',fileName)):
-                continue
-            tmpFileList.append(fileName)
-            tmpGUIDmap[fileName] = None
+        tmpGUIDmap[fileName] = fileDict['guid']
+        tmpMD5Sum  = fileDict['adler32']
+        tmpFSize   = fileDict['bytes']
+        tmpScope   = fileDict['scope']
+
     # incomplete libDS
     if tmpFileList == []:
         raise BackendError('Panda',"lib dataset %s is empty" % libDS)
     # check file list                
     if len(tmpFileList) != 1:
-        raise BackendError('Panda',"dataset %s contains multiple lib.tgz files : %s" % (libDS,tmpFileList))
+        raise BackendError('Panda',"dataset %s contains multiple lib.tgz files : %s" % (libDS, tmpFileList))
     # instantiate FileSpec
     fileBO = FileSpec()
     fileBO.lfn = tmpFileList[0]

@@ -21,6 +21,20 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
+
+def getScopeAndDSName(dataset):
+    """Return the scope and name of the given dataset
+    Args:
+        dataset(str): the dataset name to retrieve the scope from
+        """
+    if dataset.find(":") > -1:
+        toks = dataset.split(':')
+        return toks[0], toks[1]
+
+    toks = dataset.split('.')
+    return toks[0], dataset
+
+
 def convertDQ2ToClient(dataset):
 
     try:
