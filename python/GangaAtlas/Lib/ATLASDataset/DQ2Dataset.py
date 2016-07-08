@@ -35,31 +35,6 @@ def getScopeAndDSName(dataset):
     return toks[0], dataset
 
 
-def convertDQ2ToClient(dataset):
-
-    try:
-        #dq2_lock.acquire()
-        tmpListdq2 = dq2.listFilesInDataset(dataset, long=False)[0]
-    except:
-        tmpListdq2 = {}
-    finally:
-        #dq2_lock.release()
-        pass
-
-    tmpListPanda = {}
-
-    for key, value in tmpListdq2.iteritems():
-        tmpvalue = {}
-        tmpvalue['scope'] = value['scope']
-        tmpvalue['md5sum'] = value['checksum']
-        lfn = value['lfn']
-        tmpvalue['fsize'] = value['filesize']
-        tmpvalue['guid'] = str(key)
-        tmpListPanda[lfn] = tmpvalue
-
-    return tmpListPanda
-
-
 def getLocations(dataset):
     
     try:
