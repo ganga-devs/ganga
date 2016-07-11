@@ -39,8 +39,8 @@ class BoxMetadataObject(GangaObject):
 
 class BoxRegistry(Registry):
 
-    def __init__(self, name, doc, update_index_time=30):
-        super(BoxRegistry, self).__init__(name, doc, update_index_time)
+    def __init__(self, name, doc):
+        super(BoxRegistry, self).__init__(name, doc)
 
         self.stored_slice = BoxRegistrySlice(self.name)
         self.stored_slice.objects = self
@@ -51,8 +51,8 @@ class BoxRegistry(Registry):
 
     def _setName(self, obj, name):
         nobj = self.metadata[self.find(obj)]
-        obj._getWriteAccess()
-        nobj._getWriteAccess()
+        obj._getSessionLock()
+        nobj._getSessionLock()
         nobj.name = name
         nobj._setDirty()
         obj._setDirty()

@@ -1475,7 +1475,6 @@ class Job(GangaObject):
 
             logger.info("submitting job %s", self.getFQID('.'))
             # prevent other sessions from submitting this job concurrently.
-            # Also calls _getWriteAccess
             self.updateStatus('submitting')
 
             self.getDebugWorkspace(create=False).remove(preserve_top=True)
@@ -1780,7 +1779,7 @@ class Job(GangaObject):
                 pass
 
         try:
-            self._releaseWriteAccess()
+            self._releaseSessionLockAndFlush()
         except Exception as err:
             logger.debug("Remove Err: %s" % err)
             pass
