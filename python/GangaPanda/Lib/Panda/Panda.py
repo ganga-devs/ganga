@@ -24,7 +24,7 @@ from Ganga.Utility.logging import getLogger
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getScopeAndDSName, getLocations, getDatasets, getElementsFromContainer
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getScopeAndDSName, getDatasets, getElementsFromContainer
 
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 
@@ -231,111 +231,86 @@ def queueToAllowedSites(queue):
     return allowed_allowed_sites
 
 def runPandaBrokerage(job):
-    #from pandatools import Client
+
+    # import and create the Rucio client
+    from rucio.client import Client
+    rucio_client = Client()
+
+    # import the Panda Client
+    from pandatools import Client as PandaClient
+
+    # refresh panda info - not needed?
     refreshPandaSpecs()
 
     tmpSites = []
+
     # get locations when site==AUTO
     if job.backend.site == "AUTO":
-        libdslocation = []
+
+        libdslocation = ''
         if job.backend.libds:
-            try:
-                # RUCIO patch
-                #libdslocation = Client.getLocations(job.backend.libds,[],job.backend.requirements.cloud,False,False)
-                info = getLocations(job.backend.libds)
-                location = info.values()[0][1]
-                libdslocation = convertDQ2NamesToQueueName(location)
-            except exceptions.SystemExit:
-                raise BackendError('Panda','Error in Client.getLocations for libDS')
+            scope_dsname = getScopeAndDSName(job.backend.libds)
+            location = rucio_client.list_dataset_replicas(scope_dsname[0], scope_dsname[1]).next()['rse']
+            libdslocation = PandaClient.convertDQ2toPandaIDList(location)
+
             if not libdslocation:
-                raise ApplicationConfigurationError(None,'Could not locate libDS %s'%job.backend.libds)
+                raise ApplicationConfigurationError(None, 'Could not locate libDS %s' % job.backend.libds)
             else:
-                libdslocation = libdslocation.values()[0]
-                try:
-                    job.backend.requirements.cloud = Client.PandaSites[libdslocation[0]]['cloud']
-                except:
-                    raise BackendError('Panda','Could not map libds site %s to a cloud'%libdslocation)
+                job.backend.requirements.cloud = PandaClient.PandaSites[libdslocation[0]]['cloud']
+
+        # initially allow all sites then do an intersect on any sites where data is located
+        for site, spec in PandaClient.PandaSites.iteritems():
+            if spec['cloud'] == job.backend.requirements.cloud and spec['status'] == 'online' and \
+                    not PandaClient.isExcudedSite(site) and site not in job.backend.requirements.excluded_sites:
+                if not libdslocation or site == libdslocation:
+                    tmpSites.append(site)
 
         dataset = ''
         if job.inputdata:
-            try:
-                dataset = job.inputdata.dataset[0]
-            except:
-                try:
-                    dataset = job.inputdata.DQ2dataset
-                except:
-                    raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
-            if not dataset:
-                raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
 
-            try:
+            for dataset in job.inputdata.dataset:
+                new_locs = []
+                if not dataset:
+                    raise ApplicationConfigurationError(None, 'Could not determine input datasetname for Panda '
+                                                              'brokerage')
 
-                # RUCIO patch
-                # FIXME: no cloud selection
-                # dsLocationMap = Client.getLocations(dataset,fileList,job.backend.requirements.cloud,False,False,expCloud=True)
-                info = getLocations(dataset)
-                location = info.values()[0][1]
-                dsLocationMap = convertDQ2NamesToQueueName(location)
-                if not dsLocationMap:
-                    logger.info('Dataset not found in cloud %s, searching all clouds...'%job.backend.requirements.cloud)
-                    # RUCIO patch
-                    #dsLocationMap = Client.getLocations(dataset,fileList,job.backend.requirements.cloud,False,False,expCloud=False)
-                    info = getLocations(dataset)
-                    location = info.values()[0][1]
-                    dsLocationMap = convertDQ2NamesToQueueName(location)
+                scope_dsname = getScopeAndDSName(dataset)
+                for loc in rucio_client.list_dataset_replicas(scope_dsname[0], scope_dsname[1]):
+                    for pid in PandaClient.convertDQ2toPandaIDList(loc['rse']):
+                        if pid not in new_locs and (not libdslocation or pid == libdslocation):
+                            new_locs.append(pid)
 
-            except exceptions.SystemExit:
-                raise BackendError('Panda','Error in Client.getLocations')
-            # no location
-            if dsLocationMap == {}:
-                raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s" % (job.backend.requirements.cloud,dataset))
-            # run brokerage
-            for tmpItem in dsLocationMap.values():
-                if not libdslocation or tmpItem == libdslocation:
-                    tmpSites.append(tmpItem[0])
-        else:
-            for site,spec in Client.PandaSites.iteritems():
-                if spec['cloud']==job.backend.requirements.cloud and spec['status']=='online' and not Client.isExcudedSite(site):
-                    if not libdslocation or site == libdslocation:
-                        tmpSites.append(site)
-    
-        newTmpSites = []
-        for site in tmpSites:
-            if site not in job.backend.requirements.excluded_sites:
-                newTmpSites.append(site)
-        tmpSites=newTmpSites
+                tmpSites = [site for site in new_locs if site in tmpSites]
+
+        if not tmpSites:
+            raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s, %s" %
+                               (job.backend.requirements.cloud, dataset, job.backend.libds))
+
     else:
         tmpSites = [job.backend.site]
- 
-    if not tmpSites: 
-        raise BackendError('Panda',"ERROR : could not find supported locations in the %s cloud for %s, %s" % (job.backend.requirements.cloud,dataset,job.backend.libds))
-    
+
     tag = ''
+    if job.application.atlas_production=='':
+        tag = 'Atlas-%s' % job.application.atlas_release
+    else:
+        tag = '%s-%s' % (job.application.atlas_project,job.application.atlas_production)
+
     try:
-        if job.application.atlas_production=='':
-            tag = 'Atlas-%s' % job.application.atlas_release
-        else:
-            tag = '%s-%s' % (job.application.atlas_project,job.application.atlas_production)
-    except:
-        # application is probably AthenaMC
-        try:
-            if len(job.application.atlas_release.split('.')) == 3:
-                tag = 'Atlas-%s' % job.application.atlas_release
-            else:
-                tag = 'AtlasProduction-%s' % job.application.atlas_release
-        except:
-            logger.debug("Could not determine athena tag for Panda brokering")
-    try:
-        status,out = Client.runBrokerage(tmpSites,tag,verbose=False,trustIS=config['trustIS'],processingType=config['processingType'])
+        status,out = PandaClient.runBrokerage(tmpSites, tag, verbose=False, trustIS=config['trustIS'],
+                                              processingType=config['processingType'])
     except exceptions.SystemExit:
-        job.backend.reason = 'Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1])
-        raise BackendError('Panda','Exception in Client.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
+        job.backend.reason = 'Exception in PandaClient.runBrokerage: %s %s'%(sys.exc_info()[0],sys.exc_info()[1])
+        raise BackendError('Panda', 'Exception in PandaClient.runBrokerage: %s %s' %
+                           (sys.exc_info()[0], sys.exc_info()[1]))
+
     if status != 0:
         job.backend.reason = 'Non-zero to run brokerage for automatic assignment: %s' % out
         raise BackendError('Panda','Non-zero to run brokerage for automatic assignment: %s' % out)
-    if out not in Client.PandaSites:
+
+    if out not in PandaClient.PandaSites:
         job.backend.reason = 'brokerage gave wrong PandaSiteID:%s' % out
-        raise BackendError('Panda','brokerage gave wrong PandaSiteID:%s' % out)
+        raise BackendError('Panda', 'brokerage gave wrong PandaSiteID:%s' % out)
+
     # set site
     job.backend.site = out
 
@@ -345,11 +320,13 @@ def runPandaBrokerage(job):
 
     # long queue
     if job.backend.requirements.long:
-        job.backend.site = re.sub('ANALY_','ANALY_LONG_',job.backend.site)
+        job.backend.site = re.sub('ANALY_', 'ANALY_LONG_',job.backend.site)
+
     job.backend.actualCE = job.backend.site
+
     # correct the cloud in case site was not AUTO
-    job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']
-    logger.info('Panda brokerage results: cloud %s, site %s'%(job.backend.requirements.cloud,job.backend.site))
+    job.backend.requirements.cloud = PandaClient.PandaSites[job.backend.site]['cloud']
+    logger.info('Panda brokerage results: cloud %s, site %s'%(job.backend.requirements.cloud, job.backend.site))
 
 
 def selectPandaSite(job,sites):

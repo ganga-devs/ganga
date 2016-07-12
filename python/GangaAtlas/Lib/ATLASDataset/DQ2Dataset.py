@@ -35,22 +35,6 @@ def getScopeAndDSName(dataset):
     return toks[0], dataset
 
 
-def getLocations(dataset):
-    
-    try:
-        #dq2_lock.acquire()
-        try:
-            locations = dq2.listDatasetReplicas(dataset)
-        except:
-            logger.error('Dataset %s not found !', dataset)
-            return []
-    finally:
-        #dq2_lock.release()
-        pass
-
-    return locations
-
-
 def getDatasets(name):
     '''helper function for data dict'''
 
