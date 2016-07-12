@@ -230,6 +230,7 @@ def queueToAllowedSites(queue):
 
     return allowed_allowed_sites
 
+
 def runPandaBrokerage(job):
 
     # import and create the Rucio client
