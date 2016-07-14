@@ -1,3 +1,5 @@
+from Ganga.GPIDev.Base.Proxy import stripProxy
+
 try:
     from unittest.mock import patch
 except ImportError:
@@ -46,3 +48,35 @@ def test_submit_kill_resubmit(gpi):
         j.resubmit()
         submit.assert_called_once()
         assert j.backend.id == 'https://example.com:9000/43'
+
+
+def test_submit_monitor(gpi):
+    from Ganga.GPI import Job, LCG
+    j = Job()
+    j.backend = LCG()
+
+    job_id = 'https://example.com:9000/42'
+
+    with patch('Ganga.Lib.LCG.Grid.submit', return_value=job_id) as submit:
+        j.submit()
+        submit.assert_called_once()
+        assert j.backend.id == job_id
+
+    status_info = {
+        'status': 'Submitted',
+        'name': '',
+        'destination': '',
+        'reason': '',
+        'exit': '',
+        'is_node': False,
+        'id': job_id
+    }
+
+    status_results = [
+        ([status_info], []),  # Once for the proper status call
+        ([], [])  # Once for the bulk monitoring call
+    ]
+
+    with patch('Ganga.Lib.LCG.Grid.status', side_effect=status_results) as status:
+        stripProxy(j).backend.master_updateMonitoringInformation([stripProxy(j)])
+        assert status.call_count == 2
