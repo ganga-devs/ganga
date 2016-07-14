@@ -2070,8 +2070,8 @@ class Job(GangaObject):
             uniqueValues = []
 
             for val in value:
-                dir_ = val.localDir if val.localDir else ''
-                name_ = val.namePattern if val.namePattern else ''
+                dir_ = val.localDir or ''
+                name_ = val.namePattern or ''
                 key = '%s%s' % (getName(val), os.path.join(dir_, name_))
                 if key not in uniqueValuesDict:
                     uniqueValuesDict.append(key)
