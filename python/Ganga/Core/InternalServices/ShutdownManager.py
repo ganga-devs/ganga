@@ -29,9 +29,9 @@ def register_exitfunc():
     This registers the exit functiona and actually tracks that it's done so,
     registereing this  300 times is just bad...
     """
-    if not _has_registered:
+    if not register_exitfunc._has_registered:
         atexit.register(_ganga_run_exitfuncs)
-        _has_registered = True
+        register_exitfunc._has_registered = True
 register_exitfunc._has_registered = False
 
 def _ganga_run_exitfuncs():
