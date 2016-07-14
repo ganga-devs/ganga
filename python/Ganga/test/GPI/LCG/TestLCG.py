@@ -49,6 +49,9 @@ def test_submit_kill_resubmit(gpi):
         submit.assert_called_once()
         assert j.backend.id == 'https://example.com:9000/43'
 
+    with patch('Ganga.Lib.LCG.Grid.cancel', return_value=True):
+        j.kill()
+
 
 def test_submit_monitor(gpi):
     from Ganga.GPI import Job, LCG
@@ -80,3 +83,6 @@ def test_submit_monitor(gpi):
     with patch('Ganga.Lib.LCG.Grid.status', side_effect=status_results) as status:
         stripProxy(j).backend.master_updateMonitoringInformation([stripProxy(j)])
         assert status.call_count == 2
+
+    with patch('Ganga.Lib.LCG.Grid.cancel', return_value=True):
+        j.kill()
