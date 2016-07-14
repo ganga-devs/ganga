@@ -1120,6 +1120,7 @@ class GangaObject(Node):
         Return the parent Job which manages this object or throw an AssertionError is non exists
         Unknown: Why is this a GangaObject method and not a Node method?
         """
+        from Ganga.GPIDev.Lib.Job import Job
         if self._getParent():
             r = self._getRoot(cond=lambda o: isinstance(o, Job))
             if not isinstance(r, Job):
