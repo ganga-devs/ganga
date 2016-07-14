@@ -58,20 +58,18 @@ class MultiPostProcessor(IPostProcessor):
     def __init__(self, *args):
         super(MultiPostProcessor, self).__init__()
 
-        if len(args) == 1 or len(args) > 1 and isType(args, (GangaList, list)):
-            if isinstance(args, list) or isType(args, GangaList):
-                for process in args:
-                    self.addProcess(process)
-            elif isType(args, MultiPostProcessor):
-                for process in stripProxy(args).process_objects:
-                    self.addProcess(process)
+        for process in args:
+            if isinstance(process, MultiPostProcessor):
+                for process_ in process.process_objects:
+                    self.addProcess(process_)
+            elif isinstance(process, (list, tuple, GangaList)):
+                for process_ in process:
+                    self.addProcess(process_)
             else:
-                self.addProcess(args)
+                self.addProcess(process)
 
-            if hasattr(self.process_objects, 'order'):
-                self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
-        elif args and len(args) != 0:
-            raise GangaException("MultiPostProcessor error with arguments: '%s'" % str(args))
+        if hasattr(self.process_objects, 'order'):
+            self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
 
     def __str__(self):
         if not isType(self.process_objects, GangaObject):

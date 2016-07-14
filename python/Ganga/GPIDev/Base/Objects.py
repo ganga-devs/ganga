@@ -5,14 +5,9 @@
 ##########################################################################
 # NOTE: Make sure that _data and __dict__ of any GangaObject are only referenced
 # here - this is necessary for write locking and lazy loading!
-# IN THIS FILE:
-# * Make sure every time _data or __dict__ is accessed that _data is not None. If yes, do:
-#    obj._getReadAccess()
-# * Make sure every write access is preceded with:
-#    obj._getWriteAccess()
-#   and followed by
-#    obj._setDirty()
 
+from functools import partial
+import inspect
 import abc
 import threading
 from contextlib import contextmanager
@@ -45,20 +40,7 @@ def _getName(obj):
 
 logger = getLogger(modulename=1)
 
-_imported_GangaList = None
-
 do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data_dict', '_read_lock', '_write_lock', '_proxyObject']
-
-def _getGangaList():
-    """
-    This method gets around the problem that GangaList can't be imported at a module level here
-    """
-    global _imported_GangaList
-    if _imported_GangaList is None:
-        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-        _imported_GangaList = GangaList
-    return _imported_GangaList
-
 
 def synchronised(f):
     """
@@ -354,15 +336,13 @@ class Descriptor(object):
             return obj_index[name]
 
         # Since we couldn't find the information in the cache, we will need to fully load the object
+        obj._loadObject()
 
-        # Guarantee that the object is now loaded from disk
-        obj._getReadAccess()
-
-        # First try to load the object from the attributes on disk
+        # Do we have the attribute now?
         if name in obj._data:
             return obj._data[name]
 
-        # Finally, get the default value from the schema
+        # Last option: get the default value from the schema
         if obj._schema.hasItem(name):
             return obj._schema.getDefaultValue(name)
 
@@ -402,7 +382,8 @@ class Descriptor(object):
         else:
             if not isinstance(v, Node) and isinstance(v, (list, tuple)):
                 try:
-                    GangaList = _getGangaList()
+                    # must import here as will fail at the top
+                    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
                     new_v = GangaList()
                 except ImportError:
                     new_v = []
@@ -434,8 +415,10 @@ class Descriptor(object):
             name (str): This is th name of the attribute which we're setting
         """
 
+        # must import here as will fail at the top
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+
         item = obj._schema[name]
-        GangaList = _getGangaList()
         if isinstance(v, GangaList):
             categories = v.getCategory()
             len_cat = len(categories)
@@ -470,16 +453,20 @@ class Descriptor(object):
         if hasattr(obj, '_checkset_name'):
             checkSet = self._bind_method(obj, self._checkset_name)
             if checkSet is not None:
-                checkSet(_val)
+                checkSet(val)
+
         if hasattr(obj, '_filter_name'):
             this_filter = self._bind_method(obj, self._filter_name)
             if this_filter:
-                val = this_filter(_val)
+                val = this_filter(val)
 
         self._check_getter()
 
-        # ON-DISK LOCKING
-        obj._getWriteAccess()
+        # make sure we have the session lock
+        obj._getSessionLock()
+
+        # make sure the object is loaded if it's attached to a registry
+        obj._loadObject()
 
         _set_name = _getName(self)
 
@@ -488,7 +475,6 @@ class Descriptor(object):
         obj.setSchemaAttribute(_set_name, new_value)
 
         obj._setDirty()
-
 
     @staticmethod
     def cleanValue(obj, val, name):
@@ -499,7 +485,7 @@ class Descriptor(object):
             val (unknown): This is the value we want to assign to the attribute
             name (str): This is the name of the attribute which we're changing
         """
-        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
+        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList, GangaList
 
         item = obj._schema[name]
 
@@ -508,7 +494,6 @@ class Descriptor(object):
             # These objects are lists
             _preparable = True if item['preparable'] else False
             if len(val) == 0:
-                GangaList = _getGangaList()
                 new_val = GangaList()
             else:
                 if isinstance(item, ComponentItem):
@@ -518,7 +503,6 @@ class Descriptor(object):
         else:
             ## Else we need to work out what we've got.
             if isinstance(item, ComponentItem):
-                GangaList = _getGangaList()
                 if isinstance(val, (list, tuple, GangaList)):
                     ## Can't have a GangaList inside a GangaList easily so lets not
                     if isinstance(obj, GangaList):
@@ -549,7 +533,9 @@ class Descriptor(object):
             v (unknown): Object we want a new copy of
             extra_args (tuple): Contains the name of the attribute being copied and the object which owns the object being copied
         """
-        GangaList = _getGangaList()
+        # must import here as will fail at the top
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+
         name=extra_args[0]
         obj=extra_args[1]
         if isinstance(v, (list, tuple, GangaList)):
@@ -1004,55 +990,23 @@ class GangaObject(Node):
             _timeOut = 5. # 5sec hardcoded default
         return _timeOut
 
-    def _getWriteAccess(self):
-        """ tries to get write access to the object.
-        Raise LockingError (or so) on fail """
-        root = self._getRoot()
-        reg = root._getRegistry()
+    def _getSessionLock(self):
+        """Acquires the session lock on this object"""
+        reg = self._getRegistry()
         if reg is not None:
-            _haveLocked = False
-            _counter = 1
-            _sleep_size = 1
-            _timeOut = self._getIOTimeOut()
-            while not _haveLocked:
-                err = None
-                from Ganga.Core.GangaRepository.Registry import RegistryLockError, RegistryAccessError
-                reg._write_access(root)
-                try:
-                    reg._write_access(root)
-                    _haveLocked = True
-                except (RegistryLockError, RegistryAccessError) as x:
-                    #import traceback
-                    #traceback.print_stack()
-                    from time import sleep
-                    sleep(_sleep_size)  # Sleep 2 sec between tests
-                    logger.info("Waiting on Write access to registry: %s" % reg.name)
-                    logger.debug("err: %s" % x)
-                    err = x
-                _counter += 1
-                # Sleep 2 sec longer than the time taken to bail out
-                if _counter * _sleep_size >= _timeOut + 2:
-                    logger.error("Failed to get access to registry: %s. Reason: %s" % (reg.name, err))
-                    if err is not None:
-                        raise err
+            reg._acquire_session_lock(self._getRoot())
 
-    def _releaseWriteAccess(self):
-        """ releases write access to the object.
-        Raise LockingError (or so) on fail
+    def _releaseSessionLockAndFlush(self):
+        """ Releases the session lock for this object
         Please use only if the object is expected to be used by other sessions"""
-        root = self._getRoot()
-        reg = root._getRegistry()
+        reg = self._getRegistry()
         if reg is not None:
-            logger.debug("Releasing: %s" % (reg.name))
-            reg._release_lock(root)
+            reg._release_session_lock_and_flush(self._getRoot())
 
-    def _getReadAccess(self):
-        """ makes sure the objects _data is there and the object itself has a recent state.
-        Raise RepositoryError"""
-        root = self._getRoot()
-        reg = root._getRegistry()
-        if reg is not None:
-            reg._read_access(root, self)
+    def _loadObject(self):
+        """If there's an attached registry then ask it to load this object"""
+        if self._registry is not None:
+            self._registry._load(self)
 
     # define when the object is read-only (for example a job is read-only in
     # the states other than new)
@@ -1090,8 +1044,7 @@ class GangaObject(Node):
         Get the registry which is managing this GangaObject
         The registry is only managing a root object so it gets this first
         """
-        r = self._getRoot()
-        return r._registry
+        return self._getRoot()._registry
 
     def _getRegistryID(self):
         """
