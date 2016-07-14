@@ -64,7 +64,13 @@ class LocalFile(IGangaFile):
 
 
     def __setattr__(self, attr, value):
-
+        """
+        This is an overloaded setter method to make sure that we're auto-expanding the filenames of files which exist.
+        In the case we're assigning any other attributes the value is simply passed through
+        Args:
+            attr (str): This is the name of the attribute which we're assigning
+            value (unknown): This is the value being assigned.
+        """
         actual_value = value
         if attr == 'namePattern':
             if len(value.split(os.sep)) > 1:
@@ -218,8 +224,9 @@ class LocalFile(IGangaFile):
 
     def put(self):
 	"""
-        For the LocalFile it makes no sense to do anything here
+        Copy the file to the detination (in the case of LocalFile the localDir)
         """
+        #FIXME this method should be written to work with some other parameter than localDir for job outputs but for now this 'works'
         if self.localDir:
             try:
                 job = self.getJobObject()

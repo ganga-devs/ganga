@@ -631,7 +631,7 @@ class ProxyDataDescriptor(object):
         ## Does not modify val?
         self._check_type(obj, final_val)
 
-        raw_obj.__setattr__(attr_name, final_val)
+        setattr(raw_obj, attr_name, final_val)
 
 
 def proxy_wrap(f):
@@ -775,6 +775,9 @@ def GPIProxyClassFactory(name, pluginclass):
             if len(args) == 1 and isinstance(args[0], pluginclass):
                 instance = deepcopy(stripProxy(args[0]))
             # Case 2 file_ = LocalFile('myFile.txt')   # We need to pass the (stripped) arguments to the constructor only if the 
+            # Remember self = 1
+            # For the moment we're warning the user until it's clear this is a safe thing to do, aka once all classes are deemed safe
+            # The args will simply be passed through regardless
             elif len(args) < len(getargspec(pluginclass.__init__)[0]):
                 clean_args = (stripProxy(arg) for arg in args)
                 instance = pluginclass(*clean_args)
@@ -783,6 +786,7 @@ def GPIProxyClassFactory(name, pluginclass):
                 instance = pluginclass()
 
         ## Avoid intercepting any of the setter method associated with the implRef as they could trigger loading from disk
+        ## These are protected objects in the setter and it will throw an exception if they're altered
         self.__dict__[implRef] = instance
         instance.__dict__[proxyObject] = self
 
@@ -817,6 +821,8 @@ def GPIProxyClassFactory(name, pluginclass):
             if stripProxy(self)._schema.hasAttribute(k):
                 this_arg = stripProxy(kwds[k])
                 raw_self = stripProxy(self)
+                # This calls the same logic when assigning a named attribute as when we're assigning it to the object
+                # There is logic here which we 'could' duplicate but it is over 100 lines of code which then is duplicating funtionality written elsewhere
                 ProxyDataDescriptor(k, False).__set__(raw_self, raw_self._attribute_filter__set__(k, this_arg))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])

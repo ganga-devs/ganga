@@ -65,10 +65,18 @@ class File(GangaObject):
             self.subdir = subdir
 
     def __setattr__(self, attr, value):
+        """
+        This is an overloaded setter method to make sure that we're auto-expanding the filenames of files which exist.
+        In the case we're assigning any other attributes the value is simply passed through
+        Args:
+            attr (str): This is the name of the attribute which we're assigning
+            value (unknown): This is the value being assigned.
+        """
         actual_value = value
         if attr == "name":
             actual_value = expandfilename(value)
-        super(File, self).__setattr__(attr, value)
+        super(File, self).__setattr__(attr, actual_value)
+
 
     def _attribute_filter__set__(self, attribName, attribValue):
         if attribName is 'name':
