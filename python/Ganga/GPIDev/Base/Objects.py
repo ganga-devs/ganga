@@ -433,6 +433,27 @@ class Descriptor(object):
 
         return v_copy
 
+    @staticmethod
+    def check_inheritance(obj, attr_name):
+        """
+        This function crawls down the given attr_name for a given obj and checks that the parents are set correctly
+        Args:
+            obj (GangaObject): This is the object which controls the attribute we're examining
+            attr_name (str): This is the name of the attribute which we're going ot examine to find it's parents
+        """
+        attr_item = obj._schema.getItem(attr_name)
+        this_attr = getattr(obj, attr_name)
+        if hasattr(attr_item, '_getter_name') and attr_item._getter_name:
+            return
+        if isinstance(this_attr, Node):
+            if hasattr(this_attr, '__len__'):
+                for item in this_attr:
+                    if isinstance(item, Node):
+                        for this_attr in item._schema.allItemNames():
+                            Descriptor.check_inheritance(item, this_attr)
+                    else:
+                        assert this_attr._getParent() is obj
+
     @synchronised_set_descriptor
     def __set__(self, obj, val):
         """
@@ -475,6 +496,8 @@ class Descriptor(object):
 
         if isinstance(val, Node):
             val._setDirty()
+
+        Descriptor.check_inheritance(obj, _set_name)
 
     @staticmethod
     def cleanValue(obj, val, name):
