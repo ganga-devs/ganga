@@ -449,10 +449,10 @@ class Descriptor(object):
             if hasattr(this_attr, '__len__'):
                 for item in this_attr:
                     if isinstance(item, Node):
-                        for this_attr in item._schema.allItemNames():
-                            Descriptor.check_inheritance(item, this_attr)
-                    else:
-                        assert this_attr._getParent() is obj
+                        for this_attr_ in item._schema.allItemNames():
+                            Descriptor.check_inheritance(item, this_attr_)
+            else:
+                assert this_attr._getParent() is obj
 
     @synchronised_set_descriptor
     def __set__(self, obj, val):
