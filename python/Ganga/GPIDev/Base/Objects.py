@@ -150,19 +150,19 @@ class Node(object):
         cond is an optional function which may cut the search path: when it
         returns True, then the parent is returned as root
         """
+
         if self._getParent() is None:
             return self
+        root = None
         obj = self
         cond_test = cond is not None
-        while True:
+        while obj is not None:
+            root = obj
             if cond_test:
-                if cond(obj):
+                if cond(root):
                     break
-            if obj._getParent() is not None:
-                obj = obj._getParent()
-            else:
-                break
-        return obj
+            obj = obj._getParent()
+        return root
 
     # accept a visitor pattern
     @abc.abstractmethod
