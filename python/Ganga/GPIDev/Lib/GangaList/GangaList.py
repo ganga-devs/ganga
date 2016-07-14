@@ -345,10 +345,7 @@ class GangaList(GangaObject):
         return self._list.__ge__(self.__getListToCompare(obj_list))
 
     def __getitem__(self, index):
-        returnable = self._list.__getitem__(index)
-        if isinstance(returnable, Node):
-            returnable._setParent(self._getParent())
-        return returnable
+        return self._list.__getitem__(index)
 
     def _export___getitem__(self, index):
         return addProxy(self.__getitem__(index))
