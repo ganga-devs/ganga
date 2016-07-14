@@ -374,8 +374,6 @@ class Job(GangaObject):
 
         if name == 'outputfiles':
 
-            # THIS IS IMMENSELY FUGLY AND STUPID WHY FOR THE LOVE OF GOD WHY!
-
             currentOutputFiles = object.__getattribute__(self, name)
             currenUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
 
