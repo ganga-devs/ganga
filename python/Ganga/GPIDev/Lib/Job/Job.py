@@ -635,10 +635,13 @@ class Job(GangaObject):
                             logger.error("Error: %s" % err)
 
                     if backend_output_postprocess[backendClass][outputfileClass].lower() == 'client':
-                        logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
-                        outputfile.put()
-                        logger.debug("Cleaning up after put")
-                        outputfile.cleanUpClient()
+                        try:
+                            logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
+                            outputfile.put()
+                            logger.debug("Cleaning up after put")
+                            outputfile.cleanUpClient()
+                        except Exception as err:
+                            logger.error("Error Putting or cleaning up file: %s, err::%s" % (outputfile.namePattern, err))
 
         # leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)
