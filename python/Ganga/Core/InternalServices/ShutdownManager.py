@@ -10,7 +10,7 @@ import atexit
 # Ganga imports
 from Ganga.Core.GangaThread import GangaThreadPool
 from Ganga.Core.GangaThread.WorkerThreads import _global_queues, shutDownQueues
-from Ganga.Core import at_exit_should_wait_cb, monitoring_component
+from Ganga.Core import monitoring_component
 from Ganga.Core.InternalServices import Coordinator
 from Ganga.Runtime import Repository_runtime, bootstrap
 from Ganga.Utility import stacktracer
@@ -78,7 +78,7 @@ def _ganga_run_exitfuncs():
 
     # shutdown the threads in the GangaThreadPool
     try:
-        GangaThreadPool.getInstance().shutdown(should_wait_cb=at_exit_should_wait_cb)
+        GangaThreadPool.getInstance().shutdown()
     except Exception as err:
         logger.exception("Exception raised during shutdown of GangaThreadPool: %s" % err)
 
