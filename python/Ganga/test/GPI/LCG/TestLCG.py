@@ -30,6 +30,10 @@ def test_job_kill(gpi):
 
 
 def test_submit_kill_resubmit(gpi):
+    """
+    Test that a simple submit-kill-resubmit-kill cycle works
+    """
+
     from Ganga.GPI import Job, LCG
     j = Job()
     j.backend = LCG()
@@ -54,6 +58,10 @@ def test_submit_kill_resubmit(gpi):
 
 
 def test_submit_monitor(gpi):
+    """
+    Test that an LCG job can be monitored
+    """
+
     from Ganga.GPI import Job, LCG
     j = Job()
     j.backend = LCG()
