@@ -1,3 +1,6 @@
+from Ganga.Utility.GridShell import Shell
+
+
 def test_submit_no_proxy(mocker):
     """
     Test that the lack of a proxy object causes the submit to fail
@@ -37,6 +40,7 @@ def test_submit_bad_output(mocker):
     credential = mocker.patch('Ganga.Lib.LCG.Grid.credential', return_value=mocker.MagicMock())
     credential.return_value.isValid.return_value = True
     __set_submit_option__ = mocker.patch('Ganga.Lib.LCG.Grid.__set_submit_option__', return_value='  ')
+    mocker.patch('Ganga.Lib.LCG.Grid.getShell', return_value=Shell)
     cmd1 = mocker.patch('Ganga.Utility.GridShell.Shell.cmd1', return_value=(0, 'some bad output', False))
 
     from Ganga.Lib.LCG import Grid
@@ -58,6 +62,7 @@ def test_submit(mocker):
     credential = mocker.patch('Ganga.Lib.LCG.Grid.credential', return_value=mocker.MagicMock())
     credential.return_value.isValid.return_value = True
     __set_submit_option__ = mocker.patch('Ganga.Lib.LCG.Grid.__set_submit_option__', return_value='  ')
+    mocker.patch('Ganga.Lib.LCG.Grid.getShell', return_value=Shell)
     cmd1 = mocker.patch('Ganga.Utility.GridShell.Shell.cmd1', return_value=(0, 'https://example.com:9000/some_url', False))
 
     from Ganga.Lib.LCG import Grid
