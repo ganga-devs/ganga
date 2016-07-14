@@ -32,17 +32,17 @@ def test_submit_kill_resubmit(gpi):
     j = Job()
     j.backend = LCG()
 
-    with patch('Ganga.Lib.LCG.Grid.submit', return_value=42) as submit:
+    with patch('Ganga.Lib.LCG.Grid.submit', return_value='https://example.com:9000/42') as submit:
         j.submit()
         submit.assert_called_once()
-        assert j.backend.id == 42
+        assert j.backend.id == 'https://example.com:9000/42'
 
     with patch('Ganga.Lib.LCG.Grid.cancel', return_value=True) as cancel:
         j.kill()
         cancel.assert_called_once()
         assert j.status == 'killed'
 
-    with patch('Ganga.Lib.LCG.Grid.submit', return_value=43) as submit:
+    with patch('Ganga.Lib.LCG.Grid.submit', return_value='https://example.com:9000/43') as submit:
         j.resubmit()
         submit.assert_called_once()
-        assert j.backend.id == 43
+        assert j.backend.id == 'https://example.com:9000/43'
