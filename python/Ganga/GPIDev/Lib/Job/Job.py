@@ -627,34 +627,19 @@ class Job(GangaObject):
             backend_output_postprocess = self.getBackendOutputPostprocessDict()
             if backendClass in backend_output_postprocess:
                 if outputfileClass in backend_output_postprocess[backendClass]:
-                    if backend_output_postprocess[backendClass][outputfileClass].lower() == 'client':
-                        logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
-                        outputfile.put()
-                        for f in glob.glob(os.path.join(self.outputdir, outputfile.namePattern)):
-                            # FIXME should this be controlled via some per filetype config?
-                            if isinstance(outputfile, LocalFile):
-                                if not self.subjobs:
-                                    outputfile.setLocation()
-                                continue
-                            try:
-                                os.remove(f)
-                            except OSError as err:
-                                if err.errno != errno.ENOENT:
-                                    logger.error('failed to remove temporary/intermediary file: %s' % f)
-                                    logger.debug("Err: %s" % err)
-                                    raise err
-                                pass
 
-                    elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':
-                        if not self.subjobs:
-                            logger.info("Job %s Setting Location of %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
-                            outputfile.setLocation()
-                    else:
+                    if not self.subjobs:
+                        logger.info("Job %s Setting Location of %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                         try:
                             outputfile.setLocation()
                         except Exception as err:
                             logger.error("Error: %s" % err)
 
+                    if backend_output_postprocess[backendClass][outputfileClass].lower() == 'client':
+                        logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
+                        outputfile.put()
+                        logger.debug("Cleaning up after put")
+                        outputfile.cleanUpClient()
 
         # leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)
