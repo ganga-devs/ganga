@@ -297,9 +297,15 @@ valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(val, valTypeList, 
 
 class ProxyDataDescriptor(object):
 
-    def __init__(self, name, check_readOnly=True):
+    def __init__(self, name, checkReadOnly=True):
+        """
+        Descriptor which sits in fromnt  of raw unproxied objects
+        Args:
+            name (str): Name of the attribute which we're looking after here
+            checkReadOnly (bool): Should we check whether the attribute is read-only on assignment. (Only editable from within the Proxy layer itself not exposed to users)
+        """
         self._name = name
-        self._check_readOnly = check_readOnly
+        self._checkReadOnly = checkReadOnly
 
     # apply object conversion or if it failes, make the wrapper proxy
     def disguiseComponentObject(self, v):
@@ -571,7 +577,7 @@ class ProxyDataDescriptor(object):
                 raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now' % (repr(obj), attr_name))
             
 
-        if self._check_readOnly:
+        if self._checkReadOnly:
             # mechanism for locking of preparable attributes
             if item['preparable']:
                 ## Does not modify val
