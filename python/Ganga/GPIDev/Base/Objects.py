@@ -1128,7 +1128,7 @@ class GangaObject(Node):
             return r
         elif isinstance(self, Job):
             return self
-        raise AssertionError('No Parent associated with object instead root=\'%s\' for \'%s\'' % (repr(self), str(None)))
+        raise AssertionError('No Parent associated with object \'%s\'' % repr(self))
 
     # Customization of the GPI attribute assignment: Attribute Filters
     #
