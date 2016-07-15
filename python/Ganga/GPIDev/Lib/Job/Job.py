@@ -634,7 +634,7 @@ class Job(GangaObject):
                         except Exception as err:
                             logger.error("Error: %s" % err)
 
-                    if backend_output_postprocess[backendClass][outputfileClass].lower() == 'client':
+                    if backend_output_postprocess[backendClass][outputfileClass] == 'client':
                         try:
                             logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                             outputfile.put()
