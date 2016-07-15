@@ -9,6 +9,7 @@ from Ganga.GPIDev.Schema import Schema, Version
 
 from .exceptions import CredentialsError
 from .ICredentialRequirement import ICredentialRequirement
+from .ICredentialInfo import ICredentialInfo
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -19,6 +20,9 @@ class CredentialStore(GangaObject, collections.Mapping):
 
     It is not intended to store the credential objects between sessions,
     rather it will search the filesystem or create new credential files.
+
+    Its interface is similar to a dictionary with ``ICredentialRequirement``
+    objects as keys and ``ICredentialInfo`` objects as values.
 
     A single instance of this class makes most sense and should be created in the bootstrap and exported.
     """
@@ -36,6 +40,7 @@ class CredentialStore(GangaObject, collections.Mapping):
         self.credentials = set()
 
     def create(self, query, create=True, check_file=False):
+        # type: (ICredentialRequirement, bool, bool) -> ICredentialInfo
         """
         Create an ``ICredentialInfo`` for the query.
 
@@ -53,6 +58,7 @@ class CredentialStore(GangaObject, collections.Mapping):
         return cred
 
     def remove(self, credential_object):
+        # type: (ICredentialInfo) -> None
         """
         Args:
             credential_object (ICredentialInfo):
@@ -95,6 +101,7 @@ class CredentialStore(GangaObject, collections.Mapping):
         return len(self.credentials)
 
     def __getitem__(self, query):
+        # type: (ICredentialRequirement) -> ICredentialInfo
         """
         This function will try quite hard to find and wrap any missing credential
         but will never create a new file on disk
@@ -130,13 +137,14 @@ class CredentialStore(GangaObject, collections.Mapping):
         raise KeyError('Matching credential [{query}] not found in store.'.format(query=query))
 
     def get(self, query, default=None):
+        # type: (ICredentialRequirement, Optional[ICredentialInfo]) -> Optional[ICredentialInfo]
         """
         Return the value for ``query`` if ``query`` is in the store, else default.
         If ``default`` is not given, it defaults to ``None``, so that this method never raises a ``KeyError``.
 
         Args:
             query (ICredentialRequirement):
-            default (ICredentialRequirement):
+            default (ICredentialInfo):
 
         Returns:
             A single ICredentialInfo object which matches the requirements or ``default``
@@ -147,6 +155,7 @@ class CredentialStore(GangaObject, collections.Mapping):
             return default
     
     def get_all_matching_type(self, query):
+        # type: (ICredentialRequirement) -> Sequence[ICredentialInfo]
         """
         Returns all ``ICredentialInfo`` with the type that matches the query
         
@@ -160,6 +169,7 @@ class CredentialStore(GangaObject, collections.Mapping):
         return [cred for cred in self.credentials if type(cred) == query.info_class]
 
     def matches(self, query):
+        # type: (ICredentialRequirement) -> Sequence[ICredentialInfo]
         """
         Search the credentials in the store for all matches. They must match every condition exactly.
 
@@ -173,6 +183,7 @@ class CredentialStore(GangaObject, collections.Mapping):
         return [cred for cred in self.get_all_matching_type(query) if cred.check_requirements(query)]
     
     def match(self, query):
+        # type: (ICredentialRequirement) -> ICredentialInfo
         """
         Returns a single match from the store
 
@@ -194,6 +205,7 @@ class CredentialStore(GangaObject, collections.Mapping):
         return None
 
     def renew(self):
+        # type: () -> None
         """
         Renew all credentials which are invalid or will expire soon.
         It also uses the entries in `needed_credentials` and adds and renews those
@@ -209,6 +221,7 @@ class CredentialStore(GangaObject, collections.Mapping):
                 self.create(cred_req)
 
     def clear(self):
+        # type: () -> None
         """
         Remove all credentials in the system
         """
@@ -221,8 +234,9 @@ needed_credentials = set()  # type: Set[ICredentialRequirement]
 
 
 def get_needed_credentials():
+    # type: () -> Set[ICredentialRequirement]
     # Filter out any credentials which are valid
-    now_valid_creds = set()
+    now_valid_creds = set()  # type: Set[ICredentialRequirement]
     for cred_req in needed_credentials:
         cred = credential_store.get(cred_req)
         if cred and cred.is_valid():

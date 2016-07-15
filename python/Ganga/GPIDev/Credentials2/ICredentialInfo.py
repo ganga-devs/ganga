@@ -57,6 +57,7 @@ class ICredentialInfo(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, requirements, check_file=False, create=False):
+        # type: (ICredentialRequirement, bool, bool) -> None
         """
         Args:
             requirements (ICredentialRequirement): An object specifying the requirements
@@ -92,6 +93,7 @@ class ICredentialInfo(object):
 
     @property
     def location(self):
+        # type: () -> str
         """
         The location of the file on disk
         """
@@ -103,6 +105,7 @@ class ICredentialInfo(object):
 
     @abstractmethod
     def default_location(self):
+        # type: () -> str
         """
         Returns the default location for the credential file.
         This is the location that most tools will look for the file
@@ -112,18 +115,21 @@ class ICredentialInfo(object):
 
     @abstractmethod
     def create(self):
+        # type: () -> None
         """
         Create a new credential file
         """
         pass
 
     def renew(self):
+        # type: () -> None
         """
         Renew an existing credential file
         """
         self.create()
 
     def is_valid(self):
+        # type: () -> bool
         """
         Is the credential valid to be used
         """
@@ -132,19 +138,22 @@ class ICredentialInfo(object):
 
     @abstractmethod
     def expiry_time(self):
+        # type: () -> datetime.datetime
         """
-        Returns the expiry time as a datetime.datetime
+        Returns the expiry time
         """
         pass
 
     def time_left(self):
+        # type: () -> datetime.timedelta
         """
-        Returns the time left as a datetime.timedelta
+        Returns the time left
         """
         time_left = self.expiry_time() - datetime.now()
         return max(time_left, timedelta())
 
     def check_requirements(self, query):
+        # type: (ICredentialRequirement) -> bool
         """
         Args:
             query (ICredentialRequirement): The requirements to check ourself against
@@ -158,6 +167,7 @@ class ICredentialInfo(object):
         return all(self.check_requirement(query, requirementName) for requirementName in query._schema.datadict)
 
     def check_requirement(self, query, requirement_name):
+        # type: (ICredentialRequirement, str) -> bool
         """
         Args:
             query (ICredentialRequirement): 
