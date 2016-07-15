@@ -108,6 +108,7 @@ def dirac_job(load_config):
 
     final_submit_script = api_script.replace('###EXE_SCRIPT###', exe_path_name).replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name))
     confirm = execute(final_submit_script)
+    print('Output from submit command', confirm)
     if not isinstance(confirm, dict):
         raise RuntimeError('Problem submitting job\n{0}'.format(confirm))
 
@@ -120,6 +121,7 @@ def dirac_job(load_config):
     timeout = 1200
     end_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=timeout)
     status = execute('status([%s], %s)' % (job_id, repr(statusmapping)))
+    print('Output from first status command', status)
     while statusmapping[status[0][1]] not in ['completed', 'failed'] and datetime.datetime.utcnow() < end_time:
         time.sleep(5)
         status = execute('status([%s], %s)' % (job_id, repr(statusmapping)))
