@@ -3,6 +3,8 @@ from abc import abstractmethod
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 
+from .ICredentialInfo import ICredentialInfo
+
 
 class ICredentialRequirement(GangaObject):
     """
@@ -17,7 +19,8 @@ class ICredentialRequirement(GangaObject):
     _name = 'ICredentialRequirement'
     _hidden = 1
 
-    info_class = None  # This attribute refers to the ICredentialInfo subclass which can satisfy the requirements
+    # This attribute refers to the ICredentialInfo subclass which can satisfy the requirements
+    info_class = None  # type: Type[ICredentialInfo]
 
     def __init__(self, **kwargs):
         super(ICredentialRequirement, self).__init__()
