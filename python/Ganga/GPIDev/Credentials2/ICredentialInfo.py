@@ -34,7 +34,7 @@ def cache(method):
             if mtime > self.cache['mtime']:
                 self.cache = {'mtime': mtime}
         else:
-            self.cache = {}
+            self.cache = {'mtime': 0}
 
         # If entry is missing from cache, repopulate it
         # This will run if the cache was just cleared
