@@ -297,15 +297,13 @@ valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(val, valTypeList, 
 
 class ProxyDataDescriptor(object):
 
-    def __init__(self, name, checkReadOnly=True):
+    def __init__(self, name):
         """
         Descriptor which sits in fromnt  of raw unproxied objects
         Args:
             name (str): Name of the attribute which we're looking after here
-            checkReadOnly (bool): Should we check whether the attribute is read-only on assignment. (Only editable from within the Proxy layer itself not exposed to users)
         """
         self._name = name
-        self._checkReadOnly = checkReadOnly
 
     # apply object conversion or if it failes, make the wrapper proxy
     def disguiseComponentObject(self, v):
@@ -376,10 +374,10 @@ class ProxyDataDescriptor(object):
         else:
             return returnable
 
-
-    def _check_type(self, obj, val):
-        item = stripProxy(obj)._schema[getName(self)]
-        return item._check_type(val, getName(self))
+    @staticmethod
+    def _check_type(obj, val, attr_name):
+        item = stripProxy(obj)._schema[attr_name]
+        return item._check_type(val, attr_name)
 
     # apply attribute conversion
     @staticmethod
@@ -549,16 +547,22 @@ class ProxyDataDescriptor(object):
             val = stripProxy(_val)
         return val
 
-    def __set__(self, obj, _val):
-        # self is the attribute we're about to change
-        # obj is the object we're about to make the change in
-        # val is the value we're setting the attribute to.
-        # item is the schema entry of the attribute we're about to change
+    @staticmethod
+    def _process_set_value(obj, _val, attr_name, check_read_only=True):
+        """
+        Process an incoming attribute value.
 
-        ## Try to remove all proxies
+        Args:fdef _init
+            obj: the object the value is being assigned to
+            _val: the value being assigned
+            attr_name: the name of the attribute being assigned
+            check_read_only: enforce the checks of read-only objects. This makes sense to be disabled during object construction.
+
+        Returns:
+            The processed value
+        """
+
         val = ProxyDataDescriptor.__recursive_strip(_val)
-
-        attr_name = getName(self)
 
         raw_obj = stripProxy(obj)
 
@@ -575,25 +579,24 @@ class ProxyDataDescriptor(object):
 
             if not item.getProperties()['changable_at_resubmit']:
                 raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now' % (repr(obj), attr_name))
-            
 
-        if self._checkReadOnly:
+        if check_read_only:
             # mechanism for locking of preparable attributes
             if item['preparable']:
                 ## Does not modify val
-                self.__preparable_set__(obj, val, attr_name)
+                ProxyDataDescriptor.__preparable_set__(obj, val, attr_name)
 
         # if we set is_prepared to None in the GPI, that should effectively
         # unprepare the application
-        if getName(self) == 'is_prepared':
+        if attr_name == 'is_prepared':
             # Replace is_prepared on an application for another ShareDir object
             ## Does not modify val
-            self.__prep_set__(obj, val)
+            ProxyDataDescriptor.__prep_set__(obj, val)
 
         # catch assignment of 'something'  to a preparable application
-        if getName(self) == 'application':
+        if attr_name == 'application':
             ## Does not modify val
-            self.__app_set__(obj, val)
+            ProxyDataDescriptor.__app_set__(obj, val)
 
         # unwrap proxy
         if item.isA(ComponentItem):
@@ -605,14 +608,14 @@ class ProxyDataDescriptor(object):
 
         if item['sequence']:
             ## Does not modify val
-            new_val = self.__sequence_set__(stripper, obj, val, attr_name)
+            new_val = ProxyDataDescriptor.__sequence_set__(stripper, obj, val, attr_name)
         else:
             if stripper is not None:
                 ## Shouldn't modify val
                 new_val = stripper(val)
             else:
                 ## Does not modify val
-                new_val = self._stripAttribute(obj, val, attr_name)
+                new_val = ProxyDataDescriptor._stripAttribute(obj, val, attr_name)
 
         if new_val is None and val is not None:
             new_val = val
@@ -621,7 +624,7 @@ class ProxyDataDescriptor(object):
         # apply attribute filter to component items
         if item.isA(ComponentItem):
             ## Does not modify val
-            final_val = self._stripAttribute(obj, new_val, attr_name)
+            final_val = ProxyDataDescriptor._stripAttribute(obj, new_val, attr_name)
         else:
             final_val = new_val
 
@@ -629,7 +632,21 @@ class ProxyDataDescriptor(object):
             final_val = val
 
         ## Does not modify val?
-        self._check_type(obj, final_val)
+        ProxyDataDescriptor._check_type(obj, final_val, attr_name)
+
+        return final_val
+
+    def __set__(self, obj, _val):
+        # self is the attribute we're about to change
+        # obj is the object we're about to make the change in
+        # val is the value we're setting the attribute to.
+        # item is the schema entry of the attribute we're about to change
+
+        attr_name = getName(self)
+
+        raw_obj = stripProxy(obj)
+
+        final_val = ProxyDataDescriptor._process_set_value(obj, _val, attr_name)
 
         setattr(raw_obj, attr_name, final_val)
 
@@ -787,7 +804,7 @@ def GPIProxyClassFactory(name, pluginclass):
 
         ## Avoid intercepting any of the setter method associated with the implRef as they could trigger loading from disk
         ## These are protected objects in the setter and it will throw an exception if they're altered
-        self.__dict__[implRef] = instance
+        setattr(self, implRef, instance)
         instance.__dict__[proxyObject] = self
 
         ## Need to avoid any setter methods for GangaObjects
@@ -819,13 +836,12 @@ def GPIProxyClassFactory(name, pluginclass):
         # initialize all properties from keywords of the constructor
         for k in kwds:
             if stripProxy(self)._schema.hasAttribute(k):
-                this_arg = stripProxy(kwds[k])
-                raw_self = stripProxy(self)
                 # This calls the same logic when assigning a named attribute as when we're assigning it to the object
                 # There is logic here which we 'could' duplicate but it is over 100 lines of code which then is duplicating funtionality written elsewhere
-                ProxyDataDescriptor(k, False).__set__(raw_self, raw_self._attribute_filter__set__(k, this_arg))
+                this_arg = ProxyDataDescriptor._process_set_value(self, kwds[k], k, check_read_only=False)
+                setattr(instance, k, this_arg)
             else:
-                logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
+                logger.warning('keyword argument in the %s constructor ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
         ## end of _init
         return
