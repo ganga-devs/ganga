@@ -6,8 +6,6 @@ from functools import wraps
 import Ganga.Utility.logging
 
 from .CredentialStore import credential_store, needed_credentials, get_needed_credentials
-from . import VomsProxy
-from . import AfsToken
 from . import exceptions
 
 logger = Ganga.Utility.logging.getLogger()
