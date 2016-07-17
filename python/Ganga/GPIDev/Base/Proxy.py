@@ -564,8 +564,6 @@ class ProxyDataDescriptor(object):
 
         val = ProxyDataDescriptor.__recursive_strip(_val)
 
-        raw_obj = stripProxy(obj)
-
         new_val = None
 
         if not raw_obj._schema.hasAttribute(attr_name):
@@ -646,7 +644,7 @@ class ProxyDataDescriptor(object):
 
         raw_obj = stripProxy(obj)
 
-        final_val = ProxyDataDescriptor._process_set_value(obj, _val, attr_name)
+        final_val = ProxyDataDescriptor._process_set_value(raw_obj, _val, attr_name)
 
         setattr(raw_obj, attr_name, final_val)
 
@@ -799,7 +797,9 @@ def GPIProxyClassFactory(name, pluginclass):
                 clean_args = (stripProxy(arg) for arg in args)
                 instance = pluginclass(*clean_args)
             else:
+                # In the future we will just pass the args to the classes directly and throw excepions, but for now we're trying to maintain old behavior
                 logger.warning("Cannot use arguments: '%s' for constructing class type '%s'. Ignoring." % (args, getName(pluginclass)))
+                logger.warning("Please contact the Ganga developers if you believe this is an error!")
                 instance = pluginclass()
 
         ## Avoid intercepting any of the setter method associated with the implRef as they could trigger loading from disk
@@ -815,13 +815,13 @@ def GPIProxyClassFactory(name, pluginclass):
             return
 
         ## SECOND WE NEED TO MAKE SURE THAT OBJECT ID IS CORRECT AND THIS DOES THINGS LIKE REGISTER A JOB WITH THE REPO
-
         instance._auto__init__()
 
         from Ganga.GPIDev.Base.Objects import do_not_copy
         ## All objects with an _auto__init__ method need to have that method called and we set the various node attributes here based upon the schema
         for key, _val in stripProxy(self)._schema.allItems():
-            if not _val['protected'] and not _val['hidden'] and isType(_val, ComponentItem) and key not in do_not_copy:
+            if not _val['protected'] and not _val['hidden'] and not _val['getter'] and\
+                isType(_val, ComponentItem) and key not in do_not_copy:
                 val = stripProxy(getattr(self, key))
                 if isinstance(val, GangaObject):
                     val._auto__init__()
@@ -838,8 +838,10 @@ def GPIProxyClassFactory(name, pluginclass):
             if stripProxy(self)._schema.hasAttribute(k):
                 # This calls the same logic when assigning a named attribute as when we're assigning it to the object
                 # There is logic here which we 'could' duplicate but it is over 100 lines of code which then is duplicating funtionality written elsewhere
-                this_arg = ProxyDataDescriptor._process_set_value(self, kwds[k], k, check_read_only=False)
-                setattr(instance, k, this_arg)
+                val = ProxyDataDescriptor._process_set_value(self, kwds[k], k, check_read_only=False)
+                if isinstance(this_val, GangaObject):
+                    val._auto__init__()
+                setattr(instance, k, val)
             else:
                 logger.warning('keyword argument in the %s constructor ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
