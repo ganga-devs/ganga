@@ -816,10 +816,12 @@ def GPIProxyClassFactory(name, pluginclass):
 
         ## SECOND WE NEED TO MAKE SURE THAT OBJECT ID IS CORRECT AND THIS DOES THINGS LIKE REGISTER A JOB WITH THE REPO
         instance._auto__init__()
+        
+        raw_self = stripProxy(self)
 
         from Ganga.GPIDev.Base.Objects import do_not_copy
         ## All objects with an _auto__init__ method need to have that method called and we set the various node attributes here based upon the schema
-        for key, _val in stripProxy(self)._schema.allItems():
+        for key, _val in raw_self._schema.allItems():
             if not _val['protected'] and not _val['hidden'] and not _val['getter'] and\
                 isType(_val, ComponentItem) and key not in do_not_copy:
                 val = stripProxy(getattr(self, key))
@@ -835,10 +837,10 @@ def GPIProxyClassFactory(name, pluginclass):
 
         # initialize all properties from keywords of the constructor
         for k in kwds:
-            if stripProxy(self)._schema.hasAttribute(k):
+            if raw_self._schema.hasAttribute(k):
                 # This calls the same logic when assigning a named attribute as when we're assigning it to the object
                 # There is logic here which we 'could' duplicate but it is over 100 lines of code which then is duplicating funtionality written elsewhere
-                val = ProxyDataDescriptor._process_set_value(self, kwds[k], k, check_read_only=False)
+                val = ProxyDataDescriptor._process_set_value(raw_self, kwds[k], k, check_read_only=False)
                 if isinstance(this_val, GangaObject):
                     val._auto__init__()
                 setattr(instance, k, val)
