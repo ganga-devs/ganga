@@ -548,12 +548,12 @@ class ProxyDataDescriptor(object):
         return val
 
     @staticmethod
-    def _process_set_value(obj, _val, attr_name, check_read_only=True):
+    def _process_set_value(raw_obj, _val, attr_name, check_read_only=True):
         """
         Process an incoming attribute value.
 
         Args:fdef _init
-            obj: the object the value is being assigned to
+            raw_obj: the object the value is being assigned to
             _val: the value being assigned
             attr_name: the name of the attribute being assigned
             check_read_only: enforce the checks of read-only objects. This makes sense to be disabled during object construction.
