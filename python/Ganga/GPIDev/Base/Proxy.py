@@ -397,7 +397,7 @@ class ProxyDataDescriptor(object):
 
         if new_v is None:
             new_v = v
-        return stripProxy(obj)._attribute_filter__set__(name, new_v)
+        return obj._attribute_filter__set__(name, new_v)
 
     @staticmethod
     def __app_set__(obj, val):
@@ -441,19 +441,19 @@ class ProxyDataDescriptor(object):
         # if we set is_prepared to None in the GPI, that should effectively
         # unprepare the application
         if val is None:
-            if stripProxy(obj).is_prepared is not None:
+            if obj.is_prepared is not None:
                 logger.info('Unpreparing application.')
-                stripProxy(obj).unprepare()
+                obj.unprepare()
 
         # Replace is_prepared on an application for another ShareDir object
-        if hasattr( stripProxy(obj), '_getRegistry'):
+        if hasattr(obj, '_getRegistry'):
             from Ganga.GPIDev.Lib.File import ShareDir
-            if stripProxy(obj)._getRegistry() is not None and isType(val, ShareDir):
+            if obj._getRegistry() is not None and isType(val, ShareDir):
                 logger.debug('Overwriting is_prepared attribute with a ShareDir object')
                 # it's safe to unprepare 'not-prepared' applications.
-                stripProxy(obj).unprepare()
+                obj.unprepare()
                 from Ganga.Core.GangaRepository import getRegistry
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                shareref = getRegistry("prep").getShareRef()
                 shareref.increase(val.name)
 
         if isinstance(val, str):
@@ -463,7 +463,7 @@ class ProxyDataDescriptor(object):
 
     @staticmethod
     def __sequence_set__(stripper, obj, val, name):
-        item = stripProxy(obj)._schema[name]
+        item = obj._schema[name]
         # we need to explicitly check for the list type, because simple
         # values (such as strings) may be iterable
         new_v = None
@@ -573,28 +573,28 @@ class ProxyDataDescriptor(object):
         item = raw_obj._schema[attr_name]
         if item['protected']:
             raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified' % (attr_name,))
-        if stripProxy(obj)._readonly():
+        if raw_obj._readonly():
 
             if not item.getProperties()['changable_at_resubmit']:
-                raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now' % (repr(obj), attr_name))
+                raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now' % (repr(addProxy(raw_obj)), attr_name))
 
         if check_read_only:
             # mechanism for locking of preparable attributes
             if item['preparable']:
                 ## Does not modify val
-                ProxyDataDescriptor.__preparable_set__(obj, val, attr_name)
+                ProxyDataDescriptor.__preparable_set__(raw_obj, val, attr_name)
 
         # if we set is_prepared to None in the GPI, that should effectively
         # unprepare the application
         if attr_name == 'is_prepared':
             # Replace is_prepared on an application for another ShareDir object
             ## Does not modify val
-            ProxyDataDescriptor.__prep_set__(obj, val)
+            ProxyDataDescriptor.__prep_set__(raw_obj, val)
 
         # catch assignment of 'something'  to a preparable application
         if attr_name == 'application':
             ## Does not modify val
-            ProxyDataDescriptor.__app_set__(obj, val)
+            ProxyDataDescriptor.__app_set__(raw_obj, val)
 
         # unwrap proxy
         if item.isA(ComponentItem):
@@ -606,14 +606,14 @@ class ProxyDataDescriptor(object):
 
         if item['sequence']:
             ## Does not modify val
-            new_val = ProxyDataDescriptor.__sequence_set__(stripper, obj, val, attr_name)
+            new_val = ProxyDataDescriptor.__sequence_set__(stripper, raw_obj, val, attr_name)
         else:
             if stripper is not None:
                 ## Shouldn't modify val
                 new_val = stripper(val)
             else:
                 ## Does not modify val
-                new_val = ProxyDataDescriptor._stripAttribute(obj, val, attr_name)
+                new_val = ProxyDataDescriptor._stripAttribute(raw_obj, val, attr_name)
 
         if new_val is None and val is not None:
             new_val = val
@@ -622,7 +622,7 @@ class ProxyDataDescriptor(object):
         # apply attribute filter to component items
         if item.isA(ComponentItem):
             ## Does not modify val
-            final_val = ProxyDataDescriptor._stripAttribute(obj, new_val, attr_name)
+            final_val = ProxyDataDescriptor._stripAttribute(raw_obj, new_val, attr_name)
         else:
             final_val = new_val
 
@@ -630,7 +630,7 @@ class ProxyDataDescriptor(object):
             final_val = val
 
         ## Does not modify val?
-        ProxyDataDescriptor._check_type(obj, final_val, attr_name)
+        ProxyDataDescriptor._check_type(raw_obj, final_val, attr_name)
 
         return final_val
 
