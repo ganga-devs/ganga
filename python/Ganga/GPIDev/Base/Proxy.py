@@ -841,7 +841,7 @@ def GPIProxyClassFactory(name, pluginclass):
                 # This calls the same logic when assigning a named attribute as when we're assigning it to the object
                 # There is logic here which we 'could' duplicate but it is over 100 lines of code which then is duplicating funtionality written elsewhere
                 val = ProxyDataDescriptor._process_set_value(raw_self, kwds[k], k, check_read_only=False)
-                if isinstance(this_val, GangaObject):
+                if isinstance(val, GangaObject):
                     val._auto__init__()
                 setattr(instance, k, val)
             else:
