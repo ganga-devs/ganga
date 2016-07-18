@@ -909,7 +909,7 @@ under certain conditions; type license() for details.
             # If the registry or the workspace needs an AFS token then add one to the credential store.
             # Note that this happens before the monitoring starts so that it gets tracked properly
 
-            from Ganga.GPIDev.Credentials2 import AfsToken
+            from Ganga.GPIDev.Credentials2.AfsToken import AfsToken
             credential_store.create(AfsToken(), create=False)
 
         import Ganga.Core

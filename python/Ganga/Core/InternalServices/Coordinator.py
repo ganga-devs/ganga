@@ -42,63 +42,6 @@ log = getLogger()
 servicesEnabled = True
 
 
-def isCredentialRequired(credObj):
-    """
-    The logic to decide if a given invalid credential
-    should trigger the deactivation of Ganga internal services.  
-    """
-
-    from Ganga.Runtime import Workspace_runtime
-    from Ganga.Runtime import Repository_runtime
-
-    if getName(credObj) == 'AfsToken':
-        return Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken()
-
-    if getName(credObj) == 'GridProxy':
-        from Ganga.Core.GangaRepository import getRegistryProxy
-        from Ganga.Runtime.GPIFunctions import typename
-        from Ganga.GPIDev.Base.Proxy import stripProxy
-        from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobStatus
-        for j in getRegistryProxy('jobs'):
-            ji = stripProxy(j)
-            this_status = lazyLoadJobStatus(ji)
-            if this_status in ['submitted', 'running', 'completing']:
-                this_backend = lazyLoadJobBackend(ji)
-                if getName(this_backend) == 'LCG':
-                    return True
-        return False
-
-    log.warning("Unknown credential object : %s" % credObj)
-
-
-def notifyInvalidCredential(credObj):
-    """
-    The Core is notified when one of the monitored credentials is invalid
-    @see ICredential.create()
-    """
-
-    # ignore this notification if the internal services are already stopped
-    if not servicesEnabled:
-        log.debug(
-            "One of the monitored credential [%s] is invalid BUT the internal services are already disabled." % getName(credObj))
-        return
-
-    if isCredentialRequired(credObj):
-        log.debug("One of the required credential for the internal services is invalid: [%s]."
-                  "Disabling internal services ..." % getName(credObj))
-        _tl = credObj.timeleft()
-        if _tl == "-1":
-            log.error('%s has been destroyed! Could not shutdown internal services.' % getName(credObj))
-            return
-        disableInternalServices()
-        log.warning('%s is about to expire! '
-                    'To protect against possible write errors all internal services has been disabled.'
-                    'If you believe the problem has been solved type "reactivate()" to re-enable '
-                    'interactions within this session.' % getName(credObj))
-    else:
-        log.debug("One of the monitored credential [%s] is invalid BUT it is not required by the internal services" % getName(credObj))
-
-
 def _diskSpaceChecker():
     """
     the callback function used internally by Monitoring Component
