@@ -43,6 +43,7 @@ for inFile in ###IN_BOX###:
         getPackedInputSandbox( inFile )
     else:
         shutil.copy(inFile, os.path.join(os.getcwd(), os.path.basename(inFile)))
+sys.path.insert(0, os.path.join(os.getcwd(), '_python'))
 
 ###WN_INPUTFILES###
 

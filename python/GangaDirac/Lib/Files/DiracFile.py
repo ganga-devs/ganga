@@ -71,62 +71,39 @@ class DiracFile(IGangaFile):
         self._setLFNnamePattern(lfn, namePattern)
 
         if localDir is not None:
-            self.localDir = expandfilename(localDir)
+            self.localDir = localDir
         if remoteDir is not None:
             self.remoteDir = remoteDir
 
-    def __construct__(self, args):
+    def __setattr__(self, attr, value):
+        """
+        This is an overloaded setter method to make sure that we're auto-expanding the filenames of files which exist.
+        In the case we're assigning any other attributes the value is simply passed through
+        Args:
+            attr (str): This is the name of the attribute which we're assigning
+            value (unknown): This is the value being assigned.
+        """
+        actual_value = value
+        if attr == "namePattern":
+            actual_value = os.path.basename(value)
+            this_dir = os.path.dirname(value)
+            if this_dir:
+                super(DiracFile, self).__setattr__('localDir', this_dir)
+        elif attr == 'localDir':
+            if value:
+                new_value = os.path.abspath(expandfilename(value))
+                if os.path.exists(new_value):
+                    actual_value = new_value
+        elif attr == 'lfn':
+            if value:
+                this_name = os.path.basename(value)
+                super(DiracFile, self).__setattr__('namePattern', this_name)
+        elif attr == 'remoteDir':
+            if value:
+                this_lfn = os.path.join(value, self.lfn)
+                super(DiracFile, self).__setattr__('lfn', this_lfn)
 
-        self.locations = []
-
-        if len(args) == 1 and isType(args[0], DiracFile):
-            self.lfn = args[0].lfn
-            self.namePattern = args[0].namePattern
-            self.remoteDir = args[0].remoteDir
-            self.localDir = args[0].localDir
-            self.guid = args[0].guid
-            self.compressed = args[0].compressed
-            self._storedReplicas = args[0]._storedReplicas
-            self._remoteURLs = args[0]._remoteURLs
-            self.failureReason = args[0].failureReason
-            self._have_copied = True
-            self.subfiles = copy.deepcopy(args[0].subfiles)
-            return
-
-        # LFN ONLY
-        if len(args) == 1 and type(args[0]) == type(''):
-            if str(str(args[0]).upper()[0:4]) == str("LFN:"):
-                self._setLFNnamePattern(lfn=args[0][4:], namePattern="")
-            else:
-                self._setLFNnamePattern(lfn="", namePattern=args[0])
-
-        # NAMEPATTERN AND LFN
-        elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
-            self.namePattern = args[0]
-            self._setLFNnamePattern(lfn='', namePattern=self.namePattern)
-            self.localDir = expandfilename(args[1])
-
-        # NAMEPATTERN AND LFN AND LOCALDIR
-        elif len(args) == 3 and type(args[0]) == type('') and type(args[1]) == type('') and type(args[2]) == type(''):
-            self.namePattern = args[0]
-            self.lfn = args[2]
-            self._setLFNnamePattern(lfn=self.lfn, namePattern=self.namePattern)
-            self.localDir = expandfilename(args[1])
-
-        # NAMEPATTERN AND LFN AND LOCALDIR AND REMOTEDIR
-        elif len(args) == 4 and type(args[0]) == type('') and type(args[1]) == type('')\
-                and type(args[2]) == type('') and type(args[3]) == type(''):
-            self.namePattern = args[0]
-            self.lfn = args[2]
-            self._setLFNnamePattern(lfn=lfn, namePattern=namePattern)
-            self.localDir = expandfilename(args[1])
-            self.remoteDir = args[3]
-
-        # OTHER
-        else:
-            super(DiracFile, self).__construct__(args)
-
-        return
+        super(DiracFile, self).__setattr__(attr, actual_value)
 
     def _attribute_filter__set__(self, name, value):
 
@@ -165,24 +142,19 @@ class DiracFile(IGangaFile):
         if lfn:
             if len(lfn) > 3 and lfn[0:4].upper() == "LFN:":
                 lfn = lfn[4:]
+        elif namePattern:
+            if len(namePattern) > 3 and namePattern[0:4].upper() == 'LFN:':
+                lfn = namePattern[4:]
 
         if lfn != "" and namePattern != "":
             self.lfn = lfn
-            self.remoteDir = os.path.dirname(lfn)
-            self.namePattern = os.path.basename(namePattern)
-            self.localDir = os.path.dirname(expandfilename(namePattern))
+            self.namePattern = namePattern
 
         elif lfn != "" and namePattern == "":
             self.lfn = lfn
-            self.remoteDir = os.path.dirname(self.lfn)
-            self.namePattern = os.path.basename(self.lfn)
-            self.localDir = ""
 
         elif namePattern != "" and lfn == "":
-            self.namePattern = os.path.basename(namePattern)
-            self.localDir = os.path.dirname(expandfilename(namePattern))
-            self.remoteDir = ""
-            self.lfn = ""
+            self.namePattern = namePattern
 
     def _attribute_filter__get__(self, name):
 

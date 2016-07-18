@@ -502,7 +502,7 @@ class Condor(IBackend):
                 cputime = allDict[globalId]["cputime"]
                 if status != jobDict[id].backend.status:
                     printStatus = True
-                    stripProxy(jobDict[id])._getWriteAccess()
+                    stripProxy(jobDict[id])._getSessionLock()
                     jobDict[id].backend.status = status
                     if jobDict[id].backend.status == "Running":
                         jobDict[id].updateStatus("running")
