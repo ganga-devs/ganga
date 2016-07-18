@@ -7,11 +7,12 @@ from datetime import datetime, timedelta
 import Ganga.Utility.logging
 from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Utility.Shell import Shell
-from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Credentials2.ICredentialInfo import ICredentialInfo, cache
 from Ganga.GPIDev.Credentials2.ICredentialRequirement import ICredentialRequirement
 from Ganga.GPIDev.Credentials2.exceptions import CredentialRenewalError
+
+from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -23,6 +24,7 @@ class DiracProxyInfo(ICredentialInfo):
 
     def __init__(self, requirements, check_file=False, create=False):
         self.shell = Shell()
+        self.shell.env.update(getDiracEnv())
 
         super(DiracProxyInfo, self).__init__(requirements, check_file, create)
 
@@ -34,11 +36,12 @@ class DiracProxyInfo(ICredentialInfo):
             CredentialRenewalError: If the renewal process returns a non-zero value
         """
         group_command = ''
-        logger.debug('require ' + self.initial_requirements.vo)
+        logger.debug('require ' + self.initial_requirements.group)
         if self.initial_requirements.group:
             group_command = '--group %s --VOMS' % self.initial_requirements.group
         command = 'dirac-proxy-init --pwstdin --out %s %s' % (self.location, group_command)
         logger.debug(command)
+        self.shell.env['X509_USER_PROXY'] = self.location
         rc = self.shell.system(command)
         if rc == 0:
             logger.debug('Grid proxy {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
@@ -51,12 +54,13 @@ class DiracProxyInfo(ICredentialInfo):
 
     @cache
     def info(self):
+        self.shell.env['X509_USER_PROXY'] = self.location
         status, output, message = self.shell.cmd1('dirac-proxy-info --file %s' % self.location)
         return output
 
     def _from_info(self, label):
         # type: (str) -> str
-        line = re.match(r'^{0}\s*: (.*)$'.format(label), self.info, re.MULTILINE)
+        line = re.search(r'^{0}\s*: (.*)$'.format(label), self.info(), re.MULTILINE)
         return line.group(1)
 
     @property
