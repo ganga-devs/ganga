@@ -369,9 +369,6 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         
         return jspec
 
-from Ganga.GPIDev.Credentials import GridProxy
-gridProxy = GridProxy()
-
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('Executable','Panda',ExecutablePandaRTHandler)
 

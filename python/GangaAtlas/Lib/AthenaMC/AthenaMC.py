@@ -22,8 +22,6 @@ from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
-from Ganga.GPIDev.Credentials import GridProxy
-
 from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import matchFile, expandList
 
 from Ganga.GPIDev.Lib.File import *
