@@ -354,20 +354,6 @@ class LCGSEFile(IGangaFile):
                     subfile.lfc_host = self.lfc_host
 
                     self.subfiles.append(GPIProxyObjectFactory(subfile))
-    
-    def _attribute_filter__set__(self, name, value):
-        if name == 'credential_requirements':
-            self._credential_requirements = value
-        return super(LCGSEFile, self)._attribute_filter__set__(name, value)
-    
-    def getCredentialRequirements(self):
-        """
-        If the user never specified any requirements then return a default-constructed object.
-        """
-        if hasattr(self, '_credential_requirements') and self._credential_requirements is not None:
-            return self._credential_requirements
-        else:
-            return VomsProxy()
 
 # add LCGSEFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate LCGSEFile() objects via config file)
