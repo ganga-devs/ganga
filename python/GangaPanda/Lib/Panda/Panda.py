@@ -11,6 +11,8 @@ import json
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IBackend import IBackend
+from Ganga.GPIDev.Credentials2 import require_credential
+from Ganga.GPIDev.Credentials2.VomsProxy import VomsProxy
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Lib.Job import JobStatusError
@@ -26,7 +28,7 @@ from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import convertDQ2ToClient, getLocations, getDatasets, getElementsFromContainer
 
-from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname, inject_proxy
 
 logger = getLogger()
 config = getConfig('Panda')
@@ -668,6 +670,7 @@ class Panda(IBackend):
         'bexec'         : SimpleItem(defvalue='',protected=0,copyable=1,doc='String for Executable make command - if filled triggers a build job for the Execuatble'),
         'nobuild'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Boolean if no build job should be sent - use it together with Athena.athena_compile variable'),
         'domergeretrieve' : SimpleItem(defvalue=True,protected=1,hidden=1,copyable=1,doc='Should merge jobs be retrieved'),
+        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=VomsProxy()),
     })
 
     _category = 'backends'
@@ -677,6 +680,7 @@ class Panda(IBackend):
     def __init__(self):
         super(Panda,self).__init__()
 
+    @require_credential
     def master_submit(self,rjobs,subjobspecs,buildjobspec):
         '''Submit jobs'''
        
@@ -786,7 +790,8 @@ class Panda(IBackend):
                     js.lockedby = configSys['GANGA_VERSION']
 
                 verbose = logger.isEnabledFor(10)
-                status, jobids = Client.submitJobs(jobspecs,verbose)
+                with inject_proxy(self.credential_requirements):
+                    status, jobids = Client.submitJobs(jobspecs,verbose)
                 if status:
                     logger.error('Status %d from Panda submit',status)
                     return False
@@ -834,7 +839,8 @@ class Panda(IBackend):
                 js.jobsetID = -1
 
             verbose = logger.isEnabledFor(10)
-            status, jobids = Client.submitJobs(jobspecs,verbose)
+            with inject_proxy(self.credential_requirements):
+                status, jobids = Client.submitJobs(jobspecs,verbose)
             if status:
                 logger.error('Status %d from Panda submit',status)
                 return False
@@ -860,6 +866,7 @@ class Panda(IBackend):
 
         return True
 
+    @require_credential
     def master_kill(self):
         '''Kill jobs'''  
 
@@ -883,7 +890,8 @@ class Panda(IBackend):
                 
         jobids += [subjob.backend.id for subjob in job.subjobs if subjob.backend.id and subjob.backend.status in active_status]
 
-        status, output = Client.killJobs(jobids)
+        with inject_proxy(self.credential_requirements):
+            status, output = Client.killJobs(jobids)
         if status:
              logger.error('Failed killing job (status = %d)',status)
              return False
@@ -993,6 +1001,7 @@ class Panda(IBackend):
         # submit the job
         mj.submit()
 
+    @require_credential
     def rebroker(self, cloud=''):
         '''Rebroker failed subjobs'''
         #from pandatools import Client
@@ -1005,7 +1014,8 @@ class Panda(IBackend):
         for job in jobs.subjobs: 
             jobIDs[job.backend.id] = job
 
-        rc,jspecs = Client.getFullJobStatus(jobIDs.keys(),False)
+        with inject_proxy(self.credential_requirements):
+                rc,jspecs = Client.getFullJobStatus(jobIDs.keys(),False)
         if rc:
             logger.error('Return code %d retrieving job status information.',rc)
             raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
@@ -1023,7 +1033,8 @@ class Panda(IBackend):
                     libds = jobs.backend.libds
                 logger.info('Sending rebrokerage request ...')
 
-                status,output = Client.runReBrokerage(job.jobDefinitionID, libds, cloud, False)
+                with inject_proxy(self.credential_requirements):
+                    status,output = Client.runReBrokerage(job.jobDefinitionID, libds, cloud, False)
                 brokeredjobs.append(job.jobDefinitionID)
                 if status != 0:
                     logger.error(output)
@@ -1041,7 +1052,8 @@ class Panda(IBackend):
             return True
 
         return False
-        
+
+    @require_credential
     def master_resubmit(self,jobs):
         '''Resubmit failed subjobs'''
         #from pandatools import Client
@@ -1053,7 +1065,8 @@ class Panda(IBackend):
         for job in jobs: 
             jobIDs[job.backend.id] = job
 
-        rc,jspecs = Client.getFullJobStatus(jobIDs.keys(),False)
+        with inject_proxy(self.credential_requirements):
+            rc,jspecs = Client.getFullJobStatus(jobIDs.keys(),False)
         if rc:
             logger.error('Return code %d retrieving job status information.',rc)
             raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
@@ -1139,7 +1152,8 @@ class Panda(IBackend):
                 if tmpFile.type in ['output','log'] and tmpFile.dataset.endswith('/'):
                     # add datasets
                     if not tmpFile.destinationDBlock in addedDataset:
-                        tmpOutDsLocation = Client.PandaSites[rj.computingSite]['ddm']
+                        with inject_proxy(self.credential_requirements):
+                            tmpOutDsLocation = Client.PandaSites[rj.computingSite]['ddm']
                         # check this dataset doesn't already exist (in case of previous screw ups in resubmit)
                         # RUCIO patch
                         #res = Client.getDatasets(tmpFile.destinationDBlock)
@@ -1147,7 +1161,8 @@ class Panda(IBackend):
                         if not tmpFile.destinationDBlock in res.keys():
                             # DS doesn't exist - create it
                             try:
-                                Client.addDataset(tmpFile.destinationDBlock,False,location=tmpOutDsLocation)
+                                with inject_proxy(self.credential_requirements):
+                                    Client.addDataset(tmpFile.destinationDBlock,False,location=tmpOutDsLocation)
                             except exceptions.SystemExit:
                                 raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(tmpFile.destinationDBlock,sys.exc_info()[0],sys.exc_info()[1]))
 
@@ -1159,7 +1174,8 @@ class Panda(IBackend):
                         if not tmpFile.destinationDBlock in res:
                             try:
                                 # add to container
-                                Client.addDatasetsToContainer(tmpFile.dataset,[tmpFile.destinationDBlock],False)
+                                with inject_proxy(self.credential_requirements):
+                                    Client.addDatasetsToContainer(tmpFile.dataset,[tmpFile.destinationDBlock],False)
                                 logger.warning('Created dataset %s and added to container %s.'%(tmpFile.destinationDBlock,tmpFile.dataset))
                             except exceptions.SystemExit:
                                 raise BackendError('Panda','Exception in Client.addDatasetsToContainer %s, %s: %s %s'%(tmpFile.destinationDBlock,tmpFile.dataset,sys.exc_info()[0],sys.exc_info()[1]))
@@ -1171,7 +1187,8 @@ class Panda(IBackend):
             logger.warning("No failed jobs to resubmit")
             return False
 
-        status,newJobIDs = Client.submitJobs(retryJobs)
+        with inject_proxy(self.credential_requirements):
+            status,newJobIDs = Client.submitJobs(retryJobs)
         if status:
             logger.error('Error: Status %d from Panda submit',status)
             return False
