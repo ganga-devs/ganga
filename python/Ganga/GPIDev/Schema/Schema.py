@@ -515,7 +515,9 @@ class Item(object):
                             if not valueTypeAllowed(dKey, validTypes) or not valueTypeAllowed(dVal, validTypes):
                                 raise TypeMismatchError('Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % (dKey, dVal, name, validTypes))
                     else:  # new value is not a dict
-                        raise TypeMismatchError('Attribute "%s" expects a dictionary.' % name)
+                        if val == []:
+                            return
+                        raise TypeMismatchError('Attribute "%s" expects a dictionary. Found: "%s".' % (name, found))
                     return
                 else:  # a 'simple' (i.e. non-dictionary) non-sequence value
                     self.__check(valueTypeAllowed(val, validTypes), name, validTypes, val)
