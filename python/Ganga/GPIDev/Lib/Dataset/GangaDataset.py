@@ -106,7 +106,7 @@ class GangaDataset(Dataset):
         other_files = other.getFullFileNames()
         files = set(self.getFullFileNames()).difference(other_files)
         data = GangaDataset()
-        data.__construct__([list(files)])
+        data.extend([list(files)])
         data.depth = self.depth
         return data
 
@@ -124,7 +124,7 @@ class GangaDataset(Dataset):
         other_files = other.getFullFileNames()
         files = set(self.getFullFileNames()).symmetric_difference(other_files)
         data = GangaDataset()
-        data.__construct__([list(files)])
+        data.extend([list(files)])
         data.depth = self.depth
         return data
 
@@ -133,7 +133,7 @@ class GangaDataset(Dataset):
         other_files = other.getFullFileNames()
         files = set(self.getFullFileNames()).intersection(other_files)
         data = GangaDataset()
-        data.__construct__([list(files)])
+        data.extend([list(files)])
         data.depth = self.depth
         return data
 
@@ -141,7 +141,7 @@ class GangaDataset(Dataset):
         '''Returns a new data set w/ files from this and other.'''
         files = set(self.getFullFileNames()).union(other.getFullFileNames())
         data = GangaDataset()
-        data.__construct__([list(files)])
+        data.extend([list(files)])
         data.depth = self.depth
         return data
 

@@ -150,6 +150,7 @@ class Node(object):
         cond is an optional function which may cut the search path: when it
         returns True, then the parent is returned as root
         """
+
         if self._getParent() is None:
             return self
         root = None
@@ -318,6 +319,7 @@ class Descriptor(object):
             return cls._schema[name]
 
         if self._getter_name:
+            # Fixme set the parent of Node objects?!?!
             return self._bind_method(obj, self._getter_name)()
 
         # First we want to try to get the information without prompting a load from disk
@@ -492,10 +494,8 @@ class Descriptor(object):
         new_value = Descriptor.cleanValue(obj, val, _set_name)
 
         obj.setSchemaAttribute(_set_name, new_value)
-        obj._setDirty()
 
-        if isinstance(val, Node):
-            val._setDirty()
+        obj._setDirty()
 
         Descriptor.check_inheritance(obj, _set_name)
 
@@ -712,33 +712,6 @@ class GangaObject(Node):
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
-
-    def __construct__(self, args):
-        # type: (Sequence) -> None
-        """
-        This acts like a secondary constructor for proxy objects.
-        Any positional (non-keyword) arguments are passed to this function to construct the object.
-
-        This default implementation performs a copy if there was only one item in the list
-        and raises an exception if there is more than one.
-
-        Args:
-            args: a list of objects
-
-        Raises:
-            TypeMismatchError: if there is more than one item in the list
-        """
-        # FIXME: This should probably be move to Proxy.py
-
-        if len(args) == 0:
-            return
-        elif len(args) == 1:
-            if not isinstance(args[0], type(self)):
-                logger.warning("Performing a copyFrom from: %s to: %s" % (type(args[0]), type(self)))
-            self.copyFrom(args[0])
-        else:
-            from Ganga.GPIDev.Base.Proxy import TypeMismatchError
-            raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
 
     @synchronised
     def accept(self, visitor):
