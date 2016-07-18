@@ -176,12 +176,12 @@ class GaudiRunRTHandler(IRuntimeHandler):
         input_sand.append(scriptToRun)
 
         # Collect all of the prepared files which we want to pass along to this job
-        input_files, input_folders = collectPreparedFiles(app)
-        if input_folders:
-            raise ApplicationConfigurationError(None, 'Prepared folders not supported yet, please fix this in future')
-        else:
-            for f in input_files:
-                input_sand.append(File(f))
+        #input_files, input_folders = collectPreparedFiles(app)
+        #if input_folders:
+        #    raise ApplicationConfigurationError(None, 'Prepared folders not supported yet, please fix this in future')
+        #else:
+        #    for f in input_files:
+        #        input_sand.append(File(f))
 
         logger.debug("input_sand: %s" % input_sand)
 
@@ -439,20 +439,13 @@ if __name__ == '__main__':
     print("#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
     print("")
 
+    print("Files found on WN: %s" % (listdir('.')))
+
     # Extract any/_all_ (b/g)zip files on the WN
     extractAllTarFiles('.')
 
     # In the case we're wanting to run the Python script here, generate it on the WN and use it there
     generatePythonScript('###SCRIPT_NAME###')
-
-    argv_dict = {}
-    for this_arg in sys.argv:
-        split_argv = this_arg.split(':')
-        if len(this_argv) == 2:
-            argv_dict[this_argv[0]] = this_argv[1]
-
-    if 'extraOpts' in argv_dict:
-        generatePythonScript('extra_args.py', argv_dict['extraOpts'])
 
     print("Executing: %s" % '###COMMAND###')
     # Execute the actual command on the WN

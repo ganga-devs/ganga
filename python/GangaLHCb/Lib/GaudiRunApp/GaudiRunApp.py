@@ -1,10 +1,13 @@
-from os import rename, path, makedirs, chdir, unlink, listdir
+from os import rename, path, makedirs, chdir, unlink, listdir, chmod
+from os import stat as os_stat
 import tempfile
 import time
 import subprocess
 import shutil
 import tarfile
 import threading
+import stat
+from StringIO import StringIO
 
 from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -106,10 +109,8 @@ class GaudiRun(IPrepareApp):
 
         actual_value = value
         if attr == 'directory':
-            logger.info("HEllo")
             if value:
-                actual_value = path.abspath(fullpath(expandfilename(raw_dir)))
-            logger.info("Here: %s" % actual_value)
+                actual_value = path.abspath(fullpath(expandfilename(value)))
         elif attr == 'options':
             if isinstance(value, str):
                 new_file = allComponentFilters['gangafiles'](value, None)
@@ -187,7 +188,7 @@ class GaudiRun(IPrepareApp):
             return 1
 
         if self.extraOpts:
-            constructExtraOptsFile( job )
+            self.constructExtraOptsFile( job )
 
         return 1
 
@@ -198,28 +199,37 @@ class GaudiRun(IPrepareApp):
             job (Job): The parent job of this application, we don't care if it's unique or not
         """
 
-        df = job.master.application.sharedOptsInput
+        master_job = job.master or job
 
-        folder_dir = job.inputdir
+        df = master_job.application.sharedOptsInput
+
+        folder_dir = job.getInputWorkspace(create=True).getPath()
 
         with prep_lock:
             if not df:
                 add_timeStampFile(folder_dir)
                 job.master.application.sharedOptsInput = DiracFile(namePattern=GaudiRun.sharedOptsFile_name, localDir=folder_dir)
-                with tarfile.open(path.join(folder_dir, GaudiRun.sharedOptsFile_name), "a:+") as tar_file:
+                tar_filename = path.join(folder_dir, GaudiRun.sharedOptsFile_name)
+                if not path.isfile(tar_filename):
+                    with tarfile.open(tar_filename, "w") as tar_file:
+                        pass
+                with tarfile.open(tar_filename, "a") as tar_file:
                     tar_file.add('__timestamp__')
 
             extra_opts_file = 'extra_opts_%s_.py' % job.id
 
-            opts_file_path = path.join(folder_dir, extra_opts_file)
+            # First construct if needed
+            if not path.isfile(path.join(folder_dir, GaudiRun.sharedOptsFile_name)):
+                with tarfile.open(path.join(folder_dir, GaudiRun.sharedOptsFile_name), "w") as tar_file:
+                    pass
 
-            with open(opts_file_path, 'w+') as _opts_file:
-                _opts_file.write(self.extraOpts)
-
-            with tarfile.open(path.join(folder_dir, GaudiRun.sharedOptsFile_name), "a:+") as tar_file:
-                tar_file.add(opts_file_path)
-
-            unlink(opts_file_path)
+            # Now append the extra_opts file here when needed
+            with tarfile.open(path.join(folder_dir, GaudiRun.sharedOptsFile_name), "a") as tar_file:
+                tinfo = tarfile.TarInfo(extra_opts_file)
+                tinfo.mtime = time.time()
+                fileobj = StringIO(self.extraOpts)
+                tinfo.size = fileobj.len
+                tar_file.addfile(tinfo, fileobj)
 
     def cleanGangaTargetArea(self, this_build_target):
         """
@@ -286,8 +296,13 @@ class GaudiRun(IPrepareApp):
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
 
         env_wrapper = self.getEnvScript()
+        cmd_file.write("#!/bin/bash")
+        cmd_file.write("\n")
         cmd_file.write(cmd)
         cmd_file.flush()
+        cmd_file.close()
+        st = os_stat(cmd_file.name)
+        chmod(cmd_file.name, st.st_mode | stat.S_IEXEC)
 
         logger.debug("Running: %s" % cmd_file.name)
 
@@ -296,13 +311,13 @@ class GaudiRun(IPrepareApp):
 
         rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
 
-        unlink(cmd_file.name)
-
         if rc != 0:
-            logger.error("Failed to execute command: %s" % script_run)
+            logger.error("Failed to execute command: %s" % cmd_file.name)
             logger.error("Tried to execute command in: %s" % self.directory)
             logger.error("StdErr: %s" % str(stderr))
             raise GangaException("Failed to Execute command")
+
+        unlink(cmd_file.name)
 
         return rc, stdout, stderr
 
