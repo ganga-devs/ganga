@@ -42,7 +42,7 @@ class Bookkeeping(GangaObject):
             execute(cmd)
             l = self._fileToList(f)
             ds = LHCbDataset()
-            ds.__construct__([l])
+            ds.extend([l])
             return ds
 
     def _fileToList(self, file):

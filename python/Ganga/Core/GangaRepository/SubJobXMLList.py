@@ -84,20 +84,6 @@ class SubJobXMLList(GangaObject):
         # Lock to ensure only one load at a time
         self._load_lock = threading.Lock()
 
-    def __construct__(self, args):
-        """ CONSTUCT method... TODO remove me in time """
-        super(SubJobXMLList, self).__construct__(args)
-        self._definedParent = None
-
-        self._subjobIndexData = {}
-        self._subjob_master_index_name = "subjobs.idx"
-        self._jobDirectory = None
-        self._registry = None
-        self._dataFileName = None
-        self._load_backup = None
-        self._cachedJobs = {}
-        self._cached_filenames = {}
-        self._stored_len =[]
 
     ## THIS CLASS MAKES USE OF THE INTERNAL CLASS DICTIONARY ONLY!!!
     ## THIS CLASS DOES NOT MAKE USE OF THE SCHEMA TO STORE INFORMATION AS TRANSIENT OR UNCOPYABLE
