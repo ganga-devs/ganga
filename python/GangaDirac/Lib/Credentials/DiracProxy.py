@@ -1,23 +1,23 @@
 from __future__ import absolute_import
 
 import os
-import re
 from datetime import datetime, timedelta
 
 import Ganga.Utility.logging
 from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Utility.Shell import Shell
 
-from Ganga.GPIDev.Credentials2.ICredentialInfo import ICredentialInfo, cache
+from Ganga.GPIDev.Credentials2.ICredentialInfo import cache
 from Ganga.GPIDev.Credentials2.ICredentialRequirement import ICredentialRequirement
 from Ganga.GPIDev.Credentials2.exceptions import CredentialRenewalError
+from Ganga.GPIDev.Credentials2.VomsProxy import VomsProxyInfo
 
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
 
 logger = Ganga.Utility.logging.getLogger()
 
 
-class DiracProxyInfo(ICredentialInfo):
+class DiracProxyInfo(VomsProxyInfo):
     """
     A wrapper around a DIRAC proxy file
     """
@@ -58,20 +58,15 @@ class DiracProxyInfo(ICredentialInfo):
         status, output, message = self.shell.cmd1('dirac-proxy-info --file %s' % self.location)
         return output
 
-    def _from_info(self, label):
-        # type: (str) -> str
-        line = re.search(r'^{0}\s*: (.*)$'.format(label), self.info(), re.MULTILINE)
-        return line.group(1)
-
     @property
     @cache
     def identity(self):
-        return self._from_info('identity')
+        return self.field('identity')
 
     @property
     @cache
     def group(self):
-        return self._from_info('DIRAC group')
+        return self.field('DIRAC group')
 
     @cache
     def expiry_time(self):
