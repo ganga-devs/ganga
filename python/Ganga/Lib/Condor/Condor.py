@@ -303,6 +303,7 @@ class Condor(IBackend):
             "import os",
             "import time",
             "import mimetypes",
+            "import shutil",
             "",
             "startTime = time.strftime"
             + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
@@ -310,6 +311,8 @@ class Condor(IBackend):
             "for inFile in %s:" % str(fileList),
             "   if mimetypes.guess_type(inFile)[1] in ['gzip', 'bzip2']:",
             "       getPackedInputSandbox( inFile )",
+            "   else:",
+            "       shutil.copy(inFile, os.path.join(os.getcwd(), os.path.basename(inFile)))",
             "",
             "exePath = '%s'" % exeString,
             "if os.path.isfile( '%s' ):" % os.path.basename(exeString),
@@ -499,7 +502,7 @@ class Condor(IBackend):
                 cputime = allDict[globalId]["cputime"]
                 if status != jobDict[id].backend.status:
                     printStatus = True
-                    stripProxy(jobDict[id])._getSessionLock()
+                    stripProxy(jobDict[id])._getWriteAccess()
                     jobDict[id].backend.status = status
                     if jobDict[id].backend.status == "Running":
                         jobDict[id].updateStatus("running")

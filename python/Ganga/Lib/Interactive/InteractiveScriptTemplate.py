@@ -10,6 +10,7 @@ import sys
 import time
 import glob
 import mimetypes
+import shutil
 
 sys.path.insert( 0, '###GANGA_PYTHONPATH###' )
 
@@ -40,6 +41,8 @@ os.chdir( '###WORKDIR###' )
 for inFile in ###IN_BOX###:
     if mimetypes.guess_type(inFile)[1] in ['gzip', 'bzip2']:
         getPackedInputSandbox( inFile )
+    else:
+        shutil.copy(inFile, os.path.join(os.getcwd(), os.path.basename(inFile)))
 
 ###WN_INPUTFILES###
 
