@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import re
 from datetime import datetime, timedelta
 
 import Ganga.Utility.logging
@@ -61,6 +62,11 @@ class VomsProxyInfo(ICredentialInfo):
     def info(self):
         status, output, message = self.shell.cmd1('voms-proxy-info -all -file %s' % self.location)
         return output
+
+    def field(self, label):
+        # type: (str) -> str
+        line = re.search(r'^{0}\s*: (.*)$'.format(label), self.info(), re.MULTILINE)
+        return line.group(1)
 
     @property
     @cache
