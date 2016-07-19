@@ -189,10 +189,9 @@ class GaudiRun(IPrepareApp):
         if self.myOpts:
             if isinstance(self.myOpts, LocalFile):
                 ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
-                full_path = expandfilename(path.join(self.myOpts.localDir, path.basename(self.myOpts.namePattern)), force=True)
+                full_path = path.join(self.myOpts.localDir, self.myOpts.namePattern)
                 if not path.exists(full_path):
                     raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
-                self.myOpts = LocalFile(namePattern=path.basename(full_path), localDir=path.dirname(full_path))
                 return self.myOpts
             elif isinstance(self.myOpts, DiracFile):
                 return self.myOpts

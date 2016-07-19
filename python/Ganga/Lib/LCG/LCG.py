@@ -15,6 +15,7 @@ import os
 import re
 import math
 import mimetypes
+import shutil
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Core import GangaException
@@ -1203,6 +1204,8 @@ try:
         else:
             if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
                 getPackedInputSandbox(f)
+            else:
+                shutil.copy(f, os.path.join(os.getcwd(), os.path.basename(f)))
 
     printInfo('Download inputsandbox from iocache passed.')
 

@@ -509,7 +509,7 @@ class Batch(IBackend):
 
         from Ganga.Utility.Config import getConfig
         for j in jobs:
-            stripProxy(j)._getWriteAccess()
+            stripProxy(j)._getSessionLock()
             outw = j.getOutputWorkspace()
 
             statusfile = os.path.join(outw.getPath(), '__jobstatus__')

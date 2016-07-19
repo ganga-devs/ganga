@@ -4,6 +4,7 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestSavannah19059(GangaUnitTest):
+
     def test_Savannah19059(self):
         from Ganga.GPI import Executable, Job, Interactive, LocalFile
 
@@ -21,3 +22,4 @@ class TestSavannah19059(GangaUnitTest):
         self.assertTrue(sleep_until_completed(self.j, 60), 'Timeout on registering Interactive job as completed')
 
         self.assertTrue(os.path.exists(os.path.join(self.j.outputdir, self.fname)))
+
