@@ -17,7 +17,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Credentials2 import require_credential
+from Ganga.GPIDev.Credentials2 import require_credential, credential_store, needed_credentials
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.Core.GangaThread.WorkerThreads import getQueues
@@ -363,7 +363,7 @@ class DiracBase(IBackend):
                         sj.backend.reset()
             if j.master:
                 j.master.updateMasterJobStatus()
-    
+
     @require_credential
     def kill(self):
         """ Kill a Dirac jobs"""
@@ -846,12 +846,6 @@ class DiracBase(IBackend):
 
         statusmapping = configDirac['statusmapping']
 
-        # TODO split jobs by cred_req and check each for validity
-        # cred = credential_store.get(cred_req)
-        # if not cred or not cred.is_valid():
-        #     needed_credentials.add(cred_req)
-        #     continue
-
         result, bulk_state_result = execute('monitorJobs(%s, %s)' %( repr(dirac_job_ids), repr(statusmapping)), cred_req=monitor_jobs[0].backend.credential_requirements)
 
         #result = results[0]
@@ -963,8 +957,25 @@ class DiracBase(IBackend):
         #logger.debug('Monitor jobs    : ' + repr([j.fqid for j in monitor_jobs]))
         #logger.debug('Requeue jobs    : ' + repr([j.fqid for j in requeue_jobs]))
 
+        # Split all the monitorable jobs into groups based on the
+        # credential used to communicate with DIRAC
+        monitor_jobs_by_credential = defaultdict(list)  # type: Dict[ICredentialInfo, List[Job]]
+        for j in monitor_jobs:
+            try:
+                cred_req = j.backend.credential_requirements
+                cred = credential_store[cred_req]
+                if not cred.is_valid():
+                    logger.debug('Required credential %s is not valid', cred)
+                    needed_credentials.add(cred_req)
+                    continue
+                monitor_jobs_by_credential[cred].append(j)
+            except KeyError:
+                logger.debug('Required credential %s is missing', cred_req)
+                needed_credentials.add(cred_req)
+
         DiracBase.requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses)
-        DiracBase.monitor_dirac_running_jobs(monitor_jobs, finalised_statuses)
+        for one_credential_jobs in monitor_jobs_by_credential.values():
+            DiracBase.monitor_dirac_running_jobs(one_credential_jobs, finalised_statuses)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
