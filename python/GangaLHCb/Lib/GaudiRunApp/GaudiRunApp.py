@@ -23,7 +23,7 @@ from Ganga.Utility.files import expandfilename, fullpath
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 
-from .GaudiRunAppUtils import getGaudiRunInputData, _exec_cmd, add_timeStampFile
+from .GaudiRunAppUtils import getGaudiRunInputData, _exec_cmd, getTimestampContent
 
 logger = getLogger()
 
@@ -207,14 +207,17 @@ class GaudiRun(IPrepareApp):
 
         with prep_lock:
             if not df:
-                add_timeStampFile(folder_dir)
                 job.master.application.sharedOptsInput = DiracFile(namePattern=GaudiRun.sharedOptsFile_name, localDir=folder_dir)
                 tar_filename = path.join(folder_dir, GaudiRun.sharedOptsFile_name)
                 if not path.isfile(tar_filename):
                     with tarfile.open(tar_filename, "w") as tar_file:
                         pass
                 with tarfile.open(tar_filename, "a") as tar_file:
-                    tar_file.add('__timestamp__')
+                    tinfo = tarfile.TarInfo('__timestamp__')
+                    tinfo.mtime = time.time()
+                    fileobj = StringIO(getTimestampContent())
+                    tinfo.size = fileobj.len
+                    tar_file.addfile(tinfo, fileobj)
 
             extra_opts_file = 'extra_opts_%s_.py' % job.id
 
@@ -268,10 +271,9 @@ class GaudiRun(IPrepareApp):
         if self.options:
             if isinstance(self.options, LocalFile):
                 ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
-                full_path = expandfilename(path.join(self.options.localDir, path.basename(self.options.namePattern)), force=True)
+                full_path = path.join(self.options.localDir, self.options.namePattern)
                 if not path.exists(full_path):
                     raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
-                self.options = LocalFile(namePattern=path.basename(full_path), localDir=path.dirname(full_path))
                 return self.options
             elif isinstance(self.options, DiracFile):
                 return self.options

@@ -26,7 +26,7 @@ from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouput
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-from .GaudiRunAppUtils import add_timeStampFile
+from .GaudiRunAppUtils import addTimestampFile
 
 logger = getLogger()
 
@@ -212,7 +212,7 @@ def generateDiracInput(app):
         raise ApplicationConfigurationError(None, 'Prepared folders not supported yet, please fix this in future')
     else:
         prep_dir = app.getSharedPath()
-        add_timeStampFile(prep_dir)
+        addTimestampFile(prep_dir)
         prep_file = prep_dir + '.tgz'
         compressed_file = os.path.join(tempfile.gettempdir(), '__'+os.path.basename(prep_file))
 

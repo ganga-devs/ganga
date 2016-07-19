@@ -262,7 +262,7 @@ class JobTree(GangaObject):
             logger.error("Error: %s" % err)
             raise
         finally:
-            self._releaseWriteAccess()
+            self._releaseSessionLockAndFlush()
 
     def rm(self, path):
         """Removes folder or job in the path.
@@ -286,7 +286,7 @@ class JobTree(GangaObject):
                 raise TreeError(3, "Can not delete the root directory")
             self._setDirty()
         finally:
-            self._releaseWriteAccess()
+            self._releaseSessionLockAndFlush()
 
     def mkdir(self, path):
         """Makes a folder. If any folders in the path are missing they will be created as well.
@@ -295,7 +295,7 @@ class JobTree(GangaObject):
             self.__make_dir(path)
             self._setDirty()
         finally:
-            self._releaseWriteAccess()
+            self._releaseSessionLockAndFlush()
 
     def cd(self, path=os.sep):
         """Changes current directory.
@@ -306,7 +306,7 @@ class JobTree(GangaObject):
             self.cwd(self.__get_path(path))
             self._setDirty()
         finally:
-            self._releaseWriteAccess()
+            self._releaseSessionLockAndFlush()
 
     def ls(self, path=None):
         """Lists content of current folder or folder in the path if the latter is provided.
@@ -442,7 +442,7 @@ class JobTree(GangaObject):
                             pass
                         finally:
                             try:
-                                self._releaseWriteAccess()
+                                self._releaseSessionLockAndFlush()
                             except ObjectNotInRegistryError as err:
                                 logger.debug("Object: %s Not in Reg: %s" % (_id, err))
                                 pass
