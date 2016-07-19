@@ -1300,12 +1300,9 @@ under certain conditions; type license() for details.
         if needed_credentials:
             prompt = 'Warning, some credentials needed by the monitoring are missing or invalid:\n'
             for cred_req in needed_credentials:
-                prompt += str(cred_req).replace('\n ', '') + '\n'
+                prompt += '  ' + str(cred_req).replace('\n ', '') + '\n'
             prompt += 'Call `credential_store.renew()` to update them.\n'
-            return prompt
-
-        return ''
-
+            print(prompt)
 
 
 #
