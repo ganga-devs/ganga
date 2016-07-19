@@ -99,8 +99,8 @@ class DiracProxy(ICredentialRequirement):
 
     def __init__(self, **kwargs):
         super(DiracProxy, self).__init__(**kwargs)
-        #if 'vo' not in kwargs and getConfig('LCG')['VirtualOrganisation']:
-        #    self.vo = getConfig('LCG')['VirtualOrganisation']
+        if self.group is None:
+            raise ValueError('DIRAC Proxy `group` is not set')
 
     def encoded(self):
         return ':'.join(requirement for requirement in [self.group] if requirement)  # filter out the empties
