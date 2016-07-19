@@ -395,13 +395,11 @@ def extractAllTarFiles(path):
 
 def pythonScript(scriptName):
     '''
-    This is the actual code in the GaudiPython-like script
+    This allows us to run a custom python script on the WN
     '''
     script = '''
-from Gaudi.Configuration import *
-importOptions('data.py')
-execfile('./%s')
-''' % scriptName
+###WRAPPER_SCRIPT_WORKER_NODE###
+'''
     return script
 
 def generatePythonScript(scriptName, contents=None):
@@ -449,7 +447,7 @@ if __name__ == '__main__':
 
     print("Executing: %s" % '###COMMAND###')
     # Execute the actual command on the WN
-    # NB os.system caued the entire stream to be captured before being streamed in some cases
+    # NB os.system caused the entire stream to be captured before being streamed in some cases
     pipe = subprocess.Popen('###COMMAND###', shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     # Flush the stdout/stderr as the process is running correctly

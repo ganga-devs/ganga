@@ -220,6 +220,13 @@ def fillPackedSandbox(sandbox_files, destination):
 
 
 def gzipFile(filename, outputfilename=None, removeOriginal=False):
+    """
+    This method creates a new compressed version of the inputfile compressed with gzip
+    Args:
+        filename (str): This is the file which is being compressed
+        outputfilename (str): This is the (optional) name of the outputfile object which is created
+        removeOriginal (bool): Should the original be destroyed after the compressed version is made?
+    """
     import gzip
     if not outputfilename:
         outputfilename = filename + '.gz'

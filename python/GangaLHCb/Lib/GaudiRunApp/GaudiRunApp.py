@@ -234,6 +234,8 @@ class GaudiRun(IPrepareApp):
     def cleanGangaTargetArea(self, this_build_target):
         """
         Method to remove the build target and other files not needed to reproduce the same build target again
+        Args:
+            this_build_target (str): This is the full path of the build target
         """
         logger.debug("Cleaning up area after prepare")
 
