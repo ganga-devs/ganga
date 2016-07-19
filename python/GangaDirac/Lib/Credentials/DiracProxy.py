@@ -23,8 +23,7 @@ class DiracProxyInfo(VomsProxyInfo):
     """
 
     def __init__(self, requirements, check_file=False, create=False):
-        self.shell = Shell()
-        self.shell.env.update(getDiracEnv())
+        self._shell = None
 
         super(DiracProxyInfo, self).__init__(requirements, check_file, create)
 
@@ -47,6 +46,13 @@ class DiracProxyInfo(VomsProxyInfo):
             logger.debug('Grid proxy {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
         else:
             raise CredentialRenewalError('Failed to create DIRAC proxy')
+
+    @property
+    def shell(self):
+        if self._shell is None:
+            self._shell = super(DiracProxyInfo, self).shell
+            self._shell.env.update(getDiracEnv())
+        return self._shell
 
     def destroy(self):
         if os.path.isfile(self.location):

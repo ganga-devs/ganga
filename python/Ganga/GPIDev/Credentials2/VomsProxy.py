@@ -22,7 +22,7 @@ class VomsProxyInfo(ICredentialInfo):
     """
 
     def __init__(self, requirements, check_file=False, create=False):
-        self.shell = Shell()
+        self._shell = None
 
         super(VomsProxyInfo, self).__init__(requirements, check_file, create)
 
@@ -51,6 +51,12 @@ class VomsProxyInfo(ICredentialInfo):
             logger.debug('Grid proxy {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
         else:
             raise CredentialRenewalError('Failed to create VOMS proxy')
+
+    @property
+    def shell(self):
+        if self._shell is None:
+            self._shell = Shell()
+        return self._shell
 
     def destroy(self):
         self.shell.cmd1('voms-proxy-destroy -file %s' % self.location, allowed_exit=[0, 1])
