@@ -507,22 +507,22 @@ class DiracFile(IGangaFile):
 
             for this_SE in files_URLs.keys():
                 this_accessURL[this_SE] = []
-                myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn , str(this_SE)))
+                myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
                 this_accessURL[this_SE] = myurl['Value']['Successful'][self.lfn]
             # Cannot find an accessURL. Doesn't really do anything as Dirac throws an error before this point.
             if this_accessURL == '':
-                logger.info( 'Cannot find a replica for the LFN %s' % self.lfn)
+                logger.info('Cannot find a replica for the LFN %s' % self.lfn)
                 return []
             # If the SE isn't specified return a random choice.
             if thisSE == '':
-              return random.choice(list(this_accessURL.items()))[1]
+              return random.choice(list(this_accessURL.values()))
             # If the SE is specified and we got a URL for a replica there, return it.
-            elif thisSE in this_accessURL.keys():
+            elif thisSE in this_accessURL:
               return this_accessURL[thisSE]
             # If the specified SE doesn't have a replica then return another one at random.
             else:
-              logger.info("No replica at specified SE, here is a URL for another replica")
-              return random.choice(list(this_accessURL.items()))[1]
+              logger.warning('No replica at specified SE, here is a URL for another replica')
+              return random.choice(list(this_accessURL.values()))
         else:
             # For all subfiles request the accessURL, 1 URL per LFN
             _accessURLs = []
