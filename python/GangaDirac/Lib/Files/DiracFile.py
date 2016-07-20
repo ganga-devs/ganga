@@ -100,7 +100,7 @@ class DiracFile(IGangaFile):
                 super(DiracFile, self).__setattr__('namePattern', this_name)
         elif attr == 'remoteDir':
             if value:
-                this_lfn = os.path.join(value, self.lfn)
+                this_lfn = os.path.join(value, self.namePattern)
                 super(DiracFile, self).__setattr__('lfn', this_lfn)
 
         super(DiracFile, self).__setattr__(attr, actual_value)
@@ -661,15 +661,20 @@ class DiracFile(IGangaFile):
                 logger.warning("LFN will be generated automatically")
                 self.lfn = ""
 
-        selfConstructedLFN = False
-
         import glob
         if self.remoteDir == '' and self.lfn == '':
-            import datetime
-            t = datetime.datetime.now()
-            this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.lfn = os.path.join(DiracFile.diracLFNBase(), 'GangaFiles_%s' % this_date)
-            selfConstructedLFN = True
+            try:
+                job = self.getJobObject()
+            except AssertionError:
+                job = None
+            if job:
+                lfn_folder = os.path.join("GangaUploadedFiles", "GangaJob_%s" % job.getFQID('.'))
+            else:
+                import datetime
+                t = datetime.datetime.now()
+                this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
+                lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
+            self.lfn = os.path.join(DiracFile.diracLFNBase(), lfn_folder, self.namePattern)
 
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
@@ -690,11 +695,8 @@ class DiracFile(IGangaFile):
             storage_elements = [uploadSE]
 
         outputFiles = GangaList()
-        backup_lfn = self.lfn
         for this_file in glob.glob(os.path.join(sourceDir, self.namePattern)):
             name = this_file
-
-            self.lfn = backup_lfn
 
             if not os.path.exists(name):
                 if not self.compressed:
@@ -712,10 +714,7 @@ class DiracFile(IGangaFile):
             if lfn == "":
                 lfn = os.path.join(lfn_base, os.path.basename(name))
 
-            if selfConstructedLFN is True:
-                self.lfn = os.path.join(self.lfn, os.path.basename(name))
-
-            lfn = self.lfn
+            lfn = os.path.join(os.path.dirname(self.lfn), this_file)
 
             d = DiracFile()
             d.namePattern = os.path.basename(name)
@@ -838,14 +837,19 @@ for f in glob.glob('###NAME_PATTERN###'):
         WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
         script = FileUtils.loadScript(WNscript_location, '')
 
-        selfConstructedLFNs = False
-
         if self.remoteDir == '' and self.lfn == '':
-            import datetime
-            t = datetime.datetime.now()
-            this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.lfn = os.path.join(DiracFile.diracLFNBase(), 'GangaFiles_%s' % this_date)
-            selfConstructedLFNs = True
+            try:
+                job = self.getJobObject()
+            except AssertionError:
+                job = None
+            if job:
+                lfn_folder = os.path.join("GangaUploadedFiles", "GangaJob_%s" % job.getFQID('.'))
+            else:
+                import datetime
+                t = datetime.datetime.now()
+                this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
+                lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
+            self.lfn = os.path.join(DiracFile.diracLFNBase(), lfn_folder, self.namePattern)
 
         if self.remoteDir == '' and self.lfn != '':
             self.remoteDir = DiracFile.diracLFNBase()
@@ -855,6 +859,7 @@ for f in glob.glob('###NAME_PATTERN###'):
         else:
             lfn_base = self.remoteDir
 
+        lfn_base = DiracFile.diracLFNBase()
 
         for this_file in outputFiles:
             isCompressed = this_file.namePattern in patternsToZip
