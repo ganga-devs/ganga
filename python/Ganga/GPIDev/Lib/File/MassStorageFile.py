@@ -4,6 +4,11 @@ from __future__ import absolute_import
 #
 # $Id: MassStorageFile.py,v 0.1 2011-11-09 15:40:00 idzhunov Exp $
 ##########################################################################
+import errno
+import re
+import os
+import copy
+
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
@@ -13,11 +18,8 @@ from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.Utility.files import expandfilename
 
-import errno
-import re
-import os
-import copy
 import Ganga.Utility.Config
 
 regex = re.compile('[*?\[\]]')
@@ -54,13 +56,23 @@ class MassStorageFile(IGangaFile):
 
         self.shell = Shell.Shell()
 
-    def __construct__(self, args):
-        if len(args) == 1 and isinstance(args[0], str):
-            self._setNamePath(args[0], '')
-        elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
-            self._setNamePath(args[0], args[1])
-        self.locations = []
-        self.shell = Shell.Shell()
+    def __setattr__(self, attr, value):
+        """
+        This is an overloaded setter method to make sure that we're auto-expanding the filenames of files which exist.
+        In the case we're assigning any other attributes the value is simply passed through
+        Args:
+            attr (str): This is the name of the attribute which we're assigning
+            value (unknown): This is the value being assigned.
+        """
+        actual_value = value
+        if attr == "namePattern":
+            actual_value = os.path.basename(value)
+            this_localDir = os.path.dirname(value)
+            super(MassStorageFile, self).__setattr__('localDir', this_localDir)
+        if attr == "localDir":
+            actual_value = os.path.abspath(expandfilename(value))
+
+        super(MassStorageFile, self).__setattr__(attr, actual_value)
 
     def _setNamePath(self, _namePattern='', _localDir=''):
         if _namePattern != '' and _localDir == '':
@@ -71,7 +83,9 @@ class MassStorageFile(IGangaFile):
             self.namePattern = _namePattern
             self.localDir = _localDir
 
+
     def _on_attribute__set__(self, obj_type, attrib_name):
+        # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
         r = copy.deepcopy(self)
         if getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
             r.locations = []

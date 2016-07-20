@@ -29,8 +29,8 @@ logger = Ganga.Utility.logging.getLogger()
 
 class JobRegistry(Registry):
 
-    def __init__(self, name, doc, update_index_time=30):
-        super(JobRegistry, self).__init__(name, doc, update_index_time)
+    def __init__(self, name, doc):
+        super(JobRegistry, self).__init__(name, doc)
         self.stored_slice = JobRegistrySlice(self.name)
         self.stored_slice.objects = self
         self.stored_proxy = JobRegistrySliceProxy(self.stored_slice)

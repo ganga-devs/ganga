@@ -64,21 +64,19 @@ class File(GangaObject):
         if not subdir is None:
             self.subdir = subdir
 
-    def __construct__(self, args):
-        if len(args) == 1 and isinstance(args[0], str):
-            v = args[0]
-            import os.path
-            expanded = expandfilename(v)
-            # if it is not already an absolute filename
-            if not urlprefix.match(expanded):
-                if os.path.exists(os.path.abspath(expanded)):
-                    self.name = os.path.abspath(expanded)
-                else:
-                    self.name = v
-            else:  # bugfix #20545
-                self.name = expanded
-        else:
-            super(File, self).__construct__(args)
+    def __setattr__(self, attr, value):
+        """
+        This is an overloaded setter method to make sure that we're auto-expanding the filenames of files which exist.
+        In the case we're assigning any other attributes the value is simply passed through
+        Args:
+            attr (str): This is the name of the attribute which we're assigning
+            value (unknown): This is the value being assigned.
+        """
+        actual_value = value
+        if attr == "name":
+            actual_value = expandfilename(value)
+        super(File, self).__setattr__(attr, actual_value)
+
 
     def _attribute_filter__set__(self, attribName, attribValue):
         if attribName is 'name':
@@ -126,7 +124,7 @@ def string_file_shortcut_file(v, item):
     if isinstance(v, str):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
-        return stripProxy(File._proxyClass(v))
+        return File(v)
     return None
 
 allComponentFilters['files'] = string_file_shortcut_file
@@ -255,7 +253,7 @@ def string_sharedfile_shortcut(v, item):
     if isinstance(v, str):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
-        return stripProxy(ShareDir._proxyClass(v))
+        return ShareDir(v)
     return None
 
 allComponentFilters['shareddirs'] = string_sharedfile_shortcut

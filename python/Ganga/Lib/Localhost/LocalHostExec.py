@@ -58,6 +58,8 @@ os.chdir(workdir)
 for f in input_sandbox:
     if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
         getPackedInputSandbox(f)
+    else:
+        shutil.copy(f, os.path.join(os.getcwd(), os.path.basename(f)))
 
 # -- END OF MOVED CODE BLOCK
 

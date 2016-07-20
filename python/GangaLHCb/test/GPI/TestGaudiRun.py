@@ -21,12 +21,18 @@ class TestGaudiRun(GangaUnitTest):
         with open(gaudi_testOpts, 'w+') as temp_opt:
             temp_opt.write("print('hello')")
 
+        assert path.exists(gaudi_testOpts)
+
         gr = GaudiRun(directory=gaudi_testFol, myOpts=LocalFile(gaudi_testOpts))
 
         assert isinstance(stripProxy(gr).getOptsFile(), stripProxy(LocalFile))
         assert stripProxy(gr).getDir()
 
-        assert open(path.join(stripProxy(gr).getOptsFile().localDir, stripProxy(gr).getOptsFile().namePattern)).read() == "print('hello')"
+        reconstructed_path = path.join(stripProxy(gr).getOptsFile().localDir, stripProxy(gr).getOptsFile().namePattern)
+
+        assert reconstructed_path == gaudi_testOpts
+
+        assert open(reconstructed_path).read() == "print('hello')"
 
         assert stripProxy(gr).getDir() == gaudi_testFol
 

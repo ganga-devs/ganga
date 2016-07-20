@@ -26,7 +26,6 @@ import string
 import sys
 import time
 import re
-import atexit
 
 from Ganga import _gangaVersion, _gangaPythonPath
 from Ganga.Utility.Config.Config import getConfig
@@ -776,6 +775,7 @@ under certain conditions; type license() for details.
 
         if not self.options.monitoring:
             self.options.cmdline_options.append('[PollThread]autostart=False')
+            self.options.cmdline_options.append('[Tasks]disableTaskMon=True')
 
         logger = getLogger()
 
@@ -845,9 +845,8 @@ under certain conditions; type license() for details.
         logger = getLogger()
 
         logger.debug("Installing Shutdown Manager")
-        import atexit
-        from Ganga.Core.InternalServices.ShutdownManager import _ganga_run_exitfuncs
-        atexit.register(_ganga_run_exitfuncs)
+        from Ganga.Core.InternalServices.ShutdownManager import register_exitfunc
+        register_exitfunc()
 
         import Ganga.Utility.Config
         from Ganga.Utility.Runtime import RuntimePackage, allRuntimes
@@ -1043,10 +1042,6 @@ under certain conditions; type license() for details.
         if runs_script:
             if not self.interactive:
                 session_type = 'batch'
-                from Ganga.Utility.Config import setConfigOption
-                setConfigOption('PollThread', 'forced_shutdown_policy', 'batch')
-                from Ganga.Core import change_atexitPolicy
-                change_atexitPolicy(False, 'batch')
             else:
                 session_type += 'startup_script'
 
