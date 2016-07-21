@@ -75,7 +75,7 @@ class ICredentialInfo(object):
         self.initial_requirements = copy.deepcopy(requirements)  # Store the requirements that the object was created with. Used for creation
 
         if check_file:
-            logger.debug('Trying to wrap {path}'.format(path=self.location))
+            logger.debug('Trying to wrap %s', self.location)
             if not os.path.exists(self.location):
                 raise IOError('Proxy file {path} not found'.format(path=self.location))
             logger.debug('Wrapping existing file %s', self.location)
@@ -170,7 +170,7 @@ class ICredentialInfo(object):
         # type: (ICredentialRequirement, str) -> bool
         """
         Args:
-            query (ICredentialRequirement): 
+            query (ICredentialRequirement):
             requirement_name (str): The requirement attribute to check
 
         Returns:
@@ -180,8 +180,8 @@ class ICredentialInfo(object):
         if requirement_value is None:
             # If this requirementName is unspecified then ignore it
             return True
-        logger.debug('{name}: \t{cred} \t{requested}'.format(name=requirement_name, cred=getattr(self, requirement_name), requested=requirement_value))
-        return getattr(self,requirement_name) == requirement_value
+        logger.debug('%s: \t%s \t%s', requirement_name, getattr(self, requirement_name), requirement_value)
+        return getattr(self, requirement_name) == requirement_value
 
     def __eq__(self, other):
         return self.location == other.location

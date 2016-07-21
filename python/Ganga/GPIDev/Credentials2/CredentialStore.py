@@ -5,6 +5,7 @@ from datetime import timedelta
 
 import Ganga.Utility.logging
 from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Base.Proxy import export
 from Ganga.GPIDev.Schema import Schema, Version
 
 from .exceptions import CredentialsError
@@ -30,22 +31,20 @@ class CredentialStore(GangaObject, collections.Mapping):
     _schema = Schema(Version(1, 0), {})
 
     _category = 'credentials2'
-    _name = 'CredentialStore'
     _hidden = 1  # This class is hidden since we want a 'singleton' created in the bootstrap
-
-    _exportmethods = ['__getitem__', '__iter__', '__len__', '__str__', 'renew', 'create', 'clear']
 
     def __init__(self):
         super(CredentialStore, self).__init__()
         self.credentials = set()
 
+    @export
     def create(self, query, create=True, check_file=False):
         # type: (ICredentialRequirement, bool, bool) -> ICredentialInfo
         """
         Create an ``ICredentialInfo`` for the query.
 
         Args:
-            query (ICredentialRequirement): 
+            query (ICredentialRequirement):
             check_file: Raise an exception if the file does not exist
             create: Create the credential file
 
@@ -67,39 +66,47 @@ class CredentialStore(GangaObject, collections.Mapping):
         self.credentials.remove(credential_object)
 
     def __str__(self, interactive=False):
+        # Get the string information with which to fill the table
         headers = ['Type', 'Location', 'Valid', 'Time left']
         cred_info = [[str(f) for f in (type(cred).__name__, cred.location, cred.is_valid(), cred.time_left())] for cred in self.credentials]
         rows = [headers] + cred_info
+
+        # Get the length of the longest string in each column
         column_widths = [
             max(len(field) for field in column)
             for column in zip(*rows)
             ]
 
-        def list_to_strings(row, widths, filler=''):
+        def pad_row_strings(row, widths, filler=' '):
+            # type: (List[str], List[int], str) -> List[str]
+            """Add padding to each of ``row`` to equal the corresponding ``widths`` entry, padded with ``filler``"""
             return ['{field:{filler}<{width}}'.format(field=field[0], filler=filler, width=field[1]) for field in zip(row, widths)]
+        header_strings = pad_row_strings(headers, column_widths)
+        divider_strings = pad_row_strings([''] * len(column_widths), column_widths, filler='-')
+        row_strings = [pad_row_strings(cred, column_widths) for cred in cred_info]
 
-        header_strings = list_to_strings(headers, column_widths)
-        divider_strings = list_to_strings('-' * len(headers), column_widths, filler='-')
-        row_strings = [list_to_strings(cred, column_widths) for cred in cred_info]
-
+        # Concatenate the field string together
         def strings_to_row(strings, spacer='|'):
+            # type: (List[str], str) -> str
             return ' {0} '.format(spacer).join(strings)
-
         header = strings_to_row(header_strings)
         divider = strings_to_row(divider_strings, spacer='+')
         body = '\n'.join(strings_to_row(cred) for cred in row_strings)
 
         return '\n'.join([header, divider, body])
 
+    @export
     def __iter__(self):
         """Allow iterating over the store directly"""
         # yield from self.credentialList #In Python 3.3
         return iter(self.credentials)
 
+    @export
     def __len__(self):
         """How many credentials are known about in the system"""
         return len(self.credentials)
 
+    @export
     def __getitem__(self, query):
         # type: (ICredentialRequirement) -> ICredentialInfo
         """
@@ -126,10 +133,10 @@ class CredentialStore(GangaObject, collections.Mapping):
 
         try:
             cred = self.create(query, create=False, check_file=True)
-        except IOError as e:
-            logger.debug(e.strerror)
-        except CredentialsError as e:
-            logger.debug(str(e))
+        except IOError as err:
+            logger.debug(err.strerror)
+        except CredentialsError as err:
+            logger.debug(str(err))
         else:
             self.credentials.add(cred)
             return cred
@@ -153,12 +160,12 @@ class CredentialStore(GangaObject, collections.Mapping):
             return self[query]
         except KeyError:
             return default
-    
+
     def get_all_matching_type(self, query):
         # type: (ICredentialRequirement) -> Sequence[ICredentialInfo]
         """
         Returns all ``ICredentialInfo`` with the type that matches the query
-        
+
         Args:
             query (ICredentialRequirement):
 
@@ -166,7 +173,7 @@ class CredentialStore(GangaObject, collections.Mapping):
             list[ICredentialInfo]: An list of all matching objects
         """
 
-        return [cred for cred in self.credentials if type(cred) == query.info_class]
+        return [cred for cred in self.credentials if isinstance(cred, query.info_class)]
 
     def matches(self, query):
         # type: (ICredentialRequirement) -> Sequence[ICredentialInfo]
@@ -174,14 +181,14 @@ class CredentialStore(GangaObject, collections.Mapping):
         Search the credentials in the store for all matches. They must match every condition exactly.
 
         Args:
-            query (ICredentialRequirement): 
+            query (ICredentialRequirement):
 
         Returns:
             list[ICredentialInfo]: An list of all matching objects
         """
 
         return [cred for cred in self.get_all_matching_type(query) if cred.check_requirements(query)]
-    
+
     def match(self, query):
         # type: (ICredentialRequirement) -> ICredentialInfo
         """
@@ -204,6 +211,7 @@ class CredentialStore(GangaObject, collections.Mapping):
             return matches[0]  # TODO For now just return the first one... Though perhaps we should merge them or something?
         return None
 
+    @export
     def renew(self):
         # type: () -> None
         """
@@ -220,6 +228,7 @@ class CredentialStore(GangaObject, collections.Mapping):
             except KeyError:
                 self.create(cred_req)
 
+    @export
     def clear(self):
         # type: () -> None
         """

@@ -1290,7 +1290,7 @@ under certain conditions; type license() for details.
         ipshell(local_ns=local_ns, module=Ganga.GPI)
 
     @staticmethod
-    def ganga_prompt(dummy=None):
+    def ganga_prompt(_=None):
 
         from Ganga.GPIDev.Credentials2 import get_needed_credentials
 
