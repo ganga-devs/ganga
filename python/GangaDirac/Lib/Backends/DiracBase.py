@@ -959,6 +959,7 @@ class DiracBase(IBackend):
 
         # Split all the monitorable jobs into groups based on the
         # credential used to communicate with DIRAC
+        # TODO Perhaps this would make more sense being done on a more generic level
         monitor_jobs_by_credential = defaultdict(list)  # type: Dict[ICredentialInfo, List[Job]]
         for j in monitor_jobs:
             try:

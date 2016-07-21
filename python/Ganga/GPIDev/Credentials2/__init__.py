@@ -18,7 +18,7 @@ def require_credential(method):
     If the decorated method is called directly by the user (checked by looking which thread we are on) then if a
     credential is not available, a prompt is given to request one. If the method is being called in another thread
     (monitoring or similar) then a ``CredentialsError`` is raised.
-    
+
     Uses the method's object's ``credential_requirements`` attribute
     """
     @wraps(method)
@@ -36,6 +36,6 @@ def require_credential(method):
 
         if not cred.is_valid():
             raise exceptions.CredentialsError('Proxy is invalid')
-            
+
         return method(self, *args, **kwargs)
     return wrapped_method

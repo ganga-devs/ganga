@@ -45,7 +45,7 @@ class AfsTokenInfo(ICredentialInfo):
         stdoutdata, stderrdata = process.communicate(getpass('Kerberos password: '))
 
         if process.returncode == 0:
-            logger.info('AFS token {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
+            logger.info('AFS token %s created. Valid for %s', self.location, self.time_left())
         else:
             raise CredentialRenewalError(stderrdata)
 
@@ -115,7 +115,6 @@ class AfsToken(ICredentialRequirement):
     _schema = ICredentialRequirement._schema.inherit_copy()
 
     _category = 'CredentialRequirement'
-    _name = 'AfsToken'
 
     info_class = AfsTokenInfo
 

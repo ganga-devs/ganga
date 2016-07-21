@@ -46,9 +46,9 @@ class VomsProxyInfo(ICredentialInfo):
         logger.debug(voms_command)
         command = 'voms-proxy-init -pwstdin -out %s %s' % (self.location, voms_command)
         logger.debug(command)
-        rc = self.shell.system(command)
-        if rc == 0:
-            logger.debug('Grid proxy {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
+        return_code = self.shell.system(command)
+        if return_code == 0:
+            logger.debug('Grid proxy %s created. Valid for %s', self.location, self.time_left())
         else:
             raise CredentialRenewalError('Failed to create VOMS proxy')
 
@@ -87,7 +87,7 @@ class VomsProxyInfo(ICredentialInfo):
         if status != 0:
             return None
         return output.split(':')[0].strip()
-       
+
     @property
     @cache
     def role(self):
@@ -130,14 +130,13 @@ class VomsProxy(ICredentialRequirement):
     An object specifying the requirements of a VOMS proxy file
     """
     _schema = ICredentialRequirement._schema.inherit_copy()
-    _schema.datadict['identity'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Identity for the proxy')
-    _schema.datadict['vo'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation')
-    _schema.datadict['role'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Role that the proxy must have')
-    _schema.datadict['group'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy - either "group" or "group/subgroup"')
+    identity = SimpleItem(defvalue=None, typelist=[str, None], doc='Identity for the proxy')
+    vo = SimpleItem(defvalue=None, typelist=[str, None], doc='Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation')
+    role = SimpleItem(defvalue=None, typelist=[str, None], doc='Role that the proxy must have')
+    group = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy - either "group" or "group/subgroup"')
 
     _category = 'CredentialRequirement'
-    _name = 'VomsProxy'
-    
+
     info_class = VomsProxyInfo
 
     def __init__(self, **kwargs):
