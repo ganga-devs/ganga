@@ -11,18 +11,18 @@ from . import exceptions
 logger = Ganga.Utility.logging.getLogger()
 
 
-def require_credential(function):
+def require_credential(method):
     """
-    A decorator for labelling a function as needed a credential.
+    A decorator for labelling a method as needing a credential.
 
-    If the decorated function is called directly by the user (checked by looking which thread we are on) then if a
-    credential is not available, a prompt is given to request one. If the function is being called in another thread
+    If the decorated method is called directly by the user (checked by looking which thread we are on) then if a
+    credential is not available, a prompt is given to request one. If the method is being called in another thread
     (monitoring or similar) then a ``CredentialsError`` is raised.
     
-    Uses the function's object's ``credential_requirements`` attribute
+    Uses the method's object's ``credential_requirements`` attribute
     """
-    @wraps(function)
-    def wrapped_function(self, *args, **kwargs):
+    @wraps(method)
+    def wrapped_method(self, *args, **kwargs):
         cred_req = self.credential_requirements
 
         try:
@@ -32,10 +32,10 @@ def require_credential(function):
                 logger.warning('Required credential [%s] not found in store', cred_req)
                 cred = credential_store.create(cred_req, create=True)
             else:
-                raise exceptions.CredentialsError('Cannot get proxy which matches requirements')
+                raise exceptions.CredentialsError('Cannot get proxy which matches requirements {0}'.format(cred_req))
 
         if not cred.is_valid():
             raise exceptions.CredentialsError('Proxy is invalid')
             
-        return function(self, *args, **kwargs)
-    return wrapped_function
+        return method(self, *args, **kwargs)
+    return wrapped_method
