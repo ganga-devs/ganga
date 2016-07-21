@@ -237,3 +237,4 @@ def gzipFile(filename, outputfilename=None, removeOriginal=False):
     f_in.close()
     if removeOriginal:
         os.system('rm -f %s' % filename)
+

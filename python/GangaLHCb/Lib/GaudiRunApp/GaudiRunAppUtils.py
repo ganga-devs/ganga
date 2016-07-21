@@ -1,5 +1,7 @@
 import subprocess
+from datetime import datetime
 import time
+import uuid
 from Ganga.Core.exceptions import GangaException
 from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.Utility.logging import getLogger
@@ -8,7 +10,26 @@ from .PythonOptsCmakeParser import PythonOptsCmakeParser
 
 logger = getLogger()
 
+def gaudiPythonWrapper(sys_args, data_file, script_file):
+    """
+    Returns the script which is used by GaudiPython to wrap the job on the WN
+    Args:
+        sys_args
+    """
+    wrapper_script = """
+from Gaudi.Configuration import *
+
+import sys
+sys.argv += %s
+importOptions('%s')
+execfile('%s')
+""" % (sys_args, data_file, script_file)
+    return wrapper_script
+
 def getTimestampContent():
+    """
+    Returns a string containing the current time in a gven format and a unique random uuid
+    """
     fmt = '%Y-%m-%d-%H-%M-%S'
     return datetime.now().strftime(fmt) + '\n' + str(uuid.uuid4())
 
@@ -23,7 +44,6 @@ def addTimestampFile(given_path, fileName='__timestamp__'):
     logger.debug("Constructing: %s" % time_filename)
     with open(time_filename, 'a+') as time_file:
         time_file.write(getTimestampContent())
-
 
 def getGaudiRunInputData(optsfiles, app):
     '''Returns a LHCbDataSet object from a list of options files. The

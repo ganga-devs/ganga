@@ -77,13 +77,14 @@ class GaudiRun(IPrepareApp):
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
-        'directory':    SimpleItem(preparable=1, defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
+        'directory':    SimpleItem(defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
         'options':       GangaFileItem(defvalue=None, doc='File which contains the extra opts I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'sharedOptsInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the extra-opts for all (sub)jobs which are uploaded as 1 archive'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
+        'extraArgs':    SimpleItem(defvalue=[], typelist=[list], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
 
         # Prepared job object
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
@@ -182,15 +183,13 @@ class GaudiRun(IPrepareApp):
 
         self.cleanGangaTargetArea(this_build_target)
 
-        try:
-            job = self.getJobObject()
-        except AssertionError:
-            return 1
-
-        if self.extraOpts:
-            self.constructExtraOptsFile( job )
-
         return 1
+
+    def getOptsFileName(self):
+        """
+        Returns the name of the opts file which corresponds to the job which owns this app
+        """
+        return 'opts/extra_opts_%s_.py' % self.getJobObject().getFQID('.')
 
     def constructExtraOptsFile(self, job):
         """
@@ -203,11 +202,11 @@ class GaudiRun(IPrepareApp):
 
         df = master_job.application.sharedOptsInput
 
-        folder_dir = job.getInputWorkspace(create=True).getPath()
+        folder_dir = master_job.getInputWorkspace(create=True).getPath()
 
         with prep_lock:
-            if not df:
-                job.master.application.sharedOptsInput = DiracFile(namePattern=GaudiRun.sharedOptsFile_name, localDir=folder_dir)
+            if not df or df.namePattern == '':
+                master_job.application.sharedOptsInput = LocalFile(namePattern=GaudiRun.sharedOptsFile_name, localDir=folder_dir)
                 tar_filename = path.join(folder_dir, GaudiRun.sharedOptsFile_name)
                 if not path.isfile(tar_filename):
                     with tarfile.open(tar_filename, "w") as tar_file:
@@ -219,7 +218,7 @@ class GaudiRun(IPrepareApp):
                     tinfo.size = fileobj.len
                     tar_file.addfile(tinfo, fileobj)
 
-            extra_opts_file = 'extra_opts_%s_.py' % job.id
+            extra_opts_file = self.getOptsFileName()
 
             # First construct if needed
             if not path.isfile(path.join(folder_dir, GaudiRun.sharedOptsFile_name)):

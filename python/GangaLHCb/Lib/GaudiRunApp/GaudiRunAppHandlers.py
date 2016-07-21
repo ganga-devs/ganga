@@ -27,12 +27,13 @@ from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from .GaudiRunAppUtils import addTimestampFile
+from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
 
 logger = getLogger()
 
 prep_lock = threading.Lock()
 
-WN_script_name = 'GaudiRun_Python_WN_script.py'
+wrapper_script_name = 'Python_WN_script.py'
 extra_args_name = 'extra_args.py'
 
 
@@ -48,20 +49,29 @@ def genDataFiles(job):
 
     data = job.inputdata
     if data:
-        logger.debug("Returning options String")
-        data_str = data.optionsString()
-        if data.hasLFNs():
-            logger.info("Generating Data catalog for job: %s" % job.fqid)
-            logger.debug("Returning Catalogue")
-            inputsandbox.append(FileBuffer('catalog.xml', data.getCatalog()))
-            cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
-            data_str += cat_opts
+        with prep_lock:
+            logger.debug("Returning options String")
+            data_str = data.optionsString()
+            if data.hasLFNs():
+                logger.info("Generating Data catalog for job: %s" % job.fqid)
+                logger.debug("Returning Catalogue")
+                inputsandbox.append(FileBuffer('catalog.xml', data.getCatalog()))
+                cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
+                data_str += cat_opts
 
         inputsandbox.append(FileBuffer(GaudiRunDiracRTHandler.data_file, data_str))
     else:
         inputsandbox.append(FileBuffer(GaudiRunDiracRTHandler.data_file, '#dummy_data_file\n'+LHCbDataset().optionsString()))
 
     return inputsandbox
+
+def generateWrapperScript(app):
+    """
+    This generates the wrapper script which is run for non GaudiRun type apps
+    Args:
+        app (GaudiRun): GaudiRun instance which contains the script to run on the WN
+    """
+    return FileBuffer(name=wrapper_script_name, contents=app.WNWrapperScript)
 
 def generateWNScript(commandline, job):
     """
@@ -71,18 +81,14 @@ def generateWNScript(commandline, job):
         job (Job): This is the job object which contains everything useful for generating the code
     """
 
-    exe_script_name = 'gaudiRun-script.py'
-
-    if not job.application.useGaudiRun:
-
-        return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline, WN_SCRIPT_NAME=WN_script_name,
-                                                                          SCRIPT_NAME = os.path.basename(job.application.getOptsFile().namePattern),
-                                                                          OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
-                          executable=True)
+    if job.application.useGaudiRun:
+        exe_script_name = 'gaudiRunScript.py'
     else:
-        return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline, WN_SCRIPT_NAME=WN_script_name,
-                                                                          OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
-                          executable=True)
+        exe_script_name = getName(job.application)+'Script.py'
+
+    return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
+                                                                      OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
+                      executable=True)
 
 def collectPreparedFiles(app):
     """
@@ -101,7 +107,7 @@ def collectPreparedFiles(app):
             input_folders.append(os.path.join(root, name))
     return input_files, input_folders
 
-def prepareCommand(app):
+def prepareCommand(app, expand_args=True):
     """
     Returns the command which is to be run on the worker node
     Args:
@@ -117,11 +123,17 @@ def prepareCommand(app):
                                             getName(opts_file))
 
     sourceEnv = app.getEnvScript()
-        
+
+    args = app.extraArgs
+
     if not app.useGaudiRun:
-        full_cmd = sourceEnv + './run python %s' %(WN_script_name)
+        full_cmd = sourceEnv + './run python %s' % (WN_script_name)
     else:
         full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
+        if app.extraOpts:
+            full_cmd += ' ' + app.getOptsFileName()
+        if expand_args:
+            full_cmd += " " + " ".join(args)
     return full_cmd
 
 
@@ -147,6 +159,19 @@ class GaudiRunRTHandler(IRuntimeHandler):
         WarnUsers()
 
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
+        job = app.getJobObject()
+        if job.subjobs:
+            rjobs = job.subjobs
+        else:
+            rjobs = [job]
+        for this_job in rjobs:
+            logger.info("Preparing: %s" % this_job.fqid)
+            this_job.application.constructExtraOptsFile(this_job)
+
+        optsArchive = os.path.join(app.sharedOptsInput.localDir, app.sharedOptsInput.namePattern)
+        gzipFile(optsArchive, optsArchive+'.gz', True)
+
+        inputsandbox.append(File(name=optsArchive+'.gz'))
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
@@ -174,14 +199,6 @@ class GaudiRunRTHandler(IRuntimeHandler):
         # Generate the script which is to be executed for us on the WN
         scriptToRun = generateWNScript(job_command, job)
         input_sand.append(scriptToRun)
-
-        # Collect all of the prepared files which we want to pass along to this job
-        #input_files, input_folders = collectPreparedFiles(app)
-        #if input_folders:
-        #    raise ApplicationConfigurationError(None, 'Prepared folders not supported yet, please fix this in future')
-        #else:
-        #    for f in input_files:
-        #        input_sand.append(File(f))
 
         logger.debug("input_sand: %s" % input_sand)
 
@@ -402,16 +419,6 @@ def pythonScript(scriptName):
 '''
     return script
 
-def generatePythonScript(scriptName, contents=None):
-    '''
-    Generate the Python script file for the GaudiPython-like running
-    '''
-    with open('###WN_SCRIPT_NAME###', 'w') as WN_script:
-        if not contents:
-            WN_script.write(pythonScript(scriptName))
-        else:
-            WN_script.write(contents)
-
 def flush_streams(pipe):
     '''
     This flushes the stdout/stderr streams to the stdout/stderr correctly
@@ -442,13 +449,11 @@ if __name__ == '__main__':
     # Extract any/_all_ (b/g)zip files on the WN
     extractAllTarFiles('.')
 
-    # In the case we're wanting to run the Python script here, generate it on the WN and use it there
-    generatePythonScript('###SCRIPT_NAME###')
+    print("Executing: %s" % '###COMMAND###'+' '+' '.join(sys.argv))
 
-    print("Executing: %s" % '###COMMAND###')
     # Execute the actual command on the WN
     # NB os.system caused the entire stream to be captured before being streamed in some cases
-    pipe = subprocess.Popen('###COMMAND###', shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    pipe = subprocess.Popen('###COMMAND###'+' '+' '.join(sys.argv), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     # Flush the stdout/stderr as the process is running correctly
     flush_streams(pipe)
