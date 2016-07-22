@@ -110,8 +110,10 @@ class CredentialStore(GangaObject, collections.Mapping):
     def __getitem__(self, query):
         # type: (ICredentialRequirement) -> ICredentialInfo
         """
-        This function will try quite hard to find and wrap any missing credential
-        but will never create a new file on disk
+        This function will try quite hard to find and wrap any
+        missing credential but will never create a new file on disk.
+        It should *always* be non-interactive so that it can be run
+        on background threads without issue.
 
         Args:
             query (ICredentialRequirement):

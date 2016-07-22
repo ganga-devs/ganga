@@ -49,8 +49,7 @@ class ICredentialInfo(object):
     """
     The interface for all credential types.
     Each object covers one credential file exactly.
-    The proxy/token is central to the object and all information is gathered from there.
-    Everything is cached internally
+    The credential file is central to the object and all information is gathered from there.
 
     These are only created by the store and should not be persisted.
     """
