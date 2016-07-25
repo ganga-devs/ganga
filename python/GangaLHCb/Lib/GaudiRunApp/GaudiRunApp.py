@@ -23,7 +23,7 @@ from Ganga.Utility.files import expandfilename, fullpath
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 
-from .GaudiRunAppUtils import getGaudiRunInputData, _exec_cmd, getTimestampContent
+from .GaudiRunAppUtils import getGaudiRunInputData, _exec_cmd, getTimestampContent, gaudiPythonWrapper
 
 logger = getLogger()
 
@@ -80,6 +80,7 @@ class GaudiRun(IPrepareApp):
         'directory':    SimpleItem(defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
         'options':       GangaFileItem(defvalue=None, doc='File which contains the extra opts I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
+        'uploadedScripts': GangaFileItem(defvalue=None, hidden=1, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'sharedOptsInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the extra-opts for all (sub)jobs which are uploaded as 1 archive'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
@@ -189,9 +190,15 @@ class GaudiRun(IPrepareApp):
         """
         Returns the name of the opts file which corresponds to the job which owns this app
         """
-        return 'opts/extra_opts_%s_.py' % self.getJobObject().getFQID('.')
+        return path.join('opts', 'extra_opts_%s_.py' % self.getJobObject().getFQID('.'))
 
-    def constructExtraOptsFile(self, job):
+    def getWrapperScriptName(self):
+        """
+        Returns the name of the wrapper script file which corresponds to the job which owns this app
+        """
+        return "job_%s_optsFileWrapper.py" % self.getJobObject().getFQID('.')
+
+    def constructExtraFiles(self, job):
         """
         This constructs or appends to an uncompressed archive containing all of the opts files which are required to run on the grid
         Args:
@@ -227,11 +234,21 @@ class GaudiRun(IPrepareApp):
 
             # Now append the extra_opts file here when needed
             with tarfile.open(path.join(folder_dir, GaudiRun.sharedOptsFile_name), "a") as tar_file:
+                # Add the extra opts file to the job
                 tinfo = tarfile.TarInfo(extra_opts_file)
                 tinfo.mtime = time.time()
                 fileobj = StringIO(self.extraOpts)
                 tinfo.size = fileobj.len
                 tar_file.addfile(tinfo, fileobj)
+
+                if not self.useGaudiRun:
+                    # Add the WN script for wrapping the job
+                    tinfo2 = tarfile.TarInfo(self.getWrapperScriptName())
+                    tinfo2.mtime = time.time()
+                    fileobj2 = StringIO(self.getWNPythonContents())
+                    tinfo2.size = fileobj2.len
+                    tar_file.addfile(tinfo2, fileobj2)
+
 
     def cleanGangaTargetArea(self, this_build_target):
         """
@@ -354,7 +371,7 @@ class GaudiRun(IPrepareApp):
 
         Or you can use BKQuery and the box repo to save having to do this over and over
         Args:
-            opts (str):
+            opts (str): This is the file which contains the inputdata we want to read in
         """
         input_dataset = getGaudiRunInputData(opts, self)
         try:
@@ -366,4 +383,14 @@ class GaudiRun(IPrepareApp):
             logger.warning("Warning Job %s already contained inputdata, overwriting" % job.fqid)
 
         job.inputdata = input_dataset
+
+    def getWNPythonContents(self):
+        """
+        Return the wrapper script which is used to run GaudiPython type jobs on the WN
+        """
+
+        from .GaudiRunAppHandlers import GaudiRunDiracRTHandler
+
+        return gaudiPythonWrapper(repr(self.extraArgs), self.getOptsFileName(),
+                                  GaudiRunDiracRTHandler.data_file, self.options.namePattern)
 

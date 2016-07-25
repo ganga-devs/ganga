@@ -2,6 +2,7 @@ import subprocess
 from datetime import datetime
 import time
 import uuid
+from os import path
 from Ganga.Core.exceptions import GangaException
 from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.Utility.logging import getLogger
@@ -10,7 +11,7 @@ from .PythonOptsCmakeParser import PythonOptsCmakeParser
 
 logger = getLogger()
 
-def gaudiPythonWrapper(sys_args, data_file, script_file):
+def gaudiPythonWrapper(sys_args, options, data_file, script_file):
     """
     Returns the script which is used by GaudiPython to wrap the job on the WN
     Args:
@@ -21,9 +22,16 @@ from Gaudi.Configuration import *
 
 import sys
 sys.argv += %s
+
+# Import extra Opts
 importOptions('%s')
+
+# Import data.py
+importOptions('%s')
+
+# Run the command
 execfile('%s')
-""" % (sys_args, data_file, script_file)
+""" % (sys_args, options, data_file, script_file)
     return wrapper_script
 
 def getTimestampContent():
@@ -40,7 +48,7 @@ def addTimestampFile(given_path, fileName='__timestamp__'):
     Args:
         given_path (str): Path which we want to create the timestamp within
     """
-    time_filename = os.path.join(given_path, fileName)
+    time_filename = path.join(given_path, fileName)
     logger.debug("Constructing: %s" % time_filename)
     with open(time_filename, 'a+') as time_file:
         time_file.write(getTimestampContent())

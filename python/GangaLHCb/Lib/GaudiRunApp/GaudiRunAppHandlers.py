@@ -33,10 +33,6 @@ logger = getLogger()
 
 prep_lock = threading.Lock()
 
-wrapper_script_name = 'Python_WN_script.py'
-extra_args_name = 'extra_args.py'
-
-
 def genDataFiles(job):
     """
     Generating a data.py file which contains the data we want gaudirun to use
@@ -71,20 +67,22 @@ def generateWrapperScript(app):
     Args:
         app (GaudiRun): GaudiRun instance which contains the script to run on the WN
     """
-    return FileBuffer(name=wrapper_script_name, contents=app.WNWrapperScript)
+    return FileBuffer(name=app.getWrapperScriptName(), contents=app.getWNPythonContents())
 
-def generateWNScript(commandline, job):
+def getScriptName(app):
+    job = app.getJobObject()
+    return os.path.join("jobScripts", getName(app)+"_Job_"+job.getFQID('.')+'_script.py')
+
+def generateWNScript(commandline, app):
     """
     Generate the script as a file buffer and return it
     Args:
         commandline (str): This is the command-line argument the script is wrapping
-        job (Job): This is the job object which contains everything useful for generating the code
+        app (Job): This is the app object which contains everything useful for generating the code
     """
 
-    if job.application.useGaudiRun:
-        exe_script_name = 'gaudiRunScript.py'
-    else:
-        exe_script_name = getName(job.application)+'Script.py'
+    job = app.getJobObject()
+    exe_script_name = getScriptName(app)
 
     return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
                                                                       OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
@@ -107,12 +105,13 @@ def collectPreparedFiles(app):
             input_folders.append(os.path.join(root, name))
     return input_files, input_folders
 
-def prepareCommand(app, expand_args=True):
+def prepareCommand(app):
     """
     Returns the command which is to be run on the worker node
     Args:
         app (GaudiRun): This expects only the GaudiRun app
     """
+
     opts_file = app.getOptsFile()
     if isinstance(opts_file, (LocalFile, DiracFile)):
         # Ideally this would NOT need the basename, however LocalFile is special in this regard.
@@ -124,16 +123,14 @@ def prepareCommand(app, expand_args=True):
 
     sourceEnv = app.getEnvScript()
 
-    args = app.extraArgs
-
     if not app.useGaudiRun:
-        full_cmd = sourceEnv + './run python %s' % (WN_script_name)
+        full_cmd = sourceEnv + './run python %s' % app.getWrapperScriptName()
     else:
         full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
         if app.extraOpts:
             full_cmd += ' ' + app.getOptsFileName()
-        if expand_args:
-            full_cmd += " " + " ".join(args)
+        if app.extraArgs:
+            full_cmd += " " + " ".join(app.extraArgs)
     return full_cmd
 
 
@@ -165,8 +162,8 @@ class GaudiRunRTHandler(IRuntimeHandler):
         else:
             rjobs = [job]
         for this_job in rjobs:
-            logger.info("Preparing: %s" % this_job.fqid)
-            this_job.application.constructExtraOptsFile(this_job)
+            logger.info("RTHandler Preparing: %s" % this_job.fqid)
+            this_job.application.constructExtraFiles(this_job)
 
         optsArchive = os.path.join(app.sharedOptsInput.localDir, app.sharedOptsInput.namePattern)
         gzipFile(optsArchive, optsArchive+'.gz', True)
@@ -197,7 +194,7 @@ class GaudiRunRTHandler(IRuntimeHandler):
         job_command = prepareCommand(app)
 
         # Generate the script which is to be executed for us on the WN
-        scriptToRun = generateWNScript(job_command, job)
+        scriptToRun = generateWNScript(job_command, app)
         input_sand.append(scriptToRun)
 
         logger.debug("input_sand: %s" % input_sand)
@@ -233,23 +230,56 @@ def generateDiracInput(app):
         prep_file = prep_dir + '.tgz'
         compressed_file = os.path.join(tempfile.gettempdir(), '__'+os.path.basename(prep_file))
 
-        wnScript = generateWNScript(prepareCommand(app), job)
-        script_name = os.path.join(tempfile.gettempdir(), wnScript.name)
-        wnScript.create(script_name)
+        if not job.master:
+            rjobs = job.subjobs
+        else:
+            rjobs = [job]
+
+        script_names = []
+
+        for this_job in rjobs:
+            this_app = this_job.application
+            wnScript = generateWNScript(prepareCommand(this_app), this_app)
+            this_script = os.path.join(tempfile.gettempdir(), wnScript.name)
+            script_names.append(this_script)
+            wnScript.create(this_script)
 
         with tarfile.open(compressed_file, "w:gz") as tar_file:
             for name in input_files:
                 tar_file.add(name, arcname=os.path.basename(name))
-            tar_file.add(script_name, arcname=os.path.basename(script_name))
+            for script_name in script_names:
+                tar_file.add(script_name, arcname=os.path.basename(script_name))
         shutil.move(compressed_file, prep_dir)
 
-    new_df = DiracFile(namePattern=os.path.basename(compressed_file), localDir=app.getSharedPath())
-    random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
-    logger.info("new File: %s" % new_df)
-    new_lfn = os.path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid, os.path.basename(compressed_file))
-    new_df.put(uploadSE=random_SE, lfn=new_lfn)
+    new_df = uploadLocalFile(job, os.path.basename(compressed_file), app.getSharedPath())
 
     app.uploadedInput = new_df
+
+def uploadLocalFile(job, namePattern, localDir):
+    """
+    Upload a locally available file to the grid as a DiracFile
+
+    Args:
+        namePattern (str): name of the file
+        localDir (str): localDir of the file
+    Return
+        DiracFile: a DiracFile of the uploaded LFN on the grid
+    """
+
+    new_df = DiracFile(namePattern, localDir=localDir)
+    random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
+    logger.info("new File: %s" % new_df)
+    new_lfn = os.path.join(getInputFileDir(job), namePattern)
+    logger.info("Input LFN: %s" % new_lfn)
+    returnable = new_df.put(force=True, uploadSE=random_SE, lfn=new_lfn)[0]
+
+    return returnable
+
+def getInputFileDir(job):
+    """
+    Return the LFN remote dirname for this job
+    """
+    return os.path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid)
 
 class GaudiRunDiracRTHandler(IRuntimeHandler):
 
@@ -269,8 +299,31 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
 
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
-        if not isinstance(app.uploadedInput, DiracFile):
-            generateDiracInput(app)
+        generateDiracInput(app)
+        rep_data = app.uploadedInput.getReplicas()
+        assert rep_data != {}
+
+        job = app.getJobObject()
+        if job.subjobs:
+            rjobs = job.subjobs
+        else:
+            rjobs = [job]
+        for this_job in rjobs:
+            logger.info("RTHandler Preparing: %s" % this_job.fqid)
+            this_job.application.constructExtraFiles(this_job)
+
+        optsArchive = os.path.join(app.sharedOptsInput.localDir, app.sharedOptsInput.namePattern)
+        gzipFile(optsArchive, optsArchive+'.gz', True)
+
+        new_df = DiracFile()
+        new_df.namePattern = app.sharedOptsInput.namePattern + '.gz'
+        new_df.localDir = app.sharedOptsInput.localDir
+        new_df.remoteDir = getInputFileDir(app.getJobObject())
+        new_df = new_df.put(force=True)[0]
+        app.sharedOptsInput = new_df
+
+        rep_data = app.sharedOptsInput.getReplicas()
+        assert rep_data != {}
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
@@ -313,15 +366,8 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                 logger.error("Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
                 raise ApplicationConfigurationError(None, "Unsupported filetype: %s with DIRAC backend" % getName(file_))
 
-        if not isinstance(app.uploadedInput, DiracFile):
-            with prep_lock:
-                if job.master:
-                    if not job.master.app.uploadedInput:
-                        generateDiracInput(job.master.app)
-                        app.uploadedInput = job.master.app.uploadedInput
-                else:
-                    generateDiracInput(app)
-
+        app.uploadedInput = job.master.application.uploadedInput
+        app.sharedOptsInput = job.master.application.sharedOptsInput
 
         logger.info("uploadedInput: %s" % app.uploadedInput)
 
@@ -330,6 +376,9 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         logger.info("Replica info: %s" % rep_data)
 
         inputsandbox += ['LFN:'+app.uploadedInput.lfn]
+        inputsandbox += ['LFN:'+app.sharedOptsInput.lfn]
+
+        logger.info("Input Sand: %s" % inputsandbox)
 
         logger.info("input_data: %s" % input_data)
 
@@ -337,9 +386,9 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
 
         # Prepare the command which is to be run on the worker node
         job_command = prepareCommand(app)
-        logger.debug('Command line: %s: ', job_command)
+        logger.info('Command line: %s: ', job_command)
 
-        scriptToRun = generateWNScript(job_command, job)
+        scriptToRun = getScriptName(app)
         # Already added to sandbox uploaded as LFN
 
         # This code deals with the outputfiles as outputsandbox and outputdata for us
@@ -353,7 +402,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                                         DIRAC_OBJECT='DiracLHCb()',
                                         JOB_OBJECT='LHCbJob()',
                                         NAME=mangle_job_name(app),
-                                        EXE=scriptToRun.name,
+                                        EXE=scriptToRun,
                                         EXE_ARG_STR='',
                                         EXE_LOG_FILE='Ganga_GaudiRun.log',
                                         ENVIRONMENT=None,  # app.env,
