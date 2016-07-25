@@ -196,7 +196,7 @@ class GaudiRun(IPrepareApp):
         """
         Returns the name of the wrapper script file which corresponds to the job which owns this app
         """
-        return "job_%s_optsFileWrapper.py" % self.getJobObject().getFQID('.')
+        return path.join('wrapper', 'job_%s_optsFileWrapper.py' % self.getJobObject().getFQID('.'))
 
     def constructExtraFiles(self, job):
         """

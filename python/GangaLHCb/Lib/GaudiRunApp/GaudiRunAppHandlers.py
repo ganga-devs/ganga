@@ -71,7 +71,7 @@ def generateWrapperScript(app):
 
 def getScriptName(app):
     job = app.getJobObject()
-    return os.path.join("jobScripts", getName(app)+"_Job_"+job.getFQID('.')+'_script.py')
+    return getName(app)+"_Job_"+job.getFQID('.')+'_script.py'
 
 def generateWNScript(commandline, app):
     """
