@@ -23,13 +23,13 @@ from Ganga.Utility.files import expandfilename, fullpath
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 
-from .GaudiRunAppUtils import getGaudiRunInputData, _exec_cmd, getTimestampContent, gaudiPythonWrapper
+from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampContent, gaudiPythonWrapper
 
 logger = getLogger()
 
 prep_lock = threading.Lock()
 
-class GaudiRun(IPrepareApp):
+class GaudiExec(IPrepareApp):
     """
     Welcome to the new GaudiApp for LHCb apps written/constructed making use of the new CMake framework
 
@@ -51,7 +51,7 @@ class GaudiRun(IPrepareApp):
     e.g.
 
     j=Job()
-    myApp = GaudiRun()
+    myApp = GaudiExec()
     myApp.directory = "$SOMEPATH/DaVinciDev_v40r2"
     myApp.options = "$SOMEPATH/DaVinciDev_v40r2/myDaVinciOpts.py"
     j.application = myApp
@@ -93,7 +93,7 @@ class GaudiRun(IPrepareApp):
         'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
         })
     _category = 'applications'
-    _name = 'GaudiRun'
+    _name = 'GaudiExec'
     _exportmethods = ['prepare', 'unprepare', 'execCmd', 'readInputData']
 
     cmake_sandbox_name = 'cmake-input-sandbox.tgz'
@@ -120,15 +120,15 @@ class GaudiRun(IPrepareApp):
             elif isinstance(value, IGangaFile):
                 actual_valye = [ value ]
 
-        super(GaudiRun, self).__setattr__(attr, actual_value)
+        super(GaudiExec, self).__setattr__(attr, actual_value)
 
     def unprepare(self, force=False):
         """
-        Unprepare the GaudiRun App
+        Unprepare the GaudiExec App
         Args:
             force (bool): Forces an un-prepare
         """
-        logger.debug('Running unprepare in GaudiRun app')
+        logger.debug('Running unprepare in GaudiExec app')
         if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
@@ -215,8 +215,8 @@ class GaudiRun(IPrepareApp):
 
         with prep_lock:
             if not df or df.namePattern == '':
-                master_job.application.sharedOptsInput = LocalFile(namePattern=GaudiRun.sharedOptsFile_name, localDir=folder_dir)
-                tar_filename = path.join(folder_dir, GaudiRun.sharedOptsFile_name)
+                master_job.application.sharedOptsInput = LocalFile(namePattern=GaudiExec.sharedOptsFile_name, localDir=folder_dir)
+                tar_filename = path.join(folder_dir, GaudiExec.sharedOptsFile_name)
                 if not path.isfile(tar_filename):
                     with tarfile.open(tar_filename, "w") as tar_file:
                         pass
@@ -230,12 +230,12 @@ class GaudiRun(IPrepareApp):
             extra_opts_file = self.getOptsFileName()
 
             # First construct if needed
-            if not path.isfile(path.join(folder_dir, GaudiRun.sharedOptsFile_name)):
-                with tarfile.open(path.join(folder_dir, GaudiRun.sharedOptsFile_name), "w") as tar_file:
+            if not path.isfile(path.join(folder_dir, GaudiExec.sharedOptsFile_name)):
+                with tarfile.open(path.join(folder_dir, GaudiExec.sharedOptsFile_name), "w") as tar_file:
                     pass
 
             # Now append the extra_opts file here when needed
-            with tarfile.open(path.join(folder_dir, GaudiRun.sharedOptsFile_name), "a") as tar_file:
+            with tarfile.open(path.join(folder_dir, GaudiExec.sharedOptsFile_name), "a") as tar_file:
                 # Add the extra opts file to the job
                 tinfo = tarfile.TarInfo(extra_opts_file)
                 tinfo.mtime = time.time()
@@ -348,18 +348,18 @@ class GaudiRun(IPrepareApp):
         This builds the ganga target 'ganga-input-sandbox' for the project defined by self.directory
         This returns the absolute path to the file after it has been created. It will fail if things go wrong or the file fails to generate
         """
-        logger.info("Make-ing target '%s'     (This may take a few minutes depending on the size of your project)" % GaudiRun.build_target)
+        logger.info("Make-ing target '%s'     (This may take a few minutes depending on the size of your project)" % GaudiExec.build_target)
         # Up to the user to run something like make clean... (Although that would avoid some potential CMake problems)
-        self.execCmd('make %s' % GaudiRun.build_target)
+        self.execCmd('make %s' % GaudiExec.build_target)
 
         targetPath = path.join(self.directory, 'build.%s' % self.platform, 'ganga')
         if not path.isdir(targetPath):
             raise GangaException("Target Path: %s NOT found!" % targetPath)
-        sandbox_str = '%s' % GaudiRun.build_dest
+        sandbox_str = '%s' % GaudiExec.build_dest
         targetFile = path.join(targetPath, sandbox_str)
         if not path.isfile(targetFile):
             raise GangaException("Target File: %s NOT found!" % targetFile)
-        wantedTargetFile = path.join(targetPath, GaudiRun.cmake_sandbox_name)
+        wantedTargetFile = path.join(targetPath, GaudiExec.cmake_sandbox_name)
         rename(targetFile, wantedTargetFile)
         if not path.isfile(wantedTargetFile):
             raise GangaException("Wanted Target File: %s NOT found" % wantedTargetFile)
@@ -375,7 +375,7 @@ class GaudiRun(IPrepareApp):
         Args:
             opts (str): This is the file which contains the inputdata we want to read in
         """
-        input_dataset = getGaudiRunInputData(opts, self)
+        input_dataset = getGaudiExecInputData(opts, self)
         try:
             job = self.getJobObject()
         except:
@@ -391,8 +391,8 @@ class GaudiRun(IPrepareApp):
         Return the wrapper script which is used to run GaudiPython type jobs on the WN
         """
 
-        from .GaudiRunAppHandlers import GaudiRunDiracRTHandler
+        from ..RTHandlers.GaudiExecRTHandlers import GaudiExecDiracRTHandler
 
         return gaudiPythonWrapper(repr(self.extraArgs), self.getOptsFileName(),
-                                  GaudiRunDiracRTHandler.data_file, self.options.namePattern)
+                                  GaudiExecDiracRTHandler.data_file, self.options.namePattern)
 

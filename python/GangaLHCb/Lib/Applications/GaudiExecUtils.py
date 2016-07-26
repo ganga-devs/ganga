@@ -53,14 +53,14 @@ def addTimestampFile(given_path, fileName='__timestamp__'):
     with open(time_filename, 'a+') as time_file:
         time_file.write(getTimestampContent())
 
-def getGaudiRunInputData(optsfiles, app):
+def getGaudiExecInputData(optsfiles, app):
     '''Returns a LHCbDataSet object from a list of options files. The
        optional argument extraopts will decide if the extraopts string inside
        the application is considered or not.
 
     Usage example:
     # Get the data from an options file and assign it to the jobs inputdata field
-    j.inputdata = getGaudiRunInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"], j.application)
+    j.inputdata = getGaudiExecInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"], j.application)
 
     This is also called behind the scenes for j.readInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"])
 
@@ -81,7 +81,7 @@ def getGaudiRunInputData(optsfiles, app):
 
     return parser.get_input_data()
 
-exportToGPI('getGaudiRunInputData', getGaudiRunInputData, 'Functions')
+exportToGPI('getGaudiExecInputData', getGaudiExecInputData, 'Functions')
 
 def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
     """

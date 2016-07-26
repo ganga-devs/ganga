@@ -26,7 +26,7 @@ from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouput
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-from .GaudiRunAppUtils import addTimestampFile
+from ..Applications.GaudiExecUtils import addTimestampFile
 from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
 
 logger = getLogger()
@@ -55,17 +55,17 @@ def genDataFiles(job):
                 cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
                 data_str += cat_opts
 
-        inputsandbox.append(FileBuffer(GaudiRunDiracRTHandler.data_file, data_str))
+        inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file, data_str))
     else:
-        inputsandbox.append(FileBuffer(GaudiRunDiracRTHandler.data_file, '#dummy_data_file\n'+LHCbDataset().optionsString()))
+        inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file, '#dummy_data_file\n'+LHCbDataset().optionsString()))
 
     return inputsandbox
 
 def generateWrapperScript(app):
     """
-    This generates the wrapper script which is run for non GaudiRun type apps
+    This generates the wrapper script which is run for non GaudiExec type apps
     Args:
-        app (GaudiRun): GaudiRun instance which contains the script to run on the WN
+        app (GaudiExec): GaudiExec instance which contains the script to run on the WN
     """
 
     return FileBuffer(name=app.getWrapperScriptName(), contents=app.getWNPythonContents())
@@ -98,7 +98,7 @@ def collectPreparedFiles(app):
     """
     Collect the files from the Application in the prepared state
     Args:
-        app (GaudiRun): This expects only the GaudiRun app
+        app (GaudiExec): This expects only the GaudiExec app
     """
     if not isinstance(app.is_prepared, ShareDir):
         raise ApplicationConfigurationError(None, 'Failed to prepare Application Correctly')
@@ -116,7 +116,7 @@ def prepareCommand(app):
     """
     Returns the command which is to be run on the worker node
     Args:
-        app (GaudiRun): This expects only the GaudiRun app
+        app (GaudiExec): This expects only the GaudiExec app
     """
 
     opts_file = app.getOptsFile()
@@ -133,7 +133,7 @@ def prepareCommand(app):
     if not app.useGaudiRun:
         full_cmd = sourceEnv + './run python %s' % app.getWrapperScriptName()
     else:
-        full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (opts_name, GaudiRunDiracRTHandler.data_file)
+        full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (opts_name, GaudiExecDiracRTHandler.data_file)
         if app.extraOpts:
             full_cmd += ' ' + app.getOptsFileName()
         if app.extraArgs:
@@ -145,11 +145,11 @@ def prepareCommand(app):
 def WarnUsers():
     """ A quick method for warning users about the in-development status of the app """
     print("\n\n")
-    logger.warning("This GaudiRun Application is still in the testing phase.")
+    logger.warning("This GaudiExec Application is still in the testing phase.")
     logger.warning("There is no guarantee that any jobs submitted with it wil remain compatible with the next release of Ganga")
     raw_input("Please Hit the return key to continue with your Job submission\n")
 
-class GaudiRunRTHandler(IRuntimeHandler):
+class GaudiExecRTHandler(IRuntimeHandler):
 
     """The runtime handler to run plain executables on the Local backend"""
 
@@ -157,7 +157,7 @@ class GaudiRunRTHandler(IRuntimeHandler):
         """
         Prepare the RTHandler for the master job so that applications to be submitted
         Args:
-            app (GaudiRun): This application is only expected to handle GaudiRun Applications here
+            app (GaudiExec): This application is only expected to handle GaudiExec Applications here
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
 
@@ -183,7 +183,7 @@ class GaudiRunRTHandler(IRuntimeHandler):
         """
         Prepare the job in order to submit to the Local backend
         Args:
-            app (GaudiRun): This application is only expected to handle GaudiRun Applications here
+            app (GaudiExec): This application is only expected to handle GaudiExec Applications here
             appconfig (unknown): Output passed from the application configuration call
             appmasterconfig (unknown): Output passed from the application master_configure call
             jobmasterconfig (tuple): Output from the master job prepare step
@@ -212,18 +212,18 @@ class GaudiRunRTHandler(IRuntimeHandler):
         c = StandardJobConfig('./'+os.path.join(scriptToRun.subdir, scriptToRun.name), input_sand, [], output_sand)
         return c
 
-allHandlers.add('GaudiRun', 'Local', GaudiRunRTHandler)
-#allHandlers.add('GaudiRun', 'Condor', GaudiRunRTHandler)
-allHandlers.add('GaudiRun', 'Interactive', GaudiRunRTHandler)
-allHandlers.add('GaudiRun', 'Batch', GaudiRunRTHandler)
-allHandlers.add('GaudiRun', 'LSF', GaudiRunRTHandler)
+allHandlers.add('GaudiExec', 'Local', GaudiExecRTHandler)
+allHandlers.add('GaudiExec', 'Condor', GaudiExecRTHandler)
+allHandlers.add('GaudiExec', 'Interactive', GaudiExecRTHandler)
+allHandlers.add('GaudiExec', 'Batch', GaudiExecRTHandler)
+allHandlers.add('GaudiExec', 'LSF', GaudiExecRTHandler)
 
 def generateDiracInput(app):
     """
     Construct a DIRAC input which must be unique to each job to have unique checksum.
     This generates a unique file, uploads it to DRIAC and then stores the LFN in app.uploadedInput
     Args:
-        app (GaudiRun): This expects a GaudiRun app to be passed so that the constructed
+        app (GaudiExec): This expects a GaudiExec app to be passed so that the constructed
     """
 
     input_files, input_folders = collectPreparedFiles(app)
@@ -291,7 +291,7 @@ def getInputFileDir(job):
     """
     return os.path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid)
 
-class GaudiRunDiracRTHandler(IRuntimeHandler):
+class GaudiExecDiracRTHandler(IRuntimeHandler):
 
     """The runtime handler to run plain executables on the Dirac backend"""
 
@@ -301,7 +301,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         """
         Prepare the RTHandler for the master job so that applications to be submitted
         Args:
-            app (GaudiRun): This application is only expected to handle GaudiRun Applications here
+            app (GaudiExec): This application is only expected to handle GaudiExec Applications here
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
 
@@ -310,8 +310,9 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
         generateDiracInput(app)
+        assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit"
         rep_data = app.uploadedInput.getReplicas()
-        assert rep_data != {}
+        assert rep_data != {}, "Failed to find a replica, aborting submit"
 
         job = app.getJobObject()
         if job.subjobs:
@@ -332,8 +333,9 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         new_df = new_df.put(force=True)[0]
         app.sharedOptsInput = new_df
 
+        assert isinstance(app.sharedOptsInput, DiracFile), "Failed to upload needed file, aborting submit"
         rep_data = app.sharedOptsInput.getReplicas()
-        assert rep_data != {}
+        assert rep_data != {}, "Failed to find a replica, aborting submit"
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
@@ -342,7 +344,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         """
         Prepare the RTHandler in order to submit to the Dirac backend
         Args:
-            app (GaudiRun): This application is only expected to handle GaudiRun Applications here
+            app (GaudiExec): This application is only expected to handle GaudiExec Applications here
             appconfig (unknown): Output passed from the application configuration call
             appmasterconfig (unknown): Output passed from the application master_configure call
             jobmasterconfig (tuple): Output from the master job prepare step
@@ -410,7 +412,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                                         NAME=mangle_job_name(app),
                                         EXE=os.path.join('jobScript', scriptToRun),
                                         EXE_ARG_STR='',
-                                        EXE_LOG_FILE='Ganga_GaudiRun.log',
+                                        EXE_LOG_FILE='Ganga_GaudiExec.log',
                                         ENVIRONMENT=None,  # app.env,
                                         INPUTDATA=input_data,
                                         PARAMETRIC_INPUTDATA=parametricinput_data,
@@ -491,10 +493,10 @@ def flush_streams(pipe):
 # Main
 if __name__ == '__main__':
     '''
-    Main section of code for the GaudiRun script run on the WN
+    Main section of code for the GaudiExec script run on the WN
     '''
     # Opening pleasantries
-    print("Hello from GaudiRun")
+    print("Hello from GaudiExec")
     print("Arrived at workernode: %s" % getcwd())
     print("#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
     print("")
@@ -523,7 +525,7 @@ if __name__ == '__main__':
     # Final pleasantries
     print("")
     print("#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
-    print("Goodbye from GaudiRun")
+    print("Goodbye from GaudiExec")
 
     sys.exit(rc)
 """
@@ -532,5 +534,5 @@ if __name__ == '__main__':
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-allHandlers.add('GaudiRun', 'Dirac', GaudiRunDiracRTHandler)
+allHandlers.add('GaudiExec', 'Dirac', GaudiExecDiracRTHandler)
 
