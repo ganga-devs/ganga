@@ -189,12 +189,14 @@ class GaudiRun(IPrepareApp):
     def getOptsFileName(self):
         """
         Returns the name of the opts file which corresponds to the job which owns this app
+        This places the script of interest in a subdir to not overly clutter the WN
         """
         return path.join('opts', 'extra_opts_%s_.py' % self.getJobObject().getFQID('.'))
 
     def getWrapperScriptName(self):
         """
         Returns the name of the wrapper script file which corresponds to the job which owns this app
+        This places the script of interest in a subdir to not overly clutter the WN
         """
         return path.join('wrapper', 'job_%s_optsFileWrapper.py' % self.getJobObject().getFQID('.'))
 

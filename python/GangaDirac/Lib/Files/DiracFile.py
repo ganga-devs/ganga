@@ -698,9 +698,6 @@ class DiracFile(IGangaFile):
         else:
             storage_elements = [uploadSE]
 
-        logger.info("Glob: %s " % ("glob.glob(os.path.join(%s, %s))" % (sourceDir, self.namePattern), ))
-        logger.info("Return: %s" % str(glob.glob(os.path.join(sourceDir, self.namePattern))))
-
         outputFiles = GangaList()
         for this_file in glob.glob(os.path.join(sourceDir, self.namePattern)):
             name = this_file
@@ -729,8 +726,8 @@ class DiracFile(IGangaFile):
             d.localDir = sourceDir
             stderr = ''
             stdout = ''
-            logger.info('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
-            logger.info('execute: uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
+            logger.debug('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
+            logger.debug('execute: uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
             stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
             if type(stdout) == str:
                 logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), stdout))

@@ -67,10 +67,17 @@ def generateWrapperScript(app):
     Args:
         app (GaudiRun): GaudiRun instance which contains the script to run on the WN
     """
+
     return FileBuffer(name=app.getWrapperScriptName(), contents=app.getWNPythonContents())
 
 def getScriptName(app):
+    """
+    Returns the name of the script which runs on the WN.
+    Args:
+        app (Job): This is the app object which contains everything useful for generating the code
+    """
     job = app.getJobObject()
+
     return getName(app)+"_Job_"+job.getFQID('.')+'_script.py'
 
 def generateWNScript(commandline, app):
@@ -80,13 +87,12 @@ def generateWNScript(commandline, app):
         commandline (str): This is the command-line argument the script is wrapping
         app (Job): This is the app object which contains everything useful for generating the code
     """
-
     job = app.getJobObject()
     exe_script_name = getScriptName(app)
 
     return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
                                                                       OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
-                      executable=True)
+                      subdir='jobScript', executable=True)
 
 def collectPreparedFiles(app):
     """
@@ -103,6 +109,7 @@ def collectPreparedFiles(app):
             input_files.append(os.path.join(root, name))
         for name in dirs:
             input_folders.append(os.path.join(root, name))
+
     return input_files, input_folders
 
 def prepareCommand(app):
@@ -131,6 +138,7 @@ def prepareCommand(app):
             full_cmd += ' ' + app.getOptsFileName()
         if app.extraArgs:
             full_cmd += " " + " ".join(app.extraArgs)
+
     return full_cmd
 
 
@@ -162,7 +170,7 @@ class GaudiRunRTHandler(IRuntimeHandler):
         else:
             rjobs = [job]
         for this_job in rjobs:
-            logger.info("RTHandler Preparing: %s" % this_job.fqid)
+            logger.debug("RTHandler Preparing: %s" % this_job.fqid)
             this_job.application.constructExtraFiles(this_job)
 
         optsArchive = os.path.join(app.sharedOptsInput.localDir, app.sharedOptsInput.namePattern)
@@ -201,7 +209,7 @@ class GaudiRunRTHandler(IRuntimeHandler):
 
         # It's this authors opinion that the script should be in the PATH on the WN
         # As it stands policy is that is isn't so we have to call it in a relative way, hence "./"
-        c = StandardJobConfig('./'+scriptToRun.name, input_sand, [], output_sand)
+        c = StandardJobConfig('./'+os.path.join(scriptToRun.subdir, scriptToRun.name), input_sand, [], output_sand)
         return c
 
 allHandlers.add('GaudiRun', 'Local', GaudiRunRTHandler)
@@ -241,14 +249,15 @@ def generateDiracInput(app):
             this_app = this_job.application
             wnScript = generateWNScript(prepareCommand(this_app), this_app)
             this_script = os.path.join(tempfile.gettempdir(), wnScript.name)
-            script_names.append(this_script)
+            script_names.append(wnScript)
             wnScript.create(this_script)
 
         with tarfile.open(compressed_file, "w:gz") as tar_file:
             for name in input_files:
                 tar_file.add(name, arcname=os.path.basename(name))
-            for script_name in script_names:
-                tar_file.add(script_name, arcname=os.path.basename(script_name))
+            for thisScript in script_names:
+                this_file = os.path.join(tempfile.gettempdir(), wnScript.name)
+                tar_file.add(this_file, arcname=os.path.join(thisScript.subdir, thisScript.name))
         shutil.move(compressed_file, prep_dir)
 
     new_df = uploadLocalFile(job, os.path.basename(compressed_file), app.getSharedPath())
@@ -268,9 +277,7 @@ def uploadLocalFile(job, namePattern, localDir):
 
     new_df = DiracFile(namePattern, localDir=localDir)
     random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
-    logger.info("new File: %s" % new_df)
     new_lfn = os.path.join(getInputFileDir(job), namePattern)
-    logger.info("Input LFN: %s" % new_lfn)
     returnable = new_df.put(force=True, uploadSE=random_SE, lfn=new_lfn)[0]
 
     return returnable
@@ -309,7 +316,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         else:
             rjobs = [job]
         for this_job in rjobs:
-            logger.info("RTHandler Preparing: %s" % this_job.fqid)
+            logger.debug("RTHandler Preparing: %s" % this_job.fqid)
             this_job.application.constructExtraFiles(this_job)
 
         optsArchive = os.path.join(app.sharedOptsInput.localDir, app.sharedOptsInput.namePattern)
@@ -369,24 +376,24 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         app.uploadedInput = job.master.application.uploadedInput
         app.sharedOptsInput = job.master.application.sharedOptsInput
 
-        logger.info("uploadedInput: %s" % app.uploadedInput)
+        logger.debug("uploadedInput: %s" % app.uploadedInput)
 
         rep_data = app.uploadedInput.getReplicas()
 
-        logger.info("Replica info: %s" % rep_data)
+        logger.debug("Replica info: %s" % rep_data)
 
         inputsandbox += ['LFN:'+app.uploadedInput.lfn]
         inputsandbox += ['LFN:'+app.sharedOptsInput.lfn]
 
-        logger.info("Input Sand: %s" % inputsandbox)
+        logger.debug("Input Sand: %s" % inputsandbox)
 
-        logger.info("input_data: %s" % input_data)
+        logger.debug("input_data: %s" % input_data)
 
         outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
         # Prepare the command which is to be run on the worker node
         job_command = prepareCommand(app)
-        logger.info('Command line: %s: ', job_command)
+        logger.debug('Command line: %s: ', job_command)
 
         scriptToRun = getScriptName(app)
         # Already added to sandbox uploaded as LFN
@@ -402,7 +409,7 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
                                         DIRAC_OBJECT='DiracLHCb()',
                                         JOB_OBJECT='LHCbJob()',
                                         NAME=mangle_job_name(app),
-                                        EXE=scriptToRun,
+                                        EXE=os.path.join('jobScript', scriptToRun),
                                         EXE_ARG_STR='',
                                         EXE_LOG_FILE='Ganga_GaudiRun.log',
                                         ENVIRONMENT=None,  # app.env,
