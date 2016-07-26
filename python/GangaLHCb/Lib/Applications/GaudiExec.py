@@ -31,9 +31,14 @@ prep_lock = threading.Lock()
 
 class GaudiExec(IPrepareApp):
     """
+
     Welcome to the new GaudiApp for LHCb apps written/constructed making use of the new CMake framework
 
+    Requirements:
+    ===============
+
     Before submitting jobs with this application you will need to run something similar to the following:
+    (outside of Ganga at the command line)
 
     cd $SOMEPATH
     lb-dev DaVinci v40r2
@@ -45,6 +50,10 @@ class GaudiExec(IPrepareApp):
     NB:
     The output from this command can be quite large and Ganga will save it to disk and store it at least once per (master) job
     If your build target is large I would advise that you consider placing your gangadir in your AFS workspace where there is more storage available
+
+
+    Usage:
+    ===============
 
     This application needs to be configured with the absolute directory of the project and the options you want to pass to gaudirun.py
 
@@ -61,24 +70,29 @@ class GaudiExec(IPrepareApp):
 
     prepare_cmake_app(myApp, myVer, myPath, myGetpack)
 
-    For GaudiPython style of running:
+
+    How it works:
+    ===============
 
     The actual command run on the WN is:
 
         ./run gaudirun.py optionsFile.py data.py
 
-    If you would prefer to have your optsfile run as a python application then set 'job.application.useGaudiRun = False'
-    This then changes the command run on the WN to bu:
+    If you would prefer to have your optsfile run as a python application aka like 'GaudiPython' style jobs.
+    Set:
+        job.application.useGaudiRun = False
+
+    This then changes the command run on the WN to be:
 
         ./run python OptsFileWrapper.py
 
-        Here the OptsFileWrapper script imports the data.py describing the data to be run over and executes options with 'execfile'
+        Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace with 'execfile'
 
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
         'directory':    SimpleItem(defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
-        'options':       GangaFileItem(defvalue=None, doc='File which contains the extra opts I want to pass to gaudirun.py'),
+        'options':       GangaFileItem(defvalue=None, doc='File which contains the options I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'uploadedScripts': GangaFileItem(defvalue=None, hidden=1, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'sharedOptsInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the extra-opts for all (sub)jobs which are uploaded as 1 archive'),
@@ -311,6 +325,12 @@ class GaudiExec(IPrepareApp):
         This method executes a command within the namespace of the project. The cmd is placed in a bash script which is executed within the env
         This will adopt the platform associated with this application and all commands requiring to be run within the project env
         will be required to be executed with the './run' explcitly called
+
+        e.g. The following will execute a 'make' command within the given project dir
+
+            app = GaudiExec('some/path')
+            app.execCmd('make')
+
         Args:
             cmd (str): This is the command(s) which are to be executed within the project environment and directory
         """
@@ -390,7 +410,7 @@ class GaudiExec(IPrepareApp):
         """
         Return the wrapper script which is used to run GaudiPython type jobs on the WN
         """
-
+        # FIXME should there be a more central definition of 'data.py' string to rename this for all of LHCb if it ever changes for LHCbDirac
         from ..RTHandlers.GaudiExecRTHandlers import GaudiExecDiracRTHandler
 
         return gaudiPythonWrapper(repr(self.extraArgs), self.getOptsFileName(),
