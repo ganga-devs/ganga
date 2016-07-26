@@ -254,9 +254,12 @@ def generateDiracInput(app):
 
         with tarfile.open(compressed_file, "w:gz") as tar_file:
             for name in input_files:
+                # FIXME Add support for subfiles here once it's working across multiple IGangaFile objects in a consistent way
+                # Not hacking this in for now just in-case we end up with a mess as a result.
                 tar_file.add(name, arcname=os.path.basename(name))
             for thisScript in script_names:
-                this_file = os.path.join(tempfile.gettempdir(), wnScript.name)
+                this_file = os.path.join(tempfile.gettempdir(), thisScript.name)
+                logger.debug("Adding: '%s' as: '%s'" % (this_file, os.path.join(thisScript.subdir, thisScript.name)))
                 tar_file.add(this_file, arcname=os.path.join(thisScript.subdir, thisScript.name))
         shutil.move(compressed_file, prep_dir)
 
@@ -390,10 +393,6 @@ class GaudiRunDiracRTHandler(IRuntimeHandler):
         logger.debug("input_data: %s" % input_data)
 
         outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
-
-        # Prepare the command which is to be run on the worker node
-        job_command = prepareCommand(app)
-        logger.debug('Command line: %s: ', job_command)
 
         scriptToRun = getScriptName(app)
         # Already added to sandbox uploaded as LFN
