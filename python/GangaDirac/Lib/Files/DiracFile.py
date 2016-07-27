@@ -54,7 +54,7 @@ class DiracFile(IGangaFile):
     _category = 'gangafiles'
     _name = "DiracFile"
     _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove',
-                      "replicate", 'put', 'locations', 'location', 'accessURL',
+                      "replicate", 'put', 'locations', 'location', 'remoteURLs', 'accessURL',
                       '_updateRemoteURLs', 'hasMatchedFiles']
     _remoteURLs = {}
     _storedReplicas = {}
@@ -460,47 +460,34 @@ class DiracFile(IGangaFile):
                     LFNs.append(this_url)
             return LFNs
 
+    def remoteURLs(self):
+       return self._remoteURLs
+
     def accessURL(self, thisSE=''):
         """
         Attempt to find an accessURL which corresponds to the specified SE. If no SE is specified then
         return a random one from all the replicas. 
         """
-        
-        # If we don't have subfiles then we need to make sure that the replicas
-        # are known
-        if len(self._remoteURLs) == 0 and len(self.subfiles) == 0:
-            self.getReplicas()
-
-        # Now we have to match the replicas to find one at the
+        _accessURLs = []
         if len(self.subfiles) == 0:
-
-            files_URLs = self._remoteURLs
-            this_accessURL = {}
-
-            for this_SE in files_URLs.keys():
-                this_accessURL[this_SE] = []
-                myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
-                this_accessURL[this_SE] = myurl['Value']['Successful'][self.lfn]
-            # Cannot find an accessURL. Doesn't really do anything as Dirac throws an error before this point.
-            if this_accessURL == '':
-                logger.info('Cannot find a replica for the LFN %s' % self.lfn)
-                return []
-            # If the SE isn't specified return a random choice.
-            if thisSE == '':
-              return random.choice(list(this_accessURL.values()))
-            # If the SE is specified and we got a URL for a replica there, return it.
-            elif thisSE in this_accessURL:
-              return this_accessURL[thisSE]
-            # If the specified SE doesn't have a replica then return another one at random.
-            else:
-              logger.warning('No replica at specified SE, here is a URL for another replica')
-              return random.choice(list(this_accessURL.values()))
+          self.getReplicas()
+          # If the SE isn't specified return a random choice.
+          if thisSE == '':
+            this_SE = random.choice(self.locations)
+          # If the SE is specified and we got a URL for a replica there, use it.
+          elif thisSE in self.locations:
+            this_SE = thisSE
+          # If the specified SE doesn't have a replica then return another one at random.
+          else:
+             logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
+             this_SE = random.choice(self.locations) 
+          myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
+          this_accessURL = myurl['Value']['Successful'][self.lfn]
+          _accessURLs.append(this_accessURL)
         else:
-            # For all subfiles request the accessURL, 1 URL per LFN
-            _accessURLs = []
-            for i in self.subfiles:
-                for j in i.accessURL():
-                    _accessURLs.append(j)
+          # For all subfiles request the accessURL, 1 URL per LFN
+          for i in self.subfiles:
+            _accessURLs.append(i.accessURL(thisSE)[0])
         return _accessURLs
 
     def get(self, localPath=''):
