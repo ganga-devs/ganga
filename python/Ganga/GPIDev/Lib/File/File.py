@@ -290,9 +290,6 @@ def cleanUpShareDirs():
                     os.rmdir(this_dir)
                 except OSError:
                     logger.debug("Failed to remove: %s" % this_dir)
-                    pass
-
-    return
 
 exportToGPI('cleanUpShareDirs', cleanUpShareDirs, 'Functions')
 
