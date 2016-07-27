@@ -66,7 +66,7 @@ if not _after_bootstrap:
                                             'Deleted': 'failed',
                                             'Done': 'completed',
                                             'Failed': 'failed',
-                                            'Killed': 'killed',
+                                            'Killed': 'failed',
                                             'Matched': 'submitted',
                                             'Received': 'submitted',
                                             'Running': 'running',
@@ -77,7 +77,7 @@ if not _after_bootstrap:
     configDirac.addOption('finalised_statuses',
                                                 {'Done': 'completed',
                                                  'Failed': 'failed',
-                                                 'Killed': 'killed',
+                                                 'Killed': 'failed',
                                                  'Deleted': 'failed',
                                                  'Unknown: No status for Job': 'failed'},
                                                 "Mapping of Dirac to Ganga Job statuses used to construct a queue to finalize a given job, i.e. final statues in 'statusmapping'")
