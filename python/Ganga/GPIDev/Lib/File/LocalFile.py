@@ -52,6 +52,8 @@ class LocalFile(IGangaFile):
 
         if isinstance(namePattern, str):
             self.namePattern = namePattern
+            if localDir:
+            	self.localDir = localDir
         elif isinstance(namePattern, File):
             self.namePattern = path.basename(namePattern.name)
             self.localDir = path.dirname(namePattern.name)

@@ -667,14 +667,11 @@ class DiracFile(IGangaFile):
                 logger.warning("LFN will be generated automatically")
                 self.lfn = ""
 
-        if self.remoteDir == '':
+        if not self.remoteDir:
             try:
                 job = self.getJobObject()
-            except AssertionError:
-                job = None
-            if job:
                 lfn_folder = os.path.join("GangaUploadedFiles", "GangaJob_%s" % job.getFQID('.'))
-            else:
+            except AssertionError:
                 t = datetime.datetime.now()
                 this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
                 lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
@@ -838,14 +835,11 @@ for f in glob.glob('###NAME_PATTERN###'):
         WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
         script = FileUtils.loadScript(WNscript_location, '')
 
-        if self.remoteDir == '':
+        if not self.remoteDir:
             try:
                 job = self.getJobObject()
-            except AssertionError:
-                job = None
-            if job:
                 lfn_folder = os.path.join("GangaUploadedFiles", "GangaJob_%s" % job.getFQID('.'))
-            else:
+            except AssertionError:
                 t = datetime.datetime.now()
                 this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
                 lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
