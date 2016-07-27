@@ -176,7 +176,6 @@ class ShareDir(GangaObject):
         else:
             super(ShareDir, self).__setattr__(name, value)
 
-
     def _getName(self):
         """
         A getter method for the 'name' schema attribute which will trigger the creation of a SharedDir on disk only when information about it is asked
@@ -190,7 +189,6 @@ class ShareDir(GangaObject):
             raise GangaException("ShareDir ERROR")
 
         return self._name
-
 
     def add(self, input):
         from Ganga.Core.GangaRepository import getRegistry
