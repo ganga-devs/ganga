@@ -137,7 +137,7 @@ class ShareDir(GangaObject):
     the Executable() application. A single ("prepared") application can be associated to multiple jobs.
 
     """
-    _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', doc='path to the file source'),
+    _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', getter="_getName", doc='path to the file source'),
                                      'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)')})
 
     _category = 'shareddirs'
@@ -151,22 +151,10 @@ class ShareDir(GangaObject):
         self._setRegistry(None)
 
         if not name is None:
-            self.name = name
+            self._name = name
         else:
-            # continue generating directory names until we create a unique one
-            # (which will likely be on the first attempt).
-            while True:
-                name = 'conf-{0}'.format(uuid.uuid4())
-                if not os.path.isdir(os.path.join(getSharedPath(), name)):
-                    os.makedirs(os.path.join(getSharedPath(), name))
-
-                if not os.path.isdir(os.path.join(getSharedPath(), name)):
-                    logger.error("ERROR creating path: %s" %
-                                 os.path.join(getSharedPath(), name))
-                    raise GangaException("ShareDir ERROR")
-                else:
-                    break
-            self.name = str(name)
+            name = 'conf-{0}'.format(uuid.uuid4())
+            self._name = name
 
             # incrementing then decrementing the shareref counter has the effect of putting the newly
             # created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
@@ -175,6 +163,27 @@ class ShareDir(GangaObject):
         #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         # shareref.increase(self.name)
         # shareref.decrease(self.name)
+
+    def __setattr__(self, name, value):
+
+        if name == 'name':
+            self._name = value
+        else:
+            super(ShareDir, self).__setattr__(name, value)
+
+
+    def _getName(self):
+
+        share_dir = os.path.join(getSharedPath(), self._name)
+        if not os.path.isdir(share_dir):
+            logger.info("Actually creating: %s" % share_dir)
+            os.makedirs(share_dir)
+        if not os.path.isdir(share_dir):
+            logger.error("ERROR creating path: %s" % share_dir)
+            raise GangaException("ShareDir ERROR")
+
+        return self._name
+
 
     def add(self, input):
         from Ganga.Core.GangaRepository import getRegistry
