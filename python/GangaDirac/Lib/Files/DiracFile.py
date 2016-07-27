@@ -54,7 +54,7 @@ class DiracFile(IGangaFile):
     _category = 'gangafiles'
     _name = "DiracFile"
     _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove',
-                      "replicate", 'put', 'locations', 'location', 'remoteURLs', 'accessURL',
+                      "replicate", 'put', 'locations', 'location', 'accessURL',
                       '_updateRemoteURLs', 'hasMatchedFiles']
     _remoteURLs = {}
     _storedReplicas = {}
@@ -459,9 +459,6 @@ class DiracFile(IGangaFile):
                 for this_url in these_LFNs:
                     LFNs.append(this_url)
             return LFNs
-
-    def remoteURLs(self):
-       return self._remoteURLs
 
     def accessURL(self, thisSE=''):
         """
