@@ -52,6 +52,7 @@ class LocalFile(IGangaFile):
 
         if isinstance(namePattern, str):
             self.namePattern = namePattern
+            self.localDir = localDir
         elif isinstance(namePattern, File):
             self.namePattern = path.basename(namePattern.name)
             self.localDir = path.dirname(namePattern.name)
@@ -61,9 +62,6 @@ class LocalFile(IGangaFile):
             self.localDir = path.dirname(namePattern.name)
         else:
             logger.error("Unkown type: %s . Cannot Create LocalFile from this!" % type(namePattern))
-
-        if localDir:
-            self.localDir = localDir
 
 
     def __setattr__(self, attr, value):
