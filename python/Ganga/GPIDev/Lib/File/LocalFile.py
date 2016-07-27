@@ -64,9 +64,6 @@ class LocalFile(IGangaFile):
         else:
             logger.error("Unkown type: %s . Cannot Create LocalFile from this!" % type(namePattern))
 
-        if localDir:
-            self.localDir = localDir
-
 
     def __setattr__(self, attr, value):
         """
