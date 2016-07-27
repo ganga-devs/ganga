@@ -25,6 +25,8 @@ import Ganga.Utility.Config
 
 from Ganga.GPIDev.Lib.File import getSharedPath
 
+from Ganga.Runtime.GPIexport import exportToGPI
+
 # regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
 urlprefix = re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
 
@@ -150,22 +152,25 @@ class ShareDir(GangaObject):
         super(ShareDir, self).__init__()
         self._setRegistry(None)
 
-        if not name is None:
-            self._name = name
-        else:
+        if not name:
             name = 'conf-{0}'.format(uuid.uuid4())
-            self._name = name
+        self._name = name
 
-            # incrementing then decrementing the shareref counter has the effect of putting the newly
-            # created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
-            # filled with files, then assigned to an application.
-            #a=Job(); s=ShareDir(); a.application.is_prepared=s
+        # incrementing then decrementing the shareref counter has the effect of putting the newly
+        # created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
+        # filled with files, then assigned to an application.
+        #a=Job(); s=ShareDir(); a.application.is_prepared=s
         #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         # shareref.increase(self.name)
         # shareref.decrease(self.name)
 
     def __setattr__(self, name, value):
-
+        """
+        A setattr wrapper which intercepts calls to assign self.name to self._name so the name gettter works
+        Args:
+            name (str): Name of the attribute being set
+            value (unknown): value being assigned to the attribute
+        """
         if name == 'name':
             self._name = value
         else:
@@ -173,7 +178,9 @@ class ShareDir(GangaObject):
 
 
     def _getName(self):
-
+        """
+        A getter method for the 'name' schema attribute which will trigger the creation of a SharedDir on disk only when information about it is asked
+        """
         share_dir = os.path.join(getSharedPath(), self._name)
         if not os.path.isdir(share_dir):
             logger.info("Actually creating: %s" % share_dir)
@@ -194,7 +201,7 @@ class ShareDir(GangaObject):
                 if os.path.isfile(expandfilename(item)):
                     logger.info('Copying file %s to shared directory %s' % (item, self.name))
                     shutil.copy2(expandfilename(item), os.path.join(getSharedPath(), self.name))
-                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    shareref = getRegistry("prep").getShareRef()
                     shareref.increase(self.name)
                     shareref.decrease(self.name)
                 else:
@@ -202,7 +209,7 @@ class ShareDir(GangaObject):
             elif isType(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
                 logger.info('Copying file object %s to shared directory %s' % (item.name, self.name))
                 shutil.copy2(expandfilename(item.name), os.path.join(getSharedPath(), self.name))
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                shareref = getRegistry("prep").getShareRef()
                 shareref.increase(self.name)
                 shareref.decrease(self.name)
             else:
@@ -266,6 +273,31 @@ def string_sharedfile_shortcut(v, item):
     return None
 
 allComponentFilters['shareddirs'] = string_sharedfile_shortcut
+
+
+def cleanUpShareDirs():
+    """Function to be used to clean up erronious empty folders in the Shared directory"""
+    share_path = getSharedPath()
+
+    logger.info("Cleaning Shared folders in: %s" % share_path)
+    logger.info("This may take a few minutes if you're running this for the first time after 6.1.23, feel free to go grab a tea/coffee")
+
+    for item in os.listdir(share_path):
+        this_dir = os.path.join(share_path, item)
+        if os.path.isdir(this_dir):
+            # NB we do need to explicitly test the length of the returned value here
+            # Checking is __MUCH__ faster than trying and failing to remove folders with contents on AFS
+            if len(os.listdir(this_dir)) == 0:
+                try:
+                    os.rmdir(this_dir)
+                except OSError:
+                    logger.debug("Failed to remove: %s" % this_dir)
+                    pass
+
+    return
+
+exportToGPI('cleanUpShareDirs', cleanUpShareDirs, 'Functions')
+
 #
 #
 # $Log: not supported by cvs2svn $
