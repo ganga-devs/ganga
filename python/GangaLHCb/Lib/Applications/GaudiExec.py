@@ -130,7 +130,7 @@ class GaudiExec(IPrepareApp):
                 new_file = allComponentFilters['gangafiles'](value, None)
                 actual_value = [ new_file ]
             elif isinstance(value, IGangaFile):
-                actual_valye = [ value ]
+                actual_value = [ value ]
 
         super(GaudiExec, self).__setattr__(attr, actual_value)
 
