@@ -182,7 +182,7 @@ class ShareDir(GangaObject):
         """
         share_dir = os.path.join(getSharedPath(), self._name)
         if not os.path.isdir(share_dir):
-            logger.info("Actually creating: %s" % share_dir)
+            logger.debug("Actually creating: %s" % share_dir)
             os.makedirs(share_dir)
         if not os.path.isdir(share_dir):
             logger.error("ERROR creating path: %s" % share_dir)
