@@ -32,8 +32,9 @@ class GaudiExec(IPrepareApp):
 
     Welcome to the new GaudiApp for LHCb apps written/constructed making use of the new CMake framework
 
+    =============
     Requirements:
-    ===============
+    =============
 
     Before submitting jobs with this application you will need to run something similar to the following:
     (outside of Ganga at the command line)
@@ -49,9 +50,9 @@ class GaudiExec(IPrepareApp):
     The output from this command can be quite large and Ganga will save it to disk and store it at least once per (master) job
     If your build target is large I would advise that you consider placing your gangadir in your AFS workspace where there is more storage available
 
-
+    ======
     Usage:
-    ===============
+    ======
 
     This application needs to be configured with the absolute directory of the project and the options you want to pass to gaudirun.py
 
@@ -68,9 +69,9 @@ class GaudiExec(IPrepareApp):
 
     prepare_cmake_app(myApp, myVer, myPath, myGetpack)
 
-
+    =============
     How it works:
-    ===============
+    =============
 
     The actual command run on the WN is::
 
