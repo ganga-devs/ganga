@@ -105,11 +105,12 @@ class ShareRef(GangaObject):
         self.name = {}
         #self._setRegistry(None)
 
-    def __construct__(self, args):
-        super(ShareRef, self).__construct__(args)
-        if self.name is None:
-            self.name = {}
-        #self._setRegistry(None)
+    def __setattr__(self, attr, value):
+        actual_value = value
+        if attr == "name":
+            if not actual_value:
+                actual_value = {}
+        super(ShareRef, self).__setattr__(attr, actual_value)
 
     def __getName(self):
         if not hasattr(self, 'name') or self.name is None:

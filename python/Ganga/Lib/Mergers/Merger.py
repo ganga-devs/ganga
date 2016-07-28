@@ -8,7 +8,9 @@ from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Adapters.IMerger import IMerger
 from Ganga.GPIDev.Schema import FileItem, SimpleItem
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Lib.File import LocalFile
+from Ganga.GPIDev.Lib.File.File import File
+from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
@@ -269,22 +271,25 @@ class CustomMerger(IMerger):
     def mergefiles(self, file_list, output_file):
 
         import os
-        if not os.path.exists(self.module):
-            raise PostProcessException(
-                "The module '&s' does not exist and so merging will fail.", self.module)
+        if isinstance(self.module, IGangaFile):
+            module_name = os.path.join(self.module.localDir, self.module.namePattern)
+        elif isinstance(self.module, File):
+            module_name = self.module.name
+        else:
+            module_name = self.module
+        if not os.path.exists(module_name):
+            raise PostProcessException("The module '&s' does not exist and so merging will fail.", module_name)
         result = False
         try:
             ns = {'file_list': copy.copy(file_list),
                   'output_file': copy.copy(output_file)}
-            execfile(self.module, ns)
-            exec('_result = mergefiles(file_list,output_file)', ns)
+            execfile(module_name, ns)
+            exec('_result = mergefiles(file_list, output_file)', ns)
             result = ns.get('_result', result)
         except Exception as e:
-            raise PostProcessException(
-                'There was a problem executing the custom merge: %s. Merge will fail.' % e)
+            raise PostProcessException('There was a problem executing the custom merge: %s. Merge will fail.' % e)
         if result is not True:
-            raise PostProcessException(
-                'The custom merge did not return True, merge will fail.')
+            raise PostProcessException('The custom merge did not return True, merge will fail.')
         return self.success
 
 

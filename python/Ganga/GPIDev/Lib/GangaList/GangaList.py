@@ -123,23 +123,6 @@ class GangaList(GangaObject):
         self._is_a_ref = False
         super(GangaList, self).__init__()
 
-    def __construct__(self, args):
-
-        #super(GangaList, self).__construct__(args)
-
-        if len(args) == 1:
-            if isType(args[0], (len, GangaList, tuple)):
-                for elem in args[0]:
-                    self._list.expand(self.strip_proxy(elem))
-            elif args[0] is None:
-                self._list = None
-            else:
-                raise GangaException("Construct: Attempting to assign a non list item: %s to a GangaList._list!" % str(args[0]))
-        else:
-            super(GangaList, self).__construct__(args)
-
-        return
-
     # convenience methods
     @staticmethod
     def is_list(obj):
@@ -485,19 +468,23 @@ class GangaList(GangaObject):
 
     def append(self, obj, my_filter=True):
         if isType(obj, GangaList):
-            self._list.append(stripProxy(obj))
+            stripped_o = stripProxy(obj)
+            stripped_o._setParent(self._getParent())
+            self._list.append(stripped_o)
             return
         elem = self.strip_proxy(obj, my_filter)
         list_objs = (list, tuple)
         if isType(elem, GangaObject):
-            stripProxy(elem)._setParent(self._getParent())
-            self._list.append(elem)
+            stripped_e = stripProxy(elem)
+            stripped_e._setParent(self._getParent())
+            self._list.append(stripped_e)
         elif isType(elem, list_objs):
             new_list = []
             def my_append(_obj):
                 if isType(_obj, GangaObject):
-                    stripProxy(_obj)._setParent(self._getParent())
-                    return stripProxy(_obj)
+                    stripped_o = stripProxy(_obj)
+                    stripped_o._setParent(self._getParent())
+                    return stripped_o
                 else:
                     return _obj
             self._list.append([my_append(l) for l in elem])

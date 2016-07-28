@@ -1,5 +1,5 @@
 
-import os, sys
+import os, sys, datetime, subprocess
 dirac_env=###DIRAC_ENV###
 processes=[]
 storage_elements = ###STORAGE_ELEMENTS###
@@ -8,9 +8,8 @@ def uploadFile(file_name, lfn_base, compress=False, wildcard=''):
 
     upload_script = '''\n###UPLOAD_SCRIPT###'''
 
-    import sys, os, datetime, subprocess
     if not os.path.exists(os.path.join(os.getcwd(),file_name)):
-        ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' didn't exist:::NotAvailable\n" % (wildcard, file_label, file_name))
+        ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' didn't exist:::NotAvailable\n" % (wildcard, file_name, file_name))
         return
 
     replace_dict = {
