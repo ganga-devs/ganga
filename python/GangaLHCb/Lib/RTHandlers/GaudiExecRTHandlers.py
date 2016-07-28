@@ -31,8 +31,6 @@ from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
 
 logger = getLogger()
 
-prep_lock = threading.Lock()
-
 def genDataFiles(job):
     """
     Generating a data.py file which contains the data we want gaudirun to use
@@ -45,15 +43,14 @@ def genDataFiles(job):
 
     data = job.inputdata
     if data:
-        with prep_lock:
-            logger.debug("Returning options String")
-            data_str = data.optionsString()
-            if data.hasLFNs():
-                logger.info("Generating Data catalog for job: %s" % job.fqid)
-                logger.debug("Returning Catalogue")
-                inputsandbox.append(FileBuffer('catalog.xml', data.getCatalog()))
-                cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
-                data_str += cat_opts
+        logger.debug("Returning options String")
+        data_str = data.optionsString()
+        if data.hasLFNs():
+            logger.info("Generating Data catalog for job: %s" % job.fqid)
+            logger.debug("Returning Catalogue")
+            inputsandbox.append(FileBuffer('catalog.xml', data.getCatalog()))
+            cat_opts = '\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
+            data_str += cat_opts
 
         inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file, data_str))
     else:

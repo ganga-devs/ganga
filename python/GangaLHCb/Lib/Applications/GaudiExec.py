@@ -27,8 +27,6 @@ from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampConten
 
 logger = getLogger()
 
-prep_lock = threading.Lock()
-
 class GaudiExec(IPrepareApp):
     """
 
@@ -227,43 +225,42 @@ class GaudiExec(IPrepareApp):
 
         folder_dir = master_job.getInputWorkspace(create=True).getPath()
 
-        with prep_lock:
-            if not df or df.namePattern == '':
-                master_job.application.sharedOptsInput = LocalFile(namePattern=GaudiExec.sharedOptsFile_name, localDir=folder_dir)
-                tar_filename = path.join(folder_dir, GaudiExec.sharedOptsFile_name)
-                if not path.isfile(tar_filename):
-                    with tarfile.open(tar_filename, "w") as tar_file:
-                        pass
-                with tarfile.open(tar_filename, "a") as tar_file:
-                    tinfo = tarfile.TarInfo('__timestamp__')
-                    tinfo.mtime = time.time()
-                    fileobj = StringIO(getTimestampContent())
-                    tinfo.size = fileobj.len
-                    tar_file.addfile(tinfo, fileobj)
-
-            extra_opts_file = self.getOptsFileName()
-
-            # First construct if needed
-            if not path.isfile(path.join(folder_dir, GaudiExec.sharedOptsFile_name)):
-                with tarfile.open(path.join(folder_dir, GaudiExec.sharedOptsFile_name), "w") as tar_file:
+        if not df or df.namePattern == '':
+            master_job.application.sharedOptsInput = LocalFile(namePattern=GaudiExec.sharedOptsFile_name, localDir=folder_dir)
+            tar_filename = path.join(folder_dir, GaudiExec.sharedOptsFile_name)
+            if not path.isfile(tar_filename):
+                with tarfile.open(tar_filename, "w") as tar_file:
                     pass
-
-            # Now append the extra_opts file here when needed
-            with tarfile.open(path.join(folder_dir, GaudiExec.sharedOptsFile_name), "a") as tar_file:
-                # Add the extra opts file to the job
-                tinfo = tarfile.TarInfo(extra_opts_file)
+            with tarfile.open(tar_filename, "a") as tar_file:
+                tinfo = tarfile.TarInfo('__timestamp__')
                 tinfo.mtime = time.time()
-                fileobj = StringIO(self.extraOpts)
+                fileobj = StringIO(getTimestampContent())
                 tinfo.size = fileobj.len
                 tar_file.addfile(tinfo, fileobj)
 
-                if not self.useGaudiRun:
-                    # Add the WN script for wrapping the job
-                    tinfo2 = tarfile.TarInfo(self.getWrapperScriptName())
-                    tinfo2.mtime = time.time()
-                    fileobj2 = StringIO(self.getWNPythonContents())
-                    tinfo2.size = fileobj2.len
-                    tar_file.addfile(tinfo2, fileobj2)
+        extra_opts_file = self.getOptsFileName()
+
+        # First construct if needed
+        if not path.isfile(path.join(folder_dir, GaudiExec.sharedOptsFile_name)):
+            with tarfile.open(path.join(folder_dir, GaudiExec.sharedOptsFile_name), "w") as tar_file:
+                pass
+
+        # Now append the extra_opts file here when needed
+        with tarfile.open(path.join(folder_dir, GaudiExec.sharedOptsFile_name), "a") as tar_file:
+            # Add the extra opts file to the job
+            tinfo = tarfile.TarInfo(extra_opts_file)
+            tinfo.mtime = time.time()
+            fileobj = StringIO(self.extraOpts)
+            tinfo.size = fileobj.len
+            tar_file.addfile(tinfo, fileobj)
+
+            if not self.useGaudiRun:
+                # Add the WN script for wrapping the job
+                tinfo2 = tarfile.TarInfo(self.getWrapperScriptName())
+                tinfo2.mtime = time.time()
+                fileobj2 = StringIO(self.getWNPythonContents())
+                tinfo2.size = fileobj2.len
+                tar_file.addfile(tinfo2, fileobj2)
 
 
     def cleanGangaTargetArea(self, this_build_target):
