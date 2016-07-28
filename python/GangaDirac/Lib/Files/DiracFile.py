@@ -1,10 +1,12 @@
 import copy
 import os
 import datetime
+import inspect
 import hashlib
 import re
 import os.path
 import random
+import glob
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory, isType, getName
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
@@ -98,9 +100,10 @@ class DiracFile(IGangaFile):
             if value:
                 this_name = os.path.basename(value)
                 super(DiracFile, self).__setattr__('namePattern', this_name)
+                super(DiracFile, self).__setattr__('remoteDir', os.path.dirname(value))
         elif attr == 'remoteDir':
             if value:
-                this_lfn = os.path.join(value, self.lfn)
+                this_lfn = os.path.join(value, self.namePattern)
                 super(DiracFile, self).__setattr__('lfn', this_lfn)
 
         super(DiracFile, self).__setattr__(attr, actual_value)
@@ -633,7 +636,10 @@ class DiracFile(IGangaFile):
             else:
                 return
 
-        if lfn != '':
+        if lfn and os.path.basename(lfn) != self.namePattern:
+            logger.warning("Changing namePattern from: '%s' to '%s' during put operation" % (self.namePattern, os.path.basename(lfn)))
+
+        if lfn:
             self.lfn = lfn
 
         # looks like will only need this for the interactive uploading of jobs.
@@ -661,15 +667,15 @@ class DiracFile(IGangaFile):
                 logger.warning("LFN will be generated automatically")
                 self.lfn = ""
 
-        selfConstructedLFN = False
-
-        import glob
-        if self.remoteDir == '' and self.lfn == '':
-            import datetime
-            t = datetime.datetime.now()
-            this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.lfn = os.path.join(DiracFile.diracLFNBase(), 'GangaFiles_%s' % this_date)
-            selfConstructedLFN = True
+        if not self.remoteDir:
+            try:
+                job = self.getJobObject()
+                lfn_folder = os.path.join("GangaUploadedFiles", "GangaJob_%s" % job.getFQID('.'))
+            except AssertionError:
+                t = datetime.datetime.now()
+                this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
+                lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
+            self.lfn = os.path.join(DiracFile.diracLFNBase(), lfn_folder, self.namePattern)
 
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
@@ -690,11 +696,8 @@ class DiracFile(IGangaFile):
             storage_elements = [uploadSE]
 
         outputFiles = GangaList()
-        backup_lfn = self.lfn
         for this_file in glob.glob(os.path.join(sourceDir, self.namePattern)):
             name = this_file
-
-            self.lfn = backup_lfn
 
             if not os.path.exists(name):
                 if not self.compressed:
@@ -712,10 +715,7 @@ class DiracFile(IGangaFile):
             if lfn == "":
                 lfn = os.path.join(lfn_base, os.path.basename(name))
 
-            if selfConstructedLFN is True:
-                self.lfn = os.path.join(self.lfn, os.path.basename(name))
-
-            lfn = self.lfn
+            #lfn = os.path.join(os.path.dirname(self.lfn), this_file)
 
             d = DiracFile()
             d.namePattern = os.path.basename(name)
@@ -723,7 +723,8 @@ class DiracFile(IGangaFile):
             d.localDir = sourceDir
             stderr = ''
             stdout = ''
-            logger.info('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
+            logger.debug('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
+            logger.debug('execute: uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
             stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
             if type(stdout) == str:
                 logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), stdout))
@@ -770,14 +771,13 @@ class DiracFile(IGangaFile):
                         this_file.replicate(se)
 
         if len(outputFiles) > 0:
-            return GPIProxyObjectFactory(outputFiles)
+            return outputFiles
         else:
             outputFiles.append(self)
-            return GPIProxyObjectFactory(outputFiles)
+            return outputFiles
 
     def getWNScriptDownloadCommand(self, indent):
 
-        import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'downloadScript.py')
 
         from Ganga.GPIDev.Lib.File import FileUtils
@@ -801,13 +801,11 @@ subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=Tru
         return script
 
     def _getDiracEnvStr(self):
-        from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
         diracEnv = str(getDiracEnv())
         return diracEnv
 
     def _WN_wildcard_script(self, namePattern, lfnBase, compressed):
         wildcard_str =  """
-import glob, hashlib
 for f in glob.glob('###NAME_PATTERN###'):
     processes.append(uploadFile(os.path.basename(f), '###LFN_BASE###', ###COMPRESSED###, '###NAME_PATTERN###'))
 """
@@ -828,7 +826,6 @@ for f in glob.glob('###NAME_PATTERN###'):
         Returns script that have to be injected in the jobscript for postprocessing on the WN
         """
 
-        import inspect
         script_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
         script_location = os.path.join( script_path, 'uploadScript.py')
 
@@ -838,23 +835,23 @@ for f in glob.glob('###NAME_PATTERN###'):
         WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
         script = FileUtils.loadScript(WNscript_location, '')
 
-        selfConstructedLFNs = False
+        if not self.remoteDir:
+            try:
+                job = self.getJobObject()
+                lfn_folder = os.path.join("GangaUploadedFiles", "GangaJob_%s" % job.getFQID('.'))
+            except AssertionError:
+                t = datetime.datetime.now()
+                this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
+                lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
+            self.lfn = os.path.join(DiracFile.diracLFNBase(), lfn_folder, self.namePattern)
 
-        if self.remoteDir == '' and self.lfn == '':
-            import datetime
-            t = datetime.datetime.now()
-            this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.lfn = os.path.join(DiracFile.diracLFNBase(), 'GangaFiles_%s' % this_date)
-            selfConstructedLFNs = True
-
-        if self.remoteDir == '' and self.lfn != '':
+        if self.remoteDir == '':
             self.remoteDir = DiracFile.diracLFNBase()
 
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
         else:
             lfn_base = self.remoteDir
-
 
         for this_file in outputFiles:
             isCompressed = this_file.namePattern in patternsToZip

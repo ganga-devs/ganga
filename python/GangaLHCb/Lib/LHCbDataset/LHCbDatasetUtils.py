@@ -38,13 +38,13 @@ def strToDataFile(name, allowNone=True):
         else:
             raise GangaException( "Cannot construct file object: %s" % str(name) )
 
-def getDataFile(file):
-    if isType(file, DiracFile):
-        return file
-    if isType(file, LocalFile):
-        return file
-    if type(file) == type(''):
-        return strToDataFile(file)
+def getDataFile(file_):
+    if isType(file_, DiracFile):
+        return file_
+    if isType(file_, LocalFile):
+        return file_
+    if isinstance(file_, str):
+        return strToDataFile(file_)
     return None
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

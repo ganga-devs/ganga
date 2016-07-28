@@ -6,6 +6,9 @@ import sys,time
 import glob
 import sys
 import mimetypes
+import subprocess
+import tarfile
+import time
 
 # FIXME: print as DEBUG: to __syslog__ file
 #print(sys.path)
@@ -58,6 +61,8 @@ os.chdir(workdir)
 for f in input_sandbox:
     if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
         getPackedInputSandbox(f)
+    else:
+        shutil.copy(f, os.path.join(os.getcwd(), os.path.basename(f)))
 
 # -- END OF MOVED CODE BLOCK
 
@@ -67,12 +72,8 @@ for f in input_sandbox:
 # create inputdata list
 ###CREATEINPUTDATALIST###
 
-import sys
 sys.path.insert(0, ###GANGADIR###)
 sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
-
-import subprocess
-import tarfile
 
 fullenvironment = os.environ.copy()
 
@@ -81,10 +82,6 @@ errorfile=open('stderr','w')
 
 sys.stdout=open('./__syslog__','w')
 sys.stderr=sys.stdout
-
-import subprocess
-
-import time #datetime #disabled for python2.2 compatiblity
 
 try:
     child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)

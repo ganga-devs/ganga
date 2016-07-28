@@ -7,14 +7,14 @@ from tempfile import gettempdir
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
-class TestGaudiRun(GangaUnitTest):
+class TestGaudiExec(GangaUnitTest):
 
     def testInternal(self):
 
-        from Ganga.GPI import GaudiRun, Job, LocalFile, DiracFile
+        from Ganga.GPI import GaudiExec, Job, LocalFile, DiracFile
 
         tmp_fol = gettempdir()
-        gaudi_testFol = path.join(tmp_fol, 'GaudiRunTest')
+        gaudi_testFol = path.join(tmp_fol, 'GaudiExecTest')
         shutil.rmtree(gaudi_testFol, ignore_errors=True)
         makedirs(gaudi_testFol)
         gaudi_testOpts = path.join(gaudi_testFol, 'testOpts.py')
@@ -23,10 +23,9 @@ class TestGaudiRun(GangaUnitTest):
 
         assert path.exists(gaudi_testOpts)
 
-        gr = GaudiRun(directory=gaudi_testFol, myOpts=LocalFile(gaudi_testOpts))
+        gr = GaudiExec(directory=gaudi_testFol, options=LocalFile(gaudi_testOpts))
 
         assert isinstance(stripProxy(gr).getOptsFile(), stripProxy(LocalFile))
-        assert stripProxy(gr).getDir()
 
         reconstructed_path = path.join(stripProxy(gr).getOptsFile().localDir, stripProxy(gr).getOptsFile().namePattern)
 
@@ -34,18 +33,16 @@ class TestGaudiRun(GangaUnitTest):
 
         assert open(reconstructed_path).read() == "print('hello')"
 
-        assert stripProxy(gr).getDir() == gaudi_testFol
-
         j=Job()
         j.application = gr
 
-        assert isinstance(j.application, GaudiRun)
+        assert isinstance(j.application, GaudiExec)
 
         df = DiracFile(lfn='/not/some/file')
 
-        gr.myOpts = df
+        gr.options = df
 
-        assert gr.myOpts.lfn == df.lfn
+        assert gr.options.lfn == df.lfn
 
         shutil.rmtree(gaudi_testFol, ignore_errors=True)
 
