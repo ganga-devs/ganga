@@ -322,8 +322,8 @@ class GaudiExec(IPrepareApp):
     def execCmd(self, cmd):
         """
         This method executes a command within the namespace of the project. The cmd is placed in a bash script which is executed within the env
-        This will adopt the platform associated with this application and all commands requiring to be run within the project env
-        will be required to be executed with the './run' explcitly called
+        This will adopt the platform associated with this application.
+        Any explicit calls to be run within the project env have to be prepended with './run '. This is not added automatically
 
         e.g. The following will execute a 'make' command within the given project dir
 
@@ -336,9 +336,9 @@ class GaudiExec(IPrepareApp):
 
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
 
-        env_wrapper = self.getEnvScript()
         cmd_file.write("#!/bin/bash")
         cmd_file.write("\n")
+        cmd_file.write(self.getEnvScript())
         cmd_file.write(cmd)
         cmd_file.flush()
         cmd_file.close()
