@@ -128,9 +128,11 @@ class GaudiExec(IPrepareApp):
         elif attr == 'options':
             if isinstance(value, str):
                 new_file = allComponentFilters['gangafiles'](value, None)
-                actual_value = [ new_file ]
+                actual_value = new_file
             elif isinstance(value, IGangaFile):
-                actual_value = [ value ]
+                pass
+            else:
+                logger.warning("Possibly setting wrng type for options: '%s'" % type(value))
 
         super(GaudiExec, self).__setattr__(attr, actual_value)
 
