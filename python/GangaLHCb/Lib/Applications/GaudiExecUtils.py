@@ -36,7 +36,7 @@ execfile('%s')
 
 def getTimestampContent():
     """
-    Returns a string containing the current time in a gven format and a unique random uuid
+    Returns a string containing the current time in a given format and a unique random uuid
     """
     fmt = '%Y-%m-%d-%H-%M-%S'
     return datetime.now().strftime(fmt) + '\n' + str(uuid.uuid4())

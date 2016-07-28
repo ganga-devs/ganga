@@ -72,7 +72,7 @@ class GaudiExec(IPrepareApp):
     How it works:
     ===============
 
-    The actual command run on the WN is:
+    The actual command run on the WN is::
 
         ./run gaudirun.py optionsFile.py data.py
 
@@ -80,11 +80,11 @@ class GaudiExec(IPrepareApp):
     Set:
         job.application.useGaudiRun = False
 
-    This then changes the command run on the WN to be:
+    This then changes the command run on the WN to be::
 
         ./run python OptsFileWrapper.py
 
-        Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace with 'execfile'
+    Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace with 'execfile'
 
     """
     _schema = Schema(Version(1, 0), {
@@ -231,7 +231,7 @@ class GaudiExec(IPrepareApp):
             master_job.application.sharedOptsInput = LocalFile(namePattern=GaudiExec.sharedOptsFile_name, localDir=folder_dir)
             tar_filename = path.join(folder_dir, GaudiExec.sharedOptsFile_name)
             if not path.isfile(tar_filename):
-                with tarfile.open(tar_filename, "w") as tar_file:
+                with tarfile.open(tar_filename, "w"):
                     pass
             with tarfile.open(tar_filename, "a") as tar_file:
                 tinfo = tarfile.TarInfo('__timestamp__')
@@ -244,7 +244,7 @@ class GaudiExec(IPrepareApp):
 
         # First construct if needed
         if not path.isfile(path.join(folder_dir, GaudiExec.sharedOptsFile_name)):
-            with tarfile.open(path.join(folder_dir, GaudiExec.sharedOptsFile_name), "w") as tar_file:
+            with tarfile.open(path.join(folder_dir, GaudiExec.sharedOptsFile_name), "w"):
                 pass
 
         # Now append the extra_opts file here when needed

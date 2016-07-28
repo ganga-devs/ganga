@@ -31,6 +31,7 @@ from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
 
 logger = getLogger()
 
+
 def genDataFiles(job):
     """
     Generating a data.py file which contains the data we want gaudirun to use
@@ -58,6 +59,7 @@ def genDataFiles(job):
 
     return inputsandbox
 
+
 def generateWrapperScript(app):
     """
     This generates the wrapper script which is run for non GaudiExec type apps
@@ -66,6 +68,7 @@ def generateWrapperScript(app):
     """
 
     return FileBuffer(name=app.getWrapperScriptName(), contents=app.getWNPythonContents())
+
 
 def getScriptName(app):
     """
@@ -76,6 +79,7 @@ def getScriptName(app):
     job = app.getJobObject()
 
     return getName(app)+"_Job_"+job.getFQID('.')+'_script.py'
+
 
 def generateWNScript(commandline, app):
     """
@@ -90,6 +94,7 @@ def generateWNScript(commandline, app):
     return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
                                                                       OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
                       subdir='jobScript', executable=True)
+
 
 def collectPreparedFiles(app):
     """
@@ -108,6 +113,7 @@ def collectPreparedFiles(app):
             input_folders.append(os.path.join(root, name))
 
     return input_files, input_folders
+
 
 def prepareCommand(app):
     """
@@ -145,6 +151,7 @@ def WarnUsers():
     logger.warning("This GaudiExec Application is still in the testing phase.")
     logger.warning("There is no guarantee that any jobs submitted with it wil remain compatible with the next release of Ganga")
     raw_input("Please Hit the return key to continue with your Job submission\n")
+
 
 class GaudiExecRTHandler(IRuntimeHandler):
 
@@ -209,11 +216,13 @@ class GaudiExecRTHandler(IRuntimeHandler):
         c = StandardJobConfig('./'+os.path.join(scriptToRun.subdir, scriptToRun.name), input_sand, [], output_sand)
         return c
 
+
 allHandlers.add('GaudiExec', 'Local', GaudiExecRTHandler)
 allHandlers.add('GaudiExec', 'Condor', GaudiExecRTHandler)
 allHandlers.add('GaudiExec', 'Interactive', GaudiExecRTHandler)
 allHandlers.add('GaudiExec', 'Batch', GaudiExecRTHandler)
 allHandlers.add('GaudiExec', 'LSF', GaudiExecRTHandler)
+
 
 def generateDiracInput(app):
     """
@@ -264,6 +273,7 @@ def generateDiracInput(app):
 
     app.uploadedInput = new_df
 
+
 def uploadLocalFile(job, namePattern, localDir):
     """
     Upload a locally available file to the grid as a DiracFile
@@ -282,11 +292,13 @@ def uploadLocalFile(job, namePattern, localDir):
 
     return returnable
 
+
 def getInputFileDir(job):
     """
     Return the LFN remote dirname for this job
     """
     return os.path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid)
+
 
 class GaudiExecDiracRTHandler(IRuntimeHandler):
 
