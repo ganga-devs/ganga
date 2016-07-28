@@ -242,7 +242,8 @@ def generateDiracInput(app):
         prep_dir = app.getSharedPath()
         addTimestampFile(prep_dir)
         prep_file = prep_dir + '.tgz'
-        compressed_file = os.path.join(tempfile.gettempdir(), '__'+os.path.basename(prep_file))
+        tmp_dir = tempfile.gettempdir()
+        compressed_file = os.path.join(tmp_dir, '__'+os.path.basename(prep_file))
 
         if not job.master:
             rjobs = job.subjobs
@@ -254,33 +255,33 @@ def generateDiracInput(app):
         for this_job in rjobs:
             this_app = this_job.application
             wnScript = generateWNScript(prepareCommand(this_app), this_app)
-            this_script = os.path.join(tempfile.gettempdir(), wnScript.name)
+            this_script = os.path.join(tmp_dir, wnScript.name)
             script_names.append(wnScript)
             wnScript.create(this_script)
 
         with tarfile.open(compressed_file, "w:gz") as tar_file:
             for name in input_files:
                 # FIXME Add support for subfiles here once it's working across multiple IGangaFile objects in a consistent way
-                # Not hacking this in for now just in-case we end up with a mess as a result.
+                # Not hacking this in for now just in-case we end up with a mess as a result
                 tar_file.add(name, arcname=os.path.basename(name))
             for thisScript in script_names:
-                this_file = os.path.join(tempfile.gettempdir(), thisScript.name)
+                this_file = os.path.join(tmp_dir, thisScript.name)
                 logger.debug("Adding: '%s' as: '%s'" % (this_file, os.path.join(thisScript.subdir, thisScript.name)))
                 tar_file.add(this_file, arcname=os.path.join(thisScript.subdir, thisScript.name))
-        shutil.move(compressed_file, prep_dir)
 
-    new_df = uploadLocalFile(job, os.path.basename(compressed_file), app.getSharedPath())
+    new_df = uploadLocalFile(job, os.path.basename(compressed_file), tmp_dir)
 
     app.uploadedInput = new_df
 
 
-def uploadLocalFile(job, namePattern, localDir):
+def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
     Upload a locally available file to the grid as a DiracFile
 
     Args:
         namePattern (str): name of the file
         localDir (str): localDir of the file
+        should_del = (bool): should we delete the local file?
     Return
         DiracFile: a DiracFile of the uploaded LFN on the grid
     """
@@ -289,6 +290,9 @@ def uploadLocalFile(job, namePattern, localDir):
     random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
     new_lfn = os.path.join(getInputFileDir(job), namePattern)
     returnable = new_df.put(force=True, uploadSE=random_SE, lfn=new_lfn)[0]
+
+    if should_del:
+        os.unlink(os.path.join(localDir, namePattern))
 
     return returnable
 
@@ -345,6 +349,8 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         assert isinstance(app.sharedOptsInput, DiracFile), "Failed to upload needed file, aborting submit"
         rep_data = app.sharedOptsInput.getReplicas()
         assert rep_data != {}, "Failed to find a replica, aborting submit"
+
+        os.unlink(optsArchive+'.gz')
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
