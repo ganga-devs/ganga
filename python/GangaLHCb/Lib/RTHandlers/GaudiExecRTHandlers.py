@@ -168,6 +168,10 @@ class GaudiExecRTHandler(IRuntimeHandler):
         WarnUsers()
 
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
+
+        if isinstance(app.sharedOptsInput, LocalFile):
+            app.sharedOptsInput = None
+
         job = app.getJobObject()
         if job.subjobs:
             rjobs = job.subjobs
@@ -179,8 +183,10 @@ class GaudiExecRTHandler(IRuntimeHandler):
 
         optsArchive = os.path.join(app.sharedOptsInput.localDir, app.sharedOptsInput.namePattern)
         gzipFile(optsArchive, optsArchive+'.gz', True)
+        app.sharedOptsInput.namePattern = app.sharedOptsInput.namePattern + '.gz'
+        optsArchive = os.path.join(app.sharedOptsInput.localDir, app.sharedOptsInput.namePattern)
 
-        inputsandbox.append(File(name=optsArchive+'.gz'))
+        inputsandbox.append(File(name=optsArchive))
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
@@ -318,10 +324,20 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
-        generateDiracInput(app)
-        assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit"
+
+        if not isinstance(app.uploadedInput, DiracFile):
+            logger.info("Using DiracFile: '%s' as prepared state." % app.uploadedInput.lfn)
+            logger.info("Run job.application.reset()")
+        else:
+            generateDiracInput(app)
+            assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit"
+        
         rep_data = app.uploadedInput.getReplicas()
         assert rep_data != {}, "Failed to find a replica, aborting submit"
+
+
+        if isinstance(app.sharedOptsInput, DiracFile):
+            app.sharedOptsInput = None
 
         job = app.getJobObject()
         if job.subjobs:
@@ -332,7 +348,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             logger.debug("RTHandler Preparing: %s" % this_job.fqid)
             this_job.application.constructExtraFiles(this_job)
 
-        optsArchive = os.path.join(app.sharedOptsInput.localDir, app.sharedOptsInput.namePattern)
+        optsArchive = os.path.join(app.sharedOptsInput.localDir, app.sharedOptsInput.namePattern[:-3] + '-'+str(uuid.uuid4())+'.tar')
         gzipFile(optsArchive, optsArchive+'.gz', True)
 
         new_df = DiracFile()
@@ -343,6 +359,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         app.sharedOptsInput = new_df
 
         assert isinstance(app.sharedOptsInput, DiracFile), "Failed to upload needed file, aborting submit"
+
         rep_data = app.sharedOptsInput.getReplicas()
         assert rep_data != {}, "Failed to find a replica, aborting submit"
 

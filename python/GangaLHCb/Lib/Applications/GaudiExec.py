@@ -148,11 +148,9 @@ class GaudiExec(IPrepareApp):
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
         self.hash = None
-        ## FIXME Add some configurable object which controls whether a file should be removed from storage
-        ## Here if the is_prepared count reaches zero
-        if self.uploadedInput:
-            self.uploadedInput.remove()
         self.uploadedInput = None
+        self.sharedOptsInput = None
+
 
     def prepare(self, force=False):
         """
