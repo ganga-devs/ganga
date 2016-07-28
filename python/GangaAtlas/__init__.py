@@ -14,7 +14,7 @@ config.addOption('LocalOutputLocation', '/castor/cern.ch/atlas/scratch/%s/ganga'
 config.addOption('IndividualSubjobDirsForLocalOutput', False, 'When copying local output, should dir structure be jid.sid (False) or jid/sid (True)' )
 config.addOption('SingleDirForLocalOutput', False, 'When copying local output, only a single dirs used for output and output filenames are changed with jid.sid' )
 config.addOption('NoSubDirsAtAllForLocalOutput', False, 'When copying local output, all output is copied to the given output location with no subdirs created' )
-config.addOption('ATLAS_SOFTWARE', '/afs/cern.ch/project/gd/apps/atlas/slc3/software', 'FIXME')
+config.addOption('ATLAS_SOFTWARE', '/cvmfs/atlas.cern.ch/repo/sw/software/', 'FIXME')
 config.addOption('PRODUCTION_ARCHIVE_BASEURL', 'http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/Production/kits/', 'FIXME')
 config.addOption('ExcludedSites', '' , 'FIXME')
 config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The path in which the cmtsetup magic function will look up the setup.sh for CMT environment setup')
