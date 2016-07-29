@@ -14,6 +14,8 @@ from .Bender import Bender
 from .BenderScript import BenderScript
 from .Ostap import Ostap
 
+from .GaudiExec import GaudiExec
+
 # Add any additional Packages required by the user in the .gangarc file
 from Ganga.Utility.Config import getConfig
 
