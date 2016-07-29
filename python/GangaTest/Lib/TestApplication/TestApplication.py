@@ -10,18 +10,18 @@ from Ganga.GPIDev.Lib.File import File
 
 class TestApplication(IPrepareApp):
     _schema = Schema(Version(1,0), {'exe':SimpleItem(defvalue='/usr/bin/env'),
-                                    'derived_value' : SimpleItem(defvalue='',typelist=['str']),
-                                    'sequence' : SimpleItem([],sequence=1,typelist=['str']),
+                                    'derived_value' : SimpleItem(defvalue='',typelist=[str]),
+                                    'sequence' : SimpleItem([],sequence=1,typelist=[str]),
                                     'file_sequence' : FileItem(defvalue=[],sequence=1),
                                     'optsfile' : FileItem(),
                                     'modified' : SimpleItem(defvalue=0),
                                     'nodefault_file_item' : FileItem(defvalue=File('a')),
-                                    'args' :  SimpleItem(defvalue=["Hello World"],typelist=['str','Ganga.GPIDev.Lib.File.File'],sequence=1,doc="List of arguments for the executable. Arguments may be strings or File objects."),# introduced for RTHandler compatibility
+                                    'args' :  SimpleItem(defvalue=["Hello World"],typelist=[str,'Ganga.GPIDev.Lib.File.File'],sequence=1,doc="List of arguments for the executable. Arguments may be strings or File objects."),# introduced for RTHandler compatibility
                                     'env' : SimpleItem(defvalue={},doc='Environment'),# introduced for RTHandler compatibility
                                     'fail': SimpleItem(defvalue='',doc='Define the artificial runtime failures: "config", "prepare"'),
                                     'postprocess_mark_as_failed': SimpleItem(defvalue=False,doc='Update teh status of the job as failed in the postprocess step'),
-                                    'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-                                    'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1)
+                                    'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=[None, str, bool],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+                                    'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=1)
                                     } )
     _name = 'TestApplication'
 

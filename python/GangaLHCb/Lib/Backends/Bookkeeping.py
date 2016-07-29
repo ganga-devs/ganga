@@ -14,7 +14,7 @@ logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 schema = {'status': SimpleItem(defvalue=None, protected=1, copyable=0,
-                               typelist=['str', 'type(None)'],
+                               typelist=[str, None],
                                doc='Status of the bookkeeping system')}
 
 

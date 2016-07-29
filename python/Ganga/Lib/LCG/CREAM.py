@@ -68,7 +68,7 @@ class CREAM(IBackend):
         'workernode': SimpleItem(defvalue='', protected=1, copyable=0, doc='The worker node on which the job actually runs.'),
         'isbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The input sandbox URI on CREAM CE'),
         'osbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The output sandbox URI on CREAM CE'),
-        'delegation_id': SimpleItem(defvalue='', typelist=['str'], hidden=True),
+        'delegation_id': SimpleItem(defvalue='', typelist=[str], hidden=True),
     })
 
     _category = 'backends'

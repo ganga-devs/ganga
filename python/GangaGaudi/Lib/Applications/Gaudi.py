@@ -72,7 +72,7 @@ class Gaudi(GaudiBase):
 
     docstr = 'The gaudirun.py cli args that will be passed at run-time'
     _schema.datadict['args'] = SimpleItem(defvalue=['-T'], sequence=1, strict_sequence=0,
-                                          typelist=['str', 'type(None)'], doc=docstr)
+                                          typelist=[str, None], doc=docstr)
     docstr = 'The name of the optionsfile. Import statements in the file ' \
              'will be expanded at submission time and a full copy made'
     _schema.datadict['optsfile'] = FileItem(preparable=1, sequence=1, strict_sequence=0, defvalue=[],
@@ -83,7 +83,7 @@ class Gaudi(GaudiBase):
              '\"myPlots.root"\\nEventSelector().PrintFreq = 100\n or by '  \
              'using triple quotes around a multiline string.'
     _schema.datadict['extraopts'] = SimpleItem(preparable=1, defvalue=None,
-                                               typelist=['str', 'type(None)'], doc=docstr)
+                                               typelist=[str, None], doc=docstr)
 
     _schema.version.major += 0
     _schema.version.minor += 0

@@ -60,7 +60,7 @@ class AppName(Gaudi):
     _schema = Gaudi._schema.inherit_copy()
     docstr = 'The package the application belongs to (e.g. "Sim", "Phys")'
     _schema.datadict['package'] = SimpleItem(defvalue=None,
-                                             typelist=['str', 'type(None)'],
+                                             typelist=[str, None],
                                              doc=docstr)
     docstr = 'The package where your top level requirements file is read '  \
              'from. Can be written either as a path '  \
@@ -68,7 +68,7 @@ class AppName(Gaudi):
              '\"Analysis v6r0 Tutorial\"'
     _schema.datadict['masterpackage'] = SimpleItem(defvalue=None,
                                                    typelist=[
-                                                       'str', 'type(None)'],
+                                                       str, None],
                                                    doc=docstr)
     docstr = 'Extra options to be passed onto the SetupProject command '\
              'used for configuring the environment. As an example '\
@@ -77,7 +77,7 @@ class AppName(Gaudi):
              'https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'
     _schema.datadict['setupProjectOptions'] = SimpleItem(defvalue='',
                                                          typelist=[
-                                                             'str', 'type(None)'],
+                                                             str, None],
                                                          doc=docstr)
 
     _schema.version.major += 2

@@ -69,7 +69,7 @@ class GaudiPython(GaudiBase):
     _schema = GaudiBase._schema.inherit_copy()
     docstr = 'The package the application belongs to (e.g. "Sim", "Phys")'
     _schema.datadict['package'] = SimpleItem(defvalue=None,
-                                             typelist=['str', 'type(None)'],
+                                             typelist=[str, None],
                                              doc=docstr)
     docstr = 'The package where your top level requirements file is read '  \
              'from. Can be written either as a path '  \
@@ -77,7 +77,7 @@ class GaudiPython(GaudiBase):
              '\"Analysis v6r0 Tutorial\"'
     _schema.datadict['masterpackage'] = SimpleItem(defvalue=None,
                                                    typelist=[
-                                                       'str', 'type(None)'],
+                                                       str, None],
                                                    doc=docstr)
     docstr = 'Extra options to be passed onto the SetupProject command '\
              'used for configuring the environment. As an example '\
@@ -86,18 +86,18 @@ class GaudiPython(GaudiBase):
              'https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'
     _schema.datadict['setupProjectOptions'] = SimpleItem(defvalue='',
                                                          typelist=[
-                                                             'str', 'type(None)'],
+                                                             str, None],
                                                          doc=docstr)
     docstr = 'The name of the script to execute. A copy will be made ' + \
              'at submission time'
     _schema.datadict['script'] = FileItem(preparable=1, sequence=1, strict_sequence=0, defvalue=[],
                                           doc=docstr)
     docstr = "List of arguments for the script"
-    _schema.datadict['args'] = SimpleItem(defvalue=[], typelist=['str'],
+    _schema.datadict['args'] = SimpleItem(defvalue=[], typelist=[str],
                                           sequence=1, doc=docstr)
     docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
     _schema.datadict['project'] = SimpleItem(preparable=1, defvalue=None,
-                                             typelist=['str', 'type(None)'],
+                                             typelist=[str, None],
                                              doc=docstr)
     _schema.version.major += 2
     _schema.version.minor += 0

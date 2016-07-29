@@ -62,26 +62,26 @@ class DiracBase(IBackend):
 
     _schema = Schema(Version(3, 2), {
         'id': SimpleItem(defvalue=None, protected=1, copyable=0,
-                         typelist=['int', 'type(None)'],
+                         typelist=[int, None],
                          doc='The id number assigned to the job by the DIRAC WMS. If seeking help'
                          ' on jobs with the Dirac backend, please always report this id '
                          'number in addition to a full description of your problem. The id '
                          'can also be used to further inspect the job at '
                          'https://lhcbweb.pic.es/DIRAC/info/general/diracOverview'),
         'status': SimpleItem(defvalue=None, protected=1, copyable=0,
-                             typelist=['str', 'type(None)'],
+                             typelist=[str, None],
                              doc='The detailed status as reported by the DIRAC WMS'),
         'actualCE': SimpleItem(defvalue=None, protected=1, copyable=0,
-                               typelist=['str', 'type(None)'],
+                               typelist=[str, None],
                                doc='The location where the job ran'),
         'normCPUTime': SimpleItem(defvalue=None, protected=1, copyable=0,
-                                  typelist=['str', 'type(None)'],
+                                  typelist=[str, None],
                                   doc='The normalized CPU time reported by the DIRAC WMS'),
         'statusInfo': SimpleItem(defvalue='', protected=1, copyable=0,
-                                 typelist=['str', 'type(None)'],
+                                 typelist=[str, None],
                                  doc='Minor status information from Dirac'),
         'extraInfo': SimpleItem(defvalue='', protected=1, copyable=0,
-                                typelist=['str', 'type(None)'],
+                                typelist=[str, None],
                                 doc='Application status information from Dirac'),
         'diracOpts': SimpleItem(defvalue='',
                                 doc='DIRAC API commands to add the job definition script. Only edit '

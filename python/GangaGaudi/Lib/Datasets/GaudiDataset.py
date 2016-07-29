@@ -21,7 +21,7 @@ class GaudiDataset(Dataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    schema['files'] = SimpleItem(defvalue=[], typelist=['str', 'type(None)'],
+    schema['files'] = SimpleItem(defvalue=[], typelist=[str, None],
                                  sequence=1, doc=docstr)
 
     _schema = Schema(Version(3, 0), schema)

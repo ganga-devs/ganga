@@ -82,7 +82,7 @@ RecoToDST-07/90000000/DST" ,
     docstr = 'End date string yyyy-mm-dd (only works for type="RunsByDate")'
     schema['endDate'] = SimpleItem(defvalue='', doc=docstr)
     docstr = 'Data quality flag (string or list of strings).'
-    schema['dqflag'] = SimpleItem(defvalue='OK', typelist=['str', 'list'], doc=docstr)
+    schema['dqflag'] = SimpleItem(defvalue='OK', typelist=[str, list], doc=docstr)
     docstr = 'Type of query (Path, RunsByDate, Run, Production)'
     schema['type'] = SimpleItem(defvalue='Path', doc=docstr)
     docstr = 'Selection criteria: Runs, ProcessedRuns, NotProcessed (only works for type="RunsByDate")'

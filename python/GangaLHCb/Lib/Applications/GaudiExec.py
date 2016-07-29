@@ -16,7 +16,7 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Lib.File.File import ShareDir
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem, ComponentItem
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.files import expandfilename, fullpath
 
@@ -101,7 +101,7 @@ class GaudiExec(IPrepareApp):
         'extraArgs':    SimpleItem(defvalue=[], typelist=[list], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
 
         # Prepared job object
-        'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
+        'is_prepared':  ComponentItem('shareddirs', strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
         })

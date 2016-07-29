@@ -15,7 +15,7 @@ class BKTestQuery(BKQuery):
     ##     docstr = 'End date string yyyy-mm-dd (only works for type="RunsByDate")'
     ##     schema['endDate'] = SimpleItem(defvalue='' ,doc=docstr)
     ##     docstr = 'Data quality flag (string or list of strings).'
-    # schema['dqflag'] = SimpleItem(defvalue='All',typelist=['str','list'],
+    # schema['dqflag'] = SimpleItem(defvalue='All',typelist=[str, list],
     # doc=docstr)
     ##     docstr = 'Type of query (Path, RunsByDate, Run, Production)'
     ##     schema['type'] = SimpleItem(defvalue='Path',doc=docstr)
@@ -28,9 +28,9 @@ class BKTestQuery(BKQuery):
     _schema.datadict['fulldataset'] = ComponentItem(
         'datasets', defvalue=None, optional=1, load_default=False, doc='dataset', hidden=1)
     _schema.datadict['fulldatasetptr'] = SimpleItem(
-        defvalue=0, optional=0, load_default=True, doc='dataset position pointer', hidden=1, typeList=['int'])
+        defvalue=0, optional=0, load_default=True, doc='dataset position pointer', hidden=1, typeList=[int])
     _schema.datadict['filesToRelease'] = SimpleItem(
-        defvalue=3, optional=0, load_default=True, doc='number of files to release at a time', hidden=0, typeList=['int'])
+        defvalue=3, optional=0, load_default=True, doc='number of files to release at a time', hidden=0, typeList=[int])
     _category = 'query'
     _name = "BKTestQuery"
     _exportmethods = BKQuery._exportmethods

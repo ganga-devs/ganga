@@ -8,7 +8,7 @@ from __future__ import print_function
 
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, FileItem
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, FileItem, ComponentItem
 from Ganga.GPIDev.Lib.File import File, ShareDir
 
 from Ganga.Utility.Config import getConfig, ConfigError
@@ -206,7 +206,7 @@ class Root(IPrepareApp):
         'args': SimpleItem(defvalue=[], typelist=[str, int], sequence=1, doc="List of arguments for the script. Accepted types are numerics and strings"),
         'version': SimpleItem(defvalue='6.04.02', doc="The version of Root to run"),
         'usepython': SimpleItem(defvalue=False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
-        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=[None, bool], protected=1, hidden=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'is_prepared': ComponentItem('shareddirs', strict_sequence=0, visitable=1, copyable=1, typelist=[None, bool, ShareDir], protected=1, hidden=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes')
     })
     _category = 'applications'
