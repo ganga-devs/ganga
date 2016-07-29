@@ -508,11 +508,11 @@ def string_dataset_shortcut(files, item):
                      if isinstance(stripProxy(i), ObjectMetaclass)
                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))
                      and 'inputdata' in stripProxy(i)._schema.datadict]
-    if type(files) not in [list, tuple]:
+    if type(files) not in [list, tuple, GangaList]:
         return None
     if item in inputdataList:
         ds = LHCbDataset()
-        ds.extend([files])
+        ds.extend(files)
         return ds
     else:
         return None  # used to be c'tors, but shouldn't happen now
