@@ -7,6 +7,7 @@ import shutil
 import tarfile
 import threading
 import stat
+import uuid
 from StringIO import StringIO
 
 from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
@@ -93,8 +94,7 @@ class GaudiExec(IPrepareApp):
         'directory':    SimpleItem(defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
         'options':       GangaFileItem(defvalue=None, doc='File which contains the options I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
-        'uploadedScripts': GangaFileItem(defvalue=None, hidden=1, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
-        'sharedOptsInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the extra-opts for all (sub)jobs which are uploaded as 1 archive'),
+        'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
@@ -112,7 +112,7 @@ class GaudiExec(IPrepareApp):
     cmake_sandbox_name = 'cmake-input-sandbox.tgz'
     build_target = 'ganga-input-sandbox'
     build_dest = 'input-sandbox.tgz'
-    sharedOptsFile_name = 'sharedExtraOpts.tar'
+    sharedOptsFile_baseName = 'jobScripts-%s.tar'
 
     def __setattr__(self, attr, value):
         """
@@ -148,11 +148,9 @@ class GaudiExec(IPrepareApp):
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
         self.hash = None
-        ## FIXME Add some configurable object which controls whether a file should be removed from storage
-        ## Here if the is_prepared count reaches zero
-        if self.uploadedInput:
-            self.uploadedInput.remove()
         self.uploadedInput = None
+        self.jobScriptArchive = None
+
 
     def prepare(self, force=False):
         """
@@ -224,13 +222,15 @@ class GaudiExec(IPrepareApp):
 
         master_job = job.master or job
 
-        df = master_job.application.sharedOptsInput
+        df = master_job.application.jobScriptArchive
 
         folder_dir = master_job.getInputWorkspace(create=True).getPath()
 
+        unique_name = GaudiExec.sharedOptsFile_baseName % uuid.uuid4()
+
         if not df or df.namePattern == '':
-            master_job.application.sharedOptsInput = LocalFile(namePattern=GaudiExec.sharedOptsFile_name, localDir=folder_dir)
-            tar_filename = path.join(folder_dir, GaudiExec.sharedOptsFile_name)
+            master_job.application.jobScriptArchive = LocalFile(namePattern=unique_name, localDir=folder_dir)
+            tar_filename = path.join(folder_dir, unique_name)
             if not path.isfile(tar_filename):
                 with tarfile.open(tar_filename, "w"):
                     pass
@@ -244,12 +244,12 @@ class GaudiExec(IPrepareApp):
         extra_opts_file = self.getOptsFileName()
 
         # First construct if needed
-        if not path.isfile(path.join(folder_dir, GaudiExec.sharedOptsFile_name)):
-            with tarfile.open(path.join(folder_dir, GaudiExec.sharedOptsFile_name), "w"):
+        if not path.isfile(path.join(folder_dir, unique_name)):
+            with tarfile.open(path.join(folder_dir, unique_name), "w"):
                 pass
 
         # Now append the extra_opts file here when needed
-        with tarfile.open(path.join(folder_dir, GaudiExec.sharedOptsFile_name), "a") as tar_file:
+        with tarfile.open(path.join(folder_dir, unique_name), "a") as tar_file:
             # Add the extra opts file to the job
             tinfo = tarfile.TarInfo(extra_opts_file)
             tinfo.mtime = time.time()
