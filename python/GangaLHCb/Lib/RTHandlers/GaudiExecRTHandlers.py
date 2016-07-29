@@ -191,7 +191,7 @@ class GaudiExecRTHandler(IRuntimeHandler):
 
         job_command = prepareCommand(app)
 
-         # Generate the script which is to be executed for us on the WN
+        # Generate the script which is to be executed for us on the WN
         scriptToRun = generateWNScript(job_command, app)
         input_sand.append(scriptToRun)
 
@@ -259,9 +259,7 @@ def generateJobScripts(app, appendJobScripts):
     job = app.getJobObject()
 
     if not job.master:
-        rjobs = job.subjobs
-        if not rjobs:
-            rjobs = [job]
+        rjobs = job.subjobs or [job]
     else:
         rjobs = [job]
 
