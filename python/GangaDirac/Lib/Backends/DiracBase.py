@@ -736,7 +736,7 @@ class DiracBase(IBackend):
             if configDirac['failed_sandbox_download']:
                 execute("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()))
         else:
-            logger.error("Unexpected dirac status '%s' encountered" % updated_dirac_status)
+            logger.error("Job #%s Unexpected dirac status '%s' encountered" % (job.getFQID('.'), updated_dirac_status))
 
     @staticmethod
     def job_finalisation(job, updated_dirac_status):

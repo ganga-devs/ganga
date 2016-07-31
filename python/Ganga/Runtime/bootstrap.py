@@ -775,6 +775,7 @@ under certain conditions; type license() for details.
 
         if not self.options.monitoring:
             self.options.cmdline_options.append('[PollThread]autostart=False')
+            self.options.cmdline_options.append('[Tasks]disableTaskMon=True')
 
         logger = getLogger()
 
