@@ -1094,10 +1094,14 @@ class GangaObject(Node):
         Unknown: Why is this a GangaObject method and not a Node method?
         """
         from Ganga.GPIDev.Lib.Job import Job
-        r = self._getRoot(cond=lambda o: isinstance(o, Job))
-        if not isinstance(r, Job):
-            raise AssertionError('no job associated with object ' + repr(self))
-        return r
+        if self._getParent():
+            r = self._getRoot(cond=lambda o: isinstance(o, Job))
+            if not isinstance(r, Job):
+                raise AssertionError('No Job associated with object instead root=\'%s\' for \'%s\'' % (repr(r), type(r)))
+            return r
+        elif isinstance(self, Job):
+            return self
+        raise AssertionError('No Parent associated with object \'%s\'' % repr(self))
 
     # Customization of the GPI attribute assignment: Attribute Filters
     #
