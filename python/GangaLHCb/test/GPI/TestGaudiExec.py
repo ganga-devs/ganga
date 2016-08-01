@@ -25,9 +25,9 @@ class TestGaudiExec(GangaUnitTest):
 
         gr = GaudiExec(directory=gaudi_testFol, options=[LocalFile(gaudi_testOpts)])
 
-        assert isinstance(stripProxy(gr).getOptsFile()[0], stripProxy(LocalFile))
+        assert isinstance(stripProxy(gr).getOptsFiles()[0], stripProxy(LocalFile))
 
-        reconstructed_path = path.join(stripProxy(gr).getOptsFile()[0].localDir, stripProxy(gr).getOptsFile()[0].namePattern)
+        reconstructed_path = path.join(stripProxy(gr).getOptsFiles()[0].localDir, stripProxy(gr).getOptsFiles()[0].namePattern)
 
         assert reconstructed_path == gaudi_testOpts
 
