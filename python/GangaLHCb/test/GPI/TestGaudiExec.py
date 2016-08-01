@@ -23,11 +23,11 @@ class TestGaudiExec(GangaUnitTest):
 
         assert path.exists(gaudi_testOpts)
 
-        gr = GaudiExec(directory=gaudi_testFol, options=LocalFile(gaudi_testOpts))
+        gr = GaudiExec(directory=gaudi_testFol, options=[LocalFile(gaudi_testOpts)])
 
-        assert isinstance(stripProxy(gr).getOptsFile(), stripProxy(LocalFile))
+        assert isinstance(stripProxy(gr).getOptsFile()[0], stripProxy(LocalFile))
 
-        reconstructed_path = path.join(stripProxy(gr).getOptsFile().localDir, stripProxy(gr).getOptsFile().namePattern)
+        reconstructed_path = path.join(stripProxy(gr).getOptsFile()[0].localDir, stripProxy(gr).getOptsFile()[0].namePattern)
 
         assert reconstructed_path == gaudi_testOpts
 
@@ -40,9 +40,9 @@ class TestGaudiExec(GangaUnitTest):
 
         df = DiracFile(lfn='/not/some/file')
 
-        gr.options = df
+        gr.options = [df]
 
-        assert gr.options.lfn == df.lfn
+        assert gr.options[0].lfn == df.lfn
 
         shutil.rmtree(gaudi_testFol, ignore_errors=True)
 
