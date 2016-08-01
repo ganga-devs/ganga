@@ -6,7 +6,7 @@ import tempfile
 import gzip
 import shutil
 from Ganga.GPIDev.Base.Proxy import stripProxy
-from Ganga.GPIDev.Schema import SimpleItem, Schema, Version
+from Ganga.GPIDev.Schema import SimpleItem, Schema, Version, ComponentItem
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 import Ganga.Utility.logging
 from Ganga.Utility.files import expandfilename, fullpath
@@ -30,39 +30,40 @@ class GaudiBase(IPrepareApp):
     schema = {}
     docstr = 'The version of the application (like "v19r2")'
     schema['version'] = SimpleItem(preparable=1, defvalue=None,
-                                   typelist=['str', 'type(None)'], doc=docstr)
+                                   typelist=[str, None], doc=docstr)
     docstr = 'The platform the application is configured for (e.g. ' \
              '"slc4_ia32_gcc34")'
     schema['platform'] = SimpleItem(preparable=1, defvalue=None,
-                                    typelist=['str', 'type(None)'], doc=docstr)
+                                    typelist=[str, None], doc=docstr)
     docstr = 'The user path to be used. After assigning this'  \
              ' you can do j.application.getpack(\'Phys DaVinci v19r2\') to'  \
              ' check out into the new location. This variable is used to '  \
              'identify private user DLLs by parsing the output of "cmt '  \
              'show projects".'
     schema['user_release_area'] = SimpleItem(preparable=1, defvalue=None,
-                                             typelist=['str', 'type(None)'],
+                                             typelist=[str, None],
                                              doc=docstr)
     docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
-    schema['appname'] = SimpleItem(preparable=1, defvalue=None, typelist=['str', 'type(None)'],
+    schema['appname'] = SimpleItem(preparable=1, defvalue=None, typelist=[str, None],
                                    hidden=1, doc=docstr)
     docstr = 'Location of shared resources. Presence of this attribute implies'\
              'the application has been prepared.'
-    schema['is_prepared'] = SimpleItem(defvalue=None,
+    schema['is_prepared'] = ComponentItem('shareddirs',
+                                       defvalue=None,
                                        strict_sequence=0,
                                        visitable=1,
                                        copyable=1,
-                                       typelist=['type(None)', 'str', ShareDir],
+                                       typelist=[None, str, ShareDir],
                                        hidden=0,
                                        protected=1,
                                        doc=docstr)
     docstr = 'The env'
     schema['env'] = SimpleItem(preparable=1, transient=1, defvalue=None,
-                               hidden=1, doc=docstr, typelist=['type(None)', 'dict'])
+                               hidden=1, doc=docstr, typelist=[None, dict])
     docstr = 'MD5 hash of the string representation of applications preparable attributes'
-    schema['hash'] = SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1)
+    schema['hash'] = SimpleItem(defvalue=None, typelist=[None, str], hidden=1)
 
-    schema['newStyleApp'] = SimpleItem(defvalue=False, typelist=['bool'], doc="Is this app a 'new Style' CMake app?")
+    schema['newStyleApp'] = SimpleItem(defvalue=False, typelist=[bool], doc="Is this app a 'new Style' CMake app?")
 
     _name = 'GaudiBase'
     _exportmethods = ['getenv', 'getpack', 'make', 'projectCMD', 'cmt']

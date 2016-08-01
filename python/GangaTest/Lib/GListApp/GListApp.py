@@ -27,7 +27,7 @@ class GListApp(IPrepareApp):
         'gListComp': ComponentItem('files', defvalue=[], sequence=1),
         'simple_print': SimpleItem(defvalue='', summary_print='_print_summary_simple_print'),
         'comp_print': ComponentItem('backends', defvalue=None, summary_print='_print_summary_comp_print'),
-        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=['type(None)', 'bool', ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'is_prepared': ComponentItem('shareddirs', strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, bool, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
     })
 
     def configure(self, master_appconfig):

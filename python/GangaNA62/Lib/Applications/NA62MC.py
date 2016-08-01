@@ -24,19 +24,19 @@ class NA62MC(IPrepareApp):
     NA62MC application -- running arbitrary programs.
     """
     _schema = Schema(Version(2,0), {
-        'run_number' : SimpleItem(defvalue=-1,typelist=['int'],doc="Run Number to pass to the scripts"),
-        'seed'       : SimpleItem(defvalue=-1,typelist=['int'],doc="Random seed to pass to the scripts - overwritten by run_number if not given"),
-        'num_events' : SimpleItem(defvalue=-1,typelist=['int'],doc="Number of events to generate"),
-        'decay_type' : SimpleItem(defvalue=-1,typelist=['int'],doc="Decay type to generate"),
-        'decay_name' : SimpleItem(defvalue="",typelist=['str'],doc="String of the Decay type"),
-        'mc_version' : SimpleItem(defvalue=8,typelist=['int'],doc="MC version to use"),
-        'revision'   : SimpleItem(defvalue=0,typelist=['int'],doc="MC revision to use"),
-        'script_name': SimpleItem(defvalue="",typelist=['str'],doc="The name of the script to download and use on submission"),
-        'radcor'     : SimpleItem(defvalue=False,typelist=['bool'],doc="Use radiatve corrections or not"),
-        'file_prefix': SimpleItem(defvalue='pluto',typelist=['str'],doc="Prefix for output file"),
-        'job_type'   : SimpleItem(defvalue='prod',typelist=['str'],doc="Job type (e.g. prod or test)"),
-        'is_prepared': SharedItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)', 'bool', 'str'],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes')
+        'run_number' : SimpleItem(defvalue=-1,typelist=[int],doc="Run Number to pass to the scripts"),
+        'seed'       : SimpleItem(defvalue=-1,typelist=[int],doc="Random seed to pass to the scripts - overwritten by run_number if not given"),
+        'num_events' : SimpleItem(defvalue=-1,typelist=[int],doc="Number of events to generate"),
+        'decay_type' : SimpleItem(defvalue=-1,typelist=[int],doc="Decay type to generate"),
+        'decay_name' : SimpleItem(defvalue="",typelist=[str],doc="String of the Decay type"),
+        'mc_version' : SimpleItem(defvalue=8,typelist=[int],doc="MC version to use"),
+        'revision'   : SimpleItem(defvalue=0,typelist=[int],doc="MC revision to use"),
+        'script_name': SimpleItem(defvalue="",typelist=[str],doc="The name of the script to download and use on submission"),
+        'radcor'     : SimpleItem(defvalue=False,typelist=[bool],doc="Use radiatve corrections or not"),
+        'file_prefix': SimpleItem(defvalue='pluto',typelist=[str],doc="Prefix for output file"),
+        'job_type'   : SimpleItem(defvalue='prod',typelist=[str],doc="Job type (e.g. prod or test)"),
+        'is_prepared': ComponentItem('shareddirs', strict_sequence=0, visitable=1, copyable=1, typelist=[None, bool, str, ShareDir],protected=0,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes')
         } )
     _category = 'applications'
     _name = 'NA62MC'

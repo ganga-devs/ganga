@@ -37,14 +37,14 @@ class LHCbDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
+    schema['files'] = GangaFileItem(defvalue=[], typelist=[str, 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0, doc=docstr)
     docstr = 'Use contents of file rather than generating catalog.'
     schema['XMLCatalogueSlice'] = GangaFileItem(defvalue=None, doc=docstr)
     docstr = 'Specify the dataset persistency technology'
     schema['persistency'] = SimpleItem(
-        defvalue=None, typelist=['str', 'type(None)'], doc=docstr)
+        defvalue=None, typelist=[str, None], doc=docstr)
     schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
 
     _schema = Schema(Version(3, 0), schema)

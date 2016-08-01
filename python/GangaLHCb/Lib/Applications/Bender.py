@@ -53,7 +53,7 @@ class Bender(GaudiBase):
     _schema = GaudiBase._schema.inherit_copy()
     docstr = 'The package the application belongs to (e.g. "Sim", "Phys")'
     _schema.datadict['package'] = SimpleItem(defvalue=None,
-                                             typelist=['str', 'type(None)'],
+                                             typelist=[str, None],
                                              doc=docstr)
     docstr = 'The package where your top level requirements file is read '  \
              'from. Can be written either as a path '  \
@@ -61,7 +61,7 @@ class Bender(GaudiBase):
              '\"Analysis v6r0 Tutorial\"'
     _schema.datadict['masterpackage'] = SimpleItem(defvalue=None,
                                                    typelist=[
-                                                       'str', 'type(None)'],
+                                                       str, None],
                                                    doc=docstr)
     docstr = 'Extra options to be passed onto the SetupProject command '\
              'used for configuring the environment. As an example '\
@@ -70,20 +70,20 @@ class Bender(GaudiBase):
              'https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'
     _schema.datadict['setupProjectOptions'] = SimpleItem(defvalue='',
                                                          typelist=[
-                                                             'str', 'type(None)'],
+                                                             str, None],
                                                          doc=docstr)
     docstr = 'The name of the module to import. A copy will be made ' \
              'at submission time'
     _schema.datadict['module'] = FileItem(preparable=1, defvalue=File(), doc=docstr)
     docstr = 'The name of the Gaudi application (Bender)'
     _schema.datadict['project'] = SimpleItem(preparable=1, defvalue='Bender', hidden=1, protected=1,
-                                             typelist=['str'], doc=docstr)
+                                             typelist=[str], doc=docstr)
     docstr = 'The number of events '
     _schema.datadict['events'] = SimpleItem(
-        defvalue=-1, typelist=['int'], doc=docstr)
+        defvalue=-1, typelist=[int], doc=docstr)
     docstr = 'Parameres for module '
     _schema.datadict['params'] = SimpleItem(
-        defvalue={}, typelist=['dict', 'str', 'int', 'bool', 'float'], doc=docstr)
+        defvalue={}, typelist=[dict, str, int, bool, float], doc=docstr)
     _schema.version.major += 2
     _schema.version.minor += 0
 

@@ -36,11 +36,11 @@ class SplitByFiles(GaudiInputDataSplitter):
     _schema = Schema(Version(1, 0), {
         'filesPerJob': SimpleItem(defvalue=10,
                                   doc='Number of files per subjob',
-                                  typelist=['int']),
+                                  typelist=[int]),
 
         'maxFiles': SimpleItem(defvalue=None,
                                doc='Maximum number of files to use in a masterjob (None = all files)',
-                               typelist=['int', 'type(None)']),
+                               typelist=[int, None]),
 
         'bulksubmit': SimpleItem(defvalue=False,
                                  doc='determines if subjobs are split '
@@ -54,7 +54,7 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         'splitterBackend': SimpleItem(defvalue=getBackend(),
                                       doc='name of the backend algorithm to use for splitting',
-                                      typelist=['str'], protected=1, visitable=0)
+                                      typelist=[str], protected=1, visitable=0)
     })
 
     _exportmethods = ['split']

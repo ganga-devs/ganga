@@ -191,13 +191,13 @@ class BenderScript(GaudiBase):
     
     _schema.datadict['package'] = SimpleItem(
         defvalue = None,
-        typelist = ['str', 'type(None)'],
+        typelist = [str, None],
         doc      = """The package the application belongs to (e.g. 'Sim', 'Phys')
         """
         )
     _schema.datadict['masterpackage'] = SimpleItem (
         defvalue = None,
-        typelist = [ 'str', 'type(None)' ],
+        typelist = [str, None],
         doc      = """The package where your top level requirements file is read from.
         Can be written either as a path 'Tutorial/Analysis/v6r0' or in traditional notation 
         'Analysis v6r0 Tutorial'
@@ -206,7 +206,7 @@ class BenderScript(GaudiBase):
     
     _schema.datadict['setupProjectOptions'] = SimpleItem(
         defvalue = ''     ,
-        typelist = [ 'str', 'type(None)'],
+        typelist = [str, None],
         doc      = """Extra options to be passed onto the SetupProject command
         used for configuring the environment. As an example 
         setting it to '--dev' will give access to the DEV area. 
@@ -237,7 +237,7 @@ class BenderScript(GaudiBase):
     
     _schema.datadict['commands'] = SimpleItem(
         defvalue = []      ,
-        typelist = ['str'] ,
+        typelist = [str] ,
         sequence =  1      ,
         doc      = """The commands to be executed,
         e.g. [ 'run(10)' , 'print ls()' , 'print dir()' ]
@@ -246,7 +246,7 @@ class BenderScript(GaudiBase):
     
     _schema.datadict['arguments'] = SimpleItem(
         defvalue = []      ,
-        typelist = ['str'] ,
+        typelist = [str] ,
         sequence =  1      ,
         doc      = """List of command-line arguments for bender script,
         e.g. ['-w','-p5'], etc.
