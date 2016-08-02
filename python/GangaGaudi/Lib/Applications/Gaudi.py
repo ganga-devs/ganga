@@ -11,7 +11,7 @@ from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.Utility.util import unique
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename

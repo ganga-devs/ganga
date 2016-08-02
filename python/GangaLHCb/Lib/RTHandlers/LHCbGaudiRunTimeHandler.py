@@ -6,7 +6,6 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from RTHUtils import is_gaudi_child, getXMLSummaryScript, create_runscript
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Lib.File import FileBuffer, LocalFile, MassStorageFile
-from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique

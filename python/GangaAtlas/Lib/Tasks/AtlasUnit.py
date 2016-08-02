@@ -3,7 +3,7 @@ from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
@@ -327,7 +327,7 @@ class AtlasUnit(IUnit):
       # postprocessors
       if len(self._getParent().postprocessors.process_objects) > 0:
          import copy
-         j.postprocessors = copy.deepcopy( addProxy(self._getParent()).postprocessors )
+         j.postprocessors = copy.deepcopy( self._getParent().postprocessors )
          
       return j
 

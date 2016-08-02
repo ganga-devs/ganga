@@ -11,7 +11,7 @@ from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexE
 from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 import Ganga.Utility.Config
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, addProxy
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import makeConfig
 
@@ -122,17 +122,16 @@ class RegistrySlice(object):
         logger = getLogger()
 
         this_repr = repr.Repr()
-        from Ganga.GPIDev.Base.Proxy import addProxy
         attrs_str = ""
         ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
         ## Required to flatten the additional arguments into a flat string in attrs_str
         for a in attrs:
             if isclass(attrs[a]):
-                this_attr = addProxy(attrs[a]())
+                this_attr = attrs[a]()
             else:
                 from Ganga.GPIDev.Base.Objects import GangaObject
                 if isType(attrs[a], GangaObject):
-                    this_attr = addProxy(attrs[a])
+                    this_attr = attrs[a]
                 else:
                     if type(attrs[a]) is str:
                         from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
@@ -318,9 +317,9 @@ class RegistrySlice(object):
                     raise RegistryKeyError("Multiple matches for id='%s':%s" % (this_id, str(map(lambda x: x._getRegistry()._getName(x), matches))))
                 if len(matches) < 1:
                     return
-                return addProxy(matches[0])
+                return matches[0]
         try:
-            return addProxy(self.objects[this_id])
+            return self.objects[this_id]
         except KeyError as err:
             logger.debug('Object id=%d not found' % this_id)
             logger.debug("%s" % err)
@@ -355,9 +354,9 @@ class RegistrySlice(object):
         if isinstance(x, int):
             try:
                 if x < 0:
-                    return addProxy(self.objects[self.ids()[x]])
+                    return self.objects[self.ids()[x]]
                 else:
-                    return addProxy(self.objects[x])
+                    return self.objects[x]
             except IndexError:
                 raise RegistryIndexError('list index out of range')
 
@@ -371,7 +370,7 @@ class RegistrySlice(object):
                 raise RegistryKeyError('object "%s" not unique' % x)
             if len(ids) == 0:
                 raise RegistryKeyError('object "%s" not found' % x)
-            return addProxy(self.objects[ids[0]])
+            return self.objects[ids[0]]
 
         if isinstance(x, slice):
             start = x.start if x.start is not None else ''
@@ -381,7 +380,7 @@ class RegistrySlice(object):
             for id_ in self.ids()[x]:
                 returnable.objects[id_] = self.objects[id_]
 
-            return addProxy(returnable)
+            return returnable
 
         raise RegistryAccessError('Expected int or string (job name).')
 

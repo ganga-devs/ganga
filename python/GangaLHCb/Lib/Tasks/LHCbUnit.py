@@ -4,7 +4,7 @@ from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
 from Ganga.Utility.logging import getLogger
@@ -37,8 +37,7 @@ class LHCbUnit(IUnit):
 
         j.outputfiles = copy.deepcopy(self._getParent().outputfiles)
         if len(self._getParent().postprocessors.process_objects) > 0:
-            j.postprocessors = copy.deepcopy(
-                addProxy(self._getParent()).postprocessors)
+            j.postprocessors = copy.deepcopy(self._getParent().postprocessors)
 
         if trf.splitter:
             j.splitter = trf.splitter.clone()

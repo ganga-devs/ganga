@@ -3,7 +3,7 @@ from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from commands import getstatusoutput
 from datetime import datetime, date, time
 

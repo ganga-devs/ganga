@@ -1,5 +1,5 @@
 from Ganga.Runtime.GPIexport import exportToGPI
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 #from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
@@ -93,7 +93,7 @@ def getDiracFiles():
     with open(filename[1:], 'r') as lfnlist:
         lfnlist.seek(0)
         g.extend((DiracFile(lfn='%s' % lfn.strip()) for lfn in lfnlist.readlines()))
-    return addProxy(g)
+    return g
 
 exportToGPI('getDiracFiles', getDiracFiles, 'Functions')
 
@@ -134,7 +134,7 @@ def loadObject(filename):
     except:
         logger.error("Problem when loading file '%s': %s" % (filename, traceback.format_exc()))
     else:
-        return addProxy(r)
+        return r
 exportToGPI('loadObject', loadObject, 'Functions')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#

@@ -12,7 +12,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.GPIDev.Lib.File import FileBuffer, LocalFile
-from Ganga.GPIDev.Base.Proxy import addProxy, isType, stripProxy
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique

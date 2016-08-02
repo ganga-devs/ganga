@@ -7,7 +7,7 @@ import copy
 import os
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryKeyError

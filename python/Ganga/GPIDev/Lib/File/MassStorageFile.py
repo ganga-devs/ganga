@@ -12,7 +12,6 @@ import copy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
@@ -121,12 +120,12 @@ class MassStorageFile(IGangaFile):
                     d = MassStorageFile(namePattern=pattern)
                     d.compressed = mass_file.compressed
                     d.failureReason = line[line.find('ERROR') + 5:]
-                    mass_file.subfiles.append(GPIProxyObjectFactory(d))
+                    mass_file.subfiles.append(d)
                 else:
                     d = MassStorageFile(namePattern=name)
                     d.compressed = mass_file.compressed
                     d.outputfilenameformat = mass_file.outputfilenameformat
-                    mass_file.subfiles.append(GPIProxyObjectFactory(d))
+                    mass_file.subfiles.append(d)
                     mass_line_processor(line, d)
             elif name == mass_file.namePattern:
                 if outputPath == 'ERROR':
@@ -340,7 +339,7 @@ class MassStorageFile(IGangaFile):
                     # if self._getParent() != None:
                     #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
-                self.subfiles.append(GPIProxyObjectFactory(d))
+                self.subfiles.append(d)
         else:
             currentFile = os.path.join(sourceDir, fileName)
             finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
@@ -476,7 +475,7 @@ class MassStorageFile(IGangaFile):
                     subfile = MassStorageFile(namePattern=filename)
                     subfile.inputremotedirectory = self.inputremotedirectory
 
-                    self.subfiles.append(GPIProxyObjectFactory(subfile))
+                    self.subfiles.append(subfile)
 
     def remove(self, force=False, removeLocal=False):
         """

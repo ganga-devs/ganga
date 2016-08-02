@@ -9,7 +9,6 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility import GridShell
 
@@ -115,7 +114,7 @@ class LCGSEFile(IGangaFile):
                 d.lfc_host = lcgse_file.lfc_host
                 d.se = lcgse_file.se
                 # todo copy also the other attributes
-                lcgse_file.subfiles.append(GPIProxyObjectFactory(d))
+                lcgse_file.subfiles.append(d)
                 lcgse_line_processor(line, d)
             elif pattern == lcgse_file.namePattern:
                 if guid.startswith('ERROR'):
@@ -220,7 +219,7 @@ class LCGSEFile(IGangaFile):
                         logger.error(
                             "The file can't be uploaded because of %s" % (self.failureReason))
 
-                self.subfiles.append(GPIProxyObjectFactory(d))
+                self.subfiles.append(d)
 
         else:
             logger.debug("sourceDir: %s" % sourceDir)
@@ -350,7 +349,7 @@ class LCGSEFile(IGangaFile):
                     subfile.se_rpath = self.se_rpath
                     subfile.lfc_host = self.lfc_host
 
-                    self.subfiles.append(GPIProxyObjectFactory(subfile))
+                    self.subfiles.append(subfile)
 
 # add LCGSEFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate LCGSEFile() objects via config file)

@@ -28,7 +28,7 @@ from GangaAtlas.Lib.ATLASDataset import filecheck, ATLASOutputDataset
 from Ganga.Lib.Mergers.Merger import *
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir, File
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, GPIProxyObject
+from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 
 from pandatools import AthenaUtils
 from Ganga.Utility.Plugin import allPlugins
