@@ -250,13 +250,6 @@ class BoxRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(stripProxy(self).__getitem__(x))
 
-    def __getslice__(self, i1, i2):
-        """ Get a slice. Examples:
-        box[2:] : get first two objects,
-        box[:-10] : get last 10 objects.
-        """
-        return _wrap(stripProxy(self).__getslice__(i1, i2))
-
     def remove_all(self):
         """
         Remove all objects from the box registry.
