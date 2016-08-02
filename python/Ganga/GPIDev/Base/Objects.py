@@ -493,7 +493,9 @@ class Descriptor(object):
         if item['sequence']:
             # These objects are lists
             _preparable = True if item['preparable'] else False
-            if len(val) == 0:
+            if val is None:
+                new_val = None
+            elif len(val) == 0:
                 new_val = GangaList()
             else:
                 if isinstance(item, ComponentItem):
