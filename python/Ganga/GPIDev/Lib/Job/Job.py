@@ -2008,18 +2008,12 @@ class Job(GangaObject):
 
     def _subjobs_proxy(self):
 
-        subjob_slice = None
-
         from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
         if not isType(self._stored_subjobs_proxy, JobRegistrySlice):
             subjob_slice = JobRegistrySlice('jobs(%s).subjobs' % self.id)
             self._stored_subjobs_proxy = _wrap(subjob_slice)
 
         if len(self._stored_subjobs_proxy) != len(self.subjobs):
-
-            if subjob_slice is None:
-                subjob_slice = JobRegistrySlice('jobs(%s).subjobs' % self.id)
-                self._stored_subjobs_proxy = _wrap(subjob_slice)
 
             if isType(self.subjobs, SubJobXMLList):
                 subjob_slice.objects = self.subjobs
