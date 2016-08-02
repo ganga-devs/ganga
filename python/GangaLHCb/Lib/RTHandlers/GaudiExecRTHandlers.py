@@ -122,23 +122,25 @@ def prepareCommand(app):
         app (GaudiExec): This expects only the GaudiExec app
     """
 
-    opts_file = app.getOptsFile()
-    if isinstance(opts_file, (LocalFile, DiracFile)):
-        # Ideally this would NOT need the basename, however LocalFile is special in this regard.
-        # TODO Fix this after fixing LocalFile
-        opts_name = os.path.basename(opts_file.namePattern)
-    else:
-        raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
-                                            getName(opts_file))
+    all_opts_files = app.getOptsFiles()
+    opts_names = []
+    for opts_file in all_opts_files:
+        if isinstance(opts_file, (LocalFile, DiracFile)):
+            # Ideally this would NOT need the basename, however LocalFile is special in this regard.
+            # TODO Fix this after fixing LocalFile
+            opts_names.append(os.path.basename(opts_file.namePattern))
+        else:
+            raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
+                                                getName(opts_file))
 
     sourceEnv = app.getEnvScript()
 
     if not app.useGaudiRun:
         full_cmd = sourceEnv + './run python %s' % app.getWrapperScriptName()
     else:
-        full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (opts_name, GaudiExecDiracRTHandler.data_file)
+        full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
         if app.extraOpts:
-            full_cmd += ' ' + app.getOptsFileName()
+            full_cmd += ' ' + app.getExtraOptsFileName()
         if app.extraArgs:
             full_cmd += " " + " ".join(app.extraArgs)
 
@@ -162,7 +164,7 @@ class GaudiExecRTHandler(IRuntimeHandler):
         if isinstance(app.jobScriptArchive, LocalFile):
             app.jobScriptArchive = None
 
-        generateJobScripts(app, appendJobScripts=False)
+        generateJobScripts(app, appendJobScripts=True)
 
         scriptArchive = os.path.join(app.jobScriptArchive.localDir, app.jobScriptArchive.namePattern)
 
@@ -397,10 +399,11 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         # We can support inputfiles and opts_file here. Locally should be submitted once, remotely can be referenced.
 
-        opts_file = app.getOptsFile()
+        all_opts_files = app.getOptsFiles()
 
-        if isinstance(opts_file, DiracFile):
-            inputsandbox += ['LFN:'+opts_file.lfn]
+        for opts_file in all_opts_files:
+            if isinstance(opts_file, DiracFile):
+                inputsandbox += ['LFN:'+opts_file.lfn]
 
         # Sort out inputfiles we support
         for file_ in job.inputfiles:
@@ -543,11 +546,11 @@ if __name__ == '__main__':
     # Extract any/_all_ (b/g)zip files on the WN
     extractAllTarFiles('.')
 
-    print("Executing: %s" % '###COMMAND###'+' '+' '.join(sys.argv))
+    print("Executing: %s" % '###COMMAND###'+' '+' '.join(sys.argv[1:]))
 
     # Execute the actual command on the WN
     # NB os.system caused the entire stream to be captured before being streamed in some cases
-    pipe = subprocess.Popen('###COMMAND###'+' '+' '.join(sys.argv), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    pipe = subprocess.Popen('###COMMAND###'+' '+' '.join(sys.argv[1:]), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     # Flush the stdout/stderr as the process is running correctly
     flush_streams(pipe)

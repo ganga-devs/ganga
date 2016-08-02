@@ -17,6 +17,7 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Lib.File.File import ShareDir
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.files import expandfilename, fullpath
@@ -87,12 +88,13 @@ class GaudiExec(IPrepareApp):
         ./run python OptsFileWrapper.py
 
     Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace with 'execfile'
+    The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files before executing this one.
 
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
         'directory':    SimpleItem(defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
-        'options':       GangaFileItem(defvalue=None, doc='File which contains the options I want to pass to gaudirun.py'),
+        'options':       GangaFileItem(defvalue=None, sequence=1, doc='File which contains the options I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
@@ -129,11 +131,11 @@ class GaudiExec(IPrepareApp):
         elif attr == 'options':
             if isinstance(value, str):
                 new_file = allComponentFilters['gangafiles'](value, None)
-                actual_value = new_file
+                actual_value = [ new_file ]
             elif isinstance(value, IGangaFile):
-                pass
-            else:
-                logger.warning("Possibly setting wrng type for options: '%s'" % type(value))
+                actual_value = [ value ]
+            elif not isinstance(value, (list, tuple, GangaList, type(None))):
+                logger.warning("Possibly setting wrong type for options: '%s'" % type(value))
 
         super(GaudiExec, self).__setattr__(attr, actual_value)
 
@@ -180,14 +182,17 @@ class GaudiExec(IPrepareApp):
             self.checkPreparedHasParent(self)
 
             self.copyIntoPrepDir(this_build_target)
-            opts_file = self.getOptsFile()
-            if isinstance(opts_file, LocalFile):
-                self.copyIntoPrepDir(path.join( opts_file.localDir, path.basename(opts_file.namePattern) ))
-            elif isinstance(opts_file, DiracFile) and self.master and not isinstance(self.getJobObject().backend, DiracBase):
-                # NB safe to put it here as should have expressly setup a path for this job by now
-                opts_file.get(localPath=self.getSharedPath())
-            else:
-                raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
+            all_opts_files = self.getOptsFiles()
+            for opts_file in all_opts_files:
+                if isinstance(opts_file, LocalFile):
+                    self.copyIntoPrepDir(path.join( opts_file.localDir, path.basename(opts_file.namePattern) ))
+                elif isinstance(opts_file, DiracFile):
+                    # NB safe to put it here as should have expressly setup a path for this job by now.
+                    # We cannot _not_ place this here based upon the backend.
+                    # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
+                    opts_file.get(localPath=self.getSharedPath())
+                else:
+                    raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
             self.post_prepare()
 
         except Exception as err:
@@ -199,7 +204,7 @@ class GaudiExec(IPrepareApp):
 
         return 1
 
-    def getOptsFileName(self):
+    def getExtraOptsFileName(self):
         """
         Returns the name of the opts file which corresponds to the job which owns this app
         This places the script of interest in a subdir to not overly clutter the WN
@@ -226,9 +231,8 @@ class GaudiExec(IPrepareApp):
 
         folder_dir = master_job.getInputWorkspace(create=True).getPath()
 
-        unique_name = GaudiExec.sharedOptsFile_baseName % uuid.uuid4()
-
         if not df or df.namePattern == '':
+            unique_name = GaudiExec.sharedOptsFile_baseName % uuid.uuid4()
             master_job.application.jobScriptArchive = LocalFile(namePattern=unique_name, localDir=folder_dir)
             tar_filename = path.join(folder_dir, unique_name)
             if not path.isfile(tar_filename):
@@ -240,8 +244,10 @@ class GaudiExec(IPrepareApp):
                 fileobj = StringIO(getTimestampContent())
                 tinfo.size = fileobj.len
                 tar_file.addfile(tinfo, fileobj)
+        else:
+            unique_name = master_job.application.jobScriptArchive.namePattern
 
-        extra_opts_file = self.getOptsFileName()
+        extra_opts_file = self.getExtraOptsFileName()
 
         # First construct if needed
         if not path.isfile(path.join(folder_dir, unique_name)):
@@ -259,12 +265,12 @@ class GaudiExec(IPrepareApp):
 
             if not self.useGaudiRun:
                 # Add the WN script for wrapping the job
+                logger.info("Constructing: %s" % self.getWrapperScriptName())
                 tinfo2 = tarfile.TarInfo(self.getWrapperScriptName())
                 tinfo2.mtime = time.time()
                 fileobj2 = StringIO(self.getWNPythonContents())
                 tinfo2.size = fileobj2.len
                 tar_file.addfile(tinfo2, fileobj2)
-
 
     def cleanGangaTargetArea(self, this_build_target):
         """
@@ -292,25 +298,27 @@ class GaudiExec(IPrepareApp):
             masterappconfig (unknown): This is the output from the master_configure from the parent app
         """
         # Lets test the inputs
-        opt_file = self.getOptsFile()
+        opt_file = self.getOptsFiles()
         dir_name = self.directory
         return (None, None)
 
-    def getOptsFile(self):
+    def getOptsFiles(self):
         """
         This function returns a sanitized absolute path to the self.options file from user input
         """
         if self.options:
-            if isinstance(self.options, LocalFile):
-                ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
-                full_path = path.join(self.options.localDir, self.options.namePattern)
-                if not path.exists(full_path):
-                    raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
-                return self.options
-            elif isinstance(self.options, DiracFile):
-                return self.options
-            else:
-                raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(self.options))
+            for this_opt in self.options:
+                if isinstance(this_opt, LocalFile):
+                    ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
+                    full_path = path.join(this_opt.localDir, this_opt.namePattern)
+                    if not path.exists(full_path):
+                        raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
+                elif isinstance(this_opt, DiracFile):
+                    pass
+                else:
+                    logger.error("opts: %s" % self.options)
+                    raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+            return self.options
         else:
             raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")
 
@@ -413,6 +421,7 @@ class GaudiExec(IPrepareApp):
         # FIXME should there be a more central definition of 'data.py' string to rename this for all of LHCb if it ever changes for LHCbDirac
         from ..RTHandlers.GaudiExecRTHandlers import GaudiExecDiracRTHandler
 
-        return gaudiPythonWrapper(repr(self.extraArgs), self.getOptsFileName(),
-                                  GaudiExecDiracRTHandler.data_file, self.options.namePattern)
+        all_names = [this_o.namePattern  for this_o in self.options]
+        return gaudiPythonWrapper(repr(self.extraArgs), self.getExtraOptsFileName(),
+                                  GaudiExecDiracRTHandler.data_file, all_names)
 
