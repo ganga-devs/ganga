@@ -269,13 +269,6 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(stripProxy(self).__call__(x))
 
-    def __getslice__(self, i1, i2):
-        """ Get a slice. Examples:
-        tasks[2:] : get first two tasks,
-        tasks[-10:] : get last 10 tasks.
-        """
-        return _wrap(stripProxy(self).__getslice__(i1, i2))
-
     def __getitem__(self, x):
         """ Get a job by positional index. Examples:
         tasks[-1] : get last job,
