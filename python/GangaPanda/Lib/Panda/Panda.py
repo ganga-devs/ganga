@@ -272,7 +272,7 @@ def runPandaBrokerage(job):
                     raise ApplicationConfigurationError(None, 'Could not determine input datasetname for Panda '
                                                               'brokerage')
 
-                for loc in get_dataset_replica_list(dataset)
+                for loc in get_dataset_replica_list(dataset):
                     for pid in PandaClient.convertDQ2toPandaIDList(loc):
                         if pid not in new_locs and (not libdslocation or pid == libdslocation):
                             new_locs.append(pid)
