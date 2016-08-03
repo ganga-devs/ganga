@@ -25,6 +25,7 @@ from Ganga.GPIDev.Lib.File import LocalFile
 
 logger = getLogger()
 
+
 class Im3ShapeApp(IPrepareApp):
 
     """
@@ -41,7 +42,7 @@ class Im3ShapeApp(IPrepareApp):
     The im3_location is the path to a .tgz file (or some file which can be extracted by the RTHandler) which gives the im3shape-grid (run_dir) folder containing the run-im3shape app (exe-name) on the WN
     """
     _schema = Schema(Version(1, 0), {
-        ## Required to configure Im3ShapeApp
+        # Required to configure Im3ShapeApp
         'im3_location': GangaFileItem(defvalue=None, doc="Location of the Im3Shape program tarball"),
         'exe_name': SimpleItem(defvalue='run-im3shape', doc="Name of the im3shape binary"),
         'ini_location': GangaFileItem(defvalue=None, doc=".ini file used to configure Im3Shape"),
@@ -50,7 +51,7 @@ class Im3ShapeApp(IPrepareApp):
         'size': SimpleItem(defvalue=200, doc="Size of the splitting of the tile from splitting"),
         'catalog': SimpleItem(defvalue='all', types=[str], doc="Catalog which is used to describe what is processed"),
         'run_dir': SimpleItem(defvalue='im3shape-grid', types=[str], doc="Directory on the WN where the binary is"),
-        ## Below is needed for prepared state stuff
+        # Below is needed for prepared state stuff
         'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes'),
     })
@@ -111,4 +112,3 @@ class Im3ShapeApp(IPrepareApp):
         This is required so that the job will submit
         """
         return (None, None)
-
