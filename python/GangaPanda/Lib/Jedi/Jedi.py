@@ -432,8 +432,6 @@ class Jedi(IBackend):
                     do_master_update = False
 
                 tot_num_mjobs += num_mjobs
-                ## for some reason, one should call job._commit() to store panda jobs into the repository
-                job._commit()
                 logger.debug('Job %s retrieved %d Panda jobs' % (job.getFQID('.'),tot_num_mjobs) )
             # Now monitor the already attached Panda jobs
             else:
@@ -565,7 +563,6 @@ class Jedi(IBackend):
             j.status = 'submitted'
             j.time.timenow('submitted')
             master_job.subjobs.append(j)
-        master_job._commit()
         return True
 
     def get_stats(self):
