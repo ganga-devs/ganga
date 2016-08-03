@@ -110,8 +110,6 @@ def loadPlugins(config=None):
     import Lib.Backends
     logger.debug("Importing Applications")
     import Lib.Applications
-    logger.debug("Importing GaudiRun App")
-    import Lib.GaudiRunApp
     logger.debug("Importing LHCbDataset")
     import Lib.LHCbDataset
     logger.debug("Importing Mergers")
