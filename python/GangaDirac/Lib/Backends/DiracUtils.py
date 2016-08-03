@@ -108,7 +108,7 @@ def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
     if fkwargs is None:
         fkwargs = {}
     if fargs is None:
-        fargs =  ()
+        fargs = ()
     output = []
     for f in outputfiles_iterator(job, file_type, selection_pred, include_subfiles):
         output.append(func(f, *fargs, **fkwargs))

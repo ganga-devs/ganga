@@ -156,7 +156,7 @@ last_modified_valid = False
 ############################
 
 
-def _dirac_check_proxy( renew = True, shouldRaise = True):
+def _dirac_check_proxy(renew=True, shouldRaise=True):
     """
     This function checks the validity of the DIRAC proxy
     Args:
@@ -184,33 +184,35 @@ def _dirac_check_proxy( renew = True, shouldRaise = True):
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
-def _proxyValid(shouldRenew = True, shouldRaise = True):
+
+def _proxyValid(shouldRenew=True, shouldRaise=True):
     """
     This function is a wrapper for the _checkProxy with a default of False for renew. Returns the last modified time global object
     """
-    _checkProxy( renew = shouldRenew, shouldRaise = shouldRaise )
+    _checkProxy(renew=shouldRenew, shouldRaise=shouldRaise)
     return last_modified_valid
 
-def _checkProxy( delay=60, renew = True, shouldRaise = True, force = False ):
+
+def _checkProxy(delay=60, renew=True, shouldRaise=True, force=False):
     """
     Check the validity of the DIRAC proxy. If it's marked as valid, check once every 'delay' seconds.
     Args:
         delay (int): number of seconds between calls to the tools to test the proxy
         renew (bool): If True, trigger the regeneration of a valid proxy
     """
-    ## Handling mutable globals in a multi-threaded system to remember to LOCK
+    # Handling mutable globals in a multi-threaded system to remember to LOCK
     with Dirac_Proxy_Lock:
-        ## Function to check for a valid proxy once every 60( or n) seconds
+        # Function to check for a valid proxy once every 60( or n) seconds
         global last_modified_time
         if last_modified_time is None:
             # This will move/change when new credential system in place
             ############################
-            _dirac_check_proxy( renew, shouldRaise )
+            _dirac_check_proxy(renew, shouldRaise)
             ############################
             last_modified_time = time.time()
 
         if (time.time() - last_modified_time) > int(delay) or not last_modified_valid or force:
-            _dirac_check_proxy( renew, shouldRaise )
+            _dirac_check_proxy(renew, shouldRaise)
             last_modified_time = time.time()
 
 
@@ -227,7 +229,7 @@ def execute(command,
     Execute a command on the local DIRAC server.
 
     This function blocks until the server returns.
-    
+
     Args:
         command (str): This is the command we're running within our DIRAC session
         timeout (int): This is the length of time that a DIRAC call has before it's decided some interaction has timed out
@@ -245,7 +247,7 @@ def execute(command,
         python_setup = getDiracCommandIncludes()
 
     # We're about to perform an expensive operation so being safe before we run it shouldn't cost too much
-    _checkProxy(force = True)
+    _checkProxy(force=True)
 
     #logger.debug("Executing command:\n'%s'" % str(command))
     #logger.debug("python_setup:\n'%s'" % str(python_setup))
@@ -279,4 +281,3 @@ def execute(command,
         shutil.rmtree(cwd_, ignore_errors=True)
 
     return returnable
-

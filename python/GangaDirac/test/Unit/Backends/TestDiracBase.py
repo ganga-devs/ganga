@@ -285,6 +285,7 @@ def test_removeOutputData(db):
     #######################
 
     class TestFile(object):
+
         def __init__(self):
             pass
 
@@ -327,6 +328,7 @@ def test_getOutputData(db, tmpdir):
 
     #######################
     class TestFile(object):
+
         def __init__(self, lfn, namePattern):
             self.lfn = lfn
             self.namePattern = namePattern
@@ -391,6 +393,7 @@ def test_getOutputDataLFNs(db):
 
     #######################
     class TestFile(object):
+
         def __init__(self, lfn):
             self.lfn = lfn
     #######################

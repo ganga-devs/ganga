@@ -29,6 +29,7 @@ def backend_handlers():
                 }
     return backends
 
+
 def available_apps():
     global available_lhcb_apps
     if available_lhcb_apps is None:
@@ -163,4 +164,3 @@ def activeSummaryItems():
                    'xmlskippedfiles': xmlskippedfiles
                    }
     return activeItems
-

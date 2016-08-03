@@ -29,6 +29,7 @@ from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampConten
 
 logger = getLogger()
 
+
 class GaudiExec(IPrepareApp):
     """
 
@@ -93,20 +94,20 @@ class GaudiExec(IPrepareApp):
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
-        'directory':    SimpleItem(defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
-        'options':       GangaFileItem(defvalue=None, sequence=1, doc='File which contains the options I want to pass to gaudirun.py'),
+        'directory': SimpleItem(defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
+        'options': GangaFileItem(defvalue=None, sequence=1, doc='File which contains the options I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
-        'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
-        'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
-        'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
-        'extraArgs':    SimpleItem(defvalue=[], typelist=[list], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
+        'useGaudiRun': SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
+        'platform': SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
+        'extraOpts': SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
+        'extraArgs': SimpleItem(defvalue=[], typelist=[list], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
 
         # Prepared job object
-        'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
-            doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
-        })
+        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
+                                  doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
+    })
     _category = 'applications'
     _name = 'GaudiExec'
     _exportmethods = ['prepare', 'unprepare', 'execCmd', 'readInputData']
@@ -131,9 +132,9 @@ class GaudiExec(IPrepareApp):
         elif attr == 'options':
             if isinstance(value, str):
                 new_file = allComponentFilters['gangafiles'](value, None)
-                actual_value = [ new_file ]
+                actual_value = [new_file]
             elif isinstance(value, IGangaFile):
-                actual_value = [ value ]
+                actual_value = [value]
             elif not isinstance(value, (list, tuple, GangaList, type(None))):
                 logger.warning("Possibly setting wrong type for options: '%s'" % type(value))
 
@@ -152,7 +153,6 @@ class GaudiExec(IPrepareApp):
         self.hash = None
         self.uploadedInput = None
         self.jobScriptArchive = None
-
 
     def prepare(self, force=False):
         """
@@ -185,7 +185,7 @@ class GaudiExec(IPrepareApp):
             all_opts_files = self.getOptsFiles()
             for opts_file in all_opts_files:
                 if isinstance(opts_file, LocalFile):
-                    self.copyIntoPrepDir(path.join( opts_file.localDir, path.basename(opts_file.namePattern) ))
+                    self.copyIntoPrepDir(path.join(opts_file.localDir, path.basename(opts_file.namePattern)))
                 elif isinstance(opts_file, DiracFile):
                     # NB safe to put it here as should have expressly setup a path for this job by now.
                     # We cannot _not_ place this here based upon the backend.
@@ -285,7 +285,7 @@ class GaudiExec(IPrepareApp):
 
         build_dir = path.dirname(this_build_target)
         for obj in set(listdir(build_dir)) - preserved_set:
-            logger.debug("del: %s of %s" %(obj, set(listdir(build_dir)) - preserved_set))
+            logger.debug("del: %s of %s" % (obj, set(listdir(build_dir)) - preserved_set))
             if path.isfile(path.join(build_dir, obj)):
                 unlink(path.join(build_dir, obj))
             elif path.isdir(path.join(build_dir, obj)):
@@ -309,7 +309,7 @@ class GaudiExec(IPrepareApp):
         if self.options:
             for this_opt in self.options:
                 if isinstance(this_opt, LocalFile):
-                    ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
+                    # FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
                     full_path = path.join(this_opt.localDir, this_opt.namePattern)
                     if not path.exists(full_path):
                         raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
@@ -421,7 +421,6 @@ class GaudiExec(IPrepareApp):
         # FIXME should there be a more central definition of 'data.py' string to rename this for all of LHCb if it ever changes for LHCbDirac
         from ..RTHandlers.GaudiExecRTHandlers import GaudiExecDiracRTHandler
 
-        all_names = [this_o.namePattern  for this_o in self.options]
+        all_names = [this_o.namePattern for this_o in self.options]
         return gaudiPythonWrapper(repr(self.extraArgs), self.getExtraOptsFileName(),
                                   GaudiExecDiracRTHandler.data_file, all_names)
-

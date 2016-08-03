@@ -35,7 +35,7 @@ def getDataset(path, dqflag, this_type, start, end, sel):
         result = dirac.bkQueryPath(path, dqflag)  # dirac
     elif this_type is 'RunsByDate':
         result = dirac.bkQueryRunsByDate(path, start, end,
-                                             dqflag, sel)  # dirac
+                                         dqflag, sel)  # dirac
     elif this_type is 'Run':
         result = dirac.bkQueryRun(path, dqflag)  # dirac
     elif this_type is 'Production':
@@ -45,9 +45,9 @@ def getDataset(path, dqflag, this_type, start, end, sel):
 
     output(result)
 
+
 def checkTier1s():
     result = dirac.gridWeather()
     if result.get('OK', False):
         result['Value'] = result['Value']['Tier-1s']
     output(result)
-

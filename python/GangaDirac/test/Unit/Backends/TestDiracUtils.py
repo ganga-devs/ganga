@@ -62,19 +62,23 @@ def test_outputfiles_iterator():
 
     ########################################################
     class TestFile(object):
+
         def __init__(self, name, subfiles=[]):
             self.name = name
             self.subfiles = subfiles
 
     class TestFileA(TestFile):
+
         def __init__(self, name, subfiles=[]):
             super(TestFileA, self).__init__(name, subfiles)
 
     class TestFileB(TestFile):
+
         def __init__(self, name, subfiles=[]):
             super(TestFileB, self).__init__(name, subfiles)
 
     class TestJob(object):
+
         def __init__(self, outputfiles=[], nc_outputfiles=[]):
             self.outputfiles = outputfiles
             self.non_copyable_outputfiles = nc_outputfiles

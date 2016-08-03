@@ -7,8 +7,9 @@ from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 logger = Ganga.Utility.logging.getLogger()
 
-## Due to a bug in Gaudi at some point we need this equivalence here: see #204
+# Due to a bug in Gaudi at some point we need this equivalence here: see #204
 DataObjectDescriptorCollection = str
+
 
 class PythonOptsCmakeParser(object):
 
@@ -122,4 +123,3 @@ class PythonOptsCmakeParser(object):
             with open(expandfilename(name), 'r') as this_file:
                 joined_py_opts += this_file.read()
         return joined_py_opts
-

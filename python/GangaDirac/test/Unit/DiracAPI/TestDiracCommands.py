@@ -142,6 +142,7 @@ def dirac_job():
 
 @external
 class TestDiracCommands(object):
+
     def test_peek(self, dirac_job):
         confirm = execute('peek("%s")' % dirac_job.id)
         logger.info(confirm)

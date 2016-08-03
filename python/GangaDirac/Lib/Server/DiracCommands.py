@@ -2,6 +2,7 @@
 # Dirac commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
+
 def getJobGroupJobs(jg):
     ''' Return jobs in a group'''
     output(dirac.selectJobs(jobGroup=jg))
@@ -55,12 +56,12 @@ def getMetadata(lfn):
 
 def getReplicas(lfns):
     ''' Return  the locations of the replicas of a given LFN in a dict format, SE: location '''
-    output(dirac.getReplicas(lfns, active=True, preferDisk = True))
+    output(dirac.getReplicas(lfns, active=True, preferDisk=True))
 
 
-def getAccessURL(lfn,SE):
+def getAccessURL(lfn, SE):
     ''' Return the access URL for the given LFN and storage element '''
-    output(dirac.getAccessURL(lfn,SE))
+    output(dirac.getAccessURL(lfn, SE))
 
 
 def getFile(lfns, destDir=''):
@@ -72,7 +73,7 @@ def replicateFile(lfn, destSE, srcSE='', locCache=''):
     ''' Replicate a given LFN from a srcSE to a destSE'''
     res = dirac.replicateFile(lfn, destSE, srcSE, locCache)
     output(res)
-    #print(res)
+    # print(res)
 
 
 def removeReplica(lfn, sE):
@@ -132,7 +133,7 @@ def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True, noJobDir=True, p
         if not noJobDir:
             tmpdir = os.path.join(outputDir, str(id))
             os.system('mv -f %s/* %s/. ; rm -rf %s' % (tmpdir, outputDir, tmpdir))
-        
+
         os.system('for file in $(ls %s/*_Ganga_*.log); do ln -s ${file} %s/stdout; break; done' % (outputDir, outputDir))
 
     if pipe_out:
@@ -229,7 +230,7 @@ def finished_job(id, outputDir=os.getcwd(), oversized=True, noJobDir=True):
     out_cpuTime = normCPUTime(id, pipe_out=False)
     out_sandbox = getOutputSandbox(id, outputDir, oversized, noJobDir, pipe_out=False)
     out_dataInfo = getOutputDataInfo(id, pipe_out=False)
-    outStateTime = {'completed' : getStateTime(id, 'completed', pipe_out=False)}
+    outStateTime = {'completed': getStateTime(id, 'completed', pipe_out=False)}
     output((out_cpuTime, out_sandbox, out_dataInfo, outStateTime))
 
 
@@ -255,7 +256,7 @@ def status(job_ids, statusmapping, pipe_out=True):
         if ganga_status is None:
             ganga_status = 'failed'
             dirac_status = 'Unknown: No status for Job'
-        #if dirac_status == 'Completed' and (minor_status not in ['Pending Requests']):
+        # if dirac_status == 'Completed' and (minor_status not in ['Pending Requests']):
         #    ganga_status = 'running'
         if minor_status in ['Uploading Output Data']:
             ganga_status = 'running'
@@ -274,6 +275,7 @@ def status(job_ids, statusmapping, pipe_out=True):
         output(status_list)
     else:
         return status_list
+
 
 def getStateTime(id, status, pipe_out=True):
     ''' Return the state time from DIRAC corresponding to DIRACJob tranasitions'''
@@ -315,6 +317,7 @@ def getStateTime(id, status, pipe_out=True):
     else:
         return None
 
+
 def getBulkStateTime(job_ids, status, pipe_out=True):
     ''' Function to repeatedly call getStateTime for multiple Dirac Job id and return the result in a dictionary '''
     result = {}
@@ -325,6 +328,7 @@ def getBulkStateTime(job_ids, status, pipe_out=True):
         output(result)
     else:
         return result
+
 
 def monitorJobs(job_ids, status_mapping, pipe_out=True):
     ''' This combines 'status' and 'getBulkStateTime' into 1 function call for monitoring
@@ -345,6 +349,7 @@ def monitorJobs(job_ids, status_mapping, pipe_out=True):
         output((status_info, state_info))
     else:
         return (status_info, state_info)
+
 
 def timedetails(id):
     ''' Function to return the loggingInfo for a DIRAC Job of id'''

@@ -11,6 +11,7 @@ from .PythonOptsCmakeParser import PythonOptsCmakeParser
 
 logger = getLogger()
 
+
 def gaudiPythonWrapper(sys_args, options, data_file, script_file):
     """
     Returns the script which is used by GaudiPython to wrap the job on the WN
@@ -37,12 +38,14 @@ execfile('%s')
 """ % (sys_args, options, data_file, repr(script_file[1:]), script_file[0])
     return wrapper_script
 
+
 def getTimestampContent():
     """
     Returns a string containing the current time in a given format and a unique random uuid
     """
     fmt = '%Y-%m-%d-%H-%M-%S'
     return datetime.now().strftime(fmt) + '\n' + str(uuid.uuid4())
+
 
 def addTimestampFile(given_path, fileName='__timestamp__'):
     """
@@ -55,6 +58,7 @@ def addTimestampFile(given_path, fileName='__timestamp__'):
     logger.debug("Constructing: %s" % time_filename)
     with open(time_filename, 'a+') as time_file:
         time_file.write(getTimestampContent())
+
 
 def getGaudiExecInputData(optsfiles, app):
     '''Returns a LHCbDataSet object from a list of options files. The
@@ -86,6 +90,7 @@ def getGaudiExecInputData(optsfiles, app):
 
 exportToGPI('getGaudiExecInputData', getGaudiExecInputData, 'Functions')
 
+
 def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
     """
         Short helper function for setting up minimal application environments on disk for job submission
@@ -108,6 +113,7 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
 
 exportToGPI('prepare_cmake_app', prepare_cmake_app, 'Functions')
 
+
 def _exec_cmd(cmd, cwdir):
     """
         This is taken from the code which runs SetupProject
@@ -123,4 +129,3 @@ def _exec_cmd(cmd, cwdir):
     while pipe.poll() is None:
         time.sleep(0.5)
     return pipe.returncode, stdout, stderr
-

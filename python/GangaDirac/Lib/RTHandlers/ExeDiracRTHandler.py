@@ -38,7 +38,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
-        input_data,   parametricinput_data = dirac_inputdata(app)
+        input_data, parametricinput_data = dirac_inputdata(app)
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
         job = stripProxy(app).getJobObject()
@@ -50,9 +50,9 @@ class ExeDiracRTHandler(IRuntimeHandler):
             #logger.info("app: %s" % str(app.exe.name))
             #fileName = os.path.join(get_share_path(app), os.path.basename(app.exe.name))
             #logger.info("EXE: %s" % str(fileName))
-            #inputsandbox.append(File(name=fileName))
+            # inputsandbox.append(File(name=fileName))
             inputsandbox.append(app.exe)
-            commandline[0]=os.path.join('.', os.path.basename(app.exe.name))
+            commandline[0] = os.path.join('.', os.path.basename(app.exe.name))
         commandline.extend([str(arg) for arg in app.args])
         logger.debug('Command line: %s: ', commandline)
 
@@ -62,16 +62,16 @@ class ExeDiracRTHandler(IRuntimeHandler):
         logger.info("Setting Command to be: '%s'" % repr(commandline))
 
         inputsandbox.append(FileBuffer(name=exe_script_name,
-                            contents=script_generator(exe_script_template(),
-                                                    #remove_unreplaced = False,
-                                                    # ,
-                                                    COMMAND=repr(commandline),
-                                                    OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
-                                                    ),
+                                       contents=script_generator(exe_script_template(),
+                                                                 #remove_unreplaced = False,
+                                                                 # ,
+                                                                 COMMAND=repr(commandline),
+                                                                 OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, '    ')
+                                                                 ),
                                        executable=True))
 
-        contents=script_generator(exe_script_template(), COMMAND=repr(commandline),
-                                    OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
+        contents = script_generator(exe_script_template(), COMMAND=repr(commandline),
+                                    OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, '    ')
                                     )
 
         #logger.info("Script is: %s" % str(contents))

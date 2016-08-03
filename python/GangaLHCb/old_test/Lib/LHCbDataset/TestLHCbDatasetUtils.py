@@ -5,6 +5,7 @@ from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 
+
 class TestLHCbDatasetUtils(GangaGPITestCase):
 
     def test_isLFN(self):

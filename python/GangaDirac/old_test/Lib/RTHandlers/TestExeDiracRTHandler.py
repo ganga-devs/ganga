@@ -88,7 +88,7 @@ class TestExeDiracRTHandler(GangaGPITestCase):
 
             # check that inputbox and outputbox contain only unique elements
             self.assertEqual(len(ipb), len(
-                jobconfig.inputbox),  'Returned inputsandbox did not contain only unique elements')
+                jobconfig.inputbox), 'Returned inputsandbox did not contain only unique elements')
             self.assertEqual(len(opb), len(
                 jobconfig.outputbox), 'Returned outputsandbox did not contain only unique elements')
 
@@ -153,7 +153,7 @@ class TestExeDiracRTHandler(GangaGPITestCase):
 
             # check that inputbox and outputbox contain only unique elements
             self.assertEqual(len(ipb), len(
-                jobsubconfig.inputbox),  'Returned inputsandbox did not contain only unique elements')
+                jobsubconfig.inputbox), 'Returned inputsandbox did not contain only unique elements')
             self.assertEqual(len(opb), len(
                 jobsubconfig.outputbox), 'Returned outputsandbox did not contain only unique elements')
 

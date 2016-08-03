@@ -109,4 +109,3 @@ class TestLHCbDataset(GangaGPITestCase):
             assert this_str.find('c') >= 0
 
     # test rest in GPI
-

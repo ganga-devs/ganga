@@ -17,7 +17,7 @@ from Ganga.Utility.execute import execute
 logger = getLogger()
 
 if not _after_bootstrap:
-    configLHCb = Ganga.Utility.Config.makeConfig('LHCb', 'Parameters for LHCb')
+    configLHCb = Ganga.Utility.Config.Config.makeConfig('LHCb', 'Parameters for LHCb')
 
     # Set default values for the LHCb config section.
     dscrpt = 'The name of the local site to be used for resolving LFNs into PFNs.'
@@ -28,23 +28,23 @@ if not _after_bootstrap:
     from all other known handlers will go to output data (unless overridden by \
     the user in a specific job via the Job.outputsandbox field).'
     configLHCb.addOption('outputsandbox_types',
-                     ['CounterSummarySvc', 'NTupleSvc',
-                      'HistogramPersistencySvc', 'MicroDSTStream',
-                      'EvtTupleSvc'], dscrpt)
+                         ['CounterSummarySvc', 'NTupleSvc',
+                          'HistogramPersistencySvc', 'MicroDSTStream',
+                          'EvtTupleSvc'], dscrpt)
     dscrpt = 'The string that is added after the filename in the options to tell' \
              ' Gaudi how to read the data. This is the default value used if the '\
              'file name does not match any of the patterns in '\
              'datatype_string_patterns.'
     configLHCb.addOption('datatype_string_default',
-                     """TYP='POOL_ROOTTREE' OPT='READ'""", dscrpt)
+                         """TYP='POOL_ROOTTREE' OPT='READ'""", dscrpt)
     dscrpt = 'If a file matches one of these patterns, then the string here '\
-         'overrides the datatype_string_default value.'
+        'overrides the datatype_string_default value.'
     defval = {"SVC='LHCb::MDFSelector'": ['*.raw', '*.RAW', '*.mdf', '*.MDF']}
     configLHCb.addOption('datatype_string_patterns', defval, dscrpt)
     configLHCb.addOption('UserAddedApplications', "", "List of user added LHCb applications split by ':'")
 
     configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
-                     'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
+                         'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
                       options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
 
 
@@ -133,7 +133,7 @@ def postBootstrapHook():
     configDirac = Ganga.Utility.Config.getConfig('DIRAC')
     configOutput = Ganga.Utility.Config.getConfig('Output')
     configPoll = Ganga.Utility.Config.getConfig('PollThread')
-    
+
     configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
     configDirac.setSessionValue('userVO', 'lhcb')
     configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
@@ -152,4 +152,3 @@ def postBootstrapHook():
 #display_config.setSessionValue( 'jobs_columns', ('fqid', 'status', 'name', 'subjobs', 'application', 'backend', 'backend.actualCE', 'backend.extraInfo', 'comment') )
 #display_config.setSessionValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
 #display_config.setSessionValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
-

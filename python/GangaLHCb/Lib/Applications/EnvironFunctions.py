@@ -195,4 +195,3 @@ def _getshell_SP(self):
     self.env = copy.deepcopy(self.shell.env)
 
     return self.shell.env
-

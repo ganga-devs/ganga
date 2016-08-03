@@ -19,6 +19,7 @@ global_random = random
 LFN_parallel_limit = 250
 limit_divide_one = 1. / float(LFN_parallel_limit)
 
+
 def wrapped_execute(command, expected_type):
     """
     A wrapper around execute to protect us from commands which had errors
@@ -215,6 +216,7 @@ def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData, input
         logger.debug("Sorting Exception: %s" % str(err))
         raise err
 
+
 def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
 
     errors = []
@@ -231,7 +233,7 @@ def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
         output = allLFNData.get(i)
 
         if output is None:
-            logger.error("Error getting Replica information from Dirac: [%s,%s]" % ( str(i * LFN_parallel_limit), str((i + 1) * LFN_parallel_limit)))
+            logger.error("Error getting Replica information from Dirac: [%s,%s]" % (str(i * LFN_parallel_limit), str((i + 1) * LFN_parallel_limit)))
             logger.error("%s" % str(allLFNData))
             raise Exception('Error from DIRAC')
 
@@ -263,7 +265,7 @@ def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
             logger.error("Unknown error in parsing Dirac LFN Successful output")
             raise
 
-        upper_limit = (i+1)*LFN_parallel_limit
+        upper_limit = (i + 1) * LFN_parallel_limit
         if upper_limit > len(allLFNs):
             upper_limit = len(allLFNs)
 
@@ -424,7 +426,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
                 logger.debug("%s > %s" % (str(len(_this_subset)), str(limit)))
                 # else Dataset was large enough to be considered useful
                 logger.debug("Generating Dataset of size: %s" % str(len(_this_subset)))
-                ## Construct DiracFile here as we want to keep the above combination
+                # Construct DiracFile here as we want to keep the above combination
                 allSubSets.append([DiracFile(lfn=str(this_LFN)) for this_LFN in _this_subset])
 
                 for lfn in _this_subset:
@@ -484,4 +486,3 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
 
     for dataset in split_files:
         yield dataset
-

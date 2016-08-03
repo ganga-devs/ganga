@@ -7,6 +7,7 @@ from tempfile import gettempdir
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
+
 class TestGaudiExec(GangaUnitTest):
 
     def testInternal(self):
@@ -33,7 +34,7 @@ class TestGaudiExec(GangaUnitTest):
 
         assert open(reconstructed_path).read() == "print('hello')"
 
-        j=Job()
+        j = Job()
         j.application = gr
 
         assert isinstance(j.application, GaudiExec)
@@ -45,4 +46,3 @@ class TestGaudiExec(GangaUnitTest):
         assert gr.options[0].lfn == df.lfn
 
         shutil.rmtree(gaudi_testFol, ignore_errors=True)
-

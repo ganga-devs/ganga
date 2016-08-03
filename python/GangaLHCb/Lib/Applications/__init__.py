@@ -46,9 +46,7 @@ for app in AppsBaseUtils.available_apps():
     logger.debug("Adding %s" % str(app))
 
 logger.debug("Adding apps")
-modules= compile(all_apps, '<string>', 'exec')
+modules = compile(all_apps, '<string>', 'exec')
 exec modules
 
 logger.debug("Fin")
-
-
