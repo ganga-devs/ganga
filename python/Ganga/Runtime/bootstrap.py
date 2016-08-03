@@ -1199,10 +1199,12 @@ under certain conditions; type license() for details.
 
         from Ganga.Core.exceptions import GangaException
         import traceback
+        # Extract the stack from this traceback object
         stack = traceback.extract_tb(tb)
+        # If this is an error from the interactive prompt then the length is 2, otherwise the errror is from deeper in Ganga
         if not issubclass(etype, GangaException) and len(stack) > 2:
-            logger.error("Unknown/Unexpected ERROR!!")
-            #logger.error("If you're able to reproduce this please report this to the Ganga developers!")
+            logger.error("!!Unknown/Unexpected ERROR!!")
+            logger.error("If you're able to reproduce this please report this to the Ganga developers!")
             #logger.error("value: %s" % value)
             exception_obj.showtraceback((etype, value, tb), tb_offset=tb_offset)
         return None
