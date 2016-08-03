@@ -2,7 +2,6 @@ import pickle
 import os
 import copy
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
@@ -48,9 +47,8 @@ class GaussSplitter(ISplitter):
                 job (Job): master job to be used as a template to split subjobs
         """
 
-        # NB Not sure if we can ever _not_ import the Gauss app from the GPI
-        from Ganga.GPI import Gauss
-        if not isinstance(job.application, (stripProxy(Gauss), GaudiExec)):
+        from GangaLHCb.Lib.Applications import Gauss
+        if not isinstance(job.application, (Gauss, GaudiExec)):
             logger.warning("This application is of type: '%s', be careful how you use it with the GaussSplitter!" % type(job.application))
 
         subjobs = []
