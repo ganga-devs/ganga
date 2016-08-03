@@ -184,7 +184,6 @@ def execute(command,
         python_setup = getDiracCommandIncludes()
 
     if cred_req is not None:
-        env = env or {}
         env['X509_USER_PROXY'] = credential_store[cred_req].location
 
     if cwd is None:
