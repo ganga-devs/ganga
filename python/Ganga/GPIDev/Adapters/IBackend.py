@@ -10,6 +10,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import Schema, Version
+from Ganga.GPIDev.Credentials2 import credential_store, needed_credentials
 
 import Ganga.Utility.logging
 
@@ -20,6 +21,7 @@ from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError
 import os
 import itertools
 import time
+from collections import defaultdict
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -511,3 +513,32 @@ class IBackend(GangaObject):
         """
 
         raise NotImplementedError
+
+
+def group_jobs_by_backend_credential(jobs):
+    # type: (List[Job]) -> List[List[Job]]
+    """
+    Split a list of jobs based on the credential required by their backends.
+
+    Any missing or invalid credentials are added to ``needed_credentials``
+
+    Args:
+        jobs: a list of ``Job``s
+
+    Returns:
+        a list of list of ``Job``s with each sublist sharing a credential
+    """
+    jobs_by_credential = defaultdict(list)
+    for j in jobs:
+        try:
+            cred_req = j.backend.credential_requirements
+            cred = credential_store[cred_req]
+            if not cred.is_valid():
+                logger.debug('Required credential %s is not valid', cred)
+                needed_credentials.add(cred_req)
+                continue
+            jobs_by_credential[cred].append(j)
+        except KeyError:
+            logger.debug('Required credential %s is missing', cred_req)
+            needed_credentials.add(cred_req)
+    return list(jobs_by_credential.values())
