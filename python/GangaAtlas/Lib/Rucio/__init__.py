@@ -11,8 +11,6 @@ Attributes:
 
 import threading
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getScopeAndDSName
-
 _rucio_client = None
 _client_lock = threading.RLock()
 
