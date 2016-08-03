@@ -11,7 +11,7 @@ import shutil
 import tempfile
 from collections import defaultdict
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from Ganga.GPIDev.Adapters.IBackend import IBackend
+from Ganga.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Core.exceptions import GangaFileError, BackendError, IncompleteJobSubmissionError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
@@ -956,24 +956,10 @@ class DiracBase(IBackend):
         try:
             # Split all the monitorable jobs into groups based on the
             # credential used to communicate with DIRAC
-            # TODO Perhaps this would make more sense being done on a more generic level
-            monitor_jobs_by_credential = defaultdict(list)  # type: Dict[ICredentialInfo, List[Job]]
-            for j in monitor_jobs:
-                try:
-                    cred_req = j.backend.credential_requirements
-                    cred = credential_store[cred_req]
-                    if not cred.is_valid():
-                        logger.debug('Required credential %s is not valid', cred)
-                        needed_credentials.add(cred_req)
-                        continue
-                    monitor_jobs_by_credential[cred].append(j)
-                except KeyError:
-                    logger.debug('Required credential %s is missing', cred_req)
-                    needed_credentials.add(cred_req)
-
-            DiracBase.requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses)
-            for one_credential_jobs in monitor_jobs_by_credential.values():
-                DiracBase.monitor_dirac_running_jobs(one_credential_jobs, finalised_statuses)
+            for requeue_jobs_group in group_jobs_by_backend_credential(requeue_jobs):
+                DiracBase.requeue_dirac_finished_jobs(requeue_jobs_group, finalised_statuses)
+            for monitor_jobs_group in group_jobs_by_backend_credential(monitor_jobs):
+                DiracBase.monitor_dirac_running_jobs(monitor_jobs_group, finalised_statuses)
         except GangaDiracError as err:
             logger.warning("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
             logger.debug(err)
