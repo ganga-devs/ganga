@@ -1198,7 +1198,9 @@ under certain conditions; type license() for details.
         logger.error("Error: %s" % value)
 
         from Ganga.Core.exceptions import GangaException
-        if not issubclass(etype, GangaException):
+        import traceback
+        stack = traceback.extract_tb(tb)
+        if not issubclass(etype, GangaException) and len(stack) > 2:
             logger.error("Unknown/Unexpected ERROR!!")
             #logger.error("If you're able to reproduce this please report this to the Ganga developers!")
             #logger.error("value: %s" % value)
