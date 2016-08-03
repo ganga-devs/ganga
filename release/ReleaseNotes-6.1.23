@@ -14,6 +14,8 @@ ganga/python/Ganga
 * Fixed bug for submission to ARC backend.
 * New test for CREAM backend.
 * Mock tests for LCG and Grid submission.
+* Improvement to replace '_getReadAccess' and '_getWriteAccess' with specific calls where possible.
+* Improvement to tracking objects' loaded state.
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaDirac
