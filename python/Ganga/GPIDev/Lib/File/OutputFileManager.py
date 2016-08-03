@@ -11,6 +11,7 @@ from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
+
 def outputFilePostProcessingOnWN(job, outputFileClassName):
     """
     Checks if the output files of a given job(we are interested in the backend) 
@@ -211,8 +212,8 @@ def getWNCodeForDownloadingInputFiles(job, indent):
 
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
     if job.inputfiles is None or len(job.inputfiles) == 0 and\
-            (not job.inputdata or ((not isType(job.inputdata, GangaDataset)) or\
-                not job.inputdata.treat_as_inputfiles )):
+            (not job.inputdata or ((not isType(job.inputdata, GangaDataset)) or
+                                   not job.inputdata.treat_as_inputfiles)):
         return ""
 
     insertScript = """\n
@@ -368,4 +369,3 @@ def getWNCodeForInputdataListCreation(job, indent):
         insertScript = insertScript.replace('###FILELIST###', "[]")
 
     return insertScript
-

@@ -6,8 +6,9 @@ logger = getLogger()
 try:
     from Ganga.GPI import templatesLHCb, Job
 except ImportError:
-    templatesLHCb=[]
+    templatesLHCb = []
     pass
+
 
 class TestTemplatesLHCb(GangaGPITestCase):
 

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
+
 class TestRegistryExport(GangaUnitTest):
 
     def test_0_testRegistryAsserts(self):
@@ -21,4 +22,3 @@ class TestRegistryExport(GangaUnitTest):
         assert getRegistry('jobs') is stripProxy(jobs).objects
         assert getRegistry('tasks') is stripProxy(tasks).objects
         assert getRegistry('box') is stripProxy(box).objects
-

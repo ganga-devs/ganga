@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 from __future__ import print_function
+
+
 class Main(object):
+
     def run(self):
         '''Prints out some PyRoot debug info.'''
         print('Hello from PyRoot. Importing ROOT...')
@@ -11,7 +14,7 @@ class Main(object):
         import string
         import sys
 
-        print('Python Load Path', string.join([str(s) for s in sys.path],pathsep))
+        print('Python Load Path', string.join([str(s) for s in sys.path], pathsep))
 
         print('Loading libTree:', ROOT.gSystem.Load('libTree'))
 
@@ -24,4 +27,3 @@ if __name__ == '__main__':
 
     import sys
     sys.exit(0)
-

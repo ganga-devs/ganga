@@ -304,7 +304,6 @@ class AppName(Gaudi):
 
         # must change this as prepare should be seperate from the jpb.inputdata
 
-
         share_path = os.path.join(share_dir, 'output')
         if not os.path.isdir(share_path):
             os.makedirs(share_path)
@@ -317,4 +316,3 @@ class AppName(Gaudi):
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 for (backend, handler) in backend_handlers().iteritems():
     allHandlers.add('AppName', backend, handler)
-

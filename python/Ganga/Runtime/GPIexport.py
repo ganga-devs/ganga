@@ -18,6 +18,7 @@ from Ganga.GPIDev.Base.Proxy import isType, addProxy, getProxyClass
 from Ganga.GPIDev.Base.Objects import GangaObject
 from inspect import isclass
 
+
 def _addToInterface(interface, name, _object):
 
     if isType(_object, GangaObject):
@@ -26,6 +27,7 @@ def _addToInterface(interface, name, _object):
         setattr(interface, name, getProxyClass(_object))
     else:
         setattr(interface, name, _object)
+
 
 def exportToInterface(myInterface, name, _object, doc_section, docstring=None):
     '''
@@ -43,6 +45,7 @@ def exportToInterface(myInterface, name, _object, doc_section, docstring=None):
     _addToInterface(myInterface, name, _object)
     adddoc(name, getattr(myInterface, name), doc_section, docstring)
 
+
 def exportToGPI(name, _object, doc_section, docstring=None):
     '''
     Make object available publicly as "name" in Ganga.GPI module. Add automatic documentation to gangadoc system.
@@ -58,6 +61,7 @@ def exportToGPI(name, _object, doc_section, docstring=None):
 
     exportToInterface(Ganga.GPI, name, _object, doc_section, docstring)
     adddoc(name, getattr(Ganga.GPI, name), doc_section, docstring)
+
 
 def _importFromGPI(name):
     '''

@@ -71,4 +71,3 @@ def createPublisher(server, port, user='ganga', password='analysis', idle_timeou
         # add exit handler if not GangaThread
         publisher.addExitHandler(exit_timeout)
     return publisher
-

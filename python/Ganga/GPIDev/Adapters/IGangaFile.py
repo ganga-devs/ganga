@@ -172,4 +172,3 @@ class IGangaFile(GangaObject):
                     logger.error('failed to remove temporary/intermediary file: %s' % f)
                     logger.debug("Err: %s" % err)
                     raise err
-

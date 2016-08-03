@@ -278,7 +278,6 @@ def _guess_module_logger_name(modulename, frame=None):
 
     global lookup_frame_names
 
-
     this__file__ = None
     if '__file__' in frame.f_globals:
         this__file__ = frame.f_globals['__file__']
@@ -352,6 +351,7 @@ _MemHandler = logging.handlers.MemoryHandler
 
 class flushAtIPythonPrompt(object):
     """ This is a dummy class that calls a function when it's being constructed into a string """
+
     def __str__(self):
         """ This str method returns an empty string bug calls for the FlushedMemoryHandler to flush it's cache.
         When an object of this type is placed within the IPython prompt it's rendered into a string and so calls this function """
@@ -374,7 +374,7 @@ class FlushedMemoryHandler(_MemHandler):
         The exception to this is when the MemHandler says we flush as we want to always flush then.
         """
         return (threading.currentThread().getName() == "MainThread") or \
-                _MemHandler.shouldFlush(self, record)
+            _MemHandler.shouldFlush(self, record)
 
 
 def enableCaching():
@@ -478,6 +478,7 @@ def bootstrap(internal=False, handler=None):
             """
             A filter which only allow messages which are WARNING or lower to be logged
             """
+
             def filter(self, record):
                 return record.levelno <= 30
 
@@ -522,7 +523,7 @@ def force_global_level(level):
         global _global_level
         _global_level = level
 
-    ## May wish to do this for more levels in teh future
+    # May wish to do this for more levels in teh future
     if level in ['DEBUG']:
         global default_formatter
         default_formatter = "DEBUG"

@@ -43,7 +43,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
-        input_data,   parametricinput_data = dirac_inputdata(app)
+        input_data, parametricinput_data = dirac_inputdata(app)
         logger.debug("input_data: " + str(input_data))
         job = app.getJobObject()
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
@@ -60,7 +60,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                   'INPUTDATA': input_data,
                   'PARAMETRIC_INPUTDATA': parametricinput_data,
                   'OUTPUT_SANDBOX': API_nullifier(outputsandbox),
-                  'OUTPUTFILESSCRIPT' : lhcb_dirac_outputfiles,
+                  'OUTPUTFILESSCRIPT': lhcb_dirac_outputfiles,
                   'OUTPUT_PATH': "",  # job.fqid,
                   'SETTINGS': diracAPI_script_settings(app),
                   'DIRAC_OPTS': job.backend.diracOpts,
@@ -78,7 +78,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
         wrapper_path = os.path.join(job.getInputWorkspace(create=True).getPath(),
                                     'script_wrapper.py')
         python_wrapper =\
-"""#!/usr/bin/env python
+            """#!/usr/bin/env python
 import os, sys
 def formatVar(var):
     try:
@@ -98,12 +98,12 @@ os.system('###COMMAND###' % script_args)
 
         python_wrapper = python_wrapper.replace('###SCRIPT_ARGS###', str('###JOINER###'.join([str(a) for a in app.args])))
 
-        params.update({ 'APP_NAME' : 'Root',
-                        'APP_VERSION' : app.version,
-                        'APP_SCRIPT' : wrapper_path,
-                        'APP_LOG_FILE' : 'Ganga_Root.log' })
+        params.update({'APP_NAME': 'Root',
+                       'APP_VERSION': app.version,
+                       'APP_SCRIPT': wrapper_path,
+                       'APP_LOG_FILE': 'Ganga_Root.log'})
 
-        #params.update({'ROOTPY_SCRIPT': wrapper_path,
+        # params.update({'ROOTPY_SCRIPT': wrapper_path,
         #               'ROOTPY_VERSION': app.version,
         #               'ROOTPY_LOG_FILE': 'Ganga_Root.log',
         #               'ROOTPY_ARGS': [str(a) for a in app.args]})
@@ -117,7 +117,6 @@ os.system('###COMMAND###' % script_args)
                                               JOINER=' ',
                                               #INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
                                               )
-
 
         else:
             python_wrapper = script_generator(python_wrapper,
@@ -139,4 +138,3 @@ os.system('###COMMAND###' % script_args)
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('Root', 'Dirac', LHCbRootDiracRunTimeHandler)
-

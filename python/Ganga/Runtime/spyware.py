@@ -2,22 +2,24 @@ import time
 import os.path
 from Ganga.Utility.Config import getConfig
 config = getConfig('Configuration')
-#config.addOption('UsageMonitoringURL', "http://gangamon.cern.ch:8888/apmon/ganga.conf",
+# config.addOption('UsageMonitoringURL', "http://gangamon.cern.ch:8888/apmon/ganga.conf",
 #                 'MonALISA configuration file used to setup the destination of usage messages')
 
 
 monitor = None
 
-def _setupMonitor( _URL, msg, msg2 ):
+
+def _setupMonitor(_URL, msg, msg2):
     import ApMon.apmon
     # the ApMon constructor may start background threads to refresh the configuration from URL
     # NOTE: the configuration (including defaultLogLevel) is overriden from
     # the config file specified in URL
     global monitor
-    monitor = ApMon.apmon.ApMon(_URL, defaultLogLevel = ApMon.apmon.Logger.FATAL)
+    monitor = ApMon.apmon.ApMon(_URL, defaultLogLevel=ApMon.apmon.Logger.FATAL)
     monitor.sendParameters('GangaUsage', msg, msg2)
     # stop any background threads started by the ApMon constructor
     monitor.free()
+
 
 def ganga_started(session_type, **extended_attributes):
     host = getConfig('System')['GANGA_HOSTNAME']
@@ -50,6 +52,7 @@ def ganga_started(session_type, **extended_attributes):
             p.unregister()
         del p
 
+
 def ganga_job_submitted(application_name, backend_name, plain_job, master_job, sub_jobs):
     host = getConfig('System')['GANGA_HOSTNAME']
     user = getConfig('Configuration')['user']
@@ -78,5 +81,3 @@ def ganga_job_submitted(application_name, backend_name, plain_job, master_job, s
         if hasattr(p, 'unregister'):
             p.unregister()
         del p
-
-

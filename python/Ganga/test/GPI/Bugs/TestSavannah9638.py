@@ -11,6 +11,7 @@ def wipe_temp_dir():
 
 
 class TestSavannah9638(GangaUnitTest):
+
     def setUp(self):
         super(TestSavannah9638, self).setUp()
 

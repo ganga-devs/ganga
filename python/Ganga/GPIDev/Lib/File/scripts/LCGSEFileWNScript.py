@@ -1,4 +1,4 @@
-#system command executor with subprocess
+# system command executor with subprocess
 def execSyscmdSubprocessAndReturnOutputLCG(cmd):
     import subprocess
 
@@ -15,6 +15,7 @@ def execSyscmdSubprocessAndReturnOutputLCG(cmd):
 
     return (exitcode, mystdout, mystderr)
 
+
 def uploadToSE(lcgseItem):
 
     import re
@@ -30,7 +31,7 @@ def uploadToSE(lcgseItem):
 
     guidResults = {}
 
-    if filenameWildChar in ###PATTERNSTOZIP###:
+    if filenameWildChar in  # PATTERNSTOZIP###:
         filenameWildChar = '%s.gz' % filenameWildChar
 
     for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
@@ -40,8 +41,8 @@ def uploadToSE(lcgseItem):
         printInfo(cmd)
         (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputLCG(cmd)
         if exitcode == 0:
-            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
-            match = re.search('(guid:\S+)',mystdout)
+            printInfo('result from cmd %s is %s' % (cmd, str(mystdout)))
+            match = re.search('(guid:\S+)', mystdout)
             if match:
                 guidResults[mystdout] = os.path.basename(currentFile)
 
@@ -51,18 +52,18 @@ def uploadToSE(lcgseItem):
 
     return guidResults
 
-for lcgseItem in ###LCGCOMMANDS###:
+for lcgseItem in  # LCGCOMMANDS###:
     guids = uploadToSE(lcgseItem)
     for guid in guids.keys():
-        ###POSTPROCESSLOCATIONSFP###.write('%s %s %s ->%s\\n' % (lcgseItem.split(' ')[0], lcgseItem.split(' ')[1], guids[guid], guid))
+        # POSTPROCESSLOCATIONSFP###.write('%s %s %s ->%s\\n' % (lcgseItem.split(' ')[0], lcgseItem.split(' ')[1], guids[guid], guid))
 
-#lets clear after us
-for lcgseItem in ###LCGCOMMANDS###:
+        # lets clear after us
+for lcgseItem in  # LCGCOMMANDS###:
     lcgseItems = lcgseItem.split(' ')
 
     filenameWildChar = lcgseItems[1]
 
-    if filenameWildChar in ###PATTERNSTOZIP###:
+    if filenameWildChar in  # PATTERNSTOZIP###:
         filenameWildChar = '%s.gz' % filenameWildChar
 
     for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):

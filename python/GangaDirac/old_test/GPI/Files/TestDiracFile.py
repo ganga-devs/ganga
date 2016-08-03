@@ -18,6 +18,7 @@ import random
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
+
 def rand_str():
     import datetime
     import time
@@ -47,7 +48,7 @@ echo "%s" > b.root
         self.filepath = os.path.join(self.root, self.filename)
         logger.info("FilePath: %s" % str(self.filepath))
         #import Ganga.Core.InternalServices.Coordinator
-        #Ganga.Core.InternalServices.Coordinator.enableMonitoringService()
+        # Ganga.Core.InternalServices.Coordinator.enableMonitoringService()
 
     def tearDown(self):
         os.remove(self.filepath)
@@ -166,4 +167,3 @@ echo "%s" > b.root
         for df in j._impl.outputfiles[0].subfiles:
             self.assertIn(df.namePattern, ['a.root', 'b.root'])
             df.remove()
-

@@ -44,7 +44,9 @@ class FakeRegistry(object):
 # * lock(ids) (random ids, if return True put into owned_ids)
 # * unlock(ids) (random owned ids, remove from owned_ids)
 
+
 class HammerThread(threading.Thread):
+
     def __init__(self, _id, repo):
         self.id = _id
         self.repo = repo
@@ -156,6 +158,7 @@ class HammerThread(threading.Thread):
 
 
 class TestRepo(GangaUnitTest):
+
     def setUp(self):
         super(TestRepo, self).setUp()
         from Ganga.Utility.Config import setConfigOption
@@ -213,4 +216,3 @@ class testRepository(object):
         self.logger.info(str(self.id) + ' shutdown()')
         self.repo.shutdown()
         self.logger.info(str(self.id) + ' shutdown() done!')
-

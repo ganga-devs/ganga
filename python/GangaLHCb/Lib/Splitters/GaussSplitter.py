@@ -9,6 +9,7 @@ import copy
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
+
 class GaussSplitter(ISplitter):
 
     """Create a set of Gauss jobs based on the total number of jobs and the
@@ -74,4 +75,3 @@ class GaussSplitter(ISplitter):
             subjobs.append(j)
 
         return subjobs
-

@@ -4,6 +4,7 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 numJobs = 10
 
+
 class TestLazyLoadingManyJobs(GangaUnitTest):
 
     def setUp(self):
@@ -19,8 +20,8 @@ class TestLazyLoadingManyJobs(GangaUnitTest):
 
         from Ganga.GPI import Job, jobs
         for _ in range(numJobs):
-            j=Job()
-        self.assertEqual(len(jobs), numJobs) # Don't really gain anything from assertEqual...
+            j = Job()
+        self.assertEqual(len(jobs), numJobs)  # Don't really gain anything from assertEqual...
 
         jobs(9).submit()
 
@@ -52,7 +53,7 @@ class TestLazyLoadingManyJobs(GangaUnitTest):
 
                 print("job: %s status = %s" % (j.id, j.status))
 
-                app = lazyLoadJobApplication(raw_j) 
+                app = lazyLoadJobApplication(raw_j)
                 back = lazyLoadJobBackend(raw_j)
                 stat = lazyLoadJobStatus(raw_j)
                 fq = lazyLoadJobFQID(raw_j)
@@ -72,7 +73,7 @@ class TestLazyLoadingManyJobs(GangaUnitTest):
         from Ganga.GPIDev.Base.Proxy import stripProxy
         raw_j = stripProxy(j)
 
-        ## ANY COMMAND TO LOAD A JOB CAN BE USED HERE
+        # ANY COMMAND TO LOAD A JOB CAN BE USED HERE
         raw_j.printSummaryTree()
 
         has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
@@ -92,4 +93,3 @@ class TestLazyLoadingManyJobs(GangaUnitTest):
 
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'True')
-

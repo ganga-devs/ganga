@@ -17,6 +17,7 @@ def _XMLJobFiles():
 # Post-Processing script taken from AppBase to be shared among multiple
 # Job types
 
+
 def postprocess(self, logger):
 
     j = self.getJobObject()
@@ -48,7 +49,7 @@ def postprocess(self, logger):
             summaries.append(outputxml)
 
         # Not needed now that we dont merge if ANY of subjobs have missing summary.xml
-        #if not summaries:
+        # if not summaries:
         #    logger.debug('None of the subjobs of job %s produced the output XML summary file "summary.xml". Merging will therefore not happen' % j.fqid)
         #    return
 
@@ -75,4 +76,3 @@ def postprocess(self, logger):
             j.metadata[key] = 'Not Available.'
         else:
             j.metadata[key] = value
-

@@ -24,4 +24,3 @@ class TestJob(GangaUnitTest):
         # Test that submission succeeds after adding it.
         addLocalTestSubmitter()
         assert j.submit()
-

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import os,sys
+import os
+import sys
 opts = '###OPTS###'
 project_opts = '###PROJECT_OPTS###'
 app = '###APP_NAME###'
@@ -16,14 +17,14 @@ if not os.path.exists(opts):
     os.environ['JOBOPTPATH'] = opts
 else:
     os.environ['JOBOPTPATH'] = os.path.join(os.environ[app + '_release_area'],
-            app_upper,
-            app_upper,
-            version,
-            package,
-            app,
-            version,
-            'options',
-            'job.opts')
+                                            app_upper,
+                                            app_upper,
+                                            version,
+                                            package,
+                                            app,
+                                            version,
+                                            'options',
+                                            'job.opts')
     sys.stdout.write('Using the master optionsfile: %s' % opts)
     sys.stdout.flush()
 
@@ -34,12 +35,12 @@ else:
 # add lib subdir in case user supplied shared libs where copied to pwd/lib
 os.environ['LD_LIBRARY_PATH'] = '.:%s/lib:%s' % (os.getcwd(), os.environ['LD_LIBRARY_PATH'])
 
-#run
+# run
 sys.stdout.flush()
 os.environ['PYTHONPATH'] = '%s/InstallArea/python:%s' % \
-        (os.getcwd(), os.environ['PYTHONPATH'])
+    (os.getcwd(), os.environ['PYTHONPATH'])
 os.environ['PYTHONPATH'] = '%s/InstallArea/%s/python:%s' % \
-        (os.getcwd(), platform,os.environ['PYTHONPATH'])
+    (os.getcwd(), platform, os.environ['PYTHONPATH'])
 
 cmdline = '''###CMDLINE###'''
 
@@ -47,4 +48,3 @@ cmdline = '''###CMDLINE###'''
 os.system(cmdline)
 
 ###XMLSUMMARYPARSING###
-

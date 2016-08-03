@@ -51,8 +51,8 @@ def diracAPI_interactive(connection_attempts=5):
     from Ganga.Core.GangaThread.WorkerThreads import getQueues
     getQueues().add(execute("execfile('%s')" % serverpath, timeout=None, shell=False))
 
-    #time.sleep(1)
-    sys.stdout.write( "\nType 'q' or 'Q' or 'exit' or 'exit()' to quit but NOT ctrl-D")
+    # time.sleep(1)
+    sys.stdout.write("\nType 'q' or 'Q' or 'exit' or 'exit()' to quit but NOT ctrl-D")
     i = 0
     excpt = None
     while i < connection_attempts:

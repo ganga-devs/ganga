@@ -15,6 +15,7 @@ from Ganga.Utility.logging import getLogger
 
 logger = getLogger()
 
+
 class LHCbTransform(ITransform):
     _schema = Schema(Version(1, 0), dict(ITransform._schema.datadict.items() + {
         'files_per_unit': SimpleItem(defvalue=-1, doc='Maximum number of files to assign to each unit from a given input dataset. If < 1, use all files.', typelist=["int"]),
@@ -117,7 +118,7 @@ class LHCbTransform(ITransform):
                     assigned_data.files += unit.inputdata.files
 
                 # any new files
-                new_data = LHCbDataset( files = self.inputdata[id].difference(assigned_data).files )
+                new_data = LHCbDataset(files=self.inputdata[id].difference(assigned_data).files)
 
                 if len(new_data.files) == 0:
                     continue

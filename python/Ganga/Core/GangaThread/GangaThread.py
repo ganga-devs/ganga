@@ -5,6 +5,7 @@ from Ganga.Utility.logging import getLogger
 import functools
 logger = getLogger()
 
+
 def synchronised(f):
     @functools.wraps(f)
     def decorated(self, *args, **kwargs):

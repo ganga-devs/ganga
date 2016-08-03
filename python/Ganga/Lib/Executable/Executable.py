@@ -24,6 +24,7 @@ from Ganga.Utility.files import expandfilename
 
 logger = getLogger()
 
+
 class Executable(IPrepareApp):
 
     """
@@ -55,7 +56,7 @@ class Executable(IPrepareApp):
         'exe': SimpleItem(preparable=1, defvalue='echo', typelist=[str, File], comparable=1, doc='A path (string) or a File object specifying an executable.'),
         'args': SimpleItem(defvalue=["Hello World"], typelist=[str, File, int], sequence=1, strict_sequence=0, doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
         'env': SimpleItem(defvalue={}, typelist=[str], doc='Dictionary of environment variables that will be replaced in the running environment.'),
-       'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes')
     })
     _category = 'applications'
@@ -123,7 +124,7 @@ class Executable(IPrepareApp):
                 source = self.exe.name
             elif isinstance(self.exe, str):
                 source = self.exe
-            
+
             if not os.path.exists(source):
                 logger.debug("Error copying exe: %s to input workspace" % str(source))
             else:

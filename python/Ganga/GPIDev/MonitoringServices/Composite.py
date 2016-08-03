@@ -26,6 +26,7 @@
 import sys
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 
+
 class CompositeMonitoringService(IMonitoringService):
 
     """ IMonitoringService container:
@@ -92,7 +93,7 @@ class CompositeMonitoringService(IMonitoringService):
                 ret[monClass] = monService.start(**opts)
             except Exception as e:
                 # discard errors in initialization of monitoring services
-               self.logger.warning("%s monitoring service failed to *start*: %s" % (monClass, e))
+                self.logger.warning("%s monitoring service failed to *start*: %s" % (monClass, e))
 
         return ret
 
@@ -246,4 +247,3 @@ class CompositeMonitoringService(IMonitoringService):
                 # discard errors in initialization of monitoring services
                 self.logger.warning("%s monitoring service failed in *getJobInfo*: %s" % (monClass, e))
         return infos
-

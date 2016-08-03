@@ -1420,8 +1420,8 @@ sys.exit(0)
         from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
-        packed_files = jobconfig.getSandboxFiles() + [ fileutils ]
+        fileutils = File(inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR)
+        packed_files = jobconfig.getSandboxFiles() + [fileutils]
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox

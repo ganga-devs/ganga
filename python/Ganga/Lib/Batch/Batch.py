@@ -20,6 +20,8 @@ logger = Ganga.Utility.logging.getLogger()
 # return (exitcode,soutfile,exeflag)
 # soutfile - path where the stdout/stderr is stored
 # exeflag - 0 if the command failed to execute, 1 if it executed
+
+
 def shell_cmd(cmd, soutfile=None, allowed_exit=[0]):
 
     if not soutfile:
@@ -389,19 +391,18 @@ class Batch(IBackend):
         from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
+        fileutils = File(inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR)
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [fileutils])
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         sharedoutputpath = job.getOutputWorkspace().getPath()
-        ## FIXME Check this isn't a GangaList
+        # FIXME Check this isn't a GangaList
         outputpatterns = jobconfig.outputbox
         environment = jobconfig.env if not jobconfig.env is None else {}
 
-
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                       'BatchScriptTemplate.py')
+                                       'BatchScriptTemplate.py')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         text = FileUtils.loadScript(script_location, '')
@@ -414,31 +415,31 @@ class Batch(IBackend):
 
         replace_dict = {
 
-        '###OUTPUTSANDBOXPOSTPROCESSING###' : getWNCodeForOutputSandbox(job, ['__syslog__'], jobidRepr),
+            '###OUTPUTSANDBOXPOSTPROCESSING###': getWNCodeForOutputSandbox(job, ['__syslog__'], jobidRepr),
 
-        '###OUTPUTUPLOADSPOSTPROCESSING###' : getWNCodeForOutputPostprocessing(job, ''),
+            '###OUTPUTUPLOADSPOSTPROCESSING###': getWNCodeForOutputPostprocessing(job, ''),
 
-        '###DOWNLOADINPUTFILES###' : getWNCodeForDownloadingInputFiles(job, ''),
+            '###DOWNLOADINPUTFILES###': getWNCodeForDownloadingInputFiles(job, ''),
 
-        '###INLINEMODULES###' : inspect.getsource(Sandbox.WNSandbox),
-        '###INLINEHOSTNAMEFUNCTION###' : inspect.getsource(Utility.util.hostname),
-        '###APPSCRIPTPATH###' : repr(appscriptpath),
-        #'###SHAREDINPUTPATH###' : repr(sharedinputpath)),
+            '###INLINEMODULES###': inspect.getsource(Sandbox.WNSandbox),
+            '###INLINEHOSTNAMEFUNCTION###': inspect.getsource(Utility.util.hostname),
+            '###APPSCRIPTPATH###': repr(appscriptpath),
+            #'###SHAREDINPUTPATH###' : repr(sharedinputpath)),
 
-        '###INPUT_SANDBOX###' : repr(subjob_input_sandbox + master_input_sandbox),
-        '###SHAREDOUTPUTPATH###' : repr(sharedoutputpath),
+            '###INPUT_SANDBOX###': repr(subjob_input_sandbox + master_input_sandbox),
+            '###SHAREDOUTPUTPATH###': repr(sharedoutputpath),
 
-        '###OUTPUTPATTERNS###' : repr(outputpatterns),
-        '###JOBID###' : jobidRepr,
-        '###ENVIRONMENT###' : repr(environment),
-        '###PREEXECUTE###' : self.config['preexecute'],
-        '###POSTEXECUTE###' : self.config['postexecute'],
-        '###JOBIDNAME###' : self.config['jobid_name'],
-        '###QUEUENAME###' : self.config['queue_name'],
-        '###HEARTBEATFREQUENCE###' : self.config['heartbeat_frequency'],
-        '###INPUT_DIR###' : repr(job.getStringInputDir()),
+            '###OUTPUTPATTERNS###': repr(outputpatterns),
+            '###JOBID###': jobidRepr,
+            '###ENVIRONMENT###': repr(environment),
+            '###PREEXECUTE###': self.config['preexecute'],
+            '###POSTEXECUTE###': self.config['postexecute'],
+            '###JOBIDNAME###': self.config['jobid_name'],
+            '###QUEUENAME###': self.config['queue_name'],
+            '###HEARTBEATFREQUENCE###': self.config['heartbeat_frequency'],
+            '###INPUT_DIR###': repr(job.getStringInputDir()),
 
-        '###GANGADIR###' : repr(getConfig('System')['GANGA_PYTHONPATH'])
+            '###GANGADIR###': repr(getConfig('System')['GANGA_PYTHONPATH'])
         }
 
         for k, v in replace_dict.iteritems():
@@ -548,6 +549,7 @@ class Batch(IBackend):
 
 #_________________________________________________________________________
 
+
 class LSF(Batch):
 
     ''' LSF backend - submit jobs to Load Sharing Facility.'''
@@ -591,4 +593,3 @@ class SGE(Batch):
 
     def __init__(self):
         super(SGE, self).__init__()
-

@@ -26,6 +26,7 @@ from Ganga.GPIDev.Base.Proxy import getName
 
 config = getConfig('LCG')
 
+
 class ARC(IBackend):
 
     '''ARC backend - direct job submission to an ARC CE'''
@@ -747,8 +748,8 @@ sys.exit(0)
         from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
-        packed_files = jobconfig.getSandboxFiles() + [ fileutils ]
+        fileutils = File(inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR)
+        packed_files = jobconfig.getSandboxFiles() + [fileutils]
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox
@@ -871,7 +872,7 @@ sys.exit(0)
             xrsl['environment'].update(jobconfig.env)
 
         xrslText = Grid.expandxrsl(xrsl)
-        
+
         # append any additional requirements from the requirements object
         xrslText += '\n'.join(self.requirements.other)
 
@@ -1226,7 +1227,6 @@ sys.exit(0)
             if not Grid.arc_purgeMultiple(jidListForPurge):
                 logger.warning("Failed to purge all ARC jobs.")
 
-
     def updateGangaJobStatus(self):
         '''map backend job status to Ganga job status'''
 
@@ -1259,5 +1259,3 @@ sys.exit(0)
             logger.warning('Unexpected job status "%s"', self.status)
 
 logger = getLogger()
-
-

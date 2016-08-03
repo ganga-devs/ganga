@@ -67,4 +67,3 @@ class TestLHCbTask(GangaGPITestCase):
         t.update()
         assert len(t.transforms[0]._impl.toProcess_dataset.files), 'Update did not produce any datafiles to process in transform 0'
         assert len(t.transforms[1]._impl.toProcess_dataset.files), 'Update did not produce any datafiles to process in transform 1'
-

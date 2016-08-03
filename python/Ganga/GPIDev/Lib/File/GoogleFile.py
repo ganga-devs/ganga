@@ -19,6 +19,7 @@ regex = re.compile('[*?\[\]]')
 badlogger = getLogger('oauth2client.util')
 badlogger.setLevel(logging.ERROR)
 
+
 class GoogleFile(IGangaFile):
 
     """
@@ -69,7 +70,7 @@ class GoogleFile(IGangaFile):
         super(GoogleFile, self).__init__()
         self.namePattern = namePattern
         self.__initialized = False
-        
+
         self.cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata.pkl')
 
     def __initializeCred(self):
@@ -125,7 +126,7 @@ class GoogleFile(IGangaFile):
             if credentials is not '':
                 with open(self.cred_path, "wb") as output:
                     pickle.dump(credentials, output)
-                
+
                 os.chmod(self.cred_path, stat.S_IWUSR | stat.S_IRUSR)
                 logger.info('Your GoogleDrive credentials have been stored in the file %s and are only readable by you. '
                             'The file will give permission to modify files in your GoogleDrive. '

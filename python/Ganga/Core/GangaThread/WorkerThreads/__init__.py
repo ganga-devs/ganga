@@ -2,8 +2,10 @@
 _global_queues = None
 _queues_interface = None
 
+
 def getQueues():
     return _global_queues
+
 
 def startUpQueues(my_interface=None):
     from Ganga.Utility.logging import getLogger
@@ -25,6 +27,7 @@ def startUpQueues(my_interface=None):
     else:
         logger.error("Cannot Start queues if they've already started")
 
+
 def shutDownQueues():
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
@@ -43,4 +46,3 @@ def shutDownQueues():
         if hasattr(_queues_interface, 'queues'):
             delattr(_queues_interface, 'queues')
     _queues_interface = None
-

@@ -49,7 +49,7 @@ class DiracFile(IGangaFile):
                                                                typelist=['GangaDirac.Lib.Files.DiracFile'], doc="collected files from the wildcard namePattern"),
                                      'defaultSE': SimpleItem(defvalue='', copyable=1, doc="defaultSE where the file is to be accessed from or uploaded to"),
                                      'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
-    })
+                                     })
 
     _env = None
 
@@ -133,10 +133,10 @@ class DiracFile(IGangaFile):
     def _setLFNnamePattern(self, lfn="", namePattern=""):
 
         if self.defaultSE != "":
-            ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
+            # TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
             # Check for /lhcb/some/path or /gridpp/some/path
             if namePattern.split(os.pathsep)[0] == self.defaultSE \
-                or (len(namePattern) > 3 and namePattern[0:4].upper() == "LFN:"\
+                or (len(namePattern) > 3 and namePattern[0:4].upper() == "LFN:"
                     or len(namePattern.split(os.pathsep)) > 1 and namePattern.split(os.pathsep)[1] == self.defaultSE):
                 # Check for LFN:/gridpp/some/path or others...
                 lfn = namePattern
@@ -266,7 +266,7 @@ class DiracFile(IGangaFile):
         try:
             postprocesslocations = open(postprocessLocationsPath, 'r')
             self.subfiles = []
-            ## NB remember only do this once at it leaves the 'cursor' at the end of the file - rcurrie
+            # NB remember only do this once at it leaves the 'cursor' at the end of the file - rcurrie
             all_lines = postprocesslocations.readlines()
             logger.debug("lines:\n%s" % all_lines)
             for line in all_lines:
@@ -470,24 +470,24 @@ class DiracFile(IGangaFile):
         """
         _accessURLs = []
         if len(self.subfiles) == 0:
-          self.getReplicas()
-          # If the SE isn't specified return a random choice.
-          if thisSE == '':
-            this_SE = random.choice(self.locations)
-          # If the SE is specified and we got a URL for a replica there, use it.
-          elif thisSE in self.locations:
-            this_SE = thisSE
-          # If the specified SE doesn't have a replica then return another one at random.
-          else:
-             logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
-             this_SE = random.choice(self.locations) 
-          myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
-          this_accessURL = myurl['Value']['Successful'][self.lfn]
-          _accessURLs.append(this_accessURL)
+            self.getReplicas()
+            # If the SE isn't specified return a random choice.
+            if thisSE == '':
+                this_SE = random.choice(self.locations)
+            # If the SE is specified and we got a URL for a replica there, use it.
+            elif thisSE in self.locations:
+                this_SE = thisSE
+            # If the specified SE doesn't have a replica then return another one at random.
+            else:
+                logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
+                this_SE = random.choice(self.locations)
+            myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
+            this_accessURL = myurl['Value']['Successful'][self.lfn]
+            _accessURLs.append(this_accessURL)
         else:
-          # For all subfiles request the accessURL, 1 URL per LFN
-          for i in self.subfiles:
-            _accessURLs.append(i.accessURL(thisSE)[0])
+            # For all subfiles request the accessURL, 1 URL per LFN
+            for i in self.subfiles:
+                _accessURLs.append(i.accessURL(thisSE)[0])
         return _accessURLs
 
     def get(self, localPath=''):
@@ -755,11 +755,11 @@ import subprocess
 dirac_env=###DIRAC_ENV###
 subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=True, env=dirac_env, stdin=subprocess.PIPE).communicate(download_script)
 """
-        script = '\n'.join([ str(indent+str(line)) for line in script.split('\n')])
+        script = '\n'.join([str(indent + str(line)) for line in script.split('\n')])
 
-        replace_dict = {'###DOWNLOAD_SCRIPT###' : download_script,
-                        '###DIRAC_ENV###' : self._getDiracEnvStr(),
-                        '###LFN###' : self.lfn}
+        replace_dict = {'###DOWNLOAD_SCRIPT###': download_script,
+                        '###DIRAC_ENV###': self._getDiracEnvStr(),
+                        '###LFN###': self.lfn}
 
         for k, v in replace_dict.iteritems():
             script = script.replace(str(k), str(v))
@@ -778,9 +778,9 @@ for f in glob.glob('###NAME_PATTERN###'):
         from Ganga.GPIDev.Lib.File import FileUtils
         wildcard_str = FileUtils.indentScript(wildcard_str, '###INDENT###')
 
-        replace_dict = { '###NAME_PATTERN###' : namePattern,
-                         '###LFN_BASE###' : lfnBase,
-                         '###COMPRESSED###' : compressed }
+        replace_dict = {'###NAME_PATTERN###': namePattern,
+                        '###LFN_BASE###': lfnBase,
+                        '###COMPRESSED###': compressed}
 
         for k, v in replace_dict.iteritems():
             wildcard_str = wildcard_str.replace(str(k), str(v))
@@ -793,12 +793,12 @@ for f in glob.glob('###NAME_PATTERN###'):
         """
 
         script_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-        script_location = os.path.join( script_path, 'uploadScript.py')
+        script_location = os.path.join(script_path, 'uploadScript.py')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         upload_script = FileUtils.loadScript(script_location, '')
 
-        WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
+        WNscript_location = os.path.join(script_path, 'WNInjectTemplate.py')
         script = FileUtils.loadScript(WNscript_location, '')
 
         if not self.remoteDir:
@@ -828,7 +828,6 @@ for f in glob.glob('###NAME_PATTERN###'):
                 script += '###INDENT###print("Uploading: %s as: %s")\n' % (this_file.namePattern, str(os.path.join(lfn_base, this_file.namePattern)))
                 script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(isCompressed))
 
-
         if stripProxy(self)._parent is not None and stripProxy(self).getJobObject() and getName(stripProxy(self).getJobObject().backend) != 'Dirac':
             script_env = self._getDiracEnvStr()
         else:
@@ -836,11 +835,11 @@ for f in glob.glob('###NAME_PATTERN###'):
 
         script = '\n'.join([str('###INDENT###' + str(line)) for line in script.split('\n')])
 
-        replace_dict = {'###UPLOAD_SCRIPT###' : upload_script,
-                        '###STORAGE_ELEMENTS###' : str(configDirac['allDiracSE']),
-                        '###INDENT###' : indent,
-                        '###LOCATIONSFILE###' : postProcessLocationsFP,
-                        '###DIRAC_ENV###' : script_env}
+        replace_dict = {'###UPLOAD_SCRIPT###': upload_script,
+                        '###STORAGE_ELEMENTS###': str(configDirac['allDiracSE']),
+                        '###INDENT###': indent,
+                        '###LOCATIONSFILE###': postProcessLocationsFP,
+                        '###DIRAC_ENV###': script_env}
 
         for k, v in replace_dict.iteritems():
             script = script.replace(str(k), str(v))
@@ -879,4 +878,3 @@ Ganga.Utility.Config.config_scope['DiracFile'] = DiracFile
 
 from Ganga.Runtime.GPIexport import exportToGPI
 exportToGPI('GangaDirac', GangaList, 'Classes')
-

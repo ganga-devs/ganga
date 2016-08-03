@@ -51,5 +51,3 @@ class MetaDataChecker(IChecker):
         if self.result is False:
             logger.info('MetaDataChecker has failed job(%s) because the expression "%s" is False' % (job.fqid, self.expression))
         return self.result
-
-

@@ -55,6 +55,7 @@ def API_nullifier(item):
         return None
     return item
 
+
 def dirac_outputfile_jdl(output_files, empty_SE_check):
     """
     This constructs the setOutputData such that the data will be sent to the chosen SE/Token
@@ -72,7 +73,7 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
     for this_file in _output_files:
         if not this_file.defaultSE in file_SE_dict:
             file_SE_dict[this_file.defaultSE] = []
-        file_SE_dict[this_file.defaultSE].append( this_file.namePattern )
+        file_SE_dict[this_file.defaultSE].append(this_file.namePattern)
 
     per_SE_JDL = '''j.setOutputData(###OUTPUTDATA###, outputPath='###OUTPUT_PATH###', outputSE=###OUTPUT_SE###)'''
     total_JDL = ''
@@ -85,7 +86,7 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
             myLine = myLine.replace('###OUTPUT_SE###', str([outputSE]))
         else:
             if empty_SE_check:
-                ## If true check, if not false check
+                # If true check, if not false check
                 raise BackendError("Dirac", "Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
             config = getConfig('Dirac')
             myLine = myLine.replace('###OUTPUT_SE###', str([]))
@@ -117,7 +118,7 @@ def dirac_inputdata(app, hasOtherInputData=False):
     if not job.inputdata and job.master and job.master.inputdata is not None and job.master.inputdata:
         wanted_job = job.master
 
-    inputLFNs = ['LFN:'+this_file.lfn for this_file in wanted_job.inputdata if isinstance(this_file, DiracFile)]
+    inputLFNs = ['LFN:' + this_file.lfn for this_file in wanted_job.inputdata if isinstance(this_file, DiracFile)]
 
     # master job with a splitter reaching prepare, hence bulk submit
     if not job.master and job.splitter:
@@ -165,7 +166,7 @@ def dirac_parametric_split(app):
             if isinstance(this_file, DiracFile):
                 this_dataset.append(this_file.lfn)
             else:
-                raise SplitterError("ERROR: file: %s NOT of type DiracFile" % str(this_file) )
+                raise SplitterError("ERROR: file: %s NOT of type DiracFile" % str(this_file))
         split_files.append(this_dataset)
 
     if len(split_files) > 0:
@@ -231,4 +232,3 @@ def diracAPI_script_settings(app):
 
     return diracAPI_line
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-

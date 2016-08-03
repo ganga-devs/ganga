@@ -14,6 +14,7 @@ logger = Ganga.Utility.logging.getLogger()
 # The interface of this class should resemble the regular dictionary
 # interface.
 
+
 class ConfigDescriptor(object):
 
     def __init__(self, name):
@@ -25,6 +26,7 @@ class ConfigDescriptor(object):
 
     def __set__(self, obj, val):
         stripProxy(obj).setUserValue(self._name, val)
+
 
 class ConfigProxy(object):
 

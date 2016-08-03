@@ -55,7 +55,7 @@ def genDataFiles(job):
 
         inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file, data_str))
     else:
-        inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file, '#dummy_data_file\n'+LHCbDataset().optionsString()))
+        inputsandbox.append(FileBuffer(GaudiExecDiracRTHandler.data_file, '#dummy_data_file\n' + LHCbDataset().optionsString()))
 
     return inputsandbox
 
@@ -78,7 +78,7 @@ def getScriptName(app):
     """
     job = app.getJobObject()
 
-    return getName(app)+"_Job_"+job.getFQID('.')+'_script.py'
+    return getName(app) + "_Job_" + job.getFQID('.') + '_script.py'
 
 
 def generateWNScript(commandline, app):
@@ -92,7 +92,7 @@ def generateWNScript(commandline, app):
     exe_script_name = getScriptName(app)
 
     return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
-                                                                      OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
+                                                                      OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, '    ')),
                       subdir='jobScript', executable=True)
 
 
@@ -201,7 +201,7 @@ class GaudiExecRTHandler(IRuntimeHandler):
 
         # It's this authors opinion that the script should be in the PATH on the WN
         # As it stands policy is that is isn't so we have to call it in a relative way, hence "./"
-        c = StandardJobConfig('./'+os.path.join(scriptToRun.subdir, scriptToRun.name), input_sand, [], output_sand)
+        c = StandardJobConfig('./' + os.path.join(scriptToRun.subdir, scriptToRun.name), input_sand, [], output_sand)
         return c
 
 
@@ -231,7 +231,7 @@ def generateDiracInput(app):
         addTimestampFile(prep_dir)
         prep_file = prep_dir + '.tgz'
         tmp_dir = tempfile.gettempdir()
-        compressed_file = os.path.join(tmp_dir, '__'+os.path.basename(prep_file))
+        compressed_file = os.path.join(tmp_dir, '__' + os.path.basename(prep_file))
 
         if not job.master:
             rjobs = job.subjobs
@@ -291,8 +291,9 @@ def generateJobScripts(app, appendJobScripts):
                 wnScript.create(this_script)
                 tar_file.add(this_script, arcname=os.path.join(wnScript.subdir, wnScript.name))
 
-    gzipFile(scriptArchive, scriptArchive+'.gz', True)
+    gzipFile(scriptArchive, scriptArchive + '.gz', True)
     app.jobScriptArchive.namePattern = app.jobScriptArchive.namePattern + '.gz'
+
 
 def generateDiracScripts(app):
     """
@@ -356,14 +357,12 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
-
         if not isinstance(app.uploadedInput, DiracFile):
             generateDiracInput(app)
             assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit"
-        
+
         rep_data = app.uploadedInput.getReplicas()
         assert rep_data != {}, "Failed to find a replica, aborting submit"
-
 
         if isinstance(app.jobScriptArchive, (DiracFile, LocalFile)):
             app.jobScriptArchive = None
@@ -375,7 +374,6 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         assert rep_data != {}, "Failed to find a replica, aborting submit"
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
-
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         """
@@ -390,7 +388,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         # NB this needs to be removed safely
         # Get the inputdata and input/output sandbox in a sorted way
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
-        input_data,   parametricinput_data = dirac_inputdata(app)
+        input_data, parametricinput_data = dirac_inputdata(app)
 
         # We know we don't need this one
         inputsandbox = []
@@ -403,12 +401,12 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         for opts_file in all_opts_files:
             if isinstance(opts_file, DiracFile):
-                inputsandbox += ['LFN:'+opts_file.lfn]
+                inputsandbox += ['LFN:' + opts_file.lfn]
 
         # Sort out inputfiles we support
         for file_ in job.inputfiles:
             if isinstance(file_, DiracFile):
-                inputsandbox += ['LFN:'+file_.lfn]
+                inputsandbox += ['LFN:' + file_.lfn]
             elif isinstance(file_, LocalFile):
                 base_name = os.path.basename(file_.namePattern)
                 shutil.copyfile(os.path.join(file_.localDir, base_name), os.path.join(app.getSharedPath(), base_name))
@@ -427,8 +425,8 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         logger.debug("Replica info: %s" % rep_data)
 
-        inputsandbox += ['LFN:'+app.uploadedInput.lfn]
-        inputsandbox += ['LFN:'+app.jobScriptArchive.lfn]
+        inputsandbox += ['LFN:' + app.uploadedInput.lfn]
+        inputsandbox += ['LFN:' + app.jobScriptArchive.lfn]
 
         logger.debug("Input Sand: %s" % inputsandbox)
 
@@ -575,4 +573,3 @@ if __name__ == '__main__':
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('GaudiExec', 'Dirac', GaudiExecDiracRTHandler)
-

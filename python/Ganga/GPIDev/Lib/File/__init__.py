@@ -67,11 +67,11 @@ def findOutputFileTypeByFileName(filename):
                 matchKeys.append(key)
 
     if len(matchKeys) == 1:
-        #logger.debug("File name pattern %s matched %s, assigning to %s" % (
+        # logger.debug("File name pattern %s matched %s, assigning to %s" % (
         #    filename, str(matchKeys), matchKeys[-1]))
         return matchKeys[-1]
     elif len(matchKeys) > 1:
-        #logger.warning("file name pattern %s matched %s, assigning to %s" % (
+        # logger.warning("file name pattern %s matched %s, assigning to %s" % (
         #    filename, str(matchKeys), matchKeys[-1]))
         return matchKeys[-1]
     else:
@@ -104,4 +104,3 @@ def string_file_shortcut(v, item):
     return None
 
 allComponentFilters['gangafiles'] = string_file_shortcut
-

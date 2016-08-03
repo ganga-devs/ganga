@@ -100,9 +100,9 @@ class Shell(object):
         s = Shell()
         if 'NO_BAR' not in os.environ:
            assert s.env['FOO'] == '$NO_BAR'
-           
+
         will store an env from:
-        
+
         source setup setup_args[0] setup_args[1]
         e.g.
         source . && myCmd.sh someoption
@@ -116,7 +116,7 @@ class Shell(object):
 
         if setup is not None:
             self.env = dict(os.environ)
-            execute('source {0} {1}'.format(setup," ".join(setup_args)), shell=True, env=self.env, update_env=True)
+            execute('source {0} {1}'.format(setup, " ".join(setup_args)), shell=True, env=self.env, update_env=True)
 
         else:
             # bug #44334: Ganga/Utility/Shell.py does not save environ
@@ -126,7 +126,7 @@ class Shell(object):
         self.dirname = None
 
     def pythonCmd(self, cmd, soutfile=None, allowed_exit=None,
-            capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
+                  capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
         """Execute a python command and captures the stderr and stdout which are returned in a file
         Args:
             cmd (str): command to be executed in a shell
@@ -190,7 +190,7 @@ class Shell(object):
                         break
                 if timeout and time.time() - t0 > timeout:
                     logger.warning(
-                            'Command interrupted - timeout %ss reached: %s', timeout0, cmd)
+                        'Command interrupted - timeout %ss reached: %s', timeout0, cmd)
                     if already_killed:
                         sig = signal.SIGKILL
                     else:
@@ -247,7 +247,7 @@ class Shell(object):
             allowed_exit = [0]
 
         rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr,
-                timeout, mention_outputfile_on_errors=False, python=python)
+                                  timeout, mention_outputfile_on_errors=False, python=python)
 
         from contextlib import closing
         with closing(open(outfile)) as out_file:
@@ -266,7 +266,7 @@ class Shell(object):
         caputured and are passed on the caller.
 
         stderr_capture may specify a name of a file to which stderr is redirected.
-        
+
         Args:
             cmd (str): command to be executed in a shell
             allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
@@ -284,7 +284,7 @@ class Shell(object):
             rc = subprocess.call(['/bin/sh', '-c', cmd], env=self.env)
         except OSError as e:
             logger.warning(
-                    'Problem with shell command: %s, %s', e.errno, e.strerror)
+                'Problem with shell command: %s, %s', e.errno, e.strerror)
             rc = 255
         return rc
 

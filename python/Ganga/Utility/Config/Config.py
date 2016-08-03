@@ -94,6 +94,7 @@ from functools import reduce
 
 from Ganga.Core.exceptions import GangaException
 
+
 class ConfigError(GangaException):
 
     """ ConfigError indicates that an option does not exist or it cannot be set.
@@ -114,8 +115,6 @@ class ConfigError(GangaException):
 logger = None
 
 
-
-
 def getLogger():
     import Ganga.Utility.logging
     global logger
@@ -131,6 +130,7 @@ def getLogger():
         print("AttributeError: %s" % str(err))
         # in such a case we return a mock proxy object which ignore all calls
         # such as logger.info()...
+
         class X(object):
 
             def __getattr__(self, name):
@@ -212,7 +212,7 @@ def makeConfig(name, docstring, **kwds):
 
     if _after_bootstrap:
         #import traceback
-        #traceback.print_stack()
+        # traceback.print_stack()
         raise ConfigError(
             'attempt to create a configuration section [%s] after bootstrap' % name)
 
@@ -359,7 +359,7 @@ class ConfigOption(object):
             values = []
 
             for n in ['user', 'session', 'default']:
-                str_val = n+'_value'
+                str_val = n + '_value'
                 if hasattr(self, str_val):
                     values.append(getattr(self, str_val))
                 else:
@@ -518,7 +518,7 @@ class PackageConfig(object):
 
     def setModified(self, val):
         self._hasModified = val
-                               
+
     def hasModified(self):
         return self._hasModified
 
@@ -557,9 +557,9 @@ class PackageConfig(object):
         else:
             msg = "Error getting ConfigFileValue Option: %s" % str(self.name)
             if 'logger' in locals() and logger is not None:
-                logger.debug("dbg: %s"%msg)
+                logger.debug("dbg: %s" % msg)
             else:
-                ##uncomment for debugging
+                # uncomment for debugging
                 ##print("%s" % msg)
                 pass
             conf_value = dict()
@@ -572,9 +572,9 @@ class PackageConfig(object):
             except Exception as err:
                 msg = "Error Setting Session Value: %s" % str(err)
                 if 'logger' in locals() and logger is not None:
-                    logger.debug("dbg: %s"%msg)
+                    logger.debug("dbg: %s" % msg)
                 else:
-                    ##uncomment for debugging
+                    # uncomment for debugging
                     ##print("%s" % msg)
                     pass
 
@@ -694,7 +694,7 @@ class PackageConfig(object):
             #logger = getLogger()
             #logger.debug("Effective Option %s NOT FOUND, Effective Options are:" % (name))
             opts = self.getEffectiveOptions()
-            #for k, v in opts.iteritems():
+            # for k, v in opts.iteritems():
             #    logger.debug("\n\t%s:%s" % (str(k), str(v)))
             raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name))
 
@@ -800,9 +800,9 @@ def transform_PATH_option(name, new_value, current_value):
             new_value = ":::"
 
         # remove duplicate path entries
-        #if ret_value[:3] == ':::':
+        # if ret_value[:3] == ':::':
         #    new_value = ":::"
-        #else:
+        # else:
         #    new_value = ""
 
         for tok in ret_value.strip(":").split(":"):
@@ -1095,4 +1095,3 @@ def getFlavour():
         return 'Atlas'
 
     return ''
-

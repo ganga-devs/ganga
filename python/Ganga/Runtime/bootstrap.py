@@ -32,6 +32,7 @@ from Ganga.Utility.Config.Config import getConfig
 from Ganga.Utility import stacktracer
 import Ganga.Runtime
 
+
 def new_version_format_to_old(version):
     """
     Convert from 'x.y.z'-style format to 'Ganga-x-y-z'
@@ -40,8 +41,7 @@ def new_version_format_to_old(version):
         >>> new_version_format_to_old('6.1.11')
         'Ganga-6-1-11'
     """
-    return 'Ganga-'+version.replace('.', '-')
-
+    return 'Ganga-' + version.replace('.', '-')
 
 
 from Ganga.Utility.files import fullpath
@@ -128,7 +128,7 @@ def manualExportToGPI(my_interface=None):
     exportToInterface(my_interface, 'license', license, 'Functions')
     # FIXME:
     #from Ganga.Runtime.GPIFunctions import applications, backends, list_plugins
-    #exportToInterface(my_interface, 'applications', applications, 'Functions)
+    # exportToInterface(my_interface, 'applications', applications, 'Functions)
     #exportToInterface(my_interface, 'backends', backends, 'Functions')
     #exportToInterface(my_interface, 'list_plugins', list_plugins, 'Functions')
     # FIXME: END DEPRECATED
@@ -141,8 +141,6 @@ def manualExportToGPI(my_interface=None):
     from Ganga.GPIDev.Persistency import export, load
     exportToInterface(my_interface, 'load', load, 'Functions')
     exportToInterface(my_interface, 'export', export, 'Functions')
-
-
 
     from Ganga.GPIDev.Credentials import getCredential
     # only the available credentials are exported
@@ -179,6 +177,7 @@ def manualExportToGPI(my_interface=None):
 
     from Ganga.GPIDev.Lib.Registry.JobRegistry import jobSlice
     exportToInterface(my_interface, "jobSlice", jobSlice, "Functions")
+
 
 class GangaProgram(object):
 
@@ -242,7 +241,7 @@ under certain conditions; type license() for details.
         parser.add_option("-i", dest="force_interactive", action="store_true",
                           help='enter interactive mode after running script')
 
-        parser.add_option("--webgui", dest="webgui",  action="store_true", default='False',
+        parser.add_option("--webgui", dest="webgui", action="store_true", default='False',
                           help='starts web GUI monitoring server')
 
         parser.add_option("--config", dest="config_file", action="store", metavar="FILE", default=None,
@@ -360,7 +359,7 @@ under certain conditions; type license() for details.
                     hasLoaded_newer = True
                 if major == 6 and minor == 1 and debug > 13:
                     hasLoaded_newer = True
-        
+
         old_dir = os.path.expanduser('~/.ipython-ganga')
         if 'IPYTHONDIR' in os.environ:
             old_dir = os.path.abspath(os.path.expanduser(os.environ['IPYTHONDIR']))
@@ -390,18 +389,17 @@ under certain conditions; type license() for details.
             if not os.path.exists(os.path.join(old_dir, "profile_default")):
                 os.makedirs(os.path.join(old_dir, "profile_default"))
 
-            IPython_history = HistoryManager(hist_file=new_sqlite_history)#, shell = InteractiveShell.instance())
+            IPython_history = HistoryManager(hist_file=new_sqlite_history)  # , shell = InteractiveShell.instance())
 
             with open(old_text_history) as hist_file:
                 for linenum, line in enumerate(hist_file):
                     IPython_history.store_inputs(linenum, line)
 
-            ## Set a file to indicate that we've already made this transition
+            # Set a file to indicate that we've already made this transition
             passed_file = open(single_pass_file, "w")
             passed_file.close()
 
             logger.info("IPython history migrated successfully.")
-
 
     @staticmethod
     def generate_config_file(config_file):
@@ -449,7 +447,7 @@ under certain conditions; type license() for details.
         with open(os.path.join(os.path.dirname(Ganga.Runtime.__file__), 'HEAD_CONFIG.INI'), 'r') as config_head_file:
             new_config += config_head_file.read()
         new_config += config_file_as_text()
-        new_config = new_config.replace('Ganga-SVN', new_version_format_to_old(_gangaVersion))  #Add in Ganga-x-y-z format so that it is backward compatible.
+        new_config = new_config.replace('Ganga-SVN', new_version_format_to_old(_gangaVersion))  # Add in Ganga-x-y-z format so that it is backward compatible.
         with open(config_file, 'w') as new_config_file:
             new_config_file.write(new_config)
 
@@ -618,7 +616,7 @@ under certain conditions; type license() for details.
                     this_logger.error('file %s does not seem to be a Ganga config file', config_file)
                     this_logger.error('try -g option to create valid ~/.gangarc')
                 else:
-                    cv = r.group('version').split('-')  #Version number is in Ganga-x-y-z format
+                    cv = r.group('version').split('-')  # Version number is in Ganga-x-y-z format
                     if len(cv) == 1:
                         cv = new_version_format_to_old(cv[0]).split('-')
                     if cv[1] != '6':
@@ -868,17 +866,17 @@ under certain conditions; type license() for details.
             from Ganga.Utility.Config.Config import getConfig
             config = getConfig('Configuration')
 
-            #if config['IgnoreRuntimeWarnings']:
+            # if config['IgnoreRuntimeWarnings']:
             #    import warnings
             #    warnings.filterwarnings(action="ignore", category=RuntimeWarning)
 
-            
             import inspect
             from os.path import expandvars, expanduser
 
             GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
+
             def transform(x):
-                return os.path.normpath(Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath,x)))
+                return os.path.normpath(Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath, x)))
 
             paths = map(transform, filter(None, map(lambda x: expandvars(expanduser(x)), config['RUNTIME_PATH'].split(':'))))
 
@@ -923,13 +921,12 @@ under certain conditions; type license() for details.
         logger.debug("Bootstrap Core Modules")
         # bootstrap core modules
         from Ganga.Core.GangaRepository import getRegistrySlice
-        ## Here is where the monitoring loop and related services are started!
+        # Here is where the monitoring loop and related services are started!
         Ganga.Core.bootstrap(getRegistrySlice('jobs'), interactive)
 
         # export all configuration items, new options should not be added after
         # this point
         Ganga.GPIDev.Lib.Config.bootstrap()
-
 
         logger.debug("Post-Bootstrap hooks")
         from Ganga.Utility.Runtime import allRuntimes
@@ -941,7 +938,6 @@ under certain conditions; type license() for details.
             except Exception as err:
                 logger.error("problems with post bootstrap hook for %s" % r.name)
                 logger.error("Reason: %s" % err)
-
 
     @staticmethod
     def startTestRunner(my_args):
@@ -1073,7 +1069,7 @@ under certain conditions; type license() for details.
             path = Ganga.Utility.Runtime.getSearchPath()
             script = Ganga.Utility.Runtime.getScriptPath(self.args[0], path)
 
-            #if script:
+            # if script:
             #    script_file = open(script, 'r')
             #    script_content = script_file.read()
             #    script_file.close()
@@ -1124,7 +1120,7 @@ under certain conditions; type license() for details.
             ipver_major = int(ipver[0])
             ipver_minor = int(ipver[2])
 
-            #if ipver in ["1.2.1", "3.1.0", "3.2.0", "3.2.1", '4.0.0']:
+            # if ipver in ["1.2.1", "3.1.0", "3.2.0", "3.2.1", '4.0.0']:
             if ipver_major > 1 or (ipver_major == 1 and ipver_minor >= 2):
                 self.check_IPythonDir()
                 self.launch_IPython(local_ns, args, self._ganga_error_handler, self.ganga_prompt)
@@ -1180,7 +1176,7 @@ under certain conditions; type license() for details.
             os.makedirs(os.environ['IPYTHONDIR'])
 
         rc_file = os.path.join(os.environ['IPYTHONDIR'], 'ipythonrc')
-	logger.debug("Checking: %s" % rc_file)
+        logger.debug("Checking: %s" % rc_file)
         if not os.path.isfile(rc_file):
             lock = open(rc_file, "w")
             lock.close()
@@ -1192,7 +1188,7 @@ under certain conditions; type license() for details.
         """
         Error handler for IPython 3.x+ to identify expected Ganga exceptions or unexpected uncaught exceptions from somewhere
         """
-        ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
+        # see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
         from Ganga.Utility.logging import getLogger
         logger = getLogger(modulename=True)
         logger.error("Error: %s" % value)
@@ -1230,7 +1226,6 @@ under certain conditions; type license() for details.
         cfg.PlainTextFormatter.pprint = True
         banner = exit_msg = ''
 
-
         prompt_config = cfg.PromptManager
         # Here __flushCmd evaluates the object in the local_ns with this name to a str
         # The magic function time here is the builtin time prompt This renders in the same way as:
@@ -1259,7 +1254,7 @@ under certain conditions; type license() for details.
         # Import the embed function
         from IPython.terminal.embed import InteractiveShellEmbed
 
-        ## Check which version of IPython we're running
+        # Check which version of IPython we're running
         if ipver_major >= 2:
             ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
             ipshell.events.register("post_execute", ganga_prompt)
@@ -1298,10 +1293,9 @@ under certain conditions; type license() for details.
             if invalidCreds:
                 credentialsWarningPrompt = '[%s required]' % ','.join(invalidCreds)
             if credentialsWarningPrompt:  # append newline
-                 credentialsWarningPrompt += '\n'
+                credentialsWarningPrompt += '\n'
 
         return credentialsWarningPrompt
-
 
 
 #

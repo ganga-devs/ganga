@@ -93,4 +93,3 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
         my_interface = Ganga.GPI
     from Ganga.Runtime.GPIexport import exportToInterface
     exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
-

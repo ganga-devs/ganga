@@ -13,18 +13,21 @@ import time
 logger = getLogger()
 
 ########################################################################
-def addInfoString( task_obj, info_str ):
+
+
+def addInfoString(task_obj, info_str):
     """Helper function to add an info string with a timestamp"""
     if len(task_obj.info) > 0 and task_obj.info[-1].find(info_str) > -1:
         # repeated string. Add one to instances
         num_rpts = 1
         if task_obj.info[-1].find("(rpt ") > -1:
-            num_rpts = int( task_obj.info[-1][ task_obj.info[-1].find("(rpt ") + 5:-1 ] )
-            
+            num_rpts = int(task_obj.info[-1][task_obj.info[-1].find("(rpt ") + 5:-1])
+
         task_obj.info[-1] = "%s: %s (rpt %i)" % (time.ctime(), info_str, num_rpts + 1)
         return
-    
-    task_obj.info.append("%s: %s" % (time.ctime(), info_str) )
+
+    task_obj.info.append("%s: %s" % (time.ctime(), info_str))
+
 
 class ITask(GangaObject):
 
@@ -319,4 +322,3 @@ class ITask(GangaObject):
         """Remove any unused jobs"""
         for trf in self.transforms:
             trf.removeUnusedJobs()
-

@@ -220,4 +220,3 @@ def load(filename="", returnList=True):
         returnValue = objectList
 
     return returnValue
-

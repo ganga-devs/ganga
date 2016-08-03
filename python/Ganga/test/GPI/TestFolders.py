@@ -143,4 +143,3 @@ class TestFolders(GangaUnitTest):
         assert(jobtree_copy is jobtree)
         #del jobtree_copy
     # -------------
-

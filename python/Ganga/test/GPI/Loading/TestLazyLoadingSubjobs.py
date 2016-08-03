@@ -5,6 +5,7 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 global_subjob_num = 5
 default_CleanUp = None
 
+
 class TestLazyLoadingSubjobs(GangaUnitTest):
 
     def setUp(self):
@@ -21,8 +22,8 @@ class TestLazyLoadingSubjobs(GangaUnitTest):
         self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
 
         from Ganga.GPI import Job, jobs, ArgSplitter
-        j=Job()
-        self.assertEqual(len(jobs), 1) # Don't really gain anything from assertEqual...
+        j = Job()
+        self.assertEqual(len(jobs), 1)  # Don't really gain anything from assertEqual...
 
         j.splitter = ArgSplitter(args=[[i] for i in range(global_subjob_num)])
         j.submit()
@@ -59,7 +60,7 @@ class TestLazyLoadingSubjobs(GangaUnitTest):
         from Ganga.GPIDev.Base.Proxy import stripProxy
         raw_j = stripProxy(j)
 
-        ## ANY COMMAND TO LOAD A JOB CAN BE USED HERE
+        # ANY COMMAND TO LOAD A JOB CAN BE USED HERE
         raw_j.printSummaryTree()
 
         has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
@@ -76,7 +77,6 @@ class TestLazyLoadingSubjobs(GangaUnitTest):
         for i in range(1, len(j.subjobs)):
             self.assertFalse(raw_j.subjobs.isLoaded(i))
 
-
     def test_d_JobRemoval(self):
         """ Fourth make sure that we get rid of the jobs safely"""
         from Ganga.GPI import jobs
@@ -89,4 +89,3 @@ class TestLazyLoadingSubjobs(GangaUnitTest):
 
         from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', default_CleanUp)
-

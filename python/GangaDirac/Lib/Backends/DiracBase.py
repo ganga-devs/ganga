@@ -200,15 +200,15 @@ class DiracBase(IBackend):
 
         input_sandbox += self._addition_sandbox_content(subjobconfig)
 
-        ## Add LFN to the inputfiles section of the file
+        # Add LFN to the inputfiles section of the file
         input_sandbox_userFiles = []
         for this_file in j.inputfiles:
             if isType(this_file, DiracFile):
-                input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
+                input_sandbox_userFiles.append('LFN:' + str(this_file.lfn))
         if j.master:
             for this_file in j.master.inputfiles:
                 if isType(this_file, DiracFile):
-                    input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
+                    input_sandbox_userFiles.append('LFN:' + str(this_file.lfn))
 
         for this_file in input_sandbox_userFiles:
             input_sandbox.append(this_file)
@@ -390,7 +390,7 @@ class DiracBase(IBackend):
         j = self.getJobObject()
         if outputDir is None:
             outputDir = j.getOutputWorkspace().getPath()
-        dirac_cmd = "getOutputSandbox(%d,'%s')"  % (self.id, outputDir)
+        dirac_cmd = "getOutputSandbox(%d,'%s')" % (self.id, outputDir)
         result = execute(dirac_cmd)
         if not result_ok(result):
             msg = 'Problem retrieving output: %s' % str(result)
@@ -519,7 +519,7 @@ class DiracBase(IBackend):
             logger.error(result.get('Message', ''))
 
     @staticmethod
-    def _bulk_updateStateTime(jobStateDict, bulk_time_lookup={} ):
+    def _bulk_updateStateTime(jobStateDict, bulk_time_lookup={}):
         """ This performs the same as the _getStateTime method but loops over a list of job ids within the DIRAC namespace (much faster)
         Args:
             jobStateDict (dict): This is a dict of {job.backend.id : job_status, } elements
@@ -528,13 +528,13 @@ class DiracBase(IBackend):
         for this_state, these_jobs in jobStateDict.iteritems():
             if bulk_time_lookup == {} or this_state not in bulk_time_lookup:
                 bulk_result = execute("getBulkStateTime(%s,\'%s\')" %
-                                        (repr([j.backend.id for j in these_jobs]), this_state))
+                                      (repr([j.backend.id for j in these_jobs]), this_state))
             else:
                 bulk_result = bulk_time_lookup[this_state]
             for this_job in jobStateDict[this_state]:
                 backend_id = this_job.backend.id
                 if backend_id in bulk_result and bulk_result[backend_id]:
-                    DiracBase._getStateTime(this_job, this_state, {this_state : bulk_result[backend_id]})
+                    DiracBase._getStateTime(this_job, this_state, {this_state: bulk_result[backend_id]})
                 else:
                     DiracBase._getStateTime(this_job, this_state)
 
@@ -661,7 +661,7 @@ class DiracBase(IBackend):
                         from Ganga.Core.exceptions import GangaException
                         raise GangaException("Error understanding OutputDataInfo: %s" % str(file_info_dict))
 
-                    ## Caution is not clear atm whether this 'Value' is an LHCbism or bug
+                    # Caution is not clear atm whether this 'Value' is an LHCbism or bug
                     list_of_files = file_info_dict.get('Value', file_info_dict.keys())
 
                     for file_name in list_of_files:
@@ -802,12 +802,11 @@ class DiracBase(IBackend):
                     break
             if not configDirac['serializeBackend']:
                 getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
-                                                           args=(j, finalised_statuses[j.backend.status]),
-                                                           priority=5, name="Job %s Finalizing" % j.fqid)
+                                                                args=(j, finalised_statuses[j.backend.status]),
+                                                                priority=5, name="Job %s Finalizing" % j.fqid)
                 j.been_queued = True
             else:
                 DiracBase.job_finalisation(j, finalised_statuses[j.backend.status])
-
 
     @staticmethod
     def monitor_dirac_running_jobs(monitor_jobs, finalised_statuses):
@@ -838,13 +837,13 @@ class DiracBase(IBackend):
         logger.debug("diracJobIDs: %s" % str(dirac_job_ids))
 
         if not dirac_job_ids:
-            ## Nothing to do here stop bugging DIRAC about it!
-            ## Everything else beyond here in the function depends on some ids present here, no ids means we can stop.
+            # Nothing to do here stop bugging DIRAC about it!
+            # Everything else beyond here in the function depends on some ids present here, no ids means we can stop.
             return
 
         statusmapping = configDirac['statusmapping']
 
-        result, bulk_state_result = execute('monitorJobs(%s, %s)' %( repr(dirac_job_ids), repr(statusmapping)))
+        result, bulk_state_result = execute('monitorJobs(%s, %s)' % (repr(dirac_job_ids), repr(statusmapping)))
 
         if not DiracBase.checkDiracProxy():
             return
@@ -931,7 +930,7 @@ class DiracBase(IBackend):
     @staticmethod
     def checkDiracProxy():
         # make sure proxy is valid
-        if not _proxyValid(shouldRenew = False, shouldRaise = False):
+        if not _proxyValid(shouldRenew=False, shouldRaise=False):
             if DiracBase.dirac_monitoring_is_active is True:
                 logger.warning('DIRAC monitoring inactive (no valid proxy found).')
                 logger.warning('Type: \'gridProxy.renew()\' to (re-)activate')
@@ -978,4 +977,3 @@ class DiracBase(IBackend):
         DiracBase.monitor_dirac_running_jobs(monitor_jobs, finalised_statuses)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-

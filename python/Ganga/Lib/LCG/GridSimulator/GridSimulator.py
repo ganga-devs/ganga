@@ -15,6 +15,7 @@ logger.critical('LCG Grid Simulator ENABLED')
 
 config = getConfig("GridSimulator")
 
+
 def sleep(val):
     import time
     time.sleep(get_number(val))

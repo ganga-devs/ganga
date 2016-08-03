@@ -6,6 +6,7 @@ import string
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
+
 class TestCopy(GangaUnitTest):
 
     def _makeRandomString(self):

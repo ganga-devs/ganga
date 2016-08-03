@@ -127,7 +127,7 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
                                   PLATFORM=job.application.platform,
                                   CMDLINE=cmd,
                                   XMLSUMMARYPARSING=getXMLSummaryScript())  # ,
-                                  # OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
+        # OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
 
         logger.debug("Returning StandardJobConfig")
 

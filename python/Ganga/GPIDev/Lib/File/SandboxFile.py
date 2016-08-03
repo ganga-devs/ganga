@@ -5,6 +5,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
+
 class SandboxFile(LocalFile):
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
                                      'localDir': SimpleItem(defvalue="", doc='local dir where the file is stored, used from get and put methods'),

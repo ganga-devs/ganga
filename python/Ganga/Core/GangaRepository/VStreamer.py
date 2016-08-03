@@ -47,16 +47,18 @@ class XMLFileError(GangaException):
             err = ''
         return "XMLFileError: %s %s" % (self.message, err)
 
+
 def _raw_to_file(j, fobj=None, ignore_subs=[]):
     vstreamer = VStreamer(out=fobj, selection=ignore_subs)
     vstreamer.begin_root()
     stripProxy(j).accept(vstreamer)
     vstreamer.end_root()
 
+
 def to_file(j, fobj=None, ignore_subs=[]):
-    #used to debug write problems - rcurrie
+    # used to debug write problems - rcurrie
     #_raw_to_file(j, fobj, ignore_subs)
-    #return
+    # return
     _ignore_subs = [ignore_subs] if not isinstance(ignore_subs, list) else ignore_subs
     try:
         _raw_to_file(j, fobj, _ignore_subs)
@@ -80,6 +82,7 @@ def to_file(j, fobj=None, ignore_subs=[]):
 # * AssertionError (corruption: multiple objects in <root>...</root>
 # * Exception (probably corrupted data problem)
 
+
 def _raw_from_file(f):
     # logger.debug('----------------------------')
     ###logger.debug('Parsing file: %s',f.name)
@@ -87,8 +90,9 @@ def _raw_from_file(f):
     obj, errors = Loader().parse(xml_content)
     return obj, errors
 
+
 def from_file(f):
-    #return _raw_from_file(f)
+    # return _raw_from_file(f)
     try:
         return _raw_from_file(f)
     except Exception as err:
@@ -287,7 +291,7 @@ class Loader(object):
 
         # 3 handler functions
         def start_element(name, attrs):
-            #logger.debug('Start element: name=%s attrs=%s', name, attrs) #FIXME: for 2.4 use CurrentColumnNumber and CurrentLineNumber
+            # logger.debug('Start element: name=%s attrs=%s', name, attrs) #FIXME: for 2.4 use CurrentColumnNumber and CurrentLineNumber
             # if higher level element had error, ignore the corresponding part
             # of the XML tree as we go down
             if self.ignore_count:
@@ -420,4 +424,3 @@ class Loader(object):
             if not hasattr(obj, attr):
                 raise AssertionError("incomplete XML file")
         return obj, self.errors
-

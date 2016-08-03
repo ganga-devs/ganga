@@ -6,6 +6,7 @@ from .utilFunctions import getXMLFile
 
 from os import path, unlink
 
+
 def getNestedList():
     from Ganga.GPI import LocalFile, GangaList
     gl = GangaList()
@@ -15,6 +16,7 @@ def getNestedList():
     for i in range(5):
         gl2.append(gl)
     return gl2
+
 
 class TestNestedXMLWorking(GangaUnitTest):
 
@@ -30,7 +32,7 @@ class TestNestedXMLWorking(GangaUnitTest):
         self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
 
         from Ganga.GPI import Job, jobs, ArgSplitter
-        j=Job()
+        j = Job()
         assert len(jobs) == 1
 
         j.splitter = ArgSplitter()
@@ -66,7 +68,7 @@ class TestNestedXMLWorking(GangaUnitTest):
         from Ganga.GPIDev.Base.Proxy import stripProxy
         raw_j = stripProxy(j)
 
-        ## ANY COMMAND TO LOAD A JOB CAN BE USED HERE
+        # ANY COMMAND TO LOAD A JOB CAN BE USED HERE
         raw_j.printSummaryTree()
 
         has_loaded_job = raw_j._getRegistry().has_loaded(raw_j)
@@ -114,4 +116,3 @@ class TestNestedXMLWorking(GangaUnitTest):
 
             unlink(new_temp_file.name)
             unlink(new_temp_file2.name)
-

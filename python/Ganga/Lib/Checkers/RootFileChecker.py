@@ -158,5 +158,3 @@ class RootFileChecker(IFileChecker):
                     return self.failure
                 tf.Close()
         return self.result
-
-

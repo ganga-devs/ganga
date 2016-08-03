@@ -261,6 +261,7 @@ def proxy(obj, *specials):
 # ------------------------
 # cookbook recipe
 
+
 def importName(modulename, name):
     try:
         module = __import__(modulename, globals(), locals(), [name])
@@ -272,9 +273,9 @@ def importName(modulename, name):
         return vars(module)[name]
     else:
         return None
-    #try:
+    # try:
     #    return vars(module)[name]
-    #except KeyError, err:
+    # except KeyError, err:
     #    import sys
     #    sys.stderr.write("ImportName, KeyError: %s\n" % str(err))
     #    return None

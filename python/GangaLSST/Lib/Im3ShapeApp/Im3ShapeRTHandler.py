@@ -30,7 +30,7 @@ class Im3ShapeDiracRTHandler(IRuntimeHandler):
         """
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
         return StandardJobConfig(inputbox=unique(inputsandbox),
-                outputbox=unique(outputsandbox))
+                                 outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         """
@@ -44,33 +44,32 @@ class Im3ShapeDiracRTHandler(IRuntimeHandler):
 
         # Construct some common objects used in job submission here
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
-        input_data,   parametricinput_data = dirac_inputdata(app, hasOtherInputData=True)
-
+        input_data, parametricinput_data = dirac_inputdata(app, hasOtherInputData=True)
 
         job = app.getJobObject()
 
         # Construct the im3shape-script which is used by this job. i.e. the script and full command line to be used in this job
         exe_script_name = 'im3shape-script.py'
         output_filename = os.path.basename(job.inputdata[0].lfn) + '.' + str(app.rank) + '.' + str(app.size)
-        im3shape_args = ' '.join([ os.path.basename(job.inputdata[0].lfn), os.path.basename(app.ini_location.namePattern), # input.fz, config.ini
-                                   app.catalog, output_filename, # catalog, output
-                                   str(app.rank), str(app.size) ])
+        im3shape_args = ' '.join([os.path.basename(job.inputdata[0].lfn), os.path.basename(app.ini_location.namePattern),  # input.fz, config.ini
+                                  app.catalog, output_filename,  # catalog, output
+                                  str(app.rank), str(app.size)])
 
         full_cmd = app.exe_name + ' ' + im3shape_args
 
         outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
-        inputsandbox.append(FileBuffer( name=exe_script_name,
-                                        contents=script_generator(Im3Shape_script_template(),
-                                                                  ## ARGS for app from job.app
-                                                                  RUN_DIR = app.run_dir,
-                                                                  BLACKLIST = os.path.basename(app.blacklist.namePattern),
-                                                                  COMMAND = full_cmd,
-                                                                  ## Stuff for Ganga
-                                                                  OUTPUTFILES = repr([this_file.namePattern for this_file in job.outputfiles]),
-                                                                  OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    '),
+        inputsandbox.append(FileBuffer(name=exe_script_name,
+                                       contents=script_generator(Im3Shape_script_template(),
+                                                                 # ARGS for app from job.app
+                                                                 RUN_DIR=app.run_dir,
+                                                                 BLACKLIST=os.path.basename(app.blacklist.namePattern),
+                                                                 COMMAND=full_cmd,
+                                                                 # Stuff for Ganga
+                                                                 OUTPUTFILES=repr([this_file.namePattern for this_file in job.outputfiles]),
+                                                                 OUTPUTFILESINJECTEDCODE=getWNCodeForOutputPostprocessing(job, '    '),
                                                                  ),
-                                        executable=True)
+                                       executable=True)
                             )
 
         # TODO once there is a common, IApplication.getMeFilesForThisApp function replace this list with a getter ad it shouldn't really be hard-coded
@@ -80,39 +79,37 @@ class Im3ShapeDiracRTHandler(IRuntimeHandler):
         job.inputfiles.extend(app_file_list)
 
         # Slightly mis-using this here but it would be nice to have these files
-        #job.inputfiles.extend(job.inputdata)
+        # job.inputfiles.extend(job.inputdata)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
         dirac_script = script_generator(diracAPI_script_template(),
-                DIRAC_IMPORT = 'from DIRAC.Interfaces.API.Dirac import Dirac',
-                DIRAC_JOB_IMPORT = 'from DIRAC.Interfaces.API.Job import Job',
-                DIRAC_OBJECT = 'Dirac()',
-                JOB_OBJECT = 'Job()',
-                NAME = mangle_job_name(app),
-                EXE = exe_script_name,
-                EXE_ARG_STR = '',
-                EXE_LOG_FILE = 'Ganga_Executable.log',
-                ENVIRONMENT = None,
-                INPUTDATA = input_data,
-                PARAMETRIC_INPUTDATA = parametricinput_data,
-                OUTPUT_SANDBOX = API_nullifier(outputsandbox),
-                OUTPUTFILESSCRIPT = dirac_outputfile_jdl(outputfiles, False),
-                OUTPUT_PATH = "",  # job.fqid,
-                SETTINGS = diracAPI_script_settings(app),
-                DIRAC_OPTS = job.backend.diracOpts,
-                REPLICATE = 'True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
-                # leave the sandbox for altering later as needs
-                # to be done in backend.submit to combine master.
-                # Note only using 2 #s as auto-remove 3
-                INPUT_SANDBOX = '##INPUT_SANDBOX##'
-                )
-
+                                        DIRAC_IMPORT='from DIRAC.Interfaces.API.Dirac import Dirac',
+                                        DIRAC_JOB_IMPORT='from DIRAC.Interfaces.API.Job import Job',
+                                        DIRAC_OBJECT='Dirac()',
+                                        JOB_OBJECT='Job()',
+                                        NAME=mangle_job_name(app),
+                                        EXE=exe_script_name,
+                                        EXE_ARG_STR='',
+                                        EXE_LOG_FILE='Ganga_Executable.log',
+                                        ENVIRONMENT=None,
+                                        INPUTDATA=input_data,
+                                        PARAMETRIC_INPUTDATA=parametricinput_data,
+                                        OUTPUT_SANDBOX=API_nullifier(outputsandbox),
+                                        OUTPUTFILESSCRIPT=dirac_outputfile_jdl(outputfiles, False),
+                                        OUTPUT_PATH="",  # job.fqid,
+                                        SETTINGS=diracAPI_script_settings(app),
+                                        DIRAC_OPTS=job.backend.diracOpts,
+                                        REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
+                                        # leave the sandbox for altering later as needs
+                                        # to be done in backend.submit to combine master.
+                                        # Note only using 2 #s as auto-remove 3
+                                        INPUT_SANDBOX='##INPUT_SANDBOX##'
+                                        )
 
         return StandardJobConfig(dirac_script,
-                inputbox=unique(inputsandbox),
-                outputbox=unique(outputsandbox))
-
+                                 inputbox=unique(inputsandbox),
+                                 outputbox=unique(outputsandbox))
 
         #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -205,4 +202,3 @@ if __name__ == '__main__':
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('Im3ShapeApp', 'Dirac', Im3ShapeDiracRTHandler)
-

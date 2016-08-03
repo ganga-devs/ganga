@@ -184,8 +184,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         PLATFORM=app.platform,
                                         REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
                                         ANCESTOR_DEPTH=ancestor_depth,
-                                        ## This is to be modified in the final 'submit' function in the backend
-                                        ## The backend also handles the inputfiles DiracFiles ass appropriate
+                                        # This is to be modified in the final 'submit' function in the backend
+                                        # The backend also handles the inputfiles DiracFiles ass appropriate
                                         INPUT_SANDBOX='##INPUT_SANDBOX##'
                                         )
         logger.debug("prepare: LHCbGaudiDiracRunTimeHandler")

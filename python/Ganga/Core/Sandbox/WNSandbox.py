@@ -14,6 +14,7 @@ import mimetypes
 import tarfile
 from contextlib import closing
 
+
 def getPackedInputSandbox(tarpath, dest_dir='.'):
     """Get all sandbox_files from tarball and write them to the workdir.
        This function is called by wrapper script at the run time.
@@ -136,4 +137,3 @@ def createPackedOutputSandbox(output_patterns, _filter, dest_dir):
             tf.dereference = True
             for f in outputlist:
                 tf.add(f)
-

@@ -52,10 +52,10 @@ class Im3ShapeSplitter(ISplitter):
                     j = self.createSubjob(job, ['application'])
                     # Add new arguments to subjob
                     j.application = getApp(job, rank, self.size)
-                    j.inputdata = GangaDataset(files = [stripProxy(this_file)])
+                    j.inputdata = GangaDataset(files=[stripProxy(this_file)])
                     subjobs.append(j)
         else:
-            for rank in range(0,self.size):
+            for rank in range(0, self.size):
                 j = self.createSubjob(job, ['application'])
                 j.application = getApp(job, rank, self.size)
                 j.inputdata = job.inputdata
@@ -63,4 +63,3 @@ class Im3ShapeSplitter(ISplitter):
                 subjobs.append(j)
 
         return subjobs
-

@@ -105,7 +105,7 @@ class LHCbDataset(GangaDataset):
 
         # Feel free to turn this on again for debugging but it's potentially quite expensive
         #logger.debug( "Creating dataset with:\n%s" % self.files )
-        
+
         logger.debug("Assigned files")
 
         self.persistency = persistency
@@ -165,7 +165,7 @@ class LHCbDataset(GangaDataset):
             if not isDiracFile(f):
                 continue
             try:
-                result = f.replicate( destSE=destSE )
+                result = f.replicate(destSE=destSE)
             except Exception as err:
                 msg = 'Replication error for file %s (will retry in a bit).' % f.lfn
                 logger.warning(msg)
@@ -174,7 +174,7 @@ class LHCbDataset(GangaDataset):
 
         for f in retry_files:
             try:
-                result = f.replicate( destSE=destSE )
+                result = f.replicate(destSE=destSE)
             except Exception as err:
                 msg = '2nd replication attempt failed for file %s. (will not retry)' % f.lfn
                 logger.warning(msg)
@@ -364,7 +364,7 @@ class LHCbDataset(GangaDataset):
             else:
                 return snew + sdatasetsnew + sold + sdatasetsold
 
-    def _checkOtherFiles(self, other ):
+    def _checkOtherFiles(self, other):
         if isType(other, GangaList) or isType(other, []):
             other_files = LHCbDataset(other).getFullFileNames()
         elif isType(other, LHCbDataset):
@@ -497,6 +497,7 @@ allComponentFilters['gangafiles'] = string_datafile_shortcut_lhcb
 # Name of this method set in the GPIComponentFilters section of the
 # Core... either overload this default or leave it
 
+
 def string_dataset_shortcut(files, item):
     from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
     from Ganga.GPIDev.Base.Objects import ObjectMetaclass
@@ -520,4 +521,3 @@ def string_dataset_shortcut(files, item):
 allComponentFilters['datasets'] = string_dataset_shortcut
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-

@@ -15,6 +15,7 @@ logger = getLogger()
 
 _runtime_interface = None
 
+
 def requiresAfsToken():
     # Were we executed from within an AFS folder
     return fullpath(getLocalRoot(), True).find('/afs') == 0
@@ -26,6 +27,7 @@ def getLocalRoot():
         return os.path.join(expandfilename(config['gangadir'], True), 'repository', config['user'], config['repositorytype'])
     else:
         return ''
+
 
 def getLocalWorkspace():
     # Get the local top level dirtectory for the Workspace
@@ -39,6 +41,7 @@ started_registries = []
 
 partition_warning = 95
 partition_critical = 99
+
 
 def checkDiskQuota():
     # Throw an error atthe user if their AFS area is (extremely close to) full to avoid repo corruption
@@ -84,7 +87,7 @@ def checkDiskQuota():
                 logger.error("You are crtitically low on disk space!")
                 logger.error("To prevent repository corruption and data loss we won't start Ganga.")
                 logger.error("Either set your config variable 'force_start' in .gangarc to enable starting and ignore this check.")
-                logger.error("Or, make sure you have more than %s percent free disk space on: %s" %(100-partition_critical, data_partition))
+                logger.error("Or, make sure you have more than %s percent free disk space on: %s" % (100 - partition_critical, data_partition))
                 raise GangaException("Not Enough Disk Space!!!")
         except GangaException as err:
             raise
@@ -93,9 +96,10 @@ def checkDiskQuota():
 
     return
 
+
 def bootstrap_getreg():
     # Get the list of registries sorted in the bootstrap way
-    
+
     # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
     # or even named templated registries as the _auto__init from job will require the prep registry to
     # already be ready. This showed up when adding the named templates.
@@ -106,10 +110,12 @@ def bootstrap_getreg():
 
     return [registry for registry in sorted(getRegistries(), prep_filter)]
 
+
 def bootstrap_reg_names():
     # Get the list of registry names
     all_reg = bootstrap_getreg()
     return [reg.name for reg in all_reg]
+
 
 def bootstrap():
     # Bootstrap for startup and setting of parameters for the Registries
@@ -168,7 +174,7 @@ def shutdown():
     logger = getLogger()
     logger.info('Registry Shutdown')
     #import traceback
-    #traceback.print_stack()
+    # traceback.print_stack()
 
     # Flush all repos before we shut them down
     flush_all()
@@ -203,7 +209,6 @@ def shutdown():
             logger.error("%s" % x)
             logger.error("Trying to Shutdown cleanly regardless")
 
-
     for registry in all_registries:
 
         my_reg = [registry]
@@ -222,6 +227,7 @@ def shutdown():
     removeGlobalSessionFiles()
 
     removeRegistries()
+
 
 def flush_all():
     # Flush all registries in their current state with all dirty knowledge going to disk
@@ -271,10 +277,11 @@ def startUpRegistries(my_interface=None):
     shareref = getRegistry("prep").getShareRef()
     exportToInterface(my_interface, 'shareref', shareref, 'Objects', 'Mechanism for tracking use of shared directory resources')
 
-def removeRegistries():
-    ## Remove lingering Objects from the GPI and fully cleanup after the startup
 
-    ## First start with repositories
+def removeRegistries():
+    # Remove lingering Objects from the GPI and fully cleanup after the startup
+
+    # First start with repositories
 
     import Ganga.GPI
 
@@ -290,4 +297,3 @@ def removeRegistries():
             delattr(_runtime_interface, name)
 
     _runtime_interface = None
-

@@ -79,7 +79,6 @@ class File(GangaObject):
             actual_value = expandfilename(value)
         super(File, self).__setattr__(attr, actual_value)
 
-
     def _attribute_filter__set__(self, attribName, attribValue):
         if attribName is 'name':
             return expandfilename(attribValue)
@@ -122,6 +121,7 @@ class File(GangaObject):
 # write instatiate File() objects via config file)
 Ganga.Utility.Config.config_scope['File'] = File
 
+
 def string_file_shortcut_file(v, item):
     if isinstance(v, str):
         # use proxy class to enable all user conversions on the value itself
@@ -130,6 +130,7 @@ def string_file_shortcut_file(v, item):
     return None
 
 allComponentFilters['files'] = string_file_shortcut_file
+
 
 class ShareDir(GangaObject):
 
@@ -262,6 +263,7 @@ class ShareDir(GangaObject):
         return self.executable or is_executable(expandfilename(self.name))
 
 Ganga.Utility.Config.config_scope['ShareDir'] = ShareDir
+
 
 def string_sharedfile_shortcut(v, item):
     if isinstance(v, str):

@@ -378,4 +378,3 @@ class ThreadPoolQueueMonitor(object):
         self._user_threadpool._start_worker_threads()
         self._monitoring_threadpool._start_worker_threads()
         return
-

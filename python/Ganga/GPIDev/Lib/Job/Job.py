@@ -51,10 +51,10 @@ def lazyLoadJobApplication(this_job):
 
 
 def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
-    ## Returns an object which corresponds to an attribute from a Job, or matches it's default equivalent without triggering a load from disk
-    ## i.e. lazy loading a Dirac backend will return a raw Dirac() object and lazy loading the status will return the status string
-    ## These are all evaluated from the strings in the index file for the job.
-    ## dont_eval lets the method know a string is expected to be returned and not evaluated so nothing is evaluated against the GPI
+    # Returns an object which corresponds to an attribute from a Job, or matches it's default equivalent without triggering a load from disk
+    # i.e. lazy loading a Dirac backend will return a raw Dirac() object and lazy loading the status will return the status string
+    # These are all evaluated from the strings in the index file for the job.
+    # dont_eval lets the method know a string is expected to be returned and not evaluated so nothing is evaluated against the GPI
 
     this_job = stripProxy(raw_job)
 
@@ -62,7 +62,7 @@ def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
         if this_job._getRegistry().has_loaded(this_job):
             return getattr(this_job, this_attr)
 
-    lzy_loading_str = 'display:'+ this_attr
+    lzy_loading_str = 'display:' + this_attr
     job_index_cache = this_job._index_cache
     if isinstance(job_index_cache, dict) and lzy_loading_str in job_index_cache:
         obj_name = job_index_cache[lzy_loading_str]
@@ -434,9 +434,9 @@ class Job(GangaObject):
 
         logger.debug('job %s "%s" setting raw status to "%s"', id, oldstat, value)
 
-        ## This code appears to mimic the fact that we have a protected status within the Schema.
-        ## This looks like it's supposed to prevent direct manipulation of the job.status property but this is done through stack manipulation, probably not the best way to achieve this.
-        ## We may want to drop this code in future I'm leaving this in for historical purposes. rcurrie
+        # This code appears to mimic the fact that we have a protected status within the Schema.
+        # This looks like it's supposed to prevent direct manipulation of the job.status property but this is done through stack manipulation, probably not the best way to achieve this.
+        # We may want to drop this code in future I'm leaving this in for historical purposes. rcurrie
         #import inspect
         #frame = inspect.stack()[2]
         # if not frame[0].f_code.co_name == 'updateStatus' and
@@ -461,45 +461,45 @@ class Job(GangaObject):
 
     status_graph = {'new': Transitions(State('submitting', 'j.submit()', hook='monitorSubmitting_hook'),
                                        State('removed', 'j.remove()')),
-        'submitting': Transitions(State('new', 'submission failed', hook='rollbackToNewState'),
-                                  State('submitted', hook='monitorSubmitted_hook'),
-                                  State('unknown', 'forced remove OR remote jobmgr error'),
-                                  State('failed', 'manually forced or keep_on_failed=True', hook='monitorFailed_hook')),
-        'submitted': Transitions(State('running'),
-                                 State('killed', 'j.kill()', hook='monitorKilled_hook'),
-                                 State('unknown', 'forced remove'),
-                                 State('failed', 'j.fail(force=1)', hook='monitorFailed_hook'),
-                                 State('completing'),
-                                 State('completed', hook='postprocess_hook'),
-                                 State('submitting', 'j.resubmit(force=1)')),
-        'running': Transitions(State('completing'),
-                               State('completed', 'job output already in outputdir', hook='postprocess_hook'),
-                               State('failed', 'backend reported failure OR j.fail(force=1)', hook='monitorFailed_hook'),
-                               State('killed', 'j.kill()', hook='monitorKilled_hook'),
-                               State('unknown', 'forced remove'),
-                               State('submitting', 'j.resubmit(force=1)'),
-                               State('submitted', 'j.resubmit(force=1)')),
-        'completing': Transitions(State('completed', hook='postprocess_hook'),
-                                  State('failed', 'postprocessing error OR j.fail(force=1)', hook='postprocess_hook_failed'),
-                                  State('unknown', 'forced remove'),
-                                  State('submitting', 'j.resubmit(force=1)'),
-                                  State('submitted', 'j.resubmit(force=1)')),
-        'killed': Transitions(State('removed', 'j.remove()'),
-                              State('failed', 'j.fail()'),
-                              State('submitting', 'j.resubmit()'),
-                              State('submitted', 'j.resubmit()')),
-        'failed': Transitions(State('removed', 'j.remove()'),
-                              State('submitting', 'j.resubmit()'),
-                              State('completed', hook='postprocess_hook'),
-                              State('submitted', 'j.resubmit()')),
-        'completed': Transitions(State('removed', 'j.remove()'),
-                                 State('failed', 'j.fail()'),
-                                 State('submitting', 'j.resubmit()'),
-                                 State('submitted', 'j.resubmit()')),
-        'incomplete': Transitions(State('removed', 'j.remove()')),
-        'unknown': Transitions(State('removed', 'forced remove')),
-        'template': Transitions(State('removed'))
-    }
+                    'submitting': Transitions(State('new', 'submission failed', hook='rollbackToNewState'),
+                                              State('submitted', hook='monitorSubmitted_hook'),
+                                              State('unknown', 'forced remove OR remote jobmgr error'),
+                                              State('failed', 'manually forced or keep_on_failed=True', hook='monitorFailed_hook')),
+                    'submitted': Transitions(State('running'),
+                                             State('killed', 'j.kill()', hook='monitorKilled_hook'),
+                                             State('unknown', 'forced remove'),
+                                             State('failed', 'j.fail(force=1)', hook='monitorFailed_hook'),
+                                             State('completing'),
+                                             State('completed', hook='postprocess_hook'),
+                                             State('submitting', 'j.resubmit(force=1)')),
+                    'running': Transitions(State('completing'),
+                                           State('completed', 'job output already in outputdir', hook='postprocess_hook'),
+                                           State('failed', 'backend reported failure OR j.fail(force=1)', hook='monitorFailed_hook'),
+                                           State('killed', 'j.kill()', hook='monitorKilled_hook'),
+                                           State('unknown', 'forced remove'),
+                                           State('submitting', 'j.resubmit(force=1)'),
+                                           State('submitted', 'j.resubmit(force=1)')),
+                    'completing': Transitions(State('completed', hook='postprocess_hook'),
+                                              State('failed', 'postprocessing error OR j.fail(force=1)', hook='postprocess_hook_failed'),
+                                              State('unknown', 'forced remove'),
+                                              State('submitting', 'j.resubmit(force=1)'),
+                                              State('submitted', 'j.resubmit(force=1)')),
+                    'killed': Transitions(State('removed', 'j.remove()'),
+                                          State('failed', 'j.fail()'),
+                                          State('submitting', 'j.resubmit()'),
+                                          State('submitted', 'j.resubmit()')),
+                    'failed': Transitions(State('removed', 'j.remove()'),
+                                          State('submitting', 'j.resubmit()'),
+                                          State('completed', hook='postprocess_hook'),
+                                          State('submitted', 'j.resubmit()')),
+                    'completed': Transitions(State('removed', 'j.remove()'),
+                                             State('failed', 'j.fail()'),
+                                             State('submitting', 'j.resubmit()'),
+                                             State('submitted', 'j.resubmit()')),
+                    'incomplete': Transitions(State('removed', 'j.remove()')),
+                    'unknown': Transitions(State('removed', 'forced remove')),
+                    'template': Transitions(State('removed'))
+                    }
 
     transient_states = ['incomplete', 'removed', 'unknown']
     initial_states = ['new', 'incomplete', 'template']
@@ -563,7 +563,7 @@ class Job(GangaObject):
             log_user_exception()
             raise JobStatusError(x), None, sys.exc_info()[2]
 
-	final_status = self.status
+        final_status = self.status
 
         if final_status != initial_status and self.master is None:
             logger.info('job %s status changed to "%s"', self.getFQID('.'), final_status)
@@ -621,7 +621,6 @@ class Job(GangaObject):
                 if outputfile.compressed and (outputfile.namePattern == 'stdout' or outputfile.namePattern == 'stderr'):
                     for currentFile in glob.glob(os.path.join(outputdir, outputfile.namePattern)):
                         os.system("gzip %s" % currentFile)
-
 
             backend_output_postprocess = self.getBackendOutputPostprocessDict()
             if backendClass in backend_output_postprocess:
@@ -691,7 +690,7 @@ class Job(GangaObject):
         else:
             stats = set(sj.status for sj in self.subjobs)
 
-	return stats
+        return stats
 
     def updateMasterJobStatus(self):
         """
@@ -882,7 +881,7 @@ class Job(GangaObject):
         # 'removed').getPath()
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
-            ## This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
+            # This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
             return self.getInputWorkspace(create=self.status != 'removed').getPath()
         else:
             return self.getInputWorkspace(create=False).getPath()
@@ -892,7 +891,7 @@ class Job(GangaObject):
         # 'removed').getPath()
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
-            ## This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
+            # This needs to use the NodeAttribute to AVOID causing loading of a Job during initialization!
             return self.getOutputWorkspace(create=self.status != 'removed').getPath()
         else:
             return self.getOutputWorkspace(create=False).getPath()
@@ -902,7 +901,7 @@ class Job(GangaObject):
         If optional sep is specified FQID string is returned, ids are separated by sep.
         For example: getFQID('.') will return 'masterjob_id.subjob_id....'
         """
-        ## This prevents exceptions during initialization
+        # This prevents exceptions during initialization
         if hasattr(self, 'id'):
             fqid = [self.id]
         else:
@@ -1087,7 +1086,6 @@ class Job(GangaObject):
             self.application.unprepare(force=True)
             addProxy(self.application).prepare(force=True)
 
-
     def unprepare(self, force=False):
         """Revert the application associated with a job to the unprepared state
         Returns True on success.
@@ -1169,7 +1167,7 @@ class Job(GangaObject):
         return jobmasterconfig
 
     @staticmethod
-    def _prepare_sj( rtHandler, i, app, sub_c, app_master_c, job_master_c, finished):
+    def _prepare_sj(rtHandler, i, app, sub_c, app_master_c, job_master_c, finished):
         if app.is_prepared in [None, False]:
             app.prepare()
         finished[i] = rtHandler.prepare(app, sub_c, app_master_c, job_master_c)
@@ -1198,7 +1196,7 @@ class Job(GangaObject):
                     finished = {}
 
                     from Ganga.Core.GangaThread.WorkerThreads import getQueues
-                    index=0
+                    index = 0
                     for sub_j, sub_conf in zip(subjobs, appsubconfig):
                         getQueues()._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, sub_j.application, sub_conf, appmasterconfig, jobmasterconfig, finished))
                         index += 1
@@ -1353,7 +1351,6 @@ class Job(GangaObject):
         else:
             rjobs = [self]
 
-
         return rjobs
 
     def submit(self, keep_going=None, keep_on_fail=None, prepare=False):
@@ -1404,7 +1401,7 @@ class Job(GangaObject):
 
         from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 
-        assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
+        assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0))
 
         # no longer needed with prepared state
         # if self.master is not None:
@@ -1424,7 +1421,7 @@ class Job(GangaObject):
 
             # Calls the self.prepare method ALWAY
             logger.debug("Preparing Application")
-            #if hasattr(self.application, 'is_prepared'):
+            # if hasattr(self.application, 'is_prepared'):
             #    logger.debug("Calling self.prepare()")
             #    self.prepare()
             self._selfAppPrepare(prepare)
@@ -1478,11 +1475,11 @@ class Job(GangaObject):
 
             if supports_keep_going:
                 if 'parallel_submit' in inspect.getargspec(self.backend.master_submit)[0]:
-                    r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going, self.parallel_submit)
+                    r = self.backend.master_submit(rjobs, jobsubconfig, jobmasterconfig, keep_going, self.parallel_submit)
                 else:
-                    r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going)
+                    r = self.backend.master_submit(rjobs, jobsubconfig, jobmasterconfig, keep_going)
             else:
-                r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig)
+                r = self.backend.master_submit(rjobs, jobsubconfig, jobmasterconfig)
 
             if not r:
                 raise JobManagerError('error during submit')
@@ -1536,7 +1533,7 @@ class Job(GangaObject):
         # in the case of a master job however we need to still perform this
         if len(rjobs) != 1:
             self.info.increment()
-        #if self.master is not None:
+        # if self.master is not None:
         self.updateStatus('submitted')
 
         # send job submission message
@@ -2020,10 +2017,10 @@ class Job(GangaObject):
                 #self._stored_subjobs_proxy = _wrap(self._stored_subjobs_proxy)
             elif isType(self.subjobs, (list, GangaList)):
                 subjob_slice = stripProxy(self._stored_subjobs_proxy)
-                #First clear the dictionary
+                # First clear the dictionary
                 if subjob_slice.objects:
                     del subjob_slice.objects[:]
-                #Not put the objects back in
+                # Not put the objects back in
                 for sj in self.subjobs:
                     subjob_slice.objects[sj.id] = sj
                 #self._stored_subjobs_proxy = _wrap(self._stored_subjobs_proxy)

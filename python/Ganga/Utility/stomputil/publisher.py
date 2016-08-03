@@ -5,10 +5,10 @@ from Queue import Queue
 import logging
 logging_DEBUG = logging.DEBUG
 
-BEAT_TIME = 0.3 # Seconds between publisher thread heart beats.
-IDLE_TIMEOUT = 30 # Maximum seconds to idle before closing connection.
-EXIT_TIMEOUT = 5 # Maximum seconds to clear queued messages on exit.
-PUBLISHER_TIMESTAMP_HEADER = '_publisher_timestamp' # The publisher timestamp header name
+BEAT_TIME = 0.3  # Seconds between publisher thread heart beats.
+IDLE_TIMEOUT = 30  # Maximum seconds to idle before closing connection.
+EXIT_TIMEOUT = 5  # Maximum seconds to clear queued messages on exit.
+PUBLISHER_TIMESTAMP_HEADER = '_publisher_timestamp'  # The publisher timestamp header name
 
 try:
     import stomp
@@ -23,13 +23,14 @@ except (Exception, ImportError) as err:
         print("err: %s" % err)
 
     class stomp(object):
+
         def __init__(self):
-            ## DUMMY CLASS
+            # DUMMY CLASS
             pass
 
         @staticmethod
         def Connection(self, _server_and_port={}, user='', password=''):
-            ## DO NOTHING
+            # DO NOTHING
             pass
 
     stomp_listener = object
@@ -40,7 +41,7 @@ class LoggerListener(stomp_listener):
     """Connection listener which logs STOMP events."""
 
     def __init__(self, logger):
-        self._logger = logger 
+        self._logger = logger
 
     def on_connecting(self, host_and_port):
         self._logger.debug('TCP/IP connected host=%s.' % (host_and_port,))
@@ -67,10 +68,11 @@ class LoggerListener(stomp_listener):
 # counter to give unique thread names
 _thread_id = 0
 
+
 def createPublisher(T, server, port, user='', password='', logger=None,
                     idle_timeout=IDLE_TIMEOUT):
     """Create a new asynchronous publisher for sending messages to an MSG server.
-    
+
     @param T: The thread class from which the publisher should inherit.
     @param server: The server host name.
     @param user: The user name.
@@ -78,17 +80,17 @@ def createPublisher(T, server, port, user='', password='', logger=None,
     @param logger: The logger instance.
     @param idle_timeout: Maximum seconds to idle before closing connection.
             Negative value indicates never close connection.
-    
+
     The send method adds messages to a local queue, and the publisher thread sends
     them to the MSG server to emulate fast asynchronous sending of messages.
-    
+
     Usage example with regular thread::
         from threading import Thread
         p = createPublisher(Thread, 'gridmsg001.cern.ch', 6163)
         p.start()
         p.addExitHandler()
         p.send('/topic/ganga.dashboard.test', 'Hello World!')
-    
+
     Usage example with managed thread::
         #All GangaThread are registered with GangaThreadPool
         from Ganga.Core.GangaThread import GangaThread
@@ -97,7 +99,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
         p.send('/topic/ganga.dashboard.test', 'Hello World!')
         #GangaThreadPool calls p.stop() during shutdown
     """
-    
+
     # increment thread id
     global _thread_id
     _thread_id += 1
@@ -135,12 +137,12 @@ def createPublisher(T, server, port, user='', password='', logger=None,
 
         def send(self, destination=None, message='', headers=None, **keyword_headers):
             """Add message to local queue for sending to MSG server.
-            
+
             @param destination: An MSG topic or queue, e.g. /topic/dashboard.test.
             @param message: A string or dictionary of key-value pairs.
             @param headers: A dictionary of headers.
             @param keyword_headers: A dictionary of headers defined by keyword.
-            
+
             If destination is not None, then it is added to keyword_headers.
             If not already present, then _publisher_timestamp (time since the Epoch
             (00:00:00 UTC, January 1, 1970) in seconds) is added to keyword_headers.
@@ -254,7 +256,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
                                 if m is not None:
                                     self._log(logging_DEBUG, 'Re-queuing failed message. body=%r headers=%r keyword_headers=%r.', *m)
                                     self._message_queue.put(m)
-                                break # break out to wait for BEAT_TIME
+                                break  # break out to wait for BEAT_TIME
                         finally:
                             self.__sending = False
                             self._log(logging_DEBUG, 'After attempt to connect/send. %s queued message(s).', self._message_queue.qsize())
@@ -280,7 +282,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
 
         def stop(self):
             """Tells the publisher thread to stop gracefully.
-            
+
             Typically called on a managed thread such as GangaThread.
             """
             if not self.__should_stop:
@@ -290,10 +292,10 @@ def createPublisher(T, server, port, user='', password='', logger=None,
         def addExitHandler(self, timeout=EXIT_TIMEOUT):
             """Adds an exit handler that allows the publisher up to timeout seconds to send
             queued messages.
-            
+
             @param timeout: Maximum seconds to clear message queue on exit.
                     Negative value indicates clear queue without timeout.
-            
+
             Typically used on unmanaged threads, i.e. regular Thread not GangaThread.
             """
             # register atexit finalize method
@@ -302,7 +304,7 @@ def createPublisher(T, server, port, user='', password='', logger=None,
 
         def _finalize(self, timeout):
             """Allow the publisher thread up to timeout seconds to send queued messages.
-            
+
             @param timeout: Maximum seconds to clear message queue on exit.
                     Negative value indicates clear queue without timeout.
             """

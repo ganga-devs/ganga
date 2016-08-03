@@ -75,7 +75,7 @@ class TestFrancesc(GangaGPITestCase):
             logger.info('make...')
             app.make()
             tempDir = os.path.join(cmtuserpath, '%s_%s' % (appname, app.version),
-                               'Phys/%s' % appname, app._impl.platform)
+                                   'Phys/%s' % appname, app._impl.platform)
             assert os.path.exists(tempDir), '%s must exist' % tempDir
             f = os.path.join(tempDir, '%ssetup.make' % appname)
             read_file(f)

@@ -117,7 +117,7 @@ def getMonitoringObject(job):
     names = [name.strip() for name in findMonitoringClassesName(job).split(',') if name.strip()]
     # get classes, jobs and configs
     monClasses = []
-    for  name in names:
+    for name in names:
         try:
             this_class = getMonitoringClass(name)
         except MonitoringServiceError as err:
@@ -128,4 +128,3 @@ def getMonitoringObject(job):
     jobs = [job] * len(monClasses)
     configs = [monClass.getConfig() for monClass in monClasses]
     return CompositeMonitoringService(monClasses, jobs, configs)
-

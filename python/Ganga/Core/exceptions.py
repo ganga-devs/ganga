@@ -21,12 +21,12 @@ class GangaException(Exception):
         # This code will give a stack trace from a GangaException only when debugging is enabled
         # This makes debugging what's going on much easier whilst hiding mess
         # from users
-        #if self.logger is None:
+        # if self.logger is None:
         #    from Ganga.Utility.logging import getLogger
         #    self.logger = getLogger()
 
         #import logging
-        #if self.logger.isEnabledFor(logging.DEBUG):
+        # if self.logger.isEnabledFor(logging.DEBUG):
         #    import traceback
         #    traceback.print_stack()
 
@@ -105,7 +105,7 @@ class GangaAttributeError(AttributeError, GangaException):
         # This code will give a stack trace from a GangaException only when debugging is enabled
         # This makes debugging what's going on much easier whilst hiding mess
         # from users
-        #if self.logger is None:
+        # if self.logger is None:
         #    from Ganga.Utility.logging import getLogger
         #    self.logger = Ganga.Utility.logging.getLogger()
 
@@ -169,6 +169,7 @@ class SchemaVersionError(GangaException):
     """
     Error raised on schema version error
     """
+
     def __init__(self, what=''):
         """
         This is the error thrown when the Schema version in XML doesn't match what's in the code. This may be dropped in a future release

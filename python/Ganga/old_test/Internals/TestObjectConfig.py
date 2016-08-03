@@ -101,7 +101,7 @@ class TestObjectConfig(GangaGPITestCase):
             jobConfig.setUserValue("backend", "NOT_EXISTING_BACKEND")
             jobConfig.setUserValue("backend.queue", "x")
             assert(0)
-        except (ConfigError,PluginManagerError) as x:
+        except (ConfigError, PluginManagerError) as x:
             logger.error(x)
 
         job2 = Job()

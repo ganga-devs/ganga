@@ -4,6 +4,7 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestSavannah18729(GangaUnitTest):
+
     def test_Savannah18729(self):
         from Ganga.GPI import Root, Job, Local
 
@@ -13,7 +14,7 @@ class TestSavannah18729(GangaUnitTest):
 
         tmpdir = tempfile.mktemp()
         os.mkdir(tmpdir)
-        ## Is this a test of files with a leading ' '  in the name? - rcurrie
+        # Is this a test of files with a leading ' '  in the name? - rcurrie
         #self.fname = os.path.join(tmpdir, ' test.C')
         self.fname = os.path.join(tmpdir, 'test.C')
         with open(self.fname, 'w') as f:
@@ -33,7 +34,7 @@ class TestSavannah18729(GangaUnitTest):
         j = Job(backend=Local(), application=app)
         j.submit()
 
-        self.assertTrue(sleep_until_completed(j,120), 'Timeout on registering Interactive job as completed')
+        self.assertTrue(sleep_until_completed(j, 120), 'Timeout on registering Interactive job as completed')
 
         self.assertEqual(j.status, 'completed')
 

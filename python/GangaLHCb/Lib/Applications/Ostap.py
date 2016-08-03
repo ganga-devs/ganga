@@ -1,34 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # ============================================================================
-## @file
+# @file
 #  Application handler for Ostap
 #
 # The user specifies:
 #  - script file(s) which contain Ostap scripts,
 #  - set of command line arguments
-#  
-# At least one 'script' or non-empty list of commands is required 
+#
+# At least one 'script' or non-empty list of commands is required
 #
 # The application executes the following line:
-# @code   
+# @code
 # % ostap {scripts} {arguments} --import {imports} --no-color --batch
-# @endcode    
+# @endcode
 # e.g.
-# @code 
+# @code
 # % bender script.py  --with-context -p5 --no-color --no-canvas --batch
 # @endcode
 #
-# 
+#
 # @code
 # my_script  = "~/cmtuser/tests/my_batch.py"
 # my_app     = Ostap (
 #    version      = 'v28r3'       ,
 #    scripts      =   my_script   ,
 #    arguments    = [
-#      ] , 
+#      ] ,
 #    commands     = [ 'print dir()']
-#      ) 
+#      )
 # @endcode
 #
 # @author Vladimir ROMANOVSKY  Vladimir.Romanovskiy@cern.ch
@@ -66,22 +66,22 @@ e.g.
 ... ) 
 """
 # =============================================================================
-__date__    = '2016-03-16'
+__date__ = '2016-03-16'
 __version__ = '$Revision:$'
-__author__  = 'Vladimir ROMANOVSKY, Vanya BELYAEV'
+__author__ = 'Vladimir ROMANOVSKY, Vanya BELYAEV'
 # =============================================================================
 import os
-from   os.path import split, join
-from   Ganga.GPIDev.Schema.Schema             import FileItem, SimpleItem
-from   Ganga.GPIDev.Lib.File                  import File
-from   Ganga.Utility.util                     import unique
-from   Ganga.Core                             import ApplicationConfigurationError
-from   Ganga.GPIDev.Lib.File.FileBuffer       import FileBuffer
-from   GangaGaudi.Lib.Applications.GaudiBase  import GaudiBase
-from   GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
-from   Ganga.Utility.files                    import expandfilename, fullpath
-from   Ganga.Utility.Config                   import getConfig
-from   AppsBaseUtils                          import guess_version
+from os.path import split, join
+from Ganga.GPIDev.Schema.Schema import FileItem, SimpleItem
+from Ganga.GPIDev.Lib.File import File
+from Ganga.Utility.util import unique
+from Ganga.Core import ApplicationConfigurationError
+from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
+from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
+from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
+from Ganga.Utility.files import expandfilename, fullpath
+from Ganga.Utility.Config import getConfig
+from AppsBaseUtils import guess_version
 #
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
@@ -92,7 +92,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 # =============================================================================
-## the actual wrapper script to execute 
+# the actual wrapper script to execute
 # =============================================================================
 layout = """#!/usr/bin/env python
 # -*- coding: utf-8 -*-
@@ -124,36 +124,38 @@ execfile(ostap_script)
 #  - script file(s) which contain BenderScript scripts,
 #  - configuration/Configurables files, to be used for 'importOptions'
 #  - set of command-line arguments
-# 
+#
 # At least one 'script' or 'import' file is required.
 #
 # The application executes the following line:
-# @code    
+# @code
 # % ostap {scripts} {arguments} --no-color --no-castor --batch
-# @endcodce    
+# @endcodce
 # e.g.
-# @code 
+# @code
 # % ostap script1.py  --no-color --batch
-# @endcode 
+# @endcode
 #
 # @author Vladimir ROMANOVSKY  Vladimir.Romanovskiy@cern.ch
-# @author Vanya BELYAEV        Ivan.Belyaev@itep.ru 
-class Ostap(GaudiBase):    
+# @author Vanya BELYAEV        Ivan.Belyaev@itep.ru
+
+
+class Ostap(GaudiBase):
     """The application handler for Ostap
-    
+
     The user specifies:
     - script file(s) which contain Ostap scripts,
     - set of command line arguments
-    
+
     At least one 'script' or non-empty list of commands is required 
-    
+
     The application executes the following line:
-    
+
     % ostap {scripts} {arguments} --import {imports} --no-color --batch
-    
+
     e.g.
     % ostap script.py -p5 --no-color --no-canvas --batch
-    
+
     >>> my_script  = '~/cmtuser/tests/my_batch.py'
     >>> my_app     = Ostap (
     ...    project      = 'Analysis'    , ## 
@@ -165,79 +167,80 @@ class Ostap(GaudiBase):
     ...    commands     = [ 'print dir()']
     ... ) 
     """
-    
-    _name           = 'Ostap'
-    _category       = 'applications'
-    _exportmethods  = GaudiBase._exportmethods[:]
+
+    _name = 'Ostap'
+    _category = 'applications'
+    _exportmethods = GaudiBase._exportmethods[:]
     _exportmethods += ['prepare', 'unprepare']
-    
+
     _schema = GaudiBase._schema.inherit_copy()
 
     _schema.datadict['package'] = SimpleItem(
-        defvalue = None,
-        typelist = ['str', 'type(None)'],
-        doc      = """The package the application belongs to (e.g. 'Sim', 'Phys')
+        defvalue=None,
+        typelist=['str', 'type(None)'],
+        doc="""The package the application belongs to (e.g. 'Sim', 'Phys')
         """
-        )
-    _schema.datadict['masterpackage'] = SimpleItem (
-        defvalue = None,
-        typelist = [ 'str', 'type(None)' ],
-        doc      = """The package where your top level requirements file is read from.
+    )
+    _schema.datadict['masterpackage'] = SimpleItem(
+        defvalue=None,
+        typelist=['str', 'type(None)'],
+        doc="""The package where your top level requirements file is read from.
         Can be written either as a path 'Tutorial/Analysis/v6r0' or in traditional notation 
         'Analysis v6r0 Tutorial'
         """
-        )
-    
+    )
+
     _schema.datadict['setupProjectOptions'] = SimpleItem(
-        defvalue = ''     ,
-        typelist = [ 'str', 'type(None)'],
-        doc      = """Extra options to be passed onto the SetupProject command
+        defvalue='',
+        typelist=['str', 'type(None)'],
+        doc="""Extra options to be passed onto the SetupProject command
         used for configuring the environment. As an example 
         setting it to '--dev' will give access to the DEV area. 
         For full documentation of the available options see 
         https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject
         """
-        )
-    
+    )
+
     _schema.datadict['scripts'] = FileItem(
-        preparable      = 1      ,
-        sequence        = 1      ,
-        strict_sequence = 0      ,
-        defvalue        = []     ,
-        doc             = """The names of the script files to execute.
+        preparable=1,
+        sequence=1,
+        strict_sequence=0,
+        defvalue=[],
+        doc="""The names of the script files to execute.
         A copy will be made at submission time
         """
-        )
-    
+    )
+
     _schema.datadict['commands'] = SimpleItem(
-        defvalue = []      ,
-        typelist = ['str'] ,
-        sequence =  1      ,
-        doc      = """The commands to be executed,
+        defvalue=[],
+        typelist=['str'],
+        sequence=1,
+        doc="""The commands to be executed,
         e.g. [ 'run(10)' , 'print ls()' , 'print dir()' ]
         """
-        )
-    
+    )
+
     _schema.datadict['arguments'] = SimpleItem(
-        defvalue = []      ,
-        typelist = ['str'] ,
-        sequence =  1      ,
-        doc      = """List of command-line arguments for bender script,
+        defvalue=[],
+        typelist=['str'],
+        sequence=1,
+        doc="""List of command-line arguments for bender script,
         e.g. ['-w','-p5'], etc.
         For python scripts and configuration/Configurable files for 'importOptions'
         it is much better to use the separate options 'scripts' and 'imports'
         Following arguments will be appended automatically:  --no-color, --no-castor and --batch
         """
-        )
-    
+    )
+
     _schema.version.major += 2
     _schema.version.minor += 0
-    
+
     def _get_default_version(self, gaudi_app):
         return guess_version(self, gaudi_app)
 
     def _auto__init__(self):
-        if not self.appname : self.appname = 'Bender'  # default
+        if not self.appname:
+            self.appname = 'Bender'  # default
         self._init()
 
     def _getshell(self):
@@ -250,21 +253,20 @@ class Ostap(GaudiBase):
         super(Ostap, self).prepare(force)
         self._check_inputs()
 
-        
-        share_dir = os.path.join (
-            expandfilename ( getConfig('Configuration')['gangadir'] ) ,
-            'shared'                            ,
-            getConfig('Configuration')['user']  ,
-            self.is_prepared.name               )
-        
-        input_sandbox_tar = os.path.join ( share_dir , 'inputsandbox',
-                                           '_input_sandbox_%s.tar' % self.is_prepared.name ) 
-        input_sandbox_tgz = os.path.join ( share_dir , 'inputsandbox',
-                                           '_input_sandbox_%s.tgz' % self.is_prepared.name ) 
-        
-        fillPackedSandbox ( self.scripts      , input_sandbox_tar        ) 
-        gzipFile          ( input_sandbox_tar , input_sandbox_tgz , True )
-        
+        share_dir = os.path.join(
+            expandfilename(getConfig('Configuration')['gangadir']),
+            'shared',
+            getConfig('Configuration')['user'],
+            self.is_prepared.name)
+
+        input_sandbox_tar = os.path.join(share_dir, 'inputsandbox',
+                                         '_input_sandbox_%s.tar' % self.is_prepared.name)
+        input_sandbox_tgz = os.path.join(share_dir, 'inputsandbox',
+                                         '_input_sandbox_%s.tgz' % self.is_prepared.name)
+
+        fillPackedSandbox(self.scripts, input_sandbox_tar)
+        gzipFile(input_sandbox_tar, input_sandbox_tgz, True)
+
         # add the newly created shared directory into the metadata system if
         # the app is associated with a persisted object
         self.checkPreparedHasParent(self)
@@ -275,39 +277,41 @@ class Ostap(GaudiBase):
         return (None, StandardJobConfig())
 
     def configure(self, master_appconfig):
-        
-        ## strip leading and trailing blanks from arguments 
-        self.arguments = [ a.strip() for a in self.arguments ]
 
-        ## strip leading and trailing blanks from the command 
-        self.commands  = [ a.strip() for a in self.commands  ]
-        
-        ## the script layout
-        the_script    = layout.format (
-            scripts   = [ os.path.join ( f.subdir , os.path.basename ( f.name ) ) for f in self.scripts ] , 
-            arguments = self.arguments  ,
-            command   = self.commands    
-            )
+        # strip leading and trailing blanks from arguments
+        self.arguments = [a.strip() for a in self.arguments]
+
+        # strip leading and trailing blanks from the command
+        self.commands = [a.strip() for a in self.commands]
+
+        # the script layout
+        the_script = layout.format(
+            scripts=[os.path.join(f.subdir, os.path.basename(f.name)) for f in self.scripts],
+            arguments=self.arguments,
+            command=self.commands
+        )
 
         # add summary.xml
-        outputsandbox_temp  = XMLPostProcessor._XMLJobFiles()
+        outputsandbox_temp = XMLPostProcessor._XMLJobFiles()
         outputsandbox_temp += unique(self.getJobObject().outputsandbox)
-        outputsandbox       = unique(outputsandbox_temp)
-        
-        input_files  = []
-        input_files += [ FileBuffer('gaudipython-wrapper.py', the_script ) ]
+        outputsandbox = unique(outputsandbox_temp)
+
+        input_files = []
+        input_files += [FileBuffer('gaudipython-wrapper.py', the_script)]
         logger.debug("Returning StandardJobConfig")
         return (None, StandardJobConfig(inputbox=input_files,
                                         outputbox=outputsandbox))
-    
+
     def _check_inputs(self):
         """Checks the validity of user's entries for Ostap schema"""
-        
-        if not self.scripts and not self.commands and not self.arguments : 
+
+        if not self.scripts and not self.commands and not self.arguments:
             raise ApplicationConfigurationError(None, "Application scripts are not defined")
-        
-        if isinstance ( self.scripts , str ) : self.scripts = [ File ( self.scripts ) ]        
-        for f in self.scripts : f.name = fullpath ( f.name )
+
+        if isinstance(self.scripts, str):
+            self.scripts = [File(self.scripts)]
+        for f in self.scripts:
+            f.name = fullpath(f.name)
 
     def postprocess(self):
         XMLPostProcessor.postprocess(self, logger)
@@ -326,15 +330,15 @@ allHandlers.add('Ostap', 'Dirac', LHCbGaudiDiracRunTimeHandler)
 
 
 # =============================================================================
-if '__main__' == __name__ :
+if '__main__' == __name__:
 
-    print 80*'*'  
-    print __doc__ 
-    print ' Author  : %s ' %  __author__   
-    print ' Version : %s ' %  __version__  
-    print ' Date    : %s ' %  __date__     
-    print 80*'*'  
+    print 80 * '*'
+    print __doc__
+    print ' Author  : %s ' % __author__
+    print ' Version : %s ' % __version__
+    print ' Date    : %s ' % __date__
+    print 80 * '*'
 
 # =============================================================================
-# The END 
+# The END
 # =============================================================================

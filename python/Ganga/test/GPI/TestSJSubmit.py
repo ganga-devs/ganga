@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
+
 class TestSJSubmit(GangaUnitTest):
 
     n_subjobs = 10
@@ -143,7 +144,7 @@ class TestSJSubmit(GangaUnitTest):
         """
         from Ganga.GPI import Job, Local
 
-        j=Job()
+        j = Job()
         j.splitter = self._getSplitter()
         j.backend = Local()
         j.submit()
@@ -197,4 +198,3 @@ class TestSJSubmit(GangaUnitTest):
         sleep_until_completed(j)
 
         # Test that this works when resubmitOnlyFailedSubjobs = False
-

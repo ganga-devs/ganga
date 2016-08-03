@@ -26,6 +26,7 @@ regex = re.compile('[*?\[\]]')
 def getLCGConfig():
     return getConfig('Output')['LCGSEFile']['uploadOptions']
 
+
 class LCGSEFile(IGangaFile):
 
     """LCGSEFile represents a class marking an output file to be written into LCG SE
@@ -268,13 +269,13 @@ class LCGSEFile(IGangaFile):
 
         for outputFile in outputFiles:
             lcgCommands.append('lcgse %s %s %s' % (
-                outputFile.namePattern, outputFile.lfc_host,  outputFile.getUploadCmd()))
+                outputFile.namePattern, outputFile.lfc_host, outputFile.getUploadCmd()))
             logger.debug("OutputFile (%s) cmd for WN script is: %s" %
                          (outputFile.namePattern, outputFile.getUploadCmd()))
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                        'scripts/LCGSEFileWNScript.py')
+                                       'scripts/LCGSEFileWNScript.py')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '###INDENT###')

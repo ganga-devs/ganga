@@ -169,10 +169,10 @@ RecoToDST-07/90000000/DST" ,
 
         logger.debug("Creating DiracFile objects")
 
-        ## Doesn't work not clear why
+        # Doesn't work not clear why
         from GangaDirac.Lib.Files.DiracFile import DiracFile
         #new_files = []
-        #def _createDiracLFN(this_file):
+        # def _createDiracLFN(this_file):
         #    return DiracFile(lfn = this_file)
         #GangaObject.__createNewList(new_files, files, _createDiracLFN)
 
@@ -180,9 +180,9 @@ RecoToDST-07/90000000/DST" ,
         new_files = [DiracFile(lfn=f) for f in files]
 
         #new_files = [DiracFile(lfn=_file) for _file in files]
-        #for f in files:
+        # for f in files:
         #    new_files.append(DiracFile(lfn=f))
-            #ds.extend([DiracFile(lfn = f)])
+        #ds.extend([DiracFile(lfn = f)])
 
         logger.info("Constructing LHCbDataset")
 
@@ -222,9 +222,9 @@ class BKQueryDict(GangaObject):
                         'EventType': 'All',
                         'ConfigName': 'All',
                         'ConfigVersion': 'All',
-                        'ProductionID':     0,
-                        'StartRun':     0,
-                        'EndRun':     0,
+                        'ProductionID': 0,
+                        'StartRun': 0,
+                        'EndRun': 0,
                         'DataQuality': 'All'}
 
     schema = {}

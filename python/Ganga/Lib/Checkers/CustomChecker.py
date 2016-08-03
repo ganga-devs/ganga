@@ -40,7 +40,7 @@ class CustomChecker(IChecker):
 
     def check(self, job):
         if (self.module is None) or not self.module:
-            raise PostProcessException( "No module is specified and so the check will fail.")
+            raise PostProcessException("No module is specified and so the check will fail.")
         if (self.module.name is None) or not os.path.isfile(self.module.name):
             raise PostProcessException("The module '%s' does not exist and so CustomChecker will do nothing!" % (self.module.name))
 
@@ -59,4 +59,3 @@ class CustomChecker(IChecker):
             logger.info('The custom check module returned False for job(%s)', job.fqid)
             return self.failure
         return self.success
-

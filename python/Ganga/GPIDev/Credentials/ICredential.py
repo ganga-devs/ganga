@@ -238,7 +238,7 @@ class ICredential(GangaObject):
                 # Since self.inputPW_Widget is called, current arguments are
                 # ignored since renew() and create() in GUI mode will not be
                 # called with any arguments.
-                #proxy_obj = self._proxyObject ## This is removed to get rid of ref to _proxyObject
+                # proxy_obj = self._proxyObject ## This is removed to get rid of ref to _proxyObject
                 proxy_obj = self
                 if self.inputPW_Widget.ask(proxy_obj):
                     logger.dg("Proceeding to retrieve password from inputPW_Widget.")

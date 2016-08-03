@@ -16,6 +16,7 @@ conf.setSessionValue('gangadir', expandvars(None, '~/gangadir_testing/TutorialTe
 #from ganga import *
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
+
 class TutorialTests(GangaUnitTest):
 
     # A set of tests that are explicitly quoted in the tutorial docs
@@ -55,7 +56,6 @@ j.submit()
         execfile('submit.py')
         # -- INSTALLANDBASICUSAGE EXECFILE STOP
 
-
     def test_b_Configuration(self):
         from Ganga.GPI import config, jobs
 
@@ -79,7 +79,6 @@ j.submit()
         print slice
         # -- CONFIGURATION STARTUPSCRIPT STOP
 
-
     def test_c_JobManipulation(self):
 
         from Ganga.GPI import runMonitoring, Job, jobs, export, load
@@ -87,11 +86,11 @@ j.submit()
         runMonitoring()
 
         # -- JOBMANIPULATION JOBCOPY START
-        j = Job(name = 'original')
+        j = Job(name='original')
         j2 = j.copy()
         j2.name = 'copy'
         j.submit()
-        j3 = Job(j, name = 'copy2')
+        j3 = Job(j, name='copy2')
         jobs
         # -- JOBMANIPULATION JOBCOPY STOP
 
@@ -122,10 +121,10 @@ j.submit()
         # can select on ids, name, status, backend, application
         jobs.select(status='new')
         jobs.select(backend='Local')
-        jobs.select(ids=[1,3])
+        jobs.select(ids=[1, 3])
 
         # can restrict on min/max id
-        jobs.select(1,3, application='Executable')
+        jobs.select(1, 3, application='Executable')
         # -- JOBMANIPULATION JOBSELECT STOP
 
         # -- JOBMANIPULATION JOBSELECTOP START
@@ -201,8 +200,8 @@ j.submit()
 
         j = Job()
         j.application.exe = File('my_script2.sh')
-        j.inputfiles = [ LocalFile('my_input.txt') ]
-        j.outputfiles = [ LocalFile('my_output.txt') ]
+        j.inputfiles = [LocalFile('my_input.txt')]
+        j.outputfiles = [LocalFile('my_output.txt')]
         j.submit()
         # -- INPUTANDOUTPUTDATA BASIC STOP
 
@@ -215,8 +214,8 @@ j.submit()
         # This job will fail
         j = Job()
         j.application.exe = File('my_script2.sh')
-        j.inputfiles = [ LocalFile('my_input.txt') ]
-        j.outputfiles = [ LocalFile('my_output_FAIL.txt') ]
+        j.inputfiles = [LocalFile('my_input.txt')]
+        j.outputfiles = [LocalFile('my_output_FAIL.txt')]
         j.submit()
         # -- INPUTANDOUTPUTDATA FAILJOB STOP
 
@@ -276,7 +275,7 @@ j.submit()
         j = Job()
         j.splitter = GenericSplitter()
         j.splitter.multi_attrs = {'application.args': ['hello1', 'hello2'],
-                                  'application.env': [{'MYENV':'test1'}, {'MYENV':'test2'}]}
+                                  'application.env': [{'MYENV': 'test1'}, {'MYENV': 'test2'}]}
         j.submit()
         # -- SPLITTERS MULTIATTRS STOP
 
@@ -284,7 +283,7 @@ j.submit()
         j = Job()
         j.application.exe = 'more'
         j.application.args = ['__GangaInputData.txt__']
-        j.inputdata = GangaDataset( files=[ LocalFile('*.txt') ] )
+        j.inputdata = GangaDataset(files=[LocalFile('*.txt')])
         j.splitter = GangaDatasetSplitter()
         j.splitter.files_per_subjob = 2
         j.submit()
@@ -298,15 +297,15 @@ j.submit()
         j = Job()
 
         # -- POSTPROCESSORS APPEND START
-        j.postprocessors.append(RootMerger(files = ['thesis_data.root'],ignorefailed = True,overwrite = True))
+        j.postprocessors.append(RootMerger(files=['thesis_data.root'], ignorefailed=True, overwrite=True))
         # -- POSTPROCESSORS APPEND STOP
 
         # -- POSTPROCESSORS TEXTMERGER START
-        TextMerger(compress = True)
+        TextMerger(compress=True)
         # -- POSTPROCESSORS TEXTMERGER STOP
 
         # -- POSTPROCESSORS ROOTMERGER START
-        RootMerger(args = '-T')
+        RootMerger(args='-T')
         # -- POSTPROCESSORS ROOTMERGER STOP
 
         # -- POSTPROCESSORS CUSTOMMERGER START
@@ -314,20 +313,20 @@ j.submit()
         # -- POSTPROCESSORS CUSTOMMERGER STOP
 
         # -- POSTPROCESSORS SMARTMERGER START
-        SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True)
+        SmartMerger(files=['thesis_data.root', 'stdout'], overwrite=True)
         # -- POSTPROCESSORS SMARTMERGER STOP
 
         # -- POSTPROCESSORS SMARTMERGERAPPEND START
-        j.postprocessors.append(SmartMerger(files = ['thesis_data.root','stdout'],overwrite = True))
+        j.postprocessors.append(SmartMerger(files=['thesis_data.root', 'stdout'], overwrite=True))
         # -- POSTPROCESSORS SMARTMERGERAPPEND STOP
 
         # -- POSTPROCESSORS SMARTMERGERAPPEND2 START
-        j.postprocessors.append(TextMerger(files = ['stdout'],overwrite = True))
-        j.postprocessors.append(RootMerger(files = ['thesis_data.root'],overwrite = False))
+        j.postprocessors.append(TextMerger(files=['stdout'], overwrite=True))
+        j.postprocessors.append(RootMerger(files=['thesis_data.root'], overwrite=False))
         # -- POSTPROCESSORS SMARTMERGERAPPEND2 STOP
 
         # -- POSTPROCESSORS FILECHECKER START
-        fc = FileChecker(files = ['stdout'], searchStrings = ['Segmentation'])
+        fc = FileChecker(files=['stdout'], searchStrings=['Segmentation'])
         # -- POSTPROCESSORS FILECHECKER STOP
 
         # -- POSTPROCESSORS FILECHECKERMUSTEXIST START
@@ -340,17 +339,17 @@ j.submit()
         # -- POSTPROCESSORS FILECHECKEROPTS STOP
 
         # -- POSTPROCESSORS FILECHECKEROPTS START
-        rfc = RootFileChecker(files = ["*.root"])
+        rfc = RootFileChecker(files=["*.root"])
         rfc.files = ["*.root"]
         j.postprocessors.append(rfc)
         # -- POSTPROCESSORS FILECHECKEROPTS STOP
 
         # -- POSTPROCESSORS CUSTOMCHECKER START
-        cc = CustomChecker(module = '~/mychecker.py')
+        cc = CustomChecker(module='~/mychecker.py')
         # -- POSTPROCESSORS CUSTOMCHECKER STOP
 
         # -- POSTPROCESSORS NOTIFIER START
-        n = Notifier(address = 'myaddress.cern.ch')
+        n = Notifier(address='myaddress.cern.ch')
         # -- POSTPROCESSORS NOTIFIER STOP
 
         # -- POSTPROCESSORS NOTIFIEROPTS START
@@ -392,7 +391,7 @@ j.submit()
         # -- MISCFUNCTIONALITY TEMPLATE2 STOP
 
         # -- MISCFUNCTIONALITY TEMPLATE3 START
-        j = Job(templates[0], name = 'JobFromTemplate')
+        j = Job(templates[0], name='JobFromTemplate')
         j.submit()
         # -- MISCFUNCTIONALITY TEMPLATE3 STOP
 
@@ -415,7 +414,7 @@ j.submit()
 
         # create some jobs and add them
         jobtree.cd('/test/jan')
-        jobtree.add( Job() )
+        jobtree.add(Job())
         jobtree.cd('/prod/full')
         jobtree.add(Job())
         jobtree.add(Job())

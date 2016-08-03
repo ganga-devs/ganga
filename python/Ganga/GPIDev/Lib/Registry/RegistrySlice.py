@@ -19,6 +19,7 @@ logger = getLogger()
 
 config = Ganga.Utility.Config.getConfig('Display')
 
+
 class RegistrySlice(object):
 
     def __init__(self, name, display_prefix):
@@ -124,8 +125,8 @@ class RegistrySlice(object):
         this_repr = repr.Repr()
         from Ganga.GPIDev.Base.Proxy import addProxy
         attrs_str = ""
-        ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
-        ## Required to flatten the additional arguments into a flat string in attrs_str
+        # Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
+        # Required to flatten the additional arguments into a flat string in attrs_str
         for a in attrs:
             if isclass(attrs[a]):
                 this_attr = addProxy(attrs[a]())
@@ -163,8 +164,8 @@ class RegistrySlice(object):
 
         logger = getLogger()
 
-        ## Loop through attrs to parse possible inputs into instances of a class where appropriate
-        ## Unlike the select method we need to populate this dictionary with instance objects, not str or class
+        # Loop through attrs to parse possible inputs into instances of a class where appropriate
+        # Unlike the select method we need to populate this dictionary with instance objects, not str or class
         for k, v in attrs.iteritems():
             if isclass(v):
                 attrs[k] = v()
@@ -245,9 +246,9 @@ class RegistrySlice(object):
                                 attrvalue = attrs[a]
 
                                 if item.isA(ComponentItem):
-                                    ## TODO we need to distinguish between passing a Class type and a defined class instance
-                                    ## If we passed a class type to select it should look only for classes which are of this type
-                                    ## If we pass a class instance a compartison of the internal attributes should be performed
+                                    # TODO we need to distinguish between passing a Class type and a defined class instance
+                                    # If we passed a class type to select it should look only for classes which are of this type
+                                    # If we pass a class instance a compartison of the internal attributes should be performed
                                     from Ganga.GPIDev.Base.Filters import allComponentFilters
 
                                     cfilter = allComponentFilters[item['category']]
@@ -444,7 +445,6 @@ class RegistrySlice(object):
             ds += this_format % self._display_columns
             ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
-
         if hasattr(self.objects, '_private_display'):
             ds += self.objects._private_display(self, this_format, default_width, markup)
 
@@ -470,7 +470,7 @@ class RegistrySlice(object):
                         continue
                     except KeyError as err:
                         logger.debug("_display KeyError: %s" % err)
-                        #pass
+                        # pass
                         if item == "fqid":
                             vals.append(self._get_display_value(obj, item))
                         else:
@@ -483,4 +483,3 @@ class RegistrySlice(object):
 
     def _id(self):
         return id(self)
-

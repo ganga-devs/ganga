@@ -113,7 +113,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         j.splitter = None
         #logger.debug("Unsetting Merger")
         #j.merger = None
-        #j.inputsandbox = [] ## master added automatically
+        # j.inputsandbox = [] ## master added automatically
         #j.inputfiles = []
         logger.debug("Setting InputData")
         j.inputdata = LHCbDataset(files=datatmp[:],
@@ -195,4 +195,3 @@ class SplitByFiles(GaudiInputDataSplitter):
         split_return = super(SplitByFiles, self).split(job)
         logger.debug("split_return: %s" % split_return)
         return split_return
-

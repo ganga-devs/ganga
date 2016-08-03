@@ -17,6 +17,7 @@ from Ganga.Utility.Config import getConfig
 
 logger = getLogger()
 
+
 class RegistryError(GangaException):
 
     def __init__(self, what=''):
@@ -174,6 +175,7 @@ def synchronised_flush_lock(f):
             return f(self, *args, **kwargs)
     return decorated
 
+
 def synchronised_read_lock(f):
     """
     General read lock for quick functions that won't take a while but won't change anything either
@@ -186,6 +188,7 @@ def synchronised_read_lock(f):
         with self._read_lock:
             return f(self, *args, **kwargs)
     return decorated
+
 
 def synchronised_complete_lock(f):
     """
@@ -201,12 +204,14 @@ def synchronised_complete_lock(f):
                 return f(self, *args, **kwargs)
     return decorated
 
+
 class RegistryFlusher(threading.Thread):
     """
     This class is intended to be used by the registry to perfom
     automatic flushes on a fixed schedule so that information is not
     lost if Ganga is shut down abruptly.
     """
+
     def __init__(self, registry, *args, **kwargs):
         """
         This inits the RegistryFlusher and makes use of threading events
@@ -254,8 +259,8 @@ class RegistryFlusher(threading.Thread):
         regConf = getConfig('Registry')
         while not self.stopped:
             sleep_period = regConf['AutoFlusherWaitTime']
-            for i in range(sleep_period*sleeps_per_second):
-                time.sleep(1/sleeps_per_second)
+            for i in range(sleep_period * sleeps_per_second):
+                time.sleep(1 / sleeps_per_second)
                 if self.stopped:
                     return
             # This will trigger a flush on all dirty objects in the repo,
@@ -610,14 +615,14 @@ class Registry(object):
                     self.metadata = Registry(self.name + ".metadata", "Metadata repository for %s" % self.name)
                     self.metadata.type = self.type
                     self.metadata.location = self.location
-                    setattr(self.metadata, '_parent', self) ## rcurrie Registry has NO '_parent' Object so don't understand this is this used for JobTree?
+                    setattr(self.metadata, '_parent', self)  # rcurrie Registry has NO '_parent' Object so don't understand this is this used for JobTree?
                 logger.debug("metadata startup")
                 self.metadata.startup()
                 t3 = time.time()
-                logger.debug("Startup of %s.metadata took %s sec" % (self.name, t3-t2))
+                logger.debug("Startup of %s.metadata took %s sec" % (self.name, t3 - t2))
 
             logger.debug("repo startup")
-            #self.hasStarted() = True
+            # self.hasStarted() = True
             self.repository.startup()
             t1 = time.time()
             logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
@@ -625,7 +630,7 @@ class Registry(object):
             logger.debug("Logging Repo startup Error: %s" % err)
             self._hasStarted = False
             raise
-        #finally:
+        # finally:
         #    pass
 
     @synchronised_complete_lock
@@ -686,4 +691,3 @@ class Registry(object):
             return False
 
         return self.repository.isObjectLoaded(obj)
-

@@ -19,11 +19,11 @@ logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-## Due to a bug in Gaudi at some point we need this equivalenc here: see #204
+# Due to a bug in Gaudi at some point we need this equivalenc here: see #204
 DataObjectDescriptorCollection = str
 
-class PythonOptionsParser(object):
 
+class PythonOptionsParser(object):
 
     """ Parses job options file(s) w/ gaudirun.py to extract user's files"""
 
@@ -201,8 +201,8 @@ class PythonOptionsParser(object):
     def get_output(self, job):
         '''Builds lists of output files and output data.'''
 
-        outputdata = [f.namePattern for f in job.outputfiles if outputFilePostProcessingOnWN(job, getName(f)) ]
-        outsandbox = [f.namePattern for f in job.outputfiles if not outputFilePostProcessingOnWN(job, getName(f)) ]
+        outputdata = [f.namePattern for f in job.outputfiles if outputFilePostProcessingOnWN(job, getName(f))]
+        outsandbox = [f.namePattern for f in job.outputfiles if not outputFilePostProcessingOnWN(job, getName(f))]
 
         # if user put any files in both, remove them from the sandbox
         for f in outsandbox:
@@ -245,4 +245,3 @@ class PythonOptionsParser(object):
         return unique(outsandbox), unique(outputdata)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-

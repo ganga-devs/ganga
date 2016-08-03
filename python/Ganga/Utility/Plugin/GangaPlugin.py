@@ -43,7 +43,7 @@ class PluginManager(object):
         try:
             if name is not None:
                 if category in self.first:
-                    ## This is expected to work and is quite verbose when debugging turned on
+                    # This is expected to work and is quite verbose when debugging turned on
                     #logger.debug("Returning based upon Category and Name")
                     #logger.debug("name: %s cat: %s" % (str(name), str(category)))
                     if name in self.all_dict[category]:
@@ -52,7 +52,7 @@ class PluginManager(object):
 
             if (name is None) and category is not None:
                 if (category in self.first):
-                    ## This is expected to work and is quite verbose when debugging turned on
+                    # This is expected to work and is quite verbose when debugging turned on
                     #logger.debug("Returning based upon Category ONLY")
                     #logger.debug("name: %s cat: %s" % (str(name), str(category)))
                     self._prev_found[key] = self.first[category]
@@ -117,4 +117,3 @@ class PluginManager(object):
             return {}
 
 allPlugins = PluginManager()
-

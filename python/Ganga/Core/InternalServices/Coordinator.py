@@ -170,12 +170,11 @@ def disableInternalServices():
     log.info("Ganga is now attempting to shut down all running processes accessing the repository in a clean manner")
     log.info(" ... Please be patient! ")
 
-
-    ## MOVED TO THE END OF THE SHUTDOWN SO THAT WE NEVER ACCESS A REPO BEFORE WE ARE FINISHED!
+    # MOVED TO THE END OF THE SHUTDOWN SO THAT WE NEVER ACCESS A REPO BEFORE WE ARE FINISHED!
     # flush the registries
     #log.debug("Coordinator Shutting Down Repository_runtime")
     #from Ganga.Runtime import Repository_runtime
-    #Repository_runtime.shutdown()
+    # Repository_runtime.shutdown()
 
     global servicesEnabled
 
@@ -217,6 +216,7 @@ def enableMonitoringService():
         _makeThreadPool()
     global servicesEnabled
     servicesEnabled = True
+
 
 def enableInternalServices():
     """
@@ -274,6 +274,7 @@ def getMissingCredentials():
                 isCredentialRequired(availableCreds[name])]
     else:
         return []
+
 
 def bootstrap():
 

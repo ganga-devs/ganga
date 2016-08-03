@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
+
 class TestParser(GangaUnitTest):
 
     def test_heavilyNested(self):
@@ -43,4 +44,3 @@ class TestParser(GangaUnitTest):
         from Ganga.GPIDev.Base.Objects import GangaObject
         assert(not isinstance(j, GangaObject))
         assert(not isinstance(k, GangaObject))
-

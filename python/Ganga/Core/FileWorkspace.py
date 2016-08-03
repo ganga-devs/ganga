@@ -21,6 +21,7 @@ from Ganga.GPIDev.Base.Proxy import isType
 
 logger = getLogger(modulename=1)
 
+
 class FileWorkspace(object):
 
     """
@@ -155,7 +156,7 @@ class FileWorkspace(object):
                     else:
                         exctype, value = excinfo[:2]
                         logger.warning('Cannot delete %s after %s retries due to:  %s:%s (there might some AFS/NSF lock files left over)' %
-                                                                                        (self.getPath(), self.__removeTrials, exctype, value))
+                                       (self.getPath(), self.__removeTrials, exctype, value))
 
                 shutil.rmtree(remove_path, ignore_errors=False, onerror=retryRemove)
                 logger.debug('removed %s', remove_path)

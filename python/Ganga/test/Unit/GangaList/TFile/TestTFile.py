@@ -5,6 +5,7 @@ from . import TFile
 
 TFile = getProxyClass(TFile)
 
+
 class TestTFile(unittest.TestCase):
 
     def testEqualityName(self):
