@@ -20,6 +20,7 @@ def test_job_completed(gpi):
     run_until_completed(j)
     assert j.status == 'completed'
 
+
 def test_job_assignment(gpi):
     """Test assignment of all job properties"""
 

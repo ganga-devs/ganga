@@ -55,7 +55,7 @@ class Version(object):
 def defaultConfigSectionName(name):
     global _stored_defaults
     if name not in _stored_defaults:
-       _stored_defaults[name] = 'defaults_' + name  # _Properties
+        _stored_defaults[name] = 'defaults_' + name  # _Properties
     return _stored_defaults[name]
 
 # Schema defines the logical model of the Ganga Public Interface (GPI)
@@ -83,6 +83,7 @@ def defaultConfigSectionName(name):
 # about name and category of  the schema deepcopy of Schema objects is
 # possible  however   the  _pluginclass  objects   are  shared  unless
 # overriden explicitly.
+
 
 class Schema(object):
     # Schema constructor is used by Ganga plugin developers.
@@ -118,7 +119,8 @@ class Schema(object):
         return self.datadict.keys()
 
     def allItems(self):
-        if self.datadict is None: return zip()
+        if self.datadict is None:
+            return zip()
         return zip(self.datadict.keys(), self.datadict.values())
 
     def simpleItems(self):
@@ -185,7 +187,6 @@ class Schema(object):
                         types.append('dict')
                 config.addOption(name, item['defvalue'], item['doc'], override=False, typelist=types)
 
-
         def prehook(name, x):
             errmsg = "Cannot set %s=%s in [%s]: " % (name, repr(x), config.name)
 
@@ -210,7 +211,6 @@ class Schema(object):
 
         config.attachUserHandler(prehook, None)
         config.attachSessionHandler(prehook, None)
-
 
     def getDefaultValue(self, attr, make_copy=True):
         """ Get the default value of a schema item, both simple and component.
@@ -251,7 +251,7 @@ class Schema(object):
                     from Ganga.GPIDev.Base.Proxy import isProxy
                     if isProxy(defvalue):
                         raise GangaException("(1)Proxy found where it shouldn't be in the Config: %s" % stored_attr_key)
-                    ## Just in case a developer puts the proxied object into the default value!
+                    # Just in case a developer puts the proxied object into the default value!
                     _found_attrs[stored_attr_key] = defvalue
                 else:
                     useDefVal = True
@@ -264,7 +264,7 @@ class Schema(object):
             from Ganga.GPIDev.Base.Proxy import isProxy
             if isProxy(defvalue):
                 raise GangaException("(2)Proxy found where is shouldn't be in the Config" % stored_attr_key)
-            ## Just in case a developer puts the proxied object into the default value!
+            # Just in case a developer puts the proxied object into the default value!
             _found_attrs[stored_attr_key] = defvalue
 
         # in the checking mode, use the provided value instead
@@ -374,9 +374,9 @@ class Schema(object):
 class Item(object):
     # default values of common metaproperties
     _metaproperties = {'transient': 0, 'protected': 0, 'hidden': 0, 'comparable': 1, 'sequence': 0, 'defvalue': None, 'copyable': 1,
-                        'doc': '', 'visitable': 1, 'checkset': None, 'filter': None, 'strict_sequence': 1, 'summary_print': None,
-                        'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0,
-                        'optional': 0, 'category': 'internal', 'typelist': None, 'load_default': 1}
+                       'doc': '', 'visitable': 1, 'checkset': None, 'filter': None, 'strict_sequence': 1, 'summary_print': None,
+                       'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0,
+                       'optional': 0, 'category': 'internal', 'typelist': None, 'load_default': 1}
 
     def __init__(self):
         super(Item, self).__init__()
@@ -469,7 +469,7 @@ class Item(object):
     def __check(isAllowedType, name, validTypes, input_val):
         if not isAllowedType:
             #import traceback
-            #traceback.print_stack()
+            # traceback.print_stack()
             raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: "%s" of type: %s' % (name, validTypes, input_val, type(input_val)))
 
     def _check_type(self, val, name, enableGangaList=True):
@@ -534,7 +534,6 @@ class Item(object):
                 logger.debug("valType: %s defValueType: %s name: %s" % (type(val), type(self._meta['defvalue']), name))
                 self.__check(self.__actualCheck(val, self._meta['defvalue']), name, type(self._meta['defvalue']), val)
 
-
     @staticmethod
     def __actualCheck(val, defVal):
 
@@ -545,7 +544,7 @@ class Item(object):
             knownLists = (list, tuple)
         from Ganga.GPIDev.Base.Proxy import isType
         if isType(defVal, knownLists) and isType(val, knownLists):
-                return True
+            return True
         else:
             if type(defVal) == type:
                 return isType(val, type)
@@ -574,7 +573,7 @@ class ComponentItem(Item):
 
 valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(val, valTypeList, logger)
 
-defaultValue='_NOT_A_VALUE_'
+defaultValue = '_NOT_A_VALUE_'
 
 
 class SimpleItem(Item):
@@ -639,13 +638,13 @@ if __name__ == '__main__':
 
     dd = {
         'application': ComponentItem(category='applications'),
-        'backend':     ComponentItem(category='backends'),
-        'name':        SimpleItem('', comparable=0),
-        'workdir':     SimpleItem(defvalue=None, type='string', transient=1, protected=1, comparable=0),
-        'status':      SimpleItem(defvalue='new', protected=1, comparable=0),
-        'id':           SimpleItem(defvalue=None, type='string', protected=1, comparable=0),
-        'inputbox':     FileItem(defvalue=[], sequence=1),
-        'outputbox':    FileItem(defvalue=[], sequence=1),
+        'backend': ComponentItem(category='backends'),
+        'name': SimpleItem('', comparable=0),
+        'workdir': SimpleItem(defvalue=None, type='string', transient=1, protected=1, comparable=0),
+        'status': SimpleItem(defvalue='new', protected=1, comparable=0),
+        'id': SimpleItem(defvalue=None, type='string', protected=1, comparable=0),
+        'inputbox': FileItem(defvalue=[], sequence=1),
+        'outputbox': FileItem(defvalue=[], sequence=1),
         'overriden_copyable': SimpleItem(defvalue=None, protected=1, copyable=1),
         'plain_copyable': SimpleItem(defvalue=None, copyable=0)
     }

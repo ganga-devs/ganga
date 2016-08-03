@@ -4,6 +4,7 @@ from GangaTest.Framework.tests import MultipassTest
 
 from Ganga.GPIDev.Base.Proxy import stripProxy
 
+
 class InternalParentAssignment(MultipassTest):
 
     def __init__(self): MultipassTest.__init__(self, 2)
@@ -19,8 +20,8 @@ class InternalParentAssignment(MultipassTest):
             assert(stripProxy(j.inputfiles[0])._parent)
         # print j
         # print jobs(j.id)
-        #disableServices()
-        #reactivate()
+        # disableServices()
+        # reactivate()
         return j.id
 
     def pass2(self):

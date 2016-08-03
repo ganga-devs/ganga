@@ -4,6 +4,7 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestSavannah40220(GangaUnitTest):
+
     def test_Savannah40220(self):
         from Ganga.GPI import Job, LCG, export, load
 

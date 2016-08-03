@@ -13,6 +13,7 @@ global_AutoStartReg = True
 notXMLStr = ['ThisIsNOTXML' for _ in range(20)]
 badStr = ''.join(notXMLStr)
 
+
 class TestSJXMLCorruption(GangaUnitTest):
 
     def setUp(self):
@@ -29,15 +30,15 @@ class TestSJXMLCorruption(GangaUnitTest):
 
         from Ganga.GPIDev.Base.Proxy import stripProxy
         from Ganga.GPI import Job, jobs, ArgSplitter
-        j=Job()
+        j = Job()
         orig_sj_proxy = j.subjobs
         j.splitter = ArgSplitter()
         j.splitter.args = [[0], [1]]
-        i=0
+        i = 0
         for sj in stripProxy(j.splitter).split(stripProxy(j)):
             sj.id = i
             stripProxy(j).subjobs.append(sj)
-            i=i+1
+            i = i + 1
         assert len(jobs) == 1
         assert len(j.subjobs) == 2
 
@@ -69,7 +70,7 @@ class TestSJXMLCorruption(GangaUnitTest):
         unlink(XMLFileName)
 
         assert not path.isfile(XMLFileName)
-        assert path.isfile(XMLFileName+'~')
+        assert path.isfile(XMLFileName + '~')
 
         global global_AutoStartReg
         global_AutoStartReg = True
@@ -84,7 +85,7 @@ class TestSJXMLCorruption(GangaUnitTest):
         for sj in jobs(0).subjobs:
             assert isinstance(sj, Job)
 
-        ## trigger load
+        # trigger load
         backend2 = jobs(0).subjobs(0).backend
 
         assert backend2 is not None
@@ -140,12 +141,12 @@ class TestSJXMLCorruption(GangaUnitTest):
         assert backend2 is not None
 
         XMLFileName = getSJXMLFile(jobs(0).subjobs(0))
-        
+
         from tempfile import NamedTemporaryFile
         with NamedTemporaryFile(delete=False) as myTempfile:
             myTempfile.write(badStr)
             myTempfile.flush()
-            myTempName=myTempfile.name
+            myTempName = myTempfile.name
 
         from Ganga.GPIDev.Base.Proxy import stripProxy
         assert stripProxy(jobs(0).subjobs(0))._dirty is True
@@ -155,4 +156,3 @@ class TestSJXMLCorruption(GangaUnitTest):
 
         assert open(XMLFileName).read() != open(myTempName).read()
         unlink(myTempName)
-

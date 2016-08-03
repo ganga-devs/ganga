@@ -6,6 +6,7 @@ import os
 
 
 class TestSavannah31691(GangaUnitTest):
+
     def test_Savannah31691(self):
         from Ganga.GPI import config, Job, jobs
 

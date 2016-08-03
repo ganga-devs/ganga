@@ -100,14 +100,14 @@ class JobTree(GangaObject):
         returnable_folder = folders
         top_level = ''
 
-        ##  loop through elements in the path to get to the requested path from the user
+        # loop through elements in the path to get to the requested path from the user
         for _dir in path:
-            ## catch thie exception
+            # catch thie exception
             if _dir not in returnable_folder:
                 clean_path = os.path.join(*path)
                 raise TreeError(1, "Directory %s does not exist in folder %s, accessing: %s" % (_dir, top_level, clean_path))
 
-            ## 'cd' into the folder of interest
+            # 'cd' into the folder of interest
             returnable_folder = returnable_folder[_dir]
 
             if not isType(returnable_folder, type({})):
@@ -135,7 +135,7 @@ class JobTree(GangaObject):
 
         return returnable_folder[local_dir]
 
-        ##  Perform some anity checking before returning the local folder structure
+        # Perform some anity checking before returning the local folder structure
     def __get_folders(self):
         if not hasattr(self, 'folders'):
             setattr(self, 'folders', {os.sep: {}})
@@ -147,7 +147,7 @@ class JobTree(GangaObject):
 
     def __select_dir(self, path):
 
-        ## sanitise the path and get an ordered list of the path directories
+        # sanitise the path and get an ordered list of the path directories
         _path = self.__get_path(path)
 
         returnable_folder = self.__folder_cd(_path)
@@ -166,8 +166,7 @@ class JobTree(GangaObject):
                 del self.__get_folders()[path][dir]
         return
 
-
-    ## Explicitly DO NOT copy self as we want one object per jobs repo through the GPI! - rcurrie
+    # Explicitly DO NOT copy self as we want one object per jobs repo through the GPI! - rcurrie
 
     def clone(self, ignora_atts=[]):
         return self
@@ -432,10 +431,10 @@ class JobTree(GangaObject):
                             jid = fc[i].split('.')
                             j = registry[int(jid[0])].subjobs[int(jid[1])]
                     except RegistryKeyError, ObjectNotInRegistryError:
-                        #try:
+                        # try:
                         self.__remove_dir(path=path, dir=i)
                         self._setDirty()
-                        #except ObjectNotInRegistryError as err:
+                        # except ObjectNotInRegistryError as err:
                         #    logger.debug("Object: %s Not in Reg: %s" % (_id, err))
                         #    pass
                         try:
@@ -475,6 +474,7 @@ class _proxy_display(object):
             return stripProxy(cls)._proxy_display
         return stripProxy(obj)._proxy_display
 
+
 class _copy(object):
 
     def __get__(self, obj, cls):
@@ -484,4 +484,3 @@ class _copy(object):
 
 
 JobTree.__str__ = JobTree._display
-

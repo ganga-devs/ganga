@@ -77,13 +77,13 @@ class VPrinter(object):
             print(self.indent(), node._schema.name, '(', file=self.out)
         else:
             print('(', file=self.out)
-        self.level+=1
+        self.level += 1
         self.nocomma = 1
         self.empty_body = 1
 
     def nodeEnd(self, node):
 
-        self.level-=1
+        self.level -= 1
 
         if self.empty_body:
             print(self.indent(), ' )', end='', file=self.out, sep='')
@@ -130,9 +130,9 @@ class VPrinter(object):
             #    print 'no transformation'
             if isclass(value):
                 if self._interactive is True:
-                    print(self.indent(), name, '=', str(value), end = '', file=self.out)
+                    print(self.indent(), name, '=', str(value), end='', file=self.out)
                 else:
-                    print(self.indent(), name, '=', repr(value), end = '', file=self.out)
+                    print(self.indent(), name, '=', repr(value), end='', file=self.out)
             else:
                 print(self.indent(), name, '=', self.quote(value), end='', file=self.out)
 
@@ -153,19 +153,19 @@ class VPrinter(object):
             self.empty_body = 0
             self.comma()
             print(self.indent(), name, '=', end='', file=self.out)
-            #self.level+=1
+            # self.level+=1
             if sequence:
                 print('[', end='', file=self.out)
-                self.level+=1
+                self.level += 1
                 for s in subnode:
                     print(self.indent(), file=self.out)
                     self.acceptOptional(s)
                     print(',', end='', file=self.out)
-                self.level-=1
+                self.level -= 1
                 print(']', end='', file=self.out)
             else:
                 self.acceptOptional(subnode)
-            #self.level-=1
+            # self.level-=1
 
     def quote(self, x):
         return quoteValue(x, self._interactive)
@@ -320,7 +320,7 @@ def summary_print(obj, out=None, interactive=False):
             outStringList = []
             for x in obj:
                 if isType(x, GangaObject):
-                    sio =StringIO()
+                    sio = StringIO()
                     stripProxy(x).printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
@@ -339,4 +339,3 @@ def summary_print(obj, out=None, interactive=False):
         print(sio.getvalue(), end=' ', file=out)
     else:
         print(str(_obj), end=' ', file=out)
-

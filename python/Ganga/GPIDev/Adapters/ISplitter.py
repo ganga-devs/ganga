@@ -9,6 +9,7 @@ from Ganga.GPIDev.Base.Proxy import TypeMismatchError, isType, stripProxy, getNa
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.Utility.util import containsGangaObjects
 
+
 class SplittingError(Exception):
 
     def __init__(self, x): Exception.__init__(self, x)
@@ -81,4 +82,3 @@ class ISplitter(GangaObject):
             cnt += 1
 
         return subjobs
-

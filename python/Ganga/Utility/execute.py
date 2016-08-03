@@ -73,7 +73,7 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
                    .replace('###SETUP###'      , python_setup.strip())\
                    .replace('###COMMAND###'    , command.strip()     )\
                    .replace('###PKL_FDREAD###' , str(fdread)         )\
-                   .replace('###PKL_FDWRITE###', str(fdwrite)        )
+                   .replace('###PKL_FDWRITE###', str(fdwrite))
     env_file_pipes = None
     if update_env:
         update_script, env_file_pipes = env_update_script()
@@ -105,7 +105,7 @@ def __timeout_func(process, timed_out):
         process (class): This is a subprocess class which knows of the pid of wrapping thread around the command we want to kill
         timed_out (Event): A threading event to be set when the command has timed out
     """
-        
+
     if process.returncode is None:
         timed_out.set()
         try:

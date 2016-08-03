@@ -43,6 +43,7 @@ except ConfigError, err:
 
 session_lock_refresher = None
 
+
 def setupGlobalLockRef(session_name, sdir, gfn, _on_afs):
     global session_lock_refresher
     if session_lock_refresher is None:
@@ -58,6 +59,7 @@ def setupGlobalLockRef(session_name, sdir, gfn, _on_afs):
 
 sessionFiles = []
 sessionFileHandlers = []
+
 
 def registerGlobalSessionFile(thisSessionFile):
     global sessionFiles
@@ -156,20 +158,20 @@ class SessionLockRefresher(GangaThread):
                 self.clearDeadLocks(now)
 
         except Exception as x:
-            logger.warning( "Internal exception in session lock thread: %s %s" % (getName(x), x))
+            logger.warning("Internal exception in session lock thread: %s %s" % (getName(x), x))
 
     def updateNow(self):
         try:
             for index in range(len(self.fns)):
                 now = self.updateLocks(index)
         except Exception as x:
-            logger.warning("Internal exception in Updating session lock thread: %s %s" % ( getName(x), x))
+            logger.warning("Internal exception in Updating session lock thread: %s %s" % (getName(x), x))
 
     def updateLocks(self, index):
 
         this_index_file = self.fns[index]
         if this_index_file in self.FileCheckTimes:
-            if abs(self.FileCheckTimes[this_index_file]-time.time()) >= 3:
+            if abs(self.FileCheckTimes[this_index_file] - time.time()) >= 3:
                 now = self._reallyUpdateLocks(index)
                 self.FileCheckTimes[this_index_file] = now
         else:
@@ -184,7 +186,7 @@ class SessionLockRefresher(GangaThread):
         try:
             oldnow = self.delayread(this_index_file)
             os.system('touch "%s"' % this_index_file)
-            now = self.delayread(this_index_file) # os.stat(self.fn).st_ctime
+            now = self.delayread(this_index_file)  # os.stat(self.fn).st_ctime
         except OSError as x:
             if x.errno != errno.ENOENT:
                 logger.debug("Session file timestamp could not be updated! Locks could be lost!")
@@ -193,7 +195,7 @@ class SessionLockRefresher(GangaThread):
                         logger.debug("Attempting to lock file again, unknown error:\n'%s'" % x)
                         import time
                         time.sleep(0.5)
-                        failcount=failCount+1
+                        failcount = failCount + 1
                         now = self._reallyUpdateLocks(index, failcount)
                     except Exception as err:
                         now = -999.
@@ -205,7 +207,7 @@ class SessionLockRefresher(GangaThread):
             else:
                 if self.repos[index] != None:
                     raise RepositoryError(self.repos[index],
-                    "[SessionFileUpdate] Run: Own session file not found! Possibly deleted by another ganga session.\n\
+                                          "[SessionFileUpdate] Run: Own session file not found! Possibly deleted by another ganga session.\n\
                     Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
                     On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" % (this_index_file, x))
                 else:
@@ -224,7 +226,7 @@ class SessionLockRefresher(GangaThread):
             # metadata_lock_files ]
             lock_files = [f for f in ls_sdir if f.endswith(".locks") and f.find(str(os.getpid())) == -1]
 
-            ## Loop over locks which aren't belonging to this session!
+            # Loop over locks which aren't belonging to this session!
             for sf in session_files:
                 joined_path = os.path.join(self.sdir, sf)
                 #print("join: %s" % joined_path)
@@ -435,7 +437,7 @@ class SessionLockManager(object):
             if not self.afs:
                 os.close(self.lockfd)
             os.unlink(self.fn)
-            #os.unlink(self.lockfn)
+            # os.unlink(self.lockfn)
             # os.unlink(self.gfn)
         except OSError as x:
             logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (self.fn, self.gfn, x))
@@ -956,5 +958,5 @@ class SessionLockManager(object):
         try:
             return "%s (pid %s) since %s" % (".".join(si[:-3]), si[-2], ".".join(si[-5:-3]))
         except Exception, err:
-            logger.debug( "Session Info Exception: %s" % err)
+            logger.debug("Session Info Exception: %s" % err)
             return session

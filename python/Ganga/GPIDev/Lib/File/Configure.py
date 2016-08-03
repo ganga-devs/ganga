@@ -3,6 +3,7 @@ from Ganga.Utility.Config import getConfig
 
 outputconfig = getConfig("Output")
 
+
 def getSharedPath():
     # Required to be initialized for ShareDir object
     from Ganga.Utility.files import expandfilename
@@ -10,5 +11,3 @@ def getSharedPath():
     Conf_config = getConfig('Configuration')
     root_default = os.path.join(expandfilename(Conf_config['gangadir']), 'shared', Conf_config['user'])
     return root_default
-
-

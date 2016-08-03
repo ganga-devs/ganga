@@ -413,4 +413,3 @@ class SmartMerger(IMerger):
             merge_results.append(merge_result)
 
         return not False in merge_results
-

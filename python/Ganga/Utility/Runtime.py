@@ -234,7 +234,6 @@ class RuntimePackage(object):
             logger.debug("no postBootstrapHook() in runtime package %s", self.name)
 
 
-
 def loadPlugins(environment):
     """
     Given a list of environments fully load the found Plugins into them exposing all of the relavent objects
@@ -252,7 +251,7 @@ def loadPlugins(environment):
             raise err
         try:
             r.loadNamedTemplates(env_dict, Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_ext'],
-                                           Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
+                                 Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
         except Exception as err:
             logger.error('problems with loading Named Templates for %s', n)
             logger.error('Reason: %s' % str(err))
@@ -263,6 +262,7 @@ def loadPlugins(environment):
         except Exception as err:
             logger.error('problems with loading Named Templates for %s', n)
             logger.error('Reason: %s' % str(err))
+
 
 def autoPopulateGPI(my_interface=None):
     """
@@ -282,6 +282,7 @@ def autoPopulateGPI(my_interface=None):
                 if n != cls.__name__:
                     exportToInterface(my_interface, cls.__name__, cls, 'Classes')
                 exportToInterface(my_interface, n, cls, 'Classes')
+
 
 def setPluginDefaults(my_interface=None):
     """
@@ -308,7 +309,6 @@ def setPluginDefaults(my_interface=None):
             else:
                 logger.warning("do not understand option %s in [Plugins]", opt)
 
-
     # set alias for default Batch plugin (it will not appear in the
     # configuration)
 
@@ -324,6 +324,3 @@ def setPluginDefaults(my_interface=None):
             import Ganga.GPI
             my_interface = Ganga.GPI
         exportToInterface(my_interface, 'Batch', batch_default, 'Classes')
-
-
-

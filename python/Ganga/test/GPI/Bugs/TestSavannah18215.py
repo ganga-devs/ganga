@@ -17,6 +17,7 @@ def goto_state(j, destination):
 
 
 class TestSavannah18215(GangaUnitTest):
+
     def test_Savannah18215(self):
         from Ganga.GPI import Job
 

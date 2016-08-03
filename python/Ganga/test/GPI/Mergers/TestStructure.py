@@ -52,14 +52,14 @@ class TestStructure(GangaUnitTest):
             j.submit()
         for j in self.jobslice:
             assert run_until_completed(j, timeout=10), 'Timeout on job submission: job is still not finished'
-            #print('# upcoming status')
+            # print('# upcoming status')
             #print("Status 3: %s" % j.status)
-            #print('# printed status')
-            #print('# upcoming impl status')
+            # print('# printed status')
+            # print('# upcoming impl status')
             #print("Status 3: %s" % j._impl.status)
-            #print('# printed impl status')
-            #print('j._impl.__dict__: %s' j._impl.__dict__)
-            #print 'type(j).__dict__', type(j).__dict__
+            # print('# printed impl status')
+            # print('j._impl.__dict__: %s' j._impl.__dict__)
+            # print 'type(j).__dict__', type(j).__dict__
             assert j.status == 'completed'
 
     def testStructureCreated(self):
@@ -100,4 +100,3 @@ class TestStructure(GangaUnitTest):
         for j in self.jobslice:
             with pytest.raises(PostProcessException):
                 tm.merge(self.jobslice, outputdir=j.outputdir)
-

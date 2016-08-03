@@ -96,6 +96,7 @@ class TestObjectMetaclass(unittest.TestCase):
 
 
 class _ExcThread(threading.Thread):
+
     def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, verbose=None):
         super(_ExcThread, self).__init__(group, target, name, args, kwargs, verbose)
         if kwargs is None:

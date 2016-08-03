@@ -61,5 +61,3 @@ class FileChecker(IFileChecker):
                     logger.info('The string %s has not been found in file %s, FileChecker will fail job(%s)', searchString, filepath, job.fqid)
                     return self.failure
         return self.result
-
-

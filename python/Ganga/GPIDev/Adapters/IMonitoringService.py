@@ -104,5 +104,3 @@ class IMonitoringService(object):
         N.B. this is a static method.
         """
         return None
-
-

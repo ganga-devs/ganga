@@ -11,8 +11,8 @@ from Ganga.GPIDev.Base.Proxy import getName
 from collections import namedtuple
 
 logger = getLogger()
-QueueElement = namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
-CommandInput = namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
+QueueElement = namedtuple('QueueElement', ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
+CommandInput = namedtuple('CommandInput', ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
 FunctionInput = namedtuple('FunctionInput', ['function', 'args', 'kwargs'])
 
 
@@ -26,7 +26,7 @@ class WorkerThreadPool(object):
 
     def __init__(self, num_worker_threads=None, worker_thread_prefix='Worker_'):
         if num_worker_threads is None:
-            num_worker_threads=getConfig('Queues')['NumWorkerThreads']
+            num_worker_threads = getConfig('Queues')['NumWorkerThreads']
         self.__queue = Queue.PriorityQueue()
         self.__worker_threads = []
 
@@ -250,4 +250,3 @@ class WorkerThreadPool(object):
         return
 
 ###################################################################
-

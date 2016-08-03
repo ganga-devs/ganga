@@ -4,13 +4,14 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestSavannah74531(GangaUnitTest):
+
     def test_Savannah74531(self):
         from Ganga.GPI import Job, jobs, jobtree
 
         index = 10
         while index > 0:
-           Job()
-           index -= 1
+            Job()
+            index -= 1
 
         testSlice = jobs[0:4]
         testList1 = jobs.select(4, 7)

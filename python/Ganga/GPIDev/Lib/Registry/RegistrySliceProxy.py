@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from Ganga.GPIDev.Base.Proxy import stripProxy, implRef
 from Ganga.Utility.logging import getLogger
 
+
 class RegistrySliceProxy(object):
 
     """This object is an access list to registry slices"""
@@ -88,6 +89,7 @@ from .RegistrySlice import RegistrySlice
 
 from Ganga.GPIDev.Base.Proxy import isType
 
+
 def _wrap(obj):
     if isType(obj, GangaObject):
         return addProxy(obj)
@@ -99,6 +101,6 @@ def _wrap(obj):
 
 # strip Proxy and get into the ganga object implementation
 
+
 def _unwrap(obj):
     return stripProxy(obj)
-

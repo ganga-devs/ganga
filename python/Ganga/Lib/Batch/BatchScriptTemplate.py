@@ -14,41 +14,43 @@ import mimetypes
 
 ############################################################################################
 
-input_sandbox = ###INPUT_SANDBOX###
-sharedoutputpath = ###SHAREDOUTPUTPATH###
-outputpatterns = ###OUTPUTPATTERNS###
-appscriptpath = ###APPSCRIPTPATH###
-environment = ###ENVIRONMENT###
+input_sandbox =  # INPUT_SANDBOX###
+sharedoutputpath =  # SHAREDOUTPUTPATH###
+outputpatterns =  # OUTPUTPATTERNS###
+appscriptpath =  # APPSCRIPTPATH###
+environment =  # ENVIRONMENT###
 
 # jobid is a string
-jobid = ###JOBID###
+jobid =  # JOBID###
 
 ###PREEXECUTE###
 
+
 def flush_file(f):
     f.flush()
-    os.fsync(f.fileno()) #this forces a global flush (cache synchronization on AFS)
+    os.fsync(f.fileno())  # this forces a global flush (cache synchronization on AFS)
+
 
 def open_file(fname):
     try:
-        filehandle=open(fname,'w')
+        filehandle = open(fname, 'w')
     except IOError as x:
         print('ERROR: not able to write a status file: ', fname)
-        print('ERROR: ',x)
+        print('ERROR: ', x)
         raise
     return filehandle
 
-statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
-heartbeatfilename = os.path.join(sharedoutputpath,'__heartbeat__')
+statusfilename = os.path.join(sharedoutputpath, '__jobstatus__')
+heartbeatfilename = os.path.join(sharedoutputpath, '__heartbeat__')
 
-statusfile=open_file(statusfilename)
-heartbeatfile=open_file(heartbeatfilename)
+statusfile = open_file(statusfilename)
+heartbeatfile = open_file(heartbeatfilename)
 
-line='START: '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
+line = 'START: ' + time.strftime('%a %b %d %H:%M:%S %Y', time.gmtime(time.time())) + os.linesep
 try:
-    line+='PID: ' + os.getenv('###JOBIDNAME###') + os.linesep
-    line+='QUEUE: ' + os.getenv('###QUEUENAME###') + os.linesep
-    line+='ACTUALCE: ' + hostname() + os.linesep
+    line += 'PID: ' + os.getenv('###JOBIDNAME###') + os.linesep
+    line += 'QUEUE: ' + os.getenv('###QUEUENAME###') + os.linesep
+    line += 'ACTUALCE: ' + hostname() + os.linesep
 except:
     pass
 statusfile.writelines(line)
@@ -67,46 +69,46 @@ for f in input_sandbox:
 
 # -- END OF MOVED CODE BLOCK
 
-#get input files
+# get input files
 ###DOWNLOADINPUTFILES###
 
 import sys
-sys.path.insert(0, ###GANGADIR###)
-sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
+sys.path.insert(0,  # GANGADIR###)
+sys.path.insert(0, os.path.join(os.getcwd(), PYTHON_DIR))
 
 import subprocess
 
-fullenvironment = os.environ.copy()
-for key,value in environment.iteritems():
-    fullenvironment[key] = value
+fullenvironment=os.environ.copy()
+for key, value in environment.iteritems():
+    fullenvironment[key]=value
 
-sysout2 = os.dup(sys.stdout.fileno())
-syserr2 = os.dup(sys.stderr.fileno())
+sysout2=os.dup(sys.stdout.fileno())
+syserr2=os.dup(sys.stderr.fileno())
 
 print("--- GANGA APPLICATION OUTPUT BEGIN ---", file=sys.stdout)
 print("--- GANGA APPLICATION ERROR BEGIN ---", file=sys.stdout)
 flush_file(sys.stdout)
 flush_file(sys.stderr)
 
-sys.stdout=open('./__syslog__','w')
+sys.stdout=open('./__syslog__', 'w')
 sys.stderr=sys.stdout
 
-result = 255
+result=255
 
 
 
 try:
-    child = subprocess.Popen(appscriptpath, shell=False, stdout=sysout2, stderr=syserr2, env=fullenvironment)
+    child=subprocess.Popen(appscriptpath, shell=False, stdout=sysout2, stderr=syserr2, env=fullenvironment)
 
     while 1:
-        result = child.poll()
+        result=child.poll()
         if result is not None:
             break
         heartbeatfile.write('.')
         flush_file(heartbeatfile)
-        time.sleep(###HEARTBEATFREQUENCE###)
+        time.sleep(  # HEARTBEATFREQUENCE###)
 except Exception as x:
-    print('ERROR: %s'%str(x))
+    print('ERROR: %s' % str(x))
 
 flush_file(sys.stdout)
 flush_file(sys.stderr)
@@ -118,11 +120,11 @@ print("--- GANGA APPLICATION OUTPUT END ---", file=sys.stdout)
 try:
     filefilter
 except:
-    filefilter = None
+    filefilter=None
 
 from files import multi_glob, recursive_copy
 
-createOutputSandbox(outputpatterns,filefilter,sharedoutputpath)
+createOutputSandbox(outputpatterns, filefilter, sharedoutputpath)
 
 def printError(message):
     print(message, file=sys.stderr)
@@ -139,7 +141,7 @@ print("--- GANGA APPLICATION ERROR END ---", file=sys.stderr)
 ###POSTEXECUTE###
 
 line='EXITCODE: ' + repr(result) + os.linesep
-line+='STOP: '+time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
+line += 'STOP: ' + time.strftime('%a %b %d %H:%M:%S %Y', time.gmtime(time.time())) + os.linesep
 statusfile.writelines(line)
 
 statusfile.close()
@@ -147,5 +149,3 @@ heartbeatfile.close()
 os.unlink(heartbeatfilename)
 
 sys.exit(result)
-
-

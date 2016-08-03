@@ -8,6 +8,7 @@ from Ganga.testlib.monitoring import run_until_completed
 
 
 class TestStdOut(GangaUnitTest):
+
     def setUp(self):
         super(TestStdOut, self).setUp()
         from Ganga.GPI import Job, Executable, Local, File, LocalFile, config

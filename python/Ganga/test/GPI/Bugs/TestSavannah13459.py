@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
+
 class TestSavannah13459(GangaUnitTest):
 
     def test_Savannah13459(self):
@@ -14,4 +15,3 @@ class TestSavannah13459(GangaUnitTest):
         j.application.args[0] = '0'
 
         self.assertEqual(j.application.args, ['0', '2', '3'])
-

@@ -25,6 +25,7 @@ import Ganga.Utility.Config
 regex = re.compile('[*?\[\]]')
 logger = getLogger()
 
+
 class MassStorageFile(IGangaFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
     """
@@ -32,13 +33,13 @@ class MassStorageFile(IGangaFile):
                                      'localDir': SimpleItem(defvalue="", copyable=1, doc='local dir where the file is stored, used from get and put methods'),
                                      'joboutputdir': SimpleItem(defvalue="", doc='outputdir of the job with which the outputsandbox file object is associated'),
                                      'locations': SimpleItem(defvalue=[], copyable=1, typelist=[str], sequence=1, doc="list of locations where the outputfiles are uploaded"),
-                                     'outputfilenameformat': SimpleItem(defvalue=None, typelist=[str, None], protected=0,\
-                                                    doc="keyword path to where the output should be uploaded, i.e. /some/path/here/{jid}/{sjid}/{fname},\
+                                     'outputfilenameformat': SimpleItem(defvalue=None, typelist=[str, None], protected=0,
+                                                                        doc="keyword path to where the output should be uploaded, i.e. /some/path/here/{jid}/{sjid}/{fname},\
                                                         if this field is not set, the output will go in {jid}/{sjid}/{fname} or in {jid}/{fname}\
                                                         depending on whether the job is split or not"),
                                      'inputremotedirectory': SimpleItem(defvalue=None, typelist=[str, None], protected=0, doc="Directory on mass storage where the file is stored"),
-                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, sequence=1, copyable=0,\
-                                                    doc="collected files from the wildcard namePattern"),
+                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, sequence=1, copyable=0,
+                                                               doc="collected files from the wildcard namePattern"),
                                      'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
                                      'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere')
                                      })
@@ -82,7 +83,6 @@ class MassStorageFile(IGangaFile):
         elif _namePattern != '' and _localDir != '':
             self.namePattern = _namePattern
             self.localDir = _localDir
-
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
@@ -182,7 +182,7 @@ class MassStorageFile(IGangaFile):
             os.system('%s %s %s' % (cp_cmd, location, targetLocation))
 
     def getWNScriptDownloadCommand(self, indent):
-        ## FIXME fix me for the situation of multiple files?
+        # FIXME fix me for the situation of multiple files?
 
         script = """\n
 
@@ -191,7 +191,7 @@ class MassStorageFile(IGangaFile):
 """
         cp_cmd = '%s %s .' % (getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd'], self.locations[0])
 
-        replace_dict = { '###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd }
+        replace_dict = {'###INDENT###': indent, '###CP_COMMAND###': cp_cmd}
 
         for k, v in replace_dict.iteritems():
             script = script.replace(str(k), str(v))
@@ -429,12 +429,12 @@ class MassStorageFile(IGangaFile):
                 outputfilenameformat = outputFile.outputfilenameformat
 
             massStorageCommands.append(['massstorage', outputFile.namePattern, outputfilenameformat,
-                                        massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'],
+                                        massStorageConfig['mkdir_cmd'], massStorageConfig['cp_cmd'],
                                         massStorageConfig['ls_cmd'], massStorageConfig['path']])
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                        'scripts/MassStorageFileWNScript.py')
+                                       'scripts/MassStorageFileWNScript.py')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '###INDENT###')
@@ -448,13 +448,13 @@ class MassStorageFile(IGangaFile):
             jobid = jobfqid.split('.')[0]
             subjobid = jobfqid.split('.')[1]
 
-        replace_dict = {'###MASSSTORAGECOMMANDS###' : repr(massStorageCommands),
-                        '###PATTERNSTOZIP###' : str(patternsToZip),
-                        '###INDENT###' : indent,
-                        '###POSTPROCESSLOCATIONSFP###' : postProcessLocationsFP,
-                        '###FULLJOBDIR###' : str(jobfqid.replace('.', os.path.sep)),
-                        '###JOBDIR###' : str(jobid),
-                        '###SUBJOBDIR###' : str(subjobid)}
+        replace_dict = {'###MASSSTORAGECOMMANDS###': repr(massStorageCommands),
+                        '###PATTERNSTOZIP###': str(patternsToZip),
+                        '###INDENT###': indent,
+                        '###POSTPROCESSLOCATIONSFP###': postProcessLocationsFP,
+                        '###FULLJOBDIR###': str(jobfqid.replace('.', os.path.sep)),
+                        '###JOBDIR###': str(jobid),
+                        '###SUBJOBDIR###': str(subjobid)}
 
         for k, v in replace_dict.iteritems():
             script = script.replace(str(k), str(v))
@@ -583,4 +583,3 @@ class MassStorageFile(IGangaFile):
 # add MassStorageFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate MassStorageFile() objects via config file)
 Ganga.Utility.Config.config_scope['MassStorageFile'] = MassStorageFile
-

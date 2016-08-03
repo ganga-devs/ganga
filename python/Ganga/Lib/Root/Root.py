@@ -28,9 +28,11 @@ from Ganga.GPIDev.Base.Proxy import getName
 logger = Ganga.Utility.logging.getLogger()
 config = getConfig('ROOT')
 
+
 def getDefaultScript():
     name = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'defaultRootScript.C')
     return File(name=name)
+
 
 class Root(IPrepareApp):
 
@@ -370,14 +372,14 @@ class RootRTHandler(IRuntimeHandler):
         # Start ROOT with the -b and -q options to run without a
         # terminal attached.
         arguments = ['-b', '-q', os.path.relpath(join('.', script.subdir,
-                                      split(script.name)[1])) + rootarg]
+                                                      split(script.name)[1])) + rootarg]
         inputsandbox = app._getParent().inputsandbox + [script]
 
         (rootenv, _) = self._getRootEnvSys(app.version)
         logger.debug("ROOT environment:\n %s: ", str(rootenv))
 
         returnable = StandardJobConfig('root.exe', inputsandbox, arguments,
-                                 app._getParent().outputsandbox)
+                                       app._getParent().outputsandbox)
 
         logger.debug("root jobconfig: %s" % str(returnable))
 
@@ -513,7 +515,7 @@ def downloadWrapper(app):
 
     # Write a wrapper script that installs ROOT and runs script
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                   'wrapperScriptTemplate.py')
+                                   'wrapperScriptTemplate.py')
     from Ganga.GPIDev.Lib.File import FileUtils
     wrapperscript = FileUtils.loadScript(script_location, '')
 
@@ -580,5 +582,3 @@ def randomString():
 
     # seed is set to clock during import
     return join([str(a) for a in sample], '')
-
-

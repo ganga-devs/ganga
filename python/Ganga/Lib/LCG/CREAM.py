@@ -28,6 +28,7 @@ from Ganga.GPIDev.Base.Proxy import getName
 
 config = getConfig('LCG')
 
+
 def __cream_resolveOSBList__(job, jdl):
 
     osbURIList = []
@@ -790,8 +791,8 @@ sys.exit(0)
         from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
-        packed_files = jobconfig.getSandboxFiles() + [ fileutils ]
+        fileutils = File(inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR)
+        packed_files = jobconfig.getSandboxFiles() + [fileutils]
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox
@@ -1238,9 +1239,9 @@ sys.exit(0)
 
                         if osbURIList:
 
-                            if Grid.cream_get_output(osbURIList, job.getOutputWorkspace(create=True).getPath() ):
+                            if Grid.cream_get_output(osbURIList, job.getOutputWorkspace(create=True).getPath()):
                                 (ick, app_exitcode) = Grid.__get_app_exitcode__(
-                                    job.getOutputWorkspace(create=True).getPath() )
+                                    job.getOutputWorkspace(create=True).getPath())
                                 job.backend.exitcode = app_exitcode
 
                                 jidListForPurge.append(job.backend.id)
@@ -1306,4 +1307,3 @@ sys.exit(0)
             logger.warning('Unexpected job status "%s"', self.status)
 
 logger = getLogger()
-

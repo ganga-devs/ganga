@@ -21,6 +21,7 @@ import time
 
 logger = Ganga.Utility.logging.getLogger()
 
+
 class IBackend(GangaObject):
 
     """
@@ -72,10 +73,10 @@ class IBackend(GangaObject):
             sj.updateStatus('failed')
 
             #from Ganga.Core.exceptions import GangaException
-            #if isinstance(err, GangaException):
+            # if isinstance(err, GangaException):
             #    logger.error("%s" % err)
             #    #log_user_exception(logger, debug=True)
-            #else:
+            # else:
             #    #log_user_exception(logger, debug=False)
             logger.error("Parallel Job Submission Failed: %s" % err)
         finally:
@@ -120,7 +121,6 @@ class IBackend(GangaObject):
         from Ganga.Core import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
 
-
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
         assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
@@ -157,7 +157,7 @@ class IBackend(GangaObject):
             def subjob_status_check(rjobs):
                 has_submitted = True
                 for sj in rjobs:
-                    if sj.status not in ["submitted","failed","completed","running","completing"]:
+                    if sj.status not in ["submitted", "failed", "completed", "running", "completing"]:
                         has_submitted = False
                         break
                 return has_submitted
@@ -187,7 +187,7 @@ class IBackend(GangaObject):
                     if handleError(IncompleteJobSubmissionError(fqid, 'submission failed')):
                         return 0
             except Exception as x:
-                #sj.updateStatus('new')
+                # sj.updateStatus('new')
                 if isType(x, GangaException):
                     logger.error("%s" % x)
                     log_user_exception(logger, debug=True)
@@ -253,8 +253,8 @@ class IBackend(GangaObject):
 
         tmpDir = None
         files = []
-        if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and\
-                isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
+        if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and
+                                       isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
             (fileNames, tmpDir) = getInputFilesPatterns(job)
             files = itertools.imap(lambda f: File(f), fileNames)
         else:
@@ -415,7 +415,7 @@ class IBackend(GangaObject):
 
         logger.debug("Running Monitoring for Jobs: %s" % [j.getFQID('.') for j in jobs])
 
-        ## Only process 10 files from the backend at once
+        # Only process 10 files from the backend at once
         #blocks_of_size = 10
         try:
             from Ganga.Utility.Config import getConfig
@@ -424,24 +424,24 @@ class IBackend(GangaObject):
             logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
             logger.debug("Error: %s" % err)
             blocks_of_size = 5
-        ## Separate different backends implicitly
+        # Separate different backends implicitly
         simple_jobs = {}
 
         # FIXME Add some check for (sub)jobs which are in a transient state but
         # are not locked by an active session of ganga
 
         for j in jobs:
-            ## All subjobs should have same backend
+            # All subjobs should have same backend
             if len(j.subjobs) > 0:
                 #logger.info("Looking for sj")
                 monitorable_subjob_ids = []
 
                 if isType(j.subjobs, SubJobXMLList):
                     cache = j.subjobs.getAllCachedData()
-                    for sj_id in range(0,len(j.subjobs)):
+                    for sj_id in range(0, len(j.subjobs)):
                         if cache[sj_id]['status'] in ['submitted', 'running']:
                             if j.subjobs.isLoaded(sj_id):
-                                ## SJ may have changed from cache in memory
+                                # SJ may have changed from cache in memory
                                 this_sj = j.subjobs(sj_id)
                                 if this_sj.status in ['submitted', 'running']:
                                     monitorable_subjob_ids.append(sj_id)
@@ -457,7 +457,7 @@ class IBackend(GangaObject):
                 if not monitorable_subjob_ids:
                     continue
 
-                #logger.info("Dividing")
+                # logger.info("Dividing")
 
                 monitorable_blocks = []
                 temp_block = []

@@ -7,6 +7,7 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class HammerThread(threading.Thread):
+
     def __init__(self, _id, reg):
         self.id = _id
         self.reg = reg
@@ -14,7 +15,7 @@ class HammerThread(threading.Thread):
         self.owned_ids = []
         self.owned_objs = {}
         self.done = False
-        super(HammerThread, self).__init__()#'HammerThread_%s' % _id)
+        super(HammerThread, self).__init__()  # 'HammerThread_%s' % _id)
         from Ganga.Utility.logging import getLogger
         self.logger = getLogger(modulename=True)
 
@@ -216,4 +217,3 @@ class testReg(object):
         self.logger.info(str(self.id) + ' shutdown()')
         self.registry.shutdown()
         self.logger.info(str(self.id) + ' shutdown() done!')
-

@@ -15,6 +15,7 @@ from posixpath import curdir, sep, pardir, join, abspath, commonprefix
 
 logger = Ganga.Utility.logging.getLogger()
 
+
 def relpath(path, start=curdir):
     """Return a relative version of a path"""
     if not path:
@@ -30,6 +31,7 @@ def relpath(path, start=curdir):
 
 # set the mergers config up
 config = getConfig("Mergers")
+
 
 def getDefaultMergeDir():
     """Gets the default location of the mergers outputdir from the config"""

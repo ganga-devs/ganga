@@ -135,4 +135,3 @@ class IApplication(GangaObject):
         The default it to do nothing.
         """
         pass
-

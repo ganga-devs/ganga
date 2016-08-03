@@ -56,15 +56,15 @@ class Interactive(IBackend):
 
     _schema = Schema(Version(1, 0), {
         "id": SimpleItem(defvalue=0, protected=1, copyable=0,
-            doc="Process id"),
+                         doc="Process id"),
         "status": SimpleItem(defvalue="new", protected=1, copyable=0,
-            doc="Backend status"),
+                             doc="Backend status"),
         "exitcode": SimpleItem(defvalue=0, protected=1, copyable=0,
-            doc="Process exit code"),
+                               doc="Process exit code"),
         "workdir": SimpleItem(defvalue="", protected=1, copyable=0,
-            doc="Work directory"),
+                              doc="Work directory"),
         "actualCE": SimpleItem(defvalue="", protected=1, copyable=0,
-            doc="Name of machine where job is run")})
+                               doc="Name of machine where job is run")})
 
     _category = "backends"
     _name = 'Interactive'
@@ -172,8 +172,8 @@ class Interactive(IBackend):
         import Ganga.Utility.files
         import inspect
 
-        fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
-        inputfiles = jobconfig.getSandboxFiles() + [ fileutils ]
+        fileutils = File(inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR)
+        inputfiles = jobconfig.getSandboxFiles() + [fileutils]
         inbox = job.createPackedInputSandbox(inputfiles)
 
         inbox.extend(master_input_sandbox)
@@ -194,13 +194,14 @@ class Interactive(IBackend):
 
             from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatternsForInteractive, getWNCodeForOutputPostprocessing
             (outputSandboxPatterns,
-                    patternsToZip) = getOutputSandboxPatternsForInteractive(job)
+             patternsToZip) = getOutputSandboxPatternsForInteractive(job)
 
             wnCodeForPostprocessing = 'def printError(message):pass\ndef printInfo(message):pass' + \
                 getWNCodeForOutputPostprocessing(job, '')
- 
+
         all_inputfiles = [this_file for this_file in job.inputfiles]
-        if job.master: all_inputfiles.extend([this_file for this_file in job.master.inputfiles])
+        if job.master:
+            all_inputfiles.extend([this_file for this_file in job.master.inputfiles])
 
         wnCodeToDownloadInputFiles = ''
 
@@ -237,29 +238,27 @@ class Interactive(IBackend):
 
             wnCodeToDownloadInputData = getWNCodeForDownloadingInputFiles(job, '')
 
-        
-
         import inspect
 
         replace_dict = {
-        '###CONSTRUCT_TIME###' : (time.strftime("%c")),
-        '###WNSANDBOX_SOURCE###' : inspect.getsource(Sandbox.WNSandbox),
-        '###GANGA_PYTHONPATH###' : getConfig("System")["GANGA_PYTHONPATH"],
-        '###OUTPUTDIR###' : outDir,
-        '###WORKDIR###' : workdir,
-        '###IN_BOX###' : inbox,
-        '###WN_INPUTFILES###' : wnCodeToDownloadInputFiles,
-        '###WN_INPUTDATA###' : wnCodeToDownloadInputData,
-        '###JOBCONFIG_ENV###' : jobconfig.env if jobconfig.env is not None else dict(),
-        '###EXE_STRING###' : exeString,
-        '###ARG_STRING###' : argString,
-        '###WN_POSTPROCESSING###' : wnCodeForPostprocessing,
-        '###PATTERNS_TO_ZIP###' : patternsToZip,
-        '###OUTPUT_SANDBOX_PATTERNS###' : outputSandboxPatterns
+            '###CONSTRUCT_TIME###': (time.strftime("%c")),
+            '###WNSANDBOX_SOURCE###': inspect.getsource(Sandbox.WNSandbox),
+            '###GANGA_PYTHONPATH###': getConfig("System")["GANGA_PYTHONPATH"],
+            '###OUTPUTDIR###': outDir,
+            '###WORKDIR###': workdir,
+            '###IN_BOX###': inbox,
+            '###WN_INPUTFILES###': wnCodeToDownloadInputFiles,
+            '###WN_INPUTDATA###': wnCodeToDownloadInputData,
+            '###JOBCONFIG_ENV###': jobconfig.env if jobconfig.env is not None else dict(),
+            '###EXE_STRING###': exeString,
+            '###ARG_STRING###': argString,
+            '###WN_POSTPROCESSING###': wnCodeForPostprocessing,
+            '###PATTERNS_TO_ZIP###': patternsToZip,
+            '###OUTPUT_SANDBOX_PATTERNS###': outputSandboxPatterns
         }
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                'InteractiveScriptTemplate.py')
+                                       'InteractiveScriptTemplate.py')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         commandString = FileUtils.loadScript(script_location, '')
@@ -303,4 +302,3 @@ class Interactive(IBackend):
                     j.updateStatus(j.backend.status)
 
         return None
-

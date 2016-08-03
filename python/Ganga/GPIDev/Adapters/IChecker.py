@@ -89,4 +89,3 @@ class IFileChecker(IChecker):
                     logger.warning(
                         'Ignoring file %s as it does not exist.', filepath)
         return filepaths
-

@@ -5,6 +5,7 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 job_num = 5
 job_names = ['a', 'b', 'c', 'd', 'e']
 
+
 class TestSelect(GangaUnitTest):
 
     def setUp(self):
@@ -22,7 +23,7 @@ class TestSelect(GangaUnitTest):
         for i in range(job_num):
             j = Job()
             j.name = job_names[i]
-        self.assertEqual(len(jobs), job_num) # Don't really gain anything from assertEqual...
+        self.assertEqual(len(jobs), job_num)  # Don't really gain anything from assertEqual...
 
     def test_b_SelectTests(self):
         """ Check select methods"""
@@ -49,10 +50,10 @@ class TestSelect(GangaUnitTest):
     def test_c_SelectSJTests(self):
         """ Is is a bird is it a plane... no it's a test for selecting subjobs now"""
         from Ganga.GPI import jobs, Job, ArgSplitter
-        
-        j=Job(splitter=ArgSplitter(args=[[_] for _ in job_names]))
+
+        j = Job(splitter=ArgSplitter(args=[[_] for _ in job_names]))
         j.submit()
-        
+
         from GangaTest.Framework.utils import sleep_until_completed
         sleep_until_completed(j, 60)
 
@@ -66,4 +67,3 @@ class TestSelect(GangaUnitTest):
 
         assert len(mySlice2) == 1
         assert mySlice2[2].id == 2
-

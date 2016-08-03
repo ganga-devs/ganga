@@ -5,6 +5,7 @@ from Ganga.testlib.monitoring import run_until_completed
 
 
 class TestFileChecker(GangaUnitTest):
+
     def setUp(self):
         super(TestFileChecker, self).setUp()
         from Ganga.GPI import Job, FileChecker, Executable, Local

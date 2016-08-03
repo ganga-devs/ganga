@@ -4,10 +4,11 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestSavannah96158(GangaUnitTest):
+
     def test_Savannah96158(self):
         from Ganga.GPI import Job, jobs
 
-        #The first two tests check the new functionality, the remainder just check that we didn't break existing functionality with this bug-fix
+        # The first two tests check the new functionality, the remainder just check that we didn't break existing functionality with this bug-fix
         a = Job()
         a.name = 'TestName'
         tmpList = jobs.select(name='*stN*')

@@ -187,6 +187,8 @@ class Foreground(object):
 colour_objects = {'fg': Foreground(), 'bg': Background(), 'fx': Effects()}
 
 # Some additional helper functions from Tasks package
+
+
 def getColour(name):
     """ Get a colour code from the symbolic name: fg = Foreground(), bg = Background(), fx = Effects()
     The name examples fg.red, fx.normal, bg.white

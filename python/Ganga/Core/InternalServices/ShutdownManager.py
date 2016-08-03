@@ -24,6 +24,7 @@ from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, rem
 # Globals
 logger = getLogger()
 
+
 def register_exitfunc():
     """
     This registers the exit functiona and actually tracks that it's done so,
@@ -33,6 +34,7 @@ def register_exitfunc():
         atexit.register(_ganga_run_exitfuncs)
         register_exitfunc._has_registered = True
 register_exitfunc._has_registered = False
+
 
 def _ganga_run_exitfuncs():
     """Run all exit functions from plugins and internal services in the correct order

@@ -4,6 +4,7 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestSavannah76973(GangaUnitTest):
+
     def test_Savannah76973(self):
         from Ganga.GPI import Job, JobTemplate, JobError
 

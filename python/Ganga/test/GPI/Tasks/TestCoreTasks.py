@@ -122,4 +122,3 @@ class TestCoreTasks(GangaUnitTest):
                 assert t.transforms[0].unit_splitter.attribute == "application.args"
                 assert t.transforms[0].unit_splitter.values == ['arg 1', 'arg 2', 'arg 3']
                 assert t.float == 20
-

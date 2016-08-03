@@ -17,6 +17,7 @@ from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
+
 class BoxTypeError(GangaException, TypeError):
 
     def __init__(self, what=''):
@@ -25,6 +26,7 @@ class BoxTypeError(GangaException, TypeError):
 
     def __str__(self):
         return "BoxTypeError: %s" % self.what
+
 
 class BoxMetadataObject(GangaObject):
 
@@ -260,4 +262,3 @@ class BoxRegistrySliceProxy(RegistrySliceProxy):
             reg = obj._getRegistry()
             if not reg is None:
                 reg._remove(obj)
-

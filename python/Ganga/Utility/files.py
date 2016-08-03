@@ -10,6 +10,7 @@ Helper functions for operations on files.
 
 import os
 
+
 def expandfilename(filename, force=False):
     """expand a path or filename in a standard way so that it may contain ~ and ${VAR} strings"""
     expanded_path = os.path.expandvars(os.path.expanduser(filename))

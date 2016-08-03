@@ -17,9 +17,11 @@ from Ganga.GPIDev.Lib.File.File import File
 
 logger = getLogger()
 
+
 def formatTraceback():
-   "Helper function to printout a traceback as a string"
-   return "\n %s\n%s\n%s\n" % (''.join( traceback.format_tb(sys.exc_info()[2])), sys.exc_info()[0], sys.exc_info()[1])
+    "Helper function to printout a traceback as a string"
+    return "\n %s\n%s\n%s\n" % (''.join(traceback.format_tb(sys.exc_info()[2])), sys.exc_info()[0], sys.exc_info()[1])
+
 
 class IUnit(GangaObject):
     _schema = Schema(Version(1, 0), {
@@ -30,7 +32,7 @@ class IUnit(GangaObject):
         'outputdata': ComponentItem('datasets', defvalue=None, optional=1, load_default=False, doc='Output dataset'),
         'active': SimpleItem(defvalue=False, hidden=1, doc='Is this unit active'),
         'active_job_ids': SimpleItem(defvalue=[], typelist=[int], sequence=1, hidden=1, doc='Active job ids associated with this unit'),
-        'prev_job_ids': SimpleItem(defvalue=[], typelist=[int], sequence=1,  hidden=1, doc='Previous job ids associated with this unit'),
+        'prev_job_ids': SimpleItem(defvalue=[], typelist=[int], sequence=1, hidden=1, doc='Previous job ids associated with this unit'),
         'minor_resub_count': SimpleItem(defvalue=0, hidden=1, doc='Number of minor resubmits'),
         'major_resub_count': SimpleItem(defvalue=0, hidden=1, doc='Number of major resubmits'),
         'req_units': SimpleItem(defvalue=[], typelist=[str], sequence=1, hidden=1, doc='List of units that must complete for this to start (format TRF_ID:UNIT_ID)'),
@@ -42,7 +44,7 @@ class IUnit(GangaObject):
         'inputsandbox': FileItem(defvalue=[], sequence=1, doc="list of File objects shipped to the worker node "),
         'inputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects that will act as input files for a job"),
         'outputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
-        'info' : SimpleItem(defvalue=[],typelist=[str],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
+        'info': SimpleItem(defvalue=[], typelist=[str], protected=1, sequence=1, doc="Info showing status transitions and unit info"),
         'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Unit', typelist=[int]),
     })
 
@@ -54,7 +56,7 @@ class IUnit(GangaObject):
 # Special methods:
     def __init__(self):
         super(IUnit, self).__init__()
-        
+
     def _auto__init__(self):
         self.updateStatus("new")
 
@@ -74,12 +76,12 @@ class IUnit(GangaObject):
 
         # if the id isn't already set, use the index from the parent Task
         if self.id < 0:
-           trf = self._getParent()
-           if not trf:
-              raise ApplicationConfigurationError(
-                 None, "This unit has not been associated with a transform and so there is no ID available")
-           self.id = trf.units.index(self)
-           
+            trf = self._getParent()
+            if not trf:
+                raise ApplicationConfigurationError(
+                    None, "This unit has not been associated with a transform and so there is no ID available")
+            self.id = trf.units.index(self)
+
         return self.id
 
     def updateStatus(self, status):
@@ -166,11 +168,11 @@ class IUnit(GangaObject):
             logger.debug("GetParent exception!\n%s" % str(err))
             trf = None
         if trf is not None and trf.submit_with_threads:
-            addInfoString( self, "Attempting job re-submission with queues..." )
+            addInfoString(self, "Attempting job re-submission with queues...")
             from Ganga.Core.GangaThread.WorkerThreads import getQueues
             getQueues().add(job.resubmit)
         else:
-            addInfoString( self, "Attempting job re-submission..." )
+            addInfoString(self, "Attempting job re-submission...")
             job.resubmit()
 
     def update(self):
@@ -195,24 +197,24 @@ class IUnit(GangaObject):
         if req_ok and self.checkForSubmission() and maxsub > 0:
 
             # create job and submit
-            addInfoString( self, "Creating Job..." )
+            addInfoString(self, "Creating Job...")
             j = self.createNewJob()
             if j.name == '':
                 j.name = "T%i:%i U%i" % (task.id, trf.getID(), self.getID())
 
             try:
                 if trf.submit_with_threads:
-                    addInfoString( self, "Attempting job submission with queues..." )
+                    addInfoString(self, "Attempting job submission with queues...")
                     from Ganga.Core.GangaThread.WorkerThreads import getQueues
                     getQueues().add(j.submit)
                 else:
-                    addInfoString( self, "Attempting job submission..." )
+                    addInfoString(self, "Attempting job submission...")
                     j.submit()
 
             except Exception as err:
                 logger.debug("update Err: %s" % str(err))
-                addInfoString( self, "Failed Job Submission")
-                addInfoString( self, "Reason: %s" % (formatTraceback()))
+                addInfoString(self, "Failed Job Submission")
+                addInfoString(self, "Reason: %s" % (formatTraceback()))
                 logger.error("Couldn't submit the job. Deactivating unit.")
                 self.prev_job_ids.append(j.id)
                 self.active = False
@@ -272,7 +274,7 @@ class IUnit(GangaObject):
                 if self.minor_resub_count + self.major_resub_count > trf.run_limit - 1:
                     logger.error("Too many resubmits (%i). Deactivating unit." % (
                         self.minor_resub_count + self.major_resub_count))
-                    addInfoString( self, "Deactivating unit. Too many resubmits (%i)" % ( self.minor_resub_count + self.major_resub_count))
+                    addInfoString(self, "Deactivating unit. Too many resubmits (%i)" % (self.minor_resub_count + self.major_resub_count))
                     self.active = False
                     return 0
 
@@ -284,14 +286,14 @@ class IUnit(GangaObject):
                     else:
                         logger.error(
                             "Too many minor resubmits (%i). Deactivating unit." % self.minor_resub_count)
-                        addInfoString( self, "Deactivating unit. Too many resubmits (%i)" % (self.minor_resub_count + self.minor_resub_count))
+                        addInfoString(self, "Deactivating unit. Too many resubmits (%i)" % (self.minor_resub_count + self.minor_resub_count))
                         self.active = False
                         return 0
 
                 if self.major_resub_count > trf.major_run_limit - 1:
                     logger.error(
                         "Too many major resubmits (%i). Deactivating unit." % self.major_resub_count)
-                    addInfoString( self, "Deactivating unit. Too many resubmits (%i)" % (self.minor_resub_count + self.major_resub_count))
+                    addInfoString(self, "Deactivating unit. Too many resubmits (%i)" % (self.minor_resub_count + self.major_resub_count))
                     self.active = False
                     return 0
 
@@ -302,13 +304,13 @@ class IUnit(GangaObject):
                     self.minor_resub_count = 0
 
                     try:
-                        addInfoString( self, "Attempting major resubmit...")
+                        addInfoString(self, "Attempting major resubmit...")
                         self.majorResubmit(job)
                     except Exception as err:
                         logger.debug("Update Err3: %s" % str(err))
                         logger.error("Couldn't resubmit the job. Deactivating unit.")
-                        addInfoString( self, "Failed Job resubmission")
-                        addInfoString( self, "Reason: %s" % (formatTraceback()))
+                        addInfoString(self, "Failed Job resubmission")
+                        addInfoString(self, "Reason: %s" % (formatTraceback()))
                         self.active = False
 
                     # break the loop now because we've probably changed the
@@ -317,19 +319,19 @@ class IUnit(GangaObject):
                 else:
                     self.minor_resub_count += 1
                     try:
-                        addInfoString( self, "Attempting minor resubmit...")
+                        addInfoString(self, "Attempting minor resubmit...")
                         self.minorResubmit(job)
                     except Exception as err:
                         logger.debug("Update Err4: %s" % str(err))
                         logger.error("Couldn't resubmit the job. Deactivating unit.")
-                        addInfoString( self, "Failed Job resubmission")
-                        addInfoString( self, "Reason: %s" % (formatTraceback()))
+                        addInfoString(self, "Failed Job resubmission")
+                        addInfoString(self, "Reason: %s" % (formatTraceback()))
                         self.active = False
                         return 1
 
     def reset(self):
         """Reset the unit completely"""
-        addInfoString( self, "Reseting Unit...")
+        addInfoString(self, "Reseting Unit...")
         self.minor_resub_count = 0
         self.major_resub_count = 0
         if len(self.active_job_ids) > 0:

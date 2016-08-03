@@ -36,6 +36,7 @@ from Ganga.Utility.Config.Config import ConfigError
 # test configuration properties
 config = getConfig('GPIComponentFilters')
 
+
 def void_filter(val, item):
     return None
 

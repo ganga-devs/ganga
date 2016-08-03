@@ -10,6 +10,7 @@ from .utilFunctions import getJobsPath, getXMLDir, getXMLFile, getIndexFile
 
 testStr = "testFooString"
 
+
 class TestXMLGenAndLoad(GangaUnitTest):
 
     def setUp(self):
@@ -25,7 +26,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         self.assertFalse(getConfig('TestingFramework')['AutoCleanup'])
 
         from Ganga.GPI import Job, jobs
-        j=Job()
+        j = Job()
         assert len(jobs) == 1
 
     def test_b_JobXMLExists(self):
@@ -36,7 +37,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         print("len: %s" % str(len(jobs)))
 
-        j=jobs(0)
+        j = jobs(0)
 
         assert path.isdir(getJobsPath())
 
@@ -57,7 +58,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         # Check they get updated
         from Ganga.GPI import jobs
 
-        j=jobs(0)
+        j = jobs(0)
 
         XMLFileName = getXMLFile(j)
 
@@ -67,11 +68,11 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         from Ganga.Utility.Config import getConfig
         flush_timeout = getConfig('Registry')['AutoFlusherWaitTime']
-        total_time=0.
+        total_time = 0.
         new_update = 0
         lst_update = last_update.st_mtime
-        while total_time < 2.*flush_timeout and new_update <= lst_update:
-            total_time+=1.
+        while total_time < 2. * flush_timeout and new_update <= lst_update:
+            total_time += 1.
             time.sleep(1.)
             try:
                 new_update = stat(XMLFileName).st_mtime
@@ -82,18 +83,17 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
         assert newest_update.st_mtime > last_update.st_mtime
 
-
     def test_d_XMLUpdated(self):
         # check they get updated elsewhere
         from Ganga.GPI import jobs, disableMonitoring, enableMonitoring
 
         disableMonitoring()
 
-        j=jobs(0)
+        j = jobs(0)
 
         XMLFileName = getXMLFile(j)
 
-        last_update = stat(XMLFileName) 
+        last_update = stat(XMLFileName)
 
         j.submit()
 
@@ -113,9 +113,9 @@ class TestXMLGenAndLoad(GangaUnitTest):
         assert newest_update.st_mtime > last_update.st_mtime
 
         # Apparently this requirement is a bad idea. This isn't implemented in 6.1.17 but should probably be in 6.1.18
-        #if can_assert:
+        # if can_assert:
         #    assert final_update.st_mtime > newest_update.st_mtime
-        #else:
+        # else:
         #    assert final_update.st_mtime == newest_update.st_mtime
 
     def test_e_testXMLContent(self):
@@ -140,7 +140,6 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
             with NamedTemporaryFile(delete=False) as new_temp_file:
                 temp_name = new_temp_file.name
-
 
                 to_file(stripProxy(j), new_temp_file, ignore_subs)
                 new_temp_file.flush()
@@ -192,5 +191,3 @@ class TestXMLGenAndLoad(GangaUnitTest):
             this_index_cache = (index_cat, index_cls, index_cache)
 
             assert this_index_cache == obj
-
-

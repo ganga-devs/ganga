@@ -99,6 +99,7 @@ class JobRegistry(Registry):
             logger.debug("Exception in _remove: %s" % str(err))
             pass
 
+
 class JobRegistrySlice(RegistrySlice):
 
     def __init__(self, name):
@@ -284,6 +285,7 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(stripProxy(self).__getitem__(_unwrap(x)))
 
+
 def jobSlice(joblist):
     """create a 'JobSlice' from a list of jobs
     example: jobSlice([j for j in jobs if j.name.startswith("T1:")])"""
@@ -292,4 +294,3 @@ def jobSlice(joblist):
     return _wrap(this_slice)
 
 # , "Create a job slice from a job list") exported to the Runtime bootstrap
-

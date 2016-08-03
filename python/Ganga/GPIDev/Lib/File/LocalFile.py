@@ -26,6 +26,7 @@ logger = Ganga.Utility.logging.getLogger()
 
 regex = re.compile('[*?\[\]]')
 
+
 class LocalFile(IGangaFile):
 
     """LocalFile represents base class for output files, such as MassStorageFile, LCGSEFile, etc 
@@ -33,7 +34,7 @@ class LocalFile(IGangaFile):
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
                                      'localDir': SimpleItem(defvalue="", doc='local dir where the file is stored, used from get and put methods'),
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
-                                                sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+                                                               sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                                      'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
                                      #'output_location': SimpleItem(defvalue=None, typelist=[str, None], hidden=1, copyable=1, doc="path of output location on disk")
                                      })
@@ -53,7 +54,7 @@ class LocalFile(IGangaFile):
         if isinstance(namePattern, str):
             self.namePattern = namePattern
             if localDir:
-            	self.localDir = localDir
+                self.localDir = localDir
         elif isinstance(namePattern, File):
             self.namePattern = path.basename(namePattern.name)
             self.localDir = path.dirname(namePattern.name)
@@ -63,7 +64,6 @@ class LocalFile(IGangaFile):
             self.localDir = path.dirname(namePattern.name)
         else:
             logger.error("Unkown type: %s . Cannot Create LocalFile from this!" % type(namePattern))
-
 
     def __setattr__(self, attr, value):
         """
@@ -86,7 +86,6 @@ class LocalFile(IGangaFile):
                     actual_value = new_value
 
         super(LocalFile, self).__setattr__(attr, actual_value)
-        
 
     def __repr__(self):
         """Get the representation of the file."""
@@ -111,7 +110,7 @@ class LocalFile(IGangaFile):
             fileName = '%s.gz' % self.namePattern
 
         sourceDir = self.getJobObject().outputdir
-        
+
         if self.localDir:
             fileName = path.join(self.localDir, fileName)
 
@@ -225,10 +224,10 @@ class LocalFile(IGangaFile):
         return
 
     def put(self):
-	"""
+        """
         Copy the file to the detination (in the case of LocalFile the localDir)
         """
-        #FIXME this method should be written to work with some other parameter than localDir for job outputs but for now this 'works'
+        # FIXME this method should be written to work with some other parameter than localDir for job outputs but for now this 'works'
         if self.localDir:
             try:
                 job = self.getJobObject()
@@ -242,7 +241,6 @@ class LocalFile(IGangaFile):
                     os.makedirs(path.join(job.outputdir, self.localDir))
                 shutil.copy(path.join(job.outputdir, self.namePattern),
                             path.join(job.outputdir, self.localDir, self.namePattern))
-           
 
     def cleanUpClient(self):
         """
@@ -251,12 +249,12 @@ class LocalFile(IGangaFile):
         # For LocalFile this is where the file is stored so don't remove it
         pass
 
-## rcurrie Attempted to implement for 6.1.9 but commenting out due to not being able to correctly make use of setLocation
+# rcurrie Attempted to implement for 6.1.9 but commenting out due to not being able to correctly make use of setLocation
 
 #    def getWNScriptDownloadCommand(self, indent):
 #
 #        script = """
-####INDENT###os.system('###CP_COMMAND')
+# INDENT###os.system('###CP_COMMAND')
 #
 #"""
 #        full_path = path.join(self.localDir, self.namePattern)
@@ -271,7 +269,7 @@ class LocalFile(IGangaFile):
 #    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
 #
 #        cp_template = """
-####INDENT###os.system("###CP_COMMAND###")
+# INDENT###os.system("###CP_COMMAND###")
 #"""
 #        script = ""
 #
@@ -292,4 +290,3 @@ class LocalFile(IGangaFile):
 #
 #        return script
 #
-

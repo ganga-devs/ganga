@@ -8,7 +8,7 @@ from Ganga.testlib.decorators import add_config
 from Ganga.testlib.monitoring import run_until_completed
 
 global_num_threads = 10
-global_num_jobs = global_num_threads*5
+global_num_jobs = global_num_threads * 5
 
 
 @add_config([('TestingFramework', 'AutoCleanup', False),

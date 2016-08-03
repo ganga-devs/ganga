@@ -579,5 +579,3 @@ class Condor(IBackend):
         staticmethod(updateMonitoringInformation)
 
 #_________________________________________________________________________
-
-

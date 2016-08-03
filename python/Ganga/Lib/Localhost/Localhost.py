@@ -25,6 +25,7 @@ from Ganga.GPIDev.Base.Proxy import getName, stripProxy
 logger = Ganga.Utility.logging.getLogger()
 config = Ganga.Utility.Config.getConfig('Local')
 
+
 class Localhost(IBackend):
 
     """Run jobs in the background on local host.
@@ -178,8 +179,8 @@ class Localhost(IBackend):
         from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
 
-        fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
+        fileutils = File(inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR)
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [fileutils])
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         if self.nice:
@@ -188,7 +189,7 @@ class Localhost(IBackend):
             logger.warning('increasing process priority is often not allowed, your job may fail due to this')
 
         sharedoutputpath = job.getOutputWorkspace().getPath()
-        ## FIXME DON'T just use the blind list here, request the list of files to be in the output from a method.
+        # FIXME DON'T just use the blind list here, request the list of files to be in the output from a method.
         outputpatterns = jobconfig.outputbox
         environment = dict() if jobconfig.env is None else jobconfig.env
 
@@ -197,7 +198,7 @@ class Localhost(IBackend):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                        'LocalHostExec.py')
+                                       'LocalHostExec.py')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '')
@@ -207,7 +208,6 @@ class Localhost(IBackend):
         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles, getWNCodeForInputdataListCreation
         from Ganga.Utility.Config import getConfig
         jobidRepr = repr(job.getFQID('.'))
-
 
         script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__'], jobidRepr))
         script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, ''))
@@ -362,4 +362,3 @@ class Localhost(IBackend):
                 # j.outputdata.fill()
 
                 j.backend.remove_workdir()
-
