@@ -24,9 +24,11 @@ from Ganga.Utility.logging import getLogger
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getScopeAndDSName, getDatasets, getElementsFromContainer
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getElementsFromContainer
 
-from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
+
+from GangaAtlas.Lib.Rucio import get_dataset_replica_list, list_dataset_files, dataset_exists
 
 logger = getLogger()
 config = getConfig('Panda')
@@ -233,10 +235,6 @@ def queueToAllowedSites(queue):
 
 def runPandaBrokerage(job):
 
-    # import and create the Rucio client
-    from rucio.client import Client
-    rucio_client = Client()
-
     # import the Panda Client
     from pandatools import Client as PandaClient
 
@@ -250,8 +248,7 @@ def runPandaBrokerage(job):
 
         libdslocation = ''
         if job.backend.libds:
-            scope_dsname = getScopeAndDSName(job.backend.libds)
-            location = rucio_client.list_dataset_replicas(scope_dsname[0], scope_dsname[1]).next()['rse']
+            location = get_dataset_replica_list(job.backend.libds)[0]
             libdslocation = PandaClient.convertDQ2toPandaIDList(location)
 
             if not libdslocation:
@@ -275,9 +272,8 @@ def runPandaBrokerage(job):
                     raise ApplicationConfigurationError(None, 'Could not determine input datasetname for Panda '
                                                               'brokerage')
 
-                scope_dsname = getScopeAndDSName(dataset)
-                for loc in rucio_client.list_dataset_replicas(scope_dsname[0], scope_dsname[1]):
-                    for pid in PandaClient.convertDQ2toPandaIDList(loc['rse']):
+                for loc in get_dataset_replica_list(dataset)
+                    for pid in PandaClient.convertDQ2toPandaIDList(loc):
                         if pid not in new_locs and (not libdslocation or pid == libdslocation):
                             new_locs.append(pid)
 
@@ -421,7 +417,6 @@ def uploadSources(path,sources):
 
 
 def getLibFileSpecFromLibDS(libDS):
-    from rucio.client import Client
     from taskbuffer.FileSpec import FileSpec
 
     # query files in lib dataset to reuse libraries
@@ -432,8 +427,7 @@ def getLibFileSpecFromLibDS(libDS):
     tmpMD5Sum  = None
     tmpFSize   = None
     tmpScope   = None
-    scope_dsname = getScopeAndDSName(libDS)
-    for fileDict in Client().list_files(scope_dsname[0], scope_dsname[1]):
+    for fileDict in list_dataset_files(libDS):
         fileName = fileDict['name']
 
         # ignore log file
@@ -1102,10 +1096,7 @@ class Panda(IBackend):
                     if not tmpFile.destinationDBlock in addedDataset:
                         tmpOutDsLocation = Client.PandaSites[rj.computingSite]['ddm']
                         # check this dataset doesn't already exist (in case of previous screw ups in resubmit)
-                        # RUCIO patch
-                        #res = Client.getDatasets(tmpFile.destinationDBlock)
-                        res = getDatasets(tmpFile.destinationDBlock)
-                        if not tmpFile.destinationDBlock in res.keys():
+                        if not dataset_exists(tmpFile.destinationDBlock):
                             # DS doesn't exist - create it
                             try:
                                 Client.addDataset(tmpFile.destinationDBlock,False,location=tmpOutDsLocation)

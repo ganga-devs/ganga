@@ -22,10 +22,8 @@ from Ganga.Core import BackendError
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2, getDatasets
-
-from Ganga.Utility.GridShell import getShell
 from GangaPanda.Lib.Panda.Panda import setChirpVariables
+from GangaAtlas.Lib.Rucio import dataset_exists
 
 def createContainer(name):
     from pandatools import Client
@@ -316,18 +314,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         #    job.outputdata.datasetname+='/'
 
         # check if this container exists
-        try:
-            # RUCIO patch
-            #res = Client.getDatasets(job.outputdata.datasetname)
-            res = getDatasets(job.outputdata.datasetname)
-        except exceptions.SystemExit:
-            raise BackendError('Panda','Exception in Client.getDatasets %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
-        if not job.outputdata.datasetname in res.keys():
+        if not dataset_exists(job.outputdata.datasetname):
             # create the container
             createContainer(job.outputdata.datasetname)
-
         else:
             logger.info('Adding datasets to already existing container %s' % job.outputdata.datasetname)
+
         self.indivOutContList = [job.outputdata.datasetname]
             
         # store the lib datasts
@@ -347,9 +339,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             try:
                 tmpDsExist = False
                 if (configPanda['processingType'].startswith('gangarobot') or configPanda['processingType'].startswith('hammercloud') or configPanda['processingType'].startswith('rucio_test')):
-                    # RUCIO patch
-                    #if Client.getDatasets(tmpDSName):
-                    if getDatasets(tmpDSName):
+                    if dataset_exists(tmpDSName):
                         tmpDsExist = True
                         logger.info('Re-using output dataset %s'%tmpDSName)
                 if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
