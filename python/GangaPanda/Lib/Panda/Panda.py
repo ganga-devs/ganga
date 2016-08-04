@@ -577,7 +577,6 @@ def retrieveMergeJobs(job, pandaJobDefId):
 
                             if mjobj.id not in [mj2.id for mj2 in job.backend.mergejobs]:
                                 job.backend.mergejobs.append(mjobj)
-                                job._commit()
                                 num_mjobs += 1
                             else:
                                 logger.debug("merging job %s already exists locally" % mjobj.id)
@@ -1189,7 +1188,6 @@ class Panda(IBackend):
         # mark merge job retrieval to be done for any new merges created
         self.domergeretrieve = True
         self.mergejobs = []
-        job._commit()
         
         logger.info('Resubmission successful')
         return True
@@ -1233,7 +1231,6 @@ class Panda(IBackend):
 
             if job.status in ['running', 'submitted'] and job.backend.domergeretrieve:
                 job.backend.mergejobs = []
-                job._commit()
                 
         # split into 2000-job pieces
         allJobIDs = jobdict.keys()
@@ -1487,7 +1484,6 @@ class Panda(IBackend):
         for j in clear_merge_jobs:
             j.backend.mergejobs = []
             j.backend.domergeretrieve = True
-            job._commit()
 
         # update merge status's
         for job in update_merge_master_status:
@@ -1564,9 +1560,6 @@ class Panda(IBackend):
                                     logger.warning('merging job retrival failure')
 
                                 tot_num_mjobs += num_mjobs
-
-                        ## for some reason, one should call job._commit() to store merging jobs into the repository
-                        job._commit()
                                                 
                         # set the flag to prevent further retrievals unless a resub is called
                         if tot_num_mjobs > 0:
