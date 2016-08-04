@@ -198,7 +198,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
                 raise ApplicationConfigurationError(None,"Problems with outputdata.location setting '%s'" % job.outputdata.location)
 
         # validate application
-        if not app.atlas_release and not job.backend.requirements.rootver and not app.atlas_exetype in [ 'EXE' ]:
+        if not app.atlas_release and not job.backend.requirements.rootver and not app.atlas_exetype in [ 'EXE' ] and app.atlas_project != "AthAnalysisBase":
             raise ApplicationConfigurationError(None,"application.atlas_release is not set. Did you run application.prepare()")
 
         self.dbrelease = app.atlas_dbrelease
