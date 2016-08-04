@@ -33,7 +33,6 @@ from Ganga.Utility import util
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import expand_vars
 
-import inspect
 import os
 import re
 import shutil
@@ -87,7 +86,6 @@ class Interactive(IBackend):
                         value = int(match.group("value"))
             except IOError as err:
                 logger.debug("IOError: %s" % str(err))
-                pass
         return value
 
     def submit(self, jobconfig, master_input_sandbox):
@@ -259,7 +257,7 @@ class Interactive(IBackend):
         }
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                'InteractiveScriptTemplate.py')
+                'InteractiveScriptTemplate.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         commandString = FileUtils.loadScript(script_location, '')

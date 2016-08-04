@@ -1,11 +1,11 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-from Ganga.Utility.Config import getConfig, ConfigError
+from Ganga.Utility.Config import ConfigError
+from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Lib.File import LocalFile
-from Ganga.GPIDev.Base.Proxy import isType
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaLHCb.Lib.Files import LogicalFile, PhysicalFile
 
@@ -19,11 +19,11 @@ def isLFN(file):
 
 
 def isDiracFile(file):
-    return isType(file, DiracFile) or isType(file, LogicalFile)
+    return isinstance(file, DiracFile) or isinstance(file, LogicalFile)
 
 
 def isPFN(file):
-    return isType(file, PhysicalFile) or isType(file, LocalFile)
+    return isinstance(file, PhysicalFile) or isinstance(file, LocalFile)
 
 
 def strToDataFile(name, allowNone=True):
@@ -39,9 +39,9 @@ def strToDataFile(name, allowNone=True):
             raise GangaException( "Cannot construct file object: %s" % str(name) )
 
 def getDataFile(file_):
-    if isType(file_, DiracFile):
+    if isinstance(file_, DiracFile):
         return file_
-    if isType(file_, LocalFile):
+    if isinstance(file_, LocalFile):
         return file_
     if isinstance(file_, str):
         return strToDataFile(file_)

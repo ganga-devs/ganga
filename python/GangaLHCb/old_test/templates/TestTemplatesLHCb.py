@@ -7,7 +7,6 @@ try:
     from Ganga.GPI import templatesLHCb, Job
 except ImportError:
     templatesLHCb=[]
-    pass
 
 class TestTemplatesLHCb(GangaGPITestCase):
 

@@ -1,10 +1,20 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
-from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
+from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path
+from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare
+from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import sandbox_prepare
+from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import script_generator
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_settings
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_ouputdata
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_outputfile_jdl
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import mangle_job_name
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
+from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Core.exceptions import ApplicationConfigurationError
@@ -12,7 +22,6 @@ from Ganga.GPIDev.Lib.File import File, FileBuffer
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 logger = getLogger()
 config = getConfig('DIRAC')
 
@@ -41,12 +50,12 @@ class ExeDiracRTHandler(IRuntimeHandler):
         input_data,   parametricinput_data = dirac_inputdata(app)
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
-        job = stripProxy(app).getJobObject()
-        outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
+        job = app.getJobObject()
+        outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
         commandline = []
         commandline.append(app.exe)
-        if isType(app.exe, File):
+        if isinstance(app.exe, File):
             #logger.info("app: %s" % str(app.exe.name))
             #fileName = os.path.join(get_share_path(app), os.path.basename(app.exe.name))
             #logger.info("EXE: %s" % str(fileName))

@@ -2,14 +2,12 @@
 '''Parent for all Gaudi and GaudiPython applications in LHCb.'''
 
 import os
-import tempfile
 import gzip
-import shutil
-from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import SimpleItem, Schema, Version
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 import Ganga.Utility.logging
-from Ganga.Utility.files import expandfilename, fullpath
+from Ganga.Utility.files import expandfilename
+from Ganga.Utility.files import fullpath
 from GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
 from Ganga.GPIDev.Lib.File import File
 from Ganga.Core import ApplicationConfigurationError
@@ -17,7 +15,7 @@ import Ganga.Utility.Config
 from Ganga.Utility.execute import execute
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 import copy
 logger = Ganga.Utility.logging.getLogger()
 
@@ -116,7 +114,6 @@ class GaudiBase(IPrepareApp):
                 job = self.getJobObject()
             except Exception as err:
                 logger.debug("Error: %s" % str(err))
-                pass
             else:
                 env_file_name = job.getDebugWorkspace().getPath() + \
                     '/gaudi-env.py.gz'
@@ -262,13 +259,13 @@ class GaudiBase(IPrepareApp):
 
     def _register(self, force):
         if (self.is_prepared is not None) and (force is not True):
-            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.' % (getName(self)))
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.' % (_getName(self)))
 
         try:
-            logger.info('Job %s: Preparing %s application.' % (stripProxy(self).getJobObject().getFQID('.'), getName(self)))
+            logger.info('Job %s: Preparing %s application.' % (self.getJobObject().getFQID('.'), _getName(self)))
         except AssertionError, err:
             ## No Job associated with Object!!
-            logger.info("Preparing %s application." % getName(self))
+            logger.info("Preparing %s application." % _getName(self))
         self.is_prepared = ShareDir()
 
     def master_configure(self):

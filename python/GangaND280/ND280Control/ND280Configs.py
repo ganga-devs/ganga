@@ -1,11 +1,5 @@
 #!/usr/bin/env python
 
-import sys
-import re
-import tempfile
-import os
-import optparse
-import shutil
 import random
 
 

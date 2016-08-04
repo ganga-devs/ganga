@@ -107,7 +107,6 @@ class BaseExtractor(IAction):
         This method is called in the context of a Ganga session.
         
         """
-        pass
 
     def handlejobnode(self, jobnode, job):
         """Empty default implementation.
@@ -126,6 +125,5 @@ class BaseExtractor(IAction):
         This method is called in the context of a Ganga session.
         
         """
-        pass
 
     

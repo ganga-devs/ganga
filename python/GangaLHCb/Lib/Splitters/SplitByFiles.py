@@ -4,13 +4,10 @@ from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.Job import Job
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-import os
 import copy
-import pickle
 
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Filters import allComponentFilters
@@ -79,17 +76,17 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         if isinstance(dataset, LHCbDataset):
             for i in dataset:
-                if isType(i, DiracFile):
+                if isinstance(i, DiracFile):
                     datatmp.append(i)
                 else:
                     logger.error("Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
                     from Ganga.Core.exceptions import GangaException
                     raise GangaException("Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
-        elif type(dataset) == type([]) or isType(dataset, GangaList()):
+        elif type(dataset) == type([]) or isinstance(dataset, GangaList):
             for this_file in dataset:
                 if type(this_file) is str:
                     datatmp.append(allComponentFilters['gangafiles'](this_file, None))
-                elif isType(this_file, IGangaFile):
+                elif isinstance(this_file, IGangaFile):
                     datatmp.append(this_file)
                 else:
                     logger.error("Unexpected type: %s" % str(type(this_file)))
@@ -108,7 +105,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("Creating new Job in Splitter")
         j = Job()
         logger.debug("Copying From Job")
-        j.copyFrom(stripProxy(job), ['splitter', 'subjobs', 'inputdata', 'inputsandbox', 'inputfiles'])
+        j.copyFrom(job, ['splitter', 'subjobs', 'inputdata', 'inputsandbox', 'inputfiles'])
         logger.debug("Unsetting Splitter")
         j.splitter = None
         #logger.debug("Unsetting Merger")
@@ -142,7 +139,7 @@ class SplitByFiles(GaudiInputDataSplitter):
             self.persistency = None
             self.XMLCatalogueSlice = None
 
-        if stripProxy(job.backend).__module__.find('Dirac') > 0:
+        if job.backend.__module__.find('Dirac') > 0:
 
             logger.debug("found Dirac backend")
 
@@ -169,7 +166,7 @@ class SplitByFiles(GaudiInputDataSplitter):
                                             self.maxFiles,
                                             self.ignoremissing)
             elif self.splitterBackend == "splitInputData":
-                indata = stripProxy(copy.deepcopy(inputdata))
+                indata = copy.deepcopy(inputdata)
                 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
                 outdata = DiracSplitter(indata,
                                         self.filesPerJob,
@@ -189,7 +186,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         if self.maxFiles == -1:
             self.maxFiles = None
         if self.bulksubmit == True:
-            if stripProxy(job.backend).__module__.find('Dirac') > 0:
+            if job.backend.__module__.find('Dirac') > 0:
                 logger.debug("Returning []")
                 return []
         split_return = super(SplitByFiles, self).split(job)

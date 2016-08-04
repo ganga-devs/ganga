@@ -82,7 +82,6 @@ class GangaGPIPTestCase(unittest.TestCase):
 
     def run_pyunit_testcases(self):
         import os
-        import sys
         from subprocess import PIPE,Popen,STDOUT
         logger.info('\n***** %s' % self.description)
         logger.info('\tLog file: %s' % self.output_path)
@@ -116,7 +115,6 @@ class GangaGPIPTestCase(unittest.TestCase):
         if len(err) > 0:
             raise unittest.TestCase.failureException(err)
 
-import time
 
 class GPIPPreparationTestCase(unittest.TestCase):
     """

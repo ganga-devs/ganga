@@ -21,7 +21,7 @@ from Ganga.Core import ApplicationConfigurationError
 
 from os.path import isfile
 
-import os, shutil, commands, re, time
+import os
 from Ganga.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 

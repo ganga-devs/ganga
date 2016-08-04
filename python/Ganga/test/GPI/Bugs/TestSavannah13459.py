@@ -5,7 +5,8 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 class TestSavannah13459(GangaUnitTest):
 
     def test_Savannah13459(self):
-        from Ganga.GPI import Job, config
+        from Ganga.GPI import Job
+        from Ganga.GPI import config
         from Ganga.GPI import Job, Executable
         j = Job()
         j.application = Executable()

@@ -23,7 +23,10 @@ class TestQueuedSJSubmit(object):
         assert num_threads == global_num_threads
 
     def test_b_SetupJobs(self):
-        from Ganga.GPI import Job, jobs, Executable, ArgSplitter
+        from Ganga.GPI import ArgSplitter
+        from Ganga.GPI import Executable
+        from Ganga.GPI import Job
+        from Ganga.GPI import jobs
 
         for i in range(global_num_jobs):
             print('creating job', end=' ')
@@ -53,7 +56,8 @@ class TestQueuedSJSubmit(object):
             assert j.status != 'new'
 
     def test_d_Finished(self):
-        from Ganga.GPI import jobs, queues
+        from Ganga.GPI import jobs
+        from Ganga.GPI import queues
 
         print('waiting on job', end=' ')
         for j in jobs:

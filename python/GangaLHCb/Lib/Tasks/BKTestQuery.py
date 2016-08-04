@@ -1,7 +1,11 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery, BKQueryDict
-from Ganga.GPIDev.Schema import Schema, Version, ComponentItem, SimpleItem
+from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
+from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQueryDict
+from Ganga.GPIDev.Schema import ComponentItem
+from Ganga.GPIDev.Schema import Schema
+from Ganga.GPIDev.Schema import SimpleItem
+from Ganga.GPIDev.Schema import Version
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

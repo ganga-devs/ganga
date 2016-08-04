@@ -7,7 +7,6 @@ from Ganga.GPI import *
 
 # GangaTest.Framework.utils defines some utility methods
 #from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
-import unittest
 import tempfile
 import os
 import difflib

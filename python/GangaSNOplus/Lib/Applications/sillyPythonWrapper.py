@@ -26,7 +26,6 @@
 
 import os
 import sys
-import subprocess
 import optparse
 import job_tools
 

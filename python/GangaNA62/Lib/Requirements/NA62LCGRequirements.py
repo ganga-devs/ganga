@@ -1,4 +1,3 @@
-import re
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.Utility.Config import getConfig
@@ -47,7 +46,6 @@ class NA62LCGRequirements(GangaObject):
    def convert(self):
       '''Convert the condition in a JDL specification'''
      
-      import re
 
       ##requirements = [ 'Member("%s",other.GlueHostApplicationSoftwareRunTimeEnvironment)' % sw for sw in self.software ]
       requirements = []

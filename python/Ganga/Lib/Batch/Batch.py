@@ -401,7 +401,7 @@ class Batch(IBackend):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                       'BatchScriptTemplate.py')
+                                                       'BatchScriptTemplate.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         text = FileUtils.loadScript(script_location, '')
@@ -477,7 +477,6 @@ class Batch(IBackend):
 
             pid, queue, actualCE, exitcode = None, None, None, None
 
-            import re
             statusfile = None
             try:
                 statusfile = open(f)

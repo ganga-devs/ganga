@@ -1,7 +1,8 @@
 #XML differencer - reads the XML files for two test versions
 # and looks for differences between test case success failures
 from Ganga.Utility.Config import getConfig
-import os, xml, fnmatch
+import os
+import xml
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
@@ -301,7 +302,6 @@ def start(cmd_args=None):
                 newdoc = xml.dom.minidom.parse(reportfile)
             except:
                 newdoc = None
-                pass
 
         if newdoc:
             newfiles[str(newfile)] = newdoc

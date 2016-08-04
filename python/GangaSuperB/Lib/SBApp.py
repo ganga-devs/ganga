@@ -4,7 +4,6 @@ import ConfigParser
 import datetime
 import os
 import subprocess
-import sys
 
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.Core import GangaException

@@ -4,17 +4,21 @@
 ##########################################################################
 
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
+from Ganga.GPIDev.Adapters.IPostProcessor import IPostProcessor
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 from Ganga.Lib.Checkers.MetaDataChecker import MetaDataChecker
-from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+from Ganga.GPIDev.Schema import ComponentItem
+from Ganga.GPIDev.Schema import FileItem
+from Ganga.GPIDev.Schema import Schema
+from Ganga.GPIDev.Schema import SimpleItem
+from Ganga.GPIDev.Schema import Version
+from Ganga.Utility.Config import ConfigError
+from Ganga.Utility.Config import getConfig
+from Ganga.Utility.Config import makeConfig
 from Ganga.Utility.Plugin import allPlugins
-from Ganga.Utility.logging import getLogger, log_user_exception
-import commands
-import copy
-import os
-import string
+from Ganga.Utility.logging import getLogger
+from Ganga.Utility.logging import log_user_exception
 logger = getLogger()
 
 

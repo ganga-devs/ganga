@@ -2,7 +2,8 @@ from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles

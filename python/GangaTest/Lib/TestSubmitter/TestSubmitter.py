@@ -4,7 +4,8 @@ from Ganga.GPIDev.Schema import *
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-from Ganga.Utility.Config import makeConfig,getConfig
+from Ganga.Utility.Config import makeConfig
+from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.Job import JobError
 

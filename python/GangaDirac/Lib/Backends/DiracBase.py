@@ -6,7 +6,6 @@ import os
 import re
 import fnmatch
 import time
-import datetime
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Core import BackendError, GangaException
@@ -17,7 +16,7 @@ from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Credentials import getCredential
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.Core.GangaThread.WorkerThreads import getQueues
 configDirac = getConfig('DIRAC')
 logger = getLogger()
@@ -203,11 +202,11 @@ class DiracBase(IBackend):
         ## Add LFN to the inputfiles section of the file
         input_sandbox_userFiles = []
         for this_file in j.inputfiles:
-            if isType(this_file, DiracFile):
+            if isinstance(this_file, DiracFile):
                 input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
         if j.master:
             for this_file in j.master.inputfiles:
-                if isType(this_file, DiracFile):
+                if isinstance(this_file, DiracFile):
                     input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
 
         for this_file in input_sandbox_userFiles:
@@ -241,7 +240,7 @@ class DiracBase(IBackend):
         try:
             for sj in rjobs:
                 fqid = sj.getFQID('.')
-                logger.info("resubmitting job %s to %s backend", fqid, getName(sj.backend))
+                logger.info("resubmitting job %s to %s backend", fqid, _getName(sj.backend))
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
@@ -253,7 +252,7 @@ class DiracBase(IBackend):
                     else:
                         return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
-                    log_user_exception(logger, debug=isType(x, GangaException))
+                    log_user_exception(logger, debug=isinstance(x, GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
@@ -294,7 +293,7 @@ class DiracBase(IBackend):
                 if len(parametric_datasets) != len(j.master.subjobs):
                     raise BackendError('Dirac', 'number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
             if j.inputdata and len(j.inputdata) > 0:
-                _input_files = [f for f in j.inputdata if not isType(f, DiracFile)]
+                _input_files = [f for f in j.inputdata if not isinstance(f, DiracFile)]
             else:
                 _input_files = []
             if set(parametric_datasets[j.id]).symmetric_difference(set([f.namePattern for f in _input_files])):
@@ -444,7 +443,7 @@ class DiracBase(IBackend):
             if os.path.exists(os.path.join(dirac_file.localDir, os.path.basename(dirac_file.lfn))) and not force:
                 return
             try:
-                if isType(dirac_file, DiracFile):
+                if isinstance(dirac_file, DiracFile):
                     dirac_file.get(localPath=dirac_file.localDir)
                 else:
                     dirac_file.get()
@@ -484,7 +483,6 @@ class DiracBase(IBackend):
                 result = eval(result)
             except Exception as err:
                 logger.debug("Exception, err: %s" % str(err))
-                pass
         if not result_ok(result):
             logger.warning('Could not obtain services: %s' % str(result))
             return
@@ -498,7 +496,6 @@ class DiracBase(IBackend):
                     result = eval(result)
                 except Exception as err:
                     logger.debug("Exception: %s" % str(err))
-                    pass
             msg = 'OK.'
             if not result_ok(result):
                 msg = '%s' % result['Message']
@@ -882,7 +879,6 @@ class DiracBase(IBackend):
                 job.backend.extraInfo = state[4]
             except Exception as err:
                 logger.debug("gexception: %s" % str(err))
-                pass
             logger.debug('Job status vector  : ' + job.fqid + ' : ' + repr(state))
 
             if updated_dirac_status not in jobStateDict:
@@ -952,7 +948,7 @@ class DiracBase(IBackend):
         # querying dirac again. Their signature is status = running and job.backend.status
         # already set to Done or Failed etc.
 
-        jobs = [stripProxy(j) for j in jobs_]
+        jobs = [j for j in jobs_]
 
         # make sure proxy is valid
         if not DiracBase.checkDiracProxy():

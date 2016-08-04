@@ -3,7 +3,8 @@ from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 
 # config_scope is namespace used for evaluating simple objects (e.g. File, datetime, SharedDir)
 from Ganga.Utility.Config import config_scope
@@ -135,7 +136,6 @@ def fastXML(obj, indent='', ignore_subs=''):
                         sl.append('</attribute>\n')
                 except KeyError as err:
                     logger.debug("KeyError: %s" % err)
-                    pass
         sl.append(indent)
         sl.append('</class>')
         return sl

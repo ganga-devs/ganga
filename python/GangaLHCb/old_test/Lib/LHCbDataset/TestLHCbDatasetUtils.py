@@ -1,5 +1,6 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-from Ganga.Utility.Config import getConfig, ConfigError
+from Ganga.Utility.Config import ConfigError
+from Ganga.Utility.Config import getConfig
 
 from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 

@@ -5,19 +5,23 @@
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, GangaFileItem
+from Ganga.GPIDev.Schema import ComponentItem
+from Ganga.GPIDev.Schema import GangaFileItem
+from Ganga.GPIDev.Schema import Schema
+from Ganga.GPIDev.Schema import SimpleItem
+from Ganga.GPIDev.Schema import Version
 
 from Ganga.Utility.Config import getConfig
 
-from Ganga.GPIDev.Lib.File import File, ShareDir
-from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
+from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import ShareDir
+from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core import ApplicationPrepareError
 
 from Ganga.Utility.logging import getLogger
 
-from Ganga.GPIDev.Base.Proxy import getName, isType, stripProxy
+from Ganga.GPIDev.Base.Objects import _getName
 
-import os
-import shutil
 from Ganga.Utility.files import expandfilename
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
@@ -78,9 +82,9 @@ class Im3ShapeApp(IPrepareApp):
         """
 
         if (self.is_prepared is not None) and (force is not True):
-            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
+            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % _getName(self))
 
-        logger.info('Preparing %s application.' % getName(self))
+        logger.info('Preparing %s application.' % _getName(self))
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 

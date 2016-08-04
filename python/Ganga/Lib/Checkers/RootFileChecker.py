@@ -5,12 +5,11 @@
 
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Adapters.IChecker import IFileChecker
-from Ganga.GPIDev.Schema import FileItem, SimpleItem
+from Ganga.GPIDev.Schema import FileItem
+from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Utility.logging import getLogger
 import commands
-import copy
 import os
-import re
 
 
 logger = getLogger()

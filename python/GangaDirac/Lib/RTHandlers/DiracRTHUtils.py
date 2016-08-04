@@ -5,7 +5,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.util import unique
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -20,7 +20,7 @@ def mangle_job_name(app):
 
     jobName = job.name
     jobIndex = job.getStringFQID()
-    appName = getName(app)
+    appName = _getName(app)
     appVersion = None
     if hasattr(app, 'version'):
         appVersion = str(app.version)

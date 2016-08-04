@@ -2,12 +2,11 @@ import copy
 import os
 import datetime
 import inspect
-import hashlib
 import re
 import os.path
 import random
 import glob
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -254,7 +253,7 @@ class DiracFile(IGangaFile):
 
         logger.debug("DiracFile: setLocation")
 
-        if not stripProxy(self).getJobObject():
+        if not self.getJobObject():
             logger.error("No job assocaited with DiracFile: %s" % str(self))
             return
 
@@ -744,7 +743,7 @@ class DiracFile(IGangaFile):
 
     def getWNScriptDownloadCommand(self, indent):
 
-        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'downloadScript.py')
+        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'downloadScript.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         download_script = FileUtils.loadScript(script_location, '')
@@ -793,12 +792,12 @@ for f in glob.glob('###NAME_PATTERN###'):
         """
 
         script_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-        script_location = os.path.join( script_path, 'uploadScript.py')
+        script_location = os.path.join( script_path, 'uploadScript.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         upload_script = FileUtils.loadScript(script_location, '')
 
-        WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
+        WNscript_location = os.path.join( script_path, 'WNInjectTemplate.template' )
         script = FileUtils.loadScript(WNscript_location, '')
 
         if not self.remoteDir:
@@ -829,7 +828,7 @@ for f in glob.glob('###NAME_PATTERN###'):
                 script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(isCompressed))
 
 
-        if stripProxy(self)._parent is not None and stripProxy(self).getJobObject() and getName(stripProxy(self).getJobObject().backend) != 'Dirac':
+        if self._parent is not None and self.getJobObject() and _getName(self.getJobObject().backend) != 'Dirac':
             script_env = self._getDiracEnvStr()
         else:
             script_env = str(None)

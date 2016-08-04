@@ -7,7 +7,6 @@ import GangaPlotHelper
 ## require matplotlib to produce statistic plots
 from pylab import *
 
-import sys
 from functools import reduce
 
 from Ganga.Utility.Config import makeConfig

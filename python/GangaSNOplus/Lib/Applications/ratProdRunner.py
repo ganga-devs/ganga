@@ -22,12 +22,7 @@
 ######################################################
 
 import os
-import sys
 import optparse
-import glob
-import shutil
-import base64
-import socket
 import json
 import job_tools
 

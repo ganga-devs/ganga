@@ -2,8 +2,10 @@
 
 # A thread class for killing threads
 # nicked from http://www.velocityreviews.com/forums/t330554-kill-a-thread-in-python.html
-import sys, trace, threading
-import urllib2, robotparser, urlparse, os, time
+import sys
+import threading
+import os
+import time
 
 class GetHTMLThread(threading.Thread):
     """A subclass of threading.Thread, with a kill() method."""
@@ -30,7 +32,7 @@ class GetHTMLThread(threading.Thread):
 
     def run(self):
 
-        import urllib2, urlparse, os
+        import urllib2
 
         # retrieve the html
         try:
@@ -96,8 +98,7 @@ class ImageParser:
     
     def __init__( self, links, ext ):
 
-        import os
-        import urlparse
+        pass
         
         self._domain = ''
         self._viewed = []
@@ -244,7 +245,6 @@ class ImageParser:
     def GetImageSize( self, image ):
         "Get the size of the linked image (in KB)"
 
-        import urllib2, os
         
         size = -1
         
@@ -258,7 +258,9 @@ class ImageParser:
     def GetHTML( self ):
         "Get the HTML from the current link"
 
-        import urllib2, robotparser, urlparse, os, time
+        import os
+        import robotparser
+        import urlparse
         
         print "Getting HTML from " + self._currlink
         
@@ -310,7 +312,6 @@ class ImageParser:
     def ParseHTML( self, page ):
         "Parse the HTML and return the images and links found"
 
-        import re
         import os
         import urlparse
         

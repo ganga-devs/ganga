@@ -7,6 +7,7 @@ from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 class PostProcessException(GangaException):
@@ -74,7 +75,7 @@ class MultiPostProcessor(IPostProcessor):
         if not isType(self.process_objects, GangaObject):
             return str(self.process_objects)
         else:
-            return str(self.process_objects)
+            return str(GPIProxyObjectFactory(self.process_objects))
 
     def append(self, value):
         self.addProcess(value)
@@ -88,10 +89,10 @@ class MultiPostProcessor(IPostProcessor):
                 break
 
     def __get__(self):
-        return self.process_objects
+        return GPIProxyObjectFactory(self.process_objects)
 
     def __getitem__(self, i):
-        return self.process_objects[i]
+        return GPIProxyObjectFactory(self.process_objects[i])
 
     def execute(self, job, newstatus, **options):
         # run the merger objects one at a time

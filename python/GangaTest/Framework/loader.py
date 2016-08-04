@@ -156,8 +156,7 @@ class GangaTestLoader:
         return filtered_tests
                 
     def _loadReleaseTests(self,pattern):
-        import os,re
-        from os.path import join, getsize
+        import os
         
         top_level_package = pattern.split(".")[0]
         dirname = os.path.abspath("%s/%s/%s"%(self.testsTopDir,top_level_package,"old_test"))          

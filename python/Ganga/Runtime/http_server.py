@@ -5,7 +5,6 @@ from Ganga.Utility.util import hostname
 from Ganga.GPIDev.Base.Proxy import getName
 from BaseHTTPServer import HTTPServer
 
-import urlparse
 import Ganga.GPI
 from Ganga.GPIDev.Lib.Config import config
 import time

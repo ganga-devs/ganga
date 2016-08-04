@@ -6,7 +6,8 @@
 from __future__ import division
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
+from GangaTest.Framework.utils import sleep_until_completed
+from GangaTest.Framework.utils import sleep_until_state
 
 from Ganga.GPI import *
 
@@ -77,7 +78,6 @@ class TestDiracSplitter(GangaGPITestCase):
         #    'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000916_1.dimuon.dst',
         #    'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000914_1.dimuon.dst'
         #    ]
-        import copy
         #myLFNs = copy.deepcopy(LFNs)
         #myLFNs = BKQuery('LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
 

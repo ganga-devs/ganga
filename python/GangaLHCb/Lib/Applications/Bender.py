@@ -2,10 +2,7 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Application handler for Bender applications in LHCb.'''
 import os
-import tempfile
-import pprint
-import shutil
-from os.path import split, join
+from os.path import split
 from Ganga.GPIDev.Schema.Schema import FileItem, SimpleItem
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.File import File
@@ -19,7 +16,6 @@ from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import Shell
 from AppsBaseUtils import guess_version
-from Ganga.GPIDev.Base.Proxy import isType
 #
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
@@ -172,7 +168,7 @@ FileCatalog().Catalogs=[]\n""" % modulename
         """Checks the validity of user's entries for GaudiPython schema"""
         # Always check for None OR empty
         #logger.info("self.module: %s" % str(self.module))
-        if isType(self.module, str):
+        if isinstance(self.module, str):
             self.module = File(self.module)
         if self.module.name == None:
             raise ApplicationConfigurationError(None, "Application Module not requested")

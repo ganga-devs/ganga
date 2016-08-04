@@ -6,7 +6,7 @@
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.Core.GangaRepository import getRegistry
-from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Lib.File.File import File, ShareDir
 import os
@@ -50,7 +50,6 @@ class IPrepareApp(IApplication):
         Args:
             force (bool) : forces the prepare function to be called no matter what when True
         """
-        pass
 
     def post_prepare(self):
         """
@@ -217,11 +216,11 @@ class IPrepareApp(IApplication):
         """
         remove = remove
         logger.debug('Decrementing shared directory reference counter')
-        shareref = getRegistry("prep").getShareRef()
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref.decrease(shared_directory_name, remove)
 
     def listShareDirs(self):
-        shareref = getRegistry("prep").getShareRef()
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref
 
     def listShareDirContents(self, shared_directory_name):
@@ -230,7 +229,7 @@ class IPrepareApp(IApplication):
         Args:
             shared_directory_name (str): full name of directory managed by this app
         """
-        shareref = getRegistry("prep").getShareRef()
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref.ls(shared_directory_name)
 
     def checkPreparedHasParent(self, prepared_object):

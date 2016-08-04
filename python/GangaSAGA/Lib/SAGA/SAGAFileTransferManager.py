@@ -11,8 +11,6 @@ from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
 import os
-import sys
-import tarfile
 
 # SAGA Job Package Imports
 import saga.job

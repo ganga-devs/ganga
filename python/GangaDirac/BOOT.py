@@ -43,7 +43,6 @@ def diracAPI_interactive(connection_attempts=5):
     '''
     import os
     import sys
-    import time
     import inspect
     import traceback
     from GangaDirac.Lib.Server.InspectionClient import runClient
@@ -83,7 +82,6 @@ exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
 
 
 def getDiracFiles():
-    import os
     from GangaDirac.Lib.Files.DiracFile import DiracFile
     from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
     filename = DiracFile.diracLFNBase().replace('/', '-') + '.lfns'

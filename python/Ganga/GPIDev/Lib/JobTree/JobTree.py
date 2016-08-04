@@ -3,15 +3,17 @@
 #
 # $Id: JobTree.py,v 1.2.4.4 2009-07-24 13:39:39 ebke Exp $
 ##########################################################################
-import copy
 import os
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryKeyError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy, _wrap
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
+from Ganga.GPIDev.Lib.Registry.JobRegistry import _wrap
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObject
 
 import Ganga.Utility.logging
@@ -351,7 +353,6 @@ class JobTree(GangaObject):
                 registry = registry._parent
             except:
                 Ganga.Utility.logging.log_unknown_exception()
-                pass
             path = os.path.join(*self.__get_path(path))
             res.name = "jobs found in %s" % path
             cont = self.ls(path)
@@ -421,7 +422,6 @@ class JobTree(GangaObject):
 
             for i in fc:
                 if isType(fc[i], type({})):
-                    pass
                     self.cleanlinks(os.path.join(path, i))
                 else:
                     try:
@@ -445,7 +445,6 @@ class JobTree(GangaObject):
                                 self._releaseSessionLockAndFlush()
                             except ObjectNotInRegistryError as err:
                                 logger.debug("Object: %s Not in Reg: %s" % (_id, err))
-                                pass
 
     def printtree(self, path=None):
         """Prints content of the job tree in a well formatted way.

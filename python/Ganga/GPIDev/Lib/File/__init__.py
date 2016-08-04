@@ -50,7 +50,6 @@ def decodeExtensionKeys():
 
         except ConfigError as err:
             logger.debug("ConfigureError: %s" % str(err))
-            pass
 
     return outputfilesConfig
 
@@ -97,7 +96,6 @@ def string_file_shortcut(v, item):
                     return stripProxy(DiracFile._proxyClass(v))
                 except:
                     Ganga.Utility.logging.log_unknown_exception()
-                    pass
 
         return stripProxy(LocalFile._proxyClass(v))
 

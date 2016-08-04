@@ -1,10 +1,9 @@
 import os
-import shutil
-import tempfile
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaLHCb.Lib.Gaudi.Gaudi import GaudiExtras
 #from GangaLHCb.Lib.Applications.AppsBase import *
-from GangaTest.Framework.utils import read_file, failureException
+from GangaTest.Framework.utils import failureException
+from GangaTest.Framework.utils import read_file
 import Ganga.Utility.logging
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename

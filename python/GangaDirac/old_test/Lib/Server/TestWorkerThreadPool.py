@@ -4,9 +4,6 @@ from Ganga.GPI import *
 # GangaTest.Framework.utils defines some utility methods
 # from GangaTest.Framework.utils import file_contains#,
 # sleep_until_completed,sleep_until_state
-import unittest
-import tempfile
-import os
 from Ganga.Utility.Config import getConfig
 
 from Ganga.Utility.logging import getLogger
@@ -51,7 +48,9 @@ class TestWorkerThreadPool(GangaGPITestCase):
         constructor_test(w2, 2, 'World_')
 
     def test__worker_thread(self):
-        from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import QueueElement, CommandInput, FunctionInput
+        from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import CommandInput
+        from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import FunctionInput
+        from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import QueueElement
         from Ganga.Utility.logging import getLogger
         import datetime
         import difflib

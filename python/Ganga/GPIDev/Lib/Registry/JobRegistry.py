@@ -11,7 +11,9 @@ from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 from Ganga.Core.exceptions import GangaException
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher
 
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+from Ganga.GPIDev.Base.Proxy import addProxy
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import stripProxy
 
 import Ganga.Utility.logging
 
@@ -97,7 +99,6 @@ class JobRegistry(Registry):
             self.jobtree.cleanlinks()
         except Exception as err:
             logger.debug("Exception in _remove: %s" % str(err))
-            pass
 
 class JobRegistrySlice(RegistrySlice):
 

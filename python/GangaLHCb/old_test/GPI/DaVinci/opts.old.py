@@ -1,4 +1,3 @@
-from os import environ
 import GaudiKernel.SystemOfUnits as Units
 from Gaudi.Configuration import *
 from Configurables import CombineParticles, PhysDesktop

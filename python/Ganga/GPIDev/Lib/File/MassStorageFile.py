@@ -12,6 +12,7 @@ import copy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
@@ -120,12 +121,12 @@ class MassStorageFile(IGangaFile):
                     d = MassStorageFile(namePattern=pattern)
                     d.compressed = mass_file.compressed
                     d.failureReason = line[line.find('ERROR') + 5:]
-                    mass_file.subfiles.append(d)
+                    mass_file.subfiles.append(GPIProxyObjectFactory(d))
                 else:
                     d = MassStorageFile(namePattern=name)
                     d.compressed = mass_file.compressed
                     d.outputfilenameformat = mass_file.outputfilenameformat
-                    mass_file.subfiles.append(d)
+                    mass_file.subfiles.append(GPIProxyObjectFactory(d))
                     mass_line_processor(line, d)
             elif name == mass_file.namePattern:
                 if outputPath == 'ERROR':
@@ -203,7 +204,6 @@ class MassStorageFile(IGangaFile):
         be called on the client
         """
         import glob
-        import re
 
         sourceDir = ''
 
@@ -339,7 +339,7 @@ class MassStorageFile(IGangaFile):
                     # if self._getParent() != None:
                     #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
-                self.subfiles.append(d)
+                self.subfiles.append(GPIProxyObjectFactory(d))
         else:
             currentFile = os.path.join(sourceDir, fileName)
             finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
@@ -433,7 +433,7 @@ class MassStorageFile(IGangaFile):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                        'scripts/MassStorageFileWNScript.py')
+                                        'scripts/MassStorageFileWNScript.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '###INDENT###')
@@ -475,7 +475,7 @@ class MassStorageFile(IGangaFile):
                     subfile = MassStorageFile(namePattern=filename)
                     subfile.inputremotedirectory = self.inputremotedirectory
 
-                    self.subfiles.append(subfile)
+                    self.subfiles.append(GPIProxyObjectFactory(subfile))
 
     def remove(self, force=False, removeLocal=False):
         """
@@ -558,7 +558,6 @@ class MassStorageFile(IGangaFile):
                         if err.errno != errno.ENOENT:
                             logger.error("Error in removing file: %s" % str(remove_filename))
                             raise
-                        pass
         return
 
     def accessURL(self):

@@ -1,18 +1,15 @@
 import os
 import shutil
-from datetime import datetime
 import tempfile
 import tarfile
 import random
-import threading
-import uuid
 import shutil
 
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.GPIDev.Lib.File.File import File, ShareDir
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
@@ -22,7 +19,11 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_settings
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_ouputdata
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import mangle_job_name
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
@@ -78,7 +79,7 @@ def getScriptName(app):
     """
     job = app.getJobObject()
 
-    return getName(app)+"_Job_"+job.getFQID('.')+'_script.py'
+    return _getName(app)+"_Job_"+job.getFQID('.')+'_script.py'
 
 
 def generateWNScript(commandline, app):
@@ -131,7 +132,7 @@ def prepareCommand(app):
             opts_names.append(os.path.basename(opts_file.namePattern))
         else:
             raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
-                                                getName(opts_file))
+                                                _getName(opts_file))
 
     sourceEnv = app.getEnvScript()
 
@@ -413,8 +414,8 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
                 base_name = os.path.basename(file_.namePattern)
                 shutil.copyfile(os.path.join(file_.localDir, base_name), os.path.join(app.getSharedPath(), base_name))
             else:
-                logger.error("Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
-                raise ApplicationConfigurationError(None, "Unsupported filetype: %s with DIRAC backend" % getName(file_))
+                logger.error("Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % _getName(file_))
+                raise ApplicationConfigurationError(None, "Unsupported filetype: %s with DIRAC backend" % _getName(file_))
 
         master_job = job.master or job
 

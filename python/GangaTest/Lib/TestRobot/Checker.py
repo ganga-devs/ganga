@@ -4,7 +4,11 @@ from GangaRobot.Framework.Action import IAction
 from GangaRobot.Framework import Utility
 from GangaRobot.Framework.exceptions import *
 from Ganga.Utility.logging import getLogger
-import os, urllib, datetime, subprocess, time, fnmatch, shutil
+import datetime
+import os
+import shutil
+import time
+import urllib
 #from Ganga.Utility.Config import getConfig
 import Ganga.Utility.Config
 #from GangaTest.Lib.TestRobot.Utils import Emailer
@@ -49,7 +53,6 @@ class Checker(IAction):
             SleepDelta = datetime.timedelta(seconds=int(self.SleepTime))
             if (CurrentTime - self.LastCheckedTime) < SleepDelta:
                 logger.debug("Last check was too recent")
-                pass
             else:
                 logger.debug("Checking for update...")
                 self.NewRelease = self._checkfornewrelease()
@@ -91,7 +94,6 @@ class Checker(IAction):
             f.close()
         except IOError as e:
             logger.info(e)
-            pass
         #dirs below will have been deleted on clean up
         config = Ganga.Utility.Config.getConfig('TestRobot')
         #Set Install path with new directory  

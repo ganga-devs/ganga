@@ -1,7 +1,9 @@
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
-from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
+from Ganga.GPIDev.Schema import ComponentItem
+from Ganga.GPIDev.Schema import Schema
+from Ganga.GPIDev.Schema import Version
 from Ganga.Core import BackendError
 from Ganga.Core import GangaException
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset

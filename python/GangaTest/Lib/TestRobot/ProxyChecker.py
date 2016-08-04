@@ -2,7 +2,6 @@
 from GangaRobot.Framework.Action import IAction
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
-import os, datetime, time
 from GangaRobot.Framework.exceptions import *
 #from Ganga.GPIDev.Credentials.GridProxy import GridProxy
 from Ganga.GPIDev.Credentials import getCredential

@@ -3,6 +3,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from fnmatch import fnmatch
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.Utility.logging import getLogger
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Utility.Config import getConfig
 import re
@@ -107,7 +108,6 @@ class GoogleFile(IGangaFile):
                         webbrowser.get('firefox').open(authorize_url, 0, True)
                     except Exception, err:
                         logger.error("Error: %s" % str(err))
-                        pass
             logger.info(
                 'Go to the following link in your browser: ' + authorize_url)
             code = raw_input('Enter verification code: ').strip()
@@ -303,7 +303,7 @@ class GoogleFile(IGangaFile):
                 g.downloadURL = file.get('downloadUrl', '')
                 g.id = file.get('id', '')
                 g.title = file.get('title', '')
-                self.subfiles.append(g)
+                self.subfiles.append(GPIProxyObjectFactory(g))
 
         # For non-wildcard upload
         else:
@@ -340,7 +340,7 @@ class GoogleFile(IGangaFile):
             self.title = file.get('title', '')
 
             return
-        return self.subfiles[:]
+        return GPIProxyObjectFactory(self.subfiles[:])
 
     def remove(self, permanent=False):
         """

@@ -72,7 +72,6 @@ class PackageSetup(object):
     def prependPath(self, name, var):
         """ Update environment (os.environ) and prepend a package path to var.
         """
-        import sys
         import os.path
 
         if getExternalHome():
@@ -126,7 +125,6 @@ class PackageSetup(object):
         """ 
         Update environment (os.environ) and *set* (overwrite) a package path to var.
         """
-        import sys
         import os
 
         if getExternalHome():

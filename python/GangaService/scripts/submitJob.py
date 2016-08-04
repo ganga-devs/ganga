@@ -4,13 +4,8 @@ import sys, os
 import logging
 import logging.handlers
 import traceback
-import time
 from ConfigParser import ConfigParser
-import socket
-import tempfile
-import commands
 import shutil
-import stat
 
 # ------------------------------------------------
 def setupLogger( ):

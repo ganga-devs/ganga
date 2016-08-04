@@ -2,11 +2,12 @@ from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitt
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Schema import Schema
+from Ganga.GPIDev.Schema import SimpleItem
+from Ganga.GPIDev.Schema import Version
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Base.Proxy import stripProxy
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.Job import Job
 logger = Ganga.Utility.logging.getLogger()
@@ -57,11 +58,10 @@ class SplitFilesBySize(GaudiInputDataSplitter):
                     raise GangaException(
                         "Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
         elif isinstance(dataset, list):
-            from Ganga.GPIDev.Base.Proxy import isType
             for i in dataset:
                 if type(i) is str:
                     datatmp.append(DiracFile(lfn=i))
-                elif isType(i, DiracFile()):
+                elif isinstance(i, DiracFile()):
                     datatmp.extend(i)
                 else:
                     x = GangaException(
@@ -75,7 +75,7 @@ class SplitFilesBySize(GaudiInputDataSplitter):
 
         logger.debug("Creating new Job in Splitter")
         j = Job()
-        j.copyFrom(stripProxy(job))
+        j.copyFrom(job)
         j.splitter = None
         j.merger = None
         j.inputsandbox = []  # master added automatically
@@ -92,7 +92,7 @@ class SplitFilesBySize(GaudiInputDataSplitter):
 
         logger.debug("_splitter")
 
-        indata = stripProxy(copy.deepcopy(job.inputdata))
+        indata = copy.deepcopy(job.inputdata)
 
         if not job.inputdata:
             share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
@@ -114,7 +114,7 @@ class SplitFilesBySize(GaudiInputDataSplitter):
         self.persistency = indata.persistency
         self.XMLCatalogueSlice = indata.XMLCatalogueSlice
 
-        if stripProxy(job.backend).__module__.find('Dirac') > 0:
+        if job.backend.__module__.find('Dirac') > 0:
             if self.filesPerJob > 100:
                 self.filesPerJob = 100  # see above warning
             logger.debug("indata: %s " % str(indata))
@@ -135,7 +135,7 @@ class SplitFilesBySize(GaudiInputDataSplitter):
         if self.maxFiles == -1:
             self.maxFiles = None
         if self.bulksubmit:
-            if stripProxy(job.backend).__module__.find('Dirac') > 0:
+            if job.backend.__module__.find('Dirac') > 0:
                 logger.debug("Returning []")
                 return []
         split_return = super(SplitFilesBySize, self).split(job)

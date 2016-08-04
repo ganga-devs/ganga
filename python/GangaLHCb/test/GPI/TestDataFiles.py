@@ -8,7 +8,8 @@ class TestDataFiles(GangaUnitTest):
 
     def testDataFiles(self):
 
-        from Ganga.GPI import DiracFile, config
+        from Ganga.GPI import DiracFile
+        from Ganga.GPI import config
 
         # LFNs
         name = 'test.txt'

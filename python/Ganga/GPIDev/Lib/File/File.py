@@ -8,6 +8,7 @@ from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Proxy import stripProxy
 import os
 import shutil
@@ -160,7 +161,7 @@ class ShareDir(GangaObject):
         # created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
         # filled with files, then assigned to an application.
         #a=Job(); s=ShareDir(); a.application.is_prepared=s
-        #shareref = getRegistry("prep").getShareRef()
+        #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         # shareref.increase(self.name)
         # shareref.decrease(self.name)
 

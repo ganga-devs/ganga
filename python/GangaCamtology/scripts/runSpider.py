@@ -1,4 +1,4 @@
-import os, time
+import os
 
 # Finally update the monitoring
 runMonitoring()

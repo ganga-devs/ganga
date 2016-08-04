@@ -5,7 +5,8 @@ from Ganga.GPIDev.Lib.File import *
 
 from Ganga.Lib.LCG import LCGJobConfig
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from Ganga.Utility.Config import makeConfig, ConfigError
+from Ganga.Utility.Config import ConfigError
+from Ganga.Utility.Config import makeConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.files import expandfilename
 
@@ -21,7 +22,6 @@ def GetConfig(app):
     """prepare the subjob specific configuration"""
     
     #print "Preparing camont spider job"
-    import time
     job = app._getParent()
     
     # set up the executable script

@@ -4,7 +4,8 @@ import functools
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Core import GangaException
-from Ganga.Core.GangaRepository import InaccessibleObjectError, RepositoryError
+from Ganga.Core.GangaRepository import InaccessibleObjectError
+from Ganga.Core.GangaRepository import RepositoryError
 
 import time
 import threading

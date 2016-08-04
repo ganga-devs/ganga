@@ -5,7 +5,6 @@ from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.Job import Job
 import pickle
 import os
-import copy
 
 
 class OptionsFileSplitter(ISplitter):

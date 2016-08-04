@@ -1560,7 +1560,6 @@ class BeautifulSoup(BeautifulStoneSoup):
                         self.declaredHTMLEncoding = newCharset
                         self._feed(self.declaredHTMLEncoding)
                         raise StopParsing
-                    pass
         tag = self.unknown_starttag("meta", attrs)
         if tag and tagNeedsEncodingSubstitution:
             tag.containsSubstitutions = True
@@ -1856,7 +1855,6 @@ class UnicodeDammit:
                 xml_data = unicode(xml_data[3:], 'utf-8').encode('utf-8')
             else:
                 sniffed_xml_encoding = 'ascii'
-                pass
         except:
             xml_encoding_match = None
         xml_encoding_match = re.compile(

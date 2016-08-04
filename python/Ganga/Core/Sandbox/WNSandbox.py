@@ -117,7 +117,8 @@ def createPackedOutputSandbox(output_patterns, _filter, dest_dir):
         sys.path.insert(0, os.path.join(os.getcwd(), PYTHON_DIR))
 
         try:
-            from files import multi_glob, recursive_copy
+            from files import multi_glob
+            from files import recursive_copy
             print("Success!")
         except (IOError, ImportError) as e:
             print("Fail!")

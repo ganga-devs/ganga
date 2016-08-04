@@ -71,7 +71,6 @@ __version__ = '$Revision:$'
 __author__  = 'Vladimir ROMANOVSKY, Vanya BELYAEV'
 # =============================================================================
 import os
-from   os.path import split, join
 from   Ganga.GPIDev.Schema.Schema             import FileItem, SimpleItem
 from   Ganga.GPIDev.Lib.File                  import File
 from   Ganga.Utility.util                     import unique

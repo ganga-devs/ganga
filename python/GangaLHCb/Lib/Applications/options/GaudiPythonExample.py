@@ -6,8 +6,11 @@ lhcbApp = LHCbApp(DDDBtag='default',
                   DataType='2010',
                   Simulation=False)
 
-from AnalysisPython import Dir, Functors
-from GaudiPython.Bindings import gbl, AppMgr, Helper
+from AnalysisPython import Dir
+from AnalysisPython import Functors
+from GaudiPython.Bindings import AppMgr
+from GaudiPython.Bindings import Helper
+from GaudiPython.Bindings import gbl
 
 appMgr = AppMgr(outputlevel=4)
 #appMgr.config( files = ['$GAUDIPOOLDBROOT/options/GaudiPoolDbRoot.opts'])

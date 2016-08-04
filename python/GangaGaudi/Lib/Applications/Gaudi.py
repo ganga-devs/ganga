@@ -1,9 +1,7 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Application handler for Gaudi applications in LHCb.'''
 import os
-import tempfile
 import gzip
-import pickle
 from Ganga.GPIDev.Schema import SimpleItem, FileItem
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.logging
@@ -11,7 +9,6 @@ from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.Utility.util import unique
-from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
@@ -100,7 +97,7 @@ class Gaudi(GaudiBase):
 
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         from Ganga.GPIDev.Lib.File.File import File
-        if isType(self.optsfile, (list, tuple, GangaList)):
+        if isinstance(self.optsfile, (list, tuple, GangaList)):
             for this_file in self.optsfile:
                 if type(this_file) is str:
                     this_file = File(this_file)

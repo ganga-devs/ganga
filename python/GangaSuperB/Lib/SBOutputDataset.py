@@ -1,6 +1,5 @@
 '''This class defines the output of the job and checks if exist a corresponding dataset into DB.'''
 
-import os
 
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.Core import GangaException

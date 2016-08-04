@@ -1,10 +1,16 @@
 from __future__ import absolute_import
-from .LCG import LCG, LCGJobConfig
+from .LCG import LCG
+from .LCG import LCGJobConfig
 from .CREAM import CREAM
 from .ARC import ARC
 from .LCGRequirements import LCGRequirements
-from .GridSandboxCache import GridFileIndex, GridSandboxCache
-from .LCGSandboxCache import LCGFileIndex, LCGSandboxCache
-from .GridftpSandboxCache import GridftpFileIndex, GridftpSandboxCache
+from .GridSandboxCache import GridFileIndex
+from .GridSandboxCache import GridSandboxCache
+from .LCGSandboxCache import LCGFileIndex
+from .LCGSandboxCache import LCGSandboxCache
+from .GridftpSandboxCache import GridftpFileIndex
+from .GridftpSandboxCache import GridftpSandboxCache
 from .ElapsedTimeProfiler import ElapsedTimeProfiler
-from .LCGOutputDownloader import LCGOutputDownloadTask, LCGOutputDownloadAlgorithm, LCGOutputDownloader
+from .LCGOutputDownloader import LCGOutputDownloadAlgorithm
+from .LCGOutputDownloader import LCGOutputDownloadTask
+from .LCGOutputDownloader import LCGOutputDownloader

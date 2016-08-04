@@ -5,11 +5,10 @@ from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 import Ganga.Utility.Config
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Lib.File import FileBuffer, File
+from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.Core import TypeMismatchError
 from Ganga.Utility.util import unique
-import shutil
 from RunTimeHandlerUtils import sharedir_handler
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare

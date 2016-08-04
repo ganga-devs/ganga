@@ -6,6 +6,7 @@
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
+from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 

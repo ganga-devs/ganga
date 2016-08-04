@@ -9,7 +9,6 @@ import os
 import os.path
 import time
 import errno
-import copy
 import threading
 
 from Ganga.Core.GangaRepository.SessionLock import SessionLockManager
@@ -762,7 +761,6 @@ class GangaRepositoryLocal(GangaRepository):
                     self.index_write(this_id)
                 except:
                     logger.debug("Index write failed")
-                    pass
 
                 if this_id not in self._fully_loaded:
                     self._fully_loaded[this_id] = self.objects[this_id]
@@ -989,7 +987,6 @@ class GangaRepositoryLocal(GangaRepository):
                     rmrf(os.path.dirname(fn) + ".index")
                 except OSError as err:
                     logger.debug("load unlink Error: %s" % err)
-                    pass
                 raise KeyError(this_id)
             else:
                 raise RepositoryError(self, "IOError: %s" % x)
@@ -1002,7 +999,6 @@ class GangaRepositoryLocal(GangaRepository):
                         logger.warning("No job index or data found, removing empty directory: %s" % os.path.dirname(fn))
             except Exception as err:
                 logger.debug("load error %s" % err)
-                pass
 
         return fobj, has_loaded_backup
 
