@@ -14,11 +14,13 @@ __date__    = "30 November 2007"
 __version__ = "1.2"
 
 import os
-import shutil
 
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Schema import ComponentItem
+from Ganga.GPIDev.Schema import Schema
+from Ganga.GPIDev.Schema import SimpleItem
+from Ganga.GPIDev.Schema import Version
 from Ganga.Utility import logging
 from Ganga.Utility.files import fullpath
 

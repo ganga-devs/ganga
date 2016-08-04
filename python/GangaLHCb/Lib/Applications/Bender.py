@@ -2,10 +2,7 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Application handler for Bender applications in LHCb.'''
 import os
-import tempfile
-import pprint
-import shutil
-from os.path import split, join
+from os.path import split
 from Ganga.GPIDev.Schema.Schema import FileItem, SimpleItem
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.File import File

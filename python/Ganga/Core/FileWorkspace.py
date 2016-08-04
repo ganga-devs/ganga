@@ -14,7 +14,6 @@ FileWorkspace in a location-independent way.
 from Ganga.Utility.logging import getLogger
 
 import os
-import time
 
 from Ganga.Utility.files import expandfilename, chmod_executable
 from Ganga.GPIDev.Base.Proxy import isType

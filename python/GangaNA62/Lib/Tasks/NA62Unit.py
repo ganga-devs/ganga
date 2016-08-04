@@ -1,11 +1,12 @@
 from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from commands import getstatusoutput
-from datetime import datetime, date, time
+from datetime import datetime
 
 import os
 

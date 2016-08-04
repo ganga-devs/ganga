@@ -1,4 +1,3 @@
-import time
 from GangaTest.Framework.tests import GangaGPITestCase
 
 from Ganga.Utility.Config import getConfig

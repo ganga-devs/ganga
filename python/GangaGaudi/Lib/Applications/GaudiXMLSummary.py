@@ -4,7 +4,6 @@ import os
 import sys
 import imp
 import tempfile
-import pickle
 import subprocess
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base import GangaObject

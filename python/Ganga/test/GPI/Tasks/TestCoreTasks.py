@@ -16,7 +16,11 @@ class TestCoreTasks(GangaUnitTest):
 
     def createTask(self):
         """create a task with some defaults"""
-        from Ganga.GPI import tasks, CoreTask, CoreTransform, Executable, GenericSplitter
+        from Ganga.GPI import CoreTask
+        from Ganga.GPI import CoreTransform
+        from Ganga.GPI import Executable
+        from Ganga.GPI import GenericSplitter
+        from Ganga.GPI import tasks
         t = CoreTask()
 
         trf = CoreTransform()

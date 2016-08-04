@@ -1,2 +1,3 @@
 from __future__ import absolute_import
-from .Root import Root, randomString
+from .Root import Root
+from .Root import randomString

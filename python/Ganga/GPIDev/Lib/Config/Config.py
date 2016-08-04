@@ -64,7 +64,11 @@ class ConfigProxy(object):
         return self._display(False)
 
     def _display(self, colour):
-        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, getColour, Foreground, Effects
+        from Ganga.Utility.ColourText import ANSIMarkup
+        from Ganga.Utility.ColourText import Effects
+        from Ganga.Utility.ColourText import Foreground
+        from Ganga.Utility.ColourText import NoMarkup
+        from Ganga.Utility.ColourText import getColour
 
         if colour:
             markup = ANSIMarkup()
@@ -165,7 +169,10 @@ class MainConfigProxy(object):
         p.text(self._display(True))
 
     def _display(self, colour):
-        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Effects
+        from Ganga.Utility.ColourText import ANSIMarkup
+        from Ganga.Utility.ColourText import Effects
+        from Ganga.Utility.ColourText import Foreground
+        from Ganga.Utility.ColourText import NoMarkup
 
         if colour:
             markup = ANSIMarkup()

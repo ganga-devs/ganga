@@ -19,7 +19,10 @@ import shutil
 import time
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Schema import ComponentItem
+from Ganga.GPIDev.Schema import Schema
+from Ganga.GPIDev.Schema import SimpleItem
+from Ganga.GPIDev.Schema import Version
 from Ganga.Utility import logging
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import fullpath

@@ -1,5 +1,3 @@
-import sys
-import os
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)

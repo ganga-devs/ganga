@@ -3,10 +3,15 @@ import os
 from Ganga.Utility.util import unique
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_settings
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_ouputdata
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import mangle_job_name
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
+from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Core.exceptions import ApplicationConfigurationError

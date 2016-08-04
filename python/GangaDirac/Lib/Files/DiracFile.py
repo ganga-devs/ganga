@@ -2,12 +2,13 @@ import copy
 import os
 import datetime
 import inspect
-import hashlib
 import re
 import os.path
 import random
 import glob
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile

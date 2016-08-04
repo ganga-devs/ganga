@@ -5,7 +5,6 @@ from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.Job import Job
 import pickle
 import os
-import copy
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 

@@ -4,13 +4,13 @@ from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import stripProxy
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.Job import Job
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-import os
 import copy
-import pickle
 
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Filters import allComponentFilters

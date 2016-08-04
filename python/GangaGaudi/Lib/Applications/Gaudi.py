@@ -1,9 +1,7 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Application handler for Gaudi applications in LHCb.'''
 import os
-import tempfile
 import gzip
-import pickle
 from Ganga.GPIDev.Schema import SimpleItem, FileItem
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.logging

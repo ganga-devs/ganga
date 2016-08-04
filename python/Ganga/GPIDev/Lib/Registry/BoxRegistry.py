@@ -10,7 +10,8 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError
 
-from .RegistrySlice import RegistrySlice, config
+from .RegistrySlice import RegistrySlice
+from .RegistrySlice import config
 
 from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 

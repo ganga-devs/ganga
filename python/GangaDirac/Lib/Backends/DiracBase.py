@@ -6,7 +6,6 @@ import os
 import re
 import fnmatch
 import time
-import datetime
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Core import BackendError, GangaException
@@ -484,7 +483,6 @@ class DiracBase(IBackend):
                 result = eval(result)
             except Exception as err:
                 logger.debug("Exception, err: %s" % str(err))
-                pass
         if not result_ok(result):
             logger.warning('Could not obtain services: %s' % str(result))
             return
@@ -498,7 +496,6 @@ class DiracBase(IBackend):
                     result = eval(result)
                 except Exception as err:
                     logger.debug("Exception: %s" % str(err))
-                    pass
             msg = 'OK.'
             if not result_ok(result):
                 msg = '%s' % result['Message']
@@ -882,7 +879,6 @@ class DiracBase(IBackend):
                 job.backend.extraInfo = state[4]
             except Exception as err:
                 logger.debug("gexception: %s" % str(err))
-                pass
             logger.debug('Job status vector  : ' + job.fqid + ' : ' + repr(state))
 
             if updated_dirac_status not in jobStateDict:

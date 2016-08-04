@@ -203,7 +203,6 @@ class MassStorageFile(IGangaFile):
         be called on the client
         """
         import glob
-        import re
 
         sourceDir = ''
 
@@ -558,7 +557,6 @@ class MassStorageFile(IGangaFile):
                         if err.errno != errno.ENOENT:
                             logger.error("Error in removing file: %s" % str(remove_filename))
                             raise
-                        pass
         return
 
     def accessURL(self):

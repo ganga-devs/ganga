@@ -25,10 +25,8 @@
 ######################################################
 
 import os
-import sys
 import optparse
 import glob
-import socket
 import json
 import job_tools
 

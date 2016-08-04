@@ -5,8 +5,8 @@ from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.Core.exceptions import GangaException
 from Ganga.Core.exceptions import GangaAttributeError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-import time
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from Ganga.GPIDev.Lib.Tasks import ITask
 from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform

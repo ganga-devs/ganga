@@ -97,7 +97,6 @@ class JobRegistry(Registry):
             self.jobtree.cleanlinks()
         except Exception as err:
             logger.debug("Exception in _remove: %s" % str(err))
-            pass
 
 class JobRegistrySlice(RegistrySlice):
 

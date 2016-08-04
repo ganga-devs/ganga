@@ -1,4 +1,3 @@
-import os
 import Ganga.Utility.Config
 import platform
 

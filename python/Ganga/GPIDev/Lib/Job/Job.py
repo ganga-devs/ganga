@@ -603,7 +603,6 @@ class Job(GangaObject):
                     backend_output_postprocess[configEntry][key] = getConfig('Output')[key]['backendPostprocess'][configEntry]
             except ConfigError as err:
                 logger.debug("ConfigError: %s" % err)
-                pass
 
         return backend_output_postprocess
 
@@ -1686,7 +1685,6 @@ class Job(GangaObject):
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
-                pass
 
             def doit(f):
                 try:
@@ -1720,13 +1718,11 @@ class Job(GangaObject):
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
-                pass
 
         try:
             self._releaseSessionLockAndFlush()
         except Exception as err:
             logger.debug("Remove Err: %s" % err)
-            pass
 
     allowed_force_states = {'completed': ['completing', 'failed'],
                             'failed': ["submitting", "completing", "completed", "submitted", "running", "killed"]}

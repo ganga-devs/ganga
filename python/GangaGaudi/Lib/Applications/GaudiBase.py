@@ -2,14 +2,13 @@
 '''Parent for all Gaudi and GaudiPython applications in LHCb.'''
 
 import os
-import tempfile
 import gzip
-import shutil
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import SimpleItem, Schema, Version
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 import Ganga.Utility.logging
-from Ganga.Utility.files import expandfilename, fullpath
+from Ganga.Utility.files import expandfilename
+from Ganga.Utility.files import fullpath
 from GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
 from Ganga.GPIDev.Lib.File import File
 from Ganga.Core import ApplicationConfigurationError
@@ -116,7 +115,6 @@ class GaudiBase(IPrepareApp):
                 job = self.getJobObject()
             except Exception as err:
                 logger.debug("Error: %s" % str(err))
-                pass
             else:
                 env_file_name = job.getDebugWorkspace().getPath() + \
                     '/gaudi-env.py.gz'

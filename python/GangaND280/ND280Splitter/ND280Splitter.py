@@ -7,7 +7,6 @@
 This module contains various splitters for ND280 jobs.
 """
 
-import inspect
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Base.Proxy import stripProxy

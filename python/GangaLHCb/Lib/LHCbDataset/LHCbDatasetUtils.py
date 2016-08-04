@@ -1,6 +1,7 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-from Ganga.Utility.Config import getConfig, ConfigError
+from Ganga.Utility.Config import ConfigError
+from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.Core import GangaException

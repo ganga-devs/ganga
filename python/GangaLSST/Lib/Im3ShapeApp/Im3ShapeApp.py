@@ -5,19 +5,25 @@
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, GangaFileItem
+from Ganga.GPIDev.Schema import ComponentItem
+from Ganga.GPIDev.Schema import GangaFileItem
+from Ganga.GPIDev.Schema import Schema
+from Ganga.GPIDev.Schema import SimpleItem
+from Ganga.GPIDev.Schema import Version
 
 from Ganga.Utility.Config import getConfig
 
-from Ganga.GPIDev.Lib.File import File, ShareDir
-from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
+from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import ShareDir
+from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core import ApplicationPrepareError
 
 from Ganga.Utility.logging import getLogger
 
-from Ganga.GPIDev.Base.Proxy import getName, isType, stripProxy
+from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import stripProxy
 
-import os
-import shutil
 from Ganga.Utility.files import expandfilename
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile

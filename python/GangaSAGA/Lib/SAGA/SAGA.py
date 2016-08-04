@@ -12,7 +12,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer
 
 # Compression lib
 if COMPRESSED_TRANSFER:
-    import tarfile
+    pass
 
 # Setup Utility Logger
 import Ganga.Utility.logging
@@ -31,7 +31,9 @@ import Ganga.Utility.logic
 import saga.job
 
 # The threaded download manager
-from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
+from Ganga.Core.GangaThread.MTRunner import Algorithm
+from Ganga.Core.GangaThread.MTRunner import Data
+from Ganga.Core.GangaThread.MTRunner import MTRunner
 from Ganga.Core import GangaException
 
 # Other classes that are part of the SAGA iBackend
@@ -39,10 +41,9 @@ from GangaSAGA.Lib.SAGA.SAGAFileTransferManager import SAGAFileTransferManager
 from GangaSAGA.Lib.SAGA.SAGAWrapperScript import SAGAWrapperScript
 
 # Python System Imports
-import os,sys
-import os.path,re,errno
-import subprocess
-import string
+import os
+import os.path
+import errno
 
 ##############################################################################
 ## Helper functions for the multi-threaded file transfer manager
@@ -128,7 +129,7 @@ class SAGA(IBackend):
     ## Tries to create the local working directories properly
     ##
     def setupworkdir(self, path):
-        import shutil, errno
+        import errno
         
         job = self.getJobObject()
         # As a side effect, these functions create the

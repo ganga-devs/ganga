@@ -3,7 +3,8 @@ import os
 import shutil
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Lib.File import File, ShareDir
+from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.files import expandfilename

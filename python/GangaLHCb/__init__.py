@@ -1,14 +1,11 @@
 import os
 import os.path
 import re
-import datetime
-from os.path import exists, isdir, realpath, isfile, islink
-from os import pathsep, listdir, environ, fdopen
 import subprocess
 import tempfile
 import Ganga.Utility.logging
 import Ganga.Utility.Config
-from optparse import OptionParser, OptionValueError
+from optparse import OptionValueError
 
 from Ganga.Utility.Config.Config import _after_bootstrap
 from Ganga.Utility.logging import getLogger
@@ -81,7 +78,8 @@ def _store_root_version():
 
 
 def _store_dirac_environment():
-    from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache, get_env
+    from GangaDirac.Lib.Utilities.DiracUtilities import get_env
+    from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache
     diracversion = _guess_version('LHCBDIRAC')
     platform = os.environ['CMTOPT']
     fdir = os.path.join(os.path.expanduser("~/.cache/Ganga/GangaLHCb"), platform)

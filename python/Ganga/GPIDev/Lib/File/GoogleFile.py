@@ -107,7 +107,6 @@ class GoogleFile(IGangaFile):
                         webbrowser.get('firefox').open(authorize_url, 0, True)
                     except Exception, err:
                         logger.error("Error: %s" % str(err))
-                        pass
             logger.info(
                 'Go to the following link in your browser: ' + authorize_url)
             code = raw_input('Enter verification code: ').strip()

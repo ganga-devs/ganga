@@ -24,7 +24,6 @@ from Ganga.GPIDev.Lib.Registry.RegistrySliceProxy import RegistrySliceProxy
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 import Ganga.Utility.logging
 import os
-import sys
 import time
 
 logger = Ganga.Utility.logging.getLogger()

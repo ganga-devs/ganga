@@ -18,7 +18,8 @@ from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core import ApplicationConfigurationError
 
-import os, shutil, commands, re
+import os
+import re
 from Ganga.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 

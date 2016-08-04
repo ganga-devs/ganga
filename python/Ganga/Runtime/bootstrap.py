@@ -378,7 +378,8 @@ under certain conditions; type license() for details.
             try:
                 from IPython.core.interactiveshell import InteractiveShell
                 from IPython.core.history import HistoryManager
-                from IPython.utils.path import locate_profile, get_ipython_dir
+                from IPython.utils.path import get_ipython_dir
+                from IPython.utils.path import locate_profile
             except ImportError as err:
                 logger.error("Unable to import required IPython files, can't roll forward history")
                 logger.error("If you want to roll forward your old history files you'll need to do this by hand")

@@ -5,7 +5,9 @@ from __future__ import absolute_import
 #
 # $Id: VPrinterOld.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
-from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod
+from Ganga.GPIDev.Base.Proxy import isProxy
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import runProxyMethod
 
 
 def quoteValue(value, selection):

@@ -2,7 +2,7 @@ import os
 try:
     import unittest2 as unittest
 except ImportError:
-    import unittest
+    pass
 
 # remove previous test gangadirs
 os.system('rm -rf ~/gangadir_testing/TutorialTests')

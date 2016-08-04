@@ -1,17 +1,22 @@
-import copy
 import os
 import pickle
 from Ganga.Core import BackendError
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_settings
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_ouputdata
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import mangle_job_name
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
+from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.GPIDev.Lib.File import FileBuffer, LocalFile
+from Ganga.GPIDev.Lib.File import FileBuffer
+from Ganga.GPIDev.Lib.File import LocalFile
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger

@@ -19,7 +19,6 @@ def getData( job = None, dataType = "" ):
       datafile = open( datafilePath )
     except IOError:
       print "File '%s' missing for job '%s'" % ( filename, str( job.id ) )
-      pass
 
   lineList = ""
   if datafile:

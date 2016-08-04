@@ -1,2 +1,3 @@
 from __future__ import absolute_import
-from .GangaPlugin import allPlugins, PluginManagerError
+from .GangaPlugin import PluginManagerError
+from .GangaPlugin import allPlugins

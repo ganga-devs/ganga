@@ -3,7 +3,8 @@ import shutil
 import tempfile
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaGaudi.Lib.Applications.GaudiBase import Francesc
-from GangaTest.Framework.utils import read_file, failureException
+from GangaTest.Framework.utils import failureException
+from GangaTest.Framework.utils import read_file
 import Ganga.Utility.logging
 
 logger = Ganga.Utility.logging.getLogger()
