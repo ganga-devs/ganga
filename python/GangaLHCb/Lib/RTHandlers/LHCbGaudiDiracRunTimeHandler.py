@@ -17,7 +17,6 @@ from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostproces
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Lib.File import LocalFile
-from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
@@ -54,7 +53,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                 if len(job.inputdata) > 100:
                     raise BackendError("You're submitting a job to Dirac with no splitter and more than 100 files, please add a splitter and try again!")
 
-        outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
+        outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
         data_str = 'import os\n'
         data_str += 'execfile(\'data.py\')\n'
@@ -104,13 +103,13 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
             fileTransform = allComponentFilters['gangafiles']
             outdata_files = [fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)]
-            job.non_copyable_outputfiles.extend([output_file for output_file in outdata_files if not isType(output_file, DiracFile)])
+            job.non_copyable_outputfiles.extend([output_file for output_file in outdata_files if not isinstance(output_file, DiracFile)])
             outbox_files = [fileTransform(this_file, None) for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)]
-            job.non_copyable_outputfiles.extend([outbox_file for outbox_file in outbox_files if not isType(outbox_file, DiracFile)])
+            job.non_copyable_outputfiles.extend([outbox_file for outbox_file in outbox_files if not isinstance(outbox_file, DiracFile)])
 
             outputsandbox = [f.namePattern for f in job.non_copyable_outputfiles]
 
-            outputsandbox.extend([f.namePattern for f in job.outputfiles if not isType(f, DiracFile)])
+            outputsandbox.extend([f.namePattern for f in job.outputfiles if not isinstance(f, DiracFile)])
             outputsandbox = unique(outputsandbox)  # + outbox[:])
         #######################################################################
 
@@ -118,9 +117,9 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         if input_data_dirac is not None:
             for f in input_data_dirac:
-                if isType(f, DiracFile):
+                if isinstance(f, DiracFile):
                     input_data.append(f.lfn)
-                elif isType(f, str):
+                elif isinstance(f, str):
                     input_data.append(f)
                 else:
                     raise ApplicationConfigurationError("Don't know How to handle anythig other than DiracFiles or strings to LFNs!")
@@ -147,7 +146,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         # We want to propogate the ancestor depth to DIRAC when we have
         # inputdata set
-        if job.inputdata is not None and isType(job.inputdata, LHCbDataset):
+        if job.inputdata is not None and isinstance(job.inputdata, LHCbDataset):
 
             # As the RT Handler we already know we have a Dirac backend
             if type(job.backend.settings) is not dict:

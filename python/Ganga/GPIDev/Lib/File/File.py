@@ -7,7 +7,6 @@
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Base.Proxy import stripProxy
 import os
 import shutil
@@ -192,10 +191,10 @@ class ShareDir(GangaObject):
 
     def add(self, input):
         from Ganga.Core.GangaRepository import getRegistry
-        if not isType(input, list):
+        if not isinstance(input, list):
             input = [input]
         for item in input:
-            if isType(item, str):
+            if isinstance(item, str):
                 if os.path.isfile(expandfilename(item)):
                     logger.info('Copying file %s to shared directory %s' % (item, self.name))
                     shutil.copy2(expandfilename(item), os.path.join(getSharedPath(), self.name))
@@ -204,7 +203,7 @@ class ShareDir(GangaObject):
                     shareref.decrease(self.name)
                 else:
                     logger.error('File %s not found' % expandfilename(item))
-            elif isType(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
+            elif isinstance(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
                 logger.info('Copying file object %s to shared directory %s' % (item.name, self.name))
                 shutil.copy2(expandfilename(item.name), os.path.join(getSharedPath(), self.name))
                 shareref = getRegistry("prep").getShareRef()

@@ -7,7 +7,6 @@
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Adapters.IMerger import IMerger
 from Ganga.GPIDev.Schema import FileItem, SimpleItem
-from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -306,7 +305,7 @@ def findFilesToMerge(jobs):
                 file_map[file_name] = file_map.setdefault(file_name, 0) + 1
         elif j.outputfiles != []:
             for file_name in j.outputfiles:
-                if isType(file_name, LocalFile):
+                if isinstance(file_name, LocalFile):
                     file_map[file_name.namePattern] = file_map.setdefault(file_name.namePattern, 0) + 1
 
     for file_name, count in file_map.iteritems():

@@ -5,7 +5,6 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Base.Proxy import getName
-from Ganga.GPIDev.Base.Proxy import isType
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.Job import Job
 from GangaDirac.Lib.Files.DiracFile import DiracFile
@@ -78,17 +77,17 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         if isinstance(dataset, LHCbDataset):
             for i in dataset:
-                if isType(i, DiracFile):
+                if isinstance(i, DiracFile):
                     datatmp.append(i)
                 else:
                     logger.error("Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
                     from Ganga.Core.exceptions import GangaException
                     raise GangaException("Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
-        elif type(dataset) == type([]) or isType(dataset, GangaList()):
+        elif type(dataset) == type([]) or isinstance(dataset, GangaList):
             for this_file in dataset:
                 if type(this_file) is str:
                     datatmp.append(allComponentFilters['gangafiles'](this_file, None))
-                elif isType(this_file, IGangaFile):
+                elif isinstance(this_file, IGangaFile):
                     datatmp.append(this_file)
                 else:
                     logger.error("Unexpected type: %s" % str(type(this_file)))

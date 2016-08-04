@@ -72,11 +72,10 @@ def createPackedInputSandbox(sandbox_files, inws, name):
 
         from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
         from Ganga.GPIDev.Lib.File.File import File
-        from Ganga.GPIDev.Base.Proxy import isType
 
         for f in sandbox_files:
             fileobj = None
-            if isType(f, FileBuffer):
+            if isinstance(f, FileBuffer):
                 contents = f.getContents()   # is it FileBuffer?
                 # print "Getting FileBuffer Contents"
 

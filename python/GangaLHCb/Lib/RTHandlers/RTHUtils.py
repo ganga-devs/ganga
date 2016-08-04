@@ -7,7 +7,6 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Lib.File import FileBuffer
 import Ganga.Utility.logging
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template, dirac_outputfile_jdl
-from Ganga.GPIDev.Base.Proxy import isType
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -55,7 +54,7 @@ j.setAncestorDepth(###ANCESTOR_DEPTH###)
 
 def is_gaudi_child(app):
     """ Does this app inherit from Gaudi True/False"""
-    if isType(app, Gaudi):
+    if isinstance(app, Gaudi):
         return True
     return False
 

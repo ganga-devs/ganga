@@ -13,7 +13,7 @@ import threading
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
-from Ganga.GPIDev.Base.Proxy import isType, getName
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.Utility.Config import getConfig
 
 logger = getLogger()
@@ -490,7 +490,7 @@ class Registry(object):
         """
         logger.debug("_flush")
 
-        if not isType(objs, (list, tuple, GangaList)):
+        if not isinstance(objs, (list, tuple, GangaList)):
             objs = [objs]
 
         if self.hasStarted() is not True:

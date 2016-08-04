@@ -40,7 +40,7 @@ def sharedir_handler(app, root_dir_names, output):
         for root, dirs, files in os.walk(share_dir):
             # [1:] removes the preceeding /
             subdir = root.replace(share_dir, '')[1:]
-            if isType(output, (list, tuple, GangaList)):
+            if isinstance(output, (list, tuple, GangaList)):
                 output += [File(name=os.path.join(root, f), subdir=subdir) for f in files]
 # for f in files:
 ##                 output += [File(name=os.path.join(root,f),subdir=subdir)]

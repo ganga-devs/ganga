@@ -21,8 +21,6 @@ from Ganga.Core import ApplicationPrepareError
 from Ganga.Utility.logging import getLogger
 
 from Ganga.GPIDev.Base.Proxy import getName
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Base.Proxy import stripProxy
 
 from Ganga.Utility.files import expandfilename
 

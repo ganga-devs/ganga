@@ -16,7 +16,7 @@ from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Credentials import getCredential
-from Ganga.GPIDev.Base.Proxy import isType, getName
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.Core.GangaThread.WorkerThreads import getQueues
 configDirac = getConfig('DIRAC')
 logger = getLogger()
@@ -202,11 +202,11 @@ class DiracBase(IBackend):
         ## Add LFN to the inputfiles section of the file
         input_sandbox_userFiles = []
         for this_file in j.inputfiles:
-            if isType(this_file, DiracFile):
+            if isinstance(this_file, DiracFile):
                 input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
         if j.master:
             for this_file in j.master.inputfiles:
-                if isType(this_file, DiracFile):
+                if isinstance(this_file, DiracFile):
                     input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
 
         for this_file in input_sandbox_userFiles:
@@ -252,7 +252,7 @@ class DiracBase(IBackend):
                     else:
                         return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
-                    log_user_exception(logger, debug=isType(x, GangaException))
+                    log_user_exception(logger, debug=isinstance(x, GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
@@ -293,7 +293,7 @@ class DiracBase(IBackend):
                 if len(parametric_datasets) != len(j.master.subjobs):
                     raise BackendError('Dirac', 'number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
             if j.inputdata and len(j.inputdata) > 0:
-                _input_files = [f for f in j.inputdata if not isType(f, DiracFile)]
+                _input_files = [f for f in j.inputdata if not isinstance(f, DiracFile)]
             else:
                 _input_files = []
             if set(parametric_datasets[j.id]).symmetric_difference(set([f.namePattern for f in _input_files])):
@@ -443,7 +443,7 @@ class DiracBase(IBackend):
             if os.path.exists(os.path.join(dirac_file.localDir, os.path.basename(dirac_file.lfn))) and not force:
                 return
             try:
-                if isType(dirac_file, DiracFile):
+                if isinstance(dirac_file, DiracFile):
                     dirac_file.get(localPath=dirac_file.localDir)
                 else:
                     dirac_file.get()

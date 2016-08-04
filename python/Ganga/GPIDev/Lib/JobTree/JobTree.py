@@ -6,7 +6,6 @@
 import os
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryKeyError
@@ -110,7 +109,7 @@ class JobTree(GangaObject):
             ## 'cd' into the folder of interest
             returnable_folder = returnable_folder[_dir]
 
-            if not isType(returnable_folder, type({})):
+            if not isinstance(returnable_folder, type({})):
                 clean_path = os.path.join(*path)
                 raise TreeError(2, "%s not a directory, accessing: %s" % (_dir, clean_path))
 
@@ -129,7 +128,7 @@ class JobTree(GangaObject):
         if local_dir not in returnable_folder:
             returnable_folder[local_dir] = {}
 
-        if not isType(returnable_folder[local_dir], type({})):
+        if not isinstance(returnable_folder[local_dir], type({})):
             clean_path = os.path.join(*_path)
             raise TreeError(2, "%s not a directory, accessing: %s" % (local_dir, clean_path))
 
@@ -246,12 +245,12 @@ class JobTree(GangaObject):
 
             mydir = self.__select_dir(path)
 
-            if isType(job, Job):
+            if isinstance(job, Job):
                 mydir[job.getFQID('.')] = job.getFQID('.')  # job.id
-            elif isType(job, JobRegistrySlice):
+            elif isinstance(job, JobRegistrySlice):
                 for sliceKey in job.objects.iterkeys():
                     mydir[sliceKey] = sliceKey
-            elif isType(job, list):
+            elif isinstance(job, list):
                 for element in job:
                     mydir[element.id] = element.id
             else:
@@ -317,7 +316,7 @@ class JobTree(GangaObject):
         top_level = self.__folder_cd(_path)
         res = {'folders': [], 'jobs': []}
         for i in top_level:
-            if isType(top_level[i], dict):
+            if isinstance(top_level[i], dict):
                 res['folders'].append(i)
             else:
                 res['jobs'].append(i)
@@ -374,7 +373,7 @@ class JobTree(GangaObject):
         The return value is a list of found paths.
         """
 
-        if isType(id, Job):
+        if isinstance(id, Job):
             id = id.getFQID('.')
 
         pp = self.__get_path(path)
@@ -417,7 +416,7 @@ class JobTree(GangaObject):
             #print("self._getRegistry(): %s" % self._getRegistry())
 
             for i in fc:
-                if isType(fc[i], type({})):
+                if isinstance(fc[i], type({})):
                     self.cleanlinks(os.path.join(path, i))
                 else:
                     try:

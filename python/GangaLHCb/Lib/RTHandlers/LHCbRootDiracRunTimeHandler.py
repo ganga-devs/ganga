@@ -17,7 +17,6 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import isType
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 logger = getLogger()
 
@@ -51,7 +50,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
         input_data,   parametricinput_data = dirac_inputdata(app)
         logger.debug("input_data: " + str(input_data))
         job = app.getJobObject()
-        outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
+        outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
         lhcb_dirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
 

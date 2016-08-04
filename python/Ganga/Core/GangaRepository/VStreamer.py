@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import isType, getName
+from Ganga.GPIDev.Base.Proxy import getName
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
@@ -217,11 +217,11 @@ class VStreamer(object):
         if s is None:
             print(self.indent(), '<value>None</value>', file=self.out)
         else:
-            if isType(s, str):
+            if isinstance(s, str):
                 print(self.indent(), '<value>%s</value>' % escape(repr(s)), file=self.out)
             elif hasattr(s, 'accept'):
                 s.accept(self)
-            elif isType(s, (list, tuple, GangaList)):
+            elif isinstance(s, (list, tuple, GangaList)):
                 print(self.indent(), '<sequence>', file=self.out)
                 for sub_s in s:
                     self.acceptOptional(sub_s)

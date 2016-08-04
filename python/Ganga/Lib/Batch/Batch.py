@@ -1,7 +1,7 @@
 import datetime
 import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Base.Proxy import isType, getName
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Core import BackendError
 import os.path
@@ -164,7 +164,7 @@ class Batch(IBackend):
         if jobnameopt and job.name != '':
             # PBS doesn't like names with spaces
             tmp_name = job.name
-            if isType(self, PBS):
+            if isinstance(self, PBS):
                 tmp_name = tmp_name.replace(" ", "_")
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)
@@ -255,7 +255,7 @@ class Batch(IBackend):
         if jobnameopt and job.name != '':
             # PBS doesn't like names with spaces
             tmp_name = job.name
-            if isType(self, PBS):
+            if isinstance(self, PBS):
                 tmp_name = tmp_name.replace(" ", "_")
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)

@@ -7,7 +7,7 @@
 from Ganga.Core.exceptions import IncompleteJobSubmissionError
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import isType, getName
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import Schema, Version
 
@@ -185,7 +185,7 @@ class IBackend(GangaObject):
                         return 0
             except Exception as x:
                 #sj.updateStatus('new')
-                if isType(x, GangaException):
+                if isinstance(x, GangaException):
                     logger.error("%s" % x)
                     log_user_exception(logger, debug=True)
                 else:
@@ -234,7 +234,7 @@ class IBackend(GangaObject):
             create_sandbox = job.createPackedInputSandbox
 
         if masterjobconfig:
-            if hasattr(job.application, 'is_prepared') and isType(job.application.is_prepared, ShareDir):
+            if hasattr(job.application, 'is_prepared') and isinstance(job.application.is_prepared, ShareDir):
                 sharedir_pred = lambda f: f.name.find(job.application.is_prepared.name) > -1
                 sharedir_files = itertools.ifilter(sharedir_pred, masterjobconfig.getSandboxFiles())
                 nonsharedir_files = itertools.ifilterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
@@ -251,7 +251,7 @@ class IBackend(GangaObject):
         tmpDir = None
         files = []
         if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and\
-                isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
+                isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
             (fileNames, tmpDir) = getInputFilesPatterns(job)
             files = itertools.imap(lambda f: File(f), fileNames)
         else:
@@ -315,7 +315,7 @@ class IBackend(GangaObject):
                         return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
                     log_user_exception(
-                        logger, debug=isType(x, GangaException))
+                        logger, debug=isinstance(x, GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
@@ -431,7 +431,7 @@ class IBackend(GangaObject):
                 #logger.info("Looking for sj")
                 monitorable_subjob_ids = []
 
-                if isType(j.subjobs, SubJobXMLList):
+                if isinstance(j.subjobs, SubJobXMLList):
                     cache = j.subjobs.getAllCachedData()
                     for sj_id in range(0,len(j.subjobs)):
                         if cache[sj_id]['status'] in ['submitted', 'running']:

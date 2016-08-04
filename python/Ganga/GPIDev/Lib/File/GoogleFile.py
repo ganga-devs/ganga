@@ -3,7 +3,6 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from fnmatch import fnmatch
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Utility.Config import getConfig
 import re
 import copy

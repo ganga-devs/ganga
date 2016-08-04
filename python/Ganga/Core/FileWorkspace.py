@@ -16,7 +16,6 @@ from Ganga.Utility.logging import getLogger
 import os
 
 from Ganga.Utility.files import expandfilename, chmod_executable
-from Ganga.GPIDev.Base.Proxy import isType
 
 logger = getLogger(modulename=1)
 
@@ -93,7 +92,7 @@ class FileWorkspace(object):
 
         from Ganga.GPIDev.Lib.File import FileBuffer
 
-        if not isType(fileobj, FileBuffer):
+        if not isinstance(fileobj, FileBuffer):
             raise TypeError('Usage of tuples is not allowed, use FileBuffer instead')
 
         # output file name

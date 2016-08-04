@@ -2,7 +2,6 @@
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import isType
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -114,7 +113,7 @@ RecoToDST-07/90000000/DST" ,
         cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         knownLists = [tuple, list, GangaList]
-        if isType(self.dqflag, knownLists):
+        if isinstance(self.dqflag, knownLists):
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
 
         result = get_result(cmd, 'BK query error.', 'BK query error.')
@@ -151,7 +150,7 @@ RecoToDST-07/90000000/DST" ,
         cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         knownLists = [tuple, list, GangaList]
-        if isType(self.dqflag, knownLists):
+        if isinstance(self.dqflag, knownLists):
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate,
                                                                self.endDate, self.selection)
         result = get_result(cmd, 'BK query error.', 'BK query error.')

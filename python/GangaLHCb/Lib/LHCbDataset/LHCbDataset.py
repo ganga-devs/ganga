@@ -15,7 +15,7 @@ from LHCbDatasetUtils import isDiracFile
 from LHCbDatasetUtils import isLFN
 from LHCbDatasetUtils import isPFN
 from LHCbDatasetUtils import strToDataFile
-from Ganga.GPIDev.Base.Proxy import isType, getName
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.GPIDev.Lib.Job.Job import JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
@@ -84,17 +84,17 @@ class LHCbDataset(GangaDataset):
             process_files = False
 
         if process_files:
-            if isType(files, LHCbDataset):
+            if isinstance(files, LHCbDataset):
                 for this_file in files:
                     self.files.append(deepcopy(this_file))
-            elif isType(files, IGangaFile):
+            elif isinstance(files, IGangaFile):
                 self.files.append(deepcopy(this_file))
-            elif isType(files, (list, tuple, GangaList)):
+            elif isinstance(files, (list, tuple, GangaList)):
                 new_list = []
                 for this_file in files:
                     if type(this_file) is str:
                         new_file = string_datafile_shortcut_lhcb(this_file, None)
-                    elif isType(this_file, IGangaFile):
+                    elif isinstance(this_file, IGangaFile):
                         new_file = this_file
                     else:
                         new_file = strToDataFile(this_file)
@@ -196,11 +196,11 @@ class LHCbDataset(GangaDataset):
 
         _external_files = []
 
-        if type(files) is str or isType(files, IGangaFile):
+        if type(files) is str or isinstance(files, IGangaFile):
             _external_files = [files]
         elif type(files) in [list, tuple]:
             _external_files = files
-        elif isType(files, LHCbDataset):
+        elif isinstance(files, LHCbDataset):
             _external_files = files.files
         else:
             if not hasattr(files, "__getitem__") or not hasattr(files, '__iter__'):
@@ -226,7 +226,7 @@ class LHCbDataset(GangaDataset):
                 _file = this_f
             myName = _file.namePattern
             from GangaDirac.Lib.Files.DiracFile import DiracFile
-            if isType(_file, DiracFile):
+            if isinstance(_file, DiracFile):
                 myName = _file.lfn
             if unique and myName in self.getFileNames():
                 continue
@@ -271,7 +271,7 @@ class LHCbDataset(GangaDataset):
         names = []
         from GangaDirac.Lib.Files.DiracFile import DiracFile
         for f in self.files:
-            if isType(f, DiracFile):
+            if isinstance(f, DiracFile):
                 names.append('LFN:%s' % f.lfn)
             else:
                 try:
@@ -371,9 +371,9 @@ class LHCbDataset(GangaDataset):
                 return snew + sdatasetsnew + sold + sdatasetsold
 
     def _checkOtherFiles(self, other ):
-        if isType(other, GangaList) or isType(other, []):
+        if isinstance(other, GangaList) or isinstance(other, []):
             other_files = LHCbDataset(other).getFullFileNames()
-        elif isType(other, LHCbDataset):
+        elif isinstance(other, LHCbDataset):
             other_files = other.getFullFileNames()
         else:
             raise GangaException("Unknown type for difference")

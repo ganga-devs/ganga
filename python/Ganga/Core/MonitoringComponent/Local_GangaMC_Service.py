@@ -13,7 +13,6 @@ from Ganga.Core.InternalServices import Coordinator
 
 from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
-from Ganga.GPIDev.Base.Proxy import isType
 
 from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus, lazyLoadJobBackend
 
@@ -126,7 +125,7 @@ class MonitoringWorkerThread(GangaThread):
             log.debug("Qin's size is currently: %d" % Qin.qsize())
             log.debug("%s running..." % threading.currentThread())
             self._currently_running_command = True
-            if not isType(action, JobAction):
+            if not isinstance(action, JobAction):
                 continue
             if action.function == 'stop':
                 break
@@ -236,7 +235,7 @@ def _purge_actions_queue():
             action = Qin.get_nowait()
             # let the *stop* action in queue, otherwise the worker threads will
             # fail to terminate
-            if isType(action, JobAction) and action.function == 'stop':
+            if isinstance(action, JobAction) and action.function == 'stop':
                 Qin.put(action)
         except Queue.Empty:
             break
@@ -648,7 +647,7 @@ class JobRegistry_Monitor(GangaThread):
 
         log.debug("runMonitoring")
 
-        if not isType(steps, int) and steps < 0:
+        if not isinstance(steps, int) and steps < 0:
             log.warning("The number of monitor steps should be a positive (non-zero) integer")
             return False
 
@@ -691,7 +690,7 @@ class JobRegistry_Monitor(GangaThread):
                 # the underlying code is not prepared to handle correctly the
                 # situation if it is not
                 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
-                if not isType(m_jobs, RegistrySlice):
+                if not isinstance(m_jobs, RegistrySlice):
                     log.warning('runMonitoring: jobs argument must be a registry slice such as a result of jobs.select() or jobs[i1:i2]')
                     return False
 

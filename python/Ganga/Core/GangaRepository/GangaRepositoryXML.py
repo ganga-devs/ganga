@@ -25,7 +25,7 @@ from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 from Ganga.GPIDev.Base.Objects import Node
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
-from Ganga.GPIDev.Base.Proxy import isType, getName
+from Ganga.GPIDev.Base.Proxy import getName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -672,7 +672,7 @@ class GangaRepositoryLocal(GangaRepository):
         fn = self.get_fn(this_id)
         obj = self.objects[this_id]
         from Ganga.Core.GangaRepository.VStreamer import EmptyGangaObject
-        if not isType(obj, EmptyGangaObject):
+        if not isinstance(obj, EmptyGangaObject):
             split_cache = None
 
             has_children = getattr(obj, self.sub_split, False)
@@ -903,7 +903,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         from Ganga.GPIDev.Base.Objects import do_not_copy
         for node_key, node_val in obj._data.items():
-            if isType(node_val, Node):
+            if isinstance(node_val, Node):
                 if node_key not in do_not_copy:
                     node_val._setParent(obj)
 
@@ -1088,7 +1088,7 @@ class GangaRepositoryLocal(GangaRepository):
             this_id (int): This is the key of the object in the objects dict
             load_backup (bool): This reflects whether we are loading the backup 'data~' or normal 'data' XML file
         """
-        if isType(err, XMLFileError):
+        if isinstance(err, XMLFileError):
             logger.error("XML File failed to load for Job id: %s" % this_id)
             logger.error("Actual Error was:\n%s" % err)
 

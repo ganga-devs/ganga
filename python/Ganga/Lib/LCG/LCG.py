@@ -29,7 +29,7 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader
 from Ganga.Lib.LCG.Utility import get_uuid, get_md5sum
 from Ganga.Utility.logic import implies
-from Ganga.GPIDev.Base.Proxy import isType, getName
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.Utility.GridShell import getShell
 
 from . import Grid
@@ -172,7 +172,7 @@ class LCG(IBackend):
             DQ2SandboxCache = None
 
         from Ganga.Lib.LCG.LCGSandboxCache import LCGSandboxCache
-        if isType(self.sandboxcache, LCGSandboxCache):
+        if isinstance(self.sandboxcache, LCGSandboxCache):
             if not self.sandboxcache.lfc_host:
                 self.sandboxcache.lfc_host = Grid.__get_lfc_host__()
 
@@ -193,7 +193,7 @@ class LCG(IBackend):
             if (self.sandboxcache.se_type in ['srmv2']) and (not self.sandboxcache.srm_token):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
 
-        elif DQ2SandboxCache is not None and isType(self.sandboxcache, DQ2SandboxCache):
+        elif DQ2SandboxCache is not None and isinstance(self.sandboxcache, DQ2SandboxCache):
 
             # generate a new dataset name if not given
             if not self.sandboxcache.dataset_name:
@@ -248,7 +248,7 @@ class LCG(IBackend):
         # the value is exactly the same as the one from the local grid shell env. if
         # it is not specified exclusively.
         from Ganga.Lib.LCG.LCGSandboxCache import LCGSandboxCache
-        if isType(self.sandboxcache, LCGSandboxCache):
+        if isinstance(self.sandboxcache, LCGSandboxCache):
             lfc_host = self.sandboxcache.lfc_host
 
         # or in general, query it from the Grid object

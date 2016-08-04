@@ -129,10 +129,9 @@ def getValidDiracFiles(job, names=None):
         names (list): list of strings of names to be matched to namePatterns in outputfiles
     """
     from GangaDirac.Lib.Files.DiracFile import DiracFile
-    from Ganga.GPIDev.Base.Proxy import isType
     if job.subjobs:
         for sj in job.subjobs:
-            for df in (f for f in sj.outputfiles if isType(f, DiracFile)):
+            for df in (f for f in sj.outputfiles if isinstance(f, DiracFile)):
                 if df.subfiles:
                     for valid_sf in (sf for sf in df.subfiles if sf.lfn != '' and (names is None or sf.namePattern in names)):
                         yield valid_sf
@@ -140,7 +139,7 @@ def getValidDiracFiles(job, names=None):
                     if df.lfn != '' and (names is None or df.namePattern in names):
                         yield df
     else:
-        for df in (f for f in job.outputfiles if isType(f, DiracFile)):
+        for df in (f for f in job.outputfiles if isinstance(f, DiracFile)):
             if df.subfiles:
                 for valid_sf in (sf for sf in df.subfiles if sf.lfn != '' and (names is None or sf.namePattern in names)):
                     yield valid_sf

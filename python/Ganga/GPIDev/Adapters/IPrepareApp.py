@@ -6,7 +6,6 @@
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.Core.GangaRepository import getRegistry
-from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Lib.File.File import File, ShareDir
 import os
@@ -112,10 +111,10 @@ class IPrepareApp(IApplication):
         for prepitem in send_to_sharedir:
             logger.debug('working on %s' % (prepitem))
             # we may have a list of files/strings
-            if isType(prepitem, (list, GangaList)):
+            if isinstance(prepitem, (list, GangaList)):
                 logger.debug('found a list')
                 for subitem in prepitem:
-                    if isType(subitem, str):
+                    if isinstance(subitem, str):
                         # we have a file. if it's an absolute path, copy it to
                         # the shared dir
                         if os.path.abspath(subitem) == subitem:
@@ -125,7 +124,7 @@ class IPrepareApp(IApplication):
                             except IOError as e:
                                 logger.error(e)
                                 return 0
-                    elif isType(subitem, File) and subitem.name is not '':
+                    elif isinstance(subitem, File) and subitem.name is not '':
                         logger.debug('Sending file object %s to shared directory' % subitem.name)
                         try:
                             self.copyIntoPrepDir(subitem.name)
@@ -143,7 +142,7 @@ class IPrepareApp(IApplication):
                     except IOError as e:
                         logger.error(e)
                         return 0
-            elif isType(prepitem, File) and prepitem.name is not '':
+            elif isinstance(prepitem, File) and prepitem.name is not '':
                 logger.debug('found a file')
                 logger.debug('Sending "File" object %s to shared directory' % prepitem.name)
                 try:

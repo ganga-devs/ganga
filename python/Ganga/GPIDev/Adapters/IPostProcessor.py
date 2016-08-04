@@ -5,7 +5,6 @@
 ##########################################################################
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
@@ -71,7 +70,7 @@ class MultiPostProcessor(IPostProcessor):
             self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
 
     def __str__(self):
-        if not isType(self.process_objects, GangaObject):
+        if not isinstance(self.process_objects, GangaObject):
             return str(self.process_objects)
         else:
             return str(self.process_objects)
@@ -83,7 +82,7 @@ class MultiPostProcessor(IPostProcessor):
 
     def remove(self, value):
         for process in self.process_objects:
-            if (isType(value, type(process)) == True):
+            if (isinstance(value, type(process)) == True):
                 self.process_objects.remove(process)
                 break
 
@@ -149,7 +148,7 @@ def postprocessor_filter(value, item):
 #    if item is Job._schema['postprocessors']:
     if item in valid_jobtypes:
         ds = MultiPostProcessor()
-        if isinstance(value, list) or isType(value, GangaList):
+        if isinstance(value, list) or isinstance(value, GangaList):
             for item_ in value:
             	ds.append(item_)
         else:

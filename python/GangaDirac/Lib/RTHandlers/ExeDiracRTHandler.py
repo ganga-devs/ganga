@@ -22,7 +22,6 @@ from Ganga.GPIDev.Lib.File import File, FileBuffer
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
-from Ganga.GPIDev.Base.Proxy import isType
 logger = getLogger()
 config = getConfig('DIRAC')
 
@@ -52,11 +51,11 @@ class ExeDiracRTHandler(IRuntimeHandler):
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
         job = app.getJobObject()
-        outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
+        outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
         commandline = []
         commandline.append(app.exe)
-        if isType(app.exe, File):
+        if isinstance(app.exe, File):
             #logger.info("app: %s" % str(app.exe.name))
             #fileName = os.path.join(get_share_path(app), os.path.basename(app.exe.name))
             #logger.info("EXE: %s" % str(fileName))
