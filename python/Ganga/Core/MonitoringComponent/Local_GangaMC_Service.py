@@ -1,7 +1,6 @@
 import Queue
 import threading
 import time
-import copy
 from contextlib import contextmanager
 
 from Ganga.Core.GangaThread import GangaThread
@@ -12,12 +11,17 @@ from Ganga.Utility.threads import SynchronisedObject
 import Ganga.GPIDev.Credentials as Credentials
 from Ganga.Core.InternalServices import Coordinator
 
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, getRuntimeGPIObject
+from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import stripProxy
 
 from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus, lazyLoadJobBackend
 
 # Setup logging ---------------
-from Ganga.Utility.logging import getLogger, log_unknown_exception, log_user_exception
+from Ganga.Utility.logging import getLogger
+from Ganga.Utility.logging import log_unknown_exception
+from Ganga.Utility.logging import log_user_exception
 
 from Ganga.Core import BackendError
 from Ganga.Utility.Config import getConfig

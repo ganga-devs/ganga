@@ -477,7 +477,6 @@ class Batch(IBackend):
 
             pid, queue, actualCE, exitcode = None, None, None, None
 
-            import re
             statusfile = None
             try:
                 statusfile = open(f)

@@ -50,7 +50,6 @@ class IPrepareApp(IApplication):
         Args:
             force (bool) : forces the prepare function to be called no matter what when True
         """
-        pass
 
     def post_prepare(self):
         """

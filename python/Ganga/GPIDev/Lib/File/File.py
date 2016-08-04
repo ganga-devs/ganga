@@ -8,7 +8,8 @@ from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import stripProxy
 import os
 import shutil
 import uuid

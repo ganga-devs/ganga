@@ -25,7 +25,9 @@ class TestMonitoring(GangaUnitTest):
         super(TestMonitoring, self).tearDown()
 
     def test_a_JobConstruction(self):
-        from Ganga.GPI import Job, jobs, disableMonitoring
+        from Ganga.GPI import Job
+        from Ganga.GPI import disableMonitoring
+        from Ganga.GPI import jobs
 
         j=Job()
 
@@ -56,7 +58,8 @@ class TestMonitoring(GangaUnitTest):
 
     def test_d_anotherNewJob(self):
 
-        from Ganga.GPI import Job, jobs
+        from Ganga.GPI import Job
+        from Ganga.GPI import jobs
 
         j=Job()
 
@@ -65,7 +68,10 @@ class TestMonitoring(GangaUnitTest):
 
     def test_e_reEnableMon(self):
 
-        from Ganga.GPI import disableMonitoring, enableMonitoring, Job, jobs
+        from Ganga.GPI import Job
+        from Ganga.GPI import disableMonitoring
+        from Ganga.GPI import enableMonitoring
+        from Ganga.GPI import jobs
 
         disableMonitoring()
         enableMonitoring()

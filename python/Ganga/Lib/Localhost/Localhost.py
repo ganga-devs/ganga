@@ -8,7 +8,6 @@ from Ganga.GPIDev.Lib.File import FileBuffer
 
 import os
 import os.path
-import re
 import errno
 
 import subprocess

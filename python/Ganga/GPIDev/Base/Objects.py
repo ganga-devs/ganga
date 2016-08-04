@@ -170,7 +170,6 @@ class Node(object):
         """
         This can probably be removed if it doesn't do anything, only GangaObjet should inherit from Node
         """
-        pass
 
     # mark object as "dirty" and inform the registry about it
     # the registry is always associated with the root object
@@ -217,7 +216,6 @@ class Node(object):
         """
         This can probably be removed if it doesn't do anything, only GangaObjet should inherit from Node
         """
-        pass
 
     def __ne__(self, node):
         """
@@ -518,7 +516,6 @@ class Descriptor(object):
                     new_val = Descriptor.cloneListOrObject(val, (name, obj))
             else:
                 new_val = val
-                pass
 
         if isinstance(new_val, Node):
             new_val._setParent(obj)
@@ -1077,7 +1074,6 @@ class GangaObject(Node):
         This is called when an object is constructed from infront of the Proxy automatically, or manually when mimicing the behavior of the IPython prompt
         default behavior is to do nothing
         """
-        pass
 
     # return True if _name attribute was explicitly defined in the class
     # this means that implicit (inherited) _name attribute has no effect in the derived class

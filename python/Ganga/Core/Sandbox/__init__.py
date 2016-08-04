@@ -1,3 +1,10 @@
 from __future__ import absolute_import
-from .Sandbox import SandboxError, createPackedInputSandbox, createInputSandbox, getPackedOutputSandbox
-from .WNSandbox import getPackedInputSandbox, createOutputSandbox, createPackedOutputSandbox, OUTPUT_TARBALL_NAME, PYTHON_DIR
+from .Sandbox import SandboxError
+from .Sandbox import createInputSandbox
+from .Sandbox import createPackedInputSandbox
+from .Sandbox import getPackedOutputSandbox
+from .WNSandbox import OUTPUT_TARBALL_NAME
+from .WNSandbox import PYTHON_DIR
+from .WNSandbox import createOutputSandbox
+from .WNSandbox import createPackedOutputSandbox
+from .WNSandbox import getPackedInputSandbox

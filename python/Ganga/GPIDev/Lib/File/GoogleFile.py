@@ -3,7 +3,8 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from fnmatch import fnmatch
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Utility.Config import getConfig
 import re
 import copy
@@ -107,7 +108,6 @@ class GoogleFile(IGangaFile):
                         webbrowser.get('firefox').open(authorize_url, 0, True)
                     except Exception, err:
                         logger.error("Error: %s" % str(err))
-                        pass
             logger.info(
                 'Go to the following link in your browser: ' + authorize_url)
             code = raw_input('Enter verification code: ').strip()

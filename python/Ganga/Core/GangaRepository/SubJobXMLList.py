@@ -1,4 +1,6 @@
-from Ganga.GPIDev.Schema.Schema import Schema, SimpleItem, Version
+from Ganga.GPIDev.Schema.Schema import Schema
+from Ganga.GPIDev.Schema.Schema import SimpleItem
+from Ganga.GPIDev.Schema.Schema import Version
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaRepository.GangaRepository import RepositoryError
@@ -8,7 +10,6 @@ from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 import errno
 import copy
 import threading
-import shutil
 from os import listdir, path, stat
 
 logger = getLogger()

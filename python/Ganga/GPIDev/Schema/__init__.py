@@ -1,2 +1,9 @@
 from __future__ import absolute_import
-from .Schema import Schema, Version, Item, ComponentItem, SimpleItem, SharedItem, FileItem, GangaFileItem
+from .Schema import ComponentItem
+from .Schema import FileItem
+from .Schema import GangaFileItem
+from .Schema import Item
+from .Schema import Schema
+from .Schema import SharedItem
+from .Schema import SimpleItem
+from .Schema import Version

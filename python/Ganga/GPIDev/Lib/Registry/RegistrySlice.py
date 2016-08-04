@@ -6,7 +6,10 @@ import sys
 from inspect import isclass
 import Ganga.Utility.logging
 from Ganga.Core import GangaException
-from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError, IncompleteObject
+from Ganga.Core.GangaRepository.Registry import IncompleteObject
+from Ganga.Core.GangaRepository.Registry import RegistryAccessError
+from Ganga.Core.GangaRepository.Registry import RegistryIndexError
+from Ganga.Core.GangaRepository.Registry import RegistryKeyError
 
 from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
@@ -418,7 +421,9 @@ class RegistrySlice(object):
         return str(val)
 
     def _display(self, interactive=0):
-        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Effects
+        from Ganga.Utility.ColourText import ANSIMarkup
+        from Ganga.Utility.ColourText import Effects
+        from Ganga.Utility.ColourText import NoMarkup
         if interactive:
             markup = ANSIMarkup()
         else:
