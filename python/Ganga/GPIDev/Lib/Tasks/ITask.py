@@ -6,6 +6,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Lib.Tasks.common import getJobByID
 import time
 
@@ -142,6 +143,7 @@ class ITask(GangaObject):
                             j.remove()
                         except Exception as err:
                             logger.debug("Remove Err: %s" % str(err))
+                            pass
 
                     for jid in unit.prev_job_ids:
                         try:
@@ -149,6 +151,7 @@ class ITask(GangaObject):
                             j.remove()
                         except Exception as err2:
                             logger.debug("Remove Err2: %s" % str(err2))
+                            pass
 
         self._getRegistry()._remove(self, auto_removed=1)
         logger.info("Task #%s deleted" % self.id)

@@ -15,8 +15,8 @@
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.Plugin import allPlugins
-from Ganga.Core.exceptions import RepositoryError
-from Ganga.Core.exceptions import SchemaVersionError
+from Ganga.Core.exceptions import SchemaVersionError, RepositoryError
+from Ganga.GPIDev.Base.Proxy import getName
 
 logger = getLogger()
 
@@ -125,12 +125,14 @@ class GangaRepository(object):
         Args:
             ids (list): The object keys which we want to iterate over from the objects dict
         """
+        pass
 
     def clean(self):
         """clear() --> None
         Remove the Repository completely (rm -rf) and set it up again.
         Very violent. Use with caution.
         """
+        pass
 
     def isObjectLoaded(self, obj):
         """
@@ -233,11 +235,13 @@ class GangaRepositoryTransient(object):
         Args:
             id (int, None): The id which we want to update the index for
         """
+        pass
 
     def shutdown(self):
         """
         Nop the shutdown of this in-memory repo
         """
+        pass
 
     def add(self, objs, force_ids=None):
         """
@@ -274,6 +278,7 @@ class GangaRepositoryTransient(object):
         Args:
             ids (list): The object keys which we want to iterate over from the objects dict
         """
+        pass
 
     def flush(self, ids):
         """
@@ -281,6 +286,7 @@ class GangaRepositoryTransient(object):
         Args:
             ids (list): The object keys which we want to iterate over from the objects dict
         """
+        pass
 
     def lock(self, ids):
         """
@@ -294,6 +300,7 @@ class GangaRepositoryTransient(object):
         Args:
             ids (list): The object keys which we want to iterate over from the objects dict
         """
+        pass
 
     def isObjectLoaded(self, obj):
         """

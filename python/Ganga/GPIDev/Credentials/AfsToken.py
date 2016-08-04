@@ -92,6 +92,7 @@ __version__ = "1.16"
 import os
 import time
 
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Credentials.ICredential import ICommandSet, ICredential, registerCommandSet
 from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Runtime import Repository_runtime
@@ -146,7 +147,7 @@ class AfsToken (ICredential):
     def __init__(self):
         super(AfsToken, self).__init__()
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-        if "ICommandSet" == self.command._name or isinstance(self.command, GangaList):
+        if "ICommandSet" == self.command._name or isType(self.command, GangaList):
             self.command = AfsCommand()
         if not self.username:
             if "USERNAME" in os.environ:

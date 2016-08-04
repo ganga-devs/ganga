@@ -8,6 +8,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer
 
 import os
 import os.path
+import re
 import errno
 
 import subprocess
@@ -19,7 +20,7 @@ import Ganga.Utility.logging
 
 import Ganga.Utility.Config
 
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import getName, stripProxy
 
 logger = Ganga.Utility.logging.getLogger()
 config = Ganga.Utility.Config.getConfig('Local')
@@ -213,7 +214,7 @@ class Localhost(IBackend):
         script = script.replace('###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, ''))
         script = script.replace('###CREATEINPUTDATALIST###', getWNCodeForInputdataListCreation(job, ''))
 
-        script = script.replace('###APPLICATION_NAME###', repr(_getName(job.application)))
+        script = script.replace('###APPLICATION_NAME###', repr(getName(job.application)))
         script = script.replace('###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox))
         script = script.replace('###SHAREDOUTPUTPATH###', repr(sharedoutputpath))
         script = script.replace('###APPSCRIPTPATH###', repr(appscriptpath))
@@ -331,7 +332,7 @@ class Localhost(IBackend):
             # check if the exit code of the wrapper script is available (non-blocking check)
             # if the wrapper script exited with non zero this is an error
             try:
-                ws = os.waitpid(j.backend.wrapper_pid, os.WNOHANG)
+                ws = os.waitpid(stripProxy(j.backend).wrapper_pid, os.WNOHANG)
                 if not Ganga.Utility.logic.implies(ws[0] != 0, ws[1] == 0):
                     # FIXME: for some strange reason the logger DOES NOT LOG (checked in python 2.3 and 2.5)
                     # print 'logger problem', logger.name
@@ -341,7 +342,7 @@ class Localhost(IBackend):
                     j.updateStatus('failed')
             except OSError as x:
                 if x.errno != errno.ECHILD:
-                    logger.warning('cannot do waitpid for %d: %s', j.backend.wrapper_pid, str(x))
+                    logger.warning('cannot do waitpid for %d: %s', stripProxy(j.backend).wrapper_pid, str(x))
 
             # if the exit code was collected for the application get the exit
             # code back

@@ -12,10 +12,12 @@ import copy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.Utility.files import expandfilename
 
 import Ganga.Utility.Config
@@ -85,7 +87,7 @@ class MassStorageFile(IGangaFile):
     def _on_attribute__set__(self, obj_type, attrib_name):
         # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
         r = copy.deepcopy(self)
-        if _getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
+        if getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
             r.locations = []
             r.localDir = ''
             r.failureReason = ''
@@ -119,12 +121,12 @@ class MassStorageFile(IGangaFile):
                     d = MassStorageFile(namePattern=pattern)
                     d.compressed = mass_file.compressed
                     d.failureReason = line[line.find('ERROR') + 5:]
-                    mass_file.subfiles.append(d)
+                    mass_file.subfiles.append(GPIProxyObjectFactory(d))
                 else:
                     d = MassStorageFile(namePattern=name)
                     d.compressed = mass_file.compressed
                     d.outputfilenameformat = mass_file.outputfilenameformat
-                    mass_file.subfiles.append(d)
+                    mass_file.subfiles.append(GPIProxyObjectFactory(d))
                     mass_line_processor(line, d)
             elif name == mass_file.namePattern:
                 if outputPath == 'ERROR':
@@ -202,6 +204,7 @@ class MassStorageFile(IGangaFile):
         be called on the client
         """
         import glob
+        import re
 
         sourceDir = ''
 
@@ -337,7 +340,7 @@ class MassStorageFile(IGangaFile):
                     # if self._getParent() != None:
                     #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
-                self.subfiles.append(d)
+                self.subfiles.append(GPIProxyObjectFactory(d))
         else:
             currentFile = os.path.join(sourceDir, fileName)
             finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
@@ -370,7 +373,7 @@ class MassStorageFile(IGangaFile):
 
                 isJob = True
 
-                if self.getJobObject().master is not None:
+                if stripProxy(self.getJobObject()).master is not None:
 
                     isSplitJob = True
                     searchFor.append('{sjid}')
@@ -473,7 +476,7 @@ class MassStorageFile(IGangaFile):
                     subfile = MassStorageFile(namePattern=filename)
                     subfile.inputremotedirectory = self.inputremotedirectory
 
-                    self.subfiles.append(subfile)
+                    self.subfiles.append(GPIProxyObjectFactory(subfile))
 
     def remove(self, force=False, removeLocal=False):
         """
@@ -556,6 +559,7 @@ class MassStorageFile(IGangaFile):
                         if err.errno != errno.ENOENT:
                             logger.error("Error in removing file: %s" % str(remove_filename))
                             raise
+                        pass
         return
 
     def accessURL(self):

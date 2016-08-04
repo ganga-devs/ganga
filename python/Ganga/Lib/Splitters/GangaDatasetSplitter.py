@@ -5,6 +5,7 @@
 ##########################################################################
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
@@ -22,7 +23,7 @@ class GangaDatasetSplitter(ISplitter):
     def split(self, job):
         subjobs = []
 
-        if not job.inputdata or not isinstance(job.inputdata, GangaDataset):
+        if not job.inputdata or not isType(job.inputdata, GangaDataset):
             raise ApplicationConfigurationError(
                 None, "No GangaDataset given for GangaDatasetSplitter")
 

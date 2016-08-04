@@ -2,9 +2,10 @@ from BaseHTTPServer import BaseHTTPRequestHandler
 from Ganga.Core.GangaRepository import getRegistry, RegistryKeyError
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Utility.util import hostname
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import getName
 from BaseHTTPServer import HTTPServer
 
+import urlparse
 import Ganga.GPI
 from Ganga.GPIDev.Lib.Config import config
 import time
@@ -74,9 +75,9 @@ def get_subjob_JSON(job):
     result.append("\"status\": %s," % addQuotes(job.status))
     result.append("\"name\": %s," % addQuotes(job.name))
     result.append("\"application\": %s," %
-                  addQuotes(_getName(job.application)))
+                  addQuotes(getName(job.application)))
     result.append("\"backend\": %s," %
-                  addQuotes(_getName(job.backend)))
+                  addQuotes(getName(job.backend)))
     result.append("\"actualCE\": %s" % addQuotes(job.backend.actualCE))
 
     result.append("}")
@@ -136,9 +137,9 @@ def get_job_JSON(job):
                       addQuotes(str(len(job.subjobs.select(status='failed')))))
 
         result.append("\"application\": %s," %
-                      addQuotes(_getName(job.application)))
+                      addQuotes(getName(job.application)))
         result.append("\"backend\": %s," %
-                      addQuotes(_getName(job.backend)))
+                      addQuotes(getName(job.backend)))
         result.append("\"subjobs\": %s," % addQuotes(str(len(job.subjobs))))
         result.append("\"uuid\": %s," % addQuotes(job.info.uuid))
 
@@ -328,10 +329,10 @@ def create_subjobs_graphics(jobid, subjob_attribute, fromDate, toDate):
 
         elif subjob_attribute == 'application':
             increment(
-                subjobs_attributes, _getName(subjob.application))
+                subjobs_attributes, getName(subjob.application))
 
         elif subjob_attribute == 'backend':
-            increment(subjobs_attributes, _getName(subjob.backend))
+            increment(subjobs_attributes, getName(subjob.backend))
 
         elif subjob_attribute == 'actualCE':
             increment(subjobs_attributes, subjob.backend.actualCE)
@@ -553,8 +554,8 @@ class JobRelatedInfo:
         self.job_json = get_job_JSON(job)
         self.time_created = time_created
         self.job_status = job.status
-        self.job_application = _getName(job.application)
-        self.job_backend = _getName(job.backend)
+        self.job_application = getName(job.application)
+        self.job_backend = getName(job.backend)
 
     def getJobJSON(self):
 

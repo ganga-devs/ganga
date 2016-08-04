@@ -5,6 +5,8 @@
 ##########################################################################
 
 from Ganga.Utility.logging import getLogger
+import os
+import copy
 logger = getLogger()
 
 

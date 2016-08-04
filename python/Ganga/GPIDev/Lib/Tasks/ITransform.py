@@ -157,6 +157,7 @@ class ITransform(GangaObject):
 
     def startup(self):
         """This function is used to set the status after restarting Ganga"""
+        pass
 
 # Public methods
     def resetUnit(self, uid):

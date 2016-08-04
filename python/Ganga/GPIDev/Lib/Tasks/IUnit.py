@@ -3,9 +3,7 @@ from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.ColourText import ANSIMarkup
-from Ganga.Utility.ColourText import overview_colours
-from Ganga.Utility.ColourText import status_colours
+from Ganga.Utility.ColourText import status_colours, overview_colours, ANSIMarkup
 markup = ANSIMarkup()
 from Ganga.GPIDev.Lib.Tasks.common import getJobByID
 from Ganga.Core.exceptions import ApplicationConfigurationError
@@ -91,6 +89,7 @@ class IUnit(GangaObject):
 
     def createNewJob(self):
         """Create any jobs required for this unit"""
+        pass
 
     def checkCompleted(self, job):
         """Check if this unit is complete"""
@@ -152,6 +151,7 @@ class IUnit(GangaObject):
 
     def checkMajorResubmit(self, job):
         """check if this job needs to be fully rebrokered or not"""
+        pass
 
     def majorResubmit(self, job):
         """perform a mjor resubmit/rebroker"""

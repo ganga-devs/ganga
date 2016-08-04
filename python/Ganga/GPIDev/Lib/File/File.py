@@ -7,7 +7,8 @@
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
 import os
 import shutil
 import uuid
@@ -159,7 +160,7 @@ class ShareDir(GangaObject):
         # created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
         # filled with files, then assigned to an application.
         #a=Job(); s=ShareDir(); a.application.is_prepared=s
-        #shareref = getRegistry("prep").getShareRef()
+        #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         # shareref.increase(self.name)
         # shareref.decrease(self.name)
 
@@ -191,10 +192,10 @@ class ShareDir(GangaObject):
 
     def add(self, input):
         from Ganga.Core.GangaRepository import getRegistry
-        if not isinstance(input, list):
+        if not isType(input, list):
             input = [input]
         for item in input:
-            if isinstance(item, str):
+            if isType(item, str):
                 if os.path.isfile(expandfilename(item)):
                     logger.info('Copying file %s to shared directory %s' % (item, self.name))
                     shutil.copy2(expandfilename(item), os.path.join(getSharedPath(), self.name))
@@ -203,7 +204,7 @@ class ShareDir(GangaObject):
                     shareref.decrease(self.name)
                 else:
                     logger.error('File %s not found' % expandfilename(item))
-            elif isinstance(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
+            elif isType(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
                 logger.info('Copying file object %s to shared directory %s' % (item.name, self.name))
                 shutil.copy2(expandfilename(item.name), os.path.join(getSharedPath(), self.name))
                 shareref = getRegistry("prep").getShareRef()

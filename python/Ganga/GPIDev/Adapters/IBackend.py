@@ -7,7 +7,7 @@
 from Ganga.Core.exceptions import IncompleteJobSubmissionError
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import Schema, Version
 
@@ -17,6 +17,7 @@ from Ganga.Utility.logic import implies
 
 import os
 import itertools
+import time
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -55,6 +56,7 @@ class IBackend(GangaObject):
         enabled. This hook may be used by some backends to do specialized setup
         (e.g. to open ssh transport pipes of the Remote backend)
         """
+        pass
 
     def _parallel_submit(self, b, sj, sc, master_input_sandbox, fqid, logger):
 
@@ -149,6 +151,7 @@ class IBackend(GangaObject):
                 fqid = sj.getFQID('.')
                 b = sj.backend
                 # FIXME would be nice to move this to the internal threads not user ones
+                #from Ganga.GPIDev.Base.Proxy import stripProxy
                 getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
 
             def subjob_status_check(rjobs):
@@ -171,21 +174,21 @@ class IBackend(GangaObject):
         for sc, sj in zip(subjobconfigs, rjobs):
 
             fqid = sj.getFQID('.')
-            logger.info("submitting job %s to %s backend", fqid, _getName(sj.backend))
+            logger.info("submitting job %s to %s backend", fqid, getName(sj.backend))
             try:
-                b = sj.backend
+                b = stripProxy(sj.backend)
                 sj.updateStatus('submitting')
                 if b.submit(sc, master_input_sandbox):
                     sj.updateStatus('submitted')
                     # sj._commit() # PENDING: TEMPORARY DISABLED
                     incomplete = 1
-                    sj.info.increment()
+                    stripProxy(sj.info).increment()
                 else:
                     if handleError(IncompleteJobSubmissionError(fqid, 'submission failed')):
                         return 0
             except Exception as x:
                 #sj.updateStatus('new')
-                if isinstance(x, GangaException):
+                if isType(x, GangaException):
                     logger.error("%s" % x)
                     log_user_exception(logger, debug=True)
                 else:
@@ -234,7 +237,7 @@ class IBackend(GangaObject):
             create_sandbox = job.createPackedInputSandbox
 
         if masterjobconfig:
-            if hasattr(job.application, 'is_prepared') and isinstance(job.application.is_prepared, ShareDir):
+            if hasattr(job.application, 'is_prepared') and isType(job.application.is_prepared, ShareDir):
                 sharedir_pred = lambda f: f.name.find(job.application.is_prepared.name) > -1
                 sharedir_files = itertools.ifilter(sharedir_pred, masterjobconfig.getSandboxFiles())
                 nonsharedir_files = itertools.ifilterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
@@ -251,7 +254,7 @@ class IBackend(GangaObject):
         tmpDir = None
         files = []
         if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and\
-                isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
+                isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
             (fileNames, tmpDir) = getInputFilesPatterns(job)
             files = itertools.imap(lambda f: File(f), fileNames)
         else:
@@ -299,7 +302,7 @@ class IBackend(GangaObject):
         try:
             for sj in rjobs:
                 fqid = sj.getFQID('.')
-                logger.info("resubmitting job %s to %s backend", fqid, _getName(sj.backend))
+                logger.info("resubmitting job %s to %s backend", fqid, getName(sj.backend))
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
@@ -315,7 +318,7 @@ class IBackend(GangaObject):
                         return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
                     log_user_exception(
-                        logger, debug=isinstance(x, GangaException))
+                        logger, debug=isType(x, GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
@@ -384,6 +387,7 @@ class IBackend(GangaObject):
     def remove(self):
         """When the job is removed then this backend method is called.
         The primary use-case is the Remote (ssh) backend. """
+        pass
 
     def getStateTime(self, status):
         """Get the timestamps for the job's transitions into the 'running' and 'completed' states.
@@ -393,6 +397,7 @@ class IBackend(GangaObject):
     def timedetails(self):
         """Returns all available backend specific timestamps.
         """
+        pass
 
     @staticmethod
     def master_updateMonitoringInformation(jobs):
@@ -431,7 +436,7 @@ class IBackend(GangaObject):
                 #logger.info("Looking for sj")
                 monitorable_subjob_ids = []
 
-                if isinstance(j.subjobs, SubJobXMLList):
+                if isType(j.subjobs, SubJobXMLList):
                     cache = j.subjobs.getAllCachedData()
                     for sj_id in range(0,len(j.subjobs)):
                         if cache[sj_id]['status'] in ['submitted', 'running']:
@@ -484,7 +489,7 @@ class IBackend(GangaObject):
                 j.updateMasterJobStatus()
 
             else:
-                backend_name = _getName(j.backend)
+                backend_name = getName(j.backend)
                 if backend_name not in simple_jobs:
                     simple_jobs[backend_name] = []
                 simple_jobs[backend_name].append(j)
@@ -492,7 +497,7 @@ class IBackend(GangaObject):
         if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
-                simple_jobs[this_backend][0].backend.updateMonitoringInformation(simple_jobs[this_backend])
+                stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
 
         logger.debug("Finished Monitoring request")
 

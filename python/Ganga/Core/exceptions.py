@@ -34,8 +34,8 @@ class GangaException(Exception):
         """
          String representation of this class
         """
-        from Ganga.GPIDev.Base.Proxy import _getName
-        _str = "%s: " % _getName(self)
+        from Ganga.GPIDev.Base.Proxy import getName
+        _str = "%s: " % getName(self)
         if hasattr(self, 'args') and self.args:
             _str += " %s" % str(self.args)
         if hasattr(self, 'kwds') and self.kwds:
@@ -201,8 +201,8 @@ class InaccessibleObjectError(GangaException):
         if str(self.orig).find('comments') > -1:
             return "Please restart Ganga in order to reload the object"
         else:
-            from Ganga.GPIDev.Base.Proxy import _getName
-            return "Repository '%s' object #%s is not accessible because of an %s: %s" % (self.repo.registry.name, self.id, _getName(self.orig), str(self.orig))
+            from Ganga.GPIDev.Base.Proxy import getName
+            return "Repository '%s' object #%s is not accessible because of an %s: %s" % (self.repo.registry.name, self.id, getName(self.orig), str(self.orig))
 
 
 class RepositoryError(GangaException):

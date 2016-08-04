@@ -3,6 +3,8 @@ import os
 import os.path
 import math
 import re
+import mimetypes
+import shutil
 
 from urlparse import urlparse
 
@@ -20,7 +22,7 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG import Grid
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import getName
 
 config = getConfig('LCG')
 
@@ -62,6 +64,7 @@ class ARC(IBackend):
             logger.debug('load %s as LCGRequirements' % reqName)
         except:
             logger.debug('load default LCGRequirements')
+            pass
 
         # dynamic sandbox cache object loading
         # force to use GridftpSandboxCache
@@ -75,6 +78,7 @@ class ARC(IBackend):
             logger.debug('load %s as SandboxCache' % scName)
         except:
             logger.debug('load default SandboxCache')
+            pass
 
     def __refresh_jobinfo__(self, job):
         '''Refresh the lcg jobinfo. It will be called after resubmission.'''
@@ -697,7 +701,7 @@ sys.exit(0)
             '###OUTPUTSANDBOX###', repr(jobconfig.outputbox))
 
         script = script.replace(
-            '###APPLICATION_NAME###', _getName(job.application))
+            '###APPLICATION_NAME###', getName(job.application))
         script = script.replace(
             '###APPLICATIONEXEC###', repr(jobconfig.getExeString()))
         script = script.replace(

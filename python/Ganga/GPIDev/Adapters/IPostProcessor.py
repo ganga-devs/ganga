@@ -5,7 +5,9 @@
 ##########################################################################
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 class PostProcessException(GangaException):
@@ -70,10 +72,10 @@ class MultiPostProcessor(IPostProcessor):
             self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
 
     def __str__(self):
-        if not isinstance(self.process_objects, GangaObject):
+        if not isType(self.process_objects, GangaObject):
             return str(self.process_objects)
         else:
-            return str(self.process_objects)
+            return str(GPIProxyObjectFactory(self.process_objects))
 
     def append(self, value):
         self.addProcess(value)
@@ -82,15 +84,15 @@ class MultiPostProcessor(IPostProcessor):
 
     def remove(self, value):
         for process in self.process_objects:
-            if (isinstance(value, type(process)) == True):
+            if (isType(value, type(process)) == True):
                 self.process_objects.remove(process)
                 break
 
     def __get__(self):
-        return self.process_objects
+        return GPIProxyObjectFactory(self.process_objects)
 
     def __getitem__(self, i):
-        return self.process_objects[i]
+        return GPIProxyObjectFactory(self.process_objects[i])
 
     def execute(self, job, newstatus, **options):
         # run the merger objects one at a time
@@ -135,7 +137,7 @@ def postprocessor_filter(value, item):
     from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
     from Ganga.GPIDev.Base.Objects import ObjectMetaclass
 
-    from Ganga.GPIDev.Base.Proxy import stripProxy
+    #from Ganga.GPIDev.Base.Proxy import stripProxy
 
     from Ganga.GPIDev.Base.Proxy import getProxyInterface
 
@@ -148,7 +150,7 @@ def postprocessor_filter(value, item):
 #    if item is Job._schema['postprocessors']:
     if item in valid_jobtypes:
         ds = MultiPostProcessor()
-        if isinstance(value, list) or isinstance(value, GangaList):
+        if isinstance(value, list) or isType(value, GangaList):
             for item_ in value:
             	ds.append(item_)
         else:

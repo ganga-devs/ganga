@@ -219,8 +219,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
     def test_h_testXMLIndex(self):
         # Check index of job
-        from Ganga.Core.GangaRepository.PickleStreamer import from_file
-        from Ganga.Core.GangaRepository.PickleStreamer import to_file
+        from Ganga.Core.GangaRepository.PickleStreamer import to_file, from_file
 
         from Ganga.GPI import jobs
 
@@ -249,8 +248,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
     def test_i_testSJXMLIndex(self):
         # Check index of all sj
-        from Ganga.Core.GangaRepository.PickleStreamer import from_file
-        from Ganga.Core.GangaRepository.PickleStreamer import to_file
+        from Ganga.Core.GangaRepository.PickleStreamer import to_file, from_file
 
         from Ganga.GPI import jobs
 
@@ -263,8 +261,7 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
             assert isinstance(obj, dict)
 
-            from Ganga.GPIDev.Base.Proxy import getName
-            from Ganga.GPIDev.Base.Proxy import stripProxy
+            from Ganga.GPIDev.Base.Proxy import stripProxy, getName
             raw_j = stripProxy(j)
 
             new_dict = {}

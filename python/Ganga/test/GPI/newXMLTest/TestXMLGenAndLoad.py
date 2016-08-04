@@ -169,8 +169,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
     def test_f_testXMLIndex(self):
         # Check XML Index content
-        from Ganga.Core.GangaRepository.PickleStreamer import from_file
-        from Ganga.Core.GangaRepository.PickleStreamer import to_file
+        from Ganga.Core.GangaRepository.PickleStreamer import to_file, from_file
 
         from Ganga.GPI import jobs
 

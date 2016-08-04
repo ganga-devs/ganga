@@ -9,6 +9,7 @@ import errno
 import re
 import os
 from os import path
+import copy
 import shutil
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
@@ -219,6 +220,7 @@ class LocalFile(IGangaFile):
                         if err.errno != errno.ENOENT:
                             logger.error("Error in removing file: %s" % remove_filename)
                             raise
+                        pass
 
         return
 
@@ -247,6 +249,7 @@ class LocalFile(IGangaFile):
         This performs the cleanup method on the client output workspace to remove temporary files
         """
         # For LocalFile this is where the file is stored so don't remove it
+        pass
 
 ## rcurrie Attempted to implement for 6.1.9 but commenting out due to not being able to correctly make use of setLocation
 

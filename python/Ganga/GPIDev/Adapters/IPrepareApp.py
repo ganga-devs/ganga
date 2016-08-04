@@ -6,6 +6,7 @@
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.Core.GangaRepository import getRegistry
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Lib.File.File import File, ShareDir
 import os
@@ -49,6 +50,7 @@ class IPrepareApp(IApplication):
         Args:
             force (bool) : forces the prepare function to be called no matter what when True
         """
+        pass
 
     def post_prepare(self):
         """
@@ -111,10 +113,10 @@ class IPrepareApp(IApplication):
         for prepitem in send_to_sharedir:
             logger.debug('working on %s' % (prepitem))
             # we may have a list of files/strings
-            if isinstance(prepitem, (list, GangaList)):
+            if isType(prepitem, (list, GangaList)):
                 logger.debug('found a list')
                 for subitem in prepitem:
-                    if isinstance(subitem, str):
+                    if isType(subitem, str):
                         # we have a file. if it's an absolute path, copy it to
                         # the shared dir
                         if os.path.abspath(subitem) == subitem:
@@ -124,7 +126,7 @@ class IPrepareApp(IApplication):
                             except IOError as e:
                                 logger.error(e)
                                 return 0
-                    elif isinstance(subitem, File) and subitem.name is not '':
+                    elif isType(subitem, File) and subitem.name is not '':
                         logger.debug('Sending file object %s to shared directory' % subitem.name)
                         try:
                             self.copyIntoPrepDir(subitem.name)
@@ -142,7 +144,7 @@ class IPrepareApp(IApplication):
                     except IOError as e:
                         logger.error(e)
                         return 0
-            elif isinstance(prepitem, File) and prepitem.name is not '':
+            elif isType(prepitem, File) and prepitem.name is not '':
                 logger.debug('found a file')
                 logger.debug('Sending "File" object %s to shared directory' % prepitem.name)
                 try:
@@ -215,11 +217,11 @@ class IPrepareApp(IApplication):
         """
         remove = remove
         logger.debug('Decrementing shared directory reference counter')
-        shareref = getRegistry("prep").getShareRef()
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref.decrease(shared_directory_name, remove)
 
     def listShareDirs(self):
-        shareref = getRegistry("prep").getShareRef()
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref
 
     def listShareDirContents(self, shared_directory_name):
@@ -228,7 +230,7 @@ class IPrepareApp(IApplication):
         Args:
             shared_directory_name (str): full name of directory managed by this app
         """
-        shareref = getRegistry("prep").getShareRef()
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref.ls(shared_directory_name)
 
     def checkPreparedHasParent(self, prepared_object):

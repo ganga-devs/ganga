@@ -1,13 +1,12 @@
 from __future__ import absolute_import
 import os
+import sys
 import mimetypes
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=True)
 
-from .WNSandbox import OUTPUT_TARBALL_NAME
-from .WNSandbox import PYTHON_DIR
-from Ganga.Core import GangaException
-from Ganga.Core import GangaIOError
+from .WNSandbox import OUTPUT_TARBALL_NAME, PYTHON_DIR
+from Ganga.Core import GangaException, GangaIOError
 
 
 class SandboxError(GangaException):
@@ -72,10 +71,11 @@ def createPackedInputSandbox(sandbox_files, inws, name):
 
         from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
         from Ganga.GPIDev.Lib.File.File import File
+        from Ganga.GPIDev.Base.Proxy import isType
 
         for f in sandbox_files:
             fileobj = None
-            if isinstance(f, FileBuffer):
+            if isType(f, FileBuffer):
                 contents = f.getContents()   # is it FileBuffer?
                 # print "Getting FileBuffer Contents"
 

@@ -123,13 +123,16 @@ class IApplication(GangaObject):
         """ Postprocessing after the job was reported as completed. By default do nothing.
         This method may raise an exception PostprocessStatusUpdate('failed'). In this
         case the job status will be 'failed'. The postprocess_failed() hook will NOT be called."""
+        pass
 
     def postprocess_failed(self):
         """ Postprocessing after the job was reported as failed. By default do nothing."""
+        pass
 
     def transition_update(self, new_status):
         """
         This method will be called just before the status of the parent Job changes to new_status.
         The default it to do nothing.
         """
+        pass
 

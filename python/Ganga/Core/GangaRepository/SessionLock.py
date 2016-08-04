@@ -26,7 +26,7 @@ except ImportError:
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.Config.Config import getConfig, ConfigError
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import getName
 
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Core.GangaRepository import RepositoryError
@@ -156,14 +156,14 @@ class SessionLockRefresher(GangaThread):
                 self.clearDeadLocks(now)
 
         except Exception as x:
-            logger.warning( "Internal exception in session lock thread: %s %s" % (_getName(x), x))
+            logger.warning( "Internal exception in session lock thread: %s %s" % (getName(x), x))
 
     def updateNow(self):
         try:
             for index in range(len(self.fns)):
                 now = self.updateLocks(index)
         except Exception as x:
-            logger.warning("Internal exception in Updating session lock thread: %s %s" % ( _getName(x), x))
+            logger.warning("Internal exception in Updating session lock thread: %s %s" % ( getName(x), x))
 
     def updateLocks(self, index):
 
@@ -573,7 +573,7 @@ class SessionLockManager(object):
                     # 00)) # read up to 1 MB (that is more than enough...)
                     return pickle.loads(os.read(fd, 1048576))
                 except Exception as x:
-                    logger.warning("corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)." % (fn, _getName(x), x))
+                    logger.warning("corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)." % (fn, getName(x), x))
             finally:
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_UN)
@@ -846,7 +846,7 @@ class SessionLockManager(object):
                         fcntl.lockf(fd, fcntl.LOCK_UN)  # ONLY NFS
                         os.close(fd)
                 except Exception as x:
-                    logger.warning("CHECKER: session file %s corrupted: %s %s" % (session, _getName(x), x))
+                    logger.warning("CHECKER: session file %s corrupted: %s %s" % (session, getName(x), x))
                     continue
                 if not len(names & prevnames) == 0:
                     logger.error("Double-locked stuff: " + names & prevnames)

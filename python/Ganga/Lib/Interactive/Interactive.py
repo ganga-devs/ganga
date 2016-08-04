@@ -26,13 +26,14 @@ __version__ = "1.4"
 
 from Ganga.Core import Sandbox
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.Utility import util
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import expand_vars
 
+import inspect
 import os
 import re
 import shutil
@@ -86,6 +87,7 @@ class Interactive(IBackend):
                         value = int(match.group("value"))
             except IOError as err:
                 logger.debug("IOError: %s" % str(err))
+                pass
         return value
 
     def submit(self, jobconfig, master_input_sandbox):
@@ -208,7 +210,7 @@ class Interactive(IBackend):
 
             for inputFile in all_inputfiles:
 
-                inputfileClassName = _getName(inputFile)
+                inputfileClassName = getName(inputFile)
 
                 logger.debug("name: %s" % inputfileClassName)
                 logger.debug("result: %s" % str(outputFilePostProcessingOnWN(job, inputfileClassName)))
@@ -272,7 +274,7 @@ class Interactive(IBackend):
 
         for j in jobs:
 
-            raw_backend = j.backend
+            raw_backend = stripProxy(j.backend)
 
             if not j.backend.id:
                 id = raw_backend._getIntFromOutfile("PID:", "__id__")

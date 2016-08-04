@@ -1,8 +1,7 @@
 from __future__ import print_function
 
 import Ganga.Utility.logging
-from Ganga.GPIDev.Base.Proxy import getName
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -21,6 +20,7 @@ def _initconfigFeed():
         # on worker node so Config is not needed since it is copied to Feedback
         # constructor
         logger.debug("Import Error: %s" % err)
+        pass
 _initconfigFeed()
 
 
@@ -235,6 +235,7 @@ def report(job=None):
                     fileToWrite.close()
             except Exception as err2:
                 logger.debug("Err: %s" % err2)
+                pass
 
         def writeStringToFile(fileName, stringToWrite):
 

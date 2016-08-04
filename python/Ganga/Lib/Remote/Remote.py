@@ -12,6 +12,7 @@ from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
+import inspect
 import os
 from Ganga.Lib.Root import randomString
 
@@ -140,7 +141,7 @@ class Remote(IBackend):
 
             # Send a script over to the remote site that updates this jobs
             # info with the info of the remote job
-            pass
+            import os
 
             # Create a ganga script that updates the job info from the remote
             # site
@@ -363,6 +364,8 @@ print("***_FINISHED_***")
             Return value: True if job is submitted successfully,
                           or False otherwise"""
 
+        import os
+        import getpass
 
         # First some sanity checks...
         fail = 0
@@ -794,6 +797,7 @@ print("***_FINISHED_***")
         # Send a script over to the remote site that updates this jobs
         # info with the info of the remote job
         import os
+        import getpass
 
         # first, loop over the jobs and sort by host, username, gangadir and
         # pre_script
