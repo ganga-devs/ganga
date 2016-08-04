@@ -16,7 +16,7 @@ from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Credentials import getCredential
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.GPIDev.Base.Proxy import isType, getName
 from Ganga.Core.GangaThread.WorkerThreads import getQueues
 configDirac = getConfig('DIRAC')
 logger = getLogger()
@@ -948,7 +948,7 @@ class DiracBase(IBackend):
         # querying dirac again. Their signature is status = running and job.backend.status
         # already set to Done or Failed etc.
 
-        jobs = [stripProxy(j) for j in jobs_]
+        jobs = [j for j in jobs_]
 
         # make sure proxy is valid
         if not DiracBase.checkDiracProxy():

@@ -14,7 +14,6 @@ from Ganga.Core.InternalServices import Coordinator
 from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Base.Proxy import stripProxy
 
 from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus, lazyLoadJobBackend
 
@@ -311,7 +310,7 @@ class UpdateDict(object):
             self.table[backend] = _DictEntry(backendObj, set(jobList), threading.RLock(), timeoutMax)
             # queue to get processed
             Qin.put(JobAction(backendCheckingFunction, self.table[backend].updateActionTuple()))
-            log.debug("**Adding %s to new %s backend entry." % ([stripProxy(x).getFQID('.') for x in jobList], backend))
+            log.debug("**Adding %s to new %s backend entry." % ([x.getFQID('.') for x in jobList], backend))
             return True
 
         # backend is in Qin waiting to be processed. Increase it's list of jobs
@@ -323,16 +322,16 @@ class UpdateDict(object):
         if lock.acquire(False):
             try:
                 jSetSize = len(jSet)
-                log.debug("Lock acquire successful. Updating jSet %s with %s." % ([stripProxy(x).getFQID('.') for x in jSet], [stripProxy(x).getFQID('.') for x in jobList]))
+                log.debug("Lock acquire successful. Updating jSet %s with %s." % ([x.getFQID('.') for x in jSet], [x.getFQID('.') for x in jobList]))
                 jSet.update(jobList)
                 # If jSet is empty it was cleared by an update action
                 # i.e. the queue does not contain an update action for the
                 # particular backend any more.
                 if jSetSize:  # jSet not cleared
-                    log.debug("%s backend job set exists. Added %s to it." % (backend, [stripProxy(x).getFQID('.') for x in jobList]))
+                    log.debug("%s backend job set exists. Added %s to it." % (backend, [x.getFQID('.') for x in jobList]))
                 else:
                     Qin.put(JobAction(backendCheckingFunction, self.table[backend].updateActionTuple()))
-                    log.debug("Added new %s backend update action for jobs %s." % (backend, [stripProxy(x).getFQID('.') for x in self.table[backend].updateActionTuple()[1]]))
+                    log.debug("Added new %s backend update action for jobs %s." % (backend, [x.getFQID('.') for x in self.table[backend].updateActionTuple()[1]]))
 
             except Exception as err:
                 log.error("addEntry error: %s" % str(err))
@@ -340,7 +339,7 @@ class UpdateDict(object):
                 lock.release()
 
             log.debug("**: backend=%s, isLocked=%s, isOwner=%s, joblist=%s, queue=%s" %
-                    (backend, lock._RLock__count, lock._is_owned(), [stripProxy(x).getFQID('.') for x in jobList], Qin.qsize()))
+                    (backend, lock._RLock__count, lock._is_owned(), [x.getFQID('.') for x in jobList], Qin.qsize()))
             return True
 
     def clearEntry(self, backend):
@@ -444,7 +443,7 @@ def get_jobs_in_bunches(jobList_fromset, blocks_of_size=5, stripProxies=True):
     for this_job in jobList_fromset:
 
         if stripProxies:
-            temp_list.append(stripProxy(this_job))
+            temp_list.append(this_job)
         else:
             temp_list.append(this_job)
 
@@ -948,7 +947,7 @@ class JobRegistry_Monitor(GangaThread):
         log.debug("Running over fixed_ids: %s" % str(fixed_ids))
         for i in fixed_ids:
             try:
-                j = stripProxy(self.registry_slice(i))
+                j = self.registry_slice(i)
 
                 job_status = lazyLoadJobStatus(j)
 
@@ -969,7 +968,7 @@ class JobRegistry_Monitor(GangaThread):
         for backend, these_jobs in active_backends.iteritems():
             summary += '"' + str(backend) + '" : ['
             for this_job in these_jobs:
-                summary += str(stripProxy(this_job).id) + ', '#getFQID('.')) + ', '
+                summary += str(this_job.id) + ', '#getFQID('.')) + ', '
             summary += '], '
         summary += '}'
         log.debug("Returning active_backends: %s" % summary)
@@ -1013,10 +1012,10 @@ class JobRegistry_Monitor(GangaThread):
 
                     if backendObj is not None:
                         if hasattr(backendObj, 'setup'):
-                            stripProxy(j.backend).setup()
+                            j.backend.setup()
                     else:
                         if hasattr(j.backend, 'setup'):
-                            stripProxy(j.backend).setup()
+                            j.backend.setup()
 
                 if self.enabled is False and self.alive is False:
                     log.debug("NOT enabled, leaving")
@@ -1046,7 +1045,7 @@ class JobRegistry_Monitor(GangaThread):
                         job_ids += ' %s' % str(this_job.id) 
                     log.debug("Updating Jobs: %s" % job_ids)
                     try:
-                        stripProxy(backendObj).master_updateMonitoringInformation(this_job_list)
+                        backendObj.master_updateMonitoringInformation(this_job_list)
                     except Exception as err:
                         #raise err
                         log.debug("Err: %s" % str(err))
@@ -1079,7 +1078,7 @@ class JobRegistry_Monitor(GangaThread):
             #self.registry_slice._flush(jobList_fromset)  # Optimisation required!
 
             #for this_job in jobList_fromset:
-            #    stripped_job = stripProxy(this_job)
+            #    stripped_job = this_job
             #    stripped_job._getRegistry()._flush([stripped_job])
 
         except Exception as err:
@@ -1101,7 +1100,7 @@ class JobRegistry_Monitor(GangaThread):
         for this_backend, these_jobs in activeBackends.iteritems():
             summary += '"' + this_backend + '" : ['
             for this_job in these_jobs:
-                summary += str(stripProxy(this_job).getFQID('.')) + ', '
+                summary += str(this_job.getFQID('.')) + ', '
             summary += '], '
         summary += '}'
         log.debug("Active Backends: %s" % summary)
@@ -1123,7 +1122,7 @@ class JobRegistry_Monitor(GangaThread):
             #       credential requirements.
             #log.debug("addEntry: %s, %s, %s, %s" % (str(backendObj), str(self._checkBackend), str(jList), str(pRate)))
             self.updateDict_ts.addEntry(backendObj, self._checkBackend, jList, pRate)
-            summary = str([stripProxy(x).getFQID('.') for x in jList])
+            summary = str([x.getFQID('.') for x in jList])
             log.debug("jList: %s" % str(summary))
 
 

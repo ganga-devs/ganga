@@ -6,7 +6,7 @@ import copy
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+from Ganga.GPIDev.Base.Proxy import isType, getName
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -42,7 +42,7 @@ def outputFilePostProcessingTestForWhen(job, outputFileClassName, when):
     """
     backendClassName = getName(job.backend)
 
-    backend_output_postprocess = stripProxy(job).getBackendOutputPostprocessDict()
+    backend_output_postprocess = job.getBackendOutputPostprocessDict()
     if backendClassName in backend_output_postprocess:
         if outputFileClassName in backend_output_postprocess[backendClassName]:
             if backend_output_postprocess[backendClassName][outputFileClassName] == when:

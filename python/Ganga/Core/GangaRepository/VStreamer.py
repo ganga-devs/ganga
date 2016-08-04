@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.GPIDev.Base.Proxy import isType, getName
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
@@ -51,7 +51,7 @@ class XMLFileError(GangaException):
 def _raw_to_file(j, fobj=None, ignore_subs=[]):
     vstreamer = VStreamer(out=fobj, selection=ignore_subs)
     vstreamer.begin_root()
-    stripProxy(j).accept(vstreamer)
+    j.accept(vstreamer)
     vstreamer.end_root()
 
 def to_file(j, fobj=None, ignore_subs=[]):
@@ -140,7 +140,7 @@ def fastXML(obj, indent='', ignore_subs=''):
         sl.append('</class>')
         return sl
     else:
-        return ["<value>", escape(repr(stripProxy(obj))), "</value>"]
+        return ["<value>", escape(repr(obj)), "</value>"]
 
 ##########################################################################
 # A visitor to print the object tree into XML.
@@ -182,7 +182,7 @@ class VStreamer(object):
         return
 
     def print_value(self, x):
-        print('\n', self.indent(), '<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
+        print('\n', self.indent(), '<value>%s</value>' % escape(repr(x)), file=self.out)
 
     def showAttribute(self, node, name):
         return not node._schema.getItem(name)['transient'] and (self.level > 1 or name not in self.selection)
@@ -219,15 +219,15 @@ class VStreamer(object):
         else:
             if isType(s, str):
                 print(self.indent(), '<value>%s</value>' % escape(repr(s)), file=self.out)
-            elif hasattr(stripProxy(s), 'accept'):
-                stripProxy(s).accept(self)
+            elif hasattr(s, 'accept'):
+                s.accept(self)
             elif isType(s, (list, tuple, GangaList)):
                 print(self.indent(), '<sequence>', file=self.out)
                 for sub_s in s:
                     self.acceptOptional(sub_s)
                 print(self.indent(), '</sequence>', file=self.out)
             else:
-                self.print_value(stripProxy(s))
+                self.print_value(s)
         self.level -= 1
 
     def componentAttribute(self, node, name, subnode, sequence):

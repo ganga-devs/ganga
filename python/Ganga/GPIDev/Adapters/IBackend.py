@@ -7,7 +7,7 @@
 from Ganga.Core.exceptions import IncompleteJobSubmissionError
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.GPIDev.Base.Proxy import isType, getName
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import Schema, Version
 
@@ -149,7 +149,6 @@ class IBackend(GangaObject):
                 fqid = sj.getFQID('.')
                 b = sj.backend
                 # FIXME would be nice to move this to the internal threads not user ones
-                #from Ganga.GPIDev.Base.Proxy import stripProxy
                 getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
 
             def subjob_status_check(rjobs):
@@ -174,13 +173,13 @@ class IBackend(GangaObject):
             fqid = sj.getFQID('.')
             logger.info("submitting job %s to %s backend", fqid, getName(sj.backend))
             try:
-                b = stripProxy(sj.backend)
+                b = sj.backend
                 sj.updateStatus('submitting')
                 if b.submit(sc, master_input_sandbox):
                     sj.updateStatus('submitted')
                     # sj._commit() # PENDING: TEMPORARY DISABLED
                     incomplete = 1
-                    stripProxy(sj.info).increment()
+                    sj.info.increment()
                 else:
                     if handleError(IncompleteJobSubmissionError(fqid, 'submission failed')):
                         return 0
@@ -493,7 +492,7 @@ class IBackend(GangaObject):
         if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
-                stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
+                simple_jobs[this_backend][0].backend.updateMonitoringInformation(simple_jobs[this_backend])
 
         logger.debug("Finished Monitoring request")
 

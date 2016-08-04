@@ -6,7 +6,6 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Base.Proxy import stripProxy
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.Job import Job
 from GangaDirac.Lib.Files.DiracFile import DiracFile
@@ -108,7 +107,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("Creating new Job in Splitter")
         j = Job()
         logger.debug("Copying From Job")
-        j.copyFrom(stripProxy(job), ['splitter', 'subjobs', 'inputdata', 'inputsandbox', 'inputfiles'])
+        j.copyFrom(job, ['splitter', 'subjobs', 'inputdata', 'inputsandbox', 'inputfiles'])
         logger.debug("Unsetting Splitter")
         j.splitter = None
         #logger.debug("Unsetting Merger")
@@ -142,7 +141,7 @@ class SplitByFiles(GaudiInputDataSplitter):
             self.persistency = None
             self.XMLCatalogueSlice = None
 
-        if stripProxy(job.backend).__module__.find('Dirac') > 0:
+        if job.backend.__module__.find('Dirac') > 0:
 
             logger.debug("found Dirac backend")
 
@@ -169,7 +168,7 @@ class SplitByFiles(GaudiInputDataSplitter):
                                             self.maxFiles,
                                             self.ignoremissing)
             elif self.splitterBackend == "splitInputData":
-                indata = stripProxy(copy.deepcopy(inputdata))
+                indata = copy.deepcopy(inputdata)
                 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
                 outdata = DiracSplitter(indata,
                                         self.filesPerJob,
@@ -189,7 +188,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         if self.maxFiles == -1:
             self.maxFiles = None
         if self.bulksubmit == True:
-            if stripProxy(job.backend).__module__.find('Dirac') > 0:
+            if job.backend.__module__.find('Dirac') > 0:
                 logger.debug("Returning []")
                 return []
         split_return = super(SplitByFiles, self).split(job)

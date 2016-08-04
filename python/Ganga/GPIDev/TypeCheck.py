@@ -9,9 +9,6 @@ from inspect import isclass
 found_types = {}
 found_values = {}
 
-def dummy_func( _input ):
-    return _input
-
 def safer_eval( _input ):
     try:
         from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
@@ -25,7 +22,7 @@ def safer_eval( _input ):
             else:
                 _output = None
         elif isclass(temp_output):
-            _output = stripProxy(temp_output)
+            _output = temp_output
         else:
             _output = temp_output
     except ImportError:
@@ -93,18 +90,12 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
                 continue
 
         try:
-            ## Type Checking ""Should"" be proxy agnoistic but this may have problems loading before certain classes
-            from Ganga.GPIDev.Base.Proxy import stripProxy
-        except ImportError:
-            stripProxy = dummy_func
-
-        try:
             from Ganga.GPIDev.Base import GangaObject
         except:
             GangaObject = None
 
-        raw_type = stripProxy(_type)
-        raw_val = stripProxy(val)
+        raw_type = _type
+        raw_val = val
 
         if isinstance(raw_type, GangaObject):
             return isinstance(raw_val, raw_type)

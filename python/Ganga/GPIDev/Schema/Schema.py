@@ -402,9 +402,7 @@ class Item(object):
     # item.isA(SimpleItem)
     def isA(self, _what):
 
-        from Ganga.GPIDev.Base.Proxy import stripProxy
-
-        what = stripProxy(_what)
+        what = _what
 
         if isinstance(what, types.InstanceType):
             what = what.__class__

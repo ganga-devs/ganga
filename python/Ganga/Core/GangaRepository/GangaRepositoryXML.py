@@ -25,7 +25,7 @@ from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 from Ganga.GPIDev.Base.Objects import Node
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+from Ganga.GPIDev.Base.Proxy import isType, getName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -51,9 +51,9 @@ def check_app_hash(obj):
                     isVerifiableAna = True
 
     if isVerifiableApp is True:
-        hashable_app = stripProxy(obj.application)
+        hashable_app = obj.application
     elif isVerifiableAna is True:
-        hashable_app = stripProxy(obj.analysis.application)
+        hashable_app = obj.analysis.application
     else:
         hashable_app = None
 
@@ -65,7 +65,7 @@ def check_app_hash(obj):
             except AttributeError as err:
                 logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (getName(hashable_app), getName(obj)))
                 logger.warning("%s" % err)
-            jobObj = stripProxy(hashable_app).getJobObject()
+            jobObj = hashable_app.getJobObject()
             if jobObj is not None:
                 logger.warning('Job: %s is now possibly corrupt!' % jobObj.getFQID('.'))
             logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
@@ -85,7 +85,7 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
     # See Github Issue 185
     with safe_save.lock:
 
-        obj = stripProxy(_obj)
+        obj = _obj
         check_app_hash(obj)
 
         # Create the dirs
@@ -331,7 +331,7 @@ class GangaRepositoryLocal(GangaRepository):
         obj = self.objects[this_id]
         try:
             ifn = self.get_idxfn(this_id)
-            new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
+            new_idx_cache = self.registry.getIndexCache(obj)
             if not os.path.exists(ifn) or shutdown:
                 new_cache = new_idx_cache
                 with open(ifn, "w") as this_file:
@@ -438,7 +438,7 @@ class GangaRepositoryLocal(GangaRepository):
                         obj = v#self.objects[k]
                         new_index = None
                         if obj is not None:
-                            new_index = self.registry.getIndexCache(stripProxy(obj))
+                            new_index = self.registry.getIndexCache(obj)
 
                         if new_index is not None:
                             #logger.debug("k: %s" % k)
@@ -705,7 +705,7 @@ class GangaRepositoryLocal(GangaRepository):
                     tempSubJList._setParent(obj)
                     job_dict = {}
                     for sj in getattr(obj, self.sub_split):
-                        job_dict[sj.id] = stripProxy(sj)
+                        job_dict[sj.id] = sj
                     tempSubJList._reset_cachedJobs(job_dict)
                     tempSubJList.flush(ignore_disk=True)
                     del tempSubJList
@@ -823,7 +823,7 @@ class GangaRepositoryLocal(GangaRepository):
             obj (GangaObject): This is the object which we've loaded from disk
             this_id (int): This is the object id which is the objects key in the objects dict
         """
-        new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
+        new_idx_cache = self.registry.getIndexCache(obj)
         if new_idx_cache != obj._index_cache:
             logger.debug("NEW: %s" % new_idx_cache)
             logger.debug("OLD: %s" % obj._index_cache)

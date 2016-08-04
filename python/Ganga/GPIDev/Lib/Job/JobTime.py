@@ -1,7 +1,6 @@
 import datetime
 
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 import Ganga.Utility.Config
@@ -123,7 +122,7 @@ class JobTime(GangaObject):
             # backend stamps
             if status in b_list:
                 for childstatus in b_list:
-                    be_statetime = stripProxy(j.backend).getStateTime(childstatus)
+                    be_statetime = j.backend.getStateTime(childstatus)
                     if be_statetime is not None:
                         if childstatus in backend_final:
                             self.timestamps["backend_final"] = be_statetime

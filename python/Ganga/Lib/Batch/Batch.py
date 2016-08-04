@@ -1,7 +1,7 @@
 import datetime
 import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Base.Proxy import isType, getName, stripProxy
+from Ganga.GPIDev.Base.Proxy import isType, getName
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Core import BackendError
 import os.path
@@ -508,7 +508,7 @@ class Batch(IBackend):
 
         from Ganga.Utility.Config import getConfig
         for j in jobs:
-            stripProxy(j)._getSessionLock()
+            j._getSessionLock()
             outw = j.getOutputWorkspace()
 
             statusfile = os.path.join(outw.getPath(), '__jobstatus__')

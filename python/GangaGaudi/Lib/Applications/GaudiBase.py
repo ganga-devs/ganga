@@ -3,7 +3,6 @@
 
 import os
 import gzip
-from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import SimpleItem, Schema, Version
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 import Ganga.Utility.logging
@@ -263,7 +262,7 @@ class GaudiBase(IPrepareApp):
             raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.' % (getName(self)))
 
         try:
-            logger.info('Job %s: Preparing %s application.' % (stripProxy(self).getJobObject().getFQID('.'), getName(self)))
+            logger.info('Job %s: Preparing %s application.' % (self.getJobObject().getFQID('.'), getName(self)))
         except AssertionError, err:
             ## No Job associated with Object!!
             logger.info("Preparing %s application." % getName(self))

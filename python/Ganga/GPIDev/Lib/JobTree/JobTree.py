@@ -13,7 +13,6 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryKeyError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 from Ganga.GPIDev.Lib.Registry.JobRegistry import _wrap
-from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObject
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -243,7 +242,7 @@ class JobTree(GangaObject):
         If path to a folder is provided as a parameter than adds job to that folder.
         """
         try:
-            job = stripProxy(job)
+            job = job
 
             mydir = self.__select_dir(path)
 
@@ -376,9 +375,7 @@ class JobTree(GangaObject):
         """
 
         if isType(id, Job):
-            id = stripProxy(id).getFQID('.')
-        if isType(id, GPIProxyObject):
-            id = stripProxy(id)
+            id = id.getFQID('.')
 
         pp = self.__get_path(path)
         tp = os.path.join(*pp)
@@ -417,7 +414,7 @@ class JobTree(GangaObject):
             pp = self.__get_path(path)
             fc = self.__folder_cd(pp)
 
-            #print("self._getRegistry(): %s" % stripProxy(self)._getRegistry())
+            #print("self._getRegistry(): %s" % self._getRegistry())
 
             for i in fc:
                 if isType(fc[i], type({})):
@@ -470,15 +467,15 @@ class _proxy_display(object):
 
     def __get__(self, obj, cls):
         if obj is None:
-            return stripProxy(cls)._proxy_display
-        return stripProxy(obj)._proxy_display
+            return cls._proxy_display
+        return obj._proxy_display
 
 class _copy(object):
 
     def __get__(self, obj, cls):
         if obj is None:
-            return stripProxy(cls)._copy
-        return stripProxy(obj)._copy
+            return cls._copy
+        return obj._copy
 
 
 JobTree.__str__ = JobTree._display

@@ -8,7 +8,6 @@ import random
 import glob
 from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -255,7 +254,7 @@ class DiracFile(IGangaFile):
 
         logger.debug("DiracFile: setLocation")
 
-        if not stripProxy(self).getJobObject():
+        if not self.getJobObject():
             logger.error("No job assocaited with DiracFile: %s" % str(self))
             return
 
@@ -830,7 +829,7 @@ for f in glob.glob('###NAME_PATTERN###'):
                 script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(isCompressed))
 
 
-        if stripProxy(self)._parent is not None and stripProxy(self).getJobObject() and getName(stripProxy(self).getJobObject().backend) != 'Dirac':
+        if self._parent is not None and self.getJobObject() and getName(self.getJobObject().backend) != 'Dirac':
             script_env = self._getDiracEnvStr()
         else:
             script_env = str(None)

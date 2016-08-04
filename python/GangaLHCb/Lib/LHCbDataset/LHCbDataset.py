@@ -15,7 +15,7 @@ from LHCbDatasetUtils import isDiracFile
 from LHCbDatasetUtils import isLFN
 from LHCbDatasetUtils import isPFN
 from LHCbDatasetUtils import strToDataFile
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+from Ganga.GPIDev.Base.Proxy import isType, getName
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.GPIDev.Lib.Job.Job import JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
@@ -95,7 +95,7 @@ class LHCbDataset(GangaDataset):
                     if type(this_file) is str:
                         new_file = string_datafile_shortcut_lhcb(this_file, None)
                     elif isType(this_file, IGangaFile):
-                        new_file = stripProxy(this_file)
+                        new_file = this_file
                     else:
                         new_file = strToDataFile(this_file)
                     new_list.append(new_file)
@@ -230,7 +230,7 @@ class LHCbDataset(GangaDataset):
                 myName = _file.lfn
             if unique and myName in self.getFileNames():
                 continue
-            self.files.append(stripProxy(_file))
+            self.files.append(_file)
 
     def removeFile(self, input_file):
         try:
@@ -508,7 +508,7 @@ def string_dataset_shortcut(files, item):
     # This clever change mirrors that in IPostprocessor (see there)
     # essentially allows for dynamic extensions to JobTemplate
     # such as LHCbJobTemplate etc.
-    from Ganga.GPIDev.Base.Proxy import getProxyInterface
+    from Ganga.GPIDev.Base.Proxy import stripProxy, getProxyInterface
     inputdataList = [stripProxy(i)._schema.datadict['inputdata'] for i in getProxyInterface().__dict__.values()
                      if isinstance(stripProxy(i), ObjectMetaclass)
                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))

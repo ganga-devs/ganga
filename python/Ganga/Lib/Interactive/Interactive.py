@@ -26,7 +26,7 @@ __version__ = "1.4"
 
 from Ganga.Core import Sandbox
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Base.Proxy import stripProxy, getName
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.Utility import util
@@ -272,7 +272,7 @@ class Interactive(IBackend):
 
         for j in jobs:
 
-            raw_backend = stripProxy(j.backend)
+            raw_backend = j.backend
 
             if not j.backend.id:
                 id = raw_backend._getIntFromOutfile("PID:", "__id__")

@@ -6,7 +6,6 @@
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 from Ganga.Utility.logging import getLogger
@@ -118,7 +117,7 @@ class GenericSplitter(ISplitter):
                 logger.debug('set %s = %s to subjob.' %
                              (attrlist[i], getattr(obj, attr)))
 
-            subjobs.append(stripProxy(j))
+            subjobs.append(j)
 
         return subjobs
 #

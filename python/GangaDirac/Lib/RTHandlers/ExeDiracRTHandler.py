@@ -22,7 +22,7 @@ from Ganga.GPIDev.Lib.File import File, FileBuffer
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy
+from Ganga.GPIDev.Base.Proxy import isType
 logger = getLogger()
 config = getConfig('DIRAC')
 
@@ -51,7 +51,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
         input_data,   parametricinput_data = dirac_inputdata(app)
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
-        job = stripProxy(app).getJobObject()
+        job = app.getJobObject()
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
         commandline = []

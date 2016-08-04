@@ -499,7 +499,6 @@ class GoogleFile(IGangaFile):
         if isinstance(to_match, str):
             return fnmatch(self.namePattern, to_match)
         if isinstance(to_match, type):
-            # note stripProxy wont work on class types that aren't instances
             return isinstance(self, to_match._impl)
         return to_match == self
 

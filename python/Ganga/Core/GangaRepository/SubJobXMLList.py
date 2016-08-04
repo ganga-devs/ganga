@@ -5,7 +5,6 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaRepository.GangaRepository import RepositoryError
 from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 import errno
 import copy

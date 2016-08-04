@@ -1108,8 +1108,8 @@ class GangaObject(Node):
     # changing platform of Gaudi should change the version if it is not supported... etc.
     #
     # Semantics:
-    #  gpi_proxy.x = v        --> stripProxy(gpi_proxy)._attribute_filter__set__('x',v)
-    #  gpi_proxy.y = [v1,v2]  --> stripProxy(gpi_proxy)._attribute_filter__set__('x',[v1,v2])
+    #  gpi_proxy.x = v        --> gpi_proxy._attribute_filter__set__('x',v)
+    #  gpi_proxy.y = [v1,v2]  --> gpi_proxy._attribute_filter__set__('x',[v1,v2])
     #
     #  is used for *all* kinds of attributes (component and simple)
     #

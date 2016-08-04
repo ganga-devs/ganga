@@ -12,7 +12,6 @@ from Ganga.GPIDev.Lib.File.GoogleFile import GoogleFile
 
 import Ganga.Utility.logging
 
-from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig, ConfigError
 
@@ -85,19 +84,17 @@ def string_file_shortcut(v, item):
         key = findOutputFileTypeByFileName(v)
         if key is not None:
             if key == 'MassStorageFile':
-                from .MassStorageFile import MassStorageFile
-                return stripProxy(MassStorageFile._proxyClass(v))
+                return MassStorageFile(v)
             elif key == 'LCGSEFile':
-                from .LCGSEFile import LCGSEFile
-                return stripProxy(LCGSEFile._proxyClass(v))
+                return LCGSEFile(v)
             elif key == 'DiracFile':
                 try:
                     from GangaDirac.Lib.Files.DiracFile import DiracFile
-                    return stripProxy(DiracFile._proxyClass(v))
+                    return DiracFile(v)
                 except:
                     Ganga.Utility.logging.log_unknown_exception()
 
-        return stripProxy(LocalFile._proxyClass(v))
+        return LocalFile(v)
 
     return None
 

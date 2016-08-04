@@ -16,7 +16,7 @@ from Ganga.Core import ApplicationConfigurationError
 
 from Ganga.Utility.logging import getLogger
 
-from Ganga.GPIDev.Base.Proxy import getName, stripProxy
+from Ganga.GPIDev.Base.Proxy import getName
 
 import os
 import shutil
@@ -234,7 +234,7 @@ class RTHandler(IRuntimeHandler):
                 prepared_exe = File(os.path.join(
                     os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
 
-        c = StandardJobConfig(prepared_exe, stripProxy(app).getJobObject().inputsandbox, convertIntToStringArgs(app.args), stripProxy(app).getJobObject().outputsandbox)
+        c = StandardJobConfig(prepared_exe, app.getJobObject().inputsandbox, convertIntToStringArgs(app.args), app.getJobObject().outputsandbox)
         return c
 
 
