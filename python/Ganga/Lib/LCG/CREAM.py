@@ -3,6 +3,8 @@ import os
 import os.path
 import math
 import re
+import mimetypes
+import shutil
 
 from urlparse import urlparse
 
@@ -22,7 +24,7 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG import Grid
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import getName
 
 config = getConfig('LCG')
 
@@ -742,7 +744,7 @@ sys.exit(0)
             '###OUTPUTSANDBOX###', repr(jobconfig.outputbox))
 
         script = script.replace(
-            '###APPLICATION_NAME###', _getName(job.application))
+            '###APPLICATION_NAME###', getName(job.application))
         script = script.replace(
             '###APPLICATIONEXEC###', repr(jobconfig.getExeString()))
         script = script.replace(

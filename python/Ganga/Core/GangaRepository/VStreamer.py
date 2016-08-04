@@ -1,10 +1,9 @@
 from __future__ import print_function, absolute_import
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
 # config_scope is namespace used for evaluating simple objects (e.g. File, datetime, SharedDir)
 from Ganga.Utility.Config import config_scope
@@ -51,7 +50,7 @@ class XMLFileError(GangaException):
 def _raw_to_file(j, fobj=None, ignore_subs=[]):
     vstreamer = VStreamer(out=fobj, selection=ignore_subs)
     vstreamer.begin_root()
-    j.accept(vstreamer)
+    stripProxy(j).accept(vstreamer)
     vstreamer.end_root()
 
 def to_file(j, fobj=None, ignore_subs=[]):
@@ -123,7 +122,7 @@ def fastXML(obj, indent='', ignore_subs=''):
         return sl
     elif hasattr(obj, '_data'):
         v = obj._schema.version
-        sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (_getName(obj), v.major, v.minor, obj._category)]
+        sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (getName(obj), v.major, v.minor, obj._category)]
         for attr_name in obj._schema.allItemNames():
             k = attr_name
             o = getattr(obj, k)
@@ -136,11 +135,12 @@ def fastXML(obj, indent='', ignore_subs=''):
                         sl.append('</attribute>\n')
                 except KeyError as err:
                     logger.debug("KeyError: %s" % err)
+                    pass
         sl.append(indent)
         sl.append('</class>')
         return sl
     else:
-        return ["<value>", escape(repr(obj)), "</value>"]
+        return ["<value>", escape(repr(stripProxy(obj))), "</value>"]
 
 ##########################################################################
 # A visitor to print the object tree into XML.
@@ -182,7 +182,7 @@ class VStreamer(object):
         return
 
     def print_value(self, x):
-        print('\n', self.indent(), '<value>%s</value>' % escape(repr(x)), file=self.out)
+        print('\n', self.indent(), '<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
 
     def showAttribute(self, node, name):
         return not node._schema.getItem(name)['transient'] and (self.level > 1 or name not in self.selection)
@@ -217,17 +217,17 @@ class VStreamer(object):
         if s is None:
             print(self.indent(), '<value>None</value>', file=self.out)
         else:
-            if isinstance(s, str):
+            if isType(s, str):
                 print(self.indent(), '<value>%s</value>' % escape(repr(s)), file=self.out)
-            elif hasattr(s, 'accept'):
-                s.accept(self)
-            elif isinstance(s, (list, tuple, GangaList)):
+            elif hasattr(stripProxy(s), 'accept'):
+                stripProxy(s).accept(self)
+            elif isType(s, (list, tuple, GangaList)):
                 print(self.indent(), '<sequence>', file=self.out)
                 for sub_s in s:
                     self.acceptOptional(sub_s)
                 print(self.indent(), '</sequence>', file=self.out)
             else:
-                self.print_value(s)
+                self.print_value(stripProxy(s))
         self.level -= 1
 
     def componentAttribute(self, node, name, subnode, sequence):

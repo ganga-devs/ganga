@@ -285,9 +285,11 @@ def execute(command,
                 exec(eval_includes, {}, local_ns)
             except:
                 logger.error("Failed to eval the env, can't eval stdout")
+                pass
             try:
                 stdout = eval(stdout, {}, local_ns)
             except Exception as err2:
                 logger.error("Err2: %s" % str(err2))
+                pass
 
     return stdout

@@ -64,8 +64,7 @@ def findMonitoringClassesName(job):
     a gived job based on its backend and application names.
     """
 
-    from Ganga.Utility.Config import ConfigError
-    from Ganga.Utility.Config import getConfig
+    from Ganga.Utility.Config import getConfig, ConfigError
     mc = getConfig('MonitoringServices')
 
     def _getMonClasses(option):
@@ -88,9 +87,9 @@ def findMonitoringClassesName(job):
     #  - Application/*
     #  - */Backend
     #  - */*
-    from Ganga.GPIDev.Base.Objects import _getName
-    applicationName = _getName(job.application)
-    backendName = _getName(job.backend)
+    from Ganga.GPIDev.Base.Proxy import getName
+    applicationName = getName(job.application)
+    backendName = getName(job.backend)
 
     allclasses = []
     for configParam in [applicationName + '/' + backendName,

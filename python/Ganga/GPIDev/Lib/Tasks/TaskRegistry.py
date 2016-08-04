@@ -4,11 +4,7 @@ import traceback
 import sys
 import Ganga.GPIDev.Lib.Registry.RegistrySlice
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
-from Ganga.Core.GangaRepository.Registry import Registry
-from Ganga.Core.GangaRepository.Registry import RegistryAccessError
-from Ganga.Core.GangaRepository.Registry import RegistryError
-from Ganga.Core.GangaRepository.Registry import RegistryFlusher
-from Ganga.Core.GangaRepository.Registry import RegistryKeyError
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError, RegistryFlusher
 from Ganga.GPIDev.Base.Proxy import stripProxy, getName, isType
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours, status_colours, fgcol
 

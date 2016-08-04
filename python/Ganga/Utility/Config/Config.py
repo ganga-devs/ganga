@@ -1026,6 +1026,7 @@ def setConfigOption(section="", item="", value=""):
                 config.setSessionValue(item, value)
         except Exception as err:
             logger.debug("Error setting Option: %s = %s  :: %s" % (str(item), str(value), str(err)))
+            pass
 
     return None
 # KH 050725: End of addition

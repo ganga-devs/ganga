@@ -5,7 +5,7 @@
 ##########################################################################
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import getName
 import os
 import glob
 
@@ -73,7 +73,7 @@ class IFileChecker(IChecker):
 
         if not len(self.files):
             raise PostProcessException(
-                'No files specified, %s will do nothing!' % _getName(self))
+                'No files specified, %s will do nothing!' % getName(self))
 
         filepaths = []
         for f in self.files:

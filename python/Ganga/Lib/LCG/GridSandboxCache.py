@@ -12,7 +12,7 @@
 import re
 
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Credentials import getCredential
 
@@ -91,9 +91,9 @@ class GridSandboxCache(GangaObject):
 
         paths = []
         for f in files:
-            if _getName(f) == 'File':
+            if getName(f) == 'File':
                 paths.append('file://%s' % f.name)
-            elif _getName(f) == 'str':
+            elif getName(f) == 'str':
                 paths.append('file://%s' % f)
             else:
                 self.logger.warning('unknown file expression: %s' % repr(f))

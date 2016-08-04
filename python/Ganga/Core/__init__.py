@@ -5,6 +5,7 @@ Subsystems may also be created as local objects in the Ganga Client process.
 """
 from __future__ import absolute_import
 
+import time
 
 from .exceptions import GangaException, ApplicationConfigurationError, \
     BackendError, RepositoryError, BulkOperationRepositoryError, \
@@ -44,8 +45,7 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     This function will change the default value of autostart of the monitoring, depending if the session is interactive or batch.
     The autostart value may be overriden in the config file, so warn if it differs from the default.
     """
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor, config
     from Ganga.Utility.logging import getLogger
 
     logger = getLogger()

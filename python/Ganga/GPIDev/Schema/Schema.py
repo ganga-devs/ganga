@@ -402,7 +402,9 @@ class Item(object):
     # item.isA(SimpleItem)
     def isA(self, _what):
 
-        what = _what
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+
+        what = stripProxy(_what)
 
         if isinstance(what, types.InstanceType):
             what = what.__class__
@@ -491,10 +493,11 @@ class Item(object):
             return
 
         if self._meta['sequence']:
-            if not isinstance(self._meta['defvalue'], (list, tuple, GangaList)):
+            from Ganga.GPIDev.Base.Proxy import isType
+            if not isType(self._meta['defvalue'], (list, tuple, GangaList)):
                 raise SchemaError('Attribute "%s" defined as a sequence but defvalue is not a list.' % name)
 
-            if not isinstance(val, (GangaList, tuple, list)):
+            if not isType(val, (GangaList, tuple, list)):
                 raise TypeMismatchError('Attribute "%s" expects a list.' % name)
 
         if validTypes:
@@ -540,13 +543,14 @@ class Item(object):
             knownLists = (list, tuple, GangaList)
         except Exception as err:
             knownLists = (list, tuple)
-        if isinstance(defVal, knownLists) and isinstance(val, knownLists):
+        from Ganga.GPIDev.Base.Proxy import isType
+        if isType(defVal, knownLists) and isType(val, knownLists):
                 return True
         else:
             if type(defVal) == type:
-                return isinstance(val, type)
+                return isType(val, type)
             else:
-                return isinstance(val, type(defVal))
+                return isType(val, type(defVal))
 
 
 class ComponentItem(Item):

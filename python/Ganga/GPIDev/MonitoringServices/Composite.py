@@ -23,6 +23,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ##########################################################################
 
+import sys
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 
 class CompositeMonitoringService(IMonitoringService):

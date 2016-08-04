@@ -98,12 +98,13 @@ def isStringLike(obj):
 
 def containsGangaObjects(obj):
     """Recursive call to find GangaObjects"""
+    from Ganga.GPIDev.Base.Proxy import isType
     from Ganga.GPIDev.Base.Objects import GangaObject
     if not isStringLike(obj) and canLoopOver(obj):
         for o in obj:
             if containsGangaObjects(o):
                 return True
-    elif isinstance(obj, GangaObject):
+    elif isType(obj, GangaObject):
         # order is special here as we ignore GangaLists
         return True
     return False

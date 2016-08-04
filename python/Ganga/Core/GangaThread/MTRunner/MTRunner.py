@@ -59,9 +59,11 @@ class GangaWorkAgent(GangaThread):
                     break
                 except Empty:
                     logger.debug("Empty Error!")
+                    pass
                 # General case to print unexpected exceptions
                 except Exception:
                     traceback.print_exc()
+                    pass
 
         self.unregister()
 

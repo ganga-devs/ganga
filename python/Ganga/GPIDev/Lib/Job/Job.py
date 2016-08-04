@@ -18,8 +18,8 @@ from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
-from Ganga.GPIDev.Base.Objects import GangaObject, _getName
-from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
+from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Proxy import addProxy, getName, getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
 from Ganga.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
@@ -398,10 +398,9 @@ class Job(GangaObject):
             for f in files2:
                 files3.append(f)
 
-            # FIXME: This really shouldn't have _ever_ been needed.
             files3._setParent(self)
 
-            return files3
+            return addProxy(files3)
 
         # If we ask for 'inputfiles', return the expanded list of subfiles
         if name == 'inputfiles':
@@ -603,6 +602,7 @@ class Job(GangaObject):
                     backend_output_postprocess[configEntry][key] = getConfig('Output')[key]['backendPostprocess'][configEntry]
             except ConfigError as err:
                 logger.debug("ConfigError: %s" % err)
+                pass
 
         return backend_output_postprocess
 
@@ -612,8 +612,8 @@ class Job(GangaObject):
             return
 
         for outputfile in outputfiles:
-            backendClass = _getName(self.backend)
-            outputfileClass = _getName(outputfile)
+            backendClass = getName(self.backend)
+            outputfileClass = getName(outputfile)
 
             # on Batch backends these files can be compressed only on the
             # client
@@ -628,7 +628,7 @@ class Job(GangaObject):
                 if outputfileClass in backend_output_postprocess[backendClass]:
 
                     if not self.subjobs:
-                        logger.info("Job %s Setting Location of %s: %s" % (self.getFQID('.'), _getName(outputfile), outputfile.namePattern))
+                        logger.info("Job %s Setting Location of %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                         try:
                             outputfile.setLocation()
                         except Exception as err:
@@ -636,7 +636,7 @@ class Job(GangaObject):
 
                     if backend_output_postprocess[backendClass][outputfileClass] == 'client':
                         try:
-                            logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), _getName(outputfile), outputfile.namePattern))
+                            logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                             outputfile.put()
                             logger.debug("Cleaning up after put")
                             outputfile.cleanUpClient()
@@ -665,7 +665,7 @@ class Job(GangaObject):
         if getConfig('Output')['FailJobIfNoOutputMatched'] and not self.subjobs:
             for outputfile in self.outputfiles:
                 if not outputfile.hasMatchedFiles():
-                    logger.warning("Job: %s OutputFile failed to match file type %s: %s" % (self.getFQID('.'), _getName(outputfile), outputfile.namePattern))
+                    logger.warning("Job: %s OutputFile failed to match file type %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
                     postprocessFailure = True
 
         # check for failure reasons
@@ -787,7 +787,7 @@ class Job(GangaObject):
         # Dont think it should matter as templates tend not to be prepared
         # try:
         # if hasattr(getRegistry("prep"), 'getShareRef'):
-        #shareref = getRegistry("prep").getShareRef()
+        #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         # except: pass
 
         # register the job (it will also commit it)
@@ -1073,19 +1073,19 @@ class Job(GangaObject):
 
         """
         if not hasattr(self.application, 'is_prepared'):
-            logger.warning("Non-preparable application %s cannot be prepared" % _getName(self.application))
+            logger.warning("Non-preparable application %s cannot be prepared" % getName(self.application))
             return
 
         if (self.application.is_prepared is not None) and (force is False):
             msg = "The application associated with job %s has already been prepared. To force the operation, call prepare(force=True)" % self.id
             raise JobError(msg)
         if (self.application.is_prepared is None):
-            add_to_inputsandbox = self.application.prepare()
+            add_to_inputsandbox = addProxy(self.application).prepare()
             if isType(add_to_inputsandbox, (list, tuple, GangaList)):
                 self.inputsandbox.extend(add_to_inputsandbox)
         elif (self.application.is_prepared is not None) and (force is True):
             self.application.unprepare(force=True)
-            self.application.prepare(force=True)
+            addProxy(self.application).prepare(force=True)
 
 
     def unprepare(self, force=False):
@@ -1093,7 +1093,7 @@ class Job(GangaObject):
         Returns True on success.
         """
         if not hasattr(self.application, 'is_prepared'):
-            logger.warning("Non-preparable application %s cannot be unprepared" % _getName(self.application))
+            logger.warning("Non-preparable application %s cannot be unprepared" % getName(self.application))
             return
 
         if not self._readonly():
@@ -1157,7 +1157,7 @@ class Job(GangaObject):
                 appmasterconfig = self._getMasterAppConfig()
                 logger.debug("appConf: %s" % appmasterconfig)
                 rtHandler = self._getRuntimeHandler()
-                logger.debug("Job %s Calling rtHandler.master_prepare for RTH: %s" % (self.getFQID('.'), _getName(rtHandler)))
+                logger.debug("Job %s Calling rtHandler.master_prepare for RTH: %s" % (self.getFQID('.'), getName(rtHandler)))
                 jobmasterconfig = rtHandler.master_prepare(self.application, appmasterconfig)
                 self._storedJobMasterConfig = jobmasterconfig
         else:
@@ -1234,13 +1234,13 @@ class Job(GangaObject):
                 # select the runtime handler
                 try:
                     logger.debug("Job %s Calling allHandlers.get" % self.getFQID('.'))
-                    rtHandler = allHandlers.get(_getName(self.application), _getName(self.backend))()
+                    rtHandler = allHandlers.get(getName(self.application), getName(self.backend))()
                 except KeyError as x:
-                    msg = 'runtime handler not found for application=%s and backend=%s' % (_getName(self.application), _getName(self.backend))
+                    msg = 'runtime handler not found for application=%s and backend=%s' % (getName(self.application), getName(self.backend))
                     logger.error("Available: %s" % allHandlers.handlers.keys())
-                    logger.error("Wanted: %s" % _getName(self.backend))
-                    logger.error("Available: %s" % allHandlers.handlers[_getName(self.backend)])
-                    logger.error("Wanted: %s" % _getName(self.application))
+                    logger.error("Wanted: %s" % getName(self.backend))
+                    logger.error("Available: %s" % allHandlers.handlers[getName(self.backend)])
+                    logger.error("Wanted: %s" % getName(self.application))
                     logger.error(msg)
                     raise JobError(msg)
                 self._storedRTHandler = rtHandler
@@ -1303,7 +1303,7 @@ class Job(GangaObject):
         # from Panda to Jedi
         rjobs = None
 
-        if _getName(self.backend) == "Jedi" and self.splitter:
+        if getName(self.backend) == "Jedi" and self.splitter:
             logger.error("You should not use a splitter with the Jedi backend. The splitter will be ignored.")
             self.splitter = None
             rjobs = [self]
@@ -1392,7 +1392,7 @@ class Job(GangaObject):
         supports_keep_going = 'keep_going' in inspect.getargspec(self.backend.master_submit)[0]
 
         if keep_going and not supports_keep_going:
-            msg = 'job.submit(keep_going=True) is not supported by %s backend' % _getName(self.backend)
+            msg = 'job.submit(keep_going=True) is not supported by %s backend' % getName(self.backend)
             logger.error(msg)
             raise JobError(msg)
 
@@ -1458,7 +1458,7 @@ class Job(GangaObject):
             # Only stored as transient if the master_prepare successfully
             # completes
             jobmasterconfig = self._getJobMasterConfig()
-            logger.debug("Preparing with: %s" % _getName(rtHandler))
+            logger.debug("Preparing with: %s" % getName(rtHandler))
 
             # prepare the subjobs with the runtime handler
             # Calls the rtHandler.prepare if it hasn't already been called by the master job or by self
@@ -1500,14 +1500,14 @@ class Job(GangaObject):
 
             # send job submission message
             if len(self.subjobs) == 0:
-                ganga_job_submitted(_getName(self.application), _getName(self.backend), "1", "0", "0")
+                ganga_job_submitted(getName(self.application), getName(self.backend), "1", "0", "0")
             else:
                 submitted_count = 0
                 for sj in self.subjobs:
                     if sj.status == 'submitted':
                         submitted_count += 1
 
-                ganga_job_submitted(_getName(self.application), _getName(self.backend), "0", "1", submitted_count)
+                ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", submitted_count)
 
             return 1
 
@@ -1541,14 +1541,14 @@ class Job(GangaObject):
 
         # send job submission message
         if len(self.subjobs) == 0:
-            ganga_job_submitted(_getName(self.application), _getName(self.backend), "1", "0", "0")
+            ganga_job_submitted(getName(self.application), getName(self.backend), "1", "0", "0")
         else:
             submitted_count = 0
             for sj in self.subjobs:
                 if sj.status == 'submitted':
                     submitted_count += 1
 
-            ganga_job_submitted(_getName(self.application), _getName(self.backend), "0", "1", submitted_count)
+            ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", submitted_count)
 
         self._getRegistry()._flush([self])
 
@@ -1611,7 +1611,7 @@ class Job(GangaObject):
 
         if getConfig('Output')['AutoRemoveFilesWithJob']:
             def removeFiles(this_file):
-                if _getName(this_file) in getConfig('Output')['AutoRemoveFileTypes'] and hasattr(this_file, '_auto_remove'):
+                if getName(this_file) in getConfig('Output')['AutoRemoveFileTypes'] and hasattr(this_file, '_auto_remove'):
                     this_file._auto_remove()
 
             for sj in self.subjobs:
@@ -1685,6 +1685,7 @@ class Job(GangaObject):
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
+                pass
 
             def doit(f):
                 try:
@@ -1718,11 +1719,13 @@ class Job(GangaObject):
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
+                pass
 
         try:
             self._releaseSessionLockAndFlush()
         except Exception as err:
             logger.debug("Remove Err: %s" % err)
+            pass
 
     allowed_force_states = {'completed': ['completing', 'failed'],
                             'failed': ["submitting", "completing", "completed", "submitted", "running", "killed"]}
@@ -1898,7 +1901,7 @@ class Job(GangaObject):
         supports_master_resubmit = len(inspect.getargspec(self.backend.master_resubmit)[0]) > 1
 
         if not supports_master_resubmit and backend:
-            raise JobError('%s backend does not support changing of backend parameters at resubmission (optional backend argument is not supported)' % _getName(self.backend))
+            raise JobError('%s backend does not support changing of backend parameters at resubmission (optional backend argument is not supported)' % getName(self.backend))
 
         def check_changability(obj1, obj2):
             # check if the only allowed attributes have been modified
@@ -1907,7 +1910,7 @@ class Job(GangaObject):
                 v2 = getattr(obj2, name)
                 if not item['changable_at_resubmit'] and item['copyable']:
                     if v1 != v2:
-                        raise JobError('%s.%s attribute cannot be changed at resubmit' % (_getName(obj1), name))
+                        raise JobError('%s.%s attribute cannot be changed at resubmit' % (getName(obj1), name))
                 if item.isA(ComponentItem):
                     check_changability(v1, v2)
 
@@ -1976,10 +1979,10 @@ class Job(GangaObject):
             # send job submission message
             # if resubmit on subjob
             if self.getFQID('.').find('.') > 0:
-                ganga_job_submitted(_getName(self.application), _getName(self.backend), "0", "0", "1")
+                ganga_job_submitted(getName(self.application), getName(self.backend), "0", "0", "1")
             # if resubmit on plain job
             elif len(self.subjobs) == 0:
-                ganga_job_submitted(_getName(self.application), _getName(self.backend), "1", "0", "0")
+                ganga_job_submitted(getName(self.application), getName(self.backend), "1", "0", "0")
             # else resubmit on master job -> increment the counter of the
             # subjobs with the succesfull resubmited subjobs
             else:
@@ -1988,7 +1991,7 @@ class Job(GangaObject):
                     if sj.status == 'submitted':
                         submitted_count += 1
 
-                ganga_job_submitted(_getName(self.application), _getName(self.backend), "0", "0", submitted_count)
+                ganga_job_submitted(getName(self.application), getName(self.backend), "0", "0", submitted_count)
 
         except GangaException, x:
             logger.error("failed to resubmit job, %s" % x)
@@ -2001,7 +2004,7 @@ class Job(GangaObject):
             id = "None"
         else:
             id = self.getFQID('.')
-        return "%s#%s" % (_getName(self), id)
+        return "%s#%s" % (getName(self), id)
 
     def _subjobs_proxy(self):
 
@@ -2053,11 +2056,11 @@ class Job(GangaObject):
             for val in value:
                 dir_ = val.localDir or ''
                 name_ = val.namePattern or ''
-                key = '%s%s' % (_getName(val), os.path.join(dir_, name_))
+                key = '%s%s' % (getName(val), os.path.join(dir_, name_))
                 if key not in uniqueValuesDict:
                     uniqueValuesDict.append(key)
                     uniqueValues.append(val)
-                elif _getName(val) == 'LCGSEFile':
+                elif getName(val) == 'LCGSEFile':
                     uniqueValues.append(val)
 
             super(Job, self).__setattr__(attr, uniqueValues)
@@ -2114,7 +2117,7 @@ class Job(GangaObject):
             # Temporary polution of Atlas stuff to (almost) transparently
             # switch from Panda to Jedi
             configPanda = None
-            if value is not None and _getName(value) == "Panda":
+            if value is not None and getName(value) == "Panda":
                 configPanda = Ganga.Utility.Config.getConfig('Panda')
 
             if configPanda and not configPanda['AllowDirectSubmission']:

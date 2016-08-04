@@ -1,7 +1,7 @@
 import datetime
 import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import isType, getName, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Core import BackendError
 import os.path
@@ -164,7 +164,7 @@ class Batch(IBackend):
         if jobnameopt and job.name != '':
             # PBS doesn't like names with spaces
             tmp_name = job.name
-            if isinstance(self, PBS):
+            if isType(self, PBS):
                 tmp_name = tmp_name.replace(" ", "_")
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)
@@ -255,7 +255,7 @@ class Batch(IBackend):
         if jobnameopt and job.name != '':
             # PBS doesn't like names with spaces
             tmp_name = job.name
-            if isinstance(self, PBS):
+            if isType(self, PBS):
                 tmp_name = tmp_name.replace(" ", "_")
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)
@@ -477,6 +477,7 @@ class Batch(IBackend):
 
             pid, queue, actualCE, exitcode = None, None, None, None
 
+            import re
             statusfile = None
             try:
                 statusfile = open(f)
@@ -508,7 +509,7 @@ class Batch(IBackend):
 
         from Ganga.Utility.Config import getConfig
         for j in jobs:
-            j._getSessionLock()
+            stripProxy(j)._getSessionLock()
             outw = j.getOutputWorkspace()
 
             statusfile = os.path.join(outw.getPath(), '__jobstatus__')
@@ -539,7 +540,7 @@ class Batch(IBackend):
                 else:
                     # Job is still running. Check if alive
                     time = get_last_alive(heartbeatfile)
-                    config = getConfig(_getName(j.backend))
+                    config = getConfig(getName(j.backend))
                     if time > config['timeout']:
                         logger.warning(
                             'Job %s has disappeared from the batch system.', str(j.getFQID('.')))

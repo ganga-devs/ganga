@@ -2,11 +2,7 @@ import unittest
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Lib.File import LocalFile
-from Ganga.GPIDev.Schema import ComponentItem
-from Ganga.GPIDev.Schema import FileItem
-from Ganga.GPIDev.Schema import Schema
-from Ganga.GPIDev.Schema import SimpleItem
-from Ganga.GPIDev.Schema import Version
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
 
 
 class SampleGangaObject(GangaObject):

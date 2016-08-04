@@ -31,7 +31,7 @@
 """
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import getName
 
 log = getLogger()
 
@@ -48,10 +48,10 @@ def isCredentialRequired(credObj):
     from Ganga.Runtime import Workspace_runtime
     from Ganga.Runtime import Repository_runtime
 
-    if _getName(credObj) == 'AfsToken':
+    if getName(credObj) == 'AfsToken':
         return Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken()
 
-    if _getName(credObj) == 'GridProxy':
+    if getName(credObj) == 'GridProxy':
         from Ganga.Core.GangaRepository import getRegistryProxy
         from Ganga.Runtime.GPIFunctions import typename
         from Ganga.GPIDev.Base.Proxy import stripProxy
@@ -61,7 +61,7 @@ def isCredentialRequired(credObj):
             this_status = lazyLoadJobStatus(ji)
             if this_status in ['submitted', 'running', 'completing']:
                 this_backend = lazyLoadJobBackend(ji)
-                if _getName(this_backend) == 'LCG':
+                if getName(this_backend) == 'LCG':
                     return True
         return False
 

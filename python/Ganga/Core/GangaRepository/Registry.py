@@ -4,8 +4,7 @@ import functools
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Core import GangaException
-from Ganga.Core.GangaRepository import InaccessibleObjectError
-from Ganga.Core.GangaRepository import RepositoryError
+from Ganga.Core.GangaRepository import InaccessibleObjectError, RepositoryError
 
 import time
 import threading
@@ -13,7 +12,7 @@ import threading
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import isType, getName
 from Ganga.Utility.Config import getConfig
 
 logger = getLogger()
@@ -393,7 +392,7 @@ class Registry(object):
         try:
             return next(id_ for id_, o in self._objects.items() if o is obj)
         except StopIteration:
-            raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (_getName(obj), self.name))
+            raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
 
     @synchronised_complete_lock
     def clean(self, force=False):
@@ -490,7 +489,7 @@ class Registry(object):
         """
         logger.debug("_flush")
 
-        if not isinstance(objs, (list, tuple, GangaList)):
+        if not isType(objs, (list, tuple, GangaList)):
             objs = [objs]
 
         if self.hasStarted() is not True:

@@ -2,14 +2,11 @@ from __future__ import absolute_import
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
-from os import path
-from os import unlink
+from os import path, stat, unlink
 
+import time
 
-from .utilFunctions import getIndexFile
-from .utilFunctions import getJobsPath
-from .utilFunctions import getXMLDir
-from .utilFunctions import getXMLFile
+from .utilFunctions import getJobsPath, getXMLDir, getXMLFile, getIndexFile
 
 global_AutoStartReg = True
 

@@ -6,8 +6,7 @@ from Ganga.testlib.monitoring import run_until_completed, run_until_state
 
 class TestSavannah28511(GangaUnitTest):
     def test_Savannah28511(self):
-        from Ganga.GPI import Job
-        from Ganga.GPI import TestSubmitter
+        from Ganga.GPI import Job, TestSubmitter
 
         j = Job()
 

@@ -6,7 +6,7 @@ from Ganga.Core.GangaThread import GangaThread
 from Ganga.Utility.execute import execute
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import getName
 
 from collections import namedtuple
 
@@ -95,7 +95,7 @@ class WorkerThreadPool(object):
                 continue
 
             if isinstance(item.command_input, FunctionInput):
-                thread._command = _getName(item.command_input.function)
+                thread._command = getName(item.command_input.function)
             elif isinstance(item.command_input, CommandInput):
                 thread._command = item.command_input.command
                 thread._timeout = item.command_input.timeout
@@ -118,7 +118,7 @@ class WorkerThreadPool(object):
                 logger.error("Exception raised executing '%s' in Thread '%s':\n%s" % (thread._command, thread.gangaName, traceback.format_exc()))
                 if item.fallback_func.function is not None:
                     if isinstance(item.fallback_func, FunctionInput):
-                        thread._command = _getName(item.fallback_func.function)
+                        thread._command = getName(item.fallback_func.function)
                         thread._timeout = 'N/A'
                         try:
                             item.fallback_func.function(e, *item.fallback_func.args, **item.fallback_func.kwargs)
@@ -130,7 +130,7 @@ class WorkerThreadPool(object):
             else:
                 if item.callback_func.function is not None:
                     if isinstance(item.callback_func, FunctionInput):
-                        thread._command = _getName(item.callback_func.function)
+                        thread._command = getName(item.callback_func.function)
                         thread._timeout = 'N/A'
                         try:
                             item.callback_func.function(

@@ -2,12 +2,12 @@ import os
 import shutil
 import time
 import copy
+import threading
 from Ganga.Core.GangaRepository.Registry import Registry
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Objects import synchronised
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
-from Ganga.GPIDev.Base.Proxy import getName
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 import Ganga.Utility.Config
 from Ganga.GPIDev.Lib.File import getSharedPath
 logger = Ganga.Utility.logging.getLogger()
@@ -221,6 +221,7 @@ class ShareRef(GangaObject):
                             master_index += 1
                     except AttributeError as err3:
                         logger.debug("Err3: %s" % err3)
+                        pass
 
             if run_unp is not None and unprepare is True:
                 logger.info('Unpreparing %s repository object #%s associated with ShareDir %s' % (item.values()[0],  stripProxy(item.keys()[0])._registry_id, sharedir))
@@ -309,6 +310,7 @@ class ShareRef(GangaObject):
                         shortname = item.keys()[0].analysis.application.is_prepared.name
                     except AttributeError as err3:
                         logger.debug("Err3: %s" % err3)
+                        pass
             try:
                 if shortname is not None and shortname is not True:
                     if os.path.basename(shortname) != shortname:
@@ -323,6 +325,7 @@ class ShareRef(GangaObject):
             except Exception as err:
                 logger.debug("-Error: %s" % err)
                 Ganga.Utility.logging.log_unknown_exception()
+                pass
 
         # here we iterate over the lookup_input list and unprepare as
         # necessary.
