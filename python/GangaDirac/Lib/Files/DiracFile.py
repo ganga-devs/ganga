@@ -743,7 +743,7 @@ class DiracFile(IGangaFile):
 
     def getWNScriptDownloadCommand(self, indent):
 
-        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'downloadScript.py')
+        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'downloadScript.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         download_script = FileUtils.loadScript(script_location, '')
@@ -792,12 +792,12 @@ for f in glob.glob('###NAME_PATTERN###'):
         """
 
         script_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-        script_location = os.path.join( script_path, 'uploadScript.py')
+        script_location = os.path.join( script_path, 'uploadScript.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         upload_script = FileUtils.loadScript(script_location, '')
 
-        WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
+        WNscript_location = os.path.join( script_path, 'WNInjectTemplate.template' )
         script = FileUtils.loadScript(WNscript_location, '')
 
         if not self.remoteDir:
