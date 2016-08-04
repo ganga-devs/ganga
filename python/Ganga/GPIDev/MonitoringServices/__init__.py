@@ -88,9 +88,9 @@ def findMonitoringClassesName(job):
     #  - Application/*
     #  - */Backend
     #  - */*
-    from Ganga.GPIDev.Base.Proxy import getName
-    applicationName = getName(job.application)
-    backendName = getName(job.backend)
+    from Ganga.GPIDev.Base.Objects import _getName
+    applicationName = _getName(job.application)
+    backendName = _getName(job.backend)
 
     allclasses = []
     for configParam in [applicationName + '/' + backendName,

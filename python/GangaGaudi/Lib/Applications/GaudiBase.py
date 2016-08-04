@@ -15,7 +15,7 @@ import Ganga.Utility.Config
 from Ganga.Utility.execute import execute
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 import copy
 logger = Ganga.Utility.logging.getLogger()
 
@@ -259,13 +259,13 @@ class GaudiBase(IPrepareApp):
 
     def _register(self, force):
         if (self.is_prepared is not None) and (force is not True):
-            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.' % (getName(self)))
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.' % (_getName(self)))
 
         try:
-            logger.info('Job %s: Preparing %s application.' % (self.getJobObject().getFQID('.'), getName(self)))
+            logger.info('Job %s: Preparing %s application.' % (self.getJobObject().getFQID('.'), _getName(self)))
         except AssertionError, err:
             ## No Job associated with Object!!
-            logger.info("Preparing %s application." % getName(self))
+            logger.info("Preparing %s application." % _getName(self))
         self.is_prepared = ShareDir()
 
     def master_configure(self):

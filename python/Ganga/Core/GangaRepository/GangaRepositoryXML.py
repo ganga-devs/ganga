@@ -25,7 +25,7 @@ from Ganga.Core.GangaRepository.VStreamer import XMLFileError
 from Ganga.GPIDev.Base.Objects import Node
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -61,9 +61,9 @@ def check_app_hash(obj):
         if not hashable_app.calc_hash(verify=True):
             try:
                 logger.warning("%s" % hashable_app)
-                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (getName(hashable_app), getName(obj), obj._registry_id))
+                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (_getName(hashable_app), _getName(obj), obj._registry_id))
             except AttributeError as err:
-                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (getName(hashable_app), getName(obj)))
+                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (_getName(hashable_app), _getName(obj)))
                 logger.warning("%s" % err)
             jobObj = hashable_app.getJobObject()
             if jobObj is not None:
@@ -289,7 +289,7 @@ class GangaRepositoryLocal(GangaRepository):
                     cat, cls, cache = pickle_from_file(fobj)[0]
             except Exception as x:
                 logger.warning("index_load Exception: %s" % x)
-                raise IOError("Error on unpickling: %s %s" %(getName(x), x))
+                raise IOError("Error on unpickling: %s %s" %(_getName(x), x))
             if this_id in self.objects:
                 obj = self.objects[this_id]
                 setattr(obj, "_registry_refresh", True)
@@ -335,14 +335,14 @@ class GangaRepositoryLocal(GangaRepository):
             if not os.path.exists(ifn) or shutdown:
                 new_cache = new_idx_cache
                 with open(ifn, "w") as this_file:
-                    new_index = (obj._category, getName(obj), new_cache)
+                    new_index = (obj._category, _getName(obj), new_cache)
                     logger.debug("Writing: %s" % str(new_index))
                     pickle_to_file(new_index, this_file)
                 self._cached_obj[this_id] = new_cache
                 obj._index_cache = {}
             self._cached_obj[this_id] = new_idx_cache
         except IOError as err:
-            logger.error("Index saving to '%s' failed: %s %s" % (ifn, getName(err), err))
+            logger.error("Index saving to '%s' failed: %s %s" % (ifn, _getName(err), err))
 
     def get_index_listing(self):
         """Get dictionary of possible objects in the Repository: True means index is present,
@@ -595,8 +595,8 @@ class GangaRepositoryLocal(GangaRepository):
             for this_id, x in summary:
                 if this_id in self.known_bad_ids:
                     continue
-                cnt[getName(x)] = cnt.get(getName(x), []) + [str(this_id)]
-                examples[getName(x)] = str(x)
+                cnt[_getName(x)] = cnt.get(_getName(x), []) + [str(this_id)]
+                examples[_getName(x)] = str(x)
                 self.known_bad_ids.append(this_id)
                 # add object to incomplete_objects
                 if not this_id in self.incomplete_objects:
@@ -753,7 +753,7 @@ class GangaRepositoryLocal(GangaRepository):
                 self._safe_flush_xml(this_id)
 
                 self._cache_load_timestamp[this_id] = time.time()
-                self._cached_cls[this_id] = getName(self.objects[this_id])
+                self._cached_cls[this_id] = _getName(self.objects[this_id])
                 self._cached_cat[this_id] = self.objects[this_id]._category
                 self._cached_obj[this_id] = self.objects[this_id]._index_cache
 

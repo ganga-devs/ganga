@@ -20,7 +20,7 @@ from Ganga.Core import ApplicationPrepareError
 
 from Ganga.Utility.logging import getLogger
 
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 
 from Ganga.Utility.files import expandfilename
 
@@ -82,9 +82,9 @@ class Im3ShapeApp(IPrepareApp):
         """
 
         if (self.is_prepared is not None) and (force is not True):
-            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
+            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % _getName(self))
 
-        logger.info('Preparing %s application.' % getName(self))
+        logger.info('Preparing %s application.' % _getName(self))
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 

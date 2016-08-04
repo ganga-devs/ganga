@@ -4,7 +4,7 @@ of inputdata, outputdata and output files.'''
 
 import tempfile
 import fnmatch
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Lib.File import LocalFile
 import Ganga.Utility.logging
@@ -201,8 +201,8 @@ class PythonOptionsParser(object):
     def get_output(self, job):
         '''Builds lists of output files and output data.'''
 
-        outputdata = [f.namePattern for f in job.outputfiles if outputFilePostProcessingOnWN(job, getName(f)) ]
-        outsandbox = [f.namePattern for f in job.outputfiles if not outputFilePostProcessingOnWN(job, getName(f)) ]
+        outputdata = [f.namePattern for f in job.outputfiles if outputFilePostProcessingOnWN(job, _getName(f)) ]
+        outsandbox = [f.namePattern for f in job.outputfiles if not outputFilePostProcessingOnWN(job, _getName(f)) ]
 
         # if user put any files in both, remove them from the sandbox
         for f in outsandbox:

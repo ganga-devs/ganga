@@ -17,7 +17,6 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Core.exceptions import RepositoryError
 from Ganga.Core.exceptions import SchemaVersionError
-from Ganga.GPIDev.Base.Proxy import getName
 
 logger = getLogger()
 

@@ -3,7 +3,7 @@
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 import Ganga.Utility.logging
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 logger = Ganga.Utility.logging.getLogger()
@@ -64,7 +64,7 @@ class GangaDataset(Dataset):
             raise GangaException('Argument "files" must be a iterable.')
         if self._getParent() is not None and self._getParent()._readonly():
             raise ReadOnlyObjectError(
-                'object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._getParent().id, getName(self)))
+                'object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._getParent().id, _getName(self)))
         names = self.getFileNames()
         files = [f for f in files]  # just in case they extend w/ self
         for f in files:
@@ -97,7 +97,7 @@ class GangaDataset(Dataset):
                 filelist += f.getFilenameList()
             else:
                 logger.warning(
-                    "accessURL or getFilenameList not implemented for File '%s'" % getName(f))
+                    "accessURL or getFilenameList not implemented for File '%s'" % _getName(f))
 
         return filelist
 

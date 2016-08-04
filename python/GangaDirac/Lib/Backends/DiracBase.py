@@ -16,7 +16,7 @@ from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Credentials import getCredential
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.Core.GangaThread.WorkerThreads import getQueues
 configDirac = getConfig('DIRAC')
 logger = getLogger()
@@ -240,7 +240,7 @@ class DiracBase(IBackend):
         try:
             for sj in rjobs:
                 fqid = sj.getFQID('.')
-                logger.info("resubmitting job %s to %s backend", fqid, getName(sj.backend))
+                logger.info("resubmitting job %s to %s backend", fqid, _getName(sj.backend))
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')

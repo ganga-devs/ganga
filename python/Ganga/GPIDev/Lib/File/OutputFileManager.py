@@ -6,7 +6,7 @@ import copy
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -40,7 +40,7 @@ def outputFilePostProcessingTestForWhen(job, outputFileClassName, when):
     Checks if the output files of a given job(we are interested in the backend)
     should be postprocessed 'when', depending on job.backend_output_postprocess dictionary
     """
-    backendClassName = getName(job.backend)
+    backendClassName = _getName(job.backend)
 
     backend_output_postprocess = job.getBackendOutputPostprocessDict()
     if backendClassName in backend_output_postprocess:
@@ -65,7 +65,7 @@ def getOutputSandboxPatterns(job):
 
         for outputFile in job.outputfiles:
 
-            outputFileClassName = getName(outputFile)
+            outputFileClassName = _getName(outputFile)
 
             if outputFilePostProcessingOnClient(job, outputFileClassName) or outputFileClassName == 'LocalFile':
                 if outputFile.namePattern not in outputPatterns:
@@ -95,7 +95,7 @@ def getInputFilesPatterns(job):
 
     for inputFile in inputfiles_list:
 
-        inputFileClassName = getName(inputFile)
+        inputFileClassName = _getName(inputFile)
 
         if inputFileClassName == 'LocalFile':
             for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
@@ -127,7 +127,7 @@ def getOutputSandboxPatternsForInteractive(job):
 
     for outputFile in job.outputfiles:
 
-        outputFileClassName = getName(outputFile)
+        outputFileClassName = _getName(outputFile)
 
         if outputFileClassName == 'LocalFile' or (outputFileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):
             if outputFile.compressed:
@@ -156,7 +156,7 @@ def getWNCodeForOutputSandbox(job, files, jobid):
 
         for outputFile in job.outputfiles:
 
-            outputFileClassName = getName(outputFile)
+            outputFileClassName = _getName(outputFile)
 
             if outputFileClassName == 'LocalFile' or (outputFileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):
                 patternsToSandbox.append(outputFile.namePattern)
@@ -222,12 +222,12 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     # The LocalFiles in inputfiles have already been dealt with
     if job.inputdata and isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
         for inputFile in job.inputdata.files:
-            inputfileClassName = getName(inputFile)
+            inputfileClassName = _getName(inputFile)
 
             if inputfileClassName == "LocalFile":
 
                 # special case for LocalFile
-                if getName(job.backend) in ['Localhost', 'Batch', 'LSF', 'Condor', 'PBS']:
+                if _getName(job.backend) in ['Localhost', 'Batch', 'LSF', 'Condor', 'PBS']:
                     # create symlink
                     shortScript = """
 # create symbolic links for LocalFiles
@@ -248,7 +248,7 @@ for f in ###FILELIST###:
 
     for inputFile in inputfiles_list:
 
-        inputfileClassName = getName(inputFile)
+        inputfileClassName = _getName(inputFile)
 
         if outputFilePostProcessingOnWN(job, inputfileClassName):
             inputFile.processWildcardMatches()
@@ -275,8 +275,8 @@ def getWNCodeForOutputPostprocessing(job, indent):
     else:
         for outputFile in job.outputfiles:
 
-            outputfileClassName = getName(outputFile)
-            backendClassName = getName(job.backend)
+            outputfileClassName = _getName(outputFile)
+            backendClassName = _getName(job.backend)
 
             if outputFile.compressed:
                 if outputfileClassName == 'LocalFile' and backendClassName not in ['Localhost', 'LSF', 'Interactive']:

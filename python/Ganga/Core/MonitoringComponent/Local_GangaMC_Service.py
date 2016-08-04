@@ -11,7 +11,7 @@ from Ganga.Utility.threads import SynchronisedObject
 import Ganga.GPIDev.Credentials as Credentials
 from Ganga.Core.InternalServices import Coordinator
 
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
 
 from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus, lazyLoadJobBackend
@@ -302,7 +302,7 @@ class UpdateDict(object):
             timeoutMax = config['default_backend_poll_rate']
         #log.debug("*----addEntry()")
 
-        backend = getName(backendObj)
+        backend = _getName(backendObj)
         if backend in self.table:
             backendObj, jSet, lock = self.table[backend].updateActionTuple()
         else:  # New backend.
@@ -498,7 +498,7 @@ class JobRegistry_Monitor(GangaThread):
 
         # Add credential checking to monitoring loop
         for _credObj in Credentials._allCredentials.itervalues():
-            log.debug("Setting callback hook for %s" % getName(_credObj))
+            log.debug("Setting callback hook for %s" % _getName(_credObj))
             self.setCallbackHook(self.makeCredCheckJobInsertor(_credObj), {}, True, timeout=config['creds_poll_rate'])
 
         # Add low disk-space checking to monitoring loop
@@ -886,7 +886,7 @@ class JobRegistry_Monitor(GangaThread):
         return True
 
     def setCallbackHook(self, func, argDict, enabled, timeout=0):
-        func_name = getName(func)
+        func_name = _getName(func)
         log.debug('Setting Callback hook function %s.' % func_name)
         log.debug('arg dict: %s' % str(argDict))
         if func_name in self.callbackHookDict:
@@ -894,7 +894,7 @@ class JobRegistry_Monitor(GangaThread):
         self.callbackHookDict[func_name] = [func, CallbackHookEntry(argDict=argDict, enabled=enabled, timeout=timeout)]
 
     def removeCallbackHook(self, func):
-        func_name = getName(func)
+        func_name = _getName(func)
         log.debug('Removing Callback hook function %s.' % func_name)
         if func_name in self.callbackHookDict:
             del self.callbackHookDict[func_name]
@@ -902,7 +902,7 @@ class JobRegistry_Monitor(GangaThread):
             log.error('Callback hook function does not exist.')
 
     def enableCallbackHook(self, func):
-        func_name = getName(func)
+        func_name = _getName(func)
         log.debug('Enabling Callback hook function %s.' % func_name)
         if func_name in self.callbackHookDict:
             self.callbackHookDict[func_name][1].enabled = True
@@ -910,7 +910,7 @@ class JobRegistry_Monitor(GangaThread):
             log.error('Callback hook function does not exist.')
 
     def disableCallbackHook(self, func):
-        func_name = getName(func)
+        func_name = _getName(func)
         log.debug('Disabling Callback hook function %s.' % func_name)
         if func_name in self.callbackHookDict:
             self.callbackHookDict[func_name][1].enabled = False
@@ -934,7 +934,7 @@ class JobRegistry_Monitor(GangaThread):
         if clientFunc in self.clientCallbackDict:
             del self.clientCallbackDict[clientFunc]
         else:
-            log.error("%s not found in client callback dictionary." % getName(clientFunc))
+            log.error("%s not found in client callback dictionary." % _getName(clientFunc))
 
     def __defaultActiveBackendsFunc(self):
         log.debug("__defaultActiveBackendsFunc")
@@ -953,7 +953,7 @@ class JobRegistry_Monitor(GangaThread):
                 if job_status in ['submitted', 'running'] or (j.master and (job_status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
                         backend_obj = lazyLoadJobBackend(j)
-                        backend_name = getName(backend_obj)
+                        backend_name = _getName(backend_obj)
                         active_backends.setdefault(backend_name, [])
                         active_backends[backend_name].append(j)
             except RegistryKeyError as err:
@@ -984,7 +984,7 @@ class JobRegistry_Monitor(GangaThread):
         self._runningNow = True
 
         try:
-            log.debug("[Update Thread %s] Lock acquired for %s" % (currentThread, getName(backendObj)))
+            log.debug("[Update Thread %s] Lock acquired for %s" % (currentThread, _getName(backendObj)))
             #alljobList_fromset = IList(filter(lambda x: x.status in ['submitted', 'running'], jobListSet), self.stopIter)
             # print alljobList_fromset
             #masterJobList_fromset = IList(filter(lambda x: (x.master is not None) and (x.status in ['submitting']), jobListSet), self.stopIter)
@@ -999,9 +999,9 @@ class JobRegistry_Monitor(GangaThread):
             jobList_fromset = alljobList_fromset
             jobList_fromset.extend(masterJobList_fromset)
             # print jobList_fromset
-            self.updateDict_ts.clearEntry(getName(backendObj))
+            self.updateDict_ts.clearEntry(_getName(backendObj))
             try:
-                log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, getName(backendObj), [x.id for x in jobList_fromset]))
+                log.debug("[Update Thread %s] Updating %s with %s." % (currentThread, _getName(backendObj), [x.id for x in jobList_fromset]))
 
                 tested_backends = []
 
@@ -1064,7 +1064,7 @@ class JobRegistry_Monitor(GangaThread):
             except BackendError as x:
                 self._handleError(x, x.backend_name, 0)
             except Exception as err:
-                #self._handleError(err, getName(backendObj), 1)
+                #self._handleError(err, _getName(backendObj), 1)
                 log.error("Monitoring Error: %s" % str(err))
                 log.debug("Lets not crash here!")
                 return
@@ -1084,7 +1084,7 @@ class JobRegistry_Monitor(GangaThread):
             log.debug("Monitoring Loop Error: %s" % str(err))
         finally:
             lock.release()
-            log.debug("[Update Thread %s] Lock released for %s." % (currentThread, getName(backendObj)))
+            log.debug("[Update Thread %s] Lock released for %s." % (currentThread, _getName(backendObj)))
             self._runningNow = False
 
         log.debug("Finishing _checkBackend")
@@ -1108,7 +1108,7 @@ class JobRegistry_Monitor(GangaThread):
 
             #log.debug("backend: %s" % str(jList))
             backendObj = jList[0].backend
-            b_name = getName(backendObj)
+            b_name = _getName(backendObj)
             if b_name in config:
                 pRate = config[b_name]
             else:
@@ -1144,9 +1144,9 @@ class JobRegistry_Monitor(GangaThread):
 
             def cb_Failure():
                 self.enableCallbackHook(credCheckJobInsertor)
-                self._handleError('%s checking failed!' % getName(credObj), getName(credObj), False)
+                self._handleError('%s checking failed!' % _getName(credObj), _getName(credObj), False)
 
-            log.debug('Inserting %s checking function to Qin.' % getName(credObj))
+            log.debug('Inserting %s checking function to Qin.' % _getName(credObj))
             _action = JobAction(function=self.makeCredChecker(credObj),
                                 callback_Success=cb_Success,
                                 callback_Failure=cb_Failure)
@@ -1160,7 +1160,7 @@ class JobRegistry_Monitor(GangaThread):
 
     def makeCredChecker(self, credObj):
         def credChecker():
-            log.debug("Checking %s." % getName(credObj))
+            log.debug("Checking %s." % _getName(credObj))
             try:
                 s = credObj.renew()
             except Exception as msg:

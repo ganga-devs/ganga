@@ -15,7 +15,7 @@ from LHCbDatasetUtils import isDiracFile
 from LHCbDatasetUtils import isLFN
 from LHCbDatasetUtils import isPFN
 from LHCbDatasetUtils import strToDataFile
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.GPIDev.Lib.Job.Job import JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
@@ -192,7 +192,7 @@ class LHCbDataset(GangaDataset):
         from Ganga.GPIDev.Base import ReadOnlyObjectError
 
         if self._parent is not None and self._parent._readonly():
-            raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, getName(self)))
+            raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, _getName(self)))
 
         _external_files = []
 

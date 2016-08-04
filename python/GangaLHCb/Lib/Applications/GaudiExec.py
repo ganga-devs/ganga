@@ -16,7 +16,7 @@ from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, G
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Base.Filters import allComponentFilters
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.GPIDev.Lib.File.File import ShareDir
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
@@ -164,13 +164,13 @@ class GaudiExec(IPrepareApp):
         """
 
         if (self.is_prepared is not None) and not force:
-            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
+            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % _getName(self))
 
         # lets use the same criteria as the configure() method for checking file existence & sanity
         # this will bail us out of prepare if there's somthing odd with the job config - like the executable
         # file is unspecified, has a space or is a relative path
         self.configure(self)
-        logger.info('Preparing %s application.' % getName(self))
+        logger.info('Preparing %s application.' % _getName(self))
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
@@ -194,7 +194,7 @@ class GaudiExec(IPrepareApp):
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
                     opts_file.get(localPath=self.getSharedPath())
                 else:
-                    raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
+                    raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % _getName(opts_file))
             self.post_prepare()
 
         except Exception as err:
@@ -319,7 +319,7 @@ class GaudiExec(IPrepareApp):
                     pass
                 else:
                     logger.error("opts: %s" % self.options)
-                    raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+                    raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % _getName(this_opt))
             return self.options
         else:
             raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")

@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
@@ -123,7 +123,7 @@ def fastXML(obj, indent='', ignore_subs=''):
         return sl
     elif hasattr(obj, '_data'):
         v = obj._schema.version
-        sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (getName(obj), v.major, v.minor, obj._category)]
+        sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (_getName(obj), v.major, v.minor, obj._category)]
         for attr_name in obj._schema.allItemNames():
             k = attr_name
             o = getattr(obj, k)

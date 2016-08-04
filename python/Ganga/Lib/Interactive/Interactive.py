@@ -26,7 +26,7 @@ __version__ = "1.4"
 
 from Ganga.Core import Sandbox
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.Utility import util
@@ -208,7 +208,7 @@ class Interactive(IBackend):
 
             for inputFile in all_inputfiles:
 
-                inputfileClassName = getName(inputFile)
+                inputfileClassName = _getName(inputFile)
 
                 logger.debug("name: %s" % inputfileClassName)
                 logger.debug("result: %s" % str(outputFilePostProcessingOnWN(job, inputfileClassName)))

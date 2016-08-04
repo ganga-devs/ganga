@@ -15,7 +15,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.Utility.files import expandfilename
 
 import Ganga.Utility.Config
@@ -85,7 +85,7 @@ class MassStorageFile(IGangaFile):
     def _on_attribute__set__(self, obj_type, attrib_name):
         # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
         r = copy.deepcopy(self)
-        if getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
+        if _getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
             r.locations = []
             r.localDir = ''
             r.failureReason = ''

@@ -7,7 +7,7 @@
 from Ganga.Core.exceptions import IncompleteJobSubmissionError
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import Schema, Version
 
@@ -171,7 +171,7 @@ class IBackend(GangaObject):
         for sc, sj in zip(subjobconfigs, rjobs):
 
             fqid = sj.getFQID('.')
-            logger.info("submitting job %s to %s backend", fqid, getName(sj.backend))
+            logger.info("submitting job %s to %s backend", fqid, _getName(sj.backend))
             try:
                 b = sj.backend
                 sj.updateStatus('submitting')
@@ -299,7 +299,7 @@ class IBackend(GangaObject):
         try:
             for sj in rjobs:
                 fqid = sj.getFQID('.')
-                logger.info("resubmitting job %s to %s backend", fqid, getName(sj.backend))
+                logger.info("resubmitting job %s to %s backend", fqid, _getName(sj.backend))
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
@@ -484,7 +484,7 @@ class IBackend(GangaObject):
                 j.updateMasterJobStatus()
 
             else:
-                backend_name = getName(j.backend)
+                backend_name = _getName(j.backend)
                 if backend_name not in simple_jobs:
                     simple_jobs[backend_name] = []
                 simple_jobs[backend_name].append(j)

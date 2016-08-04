@@ -29,7 +29,7 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader
 from Ganga.Lib.LCG.Utility import get_uuid, get_md5sum
 from Ganga.Utility.logic import implies
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.Utility.GridShell import getShell
 
 from . import Grid
@@ -1371,7 +1371,7 @@ sys.exit(0)
             jobconfig.outputbox + getOutputSandboxPatterns(job)))
 
         script = script.replace(
-            '###APPLICATION_NAME###', getName(job.application))
+            '###APPLICATION_NAME###', _getName(job.application))
         script = script.replace(
             '###APPLICATIONEXEC###', repr(jobconfig.getExeString()))
         script = script.replace(

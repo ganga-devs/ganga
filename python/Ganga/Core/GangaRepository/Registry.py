@@ -13,7 +13,7 @@ import threading
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.Utility.Config import getConfig
 
 logger = getLogger()
@@ -393,7 +393,7 @@ class Registry(object):
         try:
             return next(id_ for id_, o in self._objects.items() if o is obj)
         except StopIteration:
-            raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (getName(obj), self.name))
+            raise ObjectNotInRegistryError("Object '%s' does not seem to be in this registry: %s !" % (_getName(obj), self.name))
 
     @synchronised_complete_lock
     def clean(self, force=False):
