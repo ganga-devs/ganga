@@ -24,11 +24,10 @@ from Ganga.Utility.logging import getLogger
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getElementsFromContainer
-
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
-from GangaAtlas.Lib.Rucio import get_dataset_replica_list, list_dataset_files, dataset_exists
+from GangaAtlas.Lib.Rucio import get_dataset_replica_list, list_dataset_files, dataset_exists, \
+    list_datasets_in_container
 
 logger = getLogger()
 config = getConfig('Panda')
@@ -1105,10 +1104,7 @@ class Panda(IBackend):
 
 
                         # check if this DS is in the container
-                        # RUCIO patch
-                        #res = Client.getElementsFromContainer(tmpFile.dataset)
-                        res = getElementsFromContainer(tmpFile.dataset)
-                        if not tmpFile.destinationDBlock in res:
+                        if not tmpFile.destinationDBlock in list_datasets_in_container(tmpFile.dataset):
                             try:
                                 # add to container
                                 Client.addDatasetsToContainer(tmpFile.dataset,[tmpFile.destinationDBlock],False)

@@ -93,3 +93,28 @@ def list_dataset_files(dsname):
             file_list.append(f)
 
         return file_list
+
+def list_datasets_in_container(dsname):
+    """Return the list of datasets in this container
+
+    Attributes:
+        dsname (str): The name of the dataset to check
+
+    Returns:
+        list: the list of datasets in the container
+    """
+
+    ds_list = []
+
+    # strip the trailing '/'
+    if dsname.endswith('/'):
+        dsname = dsname[:-1]
+
+    scope_dsname = get_scope_and_dsname(dsname)
+
+    with _client_lock:
+        for entry in get_rucio_client().list_content(scope_dsname[0], scope_dsname[1]):
+            if entry['type'] == 'DATASET':
+                ds_list.append(entry['name'])
+
+        return ds_list

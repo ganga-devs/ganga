@@ -21,18 +21,6 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
-def getElementsFromContainer(name):
-    '''helper function for container content'''
-
-    try:
-        #dq2_lock.acquire()
-        datasets = dq2.listDatasetsInContainer(name)
-    finally:
-        #dq2_lock.release()
-        pass
-
-    return datasets
-
 def listDatasets(name,filter=True):
     '''helper function to filter out temporary datasets'''
 
