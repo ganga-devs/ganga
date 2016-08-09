@@ -45,9 +45,6 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     monitoring_component = JobRegistry_Monitor(reg_slice)
     monitoring_component.start()
 
-    # register the MC shutdown hook
-    change_atexitPolicy(interactive_session)
-
     # override the default monitoring autostart value with the setting from interactive session
     config = getConfig("PollThread")
     config.overrideDefaultValue('autostart', interactive_session)
@@ -69,5 +66,3 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
         my_interface = Ganga.GPI
 
     exportToInterface(my_interface, 'runMonitoring', monitoring_component.runMonitoring, 'Functions')
-
-
