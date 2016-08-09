@@ -21,21 +21,8 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
-def listDatasets(name,filter=True):
-    '''helper function to filter out temporary datasets'''
+from GangaAtlas.Lib.Rucio import list_datasets
 
-    try:
-        #dq2_lock.acquire()
-        datasets = [ (lfn,ids['vuids'][0]) for lfn, ids in dq2.listDatasets(name).iteritems() ]
-    finally:
-        #dq2_lock.release()
-        pass
-
-    if filter:
-        re_tmp = re.compile('bnl$|bnlcoll$|sub\d+$|dis\d+$')
-        datasets = [ (dsn, vuid) for dsn, vuid in datasets if not re_tmp.search(dsn) ]
-
-    return datasets
 
 def getLocationsCE(locations):
     '''helper function to access the CE associated to a list of locations'''
@@ -855,15 +842,16 @@ class DQ2Dataset(Dataset):
         else:
             return alllocations
 
-    def list_datasets(self,name,filter=True):
+    def list_datasets(self, name):
         '''List datasets names'''
 
-        datasets = listDatasets(name,filter)
+        datasets = list_datasets(name)
+
         if not datasets:
             logger.error('No datasets found.')
             return
 
-        for dsn, vuid in datasets:
+        for dsn in datasets:
             print dsn
 
     def list_contents(self,dataset=None):
