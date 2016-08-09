@@ -39,7 +39,7 @@ Ganga.Runtime._prog.parseOptions()
 
 # Perform the configuration and bootstrap steps in ganga
 Ganga.Runtime._prog.configure()
-Ganga.Runtime._prog.initEnvironment(opt_rexec=False)
+Ganga.Runtime._prog.initEnvironment()
 Ganga.Runtime._prog.bootstrap(interactive=False)
 ## FINISHED LOADING GANGA ##
 
@@ -203,8 +203,10 @@ with open(doc_dir+'/GPI/functions.rst', 'w') as ff:
 ## EXITING GANGA ##
 from Ganga.Core.InternalServices import ShutdownManager
 
-import Ganga.Core
-Ganga.Core.change_atexitPolicy(interactive_session=False, new_policy='batch')
+# make sure we don't have an interactive shutdown policy
+from Ganga.Core.GangaThread import GangaThreadPool
+GangaThreadPool.shutdown_policy = 'batch'
+
 # This should now be safe
 ShutdownManager._ganga_run_exitfuncs()
 

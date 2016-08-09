@@ -158,8 +158,7 @@ class Interactive(IBackend):
         try:
             shutil.rmtree(self.workdir)
         except OSError as x:
-            logger.warning("Problem removing workdir %s: %s", self.workdir,
-                    str(x))
+            logger.warning("Problem removing workdir %s: %s", self.workdir, str(x))
 
             return None
 
@@ -274,7 +273,6 @@ class Interactive(IBackend):
     def updateMonitoringInformation(jobs):
 
         for j in jobs:
-            stripProxy(j)._getWriteAccess()
 
             raw_backend = stripProxy(j.backend)
 

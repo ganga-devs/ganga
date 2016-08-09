@@ -266,10 +266,14 @@ def getMissingCredentials():
     get a list of missing credentials
     i.e:  invalid credentials that are needed by the internal services to run
     """
-    from Ganga.GPIDev.Credentials import _allCredentials as availableCreds
-    return [name for name in availableCreds
-            if not availableCreds[name].isValid() and
-            isCredentialRequired(availableCreds[name])]
+    from Ganga.Utility.Config import getConfig
+    if getConfig('PollThread')['autoCheckCredentials']:
+        from Ganga.GPIDev.Credentials import _allCredentials as availableCreds
+        return [name for name in availableCreds
+                if not availableCreds[name].isValid() and
+                isCredentialRequired(availableCreds[name])]
+    else:
+        return []
 
 #
 #$Log: not supported by cvs2svn $

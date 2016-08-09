@@ -256,15 +256,15 @@ def config_file_as_text():
                 if sect.getEffectiveLevel(o) == 0:
                     value = sect[o]
                     def_value = sect.options[o].default_value
-                    try:
-                        lines = value.splitlines()
-                        def_lines = def_value.splitlines()
-                        if len(lines) > 1:
-                            value = "\n# ".join(lines)
-                            def_value = "\n# ".join(def_lines)
-                    except AttributeError as err:
-                        print("Attrib Err: %s" % str(err))
-                        pass
+                    if isinstance(value, str):
+                        try:
+                            lines = value.splitlines()
+                            def_lines = def_value.splitlines()
+                            if len(lines) > 1:
+                                value = "\n# ".join(lines)
+                                def_value = "\n# ".join(def_lines)
+                        except AttributeError as err:
+                            pass
                     text += '#%s = %s\n' % (o, def_value)
                     text += '%s = %s\n\n' % (o, value)
                 else:

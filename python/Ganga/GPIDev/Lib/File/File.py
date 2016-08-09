@@ -25,6 +25,8 @@ import Ganga.Utility.Config
 
 from Ganga.GPIDev.Lib.File import getSharedPath
 
+from Ganga.Runtime.GPIexport import exportToGPI
+
 # regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
 urlprefix = re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
 
@@ -64,21 +66,19 @@ class File(GangaObject):
         if not subdir is None:
             self.subdir = subdir
 
-    def __construct__(self, args):
-        if len(args) == 1 and isinstance(args[0], str):
-            v = args[0]
-            import os.path
-            expanded = expandfilename(v)
-            # if it is not already an absolute filename
-            if not urlprefix.match(expanded):
-                if os.path.exists(os.path.abspath(expanded)):
-                    self.name = os.path.abspath(expanded)
-                else:
-                    self.name = v
-            else:  # bugfix #20545
-                self.name = expanded
-        else:
-            super(File, self).__construct__(args)
+    def __setattr__(self, attr, value):
+        """
+        This is an overloaded setter method to make sure that we're auto-expanding the filenames of files which exist.
+        In the case we're assigning any other attributes the value is simply passed through
+        Args:
+            attr (str): This is the name of the attribute which we're assigning
+            value (unknown): This is the value being assigned.
+        """
+        actual_value = value
+        if attr == "name":
+            actual_value = expandfilename(value)
+        super(File, self).__setattr__(attr, actual_value)
+
 
     def _attribute_filter__set__(self, attribName, attribValue):
         if attribName is 'name':
@@ -126,7 +126,7 @@ def string_file_shortcut_file(v, item):
     if isinstance(v, str):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
-        return stripProxy(File._proxyClass(v))
+        return File(v)
     return None
 
 allComponentFilters['files'] = string_file_shortcut_file
@@ -139,7 +139,7 @@ class ShareDir(GangaObject):
     the Executable() application. A single ("prepared") application can be associated to multiple jobs.
 
     """
-    _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', doc='path to the file source'),
+    _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', getter="_getName", doc='path to the file source'),
                                      'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)')})
 
     _category = 'shareddirs'
@@ -152,31 +152,43 @@ class ShareDir(GangaObject):
         super(ShareDir, self).__init__()
         self._setRegistry(None)
 
-        if not name is None:
-            self.name = name
-        else:
-            # continue generating directory names until we create a unique one
-            # (which will likely be on the first attempt).
-            while True:
-                name = 'conf-{0}'.format(uuid.uuid4())
-                if not os.path.isdir(os.path.join(getSharedPath(), name)):
-                    os.makedirs(os.path.join(getSharedPath(), name))
+        if not name:
+            name = 'conf-{0}'.format(uuid.uuid4())
+        self._name = name
 
-                if not os.path.isdir(os.path.join(getSharedPath(), name)):
-                    logger.error("ERROR creating path: %s" %
-                                 os.path.join(getSharedPath(), name))
-                    raise GangaException("ShareDir ERROR")
-                else:
-                    break
-            self.name = str(name)
-
-            # incrementing then decrementing the shareref counter has the effect of putting the newly
-            # created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
-            # filled with files, then assigned to an application.
-            #a=Job(); s=ShareDir(); a.application.is_prepared=s
+        # incrementing then decrementing the shareref counter has the effect of putting the newly
+        # created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
+        # filled with files, then assigned to an application.
+        #a=Job(); s=ShareDir(); a.application.is_prepared=s
         #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         # shareref.increase(self.name)
         # shareref.decrease(self.name)
+
+    def __setattr__(self, name, value):
+        """
+        A setattr wrapper which intercepts calls to assign self.name to self._name so the name gettter works
+        Args:
+            name (str): Name of the attribute being set
+            value (unknown): value being assigned to the attribute
+        """
+        if name == 'name':
+            self._name = value
+        else:
+            super(ShareDir, self).__setattr__(name, value)
+
+    def _getName(self):
+        """
+        A getter method for the 'name' schema attribute which will trigger the creation of a SharedDir on disk only when information about it is asked
+        """
+        share_dir = os.path.join(getSharedPath(), self._name)
+        if not os.path.isdir(share_dir):
+            logger.debug("Actually creating: %s" % share_dir)
+            os.makedirs(share_dir)
+        if not os.path.isdir(share_dir):
+            logger.error("ERROR creating path: %s" % share_dir)
+            raise GangaException("ShareDir ERROR")
+
+        return self._name
 
     def add(self, input):
         from Ganga.Core.GangaRepository import getRegistry
@@ -187,7 +199,7 @@ class ShareDir(GangaObject):
                 if os.path.isfile(expandfilename(item)):
                     logger.info('Copying file %s to shared directory %s' % (item, self.name))
                     shutil.copy2(expandfilename(item), os.path.join(getSharedPath(), self.name))
-                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    shareref = getRegistry("prep").getShareRef()
                     shareref.increase(self.name)
                     shareref.decrease(self.name)
                 else:
@@ -195,7 +207,7 @@ class ShareDir(GangaObject):
             elif isType(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
                 logger.info('Copying file object %s to shared directory %s' % (item.name, self.name))
                 shutil.copy2(expandfilename(item.name), os.path.join(getSharedPath(), self.name))
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                shareref = getRegistry("prep").getShareRef()
                 shareref.increase(self.name)
                 shareref.decrease(self.name)
             else:
@@ -255,10 +267,32 @@ def string_sharedfile_shortcut(v, item):
     if isinstance(v, str):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
-        return stripProxy(ShareDir._proxyClass(v))
+        return ShareDir(v)
     return None
 
 allComponentFilters['shareddirs'] = string_sharedfile_shortcut
+
+
+def cleanUpShareDirs():
+    """Function to be used to clean up erronious empty folders in the Shared directory"""
+    share_path = getSharedPath()
+
+    logger.info("Cleaning Shared folders in: %s" % share_path)
+    logger.info("This may take a few minutes if you're running this for the first time after 6.1.23, feel free to go grab a tea/coffee")
+
+    for item in os.listdir(share_path):
+        this_dir = os.path.join(share_path, item)
+        if os.path.isdir(this_dir):
+            # NB we do need to explicitly test the length of the returned value here
+            # Checking is __MUCH__ faster than trying and failing to remove folders with contents on AFS
+            if len(os.listdir(this_dir)) == 0:
+                try:
+                    os.rmdir(this_dir)
+                except OSError:
+                    logger.debug("Failed to remove: %s" % this_dir)
+
+exportToGPI('cleanUpShareDirs', cleanUpShareDirs, 'Functions')
+
 #
 #
 # $Log: not supported by cvs2svn $

@@ -268,7 +268,7 @@ def importName(modulename, name):
         import sys
         sys.stderr.write("importName, ImportError: %s\n" % str(err))
         return None
-    if name in vars(module).keys():
+    if name in vars(module):
         return vars(module)[name]
     else:
         return None

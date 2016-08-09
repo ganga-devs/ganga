@@ -15,9 +15,9 @@ logger = Ganga.Utility.logging.getLogger()
 
 class PrepRegistry(Registry):
 
-    def __init__(self, name, doc, update_index_time=30):
+    def __init__(self, name, doc):
 
-        super(PrepRegistry, self).__init__(name, doc, update_index_time)
+        super(PrepRegistry, self).__init__(name, doc)
 
     def startup(self):
         self._needs_metadata = True
@@ -47,22 +47,22 @@ class PrepRegistry(Registry):
         #logger.info("Geting id: %s" %  self.metadata.ids()[-1])
         self.shareref = self.metadata._objects[self.metadata.ids()[-1]]
         #logger.info("ShareRef: %s" % getName(self.shareref))
-        self._lock.acquire()
-        ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
-        ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
-        try:
-            stripProxy(self.shareref).closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
-        except Exception as err:
-            logger.error("Shutdown Error in ShareRef")
-            logger.error("Err: %s" % err)
+        with self._flush_lock:
+            with self._read_lock:
+                ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
+                ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
+                try:
+                    stripProxy(self.shareref).closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
+                except Exception as err:
+                    logger.error("Shutdown Error in ShareRef")
+                    logger.error("Err: %s" % err)
 
-        try:
-            self._safe_shutdown()
-        except Exception as err:
-            logger.debug("Shutdown Error: %s" % err)
-        finally:
-            self._hasStarted = False
-            self._lock.release()
+                try:
+                    self._safe_shutdown()
+                except Exception as err:
+                    logger.debug("Shutdown Error: %s" % err)
+
+                self._hasStarted = False
 
         self.metadata = None
 
@@ -105,11 +105,12 @@ class ShareRef(GangaObject):
         self.name = {}
         #self._setRegistry(None)
 
-    def __construct__(self, args):
-        super(ShareRef, self).__construct__(args)
-        if self.name is None:
-            self.name = {}
-        #self._setRegistry(None)
+    def __setattr__(self, attr, value):
+        actual_value = value
+        if attr == "name":
+            if not actual_value:
+                actual_value = {}
+        super(ShareRef, self).__setattr__(attr, actual_value)
 
     def __getName(self):
         if not hasattr(self, 'name') or self.name is None:
@@ -125,20 +126,20 @@ class ShareRef(GangaObject):
         be discovered by calling 'shareref'.
         """
         logger.debug("running increase() in prepregistry")
-        self._getWriteAccess()
+        self._getSessionLock()
 
 
         from Ganga.GPIDev.Lib.File import getSharedPath
         shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
         basedir = os.path.basename(shareddir)
         if os.path.isdir(shareddir) and force is False:
-            if basedir not in self.__getName().keys():
+            if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 1
             else:
                 self.__getName()[basedir] += 1
         elif not os.path.isdir(shareddir) and force is True and basedir is not '':
-            if basedir not in self.__getName().keys():
+            if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 0
             else:
@@ -147,7 +148,7 @@ class ShareRef(GangaObject):
             logger.error('Directory %s does not exist' % shareddir)
 
         self._setDirty()
-        self._releaseWriteAccess()
+        self._releaseSessionLockAndFlush()
 
     @synchronised
     def decrease(self, shareddir, remove=0):
@@ -156,7 +157,7 @@ class ShareRef(GangaObject):
         the shared object directory deleted when Ganga exits. If the optional remove parameter is specified
         the shared directory is removed from the table.
         """
-        self._getWriteAccess()
+        self._getSessionLock()
 
         from Ganga.GPIDev.Lib.File import getSharedPath
         shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
@@ -175,7 +176,7 @@ class ShareRef(GangaObject):
             self.__getName()[basedir] = 0
 
         self._setDirty()
-        self._releaseWriteAccess()
+        self._releaseSessionLockAndFlush()
 
     def lookup(self, sharedir, unprepare=False):
         """
@@ -253,7 +254,7 @@ class ShareRef(GangaObject):
         from Ganga.GPIDev.Lib.File import getSharedPath
         shareddir = os.path.join(getSharedPath(), os.path.basename(this_object))
         logger.debug('Adding %s to the shareref table.' % shareddir)
-        if os.path.basename(this_object) in self.__getName().keys():
+        if os.path.basename(this_object) in self.__getName():
             self.__getName()[os.path.basename(this_object)] += 1
         else:
             self.__getName()[os.path.basename(this_object)] = 1
@@ -279,7 +280,7 @@ class ShareRef(GangaObject):
         Otherwise, it will be added to the shareref table with a reference count of zero; 
         this results in the directory being deleted upon Ganga exit.
         """
-        self._getWriteAccess()
+        self._getSessionLock()
         # clear the shareref table
         self.name = {}
         lookup_input = []
@@ -338,12 +339,12 @@ class ShareRef(GangaObject):
             if this_dir not in self.__getName().keys() and rmdir is False:
                 logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository." % this_dir)
                 self.__getName()[this_dir] = 0
-            elif this_dir not in self.__getName().keys() and rmdir is True:
+            elif this_dir not in self.__getName() and rmdir is True:
                 logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository. Removing directory." % this_dir)
                 shutil.rmtree(os.path.join(getSharedPath(), this_dir))
 
         self._setDirty()
-        self._releaseWriteAccess()
+        self._releaseSessionLockAndFlush()
 
 
     @staticmethod
@@ -365,7 +366,7 @@ class ShareRef(GangaObject):
             answer = raw_input().lower()
             if answer == '':
                 return default
-            elif answer in valid.keys():
+            elif answer in valid:
                 return valid[answer]
             else:
                 logger.warn("Please respond with 'Yes/y', 'No/n', 'All' or 'None'")
@@ -438,7 +439,7 @@ class ShareRef(GangaObject):
                 cleanup_list.append(shareddir)
             ## DISABLED BY RCURRIE
 
-        self._getWriteAccess()
+        self._getSessionLock()
         for element in cleanup_list:
             del self.name[element]
         allnames = copy.deepcopy(self.__getName())
@@ -474,7 +475,7 @@ class ShareRef(GangaObject):
         """Prints content of the shareref metadata in a well formatted way.
         """
 
-        if len(self.__getName().keys()) > 0:
+        if len(self.__getName()) > 0:
             from Ganga.GPIDev.Lib.File import getSharedPath
             fstring = " %48s | %20s |  %15s"
             disp_string = fstring % (

@@ -30,7 +30,7 @@ class ITask(GangaObject):
 
     """This is the framework of a task without special properties"""
     _schema = Schema(Version(1, 0), {
-        'transforms': ComponentItem('transforms', defvalue=[], sequence=1, copyable=1, doc='list of transforms'),
+        'transforms': ComponentItem('transforms', defvalue=[], sequence=1, copyable=0, doc='list of transforms'),
         'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Task', typelist=[int]),
         'name': SimpleItem(defvalue='NewTask', copyable=1, doc='Name of the Task', typelist=[str]),
         'comment': SimpleItem('', protected=0, doc='comment of the task', typelist=[str]),
@@ -59,12 +59,8 @@ class ITask(GangaObject):
         # job gets its id now
         registry._add(self)
         self.creation_date = time.strftime('%Y%m%d%H%M%S')
-        self.initialize()
         self.startup()
-        self._setDirty()
-
-    def initialize(self):
-        self.transforms = []
+        self.status = 'new'
 
     def startup(self):
         """Startup function on Ganga startup"""
@@ -84,8 +80,7 @@ class ITask(GangaObject):
             else:
                 return self.transforms[trf]
         else:
-            logger.warning(
-                'Incorrect type for transform referral. Allowed types are int or string.')
+            logger.warning('Incorrect type for transform referral. Allowed types are int or string.')
 
         return None
 

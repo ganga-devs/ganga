@@ -61,7 +61,7 @@ class GridSandboxCache(GangaObject):
 
     _schema = Schema(Version(1, 1), {
         'vo': SimpleItem(defvalue='dteam', hidden=1, copyable=0, doc='the Grid virtual organization'),
-        'middleware': SimpleItem(defvalue='EDG', hidden=1, copyable=1, doc='the LCG middleware type'),
+        'middleware': SimpleItem(defvalue='GLITE', hidden=1, copyable=1, doc='the LCG middleware type'),
         'protocol': SimpleItem(defvalue='', copyable=1, doc='file transfer protocol'),
         'max_try': SimpleItem(defvalue=1, doc='max. number of tries in case of failures'),
         'timeout': SimpleItem(defvalue=180, copyable=0, hidden=1, doc='transfer timeout in seconds'),
@@ -340,7 +340,7 @@ class GridSandboxCache(GangaObject):
 
     def __get_unique_fname__(self):
         '''gets an unique filename'''
-        cred = getCredential('GridProxy', self.middleware)
+        cred = getCredential('GridProxy')
         uid = re.sub(r'[\:\-\(\)]{1,}', '', cred.identity()).lower()
         fname = 'user.%s.%s' % (uid, get_uuid())
         return fname

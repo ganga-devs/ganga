@@ -162,7 +162,7 @@ def getWNCodeForOutputSandbox(job, files, jobid):
                 patternsToSandbox.append(outputFile.namePattern)
 
     insertScript = """\n
-from Ganga.Utility.files import recursive_copy
+from files import recursive_copy
 import glob
 import os
 
@@ -191,7 +191,8 @@ for fn in final_list_to_copy:
     try:
         if not os.path.exists(sharedoutputpath):
             os.makedirs(sharedoutputpath)
-        recursive_copy(fn,sharedoutputpath)
+        if os.path.exists(fn):
+            recursive_copy(fn, sharedoutputpath)
     except Exception as x:
         print('ERROR: (job'+###JOBID###+')',x)
 """
@@ -301,9 +302,10 @@ def getWNCodeForOutputPostprocessing(job, indent):
 import os, glob
 for patternToZip in ###PATTERNSTOZIP###:
     for currentFile in glob.glob(os.path.join(os.getcwd(),patternToZip)):
-        os.system("gzip %s" % currentFile)
+        if os.path.isfile(currentFile):
+            os.system("gzip %s" % currentFile)
 
-postprocesslocations = file(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFILENAME###'), 'w')  
+postprocesslocations = open(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFILENAME###'), 'a+')  
 """
 
     from Ganga.GPIDev.Lib.File import FileUtils

@@ -39,8 +39,8 @@ class BoxMetadataObject(GangaObject):
 
 class BoxRegistry(Registry):
 
-    def __init__(self, name, doc, update_index_time=30):
-        super(BoxRegistry, self).__init__(name, doc, update_index_time)
+    def __init__(self, name, doc):
+        super(BoxRegistry, self).__init__(name, doc)
 
         self.stored_slice = BoxRegistrySlice(self.name)
         self.stored_slice.objects = self
@@ -51,15 +51,14 @@ class BoxRegistry(Registry):
 
     def _setName(self, obj, name):
         nobj = self.metadata[self.find(obj)]
-        obj._getWriteAccess()
-        nobj._getWriteAccess()
+        obj._getSessionLock()
+        nobj._getSessionLock()
         nobj.name = name
         nobj._setDirty()
         obj._setDirty()
 
     def _getName(self, obj):
         nobj = self.metadata[self.find(obj)]
-        nobj._getReadAccess()
         return nobj.name
 
     def _remove(self, obj, auto_removed=0):
@@ -75,9 +74,9 @@ class BoxRegistry(Registry):
                 c[cv] = getattr(obj, cv)
             except AttributeError as err:
                 c[cv] = None
-        slice = BoxRegistrySlice("tmp")
-        for dpv in slice._display_columns:
-            c["display:" + dpv] = slice._get_display_value(obj, dpv)
+        this_slice = BoxRegistrySlice("tmp")
+        for dpv in this_slice._display_columns:
+            c["display:" + dpv] = this_slice._get_display_value(obj, dpv)
         return c
 
 # Methods for the "box" proxy (but not for slice proxies)
@@ -128,8 +127,6 @@ class BoxRegistry(Registry):
         nobj.name = name
         self._add(obj)
         self.metadata._add(nobj, self.find(obj))
-        nobj._setDirty()
-        obj._setDirty()
 
     def proxy_rename(self, obj_id, name):
         """
@@ -252,13 +249,6 @@ class BoxRegistrySliceProxy(RegistrySliceProxy):
         box[1] : get second object.
         """
         return _wrap(stripProxy(self).__getitem__(x))
-
-    def __getslice__(self, i1, i2):
-        """ Get a slice. Examples:
-        box[2:] : get first two objects,
-        box[:-10] : get last 10 objects.
-        """
-        return _wrap(stripProxy(self).__getslice__(i1, i2))
 
     def remove_all(self):
         """

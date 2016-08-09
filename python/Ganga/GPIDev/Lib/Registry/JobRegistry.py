@@ -29,8 +29,8 @@ logger = Ganga.Utility.logging.getLogger()
 
 class JobRegistry(Registry):
 
-    def __init__(self, name, doc, update_index_time=30):
-        super(JobRegistry, self).__init__(name, doc, update_index_time)
+    def __init__(self, name, doc):
+        super(JobRegistry, self).__init__(name, doc)
         self.stored_slice = JobRegistrySlice(self.name)
         self.stored_slice.objects = self
         self.stored_proxy = JobRegistrySliceProxy(self.stored_slice)
@@ -124,9 +124,9 @@ class JobRegistrySlice(RegistrySlice):
         elif isType(obj, str):
             status_attr = obj
         elif isType(obj, dict):
-            if 'display:status' in obj.keys():
+            if 'display:status' in obj:
                 status_attr = obj['display:status']
-            elif 'status' in obj.keys():
+            elif 'status' in obj:
                 status_attr = obj['status']
             else:
                 status_attr = None
@@ -275,13 +275,6 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         jobs('10.2')) : same as above
         """
         return stripProxy(self).__call__(x)
-
-    def __getslice__(self, i1, i2):
-        """ Get a slice. Examples:
-        jobs[2:] : get first two jobs,
-        jobs[-10:] : get last 10 jobs.
-        """
-        return _wrap(stripProxy(self).__getslice__(i1, i2))
 
     def __getitem__(self, x):
         """ Get a job by positional index. Examples:

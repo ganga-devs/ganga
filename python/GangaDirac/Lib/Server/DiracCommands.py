@@ -55,7 +55,12 @@ def getMetadata(lfn):
 
 def getReplicas(lfns):
     ''' Return  the locations of the replicas of a given LFN in a dict format, SE: location '''
-    output(dirac.getReplicas(lfns))
+    output(dirac.getReplicas(lfns, active=True, preferDisk = True))
+
+
+def getAccessURL(lfn,SE):
+    ''' Return the access URL for the given LFN and storage element '''
+    output(dirac.getAccessURL(lfn,SE))
 
 
 def getFile(lfns, destDir=''):
@@ -113,22 +118,23 @@ def addFile(lfn, file, diracSE, guid):
     output(dirac.addFile(lfn, file, diracSE, guid))
 
 
-def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True, pipe_out=True):
+def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True, noJobDir=True, pipe_out=True):
     '''
     Get the outputsandbox and return the output from Dirac to the calling function
     id: the DIRAC jobid of interest
     outputDir: output directory locall on disk to use
     oversized: is this output sandbox oversized this will be modified
+    noJobDir: should we create a folder with the DIRAC job ID?
     output: should I output the Dirac output or should I return a python object (False)'''
-    result = dirac.getOutputSandbox(id, outputDir, oversized)
+    result = dirac.getOutputSandbox(id, outputDir, oversized, noJobDir)
     if result is not None and result.get('OK', False):
-        tmpdir = os.path.join(outputDir, str(id))
-        os.system('mv -f %s/* %s/.' % (tmpdir, outputDir))
-        os.system('rm -rf %s' % tmpdir)
-        ganga_logs = glob.glob('%s/*_Ganga_*.log' % outputDir)
 
-        if ganga_logs:
-            os.system('ln -s %s %s/stdout' % (ganga_logs[0], outputDir))
+        if not noJobDir:
+            tmpdir = os.path.join(outputDir, str(id))
+            os.system('mv -f %s/* %s/. ; rm -rf %s' % (tmpdir, outputDir, tmpdir))
+        
+        os.system('for file in $(ls %s/*_Ganga_*.log); do ln -s ${file} %s/stdout; break; done' % (outputDir, outputDir))
+
     if pipe_out:
         output(result)
     else:
@@ -217,23 +223,27 @@ def normCPUTime(id, pipe_out=True):
         return ncput
 
 
-def finished_job(id, outputDir=os.getcwd(), oversized=True):
+def finished_job(id, outputDir=os.getcwd(), oversized=True, noJobDir=True):
     ''' Nesting function to reduce number of calls made against DIRAC when finalising a job, takes arguments such as getOutputSandbox
     Returns the CPU time of the job as a dict, the output sandbox information in another dict and a dict of the LFN of any uploaded data'''
     out_cpuTime = normCPUTime(id, pipe_out=False)
-    out_sandbox = getOutputSandbox(id, outputDir, oversized, pipe_out=False)
+    out_sandbox = getOutputSandbox(id, outputDir, oversized, noJobDir, pipe_out=False)
     out_dataInfo = getOutputDataInfo(id, pipe_out=False)
-    output((out_cpuTime, out_sandbox, out_dataInfo))
+    outStateTime = {'completed' : getStateTime(id, 'completed', pipe_out=False)}
+    output((out_cpuTime, out_sandbox, out_dataInfo, outStateTime))
 
 
-def status(job_ids, statusmapping):
+def status(job_ids, statusmapping, pipe_out=True):
     '''Function to check the statuses and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
 
     result = dirac.status(job_ids)
     if not result['OK']:
-        output(result)
-        return
+        if pipe_out:
+            output(result)
+            return
+        else:
+            return result
     status_list = []
     bulk_status = result['Value']
     for _id in job_ids:
@@ -260,15 +270,20 @@ def status(job_ids, statusmapping):
         status_list.append([minor_status, dirac_status, dirac_site,
                             ganga_status, app_status])
 
-    output(status_list)
+    if pipe_out:
+        output(status_list)
+    else:
+        return status_list
 
-
-def getStateTime(id, status):
+def getStateTime(id, status, pipe_out=True):
     ''' Return the state time from DIRAC corresponding to DIRACJob tranasitions'''
     log = dirac.loggingInfo(id)
     if 'Value' not in log:
-        output(None)
-        return
+        if pipe_out:
+            output(None)
+            return
+        else:
+            return None
     L = log['Value']
     checkstr = ''
 
@@ -289,12 +304,47 @@ def getStateTime(id, status):
 
     for l in L:
         if checkstr in l[0]:
-            T = datetime.datetime(
-                *(time.strptime(l[3], "%Y-%m-%d %H:%M:%S")[0:6]))
-            output(T)
-            return
-    output(None)
+            T = datetime.datetime(*(time.strptime(l[3], "%Y-%m-%d %H:%M:%S")[0:6]))
+            if pipe_out:
+                output(T)
+                return
+            else:
+                return T
+    if pipe_out:
+        output(None)
+    else:
+        return None
 
+def getBulkStateTime(job_ids, status, pipe_out=True):
+    ''' Function to repeatedly call getStateTime for multiple Dirac Job id and return the result in a dictionary '''
+    result = {}
+    for this_id in job_ids:
+        result[this_id] = getStateTime(this_id, status, pipe_out=False)
+
+    if pipe_out:
+        output(result)
+    else:
+        return result
+
+def monitorJobs(job_ids, status_mapping, pipe_out=True):
+    ''' This combines 'status' and 'getBulkStateTime' into 1 function call for monitoring
+    '''
+    status_info = status(job_ids, status_mapping, pipe_out=False)
+    state_job_status = {}
+    for job_id, this_stat_info in zip(job_ids, status_info):
+        if this_stat_info:
+            update_status = this_stat_info[3]
+            if update_status not in state_job_status:
+                state_job_status[update_status] = []
+            state_job_status[update_status].append(job_id)
+    state_info = {}
+    for this_status, these_jobs in state_job_status.iteritems():
+        state_info[this_status] = getBulkStateTime(these_jobs, this_status, pipe_out=False)
+
+    if pipe_out:
+        output((status_info, state_info))
+    else:
+        return (status_info, state_info)
 
 def timedetails(id):
     ''' Function to return the loggingInfo for a DIRAC Job of id'''
@@ -313,8 +363,7 @@ def getJobPilotOutput(id, dir):
     pwd = os.getcwd()
     try:
         os.chdir(dir)
-        os.system('rm -f pilot_%d/std.out' % id)
-        os.system('rmdir pilot_%d' % id)
+        os.system('rm -f pilot_%d/std.out && rmdir pilot_%d ' % (id, id))
         result = DiracAdmin().getJobPilotOutput(id)
     finally:
         os.chdir(pwd)
@@ -338,4 +387,3 @@ def getSEsForSite(site):
     from DIRAC.Core.Utilities.SiteSEMapping import getSEsForSite
     result = getSEsForSite(site)
     output(result)
-

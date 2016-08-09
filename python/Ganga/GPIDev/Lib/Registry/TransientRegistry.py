@@ -10,11 +10,10 @@ logger = getLogger()
 
 class TransientRegistry(Registry):
 
-    def __init__(self, name, filebase, doc, file_ext='tpl', pickle_files=False, update_index_time=30):
+    def __init__(self, name, filebase, doc, file_ext='tpl', pickle_files=False):
 
         super(TransientRegistry, self).__init__(name,
-                                                doc,
-                                                update_index_time)
+                                                doc)
         self.type = "ImmutableTransient"
         self.location = filebase
         self.file_ext = file_ext
@@ -125,8 +124,3 @@ class TransientRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(stripProxy(self).__getitem__(x))
 
-    def __getslice__(self, i1, i2):
-        """
-        Get a slice. Examples:
-        """
-        return _wrap(stripProxy(self).__getslice__(i1, i2))

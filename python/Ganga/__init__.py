@@ -25,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.1.20 $'
+_gangaVersion = '$Name: 6.1.23 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -175,7 +175,7 @@ makeConfig("Shell", "configuration parameters for internal Shell utility.")
 # Queues
 queues_config = makeConfig("Queues", "configuration section for the queues")
 queues_config.addOption('Timeout', None, 'default timeout for queue generated processes')
-queues_config.addOption('NumWorkerThreads', 3, 'default number of worker threads in the queues system')
+queues_config.addOption('NumWorkerThreads', 5, 'default number of worker threads in the queues system')
 
 # ------------------------------------------------
 # MSGMS
@@ -232,7 +232,7 @@ poll_config.addOption('creds_poll_rate', 30, "The frequency in seconds for crede
 poll_config.addOption('diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
 poll_config.addOption('DiskSpaceChecker', "", "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
 poll_config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
-poll_config.addOption('numParallelJobs', 50, 'Number of Jobs to update the status for in parallel')
+poll_config.addOption('numParallelJobs', 25, 'Number of Jobs to update the status for in parallel')
 
 poll_config.addOption('forced_shutdown_policy', 'session_type',
                  'If there are remaining background activities at exit such as monitoring, output download Ganga will attempt to wait for the activities to complete. You may select if a user is prompted to answer if he wants to force shutdown ("interactive") or if the system waits on a timeout without questions ("timeout"). The default is "session_type" which will do interactive shutdown for CLI and timeout for scripts.')
@@ -245,6 +245,8 @@ poll_config.addOption('forced_shutdown_first_prompt_time', 5,
 
 import sys
 poll_config.addOption('HeartBeatTimeOut', sys.maxint, 'Time before the user gets the warning that a thread has locked up due to failing to update the heartbeat attribute')
+
+poll_config.addOption('autoCheckCredentials', True, 'Check credentials using the monitoring loop')
 
 # ------------------------------------------------
 # Feedback
@@ -299,10 +301,10 @@ lcg_config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
 
 # set default values for the configuration parameters
 lcg_config.addOption(
-    'EDG_ENABLE', False, 'enables/disables the support of the EDG middleware')
+    'EDG_ENABLE', False, 'DEPRECATED enables/disables the support of the EDG middleware')
 
 lcg_config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                 'sets the LCG-UI environment setup script for the EDG middleware',
+                 'DEPRECATED sets the LCG-UI environment setup script for the EDG middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption(
@@ -312,10 +314,10 @@ lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_e
                  'sets the LCG-UI environment setup script for the GLITE middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
-lcg_config.addOption('VirtualOrganisation', 'dteam',
+lcg_config.addOption('VirtualOrganisation', '',
                  'sets the name of the grid virtual organisation')
 
-lcg_config.addOption('ConfigVO', '', 'sets the VO-specific LCG-UI configuration script for the EDG resource broker',
+lcg_config.addOption('ConfigVO', '', 'DEPRECATED sets the VO-specific LCG-UI configuration script for the EDG resource broker',
                  filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
@@ -616,23 +618,20 @@ backendPostprocess:defines where postprocessing should be done (WN/client) on di
 uploadOptions:config values needed for the actual %s upload'
 
 # LocalFile
-#    LocalPost = {'Localhost': 'WN', 'Interactive': 'WN', 'CREAM': 'client', 'Dirac': 'client'}
-#
-#    LocalUpOpt = {}
-#
-#    LocalFileExt = docstr_Ext % ('Local', 'Local')
-#
-#    outputconfig.addOption('LocalFile',
-#                            {'fileExtensions': ['*.txt'],
-#                             'backendPostprocess' : LocalPost,
-#                             'uploadOptions' : LocalUpOpt},
-#                            LocalFileExt)
+LocalPost = {'Local': 'client', 'Interactive': 'client', 'CREAM': 'client', 'Dirac': 'client'}
+LocalUpOpt = {}
+LocalFileExt = docstr_Ext % ('Local', 'Local')
+output_config.addOption('LocalFile',
+                           {'fileExtensions': ['*.txt'],
+                             'backendPostprocess' : LocalPost,
+                             'uploadOptions' : LocalUpOpt},
+                            LocalFileExt)
 
 
 # LCGSEFILE
 
 LCGSEBakPost = {'LSF': 'client', 'PBS': 'client', 'LCG': 'WN', 'CREAM': 'WN',
-                'ARC': 'WN', 'Localhost': 'WN', 'Interactive': 'WN'}
+                'ARC': 'WN', 'Local': 'WN', 'Interactive': 'WN'}
 LCGSEUpOpt = {'LFC_HOST': 'lfc-dteam.cern.ch', 'dest_SRM': 'srm-public.cern.ch'}
 LCGSEFileExt = docstr_Ext % ('LCG SE', 'LCG')
 
@@ -646,7 +645,7 @@ output_config.addOption('LCGSEFile',
 ## TODO MOVE ME TO GANGADIRAC!!!
 # Should this be in Core or elsewhere?
 diracBackPost = {'Dirac': 'submit', 'LSF': 'WN', 'PBS': 'WN', 'LCG': 'WN',
-                 'CREAM': 'WN', 'ARC': 'WN', 'Localhost': 'WN', 'Interactive': 'WN'}
+                 'CREAM': 'WN', 'ARC': 'WN', 'Local': 'WN', 'Interactive': 'WN'}
 diracFileExts = docstr_Ext % ('DIRAC', 'DIRAC')
 
 output_config.addOption('DiracFile',
@@ -659,7 +658,7 @@ output_config.addOption('DiracFile',
 # GoogleFile
 
 GoogleFileBackPost = {'Dirac': 'client', 'LSF': 'client', 'PBS': 'client', 'LCG': 'client',
-                      'CREAM': 'client', 'ARC': 'client', 'Localhost': 'client', 'Interactive': 'client'}
+                      'CREAM': 'client', 'ARC': 'client', 'Local': 'client', 'Interactive': 'client'}
 GoogleFileExts = docstr_Ext % ('GoogleDrive', 'Google')
 
 output_config.addOption('GoogleFile',
@@ -719,7 +718,7 @@ massStorageUploadOptions = {'mkdir_cmd': prefix + 'mkdir', 'cp_cmd':
 massStorageFileExt = docstr_Ext % ('Mass Storage', 'EOS')
 
 massStorageBackendPost = {'LSF': 'WN', 'PBS': 'WN', 'LCG': 'client', 'CREAM': 'client',
-                          'ARC': 'client', 'Localhost': 'WN', 'Interactive': 'client', 'Dirac': 'client'}
+                          'ARC': 'client', 'Local': 'WN', 'Interactive': 'client', 'Dirac': 'client'}
 
 output_config.addOption('MassStorageFile',
                        {'fileExtensions': [''],
@@ -840,3 +839,4 @@ Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 # Registry Dirty Monitoring Services (not related to actual Job Monitoring)
 reg_config = makeConfig('Registry','')
 reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')
+reg_config.addOption('EnableAutoFlush', True, 'Enable Registry auto-flushing feature')

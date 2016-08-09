@@ -96,12 +96,6 @@ RecoToDST-07/90000000/DST" ,
         super(BKQuery, self).__init__()
         self.path = path
 
-    def __construct__(self, args):
-        if (len(args) != 1) or (not isType(args[0], str)):
-            super(BKQuery, self).__construct__(args)
-        else:
-            self.path = args[0]
-
     def getDatasetMetadata(self):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
@@ -182,17 +176,19 @@ RecoToDST-07/90000000/DST" ,
         #    return DiracFile(lfn = this_file)
         #GangaObject.__createNewList(new_files, files, _createDiracLFN)
 
-        new_files = [DiracFile(lfn=_file) for _file in files]
+        logger.debug("Creating new list")
+        new_files = [DiracFile(lfn=f) for f in files]
 
         #new_files = [DiracFile(lfn=_file) for _file in files]
         #for f in files:
         #    new_files.append(DiracFile(lfn=f))
             #ds.extend([DiracFile(lfn = f)])
 
-        logger.debug("Creating Dataset")
+        logger.info("Constructing LHCbDataset")
 
         from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-        ds = LHCbDataset(new_files)
+        logger.debug("Imported LHCbDataset")
+        ds = LHCbDataset(files=new_files, fromRef=True)
 
         logger.debug("Returning Dataset")
 
@@ -243,12 +239,6 @@ class BKQueryDict(GangaObject):
     def __init__(self):
         super(BKQueryDict, self).__init__()
 
-    def __construct__(self, args):
-        if (len(args) != 1) or type(args[0]) is not dict:
-            super(BKQueryDict, self).__construct__(args)
-        else:
-            self.dict = args[0]
-
     def getDatasetMetadata(self):
         '''Gets the dataset from the bookkeeping for current dict.'''
         if not self.dict:
@@ -283,10 +273,10 @@ class BKQueryDict(GangaObject):
                 files = files['LFNs'].keys()
 
         from GangaDirac.Lib.Files.DiracFile import DiracFile
-        this_list = [DiracFile(lfn=_file) for _file in files]
+        this_list = [DiracFile(lfn=f) for f in files]
 
         from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-        ds = LHCbDataset(this_list)
+        ds = LHCbDataset(files=this_list, fromRef=True)
 
         return addProxy(ds)
 

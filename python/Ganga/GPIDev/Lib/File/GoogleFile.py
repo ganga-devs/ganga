@@ -116,7 +116,7 @@ class GoogleFile(IGangaFile):
             except:
                 deny = raw_input(
                     'An incorrect code was entered. Have you denied Ganga access to your GoogleDrive (y/[n])?')
-                if deny == '' or deny[0:1].upper() == 'N':
+                if deny.lower() in ['', 'n']:
                     pass
                 elif deny[0:1].upper() == 'Y':
                     return None
@@ -135,13 +135,6 @@ class GoogleFile(IGangaFile):
         self.__initialized = True
 
         self._check_Ganga_folder()
-
-    def __construct__(self, args):
-        if (len(args) != 1) or (not isType(args[0], str)):
-            super(GoogleFile, self).__construct__(args)
-        else:
-            self.namePattern = args[0]
-        self.cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata.pkl')
 
     def _attribute_filter__set__(self, n, v):
         if n == 'localDir':

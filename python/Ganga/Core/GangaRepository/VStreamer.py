@@ -1,12 +1,11 @@
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import print_function, absolute_import
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
-# config_scope is namespace used for evaluating simple objects (e.g. File)
+# config_scope is namespace used for evaluating simple objects (e.g. File, datetime, SharedDir)
 from Ganga.Utility.Config import config_scope
 
 from Ganga.Utility.Plugin import PluginManagerError, allPlugins
@@ -18,8 +17,11 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 from .GangaRepository import SchemaVersionError
 
 import xml.sax.saxutils
+import copy
 
 logger = getLogger()
+
+_cached_eval_strings = {}
 
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
@@ -121,7 +123,9 @@ def fastXML(obj, indent='', ignore_subs=''):
     elif hasattr(obj, '_data'):
         v = obj._schema.version
         sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (getName(obj), v.major, v.minor, obj._category)]
-        for k, o in obj._data.items():
+        for attr_name in obj._schema.allItemNames():
+            k = attr_name
+            o = getattr(obj, k)
             if k != ignore_subs:
                 try:
                     if not obj._schema[k]._meta["transient"]:
@@ -361,7 +365,13 @@ class Loader(object):
                 # unescape the special characters
                 s = unescape(self.value_construct)
                 #logger.debug('string value: %s',s)
-                val = eval(s, config_scope)
+                if s not in _cached_eval_strings:
+                    # This is ugly and classes which use this are bad, but this needs to be fixed in another PR
+                    # TODO Make the scope of objects a lot better than whatever is in the config
+                    # This is a dictionary constructed from eval-ing things in the Config. Why does should it do this?
+                    # Anyway, lets save the result for speed
+                    _cached_eval_strings[s] = eval(s, config_scope)
+                val = copy.deepcopy(_cached_eval_strings[s])
                 #logger.debug('evaled value: %s type=%s',repr(val),type(val))
                 self.stack.append(val)
                 self.value_construct = None
@@ -379,18 +389,7 @@ class Loader(object):
             # the object stays on the stack (will be removed by </attribute> or
             # is a root object)
             if name == 'class':
-                obj = self.stack[-1]
-                for attr, item in obj._schema.allItems():
-                    if not attr in obj._data:
-                        #logger.info("Opening: %s" % attr)
-                        if item._meta["sequence"] == 1:
-                            obj.setSchemaAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
-                            #setattr(obj, attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
-                        else:
-                            obj.setSchemaAttribute(attr, obj._schema.getDefaultValue(attr))
-                            #setattr(obj, attr, obj._schema.getDefaultValue(attr))
-
-                #print("Constructed: %s" % getName(obj))
+                pass
 
         def char_data(data):
             # char_data may be called many times in one CDATA section so we need to build up
@@ -418,7 +417,7 @@ class Loader(object):
 
         # Raise Exception if object is incomplete
         for attr, item in obj._schema.allItems():
-            if not attr in obj._data:
+            if not hasattr(obj, attr):
                 raise AssertionError("incomplete XML file")
         return obj, self.errors
 

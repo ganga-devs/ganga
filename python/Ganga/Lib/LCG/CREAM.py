@@ -4,6 +4,7 @@ import os.path
 import math
 import re
 import mimetypes
+import shutil
 
 from urlparse import urlparse
 
@@ -20,11 +21,12 @@ from Ganga.Lib.LCG.Utility import get_uuid
 from Ganga.Lib.LCG.Utility import get_md5sum
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
-from Ganga.Lib.LCG.Grid import Grid
-from Ganga.Lib.LCG.LCG import grids
+from Ganga.Lib.LCG import Grid
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
 from Ganga.GPIDev.Base.Proxy import getName
+
+config = getConfig('LCG')
 
 def __cream_resolveOSBList__(job, jdl):
 
@@ -65,7 +67,8 @@ class CREAM(IBackend):
         'reason': SimpleItem(defvalue='', protected=1, copyable=0, doc='Reason of causing the job status'),
         'workernode': SimpleItem(defvalue='', protected=1, copyable=0, doc='The worker node on which the job actually runs.'),
         'isbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The input sandbox URI on CREAM CE'),
-        'osbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The output sandbox URI on CREAM CE')
+        'osbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The output sandbox URI on CREAM CE'),
+        'delegation_id': SimpleItem(defvalue='', typelist=['str'], hidden=True),
     })
 
     _category = 'backends'
@@ -117,13 +120,11 @@ class CREAM(IBackend):
         re_token = re.compile('^token:(.*):(.*)$')
 
         self.sandboxcache.vo = config['VirtualOrganisation']
-        self.sandboxcache.middleware = 'GLITE'
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         if self.sandboxcache._name == 'LCGSandboxCache':
             if not self.sandboxcache.lfc_host:
-                self.sandboxcache.lfc_host = grids[
-                    self.sandboxcache.middleware].__get_lfc_host__()
+                self.sandboxcache.lfc_host = Grid.__get_lfc_host__()
 
             if not self.sandboxcache.se:
 
@@ -213,8 +214,7 @@ class CREAM(IBackend):
 
         # or in general, query it from the Grid object
         if not lfc_host:
-            lfc_host = grids[
-                self.sandboxcache.middleware.upper()].__get_lfc_host__()
+            lfc_host = Grid.__get_lfc_host__()
 
         idx['lfc_host'] = lfc_host
 
@@ -322,17 +322,17 @@ class CREAM(IBackend):
         # the algorithm for submitting a single bulk job
         class MyAlgorithm(Algorithm):
 
-            def __init__(self, gridObj, masterInputWorkspace, ce):
+            def __init__(self, masterInputWorkspace, ce, delid):
                 Algorithm.__init__(self)
                 self.inpw = masterInputWorkspace
-                self.gridObj = gridObj
                 self.ce = ce
+                self.delid = delid
 
             def process(self, jdl_info):
                 my_sj_id = jdl_info[0]
                 my_sj_jdl = jdl_info[1]
 
-                my_sj_jid = self.gridObj.cream_submit(my_sj_jdl, self.ce)
+                my_sj_jid = Grid.cream_submit(my_sj_jdl, self.ce, self.delid)
 
                 if not my_sj_jid:
                     return False
@@ -344,8 +344,7 @@ class CREAM(IBackend):
         for id, jdl in node_jdls.items():
             mt_data.append((id, jdl))
 
-        myAlg = MyAlgorithm(
-            gridObj=grids['GLITE'], masterInputWorkspace=job.getInputWorkspace(), ce=self.CE)
+        myAlg = MyAlgorithm(masterInputWorkspace=job.getInputWorkspace(), ce=self.CE, delid=self.delegation_id)
         myData = Data(collection=mt_data)
 
         runner = MTRunner(name='cream_jsubmit', algorithm=myAlg,
@@ -358,7 +357,7 @@ class CREAM(IBackend):
             # submitted jobs on WMS immediately
             logger.error(
                 'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            grids['GLITE'].cancelMultiple(runner.getResults().values())
+            Grid.cancelMultiple(runner.getResults().values())
             return None
         else:
             return runner.getResults()
@@ -608,6 +607,8 @@ try:
         else:
             if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
                 getPackedInputSandbox(f)
+            else:
+                shutil.copy(f, os.path.join(os.getcwd(), os.path.basename(f)))
 
     printInfo('Download inputsandbox from iocache passed.')
 
@@ -784,6 +785,7 @@ sys.exit(0)
             pass
 
 #       prepare input/output sandboxes
+        import Ganga.Utility.files
         from Ganga.GPIDev.Lib.File import File
         from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
         import inspect
@@ -927,7 +929,7 @@ sys.exit(0)
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return False
 
-        return grids['GLITE'].cream_cancelMultiple([self.id])
+        return Grid.cream_cancelMultiple([self.id])
 
     def master_kill(self):
         '''kill the master job to the grid'''
@@ -956,7 +958,7 @@ sys.exit(0)
                 ids.append(sj.backend.id)
 
         # 2. cancel the collected jobs
-        ck = grids['GLITE'].cream_cancelMultiple(ids)
+        ck = Grid.cream_cancelMultiple(ids)
         if not ck:
             logger.warning('Job cancellation failed')
             return False
@@ -1080,7 +1082,8 @@ sys.exit(0)
             raise GangaException('CREAM CE endpoint not set')
 
         # delegate proxy to CREAM CE
-        if not grids['GLITE'].cream_proxy_delegation(self.CE):
+        self.delegation_id = Grid.cream_proxy_delegation(self.CE, self.delegation_id)
+        if not self.delegation_id:
             logger.warning('proxy delegation to %s failed' % self.CE)
 
         # doing massive job preparation
@@ -1103,7 +1106,7 @@ sys.exit(0)
         jdlpath = self.preparejob(subjobconfig, master_job_sandbox)
 
         if jdlpath:
-            self.id = grids['GLITE'].cream_submit(jdlpath, self.CE)
+            self.id = Grid.cream_submit(jdlpath, self.CE, self.delegation_id)
 
             if self.id:
                 self.actualCE = self.CE
@@ -1139,7 +1142,8 @@ sys.exit(0)
         ick = False
 
         # delegate proxy to CREAM CE
-        if not grids['GLITE'].cream_proxy_delegation(self.CE):
+        self.delegation_id = Grid.cream_proxy_delegation(self.CE, self.delegation_id)
+        if not self.delegation_id:
             logger.warning('proxy delegation to %s failed' % self.CE)
 
         if not job.master and len(job.subjobs) == 0:
@@ -1175,7 +1179,7 @@ sys.exit(0)
         jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
 
         if jdlpath:
-            self.id = grids['GLITE'].cream_submit(jdlpath, self.CE)
+            self.id = Grid.cream_submit(jdlpath, self.CE, self.delegation_id)
 
             if self.id:
                 # refresh the lcg job information
@@ -1192,7 +1196,7 @@ sys.exit(0)
         jobdict = dict([[job.backend.id, job]
                         for job in jobs if job.backend.id])
 
-        jobInfoDict = grids['GLITE'].cream_status(jobdict.keys())
+        jobInfoDict = Grid.cream_status(jobdict.keys())
 
         jidListForPurge = []
 
@@ -1234,8 +1238,8 @@ sys.exit(0)
 
                         if osbURIList:
 
-                            if grids['GLITE'].cream_get_output(osbURIList, job.getOutputWorkspace(create=True).getPath() ):
-                                (ick, app_exitcode) = grids['GLITE'].__get_app_exitcode__(
+                            if Grid.cream_get_output(osbURIList, job.getOutputWorkspace(create=True).getPath() ):
+                                (ick, app_exitcode) = Grid.__get_app_exitcode__(
                                     job.getOutputWorkspace(create=True).getPath() )
                                 job.backend.exitcode = app_exitcode
 
@@ -1267,7 +1271,7 @@ sys.exit(0)
 
             # purging the jobs the output has been fetched locally
             if jidListForPurge:
-                grids['GLITE'].cream_purgeMultiple(jidListForPurge)
+                Grid.cream_purgeMultiple(jidListForPurge)
 
     def updateGangaJobStatus(self):
         '''map backend job status to Ganga job status'''

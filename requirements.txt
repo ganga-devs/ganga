@@ -3,6 +3,8 @@
 
 pytest
 pytest-cov
+pytest-mock
 unittest2
 coverage
 pygments
+mock

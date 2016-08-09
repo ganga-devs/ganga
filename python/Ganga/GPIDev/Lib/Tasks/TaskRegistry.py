@@ -23,9 +23,9 @@ str_bad = markup("bad", overview_colours["bad"])
 
 class TaskRegistry(Registry):
 
-    def __init__(self, name, doc, update_index_time=30):
+    def __init__(self, name, doc):
 
-        super(TaskRegistry, self).__init__( name, doc, update_index_time=update_index_time)
+        super(TaskRegistry, self).__init__( name, doc )
 
         self._main_thread = None
 
@@ -40,12 +40,10 @@ class TaskRegistry(Registry):
         return self.stored_proxy
 
     def getIndexCache(self, obj):
-        if obj._data is None:
-            raise Exception("Currently don't support Index Caching")
         cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:
-            if cv in obj._data:
+            if hasattr(obj, cv):
                 c[cv] = getattr(obj, cv)
         this_slice = TaskRegistrySlice("tmp")
         for dpv in this_slice._display_columns:
@@ -270,13 +268,6 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         tasks('10.2')) : same as above
         """
         return _wrap(stripProxy(self).__call__(x))
-
-    def __getslice__(self, i1, i2):
-        """ Get a slice. Examples:
-        tasks[2:] : get first two tasks,
-        tasks[-10:] : get last 10 tasks.
-        """
-        return _wrap(stripProxy(self).__getslice__(i1, i2))
 
     def __getitem__(self, x):
         """ Get a job by positional index. Examples:
