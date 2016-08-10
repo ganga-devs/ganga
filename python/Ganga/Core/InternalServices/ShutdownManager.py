@@ -5,10 +5,12 @@ Attributes:
     logger (logger): Logger for the shutdown manager
 """
 
+import atexit
+
 # Ganga imports
 from Ganga.Core.GangaThread import GangaThreadPool
 from Ganga.Core.GangaThread.WorkerThreads import _global_queues, shutDownQueues
-from Ganga.Core import at_exit_should_wait_cb, monitoring_component
+from Ganga.Core import monitoring_component
 from Ganga.Core.InternalServices import Coordinator
 from Ganga.Runtime import Repository_runtime, bootstrap
 from Ganga.Utility import stacktracer
@@ -22,6 +24,15 @@ from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, rem
 # Globals
 logger = getLogger()
 
+def register_exitfunc():
+    """
+    This registers the exit functiona and actually tracks that it's done so,
+    registereing this  300 times is just bad...
+    """
+    if not register_exitfunc._has_registered:
+        atexit.register(_ganga_run_exitfuncs)
+        register_exitfunc._has_registered = True
+register_exitfunc._has_registered = False
 
 def _ganga_run_exitfuncs():
     """Run all exit functions from plugins and internal services in the correct order
@@ -67,7 +78,7 @@ def _ganga_run_exitfuncs():
 
     # shutdown the threads in the GangaThreadPool
     try:
-        GangaThreadPool.getInstance().shutdown(should_wait_cb=at_exit_should_wait_cb)
+        GangaThreadPool.getInstance().shutdown()
     except Exception as err:
         logger.exception("Exception raised during shutdown of GangaThreadPool: %s" % err)
 

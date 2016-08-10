@@ -112,32 +112,6 @@ class LHCbDataset(GangaDataset):
         self.depth = depth
         logger.debug("Dataset Created")
 
-    def __construct__(self, args):
-        logger.debug("__construct__")
-        self.files = []
-        if (len(args) != 1):
-            super(LHCbDataset, self).__construct__(args[1:])
-
-        #logger.debug("__construct__: %s" % str(args))
-
-        if len(args) == 0:
-            return
-
-        self.files = []
-        if type(args[0]) is str:
-            this_file = string_datafile_shortcut_lhcb(args[0], None)
-            self.files.append(args[0])
-        else:
-            for file_arg in args[0]:
-                if type(file_arg) is str:
-                    this_file = string_datafile_shortcut_lhcb(file_arg, None)
-                else:
-                    this_file = file_arg
-                self.files.append(file_arg)
-        # Equally as expensive
-        #logger.debug( "Constructing dataset len: %s\n%s" % (str(len(self.files)), str(self.files) ) )
-        logger.debug("Constructing dataset len: %s" % str(len(self.files)))
-
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
         #this_file = self.files[i]
@@ -404,7 +378,7 @@ class LHCbDataset(GangaDataset):
         other_files = self._checkOtherFiles(other)
         files = set(self.getFullFileNames()).difference(other_files)
         data = LHCbDataset()
-        data.__construct__([list(files)])
+        data.extend([list(files)])
         data.depth = self.depth
         return data
 
@@ -424,7 +398,7 @@ class LHCbDataset(GangaDataset):
         other_files = other.checkOtherFiles(other)
         files = set(self.getFullFileNames()).symmetric_difference(other_files)
         data = LHCbDataset()
-        data.__construct__([list(files)])
+        data.extend([list(files)])
         data.depth = self.depth
         return data
 
@@ -433,7 +407,7 @@ class LHCbDataset(GangaDataset):
         other_files = other._checkOtherFiles(other)
         files = set(self.getFullFileNames()).intersection(other_files)
         data = LHCbDataset()
-        data.__construct__([list(files)])
+        data.extend([list(files)])
         data.depth = self.depth
         return data
 
@@ -442,7 +416,7 @@ class LHCbDataset(GangaDataset):
         other_files = self._checkOtherFiles(other)
         files = set(self.getFullFileNames()).union(other_files)
         data = LHCbDataset()
-        data.__construct__([list(files)])
+        data.extend([list(files)])
         data.depth = self.depth
         return data
 
@@ -534,11 +508,11 @@ def string_dataset_shortcut(files, item):
                      if isinstance(stripProxy(i), ObjectMetaclass)
                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))
                      and 'inputdata' in stripProxy(i)._schema.datadict]
-    if type(files) not in [list, tuple]:
+    if type(files) not in [list, tuple, GangaList]:
         return None
     if item in inputdataList:
         ds = LHCbDataset()
-        ds.__construct__([files])
+        ds.extend(files)
         return ds
     else:
         return None  # used to be c'tors, but shouldn't happen now

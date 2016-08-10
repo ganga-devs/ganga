@@ -58,6 +58,11 @@ def getReplicas(lfns):
     output(dirac.getReplicas(lfns, active=True, preferDisk = True))
 
 
+def getAccessURL(lfn,SE):
+    ''' Return the access URL for the given LFN and storage element '''
+    output(dirac.getAccessURL(lfn,SE))
+
+
 def getFile(lfns, destDir=''):
     ''' Put the physical file behind the LFN in the destDir path'''
     output(dirac.getFile(lfns, destDir=destDir))
@@ -382,4 +387,3 @@ def getSEsForSite(site):
     from DIRAC.Core.Utilities.SiteSEMapping import getSEsForSite
     result = getSEsForSite(site)
     output(result)
-

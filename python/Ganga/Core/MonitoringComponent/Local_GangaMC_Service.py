@@ -965,7 +965,6 @@ class JobRegistry_Monitor(GangaThread):
         for backend, these_jobs in active_backends.iteritems():
             summary += '"' + str(backend) + '" : ['
             for this_job in these_jobs:
-                #stripProxy(this_job)._getWriteAccess()
                 summary += str(stripProxy(this_job).id) + ', '#getFQID('.')) + ', '
             summary += '], '
         summary += '}'

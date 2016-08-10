@@ -50,7 +50,7 @@ class TestSelect(GangaUnitTest):
         """ Is is a bird is it a plane... no it's a test for selecting subjobs now"""
         from Ganga.GPI import jobs, Job, ArgSplitter
         
-        j=Job(splitter=ArgSplitter(args=job_names))
+        j=Job(splitter=ArgSplitter(args=[[_] for _ in job_names]))
         j.submit()
         
         from GangaTest.Framework.utils import sleep_until_completed
