@@ -176,7 +176,7 @@ def _getshell_SP(self):
 
     self.shell = Shell(setup=fd.name)
     if (not self.shell):
-        raise ApplicationConfigurationError(None, 'Shell not created.')
+        raise ApplicationConfigurationError('Shell not created.')
 
     fd.close()
 
@@ -190,7 +190,7 @@ def _getshell_SP(self):
     if not app_ok or not ver_ok:
         msg = 'Command "%s" failed to properly setup environment.' % cmd
         logger.error(msg)
-        raise ApplicationConfigurationError(None, msg)
+        raise ApplicationConfigurationError(msg)
 
     self.env = copy.deepcopy(self.shell.env)
 

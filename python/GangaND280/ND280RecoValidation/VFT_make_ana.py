@@ -85,7 +85,7 @@ class VFT_make_ana(IApplication):
         job = self.getJobObject()
 
         if self.cmtsetup == None:
-          raise ApplicationConfigurationError(None,'No cmt setup script given.')
+          raise ApplicationConfigurationError('No cmt setup script given.')
 
         if not self.tree == None:
           args.append('-t')
@@ -101,7 +101,7 @@ class VFT_make_ana(IApplication):
             args.append(UsrOpt)
 
         if self.ana_output == None:
-          raise ApplicationConfigurationError(None,'No output file given. Fill the ana_output variable.')
+          raise ApplicationConfigurationError('No output file given. Fill the ana_output variable.')
         else:
           args.append('-o')
           args.append(self.ana_output)
@@ -109,10 +109,10 @@ class VFT_make_ana(IApplication):
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
         if job.inputdata == None:
-          raise ApplicationConfigurationError(None,'The inputdata variable is not defined.')
+          raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:
-          raise ApplicationConfigurationError(None,'No input data file given.')
+          raise ApplicationConfigurationError('No input data file given.')
         args.extend(fileList)
 
         if self.run_pdf:
@@ -120,7 +120,7 @@ class VFT_make_ana(IApplication):
           args.append('$ND280ANALYSISTOOLSROOT/macros/grtf/pdfgen/make_pdf.py')
 
           if not 'ana_output' in [self.pdf_rdp, self.pdf_mcp, self.pdf_oldrdp, self.pdf_oldmcp]:
-            raise ApplicationConfigurationError(None,'None of the pdf inputs is set to use the make_ana.py output. Please set "pdf_rdp", "pdf_mcp", "pdf_oldrdp", or "pdf_oldmcp" to the value "ana_output"')
+            raise ApplicationConfigurationError('None of the pdf inputs is set to use the make_ana.py output. Please set "pdf_rdp", "pdf_mcp", "pdf_oldrdp", or "pdf_oldmcp" to the value "ana_output"')
 
           for key in ['pdf_rdp', 'pdf_mcp', 'pdf_oldrdp', 'pdf_oldmcp']:
             if getattr(self, key) == 'ana_output':
@@ -137,7 +137,7 @@ class VFT_make_ana(IApplication):
           for opt in self.pdf_options:
             for key in argDict:
               if opt.find(key) > -1 and not getattr(self, argDict[key]) == None:
-                raise ApplicationConfigurationError(None,'The make_pdf.py command line argument %s was set through both the ganga application variable "%s" and pdf_options "%s". Use only one of them.' % (key, argDict[key], opt))
+                raise ApplicationConfigurationError('The make_pdf.py command line argument %s was set through both the ganga application variable "%s" and pdf_options "%s". Use only one of them.' % (key, argDict[key], opt))
             args.append(opt)
 
 

@@ -147,7 +147,7 @@ class DQ2JobSplitter(ISplitter):
             
                 # check splitting options
                 if self.numsubjobs <= 0:
-                    raise ApplicationConfigurationError(None,'DQ2JobSplitter must have numsubjobs specified if not using inputdata')
+                    raise ApplicationConfigurationError('DQ2JobSplitter must have numsubjobs specified if not using inputdata')
 
                 subjobs = []
                 skipevent = 0
@@ -194,25 +194,25 @@ class DQ2JobSplitter(ISplitter):
                 return subjobs
     
             else:
-                raise ApplicationConfigurationError(None,'DQ2JobSplitter specifed but no input dataset and no splitter options (%SKIPEVENTS and/or %RNDM) in job.application.options')            
+                raise ApplicationConfigurationError('DQ2JobSplitter specifed but no input dataset and no splitter options (%SKIPEVENTS and/or %RNDM) in job.application.options')
 
         if job.inputdata._name != 'DQ2Dataset'  and job.inputdata._name != 'AMIDataset' and job.inputdata._name != 'EventPicking':
-            raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset or AMIDataset or EventPicking as input')
+            raise ApplicationConfigurationError('DQ2 Job Splitter requires a DQ2Dataset or AMIDataset or EventPicking as input')
 
         if not job.backend._name in [ 'LCG', 'CREAM', 'Panda', 'NG' ] and not ( job.backend._name in ['SGE'] and config['ENABLE_SGE_DQ2JOBSPLITTER'] ):
-            raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, CREAM, Panda or NG backend')
+            raise ApplicationConfigurationError('DQ2JobSplitter requires an LCG, CREAM, Panda or NG backend')
         
         if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0 and self.filesize <=0):
-            raise ApplicationConfigurationError(None,"Specify one of the parameters of DQ2JobSplitter for job splitting: numsubjobs, numfiles, numevtsperjob")
+            raise ApplicationConfigurationError("Specify one of the parameters of DQ2JobSplitter for job splitting: numsubjobs, numfiles, numevtsperjob")
  
         if (self.numevtsperjob > 0 and job.inputdata._name != 'AMIDataset'):
-            raise ApplicationConfigurationError(None,"Event based splitting is supported only for AMIDataset as input dataset type")
+            raise ApplicationConfigurationError("Event based splitting is supported only for AMIDataset as input dataset type")
         # split options are mutually exclusive
         if ( (self.numfiles > 0 or self.numsubjobs > 0) and self.numevtsperjob > 0):
-            raise ApplicationConfigurationError(None,"Split by files (or subjobs) and events can not be defined simultaneously")
+            raise ApplicationConfigurationError("Split by files (or subjobs) and events can not be defined simultaneously")
 
         if (job.application.max_events > 0 and self.numevtsperjob > 0):
-            raise ApplicationConfigurationError(None,"Split by maximum events and split by events can not be defined simultaneously")
+            raise ApplicationConfigurationError("Split by maximum events and split by events can not be defined simultaneously")
         
         # check correct usage of inputdata.tagdataset and create a mapping from TAG DS to parent DS
         tag_dataset_map = {}
@@ -220,7 +220,7 @@ class DQ2JobSplitter(ISplitter):
             if len(job.inputdata.dataset) != 0:
 
                 if len(job.inputdata.tagdataset) != 1 and len(job.inputdata.tagdataset) != len(job.inputdata.dataset):
-                    raise ApplicationConfigurationError(None,"There must be a 1->1 mapping of TAG datasets to parent datasets or only a single TAG dataset")
+                    raise ApplicationConfigurationError("There must be a 1->1 mapping of TAG datasets to parent datasets or only a single TAG dataset")
 
                 index = 0
 
@@ -284,7 +284,7 @@ class DQ2JobSplitter(ISplitter):
                     if not tagResults:
                         tagResults = tagIF.countGuids(dsNameForLookUp,"", streamRef + ",StreamTAG")
                         if not tagResults:
-                            raise ApplicationConfigurationError(None,"Could not find references to TAG dataset %s in ELSSI DB. Try matching from dq2 or using TagPrepare." % dsNameForLookUp)
+                            raise ApplicationConfigurationError("Could not find references to TAG dataset %s in ELSSI DB. Try matching from dq2 or using TagPrepare." % dsNameForLookUp)
                                                         
                     # NOTE: The folowing should use the TAG info returned by countGuids but ELSSI DB
                     # is messed up for pre 2011 data. This should be fixed!
@@ -358,7 +358,7 @@ class DQ2JobSplitter(ISplitter):
 
             # check for conflicts with TAG_LOCAL or TAG_COPY
             if job.inputdata.type in ['TAG_LOCAL', 'TAG_COPY']:
-                raise ApplicationConfigurationError(None, "Cannot provide both tag_info and run as '%s'. Please use one or the other!" % job.inputdata.type)
+                raise ApplicationConfigurationError("Cannot provide both tag_info and run as '%s'. Please use one or the other!" % job.inputdata.type)
             
             logger.warning('TAG information present - overwriting previous DQ2Dataset definitions')
 
@@ -430,16 +430,16 @@ class DQ2JobSplitter(ISplitter):
                         ref_dataset = job.inputdata.tag_info[tag_file]['refs'][0][1]
                         for ref in job.inputdata.tag_info[tag_file]['refs']:
                             if ref[1] != ref_dataset:
-                                raise ApplicationConfigurationError(None,'Problems with TAG entry for %s. Multiple datasets referenced for local TAG file.' % tag_file)
+                                raise ApplicationConfigurationError('Problems with TAG entry for %s. Multiple datasets referenced for local TAG file.' % tag_file)
 
                             job.inputdata.names.append( ref[0] )
                             job.inputdata.guids.append( ref[2] )
 
                     else:
-                        raise ApplicationConfigurationError(None,'Problems with TAG entry for %s' % tag_file)
+                        raise ApplicationConfigurationError('Problems with TAG entry for %s' % tag_file)
                 
             if grid_tag and local_tag:
-                raise ApplicationConfigurationError(None,'Problems with TAG info - both grid and local TAG files selected.')
+                raise ApplicationConfigurationError('Problems with TAG info - both grid and local TAG files selected.')
                     
                     
         # now carry on as before
@@ -475,9 +475,9 @@ class DQ2JobSplitter(ISplitter):
                         allowed_sites = job.backend.requirements.list_sites_cloud( req_str = rel_tag_str )
 
                     if len(allowed_sites) == 0:
-                        raise ApplicationConfigurationError(None,'DQ2JobSplitter could not find any allowed sites. This could be due to blacklisting, not having the required release installed or sites/clouds being manually excluded.')
+                        raise ApplicationConfigurationError('DQ2JobSplitter could not find any allowed sites. This could be due to blacklisting, not having the required release installed or sites/clouds being manually excluded.')
                 else: 
-                    raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
+                    raise ApplicationConfigurationError('DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
                 allowed_sites_all = job.backend.requirements.list_sites(True,True)
                 # Apply GangaRobot blacklist
                 if self.use_blacklist:
@@ -501,14 +501,14 @@ class DQ2JobSplitter(ISplitter):
                     try:
                         db_dataset = job.application.atlas_dbrelease.split(':')[0]
                     except:
-                        raise ApplicationConfigurationError(None,'Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
+                        raise ApplicationConfigurationError('Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
                     from dq2.clientapi.DQ2 import DQ2
                     from dq2.info import TiersOfATLAS
                     dq2=DQ2(force_backend='rucio')
                     try:
                         db_locations = dq2.listDatasetReplicas(db_dataset).values()[0][1]
                     except:
-                        raise ApplicationConfigurationError(None,'Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
+                        raise ApplicationConfigurationError('Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
 
                     # Update allowed_sites to contain all possible spacetokens of a site
                     dq2alternatenames = []
@@ -593,7 +593,7 @@ class DQ2JobSplitter(ISplitter):
             allowed_sites = TiersOfATLAS.getAllSources()
             
         if not allowed_sites:
-            raise ApplicationConfigurationError(None,'DQ2JobSplitter found no allowed_sites for dataset')
+            raise ApplicationConfigurationError('DQ2JobSplitter found no allowed_sites for dataset')
 
         if 'LRZ-LMU_DATADISK' in allowed_sites:
             allowed_sites.append('LRZ-LMU-RUCIOTEST_DATADISK')
@@ -684,7 +684,7 @@ class DQ2JobSplitter(ISplitter):
                         break
                             
                 if len(cloud_set) == 0:
-                    raise ApplicationConfigurationError(None, 'Cloud option \'ALL\' could not find a complete replica of the dataset in any cloud. Please try a specific site or cloud.')
+                    raise ApplicationConfigurationError('Cloud option \'ALL\' could not find a complete replica of the dataset in any cloud. Please try a specific site or cloud.')
                 else:
                     cloud_list = list(cloud_set)
                     if not fav_cloud in cloud_list:
@@ -707,7 +707,7 @@ class DQ2JobSplitter(ISplitter):
         allcontents = {}
         if job.inputdata._name == 'EventPicking' and job.backend._name == 'Panda':
             if (job.inputdata.pick_filter_policy == 'reject'):
-                raise ApplicationConfigurationError(None,"Pick event filter policy 'reject' not supported on Panda backend.")
+                raise ApplicationConfigurationError("Pick event filter policy 'reject' not supported on Panda backend.")
             # create a file containing list of files
             test_area = os.environ['TestArea']
             eventPickFileList = '%s/epFileList_%s.dat' % (test_area, commands.getoutput('uuidgen'))
@@ -941,7 +941,7 @@ class DQ2JobSplitter(ISplitter):
                 if job.backend._name in ['LCG', 'CREAM' ] and job.application.athena_compile==True and  nrjob > config['MaxJobsDQ2JobSplitterLCGCompile']: 
                     logger.error('!!! The number of allowed subjobs on the %s backend and with athena_compile=True is %s, but DQ2JobSplitter is trying to split into %s subjobs !!!', job.backend._name, config['MaxJobsDQ2JobSplitterLCGCompile'], nrjob )
                     logger.error('!!! Please pre-compile the code locally and use athena_compile=False in a new job submission if more subjobs are required !!!' )
-                    raise ApplicationConfigurationError(None,'!!! Submission stopped !!!')
+                    raise ApplicationConfigurationError('!!! Submission stopped !!!')
 
                 if nrfiles > len(guids):
                     nrfiles = len(guids)
@@ -1207,7 +1207,7 @@ class DQ2JobSplitter(ISplitter):
         if not subjobs:
             logger.error('DQ2JobSplitter did not produce any subjobs! Either the dataset is not present in the cloud or at the site or all chosen sites are black-listed for the moment.')
             logger.error('job.inputdata.dataset %s job.backend.site %s ' % (job.inputdata.dataset, job.backend.site))
-            raise ApplicationConfigurationError(None,'!!! Stopping submission now !!!')
+            raise ApplicationConfigurationError('!!! Stopping submission now !!!')
 
         # reset missing files in case of a previous submission attempt
         self.missing_files = []

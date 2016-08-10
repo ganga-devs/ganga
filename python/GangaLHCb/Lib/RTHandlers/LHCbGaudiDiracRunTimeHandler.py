@@ -146,7 +146,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
             # As the RT Handler we already know we have a Dirac backend
             if type(job.backend.settings) is not dict:
-                raise ApplicationConfigurationError(None, 'backend.settings should be a dict')
+                raise ApplicationConfigurationError('backend.settings should be a dict')
 
             if 'AncestorDepth' in job.backend.settings:
                 ancestor_depth = job.backend.settings['AncestorDepth']

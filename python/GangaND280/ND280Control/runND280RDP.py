@@ -71,11 +71,11 @@ class runND280RDP(IApplication):
         job = self.getJobObject()
 
         if self.cmtsetup == []:
-          raise ApplicationConfigurationError(None,'No cmt setup script given.')
+          raise ApplicationConfigurationError('No cmt setup script given.')
 
         for arg in args:
           if arg == '-c':
-            raise ApplicationConfigurationError(None,'Option "-c" given in args. You must use the configfile variable instead.')
+            raise ApplicationConfigurationError('Option "-c" given in args. You must use the configfile variable instead.')
 
 
         cfg = ND280Configs.ND280Config('raw',self.confopts)
@@ -88,20 +88,20 @@ class runND280RDP(IApplication):
             midas_filefnd = re.match(r"^midas_file\s*=", line)
             if inputfile_listfnd or inputfilefnd or midas_filefnd:
               if job.inputdata == None:
-                raise ApplicationConfigurationError(None,'The given config file requires an input file but the inputdata of the job is not defined.')
+                raise ApplicationConfigurationError('The given config file requires an input file but the inputdata of the job is not defined.')
               # TODO: Check if there is an inputdata
               infiles = job.inputdata.get_dataset_filenames()
               if len(infiles) < 1:
-                raise ApplicationConfigurationError(None,'The given config file contains "inputfile" but not input file was given')
+                raise ApplicationConfigurationError('The given config file contains "inputfile" but not input file was given')
               if inputfile_listfnd:
                 line = 'inputfile_list = ' + ' '.join(infiles) + '\n'
               elif inputfilefnd:
                 if len(infiles) > 1:
-                  raise ApplicationConfigurationError(None,'The given config file contains "inputfile" but more than one input file was given')
+                  raise ApplicationConfigurationError('The given config file contains "inputfile" but more than one input file was given')
                 line = 'inputfile = ' + infiles[0] + '\n'
               elif midas_filefnd:
                 if len(infiles) > 1:
-                  raise ApplicationConfigurationError(None,'The given config file contains "midas_file" but more than one file was given')
+                  raise ApplicationConfigurationError('The given config file contains "midas_file" but more than one file was given')
                 line = 'midas_file = ' + infiles[0] + '\n'
             
             outConf += line

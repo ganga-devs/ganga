@@ -76,7 +76,7 @@ class oaReconPlusoaAnalysis(IApplication):
 
     def configure(self,masterappconfig):
         if self.cmtsetup == None:
-          raise ApplicationConfigurationError(None,'No cmt setup script given.')
+          raise ApplicationConfigurationError('No cmt setup script given.')
 
         # __________ Reco first ____________
         reco_args = convertIntToStringArgs(self.reco_args)
@@ -87,14 +87,14 @@ class oaReconPlusoaAnalysis(IApplication):
         # setup the output file
         for arg in reco_args:
           if arg == '-o':
-            raise ApplicationConfigurationError(None,'Option "-o" given in reco_args. You must use the filenamesubstr and reconewstr variables instead to define an output.')
+            raise ApplicationConfigurationError('Option "-o" given in reco_args. You must use the filenamesubstr and reconewstr variables instead to define an output.')
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
         if job.inputdata == None:
-          raise ApplicationConfigurationError(None,'The inputdata variable is not defined.')
+          raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:
-          raise ApplicationConfigurationError(None,'No input data file given.')
+          raise ApplicationConfigurationError('No input data file given.')
 
         firstFile = fileList[0].split('/')[-1]
         # Define the output
@@ -118,7 +118,7 @@ class oaReconPlusoaAnalysis(IApplication):
         # setup the output file
         for arg in anal_args:
           if arg == '-o':
-            raise ApplicationConfigurationError(None,'Option "-o" given in anal_args. You must use the filenamesubstr and reconewstr variables instead to define an output.')
+            raise ApplicationConfigurationError('Option "-o" given in anal_args. You must use the filenamesubstr and reconewstr variables instead to define an output.')
 
         # Define the output
         anal_args.append('-o')

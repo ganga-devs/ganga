@@ -72,11 +72,11 @@ class runND280Kin(IApplication):
         job = self.getJobObject()
 
         if self.cmtsetup == []:
-          raise ApplicationConfigurationError(None,'No cmt setup script given.')
+          raise ApplicationConfigurationError('No cmt setup script given.')
 
         infiles = job.inputdata.get_dataset_filenames()
         if len(infiles) <> 1:
-           raise ApplicationConfigurationError(None,'Wrong Dataset values')
+           raise ApplicationConfigurationError('Wrong Dataset values')
         jn = "%08d" % int(infiles[0])
         outConf = ''
         outConf += "# Automatically generated config file\n\n"

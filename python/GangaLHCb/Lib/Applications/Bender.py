@@ -175,15 +175,15 @@ FileCatalog().Catalogs=[]\n""" % modulename
         if isType(self.module, str):
             self.module = File(self.module)
         if self.module.name == None:
-            raise ApplicationConfigurationError(None, "Application Module not requested")
+            raise ApplicationConfigurationError("Application Module not requested")
         elif self.module.name == "":
-            raise ApplicationConfigurationError(None, "Application Module not requested")
+            raise ApplicationConfigurationError("Application Module not requested")
         else:
             # Always check we've been given a FILE!
             self.module.name = fullpath(self.module.name)
             if not os.path.isfile(self.module.name):
                 msg = 'Module file %s not found.' % self.module.name
-                raise ApplicationConfigurationError(None, msg)
+                raise ApplicationConfigurationError(msg)
 
     def postprocess(self):
         XMLPostProcessor.postprocess(self, logger)

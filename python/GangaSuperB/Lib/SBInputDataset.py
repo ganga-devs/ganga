@@ -42,10 +42,10 @@ class SBInputProductionAnalysis(Dataset):
         '''Checks done during submit phase. Protected elements are written.'''
         
         if self.dataset_id == '':
-            raise ApplicationConfigurationError(None, 'You must define an input dataset')
+            raise ApplicationConfigurationError('You must define an input dataset')
         
         if self.events_per_subjobs == 0:
-            raise ApplicationConfigurationError(None, 'You must define events_per_subjobs')
+            raise ApplicationConfigurationError('You must define events_per_subjobs')
         
         kwargs = dict()
         kwargs['dataset_id'] = self.dataset_id
@@ -56,34 +56,34 @@ class SBInputProductionAnalysis(Dataset):
         # only one dataset
         if len(datasets) == 0:
             msg = 'Input dataset %s not found' % self.dataset_id
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
         assert len(datasets) == 1, 'Dataset consistency error'
         dataset = datasets[0]
         
         # status
         if dataset['status'] not in ['open', 'closed']:
             msg = 'Input dataset %s status is not open or closed' % self.dataset_id
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
         
         # session
         if dataset['session'] not in ['fastsim', 'fullsim']:
             msg = 'Input dataset %s session is not fastsim or fullsim' % self.dataset_id
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
         
         if self.events_total == 0:
             self.events_total = int(dataset['parameters']['evt_tot'])
         
         if self.events_total != 0 and self.events_total > int(dataset['parameters']['evt_tot']):
             msg = 'Input dataset %s total events is %d' % (self.dataset_id, dataset['parameters']['evt_tot'])
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
         
         if self.events_per_subjobs < int(dataset['parameters']['evt_file']):
             msg = 'events_per_subjobs must be >= %s' % dataset['parameters']['evt_file']
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
         
         if self.events_per_subjobs >= self.events_total:
             msg = 'events_per_subjobs cannot be >= events_total'
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
         
         lfns = self.__getLFNs(dataset['parameters']['evt_file'])
         self.__createInputPath(lfns, dataset['parameters']['evt_file'])
@@ -269,10 +269,10 @@ class SBInputPureAnalysis(Dataset):
         '''Checks done during submit phase. Protected elements are written.'''
         
         if self.dataset_id == '':
-            raise ApplicationConfigurationError(None, 'You must define an input dataset')
+            raise ApplicationConfigurationError('You must define an input dataset')
         
         if self.files_per_subjobs == 0:
-            raise ApplicationConfigurationError(None, 'You must define events_per_subjobs')
+            raise ApplicationConfigurationError('You must define events_per_subjobs')
         
         kwargs = dict()
         kwargs['dataset_id'] = self.dataset_id
@@ -283,30 +283,30 @@ class SBInputPureAnalysis(Dataset):
         # only one dataset
         if len(datasets) == 0:
             msg = 'Input dataset %s not found' % self.dataset_id
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
         assert len(datasets) == 1, 'Dataset consistency error'
         dataset = datasets[0]
         
         # status
         if dataset['status'] not in ['open', 'closed']:
             msg = 'Input dataset %s status is not open or closed' % self.dataset_id
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError( msg)
         
         # session
         if dataset['session'] not in ['analysis']:
             msg = 'Input dataset %s is not analysis' % self.dataset_id
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
         
         if self.files_total == 0:
             self.files_total = int(dataset['files'])
         
         if self.files_total != 0 and self.files_total > int(dataset['files']):
             msg = 'Input dataset %s total files is %d' % (self.dataset_id, dataset['files'])
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
         
         if self.files_per_subjobs >= self.files_total:
             msg = 'files_per_subjobs cannot be >= files_total'
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
         
         lfns = self.__getLFNs()
         self.__createInputPath(lfns)
@@ -511,10 +511,10 @@ class SBInputPersonalProduction(Dataset):
         
         allowed_session = ['FastSim', 'FullSim']
         if self.session not in allowed_session:
-            raise ApplicationConfigurationError(None, 'session must be %s' % allowed_session)
+            raise ApplicationConfigurationError('session must be %s' % allowed_session)
         
         if self.number_of_subjobs < 1 or self.number_of_subjobs > 250:
-            raise ApplicationConfigurationError(None, 'number_of_subjobs must be between 1 and 250')
+            raise ApplicationConfigurationError('number_of_subjobs must be between 1 and 250')
         
         sql = '''SELECT DISTINCT soft_version
             FROM session_site_soft
@@ -526,7 +526,7 @@ class SBInputPersonalProduction(Dataset):
         supported_soft_version = [s['soft_version'] for s in supported_soft_version]
         
         if self.soft_version not in supported_soft_version:
-            raise ApplicationConfigurationError(None, 'supported soft_version are: %s' % supported_soft_version)
+            raise ApplicationConfigurationError('supported soft_version are: %s' % supported_soft_version)
         
         if self.session == 'FastSim' and self.background_frame == True:
             results = db.read('''SELECT prod_series, lfn_dir
@@ -594,7 +594,7 @@ class SBInputPersonalProduction(Dataset):
         results = db.read(sql, param)
         
         if len(results) == 0:
-            raise ApplicationConfigurationError(None, 'No site found with the specified requirements')
+            raise ApplicationConfigurationError('No site found with the specified requirements')
         
         for result in results:
             self.run_site.append(result['site'])

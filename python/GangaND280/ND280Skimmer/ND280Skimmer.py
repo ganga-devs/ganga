@@ -71,13 +71,13 @@ class ND280RecoSkimmer(IPrepareApp, IApplication):
         job = self.getJobObject()
 
         if self.cmtsetup == None:
-          raise ApplicationConfigurationError(None,'No cmt setup script given.')
+          raise ApplicationConfigurationError('No cmt setup script given.')
         if not isfile(self.cmtsetup):
-          raise ApplicationConfigurationError(None,'Cannot find cmt setup script '+self.cmtsetup)
+          raise ApplicationConfigurationError('Cannot find cmt setup script '+self.cmtsetup)
 
         # Copy CSV file to inputdir. Done in splitter for subjobs.
         if not isfile(self.csvfile):
-          raise ApplicationConfigurationError(None,'Cannot find CSV file '+self.csvfile)
+          raise ApplicationConfigurationError('Cannot find CSV file '+self.csvfile)
         from shutil import copy
         tmpcsv = os.path.join(job.inputdir, os.path.basename(self.csvfile))
         if not os.path.exists(tmpcsv):
@@ -90,7 +90,7 @@ class ND280RecoSkimmer(IPrepareApp, IApplication):
         args.append('file='+self.csvfile)
 
         if self.outputfile == None:
-          raise ApplicationConfigurationError(None,'No output file given. Fill the outputfile variable.')
+          raise ApplicationConfigurationError('No output file given. Fill the outputfile variable.')
 
         args.append('-o')
         args.append(self.outputfile)
@@ -112,10 +112,10 @@ class ND280RecoSkimmer(IPrepareApp, IApplication):
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
         if job.inputdata == None:
-          raise ApplicationConfigurationError(None,'The inputdata variable is not defined.')
+          raise ApplicationConfigurationError('The inputdata variable is not defined.')
         rawFileList = job.inputdata.get_dataset_filenames()
         if len(rawFileList) < 1:
-          raise ApplicationConfigurationError(None,'No input data file given.')
+          raise ApplicationConfigurationError('No input data file given.')
 
         fileList = []
         for r_sr in run_subrun:
@@ -124,7 +124,7 @@ class ND280RecoSkimmer(IPrepareApp, IApplication):
               fileList.append(rfile)
               continue
         if not len(fileList):
-          raise ApplicationConfigurationError(None,'No file matching the run_subrun in the CSV file %s.' % self.csvfile)
+          raise ApplicationConfigurationError('No file matching the run_subrun in the CSV file %s.' % self.csvfile)
         args.extend(fileList)
 
         argsStr = ' '.join(args)

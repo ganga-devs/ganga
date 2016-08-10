@@ -304,7 +304,7 @@ class Ostap(GaudiBase):
         """Checks the validity of user's entries for Ostap schema"""
         
         if not self.scripts and not self.commands and not self.arguments : 
-            raise ApplicationConfigurationError(None, "Application scripts are not defined")
+            raise ApplicationConfigurationError("Application scripts are not defined")
         
         if isinstance ( self.scripts , str ) : self.scripts = [ File ( self.scripts ) ]        
         for f in self.scripts : f.name = fullpath ( f.name )

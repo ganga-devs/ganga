@@ -28,7 +28,7 @@ def getNickname(gridProxy=None,allowMissingNickname=True):
         if allowMissingNickname:
             logger.warning(wMessage)
         else:
-            raise ApplicationConfigurationError(None,wMessage)
+            raise ApplicationConfigurationError(wMessage)
     return nickName
 
  

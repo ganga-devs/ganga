@@ -190,7 +190,7 @@ class Gaudi(GaudiBase):
                 for _f in nonexistentOptFiles:
                     tmpmsg += "'%s', " % _f.name
                 msg = tmpmsg[:-2] + ']'
-                raise ApplicationConfigurationError(None, msg)
+                raise ApplicationConfigurationError(msg)
 
     def master_configure(self):
         '''Handles all common master_configure actions.'''

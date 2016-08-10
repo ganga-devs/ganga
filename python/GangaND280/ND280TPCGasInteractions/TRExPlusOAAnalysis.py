@@ -65,7 +65,7 @@ class TRExPlusOAAnalysis(IApplication):
 
     def configure(self,masterappconfig):
         if self.cmtsetup == None:
-          raise ApplicationConfigurationError(None,'No cmt setup script given.')
+          raise ApplicationConfigurationError('No cmt setup script given.')
 
         # __________ TREx first ____________
         trex_args = convertIntToStringArgs(self.trex_args)
@@ -76,14 +76,14 @@ class TRExPlusOAAnalysis(IApplication):
         # setup the output file
         for arg in trex_args:
           if arg == '-o':
-            raise ApplicationConfigurationError(None,'Option "-o" given in trex_args. The module will define the output filename.')
+            raise ApplicationConfigurationError('Option "-o" given in trex_args. The module will define the output filename.')
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
         if job.inputdata == None:
-          raise ApplicationConfigurationError(None,'The inputdata variable is not defined.')
+          raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:
-          raise ApplicationConfigurationError(None,'No input data file given.')
+          raise ApplicationConfigurationError('No input data file given.')
         trex_args.extend(fileList)
 
         firstFile = fileList[0].split('/')[-1]
@@ -105,7 +105,7 @@ class TRExPlusOAAnalysis(IApplication):
         # setup the output file
         for arg in oaana_args:
           if arg == '-o':
-            raise ApplicationConfigurationError(None,'Option "-o" given in oaana_args. You must use the oaana_outputfile variable instead.')
+            raise ApplicationConfigurationError('Option "-o" given in oaana_args. You must use the oaana_outputfile variable instead.')
 
         oaana_args.append('-o')
         if self.filenamesubstr == None:

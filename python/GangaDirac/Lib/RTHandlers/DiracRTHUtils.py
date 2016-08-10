@@ -214,8 +214,7 @@ def diracAPI_script_settings(app):
     job = app.getJobObject()
     diracAPI_line = ''
     if type(job.backend.settings) is not dict:
-        raise ApplicationConfigurationError(
-            None, 'backend.settings should be a dict')
+        raise ApplicationConfigurationError('backend.settings should be a dict')
     for setting, setting_val in job.backend.settings.iteritems():
         if str(setting).startswith('set'):
             _setting = str(setting)[3:]

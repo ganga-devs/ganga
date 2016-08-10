@@ -15,7 +15,7 @@ site = 'neut'           # not used if processingdb info is not updated
 if not (baseline=='2010-11' and p0d_water_fill==0 and generator=='anti-neut'):
   mess = "\nThis is a reminder that parameters in the header should be in self agreement."
   mess+= "\nNow they are not for anti-neutrino with 2010-11-air geometry and you can not proceed until ensure the new agreement."
-  raise ApplicationConfigurationError(None,mess)
+  raise ApplicationConfigurationError(mess)
 
 comment   = 'prod6sand201011airrun3'
 neut_setup_script = '/neut/data19/vavilov/sand_production/aux_files/neut_setup.sh'   # set up a particular version of NEUT package

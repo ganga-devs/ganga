@@ -25,7 +25,7 @@ class GangaDatasetSplitter(ISplitter):
 
         if not job.inputdata or not isType(job.inputdata, GangaDataset):
             raise ApplicationConfigurationError(
-                None, "No GangaDataset given for GangaDatasetSplitter")
+                "No GangaDataset given for GangaDatasetSplitter")
 
         # find the full file list
         full_list = []
@@ -41,7 +41,7 @@ class GangaDatasetSplitter(ISplitter):
 
         if len(full_list) == 0:
             raise ApplicationConfigurationError(
-                None, "GangaDatasetSplitter couldn't find any files to split over")
+                "GangaDatasetSplitter couldn't find any files to split over")
 
         # split based on all the sub files
         fid = 0

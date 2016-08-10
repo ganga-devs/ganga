@@ -144,7 +144,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 self.dbrelease_dataset = m.group(1)
                 self.dbrelease = m.group(2)
             else:
-                raise ApplicationConfigurationError(None, "Error retrieving LATEST DBRelease. Try setting application.dbrelease manually.")
+                raise ApplicationConfigurationError("Error retrieving LATEST DBRelease. Try setting application.dbrelease manually.")
         else:
             self.dbrelease_dataset = app.dbrelease_dataset
             self.dbrelease = app.dbrelease

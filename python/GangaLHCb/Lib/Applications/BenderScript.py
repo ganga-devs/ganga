@@ -336,7 +336,7 @@ class BenderScript(GaudiBase):
         """Checks the validity of user's entries for BenderScript schema"""
         
         if not self.scripts and not self.imports : 
-            raise ApplicationConfigurationError(None, "Application scripts/imports are not defined")
+            raise ApplicationConfigurationError("Application scripts/imports are not defined")
         
         if isinstance ( self.scripts , str ) : self.scripts = [ File ( self.scripts ) ]
         if isinstance ( self.imports , str ) : self.imports = [ File ( self.imports ) ]

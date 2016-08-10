@@ -248,7 +248,7 @@ def runPandaBrokerage(job):
             except exceptions.SystemExit:
                 raise BackendError('Panda','Error in Client.getLocations for libDS')
             if not libdslocation:
-                raise ApplicationConfigurationError(None,'Could not locate libDS %s'%job.backend.libds)
+                raise ApplicationConfigurationError('Could not locate libDS %s'%job.backend.libds)
             else:
                 libdslocation = libdslocation.values()[0]
                 try:
@@ -264,9 +264,9 @@ def runPandaBrokerage(job):
                 try:
                     dataset = job.inputdata.DQ2dataset
                 except:
-                    raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
+                    raise ApplicationConfigurationError('Could not determine input datasetname for Panda brokerage')
             if not dataset:
-                raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
+                raise ApplicationConfigurationError('Could not determine input datasetname for Panda brokerage')
 
             fileList = []
             try:
@@ -1619,7 +1619,7 @@ class Panda(IBackend):
                 except exceptions.SystemExit:
                     raise BackendError('Panda','Error in Client.getLocations for libDS')
                 if not libdslocation:
-                    raise ApplicationConfigurationError(None,'Could not locate libDS %s'%self.libds)
+                    raise ApplicationConfigurationError('Could not locate libDS %s'%self.libds)
                 else:
                     libdslocation = libdslocation.values()[0]
                     try:

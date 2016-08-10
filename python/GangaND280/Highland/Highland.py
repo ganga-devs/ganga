@@ -72,15 +72,15 @@ class Highland(IApplication):
         job = self.getJobObject()
 
         if self.cmtsetup == None:
-          raise ApplicationConfigurationError(None,'No cmt setup script given.')
+          raise ApplicationConfigurationError('No cmt setup script given.')
 
         # setup the output file
         for arg in self.args:
           if arg == '-o':
-            raise ApplicationConfigurationError(None,'Option "-o" given in args. You must use the outputfile variable instead.')
+            raise ApplicationConfigurationError('Option "-o" given in args. You must use the outputfile variable instead.')
 
         if self.outputfile == None:
-          raise ApplicationConfigurationError(None,'No output file given. Fill the outputfile variable.')
+          raise ApplicationConfigurationError('No output file given. Fill the outputfile variable.')
         else:
           self.args.append('-o')
           self.args.append(self.outputfile)
@@ -89,7 +89,7 @@ class Highland(IApplication):
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
         fileList = job.inputdir+'FileList'
         if not job.inputdata.set_dataset_into_list(fileList):
-          raise ApplicationConfigurationError(None,'Problem with the preparation of the list of input files')
+          raise ApplicationConfigurationError('Problem with the preparation of the list of input files')
         self.args.append(fileList)
 
         argsStr = ' '.join(self.args)

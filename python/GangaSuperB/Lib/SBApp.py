@@ -73,7 +73,7 @@ class SBApp(IApplication):
         # create the software directory
         if self.software_dir != '':
             if not os.path.isdir(self.software_dir):
-                raise ApplicationConfigurationError(None, 'software_dir must be a directory.')
+                raise ApplicationConfigurationError('software_dir must be a directory.')
             
             # make the tar file and update sw_archive parameter
             self.software_dir = os.path.normpath(self.software_dir)
@@ -91,21 +91,21 @@ class SBApp(IApplication):
             #retcode = subprocess.call("tar -cjf %s * 2>/dev/null" % self.sw_archive, shell=True)
             retcode = subprocess.call("tar -cjf %s -C %s %s 2>/dev/null" % (self.sw_archive, head, tail), shell=True)
             if retcode < 0:
-                raise ApplicationConfigurationError(None, 'Error %d while creating archive.' % retcode)
+                raise ApplicationConfigurationError('Error %d while creating archive.' % retcode)
             
             #os.chdir(savedir)
         else:
-            raise ApplicationConfigurationError(None, 'software_dir cannot be empty.')
+            raise ApplicationConfigurationError('software_dir cannot be empty.')
         
         if self.executable == '':
-            raise ApplicationConfigurationError(None, 'executable cannot be empty.')
+            raise ApplicationConfigurationError('executable cannot be empty.')
         
         # checking that j.inputdata is a valid object
         if not isinstance(j.inputdata, (SBInputDataset.SBInputPersonalProduction,
                                         SBInputDataset.SBInputProductionAnalysis,
                                         SBInputDataset.SBInputPureAnalysis)):
             msg = 'j.inputdata %s is not allowed' % str(type(j.inputdata))
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError( msg)
         
         # checking that j.inputdata (the input dataset) is a valid dataset
         j.inputdata.check()
@@ -188,7 +188,7 @@ class SBApp(IApplication):
         elif job.inputdata.input_mode == 'dir':
             path = job.inputdata.input_path[0]
         else:
-            raise ApplicationConfigurationError(None, 'input_mode not recognized.')
+            raise ApplicationConfigurationError('input_mode not recognized.')
         config.set('INPUT', 'INPUTPATH', path)
         
         config.add_section('ANALYSIS')
@@ -302,7 +302,7 @@ class LCGRTHandler(IRuntimeHandler):
                 sites.remove(site)
         
         if len(sites) == 0:
-            raise ApplicationConfigurationError(None, 'No sites available, try later again.')
+            raise ApplicationConfigurationError('No sites available, try later again.')
         
         sql = '''SELECT ce_host
             FROM ce
@@ -330,7 +330,7 @@ class LCGRTHandler(IRuntimeHandler):
         
         # if all sites are down and/or requirements are not defined, stop submission
         if requirements == 'False':
-            raise ApplicationConfigurationError(None, 'Requirements are empty.')
+            raise ApplicationConfigurationError('Requirements are empty.')
         
         j.backend.requirements.other += [requirements]
         
