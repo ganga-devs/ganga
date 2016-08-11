@@ -227,7 +227,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
 
             # Change inputfile parameter depending on input type
             if job.backend.requirements.transfertype == 'DIRECT':
-                tmp_in_file = "@tmpin_" + job.inputdata.dataset.split(':')[-1]
+                tmp_in_file = "@tmpin_" + job.inputdata.dataset[0].split(':')[-1]
             else:
                 tmp_in_file = ','.join(job.inputdata.names)
 
