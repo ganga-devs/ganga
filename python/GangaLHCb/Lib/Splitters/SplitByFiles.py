@@ -77,8 +77,6 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 
-        print 'data is instance: ' , dataset.__class__.__name__
-
         if isinstance(dataset, LHCbDataset):
             for i in dataset:
                 if isType(i, DiracFile):
