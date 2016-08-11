@@ -77,6 +77,8 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 
+        print 'data is instance: ' , dataset.__class__.__name__
+
         if isinstance(dataset, LHCbDataset):
             for i in dataset:
                 if isType(i, DiracFile):
@@ -85,7 +87,7 @@ class SplitByFiles(GaudiInputDataSplitter):
                     logger.error("Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
                     from Ganga.Core.exceptions import GangaException
                     raise GangaException("Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
-        elif type(dataset) == type([]) or isType(dataset, GangaList()):
+        elif type(dataset) == type([]) or isinstance(dataset, GangaList):
             for this_file in dataset:
                 if type(this_file) is str:
                     datatmp.append(allComponentFilters['gangafiles'](this_file, None))
