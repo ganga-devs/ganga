@@ -663,7 +663,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             jspec.transformation    = '%s/runGen-00-00-02' % Client.baseURLSUB
         else:
-            jspec.transformation    = '%s/runAthena-00-00-11' % Client.baseURLSUB
+            jspec.transformation    = '%s/runAthena-00-00-12' % Client.baseURLSUB
         if job.inputdata and self.inputdatatype=='DQ2' and (not job.inputdata.tag_info or app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']):
             jspec.prodDBlock    = job.inputdata.dataset[0]
         else:
@@ -1074,6 +1074,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if len(app.run_event) >= 1:
             param += '--eventPickTxt=%s ' % app.run_event_file.split('/')[-1]
 
+        # Athena release 21+ use CMake rather than CMT
+        if app.atlas_release.split('.')[0].isdigit() and int(app.atlas_release.split('.')[0]) > 20:
+            param += '--useCMake '
+
         # addPoolFC
         #if self.config['addPoolFC'] != "":
         #    param += '--addPoolFC %s ' % self.config['addPoolFC']
@@ -1105,7 +1109,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             param += '--accessmode=copy '
         if self.inputdatatype == 'Tier3': # and not app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             param += '--givenPFN '
- 
+
         jspec.jobParameters = param
 
         if app.atlas_exetype in ['TRF']:
