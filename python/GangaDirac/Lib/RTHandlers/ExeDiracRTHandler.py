@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
     err = None
     try:
-        rc = subprocess.call(exe_cmd, env=my_env, shell=True)
+        rc = subprocess.call(exe_cmd, env=my_env, shell=False)
     except Exception as x:
         rc = -9999
         print('Exception occured in running process: ' + exe_cmd)
