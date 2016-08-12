@@ -232,7 +232,11 @@ class Job(GangaObject):
 
     # TODO: usage of **kwds may be envisaged at this level to optimize the
     # overriding of values, this must be reviewed
-    def __init__(self):
+    def __init__(self, old_job=None):
+
+        if old_job:
+            assert isinstance(old_job, (Job, JobTemplate)), "Can only constuct a Job with 1 non-keyword argument from another Job, or JobTemplate"
+
         super(Job, self).__init__()
         # Finished initializing 'special' objects which are used in getter methods and alike
         self.time.newjob()  # <-----------NEW: timestamp method
@@ -249,6 +253,32 @@ class Job(GangaObject):
         logger.debug("__init__")
 
         self._stored_subjobs_proxy = None
+
+
+        if old_job:
+            self._unsetSubmitTransients()
+            self.copyFrom(old_job)
+
+            if isinstance(old_job, JobTemplate):
+                return
+
+            if old_job.master is not None:
+                if getConfig('Output')['ForbidLegacyInput']:
+                    if not old_job.inputfiles:
+                        self.inputfiles = copy.copy(old_job.master.inputfiles)
+                    else:
+                        self.inputfiles = copy.copy(old_job.inputfiles)
+                    self.inputsandbox = []
+                else:
+                    if not old_job.inputsandbox:
+                        self.inputsandbox = old_job.master.inputsandbox
+                    else:
+                        self.inputsandbox = old_job.inputsandbox
+                    self.inputfiles = []
+
+            if getConfig('Preparable')['unprepare_on_copy'] is True:
+                self.unprepare()
+
 
     def _getMasterJob(self):
         parent = self._getParent()
