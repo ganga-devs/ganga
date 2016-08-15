@@ -47,7 +47,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         if job.inputdata:
             if not job.splitter:
                 if len(job.inputdata) > 100:
-                    raise BackendError("You're submitting a job to Dirac with no splitter and more than 100 files, please add a splitter and try again!")
+                    raise BackendError("Dirac", "You're submitting a job to Dirac with no splitter and more than 100 files, please add a splitter and try again!")
 
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 

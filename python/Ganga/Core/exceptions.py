@@ -18,14 +18,15 @@ class ApplicationPrepareError(GangaException):
 
 
 class BackendError(GangaException):
+    """Exception from backend code that gives the offending backend in the message"""
 
     def __init__(self, backend_name, message):
-        GangaException.__init__(self, backend_name, message)
+        GangaException.__init__(self, message)
         self.backend_name = backend_name
-        self.message = message
 
     def __str__(self):
-        return "BackendError: %s (%s backend) " % (self.message, self.backend_name)
+        # print the backend name as well as error
+        return "BackendError: %s (%s backend) " % (self.args[0], self.backend_name)
 
 
 class IncompleteJobSubmissionError(GangaException):

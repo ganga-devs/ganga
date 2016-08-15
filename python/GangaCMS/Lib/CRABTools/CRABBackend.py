@@ -185,7 +185,7 @@ class CRABBackend(IBackend):
         config = Config.getConfig('Metrics')
         location = config['location']
         if not os.path.exists(location):
-            raise BackendError(0,'Location %s file doesnt exist.'%(location))
+            raise BackendError('CRAB','Location %s file doesnt exist.'%(location))
 
         config = ConfigParser()
         config.read(location)      
@@ -223,7 +223,7 @@ class CRABBackend(IBackend):
         config = Config.getConfig('Metrics')
         location = config['location']
         if not os.path.exists(location):
-            raise BackendError(0,'Location %s file doesnt exist.'%(location))
+            raise BackendError('CRAB','Location %s file doesnt exist.'%(location))
 
         config = ConfigParser()
         config.read(location)      
