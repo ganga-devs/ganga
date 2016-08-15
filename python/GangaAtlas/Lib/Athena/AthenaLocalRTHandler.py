@@ -17,7 +17,7 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations, isDQ2SRMSite
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getIncompleteLocationsCE, getIncompleteLocations, isDQ2SRMSite
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import ATLASLocalDataset
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 
