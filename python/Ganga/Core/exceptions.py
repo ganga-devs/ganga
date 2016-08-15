@@ -30,15 +30,11 @@ class BackendError(GangaException):
 
 
 class IncompleteJobSubmissionError(GangaException):
-
-    def __init__(self, *args):
-        GangaException.__init__(self, *args)
+    """Exception during submission"""
 
 
 class IncompleteKillError(GangaException):
-
-    def __init__(self, *args):
-        GangaException.__init__(self, *args)
+    """Exception during Kill operation"""
 
 
 class JobManagerError(GangaException):
