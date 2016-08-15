@@ -18,14 +18,11 @@ class TestGangaObject(unittest.TestCase):
     def setUp(self):
         self.obj = GangaObject()
 
-    def test_getReadAccess(self):
-        self.obj._getReadAccess()
+    def test_getSessionLock(self):
+        self.obj._getSessionLock()
 
-    def test_getWriteAccess(self):
-        self.obj._getWriteAccess()
-
-    def test_releaseWriteAccess(self):
-        self.obj._releaseWriteAccess()
+    def test_releaseSessionLock(self):
+        self.obj._releaseSessionLockAndFlush()
 
     def test_setRegistry(self):
         self.obj._setRegistry(None)

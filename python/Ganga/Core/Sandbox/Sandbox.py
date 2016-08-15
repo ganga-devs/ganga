@@ -102,7 +102,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
                 try:
                     fileobj = open(f.name)
                 except Exception as err:
-                    raise SandboxError("File %s does not exist." % f.name)
+                    raise SandboxError("File '%s' does not exist." % f.name)
 
                 tinfo = tf.gettarinfo(f.name, os.path.join(f.subdir, os.path.basename(f.name)))
 

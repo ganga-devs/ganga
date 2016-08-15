@@ -346,7 +346,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
     if len(bad_lfns) != 0:
         if ignoremissing is False:
             logger.error("Errors found getting LFNs:\n%s" % str(errors))
-            raise SplittingError("Error trying to split dataset with invalid LFN and ignoreMissing = False")
+            raise SplittingError("Error trying to split dataset with invalid LFN and ignoremissing = False")
 
     # This finds all replicas for all LFNs...
     # This will probably struggle for LFNs which don't exist

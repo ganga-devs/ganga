@@ -1,0 +1,49 @@
+**************************************************************************************************************
+6.1.23 (2016/08/03)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fixed bugs when requesting negative list indexes in `jobs`, `tasks` etc.
+* Fixed bug that created excess shared dir folders.
+ ** Most users are effected by this. Please use 'cleanUpShareDirs()' to remove old empty shared folders from 6.1.23.
+* '--no-mon' now stops task monitoring as well as job monitoring.
+* Improvement to WN scripts to allow the backend to copy non-tarred files to the WN from the shared dir.
+* Cleanup to the code for shutdown.
+* Fixed bug for submission to ARC backend.
+* New test for CREAM backend.
+* Mock tests for LCG and Grid submission.
+* Improvement to locking of objects in registry.
+* Improvement to tracking objects' loaded state.
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Fixed accessURL for a DiracFile. Returns a list of URLs.
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Change defualt for ATLAS_SOFTWARE to CVMFS.
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Tidy up some code.
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Migrated CMake support from GaudiRun app to new GaudiExec app.
+ ** Schema has drastically changed since GaudiRun
+ ** Schema is now stable and is intended to be forwards compatible for all future versions.
+ ** Old CMake test jobs will not load with this version of Ganga.
+ ** Code now found with the other LHCb apps.
+ ** Job splitting fixed.
+ ** Problems with duplication of large files during submit resolved.
+ ** Should support most LHCb workflows.
+* Change to Jenkins tests to source Lblogin.sh from CVMFS rather than setting up the environment by hand.
+
+
+**************************************************************************************************************

@@ -1,5 +1,8 @@
 import subprocess
+from datetime import datetime
 import time
+import uuid
+from os import path
 from Ganga.Core.exceptions import GangaException
 from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.Utility.logging import getLogger
@@ -8,14 +11,59 @@ from .PythonOptsCmakeParser import PythonOptsCmakeParser
 
 logger = getLogger()
 
-def getGaudiRunInputData(optsfiles, app):
+def gaudiPythonWrapper(sys_args, options, data_file, script_file):
+    """
+    Returns the script which is used by GaudiPython to wrap the job on the WN
+    Args:
+        sys_args
+    """
+    wrapper_script = """
+from Gaudi.Configuration import *
+
+import sys
+sys.argv += %s
+
+# Import extra Opts
+importOptions('%s')
+
+# Import data.py
+importOptions('%s')
+
+for script_file in %s:
+    importOptions( script_file )
+
+# Run the command
+execfile('%s')
+""" % (sys_args, options, data_file, repr(script_file[1:]), script_file[0])
+    return wrapper_script
+
+def getTimestampContent():
+    """
+    Returns a string containing the current time in a given format and a unique random uuid
+    """
+    fmt = '%Y-%m-%d-%H-%M-%S'
+    return datetime.now().strftime(fmt) + '\n' + str(uuid.uuid4())
+
+def addTimestampFile(given_path, fileName='__timestamp__'):
+    """
+    This creates a file in this directory given called __timestamp__ which contains the time so that the final file is unique
+    I also add a unique UUID which reduces the risk of collisions between users
+    Args:
+        given_path (str): Path which we want to create the timestamp within
+    """
+    time_filename = path.join(given_path, fileName)
+    logger.debug("Constructing: %s" % time_filename)
+    with open(time_filename, 'a+') as time_file:
+        time_file.write(getTimestampContent())
+
+def getGaudiExecInputData(optsfiles, app):
     '''Returns a LHCbDataSet object from a list of options files. The
        optional argument extraopts will decide if the extraopts string inside
        the application is considered or not.
 
     Usage example:
     # Get the data from an options file and assign it to the jobs inputdata field
-    j.inputdata = getGaudiRunInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"], j.application)
+    j.inputdata = getGaudiExecInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"], j.application)
 
     This is also called behind the scenes for j.readInputData([\"~/cmtuser/DaVinci_v22r0p2/Tutorial/Analysis/options/Bs2JpsiPhi2008.py\"])
 
@@ -36,7 +84,7 @@ def getGaudiRunInputData(optsfiles, app):
 
     return parser.get_input_data()
 
-exportToGPI('getGaudiRunInputData', getGaudiRunInputData, 'Functions')
+exportToGPI('getGaudiExecInputData', getGaudiExecInputData, 'Functions')
 
 def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
     """

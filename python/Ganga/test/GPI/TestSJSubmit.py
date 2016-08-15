@@ -73,7 +73,7 @@ class TestSJSubmit(GangaUnitTest):
         # Test that resubmitting a subjob from SubJobXMLList that subjob doesn't stall
         jobs(0).subjobs(0).resubmit()
 
-        jobs(0).subjobs(0).force_status('failed')
+        jobs(0).subjobs(0).force_status('failed', force=True)
 
         jobs(0).subjobs(0).resubmit()
 
@@ -115,7 +115,7 @@ class TestSJSubmit(GangaUnitTest):
         # Test that resubmitting a subjob from SubJobXMLList that subjob doesn't stall
         jobs(0).subjobs(0).resubmit()
 
-        jobs(0).subjobs(0).force_status('failed')
+        jobs(0).subjobs(0).force_status('failed', force=True)
 
         jobs(0).subjobs(0).resubmit()
 
@@ -164,7 +164,7 @@ class TestSJSubmit(GangaUnitTest):
 
         # We should get here if calling resubmit doesn't stall
 
-        j.subjobs(0).force_status('failed')
+        j.subjobs(0).force_status('failed', force=True)
 
         j.resubmit()
 
