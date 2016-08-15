@@ -22,22 +22,9 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
 from GangaAtlas.Lib.Rucio import list_datasets
+from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 
-def getLocationsCE(locations):
-    '''helper function to access the CE associated to a list of locations'''
-
-    ces = []
-    for location in locations:
-        try:
-            temp_ces = ToACache.sites[location]['ce']
-            if temp_ces !=[""]:
-                ces += temp_ces
-        except KeyError:
-            pass
-
-    return ces
-  
 def getIncompleteLocationsCE(locations, minnum = 0):
     '''helper function to access the CE associated to a list of locations from incomplete list '''
 
@@ -996,8 +983,8 @@ class DQ2Dataset(Dataset):
             locations = locations[datasetvuid]
 
             print 'Dataset %s' % dataset
-            if len(locations[1]): print 'Complete:', ' '.join(getLocationsCE(locations[1]))
-            if len(locations[0]): print 'Incomplete:', ' '.join(getLocationsCE(locations[0]))
+            if len(locations[1]): print 'Complete:', ' '.join(get_ce_from_locations(locations[1]))
+            if len(locations[0]): print 'Incomplete:', ' '.join(get_ce_from_locations(locations[0]))
 
     def list_locations_num_files(self,dataset=None,complete=-1,backnav=False):
         '''List the number of files replicated to the dataset locations'''
