@@ -25,22 +25,6 @@ from GangaAtlas.Lib.Rucio import list_datasets
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 
-def getIncompleteLocationsCE(locations, minnum = 0):
-    '''helper function to access the CE associated to a list of locations from incomplete list '''
-
-    ces = []
-    for dataset, info in locations.iteritems():
-        for location, num in info.iteritems():
-            if num >= minnum:
-                try:
-                    temp_ces = ToACache.sites[location]['ce']
-                    if temp_ces !=[""]:
-                        ces += temp_ces
-                except KeyError:
-                    pass
-
-    return ces
-
 def getIncompleteLocations(locations, minnum = 0):
     '''helper function to access a list of locations from incomplete list '''
 

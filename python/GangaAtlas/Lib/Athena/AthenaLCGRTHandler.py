@@ -22,7 +22,7 @@ from Ganga.Lib.LCG import LCGJobConfig
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasCREAMRequirements
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import isDQ2SRMSite, getIncompleteLocationsCE, getIncompleteLocations, whichCloud
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import isDQ2SRMSite, getIncompleteLocations, whichCloud
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
