@@ -14,7 +14,7 @@ class ApplicationConfigurationError(GangaException):
 
 
 class ApplicationPrepareError(GangaException):
-    pass
+    """Exception during Application preparation"""
 
 
 class BackendError(GangaException):
