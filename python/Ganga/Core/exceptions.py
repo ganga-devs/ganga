@@ -41,14 +41,15 @@ class JobManagerError(GangaException):
     """Exception for failed submission/configuration"""
 
 
-class GangaAttributeError(AttributeError, GangaException):
+class GangaAttributeError(GangaException):
     """Exception raised for bad attributes"""
 
 
-class GangaValueError(ValueError, GangaException):
+class GangaValueError(GangaException):
     """Error for assigning an incorrect value to a schema item"""
 
-class GangaIOError(IOError, GangaException):
+
+class GangaIOError(GangaException):
     """Exception for IO errors"""
 
 
@@ -57,31 +58,19 @@ class SplitterError(GangaException):
 
 
 class ProtectedAttributeError(GangaAttributeError):
-
-    'Attribute is read-only and may not be modified by the user (for example job.id)'
-
-    def __init__(self, *a, **k):
-        GangaAttributeError.__init__(self, *a, **k)
+    """Attribute is read-only and may not be modified by the user (for example job.id)"""
 
 
 class ReadOnlyObjectError(GangaAttributeError):
-
-    'Object cannot be modified (for example job in a submitted state)'
-
-    def __init__(self, *a, **k):
-        GangaAttributeError.__init__(self, *a, **k)
+    """Object cannot be modified (for example job in a submitted state)"""
 
 
 class TypeMismatchError(GangaAttributeError):
-
-    def __init__(self, *a, **k):
-        GangaAttributeError.__init__(self, *a, **k)
+    """Exception due to a mismatch of types"""
 
 
 class SchemaError(GangaAttributeError):
-
-    def __init__(self, *a, **k):
-        GangaAttributeError.__init__(self, *a, **k)
+    """Error in the schema items"""
 
 
 class SchemaVersionError(GangaException):
