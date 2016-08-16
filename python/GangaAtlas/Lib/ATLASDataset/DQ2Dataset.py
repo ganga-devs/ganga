@@ -25,18 +25,6 @@ from GangaAtlas.Lib.Rucio import list_datasets
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 
-def getIncompleteLocations(locations, minnum = 0):
-    '''helper function to access a list of locations from incomplete list '''
-
-    ces = []
-    for dataset, info in locations.iteritems():
-        for location, num in info.iteritems():
-            if num >= minnum:
-                ces.append(location)
-
-    return ces
-
-
 def isDQ2SRMSite(location):
     '''helper function to verify a location'''
     
