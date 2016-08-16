@@ -27,9 +27,6 @@ from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=False, allowed_sites = [], fax_sites = [], skipReplicaLookup=False ):
 
-    if datasets.__class__.__name__=='str':
-        datasets = [ datasets ]
-
     dataset_locations_list = { }
     dataset_guid_location_list = {}
     guidLocation = {}

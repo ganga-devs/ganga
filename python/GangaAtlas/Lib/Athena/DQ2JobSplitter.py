@@ -59,9 +59,9 @@ def appendFile(file_path, archive_path):
 def dq2_siteinfo(dataset, allowed_sites, locations, udays, faxSites, skipReplicaLookup):
 
     if faxSites:
-        result = dq2_list_locations_siteindex(datasets=dataset, days=udays, replicaList=True, allowed_sites=allowed_sites+locations, fax_sites=faxSites, skipReplicaLookup=skipReplicaLookup)
+        result = dq2_list_locations_siteindex(datasets=[dataset], days=udays, replicaList=True, allowed_sites=allowed_sites+locations, fax_sites=faxSites, skipReplicaLookup=skipReplicaLookup)
     else:
-        result = dq2_list_locations_siteindex(datasets=dataset, days=udays, replicaList=True, allowed_sites= allowed_sites, fax_sites=faxSites, skipReplicaLookup=skipReplicaLookup)
+        result = dq2_list_locations_siteindex(datasets=[dataset], days=udays, replicaList=True, allowed_sites= allowed_sites, fax_sites=faxSites, skipReplicaLookup=skipReplicaLookup)
         
     siteinfo = {}
     for guid, sites in result.iteritems():
