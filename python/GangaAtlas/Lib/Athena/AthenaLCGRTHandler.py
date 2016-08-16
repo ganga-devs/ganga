@@ -22,13 +22,15 @@ from Ganga.Lib.LCG import LCGJobConfig
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasCREAMRequirements
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import isDQ2SRMSite, whichCloud
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import whichCloud
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 from Ganga.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
+
+from GangaAtlas.Lib.Rucio import is_rucio_se
 
 # the config file may have a section
 # aboout monitoring
@@ -202,7 +204,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if job.outputdata._name=='DQ2OutputDataset':
 
                 if job.outputdata.location:
-                    if type(job.outputdata.location) == str and isDQ2SRMSite(job.outputdata.location):
+                    if type(job.outputdata.location) == str and is_rucio_se(job.outputdata.location):
                         output_location = job.outputdata.location
                     else:
                         logger.warning('Unknown output location %s.',job.outputdata.location)

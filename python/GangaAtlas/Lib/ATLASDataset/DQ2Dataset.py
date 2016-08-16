@@ -21,17 +21,8 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
-from GangaAtlas.Lib.Rucio import list_datasets
+from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
-
-
-def isDQ2SRMSite(location):
-    '''helper function to verify a location'''
-    
-    try:
-        return 'srm' in ToACache.sites[location]
-    except KeyError:
-        return False
 
 
 def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=False, allowed_sites = [], fax_sites = [], skipReplicaLookup=False ):
@@ -1223,7 +1214,7 @@ class DQ2OutputDataset(Dataset):
             #dq2_lock.release()
             pass
 
-        if not isDQ2SRMSite(location):
+        if not is_rucio_se(location):
             logger.error('clean_duplicates_in_dataset failed since %s in no proper DQ2 location', location) 
             return
 
@@ -1394,7 +1385,7 @@ class DQ2OutputDataset(Dataset):
     def create_subscription(self, datasetname = None, location = None):
         """Create a subscription for a dataset"""
         if datasetname and location:
-            if isDQ2SRMSite(location) and \
+            if is_rucio_se(location) and \
                    (location.find('LOCALGROUPDISK')>0 or location.find('SCRATCHDISK')>0):
                 try:
                     #dq2_lock.acquire()

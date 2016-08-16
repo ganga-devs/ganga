@@ -147,3 +147,16 @@ def list_datasets_in_container(dsname):
                 ds_list.append(entry['name'])
 
         return ds_list
+
+def is_rucio_se(rse_name):
+    """Check if the given name is a valid Rucio Storage Element
+
+    Attributes:
+        rse_name (str): The name of the Rucio Storage Element to check
+
+    Returns:
+        bool: True if the given name is a valid RSE, False if not
+    """
+
+    with get_rucio_client._client_lock:
+        return rse_name in list(get_rucio_client().list_rses())

@@ -17,7 +17,6 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import isDQ2SRMSite
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import ATLASLocalDataset
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 
@@ -26,6 +25,8 @@ from Ganga.Utility.logging import getLogger
 
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.Utility.files import expandfilename
+
+from GangaAtlas.Lib.Rucio import is_rucio_se
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
@@ -126,12 +127,12 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             if job.outputdata._name=='DQ2OutputDataset':
 
                 if job.outputdata.location:
-                    if isDQ2SRMSite(job.outputdata.location):
+                    if is_rucio_se(job.outputdata.location):
                         output_location = job.outputdata.location
                     else:
                         logger.warning('Unknown output location %s.',job.outputdata.location)
                 elif job._getRoot().subjobs and job._getRoot().outputdata.location:
-                    if isDQ2SRMSite(job._getRoot().outputdata.location):
+                    if is_rucio_se(job._getRoot().outputdata.location):
                         output_location = job._getRoot().outputdata.location
                     else:
                         logger.warning('Unknown output location %s.',job.getRoot().outputdata.location)
