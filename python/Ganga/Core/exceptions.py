@@ -38,13 +38,7 @@ class IncompleteKillError(GangaException):
 
 
 class JobManagerError(GangaException):
-
-    def __init__(self, msg):
-        self.msg = msg
-        GangaException.__init__(self, msg)
-
-    def __str__(self):
-        return "JobManagerError: %s" % str(self.msg)
+    """Exception for failed submission/configuration"""
 
 
 class GangaAttributeError(AttributeError, GangaException):
