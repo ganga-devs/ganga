@@ -74,20 +74,7 @@ class SchemaError(GangaAttributeError):
 
 
 class SchemaVersionError(GangaException):
-    """
-    Error raised on schema version error
-    """
-    def __init__(self, what=''):
-        """
-        This is the error thrown when the Schema version in XML doesn't match what's in the code. This may be dropped in a future release
-        Args:
-            what (str): This is a string of what went wrong
-        """
-        super(SchemaVersionError, self).__init__(what)
-        self.what = what
-
-    def __str__(self):
-        return "SchemaVersionError: %s" % self.what
+    """Error raised on schema version error"""
 
 
 class InaccessibleObjectError(GangaException):
@@ -166,53 +153,3 @@ class BulkOperationRepositoryError(RepositoryError):
     def getOriginalJobError(self, id):
         return self.details.get(id)
 
-#
-#
-# $Log: not supported by cvs2svn $
-# Revision 1.1  2008/07/17 16:40:49  moscicki
-# migration of 5.0.2 to HEAD
-#
-# the doc and release/tools have been taken from HEAD
-#
-# Revision 1.20.4.1  2008/03/04 14:49:03  amuraru
-# make RepositoryError a GangaException
-#
-# Revision 1.20  2007/09/13 08:36:20  amuraru
-# fixed the _str_ method of GangaException
-#
-# Revision 1.19  2007/09/12 16:25:09  amuraru
-# - log user exceptions using specific loggers
-# - fixed the str repr in exceptions
-#
-# Revision 1.18  2007/03/26 16:10:47  moscicki
-# formating of exception messages
-#
-# Revision 1.17  2007/02/28 18:23:59  moscicki
-# moved GangaException here (it now inherits from Exception)
-#
-# Revision 1.16  2007/02/22 13:25:29  moscicki
-# define JobManager exception here
-#
-# Revision 1.15  2006/10/26 12:31:34  moscicki
-# minor repository exception changes
-#
-# Revision 1.14  2006/08/11 13:41:54  moscicki
-# better formatting of messages
-#
-# Revision 1.13  2006/07/10 14:02:00  moscicki
-# IncompleteKillError
-#
-# Revision 1.12  2006/02/10 14:07:42  moscicki
-# __str__ for ApplicationConfigurationError
-#
-# Revision 1.11  2005/12/02 15:23:11  moscicki
-# IcompleteJobSubmission
-#
-# Revision 1.10  2005/08/23 17:20:59  moscicki
-# *** empty log message ***
-#
-# Revision 1.9  2005/08/23 17:20:33  moscicki
-# *** empty log message ***
-#
-#
-#
