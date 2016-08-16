@@ -115,7 +115,6 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         if replicaList and skipReplicaLookup:
             return guidLocation
 
-        locations_checktime = {}
         locations_num = {}
         retry = 0
         allchecked = False
@@ -125,62 +124,6 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         
         if allowed_sites:
             alllocations = [ site for site in alllocations if site in allowed_sites ]
-
-        while not allchecked and retry<4: 
-            for location in alllocations:
-                try:
-                    #dq2_lock.acquire()
-                    try:
-                        datasetinfo = dq2.listMetaDataReplica(location, dataset)
-                        logger.debug(datasetinfo)
-                    except:
-                        continue
-                finally:
-                    #dq2_lock.release()
-                    pass
-
-                if 'checkdate' in datasetinfo:
-                    checkdate = datasetinfo['checkdate']
-                    try:
-                        checktime = time.mktime(time.strptime(checkdate.split(".")[0],'%Y-%m-%d %H:%M:%S'))
-                    except ValueError:    
-                        checktime = -time.time()
-                    except TypeError:
-                        # RUCIO fix
-                        import datetime
-                        checktime = time.mktime(checkdate.timetuple()) + checkdate.microsecond / 1E6
-                else:
-                    checktime = -time.time()
-                    continue
-
-                if (time.time()-checktime > days*86000): 
-                    try:
-                        #dq2_lock.acquire()
-                        try:
-                            dq2.checkDatasetConsistency(location, dataset)
-                        except:
-                            logger.warning("Dataset consistency check failed - continuing but may encounter other problems.")                        
-                    finally:
-                        #dq2_lock.release()
-                        pass
-
-                    logger.warning('Please be patient - waiting for site-index update at site %s ...', location)
-                    locations_checktime[location] = False
-                else:
-                    locations_checktime[location] = True                    
-
-            for location, value in locations_checktime.iteritems():
-                if not value:
-                    allchecked = False
-                    break
-                else:
-                    allchecked = True
-
-            if allchecked or len(locations_checktime) == 0:
-                break
-
-            retry = retry + 1        
-            time.sleep(timeout)
 
         for location in alllocations:
             try:
