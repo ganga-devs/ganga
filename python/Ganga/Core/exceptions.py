@@ -42,45 +42,18 @@ class JobManagerError(GangaException):
 
 
 class GangaAttributeError(AttributeError, GangaException):
-    logger = None
-
-    def __init__(self, *a, **k):
-        GangaException.__init__(self, *a, **k)
-        AttributeError.__init__(self, *a, **k)
-
-        # This code will give a stack trace from a GangaException only when debugging is enabled
-        # This makes debugging what's going on much easier whilst hiding mess
-        # from users
-        #if self.logger is None:
-        #    from Ganga.Utility.logging import getLogger
-        #    self.logger = Ganga.Utility.logging.getLogger()
-
-        #    import logging
-        #    if self.logger.isEnabledFor(logging.DEBUG):
-        #        import traceback
-        #        traceback.print_stack()
+    """Exception raised for bad attributes"""
 
 
 class GangaValueError(ValueError, GangaException):
-
-    def __init__(self, *a, **k):
-        GangaException.__init__(self, *a, **k)
-        ValueError.__init__(self, *a, **k)
-
+    """Error for assigning an incorrect value to a schema item"""
 
 class GangaIOError(IOError, GangaException):
-    pass
+    """Exception for IO errors"""
 
 
 class SplitterError(GangaException):
-    """Splitting errors."""
-
-    def __init__(self, message=''):
-        GangaException.__init__(self, message)
-        self.message = message
-
-    def __str__(self):
-        return "SplitterError: %s " % self.message
+    """Exception raised during job splitting"""
 
 
 class ProtectedAttributeError(GangaAttributeError):
