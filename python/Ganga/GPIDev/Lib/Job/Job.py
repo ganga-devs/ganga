@@ -232,11 +232,20 @@ class Job(GangaObject):
 
     # TODO: usage of **kwds may be envisaged at this level to optimize the
     # overriding of values, this must be reviewed
-    def __init__(self, old_job=None):
+    def __init__(self, prev_job=None, **kwds):
+        """
+        This constructs a new job object
+        Args:
+            prev_job (Job, JobTemplate): This is assumed to be an old job or a job template which we're hoping to copy the configuration of
+        """
 
-        if old_job:
-            assert isinstance(old_job, (Job, JobTemplate)), "Can only constuct a Job with 1 non-keyword argument from another Job, or JobTemplate"
+        # WE WILL ONLY EVER ACCEPT Job or JobTemplate by design
+        if prev_job:
+            assert isinstance(prev_job, (Job, JobTemplate)), "Can only constuct a Job with 1 non-keyword argument which is another Job, or JobTemplate"
 
+        # START INIT OF SELF
+
+        # TODO add the kwds as a pass through so that they're handled in a sane/consistent way.
         super(Job, self).__init__()
         # Finished initializing 'special' objects which are used in getter methods and alike
         self.time.newjob()  # <-----------NEW: timestamp method
@@ -254,26 +263,25 @@ class Job(GangaObject):
 
         self._stored_subjobs_proxy = None
 
+        # FINISH INIT OF SELF
 
-        if old_job:
-            self._unsetSubmitTransients()
-            self.copyFrom(old_job)
+        # If we're copying data from an existing Job/JobTemplate
+        if prev_job:
+            # We don't want to clone the time data of an existing job
+            self.copyFrom(prev_job, ['time'])
 
-            if isinstance(old_job, JobTemplate):
-                return
-
-            if old_job.master is not None:
+            if prev_job.master is not None:
                 if getConfig('Output')['ForbidLegacyInput']:
-                    if not old_job.inputfiles:
-                        self.inputfiles = copy.copy(old_job.master.inputfiles)
+                    if not prev_job.inputfiles:
+                        self.inputfiles = prev_job.master.inputfiles
                     else:
-                        self.inputfiles = copy.copy(old_job.inputfiles)
+                        self.inputfiles = prev_job.inputfiles
                     self.inputsandbox = []
                 else:
-                    if not old_job.inputsandbox:
-                        self.inputsandbox = old_job.master.inputsandbox
+                    if not prev_job.inputsandbox:
+                        self.inputsandbox = prev_job.master.inputsandbox
                     else:
-                        self.inputsandbox = old_job.inputsandbox
+                        self.inputsandbox = prev_job.inputsandbox
                     self.inputfiles = []
 
             if getConfig('Preparable')['unprepare_on_copy'] is True:
