@@ -25,152 +25,6 @@ from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 
-def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=False, allowed_sites = [], fax_sites = [], skipReplicaLookup=False ):
-
-    dataset_locations_list = { }
-    dataset_guid_location_list = {}
-    guidLocation = {}
-        
-    for dataset in datasets:
-        try:
-            #dq2_lock.acquire()
-            try:
-                locations = dq2.listDatasetReplicas(dataset)
-            except:
-                logger.error('Dataset %s not found !', dataset)
-                return {}
-        finally:
-            #dq2_lock.release()
-            pass
-
-        try:
-            #dq2_lock.acquire()
-            try:
-                datasetinfo = dq2.listDatasets(dataset)
-            except:
-                datasetinfo = {}
-        finally:
-            #dq2_lock.release()
-            pass
-
-        # Rucio patch
-        #if dataset.find(":")>0:
-        #    try:
-        #        datasettemp = dataset.split(":",1)[1]
-        #    except:
-        #        pass
-        #    newdatasetinfo = {}
-        #    newdatasetinfo[dataset] = datasetinfo[datasettemp]
-        #    datasetinfo = newdatasetinfo
-
-        try:
-            datasetvuid = datasetinfo[dataset]['vuids'][0]
-        except KeyError:
-            try:
-                datasetvuid = datasetinfo.values()[0]['vuids'][0]
-            except:
-                try:
-                    datasetvuid = dq2.getMetaDataAttribute(dataset,['latestvuid'])['latestvuid']
-                    import uuid
-                    datasetvuid = str(uuid.UUID(datasetvuid))
-                except:
-                    logger.warning('Dataset %s not found',dataset)
-                    return {}
-
-        if datasetvuid not in locations:
-            logger.warning('Dataset %s not found',dataset)
-            return {}
-
-        alllocations = locations[datasetvuid][0] + locations[datasetvuid][1]
-        logger.info('Dataset %s has %s locations', dataset, len(alllocations))
-
-        try:
-            #dq2_lock.acquire()
-            contents = dq2.listFilesInDataset(dataset, long=False)
-        except:
-            contents = {}
-        finally:
-            #dq2_lock.release()
-            pass
-
-        if not contents:
-            logger.error('Dataset %s is empty.', dataset)
-            return {}
-
-        contents = contents[0]
-        guidsDataset = []
-
-        completeLocations = [ str(i) for i in locations[datasetvuid][1]]
-
-        for guid, keys in contents.iteritems():
-            guidsDataset.append(str(guid))
-            if skipReplicaLookup:
-                guidLocation[guid] = completeLocations
-            else:
-                guidLocation[guid] = []
-            
-        if replicaList and skipReplicaLookup:
-            return guidLocation
-
-        locations_num = {}
-        retry = 0
-        allchecked = False
-
-        if fax_sites:
-            allowed_sites = allowed_sites+fax_sites
-        
-        if allowed_sites:
-            alllocations = [ site for site in alllocations if site in allowed_sites ]
-
-        for location in alllocations:
-            try:
-                #dq2_lock.acquire()
-                datasetsiteinfo = dq2.listFileReplicas(location, dataset)                
-            except:
-                datasetsiteinfo = {}
-                return {}
-            finally:
-                #dq2_lock.release()
-                pass
-
-            # Rucio patch
-            try:
-                isfound = datasetsiteinfo[0]['found'] 
-            except:
-                isfound = datasetsiteinfo['found'] 
-
-            if isfound != None: 
-                try:
-                    numberoffiles = datasetsiteinfo[0]['found']
-                except:
-                    numberoffiles = datasetsiteinfo['found']
-                locations_num[str(location)]=int(numberoffiles)
-             
-                try:
-                    guidsSite = datasetsiteinfo[0]['content']
-                except:
-                    guidsSite = datasetsiteinfo['content']
-
-                for guid in guidsDataset:
-                    if guid in guidsSite:
-                        temp = guidLocation[guid]
-                        temp.append(str(location))
-                        if fax_sites:
-                            for faxsite in fax_sites:
-                                if not faxsite in temp:
-                                    temp.append(faxsite)
-                        guidLocation[guid] = temp
-            else:
-                logger.warning('cannot get file replica info - ignore site %s' % location)
-
-        dataset_locations_list[dataset] = locations_num
-
-    if replicaList:
-        return guidLocation
-    else:
-        return dataset_locations_list
-
-
 def resolve_container(datasets):
     """Helper function to resolver dataset containers"""
     container_datasets = []
@@ -367,7 +221,7 @@ class DQ2Dataset(Dataset):
     _name = 'DQ2Dataset'
     _exportmethods = [ 'list_datasets', 'list_contents', 'list_locations',
                        'list_locations_ce', 'list_locations_num_files',
-                       'get_contents', 'get_locations', 'list_locations_siteindex' ]
+                       'get_contents', 'get_locations' ]
 
     _GUIPrefs = [ { 'attribute' : 'dataset',         'widget' : 'String_List' },
                   { 'attribute' : 'tagdataset',      'widget' : 'String_List' },
@@ -1039,16 +893,6 @@ class DQ2Dataset(Dataset):
         else:
             return dataset_locations_list
 
-    def list_locations_siteindex(self,dataset=None, timeout=15, days=2, replicaList=False, faxSites=[], skipReplicaLookup=False):
-
-        if not dataset:
-            datasets = self.dataset
-        else:
-            datasets = [ dataset ]
-
-        datasets = resolve_container(datasets)
-
-        return dq2_list_locations_siteindex(datasets, timeout, days, replicaList, fax_sites=faxSites, skipReplicaLookup=skipReplicaLookup)
 
 class DQ2OutputDataset(Dataset):
     """DQ2 Dataset class for a dataset of output files"""

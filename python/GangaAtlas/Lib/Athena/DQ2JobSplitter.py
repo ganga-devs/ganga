@@ -19,6 +19,8 @@ from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
 from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
 
+from GangaAtlas.Lib.Rucio import get_dataset_replica_list, list_dataset_files
+
 from Ganga.GPIDev.Credentials import GridProxy
 gridProxy = GridProxy()
 
@@ -58,11 +60,27 @@ def appendFile(file_path, archive_path):
 
 def dq2_siteinfo(dataset, allowed_sites, locations, udays, faxSites, skipReplicaLookup):
 
+    # get the locations of each GUID for a dataset
+    result = {}
+
     if faxSites:
-        result = dq2_list_locations_siteindex(datasets=[dataset], days=udays, replicaList=True, allowed_sites=allowed_sites+locations, fax_sites=faxSites, skipReplicaLookup=skipReplicaLookup)
-    else:
-        result = dq2_list_locations_siteindex(datasets=[dataset], days=udays, replicaList=True, allowed_sites= allowed_sites, fax_sites=faxSites, skipReplicaLookup=skipReplicaLookup)
-        
+        allowed_sites = allowed_sites+locations+faxSites
+
+    # first get the dataset locations
+    alllocations = []
+    for site in get_dataset_replica_list(dataset):
+        if not allowed_sites or site in allowed_sites:
+            alllocations.append(site)
+
+    logger.info('Dataset %s has %s locations', dataset, len(alllocations))
+
+    # now list the guids and record each guid being at this location
+    # Note: This assumes each reported location has the complete dataset
+    for ds_files in list_dataset_files(dataset):
+        guid = '%s-%s-%s-%s-%s' % (ds_files['guid'][0:8], ds_files['guid'][8:12], ds_files['guid'][12:16],
+                                   ds_files['guid'][16:20], ds_files['guid'][20:32])
+        result[guid] = alllocations
+
     siteinfo = {}
     for guid, sites in result.iteritems():
         newsites = [ site for site in sites if site in allowed_sites ]

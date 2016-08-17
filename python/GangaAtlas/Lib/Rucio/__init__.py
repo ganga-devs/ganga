@@ -4,6 +4,8 @@ This module defines several useful functions to interface with Rucio. This ensur
 client that is then locked when in use. I'm not sure if this is required but as I don't know if Rucio is threadsafe, I'm
 erring on the side of caution.
 
+TODO: Mkae sure we only report on AVAILABLE (i.e. complete) replicas
+
 Attributes:
     _rucio_client (RucioClient): The singleton Rucio Client
     _client_lock (RLock): The reentrant lock for the client
