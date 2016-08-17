@@ -130,26 +130,3 @@ class RepositoryError(GangaException):
             logger.error("Unable to disable Internal services, they may have already been disabled!")
 
 
-# Exception raised by the Ganga Repository
-class BulkOperationRepositoryError(RepositoryError):
-
-    """
-    For bulk operations this exception
-    have a non-empty dictionary 'details'
-    which contains ids of failed jobs as keys and 'original' exceptions as values.
-    """
-
-    def __init__(self, details=None, msg=None):
-        if msg == None:
-            msg = "RepositoryError: %s" % str(err)
-            RepositoryError.__init__(self, None, msg)
-            self.details = details
-            if details == None:
-                self.details = {}
-
-    def listFailedJobs(self):
-        return self.details.keys()
-
-    def getOriginalJobError(self, id):
-        return self.details.get(id)
-
