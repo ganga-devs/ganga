@@ -266,6 +266,7 @@ class GangaUnitTest(unittest.TestCase):
         gangadir = self.gangadir()
         if not os.path.isdir(gangadir):
             os.makedirs(gangadir)
+        print("\n") # useful when watching stdout from tests
         print("Starting Ganga in: %s" % gangadir)
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
 

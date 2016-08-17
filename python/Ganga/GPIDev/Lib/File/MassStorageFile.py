@@ -8,6 +8,7 @@ import errno
 import re
 import os
 import copy
+import glob
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
@@ -203,7 +204,6 @@ class MassStorageFile(IGangaFile):
         Creates and executes commands for file upload to mass storage (Castor), this method will
         be called on the client
         """
-        import glob
         import re
 
         sourceDir = ''

@@ -85,6 +85,8 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
     if filenameWildChar in ###PATTERNSTOZIP###:
         filenameWildCharZipped = '%s.gz' % filenameWildChar
 
+    import glob
+
     for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildCharZipped)):
         currentFileBaseName = os.path.basename(currentFile)
         finalFilename = filenameStructure.replace('{fname}', currentFileBaseName)
