@@ -354,8 +354,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         # Fix DATASETNAME env variable for DQ2_COPY mode
         if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type in [ 'DQ2_LOCAL', 'DQ2_COPY', 'FILE_STAGER' ]:
             if job.inputdata.dataset:
-                from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import resolve_container
-                datasets = resolve_container(job.inputdata.dataset) 
+                from GangaAtlas.Lib.Rucio import resolve_containers
+                datasets = resolve_containers(job.inputdata.dataset)
                 environment['DATASETNAME'] = datasets[0]
                 try:
                     environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations(overlap=False)[ datasets[0] ])

@@ -245,13 +245,13 @@ class DQ2JobSplitter(ISplitter):
                 for inds in job.inputdata.dataset:
 
                     # expand container
-                    indslist = resolve_container([inds]);
+                    indslist = resolve_containers([inds]);
 
                     for inds2 in indslist:
                         if len(job.inputdata.tagdataset) > 0:
-                            tag_dataset_map[inds2] = resolve_container( [job.inputdata.tagdataset[index]] )
+                            tag_dataset_map[inds2] = resolve_containers( [job.inputdata.tagdataset[index]] )
                         else:
-                            tag_dataset_map[inds2] = resolve_container( [job.inputdata.tagdataset[0]] )
+                            tag_dataset_map[inds2] = resolve_containers( [job.inputdata.tagdataset[0]] )
 
                         # attempt to match on tid names
                         if inds2.find('tid') != -1:
@@ -343,9 +343,9 @@ class DQ2JobSplitter(ISplitter):
                                 tag_dataset_map[ parentDSList[0][g][0] ] = [tagDS]
                             else:
                                 if dsNameForLookUp == tagDS:
-                                    tag_dataset_map[ parentDSList[0][g][0] ] = resolve_container( [dsNameForLookUp ] )                                    
+                                    tag_dataset_map[ parentDSList[0][g][0] ] = resolve_containers( [dsNameForLookUp ] )
                                 else:
-                                    tag_dataset_map[ parentDSList[0][g][0] ] = resolve_container( [dsNameForLookUp + '/'] )
+                                    tag_dataset_map[ parentDSList[0][g][0] ] = resolve_containers( [dsNameForLookUp + '/'] )
 
 
 

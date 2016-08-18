@@ -21,32 +21,9 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
-from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se
+from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se, resolve_containers
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
-
-def resolve_container(datasets):
-    """Helper function to resolver dataset containers"""
-    container_datasets = []
-    for dataset in datasets:
-        if dataset.endswith("/"):
-            try:
-                #dq2_lock.acquire() 
-                try:
-                    contents = dq2.listDatasetsInContainer(dataset)
-                except:
-                    contents = []
-            finally:
-                #dq2_lock.release()
-                pass
-   
-            if not contents:
-                contents = []
-            container_datasets = container_datasets + contents
-    if container_datasets:
-        return container_datasets
-    else:
-        return datasets
 
 def _resolveSites(sites):
 
@@ -291,7 +268,7 @@ class DQ2Dataset(Dataset):
         contents = []
         contents_new = []
 
-        datasets = resolve_container(self.dataset)
+        datasets = resolve_containers(self.dataset)
 
         evtsperfile = 0
         # Get info from AMI for AMIDataset
@@ -466,7 +443,7 @@ class DQ2Dataset(Dataset):
         datasets = []
 
         for d in self.tagdataset:
-            datasets += resolve_container([d])
+            datasets += resolve_containers([d])
             
         allcontentsSize = []
             
@@ -510,7 +487,7 @@ class DQ2Dataset(Dataset):
         alllocations = {}
         overlaplocations = []
 
-        datasets = resolve_container(self.dataset)
+        datasets = resolve_containers(self.dataset)
         
         for dataset in datasets:
             if backnav:
@@ -634,7 +611,7 @@ class DQ2Dataset(Dataset):
         else:
             datasets = [ dataset ]
 
-        datasets = resolve_container(datasets)
+        datasets = resolve_containers(datasets)
 
         for dataset in datasets:
             try:
@@ -699,7 +676,7 @@ class DQ2Dataset(Dataset):
         else:
             datasets = dataset
 
-        datasets = resolve_container(datasets)
+        datasets = resolve_containers(datasets)
 
         for dataset in datasets:
             try:
@@ -751,7 +728,7 @@ class DQ2Dataset(Dataset):
         else:
             datasets = [ dataset ]
             
-        datasets = resolve_container(datasets)
+        datasets = resolve_containers(datasets)
 
         dataset_locations_num = {}
 
@@ -837,7 +814,7 @@ class DQ2Dataset(Dataset):
         else:
             datasets = [ dataset ]
 
-        datasets = resolve_container(datasets)
+        datasets = resolve_containers(datasets)
 
         dataset_locations_list = {}
         for dataset in datasets:
@@ -1061,7 +1038,7 @@ class DQ2OutputDataset(Dataset):
             return
        
         # Resolved container into datasets
-        datasets = resolve_container([containername])
+        datasets = resolve_containers([containername])
         # Use master job info
         outputInfo = self.output
         # Clean all dataset individually
@@ -1336,7 +1313,7 @@ class DQ2OutputDataset(Dataset):
         """Check outputdataset consistency"""
         
         # Resolve container into datasets
-        datasets = resolve_container([self.datasetname])
+        datasets = resolve_containers([self.datasetname])
 
         for dataset in datasets:
             try:

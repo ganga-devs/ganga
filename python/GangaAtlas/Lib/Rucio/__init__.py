@@ -162,3 +162,25 @@ def is_rucio_se(rse_name):
 
     with get_rucio_client._client_lock:
         return rse_name in list(get_rucio_client().list_rses())
+
+
+def resolve_containers(ds_list):
+    """Go through the given dataset list and expand any containers found
+
+    Attributes:
+        ds_list (list): List of dataset names to expand
+
+    Returns:
+        list: The list of datasets with containers expanded
+    """
+
+    full_ds_list = []
+
+    for ds in ds_list:
+        added_ds = list_datasets_in_container(ds)
+        if added_ds:
+            full_ds_list += added_ds
+        else:
+            full_ds_list.append(ds)
+
+    return full_ds_list
