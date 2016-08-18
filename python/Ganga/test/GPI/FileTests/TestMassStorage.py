@@ -113,7 +113,7 @@ class TestMassStorage(GangaUnitTest):
 
         from GangaTest.Framework.utils import sleep_until_completed
 
-        j = jobs(0)
+        j = jobs[-1]
 
         sleep_until_completed(j)
 
@@ -132,7 +132,7 @@ class TestMassStorage(GangaUnitTest):
         assert j.outputfiles[0].locations != [''] and isinstance(j.outputfiles[0].locations[0], str) is True
         assert j.outputfiles[0].accessURL() != [''] and isinstance(j.outputfiles[0].accessURL()[0], str) is True
 
-        output_dir = os.path.join(TestMassStorage.outputFilePath, '0')
+        output_dir = os.path.join(TestMassStorage.outputFilePath, str(j.id))
         assert os.path.isdir(output_dir)
         assert os.path.isfile(os.path.join(output_dir, j.inputfiles[0].namePattern))
 
@@ -159,7 +159,7 @@ class TestMassStorage(GangaUnitTest):
 
         from GangaTest.Framework.utils import sleep_until_completed
 
-        j = jobs(1)
+        j = jobs[-1]
 
         sleep_until_completed(j)
 
@@ -171,7 +171,7 @@ class TestMassStorage(GangaUnitTest):
         #assert (stripProxy(j.subjobs[0].outputfiles[0]).subfiles) == 1
 
         for i in range(0, TestMassStorage.sj_len):
-            output_dir = os.path.join(TestMassStorage.outputFilePath, '1', str(i))
+            output_dir = os.path.join(TestMassStorage.outputFilePath, str(j.id), str(i))
             assert os.path.isdir(output_dir)
             for _input_file in j.inputfiles:
                 assert os.path.isfile(os.path.join(output_dir, _input_file.namePattern))
@@ -204,7 +204,7 @@ class TestMassStorage(GangaUnitTest):
 
         from GangaTest.Framework.utils import sleep_until_completed
 
-        j = jobs(2)
+        j = jobs[-1]
 
         sleep_until_completed(j)
 
@@ -215,15 +215,53 @@ class TestMassStorage(GangaUnitTest):
         for i in range(0, TestMassStorage.sj_len):
             # FIXME?
             #assert (stripProxy(j.subjobs[i].outputfiles[0]).subfiles) == 2
-            output_dir = os.path.join(TestMassStorage.outputFilePath, '2', str(i))
+            output_dir = os.path.join(TestMassStorage.outputFilePath, str(j.id), str(i))
             assert os.path.isdir(output_dir)
             for file_ in j.inputfiles: 
                 assert os.path.isfile(os.path.join(output_dir, file_.namePattern))
 
         TestMassStorage.cleanUp()
 
+    def test_g_MultipleFiles(self):
+        """Test that the wildcards work"""
 
-# FIXME: The following 2 tets are designed to test the 'client-side' code of the MassStorageFile
+        from Ganga.GPI import LocalFile, MassStorageFile, Job, ArgSplitter
+
+        _ext = '.root'
+        file_1 = generateUniqueTempFile(_ext)
+        file_2 = generateUniqueTempFile(_ext)
+
+        j = Job()
+        j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
+        j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorage.sj_len) ])
+        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat='{jid}_{sjid}_{fname}')]
+        j.submit()
+
+    def test_h_MultiUpload(self):
+        """Test that multiple 'uploads' work"""
+
+        from Ganga.GPI import jobs
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+
+        from GangaTest.Framework.utils import sleep_until_completed
+
+        j = jobs[-1]
+
+        sleep_until_completed(j)
+
+        assert j.status == 'completed'
+
+        assert len(j.subjobs) == TestMassStorage.sj_len
+
+        for i in range(0, TestMassStorage.sj_len):
+            # FIXME?
+            #assert (stripProxy(j.subjobs[i].outputfiles[0]).subfiles) == 2
+            file_prep = os.path.join(TestMassStorage.outputFilePath, str(j.id) + '_' + str(i) + '_')
+            for file_ in j.inputfiles:
+                assert os.path.isfile(file_prep + file_.namePattern)
+
+
+#: The following 2 tets are designed to test the 'client-side' code of the MassStorageFile
 #        This currently will _NOT_ work as the code in Ganga/GPIDev/Lib/File/OutputFileManager.py has been written with too much special cases for
 #        among other things the Local backend and LocalFile file objects.
 #        These special cases may have been needed in the past but are only getting in the way of development now and should ideally go away ASAP!
@@ -231,7 +269,7 @@ class TestMassStorage(GangaUnitTest):
 #        Ideally these tests would be enabled prior to 6.3.0 so that we can test the MassStorageFile completely in an automated way
 #
 #
-#    def test_g_testClientSideSubmit(self):
+#    def test_i_testClientSideSubmit(self):
 #        """Test the client side code whilst stil using the Local backend"""
 #
 #        from Ganga.GPI import LocalFile, MassStorageFile, Job, ArgSplitter
@@ -249,7 +287,7 @@ class TestMassStorage(GangaUnitTest):
 #        j.outputfiles = [MassStorageFile(namePattern='*'+_ext)]
 #        j.submit()
 #
-#    def test_h_testClientSideComplete(self):
+#    def test_j_testClientSideComplete(self):
 #        """Test the client side code whilst stil using the Local backend"""
 #
 #        from Ganga.GPI import jobs
@@ -258,7 +296,7 @@ class TestMassStorage(GangaUnitTest):
 #        from Ganga.Utility.Config import setConfigOption
 #        setConfigOption('Output', 'MassStorageFile', TestMassStorage.MassStorageTestConfig2)
 #
-#        j = jobs(3)
+#        j = jobs[-1]
 #
 #        sleep_until_completed(j)
 #
