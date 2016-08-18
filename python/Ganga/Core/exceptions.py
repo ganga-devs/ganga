@@ -128,5 +128,3 @@ class RepositoryError(GangaException):
             repository_runtime.shutdown()
         except:
             logger.error("Unable to disable Internal services, they may have already been disabled!")
-
-
