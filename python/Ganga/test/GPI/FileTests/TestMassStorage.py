@@ -261,7 +261,7 @@ class TestMassStorage(GangaUnitTest):
                 assert os.path.isfile(file_prep + file_.namePattern)
 
 
-#: The following 2 tets are designed to test the 'client-side' code of the MassStorageFile
+#FIXME: The following 2 tets are designed to test the 'client-side' code of the MassStorageFile
 #        This currently will _NOT_ work as the code in Ganga/GPIDev/Lib/File/OutputFileManager.py has been written with too much special cases for
 #        among other things the Local backend and LocalFile file objects.
 #        These special cases may have been needed in the past but are only getting in the way of development now and should ideally go away ASAP!
