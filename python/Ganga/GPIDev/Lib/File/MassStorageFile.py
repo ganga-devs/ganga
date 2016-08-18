@@ -7,8 +7,12 @@ from __future__ import absolute_import
 import errno
 import re
 import os
+import os.path
 import copy
 import glob
+import inspect
+import time
+from fnmatch import fnmatch
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
@@ -77,7 +81,6 @@ class MassStorageFile(IGangaFile):
 
     def _setNamePath(self, _namePattern='', _localDir=''):
         if _namePattern != '' and _localDir == '':
-            import os.path
             self.namePattern = os.path.basename(_namePattern)
             self.localDir = os.path.dirname(_namePattern)
         elif _namePattern != '' and _localDir != '':
@@ -204,14 +207,12 @@ class MassStorageFile(IGangaFile):
         Creates and executes commands for file upload to mass storage (Castor), this method will
         be called on the client
         """
-        import re
 
         sourceDir = ''
 
         # if used as a stand alone object
         if self._getParent() is None:
             if self.localDir == '':
-                import os
                 _CWD = os.getcwd()
                 if os.path.isfile(os.path.join(_CWD, self.namePattern)):
                     sourceDir = _CWD
@@ -244,7 +245,6 @@ class MassStorageFile(IGangaFile):
         massStoragePath = massStorageConfig['path']
 
         # create the last directory (if not exist) from the config path
-        import os.path
         pathToDirName = os.path.dirname(massStoragePath)
         dirName = os.path.basename(massStoragePath)
 
@@ -432,7 +432,6 @@ class MassStorageFile(IGangaFile):
                                         massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'],
                                         massStorageConfig['ls_cmd'], massStorageConfig['path']])
 
-        import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                         'scripts/MassStorageFileWNScript.py')
 
@@ -464,8 +463,6 @@ class MassStorageFile(IGangaFile):
     def processWildcardMatches(self):
         if self.subfiles:
             return self.subfiles
-
-        from fnmatch import fnmatch
 
         if regex.search(self.namePattern):
             ls_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['ls_cmd']
@@ -517,7 +514,6 @@ class MassStorageFile(IGangaFile):
 
             sourceDir = ''
             if self.localDir == '':
-                import os
                 _CWD = os.getcwd()
                 if os.path.isfile(os.path.join(_CWD, self.namePattern)):
                     sourceDir = _CWD
@@ -544,7 +540,6 @@ class MassStorageFile(IGangaFile):
                             keyin = None
 
                 if _actual_delete:
-                    import time
                     remove_filename = _localFile + "_" + str(time.time()) + '__to_be_deleted_'
 
                     try:
@@ -575,7 +570,6 @@ class MassStorageFile(IGangaFile):
         accessURLs = []
 
         for file in myLocations:
-            import os
             accessURLs.append(protoPath + os.path.join(os.sep, file))
 
         return accessURLs
