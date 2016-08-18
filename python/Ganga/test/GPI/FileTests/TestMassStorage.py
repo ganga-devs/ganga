@@ -105,10 +105,6 @@ class TestMassStorage(GangaUnitTest):
         # FIXME?
         #assert len(stripProxy(j.outputfiles[0]).subfiles) == 1
 
-        #print("namePattern: %s" % (j.outputfiles[0].namePattern, )) 
-        #print("Locations: %s" % (j.outputfiles[0].locations, ))
-        #print("accessURL: %s" % (j.outputfiles[0].accessURL(), ))
-
         assert j.outputfiles[0].namePattern != '' and j.outputfiles[0].namePattern[0] != '*'
         assert j.outputfiles[0].locations != [''] and isinstance(j.outputfiles[0].locations[0], str) is True
         assert j.outputfiles[0].accessURL() != [''] and isinstance(j.outputfiles[0].accessURL()[0], str) is True
