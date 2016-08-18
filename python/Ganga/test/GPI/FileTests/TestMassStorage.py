@@ -104,6 +104,7 @@ class TestMassStorage(GangaUnitTest):
         assert len(j.outputfiles) == 1
         # FIXME?
         #assert len(stripProxy(j.outputfiles[0]).subfiles) == 1
+        assert len(j.outputfiles) == 1
 
         assert j.outputfiles[0].namePattern != '' and j.outputfiles[0].namePattern[0] != '*'
         assert j.outputfiles[0].locations != [''] and isinstance(j.outputfiles[0].locations[0], str) is True
@@ -146,6 +147,7 @@ class TestMassStorage(GangaUnitTest):
 
         # FIXME?
         #assert (stripProxy(j.subjobs[0].outputfiles[0]).subfiles) == 1
+        assert len(j.subjobs[0].outputfiles) == 1
 
         for i in range(0, TestMassStorage.sj_len):
             output_dir = os.path.join(TestMassStorage.outputFilePath, str(j.id), str(i))
@@ -192,6 +194,7 @@ class TestMassStorage(GangaUnitTest):
         for i in range(0, TestMassStorage.sj_len):
             # FIXME?
             #assert (stripProxy(j.subjobs[i].outputfiles[0]).subfiles) == 2
+            assert len(j.subjobs[i].outputfiles) == 3
             output_dir = os.path.join(TestMassStorage.outputFilePath, str(j.id), str(i))
             assert os.path.isdir(output_dir)
             for file_ in j.inputfiles: 
@@ -233,12 +236,13 @@ class TestMassStorage(GangaUnitTest):
         for i in range(0, TestMassStorage.sj_len):
             # FIXME?
             #assert (stripProxy(j.subjobs[i].outputfiles[0]).subfiles) == 2
+            assert len(j.subjobs[i].outputfiles) == 2
             file_prep = os.path.join(TestMassStorage.outputFilePath, str(j.id) + '_' + str(i) + '_')
             for file_ in j.inputfiles:
                 assert os.path.isfile(file_prep + file_.namePattern)
 
 
-#FIXME: The following 2 tets are designed to test the 'client-side' code of the MassStorageFile
+#FIXME:  The following 2 tets are designed to test the 'client-side' code of the MassStorageFile
 #        This currently will _NOT_ work as the code in Ganga/GPIDev/Lib/File/OutputFileManager.py has been written with too much special cases for
 #        among other things the Local backend and LocalFile file objects.
 #        These special cases may have been needed in the past but are only getting in the way of development now and should ideally go away ASAP!
