@@ -22,7 +22,6 @@ from Ganga.Lib.LCG import LCGJobConfig
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasCREAMRequirements
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import whichCloud
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -457,13 +456,13 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             self.output_datasetname, self.output_lfn = dq2outputdatasetname(dq2_datasetname, jobid, dq2_isGroupDS, dq2_groupname)
 
         # Check if all sites are in the same cloud
-        if job.backend.requirements.sites:
-            firstCloud = whichCloud(job.backend.requirements.sites[0])
-            for site in job.backend.requirements.sites:
-                cloud = whichCloud(site)
-                if cloud != firstCloud:
-                    printout = 'Job submission failed ! Site specified with j.backend.requirements.sites=%s are not in the same cloud !' %(job.backend.requirements.sites)
-                    raise ApplicationConfigurationError(None,printout )
+        #if job.backend.requirements.sites:
+        #    firstCloud = whichCloud(job.backend.requirements.sites[0])
+        #    for site in job.backend.requirements.sites:
+        #        cloud = whichCloud(site)
+        #        if cloud != firstCloud:
+        #            printout = 'Job submission failed ! Site specified with j.backend.requirements.sites=%s are not in the same cloud !' %(job.backend.requirements.sites)
+        #            raise ApplicationConfigurationError(None,printout )
 
 
         #this next for loop instructs ganga to use option_files that live in the appropriate shared directory (the job

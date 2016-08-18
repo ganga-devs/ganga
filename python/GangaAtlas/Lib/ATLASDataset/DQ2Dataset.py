@@ -25,23 +25,6 @@ from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se, resolve_containers
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 
-def whichCloud (site):
-    is_site(site)
-
-    for cloudID, eachCloud in ToACache.dbcloud.iteritems():
-        sites = getSites(eachCloud)
-        if site in sites:
-            return cloudID
-
-    info = { 'CERN' : 'T0', 'CNAF' : 'IT', 'PIC': 'ES', 'LYON': 'FR',
-             'RAL' : 'UK', 'FZK': 'DE', 'SARA' : 'NL', 'ASGC' : 'TW',
-             'TRIUMF' : 'CA', 'BNL' : 'US', 'NDGF' : 'NG' }
-    for sitename, cloud in info.iteritems():
-        if site == sitename:
-            return cloud
-        
-    return None
-
 def dq2datasetstate(dataset):
     """Helper function to determine dataset status """
     if not dataset: return -1
