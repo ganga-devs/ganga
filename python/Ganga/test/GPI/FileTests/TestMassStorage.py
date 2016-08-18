@@ -8,6 +8,7 @@ import random
 import os
 import shutil
 import copy
+import string
 
 def generateUniqueTempFile( ext = '.txt' ):
     """ Generate a unique file with a given filename with some random contents and return the name of the file on disk
@@ -15,33 +16,13 @@ def generateUniqueTempFile( ext = '.txt' ):
         ext (str): This is the extension (including '.') to give to the file of interest
     """
 
-    myFile = tempfile.NamedTemporaryFile(mode='w',delete=False)
+    with tempfile.NamedTemporaryFile(mode='w',suffix=ext,delete=False) as myFile:
 
-    t = datetime.datetime.now()
-    unix_t = time.mktime(t.timetuple())
+        myFile.write( ''.join(random.choice(string.ascii_uppercase+string.digits) for _ in range(20)) )
 
-    file_string = str(unix_t) + "\n"
+        TestMassStorage._managed_files.append(myFile.name)
 
-    random.seed( unix_t )
-    rand = random.random() * 1E10
-
-    file_string = file_string + str( rand ) + "\n"
-
-    urand = os.urandom(20)
-
-    file_string = file_string + str( urand ) + "\n"
-
-    myFile.write( file_string )
-
-    myFile.close()
-
-    returnableName = myFile.name+str(ext)
-
-    os.rename( myFile.name, returnableName )
-
-    TestMassStorage._managed_files.append(returnableName)
-
-    return returnableName
+        return myFile.name
 
 class TestMassStorage(GangaUnitTest):
     """test for sjid in filename names explain each test"""
