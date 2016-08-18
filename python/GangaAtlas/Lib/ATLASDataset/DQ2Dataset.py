@@ -25,17 +25,6 @@ from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se, resolve_containers
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 
-def _resolveSites(sites):
-
-    new_sites = []
-    for site in sites:
-        if site in ToACache.topology:
-            new_sites += _resolveSites(ToACache.topology[site])
-        else:
-            new_sites.append(site)
-
-    return new_sites
-
 def whichCloud (site):
     is_site(site)
 
