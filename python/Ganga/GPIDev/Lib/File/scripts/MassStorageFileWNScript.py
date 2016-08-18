@@ -38,8 +38,6 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
             directoryExists = True
             break
 
-    #print("Directory, %s found: %s" % (str(path), str(directoryExists)))
-
     if not directoryExists:
         (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
         if exitcode != 0:
