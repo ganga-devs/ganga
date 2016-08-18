@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform

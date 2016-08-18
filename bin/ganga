@@ -40,7 +40,7 @@ standardSetup()
 del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 import sys
 
 def log(level, err):

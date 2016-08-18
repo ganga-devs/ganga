@@ -1,7 +1,7 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import tempfile
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 import Ganga.Utility.Config
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import FileBuffer, File

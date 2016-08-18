@@ -12,7 +12,7 @@ import Ganga.Utility.logging
 from Ganga.Utility.files import expandfilename, fullpath
 from GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
 from Ganga.GPIDev.Lib.File import File
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 import Ganga.Utility.Config
 from Ganga.Utility.execute import execute
 from Ganga.GPIDev.Lib.File import ShareDir

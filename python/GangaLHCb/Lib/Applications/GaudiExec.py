@@ -10,7 +10,7 @@ import stat
 import uuid
 from StringIO import StringIO
 
-from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
+from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Base.Filters import allComponentFilters

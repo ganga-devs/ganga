@@ -5,7 +5,7 @@ import repr
 import sys
 from inspect import isclass
 import Ganga.Utility.logging
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError, IncompleteObject
 
 from Ganga.GPIDev.Schema import ComponentItem

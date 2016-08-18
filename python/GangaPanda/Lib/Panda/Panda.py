@@ -14,7 +14,8 @@ from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Lib.Job import JobStatusError
-from Ganga.Core import BackendError, Sandbox
+from Ganga.Core.exceptions import BackendError
+from Ganga.Core import Sandbox
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Core import FileWorkspace
@@ -684,7 +685,7 @@ class Panda(IBackend):
         logger.debug("Using Panda server baseURLSSL=%s" %Client.baseURLSSL)
 
         #from pandatools import Client
-        from Ganga.Core import IncompleteJobSubmissionError
+        from Ganga.Core.exceptions import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
         assert(implies(rjobs,len(subjobspecs)==len(rjobs))) 

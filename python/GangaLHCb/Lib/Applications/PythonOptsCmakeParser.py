@@ -3,7 +3,7 @@ import tempfile
 from Ganga.GPIDev.Lib.File import LocalFile
 import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 logger = Ganga.Utility.logging.getLogger()
 

@@ -1,6 +1,6 @@
 import inspect
 from GangaTest.Framework.tests import GangaGPITestCase
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 #from GangaLHCb.Lib.Gaudi.Francesc import GaudiExtras
 import Ganga.Utility.Config
 

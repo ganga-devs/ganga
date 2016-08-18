@@ -2,7 +2,7 @@ import commands, exceptions, random, re, sys, time
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getDatasets
 

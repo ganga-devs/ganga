@@ -7,7 +7,7 @@ try:
 except ImportError:
     from mock import patch, Mock
 
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -69,7 +69,7 @@ def test__addition_sandbox_content(db):
 
 
 def test__setup_bulk_subjobs(tmpdir, db):
-    from Ganga.Core import BackendError
+    from Ganga.Core.exceptions import BackendError
     from Ganga.GPIDev.Lib.Dataset.Dataset import Dataset
 
     name = str(tmpdir.join('submit_script'))
@@ -107,7 +107,7 @@ def test__setup_bulk_subjobs(tmpdir, db):
 
 
 def test__common_submit(tmpdir, db):
-    from Ganga.Core import BackendError
+    from Ganga.Core.exceptions import BackendError
     j = Job()
     j.id = 0
     j.backend = db
@@ -186,7 +186,7 @@ def test_resubmit(db):
 
 
 def test__resubmit(db):
-    from Ganga.Core import BackendError
+    from Ganga.Core.exceptions import BackendError
 
     def _common_submit(dirac_script):
         return '_common_submit run ok'
@@ -238,7 +238,7 @@ def test_reset(db):
 def test_kill(db):
     db.id = 1234
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={}):
-        from Ganga.Core import BackendError
+        from Ganga.Core.exceptions import BackendError
         with pytest.raises(BackendError):
             db.kill()
 

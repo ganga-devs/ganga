@@ -1,6 +1,6 @@
 '''This class defines the number of subjobs per use case'''
 
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Schema import *
 import Ganga.Utility.logging

@@ -14,7 +14,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 import os, shutil, commands, re, time
 from Ganga.Utility.files import expandfilename

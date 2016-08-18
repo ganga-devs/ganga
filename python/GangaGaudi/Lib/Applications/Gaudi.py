@@ -5,7 +5,7 @@ import tempfile
 import gzip
 import pickle
 from Ganga.GPIDev.Schema import SimpleItem, FileItem
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 import Ganga.Utility.logging
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir

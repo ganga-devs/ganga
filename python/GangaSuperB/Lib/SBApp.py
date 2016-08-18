@@ -6,8 +6,8 @@ import os
 import subprocess
 import sys
 
-from Ganga.Core import ApplicationConfigurationError
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.Core.exceptions import GangaException
 from Ganga.Core import FileWorkspace
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler

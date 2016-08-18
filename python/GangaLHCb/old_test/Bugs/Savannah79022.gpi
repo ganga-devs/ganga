@@ -6,7 +6,7 @@ this_file=open(path,'w')
 this_file.write('import os')
 this_file.close()
 
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 j1=Job(name='testing',application=DaVinci(),backend=Local())
 j2=Job(name='testing',application=DaVinci(optsfile=[path]),backend=Local())
 j3=Job(name='testing',application=DaVinci(optsfile=['~/deadparrot.opts']),backend=Local())

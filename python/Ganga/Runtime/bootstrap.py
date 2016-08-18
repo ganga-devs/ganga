@@ -850,7 +850,7 @@ under certain conditions; type license() for details.
 
         import Ganga.Utility.Config
         from Ganga.Utility.Runtime import RuntimePackage, allRuntimes
-        from Ganga.Core import GangaException
+        from Ganga.Core.exceptions import GangaException
 
         logger.debug("Import plugins")
         try:

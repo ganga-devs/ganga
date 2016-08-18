@@ -117,7 +117,7 @@ class IBackend(GangaObject):
         support for keep_going flag.
 
         """
-        from Ganga.Core import IncompleteJobSubmissionError, GangaException
+        from Ganga.Core.exceptions import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
 
 
@@ -290,7 +290,7 @@ class IBackend(GangaObject):
         If you override this method for bulk optimization then make sure that you call updateMasterJobStatus() on the master job,
         so the master job will be monitored by the monitoring loop.
         """
-        from Ganga.Core import IncompleteJobSubmissionError, GangaException
+        from Ganga.Core.exceptions import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
         incomplete = 0
 
@@ -350,7 +350,7 @@ class IBackend(GangaObject):
                         r = False
                         problems.append(s.id)
             if not r:
-                from Ganga.Core import IncompleteKillError
+                from Ganga.Core.exceptions import IncompleteKillError
                 raise IncompleteKillError(
                     'subjobs %s were not killed' % problems)
         else:

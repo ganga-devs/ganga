@@ -10,7 +10,7 @@
 import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions, time
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *

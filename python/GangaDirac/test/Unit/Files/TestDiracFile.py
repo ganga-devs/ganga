@@ -6,7 +6,7 @@ try:
 except ImportError:
     from mock import patch
 
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 

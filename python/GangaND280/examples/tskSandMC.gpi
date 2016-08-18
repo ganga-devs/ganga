@@ -1,4 +1,4 @@
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 # headers start ----------------------------------------------------------------------------------------------------------------
 ver = 'v11r31'		# nd280 Software version

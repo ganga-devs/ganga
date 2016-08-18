@@ -1,6 +1,6 @@
 import inspect
 from GangaTest.Framework.tests import GangaGPITestCase
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 try:
     import Ganga.Utility.Config.Config

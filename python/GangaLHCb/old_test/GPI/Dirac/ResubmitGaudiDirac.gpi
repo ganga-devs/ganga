@@ -1,4 +1,4 @@
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 
 # Do a standard DaVinci job
 j1 = Job(application=DaVinci(),backend=Dirac())

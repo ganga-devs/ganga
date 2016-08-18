@@ -11,7 +11,7 @@ import Ganga.Utility.logging
 from Ganga.Utility.util import unique
 import Ganga.Utility.Config
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd
 from Ganga.GPIDev.Lib.File.OutputFileManager import outputFilePostProcessingOnWN

@@ -9,7 +9,7 @@ import time
 import datetime
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.Core import BackendError, GangaException
+from Ganga.Core.exceptions import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, _proxyValid
@@ -229,7 +229,7 @@ class DiracBase(IBackend):
         such that the monitoring server is used rather than the user server
         Args:
             rjobs (list): This is a list of jobs which are to be auto-resubmitted'''
-        from Ganga.Core import IncompleteJobSubmissionError, GangaException
+        from Ganga.Core.exceptions import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
         incomplete = 0
 

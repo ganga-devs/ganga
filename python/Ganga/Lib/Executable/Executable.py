@@ -12,7 +12,7 @@ from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.File.File import File
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 from Ganga.Utility.logging import getLogger
 
@@ -144,7 +144,7 @@ class Executable(IPrepareApp):
         return 1
 
     def configure(self, masterappconfig):
-        from Ganga.Core import ApplicationConfigurationError
+        from Ganga.Core.exceptions import ApplicationConfigurationError
         import os.path
 
         # do the validation of input attributes, with additional checks for exe
