@@ -21,7 +21,7 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
-from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se, resolve_containers
+from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se, resolve_containers, generate_output_datasetname
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 
