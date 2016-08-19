@@ -250,7 +250,7 @@ class MassStorageFile(IGangaFile):
 
         (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, pathToDirName))
         if exitcode != 0:
-            self.handleUploadFailure(mystderr)
+            self.handleUploadFailure(mystderr, '%s %s' % (ls_cmd, pathToDirName))
             return
 
         directoryExists = False
@@ -262,7 +262,7 @@ class MassStorageFile(IGangaFile):
         if not directoryExists:
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
             if exitcode != 0:
-                self.handleUploadFailure(mystderr)
+                self.handleUploadFailure(mystderr, '%s %s' % (mkdir_cmd, massStoragePath))
                 return
 
         # the folder part of self.outputfilenameformat
@@ -312,7 +312,7 @@ class MassStorageFile(IGangaFile):
             command = '%s -p %s' % (mkdir_cmd, massStoragePath)
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(command)
             if exitcode != 0:
-                self.handleUploadFailure(mystderr)
+                self.handleUploadFailure(mystderr, command)
                 return
 
         # here filenameStructure has replaced jid and sjid if any, and only not
@@ -330,7 +330,7 @@ class MassStorageFile(IGangaFile):
                 d.compressed = self.compressed
 
                 if exitcode != 0:
-                    self.handleUploadFailure(mystderr)
+                    self.handleUploadFailure(mystderr, '%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
                 else:
                     logger.info('%s successfully uploaded to mass storage as %s' % (currentFile, os.path.join(massStoragePath, finalFilename)))
                     d.locations = os.path.join(massStoragePath, os.path.basename(finalFilename))
@@ -346,7 +346,7 @@ class MassStorageFile(IGangaFile):
             finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
             if exitcode != 0:
-                self.handleUploadFailure(mystderr)
+                self.handleUploadFailure(mystderr, '%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
             else:
                 logger.info('%s successfully uploaded to mass storage as %s' % (currentFile, os.path.join(massStoragePath, finalFilename)))
                 location = os.path.join(massStoragePath, os.path.basename(finalFilename))
@@ -405,14 +405,15 @@ class MassStorageFile(IGangaFile):
 
         return (True, '')
 
-    def handleUploadFailure(self, error):
+    def handleUploadFailure(self, error, cmd=''):
 
         self.failureReason = error
         if self._getParent() != None:
-            logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (
-                str(self._getParent().fqid), self.failureReason))
+            logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._getParent().fqid), self.failureReason))
         else:
             logger.error("The file can't be uploaded because of %s" % (self.failureReason))
+        if cmd:
+            logger.error("Attempted to run: '%s'" % (cmd))
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
