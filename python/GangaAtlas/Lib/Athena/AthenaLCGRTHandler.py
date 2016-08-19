@@ -453,7 +453,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 dq2_datasetname = ''
                 dq2_isGroupDS = False
                 dq2_groupname = ''
-            self.output_datasetname, self.output_lfn = dq2outputdatasetname(dq2_datasetname, jobid, dq2_isGroupDS, dq2_groupname)
+            self.output_datasetname = dq2outputdatasetname(dq2_datasetname, jobid, dq2_isGroupDS, dq2_groupname)
 
         # Check if all sites are in the same cloud
         #if job.backend.requirements.sites:

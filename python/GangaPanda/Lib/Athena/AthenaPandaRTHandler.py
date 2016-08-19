@@ -309,7 +309,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             bjsites = [job.backend.site]
 
         # validate the output dataset name (and make it a container)
-        job.outputdata.datasetname,outlfn = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
+        job.outputdata.datasetname = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
         #if not job.outputdata.datasetname.endswith('/'):
         #    job.outputdata.datasetname+='/'
 

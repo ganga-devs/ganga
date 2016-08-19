@@ -200,7 +200,7 @@ class LCG(IBackend):
             # generate a new dataset name if not given
             if not self.sandboxcache.dataset_name:
                 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
-                self.sandboxcache.dataset_name, unused = dq2outputdatasetname("%s.input" % get_uuid(), 0, False, '')
+                self.sandboxcache.dataset_name = dq2outputdatasetname("%s.input" % get_uuid(), 0, False, '')
 
             # subjobs inherits the dataset name from the master job
             for sj in job.subjobs:

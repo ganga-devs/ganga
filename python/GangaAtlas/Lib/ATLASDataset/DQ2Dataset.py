@@ -88,24 +88,14 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
             # dataset exists and is open or dataset does not exist
             if datasetState==0 or datasetState==-1:
                 output_datasetname = datasetname
-                if config['USE_NICKNAME_DQ2OUTPUTDATASET']:
-                    output_lfn = '%s/%s/%s/%s/' % (usertag, username, jobdate, datasetname)
-                else:
-                    output_lfn = '%s/%s/ganga/%s/' % (usertag, username, datasetname)
             else:
                 output_datasetname = patName                        
-                output_lfn = patLfn
                 logger.warning('Output dataset already exists and is closed/frozen. Overriding to %s', patName)
         else:
             output_datasetname = '%s.%s.%s' % (usertag, username, datasetname)
-            if config['USE_NICKNAME_DQ2OUTPUTDATASET']:
-                output_lfn = '%s/%s/%s/%s/' % (usertag, username, jobdate, output_datasetname)
-            else:
-                output_lfn = '%s/%s/ganga/%s/' % (usertag, username, output_datasetname)
     else:
         # No datasetname is given
         output_datasetname = patName
-        output_lfn = patLfn
 
     # container limit: 131, Dataset limit: 200
     if output_datasetname[-1:] == '/' and len(output_datasetname)>config['OUTPUTDATASET_NAMELENGTH']:
@@ -115,7 +105,7 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
     if output_datasetname[-1:] != '/' and len(output_datasetname)>200:
         raise ApplicationConfigurationError(None,'DQ2OutputDataset.datasetname = %s is longer than limit of 200 characters ! ' %(output_datasetname))
 
-    return output_datasetname, output_lfn 
+    return output_datasetname
 
 def dq2_set_dataset_lifetime(datasetname, location):
 
@@ -889,7 +879,7 @@ class DQ2OutputDataset(Dataset):
         if datasetname == '':
             return ''
         elif datasetname != '':
-            dq2datasetname, output_lfn = dq2outputdatasetname(datasetname, -999 , self.isGroupDS, self.groupname)
+            dq2datasetname = dq2outputdatasetname(datasetname, -999 , self.isGroupDS, self.groupname)
             return dq2datasetname
 
     def clean_duplicates_in_dataset(self, datasetname = None, outputInfo = None):

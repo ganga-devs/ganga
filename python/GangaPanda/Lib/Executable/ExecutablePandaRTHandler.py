@@ -98,7 +98,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             logger.info('Adding missing DQ2OutputDataset')
             job.outputdata = DQ2OutputDataset()
 
-        job.outputdata.datasetname,outlfn = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
+        job.outputdata.datasetname = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
 
         self.outDsLocation = Client.PandaSites[job.backend.site]['ddm']
 
