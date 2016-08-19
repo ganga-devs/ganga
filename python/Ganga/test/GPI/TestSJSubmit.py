@@ -7,11 +7,8 @@ class TestSJSubmit(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
+        extra_opts = [('Output', 'FailJobIfNoOutputMatched', 'True'), ('TestingFramework', 'AutoCleanup', 'False'), ('Configuration', 'resubmitOnlyFailedSubjobs', 'True')]
         super(TestSJSubmit, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('Output', 'FailJobIfNoOutputMatched', 'True')
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
-        setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'True')
 
     @staticmethod
     def _getSplitter():

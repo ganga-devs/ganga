@@ -17,10 +17,8 @@ class TestSJXMLCorruption(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False'), ('Configuration', 'AutoStartReg', global_AutoStartReg)]
         super(TestSJXMLCorruption, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
-        setConfigOption('Configuration', 'AutoStartReg', global_AutoStartReg)
 
     def test_a_JobConstruction(self):
         """ First construct the Job object (singular)"""
