@@ -8,7 +8,7 @@ class TestSJSubmit(GangaUnitTest):
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
         extra_opts = [('Output', 'FailJobIfNoOutputMatched', 'True'), ('TestingFramework', 'AutoCleanup', 'False'), ('Configuration', 'resubmitOnlyFailedSubjobs', 'True')]
-        super(TestSJSubmit, self).setUp()
+        super(TestSJSubmit, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
     def _getSplitter():
