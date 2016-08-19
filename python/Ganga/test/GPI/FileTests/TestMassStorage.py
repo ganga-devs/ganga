@@ -102,8 +102,7 @@ class TestMassStorage(GangaUnitTest):
 
         assert len(j.inputfiles) == 1
         assert len(j.outputfiles) == 1
-        # FIXME?
-        #assert len(stripProxy(j.outputfiles[0]).subfiles) == 1
+        assert len(stripProxy(stripProxy(j).outputfiles[0]).subfiles) == 1
         assert len(j.outputfiles) == 1
 
         assert j.outputfiles[0].namePattern != '' and j.outputfiles[0].namePattern[0] != '*'
@@ -145,8 +144,7 @@ class TestMassStorage(GangaUnitTest):
 
         assert len(j.subjobs) == TestMassStorage.sj_len
 
-        # FIXME?
-        #assert (stripProxy(j.subjobs[0].outputfiles[0]).subfiles) == 1
+        assert len(stripProxy(stripProxy(j.subjobs[0]).outputfiles[0]).subfiles) == 1
         assert len(j.subjobs[0].outputfiles) == 1
 
         for i in range(0, TestMassStorage.sj_len):
@@ -192,8 +190,8 @@ class TestMassStorage(GangaUnitTest):
         assert len(j.subjobs) == TestMassStorage.sj_len
 
         for i in range(0, TestMassStorage.sj_len):
-            # FIXME?
-            #assert (stripProxy(j.subjobs[i].outputfiles[0]).subfiles) == 2
+            assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[0]).subfiles) == 2
+            assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[1]).subfiles) == 1
             assert len(j.subjobs[i].outputfiles) == 3
             output_dir = os.path.join(TestMassStorage.outputFilePath, str(j.id), str(i))
             assert os.path.isdir(output_dir)
@@ -234,8 +232,7 @@ class TestMassStorage(GangaUnitTest):
         assert len(j.subjobs) == TestMassStorage.sj_len
 
         for i in range(0, TestMassStorage.sj_len):
-            # FIXME?
-            #assert (stripProxy(j.subjobs[i].outputfiles[0]).subfiles) == 2
+            assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[0]).subfiles) == 2
             assert len(j.subjobs[i].outputfiles) == 2
             file_prep = os.path.join(TestMassStorage.outputFilePath, str(j.id) + '_' + str(i) + '_')
             for file_ in j.inputfiles:
