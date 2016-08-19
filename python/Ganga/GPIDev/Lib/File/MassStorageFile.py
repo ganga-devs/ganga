@@ -108,8 +108,7 @@ class MassStorageFile(IGangaFile):
         """
         job = self.getJobObject()
 
-        postprocessLocationsPath = os.path.join(
-            job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
+        postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
         if not os.path.exists(postprocessLocationsPath):
             return
 
