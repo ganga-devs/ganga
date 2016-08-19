@@ -7,6 +7,7 @@ except ImportError:
 
 from Ganga.testlib.mark import external
 from Ganga.testlib.monitoring import run_until_completed
+from Ganga.testlib.decorators import add_config
 
 
 @external
@@ -29,6 +30,7 @@ def test_job_kill(gpi):
     j.kill()
 
 
+@add_config([('LCG', 'VirtualOrganisation', "gridpp")])
 def test_submit_kill_resubmit(gpi):
     """
     Test that a simple submit-kill-resubmit-kill cycle works
@@ -57,6 +59,7 @@ def test_submit_kill_resubmit(gpi):
         j.kill()
 
 
+@add_config([('LCG', 'VirtualOrganisation', "gridpp")])
 def test_submit_monitor(gpi):
     """
     Test that an LCG job can be monitored
