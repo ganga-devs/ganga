@@ -12,6 +12,8 @@ Attributes:
 """
 
 import threading
+import time
+import re
 
 
 def get_rucio_client():
@@ -56,7 +58,7 @@ def dataset_exists(dsname):
 
     scope_dsname = get_scope_and_dsname(dsname)
     with get_rucio_client._client_lock:
-        return len(list(get_rucio_client().list_dids(scope_dsname[0], {'name' : scope_dsname[1]}))) > 0
+        return len(list(get_rucio_client().list_dids(scope_dsname[0], {'name': scope_dsname[1]}))) > 0
 
 
 def get_dataset_replica_list(dsname):
@@ -125,6 +127,7 @@ def list_dataset_files(dsname):
 
         return file_list
 
+
 def list_datasets_in_container(dsname):
     """Return the list of datasets in this container
 
@@ -149,6 +152,7 @@ def list_datasets_in_container(dsname):
                 ds_list.append(entry['name'])
 
         return ds_list
+
 
 def is_rucio_se(rse_name):
     """Check if the given name is a valid Rucio Storage Element
@@ -184,3 +188,62 @@ def resolve_containers(ds_list):
             full_ds_list.append(ds)
 
     return full_ds_list
+
+
+def generate_output_datasetname(datasetname, jobid, is_group_ds, groupname):
+    """Generate a valid output dataset name to supply to Jedi/Panda
+
+    The name generated is based on:
+
+    usertag.nickname.timestamp.jobid
+
+    If datasetname is given, it is set to this unless it doesn't start with usertag.nickname, in which case these are
+    appended.
+
+    Attributes:
+        datasetname (str): A string containing anything that needs to be present in the name. Can be empty
+        jobid (int): The job ID to base this output ds name on
+        is_group_ds: (bool) True if this should be a group dataset
+        groupname (str): The group name to add to the dataset name
+
+    Returns:
+        str: The container name (minus the trailing '/') that is valid
+    """
+
+    from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
+    from Ganga.Core.exceptions import ApplicationConfigurationError
+    from Ganga.Utility.Config import getConfig
+    config = getConfig('DQ2')
+
+    jobdate = time.strftime('%Y%m%d%H%M%S')
+    usertag = config['usertag']
+
+    # Get nickname
+    username = getNickname()
+
+    # prepare Group Dataset names
+    if is_group_ds:
+        usertag = re.sub("user", "group", usertag)
+
+        if groupname:
+            username = groupname
+
+    # Automatic dataset name pattern
+    output_datasetname = '%s.%s.%s.%s' % (usertag, username, jobdate, jobid)
+
+    # Dataset name given
+    if datasetname:
+
+        # Check if it has the appropriate usertag and username
+        if datasetname.startswith('%s.%s' % (usertag, username)):
+            output_datasetname = datasetname
+        else:
+            output_datasetname = '%s.%s.%s' % (usertag, username, datasetname)
+
+    # Check for limit on container dataset length
+    if len(output_datasetname) > config['OUTPUTDATASET_NAMELENGTH']:
+        raise ApplicationConfigurationError(None, 'DQ2OutputDataset.datasetname = %s is longer than limit of %s '
+                                                  'characters ! ' % (output_datasetname,
+                                                                     config['OUTPUTDATASET_NAMELENGTH']))
+
+    return output_datasetname

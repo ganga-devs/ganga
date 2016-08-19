@@ -18,7 +18,7 @@ from Ganga.GPIDev.Lib.File import *
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+from GangaAtlas.Lib.Rucio import generate_output_datasetname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 
 from GangaPanda.Lib.Panda.Panda import setChirpVariables, uploadSources
@@ -98,7 +98,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             logger.info('Adding missing DQ2OutputDataset')
             job.outputdata = DQ2OutputDataset()
 
-        job.outputdata.datasetname = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
+        job.outputdata.datasetname = generate_output_datasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
 
         self.outDsLocation = Client.PandaSites[job.backend.site]['ddm']
 

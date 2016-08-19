@@ -147,9 +147,8 @@ class CREAM(IBackend):
 
             # generate a new dataset name if not given
             if not self.sandboxcache.dataset_name:
-                from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
-                self.sandboxcache.dataset_name = dq2outputdatasetname(
-                    "%s.input" % get_uuid(), 0, False, '')
+                from GangaAtlas.Lib.Rucio import generate_output_datasetname
+                self.sandboxcache.dataset_name = generate_output_datasetname("%s.input" % get_uuid(), 0, False, '')
 
             # subjobs inherits the dataset name from the master job
             for sj in job.subjobs:

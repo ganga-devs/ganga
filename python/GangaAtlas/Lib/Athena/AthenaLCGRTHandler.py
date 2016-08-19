@@ -25,7 +25,7 @@ from GangaAtlas.Lib.AtlasLCGRequirements import AtlasCREAMRequirements
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+from GangaAtlas.Lib.Rucio import generate_output_datasetname
 from Ganga.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
@@ -453,7 +453,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 dq2_datasetname = ''
                 dq2_isGroupDS = False
                 dq2_groupname = ''
-            self.output_datasetname = dq2outputdatasetname(dq2_datasetname, jobid, dq2_isGroupDS, dq2_groupname)
+            self.output_datasetname = generate_output_datasetname(dq2_datasetname, jobid, dq2_isGroupDS, dq2_groupname)
 
         # Check if all sites are in the same cloud
         #if job.backend.requirements.sites:

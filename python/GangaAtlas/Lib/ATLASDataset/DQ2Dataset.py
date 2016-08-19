@@ -25,88 +25,6 @@ from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se, resolve_containers
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 
-def dq2datasetstate(dataset):
-    """Helper function to determine dataset status """
-    if not dataset: return -1
-
-    try:
-        #dq2_lock.acquire()
-        try:
-            state = dq2.getState(dataset)
-        except:
-            state = -1
-    finally:
-        #dq2_lock.release()
-        pass
-
-    return state 
-
-def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
-
-    jobdate = time.strftime('%Y%m%d%H%M%S')
-    usertag = config['usertag']
-
-    # Get DN or nickname
-    from Ganga.GPIDev.Credentials import GridProxy
-    gridProxy = GridProxy()
-    username = gridProxy.identity(safe=True)
-    if config['ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET']:
-        nickname = getNickname(allowMissingNickname=True) 
-    else:
-        nickname = getNickname(allowMissingNickname=False) 
-    
-    if nickname and config['USE_NICKNAME_DQ2OUTPUTDATASET']:
-        username = nickname
-        if usertag.endswith('10'):
-            usertag = 'user'
-
-    # Remove apostrophe
-    username = re.sub("'","",username)
-
-    # prepare Group Dataset names
-    if isGroupDS==True:
-        usertag = re.sub("user", "group", usertag)
-        if not usertag.startswith('group'):
-            usertag = 'group' + time.strftime('%Y')[2:]
-        if groupname:
-            username = groupname
-    
-    # Automatic dataset name pattern
-    if config['USE_NICKNAME_DQ2OUTPUTDATASET']:
-        patName = '%s.%s.%s.%s' % (usertag, username, jobdate, jobid)
-        patLfn = '%s/%s/%s/%s/' % (usertag, username, jobdate, patName)
-    else:
-        patName = '%s.%s.ganga.%s.%s' % (usertag, username, jobid, jobdate)
-        patLfn = '%s/%s/ganga/%s/' % (usertag,username, patName)
-
-    # Datasetname exists (configured or resubmission)
-    if datasetname:
-        # new datasetname during job resubmission
-        pat = re.compile(r'^%s\.%s\.' % (usertag,username))
-        if re.findall(pat,datasetname):
-            datasetState = dq2datasetstate(datasetname)
-            # dataset exists and is open or dataset does not exist
-            if datasetState==0 or datasetState==-1:
-                output_datasetname = datasetname
-            else:
-                output_datasetname = patName                        
-                logger.warning('Output dataset already exists and is closed/frozen. Overriding to %s', patName)
-        else:
-            output_datasetname = '%s.%s.%s' % (usertag, username, datasetname)
-    else:
-        # No datasetname is given
-        output_datasetname = patName
-
-    # container limit: 131, Dataset limit: 200
-    if output_datasetname[-1:] == '/' and len(output_datasetname)>config['OUTPUTDATASET_NAMELENGTH']:
-        raise ApplicationConfigurationError(None,'DQ2OutputDataset.datasetname = %s is longer than limit of %s characters ! ' %(output_datasetname,config['OUTPUTDATASET_NAMELENGTH']))
-
-
-    if output_datasetname[-1:] != '/' and len(output_datasetname)>200:
-        raise ApplicationConfigurationError(None,'DQ2OutputDataset.datasetname = %s is longer than limit of 200 characters ! ' %(output_datasetname))
-
-    return output_datasetname
-
 def dq2_set_dataset_lifetime(datasetname, location):
 
     rc = 1
@@ -879,7 +797,7 @@ class DQ2OutputDataset(Dataset):
         if datasetname == '':
             return ''
         elif datasetname != '':
-            dq2datasetname = dq2outputdatasetname(datasetname, -999 , self.isGroupDS, self.groupname)
+            dq2datasetname = generate_output_datasetname(datasetname, -999 , self.isGroupDS, self.groupname)
             return dq2datasetname
 
     def clean_duplicates_in_dataset(self, datasetname = None, outputInfo = None):
@@ -1711,11 +1629,11 @@ logger = getLogger()
 # New for DQ2 client 2.3.0
 from Ganga.GPIDev.Credentials import GridProxy
 gridProxy = GridProxy()
-username = gridProxy.identity(safe=True)
+username_global = gridProxy.identity(safe=True)
 nickname = getNickname(allowMissingNickname=False)
 if nickname:
-    username = nickname
-os.environ['RUCIO_ACCOUNT'] = username
+    username_global = nickname
+os.environ['RUCIO_ACCOUNT'] = username_global
 logger.debug("Using RUCIO_ACCOUNT = %s " %(os.environ['RUCIO_ACCOUNT'])) 
 
 from dq2.clientapi.DQ2 import DQ2

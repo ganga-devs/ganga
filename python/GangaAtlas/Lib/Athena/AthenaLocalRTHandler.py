@@ -26,9 +26,8 @@ from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.Utility.files import expandfilename
 
-from GangaAtlas.Lib.Rucio import is_rucio_se
+from GangaAtlas.Lib.Rucio import is_rucio_se, generate_output_datasetname
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
 __directory__ = os.path.dirname(__file__)
@@ -437,7 +436,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 dq2_datasetname = ''
                 dq2_isGroupDS = False
                 dq2_groupname = ''
-            self.output_datasetname = dq2outputdatasetname(dq2_datasetname, jobid, dq2_isGroupDS, dq2_groupname)
+            self.output_datasetname = generate_output_datasetname(dq2_datasetname, jobid, dq2_isGroupDS, dq2_groupname)
 
         # Expand Athena jobOptions
         if not app.option_file:

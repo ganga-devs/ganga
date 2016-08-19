@@ -19,7 +19,7 @@ from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibFileSpecFromLibDS
 from Ganga.Core import BackendError
 
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
+from GangaAtlas.Lib.Rucio import generate_output_datasetname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from GangaPanda.Lib.Panda.Panda import setChirpVariables
@@ -309,7 +309,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             bjsites = [job.backend.site]
 
         # validate the output dataset name (and make it a container)
-        job.outputdata.datasetname = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
+        job.outputdata.datasetname = generate_output_datasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
         #if not job.outputdata.datasetname.endswith('/'):
         #    job.outputdata.datasetname+='/'
 
