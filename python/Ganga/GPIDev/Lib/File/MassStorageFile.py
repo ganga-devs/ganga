@@ -125,13 +125,14 @@ class MassStorageFile(IGangaFile):
                     d = MassStorageFile(namePattern=pattern)
                     d.compressed = mass_file.compressed
                     d.failureReason = line[line.find('ERROR') + 5:]
-                    mass_file.subfiles.append(GPIProxyObjectFactory(d))
+                    mass_file.subfiles.append(d)
                 else:
-                    d = MassStorageFile(namePattern=name)
-                    d.compressed = mass_file.compressed
-                    d.outputfilenameformat = mass_file.outputfilenameformat
-                    mass_file.subfiles.append(GPIProxyObjectFactory(d))
-                    mass_line_processor(line, d)
+                    if pattern == self.namePattern:
+                        d = MassStorageFile(namePattern=name)
+                        d.compressed = mass_file.compressed
+                        d.outputfilenameformat = mass_file.outputfilenameformat
+                        mass_file.subfiles.append(d)
+                        mass_line_processor(line, d)
             elif name == mass_file.namePattern:
                 if outputPath == 'ERROR':
                     logger.error("Failed to upload file to mass storage")
