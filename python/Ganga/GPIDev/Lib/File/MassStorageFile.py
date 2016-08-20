@@ -223,11 +223,12 @@ class MassStorageFile(IGangaFile):
             self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
             raise GangaException(mystderr)
         
-        logger.info("--looking for: %s" % pathToDirName)
+        logger.info("--looking for: '%s'" % massStoragePath)
+        logger.info("--looking in: '%s'" % pathToDirName)
 
         directoryExists = False
         for directory in mystdout.split('\n'):
-            logger.info("--found: %s" % directory.strip())
+            logger.info("--found: '%s'" % directory.strip())
             if directory.strip() == dirName:
                 directoryExists = True
                 break
