@@ -222,18 +222,24 @@ class MassStorageFile(IGangaFile):
         if exitcode != 0:
             self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
             raise GangaException(mystderr)
+        
+        logger.info("--looking for: %s" % pathToDirName)
 
         directoryExists = False
         for directory in mystdout.split('\n'):
+            logger.info("--found: %s" % directory.strip())
             if directory.strip() == dirName:
                 directoryExists = True
                 break
 
         if not directoryExists:
+            logger.info("---not-exists")
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
             if exitcode != 0:
                 self.handleUploadFailure(mystderr, '2) %s %s' % (mkdir_cmd, massStoragePath))
                 raise GangaException(mystderr)
+        else:
+            logger.info("---exits")
 
     def put(self):
         """
