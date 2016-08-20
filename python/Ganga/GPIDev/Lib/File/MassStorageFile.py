@@ -328,9 +328,11 @@ class MassStorageFile(IGangaFile):
             else:
                 filenameStructure = '{fname}'
 
-        # create the folder structure
-        if folderStructure != '':
+        logger.info("folderStructure: '%s'" % folderStructure)
+        logger.info("filenameStructure: '%s'" % filenameStructure)
 
+        # create the folder structure
+        if folderStructure:
             folderStructure = folderStructure.strip('/')
             massStoragePath = os.path.join(massStoragePath, folderStructure)
             command = '%s -p %s' % (mkdir_cmd, massStoragePath)
@@ -347,7 +349,9 @@ class MassStorageFile(IGangaFile):
 
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
+                logger.info("massStoragePath: %s" % massStoragePath)
                 finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
+                logger.info("finalFilename: %s" % finalFilename)
                 try:
                     folder_ = os.path.basename(os.path.join(massStoragePath, finalFilename))
                     self._mkdir(folder_)
@@ -364,12 +368,7 @@ class MassStorageFile(IGangaFile):
                     logger.info('%s successfully uploaded to mass storage as %s' % (currentFile, os.path.join(massStoragePath, finalFilename)))
                     d.locations = os.path.join(massStoragePath, os.path.basename(finalFilename))
 
-                    # Alex removed this as more general approach in job.py after put() is called
-                    # remove file from output dir if this object is attached to a job
-                    # if self._getParent() != None:
-                    #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
-
-                self.subfiles.append(GPIProxyObjectFactory(d))
+                self.subfiles.append(d)
         else:
             currentFile = os.path.join(sourceDir, fileName)
             finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
@@ -382,10 +381,6 @@ class MassStorageFile(IGangaFile):
                 if location not in self.locations:
                     self.locations.append(location)
 
-                # Alex removed this as more general approach in job.py after put() is called
-                # remove file from output dir if this object is attached to a job
-                # if self._getParent() != None:
-                #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
     def validate(self):
 
