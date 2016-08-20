@@ -227,8 +227,9 @@ class MassStorageFile(IGangaFile):
         logger.info("--looking in: '%s'" % pathToDirName)
 
         directoryExists = False
+        logger.info("Stdout: %s" % mystdout)
         for directory in mystdout.split('\n'):
-            logger.info("--found: '%s'" % directory.strip())
+            #logger.info("--found: '%s'" % directory.strip())
             if directory.strip() == dirName:
                 directoryExists = True
                 break

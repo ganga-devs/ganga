@@ -72,7 +72,7 @@ class TestMassStorageWN(GangaUnitTest):
         """Test the ability to submit a job with some LocalFiles"""
         from Ganga.GPI import jobs, Job, LocalFile, MassStorageFile
 
-        TestMassStorageClient.cleanUp()
+        TestMassStorageWN.cleanUp()
 
         _ext = '.txt'
 
