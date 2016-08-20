@@ -353,7 +353,7 @@ class MassStorageFile(IGangaFile):
                 finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
                 logger.info("finalFilename: %s" % finalFilename)
                 try:
-                    folder_ = os.path.basename(os.path.join(massStoragePath, finalFilename))
+                    folder_ = os.path.dirname(os.path.join(massStoragePath, finalFilename))
                     self._mkdir(folder_)
                 except GanagException:
                     return
