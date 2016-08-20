@@ -202,6 +202,39 @@ class MassStorageFile(IGangaFile):
 
         return script
 
+    def _mkdir(self, massStoragePath):
+        """
+        Creates a folder on the mass Storage corresponding to the given path
+        Args:
+            massStoragePath (str): This is the path we want to make if it doesn't exist.
+        """
+
+        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
+        mkdir_cmd = massStorageConfig['mkdir_cmd']
+        cp_cmd = massStorageConfig['cp_cmd']
+        ls_cmd = massStorageConfig['ls_cmd']
+
+        # create the last directory (if not exist) from the config path
+        pathToDirName = os.path.dirname(massStoragePath)
+        dirName = os.path.basename(massStoragePath)
+
+        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, pathToDirName))
+        if exitcode != 0:
+            self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
+            raise GangaException(mystderr)
+
+        directoryExists = False
+        for directory in mystdout.split('\n'):
+            if directory.strip() == dirName:
+                directoryExists = True
+                break
+
+        if not directoryExists:
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
+            if exitcode != 0:
+                self.handleUploadFailure(mystderr, '2) %s %s' % (mkdir_cmd, massStoragePath))
+                raise GangaException(mystderr)
+
     def put(self):
         """
         Creates and executes commands for file upload to mass storage (Castor), this method will
@@ -235,7 +268,7 @@ class MassStorageFile(IGangaFile):
             # if there are subjobs, the put method will be called on every subjob
             # and will upload the resulted output file
             if len(job.subjobs) > 0:
-                return
+                returN
 
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
@@ -244,26 +277,10 @@ class MassStorageFile(IGangaFile):
         ls_cmd = massStorageConfig['ls_cmd']
         massStoragePath = massStorageConfig['path']
 
-        # create the last directory (if not exist) from the config path
-        pathToDirName = os.path.dirname(massStoragePath)
-        dirName = os.path.basename(massStoragePath)
-
-        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, pathToDirName))
-        if exitcode != 0:
-            self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
+        try:
+            self._mkdir(massStoragePath)
+        except GanagException:
             return
-
-        directoryExists = False
-        for directory in mystdout.split('\n'):
-            if directory.strip() == dirName:
-                directoryExists = True
-                break
-
-        if not directoryExists:
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
-            if exitcode != 0:
-                self.handleUploadFailure(mystderr, '2) %s %s' % (mkdir_cmd, massStoragePath))
-                return
 
         # the folder part of self.outputfilenameformat
         folderStructure = ''
@@ -324,6 +341,11 @@ class MassStorageFile(IGangaFile):
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
                 finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
+                try:
+                    folder_ = os.path.basename(os.path.join(massStoragePath, finalFilename))
+                    self._mkdir(folder_)
+                except GanagException:
+                    return
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
 
                 d = MassStorageFile(namePattern=os.path.basename(currentFile))
