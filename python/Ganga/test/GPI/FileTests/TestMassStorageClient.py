@@ -75,6 +75,8 @@ class TestMassStorageClient(GangaUnitTest):
 
         from Ganga.Utility.Config import getConfig
 
+        TestMassStorageClient.cleanUp()
+
         assert getConfig('Output')['MassStorageFile']['backendPostprocess']['Local'] == 'client'
 
         _ext = '.root'
