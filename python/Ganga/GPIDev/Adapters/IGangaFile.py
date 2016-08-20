@@ -111,8 +111,7 @@ class IGangaFile(GangaObject):
         mystderr = ''
 
         try:
-            child = subprocess.Popen(
-                cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             (mystdout, mystderr) = child.communicate()
             exitcode = child.returncode
         finally:

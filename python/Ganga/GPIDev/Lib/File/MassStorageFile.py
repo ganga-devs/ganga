@@ -30,6 +30,19 @@ import Ganga.Utility.Config
 regex = re.compile('[*?\[\]]')
 logger = getLogger()
 
+def escapeWhiteSpace(somePath):
+    """
+    This function allows us to use whitespaces better in file paths.
+    1) Yes we should be using something out of Python standard libs but none come to mind which aren't deprecated/undocumented
+    2) Yes this can be removed by using subprocess.call, but this is invasive and requires rewriting even more of this class than is needed (and script injections!)
+    3) Escaping the whitespace to be compatible with bash is probably the sanest thing we can do for all strings which allows us to support whitespace in filenames
+    4) This does NOT perform any level of security/safety check and I'm sure a user could inject 'rm -fr' commands into their job description\
+       but other security practices should isolate their choices from other users.
+    Args:
+        somePath (str): somePath which may contain whitespaces
+    """
+    return somePath.replace(' ', '\ ')
+
 class MassStorageFile(IGangaFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
     """
@@ -193,7 +206,7 @@ class MassStorageFile(IGangaFile):
 ###INDENT###os.system(\'###CP_COMMAND###\')
 
 """
-        cp_cmd = '%s %s .' % (getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd'], self.locations[0])
+        cp_cmd = '%s %s .' % (getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd'], escapeWhiteSpace(self.locations[0]))
 
         replace_dict = { '###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd }
 
@@ -202,7 +215,7 @@ class MassStorageFile(IGangaFile):
 
         return script
 
-    def _mkdir(self, massStoragePath):
+    def _mkdir(self, massStoragePath, force_=False):
         """
         Creates a folder on the mass Storage corresponding to the given path
         Args:
@@ -219,7 +232,7 @@ class MassStorageFile(IGangaFile):
 
         directoryExists = False
 
-        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, pathToDirName))
+        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, escapeWhiteSpace(pathToDirName)))
         if exitcode != 0:
             #self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
             #raise GangaException(mystderr)
@@ -228,16 +241,16 @@ class MassStorageFile(IGangaFile):
         logger.info("--looking for: '%s'" % massStoragePath)
         logger.info("--looking in: '%s'" % pathToDirName)
 
-        logger.info("Stdout: %s" % mystdout)
+        #logger.info("Stdout: %s" % mystdout)
         for directory in mystdout.split('\n'):
             #logger.info("--found: '%s'" % directory.strip())
             if directory.strip() == dirName:
                 directoryExists = True
                 break
 
-        if not directoryExists:
+        if not directoryExists or force_:
             logger.info("---not-exists")
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s -p %s' % (mkdir_cmd, massStoragePath))
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s -p %s' % (mkdir_cmd, escapeWhiteSpace(massStoragePath)))
             if exitcode != 0:
                 self.handleUploadFailure(mystderr, '2) %s %s' % (mkdir_cmd, massStoragePath))
                 raise GangaException(mystderr)
@@ -336,7 +349,7 @@ class MassStorageFile(IGangaFile):
         if folderStructure:
             massStoragePath = os.path.join(massStoragePath, folderStructure)
             try:
-                self._mkdir(massStoragePath)
+                self._mkdir(massStoragePath, force_=True)
             except GangaException:
                 return
 
@@ -356,7 +369,8 @@ class MassStorageFile(IGangaFile):
                     self._mkdir(folder_)
                 except GanagException:
                     return
-                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
+                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
+                                                (cp_cmd, escapeWhiteSpace(currentFile), escapeWhiteSpace(os.path.join(massStoragePath, finalFilename))))
 
                 d = MassStorageFile(namePattern=os.path.basename(currentFile))
                 d.compressed = self.compressed
@@ -371,7 +385,8 @@ class MassStorageFile(IGangaFile):
         else:
             currentFile = os.path.join(sourceDir, fileName)
             finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
+                                                        (cp_cmd, escapeWhiteSpace(currentFile), escapeWhiteSpace(os.path.join(massStoragePath, finalFilename))))
             if exitcode != 0:
                 self.handleUploadFailure(mystderr, '%) %s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
             else:
@@ -531,7 +546,7 @@ class MassStorageFile(IGangaFile):
 
             if _delete_this:
                 logger.info("Deleting File at Location: %s")
-                self.execSyscmdSubprocess('%s %s' % (rm_cmd, i))
+                self.execSyscmdSubprocess('%s %s' % (rm_cmd, escapeWhiteSpace(i)))
                 self.locations.pop(i)
 
         if removeLocal:
