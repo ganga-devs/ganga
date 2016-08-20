@@ -334,12 +334,10 @@ class MassStorageFile(IGangaFile):
 
         # create the folder structure
         if folderStructure:
-            folderStructure = folderStructure.strip('/')
             massStoragePath = os.path.join(massStoragePath, folderStructure)
-            command = '%s -p %s' % (mkdir_cmd, massStoragePath)
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(command)
-            if exitcode != 0:
-                self.handleUploadFailure(mystderr, "3) " + command)
+            try:
+                self._mkdir(massStoragePath)
+            except GanagException:
                 return
 
         # here filenameStructure has replaced jid and sjid if any, and only not
