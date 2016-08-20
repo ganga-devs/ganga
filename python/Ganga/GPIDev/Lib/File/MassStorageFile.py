@@ -211,22 +211,23 @@ class MassStorageFile(IGangaFile):
 
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
         mkdir_cmd = massStorageConfig['mkdir_cmd']
-        cp_cmd = massStorageConfig['cp_cmd']
         ls_cmd = massStorageConfig['ls_cmd']
 
         # create the last directory (if not exist) from the config path
         pathToDirName = os.path.dirname(massStoragePath)
         dirName = os.path.basename(massStoragePath)
 
+        directoryExists = False
+
         (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, pathToDirName))
         if exitcode != 0:
-            self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
-            raise GangaException(mystderr)
-        
+            #self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
+            #raise GangaException(mystderr)
+            directoryExists = True
+
         logger.info("--looking for: '%s'" % massStoragePath)
         logger.info("--looking in: '%s'" % pathToDirName)
 
-        directoryExists = False
         logger.info("Stdout: %s" % mystdout)
         for directory in mystdout.split('\n'):
             #logger.info("--found: '%s'" % directory.strip())
@@ -236,7 +237,7 @@ class MassStorageFile(IGangaFile):
 
         if not directoryExists:
             logger.info("---not-exists")
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s -p %s' % (mkdir_cmd, massStoragePath))
             if exitcode != 0:
                 self.handleUploadFailure(mystderr, '2) %s %s' % (mkdir_cmd, massStoragePath))
                 raise GangaException(mystderr)
@@ -280,14 +281,13 @@ class MassStorageFile(IGangaFile):
 
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
-        mkdir_cmd = massStorageConfig['mkdir_cmd']
         cp_cmd = massStorageConfig['cp_cmd']
         ls_cmd = massStorageConfig['ls_cmd']
         massStoragePath = massStorageConfig['path']
 
         try:
             self._mkdir(massStoragePath)
-        except GanagException:
+        except GangaException:
             return
 
         # the folder part of self.outputfilenameformat
@@ -295,7 +295,7 @@ class MassStorageFile(IGangaFile):
         # the file name part of self.outputfilenameformat
         filenameStructure = ''
 
-        if self._getParent() != None:
+        if self._getParent() is not None:
             jobfqid = self.getJobObject().fqid
 
             jobid = jobfqid
@@ -337,7 +337,7 @@ class MassStorageFile(IGangaFile):
             massStoragePath = os.path.join(massStoragePath, folderStructure)
             try:
                 self._mkdir(massStoragePath)
-            except GanagException:
+            except GangaException:
                 return
 
         # here filenameStructure has replaced jid and sjid if any, and only not
