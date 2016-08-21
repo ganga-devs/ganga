@@ -41,7 +41,10 @@ def escapeWhiteSpace(somePath):
     Args:
         somePath (str): somePath which may contain whitespaces
     """
-    return somePath.replace(' ', '\ ')
+    returnable = str(somePath)
+    for i in (' ', ';', '(', ')',):
+        returnable = returnable.replace(i, "\\"+i)
+    return returnable
 
 class MassStorageFile(IGangaFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
@@ -186,8 +189,7 @@ class MassStorageFile(IGangaFile):
             if self._getParent() is not None:
                 to_location = self.getJobObject().outputdir
             else:
-                logger.error(
-                    "%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
+                logger.error("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
                 return
 
         cp_cmd = getConfig('Output')['MassStorageFile'][
@@ -238,24 +240,16 @@ class MassStorageFile(IGangaFile):
             #raise GangaException(mystderr)
             directoryExists = True
 
-        logger.info("--looking for: '%s'" % massStoragePath)
-        logger.info("--looking in: '%s'" % pathToDirName)
-
-        #logger.info("Stdout: %s" % mystdout)
         for directory in mystdout.split('\n'):
-            #logger.info("--found: '%s'" % directory.strip())
             if directory.strip() == dirName:
                 directoryExists = True
                 break
 
         if not directoryExists or force_:
-            logger.info("---not-exists")
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s -p %s' % (mkdir_cmd, escapeWhiteSpace(massStoragePath)))
             if exitcode != 0:
                 self.handleUploadFailure(mystderr, '2) %s %s' % (mkdir_cmd, massStoragePath))
                 raise GangaException(mystderr)
-        else:
-            logger.info("---exits")
 
     def put(self):
         """
@@ -290,7 +284,7 @@ class MassStorageFile(IGangaFile):
             # if there are subjobs, the put method will be called on every subjob
             # and will upload the resulted output file
             if len(job.subjobs) > 0:
-                returN
+                return
 
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
@@ -342,9 +336,6 @@ class MassStorageFile(IGangaFile):
             else:
                 filenameStructure = '{fname}'
 
-        logger.info("folderStructure: '%s'" % folderStructure)
-        logger.info("filenameStructure: '%s'" % filenameStructure)
-
         # create the folder structure
         if folderStructure:
             massStoragePath = os.path.join(massStoragePath, folderStructure)
@@ -361,9 +352,7 @@ class MassStorageFile(IGangaFile):
 
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-                logger.info("massStoragePath: %s" % massStoragePath)
                 finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
-                logger.info("finalFilename: %s" % finalFilename)
                 try:
                     folder_ = os.path.dirname(os.path.join(massStoragePath, finalFilename))
                     self._mkdir(folder_)

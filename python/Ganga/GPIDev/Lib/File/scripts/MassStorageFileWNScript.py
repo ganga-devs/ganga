@@ -16,7 +16,10 @@ def execSyscmdSubprocessAndReturnOutputMAS(cmd):
     return (exitcode, mystdout, mystderr)
 
 def escapeWhiteSpace(somePath):
-    return str(somePath).replace(' ', '\ ')
+    returnable = str(somePath)
+    for i in (' ', ';', '(', ')',):
+        returnable = returnable.replace(i, "\\"+i)
+    return returnable
 
 for massStorageList in ###MASSSTORAGECOMMANDS###:
 
