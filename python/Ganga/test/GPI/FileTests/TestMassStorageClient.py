@@ -1,28 +1,11 @@
 from __future__ import absolute_import
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.functions import generateUniqueTempFile
 
-import tempfile
 import datetime
 import time
-import random
 import os
 import shutil
-import copy
-import string
-
-def generateUniqueTempFile( ext = '.txt' ):
-    """ Generate a unique file with a given filename with some random contents and return the name of the file on disk
-    Args:
-        ext (str): This is the extension (including '.') to give to the file of interest
-    """
-
-    with tempfile.NamedTemporaryFile(mode='w',suffix=ext,delete=False) as myFile:
-
-        myFile.write( ''.join(random.choice(string.ascii_uppercase+string.digits) for _ in range(20)) )
-
-        TestMassStorageClient._managed_files.append(myFile.name)
-
-        return myFile.name
 
 class TestMassStorageClient(GangaUnitTest):
     """test for sjid in filename names explain each test"""
@@ -49,7 +32,7 @@ class TestMassStorageClient(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', 'MassStorageFile', copy.deepcopy(TestMassStorageClient.MassStorageTestConfig)),
+                    ('Output', 'MassStorageFile', TestMassStorageClient.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageClient, self).setUp(extra_opts=extra_opts)
 
@@ -82,7 +65,9 @@ class TestMassStorageClient(GangaUnitTest):
         _ext = '.root'
         file_1 = generateUniqueTempFile(_ext)
         file_2 = generateUniqueTempFile(_ext)
-        
+        TestMassStorageClient._managed_files.append(file_1)
+        TestMassStorageClient._managed_files.append(file_2)
+
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
         j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageClient.sj_len) ])

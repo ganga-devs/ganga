@@ -1,28 +1,11 @@
 from __future__ import absolute_import
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.functions import generateUniqueTempFile
 
-import tempfile
 import datetime
 import time
-import random
 import os
 import shutil
-import copy
-import string
-
-def generateUniqueTempFile( ext = '.txt' ):
-    """ Generate a unique file with a given filename with some random contents and return the name of the file on disk
-    Args:
-        ext (str): This is the extension (including '.') to give to the file of interest
-    """
-
-    with tempfile.NamedTemporaryFile(mode='w',suffix=ext,delete=False) as myFile:
-
-        myFile.write( ''.join(random.choice(string.ascii_uppercase+string.digits) for _ in range(20)) )
-
-        TestMassStorageWN._managed_files.append(myFile.name)
-
-        return myFile.name
 
 class TestMassStorageWN(GangaUnitTest):
     """test for sjid in filename names explain each test"""
@@ -77,6 +60,7 @@ class TestMassStorageWN(GangaUnitTest):
         _ext = '.txt'
 
         file_1 = generateUniqueTempFile(_ext)
+        TestMassStorageWN._managed_files.append(file_1)
 
         j = Job()
         j.inputfiles = [LocalFile(file_1)]
@@ -123,6 +107,7 @@ class TestMassStorageWN(GangaUnitTest):
         _ext = '.txt2'
 
         file_1 = generateUniqueTempFile(_ext)
+        TestMassStorageWN._managed_files.append(file_1)
 
         j = Job()
         j.inputfiles = [LocalFile(file_1)]
@@ -167,7 +152,10 @@ class TestMassStorageWN(GangaUnitTest):
         file_1 = generateUniqueTempFile(_ext)
         file_2 = generateUniqueTempFile(_ext)
         file_3 = generateUniqueTempFile(_ext2)
-        
+        TestMassStorageWN._managed_files.append(file_1)
+        TestMassStorageWN._managed_files.append(file_2)
+        TestMassStorageWN._managed_files.append(file_3)
+
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2), LocalFile(file_3)]
         j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageWN.sj_len) ])
@@ -213,6 +201,8 @@ class TestMassStorageWN(GangaUnitTest):
         _ext = '.root'
         file_1 = generateUniqueTempFile(_ext)
         file_2 = generateUniqueTempFile(_ext)
+        TestMassStorageWN._managed_files.append(file_1)
+        TestMassStorageWN._managed_files.append(file_2)
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
