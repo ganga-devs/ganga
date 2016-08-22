@@ -410,15 +410,21 @@ class MassStorageFile(IGangaFile):
 
         return (True, '')
 
-    def handleUploadFailure(self, error, cmd=''):
+    def handleUploadFailure(self, error, cmd_run_str=''):
+        """
+        Function to display what went wrong with an associated Job id if there is one and to assign failureReason for future.
+        Args:
+            error (str): This is the error which was given from the shell command
+            cmd_run_str (str): This is a string related to but not always exactly the command run.
+        """
 
         self.failureReason = error
         if self._getParent() != None:
             logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._getParent().fqid), self.failureReason))
         else:
             logger.error("The file can't be uploaded because of %s" % (self.failureReason))
-        if cmd:
-            logger.error("Attempted to run: '%s'" % (cmd))
+        if cmd_run_str:
+            logger.error("Attempted to run: '%s'" % (cmd_run_str))
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
