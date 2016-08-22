@@ -542,8 +542,16 @@ class Condor(IBackend):
                         if exitCode.isdigit():
                             jobStatus = "completed"
                         else:
-                            logger.error("Problem extracting exit code from job %s. Line found was '%s'." % (
-                                jobDict[id].fqid, exitLine))
+                            # Some filesystems/setups have the file created but empty - only worry if it's been 10mins
+                            if len(lineList) == 0:
+                                if (time.time() - os.path.getmtime(stdoutPath)) < 10*60:
+                                    continue
+                                else:
+                                    logger.error("Empty stdout file from job %s after waiting 10mins. Marking job as"
+                                                 "failed." % jobDict[id].fqid)
+                            else:
+                                logger.error("Problem extracting exit code from job %s. Line found was '%s'." % (
+                                    jobDict[id].fqid, exitLine))
 
                     jobDict[id].updateStatus(jobStatus)
 
