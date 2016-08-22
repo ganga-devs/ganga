@@ -346,11 +346,6 @@ class MassStorageFile(IGangaFile):
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
                 finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
-                try:
-                    folder_ = os.path.dirname(os.path.join(massStoragePath, finalFilename))
-                    self._mkdir(folder_)
-                except GanagException:
-                    return
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
                                                 (cp_cmd, escapeWhiteSpace(currentFile), escapeWhiteSpace(os.path.join(massStoragePath, finalFilename))))
 
