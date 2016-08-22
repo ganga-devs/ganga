@@ -130,13 +130,13 @@ class MassStorageFile(IGangaFile):
                 if outputPath == 'ERROR':
                     logger.error("Failed to upload file to mass storage")
                     logger.error(line[line.find('ERROR') + 5:])
-                    d = self.__class__.__init__(namePattern=pattern)
+                    d = self.__class__(namePattern=pattern)
                     d.compressed = mass_file.compressed
                     d.failureReason = line[line.find('ERROR') + 5:]
                     mass_file.subfiles.append(d)
                 else:
                     if pattern == self.namePattern:
-                        d = self.__class__.__init__(namePattern=name)
+                        d = self.__class__(namePattern=name)
                         d.compressed = mass_file.compressed
                         d.outputfilenameformat = mass_file.outputfilenameformat
                         mass_file.subfiles.append(d)
@@ -353,7 +353,7 @@ class MassStorageFile(IGangaFile):
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
                                                 (cp_cmd, escapeWhiteSpace(currentFile), escapeWhiteSpace(os.path.join(massStoragePath, finalFilename))))
 
-                d = self.__class__.__init__(namePattern=os.path.basename(currentFile))
+                d = self.__class__(namePattern=os.path.basename(currentFile))
                 d.compressed = self.compressed
 
                 if exitcode != 0:
@@ -490,7 +490,7 @@ class MassStorageFile(IGangaFile):
 
             for filename in output.split('\n'):
                 if fnmatch(filename, self.namePattern):
-                    subfile = self.__class__.__init__(namePattern=filename)
+                    subfile = self.__class__(namePattern=filename)
                     subfile.inputremotedirectory = self.inputremotedirectory
 
                     self.subfiles.append(GPIProxyObjectFactory(subfile))
