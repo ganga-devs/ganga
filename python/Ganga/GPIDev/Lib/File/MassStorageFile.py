@@ -365,7 +365,7 @@ class MassStorageFile(IGangaFile):
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
                                                         (cp_cmd, escapeWhiteSpace(currentFile), escapeWhiteSpace(os.path.join(massStoragePath, finalFilename))))
             if exitcode != 0:
-                self.handleUploadFailure(mystderr, '%) %s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
+                self.handleUploadFailure(mystderr, '5) %s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
             else:
                 logger.info('%s successfully uploaded to mass storage as %s' % (currentFile, os.path.join(massStoragePath, finalFilename)))
                 location = os.path.join(massStoragePath, os.path.basename(finalFilename))
