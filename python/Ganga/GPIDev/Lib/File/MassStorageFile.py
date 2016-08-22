@@ -210,7 +210,7 @@ class MassStorageFile(IGangaFile):
 
         return script
 
-    def _mkdir(self, massStoragePath, force_=False):
+    def _mkdir(self, massStoragePath):
         """
         Creates a folder on the mass Storage corresponding to the given path
         Args:
@@ -231,14 +231,14 @@ class MassStorageFile(IGangaFile):
         if exitcode != 0:
             #self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
             #raise GangaException(mystderr)
-            directoryExists = True
+            directoryExists = False
 
         for directory in mystdout.split('\n'):
             if directory.strip() == dirName:
                 directoryExists = True
                 break
 
-        if not directoryExists or force_:
+        if not directoryExists:
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s -p %s' % (mkdir_cmd, escapeWhiteSpace(massStoragePath)))
             if exitcode != 0:
                 self.handleUploadFailure(mystderr, '2) %s %s' % (mkdir_cmd, massStoragePath))
@@ -333,7 +333,7 @@ class MassStorageFile(IGangaFile):
         if folderStructure:
             massStoragePath = os.path.join(massStoragePath, folderStructure)
             try:
-                self._mkdir(massStoragePath, force_=True)
+                self._mkdir(massStoragePath)
             except GangaException:
                 return
 
