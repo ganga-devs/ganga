@@ -220,11 +220,9 @@ class MassStorageFile(IGangaFile):
         directoryExists = False
 
         (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, quote(pathToDirName)))
-        if exitcode != 0:
-            if exitIfNotExist:
-                self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
-                raise GangaException(mystderr)
-            directoryExists = False
+        if exitcode != 0 and exitIfNotExist:
+            self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
+            raise GangaException(mystderr)
 
         for directory in mystdout.split('\n'):
             if directory.strip() == dirName:
