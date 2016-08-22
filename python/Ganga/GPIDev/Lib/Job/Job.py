@@ -412,7 +412,7 @@ class Job(GangaObject):
         if name == 'outputfiles':
 
             currentOutputFiles = object.__getattribute__(self, name)
-            currenUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
+            currentUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
 
             regex = re.compile('[*?\[\]]')
             files = GangaList()
@@ -424,7 +424,7 @@ class Job(GangaObject):
                 else:
                     files.append(f)
 
-            for f in currenUnCopyableOutputFiles:
+            for f in currentUnCopyableOutputFiles:
                 if regex.search(f.namePattern) is not None and hasattr(f, 'subfiles') and f.subfiles:
                     files2.extend(makeGangaListByRef(f.subfiles))
                 else:
