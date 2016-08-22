@@ -13,6 +13,6 @@ def generate_unique_temp_file(ext = '.txt'):
 
         this_file.write(''.join(random.choice(string.ascii_uppercase+string.digits) for _ in range(20)))
 
-    return myFile.name
+        return this_file.name
 
 
