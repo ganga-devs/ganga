@@ -1,3 +1,4 @@
+from pipes import quote
 import subprocess
 #system command executor with subprocess
 def execSyscmdSubprocessAndReturnOutputMAS(cmd):
@@ -14,8 +15,6 @@ def execSyscmdSubprocessAndReturnOutputMAS(cmd):
         pass
 
     return (exitcode, mystdout, mystderr)
-
-from pipes import quote
 
 for massStorageList in ###MASSSTORAGECOMMANDS###:
 

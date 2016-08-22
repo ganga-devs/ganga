@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.functions import generateUniqueTempFile
+from Ganga.testlib.file_utils import generate_unique_temp_file
 
 import datetime
 import time
@@ -59,7 +59,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         _ext = '.txt'
 
-        file_1 = generateUniqueTempFile(_ext)
+        file_1 = generate_unique_temp_file(_ext)
         TestMassStorageWN._managed_files.append(file_1)
 
         j = Job()
@@ -106,7 +106,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         _ext = '.txt2'
 
-        file_1 = generateUniqueTempFile(_ext)
+        file_1 = generate_unique_temp_file(_ext)
         TestMassStorageWN._managed_files.append(file_1)
 
         j = Job()
@@ -149,9 +149,9 @@ class TestMassStorageWN(GangaUnitTest):
 
         _ext = '.root'
         _ext2 = '.txt'
-        file_1 = generateUniqueTempFile(_ext)
-        file_2 = generateUniqueTempFile(_ext)
-        file_3 = generateUniqueTempFile(_ext2)
+        file_1 = generate_unique_temp_file(_ext)
+        file_2 = generate_unique_temp_file(_ext)
+        file_3 = generate_unique_temp_file(_ext2)
         TestMassStorageWN._managed_files.append(file_1)
         TestMassStorageWN._managed_files.append(file_2)
         TestMassStorageWN._managed_files.append(file_3)
@@ -199,8 +199,8 @@ class TestMassStorageWN(GangaUnitTest):
         from Ganga.GPI import LocalFile, MassStorageFile, Job, ArgSplitter
 
         _ext = '.root'
-        file_1 = generateUniqueTempFile(_ext)
-        file_2 = generateUniqueTempFile(_ext)
+        file_1 = generate_unique_temp_file(_ext)
+        file_2 = generate_unique_temp_file(_ext)
         TestMassStorageWN._managed_files.append(file_1)
         TestMassStorageWN._managed_files.append(file_2)
 

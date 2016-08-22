@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.functions import generateUniqueTempFile
+from Ganga.testlib.file_utils import generate_unique_temp_file
 
 import datetime
 import time
@@ -63,8 +63,8 @@ class TestMassStorageClient(GangaUnitTest):
         assert getConfig('Output')['MassStorageFile']['backendPostprocess']['Local'] == 'client'
 
         _ext = '.root'
-        file_1 = generateUniqueTempFile(_ext)
-        file_2 = generateUniqueTempFile(_ext)
+        file_1 = generate_unique_temp_file(_ext)
+        file_2 = generate_unique_temp_file(_ext)
         TestMassStorageClient._managed_files.append(file_1)
         TestMassStorageClient._managed_files.append(file_2)
 
