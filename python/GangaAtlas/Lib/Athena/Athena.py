@@ -932,9 +932,6 @@ class Athena(IPrepareApp):
         if self.atlas_cmtconfig == "":
             if 'CMTCONFIG' in os.environ:
                 self.atlas_cmtconfig = os.environ['CMTCONFIG']
-                if self.atlas_cmtconfig.startswith('x86_64'):
-                    #raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
-                    logger.warning('CMTCONFIG = %s, Your CMT setup is using 64 bit - are you sure you want to use 64 bit ?'% self.atlas_cmtconfig)
             else:
                 self.atlas_cmtconfig = config['CMTCONFIG']
                 os.environ['CMTCONFIG'] = self.atlas_cmtconfig 
