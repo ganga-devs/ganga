@@ -15,11 +15,10 @@ def execSyscmdSubprocessAndReturnOutputMAS(cmd):
 
     return (exitcode, mystdout, mystderr)
 
+from pipes import quote
+
 def escapeWhiteSpace(somePath):
-    returnable = str(somePath)
-    for i in (' ', ';', '(', ')',):
-        returnable = returnable.replace(i, "\\"+i)
-    return returnable
+    return quote(somePath)
 
 for massStorageList in ###MASSSTORAGECOMMANDS###:
 

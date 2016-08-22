@@ -13,6 +13,7 @@ import glob
 import inspect
 import time
 from fnmatch import fnmatch
+from pipes import quote
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
@@ -32,19 +33,11 @@ logger = getLogger()
 
 def escapeWhiteSpace(somePath):
     """
-    This function allows us to use whitespaces better in file paths.
-    1) Yes we should be using something out of Python standard libs but none come to mind which aren't deprecated/undocumented
-    2) Yes this can be removed by using subprocess.call, but this is invasive and requires rewriting even more of this class than is needed (and script injections!)
-    3) Escaping the whitespace to be compatible with bash is probably the sanest thing we can do for all strings which allows us to support whitespace in filenames
-    4) This does NOT perform any level of security/safety check and I'm sure a user could inject 'rm -fr' commands into their job description\
-       but other security practices should isolate their choices from other users.
+    This makes the aruments safe to pass to the command line
     Args:
-        somePath (str): somePath which may contain whitespaces
+        somePath (str): somePath which may contain whitespaces or special chars
     """
-    returnable = str(somePath)
-    for i in (' ', ';', '(', ')',):
-        returnable = returnable.replace(i, "\\"+i)
-    return returnable
+    return quote(somePath)
 
 class MassStorageFile(IGangaFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
