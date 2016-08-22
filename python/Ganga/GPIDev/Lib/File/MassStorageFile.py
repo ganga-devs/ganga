@@ -597,9 +597,6 @@ class SharedFile(MassStorageFile):
         _category = 'gangafiles'
         _name = 'SharedFile'
 
-#        def __init__(self, *args, **kwds):
-#            super(SharedFile, self).__init__(*args, **kwds)
-
 # add SharedFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate SharedFile() objects via config file)
 Ganga.Utility.Config.config_scope['SharedFile'] = SharedFile
