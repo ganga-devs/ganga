@@ -727,11 +727,13 @@ output_config.addOption('MassStorageFile',
                         'defaultProtocol': defaultMassStorageProto},
                        massStorageFileExt)
 
+sharedFileBackendPost = {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client', 'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}
+
 output_config.addOption('SharedFile',
                        {'fileExtensions': [''],
-                        'backendPostprocess': massStorageBackendPost,
-                        'uploadOptions': 'path': '/path/to/sharedStorage', 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
-                        'defaultProtocol': defaultMassStorageProto},
+                        'backendPostprocess': sharedFileBackendPost,
+                        'uploadOptions': {'path': '/tmp/sharedStorage', 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir -p'},
+                        'defaultProtocol': 'file://'},
                         docstr_Ext % ('Shared Storage', 'SharedFS'))
 
 # ------------------------------------------------
