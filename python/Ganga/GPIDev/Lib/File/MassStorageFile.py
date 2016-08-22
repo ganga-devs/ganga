@@ -612,8 +612,6 @@ class SharedFile(MassStorageFile):
         _category = 'gangafiles'
         _name = 'SharedFile'
 
-        config = Ganga.Utility.Config.getConfig('SharedFile')
-
 #        def __init__(self, *args, **kwds):
 #            super(SharedFile, self).__init__(*args, **kwds)
 
