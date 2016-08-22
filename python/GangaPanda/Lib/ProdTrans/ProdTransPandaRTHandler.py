@@ -4,7 +4,7 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.Core import BackendError
 
-from GangaAtlas.Lib.Rucio import dataset_exists
+from GangaAtlas.Lib.Rucio import dataset_exists, set_dataset_lifetime
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -64,7 +64,6 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         from pandatools import AthenaUtils
         from taskbuffer.JobSpec import JobSpec
         from taskbuffer.FileSpec import FileSpec
-        from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
         from GangaPanda.Lib.Panda.Panda import refreshPandaSpecs
         
         # make sure we have the correct siteType
@@ -93,7 +92,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             if not configPanda['specialHandling']=='ddm:rucio' and not  configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
                 Client.addDataset(job.outputdata.datasetname,False,location=outDsLocation,allowProdDisk=True,dsExist=tmpDsExist)
             logger.info('Output dataset %s registered at %s'%(job.outputdata.datasetname,outDsLocation))
-            dq2_set_dataset_lifetime(job.outputdata.datasetname, outDsLocation)
+            set_dataset_lifetime(job.outputdata.datasetname, outDsLocation)
         except exceptions.SystemExit:
             raise BackendError('Panda','Exception in adding dataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
         

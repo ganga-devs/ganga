@@ -247,3 +247,25 @@ def generate_output_datasetname(datasetname, jobid, is_group_ds, groupname):
                                                                      config['OUTPUTDATASET_NAMELENGTH']))
 
     return output_datasetname
+
+
+def set_dataset_lifetime(dsname, location):
+    """Set the dataset lifetime to whatever is in the config
+
+    Attributes:
+        dsname (str): The dataset to set the lifetime on
+    """
+
+    scope_dsname = get_scope_and_dsname(dsname)
+
+    with get_rucio_client._client_lock:
+
+        # Loop over rules to find the correct location
+        for rule in get_rucio_client().client.list_did_rules(scope_dsname[0], scope_dsname[1]):
+            if rule['rse_expression'] == location:
+
+                # set the lifetime
+                from Ganga.Utility.Config import getConfig
+                config = getConfig('DQ2')
+                get_rucio_client().client.update_replication_rule(
+                    rule['id'], {'lifetime': config['OUTPUTDATASET_LIFETIME'].replace('_', ' ')})

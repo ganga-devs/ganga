@@ -20,10 +20,9 @@ from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibF
 from Ganga.Core import BackendError
 
 from GangaAtlas.Lib.Rucio import generate_output_datasetname
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from GangaPanda.Lib.Panda.Panda import setChirpVariables
-from GangaAtlas.Lib.Rucio import dataset_exists
+from GangaAtlas.Lib.Rucio import dataset_exists, set_dataset_lifetime
 
 def createContainer(name):
     from pandatools import Client
@@ -345,7 +344,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
                     Client.addDataset(tmpDSName,False,location=self.outDsLocation,dsExist=tmpDsExist)
                     logger.info('Output dataset %s registered at %s'%(tmpDSName,self.outDsLocation))
-                dq2_set_dataset_lifetime(tmpDSName, self.outDsLocation)
+                set_dataset_lifetime(tmpDSName, self.outDsLocation)
                 self.indivOutDsList.append(tmpDSName)
                 # add the DS to the container
                 addDatasetsToContainer(job.outputdata.datasetname,[tmpDSName])
@@ -371,7 +370,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                         if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
                             Client.addDataset(self.libDatasets[site],False,location=self.outDsLocation)
                             logger.info('Lib dataset %s registered at %s'%(self.libDatasets[site],self.outDsLocation))
-                        dq2_set_dataset_lifetime(self.libDatasets[site], self.outDsLocation)
+                        set_dataset_lifetime(self.libDatasets[site], self.outDsLocation)
                     except exceptions.SystemExit:
                         raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDatasets[site],sys.exc_info()[0],sys.exc_info()[1]))
 
@@ -799,7 +798,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                             logger.info('Creating dataset %s and adding to %s'%(f.destinationDBlock,f.dataset))
                             if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
                                 Client.addDataset(f.destinationDBlock,False,location=subjobOutputLocation)
-                            dq2_set_dataset_lifetime(f.destinationDBlock, subjobOutputLocation)
+                            set_dataset_lifetime(f.destinationDBlock, subjobOutputLocation)
                             self.indivOutDsList.append(f.destinationDBlock)
                             addDatasetsToContainer(f.dataset,[f.destinationDBlock])
                         except exceptions.SystemExit:

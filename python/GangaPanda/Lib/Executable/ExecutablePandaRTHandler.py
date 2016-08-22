@@ -18,8 +18,7 @@ from Ganga.GPIDev.Lib.File import *
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
-from GangaAtlas.Lib.Rucio import generate_output_datasetname
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
+from GangaAtlas.Lib.Rucio import generate_output_datasetname, set_dataset_lifetime
 
 from GangaPanda.Lib.Panda.Panda import setChirpVariables, uploadSources
 
@@ -105,7 +104,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         try:
             Client.addDataset(job.outputdata.datasetname,False,location=self.outDsLocation)
             logger.info('Output dataset %s registered at %s'%(job.outputdata.datasetname,self.outDsLocation))
-            dq2_set_dataset_lifetime(job.outputdata.datasetname, location=self.outDsLocation)
+            set_dataset_lifetime(job.outputdata.datasetname, location=self.outDsLocation)
         except exceptions.SystemExit:
             raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
 
@@ -119,7 +118,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             self.library = '%s.tgz' % self.libDataset
             try:
                 Client.addDataset(self.libDataset,False,location=self.outDsLocation)
-                dq2_set_dataset_lifetime(self.libDataset, location=self.outDsLocation)
+                set_dataset_lifetime(self.libDataset, location=self.outDsLocation)
                 logger.info('Lib dataset %s registered at %s'%(self.libDataset,self.outDsLocation))
             except exceptions.SystemExit:
                 raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDataset,sys.exc_info()[0],sys.exc_info()[1]))

@@ -20,7 +20,6 @@ from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibF
 from Ganga.Core import BackendError
 
 from GangaAtlas.Lib.Rucio import generate_output_datasetname
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 

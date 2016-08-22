@@ -25,26 +25,6 @@ from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se, resolve_containers,
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 
-def dq2_set_dataset_lifetime(datasetname, location):
-
-    rc = 1
-    if config['OUTPUTDATASET_LIFETIME']:
-        mylifetime = config['OUTPUTDATASET_LIFETIME']
-        mylifetime = mylifetime.replace('_',' ')
-        try:
-            #dq2_lock.acquire() 
-            try:
-                rc = dq2.setReplicaMetaDataAttribute(datasetname, location, 'lifetime', mylifetime)
-            except:
-                rc = 0
-        finally:
-            #dq2_lock.release()
-            pass
-    else:
-        pass
-
-    return rc
-
 class DQ2Dataset(Dataset):
     '''ATLAS DDM Dataset'''
 
@@ -1342,7 +1322,7 @@ class DQ2OutputDataset(Dataset):
                 self.output.append(pfn)
 
         # Set Replica lifteime
-        dq2_set_dataset_lifetime(self.datasetname, self.location)
+        set_dataset_lifetime(self.datasetname, self.location)
 
         # Master job finish
         if not job.master and job.subjobs:
