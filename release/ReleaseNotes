@@ -2,6 +2,11 @@
 @VERSION@
 
 --------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fix to Condor backend. It now waits for the stdout to be populated. #741
+
+--------------------------------------------------------------------------------------------------------------
 ganga/python/GPIDev
 --------------------------------------------------------------------------------------------------------------
 * Fix to MassStorageFile. The local area is now successfully cleaned up after files have been copied
@@ -18,7 +23,6 @@ ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaATLAS
 --------------------------------------------------------------------------------------------------------------
-* Fix to Condor backend. It now waits for the stdout to be populated. #741
 * Added command_line option to Athena to pass command line options to the job #746
 * Remove 64-bit config warning
 * Fix for submission to Lxbatch 
