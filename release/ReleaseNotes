@@ -8,6 +8,7 @@ ganga/python/GPIDev
 to the mass storage area. Much improvement to the code.#733
 * Fix bug to stop duplication of files when using multiple wildcards.
 * Improved whitespace, special character support for filenames and paths.
+* Fix to bring back job templates #731
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLHCb
