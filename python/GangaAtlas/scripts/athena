@@ -398,7 +398,7 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
                         if opt.nth_field_as_outdir:
 
                             # grab the field numbers
-                            field_nums = [ int(f.strip()) for f in opt.nth_field_as_outdir.split(',') ]
+                            field_nums = [int(f.strip()) for f in opt.nth_field_as_outdir.split(',')]
                             toks = pfn_list.split('.')
                             new_pfn_toks = []
                             for f in field_nums:
