@@ -130,6 +130,10 @@ class Condor(IBackend):
         }
 
     def __init__(self):
+
+        # Add a volatile variable for recording the first time a job's stdout is checked
+        self._stdout_check_time = 0
+
         super(Condor, self).__init__()
 
     def submit(self, jobconfig, master_input_sandbox):
@@ -543,8 +547,12 @@ class Condor(IBackend):
                             jobStatus = "completed"
                         else:
                             # Some filesystems/setups have the file created but empty - only worry if it's been 10mins
+                            # since we first checked the file
                             if len(lineList) == 0:
-                                if (time.time() - os.path.getmtime(stdoutPath)) < 10*60:
+                                if not jobDict[id].backend._stdout_check_time:
+                                    jobDict[id].backend._stdout_check_time = time.time()
+
+                                if (time.time() - jobDict[id].backend._stdout_check_time) < 10*60:
                                     continue
                                 else:
                                     logger.error("Empty stdout file from job %s after waiting 10mins. Marking job as"
