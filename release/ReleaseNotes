@@ -6,6 +6,8 @@ ganga/python/GPIDev
 --------------------------------------------------------------------------------------------------------------
 * Fix to MassStorageFile. The local area is now successfully cleaned up after files have been copied
 to the mass storage area. Much improvement to the code.#733
+* Fix bug to stop duplication of files when using multiple wildcards.
+* Improved whitespace, special character support for filenames and paths.
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLHCb
