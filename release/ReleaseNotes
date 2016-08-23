@@ -3,8 +3,29 @@
 
 
 --------------------------------------------------------------------------------------------------------------
-ganga/python/Ganga
+ganga/python/GPIDev
 --------------------------------------------------------------------------------------------------------------
-* ...
+* Fix to MassStorageFile. The local area is now successfully cleaned up after files have been copied
+  to the mass storage area. Much improvement to the code.
+
+  --------------------------------------------------------------------------------------------------------------
+ganga/python/test
+--------------------------------------------------------------------------------------------------------------
+* Added better testing for MassStorageFile.
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Removing LHCbApp references in the Gauss splitter. This stops the pickled options being overridden.
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaATLAS
+--------------------------------------------------------------------------------------------------------------
+* Fix to Condor backend. It now waits for the stdout to be populated.
+* Added command_line option to Athena to pass command line options to the job
+* Remove 64-bit config warning
+* Fix for submission to Lxbatch
+* Cleanup of unused TAG code
+* Add --NthFieldAsOutDir option to Athena command line
 
 **************************************************************************************************************
