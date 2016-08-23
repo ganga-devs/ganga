@@ -96,7 +96,6 @@ p.add_option('--usefax', action='store_true', dest='usefax', help='Allow submiss
 p.add_option('--lcg', action='store_const', const='lcg', dest='backend', help='Submit job(s) to LCG Grid')
 p.add_option('--cream', action='store_const', const='cream', dest='backend', help='Submit job(s) to a CREAM CE')
 p.add_option('--ng', action='store_const', const='ng', dest='backend', help='Submit job(s) to NorduGrid')
-p.add_option('--panda', action='store_const', const='panda', dest='backend', help='Submit job(s) to Panda')
 p.add_option('--jedi', action='store_const', const='jedi', dest='backend', help='Submit job(s) to jedi')
 p.add_option('--lsf', action='store_const', const='lsf', dest='backend', help='Submit job(s) to the local LSF batch system, e.g. on lxplus')
 p.add_option('--condor', action='store_const', const='condor', dest='backend', help='Submit job(s) to the local Condor batch system')
@@ -185,7 +184,7 @@ opt, args = p.parse_args()
 
 # make panda the default backend
 if not opt.backend:
-    opt.backend = "panda"
+    opt.backend = "jedi"
 
 # Job query
 if opt.jobid:
@@ -215,9 +214,9 @@ if opt.jobid:
 
 if args:
     option_files=[]
-    if args:  
+    if args:
         for option_file in args:
-            if not opt.athena_exe in ['EXE', 'TRF']:        
+            if not opt.athena_exe in ['EXE', 'TRF'] and opt.backend == "jedi":
                 if not os.access(option_file,os.R_OK):
                     print >>sys.stderr, 'ERROR: Cannot read athena job option file: %s' % option_file
                     sys.exit(4)
@@ -281,14 +280,27 @@ if opt.user_area_path:
 if opt.group_area:
     j.application.group_area=opt.group_area
 
-j.application.option_file = option_files
-if opt.options:
-    if opt.athena_exe in ['EXE', 'TRF', 'PYARA']:
-        j.application.options = " %s " %opt.options
-    else:
-        aoptions = opt.options.replace('"',"'''")        
-    	aoptions = opt.options.replace('\'',"'''")
-        j.application.options = "-c '''%s''' " %aoptions
+# TODO: Check if this works with Jedi as well
+if opt.backend != "jedi":
+    # Just pass the command line straight through to Athena
+    # options make this a bit more tricky...
+    j.application.command_line = ' '.join(args)
+    if opt.options:
+        if opt.athena_exe in ['EXE', 'TRF', 'PYARA']:
+            j.application.command_line += " " + opt.options
+        else:
+            aoptions = opt.options.replace('"',"'''")
+            aoptions = opt.options.replace('\'',"'''")
+            j.application.command_line = " -c '''%s''' %s " % (aoptions, j.application.command_line)
+else:
+    j.application.option_file = option_files
+    if opt.options:
+        if opt.athena_exe in ['EXE', 'TRF', 'PYARA']:
+            j.application.options = " %s " %opt.options
+        else:
+            aoptions = opt.options.replace('"',"'''")
+            aoptions = opt.options.replace('\'',"'''")
+            j.application.options = "-c '''%s''' " %aoptions
 
 if opt.user_setupfile:
     j.application.user_setupfile = opt.user_setupfile

@@ -358,6 +358,7 @@ class Athena(IPrepareApp):
                  'run_event_file'         : SimpleItem(defvalue='', doc='Name of the file containing run/event list for Panda backend'),
                  'option_file'            : FileItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="list of job options files" ),
                  'options'                : SimpleItem(defvalue='',doc='Additional Athena options'),
+                 'command_line'           : SimpleItem(defvalue='',doc='Command line to run in the given atlas_run_dir after Athena setup'),
                  'user_setupfile'         : FileItem(preparable=1, doc='User setup script for special setup'),
                  'exclude_from_user_area' : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Pattern of files to exclude from user area'),
                  'append_to_user_area'    : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Extra files to include in the user area'),
@@ -1041,28 +1042,16 @@ class Athena(IPrepareApp):
             else:
                 jobO = ' -c %s ' % self.options
 
-        if not self.option_file and not self.atlas_exetype in ['EXE', 'TRF']:
+        if not self.option_file and not self.command_line and not self.atlas_exetype in ['EXE', 'TRF']:
             raise ApplicationConfigurationError(None,'Set option_file before calling prepare()')
         for opt_file in self.option_file:
             if not self.atlas_exetype in ['EXE', 'TRF']: 
                 if not opt_file.exists():
                     raise ApplicationConfigurationError(None,'The job option file %s does not exist.' % opt_file.name)
-                else:
-                    # check for dodgy TAG things
-                    if 'uncompress.py' in self.append_to_user_area and 'subcoll.tar.gz' in self.append_to_user_area:
-                        for ln in open(opt_file.name).readlines():
-                            bad_lines = ['from IOVDbSvc.CondDB import conddb', 'include("RecJobTransforms/UseOracle.py")']
- 
-                            for bl in bad_lines:
-                                posA = ln.find(bl)
-                                posB = ln.find("#")
- 
-                                if posA != -1 and (posA < posB or posB == -1):
-                                    raise ApplicationConfigurationError(None,'Please remove the line "%s" from your JOs' % bl)
+                jobO = jobO + opt_file.name + " "
 
-                    jobO = jobO + opt_file.name + " "
-            else:
-                pass
+        if self.command_line:
+            jobO = self.command_line
 
         supStream = [s.upper() for s in self.atlas_supp_stream]
         shipInput = False
