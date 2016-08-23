@@ -79,17 +79,17 @@ class SchemaVersionError(GangaException):
 
 class InaccessibleObjectError(GangaException):
 
-    def __init__(self, repo=None, id='', orig=None):
+    def __init__(self, repo=None, obj_id='', orig=None):
         """
         This is an error in accessing an object in the repo
         Args:
             repo (GangaRepository): The repository the error happened in
-            id (int): The key of the object in the objects dict where this happened
+            obj_id (int): The key of the object in the objects dict where this happened
             orig (exception): The original exception
         """
-        super(InaccessibleObjectError, self).__init__("Inaccessible Object: %s" % id)
+        super(InaccessibleObjectError, self).__init__("Inaccessible Object: %s" % obj_id)
         self.repo = repo
-        self.id = id
+        self.obj_id = obj_id
         self.orig = orig
 
     def __str__(self):
@@ -97,7 +97,8 @@ class InaccessibleObjectError(GangaException):
             return "Please restart Ganga in order to reload the object"
         else:
             from Ganga.GPIDev.Base.Proxy import getName
-            return "Repository '%s' object #%s is not accessible because of an %s: %s" % (self.repo.registry.name, self.id, getName(self.orig), str(self.orig))
+            return "Repository '%s' object #%s is not accessible because of an %s: %s" % \
+                   (self.repo.registry.name, self.obj_id, getName(self.orig), str(self.orig))
 
 
 class RepositoryError(GangaException):
@@ -121,10 +122,10 @@ class RepositoryError(GangaException):
         try:
             from Ganga.Core.InternalServices.Coordinator import disableInternalServices
             disableInternalServices()
-            from Ganga.Core.GangaThread.WorkerThreads import shutdownQueues
-            shutdownQueues()
+            from Ganga.Core.GangaThread.WorkerThreads import shutDownQueues
+            shutDownQueues()
             logger.error("Shutting Down Repository_runtime")
             from Ganga.Runtime import Repository_runtime
-            repository_runtime.shutdown()
+            Repository_runtime.shutdown()
         except:
             logger.error("Unable to disable Internal services, they may have already been disabled!")
