@@ -289,9 +289,7 @@ if opt.backend != "jedi":
         if opt.athena_exe in ['EXE', 'TRF', 'PYARA']:
             j.application.command_line += " " + opt.options
         else:
-            aoptions = opt.options.replace('"',"'''")
-            aoptions = opt.options.replace('\'',"'''")
-            j.application.command_line = " -c '''%s''' %s " % (aoptions, j.application.command_line)
+            j.application.command_line = " -c \"%s\" %s " % (opt.options, j.application.command_line)
 else:
     j.application.option_file = option_files
     if opt.options:
