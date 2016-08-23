@@ -57,8 +57,7 @@ def dataset_exists(dsname):
     """
 
     # strip the trailing '/' if it's a container
-    if dsname.endswith('/'):
-        dsname = dsname[:-1]
+    dsname = dsname.rstrip('/')
 
     scope_dsname = get_scope_and_dsname(dsname)
     with get_rucio_client._client_lock:
@@ -95,8 +94,7 @@ def list_datasets(dsname):
     """
 
     # strip the trailing '/'
-    if dsname.endswith('/'):
-        dsname = dsname[:-1]
+    dsname = dsname.rstrip('/')
 
     scope_dsname = get_scope_and_dsname(dsname)
     ds_list = []
@@ -145,8 +143,7 @@ def list_datasets_in_container(dsname):
     ds_list = []
 
     # strip the trailing '/'
-    if dsname.endswith('/'):
-        dsname = dsname[:-1]
+    dsname = dsname.rstrip('/')
 
     scope_dsname = get_scope_and_dsname(dsname)
 
