@@ -56,6 +56,10 @@ def dataset_exists(dsname):
         bool: True if the dataset exists, False if not
     """
 
+    # strip the trailing '/' if it's a container
+    if dsname.endswith('/'):
+        dsname = dsname[:-1]
+
     scope_dsname = get_scope_and_dsname(dsname)
     with get_rucio_client._client_lock:
         return len(list(get_rucio_client().list_dids(scope_dsname[0], {'name': scope_dsname[1]}))) > 0

@@ -8,6 +8,7 @@ from Ganga.Utility.files import expandfilename
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
 
+from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, getSites
 from dq2.common.DQException import *
 from dq2.repository.DQRepositoryException import DQUnknownDatasetException
 from dq2.location.DQLocationException import DQLocationExistsException
@@ -88,7 +89,7 @@ class DQ2Dataset(Dataset):
 
         # ask Rucio if this is a valid dataset(s)
         all_ds_exists = True
-        for dataset in self.datasets:
+        for dataset in self.dataset:
             all_ds_exists &= dataset_exists(dataset)
 
         return all_ds_exists
