@@ -21,7 +21,8 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
-from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se, resolve_containers, generate_output_datasetname
+from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se, resolve_containers, generate_output_datasetname, \
+    dataset_exists
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 
@@ -75,43 +76,23 @@ class DQ2Dataset(Dataset):
         super(DQ2Dataset, self).__init__()
 
     def dataset_exists(self):
+        """Check if the dataset this object represents exists in DDM
 
-        if not self.dataset: return False
+        Returns:
+            bool - True if dataset exists, False if not
+        """
 
-        for dataset in self.dataset:
-            try:
-                #dq2_lock.acquire()
-                try:
-                    state = dq2.getState(dataset)
-                except:
-                    state = None
-            finally:
-                #dq2_lock.release()
-                pass
-            if not state:
-                break
+        # do we have a dataset to start with?
+        if not self.dataset:
+            return False
 
-        return not state is None
+        # ask Rucio if this is a valid dataset(s)
+        all_ds_exists = True
+        for dataset in self.datasets:
+            all_ds_exists &= dataset_exists(dataset)
 
-    def tagdataset_exists(self):
+        return all_ds_exists
 
-        if not self.tagdataset: return False
-
-        for tagdataset in self.tagdataset:
-            try:
-                #dq2_lock.acquire()
-                try:
-                    state = dq2.getState(tagdataset)
-                except DQUnknownDatasetException:
-                    state = None
-            finally:
-                #dq2_lock.release()
-                pass
-            if not state:
-                break
-
-        return not state is None
-    
     def get_contents(self,backnav=False, overlap=True, filesize=False, size=False, event=False):
         '''Helper function to access dataset content'''
 

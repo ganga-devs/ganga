@@ -1442,8 +1442,6 @@ class Athena(IPrepareApp):
             if job.inputdata._name == 'DQ2Dataset':
                 if job.inputdata.dataset and not job.inputdata.dataset_exists():
                     raise ApplicationConfigurationError(None,'DQ2 input dataset %s does not exist.' % job.inputdata.dataset)
-                if job.inputdata.tagdataset and not job.inputdata.tagdataset_exists():
-                    raise ApplicationConfigurationError(None,'DQ2 tag dataset %s does not exist.' % job.inputdata.tagdataset)
 
         # check grid/local class match up
         if job.backend._name in ['LCG', 'CREAM' ,'Panda', 'NG']: 
