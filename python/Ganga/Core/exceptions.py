@@ -79,7 +79,7 @@ class SchemaVersionError(GangaException):
 
 class InaccessibleObjectError(GangaException):
 
-    def __init__(self, repo=None, obj_id='', orig=None):
+    def __init__(self, repo=None, obj_id=-1, orig=None):
         """
         This is an error in accessing an object in the repo
         Args:
