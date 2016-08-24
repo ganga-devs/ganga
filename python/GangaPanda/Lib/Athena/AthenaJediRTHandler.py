@@ -159,9 +159,6 @@ class AthenaJediRTHandler(IRuntimeHandler):
         from pandatools import MiscUtils
         from pandatools import AthenaUtils
         from pandatools import PsubUtils
-        from taskbuffer.JobSpec import JobSpec
-        from taskbuffer.FileSpec import FileSpec
-        from pandatools import PandaToolsPkgInfo
 
         # create a random number for this submission to allow multiple use of containers
         self.rndSubNum = random.randint(1111,9999)
@@ -844,13 +841,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         '''prepare the subjob specific configuration'''
 
-        from pandatools import Client
-        from pandatools import AthenaUtils
-        from taskbuffer.JobSpec import JobSpec
-        from taskbuffer.FileSpec import FileSpec
- 
         job = app._getParent()
-        masterjob = job._getRoot()
 
         logger.debug('AthenaJediRTHandler prepare called for %s', job.getFQID('.'))
 
