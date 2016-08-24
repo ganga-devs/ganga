@@ -12,7 +12,7 @@ def test_all_exceptions(gpi):
         """Run tests on the given exception"""
         err_type = getattr(Ganga.Core.exceptions, err_name)
         err_obj = err_type(test_str)
-        assert test_str in err_obj.args[0]
+        assert test_str in str(err_obj)
 
     err_list = ["GangaException", "ApplicationConfigurationError", "ApplicationPrepareError",
                 "IncompleteJobSubmissionError", "IncompleteKillError", "JobManagerError", "GangaAttributeError",
@@ -25,16 +25,16 @@ def test_all_exceptions(gpi):
     # check the BackendError
     from Ganga.Core.exceptions import BackendError
     err = BackendError("TestBackend", test_str)
-    assert "TestBackend" in err.__str__()
-    assert test_str in err.__str__()
+    assert "TestBackend" in str(err)
+    assert test_str in str(err)
 
     # check the InaccessibleObjectError
     from Ganga.Core.exceptions import InaccessibleObjectError, JobManagerError
     from Ganga.Core.GangaRepository import getRegistry
     err = InaccessibleObjectError(getRegistry('jobs').repository, 0, JobManagerError("My JobManagerError"))
-    assert "jobs" in err.__str__()
-    assert "#0" in err.__str__()
-    assert "My JobManagerError" in err.__str__()
+    assert "jobs" in str(err)
+    assert "#0" in str(err)
+    assert "My JobManagerError" in str(err)
 
     # check the RepositoryError
     from Ganga.Core.exceptions import RepositoryError
