@@ -12,7 +12,6 @@ from Ganga.Utility.logging import getLogger
 from Ganga.GPI import *
 import Ganga.Utility.Config
 import os, datetime, time, shutil
-from os.path import join
 from GangaRobot.Framework.exceptions import *
 
 logger = getLogger()
@@ -150,7 +149,7 @@ class Tester(IAction):
         
         
     def _WriteFinalState(self):
-        import tempfile, fnmatch
+        import tempfile
         tmpdir = tempfile.gettempdir()
         config = Ganga.Utility.Config.getConfig('TestRobot')
         CurrentVersionData = config['VersionNumber']+" - "+config['VersionTime']

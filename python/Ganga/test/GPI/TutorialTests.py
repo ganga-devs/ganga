@@ -2,7 +2,7 @@ import os
 try:
     import unittest2 as unittest
 except ImportError:
-    import unittest
+    pass
 
 # remove previous test gangadirs
 os.system('rm -rf ~/gangadir_testing/TutorialTests')
@@ -275,7 +275,7 @@ j.submit()
         # -- SPLITTERS MULTIATTRS START
         j = Job()
         j.splitter = GenericSplitter()
-        j.splitter.multi_attrs = {'application.args': ['hello1', 'hello2'],
+        j.splitter.multi_attrs = {'application.args': [['hello1'], ['hello2']],
                                   'application.env': [{'MYENV':'test1'}, {'MYENV':'test2'}]}
         j.submit()
         # -- SPLITTERS MULTIATTRS STOP
@@ -449,7 +449,7 @@ j.submit()
         j = Job()
         j.splitter = GenericSplitter()
         j.splitter.attribute = 'application.args'
-        j.splitter.values = [i for i in range(0, 10)]
+        j.splitter.values = [[i] for i in range(0, 10)]
         j.parallel_submit = True
         j.submit()
         # -- QUEUES SPLIT STOP
@@ -474,7 +474,7 @@ j.submit()
         # change the 'application' object for each Unit/Master Job
         trf.unit_splitter = GenericSplitter()
         trf.unit_splitter.attribute = "application.args"
-        trf.unit_splitter.values = ['arg 1', 'arg 2', 'arg 3']
+        trf.unit_splitter.values = [['arg 1'], ['arg 2'], ['arg 3']]
 
         # Append the transform
         t.appendTransform(trf)
@@ -497,7 +497,7 @@ j.submit()
         trf.backend = Local()
         trf.unit_splitter = GenericSplitter()
         trf.unit_splitter.attribute = "application.args"
-        trf.unit_splitter.values = ['arg 1', 'arg 2', 'arg 3']
+        trf.unit_splitter.values = [['arg 1'], ['arg 2'], ['arg 3']]
         t.appendTransform(trf)
         t.float = 100
 

@@ -5,16 +5,19 @@
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
-from Ganga.GPIDev.Adapters.IChecker import IChecker, IFileChecker
+from Ganga.GPIDev.Adapters.IChecker import IChecker
+from Ganga.GPIDev.Adapters.IChecker import IFileChecker
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
-from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Schema import ComponentItem
+from Ganga.GPIDev.Schema import FileItem
+from Ganga.GPIDev.Schema import Schema
+from Ganga.GPIDev.Schema import SimpleItem
+from Ganga.GPIDev.Schema import Version
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
 
 import commands
-import copy
 import os
-import string
 import shutil
 
 # Simon's post_status - communicates to processing DB

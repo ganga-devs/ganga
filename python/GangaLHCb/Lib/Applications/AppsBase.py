@@ -2,13 +2,14 @@
 # in all cases with the relavent app name (DaVinci, Gauss etc...)
 import os
 import tempfile
-import pprint
-import sys
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
-from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
-from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps, guess_version, available_packs
-from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, activeSummaryItems
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox
+from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
+from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps
+from GangaLHCb.Lib.Applications.AppsBaseUtils import available_packs
+from GangaLHCb.Lib.Applications.AppsBaseUtils import guess_version
+from GangaLHCb.Lib.Applications.AppsBaseUtils import activeSummaryItems
+from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers
 from Ganga.GPIDev.Schema import SimpleItem
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from Ganga.Utility.Shell import Shell
@@ -20,7 +21,6 @@ from Ganga.Utility.execute import execute
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.Core.exceptions import ApplicationConfigurationError
 import Ganga.Utility.logging
-import subprocess
 import pickle
 logger = Ganga.Utility.logging.getLogger()
 
@@ -155,7 +155,7 @@ class AppName(Gaudi):
             logger.error("PythonOptionsParserError:\n%s" % str(err))
             raise ApplicationConfigurationError(None, msg)
 
-        return GPIProxyObjectFactory(parser.get_input_data())
+        return parser.get_input_data()
 
     def getpack(self, options=''):
         """Performs a getpack on the package given within the environment

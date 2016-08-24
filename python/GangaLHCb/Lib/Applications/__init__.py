@@ -2,7 +2,6 @@ from __future__ import absolute_import
 import os
 
 from Ganga.Runtime.GPIexport import exportToGPI
-from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory
 
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 from GangaLHCb.Lib.Applications import AppsBaseUtils

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 '''Script to run Gaudi application'''
 
-from os import curdir, system, environ, pathsep, sep, getcwd
-from os.path import join
+from os import environ
+from os import getcwd
+from os import pathsep
+from os import system
 import sys
 
 def prependEnv(key, value):

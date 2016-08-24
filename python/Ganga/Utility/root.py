@@ -170,7 +170,6 @@ def getpythonhome(arch=None, pythonversion=None):
             pythonhome = pythonhome.replace('${%s}' % k, configroot[k])
     except ConfigError, err:
         logger.debug("Config Error!\n%s"%str(err))
-        pass
     import os
     if not os.path.exists(pythonhome):
         pythonhome2 = pythonhome.replace('../../external', '../external')

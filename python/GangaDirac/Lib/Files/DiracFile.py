@@ -2,12 +2,13 @@ import copy
 import os
 import datetime
 import inspect
-import hashlib
 import re
 import os.path
 import random
 import glob
-from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory, isType, getName
+from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -706,7 +707,7 @@ class DiracFile(IGangaFile):
                     d.remoteDir = os.path.dirname(lfn)
                     d.locations = stdout['Value']['Successful'][lfn].get('allDiracSE', '')
                     d.guid = guid
-                    outputFiles.append(GPIProxyObjectFactory(d))
+                    outputFiles.append(d)
                     continue
                 else:
                     self.lfn = lfn
@@ -719,7 +720,7 @@ class DiracFile(IGangaFile):
                 logger.error(failureReason)
                 if regex.search(self.namePattern) is not None:
                     d.failureReason = failureReason
-                    outputFiles.append(GPIProxyObjectFactory(d))
+                    outputFiles.append(d)
                     continue
                 self.failureReason = failureReason
                 return str(stdout)

@@ -6,7 +6,8 @@
 # Required for post-processing script
 import os
 import sys
-from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, activeSummaryItems
+from GangaLHCb.Lib.Applications.AppsBaseUtils import activeSummaryItems
+from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

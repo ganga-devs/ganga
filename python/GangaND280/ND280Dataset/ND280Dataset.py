@@ -13,7 +13,8 @@ from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 
-import os, re, fnmatch
+import fnmatch
+import os
 import commands
 
 logger = getLogger()

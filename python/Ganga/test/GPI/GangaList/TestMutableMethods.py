@@ -336,7 +336,8 @@ class TestMutableMethods(GangaUnitTest):
         assert str(l) == str(g), 'Normal Python objects should print the same'
 
     def testPrintingGPIObjectList(self):
-        from Ganga.GPI import GangaList, TFile
+        from Ganga.GPI import GangaList
+        from Ganga.GPI import TFile
 
         g = GangaList()
         for _ in range(10):

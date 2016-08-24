@@ -3,7 +3,6 @@
 # 
 # 08/06/10 @ ubeda
 #
-import subprocess
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Schema import *

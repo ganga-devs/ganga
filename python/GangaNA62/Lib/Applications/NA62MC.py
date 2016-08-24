@@ -15,7 +15,7 @@ from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
 from commands import getstatusoutput
 
-import os, shutil
+import os
 from Ganga.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
@@ -184,7 +184,6 @@ class NA62MC(IPrepareApp):
 
     def configure(self,masterappconfig):
         from Ganga.Core import ApplicationConfigurationError
-        import os.path
         
         return (None,None)
 

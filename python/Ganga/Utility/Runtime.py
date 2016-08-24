@@ -174,7 +174,7 @@ class RuntimePackage(object):
 
     def bootstrap(self, globals):
         try:
-            import os.path
+            pass
 
             # do not import names from BOOT file automatically, use
             # exportToGPI() function explicitly

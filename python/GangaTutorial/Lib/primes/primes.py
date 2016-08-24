@@ -53,7 +53,10 @@ def split_prime_job(j,millions,number=None):
     if not number:
         number = j.application.args[0]
 
-    from Ganga.GPI import File, TUTDIR, ArgSplitter, Executable
+    from Ganga.GPI import ArgSplitter
+    from Ganga.GPI import Executable
+    from Ganga.GPI import File
+    from Ganga.GPI import TUTDIR
     j.application.exe=File(TUTDIR+'/Lib/primes/prime_factor.py')
 
     # make sure that we crab the data files!

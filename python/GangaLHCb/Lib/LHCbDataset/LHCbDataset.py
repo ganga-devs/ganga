@@ -7,11 +7,17 @@ from Ganga.Core import GangaException
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.Utility.Config import getConfig, ConfigError
+from Ganga.Utility.Config import ConfigError
+from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
-from LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
+from LHCbDatasetUtils import getDataFile
+from LHCbDatasetUtils import isDiracFile
+from LHCbDatasetUtils import isLFN
+from LHCbDatasetUtils import isPFN
+from LHCbDatasetUtils import strToDataFile
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
-from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
+from Ganga.GPIDev.Lib.Job.Job import Job
+from Ganga.GPIDev.Lib.Job.Job import JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -462,7 +468,6 @@ def string_datafile_shortcut_lhcb(name, item):
         mainFileOutput = Ganga.GPIDev.Lib.File.string_file_shortcut(name, item)
     except Exception, x:
         logger.debug("Failed to Construct a default file type: %s" % str(name))
-        pass
 
     #   We can do some 'magic' with strings so lets do that here
     if (mainFileOutput is not None):

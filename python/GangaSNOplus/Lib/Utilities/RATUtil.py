@@ -11,14 +11,9 @@
 ##################################################
 
 import os
-import optparse
-import subprocess
 import urlparse
 import urllib2
 import httplib
-import fnmatch
-import tarfile
-import shutil
 import base64
 import getpass
 import re

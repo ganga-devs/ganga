@@ -1,4 +1,3 @@
-import os
 import Ganga.Utility.logging
 import Ganga.Utility.Config
 

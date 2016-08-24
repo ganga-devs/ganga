@@ -333,7 +333,6 @@ class GridProxy(ICredential):
                     pass
         except Exception as err:
             logger.debug("Err: %s" % err)
-            pass
 
         id = "".join(cn.split())
         if safe:

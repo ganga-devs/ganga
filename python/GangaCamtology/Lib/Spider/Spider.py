@@ -2,7 +2,8 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 
-from Ganga.Utility.Config import makeConfig, ConfigError
+from Ganga.Utility.Config import ConfigError
+from Ganga.Utility.Config import makeConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.files import expandfilename
 
@@ -121,7 +122,7 @@ class Spider(IApplication):
 
     def ExtractQueuedLinks( self, queued_list ):
 
-        import sys
+        pass
         
         # first, get together all similar domains
         queued_arr = { }

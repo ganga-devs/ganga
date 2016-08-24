@@ -29,7 +29,6 @@ class PrimeFactorizer(IApplication):
     def configure(self,masterappconfig):
         from Ganga.GPI import TUTDIR
         from Ganga.Core import ApplicationConfigurationError
-        import os.path
 
         ## the prime number factorizer executable
         self.exe = File(TUTDIR + '/Lib/primes/prime_factor.py') 

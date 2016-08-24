@@ -88,7 +88,6 @@ def getLFNReplicas(allLFNs, index, allLFNData):
         except Exception, err:
             logger.error("Dirac Error: %s" % str(err))
             # catch 'Successful' not found and others
-            pass
 
     import Ganga.Runtime.Repository_runtime
     Ganga.Runtime.Repository_runtime.updateLocksNow()
@@ -252,7 +251,6 @@ def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
                 logger.error("%s" % str(output))
             except Exception as err:
                 logger.debug("Error: %s" % str(err))
-                pass
             logger.error("Unknown error ion Dirac LFN Failed output")
             raise
 

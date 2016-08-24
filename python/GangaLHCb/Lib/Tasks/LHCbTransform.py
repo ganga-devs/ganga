@@ -3,7 +3,8 @@ from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.Tasks.common import getJobByID
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Core.exceptions import GangaAttributeError
 from GangaLHCb.Lib.Tasks.LHCbUnit import LHCbUnit
@@ -86,7 +87,6 @@ class LHCbTransform(ITransform):
                                 f.remove()
                 except:
                     logger.error("Problem deleting data for job '%d'" % jid)
-                    pass
 
     def createUnits(self):
         """Create new units if required given the inputdata"""

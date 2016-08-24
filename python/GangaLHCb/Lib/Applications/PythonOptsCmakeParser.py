@@ -1,4 +1,3 @@
-import os.path
 import tempfile
 from Ganga.GPIDev.Lib.File import LocalFile
 import Ganga.Utility.logging

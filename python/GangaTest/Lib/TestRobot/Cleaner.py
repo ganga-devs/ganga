@@ -3,7 +3,7 @@
 from GangaRobot.Framework.Action import IAction
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
-import os, shutil
+import shutil
 from os.path import join
 from GangaRobot.Framework.exceptions import *
 

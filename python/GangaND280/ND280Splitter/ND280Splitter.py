@@ -7,10 +7,9 @@
 This module contains various splitters for ND280 jobs.
 """
 
-import inspect
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import *
 from Ganga.Utility.logging import getLogger
 
@@ -139,7 +138,7 @@ class ND280SplitNbJobs(ISplitter):
 
         for sub in subsets:
 
-            j = addProxy(self.createSubjob(job))
+            j = self.createSubjob(job)
 
             j.inputdata.set_dataset_filenames(sub)
 
@@ -187,7 +186,7 @@ class ND280SplitNbInputFiles(ISplitter):
 
         for sub in subsets:
 
-            j = addProxy(self.createSubjob(job))
+            j = self.createSubjob(job)
 
             j.inputdata.set_dataset_filenames(sub)
 
@@ -246,7 +245,7 @@ class ND280SplitCSVByNbEvt(ISplitter):
           patternout = tmpname+"_sub%d"
 
         for s,sub in enumerate(subsets):
-            j = addProxy(self.createSubjob(job))
+            j = self.createSubjob(job)
 
             j.inputdata = job.inputdata
 
@@ -298,7 +297,7 @@ class ND280SplitOneInputFile(ISplitter):
         # Less files than number of jobs wanted => easy
         logger.info('Creating %d subjobs ...',len(filenames))
         for nb in range(len(filenames)):
-            j = addProxy(self.createSubjob(job))
+            j = self.createSubjob(job)
 
             j.inputdata.set_dataset_filenames([filenames[nb]])
 

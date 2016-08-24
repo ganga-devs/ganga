@@ -2,7 +2,6 @@
 """The LHCb Bookkeeping interface to Ganga."""
 
 import os
-import sys
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.GPIDev.Base import GangaObject
@@ -26,7 +25,6 @@ class Bookkeeping(GangaObject):
 
     def __init__(self):
         super(Bookkeeping, self).__init__()
-        pass
 
     def _createTmpFile(self):
         import tempfile

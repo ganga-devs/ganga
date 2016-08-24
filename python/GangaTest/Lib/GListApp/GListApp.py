@@ -8,7 +8,8 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
-from Ganga.GPIDev.Lib.File import File, ShareDir
+from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import ShareDir
 
 
 class GListApp(IPrepareApp):

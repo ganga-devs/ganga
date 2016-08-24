@@ -5,7 +5,7 @@ def getEnvironment(c):
     
 def loadPlugins(c):
 
-    import os,sys
+    import sys
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     logger.info('You are now using Python %s',sys.version.split()[0])

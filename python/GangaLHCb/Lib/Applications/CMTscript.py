@@ -2,9 +2,6 @@
 """Write a script containing CMT command which can subsequence be executed."""
 import Ganga.Utility.logging
 import os
-import sys
-import time
-import types
 import warnings
 import tempfile
 import shutil

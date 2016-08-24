@@ -1,11 +1,13 @@
-from os import rename, path, makedirs, chdir, unlink, listdir, chmod
+from os import chmod
+from os import listdir
+from os import path
+from os import rename
+from os import unlink
 from os import stat as os_stat
 import tempfile
 import time
-import subprocess
 import shutil
 import tarfile
-import threading
 import stat
 import uuid
 from StringIO import StringIO

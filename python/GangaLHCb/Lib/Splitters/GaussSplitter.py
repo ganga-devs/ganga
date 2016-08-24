@@ -6,10 +6,10 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.Job import Job
-from Ganga.Utility.logging import getLogger
-from GangaLHCb.Lib.Applications.GaudiExec import GaudiExec
-
-logger = getLogger()
+import pickle
+import os
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
 
 class GaussSplitter(ISplitter):
 

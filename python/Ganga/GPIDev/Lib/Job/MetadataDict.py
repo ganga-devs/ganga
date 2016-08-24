@@ -1,8 +1,6 @@
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.Core.exceptions import GangaAttributeError
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Base.Proxy import addProxy
-
 
 class MetadataDict(GangaObject):
 
@@ -22,7 +20,7 @@ class MetadataDict(GangaObject):
 
     def __getitem__(self, key):
         import copy
-        return addProxy(copy.deepcopy(self.data[key]))
+        return copy.deepcopy(self.data[key])
 
     def __setitem__(self, key, value):
         from Ganga.GPIDev.Lib.Job.Job import Job

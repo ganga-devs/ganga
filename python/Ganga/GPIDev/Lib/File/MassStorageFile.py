@@ -18,7 +18,6 @@ from pipes import quote
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
@@ -486,7 +485,7 @@ class MassStorageFile(IGangaFile):
                     subfile = MassStorageFile(namePattern=filename)
                     subfile.inputremotedirectory = self.inputremotedirectory
 
-                    self.subfiles.append(GPIProxyObjectFactory(subfile))
+                    self.subfiles.append(subfile)
 
     def remove(self, force=False, removeLocal=False):
         """
@@ -567,7 +566,6 @@ class MassStorageFile(IGangaFile):
                         if err.errno != errno.ENOENT:
                             logger.error("Error in removing file: %s" % str(remove_filename))
                             raise
-                        pass
         return
 
     def accessURL(self):

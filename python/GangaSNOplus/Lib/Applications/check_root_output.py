@@ -1,9 +1,5 @@
 # Tools to check the output file
 # Useful!
-import os
-import sys
-import re
-import subprocess
 import optparse
 
 all_env = {}

@@ -24,7 +24,6 @@ def browseBK(gui=True):
     j.inputdata=browseBK()    
     """
     import Ganga.Utility.logging
-    from Ganga.GPIDev.Base.Proxy import addProxy
     logger = Ganga.Utility.logging.getLogger()
     try:
         from GangaLHCb.Lib.Backends.Bookkeeping import Bookkeeping
@@ -33,7 +32,7 @@ def browseBK(gui=True):
         logger.warning('Could not start Bookkeeping Browser')
         return None
     bkk = Bookkeeping()
-    return addProxy(bkk.browse(gui))
+    return bkk.browse(gui)
 
 exportToGPI('browseBK', browseBK, 'Functions')
 

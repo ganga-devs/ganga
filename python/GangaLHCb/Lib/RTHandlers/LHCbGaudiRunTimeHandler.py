@@ -1,12 +1,13 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-import copy
 import os
 import pickle
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from RTHUtils import is_gaudi_child, getXMLSummaryScript, create_runscript
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
-from Ganga.GPIDev.Lib.File import FileBuffer, LocalFile, MassStorageFile
-from Ganga.GPIDev.Base.Proxy import addProxy
+from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
+from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
+from Ganga.GPIDev.Lib.File import FileBuffer
+from Ganga.GPIDev.Lib.File import LocalFile
+from Ganga.GPIDev.Lib.File import MassStorageFile
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique

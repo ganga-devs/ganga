@@ -1,6 +1,5 @@
 import os
 import sys
-import pickle
 import traceback
 import StringIO
 import time
@@ -108,7 +107,6 @@ while True:
             conn, addr = sock.accept()
         except:
             conn_failed = True
-            pass
         
         if not conn_failed:
             break

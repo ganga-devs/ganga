@@ -3,8 +3,6 @@ import os
 import os.path
 import math
 import re
-import mimetypes
-import shutil
 
 from urlparse import urlparse
 

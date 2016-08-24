@@ -8,8 +8,8 @@ from Ganga.Utility.logging import getLogger
 import Ganga.Utility.Config
 from GangaRobot.Framework.exceptions import *
 
-import os, urllib, datetime, time
-from os.path import join
+import os
+import urllib
 
 logger = getLogger()
 

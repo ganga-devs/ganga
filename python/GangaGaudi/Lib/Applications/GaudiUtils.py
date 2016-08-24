@@ -1,7 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import os.path
-import pprint
 import tempfile
 from Ganga.Utility.Shell import Shell
 from Ganga.Utility.files import fullpath

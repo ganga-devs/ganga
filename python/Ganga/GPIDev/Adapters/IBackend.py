@@ -17,7 +17,6 @@ from Ganga.Utility.logic import implies
 
 import os
 import itertools
-import time
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -56,7 +55,6 @@ class IBackend(GangaObject):
         enabled. This hook may be used by some backends to do specialized setup
         (e.g. to open ssh transport pipes of the Remote backend)
         """
-        pass
 
     def _parallel_submit(self, b, sj, sc, master_input_sandbox, fqid, logger):
 
@@ -387,7 +385,6 @@ class IBackend(GangaObject):
     def remove(self):
         """When the job is removed then this backend method is called.
         The primary use-case is the Remote (ssh) backend. """
-        pass
 
     def getStateTime(self, status):
         """Get the timestamps for the job's transitions into the 'running' and 'completed' states.
@@ -397,7 +394,6 @@ class IBackend(GangaObject):
     def timedetails(self):
         """Returns all available backend specific timestamps.
         """
-        pass
 
     @staticmethod
     def master_updateMonitoringInformation(jobs):

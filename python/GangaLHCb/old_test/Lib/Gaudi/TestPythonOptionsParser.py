@@ -1,4 +1,3 @@
-import os
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaLHCb.Lib.Applications.AppsBase import *
 import Ganga.Utility.Config

@@ -3,8 +3,6 @@ import os
 import os.path
 import math
 import re
-import mimetypes
-import shutil
 
 from urlparse import urlparse
 
@@ -64,7 +62,6 @@ class ARC(IBackend):
             logger.debug('load %s as LCGRequirements' % reqName)
         except:
             logger.debug('load default LCGRequirements')
-            pass
 
         # dynamic sandbox cache object loading
         # force to use GridftpSandboxCache
@@ -78,7 +75,6 @@ class ARC(IBackend):
             logger.debug('load %s as SandboxCache' % scName)
         except:
             logger.debug('load default SandboxCache')
-            pass
 
     def __refresh_jobinfo__(self, job):
         '''Refresh the lcg jobinfo. It will be called after resubmission.'''

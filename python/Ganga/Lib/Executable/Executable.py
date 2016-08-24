@@ -131,7 +131,6 @@ class Executable(IPrepareApp):
                     parent_job = self.getJobObject()
                 except:
                     parent_job = None
-                    pass
                 if parent_job is not None:
                     input_dir = parent_job.getInputWorkspace(create=True).getPath()
                     shutil.copy2(source, input_dir)

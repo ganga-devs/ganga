@@ -84,4 +84,3 @@ class BaseSubmitter(IAction):
         This method is called in the context of a Ganga session.
         
         """
-        pass

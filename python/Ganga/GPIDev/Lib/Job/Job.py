@@ -19,7 +19,7 @@ from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import addProxy, getName, getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
+from Ganga.GPIDev.Base.Proxy import getName, getRuntimeGPIObject, isType, runtimeEvalString, stripProxy
 from Ganga.GPIDev.Lib.File import MassStorageFile, getFileConfigKeys
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
@@ -436,9 +436,10 @@ class Job(GangaObject):
             for f in files2:
                 files3.append(f)
 
+            # FIXME: This really shouldn't have _ever_ been needed.
             files3._setParent(self)
 
-            return addProxy(files3)
+            return files3
 
         # If we ask for 'inputfiles', return the expanded list of subfiles
         if name == 'inputfiles':
@@ -640,7 +641,6 @@ class Job(GangaObject):
                     backend_output_postprocess[configEntry][key] = getConfig('Output')[key]['backendPostprocess'][configEntry]
             except ConfigError as err:
                 logger.debug("ConfigError: %s" % err)
-                pass
 
         return backend_output_postprocess
 
@@ -825,7 +825,7 @@ class Job(GangaObject):
         # Dont think it should matter as templates tend not to be prepared
         # try:
         # if hasattr(getRegistry("prep"), 'getShareRef'):
-        #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        #shareref = getRegistry("prep").getShareRef()
         # except: pass
 
         # register the job (it will also commit it)
@@ -1118,12 +1118,12 @@ class Job(GangaObject):
             msg = "The application associated with job %s has already been prepared. To force the operation, call prepare(force=True)" % self.id
             raise JobError(msg)
         if (self.application.is_prepared is None):
-            add_to_inputsandbox = addProxy(self.application).prepare()
+            add_to_inputsandbox = self.application.prepare()
             if isType(add_to_inputsandbox, (list, tuple, GangaList)):
                 self.inputsandbox.extend(add_to_inputsandbox)
         elif (self.application.is_prepared is not None) and (force is True):
             self.application.unprepare(force=True)
-            addProxy(self.application).prepare(force=True)
+            self.application.prepare(force=True)
 
 
     def unprepare(self, force=False):
@@ -1723,7 +1723,6 @@ class Job(GangaObject):
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
-                pass
 
             def doit(f):
                 try:
@@ -1757,13 +1756,11 @@ class Job(GangaObject):
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
-                pass
 
         try:
             self._releaseSessionLockAndFlush()
         except Exception as err:
             logger.debug("Remove Err: %s" % err)
-            pass
 
     allowed_force_states = {'completed': ['completing', 'failed'],
                             'failed': ["submitting", "completing", "completed", "submitted", "running", "killed"]}

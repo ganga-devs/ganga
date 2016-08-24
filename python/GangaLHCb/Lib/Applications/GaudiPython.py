@@ -1,7 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Application handler for GaudiPython applications in LHCb.'''
 import os
-import pprint
 from os.path import split, join
 import inspect
 from Ganga.GPIDev.Schema import FileItem, SimpleItem
@@ -18,8 +17,6 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import Shell
 from AppsBaseUtils import guess_version
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-import shutil
-import tempfile
 
 # Added for XML PostProcessing
 from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript

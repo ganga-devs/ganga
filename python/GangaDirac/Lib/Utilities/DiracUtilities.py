@@ -4,7 +4,6 @@ import tempfile
 import shutil
 import json
 import time
-from copy import deepcopy
 
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger

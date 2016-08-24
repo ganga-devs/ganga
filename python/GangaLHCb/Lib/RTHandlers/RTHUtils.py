@@ -1,10 +1,10 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
-import tempfile
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.Config
 from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Lib.File import FileBuffer, File
+from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import FileBuffer
 import Ganga.Utility.logging
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template, dirac_outputfile_jdl
 from Ganga.GPIDev.Base.Proxy import isType

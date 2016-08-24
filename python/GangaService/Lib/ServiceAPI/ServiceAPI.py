@@ -1,7 +1,4 @@
 import os
-import sys
-import pickle
-import traceback
 from socket import *
 import time
 from commands import getstatusoutput
@@ -20,7 +17,6 @@ class GangaService:
         self.gangacmd = "ganga"
         self.userscript = None
         self.userscriptwaittime = 300
-        pass
 
     def getServerInfo(self):
         """return a tuple of the hostname and port from the server.info file"""
