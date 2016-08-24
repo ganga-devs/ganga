@@ -93,12 +93,9 @@ class InaccessibleObjectError(GangaException):
         self.orig = orig
 
     def __str__(self):
-        if str(self.orig).find('comments') > -1:
-            return "Please restart Ganga in order to reload the object"
-        else:
-            from Ganga.GPIDev.Base.Proxy import getName
-            return "Repository '%s' object #%s is not accessible because of an %s: %s" % \
-                   (self.repo.registry.name, self.obj_id, getName(self.orig), str(self.orig))
+        from Ganga.GPIDev.Base.Proxy import getName
+        return "Repository '%s' object #%s is not accessible because of an %s: %s" % \
+               (self.repo.registry.name, self.obj_id, getName(self.orig), str(self.orig))
 
 
 class RepositoryError(GangaException):

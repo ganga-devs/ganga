@@ -40,3 +40,6 @@ def test_all_exceptions(gpi):
     from Ganga.Core.exceptions import RepositoryError
     from Ganga.Core.GangaRepository import getRegistry
     RepositoryError(getRegistry('jobs').repository, test_str)
+
+    # Construct another to check the except clause in the exception is called
+    RepositoryError(getRegistry('jobs').repository, test_str)
