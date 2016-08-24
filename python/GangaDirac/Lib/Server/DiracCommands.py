@@ -58,9 +58,9 @@ def getReplicas(lfns):
     output(dirac.getReplicas(lfns, active=True, preferDisk = True))
 
 
-def getAccessURL(lfn,SE):
-    ''' Return the access URL for the given LFN and storage element '''
-    output(dirac.getAccessURL(lfn,SE))
+def getAccessURL(lfn, SE, protocol):
+    ''' Return the access URL for the given LFN, storage element and protocol '''
+    output(diracDM.getReplicaAccessUrl(lfn, SE, protocol))
 
 
 def getFile(lfns, destDir=''):

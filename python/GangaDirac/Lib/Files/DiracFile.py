@@ -463,7 +463,7 @@ class DiracFile(IGangaFile):
                     LFNs.append(this_url)
             return LFNs
 
-    def accessURL(self, thisSE=''):
+    def accessURL(self, thisSE='', protocol='xroot'):
         """
         Attempt to find an accessURL which corresponds to the specified SE. If no SE is specified then
         return a random one from all the replicas. 
@@ -481,13 +481,13 @@ class DiracFile(IGangaFile):
           else:
              logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
              this_SE = random.choice(self.locations) 
-          myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
+          myurl = execute('getAccessURL("%s", "%s", "%s")' % (self.lfn, this_SE, protocol))
           this_accessURL = myurl['Value']['Successful'][self.lfn]
           _accessURLs.append(this_accessURL)
         else:
           # For all subfiles request the accessURL, 1 URL per LFN
           for i in self.subfiles:
-            _accessURLs.append(i.accessURL(thisSE)[0])
+            _accessURLs.append(i.accessURL(thisSE, protocol)[0])
         return _accessURLs
 
     def get(self, localPath=''):
