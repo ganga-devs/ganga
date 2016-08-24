@@ -78,8 +78,6 @@ class GaussSplitter(ISplitter):
             opts = 'from Gaudi.Configuration import * \n'
             opts += 'from Configurables import GenInit \n'
             opts += 'ApplicationMgr().EvtMax = %d\n' % self.eventsPerJob
-            opts += 'from Configurables import LHCbApp\n'
-            opts += 'LHCbApp().EvtMax = %d\n' % self.eventsPerJob
             opts += 'GenInit("GaussGen").FirstEventNumber = %d\n' % first
             spillOver = ["GaussGenPrev", "GaussGenPrevPrev", "GaussGenNext"]
             for s in spillOver:
