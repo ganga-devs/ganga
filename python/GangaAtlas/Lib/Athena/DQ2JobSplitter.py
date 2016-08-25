@@ -797,10 +797,6 @@ class DQ2JobSplitter(ISplitter):
                                         new_sites.append(sitename)
                             sites = ':'.join(new_sites)
 
-                        if job.inputdata.tagdataset:
-                            tag_contents = job.inputdata.get_tag_contents(size=True, spec_dataset = tagDS)
-                            tag_dset_size += reduce(operator.add, map(lambda x: x[1][1],tag_contents))
-
                 # preferentially select sites given the cloud priority
                 cloud_pref = config['AnyCloudPreferenceList']
                 if len(cloud_pref) > 0:

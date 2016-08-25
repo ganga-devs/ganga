@@ -187,8 +187,6 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
                     input_guids, input_files = _splitlist(job.inputdata.get_contents())
 
-                    if job.inputdata.tagdataset:
-                        input_tag_guids, input_tag_files = _splitlist(job.inputdata.get_tag_contents())
                     if job.inputdata.use_aodesd_backnav:
                         input_esd_guids, input_esd_files = _splitlist(job.inputdata.get_contents(backnav=True))
 

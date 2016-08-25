@@ -272,52 +272,6 @@ class DQ2Dataset(Dataset):
             else:
                 return diffcontents
 
-    def get_tag_contents(self, size=False, spec_dataset = None):
-        '''Helper function to access tag datset content'''
-
-        allcontents = []
-
-        datasets = []
-
-        for d in self.tagdataset:
-            datasets += resolve_containers([d])
-            
-        allcontentsSize = []
-            
-        for tagdataset in datasets:
-
-            if spec_dataset and tagdataset != spec_dataset:
-                continue
-            
-            try:
-                #dq2_lock.acquire()
-                contents=dq2.listFilesInDataset(tagdataset, long=False)
-            except:
-                contents = {}
-            finally:
-                #dq2_lock.release()
-                pass
-
-            if not contents:
-                return [] # protects against crash in next line if contents is empty
-            if not len(contents):
-                continue
-
-            # Convert 0.3 output to 0.2 style
-            contents = contents[0]
-            contents_new = []
-            contents_size = {}
-            for guid, info in contents.iteritems():
-                contents_new.append( (guid, info['lfn'], tagdataset, info['scope']) )
-                allcontentsSize.append((guid, (info['lfn'],info['filesize'], info['scope'] ), tagdataset))
-                
-            allcontents = allcontents + contents_new
-
-        if size:
-            return allcontentsSize
-        else:
-            return allcontents
-        
     def get_locations(self, complete=0, backnav=False, overlap=True):
         '''helper function to access the dataset location'''
 

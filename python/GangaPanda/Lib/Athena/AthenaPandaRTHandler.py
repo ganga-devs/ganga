@@ -724,33 +724,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     finp.prodDBlockToken = 'local'
                     
                 jspec.addFile(finp)
-                
-            if len(job.inputdata.tagdataset) != 0 and not job.inputdata.use_cvmfs_tag:
-                # add the TAG files
-                tag_contents = job.inputdata.get_tag_contents(size=True)
-                tag_files = map(lambda x: x[1][0],tag_contents)
-                tag_guids = map(lambda x: x[0],tag_contents)
-                tag_scopes = map(lambda x: x[1][2],tag_contents)
 
-                for guid, lfn, scope in zip(tag_guids,tag_files,tag_scopes): 
-                    finp = FileSpec()
-                    finp.lfn            = lfn
-                    finp.GUID           = guid
-                    finp.scope          = scope
-                    #            finp.fsize =
-                    #            finp.md5sum =
-                    finp.dataset        = job.inputdata.tagdataset[0]
-                    finp.prodDBlock     = job.inputdata.tagdataset[0]
-                    finp.dispatchDBlock = job.inputdata.tagdataset[0]
-                    finp.type           = 'input'
-                    finp.status         = 'ready'
-
-                    if job.backend.forcestaged:
-                        finp.prodDBlockToken = 'local'
-                        
-                    jspec.addFile(finp)
-
-            
             if job.inputdata.tag_info and not job.inputdata.use_cvmfs_tag:
                 # add the TAG files
                 tag_files = job.inputdata.tag_info.keys()
@@ -904,38 +878,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
                     self.job_options.replace("%IN", "$MY_INPUT_FILES")
                     self.job_options = "echo -e \"from commands import getstatusoutput\\nrc,o=getstatusoutput('ls pre_*-????-*-*-*.py')\\n__import__(o.split()[0][:-3])\\nfrom AthenaCommon.AthenaCommonFlags import athenaCommonFlags\\nopen('__input_files.txt', 'w').write(','.join(athenaCommonFlags.FilesInput() ))\" > __my_conv.py ; python __my_conv.py ; export MY_INPUT_FILES=`cat __input_files.txt` ; " + self.job_options
-                
-            elif self.inputdatatype == 'DQ2' and len(job.inputdata.tagdataset) != 0:
-                # tell Panda what files are TAG and what aren't
-                tag_contents = job.inputdata.get_tag_contents(size=True)
 
-                if job.inputdata.use_cvmfs_tag:
-                    tag_files = map(lambda x: os.path.join("/cvmfs/atlas-condb.cern.ch/repo/tag", x[2], x[1][0]),tag_contents)
-                else:
-                    tag_files = map(lambda x: x[1][0],tag_contents)
-                    input_files += tag_files
-                    
-                param += '-i "%s" ' % input_files
-                param += '--tagFileList %s ' % ','.join(tag_files)
-                param += '--guidBoundary "%s" ' % job.inputdata.guids
-                
-                # set the coll name
-                if self.runConfig.input.collRefName:
-                    param += '--collRefName %s ' % self.runConfig.input.collRefName
-                else:
-                    # get coll ref from input data
-                    if input_files[0].find("AOD") != -1:
-                        param += '--collRefName StreamAOD_ref '
-                    elif input_files[0].find("ESD") != -1:
-                        param += '--collRefName StreamESD_ref '
-                    elif input_files[0].find("RAW") != -1:
-                        param += '--collRefName StreamRAW_ref '
-
-                # sort out TAG use for exe types other than just athena - TRF dealt with below
-                if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
-                    self.job_options.replace("%IN", "$MY_INPUT_FILES")
-                    self.job_options = "echo -e \"from commands import getstatusoutput\\nrc,o=getstatusoutput('ls pre_*-????-*-*-*.py')\\n__import__(o.split()[0][:-3])\\nfrom AthenaCommon.AthenaCommonFlags import athenaCommonFlags\\nopen('__input_files.txt', 'w').write(','.join(athenaCommonFlags.FilesInput() ))\" > __my_conv.py ; python __my_conv.py ; export MY_INPUT_FILES=`cat __input_files.txt` ; " + self.job_options
-                    
             if not app.atlas_exetype in ['TRF']:
                 param += '-i "%s" ' % input_files
         else:
