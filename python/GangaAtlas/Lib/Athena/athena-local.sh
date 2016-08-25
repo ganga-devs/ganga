@@ -335,12 +335,12 @@ then
 	    CP_CMD="cp" 
 	fi
 
-	$MKDIR_CMD -p $OUTPUT_LOCATION
+	$MKDIR_CMD -p `readlink -m $OUTPUT_LOCATION`
 	cat output_files | while read filespec
 	do
 	  for file in $filespec
 	  do
-	    $CP_CMD $file $OUTPUT_LOCATION/$file
+	    $CP_CMD $file `readlink -m $OUTPUT_LOCATION/$file`
 	  done
 	done
     fi

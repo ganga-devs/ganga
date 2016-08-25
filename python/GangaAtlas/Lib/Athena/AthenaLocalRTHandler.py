@@ -439,7 +439,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             self.output_datasetname = generate_output_datasetname(dq2_datasetname, jobid, dq2_isGroupDS, dq2_groupname)
 
         # Expand Athena jobOptions
-        if not app.option_file:
+        if not app.option_file and not app.command_line:
             raise ConfigError("j.application.option_file='' - No Athena jobOptions files specified.")
 
         athena_options = ''
@@ -459,6 +459,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 if app.options:
                     athena_options =  app.options + ' ' + athena_options
                 inputbox += [ File(option_file.name) ]
+
+
+            if app.command_line:
+                athena_options = app.command_line
 
         athena_usersetupfile = os.path.basename(app.user_setupfile.name)
 
@@ -523,7 +527,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             'DQ2_SETUP_SCRIPT': configDQ2['setupScript']
         }
 
-        # Set athena architecture: 32 or 64 bit    
+        # Set athena architecture: 32 or 64 bit
         environment['ATLAS_ARCH'] = '32'
         cmtconfig = app.atlas_cmtconfig
         if cmtconfig.find('x86_64')>=0:

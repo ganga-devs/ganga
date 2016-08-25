@@ -44,6 +44,7 @@ p.add_option('--name', '-n', action='store', type='string', dest='name', help='J
 # Input dataset
 p.add_option('--inDS', '-i', action='store', type='string', dest='input_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname to process')
 p.add_option('--inPfnListFile', action='store', type='string', dest='input_pfnlistfile', help='Filename with list of input files to process for ATLASTier3Dataset')
+p.add_option('--NthFieldAsOutDir', action='store', type='string', dest='nth_field_as_outdir', help='If multiple input list files given, store the output in a dir given by the field of the list file name, e.g. =2,3 data.201608.top.stuff.txt -> 201608.top/<output>')
 p.add_option('--inTagDS', action='store', type='string', dest='tag_input_dataset', metavar='TAGDATASETNAME', help='Name of the Tag DQ2 datasetname to process')
 p.add_option('--inTagFiles', action='store', type='string', dest='tag_input_files', help='Name of local TAG files to determine input data' )
 p.add_option('--tagCollRef', action='store', type='string', dest='tag_coll_ref', help='Directly specify the collection reference if not in JOs (e.g. TRF usage)' )
@@ -95,7 +96,6 @@ p.add_option('--usefax', action='store_true', dest='usefax', help='Allow submiss
 p.add_option('--lcg', action='store_const', const='lcg', dest='backend', help='Submit job(s) to LCG Grid')
 p.add_option('--cream', action='store_const', const='cream', dest='backend', help='Submit job(s) to a CREAM CE')
 p.add_option('--ng', action='store_const', const='ng', dest='backend', help='Submit job(s) to NorduGrid')
-p.add_option('--panda', action='store_const', const='panda', dest='backend', help='Submit job(s) to Panda')
 p.add_option('--jedi', action='store_const', const='jedi', dest='backend', help='Submit job(s) to jedi')
 p.add_option('--lsf', action='store_const', const='lsf', dest='backend', help='Submit job(s) to the local LSF batch system, e.g. on lxplus')
 p.add_option('--condor', action='store_const', const='condor', dest='backend', help='Submit job(s) to the local Condor batch system')
@@ -184,7 +184,7 @@ opt, args = p.parse_args()
 
 # make panda the default backend
 if not opt.backend:
-    opt.backend = "panda"
+    opt.backend = "jedi"
 
 # Job query
 if opt.jobid:
@@ -214,9 +214,9 @@ if opt.jobid:
 
 if args:
     option_files=[]
-    if args:  
+    if args:
         for option_file in args:
-            if not opt.athena_exe in ['EXE', 'TRF']:        
+            if not opt.athena_exe in ['EXE', 'TRF'] and opt.backend == "jedi":
                 if not os.access(option_file,os.R_OK):
                     print >>sys.stderr, 'ERROR: Cannot read athena job option file: %s' % option_file
                     sys.exit(4)
@@ -280,14 +280,25 @@ if opt.user_area_path:
 if opt.group_area:
     j.application.group_area=opt.group_area
 
-j.application.option_file = option_files
-if opt.options:
-    if opt.athena_exe in ['EXE', 'TRF', 'PYARA']:
-        j.application.options = " %s " %opt.options
-    else:
-        aoptions = opt.options.replace('"',"'''")        
-    	aoptions = opt.options.replace('\'',"'''")
-        j.application.options = "-c '''%s''' " %aoptions
+# TODO: Check if this works with Jedi as well
+if opt.backend != "jedi":
+    # Just pass the command line straight through to Athena
+    # options make this a bit more tricky...
+    j.application.command_line = ' '.join(args)
+    if opt.options:
+        if opt.athena_exe in ['EXE', 'TRF', 'PYARA']:
+            j.application.command_line += " " + opt.options
+        else:
+            j.application.command_line = " -c \"%s\" %s " % (opt.options, j.application.command_line)
+else:
+    j.application.option_file = option_files
+    if opt.options:
+        if opt.athena_exe in ['EXE', 'TRF', 'PYARA']:
+            j.application.options = " %s " %opt.options
+        else:
+            aoptions = opt.options.replace('"',"'''")
+            aoptions = opt.options.replace('\'',"'''")
+            j.application.options = "-c '''%s''' " %aoptions
 
 if opt.user_setupfile:
     j.application.user_setupfile = opt.user_setupfile
@@ -366,7 +377,7 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
                 j.inputdata = ATLASLocalDataset()
 
                 # check for multiple PFN lists
-                if opt.input_pfnlistfile.find(",") == -1:
+                if opt.input_pfnlistfile.find(",") == -1 and not opt.nth_field_as_outdir:
                     j.inputdata.get_dataset_from_list(opt.input_pfnlistfile, no_dir_check=True)
                 else:
                     # first set the local splitter
@@ -380,10 +391,28 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
                            logger.error('File %s does not exist',pfn_list)
                            sys.exit(1)
 
-                        f = open(pfn_list)
+                        pfn_file = open(pfn_list)
+
+                        # check for nth_field option
                         pfn_list = os.path.basename(pfn_list)
-                        j.splitter.output_loc_to_input[pfn_list] = []
-                        for ln in f.readlines():
+                        if opt.nth_field_as_outdir:
+
+                            # grab the field numbers
+                            field_nums = [int(f.strip()) for f in opt.nth_field_as_outdir.split(',')]
+                            toks = pfn_list.split('.')
+                            new_pfn_toks = []
+                            for f in field_nums:
+                                if f > len(toks):
+                                    print >>sys.stderr, "ERROR: Field number '%d' greater than the number of fields in list file name '%s'" % (f, pfn_list)
+                                    sys.exit(5)
+                                new_pfn_toks.append(toks[f])
+
+                            pfn_list = '.'.join(new_pfn_toks)
+
+                        if pfn_list not in j.splitter.output_loc_to_input:
+                            j.splitter.output_loc_to_input[pfn_list] = []
+
+                        for ln in pfn_file.readlines():
                             # ignore comments and blank lines
                             if not ln.strip() or ln.strip()[0] == '#':
                                 continue
