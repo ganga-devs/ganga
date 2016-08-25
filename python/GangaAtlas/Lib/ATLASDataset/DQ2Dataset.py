@@ -108,12 +108,6 @@ class DQ2Dataset(Dataset):
         datasets = resolve_containers(self.dataset)
 
         evtsperfile = 0
-        # Get info from AMI for AMIDataset
-        if (self._name == 'AMIDataset'):
-                metadata = self.get_files_metadata()
-                if (self._getParent()) and (self._getParent()).splitter and (self._getParent()).splitter.numevtsperfile:
-                    evtsperfile = (self._getParent()).splitter.numevtsperfile
-
         for dataset in datasets:
             if backnav:
                 dataset = re.sub('AOD','ESD',dataset)
