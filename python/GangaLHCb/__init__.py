@@ -1,5 +1,6 @@
 import os
 import os.path
+import sys
 import re
 import datetime
 from os.path import exists, isdir, realpath, isfile, islink
@@ -8,7 +9,7 @@ import subprocess
 import tempfile
 import Ganga.Utility.logging
 import Ganga.Utility.Config
-from optparse import OptionParser, OptionValueError
+from optparse import OptionParser, OptionValueError, BadOptionError
 
 from Ganga.Utility.Config.Config import _after_bootstrap
 from Ganga.Utility.logging import getLogger
@@ -47,27 +48,7 @@ if not _after_bootstrap:
                      'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
                       options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
     defaultLHCbDirac = 'v8r2p36'
-    configLHCb.addOption('diracVersion',defaultLHCbDirac,"set LHCbDirac version")
-
-def _guess_version(name):
-    if 'GANGASYSROOT' in os.environ.keys():
-        gangasys = os.environ['GANGASYSROOT']
-    else:
-        raise OptionValueError("Can't guess %s version if GANGASYSROOT is not defined" % name)
-    tmp = tempfile.NamedTemporaryFile(suffix='.txt')
-    cmd = 'cd %s && cmt show projects > %s' % (gangasys, tmp.name)
-    rc = subprocess.Popen([cmd], shell=True).wait()
-    if rc != 0:
-        msg = "Fail to get list of projects that Ganga depends on"
-        raise OptionValueError(msg)
-    p = re.compile(r'^\s*%s\s+%s_(\S+)\s+' % (name, name))
-    for line in tmp:
-        m = p.match(line)
-        if m:
-            version = m.group(1)
-            return version
-    msg = 'Failed to identify %s version that Ganga depends on' % name
-    raise OptionValueError(msg)
+    configLHCb.addOption('DiracVersion',defaultLHCbDirac,"set LHCbDirac version")
 
 
 def _store_root_version():
@@ -84,28 +65,20 @@ def _store_root_version():
 def _store_dirac_environment():
     from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache, get_env
     platform = os.environ['CMTOPT']
-    diracversion = Ganga.Utility.Config.getConfig('LHCb')['diracVersion']
+    diracversion = Ganga.Utility.Config.getConfig('LHCb')['DiracVersion']
     fdir = os.path.join(os.path.expanduser("~/.cache/Ganga/GangaLHCb"), platform)
-    fname = os.path.join(fdir, defaultLHCbDirac)
+    fname = os.path.join(fdir, diracversion)
     if not os.path.exists(fname) or not os.path.getsize(fname):
-        logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(defaultLHCbDirac), str(platform)))
-        cmd = 'lb-run LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=defaultLHCbDirac)
-        env = execute(cmd)
+      cmd =  'lb-run LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
+      env = execute(cmd)
+      if len(env)!=0:
         env = eval(env)
         write_env_cache(env, fname)
-    if not diracversion == defaultLHCbDirac:
-      fname = os.path.join(fdir, diracversion)
-      if not os.path.exists(fname) or not os.path.getsize(fname):
-        cmd =  'lb-run LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
-        env = execute(cmd)
-        if len(env)!=0:
-          env = eval(env)
-          write_env_cache(env, fname)
-          logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
-        else:
-          logger.warning('LHCbDirac version %s does not exist, using default version %s instead',diracversion,defaultLHCbDirac)
-          diracversion = defaultLHCbDirac
-          fname = os.path.join(fdir, defaultLHCbDirac)
+        logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
+      else:
+        msg = 'LHCbDirac version {version} does not exist'.format(version=diracversion)
+        logger.error(msg)
+        sys.exit() 
     logger.info("Using LHCbDirac version %s", diracversion)
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
