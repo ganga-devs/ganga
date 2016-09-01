@@ -71,14 +71,14 @@ def _store_dirac_environment():
     if not os.path.exists(fname) or not os.path.getsize(fname):
       cmd =  'lb-run LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
       env = execute(cmd)
-      if len(env)!=0:
+      try:
         env = eval(env)
         write_env_cache(env, fname)
         logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
-      else:
+      except:
         msg = 'LHCbDirac version {version} does not exist'.format(version=diracversion)
         logger.error(msg)
-        sys.exit() 
+        raise OptionValueError(msg)
     logger.info("Using LHCbDirac version %s", diracversion)
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
