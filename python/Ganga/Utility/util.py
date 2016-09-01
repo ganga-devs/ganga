@@ -157,7 +157,7 @@ def hostname():
         # [bugfix #20333]:
         # while working offline and with an improper /etc/hosts configuration
         # the localhost cannot be resolved
-        except socket.error as err:
+        except socket.error:
             hostname._hostname_cache = 'localhost'
 
     return hostname._hostname_cache
