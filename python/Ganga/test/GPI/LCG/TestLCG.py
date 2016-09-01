@@ -10,14 +10,14 @@ from Ganga.testlib.monitoring import run_until_completed
 
 
 @external
-def test_job_complete(gpi):
+def test_job_submit(gpi):
     from Ganga.GPI import Job, LCG
 
     j = Job()
     j.backend = LCG()
     j.submit()
-    assert run_until_completed(j, timeout=1200, sleep_period=10), 'Timeout on job submission: job is still not finished'
 
+    assert j.status != 'new'
 
 @external
 def test_job_kill(gpi):
