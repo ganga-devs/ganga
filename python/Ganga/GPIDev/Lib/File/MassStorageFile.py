@@ -596,10 +596,10 @@ Ganga.Utility.Config.config_scope['MassStorageFile'] = MassStorageFile
 
 class SharedFile(MassStorageFile):
 
-        ''' SharedFile. Special case of MassStorage for locally accessible fs through the standard lsb commands. '''
-        _schema = MassStorageFile._schema.inherit_copy()
-        _category = 'gangafiles'
-        _name = 'SharedFile'
+    ''' SharedFile. Special case of MassStorage for locally accessible fs through the standard lsb commands. '''
+    _schema = MassStorageFile._schema.inherit_copy()
+    _category = 'gangafiles'
+    _name = 'SharedFile'
 
     # Copied from MassStorageFile to keep interface
     def __init__(self, namePattern='', localDir='', **kwds):
