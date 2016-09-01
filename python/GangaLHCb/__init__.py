@@ -1,6 +1,5 @@
 import os
 import os.path
-import sys
 import re
 import datetime
 from os.path import exists, isdir, realpath, isfile, islink
