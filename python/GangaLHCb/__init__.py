@@ -9,7 +9,7 @@ import subprocess
 import tempfile
 import Ganga.Utility.logging
 import Ganga.Utility.Config
-from optparse import OptionParser, OptionValueError, BadOptionError
+from optparse import OptionParser, OptionValueError
 
 from Ganga.Utility.Config.Config import _after_bootstrap
 from Ganga.Utility.logging import getLogger
