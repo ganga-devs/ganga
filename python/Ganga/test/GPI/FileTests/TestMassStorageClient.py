@@ -15,26 +15,36 @@ class TestMassStorageClient(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
+    fileName = 'MassStorageFile'
+
     # Where on local storage we want to have our 'MassStorage solution'
-    outputFilePath = '/tmp/MassStorageClient'
+    outputFilePath = '/tmp/' + fileName + 'Client'
 
     # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     MassStorageTestConfig = {'defaultProtocol': 'file://',
                              'fileExtensions': [''],
-                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir -p'},
+                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
                              'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
                                                     'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
+
 
     def setUp(self):
         """
         Configure the MassStorageFile for the test
         """
+
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', 'MassStorageFile', TestMassStorageClient.MassStorageTestConfig),
+                    ('Output', TestMassStorageClient.fileName, TestMassStorageClient.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageClient, self).setUp(extra_opts=extra_opts)
+
+    @classmethod
+    def getFileObject(cls):
+        """ Return an instance of the file we're wanting to test """
+        import Ganga.GPI as gpi
+        return getattr(gpi, cls.fileName)
 
     @staticmethod
     def cleanUp():
@@ -54,13 +64,15 @@ class TestMassStorageClient(GangaUnitTest):
     def test_a_testClientSideSubmit(self):
         """Test the client side code whilst stil using the Local backend"""
 
-        from Ganga.GPI import LocalFile, MassStorageFile, Job, ArgSplitter
+        MassStorageFile = TestMassStorageClient.getFileObject()
+
+        from Ganga.GPI import LocalFile, Job, ArgSplitter
 
         from Ganga.Utility.Config import getConfig
 
         TestMassStorageClient.cleanUp()
 
-        assert getConfig('Output')['MassStorageFile']['backendPostprocess']['Local'] == 'client'
+        assert getConfig('Output')[TestMassStorageClient.fileName]['backendPostprocess']['Local'] == 'client'
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
@@ -84,7 +96,7 @@ class TestMassStorageClient(GangaUnitTest):
 
         from Ganga.Utility.Config import getConfig
 
-        assert getConfig('Output')['MassStorageFile']['backendPostprocess']['Local'] == 'client'
+        assert getConfig('Output')[TestMassStorageClient.fileName]['backendPostprocess']['Local'] == 'client'
 
         j = jobs[-1]
 
@@ -111,4 +123,9 @@ class TestMassStorageClient(GangaUnitTest):
             assert len(sj.outputfiles) == 2
 
         TestMassStorageClient.cleanUp()
+
+class TestSharedClient(TestMassStorageClient):
+    """test for sjid in filename names explain each test"""
+
+    fileName = 'SharedFile'
 

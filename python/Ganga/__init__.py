@@ -732,7 +732,7 @@ sharedFileBackendPost = {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dir
 output_config.addOption('SharedFile',
                        {'fileExtensions': [''],
                         'backendPostprocess': sharedFileBackendPost,
-                        'uploadOptions': {'path': '/tmp/sharedStorage', 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir -p'},
+                        'uploadOptions': {'path': None, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
                         'defaultProtocol': 'file://'},
                         docstr_Ext % ('Shared Storage', 'SharedFS'))
 

@@ -54,7 +54,11 @@ class MassStorageFile(IGangaFile):
     _exportmethods = ["location", "get", "put", "setLocation", "remove", "accessURL"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
-        """ namePattern is the pattern of the output file that has to be written into mass storage
+        """
+        MassStorageFile construction
+        Args:
+            namePattern (str): is the pattern of the output file that has to be written into mass storage
+            localDir (str): This is the optional local directory of a file to be uploaded to mass storage
         """
         super(MassStorageFile, self).__init__()
         self._setNamePath(_namePattern=namePattern, _localDir=localDir)
@@ -596,6 +600,20 @@ class SharedFile(MassStorageFile):
         _schema = MassStorageFile._schema.inherit_copy()
         _category = 'gangafiles'
         _name = 'SharedFile'
+
+    # Copied from MassStorageFile to keep interface
+    def __init__(self, namePattern='', localDir='', **kwds):
+        """
+        SharedFile construction
+        Args:
+            namePattern (str): is the pattern of the output file that has to be written into mass storage
+            localDir (str): This is the optional local directory of a file to be uploaded to mass storage
+        """
+        if getConfig('Output')[self._name]['uploadOptions']['path'] is None:
+            logger.error("In order to use the SharedFile class you will need to define the path directory in your .gangarc")
+            raise GangaException("In order to use the SharedFile class you will need to define the path directory in your .gangarc")
+
+        super(SharedFile, self).__init__(namePattern, localDir, **kwds)
 
 # add SharedFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate SharedFile() objects via config file)
