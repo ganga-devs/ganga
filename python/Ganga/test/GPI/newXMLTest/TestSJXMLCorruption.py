@@ -18,7 +18,7 @@ class TestSJXMLCorruption(GangaUnitTest):
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
         extra_opts = [('TestingFramework', 'AutoCleanup', 'False'), ('Configuration', 'AutoStartReg', global_AutoStartReg)]
-        super(TestSJXMLCorruption, self).setUp()
+        super(TestSJXMLCorruption, self).setUp(extra_opts=extra_opts)
 
     def test_a_JobConstruction(self):
         """ First construct the Job object (singular)"""
