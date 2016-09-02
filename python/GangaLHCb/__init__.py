@@ -78,7 +78,7 @@ def _store_dirac_environment():
       except SyntaxError:
         msg = 'LHCbDirac version {version} does not exist'.format(version=diracversion)
         logger.error(msg)
-        sys.exit()
+        sys.exit(-1)
     logger.info("Using LHCbDirac version %s", diracversion)
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
