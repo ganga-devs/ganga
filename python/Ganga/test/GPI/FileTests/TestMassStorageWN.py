@@ -36,6 +36,7 @@ class TestMassStorageWN(GangaUnitTest):
                     ('TestingFramework', 'AutoCleanup', 'False'),
                     ('Output', TestMassStorageWN.fileName, TestMassStorageWN.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
+        os.system( 'mkdir -p %s' % TestMassStorageWN.outputFilePath )
         super(TestMassStorageWN, self).setUp(extra_opts=extra_opts)
 
     @classmethod
