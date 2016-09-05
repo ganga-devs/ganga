@@ -8,9 +8,8 @@ class TestSubjobs(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestSubjobs, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
+        extra_opts = [ ('TestingFramework', 'AutoCleanup', 'False') ]
+        super(TestSubjobs, self).setUp(extra_opts=extra_opts)
 
     def testLargeJobSubmission(self):
         """
