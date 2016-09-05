@@ -163,26 +163,35 @@ class MassStorageFile(IGangaFile):
             tmpLocations = self.locations
         return tmpLocations
 
-    def get(self):
+    def get(self, localPath=''):
         """
         Retrieves locally all files matching this MassStorageFile object pattern
         """
 
-        to_location = self.localDir
+        if not localPath:
+            to_location = self.localDir
+            # FIXME? THIS IS POTENTIALLY VERY, VERY UNEXPECTED/UNDOCUMENTED BEHAVIOUR
+            if not os.path.isdir(to_location):
+                if self._getParent() is not None:
+                    try:
+                        new_dir = self.getJobObject().outputdir
+                        if to_location:
+                            logger.warning("Setting get path of file to be: '%s' from: '%s'" % (new_dir, to_location))
+                        to_location = new_dir
+                    except AssertionError:
+                        ## CANNOT auto-make a path so lets not try to, it causes problems
+                        logger.error("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
+                        pass
+                else:
+                    logger.error("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
+                    return
+        else:
+            to_location = localPath
 
-        if not os.path.isdir(self.localDir):
-            if self._getParent() is not None:
-                to_location = self.getJobObject().outputdir
-            else:
-                logger.error("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
-                return
-
-        cp_cmd = getConfig('Output')['MassStorageFile'][
-            'uploadOptions']['cp_cmd']
+        cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']
 
         for location in self.locations:
-            targetLocation = os.path.join(
-                to_location, os.path.basename(location))
+            targetLocation = os.path.join(to_location, os.path.basename(location))
             os.system('%s %s %s' % (cp_cmd, location, targetLocation))
 
     def getWNScriptDownloadCommand(self, indent):

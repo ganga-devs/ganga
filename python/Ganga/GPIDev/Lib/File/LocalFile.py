@@ -224,6 +224,19 @@ class LocalFile(IGangaFile):
 
         return
 
+    def get(self, localPath=''):
+        """
+        Method to get the Local file and/or to check that a file exists locally
+        Args:
+            localPath (str): (Optional) path where the file is to be copied to
+        """
+
+        if not localPath:
+            assert path.isfile(path.join(self.localDir, self.namePattern))
+            pass
+
+        shutil.copy(path.join(self.localDir, self.namePattern), path.join(localPath, self.namePattern))
+
     def put(self):
 	"""
         Copy the file to the detination (in the case of LocalFile the localDir)
@@ -251,21 +264,24 @@ class LocalFile(IGangaFile):
         # For LocalFile this is where the file is stored so don't remove it
         pass
 
+
+    def getWNScriptDownloadCommand(self, indent):
+
+        # create symlink
+        shortScript = """
+# create symbolic links for LocalFiles
+for f in ###FILELIST###:
+    os.symlink(f, os.path.basename(f))
+"""
+        from Ganga.GPIDev.Lib.File import FileUtils
+        shortScript = FileUtils.indentScript(shortScript, '###INDENT####')
+
+        shortScript = shortScript.replace('###FILELIST###', "%s" % self.getFilenameList())
+
+        return shortScript
+
 ## rcurrie Attempted to implement for 6.1.9 but commenting out due to not being able to correctly make use of setLocation
 
-#    def getWNScriptDownloadCommand(self, indent):
-#
-#        script = """
-####INDENT###os.system('###CP_COMMAND')
-#
-#"""
-#        full_path = path.join(self.localDir, self.namePattern)
-#        replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : 'cp %s .' % full_path}
-#
-#        for k, v in replace_dict.iteritems():
-#            script = script.replace(k, v)
-#
-#        return script
 #
 #
 #    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):

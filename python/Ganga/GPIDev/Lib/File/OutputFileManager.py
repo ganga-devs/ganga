@@ -67,7 +67,7 @@ def getOutputSandboxPatterns(job):
 
             outputFileClassName = getName(outputFile)
 
-            if outputFilePostProcessingOnClient(job, outputFileClassName) or outputFileClassName == 'LocalFile':
+            if outputFilePostProcessingOnClient(job, outputFileClassName):
                 if outputFile.namePattern not in outputPatterns:
                     if outputFile.compressed:
                         outputPatterns.append('%s.gz' % outputFile.namePattern)
@@ -97,16 +97,10 @@ def getInputFilesPatterns(job):
 
         inputFileClassName = getName(inputFile)
 
-        if inputFileClassName == 'LocalFile':
-            for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
-                if currentFile not in inputPatterns:
-                    inputPatterns.append(currentFile)
-
-        elif outputFilePostProcessingOnClient(job, inputFileClassName):
+        if outputFilePostProcessingOnClient(job, inputFileClassName):
 
             # download in temp dir
-            inputFile.localDir = tmpDir
-            inputFile.get()
+            inputFile.get(localPath=tmpDir)
 
             for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
                 if currentFile not in inputPatterns:
@@ -129,7 +123,7 @@ def getOutputSandboxPatternsForInteractive(job):
 
         outputFileClassName = getName(outputFile)
 
-        if outputFileClassName == 'LocalFile' or (outputFileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):
+        if outputFilePostProcessingOnClient(job, outputFileClassName):
             if outputFile.compressed:
                 patternsToSandbox.append('%s.gz' % outputFile.namePattern)
                 patternsToZip.append(outputFile.namePattern)
@@ -158,7 +152,7 @@ def getWNCodeForOutputSandbox(job, files, jobid):
 
             outputFileClassName = getName(outputFile)
 
-            if outputFileClassName == 'LocalFile' or (outputFileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):
+            if outputFilePostProcessingOnClient(job, outputFileClassName):
                 patternsToSandbox.append(outputFile.namePattern)
 
     insertScript = """\n
@@ -218,29 +212,6 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     insertScript = """\n
 """
 
-    # first, go over any LocalFiles in GangaDatasets to be transferred
-    # The LocalFiles in inputfiles have already been dealt with
-    if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
-        for inputFile in job.inputdata.files:
-            inputfileClassName = getName(inputFile)
-
-            if inputfileClassName == "LocalFile":
-
-                # special case for LocalFile
-                if getName(job.backend) in ['Localhost', 'Batch', 'LSF', 'Condor', 'PBS']:
-                    # create symlink
-                    shortScript = """
-# create symbolic links for LocalFiles
-for f in ###FILELIST###:
-   os.symlink(f, os.path.basename(f)) 
-"""
-                    from Ganga.GPIDev.Lib.File import FileUtils
-                    shortScript = FileUtils.indentScript(shortScript, '###INDENT####')
-
-                    insertScript += shortScript
-
-                    insertScript = insertScript.replace('###FILELIST###', "%s" % inputFile.getFilenameList())
-
     # if GangaDataset is used, check if they want the inputfiles transferred
     inputfiles_list = job.inputfiles
     if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
@@ -250,13 +221,12 @@ for f in ###FILELIST###:
 
         inputfileClassName = getName(inputFile)
 
-        if outputFilePostProcessingOnWN(job, inputfileClassName):
-            inputFile.processWildcardMatches()
-            if inputFile.subfiles:
-                for subfile in inputFile.subfiles:
-                    insertScript += subfile.getWNScriptDownloadCommand(indent)
-            else:
-                insertScript += inputFile.getWNScriptDownloadCommand(indent)
+        inputFile.processWildcardMatches()
+        if inputFile.subfiles:
+            for subfile in inputFile.subfiles:
+                insertScript += subfile.getWNScriptDownloadCommand(indent)
+        else:
+            insertScript += inputFile.getWNScriptDownloadCommand(indent)
 
     insertScript = insertScript.replace('###INDENT###', indent)
 
@@ -279,12 +249,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
             backendClassName = getName(job.backend)
 
             if outputFile.compressed:
-                if outputfileClassName == 'LocalFile' and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
-                    patternsToZip.append(outputFile.namePattern)
-                elif outputfileClassName != 'LocalFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
-                    patternsToZip.append(outputFile.namePattern)
-                elif outputfileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputfileClassName) and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
-                    patternsToZip.append(outputFile.namePattern)
+                patternsToZip.append(outputFile.namePattern)
 
             if outputfileClassName not in outputFilesProcessedOnWN.keys():
                 outputFilesProcessedOnWN[outputfileClassName] = []
