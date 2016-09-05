@@ -61,8 +61,7 @@ class TestSJXMLCorruption(GangaUnitTest):
 
     def test_b_TestRemoveSJXML(self):
         # Remove XML force to use backup
-        from Ganga.GPI import jobs
-        XMLFileName = getSJXMLFile(jobs(0).subjobs(0))
+        XMLFileName = getSJXMLFile((0, 0))
 
         unlink(XMLFileName)
 
@@ -95,7 +94,7 @@ class TestSJXMLCorruption(GangaUnitTest):
         stripProxy(sj)._getRegistry().flush_all()
 
         global global_AutoStartReg
-        global_AutoStartReg = False
+        global_AutoStartReg = True
 
     def test_d_TestCorruptXML(self):
         # Corrupt the XML file
