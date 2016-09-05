@@ -10,7 +10,7 @@ from Ganga.testlib.monitoring import run_until_completed
 
 
 @external
-def test_job_submit(gpi):
+def test_job_submit_and_monitor(gpi):
     from Ganga.GPI import Job, LCG
 
     j = Job()
@@ -18,6 +18,7 @@ def test_job_submit(gpi):
     j.submit()
 
     assert j.status != 'new'
+    stripProxy(LCG).master_updateMonitoringInformation([stripProxy(j)])
 
 @external
 def test_job_kill(gpi):
