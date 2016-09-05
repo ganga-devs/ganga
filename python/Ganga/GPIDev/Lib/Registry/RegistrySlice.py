@@ -449,7 +449,9 @@ class RegistrySlice(object):
             ds += self.objects._private_display(self, this_format, default_width, markup)
 
         else:
-            for obj_i in self.objects.keys():
+            for obj_i in self.ids():
+                if isinstance(self.objects[obj_i], IncompleteObject):
+                    continue
 
                 cached_data = None
 
