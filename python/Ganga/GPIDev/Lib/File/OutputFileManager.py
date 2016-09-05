@@ -50,13 +50,10 @@ def outputFilePostProcessingTestForWhen(job, outputFileClassName, when):
 
     return False
 
-"""
-Intented for grid backends where we have to set the outputsandbox patterns for the output file types that have to be processed on the client
-"""
-
-
 def getOutputSandboxPatterns(job):
-
+    """
+    Intented for grid backends where we have to set the outputsandbox patterns for the output file types that have to be processed on the client
+    """
     outputPatterns = []
 
     if len(job.outputfiles) > 0:
@@ -76,12 +73,10 @@ def getOutputSandboxPatterns(job):
 
     return outputPatterns
 
-"""
-we have to set the inputsandbox patterns for the input files that will be copied from the client, also write the commands for downloading input files from the WN
-"""
-
-
 def getInputFilesPatterns(job):
+    """
+    we have to set the inputsandbox patterns for the input files that will be copied from the client, also write the commands for downloading input files from the WN
+    """
 
     tmpDir = tempfile.mkdtemp()
 
@@ -109,12 +104,10 @@ def getInputFilesPatterns(job):
     return inputPatterns, tmpDir
 
 
-"""
-This should be used from only from Interactive backend
-"""
-
-
 def getOutputSandboxPatternsForInteractive(job):
+    """
+    This should be used from only from Interactive backend
+    """
 
     patternsToSandbox = [getConfig('Output')['PostProcessLocationsFileName']]
     patternsToZip = []
@@ -133,13 +126,11 @@ def getOutputSandboxPatternsForInteractive(job):
     return (patternsToSandbox, patternsToZip)
 
 
-"""
-This should be used from Local and Batch backend, where there is code on the WN for 
-sending the output(optionally compressed before that) to the outputsandbox
-"""
-
-
 def getWNCodeForOutputSandbox(job, files, jobid):
+    """
+    This should be used from Local and Batch backend, where there is code on the WN for
+    sending the output(optionally compressed before that) to the outputsandbox
+    """
 
     patternsToSandbox = []
     patternsToZip = []
@@ -319,7 +310,11 @@ def expandWildCards(filelist):
 
 
 def getWNCodeForInputdataListCreation(job, indent):
-    """generate the code to create ths inputdata list on the worker node"""
+    """generate the code to create ths inputdata list on the worker node
+    Args:
+        job (Job): Job object which this file is being generated for
+        indent (str): Indent level in the script of choice which is to be placed infront of generated code
+    """
     insertScript = """\n
 ###INDENT###open("__GangaInputData.txt__", "w").write( "\\n".join( ###FILELIST### ) )
 """
