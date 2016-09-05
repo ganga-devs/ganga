@@ -8,10 +8,8 @@ class TestCoreTasks(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Tasks object isn't destroyed between tests"""
-        super(TestCoreTasks, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
-        setConfigOption('Tasks', 'TaskLoopFrequency', 1)
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False'), ('Tasks', 'TaskLoopFrequency', 1)]
+        super(TestCoreTasks, self).setUp(extra_opts=extra_opts)
         self._numTasks = 50
 
     def createTask(self):
