@@ -227,12 +227,14 @@ class TestDiracCommands(object):
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
+    @pytest.mark.xfail(raises=AssertionError)
     def test_a_replicateFile(self, dirac_job):
         new_location = 'UKI-SOUTHGRID-OX-HEP-disk'
         confirm = execute('replicateFile("%s","%s","")' % (dirac_job.get_file_lfn, new_location))
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
+    @pytest.mark.xfail(raises=AssertionError)
     def test_b_removeReplica(self, dirac_job):
         new_location = 'UKI-SOUTHGRID-OX-HEP-disk'
         confirm = execute('removeReplica("%s","%s")' % (dirac_job.get_file_lfn, new_location))
@@ -244,6 +246,7 @@ class TestDiracCommands(object):
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
+    @pytest.mark.xfail(raises=AssertionError)
     def test_uploadFile(self, dirac_job):
         new_lfn = '%s_upload_file' % os.path.dirname(dirac_job.get_file_lfn)
         location = 'UKI-SOUTHGRID-RALPP-disk'
@@ -257,6 +260,7 @@ class TestDiracCommands(object):
         confirm_remove = execute('removeFile("%s")' % new_lfn)
         assert confirm_remove['OK'], 'Command not executed successfully'
 
+    @pytest.mark.xfail(raises=AssertionError)
     def test_addFile(self, dirac_job, tmpdir):
         new_lfn = '%s_add_file' % os.path.dirname(dirac_job.get_file_lfn)
         location = 'UKI-SOUTHGRID-RALPP-disk'
