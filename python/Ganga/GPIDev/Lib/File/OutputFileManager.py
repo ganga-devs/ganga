@@ -194,10 +194,13 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     Generate the code to be run on the WN to download input files
     """
 
+    if job.master is not None:
+        job = job.master
+
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
     if job.inputfiles is None or len(job.inputfiles) == 0 and\
-            (not job.inputdata or ((not isType(job.inputdata, GangaDataset)) or\
-                not job.inputdata.treat_as_inputfiles )):
+            not (job.inputdata or (isinstance(job.inputdata, GangaDataset) and\
+                job.inputdata.treat_as_inputfiles)):
         return ""
 
     insertScript = """\n

@@ -106,7 +106,7 @@ class RegistrySlice(object):
         from Ganga.GPIDev.Lib.Job.Job import Job
 
         if isType(minid, Job):
-            if minid.master:
+            if minid.master is not None:
                 minid = minid.master.id
             else:
                 minid = minid.id
@@ -114,7 +114,7 @@ class RegistrySlice(object):
                 maxid = minid
 
         if isType(maxid, Job):
-            if maxid.master:
+            if maxid.master is not None:
                 maxid = maxid.master.id
             else:
                 maxid = maxid.id
