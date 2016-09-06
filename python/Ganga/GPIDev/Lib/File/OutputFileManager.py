@@ -206,6 +206,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     insertScript = """\n
 """
 
+    inputfiles_list = []
     if not job.inputfiles:
         # if GangaDataset is used, check if they want the inputfiles transferred
         if job.master is not None:
