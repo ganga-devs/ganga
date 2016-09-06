@@ -83,7 +83,7 @@ def getInputFilesPatterns(job):
     inputPatterns = []
 
     # if GangaDataset is used, check if they want the inputfiles transferred
-    inputfiles_list = copy.deepcopy(job.inputfiles)
+    inputfiles_list = job.inputfiles if job.inputfiles else []
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
     if not job.subjobs and job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
         inputfiles_list += job.inputdata.files
