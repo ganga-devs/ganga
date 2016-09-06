@@ -54,9 +54,16 @@ def random_str():
 JobInfo = namedtuple('JobInfo', ['id', 'get_file_lfn', 'remove_file_lfn'])
 
 
-@pytest.yield_fixture(scope='class')
-def dirac_job():
+@pytest.yield_fixture(scope='module')
+def load_config():
+    """Load the Ganga config files before the test and clean them up afterwards"""
     load_config_files()
+    yield
+    clear_config()
+
+
+@pytest.yield_fixture(scope='class')
+def dirac_job(load_config):
 
     sandbox_str = random_str()
     time.sleep(0.5)
@@ -137,7 +144,20 @@ def dirac_job():
 
     confirm = execute('removeFile("%s")' % get_file_lfn)
     assert confirm['OK'], 'Command not executed successfully'
-    clear_config()
+
+
+@pytest.fixture(scope='module')
+def dirac_sites(load_config):
+    """Grab a shuffled list of UK DIRAC storage elements"""
+    site_script = dedent("""
+        from DIRAC.Core.Utilities.SiteSEMapping import getSEsForCountry
+        output(getSEsForCountry('uk'))
+        """)
+    output = execute(site_script)
+    assert output['OK'], 'Could not fetch list of SEs'
+    sites = output['Value']
+    random.shuffle(sites)
+    return sites
 
 
 @external
@@ -227,48 +247,64 @@ class TestDiracCommands(object):
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
-    def test_a_replicateFile(self, dirac_job):
-        new_location = 'UKI-SOUTHGRID-OX-HEP-disk'
-        confirm = execute('replicateFile("%s","%s","")' % (dirac_job.get_file_lfn, new_location))
-        logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+    def test_replicateFile(self, dirac_job, dirac_sites):
 
-    def test_b_removeReplica(self, dirac_job):
-        new_location = 'UKI-SOUTHGRID-OX-HEP-disk'
-        confirm = execute('removeReplica("%s","%s")' % (dirac_job.get_file_lfn, new_location))
-        logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        for new_location in dirac_sites:
+            confirm = execute('replicateFile("%s","%s","")' % (dirac_job.get_file_lfn, new_location))
+            logger.info(confirm)
+            if not confirm['OK']:
+                continue  # If we couldn't add the file, try the next site
+            confirm = execute('removeReplica("%s","%s")' % (dirac_job.get_file_lfn, new_location))
+            logger.info(confirm)
+            assert confirm['OK'], 'Command not executed successfully'
+            break  # Once we found a working site, stop looking
+        else:
+            raise AssertionError('No working site found')
 
     def test_splitInputData(self, dirac_job):
         confirm = execute('splitInputData("%s","1")' % dirac_job.get_file_lfn)
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
-    def test_uploadFile(self, dirac_job):
-        new_lfn = '%s_upload_file' % os.path.dirname(dirac_job.get_file_lfn)
-        location = 'UKI-SOUTHGRID-RALPP-disk'
+    def test_uploadFile(self, tmpdir, dirac_job, dirac_sites):
 
-        add_file = open('upload_file', 'w')
-        add_file.write(random_str())
-        add_file.close()
-
-        confirm = execute('uploadFile("%s","upload_file","%s")' % (new_lfn, location))
-        assert isinstance(confirm, dict), 'Command not executed successfully'
-        confirm_remove = execute('removeFile("%s")' % new_lfn)
-        assert confirm_remove['OK'], 'Command not executed successfully'
-
-    def test_addFile(self, dirac_job, tmpdir):
         new_lfn = '%s_add_file' % os.path.dirname(dirac_job.get_file_lfn)
-        location = 'UKI-SOUTHGRID-RALPP-disk'
-        temp_file = tmpdir.join('add_file')
-        temp_file.write(random_str())
-        confirm = execute('addFile("%s","%s","%s","")' % (new_lfn, temp_file, location))
-        logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
-        confirm_remove = execute('removeFile("%s")' % new_lfn)
-        logger.info(confirm)
 
-        assert confirm_remove['OK'], 'Command not executed successfully'
+        for location in dirac_sites:
+            temp_file = tmpdir.join('upload_file')
+            temp_file.write(random_str())
+            logger.info('Adding file to %s', location)
+            confirm = execute('uploadFile("%s","%s",["%s"],"")' % (new_lfn, temp_file, location))
+            logger.info(confirm)
+            if confirm.get(location, False):
+                continue  # If we couldn't add the file, try the next site
+            logger.info('Removing file from %s', location)
+            confirm_remove = execute('removeFile("%s")' % new_lfn)
+            logger.info(confirm)
+            assert confirm_remove['OK'], 'Command not executed successfully'
+            break  # Once we found a working site, stop looking
+        else:
+            raise AssertionError('No working site found')
+
+    def test_addFile(self, tmpdir, dirac_job, dirac_sites):
+
+        new_lfn = '%s_add_file' % os.path.dirname(dirac_job.get_file_lfn)
+
+        for location in dirac_sites:
+            temp_file = tmpdir.join('add_file')
+            temp_file.write(random_str())
+            logger.info('Adding file to %s', location)
+            confirm = execute('addFile("%s","%s","%s","")' % (new_lfn, temp_file, location))
+            logger.info(confirm)
+            if not confirm['OK']:
+                continue  # If we couldn't add the file, try the next site
+            logger.info('Removing file from %s', location)
+            confirm_remove = execute('removeFile("%s")' % new_lfn)
+            logger.info(confirm)
+            assert confirm_remove['OK'], 'Command not executed successfully'
+            break  # Once we found a working site, stop looking
+        else:
+            raise AssertionError('No working site found')
 
     def test_getJobGroupJobs(self, dirac_job):
         confirm = execute('getJobGroupJobs("")')
