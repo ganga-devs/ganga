@@ -6,8 +6,9 @@ import datetime
 import time
 import os
 import shutil
+import copy
 
-class TestLocalFile(GangaUnitTest):
+class TestLocalFileClient(GangaUnitTest):
     """test for sjid in filename names explain each test"""
 
     _managed_files = []
@@ -17,9 +18,9 @@ class TestLocalFile(GangaUnitTest):
 
     # This sets up a LocalFileConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     LocalFileConfig = {'fileExtensions': [''],
-                             'uploadOptions': {},
-                             'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
-                                                    'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
+                       'uploadOptions': {},
+                       'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
+                                              'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
 
     def setUp(self):
         """
@@ -28,9 +29,9 @@ class TestLocalFile(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', 'LocalFile', TestLocalFile.LocalFileConfig),
+                    ('Output', 'LocalFile', self.LocalFileConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
-        super(TestLocalFile, self).setUp(extra_opts=extra_opts)
+        super(TestLocalFileClient, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
     def cleanUp():
@@ -41,9 +42,9 @@ class TestLocalFile(GangaUnitTest):
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
 
-        for file_ in TestLocalFile._managed_files:
+        for file_ in TestLocalFileClient._managed_files:
             os.unlink(file_)
-        TestLocalFile._managed_files = []
+        TestLocalFileClient._managed_files = []
 
     def test_a_testClientSideSubmit(self):
         """Test the client side code whilst stil using the Local backend"""
@@ -52,19 +53,19 @@ class TestLocalFile(GangaUnitTest):
 
         from Ganga.Utility.Config import getConfig
 
-        TestLocalFile.cleanUp()
+        TestLocalFileClient.cleanUp()
 
         assert getConfig('Output')['LocalFile']['backendPostprocess']['Local'] == 'client'
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
         file_2 = generate_unique_temp_file(_ext)
-        TestLocalFile._managed_files.append(file_1)
-        TestLocalFile._managed_files.append(file_2)
+        TestLocalFileClient._managed_files.append(file_1)
+        TestLocalFileClient._managed_files.append(file_2)
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestLocalFile.sj_len) ])
+        j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestLocalFileClient.sj_len) ])
         j.outputfiles = [LocalFile(namePattern='*'+_ext)]
         j.submit()
 
@@ -99,5 +100,11 @@ class TestLocalFile(GangaUnitTest):
 
             assert len(sj.outputfiles) == 2
 
-        TestLocalFile.cleanUp()
+        TestLocalFileClient.cleanUp()
+
+#class TestLocalFileWN(TestLocalFileClient):
+#    """test for sjid in filename names explain each test"""
+#
+#    LocalFileConfig = copy.deepcopy(TestLocalFileClient.LocalFileConfig)
+#    LocalFileConfig['backendPostprocess']['Local'] = 'WN'
 

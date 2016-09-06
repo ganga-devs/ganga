@@ -35,7 +35,6 @@ class LocalFile(IGangaFile):
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
                                                 sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                                      'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
-                                     #'output_location': SimpleItem(defvalue=None, typelist=[str, None], hidden=1, copyable=1, doc="path of output location on disk")
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"
@@ -48,7 +47,6 @@ class LocalFile(IGangaFile):
         super(LocalFile, self).__init__()
 
         self.tmp_pwd = None
-        self.output_location = None
 
         if isinstance(namePattern, str):
             self.namePattern = namePattern
@@ -271,41 +269,41 @@ class LocalFile(IGangaFile):
         shortScript = """
 # create symbolic links for LocalFiles
 for f in ###FILELIST###:
-    os.symlink(f, os.path.basename(f))
+    if not os.path.exists(os.path.basename(f)):
+        os.symlink(f, os.path.basename(f))
 """
         from Ganga.GPIDev.Lib.File import FileUtils
-        shortScript = FileUtils.indentScript(shortScript, '###INDENT####')
+        shortScript = FileUtils.indentScript(shortScript, '###INDENT###')
 
         shortScript = shortScript.replace('###FILELIST###', "%s" % self.getFilenameList())
 
         return shortScript
 
-## rcurrie Attempted to implement for 6.1.9 but commenting out due to not being able to correctly make use of setLocation
 
-#
-#
-#    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
-#
-#        cp_template = """
-####INDENT###os.system("###CP_COMMAND###")
-#"""
-#        script = ""
-#
-#        for this_file in outputFiles:
-#            filename = this_file.namePattern
-#            cp_cmd = 'cp %s %s' % (filename, self.output_location)
-#
-#            this_cp = str(cp_template)
-#
-#            replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd}
-#
-#            for k, v in replace_dict.iteritems():
-#                print("Replace %s : %s" % (k, v))
-#                this_cp = this_cp.replace(k, v)
-#
-#            script = this_cp
-#            break
-#
-#        return script
-#
+    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
+
+        cp_template = """
+###INDENT###os.system("###CP_COMMAND###")
+"""
+        script = ""
+
+        j = self.getJobObject()
+        output_dir = j.getOutputWorkspace(create=True).getPath()
+
+        for this_file in outputFiles:
+            filename = this_file.namePattern
+            cp_cmd = 'cp %s %s' % (filename, output_dir)
+
+            this_cp = str(cp_template)
+
+            replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd}
+
+            for k, v in replace_dict.iteritems():
+                this_cp = this_cp.replace(k, v)
+
+            script = this_cp
+            break
+
+        return script
+
 
