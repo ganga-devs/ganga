@@ -51,11 +51,7 @@ class TestLocalFileClient(GangaUnitTest):
 
         from Ganga.GPI import LocalFile, Job, ArgSplitter
 
-        from Ganga.Utility.Config import getConfig
-
         TestLocalFileClient.cleanUp()
-
-        assert getConfig('Output')['LocalFile']['backendPostprocess']['Local'] == 'client'
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
@@ -76,10 +72,6 @@ class TestLocalFileClient(GangaUnitTest):
         from Ganga.GPIDev.Base.Proxy import stripProxy
 
         from GangaTest.Framework.utils import sleep_until_completed
-
-        from Ganga.Utility.Config import getConfig
-
-        assert getConfig('Output')['LocalFile']['backendPostprocess']['Local'] == 'client'
 
         j = jobs[-1]
 
@@ -102,9 +94,9 @@ class TestLocalFileClient(GangaUnitTest):
 
         TestLocalFileClient.cleanUp()
 
-#class TestLocalFileWN(TestLocalFileClient):
-#    """test for sjid in filename names explain each test"""
-#
-#    LocalFileConfig = copy.deepcopy(TestLocalFileClient.LocalFileConfig)
-#    LocalFileConfig['backendPostprocess']['Local'] = 'WN'
+class TestLocalFileWN(TestLocalFileClient):
+    """test for sjid in filename names explain each test"""
+
+    LocalFileConfig = copy.deepcopy(TestLocalFileClient.LocalFileConfig)
+    LocalFileConfig['backendPostprocess']['Local'] = 'WN'
 
