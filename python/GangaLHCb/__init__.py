@@ -63,7 +63,7 @@ def _store_root_version():
 
 
 def _store_dirac_environment():
-    from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache, get_env
+    from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache
     platform = os.environ['CMTOPT']
     diracversion = Ganga.Utility.Config.getConfig('LHCb')['DiracVersion']
     fdir = os.path.join(os.path.expanduser("~/.cache/Ganga/GangaLHCb"), platform)
@@ -79,6 +79,10 @@ def _store_dirac_environment():
         msg = 'LHCbDirac version {version} does not exist'.format(version=diracversion)
         logger.error(msg)
         sys.exit(-1)
+      except Exception :
+        msg = 'Unable to load LHCbDirac environment'
+        logger.error(msg)
+        raise 
     logger.info("Using LHCbDirac version %s", diracversion)
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
