@@ -194,22 +194,30 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     Generate the code to be run on the WN to download input files
     """
 
-    if job.master is not None:
-        job = job.master
-
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
     if job.inputfiles is None or len(job.inputfiles) == 0 and\
             not (job.inputdata or (isinstance(job.inputdata, GangaDataset) and\
                 job.inputdata.treat_as_inputfiles)):
-        return ""
+        if job.master is None or len(job.master.inputfiles) == 0 and\
+                not (job.master.inputdata or (isinstance(job.master.inputdata, GangaDataset) and\
+                                job.master.inputdata.treat_as_inputfiles)):
+            return ""
 
     insertScript = """\n
 """
 
-    # if GangaDataset is used, check if they want the inputfiles transferred
-    inputfiles_list = job.inputfiles
-    if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
-        inputfiles_list += job.inputdata.files
+    if not job.inputfiles:
+        # if GangaDataset is used, check if they want the inputfiles transferred
+        inputfiles_list = job.master.inputfiles
+    else:
+        inputfiles_list = job.inputfiles
+
+    if job.inputdata:
+        if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
+            inputfiles_list += job.inputdata.files
+    else:
+        if job.master.inputdata and isType(job.master.inputdata, GangaDataset) and job.master.inputdata.treat_as_inputfiles:
+            inputfiles_list += job.master.inputdata.files
 
     for inputFile in inputfiles_list:
 
