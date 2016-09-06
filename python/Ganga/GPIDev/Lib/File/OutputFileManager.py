@@ -208,14 +208,15 @@ def getWNCodeForDownloadingInputFiles(job, indent):
 
     if not job.inputfiles:
         # if GangaDataset is used, check if they want the inputfiles transferred
-        inputfiles_list = job.master.inputfiles
+        if job.master is not None:
+            inputfiles_list = job.master.inputfiles
     else:
         inputfiles_list = job.inputfiles
 
     if job.inputdata:
         if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
             inputfiles_list += job.inputdata.files
-    else:
+    elif job.master is not None:
         if job.master.inputdata and isType(job.master.inputdata, GangaDataset) and job.master.inputdata.treat_as_inputfiles:
             inputfiles_list += job.master.inputdata.files
 
