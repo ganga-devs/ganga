@@ -130,7 +130,7 @@ def dirac_job(load_config):
 
     output_data_info = execute('getOutputDataInfo("%s")' % job_id)
     logger.info(output_data_info)
-    while not output_data_info.get('OK', True):
+    while not output_data_info:
         time.sleep(5)
         output_data_info = execute('getOutputDataInfo("%s")' % job_id)
         logger.info("\n%s\n", output_data_info)
