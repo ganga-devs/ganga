@@ -1,3 +1,4 @@
+import pytest
 from Ganga.GPIDev.Base.Proxy import stripProxy
 
 try:
@@ -8,8 +9,14 @@ except ImportError:
 from Ganga.testlib.mark import external
 from Ganga.testlib.monitoring import run_until_completed
 
+from Ganga.Utility.Config.Config import getConfig
+from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
+load_config_files()
+glite_status = getConfig('LCG')['GLITE_ENABLE']
+clear_config()
 
 @external
+@pytest.mark.skipif(glite_status == False, reason="Cannot run test GLITE not enabled")
 def test_job_submit_and_monitor(gpi):
     from Ganga.GPI import Job, LCG
 
@@ -21,6 +28,7 @@ def test_job_submit_and_monitor(gpi):
     stripProxy(LCG).master_updateMonitoringInformation([stripProxy(j)])
 
 @external
+@pytest.mark.skipif(glite_status == False, reason="Cannot run test GLITE not enabled")
 def test_job_kill(gpi):
     from Ganga.GPI import Job, LCG
 
@@ -29,7 +37,7 @@ def test_job_kill(gpi):
     j.submit()
     j.kill()
 
-
+@pytest.mark.skipif(glite_status == False, reason="Cannot run test GLITE not enabled")
 def test_submit_kill_resubmit(gpi):
     """
     Test that a simple submit-kill-resubmit-kill cycle works
@@ -57,7 +65,7 @@ def test_submit_kill_resubmit(gpi):
     with patch('Ganga.Lib.LCG.Grid.cancel', return_value=True):
         j.kill()
 
-
+@pytest.mark.skipif(glite_status == False, reason="Cannot run test GLITE not enabled")
 def test_submit_monitor(gpi):
     """
     Test that an LCG job can be monitored
@@ -95,3 +103,4 @@ def test_submit_monitor(gpi):
 
     with patch('Ganga.Lib.LCG.Grid.cancel', return_value=True):
         j.kill()
+
