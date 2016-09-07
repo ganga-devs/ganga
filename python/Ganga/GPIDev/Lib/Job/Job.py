@@ -12,7 +12,7 @@ import sys
 
 import Ganga.Core.FileWorkspace
 from Ganga.GPIDev.MonitoringServices import getMonitoringObject
-from Ganga.Core import GangaException, IncompleteJobSubmissionError, JobManagerError, Sandbox
+from Ganga.Core import GangaException, IncompleteJobSubmissionError, JobManagerError, Sandbox, SplitterError
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
@@ -1391,7 +1391,6 @@ class Job(GangaObject):
         else:
             rjobs = [self]
 
-
         return rjobs
 
     def submit(self, keep_going=None, keep_on_fail=None, prepare=False):
@@ -1472,7 +1471,7 @@ class Job(GangaObject):
             # split into subjobs
             rjobs = self._doSplitting()
 
-            if not rjobs:
+            if not rjobs or len(rjobs) == 1 and rjobs[0] is self:
                 raise SplitterError("Splitter '%s' failed to produce any subjobs from splitting. Aborting submit" % (getName(self.splitter),))
 
             #
