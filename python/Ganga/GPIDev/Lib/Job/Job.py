@@ -1471,7 +1471,7 @@ class Job(GangaObject):
             # split into subjobs
             rjobs = self._doSplitting()
 
-            if not rjobs or len(rjobs) == 1 and rjobs[0] is self:
+            if not rjobs or len(rjobs) == 1 and rjobs[0] is self and self.splitter is not None:
                 raise SplitterError("Splitter '%s' failed to produce any subjobs from splitting. Aborting submit" % (getName(self.splitter),))
 
             #
