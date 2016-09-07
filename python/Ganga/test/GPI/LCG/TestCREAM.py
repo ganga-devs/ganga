@@ -1,12 +1,19 @@
 import re
 import subprocess
+import pytest
 
 from Ganga.Utility.Config import getConfig
 
 from Ganga.testlib.mark import external
 
+from Ganga.Utility.Config.Config import getConfig
+from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
+load_config_files()
+glite_status = getConfig('LCG')['GLITE_ENABLE']
+clear_config()
 
 @external
+@pytest.mark.skipif(glite_status == False, reason="Cannot run test GLITE not enabled")
 def test_job_kill(gpi):
     from Ganga.GPI import Job, CREAM
 
