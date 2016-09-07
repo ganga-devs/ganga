@@ -11,6 +11,7 @@ import os
 from os import path
 import copy
 import shutil
+from pipes import quote
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
@@ -292,7 +293,7 @@ for f in ###FILELIST###:
 
         for this_file in outputFiles:
             filename = this_file.namePattern
-            cp_cmd = 'cp %s %s' % (filename, output_dir)
+            cp_cmd = 'cp %s %s' % (filename, quote(output_dir))
 
             this_cp = str(cp_template)
 
