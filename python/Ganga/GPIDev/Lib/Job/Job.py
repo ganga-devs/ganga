@@ -1472,6 +1472,9 @@ class Job(GangaObject):
             # split into subjobs
             rjobs = self._doSplitting()
 
+            if not rjobs:
+                raise SplitterError("Splitter '%s' failed to produce any subjobs from splitting. Aborting submit" % (getName(self.splitter),))
+
             #
             logger.debug("Now have %s subjobs" % len(self.subjobs))
             logger.debug("Also have %s rjobs" % len(rjobs))
