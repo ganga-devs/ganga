@@ -163,13 +163,13 @@ class MassStorageFile(IGangaFile):
             tmpLocations = self.locations
         return tmpLocations
 
-    def get(self, localPath=''):
+    def get(self):
         """
         Retrieves locally all files matching this MassStorageFile object pattern
         """
-        self._actual_copy()
+        self._internal_get()
 
-    def _actual_copy(self, localPath=''):
+    def _internal_get(self, localPath=''):
         """
         Copy a the file to the local storage using the get mechanism
         Args:
@@ -207,7 +207,7 @@ class MassStorageFile(IGangaFile):
         Args:
             targetPath (str): Target path where the file is to copied to
         """
-        self._actual_copy(targetPath)
+        self._internal_get(targetPath)
 
 
     def getWNScriptDownloadCommand(self, indent):

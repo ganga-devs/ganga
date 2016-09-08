@@ -81,7 +81,7 @@ class TestLocalFileClient(GangaUnitTest):
 
         for sj in j.subjobs:
             output_dir = stripProxy(sj).getOutputWorkspace(create=False).getPath()
-            assert os.path.isdir(output_dir) == True
+            assert os.path.isdir(output_dir)
 
             # Check that the files were placed in the correct place on storage
             for file_ in j.inputfiles:

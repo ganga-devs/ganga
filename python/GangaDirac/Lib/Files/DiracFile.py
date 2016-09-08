@@ -494,7 +494,7 @@ class DiracFile(IGangaFile):
         """
         Retrieves locally the DiracFile instance
         """
-        return self._actual_copy()
+        return self._internal_get()
 
     def copyTo(self, targetPath):
         """
@@ -502,9 +502,9 @@ class DiracFile(IGangaFile):
         Args:
             targetPath (str): Target path where the file is to copied to
         """
-        self._actual_copy(targetPath)
+        self._internal_get(targetPath)
 
-    def _actual_copy(self, localPath=''):
+    def _internal_get(self, localPath=''):
         """
         Retrieves locally the file matching this DiracFile object pattern.
         If localPath is specified
