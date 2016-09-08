@@ -57,7 +57,7 @@ class DiracFile(IGangaFile):
     _name = "DiracFile"
     _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove',
                       "replicate", 'put', 'locations', 'location', 'accessURL',
-                      '_updateRemoteURLs', 'hasMatchedFiles']
+                      '_updateRemoteURLs', 'hasMatchedFiles', 'copyTo']
     _remoteURLs = {}
     _storedReplicas = {}
     _have_copied = False
@@ -490,10 +490,26 @@ class DiracFile(IGangaFile):
             _accessURLs.append(i.accessURL(thisSE)[0])
         return _accessURLs
 
-    def get(self, localPath=''):
+    def get(self):
+        """
+        Retrieves locally the DiracFile instance
+        """
+        self._actual_copy()
+
+    def copyTo(self, targetPath):
+        """
+        Copy a the file to the local storage using the get mechanism
+        Args:
+            targetPath (str): Target path where the file is to copied to
+        """
+        self._actual_copy(targetPath)
+
+    def _actual_copy(self, localPath=''):
         """
         Retrieves locally the file matching this DiracFile object pattern.
         If localPath is specified
+        Args:
+            localPath(str): The path the file should be placed at locally
         """
         if localPath == '':
             to_location = self.localDir

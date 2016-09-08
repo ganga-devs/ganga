@@ -51,7 +51,7 @@ class MassStorageFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "MassStorageFile"
-    _exportmethods = ["location", "get", "put", "setLocation", "remove", "accessURL"]
+    _exportmethods = ["location", "get", "put", "setLocation", "remove", "accessURL", "copyTo"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ namePattern is the pattern of the output file that has to be written into mass storage
@@ -167,7 +167,14 @@ class MassStorageFile(IGangaFile):
         """
         Retrieves locally all files matching this MassStorageFile object pattern
         """
+        self._actual_copy()
 
+    def _actual_copy(self, localPath=''):
+        """
+        Copy a the file to the local storage using the get mechanism
+        Args:
+            localPath (str): Target path where the file is to copied to
+        """
         if not localPath:
             to_location = self.localDir
             # FIXME? THIS IS POTENTIALLY VERY, VERY UNEXPECTED/UNDOCUMENTED BEHAVIOUR
@@ -193,6 +200,15 @@ class MassStorageFile(IGangaFile):
         for location in self.locations:
             targetLocation = os.path.join(to_location, os.path.basename(location))
             os.system('%s %s %s' % (cp_cmd, location, targetLocation))
+
+    def copyTo(self, targetPath):
+        """
+        Copy a the file to the local storage using the get mechanism
+        Args:
+            targetPath (str): Target path where the file is to copied to
+        """
+        self._actual_copy(targetPath)
+
 
     def getWNScriptDownloadCommand(self, indent):
         ## FIXME fix me for the situation of multiple files?

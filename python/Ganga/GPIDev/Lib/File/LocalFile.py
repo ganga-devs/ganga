@@ -39,7 +39,7 @@ class LocalFile(IGangaFile):
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"
-    _exportmethods = ["location", "remove", "accessURL"]
+    _exportmethods = ["location", "remove", "accessURL", "copyTo"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
@@ -223,23 +223,26 @@ class LocalFile(IGangaFile):
 
         return
 
-    def get(self, localPath=''):
+    def copyTo(self, targetPath):
+        """
+        Copy a the file to the local storage using the get mechanism
+        Args:
+            targetPath (str): Target path where the file is to copied to
+        """
+        shutil.copy(path.join(self.localDir, self.namePattern), path.join(targetPath, self.namePattern))
+
+    def get(self):
         """
         Method to get the Local file and/or to check that a file exists locally
-        Args:
-            localPath (str): (Optional) path where the file is to be copied to
         """
-
-        if not localPath:
-            assert path.isfile(path.join(self.localDir, self.namePattern))
-            pass
-
-        shutil.copy(path.join(self.localDir, self.namePattern), path.join(localPath, self.namePattern))
+        # Deliberately do nothing.
 
     def put(self):
 	"""
         Copy the file to the detination (in the case of LocalFile the localDir)
         """
+        # This is useful for placing the LocalFile in a subdir at the end of a job
+
         #FIXME this method should be written to work with some other parameter than localDir for job outputs but for now this 'works'
         if self.localDir:
             try:
@@ -255,14 +258,12 @@ class LocalFile(IGangaFile):
                 shutil.copy(path.join(job.outputdir, self.namePattern),
                             path.join(job.outputdir, self.localDir, self.namePattern))
            
-
     def cleanUpClient(self):
         """
         This performs the cleanup method on the client output workspace to remove temporary files
         """
         # For LocalFile this is where the file is stored so don't remove it
         pass
-
 
     def getWNScriptDownloadCommand(self, indent):
 

@@ -72,7 +72,7 @@ class IGangaFile(GangaObject):
         """
         raise NotImplementedError
 
-    def copy_to(self, targetPath):
+    def copyTo(self, targetPath):
         """
         Copy a the file to the local storage using the get mechanism
         Args:
