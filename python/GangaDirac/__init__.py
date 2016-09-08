@@ -83,7 +83,7 @@ if not _after_bootstrap:
                                                 "Mapping of Dirac to Ganga Job statuses used to construct a queue to finalize a given job, i.e. final statues in 'statusmapping'")
 
     configDirac.addOption('serializeBackend', False, 'Developer option to serialize Dirac code for profiling/debugging')
-
+    configDirac.addOption('DefaultAccessURLProtocol', '', 'Option to set the default protocol for the accessURL function')
 
 def standardSetup():
 
