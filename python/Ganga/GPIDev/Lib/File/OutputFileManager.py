@@ -95,7 +95,7 @@ def getInputFilesPatterns(job):
         if outputFilePostProcessingOnClient(job, inputFileClassName):
 
             # download in temp dir
-            inputFile.copy_to(tmpDir)
+            inputFile.copyTo(tmpDir)
 
             for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
                 if currentFile not in inputPatterns:
