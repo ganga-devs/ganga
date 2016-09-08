@@ -8,6 +8,7 @@ try:
 except ImportError:
     import unittest
 
+from Ganga.Utility.logging import getLogger
 
 def _getGangaPath():
     """
@@ -56,6 +57,7 @@ def clear_config():
 
 _setupGangaPath()
 
+logger = getLogger()
 
 def start_ganga(gangadir_for_test, extra_opts=[]):
     """
@@ -71,8 +73,6 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     # End taken from the ganga binary
 
     import Ganga.Runtime
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
 
     # Start ganga by passing some options for unittesting
 
@@ -156,8 +156,6 @@ def emptyRepositories():
     A method which attempts to remove jobs from various repositories in a sane manner,
     This is preferred to just shutting down and runnning rm -fr ... as it catches a few errors hard to test for
     """
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
     # empty repository so we start again at job 0 when we restart
     logger.info("Clearing the Job and Template repositories")
 
@@ -191,9 +189,6 @@ def stop_ganga():
 
     Most of the logic is weapped in ShutdownManager._ganga_run_exitfuncs but additional code is used to cleanup repos and such between tests
     """
-
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
 
     logger.info("Deciding how to shutdown")
 

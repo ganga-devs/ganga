@@ -39,11 +39,9 @@ class PrepRegistry(Registry):
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         self._hasStarted = True
-        from Ganga.Utility.logging import getLogger
         self.shouldRun = True
         ## Aparently this shuts down the metadata repo before we want to shut it down...
         #super(PrepRegistry, self).shutdown()
-        logger = getLogger()
         #logger.info("Geting id: %s" %  self.metadata.ids()[-1])
         self.shareref = self.metadata._objects[self.metadata.ids()[-1]]
         #logger.info("ShareRef: %s" % getName(self.shareref))

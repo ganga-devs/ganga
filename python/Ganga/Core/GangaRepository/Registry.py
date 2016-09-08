@@ -631,8 +631,6 @@ class Registry(object):
     @synchronised_complete_lock
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
-        from Ganga.Utility.logging import getLogger
-        logger = getLogger()
         logger.debug("Shutting Down Registry")
         logger.debug("shutdown")
         try:

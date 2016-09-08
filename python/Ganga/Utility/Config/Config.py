@@ -113,9 +113,6 @@ class ConfigError(GangaException):
 
 logger = None
 
-
-
-
 def getLogger():
     import Ganga.Utility.logging
     global logger
@@ -125,8 +122,9 @@ def getLogger():
     # for the configuration of the logging package itself (in the initial
     # phases) the logging may be disabled
     try:
-        logger = Ganga.Utility.logging.getLogger()
-        return logger
+        if getLogger.config_logger_cache is None:
+            getLogger.config_logger_cache = Ganga.Utility.logging.getLogger()
+        return getLogger.config_logger_cache
     except AttributeError as err:
         print("AttributeError: %s" % str(err))
         # in such a case we return a mock proxy object which ignore all calls
@@ -139,6 +137,8 @@ def getLogger():
                 return f
         return X()
 
+# Used for loading the logging once per session
+getLogger.config_logger_cache = None
 
 # All configuration units
 allConfigs = {}
@@ -785,6 +785,8 @@ def transform_PATH_option(name, new_value, current_value):
     For other variables just return the new_value.
     """
 
+    logger = getLogger()
+
     PATH_ITEM = '_PATH'
     if name[-len(PATH_ITEM):] == PATH_ITEM:
         logger.debug('PATH-like variable: %s %s %s', name, new_value, current_value)
@@ -1025,6 +1027,7 @@ def setConfigOption(section="", item="", value=""):
             if item in config.getEffectiveOptions():
                 config.setSessionValue(item, value)
         except Exception as err:
+            logger = getLogger()
             logger.debug("Error setting Option: %s = %s  :: %s" % (str(item), str(value), str(err)))
             pass
 

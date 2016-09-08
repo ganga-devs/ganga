@@ -2,7 +2,7 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
 import time
 
-logger = getLogger('GangaThread')
+logger_gangaThread = getLogger('GangaThread')
 
 
 class GangaThreadPool(object):
@@ -75,16 +75,14 @@ class GangaThreadPool(object):
         try:
             self._really_shutdown()
         except Exception as err:
-            from Ganga.Utility.logging import getLogger
-            logger = getLogger('GangaThread')
+            logger = logger_gangaThread
             logger.error("Error shutting down thread Pool!")
             logger.error("\n%s" % err)
         return
 
     def _really_shutdown(self):
 
-        from Ganga.Utility.logging import getLogger
-        logger = getLogger('GangaThread')
+        logger = logger_gangaThread
 
         logger.debug('shutting down GangaThreadPool with timeout %d sec' % self.SHUTDOWN_TIMEOUT)
 
@@ -130,7 +128,7 @@ class GangaThreadPool(object):
                 # and PollThread.forced_shutdown_first_prompt_time for non-critical threads
                 if critical_thread_ids:
                     if total_time > config['forced_shutdown_timeout']:
-                        getLogger().warning('Shutdown was forced after waiting for %d seconds for background '
+                        logger_gangaThread.warning('Shutdown was forced after waiting for %d seconds for background '
                                             'activities to finish (monitoring, output download, etc). This may '
                                             'result in some jobs being corrupted.', total_time)
                         break
@@ -190,8 +188,7 @@ class GangaThreadPool(object):
     @staticmethod
     def __do_shutdown__(_all_threads):
 
-        from Ganga.Utility.logging import getLogger
-        logger = getLogger('GangaThread')
+        logger = logger_gangaThread
 
         from Ganga.Core.GangaThread.WorkerThreads import _global_queues as queues
 
@@ -251,8 +248,7 @@ class GangaThreadPool(object):
         num_alive_threads = __cnt_alive_threads__(_all_threads)
 
         while num_alive_threads > 0:
-            from Ganga.Utility.logging import getLogger
-            logger = getLogger('GangaThread')
+            logger = logger_gangaThread
             # fix for bug #62543 https://savannah.cern.ch/bugs/?62543
             # following 2 lines swapped so that we access no globals between
             # sleep and exit test

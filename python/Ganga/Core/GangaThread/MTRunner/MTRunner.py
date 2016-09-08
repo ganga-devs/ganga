@@ -9,6 +9,7 @@ from Ganga.Core.GangaThread.GangaThread import GangaThread
 from Ganga.Core.GangaThread.MTRunner.Data import DuplicateDataItemError
 from Ganga.Utility.logging import getLogger
 
+logger = getLogger()
 
 class MTRunnerError(Exception):
 
@@ -27,8 +28,6 @@ class GangaWorkAgent(GangaThread):
         self._runner = runnerObj
 
     def run(self):
-
-        logger = getLogger()
 
         while not self.should_stop():
 
@@ -114,7 +113,7 @@ class MTRunner(object):
         self.name = name
         self.keepAlive = keepAlive
         self._agents = []
-        self.logger = getLogger()
+        self.logger = logger
 
     def getDoneList(self):
         """

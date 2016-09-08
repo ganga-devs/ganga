@@ -119,8 +119,6 @@ class RegistrySlice(object):
             else:
                 maxid = maxid.id
 
-        logger = getLogger()
-
         this_repr = repr.Repr()
         from Ganga.GPIDev.Base.Proxy import addProxy
         attrs_str = ""
@@ -160,8 +158,6 @@ class RegistrySlice(object):
         The returned slice object has the job registry interface but it is not connected to
         persistent storage. 
         """
-
-        logger = getLogger()
 
         ## Loop through attrs to parse possible inputs into instances of a class where appropriate
         ## Unlike the select method we need to populate this dictionary with instance objects, not str or class

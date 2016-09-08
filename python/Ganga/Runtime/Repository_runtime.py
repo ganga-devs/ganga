@@ -164,8 +164,6 @@ def updateLocksNow():
 
 def shutdown():
     # Shutdown method for all repgistries in order
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
     logger.info('Registry Shutdown')
     #import traceback
     #traceback.print_stack()
@@ -225,8 +223,6 @@ def shutdown():
 
 def flush_all():
     # Flush all registries in their current state with all dirty knowledge going to disk
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
     logger.debug("Flushing All repositories")
 
     for registry in getRegistries():
