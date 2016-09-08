@@ -1,3 +1,4 @@
+from Ganga.Core import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from fnmatch import fnmatch
@@ -70,6 +71,15 @@ class IGangaFile(GangaObject):
         Postprocesses (upload) output file to the desired destination from the client
         """
         raise NotImplementedError
+
+    def copy_to(self, targetPath):
+        """
+        Copy a the file to the local storage using the get mechanism
+        Args:
+            targetPath (str): Target path where the file is to copied to
+        """
+        self.localDir = targetPath
+        self.get()
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
