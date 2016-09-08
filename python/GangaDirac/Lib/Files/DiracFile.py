@@ -494,7 +494,7 @@ class DiracFile(IGangaFile):
         """
         Retrieves locally the DiracFile instance
         """
-        self._actual_copy()
+        return self._actual_copy()
 
     def copyTo(self, targetPath):
         """
