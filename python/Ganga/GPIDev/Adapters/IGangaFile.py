@@ -37,26 +37,29 @@ class IGangaFile(GangaObject):
     def get(self):
         """
         Retrieves locally all files that were uploaded before that 
+        Order of priority about where a file is going to be placed are:
+            1) The localDir as defined in the schema
+            2) The Job outpudir of the parent job if the localDir is not defined
+            3) The CWD if there is no Job associated
         """
         if not self.localDir:
             if not os.path.isdir(self.localDir):
-                # Should we make make the folder or raise?
+                logger.warning("Folder '%s' doesn't exist. This will now be auto-created" % self.localDir)
+                os.makedirs(self.localDir)
             to_location = self.localDir
         else:
-            should_raise = True
             if self._getParent() is not None:
-                should_raise = False
+                should_use_cwd = False
                 try:
                     to_location = self.getJobObject().outputdir
                 except AssertionError:
-                    should_raise = True
+                    should_use_cwd = True
 
-            if should_raise:
-                msg = "Failed to get a file. localDir is not set and no Job is associated with the parent of this."
-                logger.error(msg)
-                raise GangaException(msg)
+            if should_use_cwd:
+                self.localDir = os.getcwd()
+                to_location = self.localDir
 
-        self.copyTo(to_location)
+        return self.copyTo(to_location)
 
 
     def getSubFiles(self, process_wildcards=False):
@@ -93,13 +96,11 @@ class IGangaFile(GangaObject):
 
     def copyTo(self, targetPath):
         """
-        Copy a the file to the local storage using the get mechanism
+        Copy a the file to the local storage using the appropriate file-transfer mechanism
         Args:
             targetPath (str): Target path where the file is to copied to
         """
-        # FOR BACKWARDS COMPATIBILITY ONLY THIS WILL CRASH IF THIS OR GET IS NOT OVERLOADED
-        self.localDir = targetPath
-        self.get()
+        raise NotImplementedError
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
