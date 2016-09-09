@@ -48,12 +48,14 @@ class IGangaFile(GangaObject):
                 os.makedirs(self.localDir)
             to_location = self.localDir
         else:
+            should_use_cwd = False
             if self._getParent() is not None:
-                should_use_cwd = False
                 try:
                     to_location = self.getJobObject().outputdir
                 except AssertionError:
                     should_use_cwd = True
+            else:
+                should_use_cwd = True
 
             if should_use_cwd:
                 self.localDir = os.getcwd()
