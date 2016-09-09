@@ -180,7 +180,7 @@ class MassStorageFile(IGangaFile):
 
         for location in self.locations:
             targetLocation = os.path.join(to_location, os.path.basename(location))
-            self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, location, quote(targetLocation)))
+            self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, quote(location), quote(targetLocation)))
 
     def getWNScriptDownloadCommand(self, indent):
         ## FIXME fix me for the situation of multiple files?

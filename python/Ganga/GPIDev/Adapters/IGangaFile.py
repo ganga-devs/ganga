@@ -65,7 +65,11 @@ class IGangaFile(GangaObject):
                 logger.debug("localDir value: %s" % self.localDir)
                 raise GangaException(msg)
 
-        return self.copyTo(to_location)
+        if not os.path.isfile(os.path.join(self.localDir, self.namePattern)):
+            return self.copyTo(to_location)
+        else:
+            logger.info("File: %s already exists, not performing copy" % (os.path.join(self.localDir, self.namePattern), ))
+            return True
 
 
     def getSubFiles(self, process_wildcards=False):
