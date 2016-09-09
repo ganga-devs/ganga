@@ -76,14 +76,19 @@ class MassStorageFile(IGangaFile):
             this_localDir = os.path.dirname(value)
             super(MassStorageFile, self).__setattr__('localDir', this_localDir)
         if attr == "localDir":
-            actual_value = os.path.abspath(expandfilename(value))
+            if value:
+                actual_value = os.path.abspath(expandfilename(value))
 
         super(MassStorageFile, self).__setattr__(attr, actual_value)
 
     def _setNamePath(self, _namePattern='', _localDir=''):
         if _namePattern != '' and _localDir == '':
             self.namePattern = os.path.basename(_namePattern)
-            self.localDir = os.path.dirname(_namePattern)
+            if not os.path.dirname(_namePattern):
+                if os.path.isfile(os.path.join(os.getcwd()), os.path.basename(_namePattern)):
+                    self.localDir = os.getcwd()
+            else:
+                self.localDir = os.path.dirname(_namePattern)
         elif _namePattern != '' and _localDir != '':
             self.namePattern = _namePattern
             self.localDir = _localDir

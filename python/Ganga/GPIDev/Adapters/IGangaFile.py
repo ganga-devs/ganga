@@ -1,11 +1,14 @@
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.Utility.logging import getLogger
 from fnmatch import fnmatch
 import os
 import glob
 import re
 
+logger = getLogger()
 regex = re.compile('[*?\[\]]')
 
 
@@ -40,26 +43,27 @@ class IGangaFile(GangaObject):
         Order of priority about where a file is going to be placed are:
             1) The localDir as defined in the schema
             2) The Job outpudir of the parent job if the localDir is not defined
-            3) The CWD if there is no Job associated
+            3) raise an exception if neither are defined correctly
         """
-        if not self.localDir:
+        if self.localDir:
             if not os.path.isdir(self.localDir):
                 logger.warning("Folder '%s' doesn't exist. This will now be auto-created" % self.localDir)
                 os.makedirs(self.localDir)
             to_location = self.localDir
         else:
-            should_use_cwd = False
+            should_raise = True
             if self._getParent() is not None:
                 try:
                     to_location = self.getJobObject().outputdir
+                    should_raise = False
                 except AssertionError:
-                    should_use_cwd = True
-            else:
-                should_use_cwd = True
+                    should_raise = True
 
-            if should_use_cwd:
-                self.localDir = os.getcwd()
-                to_location = self.localDir
+            if should_raise:
+                msg = "%s: Failed to get file object. Please set the `localDir` parameter and try again. e.g. file.localDir=os.getcwd();file.get()" % getName(self)
+                logger.error(msg)
+                logger.debug("localDir value: %s" % self.localDir)
+                raise GangaException(msg)
 
         return self.copyTo(to_location)
 
