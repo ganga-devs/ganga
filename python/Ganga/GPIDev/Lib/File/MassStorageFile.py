@@ -85,7 +85,7 @@ class MassStorageFile(IGangaFile):
         if _namePattern != '' and _localDir == '':
             self.namePattern = os.path.basename(_namePattern)
             if not os.path.dirname(_namePattern):
-                if os.path.isfile(os.path.join(os.getcwd()), os.path.basename(_namePattern)):
+                if os.path.isfile(os.path.join(os.getcwd(), os.path.basename(_namePattern))):
                     self.localDir = os.getcwd()
             else:
                 self.localDir = os.path.dirname(_namePattern)
