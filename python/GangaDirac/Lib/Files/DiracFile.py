@@ -91,6 +91,8 @@ class DiracFile(IGangaFile):
             this_dir = os.path.dirname(value)
             if this_dir:
                 super(DiracFile, self).__setattr__('localDir', this_dir)
+            elif os.path.isfile(os.path.join(os.getcwd(), os.path.basename(value))):
+                super(DiracFile, self).__setattr__('localDir', os.getcwd())
         elif attr == 'localDir':
             if value:
                 new_value = os.path.abspath(expandfilename(value))

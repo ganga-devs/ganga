@@ -76,7 +76,10 @@ class LocalFile(IGangaFile):
         if attr == 'namePattern':
             if len(value.split(os.sep)) > 1:
                 this_dir = path.dirname(value)
-                super(LocalFile, self).__setattr__('localDir', this_dir)
+                if this_dir:
+                    super(LocalFile, self).__setattr__('localDir', this_dir)
+                elif path.isfile(path.join(os.getcwd(), path.basename(value))):
+                    super(LocalFile, self).__setattr__('localDir', os.getcwd())
             actual_value = path.basename(value)
         elif attr == 'localDir':
             if value:
