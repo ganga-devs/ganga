@@ -490,44 +490,15 @@ class DiracFile(IGangaFile):
             _accessURLs.append(i.accessURL(thisSE)[0])
         return _accessURLs
 
-    def get(self):
-        """
-        Retrieves locally the DiracFile instance
-        """
-        return self._internal_get()
-
     def copyTo(self, targetPath):
-        """
-        Copy a the file to the local storage using the get mechanism
-        Args:
-            targetPath (str): Target path where the file is to copied to
-        """
-        self._internal_get(targetPath)
-
-    def _internal_get(self, localPath=''):
         """
         Retrieves locally the file matching this DiracFile object pattern.
         If localPath is specified
         Args:
-            localPath(str): The path the file should be placed at locally
+            targetPath(str): The path the file should be placed at locally
         """
-        if localPath == '':
-            to_location = self.localDir
 
-            if self.localDir is None:
-                #to_location = os.getcwd()
-                if self._parent is not None and os.path.isdir(self.getJobObject().outputdir):
-                    to_location = self.getJobObject().outputdir
-                else:
-                    to_location = os.getcwd()
-        else:
-            to_location = localPath
-
-        self.localDir = to_location
-
-        if not os.path.isdir(to_location):
-            raise GangaException(
-                '"%s" is not a valid directory... Please set the localDir attribute to a valid directory' % self.localDir)
+        to_location = targetPath
 
         if self.lfn == "":
             raise GangaException('Can\'t download a file without an LFN.')

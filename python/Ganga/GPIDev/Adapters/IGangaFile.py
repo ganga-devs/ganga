@@ -38,7 +38,26 @@ class IGangaFile(GangaObject):
         """
         Retrieves locally all files that were uploaded before that 
         """
-        raise NotImplementedError
+        if not self.localDir:
+            if not os.path.isdir(self.localDir):
+                # Should we make make the folder or raise?
+            to_location = self.localDir
+        else:
+            should_raise = True
+            if self._getParent() is not None:
+                should_raise = False
+                try:
+                    to_location = self.getJobObject().outputdir
+                except AssertionError:
+                    should_raise = True
+
+            if should_raise:
+                msg = "Failed to get a file. localDir is not set and no Job is associated with the parent of this."
+                logger.error(msg)
+                raise GangaException(msg)
+
+        self.copyTo(to_location)
+
 
     def getSubFiles(self, process_wildcards=False):
         """
@@ -78,6 +97,7 @@ class IGangaFile(GangaObject):
         Args:
             targetPath (str): Target path where the file is to copied to
         """
+        # FOR BACKWARDS COMPATIBILITY ONLY THIS WILL CRASH IF THIS OR GET IS NOT OVERLOADED
         self.localDir = targetPath
         self.get()
 
