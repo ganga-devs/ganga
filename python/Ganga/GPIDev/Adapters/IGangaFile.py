@@ -78,8 +78,10 @@ class IGangaFile(GangaObject):
         Args:
             targetPath (str): Target path where the file is to copied to
         """
+        _tmpdir = self.localDir
         self.localDir = targetPath
         self.get()
+        self.localDir = _tmpdir
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
