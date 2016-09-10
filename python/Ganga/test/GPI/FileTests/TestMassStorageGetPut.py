@@ -125,4 +125,17 @@ class TestMassStorageGetPut(GangaUnitTest):
 
         shutil.rmtree(tmpdir, ignore_errors=True)
 
+    def test_c_test_copyTo(self):
+        """ Test the new copyTo interface"""
+
+        tmpdir = '/tmp/testMassStorageGet'
+        if not os.path.isdir(tmpdir):
+            os.makedirs(tmpdir)
+
+        for file_ in self._managed_files:
+            file_.localDir = ''
+            file_.copyTo(tmpdir)
+            assert os.path.isfile(os.path.join(tmpdir, file_.namePattern))
+
         self.cleanUp()
+
