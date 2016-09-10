@@ -47,8 +47,10 @@ class IGangaFile(GangaObject):
         """
         if self.localDir:
             if not os.path.isdir(self.localDir):
-                logger.warning("Folder '%s' doesn't exist. This will now be auto-created" % self.localDir)
-                os.makedirs(self.localDir)
+                msg = "Folder '%s' doesn't exist. Please construct this before 'get'-ing a file." % self.localDir
+                logger.error(msg)
+                #os.makedirs(self.localDir)
+                raise GangaException(msg)
             to_location = self.localDir
         else:
             should_raise = True

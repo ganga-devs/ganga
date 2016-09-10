@@ -520,9 +520,9 @@ class DiracFile(IGangaFile):
 
             if self.guid == "" or not self.locations:
                 self.getMetadata()
-            return
+            return True
         logger.error("Error in getting file '%s' : %s" % (self.lfn, str(stdout)))
-        return stdout
+        raise GangaException(stdout)
 
     def replicate(self, destSE, sourceSE=''):
         """

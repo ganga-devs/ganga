@@ -130,13 +130,13 @@ def test_get(df):
 
     df.lfn = 'lfn'
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
-        assert df.get() is None
+        assert df.get() is True
         execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
 
     df.lfn = '/the/root/lfn'
     df.namePattern = ''
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
-        assert df.get() is None
+        assert df.get() is True
         execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
         assert df.namePattern == 'lfn'
 
@@ -144,7 +144,7 @@ def test_get(df):
     df.compressed = True
     df.namePattern = ''
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
-        assert df.get() is None
+        assert df.get() is True
         execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
         assert df.namePattern == 'lfn'
 
@@ -156,7 +156,7 @@ def test_get(df):
     df.guid = ''
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
-            assert df.get() is None
+            assert df.get() is True
             execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
             assert df.guid == 'guid'
             assert df.locations == ['location']
@@ -164,7 +164,7 @@ def test_get(df):
     df.locations = []
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
-            assert df.get() is None
+            assert df.get() is True
             execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
             assert df.guid == 'guid'
             assert df.locations == ['location']
@@ -173,7 +173,7 @@ def test_get(df):
     df.locations = []
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
-            assert df.get() is None
+            assert df.get() is True
             execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
             assert df.guid == 'guid'
             assert df.locations == ['location']
@@ -188,5 +188,7 @@ def test_get(df):
     for label, fr in fail_returns:
         logger.info("Testing failure when return is {0} ...".format(label))
         with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value=fr) as execute:
-            assert df.get() == fr
+            with pytest.raises(GangaException):
+                df.get()
             execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
+

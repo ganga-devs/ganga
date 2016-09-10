@@ -87,6 +87,8 @@ class TestMassStorageGetPut(GangaUnitTest):
         from Ganga.GPI import Job
 
         tmpdir = '/tmp/testMassStorageGet'
+        if not os.path.isdir(tmpdir):
+            os.makedirs(tmpdir)
 
         # Test in the case that the files don't have a parent or a localDir
         for file_ in self._managed_files:
