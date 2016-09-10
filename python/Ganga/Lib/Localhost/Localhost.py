@@ -75,7 +75,7 @@ class Localhost(IBackend):
 
     def run(self, scriptpath):
         try:
-            process = subprocess.Popen(["python", scriptpath, 'subprocess'])
+            process = subprocess.Popen(" ".join(["python", scriptpath, 'subprocess']), shell=True)
         except OSError as x:
             logger.error('cannot start a job process: %s', str(x))
             return 0
@@ -181,7 +181,7 @@ class Localhost(IBackend):
         fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
         subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
 
-        appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
+        appscriptpath = ['env - HOME=$HOME TERM=$TERM $(which bash) -s "exec $(which bash) -l %s"' % jobconfig.getExeString()] + jobconfig.getArgStrings()
         if self.nice:
             appscriptpath = ['nice', '-n %d' % self.nice] + appscriptpath
         if self.nice < 0:
