@@ -63,12 +63,13 @@ class IGangaFile(GangaObject):
                 msg = "%s: Failed to get file object. Please set the `localDir` parameter and try again. e.g. file.localDir=os.getcwd();file.get()" % getName(self)
                 logger.error(msg)
                 logger.debug("localDir value: %s" % self.localDir)
+                logger.debug("parent: %s" % self._getParent() )
                 raise GangaException(msg)
 
-        if not os.path.isfile(os.path.join(self.localDir, self.namePattern)):
+        if not os.path.isfile(os.path.join(to_location, self.namePattern)):
             return self.copyTo(to_location)
         else:
-            logger.info("File: %s already exists, not performing copy" % (os.path.join(self.localDir, self.namePattern), ))
+            logger.debug("File: %s already exists, not performing copy" % (os.path.join(to_location, self.namePattern), ))
             return True
 
 

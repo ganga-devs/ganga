@@ -91,8 +91,6 @@ class DiracFile(IGangaFile):
             this_dir = os.path.dirname(value)
             if this_dir:
                 super(DiracFile, self).__setattr__('localDir', this_dir)
-            elif os.path.isfile(os.path.join(os.getcwd(), os.path.basename(value))):
-                super(DiracFile, self).__setattr__('localDir', os.getcwd())
         elif attr == 'localDir':
             if value:
                 new_value = os.path.abspath(expandfilename(value))
@@ -116,7 +114,10 @@ class DiracFile(IGangaFile):
             #   Do some checking of the filenames in a subprocess
             if name == 'lfn':
                 self.namePattern = os.path.basename(value)
-                self.remoteDir = os.path.dirname(value)
+                if os.path.dirname(value):
+                    self.remoteDir = os.path.dirname(value)
+                elif os.path.isfile(os.path.join(os.getcwd(), self.namePattern)):
+                    self.remoteDir = os.getcwd()
                 return value
 
             elif name == 'namePattern':
@@ -124,7 +125,10 @@ class DiracFile(IGangaFile):
                 return os.path.basename(value)
 
             elif name == 'localDir':
-                return expandfilename(value)
+                if value:
+                    return expandfilename(value)
+                else:
+                    return value
 
         return value
 

@@ -77,13 +77,8 @@ class TestMassStorageGetPut(GangaUnitTest):
 
         for file_ in [msf for msf in (msf_1, msf_2)]:
             assert os.path.isfile(os.path.join(self.outputFilePath, file_.namePattern))
-            tmpdir = '/tmp/tmpdir_getput_test'
-            if not os.path.exists(tmpdir):
-                os.makedirs(tmpdir)
-            os.chdir(tmpdir)
             file_.localDir = ''
-            os.chdir('/tmp')
-            os.rmdir(tmpdir)
+            assert file_.localDir == ''
 
     def test_b_test_get(self):
         """Test that the files were made accessible to the WN area and collected as LocalFile objects in outputfiles"""
@@ -117,6 +112,7 @@ class TestMassStorageGetPut(GangaUnitTest):
             file_.get()
             assert os.path.isfile(os.path.join(tmpdir, file_.namePattern))
             file_.localDir = ''
+            assert file_.localDir == ''
 
         # Test in the case that the object is 'owned' by a Job
 
@@ -125,6 +121,7 @@ class TestMassStorageGetPut(GangaUnitTest):
         j.outputfiles = self._managed_files
         for file_ in j.outputfiles:
             assert stripProxy(file_).getJobObject() is stripProxy(j)
+            assert file_.localDir == ''
             file_.get()
             assert os.path.isfile(os.path.join(outputdir, file_.namePattern))
 

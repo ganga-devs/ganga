@@ -74,7 +74,8 @@ class MassStorageFile(IGangaFile):
         if attr == "namePattern":
             actual_value = os.path.basename(value)
             this_localDir = os.path.dirname(value)
-            super(MassStorageFile, self).__setattr__('localDir', this_localDir)
+            if this_localDir:
+                super(MassStorageFile, self).__setattr__('localDir', this_localDir)
         if attr == "localDir":
             if value:
                 actual_value = os.path.abspath(expandfilename(value))
