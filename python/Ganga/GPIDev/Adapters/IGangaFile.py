@@ -69,7 +69,11 @@ class IGangaFile(GangaObject):
                 raise GangaException(msg)
 
         if not os.path.isfile(os.path.join(to_location, self.namePattern)):
-            return self.copyTo(to_location)
+            try:
+                return self.copyTo(to_location)
+            finally:
+                if not self.localDir:
+                    self.localDir = to_location
         else:
             logger.debug("File: %s already exists, not performing copy" % (os.path.join(to_location, self.namePattern), ))
             return True
