@@ -1,12 +1,10 @@
 from __future__ import absolute_import
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.file_utils import generate_unique_temp_file
-
-import datetime
-import time
 import os
 import shutil
 import copy
+
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.file_utils import generate_unique_temp_file
 
 class TestLocalFileClient(GangaUnitTest):
     """test for sjid in filename names explain each test"""
@@ -35,13 +33,16 @@ class TestLocalFileClient(GangaUnitTest):
 
     @staticmethod
     def cleanUp():
-        """ Cleanup the current temp objects """
+        """ Cleanup the current temp jobs """
 
         from Ganga.GPI import jobs
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
 
+    @classmethod
+    def tearDownClass(cls):
+        """ Cleanup the current temp objects """
         for file_ in TestLocalFileClient._managed_files:
             os.unlink(file_)
         TestLocalFileClient._managed_files = []
@@ -50,8 +51,6 @@ class TestLocalFileClient(GangaUnitTest):
         """Test the client side code whilst stil using the Local backend"""
 
         from Ganga.GPI import LocalFile, Job, ArgSplitter
-
-        TestLocalFileClient.cleanUp()
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
@@ -92,7 +91,7 @@ class TestLocalFileClient(GangaUnitTest):
 
             assert len(sj.outputfiles) == 2
 
-        TestLocalFileClient.cleanUp()
+        self.cleanUp()
 
 class TestLocalFileWN(TestLocalFileClient):
     """test for sjid in filename names explain each test"""

@@ -90,7 +90,7 @@ class DiracFile(IGangaFile):
             actual_value = os.path.basename(value)
             this_dir = os.path.dirname(value)
             if this_dir:
-                super(DiracFile, self).__setattr__('localDir', this_dir)
+                self.localDir = this_dir
         elif attr == 'localDir':
             if value:
                 new_value = os.path.abspath(expandfilename(value))
@@ -99,12 +99,12 @@ class DiracFile(IGangaFile):
         elif attr == 'lfn':
             if value:
                 this_name = os.path.basename(value)
-                super(DiracFile, self).__setattr__('namePattern', this_name)
-                super(DiracFile, self).__setattr__('remoteDir', os.path.dirname(value))
+                self.namePattern = this_name
+                self.remoteDir = os.path.dirname(value)
         elif attr == 'remoteDir':
             if value:
                 this_lfn = os.path.join(value, self.namePattern)
-                super(DiracFile, self).__setattr__('lfn', this_lfn)
+                self.lfn = this_lfn
 
         super(DiracFile, self).__setattr__(attr, actual_value)
 
@@ -116,8 +116,6 @@ class DiracFile(IGangaFile):
                 self.namePattern = os.path.basename(value)
                 if os.path.dirname(value):
                     self.remoteDir = os.path.dirname(value)
-                elif os.path.isfile(os.path.join(os.getcwd(), self.namePattern)):
-                    self.remoteDir = os.getcwd()
                 return value
 
             elif name == 'namePattern':
@@ -496,7 +494,7 @@ class DiracFile(IGangaFile):
             _accessURLs.append(i.accessURL(thisSE)[0])
         return _accessURLs
 
-    def copyTo(self, targetPath):
+    def internalCopyTo(self, targetPath):
         """
         Retrieves locally the file matching this DiracFile object pattern.
         If localPath is specified

@@ -175,7 +175,7 @@ class GoogleFile(IGangaFile):
         else:
             logger.info('There are no credentials to delete')
 
-    def copyTo(self, targetPath):
+    def internalCopyTo(self, targetPath):
         """
         Retrieves files uploaded to GoogleDrive
         Args:

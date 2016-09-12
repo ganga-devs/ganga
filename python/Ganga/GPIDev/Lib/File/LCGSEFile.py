@@ -286,7 +286,7 @@ class LCGSEFile(IGangaFile):
 
         return script
 
-    def copyTo(self, targetPath):
+    def internalCopyTo(self, targetPath):
         """
         Retrieves locally all files matching this LCGSEFile object pattern
         Args:

@@ -75,7 +75,7 @@ class MassStorageFile(IGangaFile):
             actual_value = os.path.basename(value)
             this_localDir = os.path.dirname(value)
             if this_localDir:
-                super(MassStorageFile, self).__setattr__('localDir', this_localDir)
+                self.localDir = this_localDir
         if attr == "localDir":
             if value:
                 actual_value = os.path.abspath(expandfilename(value))
@@ -169,7 +169,7 @@ class MassStorageFile(IGangaFile):
             tmpLocations = self.locations
         return tmpLocations
 
-    def copyTo(self, targetPath):
+    def internalCopyTo(self, targetPath):
         """
         Copy a the file to the local storage using the get mechanism
         Args:

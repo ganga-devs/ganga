@@ -1,13 +1,12 @@
 from __future__ import absolute_import
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.file_utils import generate_unique_temp_file
-from Ganga.Core.exceptions import GangaException
-
-import datetime
-import time
 import os
 import shutil
 import copy
+import tempfile
+
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.file_utils import generate_unique_temp_file
+from Ganga.Core.exceptions import GangaException
 
 class TestMassStorageGetPut(GangaUnitTest):
     """test for sjid in filename names explain each test"""
@@ -39,14 +38,18 @@ class TestMassStorageGetPut(GangaUnitTest):
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageGetPut, self).setUp(extra_opts=extra_opts)
 
-    @classmethod
-    def cleanUp(cls):
-        """ Cleanup the current temp objects """
+    @staticmethod
+    def cleanUp():
+        """ Cleanup the current temp jobs """
 
         from Ganga.GPI import jobs
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
+
+    @classmethod
+    def tearDownClass(cls):
+        """ Cleanup the current temp objects """
 
         for file_ in cls._temp_files:
             os.unlink(file_)
@@ -86,7 +89,7 @@ class TestMassStorageGetPut(GangaUnitTest):
         from Ganga.GPIDev.Base.Proxy import stripProxy
         from Ganga.GPI import Job
 
-        tmpdir = '/tmp/testMassStorageGet'
+        tmpdir = tempfile.mkdtemp()
         if not os.path.isdir(tmpdir):
             os.makedirs(tmpdir)
 
@@ -125,6 +128,8 @@ class TestMassStorageGetPut(GangaUnitTest):
 
         shutil.rmtree(tmpdir, ignore_errors=True)
 
+        self.cleanUp()
+
     def test_c_test_copyTo(self):
         """ Test the new copyTo interface"""
 
@@ -137,5 +142,4 @@ class TestMassStorageGetPut(GangaUnitTest):
             file_.copyTo(tmpdir)
             assert os.path.isfile(os.path.join(tmpdir, file_.namePattern))
 
-        self.cleanUp()
 

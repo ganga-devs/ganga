@@ -52,7 +52,7 @@ def outputFilePostProcessingTestForWhen(job, outputFileClassName, when):
 
 def getOutputSandboxPatterns(job):
     """
-    Intented for grid backends where we have to set the outputsandbox patterns for the output file types that have to be processed on the client
+    Intended for grid backends where we have to set the outputsandbox patterns for the output file types that have to be processed on the client
     """
     outputPatterns = []
 
@@ -83,7 +83,7 @@ def getInputFilesPatterns(job):
     inputPatterns = []
 
     # if GangaDataset is used, check if they want the inputfiles transferred
-    inputfiles_list = job.inputfiles if job.inputfiles else []
+    inputfiles_list = copy.deepcopy(job.inputfiles if job.inputfiles else [])
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
     if not job.subjobs and job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
         inputfiles_list += job.inputdata.files
@@ -195,12 +195,8 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     """
 
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
-    if job.inputfiles is None or len(job.inputfiles) == 0 and\
-            not (job.inputdata or (isinstance(job.inputdata, GangaDataset) and\
-                job.inputdata.treat_as_inputfiles)):
-        if job.master is None or len(job.master.inputfiles) == 0 and\
-                not (job.master.inputdata or (isinstance(job.master.inputdata, GangaDataset) and\
-                                job.master.inputdata.treat_as_inputfiles)):
+    if job.inputfiles is None or len(job.inputfiles) == 0 and not (job.inputdata or (isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles)):
+        if job.master is None or len(job.master.inputfiles) == 0 and not (job.master.inputdata or (isinstance(job.master.inputdata, GangaDataset) and job.master.inputdata.treat_as_inputfiles)):
             return ""
 
     insertScript = """\n

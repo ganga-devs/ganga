@@ -12,6 +12,7 @@ from os import path
 import copy
 import shutil
 from pipes import quote
+import glob
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
@@ -77,9 +78,9 @@ class LocalFile(IGangaFile):
             if len(value.split(os.sep)) > 1:
                 this_dir = path.dirname(value)
                 if this_dir:
-                    super(LocalFile, self).__setattr__('localDir', this_dir)
+                    self.localDir = this_dir
                 elif path.isfile(path.join(os.getcwd(), path.basename(value))):
-                    super(LocalFile, self).__setattr__('localDir', os.getcwd())
+                    self.localDir = os.getcwd()
             actual_value = path.basename(value)
         elif attr == 'localDir':
             if value:
@@ -226,13 +227,14 @@ class LocalFile(IGangaFile):
 
         return
 
-    def copyTo(self, targetPath):
+    def internalCopyTo(self, targetPath):
         """
         Copy a the file to the local storage using the get mechanism
         Args:
             targetPath (str): Target path where the file is to copied to
         """
-        shutil.copy(path.join(self.localDir, self.namePattern), path.join(targetPath, self.namePattern))
+        for currentFile in glob.glob(os.path.join(self.localDir, self.namePattern)):
+            shutil.copy(currentFile, path.join(targetPath, path.basename(currentFile)))
 
     def get(self):
         """
@@ -299,7 +301,7 @@ for f in ###FILELIST###:
             filename = this_file.namePattern
             cp_cmd = 'cp %s %s' % (filename, quote(output_dir))
 
-            this_cp = str(cp_template)
+            this_cp = cp_template
 
             replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd}
 

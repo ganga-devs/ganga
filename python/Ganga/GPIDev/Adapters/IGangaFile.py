@@ -1,12 +1,13 @@
+import os
+import glob
+import re
+import shutil
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Utility.logging import getLogger
 from fnmatch import fnmatch
-import os
-import glob
-import re
 
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
@@ -41,15 +42,13 @@ class IGangaFile(GangaObject):
         """
         Retrieves locally all files that were uploaded before that 
         Order of priority about where a file is going to be placed are:
-            1) The localDir as defined in the schema
-            2) The Job outpudir of the parent job if the localDir is not defined
-            3) raise an exception if neither are defined correctly
+            1) The localDir as defined in the schema. (Exceptions thrown if this doesn't exist)
+            2) The Job outpudir of the parent job if the localDir is not defined.
+            3) raise an exception if neither are defined correctly.
         """
         if self.localDir:
             if not os.path.isdir(self.localDir):
                 msg = "Folder '%s' doesn't exist. Please construct this before 'get'-ing a file." % self.localDir
-                logger.error(msg)
-                #os.makedirs(self.localDir)
                 raise GangaException(msg)
             to_location = self.localDir
         else:
@@ -63,17 +62,16 @@ class IGangaFile(GangaObject):
 
             if should_raise:
                 msg = "%s: Failed to get file object. Please set the `localDir` parameter and try again. e.g. file.localDir=os.getcwd();file.get()" % getName(self)
-                logger.error(msg)
                 logger.debug("localDir value: %s" % self.localDir)
-                logger.debug("parent: %s" % self._getParent() )
+                logger.debug("parent: %s" % self._getParent())
                 raise GangaException(msg)
 
+        # FIXME CANNOT perform a remote globbing here in a nice way so have to just perform a copy when dealing with wildcards
         if not os.path.isfile(os.path.join(to_location, self.namePattern)):
-            try:
-                return self.copyTo(to_location)
-            finally:
-                if not self.localDir:
-                    self.localDir = to_location
+            returnable = self.copyTo(to_location)
+            if not self.localDir:
+                self.localDir = to_location
+            return returnable
         else:
             logger.debug("File: %s already exists, not performing copy" % (os.path.join(to_location, self.namePattern), ))
             return True
@@ -114,8 +112,30 @@ class IGangaFile(GangaObject):
     def copyTo(self, targetPath):
         """
         Copy a the file to the local storage using the appropriate file-transfer mechanism
+        This will raise an excpetion if targetPath isn't set to something sensible.
         Args:
             targetPath (str): Target path where the file is to copied to
+        """
+        if isinstance(targetPath, str) and targetPath:
+            if regex.search(self.namePattern) is None\
+                and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
+
+                if not os.path.isfile(os.path.join(targetPath, self.namePattern)):
+                    shutil.copy(os.path.join(self.localDir, self.namePattern), os.path.join(targetPath, self.namePattern))
+                else:
+                    logger.debug("Already found file: %s" % os.path.join(targetPath, self.namePattern))
+
+            # Again, cannot perform a remote glob here so have to ignore wildcards
+            else:
+                self.internalCopyTo(targetPath)
+        else:
+            raise GangaException("Cannot perform a copyTo with no given targetPath!")
+
+    def internalCopyTo(self, targetPath):
+        """
+        Internal methos for implementing the actual copy mechanism for each IGangaFile
+        Args:
+             targetPath (str): Target path where the file is to copied to
         """
         raise NotImplementedError
 
