@@ -124,10 +124,12 @@ class IGangaFile(GangaObject):
                     shutil.copy(os.path.join(self.localDir, self.namePattern), os.path.join(targetPath, self.namePattern))
                 else:
                     logger.debug("Already found file: %s" % os.path.join(targetPath, self.namePattern))
+                
+                return True
 
             # Again, cannot perform a remote glob here so have to ignore wildcards
             else:
-                self.internalCopyTo(targetPath)
+                return self.internalCopyTo(targetPath)
         else:
             raise GangaException("Cannot perform a copyTo with no given targetPath!")
 

@@ -96,15 +96,6 @@ class DiracFile(IGangaFile):
                 new_value = os.path.abspath(expandfilename(value))
                 if os.path.exists(new_value):
                     actual_value = new_value
-        elif attr == 'lfn':
-            if value:
-                this_name = os.path.basename(value)
-                self.namePattern = this_name
-                self.remoteDir = os.path.dirname(value)
-        elif attr == 'remoteDir':
-            if value:
-                this_lfn = os.path.join(value, self.namePattern)
-                self.lfn = this_lfn
 
         super(DiracFile, self).__setattr__(attr, actual_value)
 
@@ -117,6 +108,10 @@ class DiracFile(IGangaFile):
                 if os.path.dirname(value):
                     self.remoteDir = os.path.dirname(value)
                 return value
+
+            elif name == 'remoteDir':
+                if self.lfn != os.path.join(value, self.namePattern):
+                    self.lfn = os.path.join(value, self.namePattern)
 
             elif name == 'namePattern':
                 self.localDir = os.path.dirname(value)
