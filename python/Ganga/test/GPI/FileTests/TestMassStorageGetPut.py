@@ -96,7 +96,6 @@ class TestMassStorageGetPut(GangaUnitTest):
         # Test in the case that the files don't have a parent or a localDir
         for file_ in self._managed_files:
             file_.localDir = ''
-            failed = True
             try:
                 assert file_.localDir == ''
                 file_.get()
