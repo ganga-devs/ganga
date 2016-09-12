@@ -61,4 +61,3 @@ class TestQueuedSJSubmit(object):
             import sys
             sys.stdout.flush()
             assert run_until_completed(j, sleep_period=0.1), 'Timeout on job submission: job is still not finished'
-            assert j.status == 'completed'

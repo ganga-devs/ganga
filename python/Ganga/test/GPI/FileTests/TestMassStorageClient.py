@@ -88,9 +88,7 @@ class TestMassStorageClient(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         for sj in j.subjobs:
             output_dir = stripProxy(sj).getOutputWorkspace(create=False).getPath()

@@ -75,10 +75,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        # Just has to have reached completed state for checks to make sense
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         # Check that we've still got 1 file everywhere we expect 1
         assert len(j.inputfiles) == 1
@@ -123,9 +120,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
@@ -172,9 +167,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
@@ -219,9 +212,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 

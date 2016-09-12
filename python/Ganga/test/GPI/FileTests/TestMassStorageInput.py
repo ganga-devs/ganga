@@ -83,9 +83,7 @@ class TestMassStorageClientInput(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         for sj in j.subjobs:
             for file_ in j.inputfiles:

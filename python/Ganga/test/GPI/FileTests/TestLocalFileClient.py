@@ -74,7 +74,7 @@ class TestLocalFileClient(GangaUnitTest):
 
         j = jobs[-1]
 
-        assert sleep_until_completed(j) # apparently the same as assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         for sj in j.subjobs:
             output_dir = stripProxy(sj).getOutputWorkspace(create=False).getPath()

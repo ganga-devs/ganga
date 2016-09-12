@@ -135,7 +135,7 @@ class IGangaFile(GangaObject):
 
     def internalCopyTo(self, targetPath):
         """
-        Internal methos for implementing the actual copy mechanism for each IGangaFile
+        Internal method for implementing the actual copy mechanism for each IGangaFile
         Args:
              targetPath (str): Target path where the file is to copied to
         """
