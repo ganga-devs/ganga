@@ -195,8 +195,21 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     """
 
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
-    if job.inputfiles is None or len(job.inputfiles) == 0 and not (job.inputdata or (isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles)):
-        if job.master is None or len(job.master.inputfiles) == 0 and not (job.master.inputdata or (isinstance(job.master.inputdata, GangaDataset) and job.master.inputdata.treat_as_inputfiles)):
+
+    def doIHaveInputFiles(job):
+        """ helper function for determining if a job has inputfiles it needs to make available
+        Args: job(Job) This is the job which we're testing for inputfiles """
+        if job.inputfiles is not None and len(job.inputfiles) != 0:
+            return True
+        if (job.inputdata is not None and len(job.inputdata) != 0) and isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
+            return True
+        return False
+
+    if job.master is not None:
+        if not doIHaveInputFiles(job.master) and not doIHaveInputFiles(job):
+            return ""
+    else:
+        if not doIHaveInputFiles(job):
             return ""
 
     insertScript = """\n

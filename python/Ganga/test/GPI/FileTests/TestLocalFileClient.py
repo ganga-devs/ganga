@@ -60,7 +60,7 @@ class TestLocalFileClient(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestLocalFileClient.sj_len) ])
+        j.splitter = ArgSplitter(args = [[_] for _ in range(TestLocalFileClient.sj_len)])
         j.outputfiles = [LocalFile(namePattern='*'+_ext)]
         j.submit()
 
@@ -85,7 +85,7 @@ class TestLocalFileClient(GangaUnitTest):
                 assert os.path.isfile(os.path.join(output_dir, file_.namePattern))
 
             # Check that wildcard expansion happened correctly
-            assert len(stripProxy(stripProxy(sj).outputfiles[0]).subfiles) == 2
+            assert len(stripProxy(sj).outputfiles[0].subfiles) == 2
 
             assert len(sj.outputfiles) == 2
 

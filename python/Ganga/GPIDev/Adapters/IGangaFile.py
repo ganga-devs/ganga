@@ -52,15 +52,9 @@ class IGangaFile(GangaObject):
                 raise GangaException(msg)
             to_location = self.localDir
         else:
-            should_raise = True
-            if self._getParent() is not None:
-                try:
-                    to_location = self.getJobObject().outputdir
-                    should_raise = False
-                except AssertionError:
-                    should_raise = True
-
-            if should_raise:
+            try:
+                to_location = self.getJobObject().outputdir
+            except AssertionError:
                 msg = "%s: Failed to get file object. Please set the `localDir` parameter and try again. e.g. file.localDir=os.getcwd();file.get()" % getName(self)
                 logger.debug("localDir value: %s" % self.localDir)
                 logger.debug("parent: %s" % self._getParent())
@@ -112,7 +106,7 @@ class IGangaFile(GangaObject):
     def copyTo(self, targetPath):
         """
         Copy a the file to the local storage using the appropriate file-transfer mechanism
-        This will raise an excpetion if targetPath isn't set to something sensible.
+        This will raise an exception if targetPath isn't set to something sensible.
         Args:
             targetPath (str): Target path where the file is to copied to
         """

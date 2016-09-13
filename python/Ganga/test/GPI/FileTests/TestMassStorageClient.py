@@ -70,7 +70,7 @@ class TestMassStorageClient(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageClient.sj_len) ])
+        j.splitter = ArgSplitter(args = [[_] for _ in range(TestMassStorageClient.sj_len)])
         j.outputfiles = [MassStorageFile(namePattern='*'+_ext)]
         j.submit()
 
