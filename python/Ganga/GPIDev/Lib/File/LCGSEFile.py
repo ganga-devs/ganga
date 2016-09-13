@@ -48,7 +48,7 @@ class LCGSEFile(IGangaFile):
         'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'gangafiles'
     _name = "LCGSEFile"
-    _exportmethods = ["location", "setLocation", "get", "put", "getUploadCmd"]
+    _exportmethods = ["location", "setLocation", "get", "put", "getUploadCmd", "copyTo"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ namePattern is the pattern of the output file that has to be written into LCG SE

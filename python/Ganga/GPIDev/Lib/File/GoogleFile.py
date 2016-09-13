@@ -63,7 +63,7 @@ class GoogleFile(IGangaFile):
                       })
     _category = 'gangafiles'
     _name = 'GoogleFile'
-    _exportmethods = ["get", "put", "remove", "restore", "deleteCredentials"]
+    _exportmethods = ["get", "put", "remove", "restore", "deleteCredentials", "copyTo"]
 
     def __init__(self, namePattern=''):
         super(GoogleFile, self).__init__()
