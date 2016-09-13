@@ -8,7 +8,6 @@ from copy import deepcopy
 
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.execute import execute
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Credentials import getCredential
 import Ganga.Utility.execute as gexecute
@@ -59,7 +58,7 @@ def get_env(env_source):
     """
     logger.debug('Running DIRAC source command %s', env_source)
     env = dict(os.environ)
-    execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
+    gexecute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
     if not any(key.startswith('DIRAC') for key in env):
         raise RuntimeError("'DIRAC*' not found in environment")
     return env
@@ -213,6 +212,14 @@ def _checkProxy( delay=60, renew = True, shouldRaise = True, force = False ):
             _dirac_check_proxy( renew, shouldRaise )
             last_modified_time = time.time()
 
+class GangaDiracException(GangaException):
+
+    def __init__(self, message):
+        GangaException.__init__(self, "DiracUtiliy.execute", message)
+        self.message = message
+
+    def __str__(self):
+        return "GangaDirac Error: %s " % (self.message, )
 
 def execute(command,
             timeout=getConfig('DIRAC')['Timeout'],
@@ -222,6 +229,7 @@ def execute(command,
             python_setup='',
             eval_includes=None,
             update_env=False,
+            return_raw_dict=False,
             ):
     """
     Execute a command on the local DIRAC server.
@@ -237,6 +245,7 @@ def execute(command,
         python_setup (str): Optional extra code to pass to python when executing
         eval_includes (???): TODO document me
         update_env (bool): Should this modify the given env object with the env after the command has executed
+        return_raw_dict(bool): Should we return the raw dict from the DIRAC interface or parse it here
     """
 
     if env is None:
@@ -278,5 +287,13 @@ def execute(command,
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
 
-    return returnable
+    assert isinstance(returnable, dict)
+
+    if return_raw_dict:
+        return returnable
+    else:
+        if returnable['OK']:
+            return returnable['Value']
+        else:
+            raise GangaDiracException(returnable['Message'])
 

@@ -299,7 +299,7 @@ class DiracFile(IGangaFile):
         if self.lfn == "":
             raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
-        stdout = execute('removeFile("%s")' % self.lfn)
+        stdout = execute('removeFile("%s")' % self.lfn, return_raw_dict=True)
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
             self.lfn = ""
             self.locations = []
@@ -318,11 +318,7 @@ class DiracFile(IGangaFile):
             self._optionallyUploadLocalFile()
 
         # eval again here as datatime not included in dirac_ganga_server
-        r = execute('getMetadata("%s")' % self.lfn)
-        try:
-            ret = eval(r)
-        except:
-            ret = r
+        r = execute('getMetadata("%s")' % self.lfn, return_raw_dict=True)
         if isinstance(ret, dict) and ret.get('OK', False) and self.lfn in ret.get('Value', {'Successful': {}})['Successful']:
             try:
                 if self.guid != ret['Value']['Successful'][self.lfn]['GUID']:
@@ -400,7 +396,7 @@ class DiracFile(IGangaFile):
                 self._storedReplicas = copy.deepcopy(self._storedReplicas)
             if (self._storedReplicas == {} and len(self.subfiles) == 0) or forceRefresh:
 
-                self._storedReplicas = execute('getReplicas("%s")' % self.lfn)
+                self._storedReplicas = execute('getReplicas("%s")' % self.lfn, return_raw_dict=True)
                 if self._storedReplicas.get('OK', False) is True:
                     try:
                         self._storedReplicas = self._storedReplicas['Value']['Successful']
@@ -481,7 +477,9 @@ class DiracFile(IGangaFile):
           else:
              logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
              this_SE = random.choice(self.locations) 
-          myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
+          myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE), return_raw_dict=True)
+          if 'Message' in myurl:
+              raise GangaException("Error requesting URL: %s" % myurl['Message'])
           this_accessURL = myurl['Value']['Successful'][self.lfn]
           _accessURLs.append(this_accessURL)
         else:
@@ -517,7 +515,7 @@ class DiracFile(IGangaFile):
             raise GangaException('Can\'t download a file without an LFN.')
 
         logger.info("Getting file %s" % self.lfn)
-        stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location))
+        stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location), return_raw_dict=True)
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
             if self.namePattern == "":
                 name = os.path.basename(self.lfn)
@@ -544,7 +542,7 @@ class DiracFile(IGangaFile):
             raise GangaException('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE))
+        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE), return_raw_dict=True)
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
             if destSE not in self.locations:
                 self.locations.append(destSE)
@@ -691,8 +689,8 @@ class DiracFile(IGangaFile):
             stdout = ''
             logger.debug('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
             logger.debug('execute: uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
-            stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
-            if type(stdout) == str:
+            stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])), return_raw_dict=True)
+            if not stdout.get('OK', False):
                 logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), stdout))
                 continue
             if stdout.get('OK', False) and lfn in stdout.get('Value', {'Successful': {}})['Successful']:

@@ -12,7 +12,7 @@ from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Core import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaDirac.Lib.Utilities.DiracUtilities import execute, _proxyValid
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracException, execute, _proxyValid
 from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
@@ -222,7 +222,11 @@ class DiracBase(IBackend):
         f = open(dirac_script_filename, 'w')
         f.write(dirac_script)
         f.close()
-        return self._common_submit(dirac_script_filename)
+        try:
+            return self._common_submit(dirac_script_filename)
+        except GangaDiracException as err:
+            logger.warning("Error during job submission: %s" % err)
+            raise GangaException(err)
 
     def master_auto_resubmit(self, rjobs):
         '''Duplicate of the IBackend.master_resubmit but hooked into auto resubmission
@@ -365,7 +369,7 @@ class DiracBase(IBackend):
         if not self.id:
             return None
         dirac_cmd = 'kill(%d)' % self.id
-        result = execute(dirac_cmd)
+        result = execute(dirac_cmd, return_raw_dict=True)
         if not result_ok(result):
             raise BackendError('Dirac', 'Could not kill job: %s' % str(result))
         return result['OK']
@@ -376,7 +380,7 @@ class DiracBase(IBackend):
             filename (str): Ignored but is filename of a file in the sandbox
             command (str): Ignored but is a command which could be executed"""
         dirac_cmd = 'peek(%d)' % self.id
-        result = execute(dirac_cmd)
+        result = execute(dirac_cmd, return_raw_dict=True)
         if result_ok(result):
             logger.info(result['Value'])
         else:
@@ -391,8 +395,8 @@ class DiracBase(IBackend):
         if outputDir is None:
             outputDir = j.getOutputWorkspace().getPath()
         dirac_cmd = "getOutputSandbox(%d,'%s')"  % (self.id, outputDir)
-        result = execute(dirac_cmd)
-        if not result_ok(result):
+        result = execute(dirac_cmd, return_raw_dict=True)
+        if not result_ok(result, return_raw_dict=True):
             msg = 'Problem retrieving output: %s' % str(result)
             logger.warning(msg)
             return False
@@ -478,13 +482,7 @@ class DiracBase(IBackend):
         '''Obtains some (possibly) useful DIRAC debug info. '''
         # check services
         cmd = 'getServicePorts()'
-        result = execute(cmd)
-        if type(result) == str:
-            try:
-                result = eval(result)
-            except Exception as err:
-                logger.debug("Exception, err: %s" % str(err))
-                pass
+        result = execute(cmd, return_raw_dict=True)
         if not result_ok(result):
             logger.warning('Could not obtain services: %s' % str(result))
             return
@@ -492,29 +490,22 @@ class DiracBase(IBackend):
         for category in services:
             system, service = category.split('/')
             cmd = "ping('%s','%s')" % (system, service)
-            result = execute(cmd)
-            if type(result) == str:
-                try:
-                    result = eval(result)
-                except Exception as err:
-                    logger.debug("Exception: %s" % str(err))
-                    pass
+            result = execute(cmd, return_raw_dict=True)
             msg = 'OK.'
             if not result_ok(result):
                 msg = '%s' % result['Message']
             logger.info('%s: %s' % (category, msg))
+
         # get pilot info for this job
-        if type(self.id) != int:
+        if not isinstance(self.id, int):
             return
         j = self.getJobObject()
         cwd = os.getcwd()
         debug_dir = j.getDebugWorkspace().getPath()
-        cmd = "getJobPilotOutput(%d,'%s')" % \
-              (self.id, debug_dir)
-        result = execute(cmd)
+        cmd = "getJobPilotOutput(%d,'%s')" % (self.id, debug_dir)
+        result = execute(cmd return_raw_dict=True)
         if result_ok(result):
-            logger.info('Pilot Info: %s/pilot_%d/std.out.' %
-                        (debug_dir, self.id))
+            logger.info('Pilot Info: %s/pilot_%d/std.out.' % (debug_dir, self.id))
         else:
             logger.error(result.get('Message', ''))
 
@@ -527,8 +518,7 @@ class DiracBase(IBackend):
         """
         for this_state, these_jobs in jobStateDict.iteritems():
             if bulk_time_lookup == {} or this_state not in bulk_time_lookup:
-                bulk_result = execute("getBulkStateTime(%s,\'%s\')" %
-                                        (repr([j.backend.id for j in these_jobs]), this_state))
+                bulk_result = execute("getBulkStateTime(%s,\'%s\')" % (repr([j.backend.id for j in these_jobs]), this_state))
             else:
                 bulk_result = bulk_time_lookup[this_state]
             for this_job in jobStateDict[this_state]:
@@ -974,8 +964,13 @@ class DiracBase(IBackend):
         #logger.debug('Monitor jobs    : ' + repr([j.fqid for j in monitor_jobs]))
         #logger.debug('Requeue jobs    : ' + repr([j.fqid for j in requeue_jobs]))
 
-        DiracBase.requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses)
-        DiracBase.monitor_dirac_running_jobs(monitor_jobs, finalised_statuses)
+        try:
+            DiracBase.requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses)
+            DiracBase.monitor_dirac_running_jobs(monitor_jobs, finalised_statuses)
+        except GangaDiracException as err:
+            logger.warning("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
+            logger.debug(err)
+            return
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
