@@ -58,7 +58,7 @@ def get_env(env_source):
     """
     logger.debug('Running DIRAC source command %s', env_source)
     env = dict(os.environ)
-    gexecute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
+    gexecute.execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
     if not any(key.startswith('DIRAC') for key in env):
         raise RuntimeError("'DIRAC*' not found in environment")
     return env
@@ -287,13 +287,15 @@ def execute(command,
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
 
-    assert isinstance(returnable, dict)
-
-    if return_raw_dict:
-        return returnable
-    else:
-        if returnable['OK']:
-            return returnable['Value']
+    if isinstance(returnable, dict):
+        # If the output is a dictionary allow for automatic error detection
+        if return_raw_dict:
+            return returnable
         else:
-            raise GangaDiracException(returnable['Message'])
-
+            if returnable['OK']:
+                return returnable['Value']
+            else:
+                raise GangaDiracException(returnable['Message'])
+    else:
+        # If the output is NOT a dictionary return it
+        return returnable

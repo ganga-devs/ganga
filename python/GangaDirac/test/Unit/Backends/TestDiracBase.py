@@ -244,14 +244,14 @@ def test_kill(db):
 
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={'OK': True}) as execute:
         assert db.kill()
-        execute.assert_called_once_with('kill(1234)')
+        execute.assert_called_once_with('kill(1234)', return_raw_dict=True)
 
 
 def test_peek(db):
     db.id = 1234
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={'OK': True, 'Value': True}) as execute:
         db.peek()
-        execute.assert_called_once_with('peek(1234)')
+        execute.assert_called_once_with('peek(1234)', return_raw_dict=True)
 
 
 def test_getOutputSandbox(db):
@@ -264,12 +264,12 @@ def test_getOutputSandbox(db):
     temp_dir = j.getOutputWorkspace().getPath()
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={'OK': True}) as execute:
         assert db.getOutputSandbox(), 'didn\'t run'
-        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % temp_dir)
+        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % temp_dir, return_raw_dict=True)
 
     test_dir = 'test_dir'
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={'OK': True}) as execute:
         assert db.getOutputSandbox(test_dir), 'didn\'t run with modified dir'
-        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % test_dir)
+        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % test_dir, return_raw_dict=True)
 
     with patch('GangaDirac.Lib.Backends.DiracBase.execute') as execute:
         assert not db.getOutputSandbox(test_dir), 'didn\'t fail gracefully'

@@ -396,7 +396,7 @@ class DiracBase(IBackend):
             outputDir = j.getOutputWorkspace().getPath()
         dirac_cmd = "getOutputSandbox(%d,'%s')"  % (self.id, outputDir)
         result = execute(dirac_cmd, return_raw_dict=True)
-        if not result_ok(result, return_raw_dict=True):
+        if not result_ok(result):
             msg = 'Problem retrieving output: %s' % str(result)
             logger.warning(msg)
             return False
@@ -503,7 +503,7 @@ class DiracBase(IBackend):
         cwd = os.getcwd()
         debug_dir = j.getDebugWorkspace().getPath()
         cmd = "getJobPilotOutput(%d,'%s')" % (self.id, debug_dir)
-        result = execute(cmd return_raw_dict=True)
+        result = execute(cmd, return_raw_dict=True)
         if result_ok(result):
             logger.info('Pilot Info: %s/pilot_%d/std.out.' % (debug_dir, self.id))
         else:
