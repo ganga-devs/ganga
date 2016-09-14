@@ -267,30 +267,40 @@ def execute(command,
             logger.error("stderr: %s" % stderr)
             raise RuntimeError("Missing update env after running command")
 
-    if not shell:
+    if not shell and not eval_includes:
         update_pkl_thread.join()
         if pkl_output_key in thread_output:
             return thread_output[pkl_output_key]
 
+    stdout_temp = None
     try:
+        # If output
         if stdout:
-            stdout = pickle.loads(stdout)
+            stdout_temp = pickle.loads(stdout)
     except pickle.UnpicklingError as err:
+        # If here, output likely unpickled
         if not shell:
-            logger.error("Execute Err: %s", err)
+            logger.debug("Execute Err: %s", err)
         else:
             logger.debug("Execute Err: %s", err)
-        local_ns = {}
+
+    if not stdout_temp:
+        local_ns = locals()
         if isinstance(eval_includes, str):
             try:
-                exec(eval_includes, {}, local_ns)
+                exec(eval_includes, local_ns)
             except:
-                logger.error("Failed to eval the env, can't eval stdout")
+                logger.debug("Failed to eval the env, can't eval stdout")
                 pass
+        if isinstance(stdout, str) and stdout:
             try:
-                stdout = eval(stdout, {}, local_ns)
+                stdout_temp = eval(stdout, local_ns)
             except Exception as err2:
-                logger.error("Err2: %s" % str(err2))
+                logger.debug("Err2: %s" % str(err2))
                 pass
 
+    if stdout_temp:
+        stdout = stdout_temp
+
     return stdout
+
