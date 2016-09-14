@@ -287,15 +287,13 @@ def execute(command,
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
 
-    if isinstance(returnable, dict):
+    if isinstance(returnable, dict) and not return_raw_dict:
         # If the output is a dictionary allow for automatic error detection
-        if return_raw_dict:
-            return returnable
+        if returnable['OK']:
+            return returnable['Value']
         else:
-            if returnable['OK']:
-                return returnable['Value']
-            else:
-                raise GangaDiracException(returnable['Message'])
+            raise GangaDiracException(returnable['Message'])
     else:
         # If the output is NOT a dictionary return it
         return returnable
+
