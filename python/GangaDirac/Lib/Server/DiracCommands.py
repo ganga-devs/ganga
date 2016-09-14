@@ -1,31 +1,5 @@
-from functools import wraps
 # Dirac commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
-
-def diracCommand(f):
-    @wraps(f)
-    def diracWrapper(*args, **kwargs):
-        if kwargs and 'pipe_out' in kwargs and kwargs['pipe_out'] is False:
-            return f(*args, **kwargs)
-
-        output_dict = {}
-        try:
-            cmd_output = f(*args, **kwargs)
-            if isinstance(cmd_output, dict) and 'OK' in cmd_output and ('Value' in cmd_output or 'Message' in cmd_output):
-                # Handle the returned values from DIRAC HERE into a dictionary which Ganga can parse
-                output_dict = cmd_output
-            else:
-                # Wrap all other returned objects in the output dict for Ganga
-                output_dict['OK'] = True
-                output_dict['Value'] = cmd_output
-        except Exception as err:
-            # Catch all errors and report them back to Ganga
-            output_dict['OK'] = False
-            output_dict['Message'] = str(err)
-
-        output(output_dict)
-
-    return diracWrapper
 
 @diracCommand
 def getJobGroupJobs(jg):
