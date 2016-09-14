@@ -4,6 +4,7 @@ import subprocess
 import threading
 import cPickle as pickle
 import signal
+from copy import deepcopy
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -92,7 +93,7 @@ def __reader(pipes, output_ns, output_var, require_output):
     os.close(pipes[1])
     with os.fdopen(pipes[0], 'rb') as read_file:
         try:
-            output_ns.update({output_var: pickle.load(read_file)})
+            output_ns[output_var] = deepcopy(pickle.load(read_file))
         except Exception as err:
             if require_output:
                 logger.error('Error getting output stream from command: %s', err)
