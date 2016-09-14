@@ -190,13 +190,13 @@ class TestDiracCommands(object):
         confirm = execute('normCPUTime("%s")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'normCPUTime command not executed successfully'
-        assert isinstance(confirm, str), 'normCPUTime ommand not executed successfully'
+        assert isinstance(confirm['Value'], str), 'normCPUTime ommand not executed successfully'
 
     def test_getStateTime(self, dirac_job):
         confirm = execute('getStateTime("%s", "completed")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'getStateTime command not executed successfully'
-        assert isinstance(confirm, datetime.datetime), 'getStateTime command not executed successfully'
+        assert isinstance(confirm['Value'], datetime.datetime), 'getStateTime command not executed successfully'
 
     def test_timedetails(self, dirac_job):
         confirm = execute('timedetails("%s")' % dirac_job.id, return_raw_dict=True)
