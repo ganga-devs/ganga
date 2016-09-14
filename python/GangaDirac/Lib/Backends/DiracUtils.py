@@ -29,7 +29,7 @@ def get_result(command,
     while retries < retry_limit:
 
         try:
-            result = execute(command, eval_includes=eval_includes)
+            result = execute(command, eval_includes=eval_includes, return_raw_dict=True)
 
             if not result_ok(result):
                 if logger_message is not None:
