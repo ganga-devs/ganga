@@ -1,16 +1,14 @@
-
-from DIRAC.Core.Utilities.ReturnValues import S_OK, S_ERROR
-import functools
-
+from functools import wraps
 # Dirac commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
 def diracCommand(f):
-    @functools.wraps(f)
-    def diracWrapper(f, *args, **kwargs):
-        if 'pipe_out' in kwargs and kwargs['pipe_out'] is False:
+    @wraps(f)
+    def diracWrapper(*args, **kwargs):
+        if kwargs and 'pipe_out' in kwargs and kwargs['pipe_out'] is False:
             return f(*args, **kwargs)
 
+        output_dict = {}
         try:
             cmd_output = f(*args, **kwargs)
             if isinstance(cmd_output, dict) and 'OK' in cmd_output and ('Value' in cmd_output or 'Message' in cmd_output):
@@ -24,7 +22,9 @@ def diracCommand(f):
             # Catch all errors and report them back to Ganga
             output_dict['OK'] = False
             output_dict['Message'] = str(err)
+
         output(output_dict)
+
     return diracWrapper
 
 @diracCommand
@@ -189,23 +189,21 @@ def getOutputDataInfo(id, pipe_out=True):
     if result.get('OK', False) and 'Value' in result:
         for lfn in result.get('Value', []):
             file_name = os.path.basename(lfn)
-            ret.update({file_name: {'LFN': lfn}})
+            ret[file_name] = {}
+            ret[file_name]['LFN'] = lfn
             md = dirac.getMetadata(lfn)
             if md.get('OK', False) and lfn in md.get('Value', {'Successful': {}})['Successful']:
-                ret[file_name].update(
-                    {'GUID': md['Value']['Successful'][lfn]['GUID']})
+                ret[file_name]['GUID'] =  md['Value']['Successful'][lfn]['GUID']
             # this catches if fail upload, note lfn still exists in list as
             # dirac tried it
             elif md.get('OK', False) and lfn in md.get('Value', {'Failed': {}})['Failed']:
-                ret[file_name].update({'LFN': '###FAILED###'})
-                ret[file_name].update(
-                    {'LOCATIONS': md['Value']['Failed'][lfn]})
-                ret[file_name].update({'GUID': 'NotAvailable'})
+                ret[file_name]['LFN'] = '###FAILED###'
+                ret[file_name]['LOCATIONS'] = md['Value']['Failed'][lfn]
+                ret[file_name]['GUID'] = 'NotAvailable'
                 continue
             rp = dirac.getReplicas(lfn)
             if rp.get('OK', False) and lfn in rp.get('Value', {'Successful': {}})['Successful']:
-                ret[file_name].update(
-                    {'LOCATIONS': rp['Value']['Successful'][lfn].keys()})
+                ret[file_name]['LOCATIONS'] = rp['Value']['Successful'][lfn].keys()
     return ret
 
 
@@ -274,13 +272,11 @@ def status(job_ids, statusmapping, pipe_out=True):
     '''Function to check the statuses and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
 
+    #return {'OK':True, 'Value':[['WIP', 'WIP', 'WIP', 'WIP', 'WIP']]}
+
     result = dirac.status(job_ids)
     if not result['OK']:
-        if pipe_out:
-            output(result)
-            return
-        else:
-            return result
+        return result
     status_list = []
     bulk_status = result['Value']
     for _id in job_ids:
@@ -304,8 +300,7 @@ def status(job_ids, statusmapping, pipe_out=True):
         except:
             app_status = "unknown ApplicationStatus"
 
-        status_list.append([minor_status, dirac_status, dirac_site,
-                            ganga_status, app_status])
+        status_list.append([minor_status, dirac_status, dirac_site, ganga_status, app_status])
 
     return status_list
 
@@ -315,11 +310,7 @@ def getStateTime(id, status, pipe_out=True):
     ''' Return the state time from DIRAC corresponding to DIRACJob tranasitions'''
     log = dirac.loggingInfo(id)
     if 'Value' not in log:
-        if pipe_out:
-            output(None)
-            return
-        else:
-            return None
+        return None
     L = log['Value']
     checkstr = ''
 
