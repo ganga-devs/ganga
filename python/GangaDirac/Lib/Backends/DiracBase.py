@@ -145,7 +145,7 @@ class DiracBase(IBackend):
         self.statusInfo = ''
         j.been_queued = False
         dirac_cmd = """execfile(\'%s\')""" % dirac_script
-        result = execute(dirac_cmd)
+        result = execute(dirac_cmd, return_raw_dict=True)
         # Could use the below code instead to submit on a thread
         # If submitting many then user may terminate ganga before
         # all jobs submitted
