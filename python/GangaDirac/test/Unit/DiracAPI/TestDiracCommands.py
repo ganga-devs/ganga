@@ -104,6 +104,8 @@ def dirac_job():
     if not isinstance(confirm, dict):
         raise RuntimeError('Problem submitting job\n{0}'.format(confirm))
 
+    assert 'OK' in confirm, 'Failed to submit job!'
+    assert confirm['OK'], 'Failed to submit job!'
     job_id = confirm['Value']
     logger.info(job_id)
 
@@ -113,30 +115,40 @@ def dirac_job():
     timeout = 1200
     end_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=timeout)
     status = execute('status([%s], %s)' % (job_id, repr(statusmapping)), return_raw_dict=True)
-    while statusmapping[status[0][1]] not in ['completed', 'failed'] and datetime.datetime.utcnow() < end_time:
+    while (status['OK'] and statusmapping[status['Value'][0][1]] not in ['completed', 'failed'] )and datetime.datetime.utcnow() < end_time:
         time.sleep(5)
         status = execute('status([%s], %s)' % (job_id, repr(statusmapping)), return_raw_dict=True)
+        print("Job status: %s" % status)
 
-    assert statusmapping[status[0][1]] == 'completed', 'job not completed properly: %s' % status
+    assert 'OK' in status, 'Failed to get job Status!'
+    assert status['OK'], 'Failed to get job Status!'
+    assert statusmapping[status['Value'][0][1]] == 'completed', 'job not completed properly: %s' % status
 
     logger.info("status: %s", status)
 
     output_data_info = execute('getOutputDataInfo("%s")' % job_id, return_raw_dict=True)
-    logger.info(output_data_info)
-    while not output_data_info.get('OK', True):
+    logger.info('output_data_info: %s' % output_data_info)
+    max_retry = 20
+    count = 0
+    while not output_data_info.get('OK', True) and count != max_retry:
         time.sleep(5)
         output_data_info = execute('getOutputDataInfo("%s")' % job_id, return_raw_dict=True)
-        logger.info("\n%s\n", output_data_info)
+        logger.info("output_data_info:\n%s\n", output_data_info)
+        count+=1
+    
+    assert 'OK' in output_data_info, 'getOutputDataInfo Failed!'
+    assert output_data_info['OK'], 'getOutputDataInfo Failed!'
 
     logger.info("\n\n\noutput_data_info: %s\n\n\n" % output_data_info)
-    get_file_lfn = output_data_info['getFile.dst']['LFN']
-    remove_file_lfn = output_data_info['removeFile.dst']['LFN']
+    get_file_lfn = output_data_info['Value']['getFile.dst']['LFN']
+    remove_file_lfn = output_data_info['Value']['removeFile.dst']['LFN']
     logger.info("%s %s", get_file_lfn, remove_file_lfn)
 
     yield JobInfo(job_id, get_file_lfn, remove_file_lfn)
 
     confirm = execute('removeFile("%s")' % get_file_lfn, return_raw_dict=True)
-    assert confirm['OK'], 'Command not executed successfully'
+    assert 'OK' in confirm, 'removeFile Failed!'
+    assert confirm['OK'], 'removeFile Failed!'
     clear_config()
 
 
@@ -145,164 +157,174 @@ class TestDiracCommands(object):
     def test_peek(self, dirac_job):
         confirm = execute('peek("%s")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'peek command not executed successfully'
 
     def test_getJobCPUTime(self, dirac_job):
         confirm = execute('getJobCPUTime("%s")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'getJobCPUTime command not executed successfully'
 
     def test_getOutputData(self, dirac_job):
         confirm = execute('getOutputData("%s")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'getOutputData command not executed successfully'
 
     def test_getOutputSandbox(self, dirac_job):
-        confirm = execute('getOutputSandbox("%s")' % dirac_job.id, return_raw_dict=true)
+        confirm = execute('getOutputSandbox("%s")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'getOutputSandbox command not executed successfully'
 
     def test_getOutputDataInfo(self, dirac_job):
         confirm = execute('getOutputDataInfo("%s")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
-        assert isinstance(confirm['getFile.dst'], dict), 'Command not executed successfully'
+        assert confirm['OK'], 'getOutputDataInfo command not executed successfully'
+        assert isinstance(confirm['Value']['getFile.dst'], dict), 'getOutputDataInfo command not executed successfully'
 
     def test_getOutputDataLFNs(self, dirac_job):
         confirm = execute('getOutputDataLFNs("%s")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        logger.info(confirm)
+        assert confirm['OK'], 'getOutputDataLFNs command not executed successfully'
 
     def test_normCPUTime(self, dirac_job):
         confirm = execute('normCPUTime("%s")' % dirac_job.id, return_raw_dict=True)
-        assert isinstance(confirm, str), 'Command not executed successfully'
+        logger.info(confirm)
+        assert confirm['OK'], 'normCPUTime command not executed successfully'
+        assert isinstance(confirm, str), 'normCPUTime ommand not executed successfully'
 
     def test_getStateTime(self, dirac_job):
         confirm = execute('getStateTime("%s", "completed")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
-        assert isinstance(confirm, datetime.datetime), 'Command not executed successfully'
+        assert confirm['OK'], 'getStateTime command not executed successfully'
+        assert isinstance(confirm, datetime.datetime), 'getStateTime command not executed successfully'
 
     def test_timedetails(self, dirac_job):
         confirm = execute('timedetails("%s")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
-        assert isinstance(confirm, dict), 'Command not executed successfully'
+        assert confirm['OK'], 'timedetails command not executed successfully'
+        assert isinstance(confirm['Value'], dict), 'Command not executed successfully'
 
     def test_y_reschedule(self, dirac_job):
         confirm = execute('reschedule("%s")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'reschedule command not executed successfully'
 
     def test_z_kill(self, dirac_job):
         # remove_files()
         confirm = execute('kill("%s")' % dirac_job.id, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'kill command not executed successfully'
 
     def test_status(self, dirac_job):
-        confirm = execute('status([%s], %s)' % (dirac_job.id, repr(statusmapping)), return_raw_dict=True)
+        confirm = execute('status([%s], %s)' % (dirac_job.id, repr(statusmapping)))
         logger.info(confirm)
-        assert isinstance(confirm, list), 'Command not executed successfully'
+        assert confirm['OK'], 'status command not executed successfully'
+        assert isinstance(confirm['Value'], list), 'Command not executed successfully'
 
     def test_getFile(self, dirac_job):
         confirm = execute('getFile("%s")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'getFile command not executed successfully'
 
     def test_removeFile(self, dirac_job):
         confirm = execute('removeFile("%s")' % dirac_job.remove_file_lfn, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'removeFile command not executed successfully'
 
     def test_ping(self, dirac_job):
         confirm = execute('ping("WorkloadManagement","JobManager")', return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'ping command not executed successfully'
 
     def test_getMetadata(self, dirac_job):
         confirm = execute('getMetadata("%s")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'getMetaData command not executed successfully'
 
     def test_getReplicas(self, dirac_job):
         confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'getReplicas command not executed successfully'
 
     def test_a_replicateFile(self, dirac_job):
         new_location = 'UKI-SOUTHGRID-OX-HEP-disk'
         confirm = execute('replicateFile("%s","%s","")' % (dirac_job.get_file_lfn, new_location), return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'replicateFile command not executed successfully'
 
     def test_b_removeReplica(self, dirac_job):
         new_location = 'UKI-SOUTHGRID-OX-HEP-disk'
         confirm = execute('removeReplica("%s","%s")' % (dirac_job.get_file_lfn, new_location), return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'removeReplica command not executed successfully'
 
     def test_splitInputData(self, dirac_job):
-        confirm = execute('splitInputData("%s","1")' % dirac_job.get_file_lfn, return_raw_dict=False)
+        confirm = execute('splitInputData("%s","1")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'splitInputData command not executed successfully'
 
     def test_uploadFile(self, dirac_job):
         new_lfn = '%s_upload_file' % os.path.dirname(dirac_job.get_file_lfn)
         location = 'UKI-SOUTHGRID-RALPP-disk'
 
         add_file = open('upload_file', 'w')
-        add_file.write(random_str(), return_raw_dict=False)
+        add_file.write(random_str())
         add_file.close()
 
-        confirm = execute('uploadFile("%s","upload_file","%s")' % (new_lfn, location), return_raw_dict=False)
-        assert isinstance(confirm, dict), 'Command not executed successfully'
-        confirm_remove = execute('removeFile("%s")' % new_lfn)
-        assert confirm_remove['OK'], 'Command not executed successfully'
+        confirm = execute('uploadFile("%s","upload_file","%s")' % (new_lfn, location), return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'uploadFile command not executed successfully'
+        confirm_remove = execute('removeFile("%s")' % new_lfn, return_raw_dict=True)
+        logger.info(confirm_remove)
+        assert confirm_remove['OK'], 'removeFile command not executed successfully'
 
     def test_addFile(self, dirac_job, tmpdir):
         new_lfn = '%s_add_file' % os.path.dirname(dirac_job.get_file_lfn)
         location = 'UKI-SOUTHGRID-RALPP-disk'
         temp_file = tmpdir.join('add_file')
         temp_file.write(random_str())
-        confirm = execute('addFile("%s","%s","%s","")' % (new_lfn, temp_file, location), return_raw_dict=False)
+        confirm = execute('addFile("%s","%s","%s","")' % (new_lfn, temp_file, location), return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
-        confirm_remove = execute('removeFile("%s")' % new_lfn)
-        logger.info(confirm)
+        assert confirm['OK'], 'addFile command not executed successfully'
+        confirm_remove = execute('removeFile("%s")' % new_lfn, return_raw_dict=True)
+        logger.info(confirm_remove)
 
-        assert confirm_remove['OK'], 'Command not executed successfully'
+        assert confirm_remove['OK'], 'removeFile command not executed successfully'
 
     def test_getJobGroupJobs(self, dirac_job):
-        confirm = execute('getJobGroupJobs("")', return_raw_dict=False)
+        confirm = execute('getJobGroupJobs("")', return_raw_dict=True)
+        logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
 # LHCb commands:
 
     @pytest.mark.skip(reason='Should be moved to LHCb')
     def test_bkQueryDict(self, dirac_job):
-        confirm = execute('bkQueryDict({"FileType":"Path","ConfigName":"LHCb","ConfigVersion":"Collision09","EventType":"10","ProcessingPass":"Real Data","DataTakingConditions":"Beam450GeV-VeloOpen-MagDown"})', return_raw_dict=False)
+        confirm = execute('bkQueryDict({"FileType":"Path","ConfigName":"LHCb","ConfigVersion":"Collision09","EventType":"10","ProcessingPass":"Real Data","DataTakingConditions":"Beam450GeV-VeloOpen-MagDown"})', return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'bkQuery command not executed successfully'
 
     @pytest.mark.skip(reason='Should be moved to LHCb')
     def test_checkSites(self, dirac_job):
-        confirm = execute('checkSites()', return_raw_dict=False)
+        confirm = execute('checkSites()', return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['OK'], 'Command not executed successfully'
+        assert confirm['OK'], 'checkSites command not executed successfully'
 
     @pytest.mark.skip(reason='Should be moved to LHCb')
     def test_bkMetaData(self, dirac_job):
-        confirm = execute('bkMetaData("")', return_raw_dict=False)
+        confirm = execute('bkMetaData("")', return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
     @pytest.mark.skip(reason='Should be moved to LHCb')
     def test_getDataset(self, dirac_job):
-        confirm = execute('getDataset("LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data + RecoToDST-07/10/DST","","Path","","","")', return_raw_dict=False)
+        confirm = execute('getDataset("LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data + RecoToDST-07/10/DST","","Path","","","")', return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
     @pytest.mark.skip(reason='Should be moved to LHCb')
     def test_checkTier1s(self, dirac_job):
-        confirm = execute('checkTier1s()', return_raw_dict=False)
+        confirm = execute('checkTier1s()', return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
@@ -310,12 +332,13 @@ class TestDiracCommands(object):
 
     @pytest.mark.skip(reason='Should be moved to LHCb')
     def test_getInputDataCatalog(self, dirac_job):
-        confirm = execute('getInputDataCatalog("%s","","")' % dirac_job.get_file_lfn, return_raw_dict=False)
+        confirm = execute('getInputDataCatalog("%s","","")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['Message'] == 'Failed to access all of requested input data', 'Command not executed successfully'
 
     @pytest.mark.skip(reason='Should be moved to LHCb')
     def test_getLHCbInputDataCatalog(self, dirac_job):
-        confirm = execute('getLHCbInputDataCatalog("%s",0,"","")' % dirac_job.get_file_lfn, return_raw_dict=False)
+        confirm = execute('getLHCbInputDataCatalog("%s",0,"","")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['Message'] == 'Failed to access all of requested input data', 'Command not executed successfully'
+

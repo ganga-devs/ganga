@@ -131,7 +131,7 @@ def test__common_submit(tmpdir, db):
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={'OK': True, 'Value': 12345}) as execute:
         assert db._common_submit(name)
 
-        execute.assert_called_once_with("execfile('%s')" % name)
+        execute.assert_called_once_with("execfile('%s')" % name,  return_raw_dict=True)
 
         assert db.id == 12345, 'id not set'
 
