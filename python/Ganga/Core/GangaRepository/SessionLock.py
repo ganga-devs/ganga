@@ -272,13 +272,16 @@ def synchronised(f):
 def global_disk_lock(f):
     @functools.wraps(f)
     def decorated_global(self, *args, **kwds):
-        self.global_lock_acquire()
-        self.safe_LockCheck()
-        try:
-            return f(self, *args, **kwds)
-        finally:
-            self.global_lock_release()
+        with global_disk_lock.global_lock:
+            self.global_lock_acquire()
+            self.safe_LockCheck()
+            try:
+                return f(self, *args, **kwds)
+            finally:
+                self.global_lock_release()
     return decorated_global
+
+global_disk_lock.global_lock = threading.Lock()
 
 class SessionLockManager(object):
 
