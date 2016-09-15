@@ -322,7 +322,7 @@ class IBackend(GangaObject):
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
-            if master:
+            if master is not None:
                 master.updateMasterJobStatus()
         return 1
 

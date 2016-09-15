@@ -1,11 +1,9 @@
 from __future__ import absolute_import
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.file_utils import generate_unique_temp_file
-
-import datetime
-import time
 import os
 import shutil
+
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.file_utils import generate_unique_temp_file
 
 class TestMassStorageWN(GangaUnitTest):
     """test for sjid in filename names explain each test"""
@@ -47,13 +45,16 @@ class TestMassStorageWN(GangaUnitTest):
 
     @staticmethod
     def cleanUp():
-        """ Cleanup the current temp objects """
+        """ Cleanup the current job objects """
 
         from Ganga.GPI import jobs
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
 
+    @classmethod
+    def tearDownClass(cls):
+        """ Cleanup the current temp objects """
         for file_ in TestMassStorageWN._managed_files:
             os.unlink(file_)
         TestMassStorageWN._managed_files = []
@@ -65,8 +66,6 @@ class TestMassStorageWN(GangaUnitTest):
 
         MassStorageFile = TestMassStorageWN.getFileObject()
         from Ganga.GPI import jobs, Job, LocalFile
-
-        TestMassStorageWN.cleanUp()
 
         _ext = '.txt'
 
@@ -87,10 +86,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        # Just has to have reached completed state for checks to make sense
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         # Check that we've still got 1 file everywhere we expect 1
         assert len(j.inputfiles) == 1
@@ -109,7 +105,7 @@ class TestMassStorageWN(GangaUnitTest):
         assert os.path.isdir(output_dir)
         assert os.path.isfile(os.path.join(output_dir, j.inputfiles[0].namePattern))
 
-        TestMassStorageWN.cleanUp()
+        self.cleanUp()
 
     def test_c_SplitJob(self):
         """Test submitting subjobs"""
@@ -136,9 +132,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
@@ -152,7 +146,7 @@ class TestMassStorageWN(GangaUnitTest):
             for _input_file in j.inputfiles:
                 assert os.path.isfile(os.path.join(output_dir, _input_file.namePattern))
 
-        TestMassStorageWN.cleanUp()
+        self.cleanUp()
 
     def test_e_MultipleFiles(self):
         """Test that the wildcards work"""
@@ -186,9 +180,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
@@ -204,7 +196,7 @@ class TestMassStorageWN(GangaUnitTest):
             for file_ in j.inputfiles: 
                 assert os.path.isfile(os.path.join(output_dir, file_.namePattern))
 
-        TestMassStorageWN.cleanUp()
+        self.cleanUp()
 
     def test_g_MultipleFiles(self):
         """Test that the wildcards work"""
@@ -234,9 +226,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
@@ -249,7 +239,7 @@ class TestMassStorageWN(GangaUnitTest):
             for file_ in j.inputfiles:
                 assert os.path.isfile(file_prep + file_.namePattern)
 
-        TestMassStorageWN.cleanUp()
+        self.cleanUp()
 
 
 class TestSharedWN(TestMassStorageWN):
