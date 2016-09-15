@@ -425,11 +425,11 @@ class Descriptor(object):
             if (len_cat > 1) or ((len_cat == 1) and (categories[0] != item['category'])) and item['category'] != 'internal':
                 # we pass on empty lists, as the catagory is yet to be defined
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
-                raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (name, v, item['category']))
+                raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (name, _getName(v), item['category']))
         else:
             if v._category not in [item['category'], 'internal'] and item['category'] != 'internal':
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
-                raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s found cat: %s"' % (name, v, item['category'], v._category))
+                raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s found cat: %s"' % (name, _getName(v), item['category'], v._category))
 
         v_copy = deepcopy(v)
 
@@ -493,7 +493,9 @@ class Descriptor(object):
         if item['sequence']:
             # These objects are lists
             _preparable = True if item['preparable'] else False
-            if len(val) == 0:
+            if val is None:
+                new_val = None
+            elif len(val) == 0:
                 new_val = GangaList()
             else:
                 if isinstance(item, ComponentItem):

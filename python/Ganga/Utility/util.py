@@ -153,11 +153,11 @@ def hostname():
     if hostname._hostname_cache == '':
         import socket
         try:
-            hostname._hostname_cache = socket.gethostbyaddr(hostname_tmp)[0]
+            hostname._hostname_cache = socket.getfqdn()
         # [bugfix #20333]:
         # while working offline and with an improper /etc/hosts configuration
         # the localhost cannot be resolved
-        except:
+        except socket.error:
             hostname._hostname_cache = 'localhost'
 
     return hostname._hostname_cache

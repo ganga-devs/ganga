@@ -1,9 +1,12 @@
+import collections
+import fnmatch
+import re
+import repr
 import sys
+from inspect import isclass
 import Ganga.Utility.logging
 from Ganga.Core import GangaException
-from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError
-import fnmatch
-import collections
+from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError, IncompleteObject
 
 from Ganga.GPIDev.Schema import ComponentItem
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
@@ -19,6 +22,12 @@ config = Ganga.Utility.Config.getConfig('Display')
 class RegistrySlice(object):
 
     def __init__(self, name, display_prefix):
+        """
+        Constructor for a Registry Slice object
+        Args:
+            name (str): Slightly descriptive name of the slice
+            display_prefix (str): Prefix for slice to help modify display and other string reps of the object
+        """
         super(RegistrySlice, self).__init__()
         self.objects = oDict()
         self.name = name
@@ -46,8 +55,7 @@ class RegistrySlice(object):
         """
         """
         if not isinstance(keep_going, bool):
-            raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
-                self.name, keep_going, method))
+            raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (self.name, keep_going, method))
         result = []
         for _id in self.objects.keys():
             obj = self.objects[_id]
@@ -95,7 +103,6 @@ class RegistrySlice(object):
         return self.objects.clean(force)
 
     def select(self, minid=None, maxid=None, **attrs):
-        import repr
         from Ganga.GPIDev.Lib.Job.Job import Job
 
         if isType(minid, Job):
@@ -120,7 +127,6 @@ class RegistrySlice(object):
         ## Loop through all possible input combinations to constructa string representation of the attrs from possible inputs
         ## Required to flatten the additional arguments into a flat string in attrs_str
         for a in attrs:
-            from inspect import isclass
             if isclass(attrs[a]):
                 this_attr = addProxy(attrs[a]())
             else:
@@ -154,13 +160,9 @@ class RegistrySlice(object):
         The returned slice object has the job registry interface but it is not connected to
         persistent storage. 
         """
-        import sys
-        import fnmatch
-        import re
 
         logger = getLogger()
 
-        from inspect import isclass
         ## Loop through attrs to parse possible inputs into instances of a class where appropriate
         ## Unlike the select method we need to populate this dictionary with instance objects, not str or class
         for k, v in attrs.iteritems():
@@ -352,13 +354,16 @@ class RegistrySlice(object):
         """
         if isinstance(x, int):
             try:
-                return addProxy(self.objects[x])
+                if x < 0:
+                    return addProxy(self.objects[self.ids()[x]])
+                else:
+                    return addProxy(self.objects[x])
             except IndexError:
                 raise RegistryIndexError('list index out of range')
 
         if isinstance(x, str):
             ids = []
-            for i in self.objects.keys():
+            for i in self.ids():
                 j = self.objects[i]
                 if j.name == x:
                     ids.append(j.id)
@@ -368,21 +373,17 @@ class RegistrySlice(object):
                 raise RegistryKeyError('object "%s" not found' % x)
             return addProxy(self.objects[ids[0]])
 
+        if isinstance(x, slice):
+            start = x.start if x.start is not None else ''
+            stop = x.stop if x.stop is not None else ''
+
+            returnable = self.__class__("%s[%s:%s]" % (self.name, start, stop))
+            for id_ in self.ids()[x]:
+                returnable.objects[id_] = self.objects[id_]
+
+            return addProxy(returnable)
+
         raise RegistryAccessError('Expected int or string (job name).')
-
-    def __getslice__(self, i1, i2):
-        import sys
-
-        if i2 == sys.maxsize:
-            endrange = ''
-        else:
-            endrange = str(i2)
-
-        slice = self.__class__("%s[%d:%s]" % (self.name, i1, endrange))
-        s = self.objects.items()[i1:i2]
-        for id, obj in s:
-            slice.objects[id] = obj
-        return slice
 
     @staticmethod
     def _getatr(obj, members):
@@ -448,7 +449,9 @@ class RegistrySlice(object):
             ds += self.objects._private_display(self, this_format, default_width, markup)
 
         else:
-            for obj_i in self.objects.keys():
+            for obj_i in self.ids():
+                if isinstance(self.objects[obj_i], IncompleteObject):
+                    continue
 
                 cached_data = None
 

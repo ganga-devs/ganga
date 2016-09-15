@@ -124,8 +124,3 @@ class TransientRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(stripProxy(self).__getitem__(x))
 
-    def __getslice__(self, i1, i2):
-        """
-        Get a slice. Examples:
-        """
-        return _wrap(stripProxy(self).__getslice__(i1, i2))

@@ -9,11 +9,10 @@ class TestLazyLoadingSubjobs(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestLazyLoadingSubjobs, self).setUp()
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False')]
+        super(TestLazyLoadingSubjobs, self).setUp(extra_opts=extra_opts)
         from Ganga.Utility.Config import getConfig
         default_CleanUp = getConfig('TestingFramework')['AutoCleanup']
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def test_a_JobConstruction(self):
         """ First construct the Job object (singular)"""
