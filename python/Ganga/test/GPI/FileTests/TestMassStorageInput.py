@@ -1,12 +1,10 @@
 from __future__ import absolute_import
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.file_utils import generate_unique_temp_file
-
-import datetime
-import time
 import os
 import shutil
 import copy
+
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.file_utils import generate_unique_temp_file
 
 class TestMassStorageClientInput(GangaUnitTest):
     """test for sjid in filename names explain each test"""
@@ -37,15 +35,18 @@ class TestMassStorageClientInput(GangaUnitTest):
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageClientInput, self).setUp(extra_opts=extra_opts)
 
-    @classmethod
-    def cleanUp(cls):
-        """ Cleanup the current temp objects """
+    @staticmethod
+    def cleanUp():
+        """ Cleanup the current job objects """
 
         from Ganga.GPI import jobs
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
 
+    @classmethod
+    def tearDownClass(cls):
+        """ Cleanup the current temp objects """ 
         for file_ in cls._managed_files:
             os.unlink(file_)
         cls._managed_files = []
@@ -69,7 +70,7 @@ class TestMassStorageClientInput(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [msf_1, msf_2]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(0, self.sj_len) ])
+        j.splitter = ArgSplitter(args = [[_] for _ in range(self.sj_len)])
         j.outputfiles = [LocalFile(namePattern='*'+_ext)]
         j.submit()
 
@@ -82,16 +83,13 @@ class TestMassStorageClientInput(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         for sj in j.subjobs:
             for file_ in j.inputfiles:
                 assert os.path.isfile(os.path.join(sj.outputdir, file_.namePattern))
 
         self.cleanUp()
-
 
 class TestMassStorageWNInput(TestMassStorageClientInput):
 

@@ -90,21 +90,12 @@ class DiracFile(IGangaFile):
             actual_value = os.path.basename(value)
             this_dir = os.path.dirname(value)
             if this_dir:
-                super(DiracFile, self).__setattr__('localDir', this_dir)
+                self.localDir = this_dir
         elif attr == 'localDir':
             if value:
                 new_value = os.path.abspath(expandfilename(value))
                 if os.path.exists(new_value):
                     actual_value = new_value
-        elif attr == 'lfn':
-            if value:
-                this_name = os.path.basename(value)
-                super(DiracFile, self).__setattr__('namePattern', this_name)
-                super(DiracFile, self).__setattr__('remoteDir', os.path.dirname(value))
-        elif attr == 'remoteDir':
-            if value:
-                this_lfn = os.path.join(value, self.namePattern)
-                super(DiracFile, self).__setattr__('lfn', this_lfn)
 
         super(DiracFile, self).__setattr__(attr, actual_value)
 
@@ -114,15 +105,23 @@ class DiracFile(IGangaFile):
             #   Do some checking of the filenames in a subprocess
             if name == 'lfn':
                 self.namePattern = os.path.basename(value)
-                self.remoteDir = os.path.dirname(value)
+                if os.path.dirname(value):
+                    self.remoteDir = os.path.dirname(value)
                 return value
+
+            elif name == 'remoteDir':
+                if self.lfn != os.path.join(value, self.namePattern):
+                    self.lfn = os.path.join(value, self.namePattern)
 
             elif name == 'namePattern':
                 self.localDir = os.path.dirname(value)
                 return os.path.basename(value)
 
             elif name == 'localDir':
-                return expandfilename(value)
+                if value:
+                    return expandfilename(value)
+                else:
+                    return value
 
         return value
 
@@ -490,44 +489,15 @@ class DiracFile(IGangaFile):
             _accessURLs.append(i.accessURL(thisSE)[0])
         return _accessURLs
 
-    def get(self):
-        """
-        Retrieves locally the DiracFile instance
-        """
-        return self._internal_get()
-
-    def copyTo(self, targetPath):
-        """
-        Copy a the file to the local storage using the get mechanism
-        Args:
-            targetPath (str): Target path where the file is to copied to
-        """
-        self._internal_get(targetPath)
-
-    def _internal_get(self, localPath=''):
+    def internalCopyTo(self, targetPath):
         """
         Retrieves locally the file matching this DiracFile object pattern.
         If localPath is specified
         Args:
-            localPath(str): The path the file should be placed at locally
+            targetPath(str): The path the file should be placed at locally
         """
-        if localPath == '':
-            to_location = self.localDir
 
-            if self.localDir is None:
-                #to_location = os.getcwd()
-                if self._parent is not None and os.path.isdir(self.getJobObject().outputdir):
-                    to_location = self.getJobObject().outputdir
-                else:
-                    to_location = os.getcwd()
-        else:
-            to_location = localPath
-
-        self.localDir = to_location
-
-        if not os.path.isdir(to_location):
-            raise GangaException(
-                '"%s" is not a valid directory... Please set the localDir attribute to a valid directory' % self.localDir)
+        to_location = targetPath
 
         if self.lfn == "":
             raise GangaException('Can\'t download a file without an LFN.')
@@ -543,9 +513,9 @@ class DiracFile(IGangaFile):
 
             if self.guid == "" or not self.locations:
                 self.getMetadata()
-            return
+            return True
         logger.error("Error in getting file '%s' : %s" % (self.lfn, str(stdout)))
-        return stdout
+        raise GangaException(stdout)
 
     def replicate(self, destSE, sourceSE=''):
         """

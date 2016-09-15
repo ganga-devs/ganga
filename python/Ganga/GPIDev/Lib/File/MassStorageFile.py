@@ -74,16 +74,22 @@ class MassStorageFile(IGangaFile):
         if attr == "namePattern":
             actual_value = os.path.basename(value)
             this_localDir = os.path.dirname(value)
-            super(MassStorageFile, self).__setattr__('localDir', this_localDir)
+            if this_localDir:
+                self.localDir = this_localDir
         if attr == "localDir":
-            actual_value = os.path.abspath(expandfilename(value))
+            if value:
+                actual_value = os.path.abspath(expandfilename(value))
 
         super(MassStorageFile, self).__setattr__(attr, actual_value)
 
     def _setNamePath(self, _namePattern='', _localDir=''):
         if _namePattern != '' and _localDir == '':
             self.namePattern = os.path.basename(_namePattern)
-            self.localDir = os.path.dirname(_namePattern)
+            if not os.path.dirname(_namePattern):
+                if os.path.isfile(os.path.join(os.getcwd(), os.path.basename(_namePattern))):
+                    self.localDir = os.getcwd()
+            else:
+                self.localDir = os.path.dirname(_namePattern)
         elif _namePattern != '' and _localDir != '':
             self.namePattern = _namePattern
             self.localDir = _localDir
@@ -163,52 +169,19 @@ class MassStorageFile(IGangaFile):
             tmpLocations = self.locations
         return tmpLocations
 
-    def get(self):
-        """
-        Retrieves locally all files matching this MassStorageFile object pattern
-        """
-        self._internal_get()
-
-    def _internal_get(self, localPath=''):
-        """
-        Copy a the file to the local storage using the get mechanism
-        Args:
-            localPath (str): Target path where the file is to copied to
-        """
-        if not localPath:
-            to_location = self.localDir
-            # FIXME? THIS IS POTENTIALLY VERY, VERY UNEXPECTED/UNDOCUMENTED BEHAVIOUR
-            if not os.path.isdir(to_location):
-                if self._getParent() is not None:
-                    try:
-                        new_dir = self.getJobObject().outputdir
-                        if to_location:
-                            logger.warning("Setting get path of file to be: '%s' from: '%s'" % (new_dir, to_location))
-                        to_location = new_dir
-                    except AssertionError:
-                        ## CANNOT auto-make a path so lets not try to, it causes problems
-                        logger.error("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
-                        pass
-                else:
-                    logger.error("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
-                    return
-        else:
-            to_location = localPath
-
-        cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']
-
-        for location in self.locations:
-            targetLocation = os.path.join(to_location, os.path.basename(location))
-            os.system('%s %s %s' % (cp_cmd, location, targetLocation))
-
-    def copyTo(self, targetPath):
+    def internalCopyTo(self, targetPath):
         """
         Copy a the file to the local storage using the get mechanism
         Args:
             targetPath (str): Target path where the file is to copied to
         """
-        self._internal_get(targetPath)
+        to_location = targetPath
 
+        cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']
+
+        for location in self.locations:
+            targetLocation = os.path.join(to_location, os.path.basename(location))
+            self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, quote(location), quote(targetLocation)))
 
     def getWNScriptDownloadCommand(self, indent):
         ## FIXME fix me for the situation of multiple files?

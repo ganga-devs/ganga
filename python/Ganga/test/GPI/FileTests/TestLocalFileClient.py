@@ -1,12 +1,10 @@
 from __future__ import absolute_import
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.file_utils import generate_unique_temp_file
-
-import datetime
-import time
 import os
 import shutil
 import copy
+
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.file_utils import generate_unique_temp_file
 
 class TestLocalFileClient(GangaUnitTest):
     """test for sjid in filename names explain each test"""
@@ -35,13 +33,16 @@ class TestLocalFileClient(GangaUnitTest):
 
     @staticmethod
     def cleanUp():
-        """ Cleanup the current temp objects """
+        """ Cleanup the current temp jobs """
 
         from Ganga.GPI import jobs
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
 
+    @classmethod
+    def tearDownClass(cls):
+        """ Cleanup the current temp objects """
         for file_ in TestLocalFileClient._managed_files:
             os.unlink(file_)
         TestLocalFileClient._managed_files = []
@@ -51,8 +52,6 @@ class TestLocalFileClient(GangaUnitTest):
 
         from Ganga.GPI import LocalFile, Job, ArgSplitter
 
-        TestLocalFileClient.cleanUp()
-
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
         file_2 = generate_unique_temp_file(_ext)
@@ -61,7 +60,7 @@ class TestLocalFileClient(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestLocalFileClient.sj_len) ])
+        j.splitter = ArgSplitter(args = [[_] for _ in range(TestLocalFileClient.sj_len)])
         j.outputfiles = [LocalFile(namePattern='*'+_ext)]
         j.submit()
 
@@ -75,9 +74,7 @@ class TestLocalFileClient(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         for sj in j.subjobs:
             output_dir = stripProxy(sj).getOutputWorkspace(create=False).getPath()
@@ -88,11 +85,11 @@ class TestLocalFileClient(GangaUnitTest):
                 assert os.path.isfile(os.path.join(output_dir, file_.namePattern))
 
             # Check that wildcard expansion happened correctly
-            assert len(stripProxy(stripProxy(sj).outputfiles[0]).subfiles) == 2
+            assert len(stripProxy(sj).outputfiles[0].subfiles) == 2
 
             assert len(sj.outputfiles) == 2
 
-        TestLocalFileClient.cleanUp()
+        self.cleanUp()
 
 class TestLocalFileWN(TestLocalFileClient):
     """test for sjid in filename names explain each test"""

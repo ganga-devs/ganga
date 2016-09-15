@@ -48,7 +48,7 @@ class LCGSEFile(IGangaFile):
         'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'gangafiles'
     _name = "LCGSEFile"
-    _exportmethods = ["location", "setLocation", "get", "put", "getUploadCmd"]
+    _exportmethods = ["location", "setLocation", "get", "put", "getUploadCmd", "copyTo"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ namePattern is the pattern of the output file that has to be written into LCG SE
@@ -286,18 +286,13 @@ class LCGSEFile(IGangaFile):
 
         return script
 
-    def get(self):
+    def internalCopyTo(self, targetPath):
         """
         Retrieves locally all files matching this LCGSEFile object pattern
+        Args:
+            targetPath (str): Target path where the file is copied to
         """
-        to_location = self.localDir
-
-        if not os.path.isdir(self.localDir):
-            if self._getParent() is not None:
-                to_location = self.getJobObject().outputdir
-            else:
-                logger.info("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
-                return
+        to_location = targetPath
 
         # set lfc host
         os.environ['LFC_HOST'] = self.lfc_host
@@ -310,8 +305,7 @@ class LCGSEFile(IGangaFile):
             (exitcode, output, m) = self.shell.cmd1(cmd, capture_stderr=True)
 
             if exitcode != 0:
-                logger.error(
-                    'command %s failed to execute , reason for failure is %s' % (cmd, output))
+                logger.error('command %s failed to execute , reason for failure is %s' % (cmd, output))
 
     def getWNScriptDownloadCommand(self, indent):
 
