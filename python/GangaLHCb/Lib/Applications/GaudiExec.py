@@ -8,7 +8,7 @@ import tarfile
 import threading
 import stat
 import uuid
-from funcutils import wraps
+from functools import wraps
 from StringIO import StringIO
 
 from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
