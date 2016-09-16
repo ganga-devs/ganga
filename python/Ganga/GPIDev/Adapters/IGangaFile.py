@@ -2,6 +2,7 @@ import os
 import glob
 import re
 import shutil
+import copy
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import getName
@@ -100,25 +101,39 @@ class IGangaFile(GangaObject):
         """
         Postprocesses (upload) output file to the desired destination from the client
         Order of priority of where the file is to be uploaded to:
-            1) If a job exists and the namePattern can be expanded in terms of (s)j-id and remoteDir doesn't exist
+            1) If a this is managed by a parent job then it's name is expanded according to the outputnameformat if the IGangaFile supports it
                 then it's placed in an automatic folder based upon the base string with the correct name expansion
                 i.e. baseDir / auto-expanded-filename
             2) If the remoteDir has been defined for this file object the file is uploaded to
                 baseDir / remoteDir / auto-expanded-filename
             3) In the case the namePattern isn't auto-expanded
                 baseDir / namePattern
+
+        Order of priority as to where the file is taken to be on local storage:
+            1) If the object is managed by a Job the job.outputdir is set to the localDir if None exists
+            2) If the object has a localDir then this is taken to be the location the upload will attempt to upload the file from
+            2) This will raise an exception if the file doesn't exist before attempting an upload
         """
 
-        targetPath = ''
+        sourcePath = ''
 
         fileName = self.namePattern
         if self.compressed:
             fileName = '%s.gz' % self.namePattern
 
+        if self._getParent() is not None and not self.localDir:
+            sourceDir = self.getJobObject().outputdir
+            self.localDir = sourceDir
+        else:
+            sourceDir = self.localDir
+
+        if sourceDir and not os.path.isdir(self.localDir):
+            raise GangaException("Local directory of file: '%s' not found please set localDir and try again" % self.localDir)
+
         if regex.search(fileName) is not None:
 
             output = True
-            for this_file in glob.glob(os.path.join(localDir, fileName)):
+            for this_file in glob.glob(os.path.join(sourceDir, fileName)):
             
                 sub_file = copy.deepcopy(self)
                 sub_file.namePattern = os.path.basename(this_file)
@@ -127,19 +142,23 @@ class IGangaFile(GangaObject):
 
             return output
         
-        if self.getSubFiles():
+        elif self.getSubFiles():
             output = True
             for sub_file in self.getSubFiles():
                 output = output and sub_file.put()
             return output
 
-        targetDir, targetPath = self.getOutputFilename()
+        targetDir, targetFile = self.getOutputFilename()
 
         if targetDir:
-            self.
+            self.makeDir(targetDir)
 
-        self.uploadTo(targetPath)
+        returnable = self.uploadTo(os.path.join(sourceDir, self.namePattern), os.path.join(targetDir, targetFile))
 
+        if returnable is True:
+            self.namePattern = targetFile
+
+        return True
 
     def getOutputFilename(self):
         """
@@ -156,15 +175,14 @@ class IGangaFile(GangaObject):
         jobid = jobfqid
         subjobid = ''
 
-        folderStructure = None
-        filenameStructure = None
+        folderStructure = ''
+        filenameStructure = self.namePattern
 
         if (jobfqid.find('.') > -1):
             jobid = jobfqid.split('.')[0]
             subjobid = jobfqid.split('.')[1]
 
-        if self.outputfilenameformat is None:
-            filenameStructure = '{fname}'
+        if not hasattr(self, 'outputfilenameformat') or (hasattr(self, 'outputfilenameformat') and not self.outputfilenameformat):
             # create jid/sjid directories
             folderStructure = jobid
             if subjobid != '':
@@ -179,10 +197,10 @@ class IGangaFile(GangaObject):
             if subjobid != '':
                 filenameStructure = filenameStructure.replace('{sjid}', subjobid)
                 folderStructure = folderStructure.replace('{sjid}', subjobid)
-        
+       
         return (folderStructure, filenameStructure)
 
-    def _mkdir(self, folderStructure):
+    def makeDir(self, folderStructure):
         """
         This method will create the given folder structure underneath the base directory of the file object
         Args:
@@ -190,10 +208,11 @@ class IGangaFile(GangaObject):
         """
         raise NotImplementedError
 
-    def uploadTo(self, targetPath):
+    def uploadTo(self, sourcePath, targetPath):
         """
         This method only cares about uploading the file to the correct location given as 'targetPath'
         Args:
+            sourcePath (str): This is the _absolute_ target where the file managed by this class is stored locally
             targetPath (str): This is the _relative_ target where the file managed by this class is uploaded to
         """
         raise NotImplementedError

@@ -200,7 +200,34 @@ class MassStorageFile(IGangaFile):
 
         return script
 
-    def _mkdir(self, massStoragePath, exitIfNotExist=False):
+    def checkDirExists(self, checkPath):
+        """
+        Checks to see if a directory exists or not within the remote storage
+        Args:
+            checkPath (str): This is the path we're checking to see if exists
+        """
+
+        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
+        ls_cmd = massStorageConfig['ls_cmd']
+        massStoragePath = massStorageConfig['path']
+
+        massStoragePath = os.path.join(massStoragePath, checkPath)
+
+        pathToDirName = os.path.dirname(massStoragePath)
+
+        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, quote(pathToDirName)))
+        if exitcode != 0:
+            #self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
+            return False
+
+        for directory in mystdout.split('\n'):
+            if directory.strip() == checkPath:
+                return True
+        
+        return False
+
+
+    def makeDir(self, wantedPath, exitIfNotExist=False):
         """
         Creates a folder on the mass Storage corresponding to the given path
         Args:
@@ -209,23 +236,11 @@ class MassStorageFile(IGangaFile):
 
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
         mkdir_cmd = massStorageConfig['mkdir_cmd']
-        ls_cmd = massStorageConfig['ls_cmd']
+        massStoragePath = massStorageConfig['path']
 
-        # create the last directory (if not exist) from the config path
-        pathToDirName = os.path.dirname(massStoragePath)
-        dirName = os.path.basename(massStoragePath)
+        massStoragePath = os.path.join(massStoragePath, wantedPath)
 
-        directoryExists = False
-
-        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, quote(pathToDirName)))
-        if exitcode != 0 and exitIfNotExist:
-            self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
-            raise GangaException(mystderr)
-
-        for directory in mystdout.split('\n'):
-            if directory.strip() == dirName:
-                directoryExists = True
-                break
+        directoryExists = self.checkDirExists(massStoragePath)
 
         if not directoryExists:
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s -p %s' % (mkdir_cmd, quote(massStoragePath)))
@@ -233,134 +248,24 @@ class MassStorageFile(IGangaFile):
                 self.handleUploadFailure(mystderr, '2) %s %s' % (mkdir_cmd, massStoragePath))
                 raise GangaException(mystderr)
 
-    def put(self):
+    def uploadTo(self, sourcePath, targetPath):
         """
-        Creates and executes commands for file upload to mass storage (Castor), this method will
-        be called on the client
         """
-
-        sourceDir = ''
-
-        # if used as a stand alone object
-        if self._getParent() is None:
-            if self.localDir == '':
-                _CWD = os.getcwd()
-                if os.path.isfile(os.path.join(_CWD, self.namePattern)):
-                    sourceDir = _CWD
-                else:
-                    logger.warning('localDir attribute is empty, don\'t know from which dir to take the file')
-                    return
-            else:
-                sourceDir = self.localDir
-
-                (result, message) = self.validate()
-
-                if result == False:
-                    logger.warning(message)
-                    return
-
-        else:
-            job = self.getJobObject()
-            sourceDir = job.outputdir
-
-            # if there are subjobs, the put method will be called on every subjob
-            # and will upload the resulted output file
-            if len(job.subjobs) > 0:
-                return
-
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
-
         cp_cmd = massStorageConfig['cp_cmd']
-        ls_cmd = massStorageConfig['ls_cmd']
         massStoragePath = massStorageConfig['path']
 
-        try:
-            self._mkdir(massStoragePath, exitIfNotExist=True)
-        except GangaException:
-            return
-
-        # the folder part of self.outputfilenameformat
-        folderStructure = ''
-        # the file name part of self.outputfilenameformat
-        filenameStructure = ''
-
-        if self._getParent() is not None:
-            jobfqid = self.getJobObject().fqid
-
-            jobid = jobfqid
-            subjobid = ''
-
-            if (jobfqid.find('.') > -1):
-                jobid = jobfqid.split('.')[0]
-                subjobid = jobfqid.split('.')[1]
-
-            if self.outputfilenameformat is None:
-                filenameStructure = '{fname}'
-                # create jid/sjid directories
-                folderStructure = jobid
-                if subjobid != '':
-                    folderStructure = os.path.join(jobid, subjobid)
-
-            else:
-                filenameStructure = os.path.basename(self.outputfilenameformat)
-                filenameStructure = filenameStructure.replace('{jid}', jobid)
-
-                folderStructure = os.path.dirname(self.outputfilenameformat)
-                folderStructure = folderStructure.replace('{jid}', jobid)
-
-                if subjobid != '':
-                    filenameStructure = filenameStructure.replace('{sjid}', subjobid)
-                    folderStructure = folderStructure.replace('{sjid}', subjobid)
+        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
+                                                    (cp_cmd, quote(sourcePath), quote(os.path.join(massStoragePath, targetPath))))
+        if exitcode != 0:
+            self.handleUploadFailure(mystderr, '5) %s %s %s' % (cp_cmd, sourcePath, os.path.join(massStoragePath, targetPath)))
+            return False
         else:
-            if self.outputfilenameformat != None:
-                folderStructure = os.path.dirname(self.outputfilenameformat)
-                filenameStructure = os.path.basename(self.outputfilenameformat)
-            else:
-                filenameStructure = '{fname}'
-
-        # create the folder structure
-        if folderStructure:
-            massStoragePath = os.path.join(massStoragePath, folderStructure)
-            try:
-                self._mkdir(massStoragePath)
-            except GangaException:
-                return
-
-        # here filenameStructure has replaced jid and sjid if any, and only not
-        # replaced keyword is fname
-        fileName = self.namePattern
-        if self.compressed:
-            fileName = '%s.gz' % self.namePattern
-
-        if regex.search(fileName) is not None:
-            for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-                finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
-                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
-                                                (cp_cmd, quote(currentFile), quote(os.path.join(massStoragePath, finalFilename))))
-
-                d = MassStorageFile(namePattern=os.path.basename(currentFile))
-                d.compressed = self.compressed
-
-                if exitcode != 0:
-                    self.handleUploadFailure(mystderr, '4) %s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
-                else:
-                    logger.info('%s successfully uploaded to mass storage as %s' % (currentFile, os.path.join(massStoragePath, finalFilename)))
-                    d.locations = os.path.join(massStoragePath, os.path.basename(finalFilename))
-
-                self.subfiles.append(d)
-        else:
-            currentFile = os.path.join(sourceDir, fileName)
-            finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
-                                                        (cp_cmd, quote(currentFile), quote(os.path.join(massStoragePath, finalFilename))))
-            if exitcode != 0:
-                self.handleUploadFailure(mystderr, '5) %s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
-            else:
-                logger.info('%s successfully uploaded to mass storage as %s' % (currentFile, os.path.join(massStoragePath, finalFilename)))
-                location = os.path.join(massStoragePath, os.path.basename(finalFilename))
-                if location not in self.locations:
-                    self.locations.append(location)
-
+            logger.info('%s successfully uploaded to mass storage as %s' % (sourcePath, os.path.join(massStoragePath, targetPath)))
+            location = os.path.join(massStoragePath, os.path.basename(targetPath))
+            if location not in self.locations:
+                self.locations.append(location)
+            return True
 
     def validate(self):
 
