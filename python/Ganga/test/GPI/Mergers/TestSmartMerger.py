@@ -49,7 +49,6 @@ class TestSmartMerger(GangaUnitTest):
         for j in self.jobslice:
             j.submit()
             assert run_until_completed(j), 'Timeout on job submission: job is still not finished'
-            assert j.status == 'completed'
 
     def tearDown(self):
 

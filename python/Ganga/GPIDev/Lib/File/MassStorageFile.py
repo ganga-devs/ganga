@@ -51,7 +51,7 @@ class MassStorageFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "MassStorageFile"
-    _exportmethods = ["location", "get", "put", "setLocation", "remove", "accessURL"]
+    _exportmethods = ["location", "get", "put", "setLocation", "remove", "accessURL", "copyTo"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ namePattern is the pattern of the output file that has to be written into mass storage
@@ -74,16 +74,22 @@ class MassStorageFile(IGangaFile):
         if attr == "namePattern":
             actual_value = os.path.basename(value)
             this_localDir = os.path.dirname(value)
-            super(MassStorageFile, self).__setattr__('localDir', this_localDir)
+            if this_localDir:
+                self.localDir = this_localDir
         if attr == "localDir":
-            actual_value = os.path.abspath(expandfilename(value))
+            if value:
+                actual_value = os.path.abspath(expandfilename(value))
 
         super(MassStorageFile, self).__setattr__(attr, actual_value)
 
     def _setNamePath(self, _namePattern='', _localDir=''):
         if _namePattern != '' and _localDir == '':
             self.namePattern = os.path.basename(_namePattern)
-            self.localDir = os.path.dirname(_namePattern)
+            if not os.path.dirname(_namePattern):
+                if os.path.isfile(os.path.join(os.getcwd(), os.path.basename(_namePattern))):
+                    self.localDir = os.getcwd()
+            else:
+                self.localDir = os.path.dirname(_namePattern)
         elif _namePattern != '' and _localDir != '':
             self.namePattern = _namePattern
             self.localDir = _localDir
@@ -163,27 +169,19 @@ class MassStorageFile(IGangaFile):
             tmpLocations = self.locations
         return tmpLocations
 
-    def get(self):
+    def internalCopyTo(self, targetPath):
         """
-        Retrieves locally all files matching this MassStorageFile object pattern
+        Copy a the file to the local storage using the get mechanism
+        Args:
+            targetPath (str): Target path where the file is to copied to
         """
+        to_location = targetPath
 
-        to_location = self.localDir
-
-        if not os.path.isdir(self.localDir):
-            if self._getParent() is not None:
-                to_location = self.getJobObject().outputdir
-            else:
-                logger.error("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
-                return
-
-        cp_cmd = getConfig('Output')['MassStorageFile'][
-            'uploadOptions']['cp_cmd']
+        cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']
 
         for location in self.locations:
-            targetLocation = os.path.join(
-                to_location, os.path.basename(location))
-            os.system('%s %s %s' % (cp_cmd, location, targetLocation))
+            targetLocation = os.path.join(to_location, os.path.basename(location))
+            self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, quote(location), quote(targetLocation)))
 
     def getWNScriptDownloadCommand(self, indent):
         ## FIXME fix me for the situation of multiple files?

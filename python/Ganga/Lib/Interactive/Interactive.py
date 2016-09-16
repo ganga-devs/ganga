@@ -200,7 +200,7 @@ class Interactive(IBackend):
                 getWNCodeForOutputPostprocessing(job, '')
  
         all_inputfiles = [this_file for this_file in job.inputfiles]
-        if job.master: all_inputfiles.extend([this_file for this_file in job.master.inputfiles])
+        if job.master is not None: all_inputfiles.extend([this_file for this_file in job.master.inputfiles])
 
         wnCodeToDownloadInputFiles = ''
 
