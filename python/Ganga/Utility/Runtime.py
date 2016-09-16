@@ -243,7 +243,7 @@ def loadPlugins(environment):
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     env_dict = environment.__dict__
-    for n, r in zip(allRuntimes.keys(), allRuntimes.values()):
+    for n, r in allRuntimes.iteritems():
         try:
             r.bootstrap(env_dict)
         except Exception as err:
@@ -257,7 +257,7 @@ def loadPlugins(environment):
             logger.error('problems with loading Named Templates for %s', n)
             logger.error('Reason: %s' % str(err))
 
-    for n, r in zip(allRuntimes.keys(), allRuntimes.values()):
+    for n, r in allRuntimes.iteritems():
         try:
             r.loadPlugins()
         except Exception as err:
