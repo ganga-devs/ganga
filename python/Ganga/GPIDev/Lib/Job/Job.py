@@ -605,7 +605,7 @@ class Job(GangaObject):
 
         if final_status != initial_status and self.master is None:
             logger.info('job %s status changed to "%s"', self.getFQID('.'), final_status)
-        if update_master and self.master:
+        if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
     def transition_update(self, new_status):
@@ -740,7 +740,7 @@ class Job(GangaObject):
         stats = self.getSubJobStatuses()
 
         # ignore non-split jobs
-        if not stats and self.master:
+        if not stats and self.master is not None:
             logger.warning('ignoring master job status updated for job %s (NOT MASTER)', self.getFQID('.'))
             return
 
@@ -860,7 +860,7 @@ class Job(GangaObject):
         name = '_input_sandbox_' + self.getFQID('_') + '%s.tgz'
 
         if master:
-            if self.master:
+            if self.master is not None:
                 name = '_input_sandbox_' + self.master.getFQID('_') + '%s.tgz'
             name = name % "_master"
         else:
@@ -1345,7 +1345,7 @@ class Job(GangaObject):
             logger.error("You should not use a splitter with the Jedi backend. The splitter will be ignored.")
             self.splitter = None
             rjobs = [self]
-        elif self.splitter and not self.master:
+        elif self.splitter and not self.master is not None:
 
             fqid = self.getFQID('.')
 
