@@ -84,7 +84,7 @@ sys.stdout=open('./__syslog__','w')
 sys.stderr=sys.stdout
 
 try:
-    child = subprocess.Popen(" ".join(appscriptpath), shell=True, stdout=outfile, stderr=errorfile)
+    child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)
 except OSError as x:
     errfile = open( 'stderr', 'w' )
     errfile.close()
