@@ -257,12 +257,14 @@ def loadPlugins(environment):
             logger.error('problems with loading Named Templates for %s', n)
             logger.error('Reason: %s' % str(err))
 
-    for r in allRuntimes.values():
+    for n, r in zip(allRuntimes.keys(), allRuntimes.values()):
         try:
             r.loadPlugins()
         except Exception as err:
-            logger.error('problems with loading Named Templates for %s', n)
+            from Ganga.Core.exceptions import GangaException
+            logger.error('problems with loading Plugin %s', n)
             logger.error('Reason: %s' % str(err))
+            raise GangaException("Failed to load plugin: %s. Ganga will now shutdown to prevent job corruption." % n)
 
 def autoPopulateGPI(my_interface=None):
     """
