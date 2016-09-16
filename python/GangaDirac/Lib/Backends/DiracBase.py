@@ -145,7 +145,10 @@ class DiracBase(IBackend):
         self.statusInfo = ''
         j.been_queued = False
         dirac_cmd = """execfile(\'%s\')""" % dirac_script
-        result = execute(dirac_cmd, return_raw_dict=True)
+
+        try:
+            result = execute(dirac_cmd)
+        except GangaDiracException as err:
         # Could use the below code instead to submit on a thread
         # If submitting many then user may terminate ganga before
         # all jobs submitted
@@ -162,8 +165,7 @@ class DiracBase(IBackend):
 #        server.execute_nonblocking(dirac_cmd, callback_func=submit_checker, args=(self, dirac_script))
 #        return True
 
-        err_msg = 'Error submitting job to Dirac: %s' % str(result)
-        if not result_ok(result) or 'Value' not in result:
+            err_msg = 'Error submitting job to Dirac: %s' % str(err)
             logger.error(err_msg)
             logger.error("\n\n===\n%s\n===\n" % dirac_script)
             logger.error("\n\n====\n")
@@ -172,7 +174,7 @@ class DiracBase(IBackend):
             logger.error("\n====\n")
             raise BackendError('Dirac', err_msg)
 
-        idlist = result['Value']
+        idlist = result
         if type(idlist) is list:
             return self._setup_bulk_subjobs(idlist, dirac_script)
 
@@ -369,10 +371,11 @@ class DiracBase(IBackend):
         if not self.id:
             return None
         dirac_cmd = 'kill(%d)' % self.id
-        result = execute(dirac_cmd, return_raw_dict=True)
-        if not result_ok(result):
-            raise BackendError('Dirac', 'Could not kill job: %s' % str(result))
-        return result['OK']
+        try:
+            result = execute(dirac_cmd)
+        except GangaDiracException as err:
+            raise BackendError('Dirac', 'Could not kill job: %s' % str(err))
+        return True
 
     def peek(self, filename=None, command=None):
         """Peek at the output of a job (Note: filename/command are ignored).
@@ -380,10 +383,10 @@ class DiracBase(IBackend):
             filename (str): Ignored but is filename of a file in the sandbox
             command (str): Ignored but is a command which could be executed"""
         dirac_cmd = 'peek(%d)' % self.id
-        result = execute(dirac_cmd, return_raw_dict=True)
-        if result_ok(result):
-            logger.info(result['Value'])
-        else:
+        try:
+            result = execute(dirac_cmd)
+            logger.info(result)
+        except GangaDiracException:
             logger.error("No peeking available for Dirac job '%i'.", self.id)
 
     def getOutputSandbox(self, outputDir=None):
@@ -395,9 +398,10 @@ class DiracBase(IBackend):
         if outputDir is None:
             outputDir = j.getOutputWorkspace().getPath()
         dirac_cmd = "getOutputSandbox(%d,'%s')"  % (self.id, outputDir)
-        result = execute(dirac_cmd, return_raw_dict=True)
-        if not result_ok(result):
-            msg = 'Problem retrieving output: %s' % str(result)
+        try:
+            result = execute(dirac_cmd)
+        except GangaDiracException as err:
+            msg = 'Problem retrieving output: %s' % str(err)
             logger.warning(msg)
             return False
 
@@ -482,18 +486,20 @@ class DiracBase(IBackend):
         '''Obtains some (possibly) useful DIRAC debug info. '''
         # check services
         cmd = 'getServicePorts()'
-        result = execute(cmd, return_raw_dict=True)
-        if not result_ok(result):
-            logger.warning('Could not obtain services: %s' % str(result))
+        try:
+            result = execute(cmd)
+        except GangaDiracException as err:
+            logger.warning('Could not obtain services: %s' % str(err))
             return
-        services = result.get('Value', {})
+        services = result
         for category in services:
             system, service = category.split('/')
             cmd = "ping('%s','%s')" % (system, service)
-            result = execute(cmd, return_raw_dict=True)
-            msg = 'OK.'
-            if not result_ok(result):
-                msg = '%s' % result['Message']
+            try:
+                result = execute(cmd)
+                msg = 'OK.'
+            except GangaDiracException as err:
+                msg = '%s' % err
             logger.info('%s: %s' % (category, msg))
 
         # get pilot info for this job
@@ -503,11 +509,11 @@ class DiracBase(IBackend):
         cwd = os.getcwd()
         debug_dir = j.getDebugWorkspace().getPath()
         cmd = "getJobPilotOutput(%d,'%s')" % (self.id, debug_dir)
-        result = execute(cmd, return_raw_dict=True)
-        if result_ok(result):
+        try:
+            result = execute(cmd)
             logger.info('Pilot Info: %s/pilot_%d/std.out.' % (debug_dir, self.id))
-        else:
-            logger.error(result.get('Message', ''))
+        except GangaDiracException as err:
+            logger.error("%s" % err)
 
     @staticmethod
     def _bulk_updateStateTime(jobStateDict, bulk_time_lookup={} ):

@@ -14,7 +14,7 @@ from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.files import expandfilename
-from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute
+from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute, GangaDiracException
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 config = getConfig('Configuration')
@@ -299,14 +299,16 @@ class DiracFile(IGangaFile):
         if self.lfn == "":
             raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
-        stdout = execute('removeFile("%s")' % self.lfn, return_raw_dict=True)
-        if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
-            self.lfn = ""
-            self.locations = []
-            self.guid = ''
-            return
-        logger.error("Error in removing file '%s' : %s" % (self.lfn, stdout))
-        return stdout
+        try:
+            stdout = execute('removeFile("%s")' % self.lfn)
+        except GangaDiracException as err:
+            logger.error("Error in removing file '%s' : %s" % (self.lfn, stdout))
+            raise
+
+        self.lfn = ""
+        self.locations = []
+        self.guid = ''
+        return
 
     def getMetadata(self):
         """
@@ -318,17 +320,20 @@ class DiracFile(IGangaFile):
             self._optionallyUploadLocalFile()
 
         # eval again here as datatime not included in dirac_ganga_server
-        r = execute('getMetadata("%s")' % self.lfn, return_raw_dict=True)
-        if isinstance(ret, dict) and ret.get('OK', False) and self.lfn in ret.get('Value', {'Successful': {}})['Successful']:
-            try:
-                if self.guid != ret['Value']['Successful'][self.lfn]['GUID']:
-                    self.guid = ret['Value']['Successful'][self.lfn]['GUID']
-            except:
-                pass
+
+        try:
+            ret = execute('getMetadata("%s")' % self.lfn)
+        except GangaDiracException as err:
+            raise
+        try:
+            if self.guid != ret['Successful'][self.lfn]['GUID']:
+                self.guid = ret['Successful'][self.lfn]['GUID']
+        except:
+            pass
 
         try:
             reps = self.getReplicas()
-            ret['Value']['Successful'][self.lfn].update({'replicas': self.locations})
+            ret['Successful'][self.lfn].update({'replicas': self.locations})
         except:
             pass
 
@@ -396,16 +401,19 @@ class DiracFile(IGangaFile):
                 self._storedReplicas = copy.deepcopy(self._storedReplicas)
             if (self._storedReplicas == {} and len(self.subfiles) == 0) or forceRefresh:
 
-                self._storedReplicas = execute('getReplicas("%s")' % self.lfn, return_raw_dict=True)
-                if self._storedReplicas.get('OK', False) is True:
-                    try:
-                        self._storedReplicas = self._storedReplicas['Value']['Successful']
-                    except Exception as err:
-                        logger.error("Unknown Error: %s" % str(err))
-                        raise err
-                else:
+                try:
+                    self._storedReplicas = execute('getReplicas("%s")' % self.lfn)
+                except GangaDiracException as err:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
-                    raise GangaException("Couldn't find replicas for: %s" % str(self.lfn))
+                    self._storedReplicas = {}
+                    raise
+
+                try:
+                    self._storedReplicas = self._storedReplicas['Successful']
+                except Exception as err:
+                    logger.error("Unknown Error: %s from %s" % (str(err), self._storedReplicas))
+                    raise err
+
                 logger.debug("getReplicas: %s" % str(self._storedReplicas))
 
                 if self.lfn in self._storedReplicas:
@@ -466,26 +474,30 @@ class DiracFile(IGangaFile):
         """
         _accessURLs = []
         if len(self.subfiles) == 0:
-          self.getReplicas()
-          # If the SE isn't specified return a random choice.
-          if thisSE == '':
-            this_SE = random.choice(self.locations)
-          # If the SE is specified and we got a URL for a replica there, use it.
-          elif thisSE in self.locations:
-            this_SE = thisSE
-          # If the specified SE doesn't have a replica then return another one at random.
-          else:
-             logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
-             this_SE = random.choice(self.locations) 
-          myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE), return_raw_dict=True)
-          if 'Message' in myurl:
-              raise GangaException("Error requesting URL: %s" % myurl['Message'])
-          this_accessURL = myurl['Value']['Successful'][self.lfn]
-          _accessURLs.append(this_accessURL)
+            self.getReplicas()
+            # If the SE isn't specified return a random choice.
+            if thisSE == '':
+                this_SE = random.choice(self.locations)
+            # If the SE is specified and we got a URL for a replica there, use it.
+            elif thisSE in self.locations:
+                this_SE = thisSE
+            # If the specified SE doesn't have a replica then return another one at random.
+            else:
+                logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
+                this_SE = random.choice(self.locations)
+
+            try:
+                myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
+            except GangaDiracException as err:
+                raise GangaException("Error requesting URL: %s" % err)
+
+
+            this_accessURL = myurl['Successful'][self.lfn]
+            _accessURLs.append(this_accessURL)
         else:
-          # For all subfiles request the accessURL, 1 URL per LFN
-          for i in self.subfiles:
-            _accessURLs.append(i.accessURL(thisSE)[0])
+            # For all subfiles request the accessURL, 1 URL per LFN
+            for i in self.subfiles:
+                _accessURLs.append(i.accessURL(thisSE)[0])
         return _accessURLs
 
     def get(self, localPath=''):
@@ -515,19 +527,21 @@ class DiracFile(IGangaFile):
             raise GangaException('Can\'t download a file without an LFN.')
 
         logger.info("Getting file %s" % self.lfn)
-        stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location), return_raw_dict=True)
-        if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
-            if self.namePattern == "":
-                name = os.path.basename(self.lfn)
-                if self.compressed:
-                    name = name[:-3]
-                self.namePattern = name
+        try:
+            stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location))
+        except GangaDiracException as err:
+            logger.error("Error in getting file '%s' : %s" % (self.lfn, str(err)))
+            raise
 
-            if self.guid == "" or not self.locations:
-                self.getMetadata()
-            return
-        logger.error("Error in getting file '%s' : %s" % (self.lfn, str(stdout)))
-        return stdout
+        if self.namePattern == "":
+            name = os.path.basename(self.lfn)
+            if self.compressed:
+                name = name[:-3]
+            self.namePattern = name
+
+        if self.guid == "" or not self.locations:
+            self.getMetadata()
+        return
 
     def replicate(self, destSE, sourceSE=''):
         """
@@ -542,13 +556,14 @@ class DiracFile(IGangaFile):
             raise GangaException('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE), return_raw_dict=True)
-        if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
-            if destSE not in self.locations:
-                self.locations.append(destSE)
-            return
-        logger.error("Error in replicating file '%s' : %s" % (self.lfn, stdout))
-        return stdout
+        try:
+            stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE))
+        except GangaDiracException as err:
+            logger.error("Error in replicating file '%s' : %s" % (self.lfn, err))
+            raise
+
+        if destSE not in self.locations:
+            self.locations.append(destSE)
 
     def processWildcardMatches(self):
         if regex.search(self.namePattern) is not None:
@@ -689,38 +704,29 @@ class DiracFile(IGangaFile):
             stdout = ''
             logger.debug('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
             logger.debug('execute: uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
-            stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])), return_raw_dict=True)
-            if not stdout.get('OK', False):
-                logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), stdout))
+            try:
+                stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
+            except GangaDiracException as err:
+                logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), err))
                 continue
-            if stdout.get('OK', False) and lfn in stdout.get('Value', {'Successful': {}})['Successful']:
-                # when doing the two step upload delete the temp file
-                if self.compressed or self._parent != None:
-                    os.remove(name)
-                # need another eval as datetime needs to be included.
-                guid = stdout['Value']['Successful'][lfn].get('GUID', '')
-                if regex.search(self.namePattern) is not None:
-                    d.lfn = lfn
-                    d.remoteDir = os.path.dirname(lfn)
-                    d.locations = stdout['Value']['Successful'][lfn].get('allDiracSE', '')
-                    d.guid = guid
-                    outputFiles.append(GPIProxyObjectFactory(d))
-                    continue
-                else:
-                    self.lfn = lfn
-                    self.remoteDir = os.path.dirname(lfn)
-                    self.locations = stdout['Value']['Successful'][lfn].get('allDiracSE', '')
-                    self.guid = guid
-                # return ## WHY?
+
+            # when doing the two step upload delete the temp file
+            if self.compressed or self._parent != None:
+                os.remove(name)
+            # need another eval as datetime needs to be included.
+            guid = stdout['Successful'][lfn].get('GUID', '')
+            if regex.search(self.namePattern) is not None:
+                d.lfn = lfn
+                d.remoteDir = os.path.dirname(lfn)
+                d.locations = stdout['Successful'][lfn].get('allDiracSE', '')
+                d.guid = guid
+                outputFiles.append(GPIProxyObjectFactory(d))
+                continue
             else:
-                failureReason = "Error in uploading file %s : %s" % (os.path.basename(name), str(stdout))
-                logger.error(failureReason)
-                if regex.search(self.namePattern) is not None:
-                    d.failureReason = failureReason
-                    outputFiles.append(GPIProxyObjectFactory(d))
-                    continue
-                self.failureReason = failureReason
-                return str(stdout)
+                self.lfn = lfn
+                self.remoteDir = os.path.dirname(lfn)
+                self.locations = stdout['Successful'][lfn].get('allDiracSE', '')
+                self.guid = guid
 
         if replicate == True:
 

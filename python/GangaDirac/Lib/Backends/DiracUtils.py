@@ -1,3 +1,4 @@
+import time
 from Ganga.Core.exceptions import GangaException, BackendError
 #from GangaDirac.BOOT       import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
@@ -20,7 +21,6 @@ def result_ok(result):
 
 
 def get_result(command,
-               logger_message=None,
                exception_message=None,
                eval_includes=None,
                retry_limit=5):
@@ -29,28 +29,18 @@ def get_result(command,
     while retries < retry_limit:
 
         try:
-            result = execute(command, eval_includes=eval_includes, return_raw_dict=True)
-
-            if not result_ok(result):
-                if logger_message is not None:
-                    logger.warning('%s: %s' % (logger_message, str(result)))
-                if exception_message is not None:
-                    logger.warning("Failed to run: %s" % str(command))
-                    logger.warning("includes:\n%s" % str(eval_includes))
-                    logger.warning("Result: '%s'" % str(result))
-                    raise GangaException(exception_message)
-                raise GangaException("Failed to return result of '%s': %s" % (command, result))
-            return result
-        except Exception as x:
-            import time
+            result = execute(command, eval_includes=eval_includes)
+        except GangaDiracException as err:
+            logger.error(exception_message)
             logger.debug("Sleeping for 5 additional seconds to reduce possible overloading")
             time.sleep(5.)
             if retries == retry_limit - 1:
                 raise
             retries = retries + 1
-            logger.error("An Error Occured: %s" % str(x))
+            logger.error("An Error Occured: %s" % str(err))
             logger.error("Retrying: %s / %s " % (str(retries + 1), str(retry_limit)))
 
+        return result
 
 def get_job_ident(dirac_script_lines):
     '''parse the dirac script for the label given to the job object'''
