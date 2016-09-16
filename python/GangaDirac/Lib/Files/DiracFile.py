@@ -302,7 +302,7 @@ class DiracFile(IGangaFile):
         try:
             stdout = execute('removeFile("%s")' % self.lfn)
         except GangaDiracException as err:
-            logger.error("Error in removing file '%s' : %s" % (self.lfn, stdout))
+            logger.error("Error in removing file '%s' : %s" % (self.lfn, err))
             raise
 
         self.lfn = ""
