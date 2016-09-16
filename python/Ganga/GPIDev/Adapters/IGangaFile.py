@@ -17,8 +17,7 @@ class IGangaFile(GangaObject):
 
     """IGangaFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, LocalFile, etc 
     """
-    _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(
-        defvalue="", doc='pattern of the file name')})
+    _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name')})
     _category = 'gangafiles'
     _name = 'IGangaFile'
     _hidden = 1
@@ -100,6 +99,102 @@ class IGangaFile(GangaObject):
     def put(self):
         """
         Postprocesses (upload) output file to the desired destination from the client
+        Order of priority of where the file is to be uploaded to:
+            1) If a job exists and the namePattern can be expanded in terms of (s)j-id and remoteDir doesn't exist
+                then it's placed in an automatic folder based upon the base string with the correct name expansion
+                i.e. baseDir / auto-expanded-filename
+            2) If the remoteDir has been defined for this file object the file is uploaded to
+                baseDir / remoteDir / auto-expanded-filename
+            3) In the case the namePattern isn't auto-expanded
+                baseDir / namePattern
+        """
+
+        targetPath = ''
+
+        fileName = self.namePattern
+        if self.compressed:
+            fileName = '%s.gz' % self.namePattern
+
+        if regex.search(fileName) is not None:
+
+            output = True
+            for this_file in glob.glob(os.path.join(localDir, fileName)):
+            
+                sub_file = copy.deepcopy(self)
+                sub_file.namePattern = os.path.basename(this_file)
+                output = output and sub_file.put()
+                self.subfiles.append(sub_file)
+
+            return output
+        
+        if self.getSubFiles():
+            output = True
+            for sub_file in self.getSubFiles():
+                output = output and sub_file.put()
+            return output
+
+        targetDir, targetPath = self.getOutputFilename()
+
+        if targetDir:
+            self.
+
+        self.uploadTo(targetPath)
+
+
+    def getOutputFilename(self):
+        """
+        This method expands the otuput file name of a class which has implemented the 'outputfilenameformat' attribute
+        Args:
+            fileName(str): This is the basename of the inputfile which is copied to the output folder
+        """
+
+        if not self._getParent() or hasattr(self, 'outputfilenameformat') and self.outputfilenameformat:
+            raise GangaException("This file has no Parent or hasn't implemented outputfilenameformat this is an error!")
+
+        jobfqid = self.getJobObject().fqid
+
+        jobid = jobfqid
+        subjobid = ''
+
+        folderStructure = None
+        filenameStructure = None
+
+        if (jobfqid.find('.') > -1):
+            jobid = jobfqid.split('.')[0]
+            subjobid = jobfqid.split('.')[1]
+
+        if self.outputfilenameformat is None:
+            filenameStructure = '{fname}'
+            # create jid/sjid directories
+            folderStructure = jobid
+            if subjobid != '':
+                folderStructure = os.path.join(jobid, subjobid)
+        else:
+            filenameStructure = os.path.basename(self.outputfilenameformat)
+            filenameStructure = filenameStructure.replace('{jid}', jobid)
+
+            folderStructure = os.path.dirname(self.outputfilenameformat)
+            folderStructure = folderStructure.replace('{jid}', jobid)
+
+            if subjobid != '':
+                filenameStructure = filenameStructure.replace('{sjid}', subjobid)
+                folderStructure = folderStructure.replace('{sjid}', subjobid)
+        
+        return (folderStructure, filenameStructure)
+
+    def _mkdir(self, folderStructure):
+        """
+        This method will create the given folder structure underneath the base directory of the file object
+        Args:
+            folderStructure (str): This is the folder structure which needs to be created under the basedir of the file on remote storage
+        """
+        raise NotImplementedError
+
+    def uploadTo(self, targetPath):
+        """
+        This method only cares about uploading the file to the correct location given as 'targetPath'
+        Args:
+            targetPath (str): This is the _relative_ target where the file managed by this class is uploaded to
         """
         raise NotImplementedError
 
