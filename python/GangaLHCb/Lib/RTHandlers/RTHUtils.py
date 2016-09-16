@@ -81,7 +81,7 @@ def getXMLSummaryScript(indent=''):
 
     import inspect
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                   'XMLWorkerScript.py')
+                                   'XMLWorkerScript.template')
 
     from Ganga.GPIDev.Lib.File import FileUtils
     xml_script = FileUtils.loadScript(script_location, '###INDENT###')
@@ -98,7 +98,7 @@ def create_runscript(useCmake=False):
 
     import inspect
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                   'WorkerScript.py')
+                                                   'WorkerScript.template')
 
     from Ganga.GPIDev.Lib.File import FileUtils
     worker_script = FileUtils.loadScript(script_location, '')

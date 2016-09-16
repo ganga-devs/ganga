@@ -401,7 +401,7 @@ class Batch(IBackend):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                       'BatchScriptTemplate.py')
+                                                       'BatchScriptTemplate.templatenn')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         text = FileUtils.loadScript(script_location, '')

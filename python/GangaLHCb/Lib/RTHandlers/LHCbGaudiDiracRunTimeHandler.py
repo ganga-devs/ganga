@@ -202,7 +202,7 @@ def gaudi_script_template():
 
     import inspect
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                   'GaudiTemplate.py')
+                                   'GaudiTemplate.template')
 
     from Ganga.GPIDev.Lib.File import FileUtils
     script_template = FileUtils.loadScript(script_location, '')
