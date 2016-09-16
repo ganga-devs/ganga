@@ -249,7 +249,6 @@ class TestMutableMethods(GangaUnitTest):
         j.submit()
         assert run_until_completed(j), 'Job must complete'
         assert len(j.subjobs) == 3, 'splitting must occur'
-        assert j.status == 'completed', 'Job must complete'
         for jj in j.subjobs:
             assert not isType(jj.master, gangaList)
 

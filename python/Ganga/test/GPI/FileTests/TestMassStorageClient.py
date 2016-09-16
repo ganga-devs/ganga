@@ -1,11 +1,9 @@
 from __future__ import absolute_import
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.file_utils import generate_unique_temp_file
-
-import datetime
-import time
 import os
 import shutil
+
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.file_utils import generate_unique_temp_file
 
 class TestMassStorageClient(GangaUnitTest):
     """test for sjid in filename names explain each test"""
@@ -38,12 +36,16 @@ class TestMassStorageClient(GangaUnitTest):
 
     @staticmethod
     def cleanUp():
-        """ Cleanup the current temp objects """
+        """ Cleanup the current temp jobs """
 
         from Ganga.GPI import jobs
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
+
+    @classmethod
+    def tearDownClass(cls):
+        """ Cleanup the current temp objects """
 
         for file_ in TestMassStorageClient._managed_files:
             os.unlink(file_)
@@ -58,8 +60,6 @@ class TestMassStorageClient(GangaUnitTest):
 
         from Ganga.Utility.Config import getConfig
 
-        TestMassStorageClient.cleanUp()
-
         assert getConfig('Output')['MassStorageFile']['backendPostprocess']['Local'] == 'client'
 
         _ext = '.root'
@@ -70,7 +70,7 @@ class TestMassStorageClient(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageClient.sj_len) ])
+        j.splitter = ArgSplitter(args = [[_] for _ in range(TestMassStorageClient.sj_len)])
         j.outputfiles = [MassStorageFile(namePattern='*'+_ext)]
         j.submit()
 
@@ -88,9 +88,7 @@ class TestMassStorageClient(GangaUnitTest):
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         for sj in j.subjobs:
             output_dir = stripProxy(sj).getOutputWorkspace(create=False).getPath()
@@ -110,5 +108,5 @@ class TestMassStorageClient(GangaUnitTest):
 
             assert len(sj.outputfiles) == 2
 
-        TestMassStorageClient.cleanUp()
+        self.cleanUp()
 
