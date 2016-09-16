@@ -1,21 +1,19 @@
 from __future__ import absolute_import
-<<<<<<< HEAD
 import os
 import shutil
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
 
-=======
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
 
-import datetime
-import time
 import os
 import shutil
 
->>>>>>> Adding test for MassStorageFile (#735)
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.file_utils import generate_unique_temp_file
+
 class TestMassStorageWN(GangaUnitTest):
     """test for sjid in filename names explain each test"""
 
@@ -24,24 +22,15 @@ class TestMassStorageWN(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
-<<<<<<< HEAD
     fileName = 'MassStorageFile'
 
     # Where on local storage we want to have our 'MassStorage solution'
     outputFilePath = '/tmp/' + fileName + 'WN'
-=======
-    # Where on local storage we want to have our 'MassStorage solution'
-    outputFilePath = '/tmp/MassStorageWN'
->>>>>>> Adding test for MassStorageFile (#735)
 
     # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     MassStorageTestConfig = {'defaultProtocol': 'file://',
                              'fileExtensions': [''],
-<<<<<<< HEAD
                              'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
-=======
-                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir -p'},
->>>>>>> Adding test for MassStorageFile (#735)
                              'backendPostprocess': {'LSF': 'WN', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
                                                     'PBS': 'WN', 'Interactive': 'client', 'Local': 'WN', 'CREAM': 'client'}}
 
@@ -52,7 +41,6 @@ class TestMassStorageWN(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-<<<<<<< HEAD
                     ('Output', TestMassStorageWN.fileName, TestMassStorageWN.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         os.system( 'mkdir -p %s' % TestMassStorageWN.outputFilePath )
@@ -67,27 +55,15 @@ class TestMassStorageWN(GangaUnitTest):
     @staticmethod
     def cleanUp():
         """ Cleanup the current job objects """
-=======
-                    ('Output', 'MassStorageFile', TestMassStorageWN.MassStorageTestConfig),
-                    ('Output', 'FailJobIfNoOutputMatched', 'True')]
-        super(TestMassStorageWN, self).setUp(extra_opts=extra_opts)
-
-    @staticmethod
-    def cleanUp():
-        """ Cleanup the current temp objects """
->>>>>>> Adding test for MassStorageFile (#735)
 
         from Ganga.GPI import jobs
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
 
-<<<<<<< HEAD
     @classmethod
     def tearDownClass(cls):
         """ Cleanup the current temp objects """
-=======
->>>>>>> Adding test for MassStorageFile (#735)
         for file_ in TestMassStorageWN._managed_files:
             os.unlink(file_)
         TestMassStorageWN._managed_files = []
@@ -96,15 +72,9 @@ class TestMassStorageWN(GangaUnitTest):
 
     def test_a_Submit(self):
         """Test the ability to submit a job with some LocalFiles"""
-<<<<<<< HEAD
 
         MassStorageFile = TestMassStorageWN.getFileObject()
         from Ganga.GPI import jobs, Job, LocalFile
-=======
-        from Ganga.GPI import jobs, Job, LocalFile, MassStorageFile
-
-        TestMassStorageWN.cleanUp()
->>>>>>> Adding test for MassStorageFile (#735)
 
         _ext = '.txt'
 
@@ -125,14 +95,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-<<<<<<< HEAD
         assert sleep_until_completed(j)
-=======
-        sleep_until_completed(j)
-
-        # Just has to have reached completed state for checks to make sense
-        assert j.status == 'completed'
->>>>>>> Adding test for MassStorageFile (#735)
 
         # Check that we've still got 1 file everywhere we expect 1
         assert len(j.inputfiles) == 1
@@ -151,20 +114,12 @@ class TestMassStorageWN(GangaUnitTest):
         assert os.path.isdir(output_dir)
         assert os.path.isfile(os.path.join(output_dir, j.inputfiles[0].namePattern))
 
-<<<<<<< HEAD
         self.cleanUp()
 
     def test_c_SplitJob(self):
         """Test submitting subjobs"""
         MassStorageFile = TestMassStorageWN.getFileObject()
         from Ganga.GPI import Job, LocalFile, ArgSplitter
-=======
-        TestMassStorageWN.cleanUp()
-
-    def test_c_SplitJob(self):
-        """Test submitting subjobs"""
-        from Ganga.GPI import Job, LocalFile, MassStorageFile, ArgSplitter
->>>>>>> Adding test for MassStorageFile (#735)
 
         _ext = '.txt2'
 
@@ -186,13 +141,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-<<<<<<< HEAD
         assert sleep_until_completed(j)
-=======
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
->>>>>>> Adding test for MassStorageFile (#735)
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
@@ -206,21 +155,13 @@ class TestMassStorageWN(GangaUnitTest):
             for _input_file in j.inputfiles:
                 assert os.path.isfile(os.path.join(output_dir, _input_file.namePattern))
 
-<<<<<<< HEAD
         self.cleanUp()
-=======
-        TestMassStorageWN.cleanUp()
->>>>>>> Adding test for MassStorageFile (#735)
 
     def test_e_MultipleFiles(self):
         """Test that the wildcards work"""
 
-<<<<<<< HEAD
         MassStorageFile = TestMassStorageWN.getFileObject()
         from Ganga.GPI import LocalFile, Job, ArgSplitter
-=======
-        from Ganga.GPI import LocalFile, MassStorageFile, Job, ArgSplitter
->>>>>>> Adding test for MassStorageFile (#735)
 
         _ext = '.root'
         _ext2 = '.txt'
@@ -248,13 +189,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-<<<<<<< HEAD
         assert sleep_until_completed(j)
-=======
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
->>>>>>> Adding test for MassStorageFile (#735)
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
@@ -270,21 +205,13 @@ class TestMassStorageWN(GangaUnitTest):
             for file_ in j.inputfiles: 
                 assert os.path.isfile(os.path.join(output_dir, file_.namePattern))
 
-<<<<<<< HEAD
         self.cleanUp()
-=======
-        TestMassStorageWN.cleanUp()
->>>>>>> Adding test for MassStorageFile (#735)
 
     def test_g_MultipleFiles(self):
         """Test that the wildcards work"""
 
-<<<<<<< HEAD
         MassStorageFile = TestMassStorageWN.getFileObject()
         from Ganga.GPI import LocalFile, Job, ArgSplitter
-=======
-        from Ganga.GPI import LocalFile, MassStorageFile, Job, ArgSplitter
->>>>>>> Adding test for MassStorageFile (#735)
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
@@ -308,13 +235,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = jobs[-1]
 
-<<<<<<< HEAD
         assert sleep_until_completed(j)
-=======
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
->>>>>>> Adding test for MassStorageFile (#735)
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
@@ -327,7 +248,6 @@ class TestMassStorageWN(GangaUnitTest):
             for file_ in j.inputfiles:
                 assert os.path.isfile(file_prep + file_.namePattern)
 
-<<<<<<< HEAD
         self.cleanUp()
 
 
@@ -335,7 +255,4 @@ class TestSharedWN(TestMassStorageWN):
     """test for sjid in filename names explain each test"""
 
     fileName = 'SharedFile'
-=======
-        TestMassStorageWN.cleanUp()
->>>>>>> Adding test for MassStorageFile (#735)
 
