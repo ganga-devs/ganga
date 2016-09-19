@@ -17,10 +17,8 @@ class TestSJXMLCorruption(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestSJXMLCorruption, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
-        setConfigOption('Configuration', 'AutoStartReg', global_AutoStartReg)
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False'), ('Configuration', 'AutoStartReg', global_AutoStartReg)]
+        super(TestSJXMLCorruption, self).setUp(extra_opts=extra_opts)
 
     def test_a_JobConstruction(self):
         """ First construct the Job object (singular)"""
@@ -63,8 +61,7 @@ class TestSJXMLCorruption(GangaUnitTest):
 
     def test_b_TestRemoveSJXML(self):
         # Remove XML force to use backup
-        from Ganga.GPI import jobs
-        XMLFileName = getSJXMLFile(jobs(0).subjobs(0))
+        XMLFileName = getSJXMLFile((0, 0))
 
         unlink(XMLFileName)
 
@@ -97,7 +94,7 @@ class TestSJXMLCorruption(GangaUnitTest):
         stripProxy(sj)._getRegistry().flush_all()
 
         global global_AutoStartReg
-        global_AutoStartReg = False
+        global_AutoStartReg = True
 
     def test_d_TestCorruptXML(self):
         # Corrupt the XML file

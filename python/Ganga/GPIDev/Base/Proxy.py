@@ -1066,7 +1066,10 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
                     not implInstance._schema.getItem(name)['hidden']:
                         returnable = addProxy(implInstance._attribute_filter__get__(name))
             else:
-                returnable = GPIProxyObject.__getattribute__(self, name)
+                try:
+                    returnable = GPIProxyObject.__getattribute__(self, name)
+                except AttributeError:
+                    raise GangaAttributeError("Object '%s' does not have attribute: '%s'" % (getName(self), name))
 
         if isType(returnable, GangaObject):
             return addProxy(returnable)
