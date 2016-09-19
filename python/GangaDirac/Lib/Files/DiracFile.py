@@ -307,7 +307,7 @@ class DiracFile(IGangaFile):
         self.lfn = ""
         self.locations = []
         self.guid = ''
-        return
+        return True
 
     def getMetadata(self):
         """
