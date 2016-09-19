@@ -961,7 +961,6 @@ class DiracBase(IBackend):
         except GangaDiracError as err:
             logger.warning("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
             logger.debug(err)
-            return
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

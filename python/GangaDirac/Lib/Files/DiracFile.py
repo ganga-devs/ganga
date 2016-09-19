@@ -320,21 +320,13 @@ class DiracFile(IGangaFile):
 
         # eval again here as datatime not included in dirac_ganga_server
 
-        try:
-            ret = execute('getMetadata("%s")' % self.lfn)
-        except GangaDiracError as err:
-            raise
-        try:
-            if self.guid != ret['Successful'][self.lfn]['GUID']:
-                self.guid = ret['Successful'][self.lfn]['GUID']
-        except:
-            pass
+        ret = execute('getMetadata("%s")' % self.lfn)
 
-        try:
-            reps = self.getReplicas()
-            ret['Successful'][self.lfn].update({'replicas': self.locations})
-        except:
-            pass
+        if self.guid != ret.get('Successful',{}).get(self.lfn,{}).get('GUID',False):
+            self.guid = ret['Successful'][self.lfn]['GUID']
+
+        reps = self.getReplicas()
+        ret['Successful'][self.lfn].update({'replicas': self.locations})
 
         return ret
 
@@ -411,7 +403,7 @@ class DiracFile(IGangaFile):
                     self._storedReplicas = self._storedReplicas['Successful']
                 except Exception as err:
                     logger.error("Unknown Error: %s from %s" % (str(err), self._storedReplicas))
-                    raise err
+                    raise
 
                 logger.debug("getReplicas: %s" % str(self._storedReplicas))
 
@@ -485,10 +477,7 @@ class DiracFile(IGangaFile):
                 logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
                 this_SE = random.choice(self.locations)
 
-            try:
-                myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
-            except GangaDiracError as err:
-                raise GangaException("Error requesting URL: %s" % err)
+            myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
 
 
             this_accessURL = myurl['Successful'][self.lfn]

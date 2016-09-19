@@ -29,7 +29,7 @@ def get_result(command,
     while retries < retry_limit:
 
         try:
-            result = execute(command, eval_includes=eval_includes)
+            return execute(command, eval_includes=eval_includes)
         except GangaDiracError as err:
             logger.error(exception_message)
             logger.debug("Sleeping for 5 additional seconds to reduce possible overloading")
@@ -40,7 +40,6 @@ def get_result(command,
             logger.error("An Error Occured: %s" % str(err))
             logger.error("Retrying: %s / %s " % (str(retries + 1), str(retry_limit)))
 
-        return result
 
 def get_job_ident(dirac_script_lines):
     '''parse the dirac script for the label given to the job object'''

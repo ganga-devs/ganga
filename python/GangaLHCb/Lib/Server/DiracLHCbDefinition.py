@@ -24,7 +24,7 @@ def diracCommand(f):
         ''' This method does the parsing of the wrapped function and it's output '''
 
         # When pipe_out == False this function is being called internally and shouldn't pipe the output to the streams
-        if kwargs and 'pipe_out' in kwargs and kwargs['pipe_out'] is False:
+        if kwargs.get('pipe_out', True) is False:
             return f(*args, **kwargs)
 
         # We know we want to pipe the output to the streams when pipe_out == True
