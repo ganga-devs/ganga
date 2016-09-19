@@ -9,7 +9,7 @@ except ImportError:
 from Ganga.Core import GangaException
 from Ganga.Utility.logging import getLogger
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracException
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 
 logger = getLogger(modulename=True)
 
@@ -76,8 +76,8 @@ def test_remove(df):
     df.lfn = 'lfn'
 
     logger.info("Testing failure when exception is raised")
-    with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracException('test Exception')):
-        with pytest.raises(GangaDiracException):
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracError('test Exception')):
+        with pytest.raises(GangaDiracError):
             assert df.remove()
         assert df.lfn == 'lfn'
 
@@ -95,8 +95,8 @@ def test_replicate(df):
         assert df.locations == ['location', 'DEST']
 
         logger.info("Testing failure when exception thrown")
-        with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracException('test Exception')) as execute:
-            with pytest.raises(GangaDiracException):
+        with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracError('test Exception')) as execute:
+            with pytest.raises(GangaDiracError):
                 assert df.replicate('DEST')
             execute.assert_called_once_with('replicateFile("lfn", "DEST", "")')
 
@@ -165,8 +165,8 @@ def test_get(df):
             assert df.locations == ['location']
 
     logger.info("Testing failure when an exception is raised")
-    with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracException('test Exception')) as execute:
-        with pytest.raises(GangaDiracException):
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracError('test Exception')) as execute:
+        with pytest.raises(GangaDiracError):
             assert df.get()
         execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
 
