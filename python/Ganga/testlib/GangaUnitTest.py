@@ -243,7 +243,7 @@ class GangaUnitTest(unittest.TestCase):
         """
         Return the directory that this test should store its registry and repository in
         """
-        return os.path.join(_getGangaPath(), 'gangadir_testing', cls.__name__)
+        return os.path.join(_getGangaPath(), 'gangadir testing', cls.__name__)
 
     @classmethod
     def setUpClass(cls):

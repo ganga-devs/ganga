@@ -19,7 +19,7 @@ def gangadir(request):
         str: the name of the gangadir directory to use
 
     """
-    return os.path.join(_getGangaPath(), 'gangadir_testing', request.module.__name__)
+    return os.path.join(_getGangaPath(), 'gangadir testing', request.module.__name__)
 
 
 @pytest.yield_fixture(scope='module')
