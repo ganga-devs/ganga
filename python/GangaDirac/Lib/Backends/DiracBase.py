@@ -12,7 +12,7 @@ from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Core import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracException, execute, _proxyValid
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute, _proxyValid
 from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
@@ -148,22 +148,7 @@ class DiracBase(IBackend):
 
         try:
             result = execute(dirac_cmd)
-        except GangaDiracException as err:
-        # Could use the below code instead to submit on a thread
-        # If submitting many then user may terminate ganga before
-        # all jobs submitted
-#        def submit_checker(result, job, script):
-#            err_msg = 'Error submitting job to Dirac: %s' % str(result)
-#            if not result_ok(result) or 'Value' not in result:
-#                logger.error(err_msg)
-#                raise BackendError('Dirac',err_msg)
-#
-#            idlist = result['Value']
-#            if type(idlist) is list:
-#                return job._setup_bulk_subjobs(idlist, script)
-#            job.id = idlist
-#        server.execute_nonblocking(dirac_cmd, callback_func=submit_checker, args=(self, dirac_script))
-#        return True
+        except GangaDiracError as err:
 
             err_msg = 'Error submitting job to Dirac: %s' % str(err)
             logger.error(err_msg)
@@ -226,7 +211,7 @@ class DiracBase(IBackend):
         f.close()
         try:
             return self._common_submit(dirac_script_filename)
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             logger.warning("Error during job submission: %s" % err)
             raise GangaException(err)
 
@@ -373,7 +358,7 @@ class DiracBase(IBackend):
         dirac_cmd = 'kill(%d)' % self.id
         try:
             result = execute(dirac_cmd)
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             raise BackendError('Dirac', 'Could not kill job: %s' % str(err))
         return True
 
@@ -386,7 +371,7 @@ class DiracBase(IBackend):
         try:
             result = execute(dirac_cmd)
             logger.info(result)
-        except GangaDiracException:
+        except GangaDiracError:
             logger.error("No peeking available for Dirac job '%i'.", self.id)
 
     def getOutputSandbox(self, outputDir=None):
@@ -400,7 +385,7 @@ class DiracBase(IBackend):
         dirac_cmd = "getOutputSandbox(%d,'%s')"  % (self.id, outputDir)
         try:
             result = execute(dirac_cmd)
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             msg = 'Problem retrieving output: %s' % str(err)
             logger.warning(msg)
             return False
@@ -488,7 +473,7 @@ class DiracBase(IBackend):
         cmd = 'getServicePorts()'
         try:
             result = execute(cmd)
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             logger.warning('Could not obtain services: %s' % str(err))
             return
         services = result
@@ -498,7 +483,7 @@ class DiracBase(IBackend):
             try:
                 result = execute(cmd)
                 msg = 'OK.'
-            except GangaDiracException as err:
+            except GangaDiracError as err:
                 msg = '%s' % err
             logger.info('%s: %s' % (category, msg))
 
@@ -512,7 +497,7 @@ class DiracBase(IBackend):
         try:
             result = execute(cmd)
             logger.info('Pilot Info: %s/pilot_%d/std.out.' % (debug_dir, self.id))
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             logger.error("%s" % err)
 
     @staticmethod
@@ -973,7 +958,7 @@ class DiracBase(IBackend):
         try:
             DiracBase.requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses)
             DiracBase.monitor_dirac_running_jobs(monitor_jobs, finalised_statuses)
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             logger.warning("Error in Monitoring Loop, jobs on the DIRAC backend may not update")
             logger.debug(err)
             return

@@ -5,7 +5,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, addProxy
 from GangaDirac.Lib.Backends.DiracUtils import get_result
-from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracException
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -121,7 +121,7 @@ RecoToDST-07/90000000/DST" ,
 
         try:
             value = get_result(cmd, 'BK query error.')
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             return {'OK': False, 'Value': str(err)}
 
         files = []
@@ -161,7 +161,7 @@ RecoToDST-07/90000000/DST" ,
                                                                self.endDate, self.selection)
         try:
             result = get_result(cmd, 'BK query error.')
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             raise
 
         logger.debug("Finished Running Command")
@@ -253,7 +253,7 @@ class BKQueryDict(GangaObject):
         cmd = 'bkQueryDict(%s)' % self.dict
         try:
             value = get_result(cmd, 'BK query error.')
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             return {'OK':False, 'Value': {}}
 
         files = []
@@ -275,7 +275,7 @@ class BKQueryDict(GangaObject):
         cmd = 'bkQueryDict(%s)' % self.dict
         try:
             value = get_result(cmd, 'BK query error.')
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             raise
 
         files = []

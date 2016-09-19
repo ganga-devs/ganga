@@ -14,7 +14,7 @@ from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.files import expandfilename
-from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute, GangaDiracException
+from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute, GangaDiracError
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 config = getConfig('Configuration')
@@ -300,7 +300,7 @@ class DiracFile(IGangaFile):
         logger.info('Removing file %s' % self.lfn)
         try:
             stdout = execute('removeFile("%s")' % self.lfn)
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             logger.error("Error in removing file '%s' : %s" % (self.lfn, err))
             raise
 
@@ -322,7 +322,7 @@ class DiracFile(IGangaFile):
 
         try:
             ret = execute('getMetadata("%s")' % self.lfn)
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             raise
         try:
             if self.guid != ret['Successful'][self.lfn]['GUID']:
@@ -402,7 +402,7 @@ class DiracFile(IGangaFile):
 
                 try:
                     self._storedReplicas = execute('getReplicas("%s")' % self.lfn)
-                except GangaDiracException as err:
+                except GangaDiracError as err:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
                     self._storedReplicas = {}
                     raise
@@ -487,7 +487,7 @@ class DiracFile(IGangaFile):
 
             try:
                 myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
-            except GangaDiracException as err:
+            except GangaDiracError as err:
                 raise GangaException("Error requesting URL: %s" % err)
 
 
@@ -515,7 +515,7 @@ class DiracFile(IGangaFile):
         logger.info("Getting file %s" % self.lfn)
         try:
             stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location))
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             logger.error("Error in getting file '%s' : %s" % (self.lfn, str(err)))
             raise
 
@@ -545,7 +545,7 @@ class DiracFile(IGangaFile):
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
         try:
             stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE))
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             logger.error("Error in replicating file '%s' : %s" % (self.lfn, err))
             raise
 
@@ -693,7 +693,7 @@ class DiracFile(IGangaFile):
             logger.debug('execute: uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
             try:
                 stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
-            except GangaDiracException as err:
+            except GangaDiracError as err:
                 logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), err))
                 continue
 

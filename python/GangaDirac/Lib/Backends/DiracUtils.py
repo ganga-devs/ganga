@@ -30,7 +30,7 @@ def get_result(command,
 
         try:
             result = execute(command, eval_includes=eval_includes)
-        except GangaDiracException as err:
+        except GangaDiracError as err:
             logger.error(exception_message)
             logger.debug("Sleeping for 5 additional seconds to reduce possible overloading")
             time.sleep(5.)

@@ -212,7 +212,7 @@ def _checkProxy( delay=60, renew = True, shouldRaise = True, force = False ):
             _dirac_check_proxy( renew, shouldRaise )
             last_modified_time = time.time()
 
-class GangaDiracException(GangaException):
+class GangaDiracError(GangaException):
 
     def __init__(self, message):
         GangaException.__init__(self, "DiracUtiliy.execute", message)
@@ -283,7 +283,7 @@ def execute(command,
 
     # If the time 
     if returnable == 'Command timed out!':
-        raise GangaDiracException("DIRAC command timed out")
+        raise GangaDiracError("DIRAC command timed out")
 
     # TODO we would like some way of working out if the code has been executed correctly
     # Most commands will be OK now that we've added the check for the valid proxy before executing commands here
@@ -296,7 +296,7 @@ def execute(command,
         if returnable['OK']:
             return returnable['Value']
         else:
-            raise GangaDiracException(returnable['Message'])
+            raise GangaDiracError(returnable['Message'])
     else:
         # If the output is NOT a dictionary return it
         return returnable

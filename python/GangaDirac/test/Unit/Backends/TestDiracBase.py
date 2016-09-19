@@ -17,7 +17,7 @@ from Ganga.Lib.Executable import Executable
 from GangaDirac.Lib.Backends import Dirac
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracException
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 
 script_template = """
 # dirac job created by ganga
@@ -119,7 +119,7 @@ def test__common_submit(tmpdir, db):
     with open(name, 'w') as fd:
         fd.write(script_template.replace('###PARAMETRIC_INPUTDATA###', str([['a'], ['b']])))
 
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracException('test Exception')):
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')):
         db.id = 1234
         db.actualCE = 'test'
         db.status = 'test'
@@ -239,7 +239,7 @@ def test_reset(db):
 
 def test_kill(db):
     db.id = 1234
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracException('test Exception')):
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')):
         from Ganga.Core import BackendError
         with pytest.raises(BackendError):
             db.kill()
@@ -273,7 +273,7 @@ def test_getOutputSandbox(db):
         assert db.getOutputSandbox(test_dir), 'didn\'t run with modified dir'
         execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % test_dir)
 
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracException('test Exception')) as execute:
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')) as execute:
         assert not db.getOutputSandbox(test_dir), 'didn\'t fail gracefully'
         execute.assert_called_once()
 

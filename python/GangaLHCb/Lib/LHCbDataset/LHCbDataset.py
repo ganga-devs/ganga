@@ -15,7 +15,7 @@ from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracException
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -134,7 +134,7 @@ class LHCbDataset(GangaDataset):
         cmd = 'getReplicas(%s)' % str(lfns)
         try:
             result = get_result(cmd, 'LFC query error. Could not get replicas.')
-        except GangaDiracException:
+        except GangaDiracError:
             raise
         return result['Successful']
 
@@ -299,7 +299,7 @@ class LHCbDataset(GangaDataset):
               % (str(lfns), depth, site, tmp_xml.name)
         try:
             result = get_result(cmd, 'LFN->PFN error. XML catalog error.')
-        except GangaDiracException:
+        except GangaDiracError:
             raise
         xml_catalog = tmp_xml.read()
         tmp_xml.close()
@@ -433,7 +433,7 @@ class LHCbDataset(GangaDataset):
         cmd = 'bkMetaData(%s)' % self.getLFNs()
         try:
             b = get_result(cmd, 'Error removing replica. Replica rm error.')
-        except GangaDiracException:
+        except GangaDiracError:
             raise
         return b
 
