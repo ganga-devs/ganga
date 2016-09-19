@@ -51,7 +51,7 @@ class DiracFile(IGangaFile):
                                                                typelist=['GangaDirac.Lib.Files.DiracFile'], doc="collected files from the wildcard namePattern"),
                                      'defaultSE': SimpleItem(defvalue='', copyable=1, doc="defaultSE where the file is to be accessed from or uploaded to"),
                                      'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
-                                     'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy()),
+                                     'credential_requirements': ComponentItem('CredentialRequirement', defvalue='DiracProxy'),
     })
 
     _env = None

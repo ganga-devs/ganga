@@ -2,6 +2,7 @@ import tempfile
 import os
 
 import pytest
+
 try:
     from unittest.mock import patch, Mock
 except ImportError:
@@ -16,6 +17,7 @@ from Ganga.Lib.Executable import Executable
 from GangaDirac.Lib.Backends import Dirac
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 from GangaDirac.Lib.Files.DiracFile import DiracFile
+from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
 
 script_template = """
 # dirac job created by ganga
@@ -54,10 +56,12 @@ output(result)
 """
 
 
-@pytest.fixture(scope='function')
+@pytest.yield_fixture(scope='function')
 def db():
     """Provides a DiracBase object per test function"""
-    return DiracBase()
+    load_config_files()
+    yield DiracBase()
+    clear_config()
 
 
 def test__setup_subjob_dataset(db):

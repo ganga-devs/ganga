@@ -89,7 +89,7 @@ class DiracBase(IBackend):
                                 'if you *really* know what you are doing'),
         'settings': SimpleItem(defvalue={'CPUTime': 2 * 86400},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
-        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy()),
+        'credential_requirements': ComponentItem('CredentialRequirement', defvalue='DiracProxy'),
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
                       'getOutputDataLFNs', 'peek', 'reset', 'debug']
