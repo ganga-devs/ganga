@@ -12,7 +12,6 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Lib.Job.Job import Job
-from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.files import expandfilename
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute, GangaDiracError
 from Ganga.Utility.Config import getConfig
@@ -296,7 +295,7 @@ class DiracFile(IGangaFile):
         Remove this lfn and all replicas from DIRAC LFC/SEs
         """
         if self.lfn == "":
-            raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
+            raise GangaDiracError('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
         try:
             stdout = execute('removeFile("%s")' % self.lfn)
@@ -357,10 +356,10 @@ class DiracFile(IGangaFile):
                 logger.debug("Continuing without uploading file")
 
             if self.lfn == "":
-                raise GangaException('Uploading of namePattern: %s failed' % self.namePattern)
+                raise GangaDiracError('Uploading of namePattern: %s failed' % self.namePattern)
 
         if self.namePattern == "" and self.lfn == "":
-            raise GangaException('Cannot do anything if I don\'t have an lfn or a namePattern!')
+            raise GangaDiracError('Cannot do anything if I don\'t have an lfn or a namePattern!')
 
         return
 
@@ -373,7 +372,7 @@ class DiracFile(IGangaFile):
         if self.lfn == '':
             self._optionallyUploadLocalFile()
         if self.lfn == '':
-            raise GangaException("Can't find replicas for file which has no LFN!")
+            raise GangaDiracError("Can't find replicas for file which has no LFN!")
 
         these_replicas = None
 
@@ -499,7 +498,7 @@ class DiracFile(IGangaFile):
         to_location = targetPath
 
         if self.lfn == "":
-            raise GangaException('Can\'t download a file without an LFN.')
+            raise GangaDiracError('Can\'t download a file without an LFN.')
 
         logger.info("Getting file %s" % self.lfn)
         try:
@@ -529,7 +528,7 @@ class DiracFile(IGangaFile):
         """
 
         if not self.lfn:
-            raise GangaException('Must supply an lfn to replicate')
+            raise GangaDiracError('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
         try:
@@ -543,8 +542,7 @@ class DiracFile(IGangaFile):
 
     def processWildcardMatches(self):
         if regex.search(self.namePattern) is not None:
-            raise Exception(
-                "No wildcards in inputfiles for DiracFile just yet. Dirac are exposing this in API soon.")
+            raise GangaDiracException("No wildcards in inputfiles for DiracFile just yet. Dirac are exposing this in API soon.")
 
     def put(self, lfn='', force=False, uploadSE="", replicate=False):
         """
@@ -604,7 +602,7 @@ class DiracFile(IGangaFile):
         if self.namePattern == "":
             if self.lfn != '':
                 logger.warning("'Put'-ing a file with ONLY an existing LFN makes no sense!")
-            raise GangaException('Can\'t upload a file without a local file name.')
+            raise GangaDiracError('Can\'t upload a file without a local file name.')
 
         sourceDir = self.localDir
         if self.localDir is None:
@@ -614,7 +612,7 @@ class DiracFile(IGangaFile):
                 sourceDir = self.getJobObject().outputdir
 
         if not os.path.isdir(sourceDir):
-            raise GangaException('localDir attribute is not a valid dir, don\'t know from which dir to take the file')
+            raise GangaDiracError('localDir attribute is not a valid dir, don\'t know from which dir to take the file')
 
         if regex.search(self.namePattern) is not None:
             if self.lfn != "":
@@ -644,7 +642,7 @@ class DiracFile(IGangaFile):
                 if configDirac['allDiracSE']:
                     storage_elements = [random.choice(configDirac['allDiracSE'])]
                 else:
-                    raise GangaException("Can't upload a file without a valid defaultSE or storageSE, please provide one")
+                    raise GangaDiracError("Can't upload a file without a valid defaultSE or storageSE, please provide one")
         elif isinstance(uploadSE, list):
             storage_elements = uploadSE
         else:
@@ -656,16 +654,16 @@ class DiracFile(IGangaFile):
 
             if not os.path.exists(name):
                 if not self.compressed:
-                    raise GangaException('Cannot upload file. File "%s" must exist!' % name)
+                    raise GangaDiracError('Cannot upload file. File "%s" must exist!' % name)
                 name += '.gz'
                 if not os.path.exists(name):
-                    raise GangaException('File "%s" must exist!' % name)
+                    raise GangaDiracError('File "%s" must exist!' % name)
             else:
                 if self.compressed:
                     os.system('gzip -c %s > %s.gz' % (name, name))
                     name += '.gz'
                     if not os.path.exists(name):
-                        raise GangaException('File "%s" must exist!' % name)
+                        raise GangaDiracError('File "%s" must exist!' % name)
 
             if lfn == "":
                 lfn = os.path.join(lfn_base, os.path.basename(name))

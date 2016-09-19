@@ -6,7 +6,6 @@ try:
 except ImportError:
     from mock import patch
 
-from Ganga.Core import GangaException
 from Ganga.Utility.logging import getLogger
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
@@ -101,17 +100,17 @@ def test_replicate(df):
             execute.assert_called_once_with('replicateFile("lfn", "DEST", "")')
 
     df.lfn = ''
-    with pytest.raises(GangaException):
+    with pytest.raises(GangaDiracError):
         df.replicate('DEST')
 
 
 def test_get(df):
-    with pytest.raises(GangaException):
+    with pytest.raises(GangaDiracError):
         df.get()
 
     df.localDir = os.getcwd()
     df.lfn = ''
-    with pytest.raises(GangaException):
+    with pytest.raises(GangaDiracError):
         df.get()
 
     df.lfn = 'lfn'

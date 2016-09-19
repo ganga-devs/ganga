@@ -8,7 +8,6 @@ try:
 except ImportError:
     from mock import patch, Mock
 
-from Ganga.Core import GangaException
 from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -324,7 +323,7 @@ def test_getOutputData(db, tmpdir):
     j.backend = db
     db._parent = j
 
-    with pytest.raises(GangaException):
+    with pytest.raises(GangaDiracError):
         db.getOutputData('/false/dir')
 
     #######################
