@@ -1472,7 +1472,7 @@ class Job(GangaObject):
             rjobs = self._doSplitting()
 
             # Some old jobs may still contain None assigned to the self.subjobs so be careful when checking length
-            if self.subjobs is not None and not self.subjobs:
+            if self.splitter is not None and not self.subjobs:
                 raise SplitterError("Splitter '%s' failed to produce any subjobs from splitting. Aborting submit" % (getName(self.splitter),))
 
             #
