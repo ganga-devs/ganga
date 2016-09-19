@@ -48,7 +48,7 @@ if not _after_bootstrap:
                      'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
                       options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
     defaultLHCbDirac = 'v8r2p36'
-    configLHCb.addOption('DiracVersion',defaultLHCbDirac,"set LHCbDirac version")
+    configLHCb.addOption('LHCbDiracVersion',defaultLHCbDirac,"set LHCbDirac version")
 
 
 def _store_root_version():
@@ -65,7 +65,7 @@ def _store_root_version():
 def _store_dirac_environment():
     from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache
     platform = os.environ['CMTOPT']
-    diracversion = Ganga.Utility.Config.getConfig('LHCb')['DiracVersion']
+    diracversion = Ganga.Utility.Config.getConfig('LHCb')['LHCbDiracVersion']
     fdir = os.path.join(os.path.expanduser("~/.cache/Ganga/GangaLHCb"), platform)
     fname = os.path.join(fdir, diracversion)
     if not os.path.exists(fname) or not os.path.getsize(fname):
@@ -73,16 +73,17 @@ def _store_dirac_environment():
       env = execute(cmd)
       try:
         env = eval(env)
-        write_env_cache(env, fname)
-        logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
       except SyntaxError:
         msg = 'LHCbDirac version {version} does not exist'.format(version=diracversion)
         logger.error(msg)
-        sys.exit(-1)
-      except Exception :
-        msg = 'Unable to load LHCbDirac environment'
+        raise OptionValueError()
+      try:
+        write_env_cache(env, fname)
+        logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
+      except (OSError, IOError, TypeError):
+        msg = 'Unable to store LHCbDirac environment'
         logger.error(msg)
-        raise 
+        raise
     logger.info("Using LHCbDirac version %s", diracversion)
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
