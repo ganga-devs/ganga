@@ -236,7 +236,7 @@ class TestDiracCommands(object):
         assert confirm['OK'], 'kill command not executed successfully'
 
     def test_status(self, dirac_job):
-        confirm = execute('status([%s], %s)' % (dirac_job.id, repr(statusmapping)))
+        confirm = execute('status([%s], %s)' % (dirac_job.id, repr(statusmapping)), return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'status command not executed successfully'
         assert isinstance(confirm['Value'], list), 'Command not executed successfully'
