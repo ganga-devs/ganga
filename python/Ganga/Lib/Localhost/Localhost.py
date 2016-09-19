@@ -197,7 +197,7 @@ class Localhost(IBackend):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                        'LocalHostExec.template')
+                                                        'LocalHostExec.py.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '')

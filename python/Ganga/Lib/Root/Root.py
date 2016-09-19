@@ -513,7 +513,7 @@ def downloadWrapper(app):
 
     # Write a wrapper script that installs ROOT and runs script
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                   'wrapperScriptTemplate.template')
+                                                   'wrapperScriptTemplate.py.template')
     from Ganga.GPIDev.Lib.File import FileUtils
     wrapperscript = FileUtils.loadScript(script_location, '')
 

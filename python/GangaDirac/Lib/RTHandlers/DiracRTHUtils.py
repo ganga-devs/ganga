@@ -194,7 +194,7 @@ def diracAPI_script_template():
     import inspect
     import os.path
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                   'DiracRTHScript.template')
+                                   'DiracRTHScript.py.template')
 
     from Ganga.GPIDev.Lib.File import FileUtils
     script_template = FileUtils.loadScript(script_location, '')
