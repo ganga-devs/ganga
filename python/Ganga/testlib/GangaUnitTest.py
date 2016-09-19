@@ -8,7 +8,7 @@ try:
 except ImportError:
     import unittest
 
-ganga_test_dir = 'gangadir testing'
+ganga_test_dir_name = 'gangadir testing'
 
 def _getGangaPath():
     """
@@ -244,7 +244,7 @@ class GangaUnitTest(unittest.TestCase):
         """
         Return the directory that this test should store its registry and repository in
         """
-        return os.path.join(_getGangaPath(), ganga_test_dir, cls.__name__)
+        return os.path.join(_getGangaPath(), ganga_test_dir_name, cls.__name__)
 
     @classmethod
     def setUpClass(cls):
