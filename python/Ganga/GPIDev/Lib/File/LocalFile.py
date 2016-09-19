@@ -242,33 +242,48 @@ class LocalFile(IGangaFile):
         """
         # Deliberately do nothing.
 
-    def put(self):
-	"""
-        Copy the file to the detination (in the case of LocalFile the localDir)
+    def makeStorageDir(self, targetPath):
         """
-        # This is useful for placing the LocalFile in a subdir at the end of a job
-
-        #FIXME this method should be written to work with some other parameter than localDir for job outputs but for now this 'works'
-        if self.localDir:
+        """
+        outputbase = ''
+        if self._getParent() is not None:
             try:
-                job = self.getJobObject()
-            except AssertionError as err:
-                return
+                outputbase = self.getJobObject().outputdir
+            except AssertionError:
+                pass
 
-            # Copy to 'desitnation'
+        new_path = path.join(outputbase, targetPath)
+        if not path.exists(new_path) and not path.isdir(new_path):
+            os.makedirs(new_path)
 
-            if path.isfile(path.join(job.outputdir, self.namePattern)):
-                if not path.exists(path.join(job.outputdir, self.localDir)):
-                    os.makedirs(path.join(job.outputdir, self.localDir))
-                shutil.copy(path.join(job.outputdir, self.namePattern),
-                            path.join(job.outputdir, self.localDir, self.namePattern))
-           
+    def getOutputFilename(self):
+        """
+        """
+        return (self.localDir, self.namePattern)
+
+    def uploadTo(self, sourcePath, targetPath):
+        """
+        """
+        outputbase = ''
+        if self._getParent() is not None:
+            outputbase = self.getJobObject()
+
+        try:
+            new_file = path.join(outputbase, targetPath)
+            if sourcePath != new_file:
+                logger.debug("Copying: '%s' to '%s'" % (sourcePath, new_file)) 
+                shutil.copy(sourcePath, new_file)
+        except Exception as err:
+            logger.error("Error copying LocalFile: %s" % err)
+            return False
+
+        return True
+
     def cleanUpClient(self):
         """
         This performs the cleanup method on the client output workspace to remove temporary files
         """
         # For LocalFile this is where the file is stored so don't remove it
-        pass
 
     def getWNScriptDownloadCommand(self, indent):
 

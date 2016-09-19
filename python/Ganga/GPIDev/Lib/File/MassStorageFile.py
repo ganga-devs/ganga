@@ -227,7 +227,7 @@ class MassStorageFile(IGangaFile):
         return False
 
 
-    def makeDir(self, wantedPath, exitIfNotExist=False):
+    def makeStorageDir(self, wantedPath):
         """
         Creates a folder on the mass Storage corresponding to the given path
         Args:

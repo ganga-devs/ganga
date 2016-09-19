@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import os
 import shutil
+import tempfile
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
@@ -42,6 +43,12 @@ class TestMassStorageWN(GangaUnitTest):
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
+
+    @classmethod
+    def setUpClass(cls):
+        """ """
+        cls.outputFilePath = tempfile.mkdtemp()
+        cls.MassStorageTestConfig['uploadOptions']['path'] = cls.outputFilePath
 
     @classmethod
     def tearDownClass(cls):

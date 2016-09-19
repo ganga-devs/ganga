@@ -127,31 +127,44 @@ class IGangaFile(GangaObject):
         else:
             sourceDir = self.localDir
 
-        if sourceDir and not os.path.isdir(self.localDir):
-            raise GangaException("Local directory of file: '%s' not found please set localDir and try again" % self.localDir)
+        # Not a valid assumption for LocalFile
+        #if sourceDir and not os.path.isdir(self.localDir):
+        #    raise GangaException("Local directory of file: '%s' not found please set localDir and try again" % self.localDir)
 
         if regex.search(fileName) is not None:
 
             output = True
             for this_file in glob.glob(os.path.join(sourceDir, fileName)):
             
+                logger.info("Adding: %s" % (this_file))
                 sub_file = copy.deepcopy(self)
                 sub_file.namePattern = os.path.basename(this_file)
                 output = output and sub_file.put()
-                self.subfiles.append(sub_file)
+                if sub_file.namePattern not in [file_.namePattern for file_ in self.subfiles]:
+                    self.subfiles.append(sub_file)
+                else:
+                    for file_ in self.subfiles:
+                        if file_.namePattern == sub_file.namePattern:
+                            file_.localDir = sub_file.localDir
+                            break
 
             return output
         
         elif self.getSubFiles():
+
             output = True
             for sub_file in self.getSubFiles():
                 output = output and sub_file.put()
             return output
 
-        targetDir, targetFile = self.getOutputFilename()
+        if self._getParent() is not None:
+            targetDir, targetFile = self.getOutputFilename()
+        else:
+            targetDir = ''
+            targetFile = self.namePattern
 
         if targetDir:
-            self.makeDir(targetDir)
+            self.makeStorageDir(targetDir)
 
         returnable = self.uploadTo(os.path.join(sourceDir, self.namePattern), os.path.join(targetDir, targetFile))
 
@@ -200,7 +213,7 @@ class IGangaFile(GangaObject):
        
         return (folderStructure, filenameStructure)
 
-    def makeDir(self, folderStructure):
+    def makeStorageDir(self, folderStructure):
         """
         This method will create the given folder structure underneath the base directory of the file object
         Args:

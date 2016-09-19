@@ -48,21 +48,27 @@ class TestMassStorageGetPut(GangaUnitTest):
             j.remove()
 
     @classmethod
+    def setUpClass(cls):
+        """ """
+        cls.outputFilePath = tempfile.mkdtemp()
+        cls.MassStorageTestConfig['uploadOptions']['path'] = cls.outputFilePath
+
+    @classmethod
     def tearDownClass(cls):
         """ Cleanup the current temp objects """
 
         for file_ in cls._temp_files:
             os.unlink(file_)
         cls._temp_files = []
-
-        for file_ in cls._managed_files:
-            os.unlink(os.path.join(cls.outputFilePath, file_.namePattern))
         cls._managed_files = []
 
         shutil.rmtree(cls.outputFilePath, ignore_errors=True)
 
     def test_a_test_put(self):
         """Test that a job can be submitted with inputfiles in the input"""
+
+        if not os.path.isdir(self.outputFilePath):
+            os.makedirs(self.outputFilePath)
 
         from Ganga.GPI import MassStorageFile
 
