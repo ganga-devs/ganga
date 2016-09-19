@@ -42,6 +42,22 @@ class GangaException(Exception):
             _str += " %s" % str(self.kwds)
         return _str
 
+class PluginError(GangaException):
+    """
+    Class to be used in 1 place only in loading plugins
+    """
+
+    def __init__(self, msg):
+        """ We only need a message here to be constructed
+        Args:
+            msg(str): Message of what caused this exception
+        """
+        self.msg = msg
+
+    def __str__(self):
+        """ Return a string explainng our message, just like GangaException """
+        return "PluginError: %s" % self.msg
+
 
 class ApplicationConfigurationError(GangaException):
 

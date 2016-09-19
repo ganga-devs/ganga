@@ -13,6 +13,8 @@
 #                    configuration parameter defining search path
 #                    to be passed as arument
 
+from Ganga.Core.exceptions import PluginError
+
 from Ganga.Utility.util import importName
 
 #from Ganga.Utility.external.ordereddict import oDict
@@ -261,10 +263,9 @@ def loadPlugins(environment):
         try:
             r.loadPlugins()
         except Exception as err:
-            from Ganga.Core.exceptions import GangaException
             logger.error('problems with loading Plugin %s', n)
             logger.error('Reason: %s' % str(err))
-            raise GangaException("Failed to load plugin: %s. Ganga will now shutdown to prevent job corruption." % n)
+            raise PluginError("Failed to load plugin: %s. Ganga will now shutdown to prevent job corruption." % n)
 
 def autoPopulateGPI(my_interface=None):
     """
