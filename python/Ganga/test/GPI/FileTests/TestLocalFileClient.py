@@ -84,9 +84,6 @@ class TestLocalFileClient(GangaUnitTest):
             for file_ in j.inputfiles:
                 assert os.path.isfile(os.path.join(output_dir, file_.namePattern))
 
-            for sf_ in stripProxy(sj).outputfiles[0].subfiles:
-                print("sf: %s" % str(sf_))
-
             # Check that wildcard expansion happened correctly
             assert len(stripProxy(sj).outputfiles[0].subfiles) == 2
 

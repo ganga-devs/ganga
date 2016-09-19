@@ -261,6 +261,37 @@ class IGangaFile(GangaObject):
         """
         raise NotImplementedError
 
+    def copyTo(self, targetPath):
+        """
+        Copy a the file to the local storage using the appropriate file-transfer mechanism
+        This will raise an exception if targetPath isn't set to something sensible.
+        Args:
+            targetPath (str): Target path where the file is to copied to
+        """
+        if not isinstance(targetPath, str) and targetPath:
+            raise GangaException("Cannot perform a copyTo with no given targetPath!")
+        if regex.search(self.namePattern) is None\
+            and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
+
+            if not os.path.isfile(os.path.join(targetPath, self.namePattern)):
+                shutil.copy(os.path.join(self.localDir, self.namePattern), os.path.join(targetPath, self.namePattern))
+            else:
+                logger.debug("Already found file: %s" % os.path.join(targetPath, self.namePattern))
+                
+            return True
+
+        # Again, cannot perform a remote glob here so have to ignore wildcards
+        else:
+            return self.internalCopyTo(targetPath)
+
+    def internalCopyTo(self, targetPath):
+        """
+        Internal method for implementing the actual copy mechanism for each IGangaFile
+        Args:
+             targetPath (str): Target path where the file is to copied to
+        """
+        raise NotImplementedError
+
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN

@@ -6,6 +6,9 @@ import tempfile
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
 
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.file_utils import generate_unique_temp_file
+
 class TestMassStorageWN(GangaUnitTest):
     """test for sjid in filename names explain each test"""
 
