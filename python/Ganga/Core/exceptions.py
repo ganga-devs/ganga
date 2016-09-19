@@ -42,6 +42,10 @@ class GangaException(Exception):
             _str += " %s" % str(self.kwds)
         return _str
 
+class GangaFileError(GangaException):
+    """
+    This is intended to be thrown as an IGangaFile Error during Runtime
+    """
 
 class ApplicationConfigurationError(GangaException):
 
