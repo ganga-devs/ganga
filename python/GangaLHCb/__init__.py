@@ -1,6 +1,5 @@
 import os
 import os.path
-import sys
 import re
 import datetime
 from os.path import exists, isdir, realpath, isfile, islink
@@ -81,8 +80,7 @@ def _store_dirac_environment():
         write_env_cache(env, fname)
         logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
       except (OSError, IOError, TypeError):
-        msg = 'Unable to store LHCbDirac environment'
-        logger.error(msg)
+        logger.error("Unable to store LHCbDirac environment")
         raise
     logger.info("Using LHCbDirac version %s", diracversion)
     os.environ['GANGADIRACENVIRONMENT'] = fname
