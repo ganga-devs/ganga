@@ -349,7 +349,7 @@ class MassStorageFile(IGangaFile):
                                         massStorageConfig['ls_cmd'], massStorageConfig['path']])
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                        'scripts/MassStorageFileWNScript.py')
+                                        'scripts/MassStorageFileWNScript.py.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '###INDENT###')
