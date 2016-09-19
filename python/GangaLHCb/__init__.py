@@ -73,8 +73,7 @@ def _store_dirac_environment():
       try:
         env = eval(env)
       except SyntaxError:
-        msg = 'LHCbDirac version {version} does not exist'.format(version=diracversion)
-        logger.error(msg)
+        logger.error("LHCbDirac version {version} does not exist".format(version=diracversion))
         raise OptionValueError()
       try:
         write_env_cache(env, fname)
