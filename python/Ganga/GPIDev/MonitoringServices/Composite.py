@@ -26,6 +26,9 @@
 import sys
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
+
 class CompositeMonitoringService(IMonitoringService):
 
     """ IMonitoringService container:
@@ -56,8 +59,7 @@ class CompositeMonitoringService(IMonitoringService):
 
         # init the logger
         try:
-            import Ganga.Utility.logging
-            self.logger = Ganga.Utility.logging.getLogger()
+            self.logger = logger
         except ImportError:
             # on the worker node we don't have access to Ganga logging facilities
             # so we simple print out the log message

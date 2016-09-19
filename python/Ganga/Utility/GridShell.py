@@ -34,6 +34,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 
 shell_cache = None
+logger = getLogger()
 
 
 def getShell(force=False):
@@ -46,8 +47,6 @@ def getShell(force=False):
     """
 
     global shell_cache
-
-    logger = getLogger()
 
     if shell_cache is not None and not force:
         return shell_cache

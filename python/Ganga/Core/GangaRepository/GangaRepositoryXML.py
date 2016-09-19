@@ -236,8 +236,6 @@ class GangaRepositoryLocal(GangaRepository):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError
         Write an index file for all new objects in memory and master index file of indexes"""
-        from Ganga.Utility.logging import getLogger
-        logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
         for k in self._fully_loaded:
             try:

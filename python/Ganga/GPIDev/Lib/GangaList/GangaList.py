@@ -42,7 +42,7 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False, extra_
     result = GangaList()
     # Subvert tests and modify the ._list here ourselves
     # This is potentially DANGEROUS if proxies aren't correctly stripped
-    result._list.extend([stripProxy(l) for l in _list])
+    result._list = [stripProxy(l) for l in _list]
     result._is_preparable = preparable
     result._is_a_ref = False
 
@@ -73,7 +73,7 @@ def makeGangaListByRef(_list, preparable=False):
     result = GangaList()
     # Subvert tests and modify the ._list here ourselves
     # This is potentially DANGEROUS is proxies aren't correctly stripped
-    result._list.extend(_list)
+    result._list = _list
     result._is_a_ref = True
     result._is_preparable = preparable
     return result

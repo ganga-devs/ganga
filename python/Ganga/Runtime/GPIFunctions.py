@@ -1,8 +1,9 @@
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
 def license():
     'Print the full license (GPL)'
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
     from os import path
     from Ganga import _gangaPythonPath
     with open(path.join(_gangaPythonPath, '..', 'LICENSE_GPL')) as printable:
@@ -15,16 +16,12 @@ def typename(obj):
         if hasattr(stripProxy(obj), '_name'):
             return stripProxy(obj)._name
         else:
-            from Ganga.Utility.logging import getLogger
-            logger = getLogger()
             logger.error("Object %s DOES NOT have the _name parameter set" % (str(obj)))
             return ""
     else:
         if hasattr(obj, '_name'):
             return obj._name
         else:
-            from Ganga.Utility.logging import getLogger
-            logger = getLogger()
             logger.error("Object %s DOES NOT have the %s or _name parameter set" % (str(obj), str(implRef)))
             return ""
 
@@ -35,16 +32,12 @@ def categoryname(obj):
         if hasattr(stripProxy(obj), '_category'):
             return stripProxy(obj)._category
         else:
-            from Ganga.Utility.logging import getLogger
-            logger = getLogger()
             logger.error("Object %s DOES NOT have the _category parameter set" % (str(obj)))
             return ""
     else:
         if hasattr(obj, '_category'):
             return obj._category
         else:
-            from Ganga.Utility.logging import getLogger
-            logger = getLogger()
             logger.error("Object %s DOES NOT have the %s or _category parameter set" % (str(obj), str(implRef)))
             return ""
 

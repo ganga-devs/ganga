@@ -3,6 +3,8 @@ from __future__ import absolute_import
 from Ganga.GPIDev.Base.Proxy import stripProxy, implRef
 from Ganga.Utility.logging import getLogger
 
+logger = getLogger()
+
 class RegistrySliceProxy(object):
 
     """This object is an access list to registry slices"""
@@ -63,7 +65,6 @@ class RegistrySliceProxy(object):
         unwrap_attrs = {}
         for a in attrs:
             unwrap_attrs[a] = _unwrap(attrs[a])
-        logger = getLogger()
         logger.debug("Calling: %s" % str(stripProxy(self).select))
         return self.__class__(stripProxy(self).select(minid, maxid, **unwrap_attrs))
 

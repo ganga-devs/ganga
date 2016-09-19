@@ -4,6 +4,13 @@
 # $Id: exceptions.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ##########################################################################
 
+def getLogger():
+    if getLogger.logger_cache is None:
+        from Ganga.Utility.logging import getLogger
+        getLogger.logger_cache = getLogger()
+    return getLogger.logger_cache
+
+getLogger.logger_cache = None
 
 class GangaException(Exception):
 
@@ -219,8 +226,6 @@ class RepositoryError(GangaException):
         super(RepositoryError, self).__init__(self, what)
         self.what = what
         self.repository = repo
-        from Ganga.Utility.logging import getLogger
-        logger = getLogger()
         logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))
         logger.error('If you believe the problem has been solved, type "reactivate()" to re-enable ')
         try:

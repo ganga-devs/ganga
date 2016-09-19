@@ -16,6 +16,13 @@ from .exceptions import GangaException, ApplicationConfigurationError, \
 
 monitoring_component = None
 
+def getLogger():
+    if getLogger.logger_cache is None:
+        import Ganga.Utility.logging
+        getLogger.logger_cache = Ganga.Utility.logging.getLogger()
+    return getLogger.logger_cache
+
+getLogger.logger_cache = None
 
 def set_autostart_policy(interactive_session):
     """
@@ -46,9 +53,6 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
     The autostart value may be overriden in the config file, so warn if it differs from the default.
     """
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import JobRegistry_Monitor, config
-    from Ganga.Utility.logging import getLogger
-
-    logger = getLogger()
 
     from Ganga.Core.GangaThread import GangaThreadPool
 
@@ -83,7 +87,7 @@ def bootstrap(reg_slice, interactive_session, my_interface=None):
         msg = 'monitoring loop %s (the default setting for %s session is %s)'
         val = {True: ('enabled', 'batch', 'disabled'),
                False: ('disabled', 'interactive', 'enabled')}
-        logger.warning(msg % val[config['autostart']])
+        getLogger().warning(msg % val[config['autostart']])
 
     if config['autostart']:
         monitoring_component.enableMonitoring()

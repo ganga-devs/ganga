@@ -446,7 +446,11 @@ class Descriptor(object):
             val (unknown): value of the attribute which we're about to set
         """
 
-        if isinstance(val, str):
+        self._check_getter()
+
+        _set_name = _getName(self)
+
+        if isinstance(val, str) and str not in obj._schema[_set_name]._meta['typelist']:
             from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
             val = stripProxy(runtimeEvalString(obj, _getName(self), val))
 
@@ -460,17 +464,11 @@ class Descriptor(object):
             if this_filter:
                 val = this_filter(val)
 
-        self._check_getter()
+        new_value = Descriptor.cleanValue(obj, val, _set_name)
 
-        # make sure we have the session lock
         obj._getSessionLock()
 
-        # make sure the object is loaded if it's attached to a registry
         obj._loadObject()
-
-        _set_name = _getName(self)
-
-        new_value = Descriptor.cleanValue(obj, val, _set_name)
 
         obj.setSchemaAttribute(_set_name, new_value)
 
@@ -560,7 +558,7 @@ class Descriptor(object):
     def createNewList(_final_list, _input_elements, action=None, extra_args=None):
         """ Create a new list object which contains the old object with a possible action parsing the elements before they're added
         Args:
-            _final_list (list): The list object which is to have the new elements appended to it
+            _final_list (list): The list object which is to have the new elements appended
             _input_elements (list): This is a list of the objects which are to be used to create new objects in _final_list
             action (function): A function which is to be called to create new objects for a list
             extra_args (tuple): Contains the name of the attribute being copied and the object which owns the object being copied

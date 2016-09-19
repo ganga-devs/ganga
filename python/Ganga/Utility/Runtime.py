@@ -22,6 +22,7 @@ allRuntimes = oDict()
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
+logger_cache = Ganga.Utility.logging.getLogger()
 
 def getScriptPath(name="", searchPath=""):
     """Determine path to a script
@@ -240,8 +241,7 @@ def loadPlugins(environment):
     Given a list of environments fully load the found Plugins into them exposing all of the relavent objects
     """
     from Ganga.Utility.Runtime import allRuntimes
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
+    logger = logger_cache
     env_dict = environment.__dict__
     for n, r in zip(allRuntimes.keys(), allRuntimes.values()):
         try:
@@ -291,8 +291,7 @@ def setPluginDefaults(my_interface=None):
     # set the default value for the plugins
     from Ganga.Utility.Config import getConfig
     default_plugins_cfg = getConfig("Plugins")
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
+    logger = logger_cache
     for opt in default_plugins_cfg:
         try:
             category, tag = opt.split('_')
