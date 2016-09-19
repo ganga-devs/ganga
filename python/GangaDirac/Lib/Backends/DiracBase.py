@@ -9,7 +9,7 @@ import time
 import datetime
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.Core import BackendError, GangaException
+from Ganga.Core.exceptions import GangaFileError, BackendError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute, _proxyValid
@@ -213,14 +213,14 @@ class DiracBase(IBackend):
             return self._common_submit(dirac_script_filename)
         except GangaDiracError as err:
             logger.warning("Error during job submission: %s" % err)
-            raise GangaException(err)
+            raise
 
     def master_auto_resubmit(self, rjobs):
         '''Duplicate of the IBackend.master_resubmit but hooked into auto resubmission
         such that the monitoring server is used rather than the user server
         Args:
             rjobs (list): This is a list of jobs which are to be auto-resubmitted'''
-        from Ganga.Core import IncompleteJobSubmissionError, GangaException
+        from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
         incomplete = 0
 
@@ -244,7 +244,7 @@ class DiracBase(IBackend):
                     else:
                         return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
-                    log_user_exception(logger, debug=isType(x, GangaException))
+                    log_user_exception(logger, debug=isType(x, GangaDiracError))
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
@@ -423,7 +423,7 @@ class DiracBase(IBackend):
         """
         j = self.getJobObject()
         if outputDir is not None and not os.path.isdir(outputDir):
-            raise GangaException("Designated outupt path '%s' must exist and be a directory" % outputDir)
+            raise GangaDiracError("Designated outupt path '%s' must exist and be a directory" % outputDir)
 
         def download(dirac_file, job, is_subjob=False):
             dirac_file.localDir = job.getOutputWorkspace().getPath()
@@ -443,7 +443,7 @@ class DiracBase(IBackend):
                     dirac_file.get()
                 return dirac_file.lfn
             # should really make the get method throw if doesn't suceed. todo
-            except GangaException as e:
+            except (GangaDiracError, GangaFileError) as e:
                 logger.warning(e)
 
         suceeded = []
@@ -639,8 +639,7 @@ class DiracBase(IBackend):
                 with open(lfn_store, 'ab') as postprocesslocationsfile:
                     if not hasattr(file_info_dict, 'keys'):
                         logger.error("Error understanding OutputDataInfo: %s" % str(file_info_dict))
-                        from Ganga.Core.exceptions import GangaException
-                        raise GangaException("Error understanding OutputDataInfo: %s" % str(file_info_dict))
+                        raise GangaDiracError("Error understanding OutputDataInfo: %s" % str(file_info_dict))
 
                     ## Caution is not clear atm whether this 'Value' is an LHCbism or bug
                     list_of_files = file_info_dict.get('Value', file_info_dict.keys())
@@ -655,8 +654,7 @@ class DiracBase(IBackend):
                             logger.error("Please check the Dirac Job still exists or attempt a job.backend.reset() to try again!")
                             logger.error("Err: %s" % str(info))
                             logger.error("file_info_dict: %s" % str(file_info_dict))
-                            from Ganga.Core.exceptions import GangaException
-                            raise GangaException("Error getting OutputDataInfo")
+                            raise GangaDiracError("Error getting OutputDataInfo")
 
                         valid_wildcards = [wc for wc in wildcards if fnmatch.fnmatch(file_name, wc)]
                         if not valid_wildcards:

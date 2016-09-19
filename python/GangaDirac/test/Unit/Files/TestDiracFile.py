@@ -63,7 +63,7 @@ def test__auto_remove(df):
 
 def test_remove(df):
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'lfn': True}}) as execute:
-        assert df.remove() is None
+        assert df.remove() is True
         assert df.lfn == ''
         assert df.locations == []
         assert df.guid == ''
