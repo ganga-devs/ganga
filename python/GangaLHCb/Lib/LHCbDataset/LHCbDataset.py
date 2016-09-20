@@ -132,10 +132,7 @@ class LHCbDataset(GangaDataset):
         'Returns the replicas for all files in the dataset.'
         lfns = self.getLFNs()
         cmd = 'getReplicas(%s)' % str(lfns)
-        try:
-            result = get_result(cmd, 'LFC query error. Could not get replicas.')
-        except GangaDiracError:
-            raise
+        result = get_result(cmd, 'LFC query error. Could not get replicas.')
         return result['Successful']
 
     def hasLFNs(self):
@@ -297,10 +294,7 @@ class LHCbDataset(GangaDataset):
         tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
         cmd = 'getLHCbInputDataCatalog(%s,%d,"%s","%s")' \
               % (str(lfns), depth, site, tmp_xml.name)
-        try:
-            result = get_result(cmd, 'LFN->PFN error. XML catalog error.')
-        except GangaDiracError:
-            raise
+        result = get_result(cmd, 'LFN->PFN error. XML catalog error.')
         xml_catalog = tmp_xml.read()
         tmp_xml.close()
         return xml_catalog
@@ -431,10 +425,7 @@ class LHCbDataset(GangaDataset):
         'Returns the bookkeeping metadata for all LFNs. '
         logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
-        try:
-            b = get_result(cmd, 'Error removing replica. Replica rm error.')
-        except GangaDiracError:
-            raise
+        b = get_result(cmd, 'Error removing replica. Replica rm error.')
         return b
 
     # def pop(self,file):

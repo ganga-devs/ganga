@@ -159,10 +159,7 @@ RecoToDST-07/90000000/DST" ,
         if isType(self.dqflag, knownLists):
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate,
                                                                self.endDate, self.selection)
-        try:
-            result = get_result(cmd, 'BK query error.')
-        except GangaDiracError as err:
-            raise
+        result = get_result(cmd, 'BK query error.')
 
         logger.debug("Finished Running Command")
 
@@ -273,10 +270,7 @@ class BKQueryDict(GangaObject):
         if not self.dict:
             return None
         cmd = 'bkQueryDict(%s)' % self.dict
-        try:
-            value = get_result(cmd, 'BK query error.')
-        except GangaDiracError as err:
-            raise
+        value = get_result(cmd, 'BK query error.')
 
         files = []
         if 'LFNs' in value:

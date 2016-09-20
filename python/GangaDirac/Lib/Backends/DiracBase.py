@@ -233,9 +233,6 @@ class DiracBase(IBackend):
 
         try:
             return self._common_submit(dirac_script_filename)
-        except GangaDiracError as err:
-            logger.warning("Error during job submission: %s" % err)
-            raise
         finally:
             # CLEANUP after workaround
             shutil.rmtree(tmp_dir, ignore_errors = True)
@@ -384,7 +381,7 @@ class DiracBase(IBackend):
         try:
             result = execute(dirac_cmd)
         except GangaDiracError as err:
-            raise BackendError('Dirac', 'Could not kill job: %s' % str(err))
+            raise BackendError('Dirac', 'Could not kill job: %s' % err)
         return True
 
     def peek(self, filename=None, command=None):

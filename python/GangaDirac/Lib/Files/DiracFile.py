@@ -298,11 +298,7 @@ class DiracFile(IGangaFile):
         if self.lfn == "":
             raise GangaFileError('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
-        try:
-            stdout = execute('removeFile("%s")' % self.lfn)
-        except GangaDiracError as err:
-            logger.error("Error in removing file '%s' : %s" % (self.lfn, err))
-            raise
+        stdout = execute('removeFile("%s")' % self.lfn)
 
         self.lfn = ""
         self.locations = []
@@ -502,11 +498,7 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Can\'t download a file without an LFN.')
 
         logger.info("Getting file %s" % self.lfn)
-        try:
-            stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location))
-        except GangaDiracError as err:
-            logger.error("Error in getting file '%s' : %s" % (self.lfn, str(err)))
-            raise
+        stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location))
 
         if self.namePattern == "":
             name = os.path.basename(self.lfn)
@@ -532,11 +524,7 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        try:
-            stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE))
-        except GangaDiracError as err:
-            logger.error("Error in replicating file '%s' : %s" % (self.lfn, err))
-            raise
+        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE))
 
         if destSE not in self.locations:
             self.locations.append(destSE)

@@ -1,7 +1,5 @@
 import tempfile
-
 import os
-
 import pytest
 try:
     from unittest.mock import patch, Mock

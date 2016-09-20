@@ -93,6 +93,7 @@ def __reader(pipes, output_ns, output_var, require_output):
     os.close(pipes[1])
     with os.fdopen(pipes[0], 'rb') as read_file:
         try:
+            # rcurrie this deepcopy hides a strange bug that the wrong dict is sometimes returned from here. Remove at your own risk
             output_ns[output_var] = deepcopy(pickle.load(read_file))
         except Exception as err:
             if require_output:
@@ -280,7 +281,7 @@ def execute(command,
     except pickle.UnpicklingError as err:
         # If here, output likely unpickled
         if not shell:
-            logger.debug("Execute Err: %s", err)
+            logger.error("Execute Err: %s", err)
         else:
             logger.debug("Execute Err: %s", err)
 
@@ -288,13 +289,13 @@ def execute(command,
         local_ns = locals()
         if isinstance(eval_includes, str):
             try:
-                exec(eval_includes, local_ns)
+                exec(eval_includes, {}, local_ns)
             except:
                 logger.debug("Failed to eval the env, can't eval stdout")
                 pass
         if isinstance(stdout, str) and stdout:
             try:
-                stdout_temp = eval(stdout, local_ns)
+                stdout_temp = eval(stdout, {}, local_ns)
             except Exception as err2:
                 logger.debug("Err2: %s" % str(err2))
                 pass
