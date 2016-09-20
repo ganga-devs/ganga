@@ -24,6 +24,7 @@ class FakeShell(object):
     timeleft = 100
 
     def __init__(self):
+        self.env = {}
         self.cmd1 = mock.Mock(wraps=self._cmd1)
         self.system = mock.Mock(wraps=self._system)
 
@@ -43,7 +44,7 @@ class FakeShell(object):
 
 @pytest.yield_fixture(scope='function')
 def fake_shell(mocker):
-    s = mocker.patch('Ganga.GPIDev.Credentials2.VomsProxy.Shell', FakeShell)
+    s = mocker.patch('Ganga.GPIDev.Credentials2.VomsProxy.VomsProxyInfo.shell', FakeShell())
     mocker.patch('Ganga.GPIDev.Credentials2.ICredentialInfo.os.path.exists', return_value=False)
     yield s
 
