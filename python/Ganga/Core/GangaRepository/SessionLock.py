@@ -279,6 +279,7 @@ def global_disk_lock(f):
                 i+=1
                 try:
                     self.global_lock_acquire()
+                    break
                 except:
                     if i == 10:
                         raise
