@@ -24,6 +24,9 @@ Dirac_Proxy_Lock = threading.Lock()
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
+class GangaDiracError(GangaException):
+    """ Exception type which is thrown from problems executing a command against DIRAC """
+
 
 def getDiracEnv():
     """
@@ -111,7 +114,7 @@ def getDiracCommandIncludes(force=False):
     if DIRAC_INCLUDE == '' or force:
         for fname in getConfig('DIRAC')['DiracCommandFiles']:
             if not os.path.exists(fname):
-                raise GangaException("Specified Dirac command file '%s' does not exist." % fname)
+                raise RuntimeError("Specified Dirac command file '%s' does not exist." % fname)
             with open(fname, 'r') as inc_file:
                 DIRAC_INCLUDE += inc_file.read() + '\n'
 
@@ -172,7 +175,7 @@ def _dirac_check_proxy( renew = True, shouldRaise = True):
             if not proxy.isValid():
                 last_modified_valid = False
                 if shouldRaise:
-                    raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
+                    raise GangaDiracError('Can not execute DIRAC API code w/o a valid grid proxy.')
             else:
                 last_modified_valid = True
         else:
@@ -211,15 +214,6 @@ def _checkProxy( delay=60, renew = True, shouldRaise = True, force = False ):
         if (time.time() - last_modified_time) > int(delay) or not last_modified_valid or force:
             _dirac_check_proxy( renew, shouldRaise )
             last_modified_time = time.time()
-
-class GangaDiracError(GangaException):
-
-    def __init__(self, message):
-        GangaException.__init__(self, "DiracUtiliy.execute", message)
-        self.message = message
-
-    def __str__(self):
-        return "GangaDirac Error: %s " % (self.message, )
 
 def execute(command,
             timeout=getConfig('DIRAC')['Timeout'],
