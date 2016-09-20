@@ -42,6 +42,11 @@ class GangaException(Exception):
             _str += " %s" % str(self.kwds)
         return _str
 
+class PluginError(GangaException):
+    """
+    Class to be used in 1 place only in loading plugins
+    """
+
 
 class ApplicationConfigurationError(GangaException):
 

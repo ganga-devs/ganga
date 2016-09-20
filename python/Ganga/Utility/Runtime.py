@@ -13,6 +13,8 @@
 #                    configuration parameter defining search path
 #                    to be passed as arument
 
+from Ganga.Core.exceptions import PluginError
+
 from Ganga.Utility.util import importName
 
 #from Ganga.Utility.external.ordereddict import oDict
@@ -243,7 +245,7 @@ def loadPlugins(environment):
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     env_dict = environment.__dict__
-    for n, r in zip(allRuntimes.keys(), allRuntimes.values()):
+    for n, r in allRuntimes.iteritems():
         try:
             r.bootstrap(env_dict)
         except Exception as err:
@@ -257,12 +259,13 @@ def loadPlugins(environment):
             logger.error('problems with loading Named Templates for %s', n)
             logger.error('Reason: %s' % str(err))
 
-    for r in allRuntimes.values():
+    for n, r in allRuntimes.iteritems():
         try:
             r.loadPlugins()
         except Exception as err:
-            logger.error('problems with loading Named Templates for %s', n)
+            logger.error('problems with loading Plugin %s', n)
             logger.error('Reason: %s' % str(err))
+            raise PluginError("Failed to load plugin: %s. Ganga will now shutdown to prevent job corruption." % n)
 
 def autoPopulateGPI(my_interface=None):
     """
