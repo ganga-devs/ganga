@@ -469,10 +469,7 @@ class DiracFile(IGangaFile):
         return a random one from all the replicas. Also use the specified protocol - if none then use 
         the default. 
         """
-#        if protocol == '':
-#          protocol = str(configDirac['DefaultAccessURLProtocol'])
         _accessURLs = []
-        print 'protocol: ', protocol
         if len(self.subfiles) == 0:
           self.getReplicas()
           # If the SE isn't specified return a random choice.
@@ -485,9 +482,7 @@ class DiracFile(IGangaFile):
           else:
              logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
              this_SE = random.choice(self.locations)
-          print self.lfn
           myurl = execute('getAccessURL("%s", "%s", "%s")' % (self.lfn, this_SE, protocol))
-          print 'myURL: ',myurl
           this_accessURL = myurl['Value']['Successful'][self.lfn]
           _accessURLs.append(this_accessURL)
         else:
