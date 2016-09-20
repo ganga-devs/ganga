@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 import Ganga.Utility.logging
 from Ganga.GPIDev.Schema import SimpleItem
-from Ganga.Utility.Shell import Shell
+from Ganga.Utility import GridShell
 from Ganga.Utility.Config import getConfig
 
 from .ICredentialInfo import ICredentialInfo, cache
@@ -55,7 +55,7 @@ class VomsProxyInfo(ICredentialInfo):
     @property
     def shell(self):
         if self._shell is None:
-            self._shell = Shell()
+            self._shell = GridShell.getShell()
         return self._shell
 
     def destroy(self):
