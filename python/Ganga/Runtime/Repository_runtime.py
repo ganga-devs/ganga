@@ -2,9 +2,10 @@
 Internal initialization of the repositories.
 """
 
+from pipes import quote
+import os.path
 from Ganga.Utility.Config import getConfig, setConfigOption
 from Ganga.Utility.logging import getLogger
-import os.path
 from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Core.GangaRepository import getRegistries
 from Ganga.Core.GangaRepository import getRegistry
@@ -66,11 +67,11 @@ def checkDiskQuota():
     for data_partition in folders_to_check:
 
         if fullpath(data_partition, True).find('/afs') == 0:
-            quota = subprocess.Popen(['fs', 'quota', '%s' % data_partition], stdout=subprocess.PIPE)
+            quota = subprocess.Popen(" ".join(['fs', 'quota', '%s' % quote(data_partition)]), shell=True, stdout=subprocess.PIPE)
             output = quota.communicate()[0]
-            logger.debug("fs quota %s:\t%s" % (data_partition, output))
+            logger.debug("fs quota %s:\t%s" % (quote(data_partition), output))
         else:
-            df = subprocess.Popen(["df", '-Pk', data_partition], stdout=subprocess.PIPE)
+            df = subprocess.Popen(["df", '-Pk', '%s' % quote(data_partition)], stdout=subprocess.PIPE)
             output = df.communicate()[0]
 
         try:
