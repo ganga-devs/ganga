@@ -4,7 +4,7 @@ import time
 import datetime
 import glob
 import pickle
-from funcutils import wraps
+from functools import wraps
 ## NB parseCommandLine first then import Dirac!!
 from DIRAC.Core.Base.Script import parseCommandLine
 parseCommandLine()
