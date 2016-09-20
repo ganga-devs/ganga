@@ -165,7 +165,7 @@ def dirac_sites(load_config):
         from DIRAC.Core.Utilities.SiteSEMapping import getSEsForCountry
         output(getSEsForCountry('uk'))
         """)
-    output = execute(site_script)
+    output = execute(site_script, return_raw_dict=True)
     assert output['OK'], 'Could not fetch list of SEs'
     sites = output['Value']
     random.shuffle(sites)
@@ -298,7 +298,7 @@ class TestDiracCommands(object):
             if confirm.get(location, False):
                 continue  # If we couldn't add the file, try the next site
             logger.info('Removing file from %s', location)
-            confirm_remove = execute('removeFile("%s")' % new_lfn)
+            confirm_remove = execute('removeFile("%s")' % new_lfn, return_raw_dict=True)
             logger.info(confirm)
             assert confirm_remove['OK'], 'Command not executed successfully'
             break  # Once we found a working site, stop looking
@@ -318,7 +318,7 @@ class TestDiracCommands(object):
             if not confirm['OK']:
                 continue  # If we couldn't add the file, try the next site
             logger.info('Removing file from %s', location)
-            confirm_remove = execute('removeFile("%s")' % new_lfn)
+            confirm_remove = execute('removeFile("%s")' % new_lfn, return_raw_dict=True)
             logger.info(confirm)
             assert confirm_remove['OK'], 'Command not executed successfully'
             break  # Once we found a working site, stop looking
