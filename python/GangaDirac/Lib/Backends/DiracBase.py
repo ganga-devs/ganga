@@ -178,6 +178,7 @@ class DiracBase(IBackend):
             subjobconfig (unknown):
             master_input_sandbox (list): file names which are in the master sandbox of the master sandbox (if any)
         """
+
         j = self.getJobObject()
 
         sboxname = j.createPackedInputSandbox(subjobconfig.getSandboxFiles())
@@ -203,17 +204,41 @@ class DiracBase(IBackend):
         logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
         logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
 
-        dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##', str(input_sandbox))
+
+        # This is a workaroud for the fact DIRAC doesn't like whitespace in sandbox filenames
+        ### START_WORKAROUND
+        import shutil
+        import tempfile
+        tmp_dir = tempfile.mkdtemp()
+
+        # Loop through all files and if the filename contains a ' ' copy it to a location which doesn't contain one.
+        # This does have the limitation that all file basenames must not contain a ' ' character.
+        # However we don't make any in Ganga as of 20/09/16
+        sandbox_str = '['
+        for file_ in input_sandbox:
+            if ' ' in str(file_):
+                new_name = os.path.join(tmp_dir, os.path.basename(file_))
+                shutil.copy(file_, new_name)
+                file_ = new_name
+            sandbox_str += '\'' + str(file_) + '\', '
+        sandbox_str += ']'
+        logger.debug("sandbox_str: %s" % sandbox_str)
+        ### FINISH_WORKAROUND
+
+        dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##', sandbox_str)
 
         dirac_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
-        f = open(dirac_script_filename, 'w')
-        f.write(dirac_script)
-        f.close()
+        with open(dirac_script_filename, 'w') as f:
+            f.write(dirac_script)
+
         try:
             return self._common_submit(dirac_script_filename)
         except GangaDiracError as err:
             logger.warning("Error during job submission: %s" % err)
             raise
+        finally:
+            # CLEANUP after workaround
+            shutil.rmtree(tmp_dir, ignore_errors = True)
 
     def master_auto_resubmit(self, rjobs):
         '''Duplicate of the IBackend.master_resubmit but hooked into auto resubmission
