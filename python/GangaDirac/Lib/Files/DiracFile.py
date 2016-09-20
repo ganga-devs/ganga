@@ -484,7 +484,8 @@ class DiracFile(IGangaFile):
           # If the specified SE doesn't have a replica then return another one at random.
           else:
              logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
-             this_SE = random.choice(self.locations) 
+             this_SE = random.choice(self.locations)
+          print self.lfn
           myurl = execute('getAccessURL("%s", "%s", "%s")' % (self.lfn, this_SE, protocol))
           print 'myURL: ',myurl
           this_accessURL = myurl['Value']['Successful'][self.lfn]
