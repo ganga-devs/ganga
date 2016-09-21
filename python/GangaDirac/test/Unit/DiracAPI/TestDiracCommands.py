@@ -50,9 +50,7 @@ def load_config():
 def dirac_job(load_config):
 
     sandbox_str = uuid.uuid4()
-    time.sleep(0.5)
     get_file_str = uuid.uuid4()
-    time.sleep(0.5)
     remove_file_str = uuid.uuid4()
 
     exe_script = """
