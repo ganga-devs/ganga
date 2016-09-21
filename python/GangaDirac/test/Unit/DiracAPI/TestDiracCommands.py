@@ -4,10 +4,10 @@ import datetime
 from collections import namedtuple
 
 import os
-import random
 import tempfile
 import time
 from textwrap import dedent
+import uuid
 
 import pytest
 
@@ -18,8 +18,6 @@ from Ganga.testlib.mark import external
 from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
 
 logger = getLogger(modulename=True)
-
-random.seed()
 
 statusmapping = {
     'Checking': 'submitted',
@@ -37,20 +35,6 @@ statusmapping = {
 }
 
 
-def random_str():
-
-    t = datetime.datetime.now()
-    unix_t = time.mktime(t.timetuple())
-
-    file_string = str(unix_t) + " "
-
-    rand_num = random.random() * 1E10
-
-    file_string += str(rand_num)
-
-    return file_string
-
-
 JobInfo = namedtuple('JobInfo', ['id', 'get_file_lfn', 'remove_file_lfn'])
 
 
@@ -65,11 +49,11 @@ def load_config():
 @pytest.yield_fixture(scope='class')
 def dirac_job(load_config):
 
-    sandbox_str = random_str()
+    sandbox_str = uuid.uuid4()
     time.sleep(0.5)
-    get_file_str = random_str()
+    get_file_str = uuid.uuid4()
     time.sleep(0.5)
-    remove_file_str = random_str()
+    remove_file_str = uuid.uuid4()
 
     exe_script = """
     #!/bin/bash
@@ -291,7 +275,7 @@ class TestDiracCommands(object):
 
         for location in dirac_sites:
             temp_file = tmpdir.join('upload_file')
-            temp_file.write(random_str())
+            temp_file.write(uuid.uuid4())
             logger.info('Adding file to %s', location)
             confirm = execute('uploadFile("%s","%s",["%s"],"")' % (new_lfn, temp_file, location), return_raw_dict=True)
             logger.info(confirm)
@@ -311,7 +295,7 @@ class TestDiracCommands(object):
 
         for location in dirac_sites:
             temp_file = tmpdir.join('add_file')
-            temp_file.write(random_str())
+            temp_file.write(uuid.uuid4())
             logger.info('Adding file to %s', location)
             confirm = execute('addFile("%s","%s","%s","")' % (new_lfn, temp_file, location), return_raw_dict=True)
             logger.info(confirm)
