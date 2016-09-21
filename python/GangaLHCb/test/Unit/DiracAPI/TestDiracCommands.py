@@ -174,6 +174,162 @@ def dirac_sites(load_config):
 
 @external
 class TestDiracCommands(object):
+    def test_peek(self, dirac_job):
+        confirm = execute('peek("%s")' % dirac_job.id, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'peek command not executed successfully'
+
+    def test_getJobCPUTime(self, dirac_job):
+        confirm = execute('getJobCPUTime("%s")' % dirac_job.id, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'getJobCPUTime command not executed successfully'
+
+    def test_getOutputData(self, dirac_job):
+        confirm = execute('getOutputData("%s")' % dirac_job.id, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'getOutputData command not executed successfully'
+
+    def test_getOutputSandbox(self, dirac_job):
+        confirm = execute('getOutputSandbox("%s")' % dirac_job.id, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'getOutputSandbox command not executed successfully'
+
+    def test_getOutputDataInfo(self, dirac_job):
+        confirm = execute('getOutputDataInfo("%s")' % dirac_job.id, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'getOutputDataInfo command not executed successfully'
+        assert isinstance(confirm['Value']['getFile.dst'], dict), 'getOutputDataInfo command not executed successfully'
+
+    def test_getOutputDataLFNs(self, dirac_job):
+        confirm = execute('getOutputDataLFNs("%s")' % dirac_job.id, return_raw_dict=True)
+        logger.info(confirm)
+        logger.info(confirm)
+        assert confirm['OK'], 'getOutputDataLFNs command not executed successfully'
+
+    def test_normCPUTime(self, dirac_job):
+        confirm = execute('normCPUTime("%s")' % dirac_job.id, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'normCPUTime command not executed successfully'
+        assert isinstance(confirm['Value'], str), 'normCPUTime ommand not executed successfully'
+
+    def test_getStateTime(self, dirac_job):
+        confirm = execute('getStateTime("%s", "completed")' % dirac_job.id, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'getStateTime command not executed successfully'
+        assert isinstance(confirm['Value'], datetime.datetime), 'getStateTime command not executed successfully'
+
+    def test_timedetails(self, dirac_job):
+        confirm = execute('timedetails("%s")' % dirac_job.id, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'timedetails command not executed successfully'
+        assert isinstance(confirm['Value'], dict), 'Command not executed successfully'
+
+    def test_y_reschedule(self, dirac_job):
+        confirm = execute('reschedule("%s")' % dirac_job.id, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'reschedule command not executed successfully'
+
+    def test_z_kill(self, dirac_job):
+        # remove_files()
+        confirm = execute('kill("%s")' % dirac_job.id, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'kill command not executed successfully'
+
+    def test_status(self, dirac_job):
+        confirm = execute('status([%s], %s)' % (dirac_job.id, repr(statusmapping)), return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'status command not executed successfully'
+        assert isinstance(confirm['Value'], list), 'Command not executed successfully'
+
+    def test_getFile(self, dirac_job):
+        confirm = execute('getFile("%s")' % dirac_job.get_file_lfn, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'getFile command not executed successfully'
+
+    def test_removeFile(self, dirac_job):
+        confirm = execute('removeFile("%s")' % dirac_job.remove_file_lfn, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'removeFile command not executed successfully'
+
+    def test_ping(self, dirac_job):
+        confirm = execute('ping("WorkloadManagement","JobManager")', return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'ping command not executed successfully'
+
+    def test_getMetadata(self, dirac_job):
+        confirm = execute('getMetadata("%s")' % dirac_job.get_file_lfn, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'getMetaData command not executed successfully'
+
+    def test_getReplicas(self, dirac_job):
+        confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'getReplicas command not executed successfully'
+
+    def test_replicateFile(self, dirac_job, dirac_sites):
+
+        for new_location in dirac_sites:
+            confirm = execute('replicateFile("%s","%s","")' % (dirac_job.get_file_lfn, new_location), return_raw_dict=True)
+            logger.info(confirm)
+            if not confirm['OK']:
+                continue  # If we couldn't add the file, try the next site
+            confirm = execute('removeReplica("%s","%s")' % (dirac_job.get_file_lfn, new_location), return_raw_dict=True)
+            logger.info(confirm)
+            assert confirm['OK'], 'Command not executed successfully'
+            break  # Once we found a working site, stop looking
+        else:
+            raise AssertionError('No working site found')
+
+    def test_splitInputData(self, dirac_job):
+        confirm = execute('splitInputData("%s","1")' % dirac_job.get_file_lfn, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'splitInputData command not executed successfully'
+
+    def test_uploadFile(self, tmpdir, dirac_job, dirac_sites):
+
+        new_lfn = '%s_add_file' % os.path.dirname(dirac_job.get_file_lfn)
+
+        for location in dirac_sites:
+            temp_file = tmpdir.join('upload_file')
+            temp_file.write(random_str())
+            logger.info('Adding file to %s', location)
+            confirm = execute('uploadFile("%s","%s",["%s"],"")' % (new_lfn, temp_file, location), return_raw_dict=True)
+            logger.info(confirm)
+            if confirm.get(location, False):
+                continue  # If we couldn't add the file, try the next site
+            logger.info('Removing file from %s', location)
+            confirm_remove = execute('removeFile("%s")' % new_lfn, return_raw_dict=True)
+            logger.info(confirm)
+            assert confirm_remove['OK'], 'Command not executed successfully'
+            break  # Once we found a working site, stop looking
+        else:
+            raise AssertionError('No working site found')
+
+    def test_addFile(self, tmpdir, dirac_job, dirac_sites):
+
+        new_lfn = '%s_add_file' % os.path.dirname(dirac_job.get_file_lfn)
+
+        for location in dirac_sites:
+            temp_file = tmpdir.join('add_file')
+            temp_file.write(random_str())
+            logger.info('Adding file to %s', location)
+            confirm = execute('addFile("%s","%s","%s","")' % (new_lfn, temp_file, location), return_raw_dict=True)
+            logger.info(confirm)
+            if not confirm['OK']:
+                continue  # If we couldn't add the file, try the next site
+            logger.info('Removing file from %s', location)
+            confirm_remove = execute('removeFile("%s")' % new_lfn, return_raw_dict=True)
+            logger.info(confirm)
+            assert confirm_remove['OK'], 'Command not executed successfully'
+            break  # Once we found a working site, stop looking
+        else:
+            raise AssertionError('No working site found')
+
+    def test_getJobGroupJobs(self, dirac_job):
+        confirm = execute('getJobGroupJobs("")', return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'Command not executed successfully'
+
 
     def test_bkQueryDict(self, dirac_job):
         confirm = execute('bkQueryDict({"FileType":"Path","ConfigName":"LHCb","ConfigVersion":"Collision09","EventType":"10","ProcessingPass":"Real Data","DataTakingConditions":"Beam450GeV-VeloOpen-MagDown"})', return_raw_dict=True)
@@ -199,8 +355,6 @@ class TestDiracCommands(object):
         confirm = execute('checkTier1s()', return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
-
-# Problematic tests
 
     def test_getInputDataCatalog(self, dirac_job):
         confirm = execute('getInputDataCatalog("%s","","")' % dirac_job.get_file_lfn, return_raw_dict=True)

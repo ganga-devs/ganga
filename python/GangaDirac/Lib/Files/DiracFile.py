@@ -7,7 +7,7 @@ import re
 import os.path
 import random
 import glob
-from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory, isType, getName
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -671,6 +671,12 @@ class DiracFile(IGangaFile):
                 stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
             except GangaDiracError as err:
                 logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), err))
+                failureReason = "Error in uploading file '%s' : '%s'" % (os.path.basename(name), err)
+                if regex.search(self.namePattern) is not None:
+                    d.failureReason = failureReason
+                    outputFiles.append(d)
+                    continue
+                self.failureReason += '\n' + failureReason
                 continue
 
             # when doing the two step upload delete the temp file
@@ -683,7 +689,7 @@ class DiracFile(IGangaFile):
                 d.remoteDir = os.path.dirname(lfn)
                 d.locations = stdout['Successful'][lfn].get('allDiracSE', '')
                 d.guid = guid
-                outputFiles.append(GPIProxyObjectFactory(d))
+                outputFiles.append(d)
                 continue
             else:
                 self.lfn = lfn
