@@ -15,10 +15,8 @@ class TestSJXMLGenAndLoad(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts = [('Registry', 'AutoFlusherWaitTime', 5)]
+        extra_opts = [('Registry', 'AutoFlusherWaitTime', 5), ('TestingFramework', 'AutoCleanup', 'False')]
         super(TestSJXMLGenAndLoad, self).setUp(extra_opts=extra_opts)
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def test_a_JobConstruction(self):
         """ First construct the Job object (singular)"""
