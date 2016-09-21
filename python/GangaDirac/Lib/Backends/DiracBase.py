@@ -476,8 +476,7 @@ class DiracBase(IBackend):
 
     def getOutputDataAccessURLs(self):
         """Retrieve the list of accessURLs assigned to outputdata for a job"""
-        lfns = self.getOutputDataLFNs()
-        urls = getAccessURLs(lfns)
+        urls = getAccessURLs(self.getOutputDataLFNs())
         return urls
 
     def debug(self):
