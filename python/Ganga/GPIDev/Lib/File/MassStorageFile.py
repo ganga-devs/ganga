@@ -18,12 +18,11 @@ from pipes import quote
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.Utility.files import expandfilename
 
 import Ganga.Utility.Config
@@ -102,7 +101,7 @@ class MassStorageFile(IGangaFile):
     def _on_attribute__set__(self, obj_type, attrib_name):
         # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
         r = copy.deepcopy(self)
-        if getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
+        if _getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
             r.locations = []
             r.localDir = ''
             r.failureReason = ''
@@ -111,7 +110,7 @@ class MassStorageFile(IGangaFile):
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "%s(namePattern='%s')" % (self._name, self.namePattern)
+        return "%s(namePattern='%s')" % (_getName(self), self.namePattern)
 
     def setLocation(self):
         """
@@ -181,7 +180,7 @@ class MassStorageFile(IGangaFile):
         """
         to_location = targetPath
 
-        cp_cmd = getConfig('Output')[self._name]['uploadOptions']['cp_cmd']
+        cp_cmd = getConfig('Output')[_getName(self)]['uploadOptions']['cp_cmd']
 
         for location in self.locations:
             targetLocation = os.path.join(to_location, os.path.basename(location))
@@ -195,7 +194,7 @@ class MassStorageFile(IGangaFile):
 ###INDENT###os.system(\'###CP_COMMAND###\')
 
 """
-        cp_cmd = '%s %s .' % (getConfig('Output')[self._name]['uploadOptions']['cp_cmd'], quote(self.locations[0]))
+        cp_cmd = '%s %s .' % (getConfig('Output')[_getName(self)]['uploadOptions']['cp_cmd'], quote(self.locations[0]))
 
         replace_dict = { '###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd }
 
@@ -211,7 +210,7 @@ class MassStorageFile(IGangaFile):
             massStoragePath (str): This is the path we want to make if it doesn't exist.
         """
 
-        massStorageConfig = getConfig('Output')[self._name]['uploadOptions']
+        massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
         mkdir_cmd = massStorageConfig['mkdir_cmd']
         ls_cmd = massStorageConfig['ls_cmd']
 
@@ -272,7 +271,7 @@ class MassStorageFile(IGangaFile):
             if len(job.subjobs) > 0:
                 return
 
-        massStorageConfig = getConfig('Output')[self._name]['uploadOptions']
+        massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
 
         cp_cmd = massStorageConfig['cp_cmd']
         ls_cmd = massStorageConfig['ls_cmd']
@@ -393,23 +392,23 @@ class MassStorageFile(IGangaFile):
                     missingKeywords.append(item)
 
             if len(missingKeywords):
-                return (False, 'Error in %s.outputfilenameformat field : missing keywords %s ' % (self._name, ','.join(missingKeywords)))
+                return (False, 'Error in %s.outputfilenameformat field : missing keywords %s ' % (_getName(self), ','.join(missingKeywords)))
 
             if isSplitJob == False and self.outputfilenameformat.find('{sjid}') > -1:
-                return (False, 'Error in %s.outputfilenameformat field :  job is non-split, but {\'sjid\'} keyword found' % self._name)
+                return (False, 'Error in %s.outputfilenameformat field :  job is non-split, but {\'sjid\'} keyword found' % _getName(self))
 
             if isJob == False and self.outputfilenameformat.find('{sjid}') > -1:
-                return (False, 'Error in %s.outputfilenameformat field :  no parent job, but {\'sjid\'} keyword found' % self._name)
+                return (False, 'Error in %s.outputfilenameformat field :  no parent job, but {\'sjid\'} keyword found' % _getName(self))
 
             if isJob == False and self.outputfilenameformat.find('{jid}') > -1:
-                return (False, 'Error in %s.outputfilenameformat field :  no parent job, but {\'jid\'} keyword found' % self._name)
+                return (False, 'Error in %s.outputfilenameformat field :  no parent job, but {\'jid\'} keyword found' % _getName(self))
 
             invalidUnixChars = ['"', ' ']
             test = self.outputfilenameformat.replace('{jid}', 'a').replace('{sjid}', 'b').replace('{fname}', 'c')
 
             for invalidUnixChar in invalidUnixChars:
                 if test.find(invalidUnixChar) > -1:
-                    return (False, 'Error in %s.outputfilenameformat field :  invalid char %s found' % (self._name, invalidUnixChar))
+                    return (False, 'Error in %s.outputfilenameformat field :  invalid char %s found' % (_getName(self), invalidUnixChar))
 
         return (True, '')
 
@@ -435,7 +434,7 @@ class MassStorageFile(IGangaFile):
         """
         massStorageCommands = []
 
-        massStorageConfig = getConfig('Output')[self._name]['uploadOptions']
+        massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
 
         for outputFile in outputFiles:
 
@@ -480,7 +479,7 @@ class MassStorageFile(IGangaFile):
             return self.subfiles
 
         if regex.search(self.namePattern):
-            ls_cmd = getConfig('Output')[self._name]['uploadOptions']['ls_cmd']
+            ls_cmd = getConfig('Output')[_getName(self)]['uploadOptions']['ls_cmd']
             exitcode, output, m = self.shell.cmd1(ls_cmd + ' ' + self.inputremotedirectory, capture_stderr=True)
 
             for filename in output.split('\n'):
@@ -488,13 +487,13 @@ class MassStorageFile(IGangaFile):
                     subfile = self.__class__(namePattern=filename)
                     subfile.inputremotedirectory = self.inputremotedirectory
 
-                    self.subfiles.append(GPIProxyObjectFactory(subfile))
+                    self.subfiles.append(subfile)
 
     def remove(self, force=False, removeLocal=False):
         """
         Removes file from remote storage ONLY by default
         """
-        massStorageConfig = getConfig('Output')[self._name]['uploadOptions']
+        massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
         rm_cmd = massStorageConfig['rm_cmd']
 
         if force == True:
@@ -578,7 +577,7 @@ class MassStorageFile(IGangaFile):
         # file on EOS or elsewhere to return a full URL which we can pass to
         # ROOT...
 
-        protoPath = getConfig('Output')[self._name]['defaultProtocol']
+        protoPath = getConfig('Output')[_getName(self)]['defaultProtocol']
 
         myLocations = self.location()
 
@@ -608,7 +607,7 @@ class SharedFile(MassStorageFile):
             namePattern (str): is the pattern of the output file that has to be written into mass storage
             localDir (str): This is the optional local directory of a file to be uploaded to mass storage
         """
-        if getConfig('Output')[self._name]['uploadOptions']['path'] is None:
+        if getConfig('Output')[_getName(self)]['uploadOptions']['path'] is None:
             logger.error("In order to use the SharedFile class you will need to define the path directory in your .gangarc")
             raise GangaException("In order to use the SharedFile class you will need to define the path directory in your .gangarc")
 
