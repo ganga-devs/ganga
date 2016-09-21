@@ -121,9 +121,8 @@ class IGangaFile(GangaObject):
         if self.compressed:
             fileName = '%s.gz' % self.namePattern
 
-        if self._getParent() is not None and not self.localDir:
+        if self._getParent() is not None:
             sourceDir = self.getJobObject().outputdir
-            self.localDir = sourceDir
         else:
             sourceDir = self.localDir
 

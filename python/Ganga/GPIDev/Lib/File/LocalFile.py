@@ -266,13 +266,19 @@ class LocalFile(IGangaFile):
         """
         outputbase = ''
         if self._getParent() is not None:
-            outputbase = self.getJobObject()
+            outputbase = self.getJobObject().outputdir
 
         try:
             new_file = path.join(outputbase, targetPath)
+            if self._getParent() is not None:
+                if not path.isdir(path.dirname(new_file)):
+                    os.makedirs(path.dirname(new_file))
             if sourcePath != new_file:
-                logger.debug("Copying: '%s' to '%s'" % (sourcePath, new_file)) 
-                shutil.copy(sourcePath, new_file)
+                if self._getParent() is not None:
+                    if not path.isfile(new_file):
+                        shutil.copy(sourcePath, new_file)
+                else:
+                    shutil.copy(sourcePath, new_file)
         except Exception as err:
             logger.error("Error copying LocalFile: %s" % err)
             return False

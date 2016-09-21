@@ -20,16 +20,19 @@ class TestStructure(GangaUnitTest):
         self.jobslice = []
         self.file_name = 'id_echo.sh'
 
+        self.subdir_path = 'subdir'
+        self.outputfile = 'out.txt'
+
         for _ in range(5):
 
             j = Job(application=Executable(), backend=Local())
 
             scriptString = '''
             #!/bin/sh
-            echo "Output from job $1." > out.txt
+            echo "Output from job $1." > %s
             mkdir -p subdir
-            echo "Output from job $2." > subdir/out.txt
-            '''
+            echo "Output from job $2." > %s
+            ''' % (self.outputfile, os.path.join(self.subdir_path, self.outputfile))
 
             # write string to tmpfile
             tmpdir = tempfile.mktemp()
@@ -40,8 +43,10 @@ class TestStructure(GangaUnitTest):
 
             j.application.exe = 'sh'
             j.application.args = [File(fileName), str(j.id), str(j.id * 10)]
-            j.outputfiles = [LocalFile('out.txt'), LocalFile('subdir/out.txt')]
+            j.outputfiles = [LocalFile(self.outputfile), LocalFile(os.path.join(self.subdir_path, self.outputfile))]
             self.jobslice.append(j)
+
+            assert len(j.outputfiles) == 2
 
     def runJobSlice(self):
 
@@ -70,9 +75,10 @@ class TestStructure(GangaUnitTest):
             print("status: %s" % j.status)
             print("Looking in: %s" % j.outputdir)
             print("ls: %s" % str(os.listdir(j.outputdir)))
-            assert os.path.exists(os.path.join(j.outputdir, 'out.txt')), 'File must exist'
+            assert os.path.isfile(os.path.join(j.outputdir, self.outputfile)), 'File must exist'
 
-            assert os.path.exists(os.path.join(j.outputdir, 'subdir', 'out.txt')), 'File in directory must exist'
+            assert os.path.isdir(os.path.join(j.outputdir, self.subdir_path)), 'Directory must exist'
+            assert os.path.isfile(os.path.join(j.outputdir, self.subdir_path, self.outputfile)), 'File in directory must exist'
 
     def testStructureOfMerger(self):
         """Test that structure in the output sandbox is recreated in the merge"""
@@ -80,13 +86,13 @@ class TestStructure(GangaUnitTest):
         self.runJobSlice()
 
         tm = TextMerger()
-        tm.files = ['out.txt', 'subdir/out.txt']
+        tm.files = [self.outputfile, os.path.join(self.subdir_path, self.outputfile)]
 
         tmpdir = tempfile.mktemp()
         os.mkdir(tmpdir)
 
         assert tm.merge(self.jobslice, tmpdir), 'Merge must run correctly'
-        assert os.path.exists(os.path.join(tmpdir, 'out.txt')), 'Merge must produce the file'
+        assert os.path.exists(os.path.join(tmpdir, self.outputfile)), 'Merge must produce the file'
 
     def testOutputEqualsInput(self):
         """Tests that setting outputdir == inputdir fails always"""
@@ -94,7 +100,7 @@ class TestStructure(GangaUnitTest):
 
         self.runJobSlice()
         tm = TextMerger(overwrite=True)
-        tm.files = ['out.txt']
+        tm.files = [self.outputfile]
 
         for j in self.jobslice:
             with pytest.raises(PostProcessException):
