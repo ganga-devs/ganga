@@ -12,7 +12,7 @@ from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Core import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaDirac.Lib.Utilities.DiracUtilities import execute, _proxyValid
+from GangaDirac.Lib.Utilities.DiracUtilities import execute, _proxyValid, getAccessURLs
 from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
@@ -90,7 +90,7 @@ class DiracBase(IBackend):
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)')
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
-                      'getOutputDataLFNs', 'peek', 'reset', 'debug']
+                      'getOutputDataLFNs','getOutputDataAccessURLs', 'peek', 'reset', 'debug']
     _packed_input_sandbox = True
     _category = "backends"
     _name = 'DiracBase'
@@ -473,6 +473,12 @@ class DiracBase(IBackend):
         else:
             lfns.extend([f.lfn for f in outputfiles_iterator(j, DiracFile) if f.lfn != ''])
         return lfns
+
+    def getOutputDataAccessURLs(self):
+        """Retrieve the list of accessURLs assigned to outputdata for a job"""
+        lfns = self.getOutputDataLFNs()
+        urls = getAccessURLs(lfns)
+        return urls
 
     def debug(self):
         '''Obtains some (possibly) useful DIRAC debug info. '''
