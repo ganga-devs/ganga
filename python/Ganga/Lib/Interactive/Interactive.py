@@ -259,7 +259,7 @@ class Interactive(IBackend):
         }
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                'InteractiveScriptTemplate.py')
+                'InteractiveScriptTemplate.py.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         commandString = FileUtils.loadScript(script_location, '')
