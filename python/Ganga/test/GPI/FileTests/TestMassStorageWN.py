@@ -6,8 +6,10 @@ import tempfile
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
 
-from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject, stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from GangaTest.Framework.utils import sleep_until_completed
+from Ganga.GPIDev.Lib.File import MassStorageFile, SharedFile
+from Ganga.GPIDev.Base.Objects import _getName
 
 class TestMassStorageWN(GangaUnitTest):
     """Testing MassStorage when completing a file"""
@@ -17,10 +19,10 @@ class TestMassStorageWN(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
-    fileName = 'MassStorageFile'
+    fileClass = MassStorageFile
 
     # Where on local storage we want to have our 'MassStorage solution'
-    outputFilePath = '/tmp/Test' + fileName + 'WN'
+    outputFilePath = '/tmp/Test' + _getName(fileClass) + 'WN'
 
     # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     MassStorageTestConfig = {'defaultProtocol': 'file://',
@@ -36,7 +38,7 @@ class TestMassStorageWN(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', self.fileName, TestMassStorageWN.MassStorageTestConfig),
+                    ('Output', _getName(self.fileClass), TestMassStorageWN.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageWN, self).setUp(extra_opts=extra_opts)
 
@@ -67,7 +69,7 @@ class TestMassStorageWN(GangaUnitTest):
     def test_a_Submit(self):
         """Test the ability to submit a job with some LocalFiles"""
 
-        MassStorageFile = getRuntimeGPIObject(self.fileName, evalClass=False)
+        MassStorageFile = _getName(self.fileClass)
         from Ganga.GPI import jobs, Job, LocalFile
 
         _ext = '.txt'
@@ -109,7 +111,7 @@ class TestMassStorageWN(GangaUnitTest):
 
     def test_c_SplitJob(self):
         """Test submitting subjobs"""
-        MassStorageFile = getRuntimeGPIObject(self.fileName, evalClass=False)
+        MassStorageFile = self.fileClass
         from Ganga.GPI import Job, LocalFile, ArgSplitter
 
         _ext = '.txt2'
@@ -148,7 +150,7 @@ class TestMassStorageWN(GangaUnitTest):
     def test_e_MultipleFiles(self):
         """Test that the wildcards work"""
 
-        MassStorageFile = getRuntimeGPIObject(self.fileName, evalClass=False)
+        MassStorageFile = self.fileClass
         from Ganga.GPI import LocalFile, Job, ArgSplitter
 
         _ext = '.root'
@@ -195,7 +197,7 @@ class TestMassStorageWN(GangaUnitTest):
     def test_g_MultipleFiles(self):
         """Test that the wildcards work"""
 
-        MassStorageFile = getRuntimeGPIObject(self.fileName, evalClass=False)
+        MassStorageFile = self.fileClass
         from Ganga.GPI import LocalFile, Job, ArgSplitter
 
         _ext = '.root'
@@ -235,5 +237,5 @@ class TestMassStorageWN(GangaUnitTest):
 
 class TestSharedWN(TestMassStorageWN):
     """Testing SharedFile when completing a file"""
-    fileName = 'SharedFile'
+    fileClass = SharedFile
 

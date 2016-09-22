@@ -4,10 +4,11 @@ import shutil
 import copy
 import tempfile
 
-from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
 from GangaTest.Framework.utils import sleep_until_completed
+from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
+from Ganga.GPIDev.Base.Objets import _getName
 
 class TestMassStorageClientInput(GangaUnitTest):
     """Testing MassStorage on input to a job"""
@@ -17,10 +18,10 @@ class TestMassStorageClientInput(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
-    fileName = 'MassStorageFile'
+    fileClass = MassStorageFile
 
     # Where on local storage we want to have our 'MassStorage solution'
-    outputFilePath = '/tmp/Test' + fileName + 'Input'
+    outputFilePath = '/tmp/Test' + _getName(fileClass) + 'Input'
 
     # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     MassStorageTestConfig = {'defaultProtocol': 'file://',
@@ -36,7 +37,7 @@ class TestMassStorageClientInput(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', self.fileName, self.MassStorageTestConfig),
+                    ('Output', _getClass(self.fileClass), self.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageClientInput, self).setUp(extra_opts=extra_opts)
 
@@ -67,7 +68,7 @@ class TestMassStorageClientInput(GangaUnitTest):
     def test_a_testClientInputSubmit(self):
         """Test that a job can be submitted with inputfiles in the input"""
 
-        MassStorageFile = getRuntimeGPIObject(self.fileName, evalClass=False)
+        MassStorageFile = self.fileClass
         from Ganga.GPI import LocalFile, Job, ArgSplitter
 
         _ext = '.root'
@@ -103,5 +104,6 @@ class TestMassStorageClientInput(GangaUnitTest):
 
 class TestMassStorageWNInput(TestMassStorageClientInput):
     """Testing SharedFile on input to a job"""
-    fileName = 'SharedFile'
+    fileClass = SharedFile
+
 

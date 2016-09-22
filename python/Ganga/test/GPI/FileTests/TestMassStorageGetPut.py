@@ -7,8 +7,10 @@ import tempfile
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
 from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject, stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from GangaTest.Framework.utils import sleep_until_completed
+from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
+from Ganga.GPIDev.Base.Objects
 
 class TestMassStorageGetPut(GangaUnitTest):
     """Testing the get/put/copyTo methods of MassStorage"""
@@ -19,10 +21,10 @@ class TestMassStorageGetPut(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
-    fileName = 'MassStorageFile'
+    fileClass = MassStorageFile
 
     # Where on local storage we want to have our 'MassStorage solution'
-    outputFilePath = '/tmp/Test' + fileName + 'GetPut'
+    outputFilePath = '/tmp/Test' + _getName(fileClass) + 'GetPut'
 
     # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     MassStorageTestConfig = {'defaultProtocol': 'file://',
@@ -38,7 +40,7 @@ class TestMassStorageGetPut(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', self.fileName, self.MassStorageTestConfig),
+                    ('Output', _getName(self.fileClass), self.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageGetPut, self).setUp(extra_opts=extra_opts)
 
@@ -74,7 +76,7 @@ class TestMassStorageGetPut(GangaUnitTest):
     def test_a_test_put(self):
         """Test that a job can be submitted with inputfiles in the input"""
 
-        MassStorageFile = getRuntimeGPIObject(self.fileName, evalClass=False)
+        MassStorageFile = _getName(self.fileClass)
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
@@ -150,5 +152,5 @@ class TestMassStorageGetPut(GangaUnitTest):
 
 class TestSharedFileGetPut(TestMassStorageGetPut):
     """Testing the get/put/copyTo methods of SharedFile"""
-    fileName = 'SharedFile'
+    fileClass = SharedFile
 

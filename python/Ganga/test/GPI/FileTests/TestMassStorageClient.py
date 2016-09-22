@@ -6,8 +6,10 @@ import tempfile
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject, stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from GangaTest.Framework.utils import sleep_until_completed
+from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
+from Ganga.GPIDev.Base.Objects import _getName
 
 class TestMassStorageClient(GangaUnitTest):
     """test for sjid in filename names explain each test"""
@@ -17,10 +19,10 @@ class TestMassStorageClient(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
-    fileName = 'MassStorageFile'
+    fileClass = MassStorageFile
 
     # Where on local storage we want to have our 'MassStorage solution'
-    outputFilePath = '/tmp/Test' + fileName + 'Client'
+    outputFilePath = '/tmp/Test' + _getName(fileClass) + 'Client'
 
     # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     MassStorageTestConfig = {'defaultProtocol': 'file://',
@@ -36,7 +38,7 @@ class TestMassStorageClient(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', self.fileName, TestMassStorageClient.MassStorageTestConfig),
+                    ('Output', _getName(self.fileClass), TestMassStorageClient.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageClient, self).setUp(extra_opts=extra_opts)
 
@@ -68,13 +70,13 @@ class TestMassStorageClient(GangaUnitTest):
     def test_a_testClientSideSubmit(self):
         """Test the client side code whilst stil using the Local backend"""
 
-        MassStorageFile = getRuntimeGPIObject(self.fileName, evalClass=False)
+        MassStorageFile = self.fileClass
 
         from Ganga.GPI import LocalFile, Job, ArgSplitter
 
         TestMassStorageClient.cleanUp()
 
-        assert getConfig('Output')[self.fileName]['backendPostprocess']['Local'] == 'client'
+        assert getConfig('Output')[_getName(self.fileClass)]['backendPostprocess']['Local'] == 'client'
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
@@ -93,7 +95,7 @@ class TestMassStorageClient(GangaUnitTest):
 
         from Ganga.GPI import jobs
 
-        assert getConfig('Output')[self.fileName]['backendPostprocess']['Local'] == 'client'
+        assert getConfig('Output')[_getName(self.fileClass)]['backendPostprocess']['Local'] == 'client'
 
         j = jobs[-1]
 
@@ -121,5 +123,5 @@ class TestMassStorageClient(GangaUnitTest):
 
 class TestSharedClient(TestMassStorageClient):
     """test for sjid in filename names explain each test"""
-    fileName = 'SharedFile'
+    fileClass = SharedFile
 
