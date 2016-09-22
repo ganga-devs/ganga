@@ -5,6 +5,7 @@ import subprocess
 from datetime import datetime, timedelta
 
 import Ganga.Utility.logging
+from Ganga.Core import GangaValueError
 from Ganga.GPIDev.Schema import SimpleItem
 
 from Ganga.GPIDev.Credentials2.ICredentialInfo import cache
@@ -101,7 +102,7 @@ class DiracProxy(ICredentialRequirement):
     def __init__(self, **kwargs):
         super(DiracProxy, self).__init__(**kwargs)
         if self.group is None:
-            raise ValueError('DIRAC Proxy `group` is not set')
+            raise GangaValueError('DIRAC Proxy `group` is not set. Set this in ~/.gangarc in `[defaults_DiracProxy]/group`')
 
     def encoded(self):
         return ':'.join(requirement for requirement in [self.group] if requirement)  # filter out the empties
