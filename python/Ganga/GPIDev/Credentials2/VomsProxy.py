@@ -11,7 +11,7 @@ from Ganga.Utility.Config import getConfig
 
 from .ICredentialInfo import ICredentialInfo, cache
 from .ICredentialRequirement import ICredentialRequirement
-from .exceptions import CredentialRenewalError
+from .exceptions import CredentialRenewalError, InvalidCredentialError
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -72,6 +72,8 @@ class VomsProxyInfo(ICredentialInfo):
     def field(self, label):
         # type: (str) -> str
         line = re.search(r'^{0}\s*: (.*)$'.format(label), self.info(), re.MULTILINE)
+        if line is None:
+            raise InvalidCredentialError()
         return line.group(1)
 
     @property
