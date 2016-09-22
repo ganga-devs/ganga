@@ -7,9 +7,11 @@ import tempfile
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
 from Ganga.Core.exceptions import GangaException
+from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject, stripProxy
+from GangaTest.Framework.utils import sleep_until_completed
 
 class TestMassStorageGetPut(GangaUnitTest):
-    """test for sjid in filename names explain each test"""
+    """Testing the get/put/copyTo methods of MassStorage"""
 
     _temp_files = []
     _managed_files = []
@@ -17,8 +19,10 @@ class TestMassStorageGetPut(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
+    fileName = 'MassStorageFile'
+
     # Where on local storage we want to have our 'MassStorage solution'
-    outputFilePath = '/tmp/TestMassStorageGetPut'
+    outputFilePath = '/tmp/Test' + fileName + 'GetPut'
 
     # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     MassStorageTestConfig = {'defaultProtocol': 'file://',
@@ -34,7 +38,7 @@ class TestMassStorageGetPut(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', 'MassStorageFile', self.MassStorageTestConfig),
+                    ('Output', self.fileName, self.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageGetPut, self).setUp(extra_opts=extra_opts)
 
@@ -46,6 +50,12 @@ class TestMassStorageGetPut(GangaUnitTest):
         for j in jobs:
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
+
+    @classmethod
+    def setUpClass(cls):
+        """ This creates a safe place to put the files into 'mass-storage' """
+        cls.outputFilePath = tempfile.mkdtemp()
+        cls.MassStorageTestConfig['uploadOptions']['path'] = cls.outputFilePath
 
     @classmethod
     def tearDownClass(cls):
@@ -64,7 +74,7 @@ class TestMassStorageGetPut(GangaUnitTest):
     def test_a_test_put(self):
         """Test that a job can be submitted with inputfiles in the input"""
 
-        from Ganga.GPI import MassStorageFile
+        MassStorageFile = getRuntimeGPIObject(self.fileName, evalClass=False)
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
@@ -86,12 +96,9 @@ class TestMassStorageGetPut(GangaUnitTest):
     def test_b_test_get(self):
         """Test that the files were made accessible to the WN area and collected as LocalFile objects in outputfiles"""
 
-        from Ganga.GPIDev.Base.Proxy import stripProxy
         from Ganga.GPI import Job
 
         tmpdir = tempfile.mkdtemp()
-        if not os.path.isdir(tmpdir):
-            os.makedirs(tmpdir)
 
         # Test in the case that the files don't have a parent or a localDir
         for file_ in self._managed_files:
@@ -132,13 +139,16 @@ class TestMassStorageGetPut(GangaUnitTest):
     def test_c_test_copyTo(self):
         """ Test the new copyTo interface"""
 
-        tmpdir = '/tmp/testMassStorageGet'
-        if not os.path.isdir(tmpdir):
-            os.makedirs(tmpdir)
+        tmpdir = tempfile.mkdtemp()
 
         for file_ in self._managed_files:
             file_.localDir = ''
             file_.copyTo(tmpdir)
             assert os.path.isfile(os.path.join(tmpdir, file_.namePattern))
 
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+class TestSharedFileGetPut(TestMassStorageGetPut):
+    """Testing the get/put/copyTo methods of SharedFile"""
+    fileName = 'SharedFile'
 

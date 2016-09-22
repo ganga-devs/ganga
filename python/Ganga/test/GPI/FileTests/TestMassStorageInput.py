@@ -2,20 +2,25 @@ from __future__ import absolute_import
 import os
 import shutil
 import copy
+import tempfile
 
+from Ganga.GPIDev.Base.Proxy import getRuntimeGPIObject
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
+from GangaTest.Framework.utils import sleep_until_completed
 
 class TestMassStorageClientInput(GangaUnitTest):
-    """test for sjid in filename names explain each test"""
+    """Testing MassStorage on input to a job"""
 
     _managed_files = []
 
     # Num of sj in tests
     sj_len = 3
 
+    fileName = 'MassStorageFile'
+
     # Where on local storage we want to have our 'MassStorage solution'
-    outputFilePath = '/tmp/TestMassStorageClientInput'
+    outputFilePath = '/tmp/Test' + fileName + 'Input'
 
     # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     MassStorageTestConfig = {'defaultProtocol': 'file://',
@@ -31,7 +36,7 @@ class TestMassStorageClientInput(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', 'MassStorageFile', self.MassStorageTestConfig),
+                    ('Output', self.fileName, self.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageClientInput, self).setUp(extra_opts=extra_opts)
 
@@ -45,6 +50,12 @@ class TestMassStorageClientInput(GangaUnitTest):
             j.remove()
 
     @classmethod
+    def setUpClass(cls):
+        """ This creates a safe place to put the files into 'mass-storage' """
+        cls.outputFilePath = tempfile.mkdtemp()
+        cls.MassStorageTestConfig['uploadOptions']['path'] = cls.outputFilePath
+
+    @classmethod
     def tearDownClass(cls):
         """ Cleanup the current temp objects """ 
         for file_ in cls._managed_files:
@@ -56,7 +67,8 @@ class TestMassStorageClientInput(GangaUnitTest):
     def test_a_testClientInputSubmit(self):
         """Test that a job can be submitted with inputfiles in the input"""
 
-        from Ganga.GPI import LocalFile, MassStorageFile, Job, ArgSplitter
+        MassStorageFile = getRuntimeGPIObject(self.fileName, evalClass=False)
+        from Ganga.GPI import LocalFile, Job, ArgSplitter
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
@@ -79,8 +91,6 @@ class TestMassStorageClientInput(GangaUnitTest):
 
         from Ganga.GPI import jobs
 
-        from GangaTest.Framework.utils import sleep_until_completed
-
         j = jobs[-1]
 
         assert sleep_until_completed(j)
@@ -92,9 +102,6 @@ class TestMassStorageClientInput(GangaUnitTest):
         self.cleanUp()
 
 class TestMassStorageWNInput(TestMassStorageClientInput):
-
-    MassStorageTestConfig = copy.deepcopy(TestMassStorageClientInput.MassStorageTestConfig)
-    MassStorageTestConfig['backendPostprocess']['Local'] = 'WN'
-
-    MassStorageTestConfig['uploadOptions']['path'] = '/tmp/TestMassStorageWNInput'
+    """Testing SharedFile on input to a job"""
+    fileName = 'SharedFile'
 
