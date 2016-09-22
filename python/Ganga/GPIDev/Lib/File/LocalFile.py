@@ -26,8 +26,6 @@ import Ganga.Utility.logging
 
 logger = Ganga.Utility.logging.getLogger()
 
-regex = re.compile('[*?\[\]]')
-
 class LocalFile(IGangaFile):
 
     """LocalFile represents base class for output files, such as MassStorageFile, LCGSEFile, etc 
@@ -141,7 +139,7 @@ class LocalFile(IGangaFile):
 
         sourceDir = self.localDir
 
-        if regex.search(fileName) is not None:
+        if self.containsWildcards():
             for currentFile in glob.glob(path.join(sourceDir, fileName)):
                 d = LocalFile(namePattern=path.basename(
                     currentFile), localDir=path.dirname(currentFile))

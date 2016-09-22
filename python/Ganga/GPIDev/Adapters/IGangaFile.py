@@ -227,8 +227,7 @@ class IGangaFile(GangaObject):
         """
         if not isinstance(targetPath, str) and targetPath:
             raise GangaException("Cannot perform a copyTo with no given targetPath!")
-        if regex.search(self.namePattern) is None\
-            and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
+        if self.containsWildcards() and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
 
             if not os.path.isfile(os.path.join(targetPath, self.namePattern)):
                 shutil.copy(os.path.join(self.localDir, self.namePattern), os.path.join(targetPath, self.namePattern))
@@ -331,7 +330,7 @@ class IGangaFile(GangaObject):
         """
         Return if the name has got wildcard characters
         """
-        if regex.search(self.namePattern) != None:
+        if regex.search(self.namePattern) is not None:
             return True
 
         return False

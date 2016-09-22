@@ -20,8 +20,6 @@ import re
 import os
 import copy
 
-regex = re.compile('[*?\[\]]')
-
 
 def getLCGConfig():
     return getConfig('Output')['LCGSEFile']['uploadOptions']
@@ -109,7 +107,7 @@ class LCGSEFile(IGangaFile):
             pattern = line.split(' ')[1]
             name = line.split(' ')[2].strip('.gz')
 
-            if regex.search(lcgse_file.namePattern) is not None:
+            if self.containsWildcards():
                 d = LCGSEFile(namePattern=name)
                 d.compressed = lcgse_file.compressed
                 d.lfc_host = lcgse_file.lfc_host
@@ -185,7 +183,7 @@ class LCGSEFile(IGangaFile):
         if self.compressed:
             fileName = '%s.gz' % self.namePattern
 
-        if regex.search(fileName) is not None:
+        if self.containsWildcards():
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
                 cmd = self.getUploadCmd()
                 cmd = cmd.replace('filename', currentFile)
@@ -332,7 +330,7 @@ class LCGSEFile(IGangaFile):
 
         from fnmatch import fnmatch
 
-        if regex.search(self.namePattern):
+        if self.containsWildcards():
             # TODO namePattern shouldn't contain slashes and se_rpath should
             # not contain wildcards
             exitcode, output, m = self.shell.cmd1('lcg-ls lfn:/grid/' + getConfig(

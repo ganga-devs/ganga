@@ -18,7 +18,6 @@ from pipes import quote
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
@@ -28,7 +27,6 @@ from Ganga.Utility.files import expandfilename
 
 import Ganga.Utility.Config
 
-regex = re.compile('[*?\[\]]')
 logger = getLogger()
 
 class MassStorageFile(IGangaFile):
@@ -124,7 +122,7 @@ class MassStorageFile(IGangaFile):
             pattern = lineParts[1]
             outputPath = lineParts[2]
             name = os.path.basename(outputPath).strip('.gz')
-            if regex.search(mass_file.namePattern) is not None:
+            if mass_file.containsWildcards():
                 if outputPath == 'ERROR':
                     logger.error("Failed to upload file to mass storage")
                     logger.error(line[line.find('ERROR') + 5:])
@@ -399,7 +397,7 @@ class MassStorageFile(IGangaFile):
         if self.subfiles:
             return self.subfiles
 
-        if regex.search(self.namePattern):
+        if self.containsWildcards():
             ls_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['ls_cmd']
             exitcode, output, m = self.shell.cmd1(ls_cmd + ' ' + self.inputremotedirectory, capture_stderr=True)
 
@@ -408,7 +406,7 @@ class MassStorageFile(IGangaFile):
                     subfile = MassStorageFile(namePattern=filename)
                     subfile.inputremotedirectory = self.inputremotedirectory
 
-                    self.subfiles.append(GPIProxyObjectFactory(subfile))
+                    self.subfiles.append(subfile)
 
     def remove(self, force=False, removeLocal=False):
         """
