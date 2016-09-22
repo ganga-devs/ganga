@@ -571,7 +571,7 @@ try:
 
 #   unpack inputsandbox from wdir
     for f in input_sandbox['local']:
-        mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+        if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
             getPackedInputSandbox(os.path.join(orig_wdir,f))
 
     printInfo('Unpack inputsandbox passed.')
