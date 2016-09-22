@@ -51,14 +51,18 @@ def getProxyInterface():
         setProxyInterface(Ganga.GPI)
     return _stored_Interface
 
-def getRuntimeGPIObject(obj_name, silent=False):
+def getRuntimeGPIObject(obj_name, silent=False, evalClass=True):
     """ Get, or attempt to get an object from the GPI, if it exists then return a new instance if a class or an object if it's not
        If it doesn't exist attempt to evaluate the obj_name as a string like a standard python object
-       If it's none of the above then return 'None' rather than the object string which was input"""
+       If it's none of the above then return 'None' rather than the object string which was input
+       Args:
+           obj_name(str): This is the object we want to get from the GPI
+           silent(bool): Should we be silent about errors?
+           evalClass(bool): Should we create an instance of a class object when it's returned"""
     interface = getProxyInterface()
     if obj_name in interface.__dict__:
         this_obj = interface.__dict__[obj_name]
-        if isclass(this_obj):
+        if evalClass and isclass(this_obj):
             return this_obj()
         else:
             return this_obj
