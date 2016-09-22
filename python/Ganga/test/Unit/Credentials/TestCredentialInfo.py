@@ -27,6 +27,7 @@ class FakeShell(object):
         self.env = {}
         self.cmd1 = mock.Mock(wraps=self._cmd1)
         self.system = mock.Mock(wraps=self._system)
+        self.check_call = mock.Mock(wraps=self._check_call)
 
     def _cmd1(self, cmd):
         val = ''
@@ -40,6 +41,9 @@ class FakeShell(object):
 
     def _system(self, cmd):
         return 0
+
+    def _check_call(self, cmd):
+        pass
 
 
 @pytest.yield_fixture(scope='function')
@@ -75,8 +79,8 @@ def test_create(fake_shell):
     v = VomsProxyInfo(req)
     v.create()
 
-    assert v.shell.system.call_count == 1
-    cmd = v.shell.system.call_args[0][0]
+    assert v.shell.check_call.call_count == 1
+    cmd = v.shell.check_call.call_args[0][0]
     assert 'voms-proxy-init' in cmd
     assert '-voms some_vo' in cmd
     assert '-out ' + v.location in cmd
