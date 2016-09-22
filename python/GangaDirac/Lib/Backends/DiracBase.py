@@ -7,18 +7,22 @@ import re
 import fnmatch
 import time
 import datetime
+import shutil
+import tempfile
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.Core.exceptions import GangaFileError, BackendError
+from Ganga.GPIDev.Lib.Job.Job import Job
+from Ganga.Core.exceptions import GangaFileError, BackendError, IncompleteJobSubmissionError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute, _proxyValid
 from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
+from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.GPIDev.Credentials import getCredential
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.Core.GangaThread.WorkerThreads import getQueues
+from Ganga.Core import monitoring_component
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
@@ -117,7 +121,6 @@ class DiracBase(IBackend):
         if len(parametric_datasets) != len(dirac_ids):
             raise BackendError('Dirac', 'Missmatch between number of datasets defines in dirac API script and those returned by DIRAC')
 
-        from Ganga.GPIDev.Lib.Job.Job import Job
         master_job = self.getJobObject()
         master_job.subjobs = []
         for i in range(len(dirac_ids)):
@@ -207,8 +210,6 @@ class DiracBase(IBackend):
 
         # This is a workaroud for the fact DIRAC doesn't like whitespace in sandbox filenames
         ### START_WORKAROUND
-        import shutil
-        import tempfile
         tmp_dir = tempfile.mkdtemp()
 
         # Loop through all files and if the filename contains a ' ' copy it to a location which doesn't contain one.
@@ -242,8 +243,6 @@ class DiracBase(IBackend):
         such that the monitoring server is used rather than the user server
         Args:
             rjobs (list): This is a list of jobs which are to be auto-resubmitted'''
-        from Ganga.Core import IncompleteJobSubmissionError
-        from Ganga.Utility.logging import log_user_exception
         incomplete = 0
 
         def handleError(x):
@@ -791,8 +790,6 @@ class DiracBase(IBackend):
             finalised_statuses (dict): Dict of the Dirac statuses vs the Ganga statuses after running
         """
 
-        from Ganga.Core import monitoring_component
-
         # requeue existing completed job
         for j in requeue_jobs:
             if j.been_queued:
@@ -857,8 +854,6 @@ class DiracBase(IBackend):
             logger.warning('Dirac monitoring failed for %s, result = %s' % (str(dirac_job_ids), str(result)))
             logger.warning("Results: %s" % str(results))
             return
-
-        from Ganga.Core import monitoring_component
 
         requeue_job_list = []
         jobStateDict = {}

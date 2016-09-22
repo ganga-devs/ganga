@@ -11,10 +11,13 @@ from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
+from Ganga.GPIDev.Lib.File import FileUtils
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Utility.files import expandfilename
 from Ganga.Core.exceptions import GangaFileError
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute, GangaDiracError
+import Ganga.Utility.Config
+from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 config = getConfig('Configuration')
@@ -719,7 +722,6 @@ class DiracFile(IGangaFile):
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'downloadScript.py.template')
 
-        from Ganga.GPIDev.Lib.File import FileUtils
         download_script = FileUtils.loadScript(script_location, '')
 
         script = """\n
@@ -748,7 +750,6 @@ subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=Tru
 for f in glob.glob('###NAME_PATTERN###'):
     processes.append(uploadFile(os.path.basename(f), '###LFN_BASE###', ###COMPRESSED###, '###NAME_PATTERN###'))
 """
-        from Ganga.GPIDev.Lib.File import FileUtils
         wildcard_str = FileUtils.indentScript(wildcard_str, '###INDENT###')
 
         replace_dict = { '###NAME_PATTERN###' : namePattern,
@@ -768,7 +769,6 @@ for f in glob.glob('###NAME_PATTERN###'):
         script_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
         script_location = os.path.join( script_path, 'uploadScript.py.template')
 
-        from Ganga.GPIDev.Lib.File import FileUtils
         upload_script = FileUtils.loadScript(script_location, '')
 
         WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py.template' )
@@ -847,9 +847,7 @@ for f in glob.glob('###NAME_PATTERN###'):
 
 # add DiracFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate DiracFile() objects via config file)
-import Ganga.Utility.Config
 Ganga.Utility.Config.config_scope['DiracFile'] = DiracFile
 
-from Ganga.Runtime.GPIexport import exportToGPI
 exportToGPI('GangaDirac', GangaList, 'Classes')
 

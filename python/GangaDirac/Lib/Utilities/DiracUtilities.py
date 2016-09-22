@@ -10,6 +10,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Credentials import getCredential
+from Ganga.GPIDev.Base.Proxy import isType
 import Ganga.Utility.execute as gexecute
 
 logger = getLogger()
@@ -132,7 +133,6 @@ def getValidDiracFiles(job, names=None):
         names (list): list of strings of names to be matched to namePatterns in outputfiles
     """
     from GangaDirac.Lib.Files.DiracFile import DiracFile
-    from Ganga.GPIDev.Base.Proxy import isType
     if job.subjobs:
         for sj in job.subjobs:
             for df in (f for f in sj.outputfiles if isType(f, DiracFile)):

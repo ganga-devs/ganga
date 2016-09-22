@@ -1,4 +1,5 @@
 import time
+import itertools
 from Ganga.Core.exceptions import GangaException, BackendError
 #from GangaDirac.BOOT       import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
@@ -82,7 +83,6 @@ def outputfiles_iterator(job, file_type, selection_pred=None,
             return issubclass(f.__class__, file_type) and selection_pred(f)
         return issubclass(f.__class__, file_type)
 
-    import itertools
     for f in itertools.chain(job.outputfiles, job.non_copyable_outputfiles):
         if include_subfiles and hasattr(f, 'subfiles') and f.subfiles:
             for sf in itertools.ifilter(combined_pred, f.subfiles):
@@ -107,7 +107,6 @@ def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
 
 
 def ifilter_chain(selection_pred, *iterables):
-    import itertools
     for item in itertools.ifilter(selection_pred,
                                   itertools.chain(*iterables)):
         yield item
