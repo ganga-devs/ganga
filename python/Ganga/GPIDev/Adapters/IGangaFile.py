@@ -2,7 +2,7 @@ import os
 import glob
 import re
 import shutil
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaFileError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
@@ -49,7 +49,7 @@ class IGangaFile(GangaObject):
         if self.localDir:
             if not os.path.isdir(self.localDir):
                 msg = "Folder '%s' doesn't exist. Please construct this before 'get'-ing a file." % self.localDir
-                raise GangaException(msg)
+                raise GangaFileError(msg)
             to_location = self.localDir
         else:
             try:
@@ -58,7 +58,7 @@ class IGangaFile(GangaObject):
                 msg = "%s: Failed to get file object. Please set the `localDir` parameter and try again. e.g. file.localDir=os.getcwd();file.get()" % getName(self)
                 logger.debug("localDir value: %s" % self.localDir)
                 logger.debug("parent: %s" % self._getParent())
-                raise GangaException(msg)
+                raise GangaFileError(msg)
 
         # FIXME CANNOT perform a remote globbing here in a nice way so have to just perform a copy when dealing with wildcards
         if not os.path.isfile(os.path.join(to_location, self.namePattern)):
@@ -111,7 +111,7 @@ class IGangaFile(GangaObject):
             targetPath (str): Target path where the file is to copied to
         """
         if not isinstance(targetPath, str) and targetPath:
-            raise GangaException("Cannot perform a copyTo with no given targetPath!")
+            raise GangaFileError("Cannot perform a copyTo with no given targetPath!")
         if regex.search(self.namePattern) is None\
             and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
 

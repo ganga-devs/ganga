@@ -213,7 +213,7 @@ def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData, input
         return _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData)
     except Exception as err:
         logger.debug("Sorting Exception: %s" % str(err))
-        raise err
+        raise SplittingError(err)
 
 def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
 
