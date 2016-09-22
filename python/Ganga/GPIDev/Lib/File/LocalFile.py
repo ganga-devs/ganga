@@ -259,25 +259,23 @@ class LocalFile(IGangaFile):
     def getOutputFilename(self):
         """
         """
-        return (self.localDir, self.namePattern)
 
-    def uploadTo(self, sourcePath, targetPath):
-        """
-        """
-        outputbase = ''
+        filePath = self.localDir
         if self._getParent() is not None:
-            outputbase = self.getJobObject().outputdir
+            filePath = path.join(self.getJobObject().outputdir, filePath)
 
+        return filePath, self.namePattern
+
+    @staticmethod
+    def uploadTo(sourcePath, targetPath):
+        """
+        """
         try:
-            new_file = path.join(outputbase, targetPath)
-            if self._getParent() is not None:
-                if not path.isdir(path.dirname(new_file)):
-                    os.makedirs(path.dirname(new_file))
+            new_file = targetPath
+            if not path.isdir(path.dirname(new_file)):
+                os.makedirs(path.dirname(new_file))
             if sourcePath != new_file:
-                if self._getParent() is not None:
-                    if not path.isfile(new_file):
-                        shutil.copy(sourcePath, new_file)
-                else:
+                if not path.isfile(new_file):
                     shutil.copy(sourcePath, new_file)
         except Exception as err:
             logger.error("Error copying LocalFile: %s" % err)
