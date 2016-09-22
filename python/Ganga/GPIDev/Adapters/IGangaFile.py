@@ -156,19 +156,15 @@ class IGangaFile(GangaObject):
                 output = output and sub_file.put()
             return output
 
-        if self._getParent() is not None:
-            targetDir, targetFile = self.getOutputFilename()
-        else:
-            targetDir = ''
-            targetFile = self.namePattern
-
-        if targetDir:
-            self.makeStorageDir(targetDir)
+        targetDir, targetFile = self.getOutputFilename()
 
         returnable = self.uploadTo(os.path.join(sourceDir, self.namePattern), os.path.join(targetDir, targetFile))
 
         if returnable is True:
             self.namePattern = targetFile
+
+        if hasattr(self, 'locations') and os.path.join(targetDir, targetFile) not in self.locations:
+            self.locations.append(os.path.join(targetDir, targetFile))
 
         return True
 
@@ -180,7 +176,7 @@ class IGangaFile(GangaObject):
         """
 
         if not self._getParent() or hasattr(self, 'outputfilenameformat') and self.outputfilenameformat:
-            raise GangaException("This file has no Parent or hasn't implemented outputfilenameformat this is an error!")
+            return '', self.namePattern
 
         jobfqid = self.getJobObject().fqid
 
@@ -212,51 +208,13 @@ class IGangaFile(GangaObject):
        
         return (folderStructure, filenameStructure)
 
-    def makeStorageDir(self, folderStructure):
-        """
-        This method will create the given folder structure underneath the base directory of the file object
-        Args:
-            folderStructure (str): This is the folder structure which needs to be created under the basedir of the file on remote storage
-        """
-        raise NotImplementedError
-
-    def uploadTo(self, sourcePath, targetPath):
+    @staticmethod
+    def uploadTo(sourcePath, targetPath):
         """
         This method only cares about uploading the file to the correct location given as 'targetPath'
         Args:
             sourcePath (str): This is the _absolute_ target where the file managed by this class is stored locally
-            targetPath (str): This is the _relative_ target where the file managed by this class is uploaded to
-        """
-        raise NotImplementedError
-
-    def copyTo(self, targetPath):
-        """
-        Copy a the file to the local storage using the appropriate file-transfer mechanism
-        This will raise an exception if targetPath isn't set to something sensible.
-        Args:
-            targetPath (str): Target path where the file is to copied to
-        """
-        if not isinstance(targetPath, str) and targetPath:
-            raise GangaException("Cannot perform a copyTo with no given targetPath!")
-        if regex.search(self.namePattern) is None\
-            and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
-
-            if not os.path.isfile(os.path.join(targetPath, self.namePattern)):
-                shutil.copy(os.path.join(self.localDir, self.namePattern), os.path.join(targetPath, self.namePattern))
-            else:
-                logger.debug("Already found file: %s" % os.path.join(targetPath, self.namePattern))
-                
-            return True
-
-        # Again, cannot perform a remote glob here so have to ignore wildcards
-        else:
-            return self.internalCopyTo(targetPath)
-
-    def internalCopyTo(self, targetPath):
-        """
-        Internal method for implementing the actual copy mechanism for each IGangaFile
-        Args:
-             targetPath (str): Target path where the file is to copied to
+            targetPath (str): This is the _absolute_ target where the file managed by this class is uploaded to
         """
         raise NotImplementedError
 
@@ -322,7 +280,8 @@ class IGangaFile(GangaObject):
             return issubclass(self.__class__, to_match)
         return to_match == self
 
-    def execSyscmdSubprocess(self, cmd):
+    @staticmethod
+    def execSyscmdSubprocess(cmd):
 
         import subprocess
 
