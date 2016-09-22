@@ -294,6 +294,15 @@ class Shell(object):
 
         return fullpath
 
+    def check_call(self, *args, **kwargs):
+        """
+        A wrapper around the standard library subprocess.check_call
+        to provide a forward-compatible API.
+        """
+        kwargs['env'] = self.env
+        kwargs['shell'] = True
+        return subprocess.check_call(*args, **kwargs)
+
 #
 #
 # $Log: not supported by cvs2svn $

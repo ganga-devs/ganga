@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 
 import os
+import subprocess
 from datetime import datetime, timedelta
 
 import Ganga.Utility.logging
 from Ganga.GPIDev.Schema import SimpleItem
-from Ganga.Utility.Shell import Shell
 
 from Ganga.GPIDev.Credentials2.ICredentialInfo import cache
 from Ganga.GPIDev.Credentials2.ICredentialRequirement import ICredentialRequirement
@@ -38,14 +38,15 @@ class DiracProxyInfo(VomsProxyInfo):
         logger.debug('require ' + self.initial_requirements.group)
         if self.initial_requirements.group:
             group_command = '--group %s --VOMS' % self.initial_requirements.group
-        command = 'dirac-proxy-init --pwstdin --out %s %s' % (self.location, group_command)
+        command = 'dirac-proxy-init --out %s %s' % (self.location, group_command)
         logger.debug(command)
         self.shell.env['X509_USER_PROXY'] = self.location
-        rc = self.shell.system(command)
-        if rc == 0:
-            logger.debug('Grid proxy {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
-        else:
+        try:
+            self.shell.check_call(command)
+        except subprocess.CalledProcessError:
             raise CredentialRenewalError('Failed to create DIRAC proxy')
+        else:
+            logger.debug('Grid proxy {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
 
     @property
     def shell(self):

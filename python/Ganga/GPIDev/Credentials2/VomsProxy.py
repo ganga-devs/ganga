@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import os
 import re
+import subprocess
 from datetime import datetime, timedelta
 
 import Ganga.Utility.logging
@@ -44,13 +45,14 @@ class VomsProxyInfo(ICredentialInfo):
                 if self.initial_requirements.role:
                     voms_command += '/%s' % self.initial_requirements.role
         logger.debug(voms_command)
-        command = 'voms-proxy-init -pwstdin -out %s %s' % (self.location, voms_command)
+        command = 'voms-proxy-init -out %s %s' % (self.location, voms_command)
         logger.debug(command)
-        return_code = self.shell.system(command)
-        if return_code == 0:
-            logger.debug('Grid proxy %s created. Valid for %s', self.location, self.time_left())
-        else:
+        try:
+            self.shell.check_call(command)
+        except subprocess.CalledProcessError:
             raise CredentialRenewalError('Failed to create VOMS proxy')
+        else:
+            logger.debug('Grid proxy %s created. Valid for %s', self.location, self.time_left())
 
     @property
     def shell(self):
