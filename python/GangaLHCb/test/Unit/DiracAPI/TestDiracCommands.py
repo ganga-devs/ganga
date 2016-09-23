@@ -7,7 +7,6 @@ import os
 import tempfile
 import time
 from textwrap import dedent
-import uuid
 
 import pytest
 
@@ -311,4 +310,40 @@ class TestDiracCommands(object):
         confirm = execute('getJobGroupJobs("")', return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
+
+
+    def test_bkQueryDict(self, dirac_job):
+        confirm = execute('bkQueryDict({"FileType":"Path","ConfigName":"LHCb","ConfigVersion":"Collision09","EventType":"10","ProcessingPass":"Real Data","DataTakingConditions":"Beam450GeV-VeloOpen-MagDown"})', return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'bkQuery command not executed successfully'
+
+    def test_checkSites(self, dirac_job):
+        confirm = execute('checkSites()', return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'checkSites command not executed successfully'
+
+    def test_bkMetaData(self, dirac_job):
+        confirm = execute('bkMetaData("")', return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'Command not executed successfully'
+
+    def test_getDataset(self, dirac_job):
+        confirm = execute('getDataset("LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data + RecoToDST-07/10/DST","","Path","","","")', return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'Command not executed successfully'
+
+    def test_checkTier1s(self, dirac_job):
+        confirm = execute('checkTier1s()', return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'Command not executed successfully'
+
+    def test_getInputDataCatalog(self, dirac_job):
+        confirm = execute('getInputDataCatalog("%s","","")' % dirac_job.get_file_lfn, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['Message'] == 'Failed to access all of requested input data' or confirm['Message'] == 'Could not access any requested input data', 'Command not executed successfully'
+
+    def test_getLHCbInputDataCatalog(self, dirac_job):
+        confirm = execute('getLHCbInputDataCatalog("%s",0,"","")' % dirac_job.get_file_lfn, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['Message'] == 'Failed to access all of requested input data' or confirm['Message'] == 'Could not access any requested input data', 'Command not executed successfully'
 
