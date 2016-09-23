@@ -132,14 +132,14 @@ class MonitoringWorkerThread(GangaThread):
             try:
                 try:
                     self._running_cmd = action.function.__name__
-                    self._running_args = ""
+                    self._running_args = []
                     for arg in action.args:
                         self._running_args.append("%s, " % arg)
                     for k, v in action.kwargs:
                         self._running_args.append("%s=%s, " % (str(k), str(v)))
                 except:
                     self._running_cmd = "unknown"
-                    self._running_args = ""
+                    self._running_args = []
                 result = action.function(*action.args, **action.kwargs)
             except Exception as err:
                 log.debug("_execUpdateAction: %s" % str(err))
