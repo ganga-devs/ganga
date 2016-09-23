@@ -110,11 +110,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     if job.inputdata.tagdataset:
                         tag_contents = job.inputdata.get_tag_contents()
                         input_tag_files = [ lfn  for guid, lfn in tag_contents ]
-                        input_tag_guids = [ guid for guid, lfn in tag_contents ] 
-                    if job.inputdata.use_aodesd_backnav:
-                        esd_contents = job.inputdata.get_contents(backnav=True)
-                        input_esd_files = [ lfn  for guid, lfn in esd_contents ]
-                        input_esd_guids = [ guid for guid, lfn in esd_contents ]                        
+                        input_tag_guids = [ guid for guid, lfn in tag_contents ]
 
                     job.inputdata.names = input_files          
                     job.inputdata.guids = input_guids          

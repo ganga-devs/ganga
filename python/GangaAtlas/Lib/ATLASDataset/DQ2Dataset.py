@@ -94,7 +94,7 @@ class DQ2Dataset(Dataset):
 
         return all_ds_exists
 
-    def get_contents(self,backnav=False, overlap=True, filesize=False, size=False, event=False):
+    def get_contents(self, overlap=True, filesize=False, size=False, event=False):
         '''Helper function to access dataset content'''
 
         allcontents = []
@@ -109,9 +109,6 @@ class DQ2Dataset(Dataset):
 
         evtsperfile = 0
         for dataset in datasets:
-            if backnav:
-                dataset = re.sub('AOD','ESD',dataset)
-
             try:
                 #dq2_lock.acquire()
                 try:
@@ -152,9 +149,6 @@ class DQ2Dataset(Dataset):
                 contents.sort(cmp=cmpfun)
             except:
                 pass
-
-            if backnav:
-                return contents
 
             # Process only certain filenames ?
             if self.names:
