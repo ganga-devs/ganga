@@ -1162,6 +1162,8 @@ class JobRegistry_Monitor(GangaThread):
             except Exception as msg:
                 return False
             else:
+                if s is None:
+                    return True
                 return s
         return credChecker
 
