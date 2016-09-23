@@ -8,9 +8,9 @@ from copy import deepcopy
 
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.execute import execute
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Credentials import getCredential
+from Ganga.GPIDev.Base.Proxy import isType
 import Ganga.Utility.execute as gexecute
 
 logger = getLogger()
@@ -24,6 +24,9 @@ Dirac_Env_Lock = threading.Lock()
 Dirac_Proxy_Lock = threading.Lock()
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+
+class GangaDiracError(GangaException):
+    """ Exception type which is thrown from problems executing a command against DIRAC """
 
 
 def getDiracEnv():
@@ -59,7 +62,7 @@ def get_env(env_source):
     """
     logger.debug('Running DIRAC source command %s', env_source)
     env = dict(os.environ)
-    execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
+    gexecute.execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
     if not any(key.startswith('DIRAC') for key in env):
         raise RuntimeError("'DIRAC*' not found in environment")
     return env
@@ -112,7 +115,7 @@ def getDiracCommandIncludes(force=False):
     if DIRAC_INCLUDE == '' or force:
         for fname in getConfig('DIRAC')['DiracCommandFiles']:
             if not os.path.exists(fname):
-                raise GangaException("Specified Dirac command file '%s' does not exist." % fname)
+                raise RuntimeError("Specified Dirac command file '%s' does not exist." % fname)
             with open(fname, 'r') as inc_file:
                 DIRAC_INCLUDE += inc_file.read() + '\n'
 
@@ -130,7 +133,6 @@ def getValidDiracFiles(job, names=None):
         names (list): list of strings of names to be matched to namePatterns in outputfiles
     """
     from GangaDirac.Lib.Files.DiracFile import DiracFile
-    from Ganga.GPIDev.Base.Proxy import isType
     if job.subjobs:
         for sj in job.subjobs:
             for df in (f for f in sj.outputfiles if isType(f, DiracFile)):
@@ -173,7 +175,7 @@ def _dirac_check_proxy( renew = True, shouldRaise = True):
             if not proxy.isValid():
                 last_modified_valid = False
                 if shouldRaise:
-                    raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
+                    raise GangaDiracError('Can not execute DIRAC API code w/o a valid grid proxy.')
             else:
                 last_modified_valid = True
         else:
@@ -213,7 +215,6 @@ def _checkProxy( delay=60, renew = True, shouldRaise = True, force = False ):
             _dirac_check_proxy( renew, shouldRaise )
             last_modified_time = time.time()
 
-
 def execute(command,
             timeout=getConfig('DIRAC')['Timeout'],
             env=None,
@@ -222,6 +223,7 @@ def execute(command,
             python_setup='',
             eval_includes=None,
             update_env=False,
+            return_raw_dict=False,
             ):
     """
     Execute a command on the local DIRAC server.
@@ -237,6 +239,7 @@ def execute(command,
         python_setup (str): Optional extra code to pass to python when executing
         eval_includes (???): TODO document me
         update_env (bool): Should this modify the given env object with the env after the command has executed
+        return_raw_dict(bool): Should we return the raw dict from the DIRAC interface or parse it here
     """
 
     if env is None:
@@ -272,11 +275,23 @@ def execute(command,
                                   eval_includes=eval_includes,
                                   update_env=update_env)
 
+    # If the time 
+    if returnable == 'Command timed out!':
+        raise GangaDiracError("DIRAC command timed out")
+
     # TODO we would like some way of working out if the code has been executed correctly
     # Most commands will be OK now that we've added the check for the valid proxy before executing commands here
 
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
 
-    return returnable
+    if isinstance(returnable, dict) and not return_raw_dict:
+        # If the output is a dictionary allow for automatic error detection
+        if returnable['OK']:
+            return returnable['Value']
+        else:
+            raise GangaDiracError(returnable['Message'])
+    else:
+        # If the output is NOT a dictionary return it
+        return returnable
 
