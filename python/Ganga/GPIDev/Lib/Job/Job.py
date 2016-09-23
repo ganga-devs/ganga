@@ -435,9 +435,6 @@ class Job(GangaObject):
             # FIXME THIS SHOULD NOT HAVE TO BE HERE! (It does else we end up with really bad errors and this is just wrong!)
             files3._setParent(self)
 
-            for file_ in files3:
-                logger.info("Returned file: %s::%s" % (file_.namePattern, file_.outputfilenameformat))
-
             return addProxy(files3)
 
         # If we ask for 'inputfiles', return the expanded list of subfiles
@@ -2102,9 +2099,6 @@ class Job(GangaObject):
                     output_ = ''
                 key = '%s:%s:%s' % (getName(val), os.path.join(dir_, name_), output_)
                 uniqueValuesDict[key] = val
-
-            for file_ in uniqueValuesDict.values():
-                logger.info("setting file: %s::%s" % (file_.namePattern, file_.outputfilenameformat))
 
             super(Job, self).__setattr__(attr, uniqueValuesDict.values())
 
