@@ -1158,7 +1158,7 @@ class JobRegistry_Monitor(GangaThread):
         def credChecker():
             log.debug("Checking %s." % getName(credObj))
             try:
-                s = credObj.renew()
+                credObj.renew()
             except CredentialRenewalError:
                 return False
             except Exception as err:
