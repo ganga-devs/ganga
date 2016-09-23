@@ -25,6 +25,7 @@ from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
 from Ganga.GPIDev.Schema import ComponentItem, FileItem, GangaFileItem, Schema, SimpleItem, Version
 from Ganga.Runtime.spyware import ganga_job_submitted
 from Ganga.Utility.Config import ConfigError, getConfig
+from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 from Ganga.Utility.logging import getLogger, log_user_exception
 
 from .JobTime import JobTime
@@ -2088,7 +2089,7 @@ class Job(GangaObject):
 
             # reduce duplicate values here, leave only duplicates for LCG,
             # where we can have replicas
-            uniqueValuesDict = {}
+            uniqueValuesDict = oDict()
 
             for val in value:
                 dir_ = val.localDir or ''
