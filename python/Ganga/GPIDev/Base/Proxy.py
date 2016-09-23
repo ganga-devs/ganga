@@ -262,7 +262,7 @@ def stripProxy(obj):
 def addProxy(obj):
     """Adds a proxy to a GangaObject instance or class
     Args:
-        obj (GangaObject, class): This may be a Ganga object or class which you're wanting to add a proxy to
+        obj (GangaObject): This may be a Ganga object which you're wanting to add a proxy to
     """
     if isType(obj, GangaObject):
         if not isProxy(obj):
