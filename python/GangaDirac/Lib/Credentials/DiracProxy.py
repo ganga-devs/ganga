@@ -106,3 +106,4 @@ class DiracProxy(ICredentialRequirement):
 
     def encoded(self):
         return ':'.join(requirement for requirement in [self.group] if requirement)  # filter out the empties
+
