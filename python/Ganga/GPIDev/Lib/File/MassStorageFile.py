@@ -65,6 +65,8 @@ class MassStorageFile(IGangaFile):
 
         self.shell = Shell.Shell()
 
+        logger.info("kwds: %s" % str(kwds))
+
     def __setattr__(self, attr, value):
         """
         This is an overloaded setter method to make sure that we're auto-expanding the filenames of files which exist.
@@ -113,6 +115,35 @@ class MassStorageFile(IGangaFile):
 
         return "%s(namePattern='%s')" % (_getName(self), self.namePattern)
 
+    def mass_line_processor(self, line):
+        lineParts = line.split(' ')
+        pattern = lineParts[1]
+        outputPath = lineParts[2]
+        name = os.path.basename(outputPath).strip('.gz')
+
+        if regex.search(self.namePattern) is not None:
+            if outputPath == 'ERROR':
+                logger.error("Failed to upload file to mass storage")
+                logger.error(line[line.find('ERROR') + 5:])
+                d = copy.deepcopy(self)
+                d.namePattern = pattern
+                d.compressed = self.compressed
+                d.failureReason = line[line.find('ERROR') + 5:]
+                self.subfiles.append(d)
+            else:
+                if pattern == self.namePattern:
+                    d = copy.deepcopy(self)
+                    d.namePattern = name
+                    self.subfiles.append(d)
+                    d.mass_line_processor(line)
+        elif name == self.namePattern:
+            if outputPath == 'ERROR':
+                logger.error("Failed to upload file to mass storage")
+                logger.error(line[line.find('ERROR') + 5:])
+                self.failureReason = line[line.find('ERROR') + 5:]
+                return
+            self.locations = [outputPath.strip('\n')]
+
     def setLocation(self):
         """
         Sets the location of output files that were uploaded to mass storage from the WN
@@ -123,41 +154,13 @@ class MassStorageFile(IGangaFile):
         if not os.path.exists(postprocessLocationsPath):
             return
 
-        def mass_line_processor(line, mass_file):
-            lineParts = line.split(' ')
-            pattern = lineParts[1]
-            outputPath = lineParts[2]
-            name = os.path.basename(outputPath).strip('.gz')
-            if regex.search(mass_file.namePattern) is not None:
-                if outputPath == 'ERROR':
-                    logger.error("Failed to upload file to mass storage")
-                    logger.error(line[line.find('ERROR') + 5:])
-                    d = self.__class__(namePattern=pattern)
-                    d.compressed = mass_file.compressed
-                    d.failureReason = line[line.find('ERROR') + 5:]
-                    mass_file.subfiles.append(d)
-                else:
-                    if pattern == self.namePattern:
-                        d = self.__class__(namePattern=name)
-                        d.compressed = mass_file.compressed
-                        d.outputfilenameformat = mass_file.outputfilenameformat
-                        mass_file.subfiles.append(d)
-                        mass_line_processor(line, d)
-            elif name == mass_file.namePattern:
-                if outputPath == 'ERROR':
-                    logger.error("Failed to upload file to mass storage")
-                    logger.error(line[line.find('ERROR') + 5:])
-                    mass_file.failureReason = line[line.find('ERROR') + 5:]
-                    return
-                mass_file.locations = [outputPath.strip('\n')]
-
         for line in open(postprocessLocationsPath, 'r'):
 
             if line.strip() == '':
                 continue
 
             if line.startswith('massstorage'):
-                mass_line_processor(line.strip(), self)
+                self.mass_line_processor(line.strip())
 
     def location(self):
         """
@@ -342,7 +345,9 @@ class MassStorageFile(IGangaFile):
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
                                                 (cp_cmd, quote(currentFile), quote(os.path.join(massStoragePath, finalFilename))))
 
-                d = self.__class__(namePattern=os.path.basename(currentFile))
+                d = copy.deepcopy(self)
+                d.namePattern = os.path.basename(currentFile)
+                d.localDir = os.path.dirname(currentFile)
                 d.compressed = self.compressed
 
                 if exitcode != 0:
@@ -485,7 +490,8 @@ class MassStorageFile(IGangaFile):
 
             for filename in output.split('\n'):
                 if fnmatch(filename, self.namePattern):
-                    subfile = self.__class__(namePattern=filename)
+                    subfile = copy.deepcopy(self)
+                    subfile.namepattern = filename
                     subfile.inputremotedirectory = self.inputremotedirectory
 
                     self.subfiles.append(subfile)
