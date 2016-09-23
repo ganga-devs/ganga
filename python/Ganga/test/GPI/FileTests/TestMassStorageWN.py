@@ -190,7 +190,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
-        for i in range(0, TestMassStorageWN.sj_len):
+        for i in range(TestMassStorageWN.sj_len):
             # Check that the subfiles were expended correctly
             assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[0]).subfiles) == 2
             assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[1]).subfiles) == 1
@@ -240,14 +240,15 @@ class TestMassStorageWN(GangaUnitTest):
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
-        for i in range(0, TestMassStorageWN.sj_len):
+        for i in range(TestMassStorageWN.sj_len):
             # Check that we correctly have expanded the wildcard still
             assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[0]).subfiles) == 2
             assert len(j.subjobs[i].outputfiles) == 2
             file_prep = os.path.join(self.outputFilePath, str(j.id) + '_' + str(i) + '_')
             # Check that the files were placed in the correct place on storage
             print("Found: %s" % str(os.listdir(self.outputFilePath)))
-            assert j.outputfiles[i].outputfilenameformat == self.customOutputFormat
+            for f in j.subjobs[i].outputfiles:
+                assert f.outputfilenameformat == self.customOutputFormat
             for file_ in j.inputfiles:
                 assert os.path.isfile(file_prep + file_.namePattern)
 

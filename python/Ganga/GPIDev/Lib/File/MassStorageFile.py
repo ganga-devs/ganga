@@ -65,8 +65,6 @@ class MassStorageFile(IGangaFile):
 
         self.shell = Shell.Shell()
 
-        logger.info("kwds: %s" % str(kwds))
-
     def __setattr__(self, attr, value):
         """
         This is an overloaded setter method to make sure that we're auto-expanding the filenames of files which exist.
