@@ -485,6 +485,9 @@ class AthenaJediRTHandler(IRuntimeHandler):
              },
             ]
 
+        # Add the --trf option to jobParameters if required
+        if app.atlas_exetype == "TRF":
+            taskParamMap['jobParameters'] += [{'type': 'constant', 'value': '--trf'}]
 
         # output
         # output files

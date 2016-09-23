@@ -12,27 +12,28 @@ def wipe_temp_dir():
 
 class TestSavannah9638(GangaUnitTest):
     def setUp(self):
-        super(TestSavannah9638, self).setUp()
-
         wipe_temp_dir()
-
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('Configuration', 'gangadir', '/tmp/ganga_topdir-$USER')
+        extra_opts = [('Configuration', 'gangadir', '/tmp/ganga_topdir-$USER')]
+        super(TestSavannah9638, self).setUp(extra_opts=extra_opts)
 
     def test_Savannah9638(self):
         from Ganga.GPI import config, Job
 
+        import os
         import os.path
 
         topdir = os.path.abspath(config['Configuration']['gangadir'])
+
+        assert  os.path.abspath(config['Configuration']['gangadir']) == '/tmp/ganga_topdir-' + os.environ['USER']
+
         j = Job()
         self.assertTrue(topdir in j.inputdir)
         self.assertTrue(topdir in j.outputdir)
 
     def tearDown(self):
-        wipe_temp_dir()
 
         from Ganga.Utility.Config import getConfig
         getConfig('Configuration').revertToDefault('gangadir')
-
         super(TestSavannah9638, self).tearDown()
+        wipe_temp_dir()
+
