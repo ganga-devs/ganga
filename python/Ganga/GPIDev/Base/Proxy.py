@@ -159,7 +159,10 @@ def runtimeEvalString(this_obj, attr_name, val):
 def raw_eval(val):
     """
      Attempts to evaluate the val object and return the object it evaluates to if it is a Python object
-     Makes use of basic caching as we don't expect that things at this level should change. """
+     Makes use of basic caching as we don't expect that things at this level should change.
+     Args:
+        val(str): This is the string which we're looking to evaluate from 'in front' of the proxy
+     """
 
     if val in _eval_cache:
         return deepcopy(_eval_cache[val])
@@ -187,6 +190,7 @@ def raw_eval(val):
     return deepcopy(new_val)
 
 def getKnownLists():
+    """ Returns the list of iterable objects, tuple, list and maybe GangaList which we can use here due to import """
     global _knownLists
     if _knownLists is None:
         try:
@@ -198,7 +202,10 @@ def getKnownLists():
     return _knownLists
 
 def isProxy(obj):
-    """Checks if an object is a proxy"""
+    """Checks if an object is a proxy
+    Args:
+        obj (object): This may be an instance or a class
+    """
 #    return isinstance(obj.__class__, GPIProxyObject)
     # Alex changed for below as doesn't check class objects, only instances
     # e.g. isProxy(DiracFile) fails at the Ganga prompt
@@ -209,7 +216,11 @@ def isProxy(obj):
         return issubclass(obj_class, GPIProxyObject) or hasattr(obj_class, implRef)
 
 def isType(_obj, type_or_seq):
-    """Checks whether on object is of the specified type, stripping proxies as needed."""
+    """Checks whether on object is of the specified type, stripping proxies as needed.
+    Args:
+        obj (object): This may be an instance or a class
+        type_or_seq (type, list, tuple, GangaList): This may be an individual type or an iterable list of types
+    """
 
     obj = stripProxy(_obj)
 
@@ -233,24 +244,36 @@ def isType(_obj, type_or_seq):
         return isinstance(obj, bare_type_or_seq)
 
 def getName(_obj):
-    """Strip any proxy and then return an objects name"""
+    """Strip any proxy and then return an objects name
+    Args:
+        _obj (object): This may be an instance or a class"""
     obj = stripProxy(_obj)
     returnable = _getName(obj)
     return returnable
 
 def stripProxy(obj):
-    """Removes the proxy if there is one"""
+    """Removes the proxy if there is one
+    Args:
+        obj (object): This may be an instance or a class
+    """
     return getattr(obj, implRef, obj)
 
 
 def addProxy(obj):
-    """Adds a proxy to a GangaObject"""
+    """Adds a proxy to a GangaObject instance or class
+    Args:
+        obj (GangaObject, class): This may be a Ganga object or class which you're wanting to add a proxy to
+    """
     if isType(obj, GangaObject):
         if not isProxy(obj):
             if hasattr(obj, proxyObject):
                 return getattr(obj, proxyObject)
             else:
                 return GPIProxyObjectFactory(obj)
+    elif isclass(obj):
+        if not issubclass(obj, GPIProxyObject):
+            addProxyClass(obj)
+        return getProxyClass(obj)
     return obj
 
 
