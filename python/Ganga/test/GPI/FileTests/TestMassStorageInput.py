@@ -9,6 +9,7 @@ from Ganga.testlib.file_utils import generate_unique_temp_file
 from GangaTest.Framework.utils import sleep_until_completed
 from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
 from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import getProxyClass
 
 class TestMassStorageClientInput(GangaUnitTest):
     """Testing MassStorage on input to a job"""
@@ -18,7 +19,7 @@ class TestMassStorageClientInput(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
-    fileClass = MassStorageFile
+    fileClass = getProxyClass(MassStorageFile)
 
     # Where on local storage we want to have our 'MassStorage solution'
     outputFilePath = '/tmp/Test' + _getName(fileClass) + 'Input'
@@ -104,6 +105,5 @@ class TestMassStorageClientInput(GangaUnitTest):
 
 class TestMassStorageWNInput(TestMassStorageClientInput):
     """Testing SharedFile on input to a job"""
-    fileClass = SharedFile
-
+    fileClass = getProxyClass(SharedFile)
 

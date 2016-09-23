@@ -7,7 +7,7 @@ import tempfile
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
 from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, getProxyClass
 from GangaTest.Framework.utils import sleep_until_completed
 from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
 from Ganga.GPIDev.Base.Objects import _getName
@@ -21,7 +21,7 @@ class TestMassStorageGetPut(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
-    fileClass = MassStorageFile
+    fileClass = getProxyClass(MassStorageFile)
 
     # Where on local storage we want to have our 'MassStorage solution'
     outputFilePath = '/tmp/Test' + _getName(fileClass) + 'GetPut'
@@ -152,5 +152,5 @@ class TestMassStorageGetPut(GangaUnitTest):
 
 class TestSharedFileGetPut(TestMassStorageGetPut):
     """Testing the get/put/copyTo methods of SharedFile"""
-    fileClass = SharedFile
+    fileClass = getProxyClass(SharedFile)
 
