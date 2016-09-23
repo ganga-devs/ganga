@@ -8,7 +8,7 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
 from GangaTest.Framework.utils import sleep_until_completed
 from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
-from Ganga.GPIDev.Base.Objets import _getName
+from Ganga.GPIDev.Base.Objects import _getName
 
 class TestMassStorageClientInput(GangaUnitTest):
     """Testing MassStorage on input to a job"""
@@ -37,7 +37,7 @@ class TestMassStorageClientInput(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', _getClass(self.fileClass), self.MassStorageTestConfig),
+                    ('Output', _getName(self.fileClass), self.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageClientInput, self).setUp(extra_opts=extra_opts)
 

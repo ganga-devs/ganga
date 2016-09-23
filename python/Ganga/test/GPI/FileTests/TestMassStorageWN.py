@@ -8,8 +8,9 @@ from Ganga.testlib.file_utils import generate_unique_temp_file
 
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from GangaTest.Framework.utils import sleep_until_completed
-from Ganga.GPIDev.Lib.File import MassStorageFile, SharedFile
+from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
 from Ganga.GPIDev.Base.Objects import _getName
+from Ganga.GPIDev.Base.Proxy import addProxy
 
 class TestMassStorageWN(GangaUnitTest):
     """Testing MassStorage when completing a file"""
@@ -19,7 +20,7 @@ class TestMassStorageWN(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
-    fileClass = MassStorageFile
+    fileClass = addProxy(MassStorageFile)
 
     # Where on local storage we want to have our 'MassStorage solution'
     outputFilePath = '/tmp/Test' + _getName(fileClass) + 'WN'
@@ -30,6 +31,10 @@ class TestMassStorageWN(GangaUnitTest):
                              'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
                              'backendPostprocess': {'LSF': 'WN', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
                                                     'PBS': 'WN', 'Interactive': 'client', 'Local': 'WN', 'CREAM': 'client'}}
+
+    standardFormat = '{jid}/{fname}'
+    extendedFormat = '{jid}/{sjid}/{fname}'
+    customOutputFormat = '{jid}_{sjid}_{fname}'
 
     def setUp(self):
         """
@@ -69,7 +74,7 @@ class TestMassStorageWN(GangaUnitTest):
     def test_a_Submit(self):
         """Test the ability to submit a job with some LocalFiles"""
 
-        MassStorageFile = _getName(self.fileClass)
+        MassStorageFile = self.fileClass
         from Ganga.GPI import jobs, Job, LocalFile
 
         _ext = '.txt'
@@ -79,8 +84,11 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1)]
-        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat='{jid}/{fname}')]
+        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat=self.standardFormat)]
         j.submit()
+
+        for f in j.outputfiles:
+            assert f.outputfilenameformat == self.standardFormat
 
     def test_b_Completed(self):
         """Test the job completed and the output files exit `in storage`"""
@@ -122,8 +130,11 @@ class TestMassStorageWN(GangaUnitTest):
         j = Job()
         j.inputfiles = [LocalFile(file_1)]
         j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageWN.sj_len) ])
-        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat='{jid}/{sjid}/{fname}')]
+        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat=self.extendedFormat)]
         j.submit()
+
+        for f in j.outputfiles:
+            assert f.outputfilenameformat == self.extendedFormat
 
     def test_d_CompletedSJ(self):
         """Test that the subjobs ave completed"""
@@ -209,8 +220,15 @@ class TestMassStorageWN(GangaUnitTest):
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
         j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageWN.sj_len) ])
-        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat='{jid}_{sjid}_{fname}')]
+        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat=self.customOutputFormat)]
+        
+        for f in j.outputfiles:
+            assert f.outputfilenameformat == self.customOutputFormat
+
         j.submit()
+
+        for f in j.outputfiles:
+            assert f.outputfilenameformat == self.customOutputFormat
 
     def test_h_MultiUpload(self):
         """Test that multiple 'uploads' work"""
@@ -229,6 +247,8 @@ class TestMassStorageWN(GangaUnitTest):
             assert len(j.subjobs[i].outputfiles) == 2
             file_prep = os.path.join(self.outputFilePath, str(j.id) + '_' + str(i) + '_')
             # Check that the files were placed in the correct place on storage
+            print("Found: %s" % str(os.listdir(self.outputFilePath)))
+            assert j.outputfiles[i].outputfilenameformat == self.customOutputFormat
             for file_ in j.inputfiles:
                 assert os.path.isfile(file_prep + file_.namePattern)
 

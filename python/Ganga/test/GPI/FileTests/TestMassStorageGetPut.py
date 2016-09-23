@@ -10,7 +10,7 @@ from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from GangaTest.Framework.utils import sleep_until_completed
 from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
-from Ganga.GPIDev.Base.Objects
+from Ganga.GPIDev.Base.Objects import _getName
 
 class TestMassStorageGetPut(GangaUnitTest):
     """Testing the get/put/copyTo methods of MassStorage"""
@@ -76,7 +76,7 @@ class TestMassStorageGetPut(GangaUnitTest):
     def test_a_test_put(self):
         """Test that a job can be submitted with inputfiles in the input"""
 
-        MassStorageFile = _getName(self.fileClass)
+        MassStorageFile = self.fileClass
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
