@@ -94,7 +94,7 @@ class DQ2Dataset(Dataset):
 
         return all_ds_exists
 
-    def get_contents(self, overlap=True, size=False, event=False):
+    def get_contents(self, overlap=True, size=False):
         '''Helper function to access dataset content'''
 
         allcontents = []
@@ -102,12 +102,9 @@ class DQ2Dataset(Dataset):
         contents_size = {}
         contents_checksum = {}
         contents_scope = {}
-        contents = []
-        contents_new = []
 
         datasets = resolve_containers(self.dataset)
 
-        evtsperfile = 0
         for dataset in datasets:
             try:
                 #dq2_lock.acquire()
@@ -203,8 +200,7 @@ class DQ2Dataset(Dataset):
         diffcontentsNew = {}
         allcontentsSize = []
         diffcontentsSize = {}
-        amicontent = {}
-        if size or event:
+        if size:
             # Sum up all dataset filesizes:
             sumfilesize = 0 
             for guid, lfn in allcontents:
@@ -229,7 +225,6 @@ class DQ2Dataset(Dataset):
                             pass
                 diffcontentsNew[dataset] = (contents, sumfilesizeDataset)
                 diffcontentsSize[dataset] = contentsSize
-                amicontent[dataset] = tmpInfo
         
         if overlap:
             if size:
@@ -239,8 +234,6 @@ class DQ2Dataset(Dataset):
         else:
             if size:
                 return diffcontentsSize
-            elif event:
-                return amicontent 
             else:
                 return diffcontents
 

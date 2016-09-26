@@ -622,10 +622,9 @@ class DQ2JobSplitter(ISplitter):
 
         contents_temp = job.inputdata.get_contents(overlap=False, size=True)
 
-        if self.numevtsperjob > 0:
-            contents_temp = job.inputdata.get_contents(overlap=False, event=True)
-        else:
-            contents_temp = job.inputdata.get_contents(overlap=False, size=True)
+        #if self.numevtsperjob > 0:
+            # contents_temp = job.inputdata.get_contents(overlap=False, event=True)
+            #THIS DOES NOTHING AND SHOULD BE REMOVED
 
         logger.debug(contents_temp)
 
