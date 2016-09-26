@@ -81,6 +81,16 @@ logTimeStamp = 0.0
 logRepeatDuration = 120.0
 
 
+class VomsProxyInfo(GangaObject):
+
+    """ dummy class to allow for loading of 6.3.x jobs inside 6.2.x. PLEASE NEVER USE THIS! """
+    _category = 'CredentialRequirement'
+
+class DiracProxyInfo(GangaObject):
+    
+    """ dummy class to allow for loading of 6.3.x jobs inside 6.2.x. PLEASE NEVER USE THIS! """
+    _category = 'CredentialRequirement'
+
 def registerCommandSet(commandClass=None):
 
     try:
