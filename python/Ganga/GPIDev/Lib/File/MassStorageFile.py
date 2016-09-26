@@ -114,7 +114,11 @@ class MassStorageFile(IGangaFile):
         return "%s(namePattern='%s')" % (_getName(self), self.namePattern)
 
     def mass_line_processor(self, line):
-        lineParts = line.split(' ')
+        """ This function splits the input line from the post-processsing system to define where this file is:
+        Args:
+            line(str): This is expected to be in the format of the postprocessor file from jobs transfering files on the WN
+        """
+        lineParts = line.split()
         pattern = lineParts[1]
         outputPath = lineParts[2]
         name = os.path.basename(outputPath).strip('.gz')
