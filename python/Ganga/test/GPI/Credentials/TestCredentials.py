@@ -32,12 +32,9 @@ def test_voms_proxy_life_cycle(gpi):
         _ = credential_store[VomsProxy()]
 
     default_cred = credential_store.create(VomsProxy())
-    lhcb_cred = credential_store.create(VomsProxy(vo='lhcb'))
-    assert len(credential_store) == 2
     explicit_default_cred = credential_store.create(VomsProxy(vo=getConfig('LCG')['VirtualOrganisation']))
     assert explicit_default_cred == default_cred
-    assert default_cred != lhcb_cred
-    assert len(credential_store) == 2
+    assert len(credential_store) == 1
 
 
 @external
