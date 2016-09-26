@@ -2,30 +2,40 @@ from __future__ import absolute_import
 import os
 import shutil
 import tempfile
-
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
+
+from Ganga.GPIDev.Base.Proxy import stripProxy, getProxyClass
+from GangaTest.Framework.utils import sleep_until_completed
+from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
+from Ganga.GPIDev.Base.Objects import _getName
 
 class TestMassStorageWN(GangaUnitTest):
-    """test for sjid in filename names explain each test"""
+    """Testing MassStorage when completing a file"""
 
     _managed_files = []
 
     # Num of sj in tests
     sj_len = 3
 
+    fileClass = getProxyClass(MassStorageFile)
+
     # Where on local storage we want to have our 'MassStorage solution'
-    outputFilePath = '/tmp/MassStorageWN'
+    outputFilePath = '/tmp/Test' + _getName(fileClass) + 'WN'
 
     # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     MassStorageTestConfig = {'defaultProtocol': 'file://',
                              'fileExtensions': [''],
-                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir -p'},
+                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
                              'backendPostprocess': {'LSF': 'WN', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
                                                     'PBS': 'WN', 'Interactive': 'client', 'Local': 'WN', 'CREAM': 'client'}}
+
+    standardFormat = '{jid}/{fname}'
+    extendedFormat = '{jid}/{sjid}/{fname}'
+    customOutputFormat = '{jid}_{sjid}_{fname}'
 
     def setUp(self):
         """
@@ -34,7 +44,7 @@ class TestMassStorageWN(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', 'MassStorageFile', TestMassStorageWN.MassStorageTestConfig),
+                    ('Output', _getName(self.fileClass), TestMassStorageWN.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageWN, self).setUp(extra_opts=extra_opts)
 
@@ -49,22 +59,24 @@ class TestMassStorageWN(GangaUnitTest):
 
     @classmethod
     def setUpClass(cls):
-        """ """
+        """ This creates a safe place to put the files into 'mass-storage' """
         cls.outputFilePath = tempfile.mkdtemp()
         cls.MassStorageTestConfig['uploadOptions']['path'] = cls.outputFilePath
 
     @classmethod
     def tearDownClass(cls):
         """ Cleanup the current temp objects """
-        for file_ in TestMassStorageWN._managed_files:
+        for file_ in cls._managed_files:
             os.unlink(file_)
-        TestMassStorageWN._managed_files = []
+        cls._managed_files = []
 
-        shutil.rmtree(TestMassStorageWN.outputFilePath, ignore_errors=True)
+        shutil.rmtree(cls.outputFilePath, ignore_errors=True)
 
     def test_a_Submit(self):
         """Test the ability to submit a job with some LocalFiles"""
-        from Ganga.GPI import jobs, Job, LocalFile, MassStorageFile
+
+        MassStorageFile = self.fileClass
+        from Ganga.GPI import jobs, Job, LocalFile
 
         _ext = '.txt'
 
@@ -73,15 +85,15 @@ class TestMassStorageWN(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1)]
-        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat='{jid}/{fname}')]
+        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat=self.standardFormat)]
         j.submit()
+
+        for f in j.outputfiles:
+            assert f.outputfilenameformat == self.standardFormat
 
     def test_b_Completed(self):
         """Test the job completed and the output files exit `in storage`"""
         from Ganga.GPI import jobs
-        from Ganga.GPIDev.Base.Proxy import stripProxy
-
-        from GangaTest.Framework.utils import sleep_until_completed
 
         j = jobs[-1]
 
@@ -95,12 +107,15 @@ class TestMassStorageWN(GangaUnitTest):
         assert len(j.outputfiles) == 1
 
         # Test that these strings are sensible
-        assert j.outputfiles[0].namePattern != '' and j.outputfiles[0].namePattern[0] != '*'
-        assert j.outputfiles[0].locations != [''] and isinstance(j.outputfiles[0].locations[0], str) is True
-        assert j.outputfiles[0].accessURL() != [''] and isinstance(j.outputfiles[0].accessURL()[0], str) is True
+        assert j.outputfiles[0].namePattern != ''
+        assert j.outputfiles[0].namePattern[0] != '*'
+        assert j.outputfiles[0].locations != ['']
+        assert isinstance(j.outputfiles[0].locations[0], str) is True
+        assert j.outputfiles[0].accessURL() != ['']
+        assert isinstance(j.outputfiles[0].accessURL()[0], str) is True
 
         # Check that the output file exists on 'storage'
-        output_dir = os.path.join(TestMassStorageWN.outputFilePath, str(j.id))
+        output_dir = os.path.join(self.outputFilePath, str(j.id))
         assert os.path.isdir(output_dir)
         assert os.path.isfile(os.path.join(output_dir, j.inputfiles[0].namePattern))
 
@@ -108,7 +123,8 @@ class TestMassStorageWN(GangaUnitTest):
 
     def test_c_SplitJob(self):
         """Test submitting subjobs"""
-        from Ganga.GPI import Job, LocalFile, MassStorageFile, ArgSplitter
+        MassStorageFile = self.fileClass
+        from Ganga.GPI import Job, LocalFile, ArgSplitter
 
         _ext = '.txt2'
 
@@ -118,15 +134,15 @@ class TestMassStorageWN(GangaUnitTest):
         j = Job()
         j.inputfiles = [LocalFile(file_1)]
         j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageWN.sj_len) ])
-        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat='{jid}/{sjid}/{fname}')]
+        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat=self.extendedFormat)]
         j.submit()
+
+        for f in j.outputfiles:
+            assert f.outputfilenameformat == self.extendedFormat
 
     def test_d_CompletedSJ(self):
         """Test that the subjobs ave completed"""
         from Ganga.GPI import jobs
-        from Ganga.GPIDev.Base.Proxy import stripProxy
-
-        from GangaTest.Framework.utils import sleep_until_completed
 
         j = jobs[-1]
 
@@ -138,7 +154,7 @@ class TestMassStorageWN(GangaUnitTest):
         assert len(j.subjobs[0].outputfiles) == 1
 
         for i in range(0, TestMassStorageWN.sj_len):
-            output_dir = os.path.join(TestMassStorageWN.outputFilePath, str(j.id), str(i))
+            output_dir = os.path.join(self.outputFilePath, str(j.id), str(i))
             assert os.path.isdir(output_dir)
             # Check each inputfile has been placed in storage like we asked
             for _input_file in j.inputfiles:
@@ -149,7 +165,8 @@ class TestMassStorageWN(GangaUnitTest):
     def test_e_MultipleFiles(self):
         """Test that the wildcards work"""
 
-        from Ganga.GPI import LocalFile, MassStorageFile, Job, ArgSplitter
+        MassStorageFile = self.fileClass
+        from Ganga.GPI import LocalFile, Job, ArgSplitter
 
         _ext = '.root'
         _ext2 = '.txt'
@@ -171,9 +188,6 @@ class TestMassStorageWN(GangaUnitTest):
         """Test that multiple 'uploads' work"""
 
         from Ganga.GPI import jobs
-        from Ganga.GPIDev.Base.Proxy import stripProxy
-
-        from GangaTest.Framework.utils import sleep_until_completed
 
         j = jobs[-1]
 
@@ -181,13 +195,13 @@ class TestMassStorageWN(GangaUnitTest):
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
-        for i in range(0, TestMassStorageWN.sj_len):
+        for i in range(TestMassStorageWN.sj_len):
             # Check that the subfiles were expended correctly
             assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[0]).subfiles) == 2
             assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[1]).subfiles) == 1
             # Check we have the correct total number of files
             assert len(j.subjobs[i].outputfiles) == 3
-            output_dir = os.path.join(TestMassStorageWN.outputFilePath, str(j.id), str(i))
+            output_dir = os.path.join(self.outputFilePath, str(j.id), str(i))
             assert os.path.isdir(output_dir)
             # Checl all of the files were put into storage
             for file_ in j.inputfiles: 
@@ -198,7 +212,8 @@ class TestMassStorageWN(GangaUnitTest):
     def test_g_MultipleFiles(self):
         """Test that the wildcards work"""
 
-        from Ganga.GPI import LocalFile, MassStorageFile, Job, ArgSplitter
+        MassStorageFile = self.fileClass
+        from Ganga.GPI import LocalFile, Job, ArgSplitter
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
@@ -209,16 +224,20 @@ class TestMassStorageWN(GangaUnitTest):
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
         j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageWN.sj_len) ])
-        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat='{jid}_{sjid}_{fname}')]
+        j.outputfiles = [MassStorageFile(namePattern='*'+_ext, outputfilenameformat=self.customOutputFormat)]
+        
+        for f in j.outputfiles:
+            assert f.outputfilenameformat == self.customOutputFormat
+
         j.submit()
+
+        for f in j.outputfiles:
+            assert f.outputfilenameformat == self.customOutputFormat
 
     def test_h_MultiUpload(self):
         """Test that multiple 'uploads' work"""
 
         from Ganga.GPI import jobs
-        from Ganga.GPIDev.Base.Proxy import stripProxy
-
-        from GangaTest.Framework.utils import sleep_until_completed
 
         j = jobs[-1]
 
@@ -226,14 +245,22 @@ class TestMassStorageWN(GangaUnitTest):
 
         assert len(j.subjobs) == TestMassStorageWN.sj_len
 
-        for i in range(0, TestMassStorageWN.sj_len):
+        for i in range(TestMassStorageWN.sj_len):
             # Check that we correctly have expanded the wildcard still
             assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[0]).subfiles) == 2
             assert len(j.subjobs[i].outputfiles) == 2
-            file_prep = os.path.join(TestMassStorageWN.outputFilePath, str(j.id) + '_' + str(i) + '_')
+            file_prep = os.path.join(self.outputFilePath, str(j.id) + '_' + str(i) + '_')
             # Check that the files were placed in the correct place on storage
+            print("Found: %s" % str(os.listdir(self.outputFilePath)))
+            for f in j.subjobs[i].outputfiles:
+                assert f.outputfilenameformat == self.customOutputFormat
             for file_ in j.inputfiles:
                 assert os.path.isfile(file_prep + file_.namePattern)
 
         self.cleanUp()
+
+
+class TestSharedWN(TestMassStorageWN):
+    """Testing SharedFile when completing a file"""
+    fileClass = getProxyClass(SharedFile)
 

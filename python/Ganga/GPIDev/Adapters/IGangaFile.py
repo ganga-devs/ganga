@@ -2,12 +2,8 @@ import os
 import glob
 import re
 import shutil
-<<<<<<< HEAD
 import copy
-from Ganga.Core import GangaException
-=======
 from Ganga.Core.exceptions import GangaFileError
->>>>>>> 6b8d97f38a69f010dab7e62346bddb66143bb2db
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import getName
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
