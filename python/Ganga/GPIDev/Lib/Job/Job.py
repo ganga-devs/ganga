@@ -25,7 +25,6 @@ from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
 from Ganga.GPIDev.Schema import ComponentItem, FileItem, GangaFileItem, Schema, SimpleItem, Version
 from Ganga.Runtime.spyware import ganga_job_submitted
 from Ganga.Utility.Config import ConfigError, getConfig
-from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 from Ganga.Utility.logging import getLogger, log_user_exception
 
 from .JobTime import JobTime
@@ -2087,21 +2086,11 @@ class Job(GangaObject):
                     logger.error('job.outputsandbox is set, you can\'t set job.outputfiles')
                     return
 
-            # reduce duplicate values here, leave only duplicates for LCG,
-            # where we can have replicas
-            uniqueValuesDict = oDict()
+            # reduce duplicate values here
+            uniqueValues = GangaList()
+            uniqueValues.extend(set(value))
 
-            for val in value:
-                dir_ = val.localDir or ''
-                name_ = val.namePattern or ''
-                if hasattr(val, 'outputfilenameformat'):
-                    output_ = val.outputfilenameformat or ''
-                else:
-                    output_ = ''
-                key = '%s:%s:%s' % (getName(val), os.path.join(dir_, name_), output_)
-                uniqueValuesDict[key] = val
-
-            super(Job, self).__setattr__(attr, uniqueValuesDict.values())
+            super(Job, self).__setattr__(attr, uniqueValues)
 
         elif attr == 'inputfiles':
 
