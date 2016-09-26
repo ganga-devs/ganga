@@ -121,7 +121,14 @@ class MassStorageFile(IGangaFile):
         lineParts = line.split()
         pattern = lineParts[1]
         outputPath = lineParts[2]
-        name = os.path.basename(outputPath).strip('.gz')
+        split_name = os.path.splitext(outputPath)
+        if len(split_name) >= 2:
+            if split_name[1] == 'gz':
+                name = split_name[0]
+            else:
+                name = outputPath
+        else:
+            name = outputPath
 
         if regex.search(self.namePattern) is not None:
             if outputPath == 'ERROR':
@@ -144,7 +151,7 @@ class MassStorageFile(IGangaFile):
                 logger.error(line[line.find('ERROR') + 5:])
                 self.failureReason = line[line.find('ERROR') + 5:]
                 return
-            self.locations = [outputPath.strip('\n')]
+        self.locations = [outputPath.strip('\n')]
 
     def setLocation(self):
         """
@@ -169,11 +176,9 @@ class MassStorageFile(IGangaFile):
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
         tmpLocations = []
-        if self.locations == []:
-            if self.subfiles != []:
-                for i in self.subfiles:
-                    for j in i:
-                        tmpLocations.append(j)
+        if self.subfiles:
+            for i in self.subfiles:
+                tmpLocations.append(i.locations)
         else:
             tmpLocations = self.locations
         return tmpLocations

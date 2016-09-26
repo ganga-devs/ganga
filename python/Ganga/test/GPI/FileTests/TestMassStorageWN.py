@@ -105,9 +105,12 @@ class TestMassStorageWN(GangaUnitTest):
         assert len(j.outputfiles) == 1
 
         # Test that these strings are sensible
-        assert j.outputfiles[0].namePattern != '' and j.outputfiles[0].namePattern[0] != '*'
-        assert j.outputfiles[0].locations != [''] and isinstance(j.outputfiles[0].locations[0], str) is True
-        assert j.outputfiles[0].accessURL() != [''] and isinstance(j.outputfiles[0].accessURL()[0], str) is True
+        assert j.outputfiles[0].namePattern != ''
+        assert j.outputfiles[0].namePattern[0] != '*'
+        assert j.outputfiles[0].locations != ['']
+        assert isinstance(j.outputfiles[0].locations[0], str) is True
+        assert j.outputfiles[0].accessURL() != ['']
+        assert isinstance(j.outputfiles[0].accessURL()[0], str) is True
 
         # Check that the output file exists on 'storage'
         output_dir = os.path.join(self.outputFilePath, str(j.id))
