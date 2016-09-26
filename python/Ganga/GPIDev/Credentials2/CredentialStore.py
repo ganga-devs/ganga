@@ -95,17 +95,17 @@ class CredentialStore(GangaObject, collections.Mapping):
             # type: (List[str], List[int], str) -> List[str]
             """Add padding to each of ``row`` to equal the corresponding ``widths`` entry, padded with ``filler``"""
             return ['{field:{filler}<{width}}'.format(field=field[0], filler=filler, width=field[1]) for field in zip(row, widths)]
-        header_strings = pad_row_strings(headers, column_widths)
-        divider_strings = pad_row_strings([''] * len(column_widths), column_widths, filler='-')
-        row_strings = [pad_row_strings(cell, column_widths) for cell in data]
+        padded_headers = pad_row_strings(headers, column_widths)
+        padded_dividers = pad_row_strings([''] * len(column_widths), column_widths, filler='-')
+        padded_data = [pad_row_strings(row, column_widths) for row in data]
 
-        # Concatenate the field string together
+        # Concatenate the field strings together
         def strings_to_row(strings, spacer='|'):
             # type: (List[str], str) -> str
             return ' {0} '.format(spacer).join(strings)
-        header = strings_to_row(header_strings)
-        divider = strings_to_row(divider_strings, spacer='+')
-        body = '\n'.join(strings_to_row(row_string) for row_string in row_strings)
+        header = strings_to_row(padded_headers)
+        divider = strings_to_row(padded_dividers, spacer='+')
+        body = '\n'.join(strings_to_row(padded_field_strings) for padded_field_strings in padded_data)
 
         return '\n'.join([header, divider, body])
 
