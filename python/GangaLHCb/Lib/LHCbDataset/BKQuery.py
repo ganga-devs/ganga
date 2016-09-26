@@ -5,6 +5,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, addProxy
 from GangaDirac.Lib.Backends.DiracUtils import get_result
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -118,10 +119,13 @@ RecoToDST-07/90000000/DST" ,
         if isType(self.dqflag, knownLists):
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
 
-        result = get_result(cmd, 'BK query error.', 'BK query error.')
+        try:
+            value = get_result(cmd, 'BK query error.')
+        except GangaDiracError as err:
+            return {'OK': False, 'Value': str(err)}
+
         files = []
         metadata = {}
-        value = result['Value']
         if 'LFNs' in value:
             files = value['LFNs']
         if not type(files) is list:  # i.e. a dict of LFN:Metadata
@@ -155,12 +159,12 @@ RecoToDST-07/90000000/DST" ,
         if isType(self.dqflag, knownLists):
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate,
                                                                self.endDate, self.selection)
-        result = get_result(cmd, 'BK query error.', 'BK query error.')
+        result = get_result(cmd, 'BK query error.')
 
         logger.debug("Finished Running Command")
 
         files = []
-        value = result['Value']
+        value = result
         if 'LFNs' in value:
             files = value['LFNs']
         if not type(files) is list:  # i.e. a dict of LFN:Metadata
@@ -244,9 +248,12 @@ class BKQueryDict(GangaObject):
         if not self.dict:
             return None
         cmd = 'bkQueryDict(%s)' % self.dict
-        result = get_result(cmd, 'BK query error.', 'BK query error.')
+        try:
+            value = get_result(cmd, 'BK query error.')
+        except GangaDiracError as err:
+            return {'OK':False, 'Value': {}}
+
         files = []
-        value = result['Value']
         if 'LFNs' in value:
             files = value['LFNs']
         metadata = {}
@@ -263,9 +270,9 @@ class BKQueryDict(GangaObject):
         if not self.dict:
             return None
         cmd = 'bkQueryDict(%s)' % self.dict
-        result = get_result(cmd, 'BK query error.', 'BK query error.')
+        value = get_result(cmd, 'BK query error.')
+
         files = []
-        value = result['Value']
         if 'LFNs' in value:
             files = value['LFNs']
         if not type(files) is list:

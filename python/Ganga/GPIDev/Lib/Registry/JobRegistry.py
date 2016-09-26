@@ -11,7 +11,7 @@ from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 from Ganga.Core.exceptions import GangaException
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher
 
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, addProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType
 
 import Ganga.Utility.logging
 
