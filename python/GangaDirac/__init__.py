@@ -3,6 +3,8 @@ import os
 from Ganga.Utility.Config import makeConfig, getConfig
 from Ganga.Utility.logging import getLogger
 
+from Ganga.Core.exceptions import GangaValueError
+
 from Ganga.Utility.Config.Config import _after_bootstrap
 logger = getLogger()
 
@@ -99,4 +101,10 @@ def loadPlugins(config=None):
     import Lib.RTHandlers
     logger.debug("Loading Files")
     import Lib.Files
+
+def postBootstrapHook():
+    """ Lets check that everything is safe here """
+    group_config = getConfig('defaults_DiracProxy')['group']
+    if not group_config:
+       raise GangaValueError('DIRAC Proxy `group` is not set. Set this in ~/.gangarc in `[defaults_DiracProxy]/group`') 
 

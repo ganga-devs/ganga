@@ -912,6 +912,16 @@ under certain conditions; type license() for details.
             from Ganga.GPIDev.Credentials2.AfsToken import AfsToken
             credential_store.create(AfsToken(), create=False)
 
+
+        logger.debug("Post-Bootstrap hooks")
+        from Ganga.Utility.Runtime import allRuntimes
+        ###########
+        # run post bootstrap hooks
+        for r in allRuntimes.values():
+            r.postBootstrapHook()
+
+        # Now all modules have loaded and run any checks which verify it's safe to proceed
+
         import Ganga.Core
         from Ganga.Runtime.Repository_runtime import startUpRegistries
         if config['AutoStartReg']:
@@ -926,19 +936,6 @@ under certain conditions; type license() for details.
         # export all configuration items, new options should not be added after
         # this point
         Ganga.GPIDev.Lib.Config.bootstrap()
-
-
-        logger.debug("Post-Bootstrap hooks")
-        from Ganga.Utility.Runtime import allRuntimes
-        ###########
-        # run post bootstrap hooks
-        for r in allRuntimes.values():
-            try:
-                r.postBootstrapHook()
-            except Exception as err:
-                logger.error("problems with post bootstrap hook for %s" % r.name)
-                logger.error("Reason: %s" % err)
-
 
     @staticmethod
     def startTestRunner(my_args):
