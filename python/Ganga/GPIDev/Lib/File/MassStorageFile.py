@@ -274,11 +274,13 @@ class MassStorageFile(IGangaFile):
                 self.handleUploadFailure(mystderr, '2) %s %s' % (mkdir_cmd, wantedPath))
                 raise GangaException(mystderr)
 
-    @staticmethod
-    def uploadTo(sourcePath, targetPath):
+    def uploadTo(self, targetPath):
         """
         """
-        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
+
+        sourcePath = os.path.join(sourceDir, self.namePattern)
+
+        massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
         cp_cmd = massStorageConfig['cp_cmd']
 
         if not MassStorageFile.checkDirExists(''):
@@ -290,12 +292,12 @@ class MassStorageFile(IGangaFile):
 
         (exitcode, mystdout, mystderr) = MassStorageFile.execSyscmdSubprocess('%s %s %s' % (cp_cmd, quote(sourcePath), quote(targetPath)))
         if exitcode != 0:
-            #self.handleUploadFailure(mystderr, '5) %s %s %s' % (cp_cmd, sourcePath, targetPath))
+            self.handleUploadFailure(mystderr, '5) %s %s %s' % (cp_cmd, sourcePath, targetPath))
             return False
         else:
             logger.info('%s successfully uploaded to mass storage as %s' % (quote(sourcePath), quote(targetPath)))
-            #if targetPath not in self.locations:
-            #    self.locations.append(targetPath)
+            if targetPath not in self.locations:
+                self.locations.append(targetPath)
             return True
 
     def validate(self):

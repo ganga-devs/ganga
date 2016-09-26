@@ -536,6 +536,18 @@ class DiracFile(IGangaFile):
         if regex.search(self.namePattern) is not None:
             raise GangaFileError("No wildcards in inputfiles for DiracFile just yet. Dirac are exposing this in API soon.")
 
+    def uploadTo(self, lfn='', uploadSE='', replicate=False):
+        """
+
+        """
+
+        try:
+            stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
+        except GangaDiracError as err:
+            logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), err))
+            failureReason = "Error in uploading file '%s' : '%s'" % (os.path.basename(name), err)
+            self.failureReason += '\n' + failureReason
+
     def put(self, lfn='', force=False, uploadSE="", replicate=False):
         """
         Try to upload file sequentially to storage elements defined in configDirac['allDiracSE'].

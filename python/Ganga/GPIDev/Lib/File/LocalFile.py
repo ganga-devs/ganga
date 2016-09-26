@@ -264,10 +264,12 @@ class LocalFile(IGangaFile):
 
         return filePath, self.namePattern
 
-    @staticmethod
-    def uploadTo(sourcePath, targetPath):
+    def uploadTo(self, targetPath):
         """
         """
+
+        sourcePath = path.join(self.localDir, self.namePattern)
+
         try:
             new_file = targetPath
             if not path.isdir(path.dirname(new_file)):

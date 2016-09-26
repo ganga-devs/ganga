@@ -126,11 +126,7 @@ class IGangaFile(GangaObject):
         else:
             sourceDir = self.localDir
 
-        # Not a valid assumption for LocalFile
-        #if sourceDir and not os.path.isdir(self.localDir):
-        #    raise GangaException("Local directory of file: '%s' not found please set localDir and try again" % self.localDir)
-
-        if regex.search(fileName) is not None:
+        if self.containsWildcards():
 
             output = True
             for this_file in glob.glob(os.path.join(sourceDir, fileName)):
@@ -158,7 +154,7 @@ class IGangaFile(GangaObject):
 
         targetDir, targetFile = self.getOutputFilename()
 
-        returnable = self.uploadTo(os.path.join(sourceDir, self.namePattern), os.path.join(targetDir, targetFile))
+        returnable = self.uploadTo(os.path.join(targetDir, targetFile))
 
         if returnable is True:
             self.namePattern = targetFile
