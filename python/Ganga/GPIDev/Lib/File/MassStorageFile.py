@@ -122,11 +122,8 @@ class MassStorageFile(IGangaFile):
         pattern = lineParts[1]
         outputPath = lineParts[2]
         split_name = os.path.splitext(outputPath)
-        if len(split_name) >= 2:
-            if split_name[1] == 'gz':
-                name = split_name[0]
-            else:
-                name = outputPath
+        if split_name[1] == '.gz':
+            name = split_name[0]
         else:
             name = outputPath
 
