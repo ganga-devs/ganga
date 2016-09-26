@@ -6,6 +6,7 @@ from contextlib import contextmanager
 
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
+from Ganga.GPIDev.Credentials2.exceptions import CredentialRenewalError
 
 from Ganga.Utility.threads import SynchronisedObject
 
@@ -131,14 +132,14 @@ class MonitoringWorkerThread(GangaThread):
             try:
                 try:
                     self._running_cmd = action.function.__name__
-                    self._running_args = ""
+                    self._running_args = []
                     for arg in action.args:
                         self._running_args.append("%s, " % arg)
                     for k, v in action.kwargs:
                         self._running_args.append("%s=%s, " % (str(k), str(v)))
                 except:
                     self._running_cmd = "unknown"
-                    self._running_args = ""
+                    self._running_args = []
                 result = action.function(*action.args, **action.kwargs)
             except Exception as err:
                 log.debug("_execUpdateAction: %s" % str(err))
@@ -1158,11 +1159,15 @@ class JobRegistry_Monitor(GangaThread):
         def credChecker():
             log.debug("Checking %s." % getName(credObj))
             try:
-                s = credObj.renew()
-            except Exception as msg:
+                credObj.renew()
+            except CredentialRenewalError:
+                return False
+            except Exception as err:
+                logger.error("Unexpected exception!")
+                logger.error("Error: %s" % err)
                 return False
             else:
-                return s
+                return True
         return credChecker
 
     def diskSpaceCheckJobInsertor(self):
@@ -1174,8 +1179,7 @@ class JobRegistry_Monitor(GangaThread):
 
         def cb_Failure():
             self.disableCallbackHook(self.diskSpaceCheckJobInsertor)
-            self._handleError(
-                'Available disk space checking failed and it has been disabled!', 'DiskSpaceChecker', False)
+            self._handleError('Available disk space checking failed and it has been disabled!', 'DiskSpaceChecker', False)
 
         log.debug('Inserting disk space checking function to Qin.')
         _action = JobAction(function=Coordinator._diskSpaceChecker,
@@ -1193,8 +1197,7 @@ class JobRegistry_Monitor(GangaThread):
             self.__sleepCounter = 0.0
         else:
             self.progressCallback("Processing... Please wait.")
-            log.debug(
-                "Updates too close together... skipping latest update request.")
+            log.debug("Updates too close together... skipping latest update request.")
             self.__sleepCounter = self.minPollRate
 
     def _handleError(self, x, backend_name, show_traceback):

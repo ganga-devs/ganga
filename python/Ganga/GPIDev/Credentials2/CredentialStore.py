@@ -65,12 +65,26 @@ class CredentialStore(GangaObject, collections.Mapping):
 
         self.credentials.remove(credential_object)
 
+    @export
     def __str__(self, interactive=False):
-        # Get the string information with which to fill the table
         headers = ['Type', 'Location', 'Valid', 'Time left']
-        cred_info = [[str(f) for f in (type(cred).__name__, cred.location, cred.is_valid(), cred.time_left())] for cred in self.credentials]
-        rows = [headers] + cred_info
+        cred_info = [
+                        [str(f) for f in (type(cred).__name__, cred.location, cred.is_valid(), cred.time_left())]  # Format each field as a string
+                        for cred in self.credentials  # for each credential in the store
+                    ]
+        return self._create_table(headers, cred_info)
 
+    @staticmethod
+    def _create_table(headers, data):
+        """
+        Create a formatted table out of the headers and data
+        Args:
+            headers (List[str]): the strings for the table headers
+            data (List[List[str]]): the body of the table
+
+        Returns (str): a formatted string displaying the data
+        """
+        rows = [headers] + data
         # Get the length of the longest string in each column
         column_widths = [
             max(len(field) for field in column)
@@ -83,7 +97,7 @@ class CredentialStore(GangaObject, collections.Mapping):
             return ['{field:{filler}<{width}}'.format(field=field[0], filler=filler, width=field[1]) for field in zip(row, widths)]
         header_strings = pad_row_strings(headers, column_widths)
         divider_strings = pad_row_strings([''] * len(column_widths), column_widths, filler='-')
-        row_strings = [pad_row_strings(cred, column_widths) for cred in cred_info]
+        row_strings = [pad_row_strings(cell, column_widths) for cell in data]
 
         # Concatenate the field string together
         def strings_to_row(strings, spacer='|'):
@@ -91,7 +105,7 @@ class CredentialStore(GangaObject, collections.Mapping):
             return ' {0} '.format(spacer).join(strings)
         header = strings_to_row(header_strings)
         divider = strings_to_row(divider_strings, spacer='+')
-        body = '\n'.join(strings_to_row(cred) for cred in row_strings)
+        body = '\n'.join(strings_to_row(row_string) for row_string in row_strings)
 
         return '\n'.join([header, divider, body])
 
