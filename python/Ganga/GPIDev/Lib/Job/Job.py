@@ -2088,9 +2088,9 @@ class Job(GangaObject):
 
             # reduce duplicate values here
             uniqueValues = GangaList()
-	     for val in values:
-		if val not in uniqueValues:
-			uniqueValues.append(val)
+            for val in values:
+                if val not in uniqueValues:
+                    uniqueValues.append(val)
 
             super(Job, self).__setattr__(attr, uniqueValues)
 
