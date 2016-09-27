@@ -840,4 +840,3 @@ class SessionLockManager(object):
         except Exception, err:
             logger.debug( "Session Info Exception: %s" % err)
             return session
-
