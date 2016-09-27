@@ -5,7 +5,6 @@ import errno
 import glob
 import inspect
 import os
-import re
 import time
 import uuid
 import sys
@@ -414,28 +413,26 @@ class Job(GangaObject):
             currentOutputFiles = object.__getattribute__(self, name)
             currentUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
 
-            regex = re.compile('[*?\[\]]')
-            files = GangaList()
-            files2 = GangaList()
+            files = []
+            files2 = []
 
             for f in currentOutputFiles:
-                if regex.search(f.namePattern) is not None and hasattr(f, 'subfiles') and f.subfiles:
-                    files.extend(makeGangaListByRef(f.subfiles))
+                if f.containsWildcards() and hasattr(f, 'subfiles') and f.subfiles:
+                    files.extend(f.subfiles)
                 else:
                     files.append(f)
 
             for f in currentUnCopyableOutputFiles:
-                if regex.search(f.namePattern) is not None and hasattr(f, 'subfiles') and f.subfiles:
-                    files2.extend(makeGangaListByRef(f.subfiles))
+                if f.containsWildcards() and hasattr(f, 'subfiles') and f.subfiles:
+                    files2.extend(f.subfiles)
                 else:
                     files2.append(f)
 
             files3 = GangaList()
-            for f in files:
-                files3.append(f)
-            for f in files2:
-                files3.append(f)
+            files3.extend(files)
+            files3.extend(files2)
 
+            # FIXME THIS SHOULD NOT HAVE TO BE HERE! (It does else we end up with really bad errors and this is just wrong!)
             files3._setParent(self)
 
             return addProxy(files3)
@@ -2089,20 +2086,9 @@ class Job(GangaObject):
                     logger.error('job.outputsandbox is set, you can\'t set job.outputfiles')
                     return
 
-            # reduce duplicate values here, leave only duplicates for LCG,
-            # where we can have replicas
-            uniqueValuesDict = []
-            uniqueValues = []
-
-            for val in value:
-                dir_ = val.localDir or ''
-                name_ = val.namePattern or ''
-                key = '%s%s' % (getName(val), os.path.join(dir_, name_))
-                if key not in uniqueValuesDict:
-                    uniqueValuesDict.append(key)
-                    uniqueValues.append(val)
-                elif getName(val) == 'LCGSEFile':
-                    uniqueValues.append(val)
+            # reduce duplicate values here
+            uniqueValues = GangaList()
+            uniqueValues.extend(set(value))
 
             super(Job, self).__setattr__(attr, uniqueValues)
 
