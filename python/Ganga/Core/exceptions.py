@@ -42,6 +42,13 @@ class GangaException(Exception):
             _str += " %s" % str(self.kwds)
         return _str
 
+
+class GangaFileError(GangaException):
+    """
+    This is intended to be thrown as an IGangaFile Error during Runtime
+    """
+
+
 class PluginError(GangaException):
     """
     Class to be used in 1 place only in loading plugins
