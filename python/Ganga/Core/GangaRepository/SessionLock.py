@@ -274,9 +274,7 @@ def global_disk_lock(f):
     @functools.wraps(f)
     def decorated_global(self, *args, **kwds):
         with global_disk_lock.global_lock:
-            i=0
-            while i< 10:
-                i+=1
+            for i in range(10):
                 try:
                     self.global_lock_acquire()
                     break
@@ -284,6 +282,7 @@ def global_disk_lock(f):
                     if i == 10:
                         raise
                     time.sleep(1.)
+
             self.safe_LockCheck()
             try:
                 return f(self, *args, **kwds)
