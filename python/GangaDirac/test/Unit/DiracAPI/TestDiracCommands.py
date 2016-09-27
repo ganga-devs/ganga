@@ -15,7 +15,6 @@ import pytest
 from Ganga.GPIDev.Credentials2 import credential_store
 from Ganga.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 
 from Ganga.testlib.mark import external
 from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
@@ -51,6 +50,7 @@ def load_config():
 
 @pytest.yield_fixture(scope='class')
 def dirac_job(load_config):
+    from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 
     sandbox_str = uuid.uuid4()
     get_file_str = uuid.uuid4()

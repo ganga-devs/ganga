@@ -9,7 +9,6 @@ except ImportError:
 
 from Ganga.Core.exceptions import GangaFileError
 from Ganga.Utility.logging import getLogger
-from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
 
@@ -19,6 +18,8 @@ logger = getLogger(modulename=True)
 @pytest.yield_fixture(scope='function')
 def df():
     load_config_files()
+
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
     f = DiracFile('np', 'ld', 'lfn')
     f.locations = ['location']
     f.guid = 'guid'
@@ -27,6 +28,8 @@ def df():
 
 
 def test__init__(df):
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
+
     assert df.namePattern == 'np', 'namePattern not initialised as np'
     assert df.lfn == 'lfn', 'lfn not initialised as lfn'
     assert df.localDir == 'ld', 'localDir not initialised as ld'

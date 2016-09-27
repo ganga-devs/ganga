@@ -12,9 +12,6 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Lib.Splitters import ArgSplitter
 from Ganga.Lib.Executable import Executable
-from GangaDirac.Lib.Backends import Dirac
-from GangaDirac.Lib.Backends.DiracBase import DiracBase
-from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
 
@@ -59,6 +56,7 @@ output(result)
 def db():
     """Provides a DiracBase object per test function"""
     load_config_files()
+    from GangaDirac.Lib.Backends.DiracBase import DiracBase
     yield DiracBase()
     clear_config()
 
@@ -74,6 +72,7 @@ def test__addition_sandbox_content(db):
 def test__setup_bulk_subjobs(tmpdir, db):
     from Ganga.Core import BackendError
     from Ganga.GPIDev.Lib.Dataset.Dataset import Dataset
+    from GangaDirac.Lib.Backends import Dirac
 
     name = str(tmpdir.join('submit_script'))
     with open(name, 'w') as fd:
@@ -288,6 +287,8 @@ def test_getOutputSandbox(db, mocker):
 
 
 def test_removeOutputData(db):
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
+
     j = Job()
     j.id = 0
     j.backend = db
@@ -328,6 +329,8 @@ def test_removeOutputData(db):
 
 
 def test_getOutputData(db, tmpdir):
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
+
     j = Job()
     j.id = 0
     j.backend = db
@@ -395,6 +398,8 @@ def test_getOutputData(db, tmpdir):
 
 
 def test_getOutputDataLFNs(db):
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
+
     j = Job()
     j.id = 0
     j.backend = db

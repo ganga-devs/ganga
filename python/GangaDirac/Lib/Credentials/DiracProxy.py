@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 import Ganga.Utility.logging
 from Ganga.Core import GangaValueError
+from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Schema import SimpleItem
 
 from Ganga.GPIDev.Credentials2.ICredentialInfo import cache
@@ -105,3 +106,7 @@ class DiracProxy(ICredentialRequirement):
 
     def encoded(self):
         return ':'.join(requirement for requirement in [self.group] if requirement)  # filter out the empties
+
+# A single global check for the DIRAC group setting. This will bail out early and safely during plugin loading.
+if getConfig('defaults_DiracProxy')['group'] is None:
+    raise GangaValueError('DIRAC Proxy `group` is not set. Set this in ~/.gangarc in `[defaults_DiracProxy]/group`')
