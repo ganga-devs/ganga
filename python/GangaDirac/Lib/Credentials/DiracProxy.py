@@ -95,7 +95,6 @@ class DiracProxy(ICredentialRequirement):
     _schema.datadict['group'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy')
 
     _category = 'CredentialRequirement'
-    _name = 'DiracProxy'
 
     info_class = DiracProxyInfo
 
