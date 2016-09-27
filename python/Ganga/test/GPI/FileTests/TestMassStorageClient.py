@@ -5,6 +5,11 @@ import tempfile
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
+from Ganga.Utility.Config import getConfig
+from Ganga.GPIDev.Base.Proxy import stripProxy, getProxyClass
+from GangaTest.Framework.utils import sleep_until_completed
+from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
+from Ganga.GPIDev.Base.Objects import _getName
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file

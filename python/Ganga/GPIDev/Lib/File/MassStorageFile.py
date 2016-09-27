@@ -126,7 +126,7 @@ class MassStorageFile(IGangaFile):
         else:
             name = outputPath
 
-        if regex.search(self.namePattern) is not None:
+        if self.containsWildcards():
             if outputPath == 'ERROR':
                 logger.error("Failed to upload file to mass storage")
                 logger.error(line[line.find('ERROR') + 5:])
