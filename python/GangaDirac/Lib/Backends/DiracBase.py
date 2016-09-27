@@ -10,9 +10,9 @@ import datetime
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Core import BackendError, GangaException
-from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
+from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaDirac.Lib.Utilities.DiracUtilities import execute, _proxyValid, getAccessURLs
+from GangaDirac.Lib.Utilities.DiracUtilities import execute, _proxyValid
 from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
@@ -90,7 +90,7 @@ class DiracBase(IBackend):
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)')
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
-                      'getOutputDataLFNs','getOutputDataAccessURLs', 'peek', 'reset', 'debug']
+                      'getOutputDataLFNs', 'getOutputDataAccessURLs', 'peek', 'reset', 'debug']
     _packed_input_sandbox = True
     _category = "backends"
     _name = 'DiracBase'
@@ -476,8 +476,7 @@ class DiracBase(IBackend):
 
     def getOutputDataAccessURLs(self):
         """Retrieve the list of accessURLs assigned to outputdata for a job"""
-        urls = getAccessURLs(self.getOutputDataLFNs())
-        return urls
+        return getAccessURLs(self.getOutputDataLFNs())
 
     def debug(self):
         '''Obtains some (possibly) useful DIRAC debug info. '''

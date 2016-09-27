@@ -2,6 +2,8 @@ from Ganga.Core.exceptions import GangaException, BackendError
 #from GangaDirac.BOOT       import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from Ganga.Utility.logging import getLogger
+from GangaDirac.Lib.Files.DiracFile import DiracFile
+from Ganga.GPIDev.Lib.File.File import File
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -132,3 +134,53 @@ def for_each(func, *iterables, **kwargs):
                            *kwargs.get('fargs', ()),
                            **kwargs.get('fkwargs', {})))
     return result
+
+def getAccessURLs(lfns, defaultSE = ''):
+    """
+    This is a function to get a list of the accessURLs
+    for a provided list of lfns.
+    """
+    lfnList = []
+    # Has a list of strings, which are probably lfns been given 
+    if all(isinstance(item, str) for item in lfns):
+        lfnList = lfns
+    else:
+        #If some elements are not strings look for the DiracFiles, separates out the LocalFiles from a job's outputfiles list
+        for diracFile in lfns:
+            if str(getattr(getattr(diracFile,'__class__',None),'__name__',None)) == 'DiracFile':
+                lfnList.append(diracFile.lfn)
+    if not lfnList:
+        logger.error("Provided list does not have LFNs or DiracFiles in it")
+        return
+    # Get all the replicas
+    reps = execute('getReplicas(%s)' % lfnList)
+    # Get the SEs
+    SEs = []
+    for lf in reps['Value']['Successful']:
+        for thisSE in reps['Value']['Successful'][lf].keys():
+            if thisSE not in SEs:
+                SEs.append(thisSE)
+    myURLs = []
+    # If an SE is specified, move it to be the first element in the list to be processed.
+    if defaultSE != '':
+        if defaultSE in SEs:
+            SEs.remove(defaultSE)
+            SEs.insert(0,defaultSE)
+        else:
+            logger.warning('No replica at specified SE, here is a URL for another replica')
+    remainingLFNs = list(lfnList)
+    # Loop over the possible SEs and get the URLs of the files stored there.
+    # Remove the successfully found ones from the list and move on to the next SE.
+    for SE in SEs:
+        lfns = remainingLFNs
+        thisSEFiles = execute('getAccessURL(%s, "%s")' % (lfns , SE))['Value']['Successful']
+        for lfn in thisSEFiles.keys():
+            myURLs.append(thisSEFiles[lfn])
+            remainingLFNs.remove(lfn)
+        # If we gotten to the end of the list then break
+        if not remainingLFNs:
+            break
+    return myURLs
+
+from Ganga.Runtime.GPIexport import exportToGPI
+exportToGPI('getAccessURLs', getAccessURLs, 'Functions')
