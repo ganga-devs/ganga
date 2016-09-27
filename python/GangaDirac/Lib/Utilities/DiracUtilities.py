@@ -214,34 +214,6 @@ def _checkProxy( delay=60, renew = True, shouldRaise = True, force = False ):
             last_modified_time = time.time()
 
 
-def getAccessURLs(lfns):
-    """
-    This is a function to get a list of the accessURLs
-    for a provided list of lfns.
-    """
-    # Get all the replicas
-    reps = execute('getReplicas(%s)' % lfns)
-    # Get the SEs
-    SEs = []
-    for lf in reps['Value']['Successful']:
-        for thisSE in reps['Value']['Successful'][lf].keys():
-            if thisSE not in SEs:
-                continue
-    myURLs = []
-    # Loop over the possible SEs and get the URLs of the files stored there.
-    # Remove the successfully found ones from the list and move on to the next SE.
-    remainingLFNs = list(lfns)
-    for SE in SEs:
-        lfns = remainingLFNs
-        thisSEFiles = execute('getAccessURL(%s, "%s")' % (lfns , SE))['Value']['Successful']
-        for lfn in thisSEFiles.keys():
-            myURLs.append(thisSEFiles[lfn])
-            remainingLFNs.remove(lfn)
-        # If we gotten to the end of the list then break
-        if not remainingLFNs:
-            break
-    return myURLs
-
 def execute(command,
             timeout=getConfig('DIRAC')['Timeout'],
             env=None,
