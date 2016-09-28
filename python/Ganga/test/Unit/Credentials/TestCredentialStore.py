@@ -42,6 +42,9 @@ class FakeCredInfo(ICredentialInfo):
     def default_location(self):
         return '/tmp/some_fake_file'
 
+    def check_requirements(self, query):
+        return True
+
 
 class FakeCred(ICredentialRequirement):
     """
