@@ -163,6 +163,8 @@ class ICredentialInfo(object):
             ``True`` if we meet all requirements
             ``False`` if even one requirement is not met or if the credential is not valid
         """
+        if not os.path.exists(self.location):
+            return False
         return all(self.check_requirement(query, requirementName) for requirementName in query._schema.datadict)
 
     def check_requirement(self, query, requirement_name):
