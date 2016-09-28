@@ -45,7 +45,7 @@ class VomsProxyInfo(ICredentialInfo):
                 if self.initial_requirements.role:
                     voms_command += '/%s' % self.initial_requirements.role
         logger.debug(voms_command)
-        command = 'voms-proxy-init -out %s %s' % (self.location, voms_command)
+        command = 'voms-proxy-init -out "%s" %s' % (self.location, voms_command)
         logger.debug(command)
         try:
             self.shell.check_call(command)
@@ -61,14 +61,14 @@ class VomsProxyInfo(ICredentialInfo):
         return self._shell
 
     def destroy(self):
-        self.shell.cmd1('voms-proxy-destroy -file %s' % self.location, allowed_exit=[0, 1])
+        self.shell.cmd1('voms-proxy-destroy -file "%s"' % self.location, allowed_exit=[0, 1])
 
         if os.path.isfile(self.location):
             os.remove(self.location)
 
     @cache
     def info(self):
-        status, output, message = self.shell.cmd1('voms-proxy-info -all -file %s' % self.location)
+        status, output, message = self.shell.cmd1('voms-proxy-info -all -file "%s"' % self.location)
         return output
 
     def field(self, label):
@@ -81,13 +81,13 @@ class VomsProxyInfo(ICredentialInfo):
     @property
     @cache
     def identity(self):
-        status, output, message = self.shell.cmd1('voms-proxy-info -file %s -identity' % self.location)
+        status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -identity' % self.location)
         return output.strip()
 
     @property
     @cache
     def vo(self):
-        status, output, message = self.shell.cmd1('voms-proxy-info -file %s -vo' % self.location)
+        status, output, message = self.shell.cmd1('ls "%s"; voms-proxy-info -file "%s" -vo' % (self.location, self.location))
         if status != 0:
             return None
         return output.split(':')[0].strip()
@@ -95,7 +95,7 @@ class VomsProxyInfo(ICredentialInfo):
     @property
     @cache
     def role(self):
-        status, output, message = self.shell.cmd1('voms-proxy-info -file %s -vo' % self.location)
+        status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -vo' % self.location)
         if status != 0:
             return None  # No VO
         vo_list = output.split(':')
@@ -106,7 +106,7 @@ class VomsProxyInfo(ICredentialInfo):
     @property
     @cache
     def group(self):
-        status, output, message = self.shell.cmd1('voms-proxy-info -file %s -vo' % self.location)
+        status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -vo' % self.location)
         if status != 0:
             return None  # No VO
         vo_list = output.split(':')
@@ -120,7 +120,7 @@ class VomsProxyInfo(ICredentialInfo):
 
     @cache
     def expiry_time(self):
-        status, output, message = self.shell.cmd1('voms-proxy-info -file %s -timeleft' % self.location)
+        status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -timeleft' % self.location)
         if status != 0:
             return datetime.now()
         return datetime.now() + timedelta(seconds=int(output))

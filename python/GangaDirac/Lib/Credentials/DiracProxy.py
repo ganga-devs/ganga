@@ -40,7 +40,7 @@ class DiracProxyInfo(VomsProxyInfo):
         logger.debug('require ' + self.initial_requirements.group)
         if self.initial_requirements.group:
             group_command = '--group %s --VOMS' % self.initial_requirements.group
-        command = 'dirac-proxy-init --strict --out %s %s' % (self.location, group_command)
+        command = 'dirac-proxy-init --strict --out "%s" %s' % (self.location, group_command)
         logger.debug(command)
         self.shell.env['X509_USER_PROXY'] = self.location
         try:
@@ -64,7 +64,7 @@ class DiracProxyInfo(VomsProxyInfo):
     @cache
     def info(self):
         self.shell.env['X509_USER_PROXY'] = self.location
-        status, output, message = self.shell.cmd1('dirac-proxy-info --file %s' % self.location)
+        status, output, message = self.shell.cmd1('dirac-proxy-info --file "%s"' % self.location)
         return output
 
     @property
@@ -79,7 +79,7 @@ class DiracProxyInfo(VomsProxyInfo):
 
     @cache
     def expiry_time(self):
-        status, output, message = self.shell.cmd1('voms-proxy-info -file %s -timeleft' % self.location)
+        status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -timeleft' % self.location)
         if status != 0:
             return datetime.now()
         return datetime.now() + timedelta(seconds=int(output))
