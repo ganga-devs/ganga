@@ -210,8 +210,7 @@ class MassStorageFile(IGangaFile):
 
         return script
 
-    @staticmethod
-    def checkDirExists(checkPath):
+    def checkDirExists(self, checkPath):
         """
         Checks to see if a directory exists or not within the remote storage
         Args:
@@ -228,7 +227,7 @@ class MassStorageFile(IGangaFile):
 
         (exitcode, mystdout, mystderr) = MassStorageFile.execSyscmdSubprocess('%s %s' % (ls_cmd, quote(pathToDirName)))
         if exitcode != 0:
-            logger.error("Error running ls_cmd (%s) on %s" % (ls_cmd, quote(pathToDirName)))
+            #logger.error("Error running ls_cmd (%s) on %s" % (ls_cmd, quote(pathToDirName)))
             #self.handleUploadFailure(mystderr, '1) %s %s' % (ls_cmd, pathToDirName))
             return False
 
@@ -249,8 +248,7 @@ class MassStorageFile(IGangaFile):
 
         return filePath, fileName
 
-    @staticmethod
-    def makeStorageDir(wantedPath):
+    def makeStorageDir(self, wantedPath):
         """
         Creates a folder on the mass Storage corresponding to the given path
         Args:
@@ -259,14 +257,13 @@ class MassStorageFile(IGangaFile):
 
         massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
 
-        cp_cmd = massStorageConfig['cp_cmd']
-        ls_cmd = massStorageConfig['ls_cmd']
+        mkdir_cmd = massStorageConfig['mkdir_cmd']
         massStoragePath = massStorageConfig['path']
 
         if not wantedPath.startswith(massStoragePath):
             wantedPath = os.path.join(massStoragePath, wantedPath)
 
-        directoryExists = MassStorageFile.checkDirExists(wantedPath)
+        directoryExists = self.checkDirExists(wantedPath)
 
         if not directoryExists:
             (exitcode, mystdout, mystderr) = MassStorageFile.execSyscmdSubprocess('%s -p %s' % (mkdir_cmd, quote(wantedPath)))
@@ -278,17 +275,17 @@ class MassStorageFile(IGangaFile):
         """
         """
 
-        sourcePath = os.path.join(sourceDir, self.namePattern)
+        sourcePath = os.path.join(*self.getOutputFilename())
 
         massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
         cp_cmd = massStorageConfig['cp_cmd']
 
-        if not MassStorageFile.checkDirExists(''):
+        if not self.checkDirExists(''):
             massStoragePath = massStorageConfig['path']
             logger.error("Can't upload as %s cannot be found!" % massStoragePath)
             return False
 
-        MassStorageFile.makeStorageDir(os.path.dirname(targetPath))
+        self.makeStorageDir(os.path.dirname(targetPath))
 
         (exitcode, mystdout, mystderr) = MassStorageFile.execSyscmdSubprocess('%s %s %s' % (cp_cmd, quote(sourcePath), quote(targetPath)))
         if exitcode != 0:

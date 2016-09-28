@@ -204,7 +204,6 @@ class IGangaFile(GangaObject):
        
         return (folderStructure, filenameStructure)
 
-    @staticmethod
     def uploadTo(sourcePath, targetPath):
         """
         This method only cares about uploading the file to the correct location given as 'targetPath'
