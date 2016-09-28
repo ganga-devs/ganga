@@ -195,6 +195,7 @@ class TestMassStorageWN(GangaUnitTest):
 
         for i in range(TestMassStorageWN.sj_len):
             # Check that the subfiles were expended correctly
+            print("outputfiles: %s" % stripProxy(j.subjobs[i]).outputfiles)
             assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[0]).subfiles) == 2
             assert len(stripProxy(stripProxy(j.subjobs[i]).outputfiles[1]).subfiles) == 1
             # Check we have the correct total number of files

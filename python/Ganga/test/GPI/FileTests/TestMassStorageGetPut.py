@@ -66,9 +66,6 @@ class TestMassStorageGetPut(GangaUnitTest):
         for file_ in cls._temp_files:
             os.unlink(file_)
         cls._temp_files = []
-
-        for file_ in cls._managed_files:
-            os.unlink(os.path.join(cls.outputFilePath, file_.namePattern))
         cls._managed_files = []
 
         shutil.rmtree(cls.outputFilePath, ignore_errors=True)

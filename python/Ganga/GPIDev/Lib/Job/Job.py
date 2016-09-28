@@ -705,13 +705,13 @@ class Job(GangaObject):
 
         # check for failure reasons
         for outputfile in self.outputfiles:
-            if hasattr(outputfile, 'failureReason') and outputfile.failureReason != '':
+            if hasattr(outputfile, 'failureReason') and outputfile.failureReason:
                 logger.warning("Job %s OutputFile failed for file: %s" % (self.getFQID('.'), outputfile.namePattern))
                 postprocessFailure = True
             else:
                 for subfile in outputfile.subfiles:
-                    if hasattr(subfile, 'failureReason') and subfile.failureReason != '':
-                        logger.warning("Job%s OutputFile failed due to reason: %s" % (self.getFQID('.'), outputfile.namePattern))
+                    if hasattr(subfile, 'failureReason') and subfile.failureReason:
+                        logger.warning("Job %s OutputFile (%s) failed due to reason: '%s'" % (self.getFQID('.'), outputfile.namePattern, outputfile.failureReason))
                         postprocessFailure = True
 
         return postprocessFailure

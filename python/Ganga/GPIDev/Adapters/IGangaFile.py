@@ -2,6 +2,7 @@ import os
 import glob
 import re
 import shutil
+import copy
 from Ganga.Core.exceptions import GangaFileError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import getName
@@ -17,8 +18,7 @@ class IGangaFile(GangaObject):
 
     """IGangaFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, LocalFile, etc 
     """
-    _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(
-        defvalue="", doc='pattern of the file name')})
+    _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name')})
     _category = 'gangafiles'
     _name = 'IGangaFile'
     _hidden = 1
@@ -100,6 +100,116 @@ class IGangaFile(GangaObject):
     def put(self):
         """
         Postprocesses (upload) output file to the desired destination from the client
+        Order of priority of where the file is to be uploaded to:
+            1) If a this is managed by a parent job then it's name is expanded according to the outputnameformat if the IGangaFile supports it
+                then it's placed in an automatic folder based upon the base string with the correct name expansion
+                i.e. baseDir / auto-expanded-filename
+            2) If the remoteDir has been defined for this file object the file is uploaded to
+                baseDir / remoteDir / auto-expanded-filename
+            3) In the case the namePattern isn't auto-expanded
+                baseDir / namePattern
+
+        Order of priority as to where the file is taken to be on local storage:
+            1) If the object is managed by a Job the job.outputdir is set to the localDir if None exists
+            2) If the object has a localDir then this is taken to be the location the upload will attempt to upload the file from
+            2) This will raise an exception if the file doesn't exist before attempting an upload
+        """
+
+        sourcePath = ''
+
+        fileName = self.namePattern
+        if self.compressed:
+            fileName = '%s.gz' % self.namePattern
+
+        if self._getParent() is not None:
+            sourceDir = self.getJobObject().outputdir
+        else:
+            sourceDir = self.localDir
+
+        if self.containsWildcards():
+
+            output = True
+            for this_file in glob.glob(os.path.join(sourceDir, fileName)):
+            
+                logger.info("Adding: %s" % (this_file))
+                sub_file = copy.deepcopy(self)
+                sub_file.namePattern = os.path.basename(this_file)
+                sub_file.localDir = sourceDir
+                output = output and sub_file.put()
+                if sub_file.namePattern not in [file_.namePattern for file_ in self.subfiles]:
+                    self.subfiles.append(sub_file)
+                else:
+                    for file_ in self.subfiles:
+                        if file_.namePattern == sub_file.namePattern:
+                            file_.localDir = sourceDir
+                            break
+
+            return output
+        
+        elif self.getSubFiles():
+
+            output = True
+            for sub_file in self.getSubFiles():
+                output = output and sub_file.put()
+            return output
+
+        targetDir, targetFile = self.getOutputFilename()
+
+        returnable = self.uploadTo(os.path.join(targetDir, targetFile))
+
+        if returnable is True:
+            self.namePattern = targetFile
+
+        if hasattr(self, 'locations') and os.path.join(targetDir, targetFile) not in self.locations:
+            self.locations.append(os.path.join(targetDir, targetFile))
+
+        return True
+
+    def getOutputFilename(self):
+        """
+        This method expands the otuput file name of a class which has implemented the 'outputfilenameformat' attribute
+        Args:
+            fileName(str): This is the basename of the inputfile which is copied to the output folder
+        """
+
+        if not self._getParent() or hasattr(self, 'outputfilenameformat') and self.outputfilenameformat:
+            return '', self.namePattern
+
+        jobfqid = self.getJobObject().fqid
+
+        jobid = jobfqid
+        subjobid = ''
+
+        folderStructure = ''
+        filenameStructure = self.namePattern
+
+        if (jobfqid.find('.') > -1):
+            jobid = jobfqid.split('.')[0]
+            subjobid = jobfqid.split('.')[1]
+
+        if not hasattr(self, 'outputfilenameformat') or (hasattr(self, 'outputfilenameformat') and not self.outputfilenameformat):
+            # create jid/sjid directories
+            folderStructure = jobid
+            if subjobid != '':
+                folderStructure = os.path.join(jobid, subjobid)
+        else:
+            filenameStructure = os.path.basename(self.outputfilenameformat)
+            filenameStructure = filenameStructure.replace('{jid}', jobid)
+
+            folderStructure = os.path.dirname(self.outputfilenameformat)
+            folderStructure = folderStructure.replace('{jid}', jobid)
+
+            if subjobid != '':
+                filenameStructure = filenameStructure.replace('{sjid}', subjobid)
+                folderStructure = folderStructure.replace('{sjid}', subjobid)
+       
+        return (folderStructure, filenameStructure)
+
+    def uploadTo(self, targetPath):
+        """
+        This method only cares about uploading the file to the correct location given as 'targetPath'
+        Args:
+            targetPath (str): This is the _absolute_ target where the file managed by this class is uploaded to
         """
         raise NotImplementedError
 
@@ -111,9 +221,8 @@ class IGangaFile(GangaObject):
             targetPath (str): Target path where the file is to copied to
         """
         if not isinstance(targetPath, str) and targetPath:
-            raise GangaFileError("Cannot perform a copyTo with no given targetPath!")
-        if regex.search(self.namePattern) is None\
-            and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
+            raise GangaException("Cannot perform a copyTo with no given targetPath!")
+        if self.containsWildcards() and os.path.isfile(os.path.join(self.localDir, self.namePattern)):
 
             if not os.path.isfile(os.path.join(targetPath, self.namePattern)):
                 shutil.copy(os.path.join(self.localDir, self.namePattern), os.path.join(targetPath, self.namePattern))
@@ -165,7 +274,8 @@ class IGangaFile(GangaObject):
             return issubclass(self.__class__, to_match)
         return to_match == self
 
-    def execSyscmdSubprocess(self, cmd):
+    @staticmethod
+    def execSyscmdSubprocess(cmd):
 
         import subprocess
 
@@ -215,7 +325,7 @@ class IGangaFile(GangaObject):
         """
         Return if the name has got wildcard characters
         """
-        if regex.search(self.namePattern) != None:
+        if regex.search(self.namePattern) is not None:
             return True
 
         return False

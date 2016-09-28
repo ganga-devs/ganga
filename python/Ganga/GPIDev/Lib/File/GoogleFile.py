@@ -15,7 +15,6 @@ import logging
 import Ganga.Utility.Config
 
 logger = getLogger()
-regex = re.compile('[*?\[\]]')
 badlogger = getLogger('oauth2client.util')
 badlogger.setLevel(logging.ERROR)
 
@@ -188,7 +187,7 @@ class GoogleFile(IGangaFile):
 
         # Checks for wildcards and loops through get procedure for each result,
         # saving file to assigned directory
-        if regex.search(self.namePattern) is not None:
+        if self.containsWildcards():
             for f in self.subfiles:
                 if f.downloadURL:
                     resp, content = service._http.request(f.downloadURL)
@@ -267,7 +266,7 @@ class GoogleFile(IGangaFile):
             dir_path = self.getJobObject().getOutputWorkspace().getPath()
 
         # Wildcard procedure
-        if regex.search(self.namePattern) is not None:
+        if self.containsWildcards():
             for wildfile in glob.glob(os.path.join(dir_path, self.namePattern)):
                 FILENAME = wildfile
                 filename = os.path.basename(wildfile)
@@ -364,7 +363,7 @@ class GoogleFile(IGangaFile):
         from apiclient import errors
 
         # Wildcard procedure
-        if regex.search(self.namePattern) is not None:
+        if self.containsWildcards():
             for f in self.subfiles:
                 if permanent == True:
                     try:
@@ -417,7 +416,7 @@ class GoogleFile(IGangaFile):
         service = self._setup_service()
 
         # Wildcard procedure
-        if regex.search(self.namePattern) is not None:
+        if self.containsWildcards():
             for f in self.subfiles:
                 try:
                     service.files().untrash(fileId=f.id).execute()
