@@ -9,10 +9,10 @@ from Ganga.Core import GangaValueError
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Schema import SimpleItem
 
-from Ganga.GPIDev.Credentials2.ICredentialInfo import cache
-from Ganga.GPIDev.Credentials2.ICredentialRequirement import ICredentialRequirement
-from Ganga.GPIDev.Credentials2.exceptions import CredentialRenewalError
-from Ganga.GPIDev.Credentials2.VomsProxy import VomsProxyInfo
+from Ganga.GPIDev.Credentials.ICredentialInfo import cache
+from Ganga.GPIDev.Credentials.ICredentialRequirement import ICredentialRequirement
+from Ganga.GPIDev.Credentials.exceptions import CredentialRenewalError
+from Ganga.GPIDev.Credentials.VomsProxy import VomsProxyInfo
 
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
 

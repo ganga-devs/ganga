@@ -19,7 +19,7 @@ from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
 from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
 
-from Ganga.GPIDev.Credentials import GridProxy
+from Ganga.GPIDev.Credentials_old import GridProxy
 gridProxy = GridProxy()
 
 logger = getLogger()

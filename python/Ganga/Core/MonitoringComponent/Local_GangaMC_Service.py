@@ -6,12 +6,12 @@ from contextlib import contextmanager
 
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
-from Ganga.GPIDev.Credentials2.exceptions import CredentialRenewalError
+from Ganga.GPIDev.Credentials.exceptions import CredentialRenewalError
 
 from Ganga.Utility.threads import SynchronisedObject
 
-from Ganga.GPIDev.Credentials2 import credential_store, get_needed_credentials
-from Ganga.GPIDev.Credentials2.AfsToken import AfsToken
+from Ganga.GPIDev.Credentials import credential_store, get_needed_credentials
+from Ganga.GPIDev.Credentials.AfsToken import AfsToken
 from Ganga.Core.InternalServices import Coordinator
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, getRuntimeGPIObject

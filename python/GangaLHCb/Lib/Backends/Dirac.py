@@ -9,7 +9,7 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
-from Ganga.GPIDev.Credentials2              import require_credential
+from Ganga.GPIDev.Credentials              import require_credential
 
 
 class Dirac(DiracBase):

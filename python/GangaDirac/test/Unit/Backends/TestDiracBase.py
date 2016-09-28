@@ -109,7 +109,7 @@ def test__setup_bulk_subjobs(tmpdir, db):
 
 
 def test__common_submit(tmpdir, db, mocker):
-    mocker.patch('Ganga.GPIDev.Credentials2.credential_store')
+    mocker.patch('Ganga.GPIDev.Credentials.credential_store')
 
     from Ganga.Core import BackendError
     j = Job()
@@ -240,7 +240,7 @@ def test_reset(db):
 
 
 def test_kill(db, mocker):
-    mocker.patch('Ganga.GPIDev.Credentials2.credential_store')
+    mocker.patch('Ganga.GPIDev.Credentials.credential_store')
 
     db.id = 1234
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')):
@@ -254,7 +254,7 @@ def test_kill(db, mocker):
 
 
 def test_peek(db, mocker):
-    mocker.patch('Ganga.GPIDev.Credentials2.credential_store')
+    mocker.patch('Ganga.GPIDev.Credentials.credential_store')
 
     db.id = 1234
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
@@ -263,7 +263,7 @@ def test_peek(db, mocker):
 
 
 def test_getOutputSandbox(db, mocker):
-    mocker.patch('Ganga.GPIDev.Credentials2.credential_store')
+    mocker.patch('Ganga.GPIDev.Credentials.credential_store')
 
     j = Job()
     j.id = 0

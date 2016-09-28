@@ -33,8 +33,8 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import getName
 
-from Ganga.GPIDev.Credentials2 import credential_store
-from Ganga.GPIDev.Credentials2.AfsToken import AfsToken
+from Ganga.GPIDev.Credentials import credential_store
+from Ganga.GPIDev.Credentials.AfsToken import AfsToken
 
 log = getLogger()
 

@@ -1,13 +1,13 @@
 import contextlib
 import os
 
-from Ganga.GPIDev.Credentials2 import credential_store
+from Ganga.GPIDev.Credentials import credential_store
 
 # get nickname
 def getNickname(gridProxy=None,allowMissingNickname=True):
     import re
     from Ganga.Utility.logging import getLogger
-    from Ganga.GPIDev.Credentials import GridProxy
+    from Ganga.GPIDev.Credentials_old import GridProxy
 
     logger = getLogger()
     if not gridProxy:

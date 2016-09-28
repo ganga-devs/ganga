@@ -20,7 +20,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
-from Ganga.GPIDev.Credentials2 import require_credential, credential_store, needed_credentials
+from Ganga.GPIDev.Credentials import require_credential, credential_store, needed_credentials
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.Core.GangaThread.WorkerThreads import getQueues

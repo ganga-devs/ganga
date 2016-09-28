@@ -16,7 +16,7 @@ from Ganga.Utility.GridShell import getShell
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Proxy import getName
 
-from Ganga.GPIDev.Credentials2 import require_credential, VomsProxy
+from Ganga.GPIDev.Credentials import require_credential, VomsProxy
 
 import re
 import os

@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 import pytest
 
 from Ganga.GPIDev.Schema import SimpleItem
-from Ganga.GPIDev.Credentials2.CredentialStore import CredentialStore
-from Ganga.GPIDev.Credentials2.ICredentialInfo import ICredentialInfo
-from Ganga.GPIDev.Credentials2.ICredentialRequirement import ICredentialRequirement
+from Ganga.GPIDev.Credentials.CredentialStore import CredentialStore
+from Ganga.GPIDev.Credentials.ICredentialInfo import ICredentialInfo
+from Ganga.GPIDev.Credentials.ICredentialRequirement import ICredentialRequirement
 
 
 class FakeCredInfo(ICredentialInfo):

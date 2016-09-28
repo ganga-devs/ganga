@@ -11,8 +11,8 @@ import json
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Credentials2 import require_credential
-from Ganga.GPIDev.Credentials2.VomsProxy import VomsProxy
+from Ganga.GPIDev.Credentials import require_credential
+from Ganga.GPIDev.Credentials.VomsProxy import VomsProxy
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Lib.Job import JobStatusError

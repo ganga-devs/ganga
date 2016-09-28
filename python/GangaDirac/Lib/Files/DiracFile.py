@@ -18,7 +18,7 @@ from Ganga.Core.exceptions import GangaFileError
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute, GangaDiracError
 import Ganga.Utility.Config
 from Ganga.Runtime.GPIexport import exportToGPI
-from Ganga.GPIDev.Credentials2 import require_credential
+from Ganga.GPIDev.Credentials import require_credential
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger

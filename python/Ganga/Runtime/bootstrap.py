@@ -133,7 +133,7 @@ def manualExportToGPI(my_interface=None):
     #exportToInterface(my_interface, 'list_plugins', list_plugins, 'Functions')
     # FIXME: END DEPRECATED
 
-    from Ganga.GPIDev.Credentials2 import credential_store
+    from Ganga.GPIDev.Credentials import credential_store
     exportToInterface(my_interface, 'credential_store', credential_store, 'Objects', 'Credential store')
 
     exportToInterface(my_interface, 'typename', typename, 'Functions')
@@ -904,12 +904,12 @@ under certain conditions; type license() for details.
         manualExportToGPI()
 
         from Ganga.Runtime import Workspace_runtime, Repository_runtime
-        from Ganga.GPIDev.Credentials2 import credential_store
+        from Ganga.GPIDev.Credentials import credential_store
         if Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken():
             # If the registry or the workspace needs an AFS token then add one to the credential store.
             # Note that this happens before the monitoring starts so that it gets tracked properly
 
-            from Ganga.GPIDev.Credentials2.AfsToken import AfsToken
+            from Ganga.GPIDev.Credentials.AfsToken import AfsToken
             credential_store.create(AfsToken(), create=False)
 
         import Ganga.Core
@@ -1292,7 +1292,7 @@ under certain conditions; type license() for details.
     @staticmethod
     def ganga_prompt(_=None):
 
-        from Ganga.GPIDev.Credentials2 import get_needed_credentials
+        from Ganga.GPIDev.Credentials import get_needed_credentials
 
         needed_credentials = get_needed_credentials()
 

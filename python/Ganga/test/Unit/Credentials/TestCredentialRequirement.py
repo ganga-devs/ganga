@@ -1,5 +1,5 @@
-from Ganga.GPIDev.Credentials2.VomsProxy import VomsProxy
-from Ganga.GPIDev.Credentials2.AfsToken import AfsToken
+from Ganga.GPIDev.Credentials.VomsProxy import VomsProxy
+from Ganga.GPIDev.Credentials.AfsToken import AfsToken
 
 
 def test_encoded():

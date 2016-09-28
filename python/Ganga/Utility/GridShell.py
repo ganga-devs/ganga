@@ -33,8 +33,8 @@ from Ganga.Utility.Shell import Shell
 from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 
-from Ganga.GPIDev.Credentials2 import credential_store
-from Ganga.GPIDev.Credentials2.exceptions import InvalidCredentialError
+from Ganga.GPIDev.Credentials import credential_store
+from Ganga.GPIDev.Credentials.exceptions import InvalidCredentialError
 
 _allShells = {}
 

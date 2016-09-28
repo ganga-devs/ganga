@@ -4,8 +4,8 @@ try:
 except ImportError:
     import mock
 
-from Ganga.GPIDev.Credentials2.VomsProxy import VomsProxy, VomsProxyInfo
-from Ganga.GPIDev.Credentials2.AfsToken import AfsToken, AfsTokenInfo
+from Ganga.GPIDev.Credentials.VomsProxy import VomsProxy, VomsProxyInfo
+from Ganga.GPIDev.Credentials.AfsToken import AfsToken, AfsTokenInfo
 
 
 class FakeShell(object):
@@ -48,8 +48,8 @@ class FakeShell(object):
 
 @pytest.yield_fixture(scope='function')
 def fake_shell(mocker):
-    s = mocker.patch('Ganga.GPIDev.Credentials2.VomsProxy.VomsProxyInfo.shell', FakeShell())
-    mocker.patch('Ganga.GPIDev.Credentials2.ICredentialInfo.os.path.exists', return_value=False)
+    s = mocker.patch('Ganga.GPIDev.Credentials.VomsProxy.VomsProxyInfo.shell', FakeShell())
+    mocker.patch('Ganga.GPIDev.Credentials.ICredentialInfo.os.path.exists', return_value=False)
     yield s
 
 

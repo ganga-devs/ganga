@@ -12,7 +12,7 @@ import uuid
 
 import pytest
 
-from Ganga.GPIDev.Credentials2 import credential_store
+from Ganga.GPIDev.Credentials import credential_store
 from Ganga.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 

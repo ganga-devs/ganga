@@ -10,7 +10,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import Schema, Version
-from Ganga.GPIDev.Credentials2 import credential_store, needed_credentials
+from Ganga.GPIDev.Credentials import credential_store, needed_credentials
 
 import Ganga.Utility.logging
 

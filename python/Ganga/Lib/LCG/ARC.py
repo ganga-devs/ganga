@@ -24,8 +24,8 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG import Grid
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
-from Ganga.GPIDev.Credentials2 import require_credential, credential_store, needed_credentials
-from Ganga.GPIDev.Credentials2.VomsProxy import VomsProxy
+from Ganga.GPIDev.Credentials import require_credential, credential_store, needed_credentials
+from Ganga.GPIDev.Credentials.VomsProxy import VomsProxy
 from Ganga.GPIDev.Base.Proxy import getName
 
 config = getConfig('LCG')

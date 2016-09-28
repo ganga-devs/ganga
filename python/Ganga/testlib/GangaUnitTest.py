@@ -138,7 +138,7 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
 
     # Adapted from the Coordinator class, check for the required credentials and stop if not found
     # Hopefully stops us falling over due to no AFS access of something similar
-    from Ganga.GPIDev.Credentials2 import get_needed_credentials
+    from Ganga.GPIDev.Credentials import get_needed_credentials
     missing_cred = get_needed_credentials()
 
     logger.info("Checking Credentials")
