@@ -105,3 +105,4 @@ class DiracProxy(GangaObject):
     """ dummy class to allow for loading of 6.3.x jobs inside 6.2.x. PLEASE NEVER USE THIS! """
     _schema = Schema(Version(1, 0))
     _category = 'CredentialRequirement'
+

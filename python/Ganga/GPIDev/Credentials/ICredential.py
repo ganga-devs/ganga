@@ -524,3 +524,4 @@ class ICredential(GangaObject):
         """
         logger.warning("Dummy method used - no information returned")
         return ""
+
