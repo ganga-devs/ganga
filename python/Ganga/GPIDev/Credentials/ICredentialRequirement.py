@@ -1,5 +1,6 @@
 from abc import abstractmethod
 
+from Ganga.Core import GangaAttributeError
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 
@@ -26,7 +27,7 @@ class ICredentialRequirement(GangaObject):
         super(ICredentialRequirement, self).__init__()
         for key, value in kwargs.items():
             if key not in self._schema.allItemNames():
-                raise Exception()
+                raise GangaAttributeError('{class_name} does not have attribute called "{attr}"'.format(class_name=self.__class__.__name__, attr=key))
             setattr(self, key, value)
 
     @abstractmethod
