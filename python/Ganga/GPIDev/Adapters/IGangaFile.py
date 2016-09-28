@@ -134,13 +134,14 @@ class IGangaFile(GangaObject):
                 logger.info("Adding: %s" % (this_file))
                 sub_file = copy.deepcopy(self)
                 sub_file.namePattern = os.path.basename(this_file)
+                sub_file.localDir = sourceDir
                 output = output and sub_file.put()
                 if sub_file.namePattern not in [file_.namePattern for file_ in self.subfiles]:
                     self.subfiles.append(sub_file)
                 else:
                     for file_ in self.subfiles:
                         if file_.namePattern == sub_file.namePattern:
-                            file_.localDir = sub_file.localDir
+                            file_.localDir = sourceDir
                             break
 
             return output
@@ -204,11 +205,10 @@ class IGangaFile(GangaObject):
        
         return (folderStructure, filenameStructure)
 
-    def uploadTo(sourcePath, targetPath):
+    def uploadTo(self, targetPath):
         """
         This method only cares about uploading the file to the correct location given as 'targetPath'
         Args:
-            sourcePath (str): This is the _absolute_ target where the file managed by this class is stored locally
             targetPath (str): This is the _absolute_ target where the file managed by this class is uploaded to
         """
         raise NotImplementedError

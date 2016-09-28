@@ -243,7 +243,7 @@ class MassStorageFile(IGangaFile):
 
         filePath, fileName = super(MassStorageFile, self).getOutputFilename()
 
-        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
+        massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
         filePath = os.path.join(massStorageConfig['path'], filePath)
 
         return filePath, fileName
@@ -275,7 +275,7 @@ class MassStorageFile(IGangaFile):
         """
         """
 
-        sourcePath = os.path.join(*self.getOutputFilename())
+        sourcePath = os.path.join(self.localDir, self.namePattern)
 
         massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
         cp_cmd = massStorageConfig['cp_cmd']
@@ -289,7 +289,7 @@ class MassStorageFile(IGangaFile):
 
         (exitcode, mystdout, mystderr) = MassStorageFile.execSyscmdSubprocess('%s %s %s' % (cp_cmd, quote(sourcePath), quote(targetPath)))
         if exitcode != 0:
-            self.handleUploadFailure(mystderr, '5) %s %s %s' % (cp_cmd, sourcePath, targetPath))
+            self.handleUploadFailure(mystderr, '5) %s %s %s' % (cp_cmd, quote(sourcePath), quote(targetPath)))
             return False
         else:
             logger.info('%s successfully uploaded to mass storage as %s' % (quote(sourcePath), quote(targetPath)))
