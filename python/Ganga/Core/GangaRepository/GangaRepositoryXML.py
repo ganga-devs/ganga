@@ -778,44 +778,6 @@ class GangaRepositoryLocal(GangaRepository):
             except (OSError, IOError, XMLFileError) as x:
                 raise RepositoryError(self, "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x))
 
-    def is_loaded(self, this_id):
-        """
-        Has "this_id" been loaded from disk already
-        Check self.objects for the ._data sttribute
-        Args:
-            this_id (int): This is the id we want to check has been fully loaded from disk
-        """
-        return (this_id in self.objects) and (self.objects[this_id]._data is not None)
-
-    def count_nodes(self, this_id):
-        """
-        Count the number of nodes in "this_id" of self.objects"
-        Is this used any more?
-        Args:
-            this_id (int): This is the ID we will look for all subnodes of on disk, i.e. subjobs, etc
-        """
-        node_count = 0
-        fn = self.get_fn(this_id)
-
-        ld = os.listdir(os.path.dirname(fn))
-        i = 0
-        while str(i) in ld:
-            sfn = os.path.join(os.path.dirname(fn), str(i), self.dataFileName)
-            if os.path.exists(sfn):
-                node_count = node_count + 1
-            i += 1
-
-        return node_count
-
-    def _actually_loaded(self, this_id):
-        """
-        Return if "this_id" is in the _full_loaded dictionary of objects loaded from XML by this class
-        This is different to is_loaded as it checks for actual read operations
-        Args:
-            this_id (int): This is an integer corresponding to a key in the _fully_loaded dict (possibly objects too)
-        """
-        return this_id in self._fully_loaded
-
     def _check_index_cache(self, obj, this_id):
         """
         Checks the index cache of "this_id" against the index cache generated from the "obj"ect
@@ -857,7 +819,7 @@ class GangaRepositoryLocal(GangaRepository):
                 # most likely the result of another ganga
                 # process modifying the repo
 
-    def _must_actually_load_xml(self, fn, this_id, load_backup, has_children, tmpobj):
+    def _parse_xml(self, fn, this_id, load_backup, has_children, tmpobj):
         """
         If we must actually load the object from disk then we end up here.
         This replaces the attrs of "objects[this_id]" with the attrs from tmpobj
@@ -918,9 +880,9 @@ class GangaRepositoryLocal(GangaRepository):
         if this_id not in self._fully_loaded:
             self._fully_loaded[this_id] = obj
 
-    def _actually_load_xml(self, fobj, fn, this_id, load_backup):
+    def _load_xml_from_obj(self, fobj, fn, this_id, load_backup):
         """
-        This is the method which will load the job from fn using the fobj using the self.from_file method and _must_actually_load_xml is called to replace the
+        This is the method which will load the job from fn using the fobj using the self.from_file method and _parse_xml is called to replace the
         self.objects[this_id] with the correct attributes. We also preseve knowledge of if we're being asked to load a backup or not
         Args:
             fobj (file handler): This is the file handler for the fn
@@ -946,7 +908,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         logger.debug("Found children: %s" % str(has_children))
 
-        self._must_actually_load_xml(fn, this_id, load_backup, has_children, tmpobj)
+        self._parse_xml(fn, this_id, load_backup, has_children, tmpobj)
 
         if hasattr(self.objects[this_id], self.sub_split):
             sub_attr = getattr(self.objects[this_id], self.sub_split)
@@ -1046,7 +1008,7 @@ class GangaRepositoryLocal(GangaRepository):
                 raise
 
             try:
-                self._actually_load_xml(fobj, fn, this_id, load_backup)
+                self._load_xml_from_obj(fobj, fn, this_id, load_backup)
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % err)
                 logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
