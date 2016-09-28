@@ -279,7 +279,7 @@ def global_disk_lock(f):
                     self.global_lock_acquire()
                     break
                 except:
-                    if i == 10:
+                    if i == 9:
                         raise
                     time.sleep(1.)
 
