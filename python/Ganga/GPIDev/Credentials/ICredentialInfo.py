@@ -12,6 +12,8 @@ from .exceptions import CredentialsError
 
 logger = Ganga.Utility.logging.getLogger()
 
+ENABLE_CACHING = True
+
 
 def cache(method):
     """
@@ -29,7 +31,7 @@ def cache(method):
     def wrapped_function(self, *args, **kwargs):
 
         # If the mtime has been changed, clear the cache
-        if os.path.exists(self.location):
+        if ENABLE_CACHING and os.path.exists(self.location):
             mtime = os.path.getmtime(self.location)
             if mtime > self.cache['mtime']:
                 self.cache = {'mtime': mtime}

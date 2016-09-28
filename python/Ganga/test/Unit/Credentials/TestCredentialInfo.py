@@ -49,11 +49,12 @@ class FakeShell(object):
 @pytest.yield_fixture(scope='function')
 def fake_shell(mocker):
     s = mocker.patch('Ganga.GPIDev.Credentials.VomsProxy.VomsProxyInfo.shell', FakeShell())
-    mocker.patch('Ganga.GPIDev.Credentials.ICredentialInfo.os.path.exists', return_value=False)
+    mocker.patch('Ganga.GPIDev.Credentials.ICredentialInfo.os.path.exists', return_value=True)
+    mocker.patch('Ganga.GPIDev.Credentials.ICredentialInfo.ENABLE_CACHING', False)
     yield s
 
 
-def test_plain_construct():
+def test_plain_construct(fake_shell):
     VomsProxyInfo(VomsProxy())
     AfsTokenInfo(AfsToken())
 
@@ -63,7 +64,7 @@ def test_construct(fake_shell):
     VomsProxyInfo(req)
 
 
-def test_default_location():
+def test_default_location(fake_shell):
     v = VomsProxyInfo(VomsProxy())
     assert v.location == v.default_location()
 
@@ -83,7 +84,7 @@ def test_create(fake_shell):
     cmd = v.shell.check_call.call_args[0][0]
     assert 'voms-proxy-init' in cmd
     assert '-voms some_vo' in cmd
-    assert '-out ' + v.location in cmd
+    assert '-out "{0}"'.format(v.location) in cmd
 
 
 def test_is_valid(fake_shell):
