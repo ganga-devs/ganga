@@ -35,7 +35,11 @@ def require_credential(method):
                 raise exceptions.CredentialsError('Cannot get proxy which matches requirements {0}'.format(cred_req))
 
         if not cred.is_valid():
-            raise exceptions.CredentialsError('Proxy is invalid')
+            if isinstance(threading.current_thread(), threading._MainThread):  # threading.main_thread() in Python 3.4
+                logger.info('Found credential [%s] but it is invalid. Trying to renew...', cred)
+                cred.renew()
+            else:
+                raise exceptions.CredentialsError('Proxy is invalid')
 
         return method(self, *args, **kwargs)
     return wrapped_method
