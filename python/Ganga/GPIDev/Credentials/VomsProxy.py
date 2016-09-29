@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import re
 import subprocess
+import tempfile
 from datetime import datetime, timedelta
 
 import Ganga.Utility.logging
@@ -126,7 +127,7 @@ class VomsProxyInfo(ICredentialInfo):
         return datetime.now() + timedelta(seconds=int(output))
 
     def default_location(self):
-        return os.getenv('X509_USER_PROXY') or '/tmp/x509up_u'+str(os.getuid())
+        return os.getenv('X509_USER_PROXY') or os.path.join(tempfile.gettempdir(), 'x509up_u'+str(os.getuid()))
 
 
 class VomsProxy(ICredentialRequirement):
