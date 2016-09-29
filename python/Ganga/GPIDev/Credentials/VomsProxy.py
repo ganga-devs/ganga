@@ -87,7 +87,7 @@ class VomsProxyInfo(ICredentialInfo):
     @property
     @cache
     def vo(self):
-        status, output, message = self.shell.cmd1('ls "%s"; voms-proxy-info -file "%s" -vo' % (self.location, self.location))
+        status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -vo' % self.location)
         if status != 0:
             return None
         return output.split(':')[0].strip()
