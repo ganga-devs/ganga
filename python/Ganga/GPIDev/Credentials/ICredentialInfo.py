@@ -77,7 +77,7 @@ class ICredentialInfo(object):
 
         if check_file:
             logger.debug('Trying to wrap %s', self.location)
-            if not os.path.exists(self.location):
+            if not self.exists():
                 raise IOError('Proxy file {path} not found'.format(path=self.location))
             logger.debug('Wrapping existing file %s', self.location)
 
@@ -165,7 +165,7 @@ class ICredentialInfo(object):
             ``True`` if we meet all requirements
             ``False`` if even one requirement is not met or if the credential is not valid
         """
-        if not os.path.exists(self.location):
+        if not self.exists():
             return False
         return all(self.check_requirement(query, requirementName) for requirementName in query._schema.datadict)
 
@@ -185,6 +185,13 @@ class ICredentialInfo(object):
             return True
         logger.debug('%s: \t%s \t%s', requirement_name, getattr(self, requirement_name), requirement_value)
         return getattr(self, requirement_name) == requirement_value
+
+    def exists(self):
+        # type: () -> bool
+        """
+        Does the credential file exist on disk
+        """
+        return os.path.exists(self.location)
 
     def __eq__(self, other):
         return self.location == other.location

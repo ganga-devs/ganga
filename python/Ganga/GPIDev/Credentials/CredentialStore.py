@@ -67,6 +67,7 @@ class CredentialStore(GangaObject, collections.Mapping):
 
     @export
     def __str__(self, interactive=False):
+        self.clean()
         headers = ['Type', 'Location', 'Valid', 'Time left']
         cred_info = [
                         [str(f) for f in (type(cred).__name__, cred.location, cred.is_valid(), cred.time_left())]  # Format each field as a string
@@ -139,6 +140,8 @@ class CredentialStore(GangaObject, collections.Mapping):
             KeyError: If it could not provide a credential
             TypeError: If query is of the wrong type
         """
+
+        self.clean()
 
         if not isinstance(query, ICredentialRequirement):
             raise TypeError('Credential store query should be of type ICredentialRequirement')
@@ -251,6 +254,13 @@ class CredentialStore(GangaObject, collections.Mapping):
         Remove all credentials in the system
         """
         self.credentials = set()
+
+    def clean(self):
+        # type: () -> None
+        """
+        Remove any credentials with missing files
+        """
+        self.credentials = set(cred for cred in self.credentials if cred.exists())
 
 # This is a global 'singleton'
 credential_store = CredentialStore()

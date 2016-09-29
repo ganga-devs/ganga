@@ -45,6 +45,9 @@ class FakeCredInfo(ICredentialInfo):
     def check_requirements(self, query):
         return True
 
+    def exists(self):
+        return self.does_exist
+
 
 class FakeCred(ICredentialRequirement):
     """
