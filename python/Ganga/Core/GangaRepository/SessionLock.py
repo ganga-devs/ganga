@@ -77,8 +77,7 @@ def removeGlobalSessionFiles():
     global sessionFiles
     for i in sessionFiles:
         if os.path.isfile(i):
-            if not i.endswith('global_lock'):
-                #logger.debug( "Removing: %s" + i )
+            if not (i.endswith('global_lock') or i.endswith('global_lock.afs')):
                 os.unlink(i)
 
 
@@ -86,7 +85,6 @@ def removeGlobalSessionFileHandlers():
     global sessionFileHandlers
     for i in sessionFileHandlers:
         try:
-            fcntl.lockf(i, fcntl.LOCK_UN)
             os.close(i)
         except Exception as err:
             logger.debug("Failed to unlock or close sessionfilehandler")
@@ -274,13 +272,11 @@ def global_disk_lock(f):
     @functools.wraps(f)
     def decorated_global(self, *args, **kwds):
         with global_disk_lock.global_lock:
-            for i in range(10):
+            while True:
                 try:
                     self.global_lock_acquire()
                     break
                 except:
-                    if i == 9:
-                        raise
                     time.sleep(1.)
 
             self.safe_LockCheck()
