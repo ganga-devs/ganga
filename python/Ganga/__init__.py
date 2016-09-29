@@ -727,6 +727,15 @@ output_config.addOption('MassStorageFile',
                         'defaultProtocol': defaultMassStorageProto},
                        massStorageFileExt)
 
+sharedFileBackendPost = {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client', 'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}
+
+output_config.addOption('SharedFile',
+                       {'fileExtensions': [''],
+                        'backendPostprocess': sharedFileBackendPost,
+                        'uploadOptions': {'path': None, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
+                        'defaultProtocol': 'file://'},
+                        docstr_Ext % ('Shared Storage', 'SharedFS'))
+
 # ------------------------------------------------
 # Display
 disp_config = makeConfig('Display', 'control the printing style of the different registries ("jobs","box","tasks"...)')

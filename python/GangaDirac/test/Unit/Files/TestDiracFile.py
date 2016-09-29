@@ -6,9 +6,10 @@ try:
 except ImportError:
     from mock import patch
 
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaFileError
 from Ganga.Utility.logging import getLogger
 from GangaDirac.Lib.Files.DiracFile import DiracFile
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 
 logger = getLogger(modulename=True)
 
@@ -61,8 +62,8 @@ def test__auto_remove(df):
 
 
 def test_remove(df):
-    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'lfn': True}}}) as execute:
-        assert df.remove() is None
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'lfn': True}}) as execute:
+        assert df.remove() is True
         assert df.lfn == ''
         assert df.locations == []
         assert df.guid == ''
@@ -74,77 +75,62 @@ def test_remove(df):
 
     df.lfn = 'lfn'
 
-    fail_returns = [
-        ('Not Dict', 'STRING!'),
-        ("No 'OK' present", {'Value': {'Successful': {'lfn': True}}}),
-        ('OK is False', {'OK': False, 'Value': {'Successful': {'lfn': True}}}),
-        ("No 'Value' present", {'OK': True}),
-        ("LFN not in Value['Successful']", {'OK': True, 'Value': {'Successful': {}}})
-    ]
-
-    for label, fr in fail_returns:
-        logger.info("Testing failure when return is {0} ...".format(label))
-        with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value=fr):
-            assert df.remove() == fr
-            assert df.lfn == 'lfn'
+    logger.info("Testing failure when exception is raised")
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracError('test Exception')):
+        with pytest.raises(GangaDiracError):
+            assert df.remove()
+        assert df.lfn == 'lfn'
 
 
 def test_replicate(df):
-    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'lfn': {}}}}) as execute:
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'lfn': {}}}) as execute:
         assert df.replicate('DEST') is None
         execute.assert_called_once_with('replicateFile("lfn", "DEST", "")')
         assert df.locations == ['location', 'DEST']
 
     df.locations = ['location']
-    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'lfn': {}}}}) as execute:
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'lfn': {}}}) as execute:
         assert df.replicate('DEST', 'location') is None
         execute.assert_called_once_with('replicateFile("lfn", "DEST", "location")')
         assert df.locations == ['location', 'DEST']
 
-    fail_returns = [
-        ('Not Dict', 'STRING!'),
-        ("No 'OK' present", {'Value': {'Successful': {'lfn': True}}}),
-        ('OK is False', {'OK': False, 'Value': {'Successful': {'lfn': True}}}),
-        ("No 'Value' present", {'OK': True}),
-        ("LFN not in Value['Successful']", {'OK': True, 'Value': {'Successful': {}}})
-    ]
-    for label, fr in fail_returns:
-        logger.info("Testing failure when return is {0} ...".format(label))
-        with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value=fr) as execute:
-            assert df.replicate('DEST') == fr
+        logger.info("Testing failure when exception thrown")
+        with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracError('test Exception')) as execute:
+            with pytest.raises(GangaDiracError):
+                assert df.replicate('DEST')
             execute.assert_called_once_with('replicateFile("lfn", "DEST", "")')
 
     df.lfn = ''
-    with pytest.raises(GangaException):
+    with pytest.raises(GangaFileError):
         df.replicate('DEST')
 
 
 def test_get(df):
-    with pytest.raises(GangaException):
+    with pytest.raises(GangaFileError):
         df.get()
 
     df.localDir = os.getcwd()
     df.lfn = ''
-    with pytest.raises(GangaException):
+    with pytest.raises(GangaFileError):
         df.get()
 
     df.lfn = 'lfn'
-    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
-        assert df.get() is None
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
+        assert df.get() is True
         execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
 
     df.lfn = '/the/root/lfn'
     df.namePattern = ''
-    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
-        assert df.get() is None
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
+        assert df.get() is True
         execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
         assert df.namePattern == 'lfn'
 
     df.lfn = '/the/root/lfn.gz'
     df.compressed = True
     df.namePattern = ''
-    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
-        assert df.get() is None
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
+        assert df.get() is True
         execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
         assert df.namePattern == 'lfn'
 
@@ -154,39 +140,33 @@ def test_get(df):
         df.locations = ['location']
 
     df.guid = ''
-    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
-            assert df.get() is None
+            assert df.get() is True
             execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
             assert df.guid == 'guid'
             assert df.locations == ['location']
 
     df.locations = []
-    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
-            assert df.get() is None
+            assert df.get() is True
             execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
             assert df.guid == 'guid'
             assert df.locations == ['location']
 
     df.guid = ''
     df.locations = []
-    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'OK': True, 'Value': {'Successful': {'%s' % df.lfn: True}}}) as execute:
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
-            assert df.get() is None
+            assert df.get() is True
             execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
             assert df.guid == 'guid'
             assert df.locations == ['location']
 
-    fail_returns = [
-        ('Not Dict', 'STRING!'),
-        ("No 'OK' present", {'Value': {'Successful': {'lfn': True}}}),
-        ('OK is False', {'OK': False, 'Value': {'Successful': {'lfn': True}}}),
-        ("No 'Value' present", {'OK': True}),
-        ("LFN not in Value['Successful']", {'OK': True, 'Value': {'Successful': {}}})
-    ]
-    for label, fr in fail_returns:
-        logger.info("Testing failure when return is {0} ...".format(label))
-        with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value=fr) as execute:
-            assert df.get() == fr
-            execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
+    logger.info("Testing failure when an exception is raised")
+    with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracError('test Exception')) as execute:
+        with pytest.raises(GangaDiracError):
+            assert df.get()
+        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
+

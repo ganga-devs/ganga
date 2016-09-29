@@ -11,6 +11,8 @@ import os
 from os import path
 import copy
 import shutil
+from pipes import quote
+import glob
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
@@ -35,11 +37,10 @@ class LocalFile(IGangaFile):
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
                                                 sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                                      'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
-                                     #'output_location': SimpleItem(defvalue=None, typelist=[str, None], hidden=1, copyable=1, doc="path of output location on disk")
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"
-    _exportmethods = ["location", "remove", "accessURL"]
+    _exportmethods = ["location", "remove", "accessURL", "copyTo"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
@@ -48,7 +49,6 @@ class LocalFile(IGangaFile):
         super(LocalFile, self).__init__()
 
         self.tmp_pwd = None
-        self.output_location = None
 
         if isinstance(namePattern, str):
             self.namePattern = namePattern
@@ -77,7 +77,10 @@ class LocalFile(IGangaFile):
         if attr == 'namePattern':
             if len(value.split(os.sep)) > 1:
                 this_dir = path.dirname(value)
-                super(LocalFile, self).__setattr__('localDir', this_dir)
+                if this_dir:
+                    self.localDir = this_dir
+                elif path.isfile(path.join(os.getcwd(), path.basename(value))):
+                    self.localDir = os.getcwd()
             actual_value = path.basename(value)
         elif attr == 'localDir':
             if value:
@@ -224,10 +227,27 @@ class LocalFile(IGangaFile):
 
         return
 
+    def internalCopyTo(self, targetPath):
+        """
+        Copy a the file to the local storage using the get mechanism
+        Args:
+            targetPath (str): Target path where the file is to copied to
+        """
+        for currentFile in glob.glob(os.path.join(self.localDir, self.namePattern)):
+            shutil.copy(currentFile, path.join(targetPath, path.basename(currentFile)))
+
+    def get(self):
+        """
+        Method to get the Local file and/or to check that a file exists locally
+        """
+        # Deliberately do nothing.
+
     def put(self):
 	"""
         Copy the file to the detination (in the case of LocalFile the localDir)
         """
+        # This is useful for placing the LocalFile in a subdir at the end of a job
+
         #FIXME this method should be written to work with some other parameter than localDir for job outputs but for now this 'works'
         if self.localDir:
             try:
@@ -243,7 +263,6 @@ class LocalFile(IGangaFile):
                 shutil.copy(path.join(job.outputdir, self.namePattern),
                             path.join(job.outputdir, self.localDir, self.namePattern))
            
-
     def cleanUpClient(self):
         """
         This performs the cleanup method on the client output workspace to remove temporary files
@@ -251,45 +270,47 @@ class LocalFile(IGangaFile):
         # For LocalFile this is where the file is stored so don't remove it
         pass
 
-## rcurrie Attempted to implement for 6.1.9 but commenting out due to not being able to correctly make use of setLocation
+    def getWNScriptDownloadCommand(self, indent):
 
-#    def getWNScriptDownloadCommand(self, indent):
-#
-#        script = """
-####INDENT###os.system('###CP_COMMAND')
-#
-#"""
-#        full_path = path.join(self.localDir, self.namePattern)
-#        replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : 'cp %s .' % full_path}
-#
-#        for k, v in replace_dict.iteritems():
-#            script = script.replace(k, v)
-#
-#        return script
-#
-#
-#    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
-#
-#        cp_template = """
-####INDENT###os.system("###CP_COMMAND###")
-#"""
-#        script = ""
-#
-#        for this_file in outputFiles:
-#            filename = this_file.namePattern
-#            cp_cmd = 'cp %s %s' % (filename, self.output_location)
-#
-#            this_cp = str(cp_template)
-#
-#            replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd}
-#
-#            for k, v in replace_dict.iteritems():
-#                print("Replace %s : %s" % (k, v))
-#                this_cp = this_cp.replace(k, v)
-#
-#            script = this_cp
-#            break
-#
-#        return script
-#
+        # create symlink
+        shortScript = """
+# create symbolic links for LocalFiles
+for f in ###FILELIST###:
+    if not os.path.exists(os.path.basename(f)):
+        os.symlink(f, os.path.basename(f))
+"""
+        from Ganga.GPIDev.Lib.File import FileUtils
+        shortScript = FileUtils.indentScript(shortScript, '###INDENT###')
+
+        shortScript = shortScript.replace('###FILELIST###', "%s" % self.getFilenameList())
+
+        return shortScript
+
+
+    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
+
+        cp_template = """
+###INDENT###os.system("###CP_COMMAND###")
+"""
+        script = ""
+
+        j = self.getJobObject()
+        output_dir = j.getOutputWorkspace(create=True).getPath()
+
+        for this_file in outputFiles:
+            filename = this_file.namePattern
+            cp_cmd = 'cp %s %s' % (filename, quote(output_dir))
+
+            this_cp = cp_template
+
+            replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd}
+
+            for k, v in replace_dict.iteritems():
+                this_cp = this_cp.replace(k, v)
+
+            script = this_cp
+            break
+
+        return script
+
 
