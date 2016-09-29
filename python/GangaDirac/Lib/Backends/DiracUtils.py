@@ -144,8 +144,8 @@ def getAccessURLs(lfns, defaultSE = ''):
     reps = execute('getReplicas(%s)' % lfnList)
     # Get the SEs
     SEs = []
-    for lf in reps['Value']['Successful']:
-        for thisSE in reps['Value']['Successful'][lf].keys():
+    for lf in reps['Successful']:
+        for thisSE in reps['Successful'][lf].keys():
             if thisSE not in SEs:
                 SEs.append(thisSE)
     myURLs = []
@@ -161,7 +161,7 @@ def getAccessURLs(lfns, defaultSE = ''):
     # Remove the successfully found ones from the list and move on to the next SE.
     for SE in SEs:
         lfns = remainingLFNs
-        thisSEFiles = execute('getAccessURL(%s, "%s")' % (lfns , SE))['Value']['Successful']
+        thisSEFiles = execute('getAccessURL(%s, "%s")' % (lfns , SE))['Successful']
         for lfn in thisSEFiles.keys():
             myURLs.append(thisSEFiles[lfn])
             remainingLFNs.remove(lfn)
