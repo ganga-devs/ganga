@@ -6,7 +6,7 @@ from functools import wraps
 import Ganga.Utility.logging
 
 from .CredentialStore import credential_store, needed_credentials, get_needed_credentials
-from . import exceptions
+from Ganga.Core.exceptions import CredentialsError, InvalidCredentialError
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -32,14 +32,14 @@ def require_credential(method):
                 logger.warning('Required credential [%s] not found in store', cred_req)
                 cred = credential_store.create(cred_req, create=True)
             else:
-                raise exceptions.CredentialsError('Cannot get proxy which matches requirements {0}'.format(cred_req))
+                raise CredentialsError('Cannot get proxy which matches requirements {0}'.format(cred_req))
 
         if not cred.is_valid():
             if isinstance(threading.current_thread(), threading._MainThread):  # threading.main_thread() in Python 3.4
                 logger.info('Found credential [%s] but it is invalid. Trying to renew...', cred)
                 cred.renew()
             else:
-                raise exceptions.CredentialsError('Proxy is invalid')
+                raise InvalidCredentialError('Proxy is invalid')
 
         return method(self, *args, **kwargs)
     return wrapped_method

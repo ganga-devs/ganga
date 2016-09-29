@@ -8,7 +8,7 @@ from functools import wraps
 
 import Ganga.Utility.logging
 
-from .exceptions import CredentialsError
+from Ganga.Core.exceptions import CredentialsError
 
 logger = Ganga.Utility.logging.getLogger()
 

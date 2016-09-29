@@ -34,7 +34,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 
 from Ganga.GPIDev.Credentials import credential_store
-from Ganga.GPIDev.Credentials.exceptions import InvalidCredentialError
+from Ganga.Core.exceptions import InvalidCredentialError
 
 _allShells = {}
 

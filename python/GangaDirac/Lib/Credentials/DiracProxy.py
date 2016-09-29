@@ -11,7 +11,7 @@ from Ganga.GPIDev.Schema import SimpleItem
 
 from Ganga.GPIDev.Credentials.ICredentialInfo import cache
 from Ganga.GPIDev.Credentials.ICredentialRequirement import ICredentialRequirement
-from Ganga.GPIDev.Credentials.exceptions import CredentialRenewalError
+from Ganga.Core.exceptions import CredentialRenewalError
 from Ganga.GPIDev.Credentials.VomsProxy import VomsProxyInfo
 
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv

@@ -6,7 +6,7 @@ from contextlib import contextmanager
 
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
-from Ganga.GPIDev.Credentials.exceptions import CredentialRenewalError
+from Ganga.Core.exceptions import CredentialRenewalError
 
 from Ganga.Utility.threads import SynchronisedObject
 

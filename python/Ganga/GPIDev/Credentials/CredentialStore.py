@@ -8,7 +8,7 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Proxy import export
 from Ganga.GPIDev.Schema import Schema, Version
 
-from .exceptions import CredentialsError
+from Ganga.Core.exceptions import CredentialsError
 from .ICredentialRequirement import ICredentialRequirement
 from .ICredentialInfo import ICredentialInfo
 

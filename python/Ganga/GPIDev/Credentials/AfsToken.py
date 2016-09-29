@@ -12,7 +12,7 @@ from Ganga.Utility.Shell import Shell
 
 from .ICredentialInfo import ICredentialInfo, cache
 from .ICredentialRequirement import ICredentialRequirement
-from .exceptions import CredentialRenewalError
+from Ganga.Core.exceptions import CredentialRenewalError
 
 logger = Ganga.Utility.logging.getLogger()
 
