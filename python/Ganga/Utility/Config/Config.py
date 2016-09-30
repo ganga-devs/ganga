@@ -217,7 +217,7 @@ class ConfigOption(object):
         self.examples = None
         self.filter = None
         self.typelist = None
-        self._hasModified = False
+        self.hasModified = False
 
     def defineOption(self, default_value, docstring, **meta):
 
@@ -235,18 +235,12 @@ class ConfigOption(object):
         self.convert_type('session_value')
         self.convert_type('user_value')
 
-    def setModified(self, val):
-        self._hasModified = val
-
-    def hasModified(self):
-        return self._hasModified
-
     def setSessionValue(self, session_value):
 
         if not hasattr(self, 'docstring'):
             raise ConfigError('Can\'t set a session value without a docstring!')
 
-        self.setModified(True)
+        self.hasModified = True
 
         # try:
         if self.filter:
@@ -263,7 +257,7 @@ class ConfigOption(object):
         if not hasattr(self, 'docstring'):
             raise ConfigError('Can\'t set a user value without a docstring!')
 
-        self.setModified(True)
+        self.hasModified = True
         try:
             if self.filter:
                 user_value = self.filter(self, user_value)
@@ -289,7 +283,7 @@ class ConfigOption(object):
             raise x
 
     def overrideDefaultValue(self, default_value):
-        self.setModified(True)
+        self.hasModified = True
         if hasattr(self, 'default_value'):
             default_value = self.transform_PATH_option(default_value, self.default_value)
         self.default_value = default_value
@@ -322,8 +316,8 @@ class ConfigOption(object):
         if name in ['value', 'level']:
             raise AttributeError('Cannot set "%s" attribute of the option object' % name)
 
-        self.__dict__[name] = value
-        self.__dict__['_hasModified'] = True
+        super(ConfigOption, self).__setattr__(name, value)
+        super(ConfigOption, self).__setattr__('_hasModified', True)
 
     def check_defined(self):
         return hasattr(self, 'default_value')
@@ -446,13 +440,7 @@ class PackageConfig(object):
         # sanity check to force using makeConfig()
         self._config_made = False
 
-        self._hasModified = False
-
-    def setModified(self, val):
-        self._hasModified = val
-
-    def hasModified(self):
-        return self._hasModified
+        self.hasModified = False
 
     def _addOpenOption(self, name, value):
         self.addOption(name, value, "", override=True)
@@ -508,7 +496,7 @@ class PackageConfig(object):
         default type of the option  is not string, then the expression
         will be evaluated."""
 
-        self.setModified(True)
+        self.hasModified = True
 
         logger = getLogger()
 
@@ -541,7 +529,7 @@ class PackageConfig(object):
         the  default  type  of  the  option  is  not  string,  then  the
         expression will be evaluated. """
 
-        self.setModified(True)
+        self.hasModified = True
 
         logger = getLogger()
 
@@ -558,29 +546,29 @@ class PackageConfig(object):
             handler[1](name, value)
 
     def overrideDefaultValue(self, name, val):
-        self.setModified(True)
+        self.hasModified = True
         self.options[name].overrideDefaultValue(val)
 
     def revertToSession(self, name):
-        self.setModified(True)
+        self.hasModified = True
         if name in self.options:
             if hasattr(self.options[name], 'user_value'):
                 del self.options[name].user_value
 
     def revertToDefault(self, name):
-        self.setModified(True)
+        self.hasModified = True
         self.revertToSession(name)
         if name in self.options:
             if hasattr(self.options[name], 'session_value'):
                 del self.options[name].session_value
 
     def revertToSessionOptions(self):
-        self.setModified(True)
+        self.hasModified = True
         for name in self.options:
             self.revertToSession(name)
 
     def revertToDefaultOptions(self):
-        self.setModified(True)
+        self.hasModified = True
         self.revertToSessionOptions()
         for name in self.options:
             self.revertToDefault(name)
