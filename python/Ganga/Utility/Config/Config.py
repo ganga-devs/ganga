@@ -115,20 +115,20 @@ class ConfigError(GangaException):
 # for example, do not do here: from Ganga.Utility.logging import logger
 # use getLogger() function defined below:
 
-logger = None
+_logger = None
 
 
 def getLogger():
     import Ganga.Utility.logging
-    global logger
-    if logger is not None:
-        return logger
+    global _logger
+    if _logger is not None:
+        return _logger
 
     # for the configuration of the logging package itself (in the initial
     # phases) the logging may be disabled
     try:
-        logger = Ganga.Utility.logging.getLogger()
-        return logger
+        _logger = Ganga.Utility.logging.getLogger()
+        return _logger
     except AttributeError as err:
         print("AttributeError: %s" % err)
         # in such a case we return a mock proxy object which ignore all calls
@@ -674,15 +674,15 @@ def transform_PATH_option(name, new_value, current_value):
 
     PATH_ITEM = '_PATH'
     if name[-len(PATH_ITEM):] == PATH_ITEM:
-        logger.debug('PATH-like variable: %s %s %s', name, new_value, current_value)
+        getLogger().debug('PATH-like variable: %s %s %s', name, new_value, current_value)
         if current_value is None:
             ret_value = new_value
         elif new_value[:3] != ':::':
-            logger.debug('Prepended %s to PATH-like variable %s', new_value, name)
+            getLogger().debug('Prepended %s to PATH-like variable %s', new_value, name)
             ret_value = new_value + ':' + current_value
             new_value = ""
         else:
-            logger.debug('Resetting PATH-like variable %s to %s', name, new_value)
+            getLogger().debug('Resetting PATH-like variable %s to %s', name, new_value)
             ret_value = new_value  # [3:]
             new_value = ":::"
 
@@ -896,7 +896,7 @@ def setConfigOption(section="", item="", value=""):
             if item in config.getEffectiveOptions():
                 config.setSessionValue(item, value)
         except Exception as err:
-            logger.debug("Error setting Option: %s = %s  :: %s" % (item, value, err))
+            getLogger().debug("Error setting Option: %s = %s  :: %s" % (item, value, err))
 
     return None
 # KH 050725: End of addition
