@@ -112,6 +112,9 @@ def collectPreparedFiles(app):
         for name in dirs:
             input_folders.append(os.path.join(root, name))
 
+    for file_ in app.getJobObject().inputfiles :
+        input_files.append(os.path.join(file_.localDir, os.path.basename(file_.namePattern)))
+
     return input_files, input_folders
 
 
