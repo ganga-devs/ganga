@@ -281,3 +281,13 @@ def get_needed_credentials():
     needed_credentials.difference_update(now_valid_creds)
 
     return needed_credentials
+
+
+def shutdown():
+    """
+    Clean up after ourselves. This should be non-destructive with
+    regards to anything stored on disk.
+    """
+    global needed_credentials
+    credential_store.clear()
+    needed_credentials = set()
