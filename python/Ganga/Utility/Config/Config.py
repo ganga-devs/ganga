@@ -109,7 +109,7 @@ class ConfigError(GangaException):
         self.what = what
 
     def __str__(self):
-        return "ConfigError: %s " % (self.what)
+        return "ConfigError: %s " % self.what
 
 # WARNING: avoid importing logging at the module level in this file
 # for example, do not do here: from Ganga.Utility.logging import logger
@@ -133,6 +133,7 @@ def getLogger():
         print("AttributeError: %s" % err)
         # in such a case we return a mock proxy object which ignore all calls
         # such as logger.info()...
+
         class X(object):
 
             def __getattr__(self, name):
@@ -305,7 +306,7 @@ class ConfigOption(object):
                 if hasattr(self, str_val):
                     values.append(getattr(self, str_val))
 
-            if values != []:
+            if values:
                 returnable = reduce(self.transform_PATH_option, values)
                 return returnable
 
@@ -331,10 +332,10 @@ class ConfigOption(object):
         return transform_PATH_option(self.name, new_value, current_value)
 
     def convert_type(self, x_name):
-        ''' Convert the type of session_value or user_value (referred to by x_name) according to the types defined by the self.
+        """ Convert the type of session_value or user_value (referred to by x_name) according to the types defined by the self.
         If the option has not been defined or the x_name in question is not defined, then this method is no-op.
         If conversion cannot be performed (type mismatch) then raise ConfigError.
-        '''
+        """
 
         try:
             value = getattr(self, x_name)
@@ -373,8 +374,6 @@ class ConfigOption(object):
 
         def check_type(x, t):
             return isinstance(x, t) or x is t
-
-        type_matched = False
 
         # first we check using the same rules for typelist as for the GPI proxy
         # objects
@@ -451,7 +450,7 @@ class PackageConfig(object):
 
     def setModified(self, val):
         self._hasModified = val
-                               
+
     def hasModified(self):
         return self._hasModified
 
@@ -490,7 +489,7 @@ class PackageConfig(object):
         else:
             msg = "Error getting ConfigFileValue Option: %s" % self.name
             if locals().get('logger') is not None:
-                locals().get('logger').debug("dbg: %s"%msg)
+                locals().get('logger').debug("dbg: %s" % msg)
             conf_value = dict()
 
         if option.name in conf_value:
@@ -503,14 +502,11 @@ class PackageConfig(object):
                 if locals().get('logger') is not None:
                     locals().get('logger').debug("dbg: %s" % msg)
 
-    def setSessionValue(self, name, value, raw=0):
+    def setSessionValue(self, name, value):
         """  Add or  override options  as a  part of  second  phase of
         initialization of  this configuration module (PHASE  2) If the
         default type of the option  is not string, then the expression
-        will be evaluated. Optional  argument raw indicates if special
-        treatment  of  PATH-like  variables  is disabled  (enabled  by
-        default).  The special treatment  applies to the session level
-        values only (and not the default one!).  """
+        will be evaluated."""
 
         self.setModified(True)
 
@@ -792,7 +788,6 @@ def read_ini_files(filenames, system_vars):
                     envvarclean = envvar.strip('$')
 
                     # is env variable
-                    envval = ''
                     logger.debug('looking for ' + str(envvarclean) + ' in the shell environment')
                     if envvarclean in os.environ:
                         envval = os.environ[envvarclean]
