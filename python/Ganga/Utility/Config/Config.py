@@ -955,30 +955,3 @@ def sanityCheck():
             for o, v in zip(opts.keys(), opts.values()):
                 cfg._addOpenOption(o, v)
                 cfg.setSessionValue(o, v)
-
-
-def getFlavour():
-
-    runtimepath = getConfig('Configuration')['RUNTIME_PATH']
-
-    if 'GangaLHCb' in runtimepath:
-        lhcb = True
-    else:
-        lhcb = False
-
-    if 'GangaAtlas' in runtimepath:
-        atlas = True
-    else:
-        atlas = False
-
-    if lhcb and atlas:
-        raise ConfigError('Atlas and LHCb conflict')
-
-    if lhcb:
-        return 'LHCb'
-
-    if atlas:
-        return 'Atlas'
-
-    return ''
-
