@@ -90,6 +90,9 @@ There is a GPI wrapper in Ganga.GPIDev.Lib.Config which:
 
 """
 
+import os
+import re
+import traceback
 from collections import defaultdict
 from functools import reduce
 
@@ -549,7 +552,6 @@ class PackageConfig(object):
             try:
                 h[1](name, value)
             except Exception as err:
-                import traceback
                 traceback.print_stack()
                 logger.error("h[1]: %s" % h[1])
                 logger.error("Error in Setting Session Value!")
@@ -742,8 +744,6 @@ def read_ini_files(filenames, system_vars):
     sequence of files (which are parsed from left-to-right).
     Apply special rules for PATH-like variables - see transform_PATH_option() """
 
-    import re
-    import os
     import Ganga.Utility.logging
 
     logger = getLogger()
@@ -895,7 +895,6 @@ def setSessionValuesFromFiles(filenames, system_vars):
 
 
 def load_user_config(filename, system_vars):
-    import os
     logger = getLogger()
     if not os.path.exists(filename):
         return
@@ -954,7 +953,6 @@ def expandConfigPath(path, top):
     """ Split the path and return a list, where all relative path components will have top prepended.
         Example: 'A:/B/C::D/E' -> ['top/A','/B/C','top/D/E']
     """
-    import os.path
     l = []
     for p in path.split(':'):
         if p:
