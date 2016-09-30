@@ -6,6 +6,7 @@ from collections import namedtuple
 import os
 import tempfile
 import time
+import uuid
 from textwrap import dedent
 
 import pytest

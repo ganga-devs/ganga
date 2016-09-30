@@ -6,10 +6,12 @@ from contextlib import contextmanager
 
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
+from Ganga.Core.exceptions import CredentialRenewalError
 
 from Ganga.Utility.threads import SynchronisedObject
 
-import Ganga.GPIDev.Credentials as Credentials
+from Ganga.GPIDev.Credentials import credential_store, get_needed_credentials
+from Ganga.GPIDev.Credentials.AfsToken import AfsToken
 from Ganga.Core.InternalServices import Coordinator
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName, getRuntimeGPIObject
@@ -495,9 +497,9 @@ class JobRegistry_Monitor(GangaThread):
         self.makeUpdateJobStatusFunction()
 
         # Add credential checking to monitoring loop
-        for _credObj in Credentials._allCredentials.itervalues():
-            log.debug("Setting callback hook for %s" % getName(_credObj))
-            self.setCallbackHook(self.makeCredCheckJobInsertor(_credObj), {}, True, timeout=config['creds_poll_rate'])
+        for afsToken in credential_store.get_all_matching_type(AfsToken):
+            log.debug("Setting callback hook for %s" % afsToken.location)
+            self.setCallbackHook(self.makeCredCheckJobInsertor(afsToken), {}, True, timeout=config['creds_poll_rate'])
 
         # Add low disk-space checking to monitoring loop
         log.debug("Setting callback hook for disk space checking")
@@ -629,7 +631,7 @@ class JobRegistry_Monitor(GangaThread):
         self.__updateTimeStamp = time.time()
         self.__sleepCounter = config['base_poll_rate']
 
-    def runMonitoring(self, jobs=None, steps=1, timeout=300, _loadCredentials=False):
+    def runMonitoring(self, jobs=None, steps=1, timeout=300):
         """
         Enable/Run the monitoring loop and wait for the monitoring steps completion.
         Parameters:
@@ -664,10 +666,7 @@ class JobRegistry_Monitor(GangaThread):
         if not self.enabled:
             # and there are some required cred which are missing
             # (the monitoring loop does not monitor the credentials so we need to check 'by hand' here)
-            if _loadCredentials is True:
-                _missingCreds = Coordinator.getMissingCredentials()
-            else:
-                _missingCreds = False
+            _missingCreds = get_needed_credentials()
             if _missingCreds:
                 log.error("Cannot run the monitoring loop. The following credentials are required: %s" % _missingCreds)
                 return False
@@ -1160,11 +1159,15 @@ class JobRegistry_Monitor(GangaThread):
         def credChecker():
             log.debug("Checking %s." % getName(credObj))
             try:
-                s = credObj.renew()
-            except Exception as msg:
+                credObj.renew()
+            except CredentialRenewalError:
+                return False
+            except Exception as err:
+                logger.error("Unexpected exception!")
+                logger.error("Error: %s" % err)
                 return False
             else:
-                return s
+                return True
         return credChecker
 
     def diskSpaceCheckJobInsertor(self):
@@ -1176,8 +1179,7 @@ class JobRegistry_Monitor(GangaThread):
 
         def cb_Failure():
             self.disableCallbackHook(self.diskSpaceCheckJobInsertor)
-            self._handleError(
-                'Available disk space checking failed and it has been disabled!', 'DiskSpaceChecker', False)
+            self._handleError('Available disk space checking failed and it has been disabled!', 'DiskSpaceChecker', False)
 
         log.debug('Inserting disk space checking function to Qin.')
         _action = JobAction(function=Coordinator._diskSpaceChecker,
@@ -1195,8 +1197,7 @@ class JobRegistry_Monitor(GangaThread):
             self.__sleepCounter = 0.0
         else:
             self.progressCallback("Processing... Please wait.")
-            log.debug(
-                "Updates too close together... skipping latest update request.")
+            log.debug("Updates too close together... skipping latest update request.")
             self.__sleepCounter = self.minPollRate
 
     def _handleError(self, x, backend_name, show_traceback):

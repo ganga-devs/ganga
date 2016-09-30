@@ -133,6 +133,9 @@ def manualExportToGPI(my_interface=None):
     #exportToInterface(my_interface, 'list_plugins', list_plugins, 'Functions')
     # FIXME: END DEPRECATED
 
+    from Ganga.GPIDev.Credentials import credential_store
+    exportToInterface(my_interface, 'credential_store', credential_store, 'Objects', 'Credential store')
+
     exportToInterface(my_interface, 'typename', typename, 'Functions')
     exportToInterface(my_interface, 'categoryname', categoryname, 'Functions')
     exportToInterface(my_interface, 'plugins', plugins, 'Functions')
@@ -141,21 +144,6 @@ def manualExportToGPI(my_interface=None):
     from Ganga.GPIDev.Persistency import export, load
     exportToInterface(my_interface, 'load', load, 'Functions')
     exportToInterface(my_interface, 'export', export, 'Functions')
-
-
-
-    from Ganga.GPIDev.Credentials import getCredential
-    # only the available credentials are exported
-    # At this point we expect to have the GridProxy already created
-    # by one of the Grid plugins (LCG/NG/etc) so we search for it in creds
-    # cache
-    credential = getCredential(name='GridProxy')
-    if credential:
-        exportToInterface(my_interface, 'gridProxy', credential, 'Objects', 'Grid proxy management object.')
-
-    credential2 = getCredential('AfsToken')
-    if credential2:
-        exportToInterface(my_interface, 'afsToken', credential2, 'Objects', 'AFS token management object.')
 
     # export full_print
     from Ganga.GPIDev.Base.VPrinter import full_print
@@ -915,6 +903,15 @@ under certain conditions; type license() for details.
 
         manualExportToGPI()
 
+        from Ganga.Runtime import Workspace_runtime, Repository_runtime
+        from Ganga.GPIDev.Credentials import credential_store
+        if Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken():
+            # If the registry or the workspace needs an AFS token then add one to the credential store.
+            # Note that this happens before the monitoring starts so that it gets tracked properly
+
+            from Ganga.GPIDev.Credentials.AfsToken import AfsToken
+            credential_store.create(AfsToken(), create=False)
+
         import Ganga.Core
         from Ganga.Runtime.Repository_runtime import startUpRegistries
         if config['AutoStartReg']:
@@ -1293,19 +1290,19 @@ under certain conditions; type license() for details.
         ipshell(local_ns=local_ns, module=Ganga.GPI)
 
     @staticmethod
-    def ganga_prompt(dummy=None):
-        credentialsWarningPrompt = ''
-        # alter the prompt only when the internal services are disabled
-        from Ganga.Core.InternalServices import Coordinator
-        if not Coordinator.servicesEnabled:
-            invalidCreds = Coordinator.getMissingCredentials()
-            if invalidCreds:
-                credentialsWarningPrompt = '[%s required]' % ','.join(invalidCreds)
-            if credentialsWarningPrompt:  # append newline
-                 credentialsWarningPrompt += '\n'
+    def ganga_prompt(_=None):
 
-        return credentialsWarningPrompt
+        from Ganga.GPIDev.Credentials import get_needed_credentials
 
+        needed_credentials = get_needed_credentials()
+
+        # Add still-needed credentials to the prompt
+        if needed_credentials:
+            prompt = 'Warning, some credentials needed by the monitoring are missing or invalid:\n'
+            for cred_req in needed_credentials:
+                prompt += '  ' + str(cred_req).replace('\n ', '') + '\n'
+            prompt += 'Call `credential_store.renew()` to update them.\n'
+            print(prompt)
 
 
 #

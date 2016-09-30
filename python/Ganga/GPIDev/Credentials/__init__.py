@@ -1,94 +1,45 @@
-##########################################################################
-# Ganga Project. http://cern.ch/ganga
-#
-# $Id: __init__.py,v 1.1 2008-07-17 16:40:53 moscicki Exp $
-##########################################################################
-# File: Credentials/__init__.py
-# Author: K.Harrison
-# Created: 060613
-#
-# 08/08/2006 KH: Added getCredential() function
-#
-# 28/08/2006 KH: Don't determine available credentials from allPlugins,
-#                as credential plugins are now defined as hidden
-#
-# 31/08/2006 KH: Corrections to getCredential() function to create
-#                only a single instance of each credential type
-#
-# 23/11/2006 KH: Added check on credential availability with
-#                system/configuration used
-#
-# 25/09/2007 KH:  Changes for compatibility with multi-proxy handling
-#                 => "middleware" argument added to getCredential function
-#
-# 02/11/2007 KH:  Added argument to getCredential() function to allow
-#                 or supress creation of new credential
+from __future__ import absolute_import
 
-"""Initialisation file for the Credentials package,
-   containing classes for working with different types of credential."""
+import threading
+from functools import wraps
 
-__author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__ = "25 September 2007"
-__version__ = "1.5"
+import Ganga.Utility.logging
 
-from Ganga.GPIDev.Credentials.AfsToken import AfsToken
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Plugin import allPlugins
-from Ganga.GPIDev.Credentials.GridProxy import GridProxy
+from .CredentialStore import credential_store, needed_credentials, get_needed_credentials
+from Ganga.Core.exceptions import CredentialsError, InvalidCredentialError
 
-_credentialPlugins = {}
-for item in locals().keys():
-    if ((hasattr(locals()[item], "_category"))
-            and (hasattr(locals()[item], "_name"))):
-        _category = getattr(locals()[item], "_category")
-        if "credentials" == _category:
-            _name = getattr(locals()[item], "_name")
-            _credentialPlugins[_name] = locals()[item]
-            del _name
-        del _category
-
-_allCredentials = {}
-_voidCredentials = {}
-
-logger = getLogger()
+logger = Ganga.Utility.logging.getLogger()
 
 
-def getCredential(name="", create=True):
+def require_credential(method):
     """
-    Function to return credential object of requested type
+    A decorator for labelling a method as needing a credential.
 
-    Arguments:
-       middleware - String specifying any middleware used with credential
-       name       - String specifying credential type
-       create     - Boole specifying:
-                    True  - requested credential should be created if
-                            it doesn't exist
-                    False - no new credential should be created
+    If the decorated method is called directly by the user (checked by looking which thread we are on) then if a
+    credential is not available, a prompt is given to request one. If the method is being called in another thread
+    (monitoring or similar) then a ``CredentialsError`` is raised.
 
-    Return value: Credential object of requested type if it exists or
-                  can be created, or False otherwise
+    Uses the method's object's ``credential_requirements`` attribute
     """
+    @wraps(method)
+    def wrapped_method(self, *args, **kwargs):
+        cred_req = self.credential_requirements
 
-#  if name in allPlugins.allClasses( "credentials" ).keys():
-#     if not name in _allCredentials.keys():
-#        _allCredentials[ name ] = \
-#           allPlugins.find( "credentials", name )._proxyClass()
-    if name in _credentialPlugins.keys():
-        if ( not name in _allCredentials.keys() ) and \
-           ( not name in _voidCredentials.keys() ) and \
-           (create is True):
-            credential = _credentialPlugins[name]()
-            if credential.isAvailable():
-                _allCredentials[name] = credential
+        try:
+            cred = credential_store[cred_req]
+        except KeyError:
+            if isinstance(threading.current_thread(), threading._MainThread):  # threading.main_thread() in Python 3.4
+                logger.warning('Required credential [%s] not found in store', cred_req)
+                cred = credential_store.create(cred_req, create=True)
             else:
-                _voidCredentials[name] = credential
-    else:
-        logger.warning("Credential type '%s' not known" % str(name))
-        logger.warning("Returning False")
+                raise CredentialsError('Cannot get proxy which matches requirements {0}'.format(cred_req))
 
-    if name in _allCredentials.keys():
-        credential = _allCredentials[name]
-    else:
-        credential = False
+        if not cred.is_valid():
+            if isinstance(threading.current_thread(), threading._MainThread):  # threading.main_thread() in Python 3.4
+                logger.info('Found credential [%s] but it is invalid. Trying to renew...', cred)
+                cred.renew()
+            else:
+                raise InvalidCredentialError('Proxy is invalid')
 
-    return credential
+        return method(self, *args, **kwargs)
+    return wrapped_method
