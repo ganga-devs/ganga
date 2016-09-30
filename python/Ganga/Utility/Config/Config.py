@@ -90,6 +90,7 @@ There is a GPI wrapper in Ganga.GPIDev.Lib.Config which:
 
 """
 
+from collections import defaultdict
 from functools import reduce
 
 from Ganga.Core.exceptions import GangaException
@@ -145,7 +146,7 @@ allConfigs = {}
 # configuration session buffer
 # this dictionary contains the value for the options which are defined in the configuration file and which have
 # not yet been defined
-unknownConfigFileValues = {}
+unknownConfigFileValues = defaultdict(dict)
 
 
 def getConfig(name):
@@ -861,7 +862,6 @@ def setSessionValue(config_name, option_name, value):
 
     # put value in the buffer, it will be removed from the buffer when option
     # is added
-    unknownConfigFileValues.setdefault(config_name, {})
     unknownConfigFileValues[config_name][option_name] = value
 
 
