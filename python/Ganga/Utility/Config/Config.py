@@ -98,6 +98,7 @@ from functools import reduce
 
 from Ganga.Core.exceptions import GangaException
 
+
 class ConfigError(GangaException):
 
     """ ConfigError indicates that an option does not exist or it cannot be set.
@@ -115,8 +116,6 @@ class ConfigError(GangaException):
 # use getLogger() function defined below:
 
 logger = None
-
-
 
 
 def getLogger():
@@ -254,13 +253,6 @@ class ConfigOption(object):
 
         if hasattr(self, 'session_value'):
             session_value = self.transform_PATH_option(session_value, self.session_value)
-        else:
-            pass
-
-        if hasattr(self, 'session_value'):
-            old_value = self.session_value
-        else:
-            pass
 
         self.session_value = session_value
         self.convert_type('session_value')
@@ -280,13 +272,9 @@ class ConfigOption(object):
 
         if hasattr(self, 'user_value'):
             user_value = self.transform_PATH_option(user_value, self.user_value)
-        else:
-            pass
 
         if hasattr(self, 'user_value'):
             old_value = self.user_value
-        else:
-            pass
 
         self.user_value = user_value
         try:
@@ -303,8 +291,6 @@ class ConfigOption(object):
         self.setModified(True)
         if hasattr(self, 'default_value'):
             default_value = self.transform_PATH_option(default_value, self.default_value)
-        else:
-            pass
         self.default_value = default_value
         self.convert_type('user_value')
         self.convert_type('session_value')
@@ -318,8 +304,6 @@ class ConfigOption(object):
                 str_val = n+'_value'
                 if hasattr(self, str_val):
                     values.append(getattr(self, str_val))
-                else:
-                    pass
 
             if values != []:
                 returnable = reduce(self.transform_PATH_option, values)
@@ -336,9 +320,9 @@ class ConfigOption(object):
     def __setattr__(self, name, value):
         if name in ['value', 'level']:
             raise AttributeError('Cannot set "%s" attribute of the option object' % name)
-        else:
-            self.__dict__[name] = value
-            self.__dict__['_hasModified'] = True
+
+        self.__dict__[name] = value
+        self.__dict__['_hasModified'] = True
 
     def check_defined(self):
         return hasattr(self, 'default_value')
@@ -507,8 +491,6 @@ class PackageConfig(object):
             msg = "Error getting ConfigFileValue Option: %s" % self.name
             if locals().get('logger') is not None:
                 locals().get('logger').debug("dbg: %s"%msg)
-            else:
-                pass
             conf_value = dict()
 
         if option.name in conf_value:
@@ -520,8 +502,6 @@ class PackageConfig(object):
                 msg = "Error Setting Session Value: %s" % err
                 if locals().get('logger') is not None:
                     locals().get('logger').debug("dbg: %s" % msg)
-                else:
-                    pass
 
     def setSessionValue(self, name, value, raw=0):
         """  Add or  override options  as a  part of  second  phase of
@@ -558,8 +538,6 @@ class PackageConfig(object):
                 logger.error("Name: %s Value: '%s'" % (name, value))
                 logger.error("Err:\n%s" % err)
                 raise err
-            finally:
-                pass
 
     def setUserValue(self, name, value):
         """ Modify option  at runtime. This  method corresponds to  the user
@@ -592,10 +570,6 @@ class PackageConfig(object):
         if name in self.options:
             if hasattr(self.options[name], 'user_value'):
                 del self.options[name].user_value
-            else:
-                pass
-        else:
-            pass
 
     def revertToDefault(self, name):
         self.setModified(True)
@@ -603,10 +577,6 @@ class PackageConfig(object):
         if name in self.options:
             if hasattr(self.options[name], 'session_value'):
                 del self.options[name].session_value
-            else:
-                pass
-        else:
-            pass
 
     def revertToSessionOptions(self):
         self.setModified(True)
