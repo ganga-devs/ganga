@@ -81,7 +81,7 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
             job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)])
             job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)])
 
-            outputsandbox = [f.namePattern for f in job.non_copyable_outputfiles]
+            outputsandbox.extend([f.namePattern for f in job.non_copyable_outputfiles])
 
             outputsandbox.extend([f.namePattern for f in job.outputfiles])
             outputsandbox = unique(outputsandbox)

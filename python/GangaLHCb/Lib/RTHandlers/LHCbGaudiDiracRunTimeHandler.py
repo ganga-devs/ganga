@@ -103,7 +103,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
             outbox_files = [fileTransform(this_file, None) for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)]
             job.non_copyable_outputfiles.extend([outbox_file for outbox_file in outbox_files if not isType(outbox_file, DiracFile)])
 
-            outputsandbox = [f.namePattern for f in job.non_copyable_outputfiles]
+            outputsandbox.extend([f.namePattern for f in job.non_copyable_outputfiles])
 
             outputsandbox.extend([f.namePattern for f in job.outputfiles if not isType(f, DiracFile)])
             outputsandbox = unique(outputsandbox)  # + outbox[:])
