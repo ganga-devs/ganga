@@ -112,6 +112,13 @@ def collectPreparedFiles(app):
         for name in dirs:
             input_folders.append(os.path.join(root, name))
 
+    for file_ in app.getJobObject().inputfiles:
+        if isinstance(file_, LocalFile):
+            shutil.copy(os.path.join(file_.localDir, os.path.basename(file_.namePattern)), shared_dir)
+            input_files.append(file._namePattern)
+        elif not isinstance(file_, DiracFile):
+            raise ApplicationConfigurationError(None, "File type: %s Not _yet_ supported in GaudiExec" % type(file_))
+
     return input_files, input_folders
 
 
@@ -409,9 +416,10 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         for file_ in job.inputfiles:
             if isinstance(file_, DiracFile):
                 inputsandbox += ['LFN:'+file_.lfn]
-            elif isinstance(file_, LocalFile):
-                base_name = os.path.basename(file_.namePattern)
-                shutil.copyfile(os.path.join(file_.localDir, base_name), os.path.join(app.getSharedPath(), base_name))
+            if isinstance(file_, LocalFile):
+                if job.master is not None and file_ not in job.master.inputfiles:
+                    shutil.copy(os.path.join(file_.localDir, file_.namePattern), app.getSharedPath())
+                    inputsandbox += [os.path.join(app.getSharedPath(), file_.namePattern)]
             else:
                 logger.error("Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
                 raise ApplicationConfigurationError(None, "Unsupported filetype: %s with DIRAC backend" % getName(file_))
