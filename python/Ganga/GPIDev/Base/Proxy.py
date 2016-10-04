@@ -701,11 +701,17 @@ class ProxyMethodDescriptor(object):
         self._internal_name = internal_name
 
     def __get__(self, obj, cls):
-        if obj is None:
-            method = getattr(stripProxy(cls), self._internal_name)
-        else:
-            method = getattr(stripProxy(obj), self._internal_name)
-        return proxy_wrap(method)
+        try:
+            if obj is None:
+                method = getattr(stripProxy(cls), self._internal_name)
+            else:
+                method = getattr(stripProxy(obj), self._internal_name)
+            return proxy_wrap(method)
+        except Exception as err:
+            if isinstance(err, GangaException):
+                logger.error("%s" % err)
+            else:
+                raise
 
 ##########################################################################
 
