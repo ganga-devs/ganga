@@ -17,7 +17,7 @@ ganga/python/Ganga
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 * Added the option to set the version of LHCbDirac and removed the old guess version code.
-* Changed the default LHCbDirac version to 
+* Changed the default LHCbDirac version to v8r3p7
 * Fix to the old RT handlers to correctly parse the xml summary #816
 
 --------------------------------------------------------------------------------------------------------------
