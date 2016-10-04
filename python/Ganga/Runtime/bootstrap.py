@@ -1127,7 +1127,7 @@ under certain conditions; type license() for details.
             #if ipver in ["1.2.1", "3.1.0", "3.2.0", "3.2.1", '4.0.0']:
             if ipver_major > 1 or (ipver_major == 1 and ipver_minor >= 2):
                 self.check_IPythonDir()
-                self.launch_IPython(local_ns, args, self._ganga_error_handler, self.ganga_prompt)
+                self.launch_IPython(local_ns, args, GangaProgram._ganga_error_handler, self.ganga_prompt)
             else:
                 print("Unknown IPython version: %s" % ipver)
                 return
