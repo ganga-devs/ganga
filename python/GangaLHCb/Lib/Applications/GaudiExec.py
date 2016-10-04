@@ -93,8 +93,8 @@ class GaudiExec(IPrepareApp):
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
-        'directory':    SimpleItem(defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
-        'options':       GangaFileItem(defvalue=None, sequence=1, doc='List of files which contain the options I want to pass to gaudirun.py'),
+        'directory':    SimpleItem(defvalue='', typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
+        'options':       GangaFileItem(defvalue=[], typelist=[str], sequence=1, doc='List of files which contain the options I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
