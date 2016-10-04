@@ -31,6 +31,8 @@ __author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__ = "25 September 2007"
 __version__ = "1.5"
 
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Schema.Schema import Schema, Version
 from Ganga.GPIDev.Credentials.AfsToken import AfsToken
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Plugin import allPlugins
@@ -92,3 +94,15 @@ def getCredential(name="", create=True):
         credential = False
 
     return credential
+
+
+class VomsProxy(GangaObject):
+    """ dummy class to allow for loading of 6.3.x jobs inside 6.2.x. PLEASE NEVER USE THIS! """
+    _schema = Schema(Version(1, 0))
+    _category = 'CredentialRequirement'
+
+class DiracProxy(GangaObject):
+    """ dummy class to allow for loading of 6.3.x jobs inside 6.2.x. PLEASE NEVER USE THIS! """
+    _schema = Schema(Version(1, 0))
+    _category = 'CredentialRequirement'
+
