@@ -46,27 +46,8 @@ if not _after_bootstrap:
     configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
                      'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
                       options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
-
-
-def _guess_version(name):
-    if 'GANGASYSROOT' in os.environ.keys():
-        gangasys = os.environ['GANGASYSROOT']
-    else:
-        raise OptionValueError("Can't guess %s version if GANGASYSROOT is not defined" % name)
-    tmp = tempfile.NamedTemporaryFile(suffix='.txt')
-    cmd = 'cd %s && cmt show projects > %s' % (gangasys, tmp.name)
-    rc = subprocess.Popen([cmd], shell=True).wait()
-    if rc != 0:
-        msg = "Fail to get list of projects that Ganga depends on"
-        raise OptionValueError(msg)
-    p = re.compile(r'^\s*%s\s+%s_(\S+)\s+' % (name, name))
-    for line in tmp:
-        m = p.match(line)
-        if m:
-            version = m.group(1)
-            return version
-    msg = 'Failed to identify %s version that Ganga depends on' % name
-    raise OptionValueError(msg)
+    defaultLHCbDirac = 'v8r2p36'
+    configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
 
 
 def _store_root_version():
@@ -81,17 +62,26 @@ def _store_root_version():
 
 
 def _store_dirac_environment():
-    from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache, get_env
-    diracversion = _guess_version('LHCBDIRAC')
+    from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache
     platform = os.environ['CMTOPT']
+    diracversion = Ganga.Utility.Config.getConfig('LHCb')['LHCbDiracVersion']
     fdir = os.path.join(os.path.expanduser("~/.cache/Ganga/GangaLHCb"), platform)
     fname = os.path.join(fdir, diracversion)
     if not os.path.exists(fname) or not os.path.getsize(fname):
-        logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
-        cmd = 'lb-run LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
-        env = execute(cmd)  # grab the stdout text
-        env = eval(env)  # env is a string so convert it to a dict
+      cmd =  'lb-run LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
+      env = execute(cmd)
+      try:
+        env = eval(env)
+      except SyntaxError:
+        logger.error("LHCbDirac version {version} does not exist".format(version=diracversion))
+        raise OptionValueError("LHCbDirac version {version} does not exist".format(version=diracversion))
+      try:
         write_env_cache(env, fname)
+        logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
+      except (OSError, IOError, TypeError):
+        logger.error("Unable to store LHCbDirac environment")
+        raise
+    logger.info("Using LHCbDirac version %s", diracversion)
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
 if not _after_bootstrap:
