@@ -46,7 +46,7 @@ if not _after_bootstrap:
     configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
                      'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
                       options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
-    defaultLHCbDirac = 'v8r2p36'
+    defaultLHCbDirac = 'v8r3p7'
     configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
 
 
