@@ -71,7 +71,7 @@ def checkDiskQuota():
             output = quota.communicate()[0]
             logger.debug("fs quota %s:\t%s" % (quote(data_partition), output))
         else:
-            df = subprocess.Popen(["df", '-Pk', '%s' % quote(data_partition)], stdout=subprocess.PIPE)
+            df = subprocess.Popen(["df", '-Pk', '%s' % data_partition], stdout=subprocess.PIPE)
             output = df.communicate()[0]
 
         try:
