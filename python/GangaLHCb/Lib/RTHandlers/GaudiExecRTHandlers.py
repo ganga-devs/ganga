@@ -115,7 +115,7 @@ def collectPreparedFiles(app):
     for file_ in app.getJobObject().inputfiles:
         if isinstance(file_, LocalFile):
             shutil.copy(os.path.join(file_.localDir, os.path.basename(file_.namePattern)), shared_dir)
-            input_files.append(file._namePattern)
+            input_files.append(os.path.join(shared_dir, file_.namePattern))
         elif not isinstance(file_, DiracFile):
             raise ApplicationConfigurationError(None, "File type: %s Not _yet_ supported in GaudiExec" % type(file_))
 
