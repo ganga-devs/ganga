@@ -359,7 +359,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         if not isinstance(app.uploadedInput, DiracFile):
             generateDiracInput(app)
-            assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit"
+            assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit\nIf your Ganga installation is not at CERN your username may be trying to create a non-existent LFN. Try setting the 'DIRAC' configuration 'DiracLFNBase' to your grid user path.\n"
         
         rep_data = app.uploadedInput.getReplicas()
         assert rep_data != {}, "Failed to find a replica, aborting submit"
