@@ -1,0 +1,31 @@
+**************************************************************************************************************
+6.1.25 (2016/08/23)
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fix to Condor backend. It now waits for the stdout to be populated. #741
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GPIDev
+--------------------------------------------------------------------------------------------------------------
+* Fix to MassStorageFile. The local area is now successfully cleaned up after files have been copied
+to the mass storage area. Much improvement to the code.#733
+* Fix bug to stop duplication of files when using multiple wildcards.
+* Improved whitespace, special character support for filenames and paths.
+* Fix to bring back job templates #731
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Removing LHCbApp references in the Gauss splitter. This stops the pickled options being overridden. #736
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaATLAS
+--------------------------------------------------------------------------------------------------------------
+* Added command_line option to Athena to pass command line options to the job #746
+* Remove 64-bit config warning
+* Fix for submission to Lxbatch 
+* Add --NthFieldAsOutDir option to Athena command line #720
+
+**************************************************************************************************************

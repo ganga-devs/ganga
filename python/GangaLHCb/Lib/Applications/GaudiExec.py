@@ -8,6 +8,7 @@ import tarfile
 import threading
 import stat
 import uuid
+from functools import wraps
 from StringIO import StringIO
 
 from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
@@ -28,6 +29,26 @@ from GangaDirac.Lib.Backends.DiracBase import DiracBase
 from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampContent, gaudiPythonWrapper
 
 logger = getLogger()
+
+
+def gaudiExecBuildLock(f):
+    """ Method used to lock the build methods in GaudiExec so we don't run multiple builds in parallel.
+    This is because each new build destorys the target.
+    Args:
+        f(function): This should be the buildGangaTarget from GaudiExec
+    """
+    @wraps(f)
+    def masterPrepLock(self, *args, **kwds):
+        
+        # Get the global lock and prepare
+        with gaudiExecBuildLock.globalBuildLock:
+            return f(*args, **kwds)
+
+    return masterPrepLock
+
+# Global lock for all builds
+gaudiExecBuildLock.globalBuildLock = threading.Lock()
+
 
 class GaudiExec(IPrepareApp):
     """
@@ -63,7 +84,7 @@ class GaudiExec(IPrepareApp):
     j=Job()
     myApp = GaudiExec()
     myApp.directory = "$SOMEPATH/DaVinciDev_v40r2"
-    myApp.options = "$SOMEPATH/DaVinciDev_v40r2/myDaVinciOpts.py"
+    myApp.options = ["$SOMEPATH/DaVinciDev_v40r2/myDaVinciOpts.py"]
     j.application = myApp
     j.submit()
 
@@ -93,8 +114,8 @@ class GaudiExec(IPrepareApp):
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
-        'directory':    SimpleItem(defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
-        'options':       GangaFileItem(defvalue=None, sequence=1, doc='File which contains the options I want to pass to gaudirun.py'),
+        'directory':    SimpleItem(defvalue='', typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
+        'options':       GangaFileItem(defvalue=[], sequence=1, doc='List of files which contain the options I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
@@ -115,6 +136,7 @@ class GaudiExec(IPrepareApp):
     build_target = 'ganga-input-sandbox'
     build_dest = 'input-sandbox.tgz'
     sharedOptsFile_baseName = 'jobScripts-%s.tar'
+
 
     def __setattr__(self, attr, value):
         """
@@ -138,6 +160,7 @@ class GaudiExec(IPrepareApp):
                 logger.warning("Possibly setting wrong type for options: '%s'" % type(value))
 
         super(GaudiExec, self).__setattr__(attr, actual_value)
+
 
     def unprepare(self, force=False):
         """
@@ -204,6 +227,7 @@ class GaudiExec(IPrepareApp):
 
         return 1
 
+
     def getExtraOptsFileName(self):
         """
         Returns the name of the opts file which corresponds to the job which owns this app
@@ -211,12 +235,14 @@ class GaudiExec(IPrepareApp):
         """
         return path.join('opts', 'extra_opts_%s_.py' % self.getJobObject().getFQID('.'))
 
+
     def getWrapperScriptName(self):
         """
         Returns the name of the wrapper script file which corresponds to the job which owns this app
         This places the script of interest in a subdir to not overly clutter the WN
         """
         return path.join('wrapper', 'job_%s_optsFileWrapper.py' % self.getJobObject().getFQID('.'))
+
 
     def constructExtraFiles(self, job):
         """
@@ -272,6 +298,7 @@ class GaudiExec(IPrepareApp):
                 tinfo2.size = fileobj2.len
                 tar_file.addfile(tinfo2, fileobj2)
 
+
     def cleanGangaTargetArea(self, this_build_target):
         """
         Method to remove the build target and other files not needed to reproduce the same build target again
@@ -291,6 +318,7 @@ class GaudiExec(IPrepareApp):
             elif path.isdir(path.join(build_dir, obj)):
                 shutil.rmtree(path.join(build_dir, obj), ignore_errors=True)
 
+
     def configure(self, masterappconfig):
         """
         Required even though nothing is done in this step for this App
@@ -301,6 +329,7 @@ class GaudiExec(IPrepareApp):
         opt_file = self.getOptsFiles()
         dir_name = self.directory
         return (None, None)
+
 
     def getOptsFiles(self):
         """
@@ -322,11 +351,13 @@ class GaudiExec(IPrepareApp):
         else:
             raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")
 
+
     def getEnvScript(self):
         """
         Return the script which wraps the running command in a correct environment
         """
         return 'export CMTCONFIG=%s; source LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
+
 
     def execCmd(self, cmd):
         """
@@ -371,6 +402,8 @@ class GaudiExec(IPrepareApp):
 
         return rc, stdout, stderr
 
+
+    @gaudiExecBuildLock
     def buildGangaTarget(self):
         """
         This builds the ganga target 'ganga-input-sandbox' for the project defined by self.directory
@@ -395,6 +428,7 @@ class GaudiExec(IPrepareApp):
         logger.info("Built %s" % wantedTargetFile)
         return wantedTargetFile
 
+
     def readInputData(self, opts):
         """
         This reads the inputdata from a file and assigns it to the inputdata field of the parent job.
@@ -413,6 +447,7 @@ class GaudiExec(IPrepareApp):
             logger.warning("Warning Job %s already contained inputdata, overwriting" % job.fqid)
 
         job.inputdata = input_dataset
+
 
     def getWNPythonContents(self):
         """
