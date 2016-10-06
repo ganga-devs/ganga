@@ -99,8 +99,9 @@ class ICredentialInfo(object):
         The location of the file on disk
         """
         location = self.default_location()
-        if self.initial_requirements.encoded():
-            location += ':' + self.initial_requirements.encoded()
+        encoded_ext = self.initial_requirements.encoded()
+        if encoded_ext and not location.endswith(encoded_ext):
+            location += ':' + encoded_ext
 
         return location
 
@@ -183,7 +184,7 @@ class ICredentialInfo(object):
         if requirement_value is None:
             # If this requirementName is unspecified then ignore it
             return True
-        logger.debug('%s: \t%s \t%s', requirement_name, getattr(self, requirement_name), requirement_value)
+        logger.debug('\'%s\': \t%s \t%s', requirement_name, getattr(self, requirement_name), requirement_value)
         return getattr(self, requirement_name) == requirement_value
 
     def exists(self):

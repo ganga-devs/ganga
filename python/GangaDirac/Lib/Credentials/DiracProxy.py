@@ -77,6 +77,10 @@ class DiracProxyInfo(VomsProxyInfo):
     def group(self):
         return self.field('DIRAC group')
 
+    @property
+    def encodeDefaultProxyFileName(self):
+        return self.initial_requirements.encodeDefaultProxyFileName
+
     @cache
     def expiry_time(self):
         status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -timeleft' % self.location)
@@ -85,7 +89,12 @@ class DiracProxyInfo(VomsProxyInfo):
         return datetime.now() + timedelta(seconds=int(output))
 
     def default_location(self):
-        return os.getenv('X509_USER_PROXY') or '/tmp/x509up_u' + str(os.getuid())
+        base_proxy_name = os.getenv('X509_USER_PROXY') or '/tmp/x509up_u' + str(os.getuid())
+        encoded_ext = self.initial_requirements.encoded()
+        if encoded_ext:
+            return base_proxy_name + ':' + encoded_ext
+        else:
+            return base_proxy_name
 
 
 class DiracProxy(ICredentialRequirement):
@@ -94,6 +103,8 @@ class DiracProxy(ICredentialRequirement):
     """
     _schema = ICredentialRequirement._schema.inherit_copy()
     _schema.datadict['group'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy')
+    _schema.datadict['encodeDefaultProxyFileName'] = \
+        SimpleItem(defvalue=True, doc='Should the proxy be generated with the group encoded onto the end of the proxy filename')
 
     _category = 'CredentialRequirement'
 
@@ -105,8 +116,17 @@ class DiracProxy(ICredentialRequirement):
             raise GangaValueError('DIRAC Proxy `group` is not set. Set this in ~/.gangarc in `[defaults_DiracProxy]/group`')
 
     def encoded(self):
-        return ':'.join(requirement for requirement in [self.group] if requirement)  # filter out the empties
+        """
+        This returns the encoding used to store a unique DIRAC proxy for each group
+        """
+        my_config = getConfig('defaults_DiracProxy')
+        default_group = my_config['group']
+        if (my_config['encodeDefaultProxyFileName'] and self.group == default_group) or self.group != default_group:
+            return ':'.join(requirement for requirement in [self.group] if requirement)  # filter out the empties
+        else:
+            return ''
 
 # A single global check for the DIRAC group setting. This will bail out early and safely during plugin loading.
 if getConfig('defaults_DiracProxy')['group'] is None:
     raise GangaValueError('DIRAC Proxy `group` is not set. Set this in ~/.gangarc in `[defaults_DiracProxy]/group`')
+

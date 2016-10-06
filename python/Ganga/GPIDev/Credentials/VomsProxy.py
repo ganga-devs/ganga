@@ -135,10 +135,10 @@ class VomsProxy(ICredentialRequirement):
     An object specifying the requirements of a VOMS proxy file
     """
     _schema = ICredentialRequirement._schema.inherit_copy()
-    identity = SimpleItem(defvalue=None, typelist=[str, None], doc='Identity for the proxy')
-    vo = SimpleItem(defvalue=None, typelist=[str, None], doc='Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation')
-    role = SimpleItem(defvalue=None, typelist=[str, None], doc='Role that the proxy must have')
-    group = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy - either "group" or "group/subgroup"')
+    _schema.datadict['identity'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Identity for the proxy')
+    _schema.datadict['vo'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation')
+    _schema.datadict['role'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Role that the proxy must have')
+    _schema.datadict['group'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy - either "group" or "group/subgroup"')
 
     _category = 'CredentialRequirement'
 
@@ -151,3 +151,4 @@ class VomsProxy(ICredentialRequirement):
 
     def encoded(self):
         return ':'.join(requirement for requirement in [self.identity, self.vo, self.role, self.group] if requirement)  # filter out the empties
+
