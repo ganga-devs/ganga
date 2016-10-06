@@ -9,8 +9,8 @@ from Ganga.Core import GangaValueError
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Schema import SimpleItem
 
-from Ganga.GPIDev.Credentials.ICredentialInfo import cache
-from Ganga.GPIDev.Credentials.ICredentialRequirement import ICredentialRequirement
+from Ganga.GPIDev.Adapters.ICredentialInfo import cache
+from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
 from Ganga.Core.exceptions import CredentialRenewalError
 from Ganga.GPIDev.Credentials.VomsProxy import VomsProxyInfo
 

@@ -11,8 +11,8 @@ from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Utility import GridShell
 from Ganga.Utility.Config import getConfig
 
-from .ICredentialInfo import ICredentialInfo, cache
-from .ICredentialRequirement import ICredentialRequirement
+from Ganga.GPIDev.Adapters.ICredentialInfo import ICredentialInfo, cache
+from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
 from Ganga.Core.exceptions import CredentialRenewalError, InvalidCredentialError
 
 logger = Ganga.Utility.logging.getLogger()

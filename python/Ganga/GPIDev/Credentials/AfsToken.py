@@ -10,8 +10,8 @@ from glob import glob
 import Ganga.Utility.logging
 from Ganga.Utility.Shell import Shell
 
-from .ICredentialInfo import ICredentialInfo, cache
-from .ICredentialRequirement import ICredentialRequirement
+from Ganga.GPIDev.Adapters.ICredentialInfo import ICredentialInfo, cache
+from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
 from Ganga.Core.exceptions import CredentialRenewalError
 
 logger = Ganga.Utility.logging.getLogger()
