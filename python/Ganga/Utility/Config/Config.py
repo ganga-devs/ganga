@@ -198,7 +198,8 @@ def getConfig(name, create=True):
         return allConfigs[name]
     else:
         if create:
-            logger.debug('Creating "%s" config in getConfig', name)
+            if logger:
+                logger.debug('Creating "%s" config in getConfig', name)
             allConfigs[name] = PackageConfig(name, 'Documentation not available')
             return allConfigs[name]
         else:
