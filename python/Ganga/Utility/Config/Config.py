@@ -856,9 +856,9 @@ def load_user_config(filename, system_vars):
         try:
             current_cfg_section = getConfig(name)
         except KeyError:
-            current_cfg_section = None
+            continue
 
-        if not current_cfg_section or not current_cfg_section.options:  # if this section does not exists
+        if not current_cfg_section.options:  # if this section does not exists
             # supressing these messages as depending on what stage of the bootstrap.py you
             # call the function more or less of the default options have been loaded
             # currently calling after initialise() could call after bootstrap()
