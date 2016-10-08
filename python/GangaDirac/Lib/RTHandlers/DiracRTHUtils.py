@@ -87,7 +87,7 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
             if empty_SE_check:
                 ## If true check, if not false check
                 raise BackendError("Dirac", "Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
-            config = getConfig('Dirac')
+            config = getConfig('DIRAC')
             myLine = myLine.replace('###OUTPUT_SE###', str([]))
 
         total_JDL += myLine + "\n"
