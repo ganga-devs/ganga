@@ -898,6 +898,8 @@ class GangaRepositoryLocal(GangaRepository):
 
         if len(errs) > 0:
             logger.error("#%s Error(s) Loading File: %s" % (len(errs), fobj.name))
+            for err in errs:
+                logger.error("err: %s" % err)
             raise InaccessibleObjectError(self, this_id, errs[0])
 
         logger.debug("Checking children: %s" % str(this_id))

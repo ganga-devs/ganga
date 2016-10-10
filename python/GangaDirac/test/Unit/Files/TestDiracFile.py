@@ -1,28 +1,35 @@
 import os
 
 import pytest
+
 try:
-    from unittest.mock import patch
+    from unittest.mock import patch, ANY
 except ImportError:
-    from mock import patch
+    from mock import patch, ANY
 
 from Ganga.Core.exceptions import GangaFileError
 from Ganga.Utility.logging import getLogger
-from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
+from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
 
 logger = getLogger(modulename=True)
 
 
-@pytest.fixture(scope='function')
+@pytest.yield_fixture(scope='function')
 def df():
+    load_config_files()
+
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
     f = DiracFile('np', 'ld', 'lfn')
     f.locations = ['location']
     f.guid = 'guid'
-    return f
+    yield f
+    clear_config()
 
 
 def test__init__(df):
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
+
     assert df.namePattern == 'np', 'namePattern not initialised as np'
     assert df.lfn == 'lfn', 'lfn not initialised as lfn'
     assert df.localDir == 'ld', 'localDir not initialised as ld'
@@ -53,7 +60,7 @@ def test__repr__(df):
 def test__auto_remove(df):
     with patch('GangaDirac.Lib.Files.DiracFile.execute') as execute:
         assert df._auto_remove() is None
-        execute.assert_called_once_with('removeFile("lfn")')
+        execute.assert_called_once_with('removeFile("lfn")', cred_req=ANY)
 
     with patch('GangaDirac.Lib.Files.DiracFile.execute') as execute:
         df.lfn = ''
@@ -67,7 +74,7 @@ def test_remove(df):
         assert df.lfn == ''
         assert df.locations == []
         assert df.guid == ''
-        execute.assert_called_once_with('removeFile("lfn")')
+        execute.assert_called_once_with('removeFile("lfn")', cred_req=ANY)
 
     # Now lfn='' exception should be raised
     with pytest.raises(Exception):
@@ -85,20 +92,20 @@ def test_remove(df):
 def test_replicate(df):
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'lfn': {}}}) as execute:
         assert df.replicate('DEST') is None
-        execute.assert_called_once_with('replicateFile("lfn", "DEST", "")')
+        execute.assert_called_once_with('replicateFile("lfn", "DEST", "")', cred_req=ANY)
         assert df.locations == ['location', 'DEST']
 
     df.locations = ['location']
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'lfn': {}}}) as execute:
         assert df.replicate('DEST', 'location') is None
-        execute.assert_called_once_with('replicateFile("lfn", "DEST", "location")')
+        execute.assert_called_once_with('replicateFile("lfn", "DEST", "location")', cred_req=ANY)
         assert df.locations == ['location', 'DEST']
 
         logger.info("Testing failure when exception thrown")
         with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracError('test Exception')) as execute:
             with pytest.raises(GangaDiracError):
                 assert df.replicate('DEST')
-            execute.assert_called_once_with('replicateFile("lfn", "DEST", "")')
+            execute.assert_called_once_with('replicateFile("lfn", "DEST", "")', cred_req=ANY)
 
     df.lfn = ''
     with pytest.raises(GangaFileError):
@@ -117,13 +124,13 @@ def test_get(df):
     df.lfn = 'lfn'
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         assert df.get() is True
-        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
+        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
 
     df.lfn = '/the/root/lfn'
     df.namePattern = ''
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         assert df.get() is True
-        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
+        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
         assert df.namePattern == 'lfn'
 
     df.lfn = '/the/root/lfn.gz'
@@ -131,7 +138,7 @@ def test_get(df):
     df.namePattern = ''
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         assert df.get() is True
-        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
+        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
         assert df.namePattern == 'lfn'
 
     def getMetadata(this):
@@ -143,7 +150,7 @@ def test_get(df):
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
             assert df.get() is True
-            execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
+            execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
             assert df.guid == 'guid'
             assert df.locations == ['location']
 
@@ -151,7 +158,7 @@ def test_get(df):
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
             assert df.get() is True
-            execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
+            execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
             assert df.guid == 'guid'
             assert df.locations == ['location']
 
@@ -160,7 +167,7 @@ def test_get(df):
     with patch('GangaDirac.Lib.Files.DiracFile.execute', return_value={'Successful': {'%s' % df.lfn: True}}) as execute:
         with patch('GangaDirac.Lib.Files.DiracFile.DiracFile.getMetadata', getMetadata):
             assert df.get() is True
-            execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
+            execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
             assert df.guid == 'guid'
             assert df.locations == ['location']
 
@@ -168,5 +175,4 @@ def test_get(df):
     with patch('GangaDirac.Lib.Files.DiracFile.execute', side_effect=GangaDiracError('test Exception')) as execute:
         with pytest.raises(GangaDiracError):
             assert df.get()
-        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir))
-
+        execute.assert_called_once_with('getFile("%s", destDir="%s")' % (df.lfn, df.localDir), cred_req=ANY)
