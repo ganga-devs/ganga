@@ -8,7 +8,6 @@ from Ganga.Utility.files import expandfilename
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
 
-from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, getSites
 from dq2.common.DQException import *
 from dq2.repository.DQRepositoryException import DQUnknownDatasetException
 from dq2.location.DQLocationException import DQLocationExistsException
@@ -18,12 +17,11 @@ from dq2.common.client.DQClientException import DQInternalServerException
 from dq2.common.dao.DQDaoException import DQDaoException
 from dq2.repository.DQRepositoryException import DQFrozenDatasetException
 
-from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
-from Ganga.Core.exceptions import ApplicationConfigurationError
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
 from GangaAtlas.Lib.Rucio import list_datasets, is_rucio_se, resolve_containers, generate_output_datasetname, \
-    dataset_exists
+    dataset_exists, list_dataset_files
 from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 
@@ -103,49 +101,15 @@ class DQ2Dataset(Dataset):
         contents_checksum = {}
         contents_scope = {}
 
-        datasets = resolve_containers(self.dataset)
+        for dataset in resolve_containers(self.dataset):
 
-        for dataset in datasets:
-            try:
-                #dq2_lock.acquire()
-                try:
-                    contents = dq2.listFilesInDataset(dataset, long=False)
-                except:
-        
-                    contents = []
-                    raise ApplicationConfigurationError(None,'DQ2Dataset.get_contents(): problem in call dq2.listFilesInDataset(%s, long=False)' %dataset )
-                    
-            finally:
-                #dq2_lock.release()
-                pass
-
-            if not contents:
-                contents = []
-                pass
-
-            if not len(contents):
-                continue
-
-            # Convert 0.3 output to 0.2 style
-            contents = contents[0]
-            contents_new = []
-            for guid, info in contents.iteritems():
-                # Rucio patch
-                contents_new.append( (str(guid), info['lfn']) )
-                contents_size[guid] = info['filesize']
-                contents_checksum[guid] = info['checksum']
-                contents_scope[guid] = info['scope'] 
-            contents = contents_new
-
-            # Sort contents
-            def cmpfun(a,b):
-                """helper function for sorting tuples"""
-                return cmp(a[1],b[1])
-
-            try:
-                contents.sort(cmp=cmpfun)
-            except:
-                pass
+            contents = []
+            for file_info in list_dataset_files(dataset):
+                guid = file_info['guid']
+                contents.append((guid, file_info['name']))
+                contents_size[guid] = file_info['bytes']
+                contents_checksum[guid] = file_info['adler32']
+                contents_scope[guid] = file_info['scope']
 
             # Process only certain filenames ?
             if self.names:
@@ -225,7 +189,7 @@ class DQ2Dataset(Dataset):
                             pass
                 diffcontentsNew[dataset] = (contents, sumfilesizeDataset)
                 diffcontentsSize[dataset] = contentsSize
-        
+
         if overlap:
             if size:
                 return allcontentsSize
