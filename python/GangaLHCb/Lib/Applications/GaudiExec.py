@@ -42,7 +42,7 @@ def gaudiExecBuildLock(f):
         
         # Get the global lock and prepare
         with gaudiExecBuildLock.globalBuildLock:
-            return f(*args, **kwds)
+            return f(self,*args, **kwds)
 
     return masterPrepLock
 
