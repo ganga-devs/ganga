@@ -14,6 +14,9 @@ from Ganga.Utility.Config.Config import _after_bootstrap
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.execute import execute
 
+from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
+
 logger = getLogger()
 
 if not _after_bootstrap:
@@ -145,4 +148,9 @@ def postBootstrapHook():
 #display_config.setSessionValue( 'jobs_columns', ('fqid', 'status', 'name', 'subjobs', 'application', 'backend', 'backend.actualCE', 'backend.extraInfo', 'comment') )
 #display_config.setSessionValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
 #display_config.setSessionValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
+
+    try:
+        credential_store[DiracProxy()]
+    except KeyError:
+        pass
 
