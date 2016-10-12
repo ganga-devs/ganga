@@ -14,6 +14,8 @@ from Ganga.Utility.Config.Config import _after_bootstrap
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.execute import execute
 
+from Ganga.Runtime.GPIexport import exportToGPI
+
 from Ganga.GPIDev.Credentials.CredentialStore import credential_store
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 
@@ -153,4 +155,32 @@ def postBootstrapHook():
         credential_store[DiracProxy()]
     except KeyError:
         pass
+
+
+class gridProxy(object):
+
+    @classmethod
+    def renew(cls):
+        from Ganga.GPI import credential_store, DiracProxy
+        try:
+            cred = credential_store[DiracProxy()]
+            if not cred.is_valid():
+                cred.create()
+        except KeyError:
+            credential_store.create(DiracProxy())
+
+    @classmethod
+    def create(cls):
+        cls.renew()
+
+    @classmethod
+    def destroy(cls):
+        from Ganga.GPI import credential_store, DiracProxy
+        try:
+            cred = credential_store[DiracProxy()]
+            cred.destroy()
+        except KeyError:
+            pass
+
+exportToGPI('gridProxy', gridProxy, 'Functions')
 
