@@ -90,7 +90,11 @@ class ICredentialInfo(object):
             raise CredentialsError('Proxy object cannot satisfy its own requirements')
 
     def __str__(self):
-        return '{class_name} at {file_path}'.format(class_name=type(self).__name__, file_path=self.location)
+        return '{class_name} at {file_path} : TimeLeft = {time_left}, Valid = {currently_valid}'.format(\
+                        class_name=type(self).__name__, file_path=self.location, currently_valid=self.is_valid(), time_left=self.time_left())
+
+    def _repr_pretty_(self, p, cycle):
+        p.text(str(self))
 
     @property
     def location(self):
