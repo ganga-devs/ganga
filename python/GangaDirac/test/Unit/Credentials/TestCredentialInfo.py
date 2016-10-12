@@ -4,7 +4,8 @@ try:
 except ImportError:
     import mock
 
-from Ganga.Utility.Config import getConfig
+from Ganga.Utility.Config import getConfig, makeConfig
+makeConfig('defaults_DiracProxy', '')
 getConfig('defaults_DiracProxy').addOption('group', 'some_group', '')
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy, DiracProxyInfo
 getConfig('defaults_DiracProxy').setSessionValue('group', 'some_group')
