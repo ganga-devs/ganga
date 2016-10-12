@@ -853,7 +853,11 @@ def load_user_config(filename, system_vars):
         return
     new_cfg = read_ini_files(filename, system_vars)
     for name in new_cfg.sections():
-        current_cfg_section = getConfig(name)
+        try:
+            current_cfg_section = getConfig(name)
+        except KeyError:
+            continue
+
         if not current_cfg_section.options:  # if this section does not exists
             # supressing these messages as depending on what stage of the bootstrap.py you
             # call the function more or less of the default options have been loaded
