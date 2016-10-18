@@ -1,10 +1,10 @@
 import pytest
 
 from Ganga.Core.exceptions import BackendError
-from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator
 
 
 def test_result_ok():
+    from GangaDirac.Lib.Backends.DiracUtils import result_ok
 
     assert not result_ok(None), "Didn't return False with None arg"
     assert not result_ok(''), "Didn't return False with non-dict arg"
@@ -14,6 +14,7 @@ def test_result_ok():
 
 
 def test_get_job_ident():
+    from GangaDirac.Lib.Backends.DiracUtils import get_job_ident
 
     error_script = """
 from DIRAC import Job
@@ -30,6 +31,8 @@ j.outputsomething('output.root')
 
 
 def test_get_parametric_dataset():
+    from GangaDirac.Lib.Backends.DiracUtils import get_parametric_datasets
+
     error_script1 = """
 from DIRAC import Job
 j=Job()
@@ -59,6 +62,7 @@ j.somethingelse('other')
 
 
 def test_outputfiles_iterator():
+    from GangaDirac.Lib.Backends.DiracUtils import outputfiles_iterator
 
     ########################################################
     class TestFile(object):

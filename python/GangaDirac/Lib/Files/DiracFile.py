@@ -18,6 +18,8 @@ from Ganga.Core.exceptions import GangaFileError
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute, GangaDiracError
 import Ganga.Utility.Config
 from Ganga.Runtime.GPIexport import exportToGPI
+from Ganga.GPIDev.Credentials import require_credential
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 config = getConfig('Configuration')
@@ -52,6 +54,7 @@ class DiracFile(IGangaFile):
                                                                typelist=['GangaDirac.Lib.Files.DiracFile'], doc="collected files from the wildcard namePattern"),
                                      'defaultSE': SimpleItem(defvalue='', copyable=1, doc="defaultSE where the file is to be accessed from or uploaded to"),
                                      'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
+                                     'credential_requirements': ComponentItem('CredentialRequirement', defvalue='DiracProxy'),
     })
 
     _env = None
@@ -294,6 +297,7 @@ class DiracFile(IGangaFile):
         if self.lfn != '':
             self.remove()
 
+    @require_credential
     def remove(self):
         """
         Remove this lfn and all replicas from DIRAC LFC/SEs
@@ -301,13 +305,14 @@ class DiracFile(IGangaFile):
         if self.lfn == "":
             raise GangaFileError('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
-        stdout = execute('removeFile("%s")' % self.lfn)
+        stdout = execute('removeFile("%s")' % self.lfn, cred_req=self.credential_requirements)
 
         self.lfn = ""
         self.locations = []
         self.guid = ''
         return True
 
+    @require_credential
     def getMetadata(self):
         """
         Get Metadata associated with this files lfn. This method will also
@@ -319,7 +324,7 @@ class DiracFile(IGangaFile):
 
         # eval again here as datatime not included in dirac_ganga_server
 
-        ret = execute('getMetadata("%s")' % self.lfn)
+        ret = execute('getMetadata("%s")' % self.lfn, cred_req=self.credential_requirements)
 
         if self.guid != ret.get('Successful',{}).get(self.lfn,{}).get('GUID',False):
             self.guid = ret['Successful'][self.lfn]['GUID']
@@ -363,6 +368,7 @@ class DiracFile(IGangaFile):
 
         return
 
+    @require_credential
     def getReplicas(self, forceRefresh=False):
         """
         Get the list of all SE where this file has a replica
@@ -392,7 +398,7 @@ class DiracFile(IGangaFile):
             if (self._storedReplicas == {} and len(self.subfiles) == 0) or forceRefresh:
 
                 try:
-                    self._storedReplicas = execute('getReplicas("%s")' % self.lfn)
+                    self._storedReplicas = execute('getReplicas("%s")' % self.lfn, cred_req=self.credential_requirements)
                 except GangaDiracError as err:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
                     self._storedReplicas = {}
@@ -457,6 +463,7 @@ class DiracFile(IGangaFile):
                     LFNs.append(this_url)
             return LFNs
 
+    @require_credential
     def accessURL(self, thisSE=''):
         """
         Attempt to find an accessURL which corresponds to the specified SE. If no SE is specified then
@@ -471,6 +478,7 @@ class DiracFile(IGangaFile):
                 lfns.append(i.lfn)
         return getAccessURLs(lfns, thisSE)
 
+    @require_credential
     def internalCopyTo(self, targetPath):
         """
         Retrieves locally the file matching this DiracFile object pattern.
@@ -485,7 +493,7 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Can\'t download a file without an LFN.')
 
         logger.info("Getting file %s" % self.lfn)
-        stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location))
+        stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location), cred_req=self.credential_requirements)
 
         if self.namePattern == "":
             name = os.path.basename(self.lfn)
@@ -498,6 +506,7 @@ class DiracFile(IGangaFile):
 
         return True
 
+    @require_credential
     def replicate(self, destSE, sourceSE=''):
         """
         Replicate an LFN to another SE
@@ -511,7 +520,7 @@ class DiracFile(IGangaFile):
             raise GangaFileError('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE))
+        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, sourceSE), cred_req=self.credential_requirements)
 
         if destSE not in self.locations:
             self.locations.append(destSE)
@@ -520,6 +529,7 @@ class DiracFile(IGangaFile):
         if regex.search(self.namePattern) is not None:
             raise GangaFileError("No wildcards in inputfiles for DiracFile just yet. Dirac are exposing this in API soon.")
 
+    @require_credential
     def put(self, lfn='', force=False, uploadSE="", replicate=False):
         """
         Try to upload file sequentially to storage elements defined in configDirac['allDiracSE'].
@@ -655,7 +665,7 @@ class DiracFile(IGangaFile):
             logger.debug('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
             logger.debug('execute: uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
             try:
-                stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
+                stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])), cred_req=self.credential_requirements)
             except GangaDiracError as err:
                 logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), err))
                 failureReason = "Error in uploading file '%s' : '%s'" % (os.path.basename(name), err)
