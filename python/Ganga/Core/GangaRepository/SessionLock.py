@@ -40,7 +40,7 @@ session_expiration_timeout = 0
 try:
     session_expiration_timeout = getConfig('Configuration')['DiskIOTimeout']
 except ConfigError, err:
-    session_expiratrion_timeout = 5
+    session_expiratrion_timeout = 30
 
 session_lock_refresher = None
 
@@ -201,28 +201,19 @@ class SessionLockRefresher(GangaThread):
             # Make list of sessions that are "alive"
             ls_sdir = os.listdir(self.sdir)
             session_files = [f for f in ls_sdir if f.endswith(".session") and f.find(str(os.getpid())) == -1]
-            #metadata_lock_files = [f for f in ls_sdir if f.endswith("metadata.locks") and not f.find( str(os.getpid()) ) ]
-            #all_lock_files = [f for f in ls_sdir if f.endswith(".locks") and not f.find( str(os.getpid()) ) ]
-            # lock_files = [ s for s in all_lock_files and not in
-            # metadata_lock_files ]
             lock_files = [f for f in ls_sdir if f.endswith(".locks") and f.find(str(os.getpid())) == -1]
 
             ## Loop over locks which aren't belonging to this session!
             for sf in session_files:
                 joined_path = os.path.join(self.sdir, sf)
-                #print("join: %s" % joined_path)
                 if joined_path in self.fns:
                     continue
                 mtm = os.stat(joined_path).st_mtime
-                # print "%s: session %s delta is %s seconds" % (time.time(),
-                # sf, now - mtm)
                 global session_expiration_timeout
-                if abs(float(now) - float(mtm)) > session_expiration_timeout:
+                if now - mtm > session_expiration_timeout:
                     logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
                     os.unlink(joined_path)
                     session_files.remove(sf)
-                # elif now - mtm  > session_expiration_timeout/2:
-                #    logger.warning("%s: Session %s is inactive (no update since %s seconds, removal after %s seconds)" % (time.time(), sf, now - mtm, session_expiration_timeout))
 
             # remove all lock files that do not belong to sessions that are
             # alive
@@ -230,10 +221,6 @@ class SessionLockRefresher(GangaThread):
                 # Determine the session file which controls this lock file
                 asf = f.split(".session")[0] + ".session"
                 if not asf in session_files:
-                    #logger.debug("Removing dead file %s" % (f) )
-                    #logger.debug("Found, %s session files" % (session_files) )
-                    #logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
-                    #logger.debug( "%s, %s" % ( self.sdir, f ) )
                     os.unlink(os.path.join(self.sdir, f))
         except OSError as x:
             # nothing really important, another process deleted the session
@@ -413,19 +400,12 @@ class SessionLockManager(object):
             global session_lock_refresher
             session_lock_refresher.stop()
             if session_lock_refresher is not None:
-                # try:
                 session_lock_refresher.removeRepo(self.fn, self.repo)
-                # except:
-                #    pass
-                #session_lock_refresher.removeRepo( self.fn, self.repo )
                 if session_lock_refresher.numberRepos() <= 1:
                     session_lock_refresher = None
-            #logger.debug("Session file '%s' deleted " % (self.fn))
             if not self.afs:
                 os.close(self.lockfd)
             os.unlink(self.fn)
-            #os.unlink(self.lockfn)
-            # os.unlink(self.gfn)
         except OSError as x:
             logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (self.fn, self.gfn, x))
 
@@ -683,14 +663,11 @@ class SessionLockManager(object):
         this_time = time.time()
         if session_lock_last == 0:
             session_lock_last = this_time
-        global session_expiration_timeout
         _diff = abs(session_lock_last - this_time)
         if _diff > session_expiration_timeout * 0.5 or _diff < 1:
-            session_expiration_timeout = this_time
             if session_lock_refresher is not None:
                 session_lock_refresher.checkAndReap()
             else:
-                # self.reap_locks()
                 pass
 
     @synchronised
@@ -795,6 +772,7 @@ class SessionLockManager(object):
         """get_session_list()
         Tries to determine the other sessions that are active and returns an informative string for each of them.
         """
+        session_lock_refresher.checkAndReap()
         sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir, s) == self.gfn]
         return [self.session_to_info(session) for session in sessions]
 
