@@ -10,7 +10,7 @@ from glob import glob
 import Ganga.Utility.logging
 from Ganga.Utility.Shell import Shell
 
-from Ganga.GPIDev.Adapters.ICredentialInfo import ICredentialInfo, cache
+from Ganga.GPIDev.Adapters.ICredentialInfo import ICredentialInfo, cache, retry_command
 from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
 from Ganga.Core.exceptions import CredentialRenewalError
 
@@ -27,10 +27,17 @@ class AfsTokenInfo(ICredentialInfo):
     """
 
     def __init__(self, requirements, check_file=False, create=False):
+        """
+        Args:
+            requirements (ICredentialRequirement): An object specifying the requirements
+            check_file (bool): Raise an exception if the file does not exist
+            create (bool): Create the credential file
+        """
         self.shell = Shell()
 
         super(AfsTokenInfo, self).__init__(requirements, check_file, create)
 
+    @retry_command
     def create(self):
         """
         Creates a new AFS token
@@ -64,6 +71,9 @@ class AfsTokenInfo(ICredentialInfo):
             self.create()
 
     def destroy(self):
+        """
+        This removes the kerberos token from disk
+        """
         self.shell.cmd1('unlog')
 
         if self.location:
@@ -72,11 +82,18 @@ class AfsTokenInfo(ICredentialInfo):
     @property
     @cache
     def info(self):
+        """
+        This returns a summary of the token infor on disk
+        """
         status, output, message = self.shell.cmd1('tokens')
         return output
 
     @cache
     def expiry_time(self):
+        """
+        This calculates the number of seconds left for the kerberos token on disk
+        # FIXME should this rely on 'afs@cern.ch'?
+        """
         info = self.info
         matches = re.finditer(info_pattern, info)
 
@@ -89,12 +106,16 @@ class AfsTokenInfo(ICredentialInfo):
         expires = expires.replace(year=now.year)
 
         # If the expiration date is in the past then assume it should be in the future
+        # FIXME? When does this ever occur?
         if expires < now:
             expires = expires.replace(year=now.year+1)
 
         return expires
 
     def default_location(self):
+        """
+        This returns the default location of a kerberos token on disk as determined from the uid
+        """
         krb_env_var = os.getenv('KRB5CCNAME', '')
         if krb_env_var.startswith('FILE:'):
             krb_env_var = krb_env_var[5:]
@@ -119,4 +140,8 @@ class AfsToken(ICredentialRequirement):
     info_class = AfsTokenInfo
 
     def encoded(self):
+        """
+        Ther kerberos token doesn't encode any additional information into the token location
+        """
         return ''
+
