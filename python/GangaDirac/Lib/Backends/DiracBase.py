@@ -17,6 +17,7 @@ from Ganga.Core.exceptions import GangaFileError, BackendError, IncompleteJobSub
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
@@ -94,7 +95,7 @@ class DiracBase(IBackend):
                                 'if you *really* know what you are doing'),
         'settings': SimpleItem(defvalue={'CPUTime': 2 * 86400},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
-        'credential_requirements': ComponentItem('CredentialRequirement', defvalue='DiracProxy'),
+        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
                       'getOutputDataLFNs', 'peek', 'reset', 'debug']
