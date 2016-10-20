@@ -667,8 +667,10 @@ class DiracFile(IGangaFile):
                     if not os.path.exists(name):
                         raise GangaFileError('File "%s" must exist!' % name)
 
-            if lfn == "":
-                lfn = os.path.join(lfn_base, os.path.basename(name))
+            if not lfn or not lfn.startswith(DiracFile.diracLFNBase()):
+                if not lfn:
+                    name = os.path.basename(name)
+                lfn = os.path.join(DiracFile.diracLFNBase(), name)
 
             #lfn = os.path.join(os.path.dirname(self.lfn), this_file)
 
@@ -678,10 +680,10 @@ class DiracFile(IGangaFile):
             d.localDir = sourceDir
             stderr = ''
             stdout = ''
-            logger.debug('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
-            logger.debug('execute: uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])))
+            logger.info('Uploading file \'%s\' to \'%s\' as \'%s\'' % (name, storage_elements[0], lfn))
+            logger.debug('execute: uploadFile("%s", "%s", %s)' % (lfn, os.path.join(sourceDir, name), str([storage_elements[0]])))
             try:
-                stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, name, str([storage_elements[0]])), cred_req=self.credential_requirements)
+                stdout = execute('uploadFile("%s", "%s", %s)' % (lfn, os.path.join(sourceDir, name), str([storage_elements[0]])), cred_req=self.credential_requirements)
             except GangaDiracError as err:
                 logger.warning("Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), err))
                 failureReason = "Error in uploading file '%s' : '%s'" % (os.path.basename(name), err)
@@ -692,22 +694,36 @@ class DiracFile(IGangaFile):
                 self.failureReason += '\n' + failureReason
                 continue
 
+            stdout_temp = stdout.get('Successful')
+
+            if not stdout_temp:
+                msg = "Couldn't upload file '%s': \'%s\'" % (os.path.basename(name), stdout)
+                logger.warning(msg)
+                if regex.search(self.namePattern) is not None:
+                    d.failureReason = msg
+                    outputFiles.append(d)
+                    continue
+                self.failureReason = msg
+                continue
+            else:
+                lfn_out = stdout_temp[lfn]
+
             # when doing the two step upload delete the temp file
             if self.compressed or self._parent != None:
                 os.remove(name)
             # need another eval as datetime needs to be included.
-            guid = stdout['Successful'][lfn].get('GUID', '')
+            guid = lfn_out.get('GUID', '')
             if regex.search(self.namePattern) is not None:
                 d.lfn = lfn
                 d.remoteDir = os.path.dirname(lfn)
-                d.locations = stdout['Successful'][lfn].get('allDiracSE', '')
+                d.locations = lfn_out.get('allDiracSE', '')
                 d.guid = guid
                 outputFiles.append(d)
                 continue
             else:
                 self.lfn = lfn
                 self.remoteDir = os.path.dirname(lfn)
-                self.locations = stdout['Successful'][lfn].get('allDiracSE', '')
+                self.locations = lfn_out.get('allDiracSE', '')
                 self.guid = guid
 
         if replicate == True:
