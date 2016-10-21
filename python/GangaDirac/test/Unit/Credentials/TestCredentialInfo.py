@@ -62,7 +62,7 @@ def fake_shell(mocker):
     mocker.patch('GangaDirac.Lib.Credentials.DiracProxy.DiracProxyInfo.field', resolver)
     mocker.patch('GangaDirac.Lib.Credentials.DiracProxy.DiracProxyInfo.identity', return_value='some_user')
     mocker.patch('Ganga.GPIDev.Adapters.ICredentialInfo.os.path.exists', return_value=True)
-    mocker.patch('Ganga.GPIDev.Adapters.ICredentialInfo.ENABLE_CACHING', False)
+    mocker.patch('Ganga.GPIDev.Credentials.CredentialStore.CredentialStore.enable_caching', False)
     yield s
     #clear_config()
 
