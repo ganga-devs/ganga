@@ -50,7 +50,7 @@ class MassStorageFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "MassStorageFile"
-    _exportmethods = ["location", "get", "put", "setLocation", "remove", "accessURL", "copyTo"]
+    _exportmethods = ["location", "get", "put", "setLocation", "remove", "accessURL"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """

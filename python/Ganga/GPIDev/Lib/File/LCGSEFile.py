@@ -52,7 +52,7 @@ class LCGSEFile(IGangaFile):
     })
     _category = 'gangafiles'
     _name = "LCGSEFile"
-    _exportmethods = ["location", "setLocation", "get", "put", "getUploadCmd", "copyTo"]
+    _exportmethods = ["location", "setLocation", "get", "put", "getUploadCmd"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ namePattern is the pattern of the output file that has to be written into LCG SE

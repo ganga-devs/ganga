@@ -40,7 +40,7 @@ class LocalFile(IGangaFile):
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"
-    _exportmethods = ["location", "remove", "accessURL", "copyTo"]
+    _exportmethods = ["location", "remove", "accessURL"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
