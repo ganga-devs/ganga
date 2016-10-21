@@ -1061,7 +1061,7 @@ class GangaObject(Node):
         Get the registry which is managing this GangaObject
         The registry is only managing a root object so it gets this first
         """
-        return self._registry
+        return self._getRoot()._registry
 
     def _getRegistryID(self):
         """
