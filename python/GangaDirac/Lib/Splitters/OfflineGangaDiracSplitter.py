@@ -320,6 +320,15 @@ def badLFNCheck(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
 def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
     """
     Generator that yields a datasets for dirac split jobs
+
+    Args:
+        _inputs (list): This is a list of input DiracFile objects
+        filesPerJob (int): Max files per jobs as defined by splitter
+        maxFiles (int): This is the max number of files per subset(subjob)
+        ignoremissing (bool): Should we ignore missing LFN
+
+    Yields:
+        dataset (list): A list of LFNs for each subset(subjob)
     """
 
     if maxFiles is not None and maxFiles > 0:
@@ -412,6 +421,22 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
         yield dataset
 
 def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping):
+    """
+    This is the main method which loops through the LFNs and creates subsets which are returned a list of list of LFNs
+
+    Args:
+        site_dict (dict): This is a dict with LFNs as keys and sites for each LFN as value
+        filesPerJob (int): Max files per jobs as defined by splitter
+        allChosenSets (dict): A dict with LFNs as keys and a sub-set of sites where each LFN is replicated
+        wanted_common_site (int): Number of sites which we want to have in common for each LFN
+
+        uniqueSE (bool): Should we check to make sure sites don't share an SE
+        site_to_SE_mapping (dict): Dict which has sites as keys and SE as values
+        SE_to_site_mapping (dict): Dict which has sites as values and SE as keys
+
+    Returns:
+        allSubSets (list): Return a list of subsets each subset being a list of LFNs
+    """
 
     good_fraction = configDirac['OfflineSplitterFraction']
     iterative_limit = configDirac['OfflineSplitterLimit']
