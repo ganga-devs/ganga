@@ -259,18 +259,35 @@ def global_disk_lock(f):
     @functools.wraps(f)
     def decorated_global(self, *args, **kwds):
         with global_disk_lock.global_lock:
-            while True:
-                try:
-                    self.global_lock_acquire()
-                    break
-                except:
-                    time.sleep(1.)
+            if self.afs:
+                while True:
+                    try:
+                        self.afs_lock_require()
+                        break
+                    except:
+                        time.sleep(0.1)
 
-            self.safe_LockCheck()
-            try:
-                return f(self, *args, **kwds)
-            finally:
-                self.global_lock_release()
+                self.safe_LockCheck()
+                try:
+                    return f(self, *args, **kwds)
+                finally:
+                    self.afs_lock_release()
+            else:
+                with open(self.lockfn) as f_lock:
+                    while True:
+                        try:
+                            fcntl.flock(f_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                            break
+                        except IOError as e:
+                            if e.errno != errno.EAGAIN:
+                                raise
+                            time.sleep(0.1)
+                    try:
+                        self.safe_LockCheck()
+                        return f(self, *args, **kwds)
+                    finally:
+                        fcntl.flock(f_lock, fcntl.LOCK_UN)
+
     return decorated_global
 
 global_disk_lock.global_lock = threading.Lock()
@@ -403,8 +420,6 @@ class SessionLockManager(object):
                 session_lock_refresher.removeRepo(self.fn, self.repo)
                 if session_lock_refresher.numberRepos() <= 1:
                     session_lock_refresher = None
-            if not self.afs:
-                os.close(self.lockfd)
             os.unlink(self.fn)
         except OSError as x:
             logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (self.fn, self.gfn, x))
@@ -431,63 +446,51 @@ class SessionLockManager(object):
                     with open(self.lockfn, "w"):
                         # create file (does not interfere with existing sessions)
                         pass
-                self.lockfd = os.open(self.lockfn, os.O_RDWR)
-                registerGlobalSessionFile(self.lockfn)
-                registerGlobalSessionFileHandler(self.lockfd)
             except IOError as x:
                 raise RepositoryError(self.repo, "Could not create lock file '%s': %s" % (self.lockfn, x))
             except OSError as x:
                 raise RepositoryError(self.repo, "Could not open lock file '%s': %s" % (self.lockfn, x))
 
-    def global_lock_acquire(self):
+    def afs_lock_require(self):
         try:
-            if self.afs:
+            lock_path = str(self.lockfn) + '.afs'
+            lock_file = os.path.join(lock_path, "lock_file")
 
-                lock_path = str(self.lockfn) + '.afs'
-                lock_file = os.path.join(lock_path, "lock_file")
+            def clean_path():
+                oldtime = os.stat(lock_file).st_ctime
+                nowtime = time.time()
+                if abs(int(nowtime) - oldtime) > 10:
+                    #logger.debug( "cleaning global lock" )
+                    os.system("fs setacl %s %s rlidwka" % (quote(lock_path), getpass.getuser()))
 
-                def clean_path():
-                    oldtime = os.stat(lock_file).st_ctime
-                    nowtime = time.time()
-                    if abs(int(nowtime) - oldtime) > 10:
-                        #logger.debug( "cleaning global lock" )
-                        os.system("fs setacl %s %s rlidwka" % (quote(lock_path), getpass.getuser()))
+            while True:
+                try:
+                    if os.path.isfile(lock_file):
+                        clean_path()
+                    os.unlink(lock_file)
+                    break
+                except Exception as err:
+                    logger.debug("Global Lock aquire Exception: %s" % err)
+                    time.sleep(0.1)
 
-                while True:
-                    try:
-                        if os.path.isfile(lock_file):
-                            clean_path()
-                        os.unlink(lock_file)
-                        break
-                    except Exception as err:
-                        logger.debug("Global Lock aquire Exception: %s" % err)
-                        time.sleep(0.01)
+            os.system("fs setacl %s %s rliwka" % (quote(lock_path), getpass.getuser()))
 
-                os.system("fs setacl %s %s rliwka" % (quote(lock_path), getpass.getuser()))
-
-                while not os.path.isfile(lock_file):
-                    with open(lock_file, "w"):
-                        pass
-                    time.sleep(0.01)
-
-            else:
-                fcntl.lockf(self.lockfd, fcntl.LOCK_EX)
+            while not os.path.isfile(lock_file):
+                with open(lock_file, "w"):
+                    pass
 
             #logger.debug("global capture")
         except IOError as x:
-            raise RepositoryError(self.repo, "IOError on lock ('%s'): %s" % (self.lockfn, x))
+            raise RepositoryError(self.repo, "IOError on AFS global lock: %s" % (x,))
 
-    def global_lock_release(self):
+    def afs_lock_release(self):
         try:
-            if self.afs:
-                lock_path = str(self.lockfn) + '.afs'
-                os.system("fs setacl %s %s rlidwka" % (quote(lock_path), getpass.getuser()))
-            else:
-                fcntl.lockf(self.lockfd, fcntl.LOCK_UN)
+            lock_path = str(self.lockfn) + '.afs'
+            os.system("fs setacl %s %s rlidwka" % (quote(lock_path), getpass.getuser()))
 
             #logger.debug("global release")
         except IOError as x:
-            raise RepositoryError(self.repo, "IOError on unlock ('%s'): %s" % (self.lockfn, x))
+            raise RepositoryError(self.repo, "IOError on AFS global lock: %s" % (x,))
 
     # Session read-write functions
     @synchronised
