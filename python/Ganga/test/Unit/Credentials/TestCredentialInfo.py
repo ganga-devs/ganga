@@ -50,7 +50,7 @@ class FakeShell(object):
 def fake_shell(mocker):
     s = mocker.patch('Ganga.GPIDev.Credentials.VomsProxy.VomsProxyInfo.shell', FakeShell())
     mocker.patch('Ganga.GPIDev.Adapters.ICredentialInfo.os.path.exists', return_value=True)
-    mocker.patch('Ganga.GPIDev.Adapters.ICredentialInfo.ENABLE_CACHING', False)
+    mocker.patch('Ganga.GPIDev.Credentials.CredentialStore.CredentialStore.enable_caching', False)
     yield s
 
 

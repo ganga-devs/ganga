@@ -158,9 +158,24 @@ def postBootstrapHook():
 
 
 class gridProxy(object):
+    """
+    This is a stub class which wraps functions from the `credential_store` sentinal to familiar functions from Ganga 6.2 and prior
+    """
 
     @classmethod
     def renew(cls):
+        """
+        This method is similar to calling::
+
+            credential_store.create(DiracProxy())
+
+        or::
+
+            credential_store[DiracProxy()].renew()
+
+        as appropriate.
+        """
+
         from Ganga.GPI import credential_store, DiracProxy
         try:
             cred = credential_store[DiracProxy()]
@@ -171,10 +186,20 @@ class gridProxy(object):
 
     @classmethod
     def create(cls):
+        """
+        This is a wrapper for::
+
+            credential_store.create(DiracProxy())
+        """
         cls.renew()
 
     @classmethod
     def destroy(cls):
+        """
+        This is a wrapper for::
+
+            credential_store[DiracProxy()].destroy()
+        """
         from Ganga.GPI import credential_store, DiracProxy
         try:
             cred = credential_store[DiracProxy()]

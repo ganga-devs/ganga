@@ -4,8 +4,6 @@ from Ganga.Core import GangaAttributeError
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 
-from .ICredentialInfo import ICredentialInfo
-
 
 class ICredentialRequirement(GangaObject):
     """

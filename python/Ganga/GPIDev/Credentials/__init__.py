@@ -22,7 +22,7 @@ def require_credential(method):
     Uses the method's object's ``credential_requirements`` attribute
     """
     @wraps(method)
-    def wrapped_method(self, *args, **kwargs):
+    def cred_wrapped_method(self, *args, **kwargs):
         cred_req = self.credential_requirements
 
         try:
@@ -42,6 +42,6 @@ def require_credential(method):
                 raise InvalidCredentialError('Proxy is invalid')
 
         return method(self, *args, **kwargs)
-    return wrapped_method
+    return cred_wrapped_method
 
 

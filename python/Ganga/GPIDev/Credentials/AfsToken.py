@@ -4,6 +4,7 @@ import datetime
 import os
 import re
 import subprocess
+import sys
 from getpass import getpass
 from glob import glob
 
@@ -16,8 +17,6 @@ from Ganga.Core.exceptions import CredentialRenewalError
 
 logger = Ganga.Utility.logging.getLogger()
 
-info_pattern = re.compile(r"^User's \(AFS ID \d*\) tokens for (?P<id>\w*@\S*) \[Expires (?P<expires>.*)\]$", re.MULTILINE)
-
 
 class AfsTokenInfo(ICredentialInfo):
     """
@@ -25,6 +24,10 @@ class AfsTokenInfo(ICredentialInfo):
 
     For now it is very CERN-specific (or at least only follows the CERN use-case)
     """
+
+    should_warn = False
+
+    info_pattern = re.compile(r"^User's \(AFS ID \d*\) tokens for (?P<id>\w*@\S*) \[Expires (?P<expires>.*)\]$", re.MULTILINE)
 
     def __init__(self, requirements, check_file=False, create=False):
         """
@@ -63,7 +66,6 @@ class AfsTokenInfo(ICredentialInfo):
         Raises:
             CredentialRenewalError: If the renewal process returns a non-zero value
         """
-
         status, output, message = self.shell.cmd1('kinit -R')
 
         if status != 0:
@@ -92,25 +94,36 @@ class AfsTokenInfo(ICredentialInfo):
     def expiry_time(self):
         """
         This calculates the number of seconds left for the kerberos token on disk
-        # FIXME should this rely on 'afs@cern.ch'?
         """
         info = self.info
-        matches = re.finditer(info_pattern, info)
+        matches = re.finditer(AfsTokenInfo.info_pattern, info)
 
         if not matches:
             return datetime.timedelta()
 
-        expires = [match.group('expires') for match in matches if match.group('id') == 'afs@cern.ch'][0]
-        expires = datetime.datetime.strptime(expires, '%b %d %H:%M')
-        now = datetime.datetime.now()
-        expires = expires.replace(year=now.year)
+        all_tokens = [match.group('expires') for match in matches]
 
-        # If the expiration date is in the past then assume it should be in the future
-        # FIXME? When does this ever occur?
-        if expires < now:
-            expires = expires.replace(year=now.year+1)
+        if len(all_tokens) > 1:
+            if AfsTokenInfo.should_warn:
+                logger.warning("Found multiple AFS tokens, taking soonest expiring one for safety")
+                logger.warning("Tokens found for: %s".format(" ".join([match.group('id') for match in matches])))
+                AfsTokenInfo.should_warn = False
 
-        return expires
+        soonest = None
+
+        for expires in all_tokens:
+            expires = datetime.datetime.strptime(expires, '%b %d %H:%M')
+            now = datetime.datetime.now()
+            expires = expires.replace(year=now.year)
+
+            # If the expiration date is in the past then assume it should be in the future
+            if expires < now:
+                expires = expires.replace(year=now.year+1)
+
+            if not soonest or expires < soonest:
+                soonest = expires
+
+        return soonest
 
     def default_location(self):
         """
@@ -120,13 +133,18 @@ class AfsTokenInfo(ICredentialInfo):
         if krb_env_var.startswith('FILE:'):
             krb_env_var = krb_env_var[5:]
 
+        # If file already exists
+        if os.path.exists(krb_env_var):
+            return krb_env_var
+
+        # Lets try to find it if we can't get it from the env
         default_name_prefix = '/tmp/krb5cc_{uid}'.format(uid=os.getuid())
         matches = glob(default_name_prefix+'*')  # Check for partial matches on disk
         if len(matches) == 1:  # If one then use it
             filename_guess = matches[0]
         else: # Otherwise use the default
             filename_guess = default_name_prefix
-        return krb_env_var or filename_guess
+        return filename_guess
 
 
 class AfsToken(ICredentialRequirement):

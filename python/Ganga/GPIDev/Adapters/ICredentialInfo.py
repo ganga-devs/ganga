@@ -9,11 +9,9 @@ from functools import wraps
 import Ganga.Utility.logging
 
 from Ganga.Core.exceptions import CredentialsError
+from Ganga.GPIDev.Credentials.CredentialStore import credential_store
 
 logger = Ganga.Utility.logging.getLogger()
-
-ENABLE_CACHING = True
-RETRY_LIMIT = 5
 
 def cache(method):
     """
@@ -34,7 +32,7 @@ def cache(method):
     def cache_function(self, *args, **kwargs):
 
         # If the mtime has been changed, clear the cache
-        if ENABLE_CACHING and os.path.exists(self.location):
+        if credential_store.enable_caching and os.path.exists(self.location):
             mtime = os.path.getmtime(self.location)
             if mtime > self.cache['mtime']:
                 self.cache = {'mtime': mtime}
@@ -52,13 +50,13 @@ def cache(method):
 def retry_command(method):
     """
     This method attempts to run the same function which can exit due to a CredetialsError
-    Any other exceptions are raised as appropriate. If a command fails it's assumed to have failed due to an invalid user input and is retried upto RETRY_LIMIT
+    Any other exceptions are raised as appropriate. If a command fails it's assumed to have failed due to an invalid user input and is retried upto crednential_store.retry_limit
     Args:
         method (function): This is the method which we're wrapping
     """
     @wraps(method)
     def retry_function(*args, **kwds):
-        for _ in range(RETRY_LIMIT):
+        for _ in range(credential_store.retry_limit):
             try:
                 return method(*args, **kwds)
             except CredentialsError:
