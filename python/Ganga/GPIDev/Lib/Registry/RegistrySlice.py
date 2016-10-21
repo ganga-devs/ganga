@@ -204,11 +204,12 @@ class RegistrySlice(object):
             if select(int(this_id)):
                 logger.debug("Selected: %s" % this_id)
                 selected = True
+                name_str = obj._getRegistry()._getName(obj)
                 for a in attrs:
                     if self.name == 'box':
                         attrvalue = attrs[a]
                         if a == 'name':
-                            if not fnmatch.fnmatch(obj._getRegistry()._getName(obj), attrvalue):
+                            if not fnmatch.fnmatch(name_str, attrvalue):
                                 selected = False
                                 break
                         elif a == 'application':
