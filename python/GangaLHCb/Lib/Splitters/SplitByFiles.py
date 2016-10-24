@@ -1,7 +1,7 @@
 from Ganga.Core.exceptions import SplitterError
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
@@ -58,7 +58,7 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         'splitterBackend': SimpleItem(defvalue=getBackend(),
                                       doc='name of the backend algorithm to use for splitting',
-                                      typelist=['str'], protected=1, visitable=0)
+                                      typelist=['str'], protected=1, visitable=0),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
         })
 
