@@ -23,9 +23,8 @@ class TutorialTests(GangaUnitTest):
     # Should also add more checks for completed jobs, etc.
     def setUp(self):
         """Make sure that the Tasks object isn't destroyed between tests"""
-        super(TutorialTests, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False')]
+        super(TutorialTests, self).setUp(extra_opts=extra_opts)
 
     def test_a_InstallAndBasicUsage(self):
         from Ganga.GPI import Job, jobs

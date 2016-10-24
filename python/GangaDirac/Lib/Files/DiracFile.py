@@ -465,64 +465,30 @@ class DiracFile(IGangaFile):
 
     def accessURL(self, thisSE=''):
         """
-        Attempt to find an accessURL which corresponds to an SE at this given site
-        The given site will be provided either by thisSE which takes precedent or by
-        the value stored in DiracFile.defaultSE
+        Attempt to find an accessURL which corresponds to the specified SE. If no SE is specified then
+        return a random one from all the replicas. 
         """
-        # If we don't have subfiles then we need to make sure that the replicas
-        # are known
-        if len(self._remoteURLs) == 0 and len(self.subfiles) == 0:
-            self.getReplicas()
-
-        # Now we have to match the replicas to find one at the
+        _accessURLs = []
         if len(self.subfiles) == 0:
-
-            files_URLs = self._remoteURLs
-            this_accessURL = ''
-
-            for this_SE in files_URLs.keys():
-
-                this_URL = files_URLs.get(this_SE)
-                these_sites_output = execute('getSitesForSE("%s")' % str(this_SE))
-                if thisSE == '':
-                    default_site = execute('getSiteForSE("%s")' % self.defaultSE)
-                else:
-                    default_site = thisSE
-
-                if these_sites_output.get('OK', False):
-                    these_sites = these_sites_output.get('Value')
-                    for this_site in these_sites:
-                        if type(default_site) == type([]):
-                            hasMatched = False
-                            for this_Site_in_SE in default_site:
-                                if this_site == this_Site_in_SE:
-                                    hasMatched = True
-                                    break
-                            if hasMatched:
-                                break
-                        elif type(default_site) == type(''):
-                            if this_site == default_site:
-                                this_accessURL = this_URL
-                                break
-                if this_accessURL != '':
-                    break
-
-            # Cannot find an accessURL
-            if this_accessURL == '':
-                return []
-
-            # Currently only written to cope with 1 replica per DIRAC file
-            # I think adding multiple accessURL for the same file at 1 site
-            # adds confusion
-            return [this_accessURL]
+          self.getReplicas()
+          # If the SE isn't specified return a random choice.
+          if thisSE == '':
+            this_SE = random.choice(self.locations)
+          # If the SE is specified and we got a URL for a replica there, use it.
+          elif thisSE in self.locations:
+            this_SE = thisSE
+          # If the specified SE doesn't have a replica then return another one at random.
+          else:
+             logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
+             this_SE = random.choice(self.locations) 
+          myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE))
+          this_accessURL = myurl['Value']['Successful'][self.lfn]
+          _accessURLs.append(this_accessURL)
         else:
-            # For all subfiles request the accessURL, 1 URL per LFN
-            _accessURLs = []
-            for i in self.subfiles:
-                for j in i.accessURL():
-                    _accessURLs.append(j)
-
-            return _accessURLs
+          # For all subfiles request the accessURL, 1 URL per LFN
+          for i in self.subfiles:
+            _accessURLs.append(i.accessURL(thisSE)[0])
+        return _accessURLs
 
     def get(self, localPath=''):
         """

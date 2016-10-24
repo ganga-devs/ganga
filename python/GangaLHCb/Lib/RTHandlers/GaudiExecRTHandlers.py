@@ -112,6 +112,13 @@ def collectPreparedFiles(app):
         for name in dirs:
             input_folders.append(os.path.join(root, name))
 
+    for file_ in app.getJobObject().inputfiles:
+        if isinstance(file_, LocalFile):
+            shutil.copy(os.path.join(file_.localDir, os.path.basename(file_.namePattern)), shared_dir)
+            input_files.append(os.path.join(shared_dir, file_.namePattern))
+        elif not isinstance(file_, DiracFile):
+            raise ApplicationConfigurationError(None, "File type: %s Not _yet_ supported in GaudiExec" % type(file_))
+
     return input_files, input_folders
 
 
@@ -122,35 +129,29 @@ def prepareCommand(app):
         app (GaudiExec): This expects only the GaudiExec app
     """
 
-    opts_file = app.getOptsFile()
-    if isinstance(opts_file, (LocalFile, DiracFile)):
-        # Ideally this would NOT need the basename, however LocalFile is special in this regard.
-        # TODO Fix this after fixing LocalFile
-        opts_name = os.path.basename(opts_file.namePattern)
-    else:
-        raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
-                                            getName(opts_file))
+    all_opts_files = app.getOptsFiles()
+    opts_names = []
+    for opts_file in all_opts_files:
+        if isinstance(opts_file, (LocalFile, DiracFile)):
+            # Ideally this would NOT need the basename, however LocalFile is special in this regard.
+            # TODO Fix this after fixing LocalFile
+            opts_names.append(os.path.basename(opts_file.namePattern))
+        else:
+            raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
+                                                getName(opts_file))
 
     sourceEnv = app.getEnvScript()
 
     if not app.useGaudiRun:
         full_cmd = sourceEnv + './run python %s' % app.getWrapperScriptName()
     else:
-        full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (opts_name, GaudiExecDiracRTHandler.data_file)
+        full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
         if app.extraOpts:
-            full_cmd += ' ' + app.getOptsFileName()
+            full_cmd += ' ' + app.getExtraOptsFileName()
         if app.extraArgs:
             full_cmd += " " + " ".join(app.extraArgs)
 
     return full_cmd
-
-
-def WarnUsers():
-    """ A quick method for warning users about the in-development status of the app """
-    print("\n\n")
-    logger.warning("This GaudiExec Application is still in the testing phase.")
-    logger.warning("There is no guarantee that any jobs submitted with it wil remain compatible with the next release of Ganga")
-    raw_input("Please Hit the return key to continue with your Job submission\n")
 
 
 class GaudiExecRTHandler(IRuntimeHandler):
@@ -165,22 +166,16 @@ class GaudiExecRTHandler(IRuntimeHandler):
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
 
-        WarnUsers()
-
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
-        job = app.getJobObject()
-        if job.subjobs:
-            rjobs = job.subjobs
-        else:
-            rjobs = [job]
-        for this_job in rjobs:
-            logger.debug("RTHandler Preparing: %s" % this_job.fqid)
-            this_job.application.constructExtraFiles(this_job)
 
-        optsArchive = os.path.join(app.sharedOptsInput.localDir, app.sharedOptsInput.namePattern)
-        gzipFile(optsArchive, optsArchive+'.gz', True)
+        if isinstance(app.jobScriptArchive, LocalFile):
+            app.jobScriptArchive = None
 
-        inputsandbox.append(File(name=optsArchive+'.gz'))
+        generateJobScripts(app, appendJobScripts=True)
+
+        scriptArchive = os.path.join(app.jobScriptArchive.localDir, app.jobScriptArchive.namePattern)
+
+        inputsandbox.append(File(name=scriptArchive))
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
@@ -226,7 +221,7 @@ allHandlers.add('GaudiExec', 'LSF', GaudiExecRTHandler)
 
 def generateDiracInput(app):
     """
-    Construct a DIRAC input which must be unique to each job to have unique checksum.
+    Construct a DIRAC input which does not need to be unique to each job but is required to have a unique checksum.
     This generates a unique file, uploads it to DRIAC and then stores the LFN in app.uploadedInput
     Args:
         app (GaudiExec): This expects a GaudiExec app to be passed so that the constructed
@@ -242,45 +237,94 @@ def generateDiracInput(app):
         prep_dir = app.getSharedPath()
         addTimestampFile(prep_dir)
         prep_file = prep_dir + '.tgz'
-        compressed_file = os.path.join(tempfile.gettempdir(), '__'+os.path.basename(prep_file))
+        tmp_dir = tempfile.gettempdir()
+        compressed_file = os.path.join(tmp_dir, '__'+os.path.basename(prep_file))
 
         if not job.master:
             rjobs = job.subjobs
         else:
             rjobs = [job]
 
-        script_names = []
-
-        for this_job in rjobs:
-            this_app = this_job.application
-            wnScript = generateWNScript(prepareCommand(this_app), this_app)
-            this_script = os.path.join(tempfile.gettempdir(), wnScript.name)
-            script_names.append(wnScript)
-            wnScript.create(this_script)
-
         with tarfile.open(compressed_file, "w:gz") as tar_file:
             for name in input_files:
                 # FIXME Add support for subfiles here once it's working across multiple IGangaFile objects in a consistent way
-                # Not hacking this in for now just in-case we end up with a mess as a result.
+                # Not hacking this in for now just in-case we end up with a mess as a result
                 tar_file.add(name, arcname=os.path.basename(name))
-            for thisScript in script_names:
-                this_file = os.path.join(tempfile.gettempdir(), thisScript.name)
-                logger.debug("Adding: '%s' as: '%s'" % (this_file, os.path.join(thisScript.subdir, thisScript.name)))
-                tar_file.add(this_file, arcname=os.path.join(thisScript.subdir, thisScript.name))
-        shutil.move(compressed_file, prep_dir)
 
-    new_df = uploadLocalFile(job, os.path.basename(compressed_file), app.getSharedPath())
+    new_df = uploadLocalFile(job, os.path.basename(compressed_file), tmp_dir)
 
     app.uploadedInput = new_df
 
 
-def uploadLocalFile(job, namePattern, localDir):
+def generateJobScripts(app, appendJobScripts):
+    """
+    Construct a DIRAC scripts which must be unique to each job to have unique checksum.
+    This generates a unique file, uploads it to DRIAC and then stores the LFN in app.uploadedInput
+    Args:
+        app (GaudiExec): This expects a GaudiExec app to be passed so that the constructed
+        appendJobScripts (bool): Should we add the job scripts to the script archive? (Only makes sense on backends which auto-extact tarballs before running)
+    """
+
+    job = app.getJobObject()
+
+    if not job.master:
+        rjobs = job.subjobs or [job]
+    else:
+        rjobs = [job]
+
+    tmp_dir = tempfile.gettempdir()
+
+    # First create the extraOpts files needed 1 per subjob
+    for this_job in rjobs:
+        logger.debug("RTHandler Making Scripts: %s" % this_job.fqid)
+        this_job.application.constructExtraFiles(this_job)
+
+    if not job.master and job.subjobs:
+        for sj in rjobs:
+            sj.application.jobScriptArchive = sj.master.application.jobScriptArchive
+
+    master_job = job.master or job
+
+    # Now lets get the name of this tar file
+    scriptArchive = os.path.join(master_job.application.jobScriptArchive.localDir, master_job.application.jobScriptArchive.namePattern)
+
+    if appendJobScripts:
+        # Now lets add the Job scripts to this archive
+        with tarfile.open(scriptArchive, 'a') as tar_file:
+            for this_job in rjobs:
+                this_app = this_job.application
+                wnScript = generateWNScript(prepareCommand(this_app), this_app)
+                this_script = os.path.join(tmp_dir, wnScript.name)
+                wnScript.create(this_script)
+                tar_file.add(this_script, arcname=os.path.join(wnScript.subdir, wnScript.name))
+
+    gzipFile(scriptArchive, scriptArchive+'.gz', True)
+    app.jobScriptArchive.namePattern = app.jobScriptArchive.namePattern + '.gz'
+
+def generateDiracScripts(app):
+    """
+    Construct a DIRAC scripts which must be unique to each job to have unique checksum.
+    This generates a unique file, uploads it to DRIAC and then stores the LFN in app.uploadedInput
+    Args:
+        app (GaudiExec): This expects a GaudiExec app to be passed so that the constructed
+    """
+    generateJobScripts(app, appendJobScripts=True)
+
+    job = app.getJobObject()
+
+    new_df = uploadLocalFile(job, app.jobScriptArchive.namePattern, app.jobScriptArchive.localDir)
+
+    app.jobScriptArchive = new_df
+
+
+def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
     Upload a locally available file to the grid as a DiracFile
 
     Args:
         namePattern (str): name of the file
         localDir (str): localDir of the file
+        should_del = (bool): should we delete the local file?
     Return
         DiracFile: a DiracFile of the uploaded LFN on the grid
     """
@@ -289,6 +333,9 @@ def uploadLocalFile(job, namePattern, localDir):
     random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
     new_lfn = os.path.join(getInputFileDir(job), namePattern)
     returnable = new_df.put(force=True, uploadSE=random_SE, lfn=new_lfn)[0]
+
+    if should_del:
+        os.unlink(os.path.join(localDir, namePattern))
 
     return returnable
 
@@ -314,36 +361,24 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
 
-        WarnUsers()
-
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
-        generateDiracInput(app)
-        assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit"
+
+        if not isinstance(app.uploadedInput, DiracFile):
+            generateDiracInput(app)
+            assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit. Tried to upload to: %s\nIf your Ganga installation is not at CERN your username may be trying to create a non-existent LFN. Try setting the 'DIRAC' configuration 'DiracLFNBase' to your grid user path.\n" % DiracFile.diracLFNBase()
+        
         rep_data = app.uploadedInput.getReplicas()
         assert rep_data != {}, "Failed to find a replica, aborting submit"
 
-        job = app.getJobObject()
-        if job.subjobs:
-            rjobs = job.subjobs
-        else:
-            rjobs = [job]
-        for this_job in rjobs:
-            logger.debug("RTHandler Preparing: %s" % this_job.fqid)
-            this_job.application.constructExtraFiles(this_job)
 
-        optsArchive = os.path.join(app.sharedOptsInput.localDir, app.sharedOptsInput.namePattern)
-        gzipFile(optsArchive, optsArchive+'.gz', True)
+        if isinstance(app.jobScriptArchive, (DiracFile, LocalFile)):
+            app.jobScriptArchive = None
 
-        new_df = DiracFile()
-        new_df.namePattern = app.sharedOptsInput.namePattern + '.gz'
-        new_df.localDir = app.sharedOptsInput.localDir
-        new_df.remoteDir = getInputFileDir(app.getJobObject())
-        new_df = new_df.put(force=True)[0]
-        app.sharedOptsInput = new_df
+        generateDiracScripts(app)
 
-        assert isinstance(app.sharedOptsInput, DiracFile), "Failed to upload needed file, aborting submit"
-        rep_data = app.sharedOptsInput.getReplicas()
+        assert isinstance(app.jobScriptArchive, DiracFile), "Failed to upload needed file, aborting submit"
+        rep_data = app.jobScriptArchive.getReplicas()
         assert rep_data != {}, "Failed to find a replica, aborting submit"
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
@@ -371,24 +406,28 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         # We can support inputfiles and opts_file here. Locally should be submitted once, remotely can be referenced.
 
-        opts_file = app.getOptsFile()
+        all_opts_files = app.getOptsFiles()
 
-        if isinstance(opts_file, DiracFile):
-            inputsandbox += ['LFN:'+opts_file.lfn]
+        for opts_file in all_opts_files:
+            if isinstance(opts_file, DiracFile):
+                inputsandbox += ['LFN:'+opts_file.lfn]
 
         # Sort out inputfiles we support
         for file_ in job.inputfiles:
             if isinstance(file_, DiracFile):
                 inputsandbox += ['LFN:'+file_.lfn]
-            elif isinstance(file_, LocalFile):
-                base_name = os.path.basename(file_.namePattern)
-                shutil.copyfile(os.path.join(file_.localDir, base_name), os.path.join(app.getSharedPath(), base_name))
+            if isinstance(file_, LocalFile):
+                if job.master is not None and file_ not in job.master.inputfiles:
+                    shutil.copy(os.path.join(file_.localDir, file_.namePattern), app.getSharedPath())
+                    inputsandbox += [os.path.join(app.getSharedPath(), file_.namePattern)]
             else:
                 logger.error("Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
                 raise ApplicationConfigurationError(None, "Unsupported filetype: %s with DIRAC backend" % getName(file_))
 
-        app.uploadedInput = job.master.application.uploadedInput
-        app.sharedOptsInput = job.master.application.sharedOptsInput
+        master_job = job.master or job
+
+        app.uploadedInput = master_job.application.uploadedInput
+        app.jobScriptArchive = master_job.application.jobScriptArchive
 
         logger.debug("uploadedInput: %s" % app.uploadedInput)
 
@@ -397,7 +436,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         logger.debug("Replica info: %s" % rep_data)
 
         inputsandbox += ['LFN:'+app.uploadedInput.lfn]
-        inputsandbox += ['LFN:'+app.sharedOptsInput.lfn]
+        inputsandbox += ['LFN:'+app.jobScriptArchive.lfn]
 
         logger.debug("Input Sand: %s" % inputsandbox)
 
@@ -515,11 +554,11 @@ if __name__ == '__main__':
     # Extract any/_all_ (b/g)zip files on the WN
     extractAllTarFiles('.')
 
-    print("Executing: %s" % '###COMMAND###'+' '+' '.join(sys.argv))
+    print("Executing: %s" % '###COMMAND###'+' '+' '.join(sys.argv[1:]))
 
     # Execute the actual command on the WN
     # NB os.system caused the entire stream to be captured before being streamed in some cases
-    pipe = subprocess.Popen('###COMMAND###'+' '+' '.join(sys.argv), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    pipe = subprocess.Popen('###COMMAND###'+' '+' '.join(sys.argv[1:]), shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
     # Flush the stdout/stderr as the process is running correctly
     flush_streams(pipe)

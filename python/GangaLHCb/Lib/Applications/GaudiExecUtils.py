@@ -5,6 +5,7 @@ import uuid
 from os import path
 from Ganga.Core.exceptions import GangaException
 from Ganga.Runtime.GPIexport import exportToGPI
+from Ganga.Utility.files import expandfilename
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from .PythonOptsCmakeParser import PythonOptsCmakeParser
@@ -29,9 +30,12 @@ importOptions('%s')
 # Import data.py
 importOptions('%s')
 
+for script_file in %s:
+    importOptions( script_file )
+
 # Run the command
 execfile('%s')
-""" % (sys_args, options, data_file, script_file)
+""" % (sys_args, options, data_file, repr(script_file[1:]), script_file[0])
     return wrapper_script
 
 def getTimestampContent():
@@ -97,13 +101,27 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
         makedirs(full_path)
         chdir(full_path)
     _exec_cmd('lb-dev %s %s' % (myApp, myVer), full_path)
-    logger.info("Set up App Env at: %s" % full_path)
+    dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
+    logger.info("Set up App Env at: %s" % dev_dir)
     if myGetpack:
-        dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
         _exec_cmd('getpack %s' % myGetpack, dev_dir)
         logger.info("Ran Getpack: %s" % myGetpack)
+    return dev_dir
 
 exportToGPI('prepare_cmake_app', prepare_cmake_app, 'Functions')
+
+def prepareGaudiExec(myApp, myVer):
+    """
+        Setup and Return a GaudiExec based upon a release version of a given App.
+        Args:
+            myApp (str): This is name of the App you want to run
+            myVer (str): This is the version of the app you want
+    """
+    path = prepare_cmake_app(myApp, myVer)
+    from Ganga.GPI import GaudiExec
+    return GaudiExec(directory=path)
+
+exportToGPI('prepareGaudiExec', prepareGaudiExec, 'Functions')
 
 def _exec_cmd(cmd, cwdir):
     """

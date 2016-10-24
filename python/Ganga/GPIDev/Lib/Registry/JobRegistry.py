@@ -276,13 +276,6 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         """
         return stripProxy(self).__call__(x)
 
-    def __getslice__(self, i1, i2):
-        """ Get a slice. Examples:
-        jobs[2:] : get first two jobs,
-        jobs[-10:] : get last 10 jobs.
-        """
-        return _wrap(stripProxy(self).__getslice__(i1, i2))
-
     def __getitem__(self, x):
         """ Get a job by positional index. Examples:
         jobs[-1] : get last job,
