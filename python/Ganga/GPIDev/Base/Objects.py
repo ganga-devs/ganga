@@ -112,20 +112,6 @@ class Node(object):
 
     @property
     @contextmanager
-    def _internal_lock(self):
-        """
-        This is a context manager which acquires the internal read lock on the
-        object's root object.
-        """
-        root = self._getRoot()
-        root._read_lock.acquire()
-        try:
-            yield
-        finally:
-            root._read_lock.release()
-
-    @property
-    @contextmanager
     def const_lock(self):
         """
         This is a context manager which acquires the const write lock on the
@@ -246,7 +232,7 @@ def synchronised_get_descriptor(get_function):
         if obj is None:
             return get_function(self, obj, type_or_value)
 
-        with obj._internal_lock:
+        with obj._getRoot()._read_lock:
             return get_function(self, obj, type_or_value)
 
     return decorated
@@ -262,8 +248,9 @@ def synchronised_set_descriptor(set_function):
         if obj is None:
             return set_function(self, obj, type_or_value)
 
-        with obj.const_lock:
-            with obj._internal_lock:
+        root_obj = obj._getRoot()
+        with root_obj._write_lock:
+            with root_obj._read_lock:
                 return set_function(self, obj, type_or_value)
     return decorated
 
@@ -1008,7 +995,7 @@ class GangaObject(Node):
     def _getSessionLock(self):
         """Acquires the session lock on this object"""
         r = self._getRoot()
-        reg = r._getRegistry()
+        reg = r._registry
         if reg is not None:
             reg._acquire_session_lock(r)
 
@@ -1016,7 +1003,7 @@ class GangaObject(Node):
         """ Releases the session lock for this object
         Please use only if the object is expected to be used by other sessions"""
         r = self._getRoot()
-        reg = r._getRegistry()
+        reg = r._registry
         if reg is not None:
             reg._release_session_lock_and_flush(r)
 
