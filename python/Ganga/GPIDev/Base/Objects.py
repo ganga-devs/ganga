@@ -31,12 +31,9 @@ def _getName(obj):
     Args:
         obj (unknown):
     """
-    returnable = getattr(obj, '_name', getattr(obj, '__name__', None))
-    if returnable is None:
-        returnable = getattr(getattr(obj, '__class__', None), '__name__', None)
-    if returnable is None:
-        returnable = str(obj)
-    return returnable
+    return getattr(obj, '_name', getattr(obj, '__name__',\
+                    getattr(getattr(obj, '__class__', None), '__name__',\
+                    str(obj))))
 
 logger = getLogger(modulename=1)
 
@@ -520,7 +517,7 @@ class Descriptor(object):
                 new_val = val
                 pass
 
-        if isinstance(new_val, Node):
+        if isinstance(new_val, Node) and new_val._getParent() is not obj:
             new_val._setParent(obj)
 
         return new_val
@@ -766,7 +763,8 @@ class GangaObject(Node):
             this_attr = getattr(srcobj, key)
             if isinstance(this_attr, Node) and key not in do_not_copy:
                 #logger.debug("k: %s  Parent: %s" % (key, (srcobj)))
-                this_attr._setParent(srcobj)
+                if this_attr._getParent() is not srcobj:
+                    this_attr._setParent(srcobj)
 
     def _actually_copyFrom(self, _srcobj, _ignore_atts):
         # type: (GangaObject, Optional[Sequence[str]]) -> None
@@ -787,13 +785,15 @@ class GangaObject(Node):
                     setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
                 if isinstance(this_attr, Node) and name not in do_not_copy:
-                    this_attr._setParent(self)
+                    if this_attr._getParent() is not self:
+                        this_attr._setParent(self)
             elif not item['copyable']: ## Default of '1' instead of True...
                 if not hasattr(self, name):
                     setattr(self, name, self._schema.getDefaultValue(name))
                 this_attr = getattr(self, name)
                 if isinstance(this_attr, Node) and name not in do_not_copy:
-                    this_attr._setParent(self)
+                    if this_attr._getParent() is not self:
+                        this_attr._setParent(self)
             else:
                 copy_obj = deepcopy(getattr(_srcobj, name))
                 setattr(self, name, copy_obj)
@@ -847,7 +847,7 @@ class GangaObject(Node):
         """
         # type: (Dict[str, Any]) -> None
         for v in new_data.values():
-            if isinstance(v, Node):
+            if isinstance(v, Node) and v._getParent() is not self:
                 v._setParent(self)
         self._data_dict = new_data
 
@@ -861,7 +861,7 @@ class GangaObject(Node):
             attrib_value (unknown): the value to set it to
         """
         self._data[attrib_name] = attrib_value
-        if isinstance(attrib_value, Node):
+        if isinstance(attrib_value, Node) and attrib_value._getParent() is not self:
             self._data[attrib_name]._setParent(self)
 
     @property
@@ -958,7 +958,7 @@ class GangaObject(Node):
                         setattr(self_copy, name, self._schema.getDefaultValue(name))
 
                 this_attr = getattr(self_copy, name)
-                if isinstance(this_attr, Node):
+                if isinstance(this_attr, Node) and this_attr._getParent() is not self_copy:
                     this_attr._setParent(self_copy)
 
                 if item.isA(SharedItem):
@@ -972,8 +972,10 @@ class GangaObject(Node):
                     self_copy.__dict__[k] = v
 
         if true_parent is not None:
-            self._setParent(true_parent)
-            self_copy._setParent(true_parent)
+            if self._getParent() is not true_parent:
+                self._setParent(true_parent)
+            if self_copy._getParent() is not true_parent:
+                self_copy._setParent(true_parent)
         setattr(self_copy, '_registry', self._registry)
         return self_copy
 
