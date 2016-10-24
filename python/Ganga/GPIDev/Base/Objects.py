@@ -31,9 +31,16 @@ def _getName(obj):
     Args:
         obj (unknown):
     """
-    return getattr(obj, '_name', getattr(obj, '__name__',\
-                    getattr(getattr(obj, '__class__', None), '__name__',\
-                    str(obj))))
+    try:
+        return obj._name
+    except AttributeError:
+        try:
+            return obj.__name__
+        except AttributeError:
+            try:
+                return obj.__class__.__name__
+            except AttributeError:
+                return str(obj)
 
 logger = getLogger(modulename=1)
 
@@ -1071,7 +1078,7 @@ class GangaObject(Node):
                 if not self._schema[k].getProperties()['visitable'] or self._schema[k].getProperties()['transient']:
                     continue
                 this_attr = getattr(self, k)
-                if isinstance(this_attr, Node):
+                if isinstance(this_attr, Node) and this_attr._dirty:
                     this_attr._setFlushed()
         super(GangaObject, self)._setFlushed()
 
