@@ -1074,11 +1074,17 @@ class GangaObject(Node):
         """Un-Set the dirty flag all of the way down the schema."""
         if self._schema:
             for k in self._schema.allItemNames():
-                ## Avoid attributes the likes of job.master which crawl back up the tree
-                if not self._schema[k].getProperties()['visitable'] or self._schema[k].getProperties()['transient']:
-                    continue
                 this_attr = getattr(self, k)
-                if isinstance(this_attr, Node) and this_attr._dirty:
+                if isinstance(this_attr, Node):
+                    if not this_attr._dirty:
+                        continue
+                else:
+                    continue
+                ## Avoid attributes the likes of job.master which crawl back up the tree
+                k_props = self._schema[k].getProperties()
+                if not k_props['visitable'] or k_props['transient']:
+                    continue
+                if isinstance(this_attr, Node):
                     this_attr._setFlushed()
         super(GangaObject, self)._setFlushed()
 
