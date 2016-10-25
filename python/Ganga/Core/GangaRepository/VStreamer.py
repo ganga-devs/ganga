@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy, isType, getName
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
@@ -10,7 +10,7 @@ from Ganga.Utility.Config import config_scope
 
 from Ganga.Utility.Plugin import PluginManagerError, allPlugins
 
-from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Base.Objects import GangaObject, ObjectMetaclass
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
@@ -18,10 +18,13 @@ from .GangaRepository import SchemaVersionError
 
 import xml.sax.saxutils
 import copy
+from cStringIO import StringIO
 
 logger = getLogger()
 
 _cached_eval_strings = {}
+
+_xml_classes = {}
 
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
@@ -48,10 +51,12 @@ class XMLFileError(GangaException):
         return "XMLFileError: %s %s" % (self.message, err)
 
 def _raw_to_file(j, fobj=None, ignore_subs=[]):
-    vstreamer = VStreamer(out=fobj, selection=ignore_subs)
+    sio = StringIO()
+    vstreamer = VStreamer(out=sio, selection=ignore_subs)
     vstreamer.begin_root()
     j.accept(vstreamer)
     vstreamer.end_root()
+    print(sio.getvalue(), file=fobj)
 
 def to_file(j, fobj=None, ignore_subs=[]):
     #used to debug write problems - rcurrie
@@ -325,7 +330,18 @@ class Loader(object):
                         self.ignore_count = 1
                     else:
                         # make a new ganga object
-                        obj = cls()
+                        if cls.__name__ not in _xml_classes:
+                            attrs_to_add = [ attr for attr, item in cls._schema.allItems()]
+                            cls2 = type(str(attrs['name']), (cls,),
+                                    {'_should_init':False, '_should_be_available':False,
+                                    '_schema': cls._schema.inherit_copy(), '_data_dict': {} })
+                            cls2._name = getName(cls)
+                            if hasattr(addProxy(cls), '_proxyObject'):
+                                cls2._proxyObject = addProxy(cls)._proxyObject
+                            _xml_classes[cls.__name__] = cls2
+                        else:
+                            cls2 = _xml_classes[cls.__name__]
+                        obj = cls2()
                 self.stack.append(obj)
 
             # push the attribute name on the stack
@@ -389,6 +405,13 @@ class Loader(object):
             # the object stays on the stack (will be removed by </attribute> or
             # is a root object)
             if name == 'class':
+                obj = self.stack[-1]
+                cls = obj.__class__
+                if isinstance(cls, GangaObject):
+                    for attr, item in cls._schema.allItems():
+                        if attr not in obj._data:
+                            if item.getProperties()['getter'] is None:
+                                setattr(obj, attr, self._schema.getDefaultValue(attr))
                 pass
 
         def char_data(data):

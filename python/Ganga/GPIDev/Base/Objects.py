@@ -647,13 +647,16 @@ class ObjectMetaclass(abc.ABCMeta):
         # create reference in schema to the pluginclass
         this_schema._pluginclass = cls
 
-        # if we've not even declared this we don't want to use it!
-        if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
-            allPlugins.add(cls, cls._category, _getName(cls))
+        # The boolean also indicates that there is no need to add this class
+        if cls._should_be_available:
 
-        # create a configuration unit for default values of object properties
-        if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
-            this_schema.createDefaultConfig()
+            # if we've not even declared this we don't want to use it!
+            if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
+                allPlugins.add(cls, cls._category, _getName(cls))
+
+            # create a configuration unit for default values of object properties
+            if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
+                this_schema.createDefaultConfig()
 
 
 class GangaObject(Node):
@@ -677,6 +680,14 @@ class GangaObject(Node):
     # _enable_config = 1 -> allow generation of [default_X] configuration
     # section with schema properties
 
+    # This boolean is used to stop a GangaObject from populating it's ._data dict with
+    # default entries as evaluated from the schema.
+    # This is useful when reading many objects from disk as this wastes CPU as the entry is being overridden
+    _should_init = True
+
+    # This boolean hides if the class is to be made availble to both the Plugin and Config systems
+    _should_be_available = True
+
     # must be fully initialized
     def __init__(self):
         """
@@ -687,11 +698,12 @@ class GangaObject(Node):
         self._index_cache_dict = {}
         self._registry = None
 
-        self._data_dict = dict.fromkeys(self._schema.datadict)
-        for attr, item in self._schema.allItems():
-            ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
-            if item.getProperties()['getter'] is None:
-                setattr(self, attr, self._schema.getDefaultValue(attr))
+        if self.__class__._should_init is True:
+            self._data_dict = dict.fromkeys(self._schema.datadict)
+            for attr, item in self._schema.allItems():
+                ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
+                if item.getProperties()['getter'] is None:
+                    setattr(self, attr, self._schema.getDefaultValue(attr))
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()

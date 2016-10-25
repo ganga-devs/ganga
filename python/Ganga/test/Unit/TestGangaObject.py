@@ -89,6 +89,7 @@ class TestObjectMetaclass(unittest.TestCase):
             _schema = None
             _category = None
             _hidden = True
+            _should_be_available = False 
 
             @classmethod
             def _declared_property(cls, name):
