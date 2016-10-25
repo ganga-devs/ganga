@@ -715,7 +715,7 @@ class DiracBase(IBackend):
                 job.updateStatus('failed')
                 if job.master:
                     job.master.updateMasterJobStatus()
-                raise BackendError('Problem retrieving outputsandbox: %s' % str(getSandboxResult))
+                raise BackendError('Dirac', 'Problem retrieving outputsandbox: %s' % str(getSandboxResult))
 
             # finally update job to completed
             DiracBase._getStateTime(job, 'completed', completeTimeResult)
