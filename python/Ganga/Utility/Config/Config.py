@@ -180,8 +180,7 @@ def makeConfig(name, docstring, **kwds):
     """
 
     if _after_bootstrap:
-        raise ConfigError(
-            'attempt to create a configuration section [%s] after bootstrap' % name)
+        raise ConfigError('attempt to create a configuration section [%s] after bootstrap' % name)
 
     try:
         c = allConfigs[name]
@@ -459,9 +458,9 @@ class PackageConfig(object):
         if _after_bootstrap and not self.is_open:
             raise ConfigError('attempt to add a new option [%s]%s after bootstrap' % (self.name, name))
 
-        if name in self.options:
+        try:
             option = self.options[name]
-        else:
+        except KeyError:
             option = ConfigOption(name)
 
         if option.check_defined() and not override:
@@ -472,9 +471,9 @@ class PackageConfig(object):
         option.defineOption(default_value, docstring, **meta)
         self.options[option.name] = option
 
-        if self.name in unknownConfigFileValues:
+        try:
             conf_value = unknownConfigFileValues[self.name]
-        else:
+        except KeyError:
             msg = "Error getting ConfigFileValue Option: %s" % self.name
             if locals().get('logger') is not None:
                 locals().get('logger').debug("dbg: %s" % msg)
@@ -505,10 +504,13 @@ class PackageConfig(object):
         for h in self._session_handlers:
             value = h[0](name, value)
 
-        if name not in self.options:
+        try:
+            this_opt = self.options[name]
+        except KeyError:
             self.options[name] = ConfigOption(name)
+            this_opt = self.options[name]
 
-        self.options[name].setSessionValue(value)
+        this_opt.setSessionValue(value)
 
         logger.debug('sucessfully set session option [%s]%s = %s', self.name, name, value)
 
@@ -551,16 +553,20 @@ class PackageConfig(object):
 
     def revertToSession(self, name):
         self.hasModified = True
-        if name in self.options:
+        try:
             if hasattr(self.options[name], 'user_value'):
                 del self.options[name].user_value
+        except KeyError:
+            pass
 
     def revertToDefault(self, name):
         self.hasModified = True
         self.revertToSession(name)
-        if name in self.options:
+        try:
             if hasattr(self.options[name], 'session_value'):
                 del self.options[name].session_value
+        except KeyError:
+            pass
 
     def revertToSessionOptions(self):
         self.hasModified = True
@@ -580,17 +586,17 @@ class PackageConfig(object):
         return eff
 
     def getEffectiveOption(self, name):
-        if name in self.options:
+        try:
             return self.options[name].value
-        else:
+        except KeyError:
             raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name))
 
     def getEffectiveLevel(self, name):
         """ Return 0 if option is effectively set at the user level, 1
         if at session level or 2 if at default level """
-        if name in self.options:
+        try:
             return self.options[name].level
-        else:
+        except KeyError:
             raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name))
 
     def attachUserHandler(self, pre, post):

@@ -145,7 +145,7 @@ class TestMassStorageGetPut(GangaUnitTest):
 
         for file_ in self._managed_files:
             file_.localDir = ''
-            file_.copyTo(tmpdir)
+            stripProxy(file_).copyTo(tmpdir)
             assert os.path.isfile(os.path.join(tmpdir, file_.namePattern))
 
         shutil.rmtree(tmpdir, ignore_errors=True)

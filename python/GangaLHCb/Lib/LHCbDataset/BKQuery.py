@@ -1,9 +1,11 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import datetime
 from Ganga.Core import GangaException
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, addProxy
+from Ganga.GPIDev.Credentials import require_credential
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from Ganga.Utility.logging import getLogger
@@ -88,6 +90,7 @@ RecoToDST-07/90000000/DST" ,
     schema['type'] = SimpleItem(defvalue='Path', doc=docstr)
     docstr = 'Selection criteria: Runs, ProcessedRuns, NotProcessed (only works for type="RunsByDate")'
     schema['selection'] = SimpleItem(defvalue='', doc=docstr)
+    schema['credential_requirements'] = ComponentItem('CredentialRequirement', defvalue='DiracProxy')
     _schema = Schema(Version(1, 2), schema)
     _category = 'query'
     _name = "BKQuery"
@@ -97,6 +100,7 @@ RecoToDST-07/90000000/DST" ,
         super(BKQuery, self).__init__()
         self.path = path
 
+    @require_credential
     def getDatasetMetadata(self):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
@@ -137,6 +141,7 @@ RecoToDST-07/90000000/DST" ,
 
         return {'OK': False, 'Value': metadata}
 
+    @require_credential
     def getDataset(self):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
         if not self.path:
@@ -235,6 +240,7 @@ class BKQueryDict(GangaObject):
     docstr = 'Dirac BK query dictionary.'
     schema['dict'] = SimpleItem(defvalue=_bkQueryTemplate,  # typelist=['dict'],
                                 doc=docstr)
+    schema['credential_requirements'] = ComponentItem('CredentialRequirement', defvalue='DiracProxy')
     _schema = Schema(Version(1, 0), schema)
     _category = ''
     _name = "BKQueryDict"
@@ -243,6 +249,7 @@ class BKQueryDict(GangaObject):
     def __init__(self):
         super(BKQueryDict, self).__init__()
 
+    @require_credential
     def getDatasetMetadata(self):
         '''Gets the dataset from the bookkeeping for current dict.'''
         if not self.dict:
@@ -265,6 +272,7 @@ class BKQueryDict(GangaObject):
             return {'OK': True, 'Value': metadata}
         return {'OK': False, 'Value': metadata}
 
+    @require_credential
     def getDataset(self):
         '''Gets the dataset from the bookkeeping for current dict.'''
         if not self.dict:

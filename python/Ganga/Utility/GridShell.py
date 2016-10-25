@@ -40,23 +40,10 @@ _allShells = {}
 
 logger = getLogger()
 
-def getShell(cred_req=None):
+def constructShell():
     """
-    Utility function for getting Grid Shell.
-    Caller should take responsibility of credential checking if proxy is needed.
-
-    Arguments:
-
-     proxy - the credential requirement object
+    Construct a grid shell based upon either the GLITE_SETUP or GLITE_LOCATION as possibly defined by the user
     """
-
-    if cred_req is not None:
-        if not credential_store[cred_req].is_valid():
-            logger.info('GridShell.getShell given credential which is invalid')
-            raise InvalidCredentialError()
-
-    if cred_req in _allShells.keys():
-        return _allShells[cred_req]
 
     values = {}
     for key in ['X509_CERT_DIR', 'X509_VOMS_DIR']:
@@ -100,9 +87,35 @@ def getShell(cred_req=None):
     if 'LFC_CONRETRYINT' not in s.env:
         s.env['LFC_CONRETRYINT'] = '1'
 
-    if cred_req is not None:
-        s.env['X509_USER_PROXY'] = credential_store[cred_req].location
-
-    _allShells[cred_req] = s
-
     return s
+
+def getShell(cred_req=None):
+    """
+    Utility function for getting Grid Shell.
+
+    If a cred_req is given then the grid shell which has been cached for this credential requirement is returned.
+    If a cred_req is given an the credential doesn't exist in the credential_store then an InvalidCredentialError exception is raised
+
+    If no cred_req is given then a grid shell is contructed based upon either the GLITE_SETUP or GLITE_LOCATION as possibly defined by the user
+        THERE IS NO CACHING MADE HERE IN THIS CASE!!!
+
+    Arguments:
+        cred_req (ICredentialRequirement): This is the credential requirement required.
+    """
+
+    if cred_req is not None:
+        if not credential_store[cred_req].is_valid():
+            logger.info('GridShell.getShell given credential which is invalid')
+            raise InvalidCredentialError()
+
+        if cred_req in _allShells.keys():
+            return _allShells[cred_req]
+
+    constructed_shell = constructShell()
+
+    if cred_req is not None:
+        constructed_shell.env['X509_USER_PROXY'] = credential_store[cred_req].location
+
+    _allShells[cred_req] = constructed_shell
+
+    return constructed_shell

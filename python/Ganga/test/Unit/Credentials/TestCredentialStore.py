@@ -4,8 +4,8 @@ import pytest
 
 from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.GPIDev.Credentials.CredentialStore import CredentialStore
-from Ganga.GPIDev.Credentials.ICredentialInfo import ICredentialInfo
-from Ganga.GPIDev.Credentials.ICredentialRequirement import ICredentialRequirement
+from Ganga.GPIDev.Adapters.ICredentialInfo import ICredentialInfo
+from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
 
 
 class FakeCredInfo(ICredentialInfo):
