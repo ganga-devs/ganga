@@ -42,10 +42,28 @@ class GangaException(Exception):
             _str += " %s" % str(self.kwds)
         return _str
 
+
+class GangaFileError(GangaException):
+    """
+    This is intended to be thrown as an IGangaFile Error during Runtime
+    """
+
+
 class PluginError(GangaException):
     """
     Class to be used in 1 place only in loading plugins
     """
+
+
+class GangaKeyError(GangaException, KeyError):
+    """
+    Class used to make known, thrown KeyError's safe to raise to the user
+    """
+
+    def __init__(self, *args, **kwds):
+        super(GangaException, self).__init__(args)
+        KeyError.__init__(self, *args)
+        self.kwds = kwds
 
 
 class ApplicationConfigurationError(GangaException):
@@ -262,6 +280,34 @@ class BulkOperationRepositoryError(RepositoryError):
 
     def getOriginalJobError(self, id):
         return self.details.get(id)
+
+
+class CredentialsError(GangaException):
+    """
+    Base class for credential-related errors
+    """
+    pass
+
+
+class CredentialRenewalError(CredentialsError):
+    """
+    There was some problem with renewing a credential
+    """
+    pass
+
+
+class InvalidCredentialError(CredentialsError):
+    """
+    The credential is invalid for some reason
+    """
+    pass
+
+
+class ExpiredCredentialError(InvalidCredentialError):
+    """
+    The credential has expired
+    """
+    pass
 
 #
 #

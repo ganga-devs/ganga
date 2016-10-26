@@ -1,6 +1,8 @@
+import time
+import itertools
 from Ganga.Core.exceptions import GangaException, BackendError
 #from GangaDirac.BOOT       import dirac_ganga_server
-from GangaDirac.Lib.Utilities.DiracUtilities import execute
+from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -20,7 +22,6 @@ def result_ok(result):
 
 
 def get_result(command,
-               logger_message=None,
                exception_message=None,
                eval_includes=None,
                retry_limit=5):
@@ -29,26 +30,15 @@ def get_result(command,
     while retries < retry_limit:
 
         try:
-            result = execute(command, eval_includes=eval_includes)
-
-            if not result_ok(result):
-                if logger_message is not None:
-                    logger.warning('%s: %s' % (logger_message, str(result)))
-                if exception_message is not None:
-                    logger.warning("Failed to run: %s" % str(command))
-                    logger.warning("includes:\n%s" % str(eval_includes))
-                    logger.warning("Result: '%s'" % str(result))
-                    raise GangaException(exception_message)
-                raise GangaException("Failed to return result of '%s': %s" % (command, result))
-            return result
-        except Exception as x:
-            import time
+            return execute(command, eval_includes=eval_includes)
+        except GangaDiracError as err:
+            logger.error(exception_message)
             logger.debug("Sleeping for 5 additional seconds to reduce possible overloading")
             time.sleep(5.)
             if retries == retry_limit - 1:
                 raise
             retries = retries + 1
-            logger.error("An Error Occured: %s" % str(x))
+            logger.error("An Error Occured: %s" % err)
             logger.error("Retrying: %s / %s " % (str(retries + 1), str(retry_limit)))
 
 
@@ -93,7 +83,6 @@ def outputfiles_iterator(job, file_type, selection_pred=None,
             return issubclass(f.__class__, file_type) and selection_pred(f)
         return issubclass(f.__class__, file_type)
 
-    import itertools
     for f in itertools.chain(job.outputfiles, job.non_copyable_outputfiles):
         if include_subfiles and hasattr(f, 'subfiles') and f.subfiles:
             for sf in itertools.ifilter(combined_pred, f.subfiles):
@@ -118,7 +107,6 @@ def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
 
 
 def ifilter_chain(selection_pred, *iterables):
-    import itertools
     for item in itertools.ifilter(selection_pred,
                                   itertools.chain(*iterables)):
         yield item

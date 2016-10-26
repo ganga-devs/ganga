@@ -33,39 +33,26 @@ from Ganga.Utility.Shell import Shell
 from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 
-shell_cache = None
+from Ganga.GPIDev.Credentials import credential_store
+from Ganga.Core.exceptions import InvalidCredentialError
 
+_allShells = {}
 
-def getShell(force=False):
+logger = getLogger()
+
+def constructShell():
     """
-    Utility function for getting Grid Shell.
-    Caller should take responsibility of credential checking if proxy is needed.
-
-    Arguments:
-       force (bool): False: if the shell already exists in local cache return the previous created instance ; True: recreate the shell and if not None update the cache
+    Construct a grid shell based upon either the GLITE_SETUP or GLITE_LOCATION as possibly defined by the user
     """
-
-    global shell_cache
-
-    logger = getLogger()
-
-    if shell_cache is not None and not force:
-        return shell_cache
 
     values = {}
-    for key in ['X509_USER_PROXY', 'X509_CERT_DIR', 'X509_VOMS_DIR']:
+    for key in ['X509_CERT_DIR', 'X509_VOMS_DIR']:
         try:
             values[key] = os.environ[key]
         except KeyError:
             pass
 
-    try:
-        config = getConfig('LCG')
-    except:
-        logger.warning('[LCG] configuration section not found. Cannot set up a proper grid shell.')
-        return None
-
-    s = None
+    config = getConfig('LCG')
 
     # 1. check if the GLITE_SETUP is changed by user -> take the user's value as session value
     # 2. else check if GLITE_LOCATION is defined as env. variable -> do nothing (ie. create shell without any lcg setup)
@@ -77,30 +64,58 @@ def getShell(force=False):
         if os.path.exists(config['GLITE_SETUP']):
             s = Shell(config['GLITE_SETUP'])
         else:
-            if config['GLITE_ENABLE']:
-                logger.warning("Configuration of GLITE for LCG: ")
-                logger.warning("File not found: %s" % config['GLITE_SETUP'])
+            logger.error("Configuration of GLITE for LCG: ")
+            logger.error("File not found: %s" % config['GLITE_SETUP'])
+            return None
 
-    if s:
-        for key, val in values.items():
-            s.env[key] = val
+    for key, val in values.items():
+        s.env[key] = val
 
-        # check and set env. variables for default LFC setup
-        if 'LFC_HOST' not in s.env:
-            try:
-                s.env['LFC_HOST'] = config['DefaultLFC']
-            except ConfigError:
-                pass
+    # check and set env. variables for default LFC setup
+    if 'LFC_HOST' not in s.env:
+        try:
+            s.env['LFC_HOST'] = config['DefaultLFC']
+        except ConfigError:
+            pass
 
-        if 'LFC_CONNTIMEOUT' not in s.env:
-            s.env['LFC_CONNTIMEOUT'] = '20'
+    if 'LFC_CONNTIMEOUT' not in s.env:
+        s.env['LFC_CONNTIMEOUT'] = '20'
 
-        if 'LFC_CONRETRY' not in s.env:
-            s.env['LFC_CONRETRY'] = '0'
+    if 'LFC_CONRETRY' not in s.env:
+        s.env['LFC_CONRETRY'] = '0'
 
-        if 'LFC_CONRETRYINT' not in s.env:
-            s.env['LFC_CONRETRYINT'] = '1'
-
-        shell_cache = s
+    if 'LFC_CONRETRYINT' not in s.env:
+        s.env['LFC_CONRETRYINT'] = '1'
 
     return s
+
+def getShell(cred_req=None):
+    """
+    Utility function for getting Grid Shell.
+
+    If a cred_req is given then the grid shell which has been cached for this credential requirement is returned.
+    If a cred_req is given an the credential doesn't exist in the credential_store then an InvalidCredentialError exception is raised
+
+    If no cred_req is given then a grid shell is contructed based upon either the GLITE_SETUP or GLITE_LOCATION as possibly defined by the user
+        THERE IS NO CACHING MADE HERE IN THIS CASE!!!
+
+    Arguments:
+        cred_req (ICredentialRequirement): This is the credential requirement required.
+    """
+
+    if cred_req is not None:
+        if not credential_store[cred_req].is_valid():
+            logger.info('GridShell.getShell given credential which is invalid')
+            raise InvalidCredentialError()
+
+        if cred_req in _allShells.keys():
+            return _allShells[cred_req]
+
+    constructed_shell = constructShell()
+
+    if cred_req is not None:
+        constructed_shell.env['X509_USER_PROXY'] = credential_store[cred_req].location
+
+    _allShells[cred_req] = constructed_shell
+
+    return constructed_shell
