@@ -1,11 +1,15 @@
 from __future__ import absolute_import
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.file_utils import generate_unique_temp_file
-
-import datetime
-import time
 import os
 import shutil
+import tempfile
+
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.testlib.file_utils import generate_unique_temp_file
+from Ganga.Utility.Config import getConfig
+from Ganga.GPIDev.Base.Proxy import stripProxy, getProxyClass
+from GangaTest.Framework.utils import sleep_until_completed
+from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile, SharedFile
+from Ganga.GPIDev.Base.Objects import _getName
 
 class TestMassStorageClient(GangaUnitTest):
     """test for sjid in filename names explain each test"""
@@ -15,13 +19,15 @@ class TestMassStorageClient(GangaUnitTest):
     # Num of sj in tests
     sj_len = 3
 
+    fileClass = getProxyClass(MassStorageFile)
+
     # Where on local storage we want to have our 'MassStorage solution'
-    outputFilePath = '/tmp/MassStorageClient'
+    outputFilePath = '/tmp/Test' + _getName(fileClass) + 'Client'
 
     # This sets up a MassStorageConfiguration which works by placing a file on local storage somewhere we can test using standard tools
     MassStorageTestConfig = {'defaultProtocol': 'file://',
                              'fileExtensions': [''],
-                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir -p'},
+                             'uploadOptions': {'path': outputFilePath, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
                              'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
                                                     'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
 
@@ -32,7 +38,7 @@ class TestMassStorageClient(GangaUnitTest):
         extra_opts=[('PollThread', 'autostart', 'False'),
                     ('Local', 'remove_workdir', 'False'),
                     ('TestingFramework', 'AutoCleanup', 'False'),
-                    ('Output', 'MassStorageFile', TestMassStorageClient.MassStorageTestConfig),
+                    ('Output', _getName(self.fileClass), TestMassStorageClient.MassStorageTestConfig),
                     ('Output', 'FailJobIfNoOutputMatched', 'True')]
         super(TestMassStorageClient, self).setUp(extra_opts=extra_opts)
 
@@ -45,22 +51,32 @@ class TestMassStorageClient(GangaUnitTest):
             shutil.rmtree(j.backend.workdir, ignore_errors=True)
             j.remove()
 
-        for file_ in TestMassStorageClient._managed_files:
-            os.unlink(file_)
-        TestMassStorageClient._managed_files = []
+    @classmethod
+    def setUpClass(cls):
+        """ This creates a safe place to put the files into 'mass-storage' """
+        cls.outputFilePath = tempfile.mkdtemp()
+        cls.MassStorageTestConfig['uploadOptions']['path'] = cls.outputFilePath
 
-        shutil.rmtree(TestMassStorageClient.outputFilePath, ignore_errors=True)
+    @classmethod
+    def tearDownClass(cls):
+        """ Cleanup the current temp objects """
+
+        for file_ in cls._managed_files:
+            os.unlink(file_)
+        cls._managed_files = []
+
+        shutil.rmtree(cls.outputFilePath, ignore_errors=True)
 
     def test_a_testClientSideSubmit(self):
         """Test the client side code whilst stil using the Local backend"""
 
-        from Ganga.GPI import LocalFile, MassStorageFile, Job, ArgSplitter
+        MassStorageFile = self.fileClass
 
-        from Ganga.Utility.Config import getConfig
+        from Ganga.GPI import LocalFile, Job, ArgSplitter
 
         TestMassStorageClient.cleanUp()
 
-        assert getConfig('Output')['MassStorageFile']['backendPostprocess']['Local'] == 'client'
+        assert getConfig('Output')[_getName(self.fileClass)]['backendPostprocess']['Local'] == 'client'
 
         _ext = '.root'
         file_1 = generate_unique_temp_file(_ext)
@@ -70,7 +86,7 @@ class TestMassStorageClient(GangaUnitTest):
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
-        j.splitter = ArgSplitter(args = [[_] for _ in range(0, TestMassStorageClient.sj_len) ])
+        j.splitter = ArgSplitter(args = [[_] for _ in range(TestMassStorageClient.sj_len)])
         j.outputfiles = [MassStorageFile(namePattern='*'+_ext)]
         j.submit()
 
@@ -78,19 +94,12 @@ class TestMassStorageClient(GangaUnitTest):
         """Test the client side code whilst stil using the Local backend"""
 
         from Ganga.GPI import jobs
-        from Ganga.GPIDev.Base.Proxy import stripProxy
 
-        from GangaTest.Framework.utils import sleep_until_completed
-
-        from Ganga.Utility.Config import getConfig
-
-        assert getConfig('Output')['MassStorageFile']['backendPostprocess']['Local'] == 'client'
+        assert getConfig('Output')[_getName(self.fileClass)]['backendPostprocess']['Local'] == 'client'
 
         j = jobs[-1]
 
-        sleep_until_completed(j)
-
-        assert j.status == 'completed'
+        assert sleep_until_completed(j)
 
         for sj in j.subjobs:
             output_dir = stripProxy(sj).getOutputWorkspace(create=False).getPath()
@@ -101,7 +110,7 @@ class TestMassStorageClient(GangaUnitTest):
                 assert not os.path.isfile(os.path.join(output_dir, input_f.namePattern))
 
             # Check that the files were placed in the correct place on storage
-            output_dir = os.path.join(TestMassStorageClient.outputFilePath, str(j.id), str(sj.id))
+            output_dir = os.path.join(self.outputFilePath, str(j.id), str(sj.id))
             for file_ in j.inputfiles:
                 assert os.path.isfile(os.path.join(output_dir, file_.namePattern))
 
@@ -110,5 +119,9 @@ class TestMassStorageClient(GangaUnitTest):
 
             assert len(sj.outputfiles) == 2
 
-        TestMassStorageClient.cleanUp()
+        self.cleanUp()
+
+class TestSharedClient(TestMassStorageClient):
+    """test for sjid in filename names explain each test"""
+    fileClass = getProxyClass(SharedFile)
 

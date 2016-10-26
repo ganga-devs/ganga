@@ -8,6 +8,8 @@ try:
 except ImportError:
     import unittest
 
+ganga_test_dir_name = 'gangadir testing'
+ganga_config_file = '/not/a/file'
 
 def _getGangaPath():
     """
@@ -40,7 +42,7 @@ def load_config_files():
     system_vars = {}
     for opt in getConfig('System'):
         system_vars[opt] = getConfig('System')[opt]
-    config_files = GangaProgram.get_config_files(os.path.expanduser('~/.gangarc'))
+    config_files = GangaProgram.get_config_files(ganga_config_file)
     setSessionValuesFromFiles(config_files, system_vars)
 
 
@@ -100,6 +102,7 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
 
     # Actually parse the options
     Ganga.Runtime._prog = Ganga.Runtime.GangaProgram(argv=this_argv)
+    Ganga.Runtime._prog.default_config_file = ganga_config_file
     Ganga.Runtime._prog.parseOptions()
 
     # For all the default and extra options, we set the session value
@@ -135,13 +138,13 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
 
     # Adapted from the Coordinator class, check for the required credentials and stop if not found
     # Hopefully stops us falling over due to no AFS access of something similar
-    from Ganga.Core.InternalServices import Coordinator
-    missing_cred = Coordinator.getMissingCredentials()
+    from Ganga.GPIDev.Credentials import get_needed_credentials
+    missing_cred = get_needed_credentials()
 
     logger.info("Checking Credentials")
 
     if missing_cred:
-        raise Exception("Failed due to missing credentials %s" % str(missing_cred))
+        raise Exception("Failed due to missing credentials %s" % missing_cred)
 
     # Make sure that all the config options are really set.
     # Some from plugins may not have taken during startup
@@ -243,7 +246,7 @@ class GangaUnitTest(unittest.TestCase):
         """
         Return the directory that this test should store its registry and repository in
         """
-        return os.path.join(_getGangaPath(), 'gangadir_testing', cls.__name__)
+        return os.path.join(_getGangaPath(), ganga_test_dir_name, cls.__name__)
 
     @classmethod
     def setUpClass(cls):

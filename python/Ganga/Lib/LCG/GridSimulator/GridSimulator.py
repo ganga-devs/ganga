@@ -3,8 +3,6 @@ from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.GridShell import getShell
 
-from Ganga.GPIDev.Credentials.ICredential import ICredential
-
 logger = getLogger()
 
 logger.critical('LCG Grid Simulator ENABLED')
@@ -54,7 +52,6 @@ class GridSimulator(object):
 
     def __init__(self):
         self.active = True
-        self.credential = ICredential()  # FIXME: or the real one
         #import Ganga.Core.FileWorkspace
         #basedir = Ganga.Core.FileWorkspace.gettop()
         #basedir = '/tmp'

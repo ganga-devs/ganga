@@ -108,5 +108,4 @@ def mergefiles(file_list, output_file):
         j.postprocessors = cm
         j.submit()
 
-        run_until_state(j, state='failed')
-        assert j.status == 'failed'
+        assert run_until_state(j, state='failed')
