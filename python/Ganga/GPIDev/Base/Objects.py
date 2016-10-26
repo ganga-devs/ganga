@@ -153,16 +153,18 @@ class Node(object):
 
         if self._getParent() is None:
             return self
-        root = None
         obj = self
         cond_test = cond is not None
-        while obj is not None:
-            root = obj
+        while True:
             if cond_test:
-                if cond(root):
+                if cond(obj):
                     break
-            obj = obj._getParent()
-        return root
+            lookup = obj._getParent()
+            if lookup is not None:
+                obj = lookup
+            else:
+                break
+        return obj
 
     # accept a visitor pattern
     @abc.abstractmethod
