@@ -31,12 +31,12 @@ class skipif_config(object):
         self.value = value
         self.reason = reason
 
-    def __call__(self, function):
+    def __call__(self, function, *args, **kwds):
         """
         Args:
             function (method, class): This is the test method or class we want to skip if the conditions aren't met
         """
-        def _skip_if_config(*args, **kwds):
+        def _skip_if_config():
             # Load config
             load_config_files()
             # test if the config parameter is what we require
