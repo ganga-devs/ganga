@@ -505,7 +505,10 @@ class Descriptor(object):
 
         obj._setDirty()
 
-        Descriptor.check_inheritance(obj, _set_name)
+        try:
+            Descriptor.check_inheritance(obj, _set_name)
+        except AssertionError:
+            raise RuntimeError("Something went wrong in setting: '%s'::'%s' = '%s'" % (_getName(obj), _set_name, str(val)))
 
     @staticmethod
     def cleanValue(obj, val, name):
