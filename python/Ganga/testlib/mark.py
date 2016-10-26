@@ -43,11 +43,7 @@ class skipif_config(object):
         clear_config()
         if test:
             # Mark test as skip if it's not what we require
-            return pytest.skip(self.reason)
+            return pytest.mark.skip(self.reason)(function)
 
-        @functools.wraps(function)
-        def _skip_if_config(function):
-            # run test if we have met the requirements
-            return function
-        return _skip_if_config
+        return function
 
