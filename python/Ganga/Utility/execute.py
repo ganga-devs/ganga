@@ -274,7 +274,7 @@ def execute(command,
     try:
         if stdout:
             stdout = pickle.loads(stdout)
-    except pickle.UnpicklingError as err:
+    except (pickle.UnpicklingError, EOFError) as err:
         if not shell:
             logger.error("Execute Err: %s", err)
         else:
