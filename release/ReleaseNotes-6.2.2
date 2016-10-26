@@ -1,0 +1,35 @@
+**************************************************************************************************************
+6.2.2 (2016/10/10)
+
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Minor fix to the monitoring code.
+* Remove some unneeded stack traces #713
+* Fix to the host machine identification #759
+* Fix to the splitter. It now fails if no splitting is done, rather than continuing regardless. #780
+* Fix to the ARC backend submission #789
+* Bugfix to raise an exception if a plugin fails to load at startup #794
+* Implementation of some forward compatibility for Ganga 6.3 #807
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Added the option to set the version of LHCbDirac and removed the old guess version code.
+* Changed the default LHCbDirac version to v8r3p7
+* Fix to the old RT handlers to correctly parse the xml summary #816
+* Fix some minor bugs in GaudiExec with inputfiles and preparing a raw release with 'prepareGaudiExec' #822
+* Bugfix for the GaudiExec prepare thread lock #831
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/test
+--------------------------------------------------------------------------------------------------------------
+* Change to the setting of configuration options for tests #742
+* Fix to the LCG test #761
+* Fix to the Dirac test to try each SE in order until one works #773
+* Removal of outdated LHCb tests #782
+* Ensure a fresh .gangarc is being used for tests #800
+
+**************************************************************************************************************

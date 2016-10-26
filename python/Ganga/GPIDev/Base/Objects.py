@@ -150,6 +150,7 @@ class Node(object):
         cond is an optional function which may cut the search path: when it
         returns True, then the parent is returned as root
         """
+
         if self._getParent() is None:
             return self
         root = None
@@ -318,6 +319,7 @@ class Descriptor(object):
             return cls._schema[name]
 
         if self._getter_name:
+            # Fixme set the parent of Node objects?!?!
             return self._bind_method(obj, self._getter_name)()
 
         # First we want to try to get the information without prompting a load from disk
@@ -423,11 +425,11 @@ class Descriptor(object):
             if (len_cat > 1) or ((len_cat == 1) and (categories[0] != item['category'])) and item['category'] != 'internal':
                 # we pass on empty lists, as the catagory is yet to be defined
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
-                raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (name, v, item['category']))
+                raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (name, _getName(v), item['category']))
         else:
             if v._category not in [item['category'], 'internal'] and item['category'] != 'internal':
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
-                raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s found cat: %s"' % (name, v, item['category'], v._category))
+                raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s found cat: %s"' % (name, _getName(v), item['category'], v._category))
 
         v_copy = deepcopy(v)
 
@@ -459,7 +461,6 @@ class Descriptor(object):
                             assert item._getParent() is this_attr
                 assert this_attr._getParent() is obj
             else:
-                print("testing: %s" % attr_name)
                 assert this_attr._getParent() is obj
 
     @synchronised_set_descriptor
@@ -500,10 +501,8 @@ class Descriptor(object):
         new_value = Descriptor.cleanValue(obj, val, _set_name)
 
         obj.setSchemaAttribute(_set_name, new_value)
-        obj._setDirty()
 
-        if isinstance(val, Node):
-            val._setDirty()
+        obj._setDirty()
 
         Descriptor.check_inheritance(obj, _set_name)
 
@@ -524,7 +523,9 @@ class Descriptor(object):
         if item['sequence']:
             # These objects are lists
             _preparable = True if item['preparable'] else False
-            if len(val) == 0:
+            if val is None:
+                new_val = None
+            elif len(val) == 0:
                 new_val = GangaList()
             else:
                 if isinstance(item, ComponentItem):
@@ -720,33 +721,6 @@ class GangaObject(Node):
 
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
-
-    def __construct__(self, args):
-        # type: (Sequence) -> None
-        """
-        This acts like a secondary constructor for proxy objects.
-        Any positional (non-keyword) arguments are passed to this function to construct the object.
-
-        This default implementation performs a copy if there was only one item in the list
-        and raises an exception if there is more than one.
-
-        Args:
-            args: a list of objects
-
-        Raises:
-            TypeMismatchError: if there is more than one item in the list
-        """
-        # FIXME: This should probably be move to Proxy.py
-
-        if len(args) == 0:
-            return
-        elif len(args) == 1:
-            if not isinstance(args[0], type(self)):
-                logger.warning("Performing a copyFrom from: %s to: %s" % (type(args[0]), type(self)))
-            self.copyFrom(args[0])
-        else:
-            from Ganga.GPIDev.Base.Proxy import TypeMismatchError
-            raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
 
     @synchronised
     def accept(self, visitor):
@@ -1152,10 +1126,14 @@ class GangaObject(Node):
         Unknown: Why is this a GangaObject method and not a Node method?
         """
         from Ganga.GPIDev.Lib.Job import Job
-        r = self._getRoot(cond=lambda o: isinstance(o, Job))
-        if not isinstance(r, Job):
-            raise AssertionError('no job associated with object ' + repr(self))
-        return r
+        if self._getParent():
+            r = self._getRoot(cond=lambda o: isinstance(o, Job))
+            if not isinstance(r, Job):
+                raise AssertionError('No Job associated with object instead root=\'%s\' for \'%s\'' % (repr(r), type(r)))
+            return r
+        elif isinstance(self, Job):
+            return self
+        raise AssertionError('No Parent associated with object \'%s\'' % repr(self))
 
     # Customization of the GPI attribute assignment: Attribute Filters
     #

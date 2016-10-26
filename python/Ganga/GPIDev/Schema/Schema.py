@@ -241,9 +241,9 @@ class Schema(object):
 
         try:
             # Attempt to get the relevant config section
-            config = Config.getConfig(def_name, create=False)
+            config = Config.getConfig(def_name)
 
-            if is_finalized and stored_attr_key in _found_attrs and not config.hasModified():
+            if is_finalized and stored_attr_key in _found_attrs and not config.hasModified:
                 defvalue = _found_attrs[stored_attr_key]
             else:
                 if attr in config.getEffectiveOptions():
@@ -289,8 +289,8 @@ class Schema(object):
 
                 if isinstance(defvalue, str) or defvalue is None:
                     try:
-                        config = Config.getConfig(def_name, create=False)
-                        has_modified = config.hasModified()
+                        config = Config.getConfig(def_name)
+                        has_modified = config.hasModified
                     except KeyError:
                         has_modified = False
 
@@ -515,7 +515,9 @@ class Item(object):
                             if not valueTypeAllowed(dKey, validTypes) or not valueTypeAllowed(dVal, validTypes):
                                 raise TypeMismatchError('Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % (dKey, dVal, name, validTypes))
                     else:  # new value is not a dict
-                        raise TypeMismatchError('Attribute "%s" expects a dictionary.' % name)
+                        if val == []:
+                            return
+                        raise TypeMismatchError('Attribute "%s" expects a dictionary. Found: "%s".' % (name, found))
                     return
                 else:  # a 'simple' (i.e. non-dictionary) non-sequence value
                     self.__check(valueTypeAllowed(val, validTypes), name, validTypes, val)

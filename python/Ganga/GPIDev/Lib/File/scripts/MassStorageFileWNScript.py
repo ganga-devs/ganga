@@ -1,3 +1,6 @@
+
+# FIXME empty line above needed to ensure proper indenting
+from pipes import quote
 import subprocess
 #system command executor with subprocess
 def execSyscmdSubprocessAndReturnOutputMAS(cmd):
@@ -27,7 +30,7 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
     pathToDirName = os.path.dirname(path)
     dirName = os.path.basename(path)
 
-    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, pathToDirName))
+    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, quote(pathToDirName)))
     if exitcode != 0:
         ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\n' % (filenameWildChar, mystderr))
         continue
@@ -38,10 +41,8 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
             directoryExists = True
             break
 
-    print("Directory, %s found: %s" % (str(path), str(directoryExists)))
-
     if not directoryExists:
-        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
+        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, quote(path)))
         if exitcode != 0:
             printError('Error while executing "%s %s" command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
             ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\n' % (filenameWildChar, mystderr))
@@ -73,7 +74,7 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
     if folderStructure != '':
         folderStructure = folderStructure.strip('/')
         path = os.path.join(path, folderStructure)
-        command = '%s -p %s' % (cm_mkdir, path)
+        command = '%s -p %s' % (cm_mkdir, quote(path))
         (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS(command)
         if exitcode != 0:
             printError('Error while executing "%s" command, check if the ganga user has rights for creating directories in this folder' % command + os.linesep + mystderr)
@@ -85,10 +86,12 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
     if filenameWildChar in ###PATTERNSTOZIP###:
         filenameWildCharZipped = '%s.gz' % filenameWildChar
 
+    import glob
+
     for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildCharZipped)):
         currentFileBaseName = os.path.basename(currentFile)
         finalFilename = filenameStructure.replace('{fname}', currentFileBaseName)
-        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, finalFilename)))
+        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, quote(os.path.join(path, finalFilename))))
         if exitcode != 0:
             printError('Error while executing "%s %s %s" command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, finalFilename)) + os.linesep  + mystderr)
             ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\n' % (filenameWildChar, mystderr))

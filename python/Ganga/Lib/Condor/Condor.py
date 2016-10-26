@@ -130,6 +130,10 @@ class Condor(IBackend):
         }
 
     def __init__(self):
+
+        # Add a volatile variable for recording the first time a job's stdout is checked
+        self._stdout_check_time = 0
+
         super(Condor, self).__init__()
 
     def submit(self, jobconfig, master_input_sandbox):
@@ -303,6 +307,7 @@ class Condor(IBackend):
             "import os",
             "import time",
             "import mimetypes",
+            "import shutil",
             "",
             "startTime = time.strftime"
             + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
@@ -310,6 +315,8 @@ class Condor(IBackend):
             "for inFile in %s:" % str(fileList),
             "   if mimetypes.guess_type(inFile)[1] in ['gzip', 'bzip2']:",
             "       getPackedInputSandbox( inFile )",
+            "   else:",
+            "       shutil.copy(inFile, os.path.join(os.getcwd(), os.path.basename(inFile)))",
             "",
             "exePath = '%s'" % exeString,
             "if os.path.isfile( '%s' ):" % os.path.basename(exeString),
@@ -539,8 +546,20 @@ class Condor(IBackend):
                         if exitCode.isdigit():
                             jobStatus = "completed"
                         else:
-                            logger.error("Problem extracting exit code from job %s. Line found was '%s'." % (
-                                jobDict[id].fqid, exitLine))
+                            # Some filesystems/setups have the file created but empty - only worry if it's been 10mins
+                            # since we first checked the file
+                            if len(lineList) == 0:
+                                if not jobDict[id].backend._stdout_check_time:
+                                    jobDict[id].backend._stdout_check_time = time.time()
+
+                                if (time.time() - jobDict[id].backend._stdout_check_time) < 10*60:
+                                    continue
+                                else:
+                                    logger.error("Empty stdout file from job %s after waiting 10mins. Marking job as"
+                                                 "failed." % jobDict[id].fqid)
+                            else:
+                                logger.error("Problem extracting exit code from job %s. Line found was '%s'." % (
+                                    jobDict[id].fqid, exitLine))
 
                     jobDict[id].updateStatus(jobStatus)
 

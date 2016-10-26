@@ -7,11 +7,8 @@ class TestSJSubmit(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestSJSubmit, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('Output', 'FailJobIfNoOutputMatched', 'True')
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
-        setConfigOption('Configuration', 'resubmitOnlyFailedSubjobs', 'True')
+        extra_opts = [('Output', 'FailJobIfNoOutputMatched', 'True'), ('TestingFramework', 'AutoCleanup', 'False'), ('Configuration', 'resubmitOnlyFailedSubjobs', 'True')]
+        super(TestSJSubmit, self).setUp(extra_opts=extra_opts)
 
     @staticmethod
     def _getSplitter():
@@ -73,7 +70,7 @@ class TestSJSubmit(GangaUnitTest):
         # Test that resubmitting a subjob from SubJobXMLList that subjob doesn't stall
         jobs(0).subjobs(0).resubmit()
 
-        jobs(0).subjobs(0).force_status('failed')
+        jobs(0).subjobs(0).force_status('failed', force=True)
 
         jobs(0).subjobs(0).resubmit()
 
@@ -115,7 +112,7 @@ class TestSJSubmit(GangaUnitTest):
         # Test that resubmitting a subjob from SubJobXMLList that subjob doesn't stall
         jobs(0).subjobs(0).resubmit()
 
-        jobs(0).subjobs(0).force_status('failed')
+        jobs(0).subjobs(0).force_status('failed', force=True)
 
         jobs(0).subjobs(0).resubmit()
 
@@ -164,7 +161,7 @@ class TestSJSubmit(GangaUnitTest):
 
         # We should get here if calling resubmit doesn't stall
 
-        j.subjobs(0).force_status('failed')
+        j.subjobs(0).force_status('failed', force=True)
 
         j.resubmit()
 

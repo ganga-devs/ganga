@@ -4,6 +4,7 @@ import os.path
 import math
 import re
 import mimetypes
+import shutil
 
 from urlparse import urlparse
 
@@ -563,12 +564,14 @@ try:
         else:
             if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
                 getPackedInputSandbox(f)
+            else:
+                shutil.copy(f, os.path.join(os.getcwd(), os.path.basename(f)))
 
     printInfo('Download inputsandbox from iocache passed.')
 
 #   unpack inputsandbox from wdir
     for f in input_sandbox['local']:
-        mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
+        if mimetypes.guess_type(f)[1] in ['gzip', 'bzip2']:
             getPackedInputSandbox(os.path.join(orig_wdir,f))
 
     printInfo('Unpack inputsandbox passed.')

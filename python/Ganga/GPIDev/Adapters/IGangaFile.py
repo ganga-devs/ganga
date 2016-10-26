@@ -1,6 +1,8 @@
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from fnmatch import fnmatch
+import os
+import glob
 import re
 
 regex = re.compile('[*?\[\]]')
@@ -109,8 +111,7 @@ class IGangaFile(GangaObject):
         mystderr = ''
 
         try:
-            child = subprocess.Popen(
-                cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             (mystdout, mystderr) = child.communicate()
             exitcode = child.returncode
         finally:
@@ -155,4 +156,21 @@ class IGangaFile(GangaObject):
             return True
 
         return False
+
+    def cleanUpClient(self):
+        """
+        This method cleans up the client space after performing a put of a file after a job has completed
+        """
+
+        # For all other file types (not LocalFile) The file in the outputdir is temporary waiting for Ganga to pass it to the storage solution
+        job = self.getJobObject()
+
+        for f in glob.glob(os.path.join(job.outputdir, self.namePattern)):
+            try:
+                os.remove(f)
+            except OSError as err:
+                if err.errno != errno.ENOENT:
+                    logger.error('failed to remove temporary/intermediary file: %s' % f)
+                    logger.debug("Err: %s" % err)
+                    raise err
 

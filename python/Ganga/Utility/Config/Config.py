@@ -90,9 +90,14 @@ There is a GPI wrapper in Ganga.GPIDev.Lib.Config which:
 
 """
 
+import os
+import re
+import traceback
+from collections import defaultdict
 from functools import reduce
 
 from Ganga.Core.exceptions import GangaException
+
 
 class ConfigError(GangaException):
 
@@ -100,37 +105,35 @@ class ConfigError(GangaException):
     """
 
     def __init__(self, what=''):
-        # GangaException.__init__(self)
         super(ConfigError, self).__init__()
         self.what = what
 
     def __str__(self):
-        return "ConfigError: %s " % (self.what)
+        return "ConfigError: %s " % self.what
 
 # WARNING: avoid importing logging at the module level in this file
 # for example, do not do here: from Ganga.Utility.logging import logger
 # use getLogger() function defined below:
 
-logger = None
-
-
+_logger = None
 
 
 def getLogger():
     import Ganga.Utility.logging
-    global logger
-    if logger is not None:
-        return logger
+    global _logger
+    if _logger is not None:
+        return _logger
 
     # for the configuration of the logging package itself (in the initial
     # phases) the logging may be disabled
     try:
-        logger = Ganga.Utility.logging.getLogger()
-        return logger
+        _logger = Ganga.Utility.logging.getLogger()
+        return _logger
     except AttributeError as err:
-        print("AttributeError: %s" % str(err))
+        print("AttributeError: %s" % err)
         # in such a case we return a mock proxy object which ignore all calls
         # such as logger.info()...
+
         class X(object):
 
             def __getattr__(self, name):
@@ -146,63 +149,29 @@ allConfigs = {}
 # configuration session buffer
 # this dictionary contains the value for the options which are defined in the configuration file and which have
 # not yet been defined
-allConfigFileValues = {}
-
-translated_names = {}
-# helper function which helps migrating the names from old naming convention
-# to the stricter new one: spaces are removed, colons replaced by underscored
-# returns a valid name or raises a ValueError
+unknownConfigFileValues = defaultdict(dict)
 
 
-def _migrate_name(name):
-    import Ganga.Utility.strings as strings
-
-    if (name not in translated_names) and (not strings.is_identifier(name)):
-        name2 = strings.drop_spaces(name)
-        name3 = name2.replace(':', '_')
-
-        if not strings.is_identifier(name3):
-            raise ValueError('config name %s is not a valid python identifier' % name)
-        else:
-            logger = getLogger()
-            logger.warning('obsolete config name found: replaced "%s" -> "%s"' % (name, name3))
-            logger.warning('config names must be python identifiers, please correct your usage in the future ')
-            translated_names[name] = name3
-    elif name not in translated_names:
-        translated_names[name] = name
-
-    return translated_names[name]
-
-
-def getConfig(name, create=True):
+def getConfig(name):
     """
-    Get an exisiting PackageConfig or create a new one if needed.
-    Temporary name migration conversion applies -- see _migrate_name().
+    Get an existing PackageConfig.
     Principle is the same as for getLogger() -- the config instances may
     be easily shared between different parts of the program.
 
     Args:
         name: the name of the config section
-        create (bool): should the section be created if it does not yet exist
 
     Returns:
         PackageConfig:
 
     Raises:
-        KeyError: if the config is not found and ``create`` was False
+        KeyError: if the config is not found
     """
-    # FIXME: In future ``create`` should always be False and the function should be simplified to return ``return allConfigs[name]``
 
-    name = _migrate_name(name)
-    if name in allConfigs:
+    try:
         return allConfigs[name]
-    else:
-        if create:
-            logger.debug('Creating "%s" config in getConfig', name)
-            allConfigs[name] = PackageConfig(name, 'Documentation not available')
-            return allConfigs[name]
-        else:
-            raise KeyError('Config section "{0}" not found'.format(name))
+    except KeyError:
+        raise KeyError('Config section "[{0}]" not found'.format(name))
 
 
 def makeConfig(name, docstring, **kwds):
@@ -211,12 +180,9 @@ def makeConfig(name, docstring, **kwds):
     """
 
     if _after_bootstrap:
-        #import traceback
-        #traceback.print_stack()
         raise ConfigError(
             'attempt to create a configuration section [%s] after bootstrap' % name)
 
-    name = _migrate_name(name)
     try:
         c = allConfigs[name]
         c.docstring = docstring
@@ -224,12 +190,6 @@ def makeConfig(name, docstring, **kwds):
             setattr(c, k, kwds[k])
     except KeyError:
         c = allConfigs[name] = PackageConfig(name, docstring, **kwds)
-
-# _after_bootstrap flag solves chicken-egg problem between logging and config modules
-# if _after_bootstrap:
-# make the GPI proxy
-##          from Ganga.GPIDev.Lib.Config.Config import createSectionProxy
-# createSectionProxy(name)
 
     c._config_made = True
     return c
@@ -257,7 +217,7 @@ class ConfigOption(object):
         self.examples = None
         self.filter = None
         self.typelist = None
-        self._hasModified = False
+        self.hasModified = False
 
     def defineOption(self, default_value, docstring, **meta):
 
@@ -275,36 +235,19 @@ class ConfigOption(object):
         self.convert_type('session_value')
         self.convert_type('user_value')
 
-    def setModified(self, val):
-        self._hasModified = val
-
-    def hasModified(self):
-        return self._hasModified
-
     def setSessionValue(self, session_value):
 
         if not hasattr(self, 'docstring'):
             raise ConfigError('Can\'t set a session value without a docstring!')
 
-        self.setModified(True)
+        self.hasModified = True
 
         # try:
         if self.filter:
             session_value = self.filter(self, session_value)
-        # except Exception as x:
-        #    import  Ganga.Utility.logging
-        #    logger = Ganga.Utility.logging.getLogger()
-        #    logger.warning('problem with option filter: %s: %s',self.name,x)
 
         if hasattr(self, 'session_value'):
             session_value = self.transform_PATH_option(session_value, self.session_value)
-        else:
-            pass
-
-        if hasattr(self, 'session_value'):
-            old_value = self.session_value
-        else:
-            pass
 
         self.session_value = session_value
         self.convert_type('session_value')
@@ -314,7 +257,7 @@ class ConfigOption(object):
         if not hasattr(self, 'docstring'):
             raise ConfigError('Can\'t set a user value without a docstring!')
 
-        self.setModified(True)
+        self.hasModified = True
         try:
             if self.filter:
                 user_value = self.filter(self, user_value)
@@ -324,13 +267,9 @@ class ConfigOption(object):
 
         if hasattr(self, 'user_value'):
             user_value = self.transform_PATH_option(user_value, self.user_value)
-        else:
-            pass
 
         if hasattr(self, 'user_value'):
             old_value = self.user_value
-        else:
-            pass
 
         self.user_value = user_value
         try:
@@ -344,11 +283,9 @@ class ConfigOption(object):
             raise x
 
     def overrideDefaultValue(self, default_value):
-        self.setModified(True)
+        self.hasModified = True
         if hasattr(self, 'default_value'):
             default_value = self.transform_PATH_option(default_value, self.default_value)
-        else:
-            pass
         self.default_value = default_value
         self.convert_type('user_value')
         self.convert_type('session_value')
@@ -362,10 +299,8 @@ class ConfigOption(object):
                 str_val = n+'_value'
                 if hasattr(self, str_val):
                     values.append(getattr(self, str_val))
-                else:
-                    pass
 
-            if values != []:
+            if values:
                 returnable = reduce(self.transform_PATH_option, values)
                 return returnable
 
@@ -380,9 +315,9 @@ class ConfigOption(object):
     def __setattr__(self, name, value):
         if name in ['value', 'level']:
             raise AttributeError('Cannot set "%s" attribute of the option object' % name)
-        else:
-            self.__dict__[name] = value
-            self.__dict__['_hasModified'] = True
+
+        super(ConfigOption, self).__setattr__(name, value)
+        super(ConfigOption, self).__setattr__('_hasModified', True)
 
     def check_defined(self):
         return hasattr(self, 'default_value')
@@ -391,10 +326,10 @@ class ConfigOption(object):
         return transform_PATH_option(self.name, new_value, current_value)
 
     def convert_type(self, x_name):
-        ''' Convert the type of session_value or user_value (referred to by x_name) according to the types defined by the self.
+        """ Convert the type of session_value or user_value (referred to by x_name) according to the types defined by the self.
         If the option has not been defined or the x_name in question is not defined, then this method is no-op.
         If conversion cannot be performed (type mismatch) then raise ConfigError.
-        '''
+        """
 
         try:
             value = getattr(self, x_name)
@@ -418,8 +353,7 @@ class ConfigOption(object):
 
         new_value = value
 
-        #optdesc = 'while setting option [%s]%s = %s ' % (self.name,o,str(value))
-        optdesc = 'while setting option [.]%s = %s ' % (self.name, str(value))
+        optdesc = 'while setting option [.]%s = %s ' % (self.name, value)
 
         # eval string values only if the cast_type is not exactly a string
         if isinstance(value, str) and cast_type is not str:
@@ -430,12 +364,10 @@ class ConfigOption(object):
                 logger.debug('ignored failed eval(%s): %s (%s)', value, x, optdesc)
 
         # check the type of the value unless the cast_type is not NoneType
-        logger.debug('checking value type: %s (%s)', str(cast_type), optdesc)
+        logger.debug('checking value type: %s (%s)', cast_type, optdesc)
 
         def check_type(x, t):
             return isinstance(x, t) or x is t
-
-        type_matched = False
 
         # first we check using the same rules for typelist as for the GPI proxy
         # objects
@@ -447,8 +379,7 @@ class ConfigOption(object):
 
         from Ganga.Utility.logic import implies
         if not implies(not cast_type is type(None), type_matched):
-            raise ConfigError('type mismatch: expected %s got %s (%s)' % (
-                str(cast_type), str(type(new_value)), optdesc))
+            raise ConfigError('type mismatch: expected %s got %s (%s)' % (cast_type, type(new_value), optdesc))
 
         setattr(self, x_name, new_value)
 
@@ -487,12 +418,11 @@ class PackageConfig(object):
     def __init__(self, name, docstring, **meta):
         """ Arguments:
          - name may not contain blanks and should be a valid python identifier otherwise ValueError is raised
-         - temporary name migration conversion applies -- see _migrate_name()
          meta args have the same meaning as for the ConfigOption:
           - hidden
           - cfile
         """
-        self.name = _migrate_name(name)
+        self.name = name
         self.options = {}  # {'name':Option('name',default_value,docstring)}
         self.docstring = docstring
         self.hidden = False
@@ -510,17 +440,7 @@ class PackageConfig(object):
         # sanity check to force using makeConfig()
         self._config_made = False
 
-        if _configured and self.is_open:
-            logger = getLogger()
-            logger.error('cannot define open configuration section %s after configure() step', self.name)
-
-        self._hasModified = False
-
-    def setModified(self, val):
-        self._hasModified = val
-                               
-    def hasModified(self):
-        return self._hasModified
+        self.hasModified = False
 
     def _addOpenOption(self, name, value):
         self.addOption(name, value, "", override=True)
@@ -552,16 +472,12 @@ class PackageConfig(object):
         option.defineOption(default_value, docstring, **meta)
         self.options[option.name] = option
 
-        if self.name in allConfigFileValues:
-            conf_value = allConfigFileValues[self.name]
+        if self.name in unknownConfigFileValues:
+            conf_value = unknownConfigFileValues[self.name]
         else:
-            msg = "Error getting ConfigFileValue Option: %s" % str(self.name)
-            if 'logger' in locals() and logger is not None:
-                logger.debug("dbg: %s"%msg)
-            else:
-                ##uncomment for debugging
-                ##print("%s" % msg)
-                pass
+            msg = "Error getting ConfigFileValue Option: %s" % self.name
+            if locals().get('logger') is not None:
+                locals().get('logger').debug("dbg: %s" % msg)
             conf_value = dict()
 
         if option.name in conf_value:
@@ -570,30 +486,17 @@ class PackageConfig(object):
                 option.setSessionValue(session_value)
                 del conf_value[option.name]
             except Exception as err:
-                msg = "Error Setting Session Value: %s" % str(err)
-                if 'logger' in locals() and logger is not None:
-                    logger.debug("dbg: %s"%msg)
-                else:
-                    ##uncomment for debugging
-                    ##print("%s" % msg)
-                    pass
+                msg = "Error Setting Session Value: %s" % err
+                if locals().get('logger') is not None:
+                    locals().get('logger').debug("dbg: %s" % msg)
 
-
-# set the GPI proxy object if already created, if not it will be created by bootstrap() function in the GPI Config module
-# if _after_bootstrap:
-##             from Ganga.GPIDev.Lib.Config.Config import createOptionProxy
-# createOptionProxy(self.name,name)
-
-    def setSessionValue(self, name, value, raw=0):
+    def setSessionValue(self, name, value):
         """  Add or  override options  as a  part of  second  phase of
         initialization of  this configuration module (PHASE  2) If the
         default type of the option  is not string, then the expression
-        will be evaluated. Optional  argument raw indicates if special
-        treatment  of  PATH-like  variables  is disabled  (enabled  by
-        default).  The special treatment  applies to the session level
-        values only (and not the default one!).  """
+        will be evaluated."""
 
-        self.setModified(True)
+        self.hasModified = True
 
         logger = getLogger()
 
@@ -613,15 +516,12 @@ class PackageConfig(object):
             try:
                 h[1](name, value)
             except Exception as err:
-                import traceback
                 traceback.print_stack()
-                logger.error("h[1]: %s" % str(h[1]))
+                logger.error("h[1]: %s" % h[1])
                 logger.error("Error in Setting Session Value!")
-                logger.error("Name: %s Value: '%s'" % (str(name), str(value)))
-                logger.error("Err:\n%s" % str(err))
+                logger.error("Name: %s Value: '%s'" % (name, value))
+                logger.error("Err:\n%s" % err)
                 raise err
-            finally:
-                pass
 
     def setUserValue(self, name, value):
         """ Modify option  at runtime. This  method corresponds to  the user
@@ -629,7 +529,7 @@ class PackageConfig(object):
         the  default  type  of  the  option  is  not  string,  then  the
         expression will be evaluated. """
 
-        self.setModified(True)
+        self.hasModified = True
 
         logger = getLogger()
 
@@ -646,37 +546,29 @@ class PackageConfig(object):
             handler[1](name, value)
 
     def overrideDefaultValue(self, name, val):
-        self.setModified(True)
+        self.hasModified = True
         self.options[name].overrideDefaultValue(val)
 
     def revertToSession(self, name):
-        self.setModified(True)
+        self.hasModified = True
         if name in self.options:
             if hasattr(self.options[name], 'user_value'):
                 del self.options[name].user_value
-            else:
-                pass
-        else:
-            pass
 
     def revertToDefault(self, name):
-        self.setModified(True)
+        self.hasModified = True
         self.revertToSession(name)
         if name in self.options:
             if hasattr(self.options[name], 'session_value'):
                 del self.options[name].session_value
-            else:
-                pass
-        else:
-            pass
 
     def revertToSessionOptions(self):
-        self.setModified(True)
+        self.hasModified = True
         for name in self.options:
             self.revertToSession(name)
 
     def revertToDefaultOptions(self):
-        self.setModified(True)
+        self.hasModified = True
         self.revertToSessionOptions()
         for name in self.options:
             self.revertToDefault(name)
@@ -691,11 +583,6 @@ class PackageConfig(object):
         if name in self.options:
             return self.options[name].value
         else:
-            #logger = getLogger()
-            #logger.debug("Effective Option %s NOT FOUND, Effective Options are:" % (name))
-            opts = self.getEffectiveOptions()
-            #for k, v in opts.iteritems():
-            #    logger.debug("\n\t%s:%s" % (str(k), str(v)))
             raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name))
 
     def getEffectiveLevel(self, name):
@@ -787,23 +674,17 @@ def transform_PATH_option(name, new_value, current_value):
 
     PATH_ITEM = '_PATH'
     if name[-len(PATH_ITEM):] == PATH_ITEM:
-        logger.debug('PATH-like variable: %s %s %s', name, new_value, current_value)
+        getLogger().debug('PATH-like variable: %s %s %s', name, new_value, current_value)
         if current_value is None:
             ret_value = new_value
         elif new_value[:3] != ':::':
-            logger.debug('Prepended %s to PATH-like variable %s', new_value, name)
+            getLogger().debug('Prepended %s to PATH-like variable %s', new_value, name)
             ret_value = new_value + ':' + current_value
             new_value = ""
         else:
-            logger.debug('Resetting PATH-like variable %s to %s', name, new_value)
+            getLogger().debug('Resetting PATH-like variable %s to %s', name, new_value)
             ret_value = new_value  # [3:]
             new_value = ":::"
-
-        # remove duplicate path entries
-        #if ret_value[:3] == ':::':
-        #    new_value = ":::"
-        #else:
-        #    new_value = ""
 
         for tok in ret_value.strip(":").split(":"):
             if new_value.find(tok) == -1 or tok == "":
@@ -817,13 +698,11 @@ def read_ini_files(filenames, system_vars):
     sequence of files (which are parsed from left-to-right).
     Apply special rules for PATH-like variables - see transform_PATH_option() """
 
-    import re
-    import os
     import Ganga.Utility.logging
 
     logger = getLogger()
 
-    logger.debug('reading ini files: %s', str(filenames))
+    logger.debug('reading ini files: %s', filenames)
 
     main = make_config_parser(system_vars)
 
@@ -842,7 +721,7 @@ def read_ini_files(filenames, system_vars):
             with open(f) as file_f:
                 cc.readfp(file_f)
         except Exception as x:
-            logger.warning('Exception reading config file %s', str(x))
+            logger.warning('Exception reading config file %s', x)
 
         for sec in cc.sections():
             if not main.has_section(sec):
@@ -852,7 +731,7 @@ def read_ini_files(filenames, system_vars):
                 try:
                     value = cc.get(sec, name)
                 except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
-                    logger.debug("Parse Error!:\n  %s" % str(err))
+                    logger.debug("Parse Error!:\n  %s" % err)
                     value = cc.get(sec, name, raw=True)
                     #raise err
 
@@ -864,7 +743,7 @@ def read_ini_files(filenames, system_vars):
                         Ganga.Utility.logging.log_unknown_exception()
                         logger.debug('The variable \"' + localvarstripped + '\" is referenced but not defined in the ')
                         logger.debug('[' + sec + '] configuration section of ' + f)
-                        logger.debug("err: %s" % str(err))
+                        logger.debug("err: %s" % err)
 
                 # do not put the DEFAULTS into the sections (no need)
                 if name in cc.defaults():
@@ -877,8 +756,8 @@ def read_ini_files(filenames, system_vars):
                 except ConfigParser.NoOptionError:
                     current_value = None
                 except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
-                    logger.debug("Parse Error!:\n  %s" % str(err))
-                    logger.debug("Failed to expand, Importing value %s:%s as raw" % (str(sec), str(name)))
+                    logger.debug("Parse Error!:\n  %s" % err)
+                    logger.debug("Failed to expand, Importing value %s:%s as raw" % (sec, name))
                     current_value = main.get(sec, name, raw=True)
                     current_value = current_value.replace('%', '%%')
                     #raise err
@@ -897,7 +776,6 @@ def read_ini_files(filenames, system_vars):
                     envvarclean = envvar.strip('$')
 
                     # is env variable
-                    envval = ''
                     logger.debug('looking for ' + str(envvarclean) + ' in the shell environment')
                     if envvarclean in os.environ:
                         envval = os.environ[envvarclean]
@@ -914,11 +792,11 @@ def read_ini_files(filenames, system_vars):
                     main.set(sec, name, value)
                 except Exception as err:
                     value = value.replace('%', '%%')
-                    logger.debug("Error Setting %s" % str(err))
+                    logger.debug("Error Setting %s" % err)
                     try:
                         main.set(sec, name, value)
                     except Exception as err2:
-                        logger.debug("Error setting #2: %s" % str(err2))
+                        logger.debug("Error setting #2: %s" % err2)
                         raise err
 
     return main
@@ -937,11 +815,7 @@ def setSessionValue(config_name, option_name, value):
 
     # put value in the buffer, it will be removed from the buffer when option
     # is added
-    allConfigFileValues.setdefault(config_name, {})
-    allConfigFileValues[config_name][option_name] = value
-
-
-_configured = False
+    unknownConfigFileValues[config_name][option_name] = value
 
 
 def setSessionValuesFromFiles(filenames, system_vars):
@@ -967,22 +841,23 @@ def setSessionValuesFromFiles(filenames, system_vars):
                 v = cfg.get(name, o)
             except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
                 logger = getLogger()
-                logger.debug("Parse Error!:\n  %s" % str(err))
-                logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (str(name), str(o)))
+                logger.debug("Parse Error!:\n  %s" % err)
+                logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (name, o))
                 v = cfg.get(name, o, raw=True)
             setSessionValue(name, o, v)
 
-    _configured = True
-
 
 def load_user_config(filename, system_vars):
-    import os
     logger = getLogger()
     if not os.path.exists(filename):
         return
     new_cfg = read_ini_files(filename, system_vars)
     for name in new_cfg.sections():
-        current_cfg_section = getConfig(name)
+        try:
+            current_cfg_section = getConfig(name)
+        except KeyError:
+            continue
+
         if not current_cfg_section.options:  # if this section does not exists
             # supressing these messages as depending on what stage of the bootstrap.py you
             # call the function more or less of the default options have been loaded
@@ -997,8 +872,8 @@ def load_user_config(filename, system_vars):
             try:
                 v = new_cfg.get(name, o)
             except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
-                logger.debug("Parse Error!:\n  %s" % str(err))
-                logger.debug("Failed to expand %s:%s, loading it as raw" % (str(name), str(o)))
+                logger.debug("Parse Error!:\n  %s" % err)
+                logger.debug("Failed to expand %s:%s, loading it as raw" % (name, o))
                 v = new_cfg.get(name, o, raw=True)
             current_cfg_section.setUserValue(o, v)
 
@@ -1025,8 +900,7 @@ def setConfigOption(section="", item="", value=""):
             if item in config.getEffectiveOptions():
                 config.setSessionValue(item, value)
         except Exception as err:
-            logger.debug("Error setting Option: %s = %s  :: %s" % (str(item), str(value), str(err)))
-            pass
+            getLogger().debug("Error setting Option: %s = %s  :: %s" % (item, value, err))
 
     return None
 # KH 050725: End of addition
@@ -1036,7 +910,6 @@ def expandConfigPath(path, top):
     """ Split the path and return a list, where all relative path components will have top prepended.
         Example: 'A:/B/C::D/E' -> ['top/A','/B/C','top/D/E']
     """
-    import os.path
     l = []
     for p in path.split(':'):
         if p:
@@ -1053,8 +926,8 @@ def sanityCheck():
         if not c._config_made:
             logger.error("sanity check failed: %s: no makeConfig() found in the code", c.name)
 
-    for name in allConfigFileValues:
-        opts = allConfigFileValues[name]
+    for name in unknownConfigFileValues:
+        opts = unknownConfigFileValues[name]
         if name in allConfigs:
             cfg = allConfigs[name]
         else:
@@ -1069,30 +942,3 @@ def sanityCheck():
             for o, v in zip(opts.keys(), opts.values()):
                 cfg._addOpenOption(o, v)
                 cfg.setSessionValue(o, v)
-
-
-def getFlavour():
-
-    runtimepath = getConfig('Configuration')['RUNTIME_PATH']
-
-    if 'GangaLHCb' in runtimepath:
-        lhcb = True
-    else:
-        lhcb = False
-
-    if 'GangaAtlas' in runtimepath:
-        atlas = True
-    else:
-        atlas = False
-
-    if lhcb and atlas:
-        raise ConfigError('Atlas and LHCb conflict')
-
-    if lhcb:
-        return 'LHCb'
-
-    if atlas:
-        return 'Atlas'
-
-    return ''
-

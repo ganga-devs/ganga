@@ -12,7 +12,7 @@ import sys
 
 import Ganga.Core.FileWorkspace
 from Ganga.GPIDev.MonitoringServices import getMonitoringObject
-from Ganga.Core import GangaException, IncompleteJobSubmissionError, JobManagerError, Sandbox
+from Ganga.Core import GangaException, IncompleteJobSubmissionError, JobManagerError, Sandbox, SplitterError
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
@@ -232,7 +232,20 @@ class Job(GangaObject):
 
     # TODO: usage of **kwds may be envisaged at this level to optimize the
     # overriding of values, this must be reviewed
-    def __init__(self):
+    def __init__(self, prev_job=None, **kwds):
+        """
+        This constructs a new job object
+        Args:
+            prev_job (Job, JobTemplate): This is assumed to be an old job or a job template which we're hoping to copy the configuration of
+        """
+
+        # WE WILL ONLY EVER ACCEPT Job or JobTemplate by design
+        if prev_job:
+            assert isinstance(prev_job, (Job, JobTemplate)), "Can only constuct a Job with 1 non-keyword argument which is another Job, or JobTemplate"
+
+        # START INIT OF SELF
+
+        # TODO add the kwds as a pass through so that they're handled in a sane/consistent way.
         super(Job, self).__init__()
         # Finished initializing 'special' objects which are used in getter methods and alike
         self.time.newjob()  # <-----------NEW: timestamp method
@@ -250,6 +263,31 @@ class Job(GangaObject):
 
         self._stored_subjobs_proxy = None
 
+        # FINISH INIT OF SELF
+
+        # If we're copying data from an existing Job/JobTemplate
+        if prev_job:
+            # We don't want to clone the time data of an existing job
+            self.copyFrom(prev_job, ['time'])
+
+            if prev_job.master is not None:
+                if getConfig('Output')['ForbidLegacyInput']:
+                    if not prev_job.inputfiles:
+                        self.inputfiles = prev_job.master.inputfiles
+                    else:
+                        self.inputfiles = prev_job.inputfiles
+                    self.inputsandbox = []
+                else:
+                    if not prev_job.inputsandbox:
+                        self.inputsandbox = prev_job.master.inputsandbox
+                    else:
+                        self.inputsandbox = prev_job.inputsandbox
+                    self.inputfiles = []
+
+            if getConfig('Preparable')['unprepare_on_copy'] is True:
+                self.unprepare()
+
+
     def _getMasterJob(self):
         parent = self._getParent()
         while parent is not None:
@@ -257,57 +295,6 @@ class Job(GangaObject):
                 break
             parent = self._getParent()
         return parent
-
-    def __construct__(self, args):
-
-        self.status = "new"
-        logger.debug("Intercepting __construct__")
-
-        #super(Job, self).__construct__(args)
-
-        # Not correctly calling Copy Constructor as in
-        # Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
-        #super(Job, self).__construct__( args )
-
-        logger.debug("Job args: %s" % args)
-
-        if len(args) == 1:
-
-            if isType(args[0], Job):
-
-                self._unsetSubmitTransients()
-                super(Job, self).__construct__( args )
-
-                original_job = args[0]
-
-                self.copyFrom(original_job)
-
-                if original_job.master is not None:
-
-                    if getConfig('Output')['ForbidLegacyInput']:
-
-                        if original_job.inputfiles == []:
-                            self.inputfiles = copy.copy(original_job.master.inputfiles)
-                        else:
-                            self.inputfiles = copy.copy(original_job.inputfiles)
-                        self.inputsandbox = []
-                    else:
-
-                        if original_job.inputsandbox == []:
-                            self.inputsandbox = original_job.master.inputsandbox
-                        else:
-                            self.inputsandbox = original_job.inputsandbox
-                        self.inputfiles = []
-                if getConfig('Preparable')['unprepare_on_copy'] is True:
-                    self.unprepare()
-
-            else:
-                # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
-                super(Job, self).__construct__( args )
-                #raise ValueError("Object %s is NOT of type Job" % args[0])
-        else:
-            # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
-            super(Job, self).__construct__(args)
 
     def _readonly(self):
         return self.status != 'new'
@@ -425,7 +412,7 @@ class Job(GangaObject):
         if name == 'outputfiles':
 
             currentOutputFiles = object.__getattribute__(self, name)
-            currenUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
+            currentUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
 
             regex = re.compile('[*?\[\]]')
             files = GangaList()
@@ -437,7 +424,7 @@ class Job(GangaObject):
                 else:
                     files.append(f)
 
-            for f in currenUnCopyableOutputFiles:
+            for f in currentUnCopyableOutputFiles:
                 if regex.search(f.namePattern) is not None and hasattr(f, 'subfiles') and f.subfiles:
                     files2.extend(makeGangaListByRef(f.subfiles))
                 else:
@@ -448,6 +435,8 @@ class Job(GangaObject):
                 files3.append(f)
             for f in files2:
                 files3.append(f)
+
+            files3._setParent(self)
 
             return addProxy(files3)
 
@@ -671,34 +660,26 @@ class Job(GangaObject):
                     for currentFile in glob.glob(os.path.join(outputdir, outputfile.namePattern)):
                         os.system("gzip %s" % currentFile)
 
+
             backend_output_postprocess = self.getBackendOutputPostprocessDict()
             if backendClass in backend_output_postprocess:
                 if outputfileClass in backend_output_postprocess[backendClass]:
-                    if backend_output_postprocess[backendClass][outputfileClass] == 'client':
-                        logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
-                        outputfile.put()
-                        for f in glob.glob(os.path.join(self.outputdir, outputfile.namePattern)):
-                            try:
-                                os.remove(f)
-                            except OSError as err:
-                                if err.errno != errno.ENOENT:
-                                    logger.error('failed to remove temporary/intermediary file: %s' % f)
-                                    logger.debug("Err: %s" % err)
-                                    raise err
-                                pass
 
-                    elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':
+                    if not self.subjobs:
                         logger.info("Job %s Setting Location of %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
-                        if not self.subjobs:
-                            outputfile.setLocation()
-                    else:
                         try:
                             outputfile.setLocation()
                         except Exception as err:
                             logger.error("Error: %s" % err)
 
-            if outputfileClass == 'LocalFile':
-                outputfile.processOutputWildcardMatches()
+                    if backend_output_postprocess[backendClass][outputfileClass] == 'client':
+                        try:
+                            logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), getName(outputfile), outputfile.namePattern))
+                            outputfile.put()
+                            logger.debug("Cleaning up after put")
+                            outputfile.cleanUpClient()
+                        except Exception as err:
+                            logger.error("Error Putting or cleaning up file: %s, err::%s" % (outputfile.namePattern, err))
 
         # leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)
@@ -1410,7 +1391,6 @@ class Job(GangaObject):
         else:
             rjobs = [self]
 
-
         return rjobs
 
     def submit(self, keep_going=None, keep_on_fail=None, prepare=False):
@@ -1490,6 +1470,10 @@ class Job(GangaObject):
             logger.debug("Checking Job: %s for splitting" % self.getFQID('.'))
             # split into subjobs
             rjobs = self._doSplitting()
+
+            # Some old jobs may still contain None assigned to the self.subjobs so be careful when checking length
+            if self.splitter is not None and not self.subjobs:
+                raise SplitterError("Splitter '%s' failed to produce any subjobs from splitting. Aborting submit" % (getName(self.splitter),))
 
             #
             logger.debug("Now have %s subjobs" % len(self.subjobs))
@@ -2111,13 +2095,14 @@ class Job(GangaObject):
             uniqueValues = []
 
             for val in value:
-                key = '%s%s' % (getName(val), val.namePattern)
+                dir_ = val.localDir or ''
+                name_ = val.namePattern or ''
+                key = '%s%s' % (getName(val), os.path.join(dir_, name_))
                 if key not in uniqueValuesDict:
                     uniqueValuesDict.append(key)
                     uniqueValues.append(val)
                 elif getName(val) == 'LCGSEFile':
                     uniqueValues.append(val)
-
 
             super(Job, self).__setattr__(attr, uniqueValues)
 
@@ -2133,7 +2118,7 @@ class Job(GangaObject):
                     logger.error('Use of job.outputsandbox is forbidden, please use job.outputfiles')
                     return
 
-                if self.outputfiles != []:
+                if self.outputfiles:
                     logger.error('job.outputfiles is set, you can\'t set job.outputsandbox')
                     return
 
@@ -2159,7 +2144,7 @@ class Job(GangaObject):
                     logger.error('Use of job.outputdata is forbidden, please use job.outputfiles')
                     return
 
-                if self.outputfiles != []:
+                if self.outputfiles:
                     logger.error('job.outputfiles is set, you can\'t set job.outputdata')
                     return
             super(Job, self).__setattr__(attr, value)
@@ -2231,10 +2216,6 @@ class JobTemplate(Job):
 
     def __init__(self):
         super(JobTemplate, self).__init__()
-        self.status = "template"
-
-    def __construct__(self, args):
-        super(JobTemplate, self).__construct__(args)
         self.status = "template"
 
     def _readonly(self):

@@ -26,7 +26,6 @@ import string
 import sys
 import time
 import re
-import atexit
 
 from Ganga import _gangaVersion, _gangaPythonPath
 from Ganga.Utility.Config.Config import getConfig
@@ -776,6 +775,7 @@ under certain conditions; type license() for details.
 
         if not self.options.monitoring:
             self.options.cmdline_options.append('[PollThread]autostart=False')
+            self.options.cmdline_options.append('[Tasks]disableTaskMon=True')
 
         logger = getLogger()
 
@@ -845,9 +845,8 @@ under certain conditions; type license() for details.
         logger = getLogger()
 
         logger.debug("Installing Shutdown Manager")
-        import atexit
-        from Ganga.Core.InternalServices.ShutdownManager import _ganga_run_exitfuncs
-        atexit.register(_ganga_run_exitfuncs)
+        from Ganga.Core.InternalServices.ShutdownManager import register_exitfunc
+        register_exitfunc()
 
         import Ganga.Utility.Config
         from Ganga.Utility.Runtime import RuntimePackage, allRuntimes
@@ -1199,9 +1198,13 @@ under certain conditions; type license() for details.
         logger.error("Error: %s" % value)
 
         from Ganga.Core.exceptions import GangaException
-        if not issubclass(etype, GangaException):
-            logger.error("Unknown/Unexpected ERROR!!")
-            #logger.error("If you're able to reproduce this please report this to the Ganga developers!")
+        import traceback
+        # Extract the stack from this traceback object
+        stack = traceback.extract_tb(tb)
+        # If this is an error from the interactive prompt then the length is 2, otherwise the errror is from deeper in Ganga
+        if not issubclass(etype, GangaException) and len(stack) > 2:
+            logger.error("!!Unknown/Unexpected ERROR!!")
+            logger.error("If you're able to reproduce this please report this to the Ganga developers!")
             #logger.error("value: %s" % value)
             exception_obj.showtraceback((etype, value, tb), tb_offset=tb_offset)
         return None
