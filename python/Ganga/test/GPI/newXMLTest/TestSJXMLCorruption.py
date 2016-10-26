@@ -49,12 +49,12 @@ class TestSJXMLCorruption(GangaUnitTest):
         global global_AutoStartReg
         global_AutoStartReg = False
 
-        stripProxy(sj)._getRegistry().flush_all()
+        stripProxy(j)._getRegistry().flush_all()
 
         for sj in j.subjobs:
             stripProxy(sj)._setDirty()
 
-        stripProxy(sj)._getRegistry().flush_all()
+        stripProxy(j)._getRegistry().flush_all()
 
         for sj in j.subjobs:
             stripProxy(sj)._setDirty()
@@ -91,7 +91,7 @@ class TestSJXMLCorruption(GangaUnitTest):
         print("jobs(0): %s" % str(stripProxy(jobs(0))))
         assert stripProxy(jobs(0))._dirty is True
 
-        stripProxy(sj)._getRegistry().flush_all()
+        stripProxy(jobs(0))._getRegistry().flush_all()
 
         global global_AutoStartReg
         global_AutoStartReg = True

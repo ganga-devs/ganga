@@ -19,6 +19,7 @@ from Ganga.Utility.Config import setConfigOption
 from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace, _purge_actions_queue,\
     stop_and_free_thread_pool
 from Ganga.GPIDev.Lib.Tasks import stopTasks
+from Ganga.GPIDev.Credentials import CredentialStore
 from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
 
 # Globals
@@ -98,6 +99,12 @@ def _ganga_run_exitfuncs():
 
     # label services as disabled
     Coordinator.servicesEnabled = False
+
+    # clear the credential store
+    try:
+        CredentialStore.shutdown()
+    except Exception as err:
+        logger.exception("Exception raised while clearing the credential store: %s" % err)
 
     # shutdown SessionLock
     try:
