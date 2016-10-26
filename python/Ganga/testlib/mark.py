@@ -31,21 +31,23 @@ class skipif_config(object):
         self.value = value
         self.reason = reason
 
-    def __call__(self, function, *args, **kwds):
+    def __call__(self, function):
         """
         Args:
             function (method, class): This is the test method or class we want to skip if the conditions aren't met
         """
-        def _skip_if_config():
-            # Load config
-            load_config_files()
-            # test if the config parameter is what we require
-            test = getConfig(self.section)[self.item] == self.value
-            clear_config()
-            if test:
-                # Mark test as skip if it's not what we require
-                return pytest.skip(self.reason)
+        # Load config
+        load_config_files()
+        # test if the config parameter is what we require
+        test = getConfig(self.section)[self.item] == self.value
+        clear_config()
+        if test:
+            # Mark test as skip if it's not what we require
+            return pytest.skip(self.reason)
+
+        @functools.wraps(function)
+        def _skip_if_config(function):
             # run test if we have met the requirements
-            return function(*args, **kwds)
+            return function
         return _skip_if_config
 
