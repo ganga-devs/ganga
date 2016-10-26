@@ -451,11 +451,12 @@ class Descriptor(object):
             return
         if isinstance(this_attr, Node):
             if hasattr(this_attr, '__len__'):
+                from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
                 for item in this_attr:
                     if isinstance(item, Node):
                         for _this_attr in item._schema.allItemNames():
                             Descriptor.check_inheritance(item, _this_attr)
-                        if this_attr._getParent() is not None:
+                        if isinstance(this_attr, GangaList) and this_attr._getParent() is not None:
                             assert item._getParent() is this_attr._getParent()
                         else:
                             assert item._getParent() is this_attr
