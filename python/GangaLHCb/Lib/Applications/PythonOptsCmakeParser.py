@@ -34,7 +34,7 @@ class PythonOptsCmakeParser(object):
         py_opts.write(self._join_opts_files())
         py_opts.flush()
 
-        gaudirun = './run gaudirun.py -n -v -o %s %s' % (tmp_py.name, py_opts.name)
+        gaudirun = 'gaudirun.py -n -v -o %s %s' % (tmp_py.name, py_opts.name)
         opts_str = ''
         err_msg = ''
         options = {}
@@ -46,7 +46,7 @@ class PythonOptsCmakeParser(object):
             raise ValueError(None, msg)
 
         elif stdout.find('no such option: -o') >= 0:
-            gaudirun = './run gaudirun.py -n -v -p %s %s' % (tmp_pkl.name, py_opts.name)
+            gaudirun = 'gaudirun.py -n -v -p %s %s' % (tmp_pkl.name, py_opts.name)
             rc, stdout, m = self.app.execCmd(gaudirun)
             rc = 0
 
@@ -56,7 +56,7 @@ class PythonOptsCmakeParser(object):
                 err_msg += ' returns valid python syntax'
 
         else:
-            cmd = './run gaudirun.py -n -p %s %s' % (tmp_pkl.name, py_opts.name)
+            cmd = 'gaudirun.py -n -p %s %s' % (tmp_pkl.name, py_opts.name)
             rc, stdout, m = self.app.execCmd(cmd)
             if rc == 0 and stdout:
                 opts_str = tmp_py.read()

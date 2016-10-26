@@ -392,6 +392,9 @@ class GaudiExec(IPrepareApp):
 
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
 
+        if not cmd.startswith('./run '):
+            cmd = './run ' + cmd
+
         cmd_file.write("#!/bin/bash")
         cmd_file.write("\n")
         cmd_file.write(self.getEnvScript())
