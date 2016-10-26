@@ -445,14 +445,22 @@ class Descriptor(object):
         this_attr = getattr(obj, attr_name)
         if hasattr(attr_item, '_getter_name') and attr_item._getter_name:
             return
+        if not obj._schema[attr_name].getProperties()['visitable'] or obj._schema[attr_name].getProperties()['transient']:
+            return
         if isinstance(this_attr, Node):
             if hasattr(this_attr, '__len__'):
                 for item in this_attr:
                     if isinstance(item, Node):
-                        for this_attr in item._schema.allItemNames():
-                            Descriptor.check_inheritance(item, this_attr)
-                    else:
-                        assert this_attr._getParent() is obj
+                        for _this_attr in item._schema.allItemNames():
+                            Descriptor.check_inheritance(item, _this_attr)
+                        if this_attr._getParent() is not None:
+                            assert item._getParent() is this_attr._getParent()
+                        else:
+                            assert item._getParent() is this_attr
+                assert this_attr._getParent() is obj
+            else:
+                print("testing: %s" % attr_name)
+                assert this_attr._getParent() is obj
 
     @synchronised_set_descriptor
     def __set__(self, obj, val):
