@@ -31,6 +31,7 @@ del standardSetup
 
 def testStartUp():
     """ Lets test the startup of Ganga mimicking first launch """
+    import sys
     sys.argv = ['ganga', '--no-mon']
     # Process options given at command line and in configuration file(s)
     # Perform environment setup and bootstrap
