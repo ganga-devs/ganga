@@ -36,7 +36,7 @@ class TestSubjobs(GangaUnitTest):
         def flush_full_job():
             mj = jobs(0)
             mj.comment = "Make sure I'm dirty " + ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-            stripProxy(mj)._getRegistry()._flush([j])
+            stripProxy(mj)._getRegistry()._flush([stripProxy(j)])
 
         # Make sure the main job is fully loaded
         j = jobs(0)
