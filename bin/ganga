@@ -41,6 +41,7 @@ del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 from Ganga.Core import GangaException
+from Ganga.Runtime import setupGanga
 import sys
 
 def log(level, err):
@@ -55,17 +56,9 @@ def log(level, err):
         sys.stderr.write('(consider --debug option for more information)\n')
 
 try:
-    # Process options given at command line and in configuration file(s)
-    # Perform environment setup and bootstrap
-    import Ganga.Runtime
-    Ganga.Runtime._prog = Ganga.Runtime.GangaProgram()
-    Ganga.Runtime._prog.parseOptions()
-    Ganga.Runtime._prog.configure()
-    Ganga.Runtime._prog.initEnvironment()
-    Ganga.Runtime._prog.bootstrap(Ganga.Runtime._prog.interactive)
-    Ganga.Runtime._prog.new_user_wizard()
     # Import GPI and run Ganga
     from Ganga.GPI import *
+    setupGanga()
     Ganga.Runtime._prog.run()
 except GangaException as err:
     log(Ganga.Runtime._prog.options.force_loglevel, err)

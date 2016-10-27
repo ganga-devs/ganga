@@ -1,4 +1,4 @@
-
+from __future__ import absolute_import
 import os
 import inspect
 import sys
@@ -23,6 +23,10 @@ def standardSetup():
 
     sys.path.insert(0, gangaDir)
 
+    binDir = os.path.join(gangaDir, '../bin')
+
+    sys.path.insert(1, binDir)
+
     from Ganga.PACKAGE import standardSetup
     standardSetup()
 
@@ -31,17 +35,11 @@ del standardSetup
 
 def testStartUp():
     """ Lets test the startup of Ganga mimicking first launch """
-    import sys
-    sys.argv = ['ganga', '--no-mon']
     # Process options given at command line and in configuration file(s)
     # Perform environment setup and bootstrap
-    import Ganga.Runtime
-    Ganga.Runtime._prog = Ganga.Runtime.GangaProgram()
-    Ganga.Runtime._prog.parseOptions()
-    Ganga.Runtime._prog.configure()
-    Ganga.Runtime._prog.initEnvironment()
-    Ganga.Runtime._prog.bootstrap(Ganga.Runtime._prog.interactive)
-    Ganga.Runtime._prog.new_user_wizard(interactive=False)
+
+    from Ganga.Runtime import setupGanga
+    setupGanga(argv=['ganga', '--no-mon'], interactive=False)
 
 def testShutdown():
     """ Lets just call the shutdown here for safety """
