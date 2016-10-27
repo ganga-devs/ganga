@@ -20,6 +20,8 @@ class TestLocalFileClient(GangaUnitTest):
                        'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
                                               'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
 
+    _ext = '.root'
+
     def setUp(self):
         """
         Configure the LocalFile for the test
@@ -52,16 +54,15 @@ class TestLocalFileClient(GangaUnitTest):
 
         from Ganga.GPI import LocalFile, Job, ArgSplitter
 
-        _ext = '.root'
-        file_1 = generate_unique_temp_file(_ext)
-        file_2 = generate_unique_temp_file(_ext)
+        file_1 = generate_unique_temp_file(TestLocalFileClient._ext)
+        file_2 = generate_unique_temp_file(TestLocalFileClient._ext)
         TestLocalFileClient._managed_files.append(file_1)
         TestLocalFileClient._managed_files.append(file_2)
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
         j.splitter = ArgSplitter(args = [[_] for _ in range(TestLocalFileClient.sj_len)])
-        j.outputfiles = [LocalFile(namePattern='*'+_ext)]
+        j.outputfiles = [LocalFile(namePattern='*'+TestLocalFileClient._ext)]
         j.submit()
 
     def test_b_testClientSideComplete(self):
@@ -88,6 +89,20 @@ class TestLocalFileClient(GangaUnitTest):
             assert len(stripProxy(sj).outputfiles[0].subfiles) == 2
 
             assert len(sj.outputfiles) == 2
+
+    def test_c_testCopy(self):
+
+        from Ganga.GPI import jobs, LocalFile
+
+        j = jobs[-1]
+
+        j2 = j.copy()
+
+        assert len(j2.outputfiles) == 1
+
+        assert j2.outputfiles == [LocalFile(namePattern='*'+TestLocalFileClient._ext)]
+
+        assert len(j2.inputfiles) == 2
 
         self.cleanUp()
 
