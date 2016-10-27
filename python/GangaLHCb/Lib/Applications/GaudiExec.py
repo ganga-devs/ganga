@@ -42,7 +42,7 @@ def gaudiExecBuildLock(f):
         
         # Get the global lock and prepare
         with gaudiExecBuildLock.globalBuildLock:
-            return f(*args, **kwds)
+            return f(self,*args, **kwds)
 
     return masterPrepLock
 
@@ -54,6 +54,18 @@ class GaudiExec(IPrepareApp):
     """
 
     Welcome to the new GaudiApp for LHCb apps written/constructed making use of the new CMake framework
+
+    =============
+    Simple Usage:
+    =============
+    The simplest usage of GaudiExec can be achieved by using the 'prepareGaudiExec' function
+
+    e.g.
+
+    j=Job(application=prepareGaudiExec('DaVinci','v41r3'));
+
+    This creates a new application env within 'cmtuser' (this is configurable) and returns a GaudiExec object for Ganga to use.
+    This is equivalent to running over a released application when you don't want to check out any private code or make any code changes.
 
     =============
     Requirements:
@@ -363,7 +375,6 @@ class GaudiExec(IPrepareApp):
         """
         This method executes a command within the namespace of the project. The cmd is placed in a bash script which is executed within the env
         This will adopt the platform associated with this application.
-        Any explicit calls to be run within the project env have to be prepended with './run '. This is not added automatically
 
         e.g. The following will execute a 'make' command within the given project dir
 
@@ -374,7 +385,15 @@ class GaudiExec(IPrepareApp):
             cmd (str): This is the command(s) which are to be executed within the project environment and directory
         """
 
+        if not self.directory:
+            raise GangaException("Cannot run a command using GaudiExec without a directory first being set!")
+        if not path.isdir(self.directory):
+            raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
+
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
+
+        if not cmd.startswith('./run '):
+            cmd = './run ' + cmd
 
         cmd_file.write("#!/bin/bash")
         cmd_file.write("\n")
@@ -390,7 +409,17 @@ class GaudiExec(IPrepareApp):
         # I would have preferred to execute all commands against inside `./run` so we have some sane behaviour
         # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
 
-        rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
+        if not path.isfile(path.join(self.directory, 'build.%s' %self.platform, 'run')):
+            rc, stdout, stderr = _exec_cmd('make', self.directory)
+            if rc != 0:
+                logger.error("Failed to perform initial make on a Cmake based project")
+                logger.error("This is required so that the './run' target exists and is callable within the project")
+                logger.error("StdErr: %s" % str(stderr))
+                raise GangaException("Failed to execute command")
+            if cmd != 'make':
+                rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
+        else:
+            rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
 
         if rc != 0:
             logger.error("Failed to execute command: %s" % cmd_file.name)
@@ -440,7 +469,7 @@ class GaudiExec(IPrepareApp):
         input_dataset = getGaudiExecInputData(opts, self)
         try:
             job = self.getJobObject()
-        except:
+        except AssertionError:
             raise GangaException("This makes no sense without first belonging to a job object as I can't assign input data!")
 
         if job.inputdata is not None and len(job.inputdata) > 0:
