@@ -5,12 +5,13 @@ try:
 except ImportError:
     from mock import patch
 
-from Ganga.testlib.mark import external, skipif_config
+from Ganga.testlib.mark import external, requires_cred
 from Ganga.testlib.monitoring import run_until_completed
 
+from Ganga.GPIDev.Credentials.VomsProxy import VomsProxy
 
 @external
-@skipif_config('LCG', 'GLITE_ENABLE', False, reason='GLITE not enabled')
+@requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_job_submit_and_monitor(gpi):
     from Ganga.GPI import Job, LCG
 
@@ -22,7 +23,7 @@ def test_job_submit_and_monitor(gpi):
     stripProxy(LCG).master_updateMonitoringInformation([stripProxy(j)])
 
 @external
-@skipif_config('LCG', 'GLITE_ENABLE', False, reason='GLITE not enabled')
+@requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_job_kill(gpi):
     from Ganga.GPI import Job, LCG
 
@@ -31,7 +32,7 @@ def test_job_kill(gpi):
     j.submit()
     j.kill()
 
-@skipif_config('LCG', 'GLITE_ENABLE', False, reason='GLITE not enabled')
+@requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_submit_kill_resubmit(gpi):
     """
     Test that a simple submit-kill-resubmit-kill cycle works
@@ -59,7 +60,7 @@ def test_submit_kill_resubmit(gpi):
     with patch('Ganga.Lib.LCG.Grid.cancel', return_value=True):
         j.kill()
 
-@skipif_config('LCG', 'GLITE_ENABLE', False, reason='GLITE not enabled')
+@requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_submit_monitor(gpi):
     """
     Test that an LCG job can be monitored
