@@ -319,7 +319,8 @@ def generateDiracScripts(app):
 
 def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
-    Upload a locally available file to the grid as a DiracFile
+    Upload a locally available file to the grid as a DiracFile.
+    Randomly chooses an SE.
 
     Args:
         namePattern (str): name of the file
@@ -330,10 +331,16 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
 
     new_df = DiracFile(namePattern, localDir=localDir)
-    random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
+    trySEs = getConfig('DIRAC')['allDiracSE']
+    random.shuffle(trySEs)
     new_lfn = os.path.join(getInputFileDir(job), namePattern)
-    returnable = new_df.put(force=True, uploadSE=random_SE, lfn=new_lfn)[0]
-
+    for SE in trySEs:
+        returnable = new_df.put(force=True, uploadSE=SE, lfn=new_lfn)[0]
+        if new_df.failureReason == '':
+            break
+        else:
+            logger.warning("Unable to upload LFN %s to SE %s. Trying another SE." % (new_lfn, SE))
+            new_df.failureReason = ''
     if should_del:
         os.unlink(os.path.join(localDir, namePattern))
 
