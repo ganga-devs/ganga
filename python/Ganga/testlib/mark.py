@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 import pytest
 import functools
-from tempfile import mkdtemp
-import shutil
 
 from .GangaUnitTest import load_config_files, clear_config
 from Ganga.GPIDev.Credentials.CredentialStore import credential_store
