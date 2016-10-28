@@ -335,7 +335,10 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
     random.shuffle(trySEs)
     new_lfn = os.path.join(getInputFileDir(job), namePattern)
     for SE in trySEs:
-        returnable = new_df.put(force=True, uploadSE=SE, lfn=new_lfn)[0]
+        try:
+            returnable = new_df.put(force=True, uploadSE=SE, lfn=new_lfn)[0]
+        except:
+            raise GangaException("Upload of LFN %s to SE %s failed" % (new_lfn, SE)) 
         if new_df.failureReason == '':
             break
         else:
