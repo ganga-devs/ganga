@@ -3,8 +3,12 @@
 
 
 --------------------------------------------------------------------------------------------------------------
-ganga/python/Ganga
+ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
-* ...
+* Bugfix for readInputData for the GaudiExec application. #843
+* Bugfix for the difference, symmetricDifference and union functions in LHCbDataset #856
+* Update default LHCbDirac version to v8r3p10.
+* Fix for the unprepare in the old style apps. #861
+* Fix for the GaussSplitter with GaudiExec #864
 
 **************************************************************************************************************
