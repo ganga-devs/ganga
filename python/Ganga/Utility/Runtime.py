@@ -122,7 +122,7 @@ class RuntimePackage(object):
             if allRuntimes[self.name].path != self.path:
                 logger.warning('possible clash: runtime "%s" already exists at path "%s"', self.name, allRuntimes[self.name].path)
 
-        allRuntimes[self.name] = self
+        allRuntimes[self.path] = self
 
         if self.syspath:
             # FIXME: not sure if I really want to modify sys.path (side effects!!)
