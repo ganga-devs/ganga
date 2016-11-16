@@ -31,7 +31,7 @@ def load_config_files():
     system_vars = {}
     for opt in getConfig('System'):
         system_vars[opt] = getConfig('System')[opt]
-        config_files = GangaProgram.get_config_files('')#os.path.expanduser('~/.gangarc'))
+        config_files = GangaProgram.get_config_files(os.path.expanduser('~/.gangarc'))
         setSessionValuesFromFiles(config_files, system_vars)
 
 
