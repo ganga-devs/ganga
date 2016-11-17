@@ -3,10 +3,11 @@ import subprocess
 
 from Ganga.Utility.Config import getConfig
 
-from Ganga.testlib.mark import external
+from Ganga.testlib.mark import external, skipif_config
 
 
 @external
+@skipif_config('LCG', 'GLITE_ENABLE', False, reason='GLITE not enabled')
 def test_job_kill(gpi):
     from Ganga.GPI import Job, CREAM
 
