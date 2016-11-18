@@ -20,7 +20,7 @@ from dq2.common.DQException import DQInvalidRequestException
 from dq2.common.client.DQClientException import DQInternalServerException
 from dq2.content.DQContentException import DQFileExistsInDatasetException
 
-from Ganga.GPIDev.Credentials import GridProxy
+from Ganga.GPIDev.Credentials_old import GridProxy
 
 from Ganga.Utility.GridShell import getShell
 
