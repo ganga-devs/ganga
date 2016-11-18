@@ -53,9 +53,7 @@ class TestSelect(GangaUnitTest):
         j.submit()
         
         from GangaTest.Framework.utils import sleep_until_completed
-        sleep_until_completed(j, 60)
-
-        assert j.status == "completed"
+        assert sleep_until_completed(j, 60)
 
         mySlice = jobs(j.id).subjobs.select(status="completed")
 

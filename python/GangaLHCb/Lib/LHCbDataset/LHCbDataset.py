@@ -15,6 +15,7 @@ from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -131,8 +132,8 @@ class LHCbDataset(GangaDataset):
         'Returns the replicas for all files in the dataset.'
         lfns = self.getLFNs()
         cmd = 'getReplicas(%s)' % str(lfns)
-        result = get_result(cmd, 'LFC query error', 'Could not get replicas.')
-        return result['Value']['Successful']
+        result = get_result(cmd, 'LFC query error. Could not get replicas.')
+        return result['Successful']
 
     def hasLFNs(self):
         'Returns True is the dataset has LFNs and False otherwise.'
@@ -293,7 +294,7 @@ class LHCbDataset(GangaDataset):
         tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
         cmd = 'getLHCbInputDataCatalog(%s,%d,"%s","%s")' \
               % (str(lfns), depth, site, tmp_xml.name)
-        result = get_result(cmd, 'LFN->PFN error', 'XML catalog error.')
+        result = get_result(cmd, 'LFN->PFN error. XML catalog error.')
         xml_catalog = tmp_xml.read()
         tmp_xml.close()
         return xml_catalog
@@ -378,7 +379,7 @@ class LHCbDataset(GangaDataset):
         other_files = self._checkOtherFiles(other)
         files = set(self.getFullFileNames()).difference(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -395,10 +396,10 @@ class LHCbDataset(GangaDataset):
     def symmetricDifference(self, other):
         '''Returns a new data set w/ files in either this or other but not
         both.'''
-        other_files = other.checkOtherFiles(other)
+        other_files = other._checkOtherFiles(other)
         files = set(self.getFullFileNames()).symmetric_difference(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -407,7 +408,7 @@ class LHCbDataset(GangaDataset):
         other_files = other._checkOtherFiles(other)
         files = set(self.getFullFileNames()).intersection(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -416,7 +417,7 @@ class LHCbDataset(GangaDataset):
         other_files = self._checkOtherFiles(other)
         files = set(self.getFullFileNames()).union(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -424,7 +425,7 @@ class LHCbDataset(GangaDataset):
         'Returns the bookkeeping metadata for all LFNs. '
         logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
-        b = get_result(cmd, 'Error removing replica', 'Replica rm error.')
+        b = get_result(cmd, 'Error removing replica. Replica rm error.')
         return b
 
     # def pop(self,file):

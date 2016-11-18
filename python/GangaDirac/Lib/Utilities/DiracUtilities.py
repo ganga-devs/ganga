@@ -8,13 +8,12 @@ from copy import deepcopy
 
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.execute import execute
 from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Credentials import getCredential
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Credentials import credential_store
 import Ganga.Utility.execute as gexecute
 
 logger = getLogger()
-proxy = None
 
 # Cache
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -24,6 +23,9 @@ Dirac_Env_Lock = threading.Lock()
 Dirac_Proxy_Lock = threading.Lock()
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+
+class GangaDiracError(GangaException):
+    """ Exception type which is thrown from problems executing a command against DIRAC """
 
 
 def getDiracEnv():
@@ -59,7 +61,7 @@ def get_env(env_source):
     """
     logger.debug('Running DIRAC source command %s', env_source)
     env = dict(os.environ)
-    execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
+    gexecute.execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
     if not any(key.startswith('DIRAC') for key in env):
         raise RuntimeError("'DIRAC*' not found in environment")
     return env
@@ -112,7 +114,7 @@ def getDiracCommandIncludes(force=False):
     if DIRAC_INCLUDE == '' or force:
         for fname in getConfig('DIRAC')['DiracCommandFiles']:
             if not os.path.exists(fname):
-                raise GangaException("Specified Dirac command file '%s' does not exist." % fname)
+                raise RuntimeError("Specified Dirac command file '%s' does not exist." % fname)
             with open(fname, 'r') as inc_file:
                 DIRAC_INCLUDE += inc_file.read() + '\n'
 
@@ -130,7 +132,6 @@ def getValidDiracFiles(job, names=None):
         names (list): list of strings of names to be matched to namePatterns in outputfiles
     """
     from GangaDirac.Lib.Files.DiracFile import DiracFile
-    from Ganga.GPIDev.Base.Proxy import isType
     if job.subjobs:
         for sj in job.subjobs:
             for df in (f for f in sj.outputfiles if isType(f, DiracFile)):
@@ -149,70 +150,6 @@ def getValidDiracFiles(job, names=None):
                 if df.lfn != '' and (names is None or df.namePattern in names):
                     yield df
 
-last_modified_time = None
-last_modified_valid = False
-
-# This will move/change when new credential system in place
-############################
-
-
-def _dirac_check_proxy( renew = True, shouldRaise = True):
-    """
-    This function checks the validity of the DIRAC proxy
-    Args:
-        renew (bool): When True this will require a proxy to be valid before we proceed. False means raise Exception when expired
-    """
-    global last_modified_valid
-    global proxy
-    if proxy is None:
-        proxy = getCredential('GridProxy')
-    _isValid = proxy.isValid()
-    if not _isValid:
-        if renew is True:
-            proxy.renew()
-            if not proxy.isValid():
-                last_modified_valid = False
-                if shouldRaise:
-                    raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
-            else:
-                last_modified_valid = True
-        else:
-            last_modified_valid = False
-    else:
-        last_modified_valid = True
-############################
-
-# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-
-def _proxyValid(shouldRenew = True, shouldRaise = True):
-    """
-    This function is a wrapper for the _checkProxy with a default of False for renew. Returns the last modified time global object
-    """
-    _checkProxy( renew = shouldRenew, shouldRaise = shouldRaise )
-    return last_modified_valid
-
-def _checkProxy( delay=60, renew = True, shouldRaise = True, force = False ):
-    """
-    Check the validity of the DIRAC proxy. If it's marked as valid, check once every 'delay' seconds.
-    Args:
-        delay (int): number of seconds between calls to the tools to test the proxy
-        renew (bool): If True, trigger the regeneration of a valid proxy
-    """
-    ## Handling mutable globals in a multi-threaded system to remember to LOCK
-    with Dirac_Proxy_Lock:
-        ## Function to check for a valid proxy once every 60( or n) seconds
-        global last_modified_time
-        if last_modified_time is None:
-            # This will move/change when new credential system in place
-            ############################
-            _dirac_check_proxy( renew, shouldRaise )
-            ############################
-            last_modified_time = time.time()
-
-        if (time.time() - last_modified_time) > int(delay) or not last_modified_valid or force:
-            _dirac_check_proxy( renew, shouldRaise )
-            last_modified_time = time.time()
-
 
 def execute(command,
             timeout=getConfig('DIRAC')['Timeout'],
@@ -222,6 +159,8 @@ def execute(command,
             python_setup='',
             eval_includes=None,
             update_env=False,
+            return_raw_dict=False,
+            cred_req=None,
             ):
     """
     Execute a command on the local DIRAC server.
@@ -237,6 +176,8 @@ def execute(command,
         python_setup (str): Optional extra code to pass to python when executing
         eval_includes (???): TODO document me
         update_env (bool): Should this modify the given env object with the env after the command has executed
+        return_raw_dict(bool): Should we return the raw dict from the DIRAC interface or parse it here
+        cred_req (ICredentialRequirement): What credentials does this call need
     """
 
     if env is None:
@@ -244,12 +185,8 @@ def execute(command,
     if python_setup == '':
         python_setup = getDiracCommandIncludes()
 
-    # We're about to perform an expensive operation so being safe before we run it shouldn't cost too much
-    _checkProxy(force = True)
-
-    #logger.debug("Executing command:\n'%s'" % str(command))
-    #logger.debug("python_setup:\n'%s'" % str(python_setup))
-    #logger.debug("eval_includes:\n'%s'" % str(eval_includes))
+    if cred_req is not None:
+        env['X509_USER_PROXY'] = credential_store[cred_req].location
 
     if cwd is None:
         # We can in all likelyhood be in a temp folder on a shared (SLOW) filesystem
@@ -258,10 +195,6 @@ def execute(command,
     else:
         # We know were whe want to run, lets just run there
         cwd_ = cwd
-
-    global last_modified_valid
-    if not last_modified_valid:
-        return None
 
     returnable = gexecute.execute(command,
                                   timeout=timeout,
@@ -272,11 +205,23 @@ def execute(command,
                                   eval_includes=eval_includes,
                                   update_env=update_env)
 
+    # If the time 
+    if returnable == 'Command timed out!':
+        raise GangaDiracError("DIRAC command timed out")
+
     # TODO we would like some way of working out if the code has been executed correctly
     # Most commands will be OK now that we've added the check for the valid proxy before executing commands here
 
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
 
-    return returnable
+    if isinstance(returnable, dict) and not return_raw_dict:
+        # If the output is a dictionary allow for automatic error detection
+        if returnable['OK']:
+            return returnable['Value']
+        else:
+            raise GangaDiracError(returnable['Message'])
+    else:
+        # If the output is NOT a dictionary return it
+        return returnable
 

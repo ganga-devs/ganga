@@ -27,19 +27,3 @@ class TestInterfaceLookFeel(GangaUnitTest):
         ap = Executable()
 
         j1.application = ap # deepcopy
-
-    def testGridInterface(self):
-        """
-        This tests that the gridProxy tool is available for everyone _ALWAYS_
-        """
-
-        # This should __NEVER__ fail for LHCb
-        from Ganga.GPI import gridProxy
-
-        # This too should always work
-        info_str = gridProxy.info()
-
-        # Cannot test these (ever?)
-        # gridProxy.renew()
-        # gridProxy.destroy()
-
