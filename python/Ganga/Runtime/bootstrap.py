@@ -841,7 +841,7 @@ under certain conditions; type license() for details.
         register_exitfunc()
 
         import Ganga.Utility.Config
-        from Ganga.Utility.Runtime import RuntimePackage, allRuntimes
+        from Ganga.Utility.Runtime import initSetupRuntimePackages
         from Ganga.Core import GangaException
 
         logger.debug("Import plugins")
@@ -853,36 +853,7 @@ under certain conditions; type license() for details.
             logger.exception(x)
             raise GangaException(x), None, sys.exc_info()[2]
 
-        # initialize runtime packages, they are registered in allRuntimes
-        # dictionary automatically
-        try:
-            import Ganga.Utility.files
-            from Ganga.Utility.Config.Config import getConfig
-            config = getConfig('Configuration')
-
-            #if config['IgnoreRuntimeWarnings']:
-            #    import warnings
-            #    warnings.filterwarnings(action="ignore", category=RuntimeWarning)
-
-            
-            import inspect
-            from os.path import expandvars, expanduser
-
-            GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
-            def transform(x):
-                return os.path.normpath(Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath,x)))
-
-            paths = map(transform, filter(None, map(lambda x: expandvars(expanduser(x)), config['RUNTIME_PATH'].split(':'))))
-
-            for path in paths:
-                r = RuntimePackage(path)
-        except KeyError, err:
-            logger.debug("init KeyError: %s" % err)
-
-        # perform any setup of runtime packages
-        logger.debug('Setting up Runtime Packages')
-        for r in allRuntimes.values():
-            r.standardSetup()
+        initSetupRuntimePackages()
 
         from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
         startUpQueues()
