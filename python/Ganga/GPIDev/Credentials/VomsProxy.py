@@ -43,7 +43,7 @@ class VomsProxyInfo(ICredentialInfo):
             CredentialRenewalError: If the renewal process returns a non-zero value
         """
         voms_command = ''
-        logger.debug('require ' + self.initial_requirements.vo)
+        logger.debug('require ' + str(self.initial_requirements.vo))
         if self.initial_requirements.vo:
             voms_command = '-voms %s' % self.initial_requirements.vo
             if self.initial_requirements.group or self.initial_requirements.role:
