@@ -39,7 +39,7 @@ class PythonOptsCmakeParser(object):
         err_msg = ''
         options = {}
 
-        rc, stdout, m = self.app.exec_cmd(gaudirun)
+        rc, stdout, m = self.app.execCmd(gaudirun)
 
         if stdout.find('Gaudi.py') >= 0:
             msg = 'The version of gaudirun.py required for your application is not supported.'
@@ -47,7 +47,7 @@ class PythonOptsCmakeParser(object):
 
         elif stdout.find('no such option: -o') >= 0:
             gaudirun = 'gaudirun.py -n -v -p %s %s' % (tmp_pkl.name, py_opts.name)
-            rc, stdout, m = self.app.exec_cmd(gaudirun)
+            rc, stdout, m = self.app.execCmd(gaudirun)
             rc = 0
 
             if stdout and rc == 0:
@@ -57,7 +57,7 @@ class PythonOptsCmakeParser(object):
 
         else:
             cmd = 'gaudirun.py -n -p %s %s' % (tmp_pkl.name, py_opts.name)
-            rc, stdout, m = self.app.exec_cmd(cmd)
+            rc, stdout, m = self.app.execCmd(cmd)
             if rc == 0 and stdout:
                 opts_str = tmp_py.read()
                 err_msg = 'Please check gaudirun.py -o file.py produces a valid python file.'
