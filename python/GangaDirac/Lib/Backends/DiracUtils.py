@@ -6,6 +6,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from Ganga.Utility.logging import getLogger
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Lib.File.File import File
+from Ganga.GPIDev.Base.Proxy import stripProxy
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -135,7 +136,7 @@ def getAccessURLs(lfns, defaultSE = ''):
     else:
         #If some elements are not strings look for the DiracFiles, separates out the LocalFiles from a job's outputfiles list
         for diracFile in lfns:
-            if str(getattr(getattr(diracFile,'__class__',None),'__name__',None)) == 'DiracFile':
+            if isinstance(stripProxy(diracFile), DiracFile):
                 lfnList.append(diracFile.lfn)
     if not lfnList:
         logger.error("Provided list does not have LFNs or DiracFiles in it")
