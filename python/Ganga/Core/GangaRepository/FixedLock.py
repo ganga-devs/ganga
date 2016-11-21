@@ -75,7 +75,9 @@ class FixedLockManager(object):
         self.global_lock = os.path.join(sessions_folder, '%s_fixed_lock' % name)
         self.count = minimum_count
         if os.path.exists(self.global_lock):
-            raise RepositoryError(repo, "Cannot start this registry: %s Due to a lock file already existing: '%s'" % (name, self.global_lock))
+            msg = "\n\nCannot start this registry: %s due to a lock file already existing: '%s'\n" % (name, self.global_lock)
+            msg += "If you are trying to run only 1 ganga session please remove this file and re-launch ganga\n"
+            raise RepositoryError(repo, msg)
 
         with open(self.global_lock, 'w'):
             pass
