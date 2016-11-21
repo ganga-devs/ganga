@@ -13,6 +13,7 @@ import copy
 import threading
 
 from Ganga.Core.GangaRepository.SessionLock import SessionLockManager
+from Ganga.Core.GangaRepository.FixedLock import FixedLockManager
 
 import Ganga.Utility.logging
 
@@ -27,6 +28,8 @@ from Ganga.GPIDev.Base.Objects import Node
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+
+from Ganga.Utility.Config import getConfig
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -225,7 +228,10 @@ class GangaRepositoryLocal(GangaRepository):
             self.from_file = pickle_from_file
         else:
             raise RepositoryError(self.repo, "Unknown Repository type: %s" % self.registry.type)
-        self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
+        if getConfig('Configuration')['lockingStrategy'] == "UNIX":
+            self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
+        else:
+            self.sessionlock = FixedLockManager(self, self.lockroot, self.registry.name)
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary
         # of errors
