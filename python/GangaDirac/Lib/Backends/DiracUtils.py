@@ -5,7 +5,6 @@ from Ganga.Core.exceptions import GangaException, BackendError
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from Ganga.Utility.logging import getLogger
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Base.Proxy import stripProxy
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -154,7 +153,7 @@ def getAccessURLs(lfns, defaultSE = ''):
     if defaultSE != '':
         if defaultSE in SEs:
             SEs.remove(defaultSE)
-            SEs.insert(0,defaultSE)
+            SEs.insert(0, defaultSE)
         else:
             logger.warning('No replica at specified SE, here is a URL for another replica')
     remainingLFNs = list(lfnList)
