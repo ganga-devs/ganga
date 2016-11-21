@@ -190,7 +190,7 @@ class GaudiBase(IPrepareApp):
                 env=self.getenv(False),
                 cwd=self.user_release_area)
 
-    def unprepare(self):
+    def unprepare(self, force=False):
         self._unregister()
 
     def _unregister(self):

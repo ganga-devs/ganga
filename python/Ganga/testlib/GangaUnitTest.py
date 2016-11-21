@@ -59,7 +59,7 @@ def clear_config():
 _setupGangaPath()
 
 
-def start_ganga(gangadir_for_test, extra_opts=[]):
+def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
     """
     Startup Ganga by calling the same set of 'safe' functions each time
     Args:
@@ -84,6 +84,8 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     this_argv = [
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
     ]
+    if extra_args:
+        this_argv += extra_args
 
     # These are the default options for all test instances
     # They can be overridden by extra_opts
@@ -228,6 +230,8 @@ def stop_ganga():
 
     # This should now be safe
     ShutdownManager._ganga_run_exitfuncs()
+
+    logger.info("Clearing Config")
 
     # Undo any manual editing of the config and revert to defaults
     clear_config()

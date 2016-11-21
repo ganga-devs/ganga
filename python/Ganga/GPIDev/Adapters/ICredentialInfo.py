@@ -9,11 +9,9 @@ from functools import wraps
 import Ganga.Utility.logging
 
 from Ganga.Core.exceptions import CredentialsError
+from Ganga.GPIDev.Credentials.CredentialStore import credential_store
 
 logger = Ganga.Utility.logging.getLogger()
-
-ENABLE_CACHING = True
-
 
 def cache(method):
     """
@@ -26,12 +24,15 @@ def cache(method):
     Not having to call the external commands comes at the cost of calling ``stat()``
     every time a parameter is accessed but this is still a saving of many orders of
     magnitude.
+
+    Args:
+        method (function): This is the method which we're wrapping
     """
     @wraps(method)
-    def wrapped_function(self, *args, **kwargs):
+    def cache_function(self, *args, **kwargs):
 
         # If the mtime has been changed, clear the cache
-        if ENABLE_CACHING and os.path.exists(self.location):
+        if credential_store.enable_caching and os.path.exists(self.location):
             mtime = os.path.getmtime(self.location)
             if mtime > self.cache['mtime']:
                 self.cache = {'mtime': mtime}
@@ -44,8 +45,25 @@ def cache(method):
             self.cache[method.func_name] = method(self, *args, **kwargs)
 
         return self.cache[method.func_name]
-    return wrapped_function
+    return cache_function
 
+def retry_command(method):
+    """
+    This method attempts to run the same function which can exit due to a CredetialsError
+    Any other exceptions are raised as appropriate. If a command fails it's assumed to have failed due to an invalid user input and is retried upto crednential_store.retry_limit
+    Args:
+        method (function): This is the method which we're wrapping
+    """
+    @wraps(method)
+    def retry_function(*args, **kwds):
+        for _ in range(credential_store.retry_limit):
+            try:
+                return method(*args, **kwds)
+            except CredentialsError:
+                # We expect errors of this type
+                pass
+        return None
+    return retry_function
 
 class ICredentialInfo(object):
     """
@@ -62,8 +80,8 @@ class ICredentialInfo(object):
         """
         Args:
             requirements (ICredentialRequirement): An object specifying the requirements
-            check_file: Raise an exception if the file does not exist
-            create: Create the credential file
+            check_file (bool): Raise an exception if the file does not exist
+            create (bool): Create the credential file
 
         Raises:
             IOError: If told to wrap a non-existent file
@@ -90,7 +108,13 @@ class ICredentialInfo(object):
             raise CredentialsError('Proxy object cannot satisfy its own requirements')
 
     def __str__(self):
-        return '{class_name} at {file_path}'.format(class_name=type(self).__name__, file_path=self.location)
+        """ Returns a user-readable string describing the credential and it's validity """
+        return '{class_name} at {file_path} : TimeLeft = {time_left}, Valid = {currently_valid}'.format(\
+                        class_name=type(self).__name__, file_path=self.location, currently_valid=self.is_valid(), time_left=self.time_left())
+
+    def _repr_pretty_(self, p, cycle):
+        """ A wrapper to self.__str__ for the pretty print methods in IPython """
+        p.text(str(self))
 
     @property
     def location(self):
@@ -99,8 +123,9 @@ class ICredentialInfo(object):
         The location of the file on disk
         """
         location = self.default_location()
-        if self.initial_requirements.encoded():
-            location += ':' + self.initial_requirements.encoded()
+        encoded_ext = self.initial_requirements.encoded()
+        if encoded_ext and not location.endswith(encoded_ext):
+            location += ':' + encoded_ext
 
         return location
 
@@ -183,7 +208,7 @@ class ICredentialInfo(object):
         if requirement_value is None:
             # If this requirementName is unspecified then ignore it
             return True
-        logger.debug('%s: \t%s \t%s', requirement_name, getattr(self, requirement_name), requirement_value)
+        logger.debug('\'%s\': \t%s \t%s', requirement_name, getattr(self, requirement_name), requirement_value)
         return getattr(self, requirement_name) == requirement_value
 
     def exists(self):
@@ -194,10 +219,24 @@ class ICredentialInfo(object):
         return os.path.exists(self.location)
 
     def __eq__(self, other):
+        """
+        Test the equality of a crednetial against another by comparing their on-disk location-s
+        Args:
+            other (ICredentialInfo) This is the object being compared against
+        """
         return self.location == other.location
 
     def __ne__(self, other):
+        """
+        Returns the inverse of the equality check
+        Args:
+            other (ICredentialInfo) This is the object being compared against
+        """
         return not self == other
 
     def __hash__(self):
+        """
+        Returns a hash of the location of the object on disk
+        """
         return hash(self.location)
+

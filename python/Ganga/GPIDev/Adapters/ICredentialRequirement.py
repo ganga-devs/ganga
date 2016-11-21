@@ -4,8 +4,6 @@ from Ganga.Core import GangaAttributeError
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 
-from .ICredentialInfo import ICredentialInfo
-
 
 class ICredentialRequirement(GangaObject):
     """
@@ -39,9 +37,11 @@ class ICredentialRequirement(GangaObject):
         pass
 
     def __str__(self):
+        """ Returns the repr as defined within __repr__ """
         return repr(self)
 
     def __repr__(self):
+        """ This is a custom strinf repr of the class which can regenerate it on the IPython prompt. FIXME: This should rely on GangaObject. """
         items = ((name, getattr(self, name)) for name in self._schema.allItemNames())  # Name,value pairs for all schema items
         explicit_items = ((name, value) for name, value in items if value)  # Filter out any default values
         item_strings = ((name, repr(value)) for name, value in explicit_items)  # Stringify the values
@@ -50,9 +50,11 @@ class ICredentialRequirement(GangaObject):
         return '{name}({args})'.format(name=self.__class__.__name__, args=arg_string)
 
     def __hash__(self):
+        """ Returns a hash of the name of the credential requirement and the location of the requirement on disk with additional encoding """
         return hash(self.__class__.__name__ + self.encoded())
 
     def __eq__(self, other):
+        """ This compares 2 Credential Requirements based upon additional encoding of the credential properties """
         if other is None:
             return False
         return type(self) is type(other) and self.encoded() == other.encoded()

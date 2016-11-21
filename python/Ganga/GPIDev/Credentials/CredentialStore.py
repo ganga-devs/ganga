@@ -9,8 +9,7 @@ from Ganga.GPIDev.Base.Proxy import export
 from Ganga.GPIDev.Schema import Schema, Version
 
 from Ganga.Core.exceptions import CredentialsError, GangaKeyError
-from .ICredentialRequirement import ICredentialRequirement
-from .ICredentialInfo import ICredentialInfo
+from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -26,12 +25,36 @@ class CredentialStore(GangaObject, collections.Mapping):
     objects as keys and ``ICredentialInfo`` objects as values.
 
     A single instance of this class makes most sense and should be created in the bootstrap and exported.
+
+
+    E.g:
+
+    To create a new Afs Token call::
+
+        credential_store.create(AfsToken())
+
+    To create a new Dirac Proxy call::
+
+        credential_store.create(DiracProxy())
+
+
+    To destroy a proxy which is already in the store call::
+
+        credential_store[VomsProxy()].destroy()
+
+
+    To get a summary of the available proxies already in the store simply type::
+
+        credential_store
     """
 
     _schema = Schema(Version(1, 0), {})
 
     _category = 'credentials2'
     _hidden = 1  # This class is hidden since we want a 'singleton' created in the bootstrap
+
+    retry_limit = 5
+    enable_caching = True
 
     def __init__(self):
         super(CredentialStore, self).__init__()
@@ -67,6 +90,9 @@ class CredentialStore(GangaObject, collections.Mapping):
 
     @export
     def __str__(self, interactive=False):
+        """
+        This creates a table summary of all credentials known to the store
+        """
         self.clean()
         headers = ['Type', 'Location', 'Valid', 'Time left']
         cred_info = [
@@ -251,7 +277,7 @@ class CredentialStore(GangaObject, collections.Mapping):
     def clear(self):
         # type: () -> None
         """
-        Remove all credentials in the system
+        Remove all credentials in the system (without destorying them)
         """
         self.credentials = set()
 
@@ -291,3 +317,4 @@ def shutdown():
     global needed_credentials
     credential_store.clear()
     needed_credentials = set()
+

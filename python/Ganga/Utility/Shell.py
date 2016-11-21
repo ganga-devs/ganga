@@ -197,9 +197,9 @@ class Shell(object):
             logger.warning('exit status [%d] of command %s', rc, cmd)
             if mention_outputfile_on_errors:
                 logger.warning('full output is in file: %s', soutfile)
-            with open(soutfile) as sout_file:
-                logger.warning('<first %d bytes of output>\n%s', BYTES, sout_file.read(BYTES))
-            logger.warning('<end of first %d bytes of output>', BYTES)
+                with open(soutfile) as sout_file:
+                    logger.warning('<first %d bytes of output>\n%s', BYTES, sout_file.read(BYTES))
+                logger.warning('<end of first %d bytes of output>', BYTES)
 
         # FIXME /bin/sh might have also other error messages
         m = None
@@ -211,7 +211,7 @@ class Shell(object):
 
         return rc, soutfile, m is None
 
-    def cmd1(self, cmd, allowed_exit=None, capture_stderr=False, timeout=None):
+    def cmd1(self, cmd, allowed_exit=None, capture_stderr=False, timeout=None, mention_outputfile_on_errors=False):
         """Executes an OS command and captures the stderr and stdout which are returned as a string
         Args:
             cmd (str): command to be executed in a shell
@@ -225,8 +225,7 @@ class Shell(object):
         if allowed_exit is None:
             allowed_exit = [0]
 
-        rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr,
-                timeout, mention_outputfile_on_errors=False)
+        rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr, timeout, mention_outputfile_on_errors)
 
         from contextlib import closing
         with closing(open(outfile)) as out_file:

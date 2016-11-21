@@ -2,7 +2,7 @@ import time
 import itertools
 from Ganga.Core.exceptions import GangaException, BackendError
 #from GangaDirac.BOOT       import dirac_ganga_server
-from GangaDirac.Lib.Utilities.DiracUtilities import execute
+from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from Ganga.Utility.logging import getLogger
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Lib.File.File import File

@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import os
-import re
 import subprocess
 import tempfile
 from datetime import datetime, timedelta
@@ -11,8 +10,8 @@ from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Utility import GridShell
 from Ganga.Utility.Config import getConfig
 
-from .ICredentialInfo import ICredentialInfo, cache
-from .ICredentialRequirement import ICredentialRequirement
+from Ganga.GPIDev.Adapters.ICredentialInfo import ICredentialInfo, cache, retry_command
+from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
 from Ganga.Core.exceptions import CredentialRenewalError, InvalidCredentialError
 
 logger = Ganga.Utility.logging.getLogger()
@@ -24,10 +23,18 @@ class VomsProxyInfo(ICredentialInfo):
     """
 
     def __init__(self, requirements, check_file=False, create=False):
+        """
+        Args:
+            requirements (ICredentialRequirement): An object specifying the requirements
+            check_file (bool): Raise an exception if the file does not exist
+            create (bool): Create the credential file
+        """
+
         self._shell = None
 
         super(VomsProxyInfo, self).__init__(requirements, check_file, create)
 
+    @retry_command
     def create(self):
         """
         Creates the grid proxy.
@@ -36,7 +43,7 @@ class VomsProxyInfo(ICredentialInfo):
             CredentialRenewalError: If the renewal process returns a non-zero value
         """
         voms_command = ''
-        logger.debug('require ' + self.initial_requirements.vo)
+        logger.debug('require ' + str(self.initial_requirements.vo))
         if self.initial_requirements.vo:
             voms_command = '-voms %s' % self.initial_requirements.vo
             if self.initial_requirements.group or self.initial_requirements.role:
@@ -57,11 +64,17 @@ class VomsProxyInfo(ICredentialInfo):
 
     @property
     def shell(self):
+        """
+        This creates a grid shell instance which is used by the VomsProxy only when needed
+        """
         if self._shell is None:
             self._shell = GridShell.getShell()
         return self._shell
 
     def destroy(self):
+        """
+        This destroys the voms proxy on disk
+        """
         self.shell.cmd1('voms-proxy-destroy -file "%s"' % self.location, allowed_exit=[0, 1])
 
         if os.path.isfile(self.location):
@@ -69,25 +82,27 @@ class VomsProxyInfo(ICredentialInfo):
 
     @cache
     def info(self):
+        """
+        This returns the full proxy info with all information from a given proxy on disk
+        """
         status, output, message = self.shell.cmd1('voms-proxy-info -all -file "%s"' % self.location)
         return output
-
-    def field(self, label):
-        # type: (str) -> str
-        line = re.search(r'^{0}\s*: (.*)$'.format(label), self.info(), re.MULTILINE)
-        if line is None:
-            raise InvalidCredentialError()
-        return line.group(1)
 
     @property
     @cache
     def identity(self):
+        """
+        This returns the identity associated with the voms proxy on disk
+        """
         status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -identity' % self.location)
         return output.strip()
 
     @property
     @cache
     def vo(self):
+        """
+        This returns the vo associated with a voms proxy on disk
+        """
         status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -vo' % self.location)
         if status != 0:
             return None
@@ -96,6 +111,9 @@ class VomsProxyInfo(ICredentialInfo):
     @property
     @cache
     def role(self):
+        """
+        This returns the role associated with a voms proxy on disk
+        """
         status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -vo' % self.location)
         if status != 0:
             return None  # No VO
@@ -107,6 +125,9 @@ class VomsProxyInfo(ICredentialInfo):
     @property
     @cache
     def group(self):
+        """
+        This returns the group associated with a voms proxy on disk
+        """
         status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -vo' % self.location)
         if status != 0:
             return None  # No VO
@@ -121,12 +142,18 @@ class VomsProxyInfo(ICredentialInfo):
 
     @cache
     def expiry_time(self):
+        """
+        This returns the time that a proxy will expire at in seconds
+        """
         status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -timeleft' % self.location)
         if status != 0:
             return datetime.now()
         return datetime.now() + timedelta(seconds=int(output))
 
     def default_location(self):
+        """
+        This returns the default_location of a voms proxy on disk based only on the location and uid
+        """
         return os.getenv('X509_USER_PROXY') or os.path.join(tempfile.gettempdir(), 'x509up_u'+str(os.getuid()))
 
 
@@ -135,19 +162,26 @@ class VomsProxy(ICredentialRequirement):
     An object specifying the requirements of a VOMS proxy file
     """
     _schema = ICredentialRequirement._schema.inherit_copy()
-    identity = SimpleItem(defvalue=None, typelist=[str, None], doc='Identity for the proxy')
-    vo = SimpleItem(defvalue=None, typelist=[str, None], doc='Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation')
-    role = SimpleItem(defvalue=None, typelist=[str, None], doc='Role that the proxy must have')
-    group = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy - either "group" or "group/subgroup"')
+    _schema.datadict['identity'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Identity for the proxy')
+    _schema.datadict['vo'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation')
+    _schema.datadict['role'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Role that the proxy must have')
+    _schema.datadict['group'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy - either "group" or "group/subgroup"')
 
     _category = 'CredentialRequirement'
 
     info_class = VomsProxyInfo
 
     def __init__(self, **kwargs):
+        """
+        Construct a voms proxy requirement and assign the default vo from the config if none has been provided
+        """
         super(VomsProxy, self).__init__(**kwargs)
         if 'vo' not in kwargs and getConfig('LCG')['VirtualOrganisation']:
             self.vo = getConfig('LCG')['VirtualOrganisation']
 
     def encoded(self):
+        """
+        This returns the additional encoding of the identity, vo, role and group which are to be encoded into the voms file location
+        """
         return ':'.join(requirement for requirement in [self.identity, self.vo, self.role, self.group] if requirement)  # filter out the empties
+
