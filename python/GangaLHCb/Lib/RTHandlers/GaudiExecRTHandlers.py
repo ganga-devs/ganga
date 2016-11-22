@@ -23,6 +23,7 @@ from Ganga.Utility.util import unique
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
@@ -335,15 +336,13 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
     random.shuffle(trySEs)
     new_lfn = os.path.join(getInputFileDir(job), namePattern)
     for SE in trySEs:
-        try:
-            returnable = new_df.put(force=True, uploadSE=SE, lfn=new_lfn)[0]
-        except:
-            raise GangaException("Upload of LFN %s to SE %s failed" % (new_lfn, SE)) 
-        if new_df.failureReason == '':
-            break
-        else:
-            logger.warning("Unable to upload LFN %s to SE %s. Trying another SE." % (new_lfn, SE))
-            new_df.failureReason = ''
+        #Check that the SE is writable
+        if execute('checkSEStatus("%s", "%s")' % (SE, 'Write')):
+            try:
+                returnable = new_df.put(force=True, uploadSE=SE, lfn=new_lfn)[0]
+                break
+            except GangaDiracError as err:
+                raise GangaException("Upload of LFN %s to SE %s failed" % (new_lfn, SE)) 
     if should_del:
         os.unlink(os.path.join(localDir, namePattern))
 
