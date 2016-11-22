@@ -23,6 +23,8 @@ ganga/python/GangaLHCb
 *  Cleaned up code for SplitByFiles, added more documentation.
 *  Added new gridProxy object for backwards compatibility. This a wrapper around the new `credential_store`.
 *  Default DiracProxy is constructed to be for `lhcb_user`.
+*  Added function getAccessURLs to GPI to return a list of accessURLs for a provided list of DiracFiles or LFNs (strings).
+Can access from the Dirac backend job.backend.getOutputDataAccessURLs(). #801
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga/GPIDev/Credentials
