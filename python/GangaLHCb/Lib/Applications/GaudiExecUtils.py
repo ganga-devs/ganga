@@ -110,14 +110,16 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
 
 exportToGPI('prepare_cmake_app', prepare_cmake_app, 'Functions')
 
-def prepareGaudiExec(myApp, myVer):
+def prepareGaudiExec(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
     """
         Setup and Return a GaudiExec based upon a release version of a given App.
         Args:
             myApp (str): This is name of the App you want to run
             myVer (str): This is the version of the app you want
+            myPath (str): This is where lb-dev will be run
+            myGepPack (str): This is a getpack which will be run once the lb-dev has executed
     """
-    path = prepare_cmake_app(myApp, myVer)
+    path = prepare_cmake_app(myApp, myVer, myPath, myGetpack)
     from Ganga.GPI import GaudiExec
     return GaudiExec(directory=path)
 

@@ -102,7 +102,7 @@ class MassStorageFile(IGangaFile):
         # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
         r = copy.deepcopy(self)
         from Ganga.GPIDev.Lib.Job.Job import Job
-        if isintance(obj_type, Job) and attrib_name == 'outputfiles':
+        if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
             r.locations = []
             r.localDir = ''
             r.failureReason = ''

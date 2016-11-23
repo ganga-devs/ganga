@@ -379,7 +379,7 @@ class LHCbDataset(GangaDataset):
         other_files = self._checkOtherFiles(other)
         files = set(self.getFullFileNames()).difference(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -396,10 +396,10 @@ class LHCbDataset(GangaDataset):
     def symmetricDifference(self, other):
         '''Returns a new data set w/ files in either this or other but not
         both.'''
-        other_files = other.checkOtherFiles(other)
+        other_files = other._checkOtherFiles(other)
         files = set(self.getFullFileNames()).symmetric_difference(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -408,7 +408,7 @@ class LHCbDataset(GangaDataset):
         other_files = other._checkOtherFiles(other)
         files = set(self.getFullFileNames()).intersection(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -417,7 +417,7 @@ class LHCbDataset(GangaDataset):
         other_files = self._checkOtherFiles(other)
         files = set(self.getFullFileNames()).union(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 

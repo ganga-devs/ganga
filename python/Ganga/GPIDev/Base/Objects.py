@@ -1096,7 +1096,7 @@ class GangaObject(Node):
                 k_props = self._schema[k].getProperties()
                 if not k_props['visitable'] or k_props['transient']:
                     continue
-                if isinstance(this_attr, Node):
+                if isinstance(this_attr, Node) and this_attr._dirty:
                     this_attr._setFlushed()
         super(GangaObject, self)._setFlushed()
 
