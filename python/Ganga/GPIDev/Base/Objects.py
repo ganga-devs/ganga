@@ -647,16 +647,13 @@ class ObjectMetaclass(abc.ABCMeta):
         # create reference in schema to the pluginclass
         this_schema._pluginclass = cls
 
-        # The boolean also indicates that there is no need to add this class
-        if cls._should_be_available:
+        # if we've not even declared this we don't want to use it!
+        if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
+            allPlugins.add(cls, cls._category, _getName(cls))
 
-            # if we've not even declared this we don't want to use it!
-            if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
-                allPlugins.add(cls, cls._category, _getName(cls))
-
-            # create a configuration unit for default values of object properties
-            if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
-                this_schema.createDefaultConfig()
+        # create a configuration unit for default values of object properties
+        if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
+            this_schema.createDefaultConfig()
 
 
 class GangaObject(Node):
@@ -685,15 +682,11 @@ class GangaObject(Node):
     # This is useful when reading many objects from disk as this wastes CPU as the entry is being overridden
     _should_init = True
 
-    # This boolean hides if the class is to be made availble to both the Plugin and Config systems
-    _should_be_available = True
-
     def getNew(self):
         returnable = super(GangaObject, self).__new__(self.__class__, (), {})
-        Node.__init__(returnable, None)
-        returnable._data_dict = {}
-        returnable._registry = None
-        returnable._index_cache_dict = {}
+        self._should_init = False
+        self.__class__.__init__(returnable)
+        #Node.__init__(returnable, None)
         return returnable
 
     # must be fully initialized
@@ -706,7 +699,7 @@ class GangaObject(Node):
         self._index_cache_dict = {}
         self._registry = None
 
-        if self.__class__._should_init is True:
+        if self._should_init is True:
             self._data_dict = dict.fromkeys(self._schema.datadict)
             for attr, item in self._schema.allItems():
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
