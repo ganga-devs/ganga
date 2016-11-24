@@ -274,6 +274,8 @@ class Descriptor(object):
             name (str): Name of the attribute being wrapped
             item (Item): The Schema entry describing this attribute (Not currently used atm)
         """
+        super(Descriptor, self).__init__()
+
         self._name = name
         self._item = item
         self._checkset_name = None
@@ -686,6 +688,8 @@ class GangaObject(Node):
         returnable = super(GangaObject, self).__new__(self.__class__, (), {})
         self._should_init = False
         self.__class__.__init__(returnable)
+        Node.__init__(returnable, None)
+        GangaObject.__init__(returnable)
         #Node.__init__(returnable, None)
         return returnable
 
@@ -939,8 +943,7 @@ class GangaObject(Node):
             shareref.increase(shared_dir.name)
 
     def __copy__(self):
-        cls = self.__class__
-        obj = cls()
+        obj = self.getNew()
         # FIXME: this is different than for deepcopy... is this really correct?
         this_dict = copy(self.__dict__)
         for elem in this_dict.keys():
@@ -962,9 +965,8 @@ class GangaObject(Node):
             memo (unknown): Used to track infinite loops etc in the deep-copy of objects
         """
         true_parent = self._getParent()
-        cls = self.__class__
 
-        self_copy = cls()
+        self_copy = self.getNew()
 
         global do_not_copy
         if self._schema is not None:
