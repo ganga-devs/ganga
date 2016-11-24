@@ -450,6 +450,7 @@ class Descriptor(object):
             self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
             obj (GanagObject): parent class which 'owns' the attribute
             val (unknown): value of the attribute which we're about to set
+            root_obj (GangaObject): a pointer to the root object of obj
         """
 
         if isinstance(val, str):
@@ -684,12 +685,25 @@ class GangaObject(Node):
     # This is useful when reading many objects from disk as this wastes CPU as the entry is being overridden
     _should_init = True
 
-    def getNew(self):
-        returnable = super(GangaObject, self).__new__(self.__class__, (), {})
-        self._should_init = False
-        self.__class__.__init__(returnable)
+    @classmethod
+    def getNew(cls):
+        """
+        Returns a new instance of this class type without a populated Schema.
+        This should be an object which has all of the core logic initialized correctly.
+        """
+        # Build an object of this type
+        returnable = cls.__new__(cls, (), {})
+
+        # Set that we do NOT want to initialize the schema from defaults
+        setattr(returnable, '_should_init', False)
+        # Initialize the most derrived class to get all of the goodness needed higher up.
+        returnable.__class__.__init__(returnable)
+
+        # Just to make sure that if a class's inheritance is broken we still have all of the Core member paramreters initialized
         Node.__init__(returnable, None)
         GangaObject.__init__(returnable)
+
+        # Return the newly initialized object
         return returnable
 
     # must be fully initialized
@@ -708,6 +722,8 @@ class GangaObject(Node):
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
                     setattr(self, attr, self._schema.getDefaultValue(attr))
+        else:
+            self._data_dict = {}
 
     @synchronised
     def accept(self, visitor):

@@ -24,8 +24,6 @@ logger = getLogger()
 
 _cached_eval_strings = {}
 
-_xml_classes = {}
-
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -329,13 +327,8 @@ class Loader(object):
                         # element (</class>) is reached
                         self.ignore_count = 1
                     else:
-                        # make a new ganga object
-                        if cls.__name__ not in _xml_classes:
-                            cls_obj = cls()
-                            _xml_classes[cls.__name__] = cls_obj
-                        else:
-                            cls_obj = _xml_classes[cls.__name__]
-                        obj = cls_obj.getNew()
+                        # Initialize and cache a c class instance to use as a classs fctory
+                        obj = cls.getNew()
                 self.stack.append(obj)
 
             # push the attribute name on the stack
