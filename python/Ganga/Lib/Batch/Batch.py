@@ -426,7 +426,7 @@ class Batch(IBackend):
         #'###SHAREDINPUTPATH###' : repr(sharedinputpath)),
 
         '###INPUT_SANDBOX###' : repr(subjob_input_sandbox + master_input_sandbox),
-            '###CREATEINPUTDATALIST###' : getWNCodeForInputdataListCreation(job, ''),
+        '###CREATEINPUTDATALIST###' : getWNCodeForInputdataListCreation(job, ''),
         '###SHAREDOUTPUTPATH###' : repr(sharedoutputpath),
 
         '###OUTPUTPATTERNS###' : repr(outputpatterns),
