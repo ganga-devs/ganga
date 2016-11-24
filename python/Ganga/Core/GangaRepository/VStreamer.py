@@ -381,7 +381,11 @@ class Loader(object):
                     # This is a dictionary constructed from eval-ing things in the Config. Why does should it do this?
                     # Anyway, lets save the result for speed
                     _cached_eval_strings[s] = eval(s, config_scope)
-                val = copy.deepcopy(_cached_eval_strings[s])
+                eval_str = _cached_eval_strings[s]
+                if not isinstance(eval_str, str):
+                    val = copy.deepcopy(eval_str)
+                else:
+                    val = eval_str
                 #logger.debug('evaled value: %s type=%s',repr(val),type(val))
                 self.stack.append(val)
                 self.value_construct = None
@@ -405,6 +409,7 @@ class Loader(object):
                     for attr, item in cls._schema.allItems():
                         if attr not in obj._data:
                             if item.getProperties()['getter'] is None:
+                                logger.info("Failed to find: %s::%s" % (obj.__class__.__name__, attr))
                                 setattr(obj, attr, self._schema.getDefaultValue(attr))
                 pass
 

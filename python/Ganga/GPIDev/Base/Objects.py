@@ -249,10 +249,10 @@ def synchronised_set_descriptor(set_function):
         set_function (function): Function we intend to wrap with the hard/write lock
     """
     def decorated(self, obj, type_or_value):
-        if obj is None:
-            return set_function(self, obj, type_or_value)
-
         root_obj = obj._getRoot()
+        if obj is None:
+            return set_function(self, obj, type_or_value, root_obj)
+
         with root_obj._write_lock:
             with root_obj._read_lock:
                 return set_function(self, obj, type_or_value)
@@ -442,7 +442,7 @@ class Descriptor(object):
         return v_copy
 
     @synchronised_set_descriptor
-    def __set__(self, obj, val):
+    def __set__(self, obj, val, root_obj=None):
         """
         Set method
         This wraps the given object with a lock preventing both read+write until this transaction is complete for consistency
@@ -469,7 +469,7 @@ class Descriptor(object):
         self._check_getter()
 
         # make sure we have the session lock
-        obj._getSessionLock()
+        obj._getSessionLock(root_obj)
 
         # make sure the object is loaded if it's attached to a registry
         obj._loadObject()
@@ -690,7 +690,6 @@ class GangaObject(Node):
         self.__class__.__init__(returnable)
         Node.__init__(returnable, None)
         GangaObject.__init__(returnable)
-        #Node.__init__(returnable, None)
         return returnable
 
     # must be fully initialized
@@ -709,9 +708,6 @@ class GangaObject(Node):
                 ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
                 if item.getProperties()['getter'] is None:
                     setattr(self, attr, self._schema.getDefaultValue(attr))
-
-        # Overwrite default values with any config values specified
-        # self.setPropertiesFromConfig()
 
     @synchronised
     def accept(self, visitor):
@@ -1016,9 +1012,12 @@ class GangaObject(Node):
             _timeOut = 5. # 5sec hardcoded default
         return _timeOut
 
-    def _getSessionLock(self):
+    def _getSessionLock(self, root=None):
         """Acquires the session lock on this object"""
-        r = self._getRoot()
+        if root:
+            r=root
+        else:
+            r = self._getRoot()
         reg = r._registry
         if reg is not None:
             reg._acquire_session_lock(r)

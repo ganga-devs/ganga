@@ -145,10 +145,7 @@ class Schema(object):
         if self.datadict is None:
             return []
 
-        r = []
-        for n, c in zip(self.datadict.keys(), self.datadict.values()):
-            if issubclass(c.__class__, klass):
-                r.append((n, c))
+        r = [(n, c) for (n, c) in self.datadict.iteritems() if issubclass(c.__class__, klass)]
         return r
 
     def isEqual(self, schema):
