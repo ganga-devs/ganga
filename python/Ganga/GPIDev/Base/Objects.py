@@ -688,6 +688,14 @@ class GangaObject(Node):
     # This boolean hides if the class is to be made availble to both the Plugin and Config systems
     _should_be_available = True
 
+    def getNew(self):
+        returnable = super(GangaObject, self).__new__(self.__class__, (), {})
+        Node.__init__(returnable, None)
+        returnable._data_dict = {}
+        returnable._registry = None
+        returnable._index_cache_dict = {}
+        return returnable
+
     # must be fully initialized
     def __init__(self):
         """

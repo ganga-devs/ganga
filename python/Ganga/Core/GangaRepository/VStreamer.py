@@ -331,17 +331,11 @@ class Loader(object):
                     else:
                         # make a new ganga object
                         if cls.__name__ not in _xml_classes:
-                            attrs_to_add = [ attr for attr, item in cls._schema.allItems()]
-                            cls2 = type(str(attrs['name']), (cls,),
-                                    {'_should_init':False, '_should_be_available':False,
-                                    '_schema': cls._schema.inherit_copy(), '_data_dict': {} })
-                            cls2._name = getName(cls)
-                            if hasattr(addProxy(cls), '_proxyObject'):
-                                cls2._proxyObject = addProxy(cls)._proxyObject
-                            _xml_classes[cls.__name__] = cls2
+                            cls_obj = cls()
+                            _xml_classes[cls.__name__] = cls_obj
                         else:
-                            cls2 = _xml_classes[cls.__name__]
-                        obj = cls2()
+                            cls_obj = _xml_classes[cls.__name__]
+                        obj = cls_obj.getNew()
                 self.stack.append(obj)
 
             # push the attribute name on the stack
