@@ -388,3 +388,15 @@ def getSEsForSite(site):
     result = getSEsForSite(site)
     return result
 
+
+@diracCommand
+def checkSEStatus(se, access = 'Write'):
+    ''' returns the value of a certain SE status flag (access or other)
+      param se: Storage Element name
+      type se: string
+      param access: type of access
+      type access: string in ('Read', 'Write', 'Remove', 'Check')
+       returns: True or False
+    '''
+    result = dirac.checkSEAccess(se, access)
+    return result
