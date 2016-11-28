@@ -479,7 +479,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('AthenaMC','Panda',AthenaMCPandaRTHandler)
 
-from Ganga.GPIDev.Credentials import GridProxy
+from Ganga.GPIDev.Credentials_old import GridProxy
 gridProxy = GridProxy()
 
 from Ganga.Utility.Config import getConfig, ConfigError

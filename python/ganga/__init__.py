@@ -24,18 +24,29 @@ def ganga_license():
 # Setup the shutdown manager
 atexit.register(_ganga_run_exitfuncs)
 
-system_vars = {}
-for opt in getConfig('System'):
-    system_vars[opt] = getConfig('System')[opt]
-setSessionValuesFromFiles([os.path.expanduser('~/.gangarc')], system_vars)
-
 import ganga
-from Ganga.Runtime import plugins
 
+# Lets load the config files from disk
+from Ganga.Utility.Config import load_config_files
+load_config_files()
+
+# Setup the proxy interface early
 from Ganga.GPIDev.Base.Proxy import setProxyInterface
 setProxyInterface(ganga)
 
-from Ganga.Utility.Runtime import loadPlugins, autoPopulateGPI
+# Init Setup and Load the RuntimePlugins
+
+logger.debug("Import plugins")
+try:
+    # load Ganga system plugins...
+    from Ganga.Runtime import plugins
+except Exception as x:
+    logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', x)
+    logger.exception(x)
+    raise GangaException(x), None, sys.exc_info()[2]
+
+from Ganga.Utility.Runtime import initSetupRuntimePackages, loadPlugins, autoPopulateGPI
+initSetupRuntimePackages()
 loadPlugins(ganga)
 autoPopulateGPI(ganga)
 

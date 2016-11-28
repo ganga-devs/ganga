@@ -6,7 +6,6 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
-from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download, ATLASOutputDataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset

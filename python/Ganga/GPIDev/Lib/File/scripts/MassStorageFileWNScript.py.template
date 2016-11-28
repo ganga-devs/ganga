@@ -1,0 +1,102 @@
+
+# FIXME empty line above needed to ensure proper indenting
+from pipes import quote
+import subprocess
+#system command executor with subprocess
+def execSyscmdSubprocessAndReturnOutputMAS(cmd):
+
+    exitcode = -999
+    mystdout = ''
+    mystderr = ''
+
+    try:
+        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (mystdout, mystderr) = child.communicate()
+        exitcode = child.returncode
+    finally:
+        pass
+
+    return (exitcode, mystdout, mystderr)
+
+for massStorageList in ###MASSSTORAGECOMMANDS###:
+
+    filenameWildChar = massStorageList[1]
+    outputfilenameformat = massStorageList[2]
+    cm_mkdir = massStorageList[3]
+    cm_cp = massStorageList[4]
+    cm_ls = massStorageList[5]
+    path = massStorageList[6]
+
+    pathToDirName = os.path.dirname(path)
+    dirName = os.path.basename(path)
+
+    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, quote(pathToDirName)))
+    if exitcode != 0:
+        ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\n' % (filenameWildChar, mystderr))
+        continue
+
+    directoryExists = False
+    for directory in mystdout.split('\n'):
+        if directory.strip() == dirName.strip():
+            directoryExists = True
+            break
+
+    if not directoryExists:
+        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, quote(path)))
+        if exitcode != 0:
+            printError('Error while executing "%s %s" command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
+            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\n' % (filenameWildChar, mystderr))
+            continue
+
+    folderStructure = ''
+    filenameStructure = ''
+
+    jobid = '###JOBDIR###'
+    subjobid = '###SUBJOBDIR###'
+
+    if outputfilenameformat == 'None':
+        filenameStructure = '{fname}'
+        folderStructure = jobid
+        if subjobid != '':
+            folderStructure = os.path.join(jobid, subjobid)
+
+    else:
+        filenameStructure = os.path.basename(outputfilenameformat)
+        filenameStructure = filenameStructure.replace('{jid}', jobid)
+
+        folderStructure = os.path.dirname(outputfilenameformat)
+        folderStructure = folderStructure.replace('{jid}', jobid)
+
+        if subjobid != '':
+            filenameStructure = filenameStructure.replace('{sjid}', subjobid)
+            folderStructure = folderStructure.replace('{sjid}', subjobid)
+
+    if folderStructure != '':
+        folderStructure = folderStructure.strip('/')
+        path = os.path.join(path, folderStructure)
+        command = '%s -p %s' % (cm_mkdir, quote(path))
+        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS(command)
+        if exitcode != 0:
+            printError('Error while executing "%s" command, check if the ganga user has rights for creating directories in this folder' % command + os.linesep + mystderr)
+            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\n' % (filenameWildChar, mystderr))
+            continue
+
+
+    filenameWildCharZipped = filenameWildChar
+    if filenameWildChar in ###PATTERNSTOZIP###:
+        filenameWildCharZipped = '%s.gz' % filenameWildChar
+
+    import glob
+
+    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildCharZipped)):
+        currentFileBaseName = os.path.basename(currentFile)
+        finalFilename = filenameStructure.replace('{fname}', currentFileBaseName)
+        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, quote(os.path.join(path, finalFilename))))
+        if exitcode != 0:
+            printError('Error while executing "%s %s %s" command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, finalFilename)) + os.linesep  + mystderr)
+            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\n' % (filenameWildChar, mystderr))
+        else:
+            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s %s\n' % (filenameWildChar, os.path.join(path, finalFilename)))
+            #remove file from output dir
+            os.system('rm %s' % currentFile)
+

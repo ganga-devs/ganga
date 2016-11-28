@@ -23,6 +23,7 @@ from Ganga.Utility.util import unique
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
@@ -111,6 +112,13 @@ def collectPreparedFiles(app):
             input_files.append(os.path.join(root, name))
         for name in dirs:
             input_folders.append(os.path.join(root, name))
+
+    for file_ in app.getJobObject().inputfiles:
+        if isinstance(file_, LocalFile):
+            shutil.copy(os.path.join(file_.localDir, os.path.basename(file_.namePattern)), shared_dir)
+            input_files.append(os.path.join(shared_dir, file_.namePattern))
+        elif not isinstance(file_, DiracFile):
+            raise ApplicationConfigurationError(None, "File type: %s Not _yet_ supported in GaudiExec" % type(file_))
 
     return input_files, input_folders
 
@@ -312,7 +320,8 @@ def generateDiracScripts(app):
 
 def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
-    Upload a locally available file to the grid as a DiracFile
+    Upload a locally available file to the grid as a DiracFile.
+    Randomly chooses an SE.
 
     Args:
         namePattern (str): name of the file
@@ -323,10 +332,17 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
 
     new_df = DiracFile(namePattern, localDir=localDir)
-    random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
+    trySEs = getConfig('DIRAC')['allDiracSE']
+    random.shuffle(trySEs)
     new_lfn = os.path.join(getInputFileDir(job), namePattern)
-    returnable = new_df.put(force=True, uploadSE=random_SE, lfn=new_lfn)[0]
-
+    for SE in trySEs:
+        #Check that the SE is writable
+        if execute('checkSEStatus("%s", "%s")' % (SE, 'Write')):
+            try:
+                returnable = new_df.put(force=True, uploadSE=SE, lfn=new_lfn)[0]
+                break
+            except GangaDiracError as err:
+                raise GangaException("Upload of LFN %s to SE %s failed" % (new_lfn, SE)) 
     if should_del:
         os.unlink(os.path.join(localDir, namePattern))
 
@@ -359,7 +375,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         if not isinstance(app.uploadedInput, DiracFile):
             generateDiracInput(app)
-            assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit"
+            assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit. Tried to upload to: %s\nIf your Ganga installation is not at CERN your username may be trying to create a non-existent LFN. Try setting the 'DIRAC' configuration 'DiracLFNBase' to your grid user path.\n" % DiracFile.diracLFNBase()
         
         rep_data = app.uploadedInput.getReplicas()
         assert rep_data != {}, "Failed to find a replica, aborting submit"
@@ -409,9 +425,10 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         for file_ in job.inputfiles:
             if isinstance(file_, DiracFile):
                 inputsandbox += ['LFN:'+file_.lfn]
-            elif isinstance(file_, LocalFile):
-                base_name = os.path.basename(file_.namePattern)
-                shutil.copyfile(os.path.join(file_.localDir, base_name), os.path.join(app.getSharedPath(), base_name))
+            if isinstance(file_, LocalFile):
+                if job.master is not None and file_ not in job.master.inputfiles:
+                    shutil.copy(os.path.join(file_.localDir, file_.namePattern), app.getSharedPath())
+                    inputsandbox += [os.path.join(app.getSharedPath(), file_.namePattern)]
             else:
                 logger.error("Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
                 raise ApplicationConfigurationError("Unsupported filetype: %s with DIRAC backend" % getName(file_))

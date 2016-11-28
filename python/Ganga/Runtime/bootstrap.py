@@ -133,6 +133,9 @@ def manualExportToGPI(my_interface=None):
     #exportToInterface(my_interface, 'list_plugins', list_plugins, 'Functions')
     # FIXME: END DEPRECATED
 
+    from Ganga.GPIDev.Credentials import credential_store
+    exportToInterface(my_interface, 'credential_store', credential_store, 'Objects', 'Credential store')
+
     exportToInterface(my_interface, 'typename', typename, 'Functions')
     exportToInterface(my_interface, 'categoryname', categoryname, 'Functions')
     exportToInterface(my_interface, 'plugins', plugins, 'Functions')
@@ -141,21 +144,6 @@ def manualExportToGPI(my_interface=None):
     from Ganga.GPIDev.Persistency import export, load
     exportToInterface(my_interface, 'load', load, 'Functions')
     exportToInterface(my_interface, 'export', export, 'Functions')
-
-
-
-    from Ganga.GPIDev.Credentials import getCredential
-    # only the available credentials are exported
-    # At this point we expect to have the GridProxy already created
-    # by one of the Grid plugins (LCG/NG/etc) so we search for it in creds
-    # cache
-    credential = getCredential(name='GridProxy')
-    if credential:
-        exportToInterface(my_interface, 'gridProxy', credential, 'Objects', 'Grid proxy management object.')
-
-    credential2 = getCredential('AfsToken')
-    if credential2:
-        exportToInterface(my_interface, 'afsToken', credential2, 'Objects', 'AFS token management object.')
 
     # export full_print
     from Ganga.GPIDev.Base.VPrinter import full_print
@@ -849,7 +837,7 @@ under certain conditions; type license() for details.
         register_exitfunc()
 
         import Ganga.Utility.Config
-        from Ganga.Utility.Runtime import RuntimePackage, allRuntimes
+        from Ganga.Utility.Runtime import initSetupRuntimePackages
         from Ganga.Core.exceptions import GangaException
 
         logger.debug("Import plugins")
@@ -861,36 +849,7 @@ under certain conditions; type license() for details.
             logger.exception(x)
             raise GangaException(x), None, sys.exc_info()[2]
 
-        # initialize runtime packages, they are registered in allRuntimes
-        # dictionary automatically
-        try:
-            import Ganga.Utility.files
-            from Ganga.Utility.Config.Config import getConfig
-            config = getConfig('Configuration')
-
-            #if config['IgnoreRuntimeWarnings']:
-            #    import warnings
-            #    warnings.filterwarnings(action="ignore", category=RuntimeWarning)
-
-            
-            import inspect
-            from os.path import expandvars, expanduser
-
-            GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
-            def transform(x):
-                return os.path.normpath(Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath,x)))
-
-            paths = map(transform, filter(None, map(lambda x: expandvars(expanduser(x)), config['RUNTIME_PATH'].split(':'))))
-
-            for path in paths:
-                r = RuntimePackage(path)
-        except KeyError, err:
-            logger.debug("init KeyError: %s" % err)
-
-        # perform any setup of runtime packages
-        logger.debug('Setting up Runtime Packages')
-        for r in allRuntimes.values():
-            r.standardSetup()
+        initSetupRuntimePackages()
 
         from Ganga.Core.GangaThread.WorkerThreads import startUpQueues
         startUpQueues()
@@ -914,6 +873,15 @@ under certain conditions; type license() for details.
         logger = getLogger()
 
         manualExportToGPI()
+
+        from Ganga.Runtime import Workspace_runtime, Repository_runtime
+        from Ganga.GPIDev.Credentials import credential_store
+        if Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken():
+            # If the registry or the workspace needs an AFS token then add one to the credential store.
+            # Note that this happens before the monitoring starts so that it gets tracked properly
+
+            from Ganga.GPIDev.Credentials.AfsToken import AfsToken
+            credential_store.create(AfsToken(), create=False, check_file=True)
 
         import Ganga.Core
         from Ganga.Runtime.Repository_runtime import startUpRegistries
@@ -1127,7 +1095,7 @@ under certain conditions; type license() for details.
             #if ipver in ["1.2.1", "3.1.0", "3.2.0", "3.2.1", '4.0.0']:
             if ipver_major > 1 or (ipver_major == 1 and ipver_minor >= 2):
                 self.check_IPythonDir()
-                self.launch_IPython(local_ns, args, self._ganga_error_handler, self.ganga_prompt)
+                self.launch_IPython(local_ns, args, GangaProgram._ganga_error_handler, self.ganga_prompt)
             else:
                 print("Unknown IPython version: %s" % ipver)
                 return
@@ -1198,9 +1166,13 @@ under certain conditions; type license() for details.
         logger.error("Error: %s" % value)
 
         from Ganga.Core.exceptions import GangaException
-        if not issubclass(etype, GangaException):
-            logger.error("Unknown/Unexpected ERROR!!")
-            #logger.error("If you're able to reproduce this please report this to the Ganga developers!")
+        import traceback
+        # Extract the stack from this traceback object
+        stack = traceback.extract_tb(tb)
+        # If this is an error from the interactive prompt then the length is 2, otherwise the errror is from deeper in Ganga
+        if not issubclass(etype, GangaException) and len(stack) > 2:
+            logger.error("!!Unknown/Unexpected ERROR!!")
+            logger.error("If you're able to reproduce this please report this to the Ganga developers!")
             #logger.error("value: %s" % value)
             exception_obj.showtraceback((etype, value, tb), tb_offset=tb_offset)
         return None
@@ -1289,19 +1261,19 @@ under certain conditions; type license() for details.
         ipshell(local_ns=local_ns, module=Ganga.GPI)
 
     @staticmethod
-    def ganga_prompt(dummy=None):
-        credentialsWarningPrompt = ''
-        # alter the prompt only when the internal services are disabled
-        from Ganga.Core.InternalServices import Coordinator
-        if not Coordinator.servicesEnabled:
-            invalidCreds = Coordinator.getMissingCredentials()
-            if invalidCreds:
-                credentialsWarningPrompt = '[%s required]' % ','.join(invalidCreds)
-            if credentialsWarningPrompt:  # append newline
-                 credentialsWarningPrompt += '\n'
+    def ganga_prompt(_=None):
 
-        return credentialsWarningPrompt
+        from Ganga.GPIDev.Credentials import get_needed_credentials
 
+        needed_credentials = get_needed_credentials()
+
+        # Add still-needed credentials to the prompt
+        if needed_credentials:
+            prompt = 'Warning, some credentials needed by the monitoring are missing or invalid:\n'
+            for cred_req in needed_credentials:
+                prompt += '  ' + str(cred_req).replace('\n ', '') + '\n'
+            prompt += 'Call `credential_store.renew()` to update them.\n'
+            print(prompt)
 
 
 #

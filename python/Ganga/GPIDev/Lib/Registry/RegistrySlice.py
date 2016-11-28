@@ -106,7 +106,7 @@ class RegistrySlice(object):
         from Ganga.GPIDev.Lib.Job.Job import Job
 
         if isType(minid, Job):
-            if minid.master:
+            if minid.master is not None:
                 minid = minid.master.id
             else:
                 minid = minid.id
@@ -114,7 +114,7 @@ class RegistrySlice(object):
                 maxid = minid
 
         if isType(maxid, Job):
-            if maxid.master:
+            if maxid.master is not None:
                 maxid = maxid.master.id
             else:
                 maxid = maxid.id
@@ -204,11 +204,15 @@ class RegistrySlice(object):
             if select(int(this_id)):
                 logger.debug("Selected: %s" % this_id)
                 selected = True
+                if self.name == 'box':
+                    name_str = obj._getRegistry()._getName(obj)
+                else:
+                    name_str = ''
                 for a in attrs:
                     if self.name == 'box':
                         attrvalue = attrs[a]
                         if a == 'name':
-                            if not fnmatch.fnmatch(obj._getRegistry()._getName(obj), attrvalue):
+                            if not fnmatch.fnmatch(name_str, attrvalue):
                                 selected = False
                                 break
                         elif a == 'application':
@@ -449,7 +453,9 @@ class RegistrySlice(object):
             ds += self.objects._private_display(self, this_format, default_width, markup)
 
         else:
-            for obj_i in self.objects.keys():
+            for obj_i in self.ids():
+                if isinstance(self.objects[obj_i], IncompleteObject):
+                    continue
 
                 cached_data = None
 

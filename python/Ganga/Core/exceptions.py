@@ -9,6 +9,29 @@ class GangaException(Exception):
     """Basic Ganga Exception class"""
 
 
+class GangaFileError(GangaException):
+    """
+    This is intended to be thrown as an IGangaFile Error during Runtime
+    """
+
+
+class PluginError(GangaException):
+    """
+    Class to be used in 1 place only in loading plugins
+    """
+
+
+class GangaKeyError(GangaException, KeyError):
+    """
+    Class used to make known, thrown KeyError's safe to raise to the user
+    """
+
+    def __init__(self, *args, **kwds):
+        super(GangaException, self).__init__(args)
+        KeyError.__init__(self, *args)
+        self.kwds = kwds
+
+
 class ApplicationConfigurationError(GangaException):
     """Specific Application Configuration Exception"""
 
@@ -126,3 +149,26 @@ class RepositoryError(GangaException):
             Repository_runtime.shutdown()
         except:
             logger.error("Unable to disable Internal services, they may have already been disabled!")
+
+class CredentialsError(GangaException):
+    """
+    Base class for credential-related errors
+    """
+
+
+class CredentialRenewalError(CredentialsError):
+    """
+    There was some problem with renewing a credential
+    """
+
+
+class InvalidCredentialError(CredentialsError):
+    """
+    The credential is invalid for some reason
+    """
+
+
+class ExpiredCredentialError(InvalidCredentialError):
+    """
+    The credential has expired
+    """

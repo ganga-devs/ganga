@@ -25,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.1.24 $'
+_gangaVersion = '$Name: 6.2.3 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -299,26 +299,12 @@ local_config.addOption('location', None, 'The location where the workdir will be
 lcg_config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
 #gproxy_config = getConfig('GridProxy_Properties')
 
-# set default values for the configuration parameters
-lcg_config.addOption(
-    'EDG_ENABLE', False, 'DEPRECATED enables/disables the support of the EDG middleware')
-
-lcg_config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                 'DEPRECATED sets the LCG-UI environment setup script for the EDG middleware',
-                 filter=Ganga.Utility.Config.expandvars)
-
-lcg_config.addOption(
-    'GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
-
 lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
                  'sets the LCG-UI environment setup script for the GLITE middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption('VirtualOrganisation', '',
                  'sets the name of the grid virtual organisation')
-
-lcg_config.addOption('ConfigVO', '', 'DEPRECATED sets the VO-specific LCG-UI configuration script for the EDG resource broker',
-                 filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
                  filter=Ganga.Utility.Config.expandvars)
@@ -726,6 +712,15 @@ output_config.addOption('MassStorageFile',
                         'uploadOptions': massStorageUploadOptions,
                         'defaultProtocol': defaultMassStorageProto},
                        massStorageFileExt)
+
+sharedFileBackendPost = {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client', 'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}
+
+output_config.addOption('SharedFile',
+                       {'fileExtensions': [''],
+                        'backendPostprocess': sharedFileBackendPost,
+                        'uploadOptions': {'path': None, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
+                        'defaultProtocol': 'file://'},
+                        docstr_Ext % ('Shared Storage', 'SharedFS'))
 
 # ------------------------------------------------
 # Display

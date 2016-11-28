@@ -7,15 +7,22 @@
 #def getSoftwareVersions(): output( dirac.getSoftwareVersions() )
 
 
-def bkQueryDict(dict): output(dirac.bkQuery(dict))
+@diracCommand
+def bkQueryDict(dict):
+    return dirac.bkQuery(dict)
 
 
-def checkSites(): output(dirac.checkSites())
+@diracCommand
+def checkSites():
+    return dirac.checkSites()
 
 
-def bkMetaData(files): output(dirac.bkMetadata(files))
+@diracCommand
+def bkMetaData(files):
+    return dirac.bkMetadata(files)
 
 
+@diracCommand
 def getLHCbInputDataCatalog(lfns, depth, site, xml_file):
     if depth > 0:
         result = dirac.getBKAncestors(lfns, depth)
@@ -23,13 +30,14 @@ def getLHCbInputDataCatalog(lfns, depth, site, xml_file):
             output(result)
             return
         lfns = result['Value']
-    output(dirac.getInputDataCatalog(lfns, site, xml_file))
+    return dirac.getInputDataCatalog(lfns, site, xml_file)
 
 
 def bookkeepingGUI(file):
     print(os.system('dirac-bookkeeping-gui %s' % file))
 
 
+@diracCommand
 def getDataset(path, dqflag, this_type, start, end, sel):
     if this_type is 'Path':
         result = dirac.bkQueryPath(path, dqflag)  # dirac
@@ -43,11 +51,13 @@ def getDataset(path, dqflag, this_type, start, end, sel):
     else:
         result = {'OK': False, 'Message': 'Unsupported type!'}
 
-    output(result)
+    return result
 
+
+@diracCommand
 def checkTier1s():
     result = dirac.gridWeather()
     if result.get('OK', False):
         result['Value'] = result['Value']['Tier-1s']
-    output(result)
+    return result
 

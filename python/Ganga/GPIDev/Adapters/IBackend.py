@@ -10,14 +10,18 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import Schema, Version
+from Ganga.GPIDev.Credentials import credential_store, needed_credentials
 
 import Ganga.Utility.logging
 
 from Ganga.Utility.logic import implies
 
+from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError
+
 import os
 import itertools
 import time
+from collections import defaultdict
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -117,9 +121,7 @@ class IBackend(GangaObject):
         support for keep_going flag.
 
         """
-        from Ganga.Core.exceptions import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
-
 
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
@@ -290,7 +292,6 @@ class IBackend(GangaObject):
         If you override this method for bulk optimization then make sure that you call updateMasterJobStatus() on the master job,
         so the master job will be monitored by the monitoring loop.
         """
-        from Ganga.Core.exceptions import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
         incomplete = 0
 
@@ -322,7 +323,7 @@ class IBackend(GangaObject):
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
-            if master:
+            if master is not None:
                 master.updateMasterJobStatus()
         return 1
 
@@ -511,3 +512,32 @@ class IBackend(GangaObject):
         """
 
         raise NotImplementedError
+
+
+def group_jobs_by_backend_credential(jobs):
+    # type: (List[Job]) -> List[List[Job]]
+    """
+    Split a list of jobs based on the credential required by their backends.
+
+    Any missing or invalid credentials are added to ``needed_credentials``
+
+    Args:
+        jobs: a list of ``Job``s
+
+    Returns:
+        a list of list of ``Job``s with each sublist sharing a credential
+    """
+    jobs_by_credential = defaultdict(list)
+    for j in jobs:
+        try:
+            cred_req = j.backend.credential_requirements
+            cred = credential_store[cred_req]
+            if not cred.is_valid():
+                logger.debug('Required credential %s is not valid', cred)
+                needed_credentials.add(cred_req)
+                continue
+            jobs_by_credential[cred].append(j)
+        except KeyError:
+            logger.debug('Required credential %s is missing', cred_req)
+            needed_credentials.add(cred_req)
+    return list(jobs_by_credential.values())

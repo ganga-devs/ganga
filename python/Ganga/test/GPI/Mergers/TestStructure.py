@@ -60,7 +60,6 @@ class TestStructure(GangaUnitTest):
             #print('# printed impl status')
             #print('j._impl.__dict__: %s' j._impl.__dict__)
             #print 'type(j).__dict__', type(j).__dict__
-            assert j.status == 'completed'
 
     def testStructureCreated(self):
 
