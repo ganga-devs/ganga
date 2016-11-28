@@ -300,6 +300,7 @@ class LHCbDataset(GangaDataset):
         return xml_catalog
 
     def optionsString(self, file=None):
+        print 'Options STRING!'
         'Returns the Gaudi-style options string for the dataset (if a filename' \
             ' is given, the file is created and output is written there).'
         if not self or len(self) == 0:
@@ -339,8 +340,8 @@ class LHCbDataset(GangaDataset):
                 sdatasetsnew += """ \"LFN:%s\",""" % f.lfn
                 sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.lfn, dtype_str)
             else:
-                sdatasetsnew += """ \"PFN:%s\",""" % f.namePattern
-                sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (f.namePattern, dtype_str)
+                sdatasetsnew += """ \"%s\",""" % f.accessURL()[0]
+                sdatasetsold += """ \"DATAFILE='%s' %s\",""" % (f.accessURL()[0], dtype_str)
         if sdatasetsold.endswith(","):
             if self.persistency == 'ROOT':
                 sdatasetsnew = sdatasetsnew[:-1] + """\n], clear=True)"""
