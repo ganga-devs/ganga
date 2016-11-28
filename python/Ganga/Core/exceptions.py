@@ -21,15 +21,10 @@ class PluginError(GangaException):
     """
 
 
-class GangaKeyError(GangaException, KeyError):
+class GangaKeyError(GangaException):
     """
     Class used to make known, thrown KeyError's safe to raise to the user
     """
-
-    def __init__(self, *args, **kwds):
-        super(GangaException, self).__init__(args)
-        KeyError.__init__(self, *args)
-        self.kwds = kwds
 
 
 class ApplicationConfigurationError(GangaException):
