@@ -6,6 +6,7 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.testlib.mark import external
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility import logging
+from Ganga.Core.exceptions import GangaKeyError
 
 logger = logging.getLogger()
 
@@ -28,7 +29,7 @@ def test_voms_proxy_life_cycle(gpi):
     credential_store.clear()
     assert len(credential_store) == 0
 
-    with pytest.raises(KeyError):
+    with pytest.raises(GangaKeyError):
         _ = credential_store[VomsProxy()]
 
     default_cred = credential_store.create(VomsProxy())
