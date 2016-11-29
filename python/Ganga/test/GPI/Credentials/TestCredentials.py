@@ -10,6 +10,8 @@ from Ganga.Utility import logging
 logger = logging.getLogger()
 
 
+@external
+@requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_voms_proxy_life_cycle(gpi):
     from Ganga.GPI import VomsProxy, credential_store
 
@@ -38,6 +40,7 @@ def test_voms_proxy_life_cycle(gpi):
 
 
 @external
+@requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_lcg(gpi):
     from Ganga.GPI import Job, LCG, VomsProxy, credential_store, jobs
 
