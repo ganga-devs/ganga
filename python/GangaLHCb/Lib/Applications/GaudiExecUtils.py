@@ -5,6 +5,7 @@ import uuid
 from os import path
 from Ganga.Core.exceptions import GangaException
 from Ganga.Runtime.GPIexport import exportToGPI
+from Ganga.Utility.files import expandfilename
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from .PythonOptsCmakeParser import PythonOptsCmakeParser
@@ -100,13 +101,29 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
         makedirs(full_path)
         chdir(full_path)
     _exec_cmd('lb-dev %s %s' % (myApp, myVer), full_path)
-    logger.info("Set up App Env at: %s" % full_path)
+    dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
+    logger.info("Set up App Env at: %s" % dev_dir)
     if myGetpack:
-        dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
         _exec_cmd('getpack %s' % myGetpack, dev_dir)
         logger.info("Ran Getpack: %s" % myGetpack)
+    return dev_dir
 
 exportToGPI('prepare_cmake_app', prepare_cmake_app, 'Functions')
+
+def prepareGaudiExec(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
+    """
+        Setup and Return a GaudiExec based upon a release version of a given App.
+        Args:
+            myApp (str): This is name of the App you want to run
+            myVer (str): This is the version of the app you want
+            myPath (str): This is where lb-dev will be run
+            myGepPack (str): This is a getpack which will be run once the lb-dev has executed
+    """
+    path = prepare_cmake_app(myApp, myVer, myPath, myGetpack)
+    from Ganga.GPI import GaudiExec
+    return GaudiExec(directory=path)
+
+exportToGPI('prepareGaudiExec', prepareGaudiExec, 'Functions')
 
 def _exec_cmd(cmd, cwdir):
     """

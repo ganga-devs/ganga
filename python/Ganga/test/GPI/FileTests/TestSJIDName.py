@@ -6,10 +6,8 @@ class TestSJIDName(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestSJIDName, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
-        setConfigOption('Output', 'FailJobIfNoOutputMatched', 'True')
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False'), ('Output', 'FailJobIfNoOutputMatched', 'True')]
+        super(TestSJIDName, self).setUp(extra_opts=extra_opts)
 
     def test_a_jobSubmit(self):
         """here for testing a submit"""

@@ -33,67 +33,13 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import getName
 
+from Ganga.GPIDev.Credentials import credential_store
+from Ganga.GPIDev.Credentials.AfsToken import AfsToken
+
 log = getLogger()
 
 # the overall state of Ganga internal services
 servicesEnabled = True
-
-
-def isCredentialRequired(credObj):
-    """
-    The logic to decide if a given invalid credential
-    should trigger the deactivation of Ganga internal services.  
-    """
-
-    from Ganga.Runtime import Workspace_runtime
-    from Ganga.Runtime import Repository_runtime
-
-    if getName(credObj) == 'AfsToken':
-        return Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken()
-
-    if getName(credObj) == 'GridProxy':
-        from Ganga.Core.GangaRepository import getRegistryProxy
-        from Ganga.Runtime.GPIFunctions import typename
-        from Ganga.GPIDev.Base.Proxy import stripProxy
-        from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobBackend, lazyLoadJobStatus
-        for j in getRegistryProxy('jobs'):
-            ji = stripProxy(j)
-            this_status = lazyLoadJobStatus(ji)
-            if this_status in ['submitted', 'running', 'completing']:
-                this_backend = lazyLoadJobBackend(ji)
-                if getName(this_backend) == 'LCG':
-                    return True
-        return False
-
-    log.warning("Unknown credential object : %s" % credObj)
-
-
-def notifyInvalidCredential(credObj):
-    """
-    The Core is notified when one of the monitored credentials is invalid
-    @see ICredential.create()
-    """
-
-    # ignore this notification if the internal services are already stopped
-    if not servicesEnabled:
-        log.debug(
-            "One of the monitored credential [%s] is invalid BUT the internal services are already disabled." % getName(credObj))
-        return
-
-    if isCredentialRequired(credObj):
-        log.debug("One of the required credential for the internal services is invalid: [%s]."
-                  "Disabling internal services ..." % getName(credObj))
-        _tl = credObj.timeleft()
-        if _tl == "-1":
-            log.error('%s has been destroyed! Could not shutdown internal services.' % getName(credObj))
-            return
-        disableInternalServices()
-        log.warning('%s is about to expire! '
-                    'To protect against possible write errors all internal services has been disabled.'
-                    'If you believe the problem has been solved type "reactivate()" to re-enable '
-                    'interactions within this session.' % getName(credObj))
-    else:
-        log.debug("One of the monitored credential [%s] is invalid BUT it is not required by the internal services" % getName(credObj))
 
 
 def _diskSpaceChecker():
@@ -234,10 +180,10 @@ def enableInternalServices():
     Repository_runtime.bootstrap()
 
     # make sure all required credentials are valid
-    missing_cred = getMissingCredentials()
-    if missing_cred:
-        log.error("The following credentials are still required: %s."
-                  "Make sure you renew them before reactivating this session" % ','.join(missing_cred))
+    invalid_afs = [afsToken for afsToken in credential_store.get_all_matching_type(AfsToken) if not afsToken.is_valid()]
+
+    if invalid_afs:
+        log.error('No valid AFS token was found. Please re-authorise before reactivating this session.')
         return
 
     log.debug("Enabling the internal services")
@@ -259,21 +205,6 @@ def checkInternalServices(errMsg='Internal services disabled. Job registry is re
 
     if not servicesEnabled:
         raise ReadOnlyObjectError(errMsg)
-
-
-def getMissingCredentials():
-    """
-    get a list of missing credentials
-    i.e:  invalid credentials that are needed by the internal services to run
-    """
-    from Ganga.Utility.Config import getConfig
-    if getConfig('PollThread')['autoCheckCredentials']:
-        from Ganga.GPIDev.Credentials import _allCredentials as availableCreds
-        return [name for name in availableCreds
-                if not availableCreds[name].isValid() and
-                isCredentialRequired(availableCreds[name])]
-    else:
-        return []
 
 #
 #$Log: not supported by cvs2svn $

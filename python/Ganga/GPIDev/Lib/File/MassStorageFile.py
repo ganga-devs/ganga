@@ -18,12 +18,11 @@ from pipes import quote
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.Utility.files import expandfilename
 
 import Ganga.Utility.Config
@@ -54,7 +53,11 @@ class MassStorageFile(IGangaFile):
     _exportmethods = ["location", "get", "put", "setLocation", "remove", "accessURL"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
-        """ namePattern is the pattern of the output file that has to be written into mass storage
+        """
+        MassStorageFile construction
+        Args:
+            namePattern (str): is the pattern of the output file that has to be written into mass storage
+            localDir (str): This is the optional local directory of a file to be uploaded to mass storage
         """
         super(MassStorageFile, self).__init__()
         self._setNamePath(_namePattern=namePattern, _localDir=localDir)
@@ -74,16 +77,22 @@ class MassStorageFile(IGangaFile):
         if attr == "namePattern":
             actual_value = os.path.basename(value)
             this_localDir = os.path.dirname(value)
-            super(MassStorageFile, self).__setattr__('localDir', this_localDir)
+            if this_localDir:
+                self.localDir = this_localDir
         if attr == "localDir":
-            actual_value = os.path.abspath(expandfilename(value))
+            if value:
+                actual_value = os.path.abspath(expandfilename(value))
 
         super(MassStorageFile, self).__setattr__(attr, actual_value)
 
     def _setNamePath(self, _namePattern='', _localDir=''):
         if _namePattern != '' and _localDir == '':
             self.namePattern = os.path.basename(_namePattern)
-            self.localDir = os.path.dirname(_namePattern)
+            if not os.path.dirname(_namePattern):
+                if os.path.isfile(os.path.join(os.getcwd(), os.path.basename(_namePattern))):
+                    self.localDir = os.getcwd()
+            else:
+                self.localDir = os.path.dirname(_namePattern)
         elif _namePattern != '' and _localDir != '':
             self.namePattern = _namePattern
             self.localDir = _localDir
@@ -92,7 +101,8 @@ class MassStorageFile(IGangaFile):
     def _on_attribute__set__(self, obj_type, attrib_name):
         # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
         r = copy.deepcopy(self)
-        if getName(obj_type) == 'Job' and attrib_name == 'outputfiles':
+        from Ganga.GPIDev.Lib.Job.Job import Job
+        if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
             r.locations = []
             r.localDir = ''
             r.failureReason = ''
@@ -101,7 +111,44 @@ class MassStorageFile(IGangaFile):
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "MassStorageFile(namePattern='%s')" % self.namePattern
+        return "%s(namePattern='%s')" % (_getName(self), self.namePattern)
+
+    def mass_line_processor(self, line):
+        """ This function splits the input line from the post-processsing system to define where this file is:
+        Args:
+            line(str): This is expected to be in the format of the postprocessor file from jobs transfering files on the WN
+        """
+        lineParts = line.split()
+        pattern = lineParts[1]
+        outputPath = lineParts[2]
+        split_name = os.path.splitext(outputPath)
+        if split_name[1] == '.gz':
+            name = split_name[0]
+        else:
+            name = outputPath
+
+        if regex.search(self.namePattern) is not None:
+            if outputPath == 'ERROR':
+                logger.error("Failed to upload file to mass storage")
+                logger.error(line[line.find('ERROR') + 5:])
+                d = copy.deepcopy(self)
+                d.namePattern = pattern
+                d.compressed = self.compressed
+                d.failureReason = line[line.find('ERROR') + 5:]
+                self.subfiles.append(d)
+            else:
+                if pattern == self.namePattern:
+                    d = copy.deepcopy(self)
+                    d.namePattern = name
+                    self.subfiles.append(d)
+                    d.mass_line_processor(line)
+        elif name == self.namePattern:
+            if outputPath == 'ERROR':
+                logger.error("Failed to upload file to mass storage")
+                logger.error(line[line.find('ERROR') + 5:])
+                self.failureReason = line[line.find('ERROR') + 5:]
+                return
+        self.locations = [outputPath.strip('\n')]
 
     def setLocation(self):
         """
@@ -113,77 +160,39 @@ class MassStorageFile(IGangaFile):
         if not os.path.exists(postprocessLocationsPath):
             return
 
-        def mass_line_processor(line, mass_file):
-            lineParts = line.split(' ')
-            pattern = lineParts[1]
-            outputPath = lineParts[2]
-            name = os.path.basename(outputPath).strip('.gz')
-            if regex.search(mass_file.namePattern) is not None:
-                if outputPath == 'ERROR':
-                    logger.error("Failed to upload file to mass storage")
-                    logger.error(line[line.find('ERROR') + 5:])
-                    d = MassStorageFile(namePattern=pattern)
-                    d.compressed = mass_file.compressed
-                    d.failureReason = line[line.find('ERROR') + 5:]
-                    mass_file.subfiles.append(d)
-                else:
-                    if pattern == self.namePattern:
-                        d = MassStorageFile(namePattern=name)
-                        d.compressed = mass_file.compressed
-                        d.outputfilenameformat = mass_file.outputfilenameformat
-                        mass_file.subfiles.append(d)
-                        mass_line_processor(line, d)
-            elif name == mass_file.namePattern:
-                if outputPath == 'ERROR':
-                    logger.error("Failed to upload file to mass storage")
-                    logger.error(line[line.find('ERROR') + 5:])
-                    mass_file.failureReason = line[line.find('ERROR') + 5:]
-                    return
-                mass_file.locations = [outputPath.strip('\n')]
-
         for line in open(postprocessLocationsPath, 'r'):
 
             if line.strip() == '':
                 continue
 
             if line.startswith('massstorage'):
-                mass_line_processor(line.strip(), self)
+                self.mass_line_processor(line.strip())
 
     def location(self):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
         tmpLocations = []
-        if self.locations == []:
-            if self.subfiles != []:
-                for i in self.subfiles:
-                    for j in i:
-                        tmpLocations.append(j)
+        if self.subfiles:
+            for i in self.subfiles:
+                tmpLocations.append(i.locations)
         else:
             tmpLocations = self.locations
         return tmpLocations
 
-    def get(self):
+    def internalCopyTo(self, targetPath):
         """
-        Retrieves locally all files matching this MassStorageFile object pattern
+        Copy a the file to the local storage using the get mechanism
+        Args:
+            targetPath (str): Target path where the file is to copied to
         """
+        to_location = targetPath
 
-        to_location = self.localDir
-
-        if not os.path.isdir(self.localDir):
-            if self._getParent() is not None:
-                to_location = self.getJobObject().outputdir
-            else:
-                logger.error("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
-                return
-
-        cp_cmd = getConfig('Output')['MassStorageFile'][
-            'uploadOptions']['cp_cmd']
+        cp_cmd = getConfig('Output')[_getName(self)]['uploadOptions']['cp_cmd']
 
         for location in self.locations:
-            targetLocation = os.path.join(
-                to_location, os.path.basename(location))
-            os.system('%s %s %s' % (cp_cmd, location, targetLocation))
+            targetLocation = os.path.join(to_location, os.path.basename(location))
+            self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, quote(location), quote(targetLocation)))
 
     def getWNScriptDownloadCommand(self, indent):
         ## FIXME fix me for the situation of multiple files?
@@ -193,7 +202,7 @@ class MassStorageFile(IGangaFile):
 ###INDENT###os.system(\'###CP_COMMAND###\')
 
 """
-        cp_cmd = '%s %s .' % (getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd'], quote(self.locations[0]))
+        cp_cmd = '%s %s .' % (getConfig('Output')[_getName(self)]['uploadOptions']['cp_cmd'], quote(self.locations[0]))
 
         replace_dict = { '###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd }
 
@@ -209,7 +218,7 @@ class MassStorageFile(IGangaFile):
             massStoragePath (str): This is the path we want to make if it doesn't exist.
         """
 
-        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
+        massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
         mkdir_cmd = massStorageConfig['mkdir_cmd']
         ls_cmd = massStorageConfig['ls_cmd']
 
@@ -270,7 +279,7 @@ class MassStorageFile(IGangaFile):
             if len(job.subjobs) > 0:
                 return
 
-        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
+        massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
 
         cp_cmd = massStorageConfig['cp_cmd']
         ls_cmd = massStorageConfig['ls_cmd']
@@ -340,7 +349,9 @@ class MassStorageFile(IGangaFile):
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
                                                 (cp_cmd, quote(currentFile), quote(os.path.join(massStoragePath, finalFilename))))
 
-                d = MassStorageFile(namePattern=os.path.basename(currentFile))
+                d = copy.deepcopy(self)
+                d.namePattern = os.path.basename(currentFile)
+                d.localDir = os.path.dirname(currentFile)
                 d.compressed = self.compressed
 
                 if exitcode != 0:
@@ -391,23 +402,23 @@ class MassStorageFile(IGangaFile):
                     missingKeywords.append(item)
 
             if len(missingKeywords):
-                return (False, 'Error in MassStorageFile.outputfilenameformat field : missing keywords %s ' % ','.join(missingKeywords))
+                return (False, 'Error in %s.outputfilenameformat field : missing keywords %s ' % (_getName(self), ','.join(missingKeywords)))
 
             if isSplitJob == False and self.outputfilenameformat.find('{sjid}') > -1:
-                return (False, 'Error in MassStorageFile.outputfilenameformat field :  job is non-split, but {\'sjid\'} keyword found')
+                return (False, 'Error in %s.outputfilenameformat field :  job is non-split, but {\'sjid\'} keyword found' % _getName(self))
 
             if isJob == False and self.outputfilenameformat.find('{sjid}') > -1:
-                return (False, 'Error in MassStorageFile.outputfilenameformat field :  no parent job, but {\'sjid\'} keyword found')
+                return (False, 'Error in %s.outputfilenameformat field :  no parent job, but {\'sjid\'} keyword found' % _getName(self))
 
             if isJob == False and self.outputfilenameformat.find('{jid}') > -1:
-                return (False, 'Error in MassStorageFile.outputfilenameformat field :  no parent job, but {\'jid\'} keyword found')
+                return (False, 'Error in %s.outputfilenameformat field :  no parent job, but {\'jid\'} keyword found' % _getName(self))
 
             invalidUnixChars = ['"', ' ']
             test = self.outputfilenameformat.replace('{jid}', 'a').replace('{sjid}', 'b').replace('{fname}', 'c')
 
             for invalidUnixChar in invalidUnixChars:
                 if test.find(invalidUnixChar) > -1:
-                    return (False, 'Error in MassStorageFile.outputfilenameformat field :  invalid char %s found' % invalidUnixChar)
+                    return (False, 'Error in %s.outputfilenameformat field :  invalid char %s found' % (_getName(self), invalidUnixChar))
 
         return (True, '')
 
@@ -433,7 +444,7 @@ class MassStorageFile(IGangaFile):
         """
         massStorageCommands = []
 
-        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
+        massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
 
         for outputFile in outputFiles:
 
@@ -446,7 +457,7 @@ class MassStorageFile(IGangaFile):
                                         massStorageConfig['ls_cmd'], massStorageConfig['path']])
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                        'scripts/MassStorageFileWNScript.py')
+                                        'scripts/MassStorageFileWNScript.py.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '###INDENT###')
@@ -478,21 +489,22 @@ class MassStorageFile(IGangaFile):
             return self.subfiles
 
         if regex.search(self.namePattern):
-            ls_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['ls_cmd']
+            ls_cmd = getConfig('Output')[_getName(self)]['uploadOptions']['ls_cmd']
             exitcode, output, m = self.shell.cmd1(ls_cmd + ' ' + self.inputremotedirectory, capture_stderr=True)
 
             for filename in output.split('\n'):
                 if fnmatch(filename, self.namePattern):
-                    subfile = MassStorageFile(namePattern=filename)
+                    subfile = copy.deepcopy(self)
+                    subfile.namepattern = filename
                     subfile.inputremotedirectory = self.inputremotedirectory
 
-                    self.subfiles.append(GPIProxyObjectFactory(subfile))
+                    self.subfiles.append(subfile)
 
     def remove(self, force=False, removeLocal=False):
         """
         Removes file from remote storage ONLY by default
         """
-        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
+        massStorageConfig = getConfig('Output')[_getName(self)]['uploadOptions']
         rm_cmd = massStorageConfig['rm_cmd']
 
         if force == True:
@@ -576,7 +588,7 @@ class MassStorageFile(IGangaFile):
         # file on EOS or elsewhere to return a full URL which we can pass to
         # ROOT...
 
-        protoPath = getConfig('Output')['MassStorageFile']['defaultProtocol']
+        protoPath = getConfig('Output')[_getName(self)]['defaultProtocol']
 
         myLocations = self.location()
 
@@ -590,4 +602,29 @@ class MassStorageFile(IGangaFile):
 # add MassStorageFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate MassStorageFile() objects via config file)
 Ganga.Utility.Config.config_scope['MassStorageFile'] = MassStorageFile
+
+class SharedFile(MassStorageFile):
+
+    ''' SharedFile. Special case of MassStorage for locally accessible fs through the standard lsb commands. '''
+    _schema = MassStorageFile._schema.inherit_copy()
+    _category = 'gangafiles'
+    _name = 'SharedFile'
+
+    # Copied from MassStorageFile to keep interface
+    def __init__(self, namePattern='', localDir='', **kwds):
+        """
+        SharedFile construction
+        Args:
+            namePattern (str): is the pattern of the output file that has to be written into mass storage
+            localDir (str): This is the optional local directory of a file to be uploaded to mass storage
+        """
+        if getConfig('Output')[_getName(self)]['uploadOptions']['path'] is None:
+            logger.error("In order to use the SharedFile class you will need to define the path directory in your .gangarc")
+            raise GangaException("In order to use the SharedFile class you will need to define the path directory in your .gangarc")
+
+        super(SharedFile, self).__init__(namePattern, localDir, **kwds)
+
+# add SharedFile objects to the configuration scope (i.e. it will be
+# possible to write instatiate SharedFile() objects via config file)
+Ganga.Utility.Config.config_scope['SharedFile'] = SharedFile
 

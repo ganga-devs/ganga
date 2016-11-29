@@ -157,9 +157,8 @@ class HammerThread(threading.Thread):
 
 class TestRepo(GangaUnitTest):
     def setUp(self):
-        super(TestRepo, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False')]
+        super(TestRepo, self).setUp(extra_opts=extra_opts)
 
     def test_pass1(self):
         t = testRepository(1)
