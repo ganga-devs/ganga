@@ -300,7 +300,6 @@ class LHCbDataset(GangaDataset):
         return xml_catalog
 
     def optionsString(self, file=None):
-        print 'Options STRING!'
         'Returns the Gaudi-style options string for the dataset (if a filename' \
             ' is given, the file is created and output is written there).'
         if not self or len(self) == 0:
