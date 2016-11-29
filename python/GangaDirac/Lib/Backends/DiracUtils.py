@@ -123,7 +123,7 @@ def for_each(func, *iterables, **kwargs):
                            **kwargs.get('fkwargs', {})))
     return result
 
-def getAccessURLs(lfns, defaultSE = ''):
+def getAccessURLs(lfns, defaultSE = '', protocol = ''):
     """
     This is a function to get a list of the accessURLs
     for a provided list of lfns.
@@ -161,7 +161,7 @@ def getAccessURLs(lfns, defaultSE = ''):
     # Remove the successfully found ones from the list and move on to the next SE.
     for SE in SEs:
         lfns = remainingLFNs
-        thisSEFiles = execute('getAccessURL(%s, "%s")' % (lfns , SE))['Successful']
+        thisSEFiles = execute('getAccessURL(%s, "%s", "%s")' % (lfns, SE, protocol))['Successful']
         for lfn in thisSEFiles.keys():
             myURLs.append(thisSEFiles[lfn])
             remainingLFNs.remove(lfn)
