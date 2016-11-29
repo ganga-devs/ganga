@@ -203,7 +203,7 @@ class CredentialStore(GangaObject, collections.Mapping):
         """
         try:
             return self[query]
-        except KeyError:
+        except GangaKeyError:
             return default
 
     def get_all_matching_type(self, query):

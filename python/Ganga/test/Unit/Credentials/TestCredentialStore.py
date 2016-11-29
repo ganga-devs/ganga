@@ -6,7 +6,7 @@ from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.GPIDev.Credentials.CredentialStore import CredentialStore
 from Ganga.GPIDev.Adapters.ICredentialInfo import ICredentialInfo
 from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
-
+from Ganga.Core.exceptions import GangaKeyError
 
 class FakeCredInfo(ICredentialInfo):
     def __init__(self, requirements, check_file=False, create=False):
@@ -79,7 +79,7 @@ def test_get_missing_credential():
     store = CredentialStore()
     req = FakeCred()
 
-    with pytest.raises(KeyError):
+    with pytest.raises(GangaKeyError):
         _ = store[req]
 
 
@@ -98,7 +98,7 @@ def test_create_remove():
     with pytest.raises(KeyError):
         store.remove(info)
 
-    with pytest.raises(KeyError):
+    with pytest.raises(GangaKeyError):
         _ = store[req]
 
 
