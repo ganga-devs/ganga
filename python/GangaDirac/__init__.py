@@ -4,6 +4,9 @@ from Ganga.Utility.Config import makeConfig, getConfig
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.Config.Config import _after_bootstrap
+
+from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+
 logger = getLogger()
 
 if not _after_bootstrap:
@@ -98,4 +101,14 @@ def loadPlugins(config=None):
     import Lib.RTHandlers
     logger.debug("Loading Files")
     import Lib.Files
+
+def postBootstrapHook():
+    dirac_conf = getConfig('DIRAC')
+    if not dirac_conf['DiracEnvSource'] and not dirac_conf['DiracEnvJSON']:
+        return
+    from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
+    try:
+        credential_store[DiracProxy()]
+    except KeyError:
+        pass
 

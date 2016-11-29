@@ -1121,9 +1121,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         
         return jspec
 
-from Ganga.GPIDev.Credentials import GridProxy
-gridProxy = GridProxy()
-
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 for app in ['Athena', 'ExecutableDQ2', 'RootDQ2']:

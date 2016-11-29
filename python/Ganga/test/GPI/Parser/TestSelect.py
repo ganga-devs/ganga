@@ -9,9 +9,8 @@ class TestSelect(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestSelect, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False')]
+        super(TestSelect, self).setUp(extra_opts=extra_opts)
 
     def test_a_JobConstruction(self):
         """ First construct the Job object (singular)"""
@@ -54,9 +53,7 @@ class TestSelect(GangaUnitTest):
         j.submit()
         
         from GangaTest.Framework.utils import sleep_until_completed
-        sleep_until_completed(j, 60)
-
-        assert j.status == "completed"
+        assert sleep_until_completed(j, 60)
 
         mySlice = jobs(j.id).subjobs.select(status="completed")
 

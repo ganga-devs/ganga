@@ -21,11 +21,9 @@ from Ganga.Core import BackendError
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
-from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 
 from Ganga.Utility.GridShell import getShell
-from GangaPanda.Lib.Panda.Panda import setChirpVariables
 
 def createContainer(name):
     from pandatools import Client
@@ -486,6 +484,9 @@ class AthenaJediRTHandler(IRuntimeHandler):
              },
             ]
 
+        # Add the --trf option to jobParameters if required
+        if app.atlas_exetype == "TRF":
+            taskParamMap['jobParameters'] += [{'type': 'constant', 'value': '--trf'}]
 
         # output
         # output files
@@ -848,9 +849,6 @@ class AthenaJediRTHandler(IRuntimeHandler):
 #       in case of a simple job get the dataset content, otherwise subjobs are filled by the splitter
         
         return {}
-
-from Ganga.GPIDev.Credentials import GridProxy
-gridProxy = GridProxy()
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 

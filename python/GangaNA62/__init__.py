@@ -22,5 +22,5 @@ def loadPlugins( config = {} ):
 #    import Lib.DIRAC
     #import Lib.Tasks
 
-#from Ganga.GPIDev.Credentials import getCredential
+#from Ganga.GPIDev.Credentials_old import getCredential
 #proxy = getCredential('GridProxy', '')
