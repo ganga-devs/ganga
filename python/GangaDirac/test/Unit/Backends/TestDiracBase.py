@@ -244,13 +244,9 @@ def test_kill(db, mocker):
     mocker.patch('Ganga.GPIDev.Credentials.credential_store')
 
     db.id = 1234
-<<<<<<< HEAD
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={}):
-        from Ganga.Core.exceptions import BackendError
-=======
+
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')):
-        from Ganga.Core import BackendError
->>>>>>> develop
+        from Ganga.Core.exceptions import BackendError
         with pytest.raises(BackendError):
             db.kill()
 
