@@ -108,15 +108,11 @@ def test__setup_bulk_subjobs(tmpdir, db):
         assert isinstance(subjob.backend, j.backend.__class__), 'backend dont match'
 
 
-<<<<<<< HEAD
-def test__common_submit(tmpdir, db):
-    from Ganga.Core.exceptions import BackendError
-=======
 def test__common_submit(tmpdir, db, mocker):
     mocker.patch('Ganga.GPIDev.Credentials.credential_store')
 
-    from Ganga.Core import BackendError
->>>>>>> develop
+    from Ganga.Core.exceptions import BackendError
+
     j = Job()
     j.id = 0
     j.backend = db
