@@ -108,9 +108,8 @@ def postBootstrapHook():
     if not dirac_conf['DiracEnvSource'] and not dirac_conf['DiracEnvJSON']:
         return
     from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
-    from Ganga.Core.exceptions import GangaKeyError
     try:
         credential_store[DiracProxy()]
-    except GangaKeyError:
+    except KeyError:
         pass
 

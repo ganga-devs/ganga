@@ -151,10 +151,9 @@ def postBootstrapHook():
 #display_config.setSessionValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
 #display_config.setSessionValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
 
-    from Ganga.Core.exceptions import GangaKeyError
     try:
         credential_store[DiracProxy()]
-    except GangaKeyError:
+    except KeyError:
         pass
 
 
@@ -178,12 +177,11 @@ class gridProxy(object):
         """
 
         from Ganga.GPI import credential_store, DiracProxy
-        from Ganga.Core.exceptions import GangaKeyError
         try:
             cred = credential_store[DiracProxy()]
             if not cred.is_valid():
                 cred.create()
-        except GangaKeyError:
+        except KeyError:
             credential_store.create(DiracProxy())
 
     @classmethod
@@ -203,11 +201,10 @@ class gridProxy(object):
             credential_store[DiracProxy()].destroy()
         """
         from Ganga.GPI import credential_store, DiracProxy
-        from Ganga.Core.exceptions import GangaKeyError
         try:
             cred = credential_store[DiracProxy()]
             cred.destroy()
-        except GangaKeyError:
+        except KeyError:
             pass
 
 exportToGPI('gridProxy', gridProxy, 'Functions')

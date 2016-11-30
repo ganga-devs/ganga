@@ -21,12 +21,6 @@ class PluginError(GangaException):
     """
 
 
-class GangaKeyError(GangaException):
-    """
-    Class used to make known, thrown KeyError's safe to raise to the user
-    """
-
-
 class ApplicationConfigurationError(GangaException):
     """Specific Application Configuration Exception"""
 

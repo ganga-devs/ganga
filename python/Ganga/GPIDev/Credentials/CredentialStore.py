@@ -8,7 +8,7 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Proxy import export
 from Ganga.GPIDev.Schema import Schema, Version
 
-from Ganga.Core.exceptions import CredentialsError, GangaKeyError
+from Ganga.Core.exceptions import CredentialsError
 from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
 
 logger = Ganga.Utility.logging.getLogger()
@@ -186,7 +186,7 @@ class CredentialStore(GangaObject, collections.Mapping):
             self.credentials.add(cred)
             return cred
 
-        raise GangaKeyError('Matching credential [{query}] not found in store.'.format(query=query))
+        raise KeyError('Matching credential [{query}] not found in store.'.format(query=query))
 
     def get(self, query, default=None):
         # type: (ICredentialRequirement, Optional[ICredentialInfo]) -> Optional[ICredentialInfo]
@@ -203,7 +203,7 @@ class CredentialStore(GangaObject, collections.Mapping):
         """
         try:
             return self[query]
-        except GangaKeyError:
+        except KeyError:
             return default
 
     def get_all_matching_type(self, query):
