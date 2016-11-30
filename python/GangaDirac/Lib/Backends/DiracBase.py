@@ -10,11 +10,11 @@ import datetime
 import shutil
 import tempfile
 from collections import defaultdict
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.Core.exceptions import BackendError, GangaException
-from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from Ganga.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
 from Ganga.GPIDev.Lib.Job.Job import Job
+from Ganga.Core.exceptions import GangaFileError, BackendError, IncompleteJobSubmissionError
+from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
