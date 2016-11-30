@@ -14,10 +14,11 @@ def test_all_exceptions(gpi):
         err_obj = err_type(test_str)
         assert test_str in str(err_obj)
 
-    err_list = ["GangaException", "ApplicationConfigurationError", "ApplicationPrepareError",
-                "IncompleteJobSubmissionError", "IncompleteKillError", "JobManagerError", "GangaAttributeError",
-                "GangaValueError", "GangaIOError", "SplitterError", "ProtectedAttributeError", "ReadOnlyObjectError",
-                "TypeMismatchError", "SchemaError", "SchemaVersionError"]
+    err_list = ["GangaException", "GangaFileError", "PluginError", "GangaKeyError", "ApplicationConfigurationError",
+                "ApplicationPrepareError", "IncompleteJobSubmissionError", "IncompleteKillError", "JobManagerError",
+                "GangaAttributeError", "GangaValueError", "GangaIOError", "SplitterError", "ProtectedAttributeError",
+                "ReadOnlyObjectError", "TypeMismatchError", "SchemaError", "SchemaVersionError", "CredentialsError",
+                "CredentialRenewalError", "InvalidCredentialError", "ExpiredCredentialError"]
 
     for e in err_list:
         exception_test(e)

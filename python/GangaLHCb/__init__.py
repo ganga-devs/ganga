@@ -153,7 +153,7 @@ def postBootstrapHook():
 
     try:
         credential_store[DiracProxy()]
-    except KeyError:
+    except GangaKeyError:
         pass
 
 
@@ -181,7 +181,7 @@ class gridProxy(object):
             cred = credential_store[DiracProxy()]
             if not cred.is_valid():
                 cred.create()
-        except KeyError:
+        except GangaKeyError:
             credential_store.create(DiracProxy())
 
     @classmethod
@@ -204,7 +204,7 @@ class gridProxy(object):
         try:
             cred = credential_store[DiracProxy()]
             cred.destroy()
-        except KeyError:
+        except GangaKeyError:
             pass
 
 exportToGPI('gridProxy', gridProxy, 'Functions')

@@ -110,6 +110,6 @@ def postBootstrapHook():
     from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
     try:
         credential_store[DiracProxy()]
-    except KeyError:
+    except GangaKeyError:
         pass
 
