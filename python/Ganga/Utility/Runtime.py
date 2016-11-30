@@ -304,6 +304,7 @@ def loadPlugins(environment):
         except Exception as err:
             logger.error('problems with loading Plugin %s', n)
             logger.error('Reason: %s' % str(err))
+            raise
             raise PluginError("Failed to load plugin: %s. Ganga will now shutdown to prevent job corruption." % n)
 
 def autoPopulateGPI(my_interface=None):

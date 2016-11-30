@@ -75,7 +75,7 @@ from   os.path import split, join
 from   Ganga.GPIDev.Schema.Schema             import FileItem, SimpleItem
 from   Ganga.GPIDev.Lib.File                  import File
 from   Ganga.Utility.util                     import unique
-from   Ganga.Core                             import ApplicationConfigurationError
+from   Ganga.Core.exceptions                  import ApplicationConfigurationError
 from   Ganga.GPIDev.Lib.File.FileBuffer       import FileBuffer
 from   GangaGaudi.Lib.Applications.GaudiBase  import GaudiBase
 from   GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile

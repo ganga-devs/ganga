@@ -161,3 +161,17 @@ class ExpiredCredentialError(InvalidCredentialError):
     """
     The credential has expired
     """
+
+class GangaKeyError(GangaException, KeyError):
+    """
+    Class used for known Ganga-related KeyError exception (generally to do with Credential Store) that will consequently
+    not generate a traceback for the user.
+
+    TODO: Note that currently KeyError is checked for in the code - this should be shifted to GangaKeyError at the
+    earliest oppurtunity!
+    """
+
+    def __init__(self, *args, **kwds):
+        super(GangaException, self).__init__(args)
+        KeyError.__init__(self, *args)
+        self.kwds = kwds
