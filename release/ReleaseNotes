@@ -10,7 +10,8 @@ ganga/python/Ganga
 *  Added SharedFile file type for using large locally accessible files which doesn't copy a file as much as LocalFile.
 *  Added many integration tests for MassStorageFile, SharedFile and LocalFile.
 *  Added new exception types inheriting from GangaException to make reasons for the exceptions clearer.
-
+*  Bugfix for GangaDataset and batch jobs #871
+*  Improvements to the XML loading #839
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaDirac
 --------------------------------------------------------------------------------------------------------------
@@ -25,6 +26,8 @@ ganga/python/GangaLHCb
 *  Default DiracProxy is constructed to be for `lhcb_user`.
 *  Added function getAccessURLs to GPI to return a list of accessURLs for a provided list of DiracFiles or LFNs (strings).
 Can access from the Dirac backend job.backend.getOutputDataAccessURLs(). #801
+* Bugfix for GaudiExec. Now it checks that the SE is writable before attempting to upload the tarballs #852
+* Update default LHCbDirac to v8r4p4
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga/GPIDev/Credentials
