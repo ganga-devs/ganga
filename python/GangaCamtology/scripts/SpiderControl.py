@@ -75,7 +75,7 @@ def runSpider( ):
     cmd += gangaexec + " "
     cmd += "-o'[Configuration]gangadir=" + os.path.join(linkdir, "gangadir") + "' "
     cmd += "-o'[LCG]Config=" + os.path.join(os.getcwd(), "glite_wmsui.conf") + "' "
-    cmd += "-o'[LCG]GLITE_ENABLE=True' -o'[LCG]VirtualOrganisation=camont' -o'[defaults_GridProxy]voms=camont' -o'[defaults_LCG]middleware=GLITE' "
+    cmd += "-o'[LCG]VirtualOrganisation=camont' -o'[defaults_GridProxy]voms=camont'"
     cmd += os.path.join(os.getcwd(), "runSpider.py")
     
     print cmd

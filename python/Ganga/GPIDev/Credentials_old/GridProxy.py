@@ -97,7 +97,7 @@ import re
 import time
 
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Credentials.ICredential import ICommandSet, ICredential, registerCommandSet
+from Ganga.GPIDev.Credentials_old.ICredential import ICommandSet, ICredential, registerCommandSet
 from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.GridShell import getShell

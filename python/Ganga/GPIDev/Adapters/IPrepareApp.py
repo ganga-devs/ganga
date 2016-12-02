@@ -137,7 +137,7 @@ class IPrepareApp(IApplication):
                 logger.debug('found a string')
                 # we have a file. if it's an absolute path, copy it to the
                 # shared dir
-                if os.path.abspath(prepitem) == prepitem:
+                if prepitem and os.path.abspath(prepitem) == prepitem:
                     logger.debug('Sending string file %s to shared directory.' % (prepitem))
                     try:
                         self.copyIntoPrepDir(prepitem)

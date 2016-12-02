@@ -3,6 +3,8 @@ import pytest
 import functools
 
 from .GangaUnitTest import load_config_files, clear_config
+from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+from Ganga.Core.exceptions import GangaKeyError, CredentialsError
 from Ganga.Utility.Config import getConfig
 
 external = pytest.mark.skipif(
@@ -13,8 +15,6 @@ external = pytest.mark.skipif(
 class skipif_config(object):
     """
     Class used to skip a test when it cannot be run due to a conflicting env config
-    Args:
-        function (method, class): This is the test method or class we want to skip if the conditions aren't met
     """
 
     def __init__(self, section, item, value, reason):
@@ -33,6 +33,7 @@ class skipif_config(object):
 
     def __call__(self, function):
         """
+        This is the actual function call which is done at the level of decorator testing
         Args:
             function (method, class): This is the test method or class we want to skip if the conditions aren't met
         """
@@ -46,4 +47,37 @@ class skipif_config(object):
             return pytest.mark.skip(self.reason)(function)
 
         return function
+
+class requires_cred(object):
+    """
+    Class used to skip a test is a required credential is not available
+    """
+
+    def __init__(self, credential_requirement, reason):
+        """
+        This is the constructor for taking the credential and skip reason via the arguments to the decorator
+        """
+        self._cred_req = credential_requirement
+        self.reason = reason
+
+    def __call__(self, function):
+        """
+        This call is called at the detection step of the tests for py.test.
+        It wil fail if the credential_requirement is not present in the store and can't be auto-detected
+        Args:
+            function (method, class): This is the test method or class we want to skip if the conditions aren't met
+        """
+        load_config_files()
+        from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+        try:
+            credential_store[self._cred_req]
+            return function
+        except GangaKeyError:
+            try:
+                credential_store.create(self._cred_req)
+                return function
+            except CredentialsError:
+                return pytest.mark.skip(self.reason)(function)
+        finally:
+            clear_config()
 

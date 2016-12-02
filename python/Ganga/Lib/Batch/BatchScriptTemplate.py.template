@@ -70,6 +70,9 @@ for f in input_sandbox:
 #get input files
 ###DOWNLOADINPUTFILES###
 
+# create inputdata list
+###CREATEINPUTDATALIST###
+
 import sys
 sys.path.insert(0, ###GANGADIR###)
 sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
@@ -84,7 +87,7 @@ sysout2 = os.dup(sys.stdout.fileno())
 syserr2 = os.dup(sys.stderr.fileno())
 
 print("--- GANGA APPLICATION OUTPUT BEGIN ---", file=sys.stdout)
-print("--- GANGA APPLICATION ERROR BEGIN ---", file=sys.stdout)
+print("--- GANGA APPLICATION ERROR BEGIN ---", file=sys.stderr)
 flush_file(sys.stdout)
 flush_file(sys.stderr)
 

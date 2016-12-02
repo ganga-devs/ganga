@@ -3,11 +3,12 @@ import subprocess
 
 from Ganga.Utility.Config import getConfig
 
-from Ganga.testlib.mark import external, skipif_config
+from Ganga.testlib.mark import external, requires_cred
 
+from Ganga.GPIDev.Credentials.VomsProxy import VomsProxy
 
 @external
-@skipif_config('LCG', 'GLITE_ENABLE', False, reason='GLITE not enabled')
+@requires_cred(VomsProxy(), 'CREAM requires a Voms proxy to submit a job')
 def test_job_kill(gpi):
     from Ganga.GPI import Job, CREAM
 
@@ -32,3 +33,4 @@ def test_job_kill(gpi):
     j.backend = CREAM(CE=ce)
     j.submit()
     j.kill()
+
