@@ -7,6 +7,11 @@ This module contains all the Ganga Core specific exceptions used throughout the 
 
 class GangaException(Exception):
     """Basic Ganga Exception class"""
+    def __str__(self):
+        """
+        Return a string containing the error type as well as the parent string
+        """
+        return "%s: %s" % (self.__class__.__name__, super(GangaException, self).__str__())
 
 
 class GangaFileError(GangaException):
