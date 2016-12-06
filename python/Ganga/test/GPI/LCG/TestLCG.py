@@ -5,11 +5,13 @@ try:
 except ImportError:
     from mock import patch
 
-from Ganga.testlib.mark import external
+from Ganga.testlib.mark import external, requires_cred
 from Ganga.testlib.monitoring import run_until_completed
 
+from Ganga.GPIDev.Credentials.VomsProxy import VomsProxy
 
 @external
+@requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_job_submit_and_monitor(gpi):
     from Ganga.GPI import Job, LCG
 
@@ -21,6 +23,7 @@ def test_job_submit_and_monitor(gpi):
     stripProxy(LCG).master_updateMonitoringInformation([stripProxy(j)])
 
 @external
+@requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_job_kill(gpi):
     from Ganga.GPI import Job, LCG
 
@@ -29,7 +32,7 @@ def test_job_kill(gpi):
     j.submit()
     j.kill()
 
-
+@requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_submit_kill_resubmit(gpi):
     """
     Test that a simple submit-kill-resubmit-kill cycle works
@@ -57,7 +60,7 @@ def test_submit_kill_resubmit(gpi):
     with patch('Ganga.Lib.LCG.Grid.cancel', return_value=True):
         j.kill()
 
-
+@requires_cred(VomsProxy(), 'LCG Requires a Voms proxy for testing')
 def test_submit_monitor(gpi):
     """
     Test that an LCG job can be monitored
@@ -95,3 +98,4 @@ def test_submit_monitor(gpi):
 
     with patch('Ganga.Lib.LCG.Grid.cancel', return_value=True):
         j.kill()
+

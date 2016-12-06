@@ -31,6 +31,8 @@ class TestMassStorageClient(GangaUnitTest):
                              'backendPostprocess': {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client',
                                                     'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}}
 
+    _ext = '.root'
+
     def setUp(self):
         """
         Configure the MassStorageFile for the test
@@ -78,16 +80,15 @@ class TestMassStorageClient(GangaUnitTest):
 
         assert getConfig('Output')[_getName(self.fileClass)]['backendPostprocess']['Local'] == 'client'
 
-        _ext = '.root'
-        file_1 = generate_unique_temp_file(_ext)
-        file_2 = generate_unique_temp_file(_ext)
+        file_1 = generate_unique_temp_file(TestMassStorageClient._ext)
+        file_2 = generate_unique_temp_file(TestMassStorageClient._ext)
         TestMassStorageClient._managed_files.append(file_1)
         TestMassStorageClient._managed_files.append(file_2)
 
         j = Job()
         j.inputfiles = [LocalFile(file_1), LocalFile(file_2)]
         j.splitter = ArgSplitter(args = [[_] for _ in range(TestMassStorageClient.sj_len)])
-        j.outputfiles = [MassStorageFile(namePattern='*'+_ext)]
+        j.outputfiles = [MassStorageFile(namePattern='*'+TestMassStorageClient._ext)]
         j.submit()
 
     def test_b_testClientSideComplete(self):
@@ -119,7 +120,25 @@ class TestMassStorageClient(GangaUnitTest):
 
             assert len(sj.outputfiles) == 2
 
+    def test_c_testCopyJob(self):
+        """ Test copying a completed job with a wildcard in the outputfiles """
+
+        from Ganga.GPI import jobs
+
+        j = jobs[-1]
+
+        j2 = j.copy()
+
+        assert len(j2.outputfiles) == 1
+
+        MassStorageFile = self.fileClass
+
+        assert j2.outputfiles == [MassStorageFile(namePattern='*'+TestMassStorageClient._ext)]
+
+        assert len(j2.inputfiles) == 2
+
         self.cleanUp()
+
 
 class TestSharedClient(TestMassStorageClient):
     """test for sjid in filename names explain each test"""
