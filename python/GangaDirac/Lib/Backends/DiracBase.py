@@ -14,7 +14,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Core.exceptions import GangaFileError, BackendError, IncompleteJobSubmissionError
-from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach
+from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
@@ -98,7 +98,7 @@ class DiracBase(IBackend):
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
-                      'getOutputDataLFNs', 'peek', 'reset', 'debug']
+                      'getOutputDataLFNs', 'getOutputDataAccessURLs', 'peek', 'reset', 'debug']
     _packed_input_sandbox = True
     _category = "backends"
     _name = 'DiracBase'
@@ -495,6 +495,10 @@ class DiracBase(IBackend):
         else:
             lfns.extend([f.lfn for f in outputfiles_iterator(j, DiracFile) if f.lfn != ''])
         return lfns
+
+    def getOutputDataAccessURLs(self):
+        """Retrieve the list of accessURLs assigned to outputdata for a job"""
+        return getAccessURLs(self.getOutputDataLFNs())
 
     @require_credential
     def debug(self):
