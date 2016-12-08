@@ -292,18 +292,24 @@ class ConfigOption(object):
     def __getattr__(self, name):
 
         if name == 'value':
-            values = []
+            if self.name.endswith('_PATH'):
+                values = []
 
-            for n in ['user', 'session', 'default']:
-                str_val = n+'_value'
-                if hasattr(self, str_val):
-                    values.append(getattr(self, str_val))
+                for n in ['user', 'session', 'default']:
+                    str_val = n+'_value'
+                    if hasattr(self, str_val):
+                        values.append(getattr(self, str_val))
 
-            if values:
-                returnable = reduce(self.transform_PATH_option, values)
-                return returnable
+                if values:
+                    returnable = reduce(self.transform_PATH_option, values)
+                    return returnable
+            else:
+                for n in ['user', 'session', 'default']:
+                    str_val = n+'_value'
+                    if hasattr(self, str_val):
+                        return getattr(self, str_val)
 
-        if name == 'level':
+        elif name == 'level':
 
             for level, name in [(0, 'user'), (1, 'session'), (2, 'default')]:
                 if hasattr(self, name + '_value'):
@@ -680,15 +686,16 @@ def transform_PATH_option(name, new_value, current_value):
 
     PATH_ITEM = '_PATH'
     if name[-len(PATH_ITEM):] == PATH_ITEM:
-        getLogger().debug('PATH-like variable: %s %s %s', name, new_value, current_value)
+        logger = getLogger()
+        logger.debug('PATH-like variable: %s %s %s', name, new_value, current_value)
         if current_value is None:
             ret_value = new_value
         elif new_value[:3] != ':::':
-            getLogger().debug('Prepended %s to PATH-like variable %s', new_value, name)
+            logger.debug('Prepended %s to PATH-like variable %s', new_value, name)
             ret_value = new_value + ':' + current_value
             new_value = ""
         else:
-            getLogger().debug('Resetting PATH-like variable %s to %s', name, new_value)
+            logger.debug('Resetting PATH-like variable %s to %s', name, new_value)
             ret_value = new_value  # [3:]
             new_value = ":::"
 
