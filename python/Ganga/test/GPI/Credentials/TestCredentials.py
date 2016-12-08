@@ -10,14 +10,21 @@ from Ganga.Utility import logging
 logger = logging.getLogger()
 
 
+@external
 def test_voms_proxy_life_cycle(gpi):
     from Ganga.GPI import VomsProxy, credential_store
 
-    assert len(credential_store) == 0
+    try:
+        _ = credential_store[VomsProxy()]
+        # There is no auto-detection of a VomsProxy built into Ganga atm
+        # requesting it is expected to fail.
+        assert False
+    except KeyError:
+        pass
 
     cred = credential_store.create(VomsProxy())
     assert cred.is_valid()
-    assert len(credential_store) == 1
+    assert credential_store[VomsProxy()]
     assert os.path.isfile(cred.location)
 
     assert cred.vo == getConfig('LCG')['VirtualOrganisation']
@@ -34,7 +41,7 @@ def test_voms_proxy_life_cycle(gpi):
     default_cred = credential_store.create(VomsProxy())
     explicit_default_cred = credential_store.create(VomsProxy(vo=getConfig('LCG')['VirtualOrganisation']))
     assert explicit_default_cred == default_cred
-    assert len(credential_store) == 1
+    assert credential_store[VomsProxy(vo=getConfig('LCG')['VirtualOrganisation'])]
 
 
 @external
