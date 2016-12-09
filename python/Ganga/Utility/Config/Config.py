@@ -150,7 +150,7 @@ allConfigs = {}
 # this dictionary contains the value for the options which are defined in the configuration file and which have
 # not yet been defined
 unknownConfigFileValues = defaultdict(dict)
-
+unknownUserConfigValues = defaultdict(dict)
 
 def getConfig(name):
     """
@@ -235,7 +235,6 @@ class ConfigOption(object):
         self.convert_type('user_value')
 
     def setSessionValue(self, session_value):
-
         if not hasattr(self, 'docstring'):
             raise ConfigError('Can\'t set a session value without a docstring!')
 
@@ -252,7 +251,6 @@ class ConfigOption(object):
         self.convert_type('session_value')
 
     def setUserValue(self, user_value):
-
         if not hasattr(self, 'docstring'):
             raise ConfigError('Can\'t set a user value without a docstring!')
 
@@ -494,6 +492,26 @@ class PackageConfig(object):
                 msg = "Error Setting Session Value: %s" % err
                 if locals().get('logger') is not None:
                     locals().get('logger').debug("dbg: %s" % msg)
+
+        try:
+            conf_value = unknownUserConfigValues[self.name]
+        except KeyError:
+            msg = "Error getting User Option: %s" % self.name
+            if locals().get('logger') is not None:
+                locals().get('logger').debug("dbg: %s" % msg)
+            conf_value = dict()
+
+        if option.name in conf_value:
+            user_value = conf_value[option.name]
+            try:
+                option.setUserValue(session_value)
+                del conf_value[option.name]
+            except Exception as err:
+                msg = "Error Setting User Value: %s" % err
+                if locals().get('logger') is not None:
+                    locals().get('logger').debug("dbg: %s" % msg)
+
+
 
     def setSessionValue(self, name, value):
         """  Add or  override options  as a  part of  second  phase of
@@ -813,6 +831,21 @@ def read_ini_files(filenames, system_vars):
                         raise err
 
     return main
+
+
+def setUserValue(config_name, option_name, value):
+    if config_name in allConfigs:
+        c = getConfig(config_name)
+        if option_name in c.options:
+            c.setUserValue(option_name, value)
+            return
+        if c.is_open:
+            c._addOpenOption(option_name, value)
+            c.setUserValue(option_name, value)
+            return
+    # put value in the buffer, it will be removed from the buffer when option
+    # is added
+    unknownUserConfigValues[config_name][option_name] = value
 
 
 def setSessionValue(config_name, option_name, value):
