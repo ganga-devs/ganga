@@ -880,7 +880,7 @@ def setSessionValuesFromFiles(filenames, system_vars):
             # the configuration units!
             if o in cfg.defaults():
                 continue
-            try:               
+            try:
                 v = cfg.get(name, o)
             except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
                 logger = getLogger()
