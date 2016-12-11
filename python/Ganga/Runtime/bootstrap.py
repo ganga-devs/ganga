@@ -697,14 +697,12 @@ under certain conditions; type license() for details.
 
         def set_cmdline_config_options(sects=None):
             try:
-               
                 opts = self.parse_cmdline_config_options(self.options.cmdline_options)
                 for section, option, val in opts:
                     should_set = True
                     if not sects is None and not section in sects:
                         should_set = False
                     if should_set:
-                        Ganga.Utility.Config.setSessionValue(section, option, val)
                         config = Ganga.Utility.Config.setUserValue(section, option, val)
             except ConfigError as x:
                 self.exit('command line option error: %s' % x)
