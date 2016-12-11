@@ -458,7 +458,6 @@ class PackageConfig(object):
         return self.getEffectiveOption(o)
 
     def addOption(self, name, default_value, docstring, override=False, **meta):
-
         if _after_bootstrap and not self.is_open:
             raise ConfigError('attempt to add a new option [%s]%s after bootstrap' % (self.name, name))
 
@@ -492,7 +491,6 @@ class PackageConfig(object):
                 msg = "Error Setting Session Value: %s" % err
                 if locals().get('logger') is not None:
                     locals().get('logger').debug("dbg: %s" % msg)
-
         try:
             conf_value = unknownUserConfigValues[self.name]
         except KeyError:
@@ -504,7 +502,7 @@ class PackageConfig(object):
         if option.name in conf_value:
             user_value = conf_value[option.name]
             try:
-                option.setUserValue(session_value)
+                option.setUserValue(user_value) 
                 del conf_value[option.name]
             except Exception as err:
                 msg = "Error Setting User Value: %s" % err
@@ -874,7 +872,6 @@ def setSessionValuesFromFiles(filenames, system_vars):
     At the time of reading the initialization files, the default options in
     the configuration options (default values) may have not yet been defined.
     """
-
     cfg = read_ini_files(filenames, system_vars)
 
     for name in cfg.sections():
@@ -883,14 +880,14 @@ def setSessionValuesFromFiles(filenames, system_vars):
             # the configuration units!
             if o in cfg.defaults():
                 continue
-            try:
+            try:               
                 v = cfg.get(name, o)
             except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
                 logger = getLogger()
                 logger.debug("Parse Error!:\n  %s" % err)
                 logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (name, o))
                 v = cfg.get(name, o, raw=True)
-            setSessionValue(name, o, v)
+            setUserValue(name, o, v)
 
 
 def load_user_config(filename, system_vars):
@@ -966,7 +963,6 @@ def expandConfigPath(path, top):
 
 
 def sanityCheck():
-
     logger = getLogger()
     for c in allConfigs.values():
         if not c._config_made:
