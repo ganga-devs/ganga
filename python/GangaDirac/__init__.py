@@ -87,6 +87,7 @@ if not _after_bootstrap:
 
     configDirac.addOption('serializeBackend', False, 'Developer option to serialize Dirac code for profiling/debugging')
 
+
 def standardSetup():
 
     import PACKAGE
