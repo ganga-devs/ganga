@@ -249,10 +249,10 @@ def synchronised_set_descriptor(set_function):
         set_function (function): Function we intend to wrap with the hard/write lock
     """
     def decorated(self, obj, type_or_value):
-        if obj is None:
-            return set_function(self, obj, type_or_value)
-
         root_obj = obj._getRoot()
+        if obj is None:
+            return set_function(self, obj, type_or_value, root_obj)
+
         with root_obj._write_lock:
             with root_obj._read_lock:
                 return set_function(self, obj, type_or_value)
@@ -274,6 +274,8 @@ class Descriptor(object):
             name (str): Name of the attribute being wrapped
             item (Item): The Schema entry describing this attribute (Not currently used atm)
         """
+        super(Descriptor, self).__init__()
+
         self._name = name
         self._item = item
         self._checkset_name = None
@@ -469,7 +471,7 @@ class Descriptor(object):
                 assert this_attr._getParent() is obj
 
     @synchronised_set_descriptor
-    def __set__(self, obj, val):
+    def __set__(self, obj, val, root_obj=None):
         """
         Set method
         This wraps the given object with a lock preventing both read+write until this transaction is complete for consistency
@@ -477,6 +479,7 @@ class Descriptor(object):
             self: attribute being changed or Ganga.GPIDev.Base.Objects.Descriptor in which case _getName(self) gives the name of the attribute being changed
             obj (GanagObject): parent class which 'owns' the attribute
             val (unknown): value of the attribute which we're about to set
+            root_obj (GangaObject): a pointer to the root object of obj
         """
 
         if isinstance(val, str):
@@ -496,7 +499,7 @@ class Descriptor(object):
         self._check_getter()
 
         # make sure we have the session lock
-        obj._getSessionLock()
+        obj._getSessionLock(root_obj)
 
         # make sure the object is loaded if it's attached to a registry
         obj._loadObject()
@@ -711,6 +714,32 @@ class GangaObject(Node):
     # _enable_config = 1 -> allow generation of [default_X] configuration
     # section with schema properties
 
+    # This boolean is used to stop a GangaObject from populating it's ._data dict with
+    # default entries as evaluated from the schema.
+    # This is useful when reading many objects from disk as this wastes CPU as the entry is being overridden
+    _should_init = True
+
+    @classmethod
+    def getNew(cls):
+        """
+        Returns a new instance of this class type without a populated Schema.
+        This should be an object which has all of the core logic initialized correctly.
+        """
+        # Build an object of this type
+        returnable = cls.__new__(cls, (), {})
+
+        # Set that we do NOT want to initialize the schema from defaults
+        setattr(returnable, '_should_init', False)
+        # Initialize the most derrived class to get all of the goodness needed higher up.
+        returnable.__class__.__init__(returnable)
+
+        # Just to make sure that if a class's inheritance is broken we still have all of the Core member paramreters initialized
+        Node.__init__(returnable, None)
+        GangaObject.__init__(returnable)
+
+        # Return the newly initialized object
+        return returnable
+
     # must be fully initialized
     def __init__(self):
         """
@@ -721,14 +750,14 @@ class GangaObject(Node):
         self._index_cache_dict = {}
         self._registry = None
 
-        self._data_dict = dict.fromkeys(self._schema.datadict)
-        for attr, item in self._schema.allItems():
-            ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
-            if item.getProperties()['getter'] is None:
-                setattr(self, attr, self._schema.getDefaultValue(attr))
-
-        # Overwrite default values with any config values specified
-        # self.setPropertiesFromConfig()
+        if self._should_init is True:
+            self._data_dict = dict.fromkeys(self._schema.datadict)
+            for attr, item in self._schema.allItems():
+                ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
+                if item.getProperties()['getter'] is None:
+                    setattr(self, attr, self._schema.getDefaultValue(attr))
+        else:
+            self._data_dict = {}
 
     @synchronised
     def accept(self, visitor):
@@ -960,8 +989,7 @@ class GangaObject(Node):
             shareref.increase(shared_dir.name)
 
     def __copy__(self):
-        cls = self.__class__
-        obj = cls()
+        obj = self.getNew()
         # FIXME: this is different than for deepcopy... is this really correct?
         this_dict = copy(self.__dict__)
         for elem in this_dict.keys():
@@ -983,9 +1011,8 @@ class GangaObject(Node):
             memo (unknown): Used to track infinite loops etc in the deep-copy of objects
         """
         true_parent = self._getParent()
-        cls = self.__class__
 
-        self_copy = cls()
+        self_copy = self.getNew()
 
         global do_not_copy
         if self._schema is not None:
@@ -1035,9 +1062,12 @@ class GangaObject(Node):
             _timeOut = 5. # 5sec hardcoded default
         return _timeOut
 
-    def _getSessionLock(self):
+    def _getSessionLock(self, root=None):
         """Acquires the session lock on this object"""
-        r = self._getRoot()
+        if root:
+            r=root
+        else:
+            r = self._getRoot()
         reg = r._registry
         if reg is not None:
             reg._acquire_session_lock(r)
@@ -1108,10 +1138,16 @@ class GangaObject(Node):
         """Un-Set the dirty flag all of the way down the schema."""
         if self._schema:
             for k in self._schema.allItemNames():
-                ## Avoid attributes the likes of job.master which crawl back up the tree
-                if not self._schema[k].getProperties()['visitable'] or self._schema[k].getProperties()['transient']:
-                    continue
                 this_attr = getattr(self, k)
+                if isinstance(this_attr, Node):
+                    if not this_attr._dirty:
+                        continue
+                else:
+                    continue
+                ## Avoid attributes the likes of job.master which crawl back up the tree
+                k_props = self._schema[k].getProperties()
+                if not k_props['visitable'] or k_props['transient']:
+                    continue
                 if isinstance(this_attr, Node) and this_attr._dirty:
                     this_attr._setFlushed()
         super(GangaObject, self)._setFlushed()

@@ -469,30 +469,14 @@ class DiracFile(IGangaFile):
         Attempt to find an accessURL which corresponds to the specified SE. If no SE is specified then
         return a random one from all the replicas. 
         """
-        _accessURLs = []
+        from GangaDirac.Lib.Backends.DiracUtils import getAccessURLs
+        lfns = []
         if len(self.subfiles) == 0:
-            self.getReplicas()
-            # If the SE isn't specified return a random choice.
-            if thisSE == '':
-                this_SE = random.choice(self.locations)
-            # If the SE is specified and we got a URL for a replica there, use it.
-            elif thisSE in self.locations:
-                this_SE = thisSE
-            # If the specified SE doesn't have a replica then return another one at random.
-            else:
-                logger.warning('No replica at specified SE for the LFN %s, here is a URL for another replica' % self.lfn)
-                this_SE = random.choice(self.locations)
-
-            myurl = execute('getAccessURL("%s" , "%s")' % (self.lfn, this_SE), cred_req=self.credential_requirements)
-
-
-            this_accessURL = myurl['Successful'][self.lfn]
-            _accessURLs.append(this_accessURL)
+            lfns.append(self.lfn)
         else:
-            # For all subfiles request the accessURL, 1 URL per LFN
             for i in self.subfiles:
-                _accessURLs.append(i.accessURL(thisSE)[0])
-        return _accessURLs
+                lfns.append(i.lfn)
+        return getAccessURLs(lfns, thisSE)
 
     @require_credential
     def internalCopyTo(self, targetPath):
