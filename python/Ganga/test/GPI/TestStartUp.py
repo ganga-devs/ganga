@@ -19,13 +19,9 @@ def standardSetup():
     """Function to perform standard setup for Ganga.
     """
 
-    gangaDir = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../../')
+    gangaDir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../../python'))
 
     sys.path.insert(0, gangaDir)
-
-    binDir = os.path.join(gangaDir, '../bin')
-
-    sys.path.insert(1, binDir)
 
     from Ganga.PACKAGE import standardSetup
     standardSetup()

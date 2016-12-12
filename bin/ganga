@@ -27,7 +27,7 @@ def standardSetup():
     import sys, os.path
 
     # insert the path to Ganga itself
-    exeDir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
+    exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
 
     gangaDir = os.path.join(os.path.dirname(exeDir), 'python' )
 
