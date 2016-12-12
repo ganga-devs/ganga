@@ -458,9 +458,13 @@ class PackageConfig(object):
         return self.getEffectiveOption(o)
 
     def addOption(self, name, default_value, docstring, override=False, **meta):
+        """
+        Add a new option to the configuration.
+        """
         if _after_bootstrap and not self.is_open:
             raise ConfigError('attempt to add a new option [%s]%s after bootstrap' % (self.name, name))
 
+        # has the option already been made
         try:
             option = self.options[name]
         except KeyError:
@@ -474,6 +478,7 @@ class PackageConfig(object):
         option.defineOption(default_value, docstring, **meta)
         self.options[option.name] = option
 
+        # is it in the list of unknown options from the standard config files
         try:
             conf_value = unknownConfigFileValues[self.name]
         except KeyError:
@@ -491,6 +496,7 @@ class PackageConfig(object):
                 msg = "Error Setting Session Value: %s" % err
                 if locals().get('logger') is not None:
                     locals().get('logger').debug("dbg: %s" % msg)
+        # is it in the list of unknown options specified by the user at the command line or gangarc
         try:
             conf_value = unknownUserConfigValues[self.name]
         except KeyError:
@@ -832,6 +838,12 @@ def read_ini_files(filenames, system_vars):
 
 
 def setUserValue(config_name, option_name, value):
+    """
+    Sets the user value for the given config and option.
+    If the given config has not already been set the it is added
+    to the dict to be added later. The user values supersede the
+    session values so are the command line or gangarc options.
+    """
     if config_name in allConfigs:
         c = getConfig(config_name)
         if option_name in c.options:
@@ -847,6 +859,12 @@ def setUserValue(config_name, option_name, value):
 
 
 def setSessionValue(config_name, option_name, value):
+    """
+    Sets the session value for the given config and option.
+    If the given config has not been set already then it is added
+    to the dict to be added later. The session value is superseded by
+    the user value.
+    """
     if config_name in allConfigs:
         c = getConfig(config_name)
         if option_name in c.options:
