@@ -53,8 +53,6 @@ class TestDatasets(GangaUnitTest):
         assert sorted(ds.union(ds2).getFileNames()) == ['a', 'b', 'c', 'd']
 
 
-
-
     # TODO: Mark as expected to fail because there should be an addProxy in __getitem__.
     # Will be superceded by new Proxy handling code from Matt Williams
 #    @pytest.mark.xfail
