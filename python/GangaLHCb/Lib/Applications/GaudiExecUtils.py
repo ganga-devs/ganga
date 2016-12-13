@@ -92,7 +92,7 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
         Short helper function for setting up minimal application environments on disk for job submission
         Args:
             myApp (str): This is the name of the app to pass to lb-dev
-            myVer (str): This is the version of 'myApp' to pass tp lb-dev
+            myVer (str): This is the version of 'myApp' to pass to lb-dev
             myPath (str): This is where lb-dev will be run
             myGepPack (str): This is a getpack which will be run once the lb-dev has executed
     """
@@ -100,7 +100,10 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
     if not path.exists(full_path):
         makedirs(full_path)
         chdir(full_path)
-    _exec_cmd('lb-dev %s %s' % (myApp, myVer), full_path)
+    if not path.exists(full_path + '/' + myApp + 'Dev_' +myVer):
+        _exec_cmd('lb-dev %s %s' % (myApp, myVer), full_path)
+    else:
+        raise GangaException("Path %s already exists. Not checking out application. Try a different location." % str(full_path + '/' + myApp + 'Dev_' +myVer))
     dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
     logger.info("Set up App Env at: %s" % dev_dir)
     if myGetpack:
