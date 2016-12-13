@@ -59,7 +59,8 @@ try:
     # Import GPI and run Ganga
     from Ganga.GPI import *
     setupGanga()
-    Ganga.Runtime._prog.run()
+    from Ganga.Runtime import _prog
+    _prog.run()
 except GangaException as err:
     log(Ganga.Runtime._prog.options.force_loglevel, err)
     sys.exit(-1)
