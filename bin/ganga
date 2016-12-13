@@ -57,10 +57,10 @@ def log(level, err):
 
 try:
     # Import GPI and run Ganga
-    from Ganga.GPI import *
     setupGanga()
     from Ganga.Runtime import _prog
-    _prog.run()
+    from Ganga import GPI
+    _prog.run(GPI.__dict__)
 except GangaException as err:
     log(Ganga.Runtime._prog.options.force_loglevel, err)
     sys.exit(-1)
