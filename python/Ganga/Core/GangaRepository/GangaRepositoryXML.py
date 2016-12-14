@@ -229,13 +229,17 @@ class GangaRepositoryLocal(GangaRepository):
         else:
             raise RepositoryError(self, "Unknown Repository type: %s" % self.registry.type)
         if getConfig('Configuration')['lockingStrategy'] == "UNIX":
+            # First test the UNIX locks are working as expected
             try:
                 test_unix_locks(self.lockroot)
             except Exception as err:
+                # Locking has not worked, lets raise an error
                 logger.error("Error: %s" % err)
-                msg="\nUnable to launch due to underlying filesystem not working with unix locks."
+                msg="\n\nUnable to launch due to underlying filesystem not working with unix locks."
                 msg+="Please try launching again with [Configuration]lockingStrategy=FIXED to start Ganga without multiple session support."
                 raise RepositoryError(self, msg)
+
+            # Locks passed test so lets continue
             self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
         elif getConfig('Configuration')['lockingStrategy'] == "FIXED":
             self.sessionlock = FixedLockManager(self, self.lockroot, self.registry.name)

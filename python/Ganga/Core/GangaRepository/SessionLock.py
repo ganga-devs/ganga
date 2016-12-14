@@ -263,6 +263,8 @@ def test_unix_locks(folder):
     """
 
     test_file = os.path.join(os.path.realpath(folder), 'sessions', 'test_lock')
+    if not os.path.isdir(os.path.dirname(test_file)):
+        os.makedirs(os.path.dirname(test_file))
     # Create file if it doesn't exit
     with open(test_file, 'w'):
         pass
@@ -281,6 +283,7 @@ def test_unix_locks(folder):
             finally:
                 fcntl.flock(f_lock, fcntl.LOCK_UN)
 
+    os.unlink(test_file)
 
 def global_disk_lock(f):
     @functools.wraps(f)
