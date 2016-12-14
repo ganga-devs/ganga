@@ -12,7 +12,7 @@ import errno
 import copy
 import threading
 
-from Ganga.Core.GangaRepository.SessionLock import SessionLockManager, test_unix_locks
+from Ganga.Core.GangaRepository.SessionLock import SessionLockManager, dry_run_unix_locks
 from Ganga.Core.GangaRepository.FixedLock import FixedLockManager
 
 import Ganga.Utility.logging
@@ -231,7 +231,7 @@ class GangaRepositoryLocal(GangaRepository):
         if getConfig('Configuration')['lockingStrategy'] == "UNIX":
             # First test the UNIX locks are working as expected
             try:
-                test_unix_locks(self.lockroot)
+                dry_run_unix_locks(self.lockroot)
             except Exception as err:
                 # Locking has not worked, lets raise an error
                 logger.error("Error: %s" % err)

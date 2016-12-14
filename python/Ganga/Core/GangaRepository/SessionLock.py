@@ -255,7 +255,7 @@ def synchronised(f):
             return f(self, *args, **kwargs)
     return decorated
 
-def test_unix_locks(folder):
+def dry_run_unix_locks(folder):
     """
     This attempts to make a 'sessions/test_lock' file in folder and lock it using unix lock commands
     Args:
