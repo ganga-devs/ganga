@@ -14,13 +14,7 @@ logger = logging.getLogger()
 def test_voms_proxy_life_cycle(gpi):
     from Ganga.GPI import VomsProxy, credential_store
 
-    try:
-        _ = credential_store[VomsProxy()]
-        # There is no auto-detection of a VomsProxy built into Ganga atm
-        # requesting it is expected to fail.
-        assert False
-    except KeyError:
-        pass
+    assert len(credential_store) == 0
 
     cred = credential_store.create(VomsProxy())
     assert cred.is_valid()
