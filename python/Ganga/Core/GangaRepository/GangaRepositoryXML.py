@@ -12,7 +12,7 @@ import errno
 import copy
 import threading
 
-from Ganga.Core.GangaRepository.SessionLock import SessionLockManager
+from Ganga.Core.GangaRepository.SessionLock import SessionLockManager, test_unix_locks
 from Ganga.Core.GangaRepository.FixedLock import FixedLockManager
 
 import Ganga.Utility.logging
@@ -227,11 +227,20 @@ class GangaRepositoryLocal(GangaRepository):
             self.to_file = pickle_to_file
             self.from_file = pickle_from_file
         else:
-            raise RepositoryError(self.repo, "Unknown Repository type: %s" % self.registry.type)
+            raise RepositoryError(self, "Unknown Repository type: %s" % self.registry.type)
         if getConfig('Configuration')['lockingStrategy'] == "UNIX":
+            try:
+                test_unix_locks(self.lockroot)
+            except Exception as err:
+                logger.error("Error: %s" % err)
+                msg="\nUnable to launch due to underlying filesystem not working with unix locks."
+                msg+="Please try launching again with [Configuration]lockingStrategy=FIXED to start Ganga without multiple session support."
+                raise RepositoryError(self, msg)
             self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
-        else:
+        elif getConfig('Configuration')['lockingStrategy'] == "FIXED":
             self.sessionlock = FixedLockManager(self, self.lockroot, self.registry.name)
+        else:
+            raise RepositoryError(self, "Unable to launch due to unknown file-locking Strategy: \"%s\"" % getConfig('Configuration')['lockingStrategy'])
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary
         # of errors

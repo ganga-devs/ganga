@@ -255,6 +255,33 @@ def synchronised(f):
             return f(self, *args, **kwargs)
     return decorated
 
+def test_unix_locks(folder):
+    """
+    This attempts to make a 'sessions/test_lock' file in folder and lock it using unix lock commands
+    Args:
+        folder(str): This is the folder where the lock file will be created for testing
+    """
+
+    test_file = os.path.join(os.path.realpath(folder), 'sessions', 'test_lock')
+    # Create file if it doesn't exit
+    with open(test_file, 'w'):
+        pass
+
+    # Open test lock file
+    with open(test_file) as f_lock:
+        # If lock file is locked, wait until we can lock it and continue
+        while True:
+            try:
+                fcntl.flock(f_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except IOError as e:
+                if e.errno != errno.EAGAIN:
+                    raise
+                time.sleep(0.1)
+            finally:
+                fcntl.flock(f_lock, fcntl.LOCK_UN)
+
+
 def global_disk_lock(f):
     @functools.wraps(f)
     def decorated_global(self, *args, **kwds):

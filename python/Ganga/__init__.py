@@ -121,7 +121,7 @@ conf_config.addOption('ReleaseNotes', True, 'Flag to print out the relevent subs
 conf_config.addOption('gangadir', expandvars(None, '~/gangadir'),
                  'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=Ganga.Utility.Config.expandvars)
 conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
-conf_config.addOption('lockingStrategy', 'UNIX', 'Type of locking strategy which can be used. UNIX or FIXED')
+conf_config.addOption('lockingStrategy', 'UNIX', 'Type of locking strategy which can be used. UNIX or FIXED . default = UNIX')
 conf_config.addOption('workspacetype', 'LocalFilesystem',
                  'Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
 conf_config.addOption('user', getpass.getuser(),
