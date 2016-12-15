@@ -24,9 +24,6 @@ class TestDatasets(GangaUnitTest):
         assert ds.getFullFileNames() == ['LFN:a', 'PFN:b']
         ds.files.append('lfn:c')
         assert isinstance(ds[-1], DiracFile)
-#        d = OutputData(['a', 'b'])
-#        assert isinstance(d.files[0],str)
-#        assert isinstance(d.files[1],str)
 
         # check job assignments
         j = Job()
