@@ -703,7 +703,7 @@ under certain conditions; type license() for details.
                     if not sects is None and not section in sects:
                         should_set = False
                     if should_set:
-                        config = Ganga.Utility.Config.setSessionValue(section, option, val)
+                        config = Ganga.Utility.Config.setUserValue(section, option, val)
             except ConfigError as x:
                 self.exit('command line option error: %s' % x)
 
@@ -750,7 +750,6 @@ under certain conditions; type license() for details.
                 'Cannot modify [System] settings (attempted %s=%s)' % (name, x))
         syscfg.attachUserHandler(deny_modification, None)
         syscfg.attachSessionHandler(deny_modification, None)
-
         Ganga.Utility.Config.setSessionValuesFromFiles(config_files, system_vars)
 
         # set the system variables to the [System] module
