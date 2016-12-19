@@ -467,9 +467,9 @@ class DiracBase(IBackend):
                 return
             try:
                 if isType(dirac_file, DiracFile):
-                    dirac_file.internalCopyTo(targetPath=dirac_file.localDir)
+                    dirac_file.get(targetPath=dirac_file.localDir)
                 else:
-                    dirac_file.internalCopyTo()
+                    dirac_file.get()
                 return dirac_file.lfn
             # should really make the get method throw if doesn't suceed. todo
             except (GangaDiracError, GangaFileError) as e:
