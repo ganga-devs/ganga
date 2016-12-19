@@ -6,14 +6,14 @@ import tempfile
 import pytest
 
 from GangaTest.Framework.utils import write_file
-from Ganga.GPIDev.Base.Proxy import getProxyClass
+from Ganga.GPIDev.Base.Proxy import addProxy
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.monitoring import run_until_completed, run_until_state
 from .CopySplitter import CopySplitter
 
-CopySplitter = getProxyClass(CopySplitter)
+CopySplitter = addProxy(CopySplitter)
 
 
 class TestCustomMerger(GangaUnitTest):
