@@ -466,7 +466,7 @@ class DiracBase(IBackend):
                 return
             try:
                 if isType(dirac_file, DiracFile):
-                    dirac_file.get(targetPath=dirac_file.localDir)
+                    dirac_file.copyTo(targetPath=dirac_file.localDir)
                 else:
                     dirac_file.get()
                 return dirac_file.lfn
