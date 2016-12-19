@@ -14,18 +14,13 @@ import Ganga.GPI
 
 from .gangadoc import adddoc
 
-from Ganga.GPIDev.Base.Proxy import isType, addProxy, getProxyClass
+from Ganga.GPIDev.Base.Proxy import isType, addProxy
 from Ganga.GPIDev.Base.Objects import GangaObject
 from inspect import isclass
 
 def _addToInterface(interface, name, _object):
 
-    if isType(_object, GangaObject):
-        setattr(interface, name, addProxy(_object))
-    elif isclass(_object) and issubclass(_object, GangaObject):
-        setattr(interface, name, getProxyClass(_object))
-    else:
-        setattr(interface, name, _object)
+    setattr(interface, name, addProxy(_object))
 
 def exportToInterface(myInterface, name, _object, doc_section, docstring=None):
     '''
