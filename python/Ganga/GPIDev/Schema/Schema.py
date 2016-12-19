@@ -96,6 +96,8 @@ class Schema(object):
     # datadict: dictionary of properties (schema items) Defaults to '{}'
     # version: the version information
 
+    __slots__ = ('datadict', 'version', '_pluginclass')
+
     def __init__(self, version, datadict=None):
         self.datadict = datadict or {}
         self.version = version
@@ -380,6 +382,8 @@ class Item(object):
                         'doc': '', 'visitable': 1, 'checkset': None, 'filter': None, 'strict_sequence': 1, 'summary_print': None,
                         'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0,
                         'optional': 0, 'category': 'internal', 'typelist': None, 'load_default': 1}
+
+    __slots__ = ('_meta')
 
     def __init__(self):
         super(Item, self).__init__()

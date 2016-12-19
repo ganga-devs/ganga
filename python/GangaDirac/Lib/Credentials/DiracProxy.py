@@ -178,6 +178,6 @@ class DiracProxy(ICredentialRequirement):
             return ''
 
 # A single global check for the DIRAC group setting. This will bail out early and safely during plugin loading.
-if getConfig('defaults_DiracProxy')['group'] is None:
-    raise GangaValueError('DIRAC Proxy `group` is not set. Set this in ~/.gangarc in `[defaults_DiracProxy]/group`')
+#if getConfig('defaults_DiracProxy')['group'] is None:
+#    raise GangaValueError('DIRAC Proxy `group` is not set. Set this in ~/.gangarc in `[defaults_DiracProxy]/group`')
 

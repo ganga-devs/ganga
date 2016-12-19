@@ -324,6 +324,8 @@ valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(val, valTypeList, 
 
 class ProxyDataDescriptor(object):
 
+    __slots__ = ('_name', )
+
     def __init__(self, name):
         """
         Descriptor which sits in fromnt  of raw unproxied objects
@@ -697,6 +699,8 @@ def proxy_wrap(f):
 
 
 class ProxyMethodDescriptor(object):
+
+    __slots__ = ('_name', '_internal_name', '__doc__')
 
     def __init__(self, name, internal_name):
         self._name = name

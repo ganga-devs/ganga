@@ -42,6 +42,8 @@ def void_filter(val, item):
 
 class _ComponentFilterManager(object):
 
+    __slots__ = ('default', '_dict')
+
     def __init__(self):
         # for each category there may be multiple filters registered, the one used being defined
         # in the configuration file in [GPIComponentFilters]

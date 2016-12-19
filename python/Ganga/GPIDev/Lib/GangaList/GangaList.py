@@ -93,6 +93,8 @@ class GangaListIter(object):
 
     """Simple wrapper around the listiterator"""
 
+    __slots__=('it',)
+
     def __init__(self, it):
         self.it = it
 
@@ -118,6 +120,8 @@ class GangaList(GangaObject):
                                      '_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),
                                     })
     _enable_config = 1
+
+    _additional_slots = ['_is_a_ref']
 
     def __init__(self):
         self._is_a_ref = False

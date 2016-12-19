@@ -626,6 +626,9 @@ class ObjectMetaclass(abc.ABCMeta):
 
         attrs_to_add = [ attr for attr, item in this_schema.allItems()]
 
+        if hasattr(cls, '_additional_slots'):
+            attrs_to_add += [_ for _ in cls._additional_slots]
+
         cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject') + tuple(attrs_to_add)
 
         # If a class has not specified a '_name' then default to using the class '__name__'

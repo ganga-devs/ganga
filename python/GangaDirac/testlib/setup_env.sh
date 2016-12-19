@@ -1,1 +1,1 @@
-export GANGA_CONFIG_PATH=GangaDirac/Dirac.ini
+export GANGA_CONFIG_PATH=$PWD/GangaDirac/Dirac.ini

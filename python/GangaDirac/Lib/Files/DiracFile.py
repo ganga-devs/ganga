@@ -64,9 +64,8 @@ class DiracFile(IGangaFile):
     _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove',
                       "replicate", 'put', 'locations', 'location', 'accessURL',
                       '_updateRemoteURLs', 'hasMatchedFiles']
-    _remoteURLs = {}
-    _storedReplicas = {}
-    _have_copied = False
+
+    _additional_slots = ['_have_copied', '_remoteURLs', '_storedReplicas']
 
     def __init__(self, namePattern='', localDir=None, lfn='', remoteDir=None, **kwds):
         """
@@ -82,6 +81,10 @@ class DiracFile(IGangaFile):
             self.localDir = localDir
         if remoteDir is not None:
             self.remoteDir = remoteDir
+
+        self._have_copied = False
+        self._remoteURLs = {}
+        self._storedReplicas = {}
 
     def __setattr__(self, attr, value):
         """

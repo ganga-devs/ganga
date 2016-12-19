@@ -229,6 +229,8 @@ class Job(GangaObject):
 
     default_registry = 'jobs'
 
+    _additional_slots = ['_storedRTHandler', '_storedJobSubConfig', '_storedAppSubConfig', '_storedJobMasterConfig', '_storedAppMasterConfig', '_stored_subjobs_proxy']
+
     # TODO: usage of **kwds may be envisaged at this level to optimize the
     # overriding of values, this must be reviewed
     def __init__(self, prev_job=None, **kwds):
@@ -249,18 +251,11 @@ class Job(GangaObject):
         # Finished initializing 'special' objects which are used in getter methods and alike
         self.time.newjob()  # <-----------NEW: timestamp method
 
-        # These attributes are entirely transitory. They are not copyable or assumed picklable
-        # These are created to hold the result of calling prepare/configure on the application/RTHandler
-        # and are to make life easier in passing around objects
-        self._storedRTHandler = None
-        self._storedJobSubConfig = None
-        self._storedAppSubConfig = None
-        self._storedJobMasterConfig = None
-        self._storedAppMasterConfig = None
+        #logger.debug("__init__")
 
-        logger.debug("__init__")
-
-        self._stored_subjobs_proxy = None
+        for i in Job._additional_slots:
+            if not hasattr(self, i):
+                setattr(self, i, None)
 
         # FINISH INIT OF SELF
 

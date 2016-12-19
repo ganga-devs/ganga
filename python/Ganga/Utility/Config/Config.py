@@ -418,6 +418,8 @@ class PackageConfig(object):
 
     """
 
+    __slots__ = ('name', 'options', 'docstring', 'hidden', 'cfile', '_user_handlers', '_session_handlers', 'is_open', '_config_made', 'hasModified', '__dict__')
+
     def __init__(self, name, docstring, **meta):
         """ Arguments:
          - name may not contain blanks and should be a valid python identifier otherwise ValueError is raised

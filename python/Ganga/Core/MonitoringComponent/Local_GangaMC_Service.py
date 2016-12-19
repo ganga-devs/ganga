@@ -41,6 +41,8 @@ global_start_time = None
 
 class JobAction(object):
 
+    __slots__ = ('function', 'args', 'kwargs', 'success', 'callback_Success', 'callback_Failure', 'thread', 'description')
+
     def __init__(self, function, args=(), kwargs={},
                  success=(True, ),
                  callback_Success=lambda: None,
@@ -88,6 +90,8 @@ def checkHeartBeat(global_count):
             global_count+=1
 
 class MonitoringWorkerThread(GangaThread):
+
+    __slots__ = ('_currently_running_command', '_running_cmd', '_running_args', '_thread_name')
 
     def __init__(self, name):
         GangaThread.__init__(self, name)
@@ -248,6 +252,8 @@ if config['autostart_monThreads'] is True:
 # is a _DictEntry object.
 class _DictEntry(object):
 
+    __slots__ = ('backendObj', 'jobSet', 'entryLock', 'timeoutCounterMax', 'timeoutCounter', 'timeLastUpdate')
+
     def __init__(self, backendObj, jobSet, entryLock, timeoutCounterMax):
         self.backendObj = backendObj
         self.jobSet = jobSet
@@ -291,6 +297,8 @@ class UpdateDict(object):
     This serves as the Update Table. Is is meant to be used 
     by wrapping it as a SynchronisedObject so as to ensure thread safety.
     """
+
+    __slots__ = ('table',)
 
     def __init__(self):
         self.table = {}
@@ -386,6 +394,8 @@ class UpdateDict(object):
 
 class CallbackHookEntry(object):
 
+    __slots__ = ('argDict', 'enabled', 'timeout', '_lastRun')
+
     def __init__(self, argDict, enabled=True, timeout=0):
         self.argDict = argDict
         self.enabled = enabled
@@ -471,6 +481,8 @@ class JobRegistry_Monitor(GangaThread):
     uPollRate = 1.
     minPollRate = 1.
     global_count = 0
+
+    __slots__ = ('registry_slice', '__sleepCounter', '__updateTimeStamp', 'progressCallback', 'callbackHookDict', 'clientCallbackDict', 'alive', 'enabled', 'steps', 'activeBackends', 'updateJobStatus', 'errors', 'updateDict_ts', '__mainLoopCond', '__cleanUpEvent', '__monStepsTerminatedEvent', 'stopIter', '_runningNow')
 
     def __init__(self, registry_slice):
         GangaThread.__init__(self, name="JobRegistry_Monitor")

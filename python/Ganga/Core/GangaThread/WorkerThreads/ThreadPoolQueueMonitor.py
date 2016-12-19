@@ -21,6 +21,8 @@ class ThreadPoolQueueMonitor(object):
     the getConfig('Queues')['NumWorkerThreads'] config option.
     '''
 
+    __slots__ = ('_user_threadpool', '_monitoring_threadpool', '_frozen', '_shutdown')
+
     def __init__(self, user_threadpool=None, monitoring_threadpool=None):
 
         if user_threadpool is None:

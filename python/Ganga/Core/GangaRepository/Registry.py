@@ -117,6 +117,8 @@ class IncompleteObject(GangaObject):
 
     _exportmethods = ['reload', 'remove', '__repr__']
 
+    _additional_slots = ('registry', 'id')
+
     def __init__(self, registry, this_id):
         """
         This constructs an object which is placed into the objects dict when a repo fails to load an object due to some error
@@ -207,6 +209,9 @@ class RegistryFlusher(threading.Thread):
     automatic flushes on a fixed schedule so that information is not
     lost if Ganga is shut down abruptly.
     """
+
+    __slots__ = ('registry', '_stop')
+
     def __init__(self, registry, *args, **kwargs):
         """
         This inits the RegistryFlusher and makes use of threading events
@@ -271,6 +276,8 @@ class Registry(object):
     """Ganga Registry
     Base class providing a dict-like locked and lazy-loading interface to a Ganga repository
     """
+
+    __slots__ = ('name', 'doc', '_hasStarted', '_needs_metadata', 'metadata', '_read_lock', '_flush_lock', '_parent', 'repository', '_objects', '_incomplete_objects', 'flush_thread', 'type', 'location')
 
     def __init__(self, name, doc):
         """Registry constructor, giving public name and documentation

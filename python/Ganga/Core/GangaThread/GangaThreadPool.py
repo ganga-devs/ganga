@@ -25,11 +25,12 @@ class GangaThreadPool(object):
     getInstance = SingletonHelper()
     shutdown_policy = 'interactive'
 
+    __slots__ = ('__threads', 'SHUTDOWN_TIMEOUT', '_instance')
+
     def __init__(self):
 
-        if not GangaThreadPool._instance == None:
-            raise RuntimeError(
-                'Only one instance of GangaThreadPool is allowed!')
+        if not GangaThreadPool._instance is None:
+            raise RuntimeError('Only one instance of GangaThreadPool is allowed!')
 
         GangaThreadPool._instance = self
 
@@ -174,7 +175,7 @@ class GangaThreadPool(object):
             logger.debug('Shutdown forced. %d non-critical background thread(s) still running: %s', len(non_critical_thread_ids), non_critical_thread_ids)
 
         # set singleton instance to None
-        self._instance = None
+        GangaThreadPool._instance = None
         for i in self.__threads:
             del i
         self.__threads = []

@@ -77,6 +77,8 @@ class ANSIMarkup(object):
     """ Apply ANSI colouring codes.
     """
 
+    __slots__ = ('default_code',)
+
     def __init__(self, default_code=None):
         if default_code is None:
             default_code = Effects().normal
@@ -92,6 +94,8 @@ class NoMarkup(object):
 
     """ Leave text unchanged.
     """
+
+    __slots__ = tuple()
 
     def __init__(self, default_code=None):
         pass
@@ -109,6 +113,8 @@ class Background(object):
 
        In all cases, the text foregreound colour is the terminal
        default (usually black or white)."""
+
+    __slots__ = ('black', 'red', 'green', 'orange', 'blue', 'magenta', 'cyan', 'white')
 
     def __init__(self):
         """Set ANSI codes for defined colours"""
@@ -137,6 +143,8 @@ class Effects(object):
 
        All effects imply terminal defaults for the colours."""
 
+    __slots__ = ('normal', 'bold', 'underline', 'reverse', 'nobold', 'nounderline', 'noreverse')
+
     def __init__(self):
         """Set ANSI codes for defined effects"""
         _base = '\033[%sm'
@@ -160,6 +168,8 @@ class Foreground(object):
        boldmagenta, boldred, boldwhite, boldyellow.
 
        For good visibility, the bold colours are better."""
+
+    __slots__ = ('normal', 'black', 'red', 'green', 'orange', 'blue', 'magenta', 'cyan', 'white', 'boldgrey', 'boldred', 'boldgreen', 'boldyellow', 'boldblue', 'boldmagenta', 'boldcyan', 'boldwhite')
 
     def __init__(self):
         """Set ANSI codes for defined colours"""

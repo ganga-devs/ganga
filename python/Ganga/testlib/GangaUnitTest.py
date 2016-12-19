@@ -97,7 +97,8 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
         ('Configuration', 'UsageMonitoringMSG', False),  # Turn off spyware
         ('TestingFramework', 'ReleaseTesting', True),
         ('Queues', 'NumWorkerThreads', 2),
-    ]
+        ('defaults_DiracProxy', 'group', 'gridpp_user'),
+        ]
 
     # FIXME Should we need to add the ability to load from a custom .ini file
     # to configure tests without editting this?

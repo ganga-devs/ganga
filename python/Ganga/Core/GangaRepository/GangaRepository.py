@@ -27,6 +27,8 @@ class GangaRepository(object):
         The base class implements a transient Ganga Repository for testing purposes.
     """
 
+    __slots__ = ('registry', 'objects', 'incomplete_objects', '_found_classes')
+
     def __init__(self, registry, locking=True):
         """GangaRepository constructor. Initialization should be done in startup()"""
         super(GangaRepository, self).__init__()
@@ -222,6 +224,8 @@ class GangaRepositoryTransient(object):
     """This class implements a transient Ganga Repository for testing purposes.
     """
 # Functions that should be overridden and implemented by derived classes.
+
+    __slots__ = ('_next_id')
 
     def startup(self):
         """

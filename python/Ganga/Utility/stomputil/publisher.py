@@ -39,6 +39,8 @@ except (Exception, ImportError) as err:
 class LoggerListener(stomp_listener):
     """Connection listener which logs STOMP events."""
 
+    __slots__ = ('_logger', '_log_frame')
+
     def __init__(self, logger):
         self._logger = logger 
 
@@ -104,6 +106,8 @@ def createPublisher(T, server, port, user='', password='', logger=None,
 
     class AsyncStompPublisher(T):
         """Asynchronous asynchronous publisher for sending messages to an MSG server."""
+
+        __slots__ = ('__should_stop', '__sending', '_cx', '_logger', 'idle_timeout', 'backoff_initial', 'backoff_multiplier', 'backoff_max', '_message_queue', '__finalized')
 
         def __init__(self):
             T.__init__(self, name=('AsyncStompPublisher_%s_%s:%s' % (_thread_id, server, port)))

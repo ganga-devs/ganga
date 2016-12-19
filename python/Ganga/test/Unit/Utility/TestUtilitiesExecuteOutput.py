@@ -29,9 +29,9 @@ def test_execute_timeouts():
     # Test timeout doesn't delay normal command
     assert timeit.timeit(
         '''
-        import os
-        from Ganga.Utility.execute import execute
-        execute('import os\\noutput(os.getcwd())',timeout=10, cwd=os.getcwd(), shell=False)
+import os
+from Ganga.Utility.execute import execute
+execute('import os\\noutput(os.getcwd())',timeout=10, cwd=os.getcwd(), shell=False)
         ''', number=1) < 11
 
 

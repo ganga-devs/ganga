@@ -24,6 +24,7 @@ from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.Utility.files import expandfilename
+from Ganga.Core.exceptions import GangaException
 
 import Ganga.Utility.Config
 
@@ -51,6 +52,8 @@ class MassStorageFile(IGangaFile):
     _category = 'gangafiles'
     _name = "MassStorageFile"
     _exportmethods = ["location", "get", "put", "setLocation", "remove", "accessURL"]
+
+    _additional_slots = ['shell']
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """

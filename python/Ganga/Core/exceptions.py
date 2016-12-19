@@ -13,6 +13,8 @@ class GangaException(Exception):
     """
     logger = None
 
+    __slots__ = ('kwds')
+
     def __init__(self, *args, **kwds):
         super(GangaException, self).__init__(args)
         Exception.__init__(self, *args)
@@ -143,10 +145,6 @@ class GangaValueError(ValueError, GangaException):
     def __init__(self, *a, **k):
         GangaException.__init__(self, *a, **k)
         ValueError.__init__(self, *a, **k)
-
-
-class GangaIOError(IOError, GangaException):
-    pass
 
 
 class SplitterError(GangaException):
