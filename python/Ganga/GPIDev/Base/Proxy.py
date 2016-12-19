@@ -270,6 +270,8 @@ def addProxy(obj):
                 return getattr(obj, proxyObject)
             else:
                 return GPIProxyObjectFactory(obj)
+    elif isclass(obj) and issubclass(obj, GangaObject):
+        return getProxyClass(obj)
     return obj
 
 
