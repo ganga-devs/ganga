@@ -126,7 +126,9 @@ def for_each(func, *iterables, **kwargs):
 def getAccessURLs(lfns, defaultSE = '', protocol = ''):
     """
     This is a function to get a list of the accessURLs
-    for a provided list of lfns.
+    for a provided list of lfns. If no defaultSE is provided then one is chosen at random
+    from those with replicase. The protocol allows you the option of specifying xroot or root (or any other available)
+    protocols for the file accessURL. If left blank the default protocol for the SE will be used by Dirac.
     """
     lfnList = []
     # Has a list of strings, which are probably lfns been given 
