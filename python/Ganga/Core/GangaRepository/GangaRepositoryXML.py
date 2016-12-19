@@ -12,7 +12,8 @@ import errno
 import copy
 import threading
 
-from Ganga.Core.GangaRepository.SessionLock import SessionLockManager
+from Ganga.Core.GangaRepository.SessionLock import SessionLockManager, dry_run_unix_locks
+from Ganga.Core.GangaRepository.FixedLock import FixedLockManager
 
 import Ganga.Utility.logging
 
@@ -27,6 +28,8 @@ from Ganga.GPIDev.Base.Objects import Node
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+
+from Ganga.Utility.Config import getConfig
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -224,8 +227,24 @@ class GangaRepositoryLocal(GangaRepository):
             self.to_file = pickle_to_file
             self.from_file = pickle_from_file
         else:
-            raise RepositoryError(self.repo, "Unknown Repository type: %s" % self.registry.type)
-        self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
+            raise RepositoryError(self, "Unknown Repository type: %s" % self.registry.type)
+        if getConfig('Configuration')['lockingStrategy'] == "UNIX":
+            # First test the UNIX locks are working as expected
+            try:
+                dry_run_unix_locks(self.lockroot)
+            except Exception as err:
+                # Locking has not worked, lets raise an error
+                logger.error("Error: %s" % err)
+                msg="\n\nUnable to launch due to underlying filesystem not working with unix locks."
+                msg+="Please try launching again with [Configuration]lockingStrategy=FIXED to start Ganga without multiple session support."
+                raise RepositoryError(self, msg)
+
+            # Locks passed test so lets continue
+            self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
+        elif getConfig('Configuration')['lockingStrategy'] == "FIXED":
+            self.sessionlock = FixedLockManager(self, self.lockroot, self.registry.name)
+        else:
+            raise RepositoryError(self, "Unable to launch due to unknown file-locking Strategy: \"%s\"" % getConfig('Configuration')['lockingStrategy'])
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary
         # of errors

@@ -1,0 +1,49 @@
+**************************************************************************************************************
+6.3.0 (2016/12/01)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+*  Profiled and improved performance in GangaObject bigly.
+*  Some code cleanups.
+*  Added SharedFile file type for using large locally accessible files which doesn't copy a file as much as LocalFile.
+*  Added many integration tests for MassStorageFile, SharedFile and LocalFile.
+*  Added new exception types inheriting from GangaException to make reasons for the exceptions clearer.
+*  Bugfix for GangaDataset and batch jobs #871
+*  Improvements to the XML loading #839
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+*  Added a universal check for all objects returned from calls to Dirac.
+*  Added GangaDiracError exception type which is thrown when a command timesout/fails.
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+*  Cleaned up code for SplitByFiles, added more documentation.
+*  Added new gridProxy object for backwards compatibility. This a wrapper around the new `credential_store`.
+*  Default DiracProxy is constructed to be for `lhcb_user`.
+*  Added function getAccessURLs to GPI to return a list of accessURLs for a provided list of DiracFiles or LFNs (strings).
+Can access from the Dirac backend job.backend.getOutputDataAccessURLs(). #801
+* Bugfix for GaudiExec. Now it checks that the SE is writable before attempting to upload the tarballs #852
+* Update default LHCbDirac to v8r4p4
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/GPIDev/Credentials
+--------------------------------------------------------------------------------------------------------------
+*  Integrated new credentials managment framework into Core.
+*  Added AfsToken and VomsProxy for AFS and LCG credential managment.
+
+*  ***All forwarded kerberos tokens are expected to be renewable. If ganga hangs after `kinit -R` check your config!***
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac/Lib/Credentials
+--------------------------------------------------------------------------------------------------------------
+*  Added DiracProxy to allow for managing multiple proxies.
+*  New grid proxies can be constructed via `credential_store.create(DiracProxy())`.
+*  New grid proxies can be destoryed via `credential_store.destroy(DiracProxy())`.
+
+*  Default DIRAC proxy group is now managed via `[defaults_DiracProxy] group = myvo_user` in your .gangarc.
+
+**************************************************************************************************************
