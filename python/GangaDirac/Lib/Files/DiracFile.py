@@ -61,7 +61,7 @@ class DiracFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "DiracFile"
-    _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove',
+    _exportmethods = ["internalCopyTo", "getMetadata", "getReplicas", 'getSubFiles', 'remove',
                       "replicate", 'put', 'locations', 'location', 'accessURL',
                       '_updateRemoteURLs', 'hasMatchedFiles']
     _remoteURLs = {}
