@@ -466,6 +466,7 @@ class DiracBase(IBackend):
                 return
             try:
                 dirac_file.get()
+                return dirac_file.lfn
             # should really make the get method throw if doesn't suceed. todo
             except (GangaDiracError, GangaFileError) as e:
                 logger.warning(e)
