@@ -9,7 +9,6 @@ userValues instead of sessionValues so they take precedence. #896
 * Use userValues for the testing configs. #913
 * Fix for loading Dirac jobs created with old ganga versions in 6.3 #901
 
-
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaDirac
 --------------------------------------------------------------------------------------------------------------
@@ -24,6 +23,5 @@ ganga/python/GangaLHCb
 * Change to GaudiExecPrepare. If the folder for the default project already exists now an exception is raised
 instead of continuing. #888
 * Fix for old style applications with the newest LbScripts v9r0. #891
-
 
 **************************************************************************************************************
