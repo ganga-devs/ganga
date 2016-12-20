@@ -359,35 +359,44 @@ class Loader(object):
                 aname = self.stack.pop()
                 obj = self.stack[-1]
                 # update the object's attribute
-                obj.setSchemaAttribute(aname, value)
+                try:
+                    obj.setSchemaAttribute(aname, value)
+                except:
+                    raise GangaException("ERROR in loading XML, failed to set attribute %s for class %s" % (aname, _getName(obj)))
                 #logger.info("Setting: %s = %s" % (aname, value))
 
             # when </value> is seen the value_construct buffer (CDATA) should
             # be a python expression (e.g. quoted string)
             if name == 'value':
-                # unescape the special characters
-                s = unescape(self.value_construct)
-                #logger.debug('string value: %s',s)
-                if s not in _cached_eval_strings:
-                    # This is ugly and classes which use this are bad, but this needs to be fixed in another PR
-                    # TODO Make the scope of objects a lot better than whatever is in the config
-                    # This is a dictionary constructed from eval-ing things in the Config. Why does should it do this?
-                    # Anyway, lets save the result for speed
-                    _cached_eval_strings[s] = eval(s, config_scope)
-                eval_str = _cached_eval_strings[s]
-                if not isinstance(eval_str, str):
-                    val = copy.deepcopy(eval_str)
-                else:
-                    val = eval_str
-                #logger.debug('evaled value: %s type=%s',repr(val),type(val))
-                self.stack.append(val)
-                self.value_construct = None
+                try:
+                    # unescape the special characters
+                    s = unescape(self.value_construct)
+                    #logger.debug('string value: %s',s)
+                    if s not in _cached_eval_strings:
+                        # This is ugly and classes which use this are bad, but this needs to be fixed in another PR
+                        # TODO Make the scope of objects a lot better than whatever is in the config
+                        # This is a dictionary constructed from eval-ing things in the Config. Why does should it do this?
+                        # Anyway, lets save the result for speed
+                        _cached_eval_strings[s] = eval(s, config_scope)
+                    eval_str = _cached_eval_strings[s]
+                    if not isinstance(eval_str, str):
+                        val = copy.deepcopy(eval_str)
+                    else:
+                        val = eval_str
+                    #logger.debug('evaled value: %s type=%s',repr(val),type(val))
+                    self.stack.append(val)
+                    self.value_construct = None
+                except:
+                    raise GangaException("ERROR in loading XML, failed to correctly parse attribute value: \'%s\'" % str(self.value_construct))
 
             # when </sequence> is seen we remove last items from stack (as indicated by sequence_start)
             # we make a GangaList from these items and put it on stack
             if name == 'sequence':
                 pos = self.sequence_start.pop()
-                alist = makeGangaList(self.stack[pos:])
+                try:
+                    alist = makeGangaList(self.stack[pos:])
+                except:
+                    raise GangaException("ERROR in loading XML, failed to construct a sequence(list) properly")
                 del self.stack[pos:]
                 self.stack.append(alist)
 
@@ -402,8 +411,10 @@ class Loader(object):
                     for attr, item in cls._schema.allItems():
                         if attr not in obj._data:
                             if item.getProperties()['getter'] is None:
-                                logger.info("Failed to find: %s::%s" % (obj.__class__.__name__, attr))
-                                setattr(obj, attr, self._schema.getDefaultValue(attr))
+                                try:
+                                    setattr(obj, attr, self._schema.getDefaultValue(attr))
+                                except:
+                                    raise GangaException("ERROR in loading XML, failed to set default attribute %s for class %s" % (attr, _getName(obj)))
                 pass
 
         def char_data(data):
