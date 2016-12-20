@@ -137,7 +137,7 @@ class DiracFile(IGangaFile):
 
     def _setLFNnamePattern(self, lfn="", namePattern=""):
 
-        if self.defaultSE != "":
+        if hasattr(self, 'defaultSE') and self.defaultSE != "":
             ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
             # Check for /lhcb/some/path or /gridpp/some/path
             if namePattern.split(os.pathsep)[0] == self.defaultSE \
