@@ -4,10 +4,11 @@
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
-* Fix for the configuratios. Options in the gangarc and specified in the command line are now set as 
+* Fix for the configurations. Options in the gangarc and specified in the command line are now set as 
 userValues instead of sessionValues so they take precedence. #896
 * Use userValues for the testing configs. #913
 * Fixed bug when loading Dirac jobs created with old ganga versions in 6.3.0 #901
+* Alterations to the startup code and a new test for the startup. #849
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaDirac
