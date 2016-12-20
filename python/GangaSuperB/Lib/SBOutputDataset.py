@@ -2,8 +2,8 @@
 
 import os
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.Core.exceptions import GangaException
+from Ganga.Core.exceptions import (GangaException,
+                                   ApplicationConfigurationError)
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Lib.File import File
