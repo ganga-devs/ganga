@@ -17,7 +17,7 @@ logger = getLogger()
 class SJXLIterator(object):
     """Class for iterating over SJXMLList, potentially very unstable, dangerous and only supports looping forwards ever"""
 
-    __slots__ = ('_myCount', '_mySubJob')
+    __slots__ = ('_myCount', '_mySubJobs')
 
     def __init__(self, theseSubJobs):
         """ Iterator constructor
