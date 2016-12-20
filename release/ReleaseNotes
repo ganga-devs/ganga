@@ -4,16 +4,16 @@
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
-* Fix for the configurations. Options in the gangarc and specified in the command line are now set as 
+* Fix for the configuratios. Options in the gangarc and specified in the command line are now set as 
 userValues instead of sessionValues so they take precedence. #896
 * Use userValues for the testing configs. #913
-* Fix for loading Dirac jobs created with old ganga versions in 6.3 #901
+* Fixed bug when loading Dirac jobs created with old ganga versions in 6.3.0 #901
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaDirac
 --------------------------------------------------------------------------------------------------------------
 * Added option to accessURL function to request a specific protocol for the accessURL. #754
-* Fix for the DiracFile schema #907
+* Fix for very old DiracFile objects not loading correctly #907
 * Fix for getOutputData with Dirac backend. #912
 
 --------------------------------------------------------------------------------------------------------------
