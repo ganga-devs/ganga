@@ -465,10 +465,7 @@ class DiracBase(IBackend):
             if os.path.exists(os.path.join(dirac_file.localDir, os.path.basename(dirac_file.lfn))) and not force:
                 return
             try:
-                if isType(dirac_file, DiracFile):
-                    dirac_file.get(localPath=dirac_file.localDir)
-                else:
-                    dirac_file.get()
+                dirac_file.get()
                 return dirac_file.lfn
             # should really make the get method throw if doesn't suceed. todo
             except (GangaDiracError, GangaFileError) as e:

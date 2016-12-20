@@ -467,10 +467,11 @@ class DiracFile(IGangaFile):
             return LFNs
 
     @require_credential
-    def accessURL(self, thisSE=''):
+    def accessURL(self, thisSE='', protocol=''):
         """
         Attempt to find an accessURL which corresponds to the specified SE. If no SE is specified then
-        return a random one from all the replicas. 
+        return a random one from all the replicas. Also use the specified protocol - if none then use 
+        the default. 
         """
         from GangaDirac.Lib.Backends.DiracUtils import getAccessURLs
         lfns = []
@@ -479,7 +480,7 @@ class DiracFile(IGangaFile):
         else:
             for i in self.subfiles:
                 lfns.append(i.lfn)
-        return getAccessURLs(lfns, thisSE)
+        return getAccessURLs(lfns, thisSE, protocol)
 
     @require_credential
     def internalCopyTo(self, targetPath):
