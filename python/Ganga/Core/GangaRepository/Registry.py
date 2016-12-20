@@ -3,8 +3,9 @@ from __future__ import division
 import functools
 from Ganga.Utility.logging import getLogger
 
-from Ganga.Core.exceptions import GangaException
-from Ganga.Core.exceptions import InaccessibleObjectError, RepositoryError
+from Ganga.Core.exceptions import (GangaException,
+                                   InaccessibleObjectError,
+                                   RepositoryError)
 
 import time
 import threading
