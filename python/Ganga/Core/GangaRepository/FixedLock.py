@@ -117,6 +117,8 @@ class FixedLockManager(object):
     def cnt_read(self):
         """Reads the counter file.
         """
+        if not os.path.exists(self.cntfn):
+            self.cnt_write()
         with open(self.cntfn) as fd:
             # 100 bytes should be enough for any ID. Can raise ValueErrorr
             _output = int(fd.readline())
