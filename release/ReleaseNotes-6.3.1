@@ -1,0 +1,28 @@
+**************************************************************************************************************
+6.3.1 (2016/12/20)
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fix for the configurations. Options in the gangarc and specified in the command line are now set as 
+userValues instead of sessionValues so they take precedence. #896
+* Use userValues for the testing configs. #913
+* Fixed bug when loading Dirac jobs created with old ganga versions in 6.3.0 #901
+* Alterations to the startup code and a new test for the startup. #849
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Added option to accessURL function to request a specific protocol for the accessURL. #754
+* Fix for very old DiracFile objects not loading correctly #907
+* Fix for getOutputData with Dirac backend. #912
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Fix to LHCbDataset to be able to pass the full path of LocalFiles for inputdata. #881
+* Change to GaudiExecPrepare. If the folder for the default project already exists now an exception is raised
+instead of continuing. #888
+* Fix for old style applications with the newest LbScripts v9r0. #891
+
+**************************************************************************************************************
