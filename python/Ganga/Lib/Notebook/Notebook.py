@@ -1,129 +1,129 @@
-# ##########################################################################
-# # Ganga Project. http://cern.ch/ganga
-# #
-# # $Id: Notebook.py,v 1.1 $
-# ##########################################################################
+##########################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: Notebook.py,v 1.1 $
+##########################################################################
 
-# from os import path
-# import inspect
-# import uuid
+from os import path
+import inspect
+import uuid
 
-# from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
-# from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-# from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-# from Ganga.GPIDev.Lib.File import FileUtils
-# from Ganga.GPIDev.Lib.File import FileBuffer
-# from Ganga.GPIDev.Lib.File import ShareDir
-# from Ganga.Core import ApplicationPrepareError
-# from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-# from Ganga.Utility.logging import getLogger
-# from Ganga.GPIDev.Base.Proxy import getName
+from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
+from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from Ganga.GPIDev.Lib.File import FileUtils
+from Ganga.GPIDev.Lib.File import FileBuffer
+from Ganga.GPIDev.Lib.File import ShareDir
+from Ganga.Core import ApplicationPrepareError
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.Utility.logging import getLogger
+from Ganga.GPIDev.Base.Proxy import getName
 
 
-# logger = getLogger()
+logger = getLogger()
 
-# class Notebook(IPrepareApp):
+class Notebook(IPrepareApp):
 
-#     """Notebook application -- execute Jupyter notebooks.
+    """Notebook application -- execute Jupyter notebooks.
 
-#     All cells in the notebooks given as inputfiles will be evaluated 
-#     and the results returned in the same notebooks.
+    All cells in the notebooks given as inputfiles will be evaluated 
+    and the results returned in the same notebooks.
 
-#     A simple example is
+    A simple example is
 
-#     app = Notebook()
-#     infiles = [LocalFile('/abc/test.ipynb')]
-#     outfiles = [LocalFile('test.ipynb')]
-#     j = Job(application=app, inputfiles=files, backend=Local())
-#     j.submit()
+    app = Notebook()
+    infiles = [LocalFile('/abc/test.ipynb')]
+    outfiles = [LocalFile('test.ipynb')]
+    j = Job(application=app, inputfiles=files, backend=Local())
+    j.submit()
 
-#     The input can come from any GangaFile type supported and the same
-#     is the case for the output.
+    The input can come from any GangaFile type supported and the same
+    is the case for the output.
 
-#     All inputfiles matching the regular expressions (default all
-#     files ending in .ipynb) given are executed. Other files will
-#     simply be unpacked and available.
+    All inputfiles matching the regular expressions (default all
+    files ending in .ipynb) given are executed. Other files will
+    simply be unpacked and available.
 
-#     """
-#     _schema = Schema(Version(1, 0), {
-#         'version': SimpleItem(preparable=1, defvalue=None, typelist=[None, int], doc="Version of the notebook. If None, it will be assumed that it is the latest one."),
-#         'timeout': SimpleItem(preparable=1, defvalue=None, typelist=[None, int], doc="Timeout in seconds for executing a notebook. If None, the default value will be taken."),
-#         'kernel': SimpleItem(preparable=1, defvalue='python2', doc="The kernel to use for the notebook execution. Depending on configuration, python3, Root and R might be available."),
-#         'regexp': SimpleItem(preparable=1, defvalue=['.+\.ipynb$'], typelist=["str"], sequence=1, strict_sequence=0, doc="Regular expression for the inputfiles to match for executing."),
-#        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-#         'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes')
-#     })
-#     _category = 'applications'
-#     _name = 'Notebook'
-#     _exportmethods = ['prepare', 'unprepare']
+    """
+    _schema = Schema(Version(1, 0), {
+        'version': SimpleItem(preparable=1, defvalue=None, typelist=[None, int], doc="Version of the notebook. If None, it will be assumed that it is the latest one."),
+        'timeout': SimpleItem(preparable=1, defvalue=None, typelist=[None, int], doc="Timeout in seconds for executing a notebook. If None, the default value will be taken."),
+        'kernel': SimpleItem(preparable=1, defvalue='python2', doc="The kernel to use for the notebook execution. Depending on configuration, python3, Root and R might be available."),
+        'regexp': SimpleItem(preparable=1, defvalue=['.+\.ipynb$'], typelist=["str"], sequence=1, strict_sequence=0, doc="Regular expression for the inputfiles to match for executing."),
+       'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'hash': SimpleItem(defvalue=None, typelist=[None, str], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes')
+    })
+    _category = 'applications'
+    _name = 'Notebook'
+    _exportmethods = ['prepare', 'unprepare']
 
-#     def __init__(self):
-#         super(Notebook, self).__init__()
+    def __init__(self):
+        super(Notebook, self).__init__()
 
-#     def templatelocation(self):
-#         """Provide name of template file with absolute path"""
-#         dir = path.dirname(path.abspath(inspect.getfile(inspect.currentframe())))
-#         return path.join(dir, 'wrapperNotebookTemplate.py.template')
-                                                       
-#     def wrapper(self, regexp, version, timeout, kernel):
-#         """Write a wrapper Python script that executes the notebooks"""
-#         wrapperscript = FileUtils.loadScript(self.templatelocation(), '')
+    def templatelocation(self):
+        """Provide name of template file with absolute path"""
+        dir = path.dirname(path.abspath(inspect.getfile(inspect.currentframe())))
+        return path.join(dir, 'wrapperNotebookTemplate.py.template')
+                                                     
+    def wrapper(self, regexp, version, timeout, kernel):
+        """Write a wrapper Python script that executes the notebooks"""
+        wrapperscript = FileUtils.loadScript(self.templatelocation(), '')
 
-#         wrapperscript = wrapperscript.replace('###NBFILES###', str(regexp))
-#         wrapperscript = wrapperscript.replace('###VERSION###', str(version))
-#         wrapperscript = wrapperscript.replace('###TIMEOUT###', str(timeout))
-#         wrapperscript = wrapperscript.replace('###KERNEL###', str(kernel))
-#         wrapperscript = wrapperscript.replace('###UUID###', str(uuid.uuid4()))
+        wrapperscript = wrapperscript.replace('###NBFILES###', str(regexp))
+        wrapperscript = wrapperscript.replace('###VERSION###', str(version))
+        wrapperscript = wrapperscript.replace('###TIMEOUT###', str(timeout))
+        wrapperscript = wrapperscript.replace('###KERNEL###', str(kernel))
+        wrapperscript = wrapperscript.replace('###UUID###', str(uuid.uuid4()))
 
-#         logger.debug('Script to run on worker node\n' + wrapperscript)
-#         scriptName = "notebook_wrapper_generated.py"
-#         runScript = FileBuffer(scriptName, wrapperscript, executable=1)
+        logger.debug('Script to run on worker node\n' + wrapperscript)
+        scriptName = "notebook_wrapper_generated.py"
+        runScript = FileBuffer(scriptName, wrapperscript, executable=1)
 
-#         return runScript
-        
-#     def unprepare(self, force=False):
-#         """
-#         Revert a Notebook application back to its unprepared state.
-#         """
-#         logger.debug('Running unprepare in Notebook app')
-#         if self.is_prepared is not None:
-#             self.decrementShareCounter(self.is_prepared.name)
-#             self.is_prepared = None
-#         self.hash = None
+        return runScript
+      
+    def unprepare(self, force=False):
+        """
+        Revert a Notebook application back to its unprepared state.
+        """
+        logger.debug('Running unprepare in Notebook app')
+        if self.is_prepared is not None:
+            self.decrementShareCounter(self.is_prepared.name)
+            self.is_prepared = None
+        self.hash = None
 
-#     def prepare(self, force=False):
-#         """
-#         This writes the wrapper script for the Notebook application.
+    def prepare(self, force=False):
+        """
+        This writes the wrapper script for the Notebook application.
 
-#         """
-#         if force:
-#             self.unprepare()
-        
-#         if (self.is_prepared is not None):
-#             raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
+        """
+        if force:
+            self.unprepare()
+      
+        if (self.is_prepared is not None):
+            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
 
-#         self.configure(self)
-#         logger.info('Preparing %s application.' % getName(self))
-#         self.is_prepared = ShareDir()
-#         logger.info('Created shared directory: %s' % (self.is_prepared.name))
-        
-#         # Prevent orphaned shared directories
-#         try:
-#             self.checkPreparedHasParent(self)
+        self.configure(self)
+        logger.info('Preparing %s application.' % getName(self))
+        self.is_prepared = ShareDir()
+        logger.info('Created shared directory: %s' % (self.is_prepared.name))
+      
+        # Prevent orphaned shared directories
+        try:
+            self.checkPreparedHasParent(self)
 
-#             script = self.wrapper(self.regexp,self.version, self.timeout, self.kernel)
-#             script.create(path.join(self.getSharedPath(),script.name))
+            script = self.wrapper(self.regexp,self.version, self.timeout, self.kernel)
+            script.create(path.join(self.getSharedPath(),script.name))
 
-#             self.post_prepare()
+            self.post_prepare()
 
-#         except Exception as err:
-#             self.unprepare()
-#             raise
+        except Exception as err:
+            self.unprepare()
+            raise
 
-#         return 1
+        return 1
 
-#     def configure(self, masterappconfig):
-#         return (None, None)
+    def configure(self, masterappconfig):
+        return (None, None)
 
 
 
