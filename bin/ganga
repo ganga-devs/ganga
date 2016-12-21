@@ -41,7 +41,8 @@ del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 from Ganga.Core import GangaException
-from Ganga.Runtime import setupGanga
+import Ganga.Runtime
+Ganga.Runtime._prog = None
 import sys
 
 def log(level, err):
@@ -57,11 +58,11 @@ def log(level, err):
 
 try:
     # Import GPI and run Ganga
-    from Ganga.GPI import *
-    setupGanga()
-    from Ganga.Runtime import _prog
-    _prog.run()
+    Ganga.Runtime.setupGanga()
+    from Ganga import GPI
+    Ganga.Runtime._prog.run(GPI.__dict__)
 except GangaException as err:
-    log(Ganga.Runtime._prog.options.force_loglevel, err)
+    if Ganga.Runtime._prog:
+        log(Ganga.Runtime._prog.options.force_loglevel, err)
     sys.exit(-1)
 

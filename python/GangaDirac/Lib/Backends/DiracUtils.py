@@ -123,10 +123,12 @@ def for_each(func, *iterables, **kwargs):
                            **kwargs.get('fkwargs', {})))
     return result
 
-def getAccessURLs(lfns, defaultSE = ''):
+def getAccessURLs(lfns, defaultSE = '', protocol = ''):
     """
     This is a function to get a list of the accessURLs
-    for a provided list of lfns.
+    for a provided list of lfns. If no defaultSE is provided then one is chosen at random
+    from those with replicase. The protocol allows you the option of specifying xroot or root (or any other available)
+    protocols for the file accessURL. If left blank the default protocol for the SE will be used by Dirac.
     """
     lfnList = []
     # Has a list of strings, which are probably lfns been given 
@@ -161,7 +163,7 @@ def getAccessURLs(lfns, defaultSE = ''):
     # Remove the successfully found ones from the list and move on to the next SE.
     for SE in SEs:
         lfns = remainingLFNs
-        thisSEFiles = execute('getAccessURL(%s, "%s")' % (lfns , SE))['Successful']
+        thisSEFiles = execute('getAccessURL(%s, "%s", "%s")' % (lfns, SE, protocol))['Successful']
         for lfn in thisSEFiles.keys():
             myURLs.append(thisSEFiles[lfn])
             remainingLFNs.remove(lfn)

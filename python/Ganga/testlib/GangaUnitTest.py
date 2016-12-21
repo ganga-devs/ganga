@@ -108,9 +108,9 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
     Ganga.Runtime._prog.parseOptions()
 
     # For all the default and extra options, we set the session value
-    from Ganga.Utility.Config import setConfigOption
+    from Ganga.Utility.Config import setUserValue
     for opt in default_opts + extra_opts:
-        setConfigOption(*opt)
+        setUserValue(*opt)
 
     # The configuration is currently created at module import and hence can't be
     # regenerated.
@@ -151,7 +151,7 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
     # Make sure that all the config options are really set.
     # Some from plugins may not have taken during startup
     for opt in default_opts + extra_opts:
-        setConfigOption(*opt)
+        setUserValue(*opt)
 
     logger.info("Passing to Unittest")
 
