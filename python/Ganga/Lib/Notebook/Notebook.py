@@ -57,95 +57,93 @@ class Notebook(IPrepareApp):
     _name = 'Notebook'
     _exportmethods = ['prepare', 'unprepare']
 
-    # def __init__(self):
-    #     super(Notebook, self).__init__()
+    def __init__(self):
+        super(Notebook, self).__init__()
 
-    # def configure(self, masterappconfig):
-    #     return (None, None)
+    def configure(self, masterappconfig):
+        return (None, None)
 
-    # def templatelocation(self):
-    #     """Provide name of template file with absolute path"""
-    #     dir = path.dirname(path.abspath(inspect.getfile(inspect.currentframe())))
-    #     return path.join(dir, 'wrapperNotebookTemplate.py.template')
+    def templatelocation(self):
+        """Provide name of template file with absolute path"""
+        dir = path.dirname(path.abspath(inspect.getfile(inspect.currentframe())))
+        return path.join(dir, 'wrapperNotebookTemplate.py.template')
                                                    
-    # def wrapper(self, regexp, version, timeout, kernel):
-    #     """Write a wrapper Python script that executes the notebooks"""
-    #     wrapperscript = FileUtils.loadScript(self.templatelocation(), '')
+    def wrapper(self, regexp, version, timeout, kernel):
+        """Write a wrapper Python script that executes the notebooks"""
+        wrapperscript = FileUtils.loadScript(self.templatelocation(), '')
 
-    #     wrapperscript = wrapperscript.replace('###NBFILES###', str(regexp))
-    #     wrapperscript = wrapperscript.replace('###VERSION###', str(version))
-    #     wrapperscript = wrapperscript.replace('###TIMEOUT###', str(timeout))
-    #     wrapperscript = wrapperscript.replace('###KERNEL###', str(kernel))
-    #     wrapperscript = wrapperscript.replace('###UUID###', str(uuid.uuid4()))
+        wrapperscript = wrapperscript.replace('###NBFILES###', str(regexp))
+        wrapperscript = wrapperscript.replace('###VERSION###', str(version))
+        wrapperscript = wrapperscript.replace('###TIMEOUT###', str(timeout))
+        wrapperscript = wrapperscript.replace('###KERNEL###', str(kernel))
+        wrapperscript = wrapperscript.replace('###UUID###', str(uuid.uuid4()))
 
-    #     logger.debug('Script to run on worker node\n' + wrapperscript)
-    #     scriptName = "notebook_wrapper_generated.py"
-    #     runScript = FileBuffer(scriptName, wrapperscript, executable=1)
+        logger.debug('Script to run on worker node\n' + wrapperscript)
+        scriptName = "notebook_wrapper_generated.py"
+        runScript = FileBuffer(scriptName, wrapperscript, executable=1)
 
-    #     return runScript
+        return runScript
     
-    # def unprepare(self, force=False):
-    #     """
-    #     Revert a Notebook application back to its unprepared state.
-    #     """
-    #     logger.debug('Running unprepare in Notebook app')
-    #     if self.is_prepared is not None:
-    #         self.decrementShareCounter(self.is_prepared.name)
-    #         self.is_prepared = None
-    #     self.hash = None
+    def unprepare(self, force=False):
+        """
+        Revert a Notebook application back to its unprepared state.
+        """
+        logger.debug('Running unprepare in Notebook app')
+        if self.is_prepared is not None:
+            self.decrementShareCounter(self.is_prepared.name)
+            self.is_prepared = None
+        self.hash = None
 
-    # def prepare(self, force=False):
-    #     """
-    #     This writes the wrapper script for the Notebook application.
+    def prepare(self, force=False):
+        """
+        This writes the wrapper script for the Notebook application.
 
-    #     """
-    #     if force:
-    #         self.unprepare()
+        """
+        if force:
+            self.unprepare()
     
-    #     if (self.is_prepared is not None):
-    #         raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
+        if (self.is_prepared is not None):
+            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
 
-    #     logger.info('Preparing %s application.' % getName(self))
-    #     self.is_prepared = ShareDir()
-    #     logger.info('Created shared directory: %s' % (self.is_prepared.name))
+        logger.info('Preparing %s application.' % getName(self))
+        self.is_prepared = ShareDir()
+        logger.info('Created shared directory: %s' % (self.is_prepared.name))
     
-    #     # Prevent orphaned shared directories
-    #     try:
-    #         self.checkPreparedHasParent(self)
+        # Prevent orphaned shared directories
+        try:
+            self.checkPreparedHasParent(self)
 
-    #         script = self.wrapper(self.regexp,self.version, self.timeout, self.kernel)
-    #         script.create(path.join(self.getSharedPath(),script.name))
+            script = self.wrapper(self.regexp,self.version, self.timeout, self.kernel)
+            script.create(path.join(self.getSharedPath(),script.name))
 
-    #         self.post_prepare()
+            self.post_prepare()
 
-    #     except Exception as err:
-    #         self.unprepare()
-    #         raise
+        except Exception as err:
+            self.unprepare()
+            raise
 
-    #     return 1
-
-
+        return 1
 
 
-# class NotebookRTHandler(IRuntimeHandler):
-#     """Empty runtime handler for notebooks"""
+class NotebookRTHandler(IRuntimeHandler):
+    """Empty runtime handler for notebooks"""
 
-#     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
+    def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
 
-#         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-#         return StandardJobConfig('python', None, ['notebook_wrapper_generated.py'], None, None, [app.is_prepared.path()])
+        from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+        return StandardJobConfig('python', None, ['notebook_wrapper_generated.py'], None, None, [app.is_prepared.path()])
 
 
-# allHandlers.add('Notebook', 'LSF', NotebookRTHandler)
-# allHandlers.add('Notebook', 'Local', NotebookRTHandler)
-# allHandlers.add('Notebook', 'PBS', NotebookRTHandler)
-# allHandlers.add('Notebook', 'SGE', NotebookRTHandler)
-# allHandlers.add('Notebook', 'Condor', NotebookRTHandler)
-# allHandlers.add('Notebook', 'LCG', NotebookRTHandler)
-# allHandlers.add('Notebook', 'gLite', NotebookRTHandler)
-# allHandlers.add('Notebook', 'TestSubmitter', NotebookRTHandler)
-# allHandlers.add('Notebook', 'Interactive', NotebookRTHandler)
-# allHandlers.add('Notebook', 'Batch', NotebookRTHandler)
-# allHandlers.add('Notebook', 'Remote', NotebookRTHandler)
-# allHandlers.add('Notebook', 'CREAM', NotebookRTHandler)
-# allHandlers.add('Notebook', 'ARC', NotebookRTHandler)
+allHandlers.add('Notebook', 'LSF', NotebookRTHandler)
+allHandlers.add('Notebook', 'Local', NotebookRTHandler)
+allHandlers.add('Notebook', 'PBS', NotebookRTHandler)
+allHandlers.add('Notebook', 'SGE', NotebookRTHandler)
+allHandlers.add('Notebook', 'Condor', NotebookRTHandler)
+allHandlers.add('Notebook', 'LCG', NotebookRTHandler)
+allHandlers.add('Notebook', 'gLite', NotebookRTHandler)
+allHandlers.add('Notebook', 'TestSubmitter', NotebookRTHandler)
+allHandlers.add('Notebook', 'Interactive', NotebookRTHandler)
+allHandlers.add('Notebook', 'Batch', NotebookRTHandler)
+allHandlers.add('Notebook', 'Remote', NotebookRTHandler)
+allHandlers.add('Notebook', 'CREAM', NotebookRTHandler)
+allHandlers.add('Notebook', 'ARC', NotebookRTHandler)
