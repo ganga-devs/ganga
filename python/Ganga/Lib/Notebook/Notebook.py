@@ -22,6 +22,9 @@ import uuid
 
 # logger = getLogger()
 
+class Notebook():
+    pass
+
 # class Notebook(IPrepareApp):
 
 #     """Notebook application -- execute Jupyter notebooks.
