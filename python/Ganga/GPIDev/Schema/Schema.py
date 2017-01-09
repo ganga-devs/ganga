@@ -23,6 +23,8 @@ from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
 
 from inspect import isclass
 
+from Ganga.Utility.Config import Config
+
 logger = Ganga.Utility.logging.getLogger()
 
 # Dictionary for storing data from the Config system which takes a while to lookup
@@ -30,6 +32,8 @@ _found_components = {}
 _found_configs = {}
 _found_attrs = {}
 _stored_defaults = {}
+_stored_options = {}
+_stored_configs = {}
 
 #
 # Ganga Public Interface Schema
@@ -235,21 +239,38 @@ class Schema(object):
 
         item = self.getItem(attr)
 
-        stored_attr_key = def_name + ':' + str(attr)
+        stored_option_key = def_name
+        stored_attr_key = def_name + ':' + attr
 
-        from Ganga.Utility.Config import Config
         is_finalized = Config._after_bootstrap
 
         useDefVal = False
 
         try:
+
             # Attempt to get the relevant config section
-            config = Config.getConfig(def_name)
+            if is_finalized:
+                if stored_option_key in _stored_configs:
+                    config = _stored_configs[stored_option_key]
+                else:
+                    config = Config.getConfig(def_name)
+                    _stored_configs[stored_option_key] = config
+            else:
+                config = Config.getConfig(def_name)
 
             if is_finalized and not config.hasModified and stored_attr_key in _found_attrs:
-                defvalue = _found_attrs[stored_attr_key]
+                    defvalue = _found_attrs[stored_attr_key]
             else:
-                if attr in config.getEffectiveOptions():
+                if is_finalized:
+                    if stored_option_key in _stored_options and not config.hasModified:
+                        eff_ops = _stored_options[stored_option_key]
+                    else:
+                        eff_ops = config.getEffectiveOptions()
+                        _stored_options[stored_option_key] = eff_ops
+                else:
+                    eff_ops = config.getEffectiveOptions()
+
+                if attr in eff_ops:
                     defvalue = config[attr]
                     from Ganga.GPIDev.Base.Proxy import isProxy
                     if isProxy(defvalue):
@@ -264,10 +285,6 @@ class Schema(object):
         if useDefVal:
             # hidden, protected and sequence values are not represented in config
             defvalue = item['defvalue']
-            from Ganga.GPIDev.Base.Proxy import isProxy
-            if isProxy(defvalue):
-                raise GangaException("(2)Proxy found where is shouldn't be in the Config" % stored_attr_key)
-            ## Just in case a developer puts the proxied object into the default value!
             _found_attrs[stored_attr_key] = defvalue
 
         # in the checking mode, use the provided value instead

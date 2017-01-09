@@ -54,10 +54,11 @@ def synchronised(f):
         f (function): This is the function which we want to wrap
     """
     @functools.wraps(f)
-    def decorated(self, *args, **kwargs):
+    def sync_decorated(self, *args, **kwargs):
         with self.const_lock:
             return f(self, *args, **kwargs)
-    return decorated
+
+    return sync_decorated
 
 
 class Node(object):
@@ -75,8 +76,9 @@ class Node(object):
     def __init__(self, parent=None):
         super(Node, self).__init__()
         self._parent = parent
-        self._read_lock = threading.RLock()  # Don't read out of thread whilst we're making a change
+        #self._read_lock = threading.RLock()  # Don't read out of thread whilst we're making a change
         self._write_lock = threading.RLock()  # Don't write from out of thread when modifying an object
+        self._read_lock = self._write_lock
         self._dirty = False  # dirty flag is true if the object has been modified locally and its contents is out-of-sync with its repository
 
     def __deepcopy__(self, memo=None):
@@ -232,14 +234,14 @@ def synchronised_get_descriptor(get_function):
         get_function (function): Function we intend to wrap with the soft/read lock
     """
     @functools.wraps(get_function)
-    def decorated(self, obj, type_or_value):
+    def get_decorator(self, obj, type_or_value):
         if obj is None:
             return get_function(self, obj, type_or_value)
 
-        with obj._getRoot()._read_lock:
+        with obj._getRoot()._write_lock:
             return get_function(self, obj, type_or_value)
 
-    return decorated
+    return get_decorator
 
 
 def synchronised_set_descriptor(set_function):
@@ -248,15 +250,16 @@ def synchronised_set_descriptor(set_function):
     Args:
         set_function (function): Function we intend to wrap with the hard/write lock
     """
-    def decorated(self, obj, type_or_value):
+    def set_decorator(self, obj, type_or_value):
         root_obj = obj._getRoot()
         if obj is None:
             return set_function(self, obj, type_or_value, root_obj)
 
         with root_obj._write_lock:
-            with root_obj._read_lock:
-                return set_function(self, obj, type_or_value)
-    return decorated
+            #with root_obj._read_lock:
+            return set_function(self, obj, type_or_value)
+
+    return set_decorator
 
 
 class Descriptor(object):
@@ -453,9 +456,12 @@ class Descriptor(object):
             root_obj (GangaObject): a pointer to the root object of obj
         """
 
+        _set_name = _getName(self)
+
         if isinstance(val, str):
-            from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
-            val = stripProxy(runtimeEvalString(obj, _getName(self), val))
+            if val:
+                from Ganga.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
+                val = stripProxy(runtimeEvalString(obj, _set_name, val))
 
         if hasattr(obj, '_checkset_name'):
             checkSet = self._bind_method(obj, self._checkset_name)
@@ -475,9 +481,14 @@ class Descriptor(object):
         # make sure the object is loaded if it's attached to a registry
         obj._loadObject()
 
-        _set_name = _getName(self)
-
-        new_value = Descriptor.cleanValue(obj, val, _set_name)
+        basic=False
+        for i in [int, str, bool, type]:
+            if isinstance(val, i):
+                new_value = deepcopy(val)
+                basic=True
+                break
+        if not basic:
+            new_value = Descriptor.cleanValue(obj, val, _set_name)
 
         obj.setSchemaAttribute(_set_name, new_value)
 
