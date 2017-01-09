@@ -160,7 +160,7 @@ class Schema(object):
         new_dict = {}
         for key, val in self.datadict.iteritems():
             new_dict[key] = copy.deepcopy(val)
-        return Schema(version=copy.deepcopy(self.version), datadict=new_dict)
+        return Schema(copy.deepcopy(self.version), new_dict)
 
     def createDefaultConfig(self):
         # create a configuration unit for default values of object properties
@@ -186,7 +186,7 @@ class Schema(object):
                 if isinstance(item['defvalue'], dict):
                     if not types is None:
                         types.append('dict')
-                config.addOption(name, item['defvalue'], item['doc'], override=False, typelist=types)
+                config.addOption(name, item['defvalue'], item['doc'], False, typelist=types)
 
 
         def prehook(name, x):
@@ -201,7 +201,7 @@ class Schema(object):
                 if not isinstance(x, str) and not x is None:
                     raise Ganga.Utility.Config.ConfigError(errmsg + "only strings and None allowed as a default value of Component Item.")
                 try:
-                    self._getDefaultValueInternal(name, x, check=True)
+                    self._getDefaultValueInternal(name, x, True)
                 except Exception as err:
                     logger.info("Unexpected error: %s", err)
                     raise
@@ -570,7 +570,7 @@ class ComponentItem(Item):
         kwds['optional'] = optional
         kwds['load_default'] = load_default
         #kwds['getter'] = getter
-        self._update(kwds, forced=ComponentItem._forced)
+        self._update(kwds, ComponentItem._forced)
         assert(implies(self['defvalue'] is None and not self['load_default'], self['optional']))
 
         assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self['protected'] and not self['sequence'] and not self['copyable']))

@@ -42,7 +42,7 @@ def _getName(obj):
             except AttributeError:
                 return str(obj)
 
-logger = getLogger(modulename=1)
+logger = getLogger()
 
 do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data_dict', '_read_lock', '_write_lock', '_proxyObject']
 
@@ -506,9 +506,9 @@ class Descriptor(object):
                 new_val = GangaList()
             else:
                 if isinstance(item, ComponentItem):
-                    new_val = makeGangaList(val, Descriptor.cloneListOrObject, parent=obj, preparable=_preparable, extra_args=(name, obj))
+                    new_val = makeGangaList(val, Descriptor.cloneListOrObject, obj, _preparable, (name, obj))
                 else:
-                    new_val = makeGangaList(val, parent=obj, preparable=_preparable)
+                    new_val = makeGangaList(val, None, obj, _preparable)
         else:
             ## Else we need to work out what we've got.
             if isinstance(item, ComponentItem):
@@ -519,7 +519,7 @@ class Descriptor(object):
                     else:
                         new_val = GangaList()
                     # Still don't know if val list of object here
-                    Descriptor.createNewList(new_val, val, Descriptor.cloneListOrObject, extra_args=(name, obj))
+                    Descriptor.createNewList(new_val, val, Descriptor.cloneListOrObject, (name, obj))
                 else:
                     # Still don't know if val list of object here
                     new_val = Descriptor.cloneListOrObject(val, (name, obj))
@@ -648,7 +648,7 @@ class ObjectMetaclass(abc.ABCMeta):
         # in the schema
         for attr, item in this_schema.simpleItems():
             if not item['getter']:
-                item._check_type(item['defvalue'], '.'.join([name, attr]), enableGangaList=False)
+                item._check_type(item['defvalue'], '.'.join([name, attr]), False)
 
         # create reference in schema to the pluginclass
         this_schema._pluginclass = cls

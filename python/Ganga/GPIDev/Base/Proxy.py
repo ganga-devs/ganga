@@ -29,7 +29,7 @@ proxyObject = '_proxyObject'
 
 prepconfig = getConfig('Preparable')
 
-logger = Ganga.Utility.logging.getLogger(modulename=1)
+logger = Ganga.Utility.logging.getLogger()
 
 # some proxy related convieniance methods
 
@@ -877,7 +877,7 @@ def GPIProxyClassFactory(name, pluginclass):
             if instance._schema.hasAttribute(k):
                 # This calls the same logic when assigning a named attribute as when we're assigning it to the object
                 # There is logic here which we 'could' duplicate but it is over 100 lines of code which then is duplicating funtionality written elsewhere
-                val = ProxyDataDescriptor._process_set_value(instance, kwds[k], k, check_read_only=False)
+                val = ProxyDataDescriptor._process_set_value(instance, kwds[k], k, False)
                 if isinstance(val, GangaObject):
                     val._auto__init__()
                 setattr(instance, k, val)
@@ -889,7 +889,7 @@ def GPIProxyClassFactory(name, pluginclass):
 
     from Ganga.Utility.strings import ItemizedTextParagraph
 
-    itbuf = ItemizedTextParagraph('Properties:', linesep='')
+    itbuf = ItemizedTextParagraph('Properties:', 80, ' ', '')
 
     for n, item in pluginclass._schema.allItems():
         if not item['hidden']:
@@ -932,9 +932,9 @@ def GPIProxyClassFactory(name, pluginclass):
                 elif hasattr(raw_self, '_display'):
                     p_text = raw_self._display()
                 else:
-                    p_text = self.__str__(interactive=True)
+                    p_text = self.__str__(True)
             else:
-                p_text = self.__str__(interactive=True)
+                p_text = self.__str__(True)
         except Exception as err:
             p_text = "Error Representing object: %s\nErr:\n%s" % (type(self), err)
 

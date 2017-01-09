@@ -38,7 +38,7 @@ def lazyLoadJobFQID(this_job):
 
 
 def lazyLoadJobStatus(this_job):
-    return lazyLoadJobObject(this_job, 'status', do_eval=False)
+    return lazyLoadJobObject(this_job, 'status', False)
 
 
 def lazyLoadJobBackend(this_job):
@@ -49,7 +49,7 @@ def lazyLoadJobApplication(this_job):
     return lazyLoadJobObject(this_job, 'application')
 
 
-def lazyLoadJobObject(raw_job, this_attr, do_eval=True):
+def lazyLoadJobObject(raw_job, this_attr, True):
     ## Returns an object which corresponds to an attribute from a Job, or matches it's default equivalent without triggering a load from disk
     ## i.e. lazy loading a Dirac backend will return a raw Dirac() object and lazy loading the status will return the status string
     ## These are all evaluated from the strings in the index file for the job.

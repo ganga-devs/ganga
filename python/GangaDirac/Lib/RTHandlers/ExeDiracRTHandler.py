@@ -37,7 +37,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                  outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
-        from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import sandbox_prepare,
+        from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import sandbox_prepare
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app)
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
