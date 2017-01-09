@@ -218,8 +218,8 @@ def execute(command,
     print "COMMAND: " + command
     logger.warning("COMMAND: " + command)
     if command.find("getReplicas") != -1:
-        print "RETURNABLE: " + returnable
-        logger.warning("RETURNABLE: " + returnable)
+        print "RETURNABLE: %s" % returnable
+        logger.warning("RETURNABLE: %s" % returnable)
 
     if isinstance(returnable, dict) and not return_raw_dict:
         # If the output is a dictionary allow for automatic error detection
