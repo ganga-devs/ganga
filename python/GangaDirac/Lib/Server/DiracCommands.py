@@ -64,6 +64,8 @@ def getMetadata(lfn):
 @diracCommand
 def getReplicas(lfns):
     ''' Return  the locations of the replicas of a given LFN in a dict format, SE: location '''
+    import traceback
+    traceback.print_stack()
     return dirac.getReplicas(lfns, active=True, preferDisk = True)
 
 
