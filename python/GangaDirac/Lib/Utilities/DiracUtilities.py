@@ -215,6 +215,9 @@ def execute(command,
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
 
+    if command.find("getReplicas") != -1:
+        print returnable
+        
     if isinstance(returnable, dict) and not return_raw_dict:
         # If the output is a dictionary allow for automatic error detection
         if returnable['OK']:
