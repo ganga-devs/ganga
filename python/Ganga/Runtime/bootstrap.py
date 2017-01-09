@@ -492,7 +492,7 @@ under certain conditions; type license() for details.
 
     # this is an option method which runs an interactive wizard which helps new users to start with Ganga
     # the interactive mode is not entered if -c option was used
-    def new_user_wizard(self):
+    def new_user_wizard(self, interactive=True):
         from Ganga.Utility.logging import getLogger
         from Ganga.Utility.Config.Config import load_user_config, getConfig, ConfigError
 
@@ -526,10 +526,14 @@ under certain conditions; type license() for details.
             # Sleep for 1 sec to allow for most of the bootstrap to finish so
             # the user actually sees this message last
             time.sleep(3.)
-            yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')
+            if interactive:
+                yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')
+            else:
+                yes = 'y'
             if yes.lower() in ['', 'y']:
                 self.generate_config_file(default_config)
-                raw_input('Press <Enter> to continue.\n')
+                if interactive:
+                    raw_input('Press <Enter> to continue.\n')
         elif self.new_version():
             self.print_release_notes()
             self.rollHistoryForward()
@@ -703,7 +707,7 @@ under certain conditions; type license() for details.
                     if not sects is None and not section in sects:
                         should_set = False
                     if should_set:
-                        config = Ganga.Utility.Config.setSessionValue(section, option, val)
+                        config = Ganga.Utility.Config.setUserValue(section, option, val)
             except ConfigError as x:
                 self.exit('command line option error: %s' % x)
 
@@ -750,7 +754,6 @@ under certain conditions; type license() for details.
                 'Cannot modify [System] settings (attempted %s=%s)' % (name, x))
         syscfg.attachUserHandler(deny_modification, None)
         syscfg.attachSessionHandler(deny_modification, None)
-
         Ganga.Utility.Config.setSessionValuesFromFiles(config_files, system_vars)
 
         # set the system variables to the [System] module

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import os
 import shutil
 import copy
+import glob
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.file_utils import generate_unique_temp_file
@@ -83,7 +84,8 @@ class TestLocalFileClient(GangaUnitTest):
 
             # Check that the files were placed in the correct place on storage
             for file_ in j.inputfiles:
-                assert os.path.isfile(os.path.join(output_dir, file_.namePattern))
+                for this_file in glob.glob(os.path.join(output_dir, file_.namePattern)):
+                    assert os.path.isfile(this_file)
 
             # Check that wildcard expansion happened correctly
             assert len(stripProxy(sj).outputfiles[0].subfiles) == 2
@@ -100,7 +102,7 @@ class TestLocalFileClient(GangaUnitTest):
 
         assert len(j2.outputfiles) == 1
 
-        assert j2.outputfiles == [LocalFile(namePattern='*'+TestLocalFileClient._ext)]
+        assert j2.outputfiles[0] == LocalFile(namePattern='*'+TestLocalFileClient._ext)
 
         assert len(j2.inputfiles) == 2
 

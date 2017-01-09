@@ -21,6 +21,8 @@ import types
 
 from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
 
+from inspect import isclass
+
 logger = Ganga.Utility.logging.getLogger()
 
 # Dictionary for storing data from the Config system which takes a while to lookup
@@ -145,10 +147,7 @@ class Schema(object):
         if self.datadict is None:
             return []
 
-        r = []
-        for n, c in zip(self.datadict.keys(), self.datadict.values()):
-            if issubclass(c.__class__, klass):
-                r.append((n, c))
+        r = [(n, c) for (n, c) in self.datadict.iteritems() if issubclass(c.__class__, klass)]
         return r
 
     def isEqual(self, schema):
@@ -299,6 +298,8 @@ class Schema(object):
                     if category not in _found_components or has_modified:
                         _found_components[category] = allPlugins.find(category, defvalue)
                     return _found_components[category]()
+                if isclass(defvalue):
+                    return defvalue()
 
         # If needed/requested make a copy of the function elsewhwre
         return defvalue
