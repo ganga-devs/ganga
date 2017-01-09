@@ -76,13 +76,14 @@ def _store_dirac_environment():
         cmd =  'lb-run LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
         env = execute(cmd)
         if isinstance(env, str):
-            try:
+            #try:
+            if True:
                env_temp = eval(env)
                env = env_temp
 
-            except SyntaxError:
-                logger.error("LHCbDirac version {version} does not exist".format(version=diracversion))
-                raise OptionValueError("LHCbDirac version {version} does not exist".format(version=diracversion))
+            #except SyntaxError:
+            #    logger.error("LHCbDirac version {version} does not exist".format(version=diracversion))
+            #    raise OptionValueError("LHCbDirac version {version} does not exist".format(version=diracversion))
         try:
             write_env_cache(env, fname)
             logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
