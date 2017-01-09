@@ -78,8 +78,9 @@ def _store_dirac_environment():
         if isinstance(env, str):
             #try:
             if True:
-               env_temp = eval(env)
-               env = env_temp
+                print "---- " + env
+                env_temp = eval(env)
+                env = env_temp
 
             #except SyntaxError:
             #    logger.error("LHCbDirac version {version} does not exist".format(version=diracversion))
