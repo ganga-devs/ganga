@@ -215,12 +215,6 @@ def execute(command,
     if cwd is None:
         shutil.rmtree(cwd_, ignore_errors=True)
 
-    print "COMMAND: " + command
-    logger.warning("COMMAND: " + command)
-    if command.find("getReplicas") != -1:
-        print "RETURNABLE: %s" % returnable
-        logger.warning("RETURNABLE: %s" % returnable)
-
     if isinstance(returnable, dict) and not return_raw_dict:
         # If the output is a dictionary allow for automatic error detection
         if returnable['OK']:

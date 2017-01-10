@@ -76,15 +76,13 @@ def _store_dirac_environment():
         cmd =  'lb-run LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
         env = execute(cmd)
         if isinstance(env, str):
-            #try:
-            if True:
-                print "---- " + env
+            try:
                 env_temp = eval(env)
                 env = env_temp
 
-            #except SyntaxError:
-            #    logger.error("LHCbDirac version {version} does not exist".format(version=diracversion))
-            #    raise OptionValueError("LHCbDirac version {version} does not exist".format(version=diracversion))
+            except SyntaxError:
+                logger.error("LHCbDirac version {version} does not exist".format(version=diracversion))
+                raise OptionValueError("LHCbDirac version {version} does not exist".format(version=diracversion))
         try:
             write_env_cache(env, fname)
             logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
@@ -133,7 +131,7 @@ def postBootstrapHook():
     configDirac = Ganga.Utility.Config.getConfig('DIRAC')
     configOutput = Ganga.Utility.Config.getConfig('Output')
     configPoll = Ganga.Utility.Config.getConfig('PollThread')
-    
+
     configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
     configDirac.setSessionValue('userVO', 'lhcb')
     configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])

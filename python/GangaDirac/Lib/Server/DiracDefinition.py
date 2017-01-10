@@ -29,8 +29,7 @@ def diracCommand(f):
 
         # We know we want to pipe the output to the streams when pipe_out == True
         output_dict = {}
-        #try:
-        if True:
+        try:
             # Execute the function
             cmd_output = f(*args, **kwargs)
             if isinstance(cmd_output, dict) and 'OK' in cmd_output and ('Value' in cmd_output or 'Message' in cmd_output):
@@ -40,11 +39,11 @@ def diracCommand(f):
                 # Wrap all other returned objects in the output dict for Ganga
                 output_dict['OK'] = True
                 output_dict['Value'] = cmd_output
-        #except Exception as err:
-        #    # Catch __ALL__ errors and report them back to Ganga
-        #    # STDERR is lost in normal running so this will have to do!
-        #    output_dict['OK'] = False
-        #    output_dict['Message'] = str(err)
+        except Exception as err:
+            # Catch __ALL__ errors and report them back to Ganga
+            # STDERR is lost in normal running so this will have to do!
+            output_dict['OK'] = False
+            output_dict['Message'] = str(err)
 
         # Pipe the output to the streams
         output(output_dict)
