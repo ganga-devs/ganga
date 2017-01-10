@@ -7,6 +7,7 @@ import os
 import tempfile
 import time
 import uuid
+import random
 from textwrap import dedent
 
 import pytest
@@ -117,6 +118,7 @@ def dirac_job(load_config):
 
     assert 'OK' in status, 'Failed to get job Status!'
     assert status['OK'], 'Failed to get job Status!'
+
     assert statusmapping[status['Value'][0][1]] == 'completed', 'job not completed properly: %s' % status
 
     logger.info("status: %s", status)
