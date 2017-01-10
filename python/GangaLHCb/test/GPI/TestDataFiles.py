@@ -29,7 +29,6 @@ class TestDataFiles(GangaUnitTest):
         from Ganga.GPI import DiracFile
         
         # Methods
-        #lfn = DiracFile(lfn='/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000326_1.dimuon.dst')
         lfn = DiracFile(lfn='/lhcb/LHCb/Collision16/DIMUON.DST/00053485/0000/00053485_00000424_1.dimuon.dst')
         assert lfn.getReplicas()
         assert lfn.getMetadata()
