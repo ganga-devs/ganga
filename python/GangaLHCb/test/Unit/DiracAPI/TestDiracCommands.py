@@ -42,6 +42,12 @@ JobInfo = namedtuple('JobInfo', ['id', 'get_file_lfn', 'remove_file_lfn'])
 def load_config():
     """Load the Ganga config files before the test and clean them up afterwards"""
     load_config_files()
+
+    # make sure post-boostrap hook is run to ensure Dirac config options are set correctly
+    # Only becomes an issue if this test is run on it's own
+    from GangaLHCb import postBootstrapHook
+    postBootstrapHook()
+
     yield
     clear_config()
 
