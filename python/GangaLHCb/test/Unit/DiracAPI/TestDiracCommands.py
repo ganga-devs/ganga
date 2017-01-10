@@ -337,7 +337,7 @@ class TestDiracCommands(object):
         assert confirm['OK'], 'Command not executed successfully'
 
     def test_getDataset(self, dirac_job):
-        confirm = execute('getDataset("LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data + RecoToDST-07/10/DST","","Path","","","")', return_raw_dict=True)
+        confirm = execute('getDataset("LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data/RecoToDST-07/10/DST","","Path","","","")', return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
