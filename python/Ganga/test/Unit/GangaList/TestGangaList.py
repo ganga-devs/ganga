@@ -7,12 +7,12 @@ except ImportError:
 import random
 import string
 
-from Ganga.GPIDev.Base.Proxy import addProxy, getProxyClass, getProxyAttr, isProxy, isType, stripProxy
+from Ganga.GPIDev.Base.Proxy import addProxy, getProxyAttr, isProxy, isType, stripProxy
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-GangaList = getProxyClass(GangaList)
+GangaList = addProxy(GangaList)
 from .TFile import TFile
-TFile = getProxyClass(TFile)
+TFile = addProxy(TFile)
 
 # set the seed for repeatable tests
 random.seed(666)
