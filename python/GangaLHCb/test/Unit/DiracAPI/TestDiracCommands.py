@@ -7,6 +7,7 @@ import os
 import tempfile
 import time
 import uuid
+import random
 from textwrap import dedent
 
 import pytest
@@ -42,6 +43,12 @@ JobInfo = namedtuple('JobInfo', ['id', 'get_file_lfn', 'remove_file_lfn'])
 def load_config():
     """Load the Ganga config files before the test and clean them up afterwards"""
     load_config_files()
+
+    # make sure post-boostrap hook is run to ensure Dirac config options are set correctly
+    # Only becomes an issue if this test is run on it's own
+    from GangaLHCb import postBootstrapHook
+    postBootstrapHook()
+
     yield
     clear_config()
 
@@ -110,6 +117,7 @@ def dirac_job(load_config):
 
     assert 'OK' in status, 'Failed to get job Status!'
     assert status['OK'], 'Failed to get job Status!'
+
     assert statusmapping[status['Value'][0][1]] == 'completed', 'job not completed properly: %s' % status
 
     logger.info("status: %s", status)
@@ -328,7 +336,7 @@ class TestDiracCommands(object):
         assert confirm['OK'], 'Command not executed successfully'
 
     def test_getDataset(self, dirac_job):
-        confirm = execute('getDataset("LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data + RecoToDST-07/10/DST","","Path","","","")', return_raw_dict=True)
+        confirm = execute('getDataset("LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data/RecoToDST-07/10/DST","","Path","","","")', return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'Command not executed successfully'
 
