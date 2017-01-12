@@ -27,7 +27,6 @@ def test_job_kill(gpi):
     # Select the CREAM CEs (URL path starts with '/cream') and how many free slots they have
     ces = re.findall(r'^\s*\d+\s*(?P<free>\d+)\s*\d+\s*\d+\s*\d+\s*(?P<ce>[^:/\s]+uk:\d+/cream.*)$', stdout, re.MULTILINE)
     # Grab the one with the most empty slots
-    print "%s" % sorted(ces)
     ce = sorted(ces)[-1][1]
 
     j = Job()
