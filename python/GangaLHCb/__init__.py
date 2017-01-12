@@ -77,8 +77,8 @@ def _store_dirac_environment():
         env = execute(cmd)
         if isinstance(env, str):
             try:
-               env_temp = eval(env)
-               env = env_temp
+                env_temp = eval(env)
+                env = env_temp
 
             except SyntaxError:
                 logger.error("LHCbDirac version {version} does not exist".format(version=diracversion))
@@ -131,7 +131,7 @@ def postBootstrapHook():
     configDirac = Ganga.Utility.Config.getConfig('DIRAC')
     configOutput = Ganga.Utility.Config.getConfig('Output')
     configPoll = Ganga.Utility.Config.getConfig('PollThread')
-    
+
     configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
     configDirac.setSessionValue('userVO', 'lhcb')
     configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
