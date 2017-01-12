@@ -179,6 +179,9 @@ class Localhost(IBackend):
         import inspect
 
         fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
+
+        sharedfiles = jobconfig.getSharedFiles()
+
         subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
@@ -215,7 +218,7 @@ class Localhost(IBackend):
         script = script.replace('###CREATEINPUTDATALIST###', getWNCodeForInputdataListCreation(job, ''))
 
         script = script.replace('###APPLICATION_NAME###', repr(getName(job.application)))
-        script = script.replace('###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox))
+        script = script.replace('###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox + sharedfiles))
         script = script.replace('###SHAREDOUTPUTPATH###', repr(sharedoutputpath))
         script = script.replace('###APPSCRIPTPATH###', repr(appscriptpath))
         script = script.replace('###OUTPUTPATTERNS###', str(outputpatterns))

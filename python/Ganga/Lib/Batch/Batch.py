@@ -390,6 +390,9 @@ class Batch(IBackend):
         import inspect
 
         fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
+
+        sharedfiles = jobconfig.getSharedFiles()
+
         subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
@@ -425,7 +428,7 @@ class Batch(IBackend):
         '###APPSCRIPTPATH###' : repr(appscriptpath),
         #'###SHAREDINPUTPATH###' : repr(sharedinputpath)),
 
-        '###INPUT_SANDBOX###' : repr(subjob_input_sandbox + master_input_sandbox),
+        '###INPUT_SANDBOX###' : repr(subjob_input_sandbox + master_input_sandbox + sharedfiles),
         '###CREATEINPUTDATALIST###' : getWNCodeForInputdataListCreation(job, ''),
         '###SHAREDOUTPUTPATH###' : repr(sharedoutputpath),
 
