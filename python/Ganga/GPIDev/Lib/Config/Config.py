@@ -1,4 +1,4 @@
-import textwrap
+import textwrap, re
 
 import Ganga.Utility.logging
 
@@ -89,18 +89,19 @@ class ConfigProxy(object):
                   ' : ' + markup(stripProxy(self).docstring, docstring_colour) + '\n')
         opts = sorted(stripProxy(self).options.keys())
         INDENT = '     ' * 2
+        p = re.compile('[\.\w]*\.')
         for o in opts:
             sio.write(levels[stripProxy(self).getEffectiveLevel(
-                o)] + '   ' + markup(o, name_colour) + ' = ' + markup(repr(stripProxy(self)[o]), value_colour) + '\n')
+                o)] + '   ' + markup(o, name_colour) + ' = ' + markup(p.sub('',repr(stripProxy(self)[o])), value_colour) + '\n')
             sio.write(textwrap.fill(markup(stripProxy(self).options[o].docstring.strip(
             ), docstring_colour), width=80, initial_indent=INDENT, subsequent_indent=INDENT) + '\n')
             typelist = stripProxy(self).options[o].typelist
             if not typelist:
                 typedesc = 'Type: ' + \
-                    str(type(stripProxy(self).options[o].default_value))
+                    p.sub('',str(type(stripProxy(self).options[o].default_value)))
             else:
                 typedesc = 'Allowed types: ' + \
-                    str([t.split('.')[-1] for t in typelist])
+                    str([p.sub('',str(t)) for t in typelist])
             sio.write(markup(INDENT + typedesc, docstring_colour) + '\n')
             filter = stripProxy(self).options[o].filter
             if filter:
