@@ -1,4 +1,5 @@
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.Utility.Config import setConfigOption
 
 
 class TestSavannah10016(GangaUnitTest):
@@ -6,7 +7,6 @@ class TestSavannah10016(GangaUnitTest):
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
         super(TestSavannah10016, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
         setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def test_a_TestJobDirs(self):
