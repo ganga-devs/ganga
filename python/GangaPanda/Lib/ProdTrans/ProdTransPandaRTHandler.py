@@ -224,10 +224,18 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 itype = app.input_type
             else:
                 itype = m.group(5)
-            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
-                jspec.jobParameters += ' --input%sFile %s' % (itype, ','.join(job.inputdata.names))
+
+            # Change inputfile parameter depending on input type
+            if job.backend.requirements.transfertype.upper() == 'DIRECT':
+                tmp_in_file = "@tmpin_" + job.inputdata.dataset[0].split(':')[-1]
             else:
-                jspec.jobParameters += ' input%sFile=%s' % (itype, ','.join(job.inputdata.names))
+                tmp_in_file = ','.join(job.inputdata.names)
+
+            # set the inputfile parameter
+            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
+                jspec.jobParameters += ' --input%sFile %s' % (itype, tmp_in_file)
+            else:
+                jspec.jobParameters += ' input%sFile=%s' % (itype, tmp_in_file)
 
         # Log files.
         lfspec = FileSpec()
