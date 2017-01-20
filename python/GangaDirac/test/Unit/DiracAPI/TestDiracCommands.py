@@ -83,7 +83,6 @@ def dirac_job(load_config):
     j.setInputSandbox(['###EXE_SCRIPT###'])
     j.setOutputSandbox(['std.out','std.err','sandboxFile.txt'])
     j.setOutputData(['getFile.dst', 'removeFile.dst'], outputSE=uk_ses)
-    j.setBannedSites(['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
     #submit the job to dirac
     dirac=Dirac()
     result = dirac.submit(j)
