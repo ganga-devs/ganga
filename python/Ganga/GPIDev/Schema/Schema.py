@@ -21,6 +21,8 @@ import types
 
 from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
 
+from inspect import isclass
+
 logger = Ganga.Utility.logging.getLogger()
 
 # Dictionary for storing data from the Config system which takes a while to lookup
@@ -54,9 +56,11 @@ class Version(object):
 
 def defaultConfigSectionName(name):
     global _stored_defaults
-    if name not in _stored_defaults:
+    try:
+        return _stored_defaults[name]
+    except KeyError:
        _stored_defaults[name] = 'defaults_' + name  # _Properties
-    return _stored_defaults[name]
+       return _stored_defaults[name]
 
 # Schema defines the logical model of the Ganga Public Interface (GPI)
 # for  jobs and  pluggable  job components  such  as applications  and
@@ -98,9 +102,9 @@ class Schema(object):
         self._pluginclass = None
 
     def __getitem__(self, name):
-        if name in self.datadict:
+        try:
             return self.datadict[name]
-        else:
+        except KeyError:
             err_str = "Ganga Cannot find: %s in Object: %s" % (name, self.name)
             logger.error(err_str)
             raise GangaAttributeError(err_str)
@@ -143,10 +147,7 @@ class Schema(object):
         if self.datadict is None:
             return []
 
-        r = []
-        for n, c in zip(self.datadict.keys(), self.datadict.values()):
-            if issubclass(c.__class__, klass):
-                r.append((n, c))
+        r = [(n, c) for (n, c) in self.datadict.iteritems() if issubclass(c.__class__, klass)]
         return r
 
     def isEqual(self, schema):
@@ -243,7 +244,7 @@ class Schema(object):
             # Attempt to get the relevant config section
             config = Config.getConfig(def_name)
 
-            if is_finalized and stored_attr_key in _found_attrs and not config.hasModified:
+            if is_finalized and not config.hasModified and stored_attr_key in _found_attrs:
                 defvalue = _found_attrs[stored_attr_key]
             else:
                 if attr in config.getEffectiveOptions():
@@ -297,6 +298,8 @@ class Schema(object):
                     if category not in _found_components or has_modified:
                         _found_components[category] = allPlugins.find(category, defvalue)
                     return _found_components[category]()
+                if isclass(defvalue):
+                    return defvalue()
 
         # If needed/requested make a copy of the function elsewhwre
         return defvalue

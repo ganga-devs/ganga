@@ -5,7 +5,6 @@ import errno
 import glob
 import inspect
 import os
-import re
 import time
 import uuid
 import sys
@@ -29,6 +28,8 @@ from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
 
 from .JobTime import JobTime
+from Ganga.Lib.Localhost import Localhost
+from Ganga.Lib.Executable import Executable
 
 logger = getLogger()
 config = Ganga.Utility.Config.getConfig('Configuration')
@@ -199,8 +200,8 @@ class Job(GangaObject):
                                      'info': ComponentItem('jobinfos', defvalue=None, doc='JobInfo '),
                                      'comment': SimpleItem('', protected=0, changable_at_resubmit=1, doc='comment of the job'),
                                      'time': ComponentItem('jobtime', defvalue=JobTime(), protected=1, comparable=0, doc='provides timestamps for status transitions'),
-                                     'application': ComponentItem('applications', doc='specification of the application to be executed'),
-                                     'backend': ComponentItem('backends', doc='specification of the resources to be used (e.g. batch system)'),
+                                     'application': ComponentItem('applications', defvalue=Executable(), doc='specification of the application to be executed'),
+                                     'backend': ComponentItem('backends', defvalue=Localhost(), doc='specification of the resources to be used (e.g. batch system)'),
                                      'inputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects that will act as input files for a job"),
                                      'outputfiles': GangaFileItem(defvalue=[], sequence=1, doc="list of file objects decorating what have to be done with the output files after job is completed "),
                                      'non_copyable_outputfiles': GangaFileItem(defvalue=[], hidden=1, sequence=1, doc="list of file objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
@@ -414,28 +415,26 @@ class Job(GangaObject):
             currentOutputFiles = object.__getattribute__(self, name)
             currentUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
 
-            regex = re.compile('[*?\[\]]')
-            files = GangaList()
-            files2 = GangaList()
+            files = []
+            files2 = []
 
             for f in currentOutputFiles:
-                if regex.search(f.namePattern) is not None and hasattr(f, 'subfiles') and f.subfiles:
-                    files.extend(makeGangaListByRef(f.subfiles))
+                if f.containsWildcards() and hasattr(f, 'subfiles') and f.subfiles:
+                    files.extend(f.subfiles)
                 else:
                     files.append(f)
 
             for f in currentUnCopyableOutputFiles:
-                if regex.search(f.namePattern) is not None and hasattr(f, 'subfiles') and f.subfiles:
-                    files2.extend(makeGangaListByRef(f.subfiles))
+                if f.containsWildcards() and hasattr(f, 'subfiles') and f.subfiles:
+                    files2.extend(f.subfiles)
                 else:
                     files2.append(f)
 
             files3 = GangaList()
-            for f in files:
-                files3.append(f)
-            for f in files2:
-                files3.append(f)
+            files3.extend(files)
+            files3.extend(files2)
 
+            # FIXME THIS SHOULD NOT HAVE TO BE HERE! (It does else we end up with really bad errors and this is just wrong!)
             files3._setParent(self)
 
             return addProxy(files3)
@@ -605,7 +604,7 @@ class Job(GangaObject):
 
         if final_status != initial_status and self.master is None:
             logger.info('job %s status changed to "%s"', self.getFQID('.'), final_status)
-        if update_master and self.master:
+        if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
     def transition_update(self, new_status):
@@ -740,7 +739,7 @@ class Job(GangaObject):
         stats = self.getSubJobStatuses()
 
         # ignore non-split jobs
-        if not stats and self.master:
+        if not stats and self.master is not None:
             logger.warning('ignoring master job status updated for job %s (NOT MASTER)', self.getFQID('.'))
             return
 
@@ -860,7 +859,7 @@ class Job(GangaObject):
         name = '_input_sandbox_' + self.getFQID('_') + '%s.tgz'
 
         if master:
-            if self.master:
+            if self.master is not None:
                 name = '_input_sandbox_' + self.master.getFQID('_') + '%s.tgz'
             name = name % "_master"
         else:
@@ -1345,7 +1344,7 @@ class Job(GangaObject):
             logger.error("You should not use a splitter with the Jedi backend. The splitter will be ignored.")
             self.splitter = None
             rjobs = [self]
-        elif self.splitter and not self.master:
+        elif self.splitter and not self.master is not None:
 
             fqid = self.getFQID('.')
 
@@ -2089,19 +2088,10 @@ class Job(GangaObject):
                     logger.error('job.outputsandbox is set, you can\'t set job.outputfiles')
                     return
 
-            # reduce duplicate values here, leave only duplicates for LCG,
-            # where we can have replicas
-            uniqueValuesDict = []
-            uniqueValues = []
-
+            # reduce duplicate values here
+            uniqueValues = GangaList()
             for val in value:
-                dir_ = val.localDir or ''
-                name_ = val.namePattern or ''
-                key = '%s%s' % (getName(val), os.path.join(dir_, name_))
-                if key not in uniqueValuesDict:
-                    uniqueValuesDict.append(key)
-                    uniqueValues.append(val)
-                elif getName(val) == 'LCGSEFile':
+                if val not in uniqueValues:
                     uniqueValues.append(val)
 
             super(Job, self).__setattr__(attr, uniqueValues)

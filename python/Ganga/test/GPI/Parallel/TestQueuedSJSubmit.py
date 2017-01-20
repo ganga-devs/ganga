@@ -8,7 +8,7 @@ from Ganga.testlib.decorators import add_config
 from Ganga.testlib.monitoring import run_until_completed
 
 global_num_threads = 5
-global_num_jobs = global_num_threads*5
+global_num_jobs = global_num_threads * 5
 
 
 @add_config([('TestingFramework', 'AutoCleanup', False),
@@ -61,4 +61,3 @@ class TestQueuedSJSubmit(object):
             import sys
             sys.stdout.flush()
             assert run_until_completed(j, sleep_period=0.1), 'Timeout on job submission: job is still not finished'
-            assert j.status == 'completed'

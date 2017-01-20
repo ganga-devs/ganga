@@ -390,6 +390,9 @@ class Batch(IBackend):
         import inspect
 
         fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
+
+        sharedfiles = jobconfig.getSharedFiles()
+
         subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
@@ -401,7 +404,7 @@ class Batch(IBackend):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                       'BatchScriptTemplate.py')
+                                                       'BatchScriptTemplate.py.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         text = FileUtils.loadScript(script_location, '')
@@ -409,7 +412,7 @@ class Batch(IBackend):
         import Ganga.Core.Sandbox as Sandbox
         import Ganga.Utility as Utility
         from Ganga.Utility.Config import getConfig
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles
+        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles, getWNCodeForInputdataListCreation
         jobidRepr = repr(self.getJobObject().getFQID('.'))
 
         replace_dict = {
@@ -425,7 +428,8 @@ class Batch(IBackend):
         '###APPSCRIPTPATH###' : repr(appscriptpath),
         #'###SHAREDINPUTPATH###' : repr(sharedinputpath)),
 
-        '###INPUT_SANDBOX###' : repr(subjob_input_sandbox + master_input_sandbox),
+        '###INPUT_SANDBOX###' : repr(subjob_input_sandbox + master_input_sandbox + sharedfiles),
+        '###CREATEINPUTDATALIST###' : getWNCodeForInputdataListCreation(job, ''),
         '###SHAREDOUTPUTPATH###' : repr(sharedoutputpath),
 
         '###OUTPUTPATTERNS###' : repr(outputpatterns),

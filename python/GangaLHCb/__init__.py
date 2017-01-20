@@ -14,6 +14,11 @@ from Ganga.Utility.Config.Config import _after_bootstrap
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.execute import execute
 
+from Ganga.Runtime.GPIexport import exportToGPI
+
+from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
+
 logger = getLogger()
 
 if not _after_bootstrap:
@@ -46,7 +51,7 @@ if not _after_bootstrap:
     configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
                      'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
                       options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
-    defaultLHCbDirac = 'v8r3p7'
+    defaultLHCbDirac = 'v8r4p4'
     configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
 
 
@@ -72,8 +77,8 @@ def _store_dirac_environment():
         env = execute(cmd)
         if isinstance(env, str):
             try:
-               env_temp = eval(env)
-               env = env_temp
+                env_temp = eval(env)
+                env = env_temp
 
             except SyntaxError:
                 logger.error("LHCbDirac version {version} does not exist".format(version=diracversion))
@@ -126,11 +131,11 @@ def postBootstrapHook():
     configDirac = Ganga.Utility.Config.getConfig('DIRAC')
     configOutput = Ganga.Utility.Config.getConfig('Output')
     configPoll = Ganga.Utility.Config.getConfig('PollThread')
-    
+
     configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
     configDirac.setSessionValue('userVO', 'lhcb')
     configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
-    configDirac.setSessionValue('noInputDataBannedSites', ['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
+    configDirac.setSessionValue('noInputDataBannedSites', [])
     configDirac.setSessionValue('RequireDefaultSE', False)
 
     configOutput.setSessionValue('FailJobIfNoOutputMatched', 'False')
@@ -145,4 +150,62 @@ def postBootstrapHook():
 #display_config.setSessionValue( 'jobs_columns', ('fqid', 'status', 'name', 'subjobs', 'application', 'backend', 'backend.actualCE', 'backend.extraInfo', 'comment') )
 #display_config.setSessionValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
 #display_config.setSessionValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
+
+    try:
+        credential_store[DiracProxy()]
+    except KeyError:
+        pass
+
+
+class gridProxy(object):
+    """
+    This is a stub class which wraps functions from the `credential_store` sentinal to familiar functions from Ganga 6.2 and prior
+    """
+
+    @classmethod
+    def renew(cls):
+        """
+        This method is similar to calling::
+
+            credential_store.create(DiracProxy())
+
+        or::
+
+            credential_store[DiracProxy()].renew()
+
+        as appropriate.
+        """
+
+        from Ganga.GPI import credential_store, DiracProxy
+        try:
+            cred = credential_store[DiracProxy()]
+            if not cred.is_valid():
+                cred.create()
+        except KeyError:
+            credential_store.create(DiracProxy())
+
+    @classmethod
+    def create(cls):
+        """
+        This is a wrapper for::
+
+            credential_store.create(DiracProxy())
+        """
+        cls.renew()
+
+    @classmethod
+    def destroy(cls):
+        """
+        This is a wrapper for::
+
+            credential_store[DiracProxy()].destroy()
+        """
+        from Ganga.GPI import credential_store, DiracProxy
+        try:
+            cred = credential_store[DiracProxy()]
+            cred.destroy()
+        except KeyError:
+            pass
+
+exportToGPI('gridProxy', gridProxy, 'Functions')
 

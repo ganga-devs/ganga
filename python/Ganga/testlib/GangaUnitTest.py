@@ -59,7 +59,7 @@ def clear_config():
 _setupGangaPath()
 
 
-def start_ganga(gangadir_for_test, extra_opts=[]):
+def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
     """
     Startup Ganga by calling the same set of 'safe' functions each time
     Args:
@@ -84,6 +84,8 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     this_argv = [
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
     ]
+    if extra_args:
+        this_argv += extra_args
 
     # These are the default options for all test instances
     # They can be overridden by extra_opts
@@ -93,6 +95,7 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         ('Configuration', 'user', 'testframework'),
         ('Configuration', 'repositorytype', 'LocalXML'),
         ('Configuration', 'UsageMonitoringMSG', False),  # Turn off spyware
+        ('Configuration', 'lockingStrategy', 'FIXED'),
         ('TestingFramework', 'ReleaseTesting', True),
         ('Queues', 'NumWorkerThreads', 2),
     ]
@@ -106,9 +109,9 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     Ganga.Runtime._prog.parseOptions()
 
     # For all the default and extra options, we set the session value
-    from Ganga.Utility.Config import setConfigOption
+    from Ganga.Utility.Config import setUserValue
     for opt in default_opts + extra_opts:
-        setConfigOption(*opt)
+        setUserValue(*opt)
 
     # The configuration is currently created at module import and hence can't be
     # regenerated.
@@ -138,18 +141,18 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
 
     # Adapted from the Coordinator class, check for the required credentials and stop if not found
     # Hopefully stops us falling over due to no AFS access of something similar
-    from Ganga.Core.InternalServices import Coordinator
-    missing_cred = Coordinator.getMissingCredentials()
+    from Ganga.GPIDev.Credentials import get_needed_credentials
+    missing_cred = get_needed_credentials()
 
     logger.info("Checking Credentials")
 
     if missing_cred:
-        raise Exception("Failed due to missing credentials %s" % str(missing_cred))
+        raise Exception("Failed due to missing credentials %s" % missing_cred)
 
     # Make sure that all the config options are really set.
     # Some from plugins may not have taken during startup
     for opt in default_opts + extra_opts:
-        setConfigOption(*opt)
+        setUserValue(*opt)
 
     logger.info("Passing to Unittest")
 
@@ -228,6 +231,8 @@ def stop_ganga():
 
     # This should now be safe
     ShutdownManager._ganga_run_exitfuncs()
+
+    logger.info("Clearing Config")
 
     # Undo any manual editing of the config and revert to defaults
     clear_config()

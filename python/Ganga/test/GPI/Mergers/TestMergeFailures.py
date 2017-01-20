@@ -5,15 +5,15 @@ import os
 import pytest
 
 from GangaTest.Framework.utils import sleep_until_state
-from Ganga.testlib.monitoring import run_until_completed, run_until_state
-from Ganga.GPIDev.Base.Proxy import getProxyClass
+from Ganga.testlib.monitoring import run_until_state
+from Ganga.GPIDev.Base.Proxy import addProxy
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from .MergerTester import MergerTester
 from .CopySplitter import CopySplitter
 
-CopySplitter = getProxyClass(CopySplitter)
-MergerTester = getProxyClass(MergerTester)
+CopySplitter = addProxy(CopySplitter)
+MergerTester = addProxy(MergerTester)
 
 
 class TestMergeFailures(GangaUnitTest):
@@ -30,8 +30,7 @@ class TestMergeFailures(GangaUnitTest):
 
         j.submit()
 
-        run_until_completed(j, timeout=60)
-        assert j.status == 'failed'
+        assert run_until_state(j, 'failed', timeout=60)
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsIgnoreFailed(self):
@@ -46,8 +45,7 @@ class TestMergeFailures(GangaUnitTest):
 
         j.submit()
 
-        run_until_completed(j, timeout=60)
-        assert j.status == 'failed'
+        assert run_until_state(j, 'failed', timeout=60)
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsOverwrite(self):
@@ -62,8 +60,7 @@ class TestMergeFailures(GangaUnitTest):
 
         j.submit()
 
-        run_until_completed(j, timeout=60)
-        assert j.status == 'failed'
+        assert run_until_state(j, 'failed', timeout=60)
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeThatAlwaysFailsFlagsSet(self):
@@ -79,8 +76,7 @@ class TestMergeFailures(GangaUnitTest):
 
         j.submit()
 
-        run_until_completed(j, timeout=60)
-        assert j.status == 'failed'
+        assert run_until_state(j, 'failed', timeout=60)
         assert os.path.exists(os.path.join(j.outputdir, 'out.txt.merge_summary')), 'Summary file should be created'
 
     def testMergeRemoval(self):

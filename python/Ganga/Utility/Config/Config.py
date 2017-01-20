@@ -150,7 +150,7 @@ allConfigs = {}
 # this dictionary contains the value for the options which are defined in the configuration file and which have
 # not yet been defined
 unknownConfigFileValues = defaultdict(dict)
-
+unknownUserConfigValues = defaultdict(dict)
 
 def getConfig(name):
     """
@@ -180,8 +180,7 @@ def makeConfig(name, docstring, **kwds):
     """
 
     if _after_bootstrap:
-        raise ConfigError(
-            'attempt to create a configuration section [%s] after bootstrap' % name)
+        raise ConfigError('attempt to create a configuration section [%s] after bootstrap' % name)
 
     try:
         c = allConfigs[name]
@@ -236,7 +235,6 @@ class ConfigOption(object):
         self.convert_type('user_value')
 
     def setSessionValue(self, session_value):
-
         if not hasattr(self, 'docstring'):
             raise ConfigError('Can\'t set a session value without a docstring!')
 
@@ -253,7 +251,6 @@ class ConfigOption(object):
         self.convert_type('session_value')
 
     def setUserValue(self, user_value):
-
         if not hasattr(self, 'docstring'):
             raise ConfigError('Can\'t set a user value without a docstring!')
 
@@ -293,18 +290,24 @@ class ConfigOption(object):
     def __getattr__(self, name):
 
         if name == 'value':
-            values = []
+            if self.name.endswith('_PATH'):
+                values = []
 
-            for n in ['user', 'session', 'default']:
-                str_val = n+'_value'
-                if hasattr(self, str_val):
-                    values.append(getattr(self, str_val))
+                for n in ['user', 'session', 'default']:
+                    str_val = n+'_value'
+                    if hasattr(self, str_val):
+                        values.append(getattr(self, str_val))
 
-            if values:
-                returnable = reduce(self.transform_PATH_option, values)
-                return returnable
+                if values:
+                    returnable = reduce(self.transform_PATH_option, values)
+                    return returnable
+            else:
+                for n in ['user', 'session', 'default']:
+                    str_val = n+'_value'
+                    if hasattr(self, str_val):
+                        return getattr(self, str_val)
 
-        if name == 'level':
+        elif name == 'level':
 
             for level, name in [(0, 'user'), (1, 'session'), (2, 'default')]:
                 if hasattr(self, name + '_value'):
@@ -455,13 +458,16 @@ class PackageConfig(object):
         return self.getEffectiveOption(o)
 
     def addOption(self, name, default_value, docstring, override=False, **meta):
-
+        """
+        Add a new option to the configuration.
+        """
         if _after_bootstrap and not self.is_open:
             raise ConfigError('attempt to add a new option [%s]%s after bootstrap' % (self.name, name))
 
-        if name in self.options:
+        # has the option already been made
+        try:
             option = self.options[name]
-        else:
+        except KeyError:
             option = ConfigOption(name)
 
         if option.check_defined() and not override:
@@ -472,9 +478,10 @@ class PackageConfig(object):
         option.defineOption(default_value, docstring, **meta)
         self.options[option.name] = option
 
-        if self.name in unknownConfigFileValues:
+        # is it in the list of unknown options from the standard config files
+        try:
             conf_value = unknownConfigFileValues[self.name]
-        else:
+        except KeyError:
             msg = "Error getting ConfigFileValue Option: %s" % self.name
             if locals().get('logger') is not None:
                 locals().get('logger').debug("dbg: %s" % msg)
@@ -489,6 +496,26 @@ class PackageConfig(object):
                 msg = "Error Setting Session Value: %s" % err
                 if locals().get('logger') is not None:
                     locals().get('logger').debug("dbg: %s" % msg)
+        # is it in the list of unknown options specified by the user at the command line or gangarc
+        try:
+            conf_value = unknownUserConfigValues[self.name]
+        except KeyError:
+            msg = "Error getting User Option: %s" % self.name
+            if locals().get('logger') is not None:
+                locals().get('logger').debug("dbg: %s" % msg)
+            conf_value = dict()
+
+        if option.name in conf_value:
+            user_value = conf_value[option.name]
+            try:
+                option.setUserValue(user_value) 
+                del conf_value[option.name]
+            except Exception as err:
+                msg = "Error Setting User Value: %s" % err
+                if locals().get('logger') is not None:
+                    locals().get('logger').debug("dbg: %s" % msg)
+
+
 
     def setSessionValue(self, name, value):
         """  Add or  override options  as a  part of  second  phase of
@@ -505,10 +532,13 @@ class PackageConfig(object):
         for h in self._session_handlers:
             value = h[0](name, value)
 
-        if name not in self.options:
+        try:
+            this_opt = self.options[name]
+        except KeyError:
             self.options[name] = ConfigOption(name)
+            this_opt = self.options[name]
 
-        self.options[name].setSessionValue(value)
+        this_opt.setSessionValue(value)
 
         logger.debug('sucessfully set session option [%s]%s = %s', self.name, name, value)
 
@@ -551,16 +581,20 @@ class PackageConfig(object):
 
     def revertToSession(self, name):
         self.hasModified = True
-        if name in self.options:
+        try:
             if hasattr(self.options[name], 'user_value'):
                 del self.options[name].user_value
+        except KeyError:
+            pass
 
     def revertToDefault(self, name):
         self.hasModified = True
         self.revertToSession(name)
-        if name in self.options:
+        try:
             if hasattr(self.options[name], 'session_value'):
                 del self.options[name].session_value
+        except KeyError:
+            pass
 
     def revertToSessionOptions(self):
         self.hasModified = True
@@ -580,17 +614,17 @@ class PackageConfig(object):
         return eff
 
     def getEffectiveOption(self, name):
-        if name in self.options:
+        try:
             return self.options[name].value
-        else:
+        except KeyError:
             raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name))
 
     def getEffectiveLevel(self, name):
         """ Return 0 if option is effectively set at the user level, 1
         if at session level or 2 if at default level """
-        if name in self.options:
+        try:
             return self.options[name].level
-        else:
+        except KeyError:
             raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name))
 
     def attachUserHandler(self, pre, post):
@@ -674,15 +708,16 @@ def transform_PATH_option(name, new_value, current_value):
 
     PATH_ITEM = '_PATH'
     if name[-len(PATH_ITEM):] == PATH_ITEM:
-        getLogger().debug('PATH-like variable: %s %s %s', name, new_value, current_value)
+        logger = getLogger()
+        logger.debug('PATH-like variable: %s %s %s', name, new_value, current_value)
         if current_value is None:
             ret_value = new_value
         elif new_value[:3] != ':::':
-            getLogger().debug('Prepended %s to PATH-like variable %s', new_value, name)
+            logger.debug('Prepended %s to PATH-like variable %s', new_value, name)
             ret_value = new_value + ':' + current_value
             new_value = ""
         else:
-            getLogger().debug('Resetting PATH-like variable %s to %s', name, new_value)
+            logger.debug('Resetting PATH-like variable %s to %s', name, new_value)
             ret_value = new_value  # [3:]
             new_value = ":::"
 
@@ -802,7 +837,34 @@ def read_ini_files(filenames, system_vars):
     return main
 
 
+def setUserValue(config_name, option_name, value):
+    """
+    Sets the user value for the given config and option.
+    If the given config has not already been set the it is added
+    to the dict to be added later. The user values supersede the
+    session values so are the command line or gangarc options.
+    """
+    if config_name in allConfigs:
+        c = getConfig(config_name)
+        if option_name in c.options:
+            c.setUserValue(option_name, value)
+            return
+        if c.is_open:
+            c._addOpenOption(option_name, value)
+            c.setUserValue(option_name, value)
+            return
+    # put value in the buffer, it will be removed from the buffer when option
+    # is added
+    unknownUserConfigValues[config_name][option_name] = value
+
+
 def setSessionValue(config_name, option_name, value):
+    """
+    Sets the session value for the given config and option.
+    If the given config has not been set already then it is added
+    to the dict to be added later. The session value is superseded by
+    the user value.
+    """
     if config_name in allConfigs:
         c = getConfig(config_name)
         if option_name in c.options:
@@ -828,7 +890,6 @@ def setSessionValuesFromFiles(filenames, system_vars):
     At the time of reading the initialization files, the default options in
     the configuration options (default values) may have not yet been defined.
     """
-
     cfg = read_ini_files(filenames, system_vars)
 
     for name in cfg.sections():
@@ -844,7 +905,7 @@ def setSessionValuesFromFiles(filenames, system_vars):
                 logger.debug("Parse Error!:\n  %s" % err)
                 logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (name, o))
                 v = cfg.get(name, o, raw=True)
-            setSessionValue(name, o, v)
+            setUserValue(name, o, v)
 
 
 def load_user_config(filename, system_vars):
@@ -920,7 +981,6 @@ def expandConfigPath(path, top):
 
 
 def sanityCheck():
-
     logger = getLogger()
     for c in allConfigs.values():
         if not c._config_made:
