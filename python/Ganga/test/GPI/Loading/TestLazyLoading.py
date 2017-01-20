@@ -5,7 +5,6 @@ import pytest
 from Ganga.GPIDev.Base.Proxy import stripProxy
 
 from Ganga.testlib.decorators import add_config
-
 from Ganga.Core.exceptions import GangaAttributeError
 
 @add_config([('TestingFramework', 'AutoCleanup', 'False')])
