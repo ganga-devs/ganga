@@ -369,6 +369,8 @@ class GangaRepositoryLocal(GangaRepository):
             False if not present
         Raise RepositoryError"""
         try:
+            if not os.path.exists(self.root):
+                os.makedirs(self.root)
             obj_chunks = [d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
         except OSError as err:
             logger.debug("get_index_listing Exception: %s" % err)

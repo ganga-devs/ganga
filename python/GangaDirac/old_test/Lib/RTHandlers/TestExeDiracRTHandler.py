@@ -197,7 +197,6 @@ j.setOutputSandbox(['file4.txt', 'file3.txt', 'file8.txt', 'file7.txt'])
 
 # <-- user settings
 j.setCPUTime(172800)
-j.setBannedSites(['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
 
 # user settings -->
 
