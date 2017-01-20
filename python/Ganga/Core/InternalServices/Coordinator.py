@@ -206,16 +206,6 @@ def checkInternalServices(errMsg='Internal services disabled. Job registry is re
     if not servicesEnabled:
         raise ReadOnlyObjectError(errMsg)
 
-
-def bootstrap():
-
-    #global servicesEnabled
-    #servicesEnabled = True
-
-    # export to GPI moved to Runtime bootstrap
-
-    servicesEnabled = True
-
 #
 #$Log: not supported by cvs2svn $
 # Revision 1.1.4.1  2009/07/08 11:18:21  ebke

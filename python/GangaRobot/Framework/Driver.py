@@ -8,7 +8,7 @@ configuration.
 """
 
 from GangaRobot.Framework import Utility
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from GangaRobot.Framework.exceptions import * #import Fatal, Break, Continue excpetions
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
@@ -169,14 +169,14 @@ def loaddriver():
             try:
                 actions[action] = _loadclass(fqcn)
             except Exception as e:
-                raise ApplicationConfigurationError(e, "Cannot load class '%s'." % fqcn)
+                raise ApplicationConfigurationError("Cannot load class '%s'. Exception: '%s'" % (fqcn, e))
     #check actions exist for run
     for action in run:
         if not action in actions:
             try:
                 int(action)
             except ValueError as e:
-                raise ApplicationConfigurationError(e, "Unknown action '%s'." % action)
+                raise ApplicationConfigurationError("Unknown action '%s'. Exception: '%s'" % (action, e))
             
             
 

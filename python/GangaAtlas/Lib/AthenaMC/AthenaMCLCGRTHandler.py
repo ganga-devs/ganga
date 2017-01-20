@@ -61,12 +61,12 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert "SITEROOT" in os.environ
             except:
-                raise ApplicationConfigurationError(None," ATLAS environment not defined")
+                raise ApplicationConfigurationError(" ATLAS environment not defined")
                 
             try:
                 assert "CMTSITE" in os.environ
             except:
-                raise ApplicationConfigurationError(None,"cmt not setup properly. Please check your ATLAS setup or run on the grid")
+                raise ApplicationConfigurationError("cmt not setup properly. Please check your ATLAS setup or run on the grid")
             
             if os.environ["CMTSITE"]=="CERN" and "AtlasVersion" in os.environ:
                 logger.debug("Checking AtlasVersion: %s and selected atlas release %s" % (os.environ["AtlasVersion"],app.atlas_rel))
@@ -91,7 +91,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert "CMTSITE" in os.environ and os.environ["CMTSITE"]=="CERN"
             except:
-                raise ApplicationConfigurationError(None,"Error, CERN ATLAS AFS environment not defined. Needed by LSF backend")
+                raise ApplicationConfigurationError("Error, CERN ATLAS AFS environment not defined. Needed by LSF backend")
 
        
         environment={'T_LCG_GFAL_INFOSYS' :'atlas-bdii.cern.ch:2170'}
@@ -140,7 +140,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert len(usersites)==0
             except:
-                raise ApplicationConfigurationError(None,"Could not find a match between input dataset locations: %s and your requested sites: %s. Please use a space token compatible with one of the input dataset locations (replace _XXXDISK or _XXXTAPE by _LOCALGROUPDISK or _SCRATCHDISK if necessary)" % (str(app.sites),str(usersites)))
+                raise ApplicationConfigurationError("Could not find a match between input dataset locations: %s and your requested sites: %s. Please use a space token compatible with one of the input dataset locations (replace _XXXDISK or _XXXTAPE by _LOCALGROUPDISK or _SCRATCHDISK if necessary)" % (str(app.sites),str(usersites)))
             logger.warning("Failed to obtain processing site from input data, will use default value: CERN-PROD_SCRATCHDISK and submit production to CERN")
             selectedSites.append(_defaultSite)
 
@@ -177,7 +177,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
         try:
             assert outsite
         except:
-            raise ApplicationConfigurationError(None,"Could not find suitable location for your output. Please subscribe your input dataset (if any) to a suitable location or change application.se_name to a suitable space token")
+            raise ApplicationConfigurationError("Could not find suitable location for your output. Please subscribe your input dataset (if any) to a suitable location or change application.se_name to a suitable space token")
 
 
         # srmv2 sites special treatment: the space token has been prefixed to the outputlocation and must be removed now:
@@ -327,7 +327,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
 ##        try:
 ##            assert dq2client_version!=""
 ##        except:
-##            raise  ApplicationConfigurationError(None,"Please give a value to dq2client_version in job.backend.requirements.")
+##            raise  ApplicationConfigurationError("Please give a value to dq2client_version in job.backend.requirements.")
         
 #        requirements.software += ['VO-atlas-dq2clients-%s' % dq2client_version]
 #        requirements.other+=['RegExp("VO-atlas-dq2clients",other.GlueHostApplicationSoftwareRunTimeEnvironment)']
@@ -362,7 +362,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert cloud==userCloud
             except:
-                raise ApplicationConfigurationError(None,"Requested cloud: %s did not match selected processing cloud: %s. Reverting to submission to site %s" % (userCloud,cloud,outsite))
+                raise ApplicationConfigurationError("Requested cloud: %s did not match selected processing cloud: %s. Reverting to submission to site %s" % (userCloud,cloud,outsite))
 
             requirements.cloud=cloud
             # looks like cloud has to be converted in a list of sites anyway, and this is not done in AtlasLCGRequirements.convert()... 
@@ -370,7 +370,7 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             try:
                 assert len(allsites)>0
             except:
-                raise ApplicationConfigurationError(None,"Could not get any sites from the specified cloud: %s. You will have to specify a target site in job.backend.requirements.sites" % cloud)
+                raise ApplicationConfigurationError("Could not get any sites from the specified cloud: %s. You will have to specify a target site in job.backend.requirements.sites" % cloud)
             # need to weed out unwanted sites from excluded list
             excludedSites=requirements.excluded_sites
             goodsites=[]
@@ -488,9 +488,9 @@ class AthenaMCLCGRTHandler(IRuntimeHandler):
             if "INPUTTURLS" in environment:
                 logger.debug(environment["INPUTTURLS"])
                 if string.find(environment["INPUTTURLS"],"file:")>=0:
-                    raise ApplicationConfigurationError(None,"Input file was found to be local, and LCG backend does not support replication of local files to the GRID yet. Please register your input dataset in DQ2 before resubmitting this job. Aborting")
+                    raise ApplicationConfigurationError("Input file was found to be local, and LCG backend does not support replication of local files to the GRID yet. Please register your input dataset in DQ2 before resubmitting this job. Aborting")
             if string.lower(app.se_name)=="local":
-                raise ApplicationConfigurationError(None,"Output file cannot be committed to local filesystem on a grid job. Please change se_name")
+                raise ApplicationConfigurationError("Output file cannot be committed to local filesystem on a grid job. Please change se_name")
 
             lcg_job_config = LCGJobConfig(File(exe),inputbox,args,outputbox,environment,inputdata,requirements) 
             lcg_job_config.monitoring_svc = mc['AthenaMC/LCG']

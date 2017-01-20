@@ -16,7 +16,8 @@ from Ganga.GPIDev.Credentials.VomsProxy import VomsProxy
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Lib.Job import JobStatusError
-from Ganga.Core import BackendError, Sandbox
+from Ganga.Core.exceptions import BackendError
+from Ganga.Core import Sandbox
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Core import FileWorkspace
@@ -250,7 +251,7 @@ def runPandaBrokerage(job):
             except exceptions.SystemExit:
                 raise BackendError('Panda','Error in Client.getLocations for libDS')
             if not libdslocation:
-                raise ApplicationConfigurationError(None,'Could not locate libDS %s'%job.backend.libds)
+                raise ApplicationConfigurationError('Could not locate libDS %s'%job.backend.libds)
             else:
                 libdslocation = libdslocation.values()[0]
                 try:
@@ -266,9 +267,9 @@ def runPandaBrokerage(job):
                 try:
                     dataset = job.inputdata.DQ2dataset
                 except:
-                    raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
+                    raise ApplicationConfigurationError('Could not determine input datasetname for Panda brokerage')
             if not dataset:
-                raise ApplicationConfigurationError(None,'Could not determine input datasetname for Panda brokerage')
+                raise ApplicationConfigurationError('Could not determine input datasetname for Panda brokerage')
 
             fileList = []
             try:
@@ -688,7 +689,7 @@ class Panda(IBackend):
         logger.debug("Using Panda server baseURLSSL=%s" %Client.baseURLSSL)
 
         #from pandatools import Client
-        from Ganga.Core import IncompleteJobSubmissionError
+        from Ganga.Core.exceptions import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
         assert(implies(rjobs,len(subjobspecs)==len(rjobs))) 
@@ -1636,7 +1637,7 @@ class Panda(IBackend):
                 except exceptions.SystemExit:
                     raise BackendError('Panda','Error in Client.getLocations for libDS')
                 if not libdslocation:
-                    raise ApplicationConfigurationError(None,'Could not locate libDS %s'%self.libds)
+                    raise ApplicationConfigurationError('Could not locate libDS %s'%self.libds)
                 else:
                     libdslocation = libdslocation.values()[0]
                     try:

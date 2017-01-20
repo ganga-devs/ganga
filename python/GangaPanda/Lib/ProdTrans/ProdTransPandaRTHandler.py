@@ -2,7 +2,7 @@ import commands, exceptions, random, re, sys, time
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getDatasets
 
@@ -144,7 +144,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 self.dbrelease_dataset = m.group(1)
                 self.dbrelease = m.group(2)
             else:
-                raise ApplicationConfigurationError(None, "Error retrieving LATEST DBRelease. Try setting application.dbrelease manually.")
+                raise ApplicationConfigurationError("Error retrieving LATEST DBRelease. Try setting application.dbrelease manually.")
         else:
             self.dbrelease_dataset = app.dbrelease_dataset
             self.dbrelease = app.dbrelease

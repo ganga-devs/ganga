@@ -841,7 +841,7 @@ under certain conditions; type license() for details.
 
         import Ganga.Utility.Config
         from Ganga.Utility.Runtime import initSetupRuntimePackages
-        from Ganga.Core import GangaException
+        from Ganga.Core.exceptions import GangaException
 
         logger.debug("Import plugins")
         try:
@@ -1166,13 +1166,13 @@ under certain conditions; type license() for details.
         ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
         from Ganga.Utility.logging import getLogger
         logger = getLogger(modulename=True)
-        logger.error("Error: %s" % value)
+        logger.error("%s" % value)
 
         from Ganga.Core.exceptions import GangaException
         import traceback
         # Extract the stack from this traceback object
         stack = traceback.extract_tb(tb)
-        # If this is an error from the interactive prompt then the length is 2, otherwise the errror is from deeper in Ganga
+        # If this is an error from the interactive prompt then the length is 2, otherwise the error is from deeper in Ganga
         if not issubclass(etype, GangaException) and len(stack) > 2:
             logger.error("!!Unknown/Unexpected ERROR!!")
             logger.error("If you're able to reproduce this please report this to the Ganga developers!")

@@ -68,12 +68,12 @@ class AthenaMCLocalRTHandler(IRuntimeHandler):
         try:
             assert "SITEROOT" in os.environ
         except:
-            raise ApplicationConfigurationError(None," ATLAS environment not defined")
+            raise ApplicationConfigurationError(" ATLAS environment not defined")
                 
         try:
             assert "CMTSITE" in os.environ and os.environ["CMTSITE"]!=""
         except:
-            raise ApplicationConfigurationError(None,"cmt not setup properly. Please check your ATLAS setup or run on the grid")
+            raise ApplicationConfigurationError("cmt not setup properly. Please check your ATLAS setup or run on the grid")
             
         if "AtlasVersion" in os.environ:
             logger.debug("Checking AtlasVersion: %s and selected atlas release %s" % (os.environ["AtlasVersion"],app.atlas_rel))
@@ -97,7 +97,7 @@ class AthenaMCLocalRTHandler(IRuntimeHandler):
             try:
                 assert "CMTSITE" in os.environ and os.environ["CMTSITE"]=="CERN"
             except:
-                raise ApplicationConfigurationError(None,"Error, CERN ATLAS AFS environment not defined. Needed by LSF backend")
+                raise ApplicationConfigurationError("Error, CERN ATLAS AFS environment not defined. Needed by LSF backend")
 
        
         environment={'T_LCG_GFAL_INFOSYS' :'atlas-bdii.cern.ch:2170'}

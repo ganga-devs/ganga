@@ -71,7 +71,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
 
         # check DBRelease
         # if job.backend.dbRelease != '' and job.backend.dbRelease.find(':') == -1:
-         #   raise ApplicationConfigurationError(None,"ERROR : invalid argument for backend.dbRelease. Must be 'DatasetName:FileName'")
+         #   raise ApplicationConfigurationError("ERROR : invalid argument for backend.dbRelease. Must be 'DatasetName:FileName'")
 
 #       unpack library
         logger.debug('Creating source tarball ...')        
@@ -115,7 +115,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         if rc:
             logger.error('Packing sources failed with status %d',rc)
             logger.error(output)
-            raise ApplicationConfigurationError(None,'Packing sources failed.')
+            raise ApplicationConfigurationError('Packing sources failed.')
 
         shutil.rmtree(tmpdir)
 
@@ -129,7 +129,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
             if output != 'True':
                 logger.error('Uploading sources %s failed. Status = %d', sources, rc)
                 logger.error(output)
-                raise ApplicationConfigurationError(None,'Uploading archive failed')
+                raise ApplicationConfigurationError('Uploading archive failed')
         finally:
             os.chdir(cwd)      
 
@@ -161,20 +161,20 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
 ##                     try:
 ##                         assert job.backend.requirements.cloud in outclouds
 ##                     except:
-##                         raise ApplicationConfigurationError(None,'Input dataset not available in target cloud %s. Please try any of the following %s' % (job.backend.requirements.cloud, str(outclouds)))
+##                         raise ApplicationConfigurationError('Input dataset not available in target cloud %s. Please try any of the following %s' % (job.backend.requirements.cloud, str(outclouds)))
                                                             
         from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
         
         runPandaBrokerage(job)
         
         if job.backend.site == 'AUTO':
-            raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
+            raise ApplicationConfigurationError('site is still AUTO after brokerage!')
 
         # output dataset preparation and registration
         try:
             outDsLocation = Client.PandaSites[job.backend.site]['ddm']
         except:
-            raise ApplicationConfigurationError(None,"Could not extract output dataset location from job.backend.site value: %s. Aborting" % job.backend.site)
+            raise ApplicationConfigurationError("Could not extract output dataset location from job.backend.site value: %s. Aborting" % job.backend.site)
         if not app.dryrun:
             for outtype in app.outputpaths.keys():
                 dset=string.replace(app.outputpaths[outtype],"/",".")
@@ -185,7 +185,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
                     Client.addDataset(dset,False,location=outDsLocation)
                     dq2_set_dataset_lifetime(dset, location=outDsLocation)
                 except:
-                    raise ApplicationConfigurationError(None,"Fail to create output dataset %s. Aborting" % dset)
+                    raise ApplicationConfigurationError("Fail to create output dataset %s. Aborting" % dset)
             # extend registration to build job lib dataset:
             print "registering output dataset %s at %s" % (self.libDataset,outDsLocation)
 
@@ -193,7 +193,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
                 Client.addDataset(self.libDataset,False,location=outDsLocation)
                 dq2_set_dataset_lifetime(self.libDataset, outDsLocation)
             except:
-                raise ApplicationConfigurationError(None,"Fail to create output dataset %s. Aborting" % self.libDataset)
+                raise ApplicationConfigurationError("Fail to create output dataset %s. Aborting" % self.libDataset)
 
 
         ###
