@@ -40,7 +40,7 @@ standardSetup()
 del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 import Ganga.Runtime
 Ganga.Runtime._prog = None
 import sys

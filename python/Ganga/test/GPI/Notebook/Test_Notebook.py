@@ -4,7 +4,7 @@ import inspect
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from GangaTest.Framework.utils import sleep_until_completed
-from Ganga.Core import ApplicationPrepareError, ProtectedAttributeError
+from Ganga.Core.exceptions import ApplicationPrepareError, ProtectedAttributeError
 
 class TestNotebook(GangaUnitTest):
 

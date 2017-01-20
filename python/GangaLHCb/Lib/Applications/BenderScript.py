@@ -97,7 +97,7 @@ from   os.path                                 import split, join
 from   Ganga.GPIDev.Schema.Schema              import FileItem, SimpleItem
 from   Ganga.GPIDev.Lib.File                   import File
 from   Ganga.Utility.util                      import unique
-from   Ganga.Core                              import ApplicationConfigurationError
+from   Ganga.Core.exceptions                   import ApplicationConfigurationError
 from   Ganga.GPIDev.Lib.File                   import ShareDir
 from   Ganga.GPIDev.Lib.File.FileBuffer        import FileBuffer
 from   GangaGaudi.Lib.Applications.GaudiBase   import GaudiBase
@@ -336,7 +336,7 @@ class BenderScript(GaudiBase):
         """Checks the validity of user's entries for BenderScript schema"""
         
         if not self.scripts and not self.imports : 
-            raise ApplicationConfigurationError(None, "Application scripts/imports are not defined")
+            raise ApplicationConfigurationError("Application scripts/imports are not defined")
         
         if isinstance ( self.scripts , str ) : self.scripts = [ File ( self.scripts ) ]
         if isinstance ( self.imports , str ) : self.imports = [ File ( self.imports ) ]

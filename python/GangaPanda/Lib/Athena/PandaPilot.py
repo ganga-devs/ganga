@@ -45,14 +45,14 @@ class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.Lib.LCG import LCGJobConfig
         if not app.queue:
-            raise ApplicationConfigurationError(None,'queue not specified for PandaPilot')
+            raise ApplicationConfigurationError('queue not specified for PandaPilot')
         args = app.arg_pattern.replace('%%QUEUE%%',app.queue)
         job = app._getParent()
 
         if not job.backend.requirements.sites:
             job.backend.requirements.sites=[queueToDDM(app.queue)]
             if not job.backend.requirements.sites:
-                raise ApplicationConfigurationError(None,'Could not map queue name to LCG site')
+                raise ApplicationConfigurationError('Could not map queue name to LCG site')
         logger.info('Sending pilot for %s to %s'%(app.queue,job.backend.requirements.sites))
         return LCGJobConfig(app.exe,app._getParent().inputsandbox,[args],app._getParent().outputsandbox,None)
 

@@ -8,16 +8,6 @@ Attributes:
     monitoring_component (JobRegistry_Monitor): Global variable that is set to the single global monitoring thread. Set
         in the bootstrap function.
 """
-
-# Ganga Imports
-from Ganga.Core.exceptions import GangaException, ApplicationConfigurationError, \
-    BackendError, RepositoryError, BulkOperationRepositoryError, \
-    IncompleteJobSubmissionError, IncompleteKillError, JobManagerError, \
-    GangaAttributeError, GangaValueError, ProtectedAttributeError, \
-    ReadOnlyObjectError, TypeMismatchError, SchemaError, ApplicationPrepareError, \
-    GangaIOError, SplitterError
-
-# Globals
 monitoring_component = None
 
 

@@ -66,8 +66,7 @@ class GenericSplitter(ISplitter):
 
         # sort out multiple arg splitting
         if (self.attribute != '' or len(self.values) > 0) and len(self.multi_attrs) > 0:
-            raise ApplicationConfigurationError(
-                None, "Setting both 'attribute'/'values' and 'multi_attrs' is unsupported")
+            raise ApplicationConfigurationError("Setting both 'attribute'/'values' and 'multi_attrs' is unsupported")
 
         if self.attribute != '':
             attrlist = [self.attribute]
@@ -84,7 +83,7 @@ class GenericSplitter(ISplitter):
                 else:
                     if len(self.multi_attrs[attr]) != numjobs:
                         raise ApplicationConfigurationError(
-                            None, "Number of values for '%s' doesn't equal others '%d'" % (attr, numjobs))
+                            "Number of values for '%s' doesn't equal others '%d'" % (attr, numjobs))
 
                 attrlist.append(attr)
 
@@ -100,7 +99,7 @@ class GenericSplitter(ISplitter):
         for vallist in values:
             if len(attrlist) != len(vallist):
                 raise ApplicationConfigurationError(
-                    None, "Number of attributes to split over doesn't equal number of values in list '%s'" % vallist)
+                    "Number of attributes to split over doesn't equal number of values in list '%s'" % vallist)
 
         # now perform the split
         for vallist in values:

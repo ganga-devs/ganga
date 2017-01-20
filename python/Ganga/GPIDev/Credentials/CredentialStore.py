@@ -163,7 +163,7 @@ class CredentialStore(GangaObject, collections.Mapping):
             A single ICredentialInfo object which matches the requirements
 
         Raises:
-            KeyError: If it could not provide a credential
+            GangaKeyError: If it could not provide a credential
             TypeError: If query is of the wrong type
         """
 

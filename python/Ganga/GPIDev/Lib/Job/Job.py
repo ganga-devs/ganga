@@ -11,7 +11,8 @@ import sys
 
 import Ganga.Core.FileWorkspace
 from Ganga.GPIDev.MonitoringServices import getMonitoringObject
-from Ganga.Core import GangaException, IncompleteJobSubmissionError, JobManagerError, Sandbox, SplitterError
+from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError
+from Ganga.Core import Sandbox
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
