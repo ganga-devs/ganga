@@ -70,7 +70,7 @@ def test__addition_sandbox_content(db):
 
 
 def test__setup_bulk_subjobs(tmpdir, db):
-    from Ganga.Core import BackendError
+    from Ganga.Core.exceptions import BackendError
     from Ganga.GPIDev.Lib.Dataset.Dataset import Dataset
     from GangaDirac.Lib.Backends import Dirac
 
@@ -111,7 +111,8 @@ def test__setup_bulk_subjobs(tmpdir, db):
 def test__common_submit(tmpdir, db, mocker):
     mocker.patch('Ganga.GPIDev.Credentials.credential_store')
 
-    from Ganga.Core import BackendError
+    from Ganga.Core.exceptions import BackendError
+
     j = Job()
     j.id = 0
     j.backend = db
@@ -190,7 +191,7 @@ def test_resubmit(db):
 
 
 def test__resubmit(db):
-    from Ganga.Core import BackendError
+    from Ganga.Core.exceptions import BackendError
 
     def _common_submit(dirac_script):
         return '_common_submit run ok'
@@ -243,8 +244,9 @@ def test_kill(db, mocker):
     mocker.patch('Ganga.GPIDev.Credentials.credential_store')
 
     db.id = 1234
+
     with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')):
-        from Ganga.Core import BackendError
+        from Ganga.Core.exceptions import BackendError
         with pytest.raises(BackendError):
             db.kill()
 

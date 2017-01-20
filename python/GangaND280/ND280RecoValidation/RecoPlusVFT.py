@@ -17,7 +17,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 import os, shutil, commands, re, time
 from Ganga.Utility.files import expandfilename
@@ -78,7 +78,7 @@ class RecoPlusVFT(IApplication):
 
     def configure(self,masterappconfig):
         if self.cmtsetup == None:
-          raise ApplicationConfigurationError(None,'No cmt setup script given.')
+          raise ApplicationConfigurationError('No cmt setup script given.')
 
         # __________ Reco first ____________
         reco_args = convertIntToStringArgs(self.reco_args)
@@ -89,14 +89,14 @@ class RecoPlusVFT(IApplication):
         # setup the output file
         for arg in reco_args:
           if arg == '-o':
-            raise ApplicationConfigurationError(None,'Option "-o" given in reco_args. You must use the filenamesubstr and reconewstr variables instead to define an output.')
+            raise ApplicationConfigurationError('Option "-o" given in reco_args. You must use the filenamesubstr and reconewstr variables instead to define an output.')
 
         # So get the list of filenames get_dataset_filenames() and create a file containing the list of files and put it in the sandbox
         if job.inputdata == None:
-          raise ApplicationConfigurationError(None,'The inputdata variable is not defined.')
+          raise ApplicationConfigurationError('The inputdata variable is not defined.')
         fileList = job.inputdata.get_dataset_filenames()
         if len(fileList) < 1:
-          raise ApplicationConfigurationError(None,'No input data file given.')
+          raise ApplicationConfigurationError('No input data file given.')
 
         firstFile = fileList[0].split('/')[-1]
         # Define the output
@@ -120,7 +120,7 @@ class RecoPlusVFT(IApplication):
         # setup the output file
         for arg in vft_args:
           if arg == '-o':
-            raise ApplicationConfigurationError(None,'Option "-o" given in vft_args. You must use the filenamesubstr and reconewstr variables instead to define an output.')
+            raise ApplicationConfigurationError('Option "-o" given in vft_args. You must use the filenamesubstr and reconewstr variables instead to define an output.')
 
         # Define the output
         vft_args.append('-o')

@@ -7,13 +7,6 @@ from __future__ import absolute_import
 
 import time
 
-from .exceptions import GangaException, ApplicationConfigurationError, \
-    BackendError, RepositoryError, BulkOperationRepositoryError, \
-    IncompleteJobSubmissionError, IncompleteKillError, JobManagerError, \
-    GangaAttributeError, GangaValueError, ProtectedAttributeError, \
-    ReadOnlyObjectError, TypeMismatchError, SchemaError, ApplicationPrepareError, \
-    GangaIOError, SplitterError
-
 monitoring_component = None
 
 

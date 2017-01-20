@@ -14,7 +14,7 @@ from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Lib.File import FileUtils
 from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Lib.File import ShareDir
-from Ganga.Core import ApplicationPrepareError
+from Ganga.Core.exceptions import ApplicationPrepareError
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import getName

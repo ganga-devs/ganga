@@ -16,7 +16,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 import os, shutil, commands, re
 from Ganga.Utility.files import expandfilename
@@ -69,20 +69,20 @@ class runND280(IApplication):
         job = self.getJobObject()
 
         if self.cmtsetup == []:
-          raise ApplicationConfigurationError(None,'No cmt setup script given.')
+          raise ApplicationConfigurationError('No cmt setup script given.')
 
         for arg in args:
           if arg == '-c':
-            raise ApplicationConfigurationError(None,'Option "-c" given in args. You must use the configfile variable instead.')
+            raise ApplicationConfigurationError('Option "-c" given in args. You must use the configfile variable instead.')
 
         # setup the config file for this job
         if self.configfile == None:
-          raise ApplicationConfigurationError(None,'No config file given. Use args list or configfile field.')
+          raise ApplicationConfigurationError('No config file given. Use args list or configfile field.')
         # check if given config file exists
         if not os.path.exists(self.configfile):
-          raise ApplicationConfigurationError(None,'The given config file "'+self.configfile+'" was not found.')
+          raise ApplicationConfigurationError('The given config file "'+self.configfile+'" was not found.')
         if not os.path.isfile(self.configfile):
-          raise ApplicationConfigurationError(None,'The given config file "'+self.configfile+'" is not a file.')
+          raise ApplicationConfigurationError('The given config file "'+self.configfile+'" is not a file.')
 
         # Right here, take the input config file and change it as needed
         # If found inputfile, just put the first file in the inputdata
@@ -96,20 +96,20 @@ class runND280(IApplication):
             midas_filefnd = re.match(r"^midas_file\s*=", line)
             if inputfile_listfnd or inputfilefnd or midas_filefnd:
               if job.inputdata == None:
-                raise ApplicationConfigurationError(None,'The given config file requires an input file but the inputdata of the job is not defined.')
+                raise ApplicationConfigurationError('The given config file requires an input file but the inputdata of the job is not defined.')
               # TODO: Check if there is an inputdata
               infiles = job.inputdata.get_dataset_filenames()
               if len(infiles) < 1:
-                raise ApplicationConfigurationError(None,'The given config file contains "inputfile" but not input file was given')
+                raise ApplicationConfigurationError('The given config file contains "inputfile" but not input file was given')
               if inputfile_listfnd:
                 line = 'inputfile_list = ' + ' '.join(infiles) + '\n'
               elif inputfilefnd:
                 if len(infiles) > 1:
-                  raise ApplicationConfigurationError(None,'The given config file contains "inputfile" but more than one input file was given')
+                  raise ApplicationConfigurationError('The given config file contains "inputfile" but more than one input file was given')
                 line = 'inputfile = ' + infiles[0] + '\n'
               elif midas_filefnd:
                 if len(infiles) > 1:
-                  raise ApplicationConfigurationError(None,'The given config file contains "midas_file" but more than one file was given')
+                  raise ApplicationConfigurationError('The given config file contains "midas_file" but more than one file was given')
                 line = 'midas_file = ' + infiles[0] + '\n'
             
             outConf += line

@@ -2,8 +2,7 @@ from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
-from Ganga.Core import BackendError
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException, BackendError
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Utilities.DiracUtilities import execute

@@ -29,14 +29,14 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
         # check file is set OK
         if not app.script.name:
             msg = 'Root.script.name must be set.'
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
 
         sharedir_scriptpath = os.path.join(get_share_path(app),
                                            os.path.basename(app.script.name))
 
         if not os.path.exists(sharedir_scriptpath):
             msg = 'Script must exist!'
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
 
         return StandardJobConfig(inputbox=unique(inputsandbox),
                                  outputbox=unique(outputsandbox))

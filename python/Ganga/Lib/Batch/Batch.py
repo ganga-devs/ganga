@@ -3,7 +3,7 @@ import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Base.Proxy import isType, getName, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 import os.path
 
 import Ganga.Utility.logging
