@@ -32,7 +32,7 @@ import saga.job
 
 # The threaded download manager
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 
 # Other classes that are part of the SAGA iBackend
 from GangaSAGA.Lib.SAGA.SAGAFileTransferManager import SAGAFileTransferManager

@@ -11,7 +11,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Schema import ComponentItem
 
 from Ganga.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass, _getName
-from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
+from Ganga.Core.exceptions import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
 import collections
 import functools

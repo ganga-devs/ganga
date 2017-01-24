@@ -27,8 +27,8 @@ def test_execute_timeouts():
 
     assert timeit.timeit(
         '''
-        from Ganga.Utility.execute import execute
-        execute('cd "{0}"; pwd', shell=True, timeout=10)
+from Ganga.Utility.execute import execute
+execute('cd "{0}"; pwd', shell=True, timeout=10)
         '''.format(os.getcwd()), number=1) < 11
 
 

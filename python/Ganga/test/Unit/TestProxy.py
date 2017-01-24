@@ -116,7 +116,7 @@ class TestProxy(unittest.TestCase):
         def _get():
             temp = self.p.b
 
-        self.assertRaises(AttributeError, _get)
+        self.assertRaises(Ganga.Core.exceptions.GangaAttributeError, _get)
 
     def test_set_wrong_type(self):
         """
@@ -158,4 +158,4 @@ class TestProxy(unittest.TestCase):
         def _call():
             self.p.not_proxied()
 
-        self.assertRaises(AttributeError, _call)
+        self.assertRaises(Ganga.Core.exceptions.GangaAttributeError, _call)

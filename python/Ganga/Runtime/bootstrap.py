@@ -492,7 +492,7 @@ under certain conditions; type license() for details.
 
     # this is an option method which runs an interactive wizard which helps new users to start with Ganga
     # the interactive mode is not entered if -c option was used
-    def new_user_wizard(self):
+    def new_user_wizard(self, interactive=True):
         from Ganga.Utility.logging import getLogger
         from Ganga.Utility.Config.Config import load_user_config, getConfig, ConfigError
 
@@ -526,10 +526,14 @@ under certain conditions; type license() for details.
             # Sleep for 1 sec to allow for most of the bootstrap to finish so
             # the user actually sees this message last
             time.sleep(3.)
-            yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')
+            if interactive:
+                yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')
+            else:
+                yes = 'y'
             if yes.lower() in ['', 'y']:
                 self.generate_config_file(default_config)
-                raw_input('Press <Enter> to continue.\n')
+                if interactive:
+                    raw_input('Press <Enter> to continue.\n')
         elif self.new_version():
             self.print_release_notes()
             self.rollHistoryForward()
@@ -837,7 +841,7 @@ under certain conditions; type license() for details.
 
         import Ganga.Utility.Config
         from Ganga.Utility.Runtime import initSetupRuntimePackages
-        from Ganga.Core import GangaException
+        from Ganga.Core.exceptions import GangaException
 
         logger.debug("Import plugins")
         try:
@@ -1162,13 +1166,13 @@ under certain conditions; type license() for details.
         ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
         from Ganga.Utility.logging import getLogger
         logger = getLogger(modulename=True)
-        logger.error("Error: %s" % value)
+        logger.error("%s" % value)
 
         from Ganga.Core.exceptions import GangaException
         import traceback
         # Extract the stack from this traceback object
         stack = traceback.extract_tb(tb)
-        # If this is an error from the interactive prompt then the length is 2, otherwise the errror is from deeper in Ganga
+        # If this is an error from the interactive prompt then the length is 2, otherwise the error is from deeper in Ganga
         if not issubclass(etype, GangaException) and len(stack) > 2:
             logger.error("!!Unknown/Unexpected ERROR!!")
             logger.error("If you're able to reproduce this please report this to the Ganga developers!")
