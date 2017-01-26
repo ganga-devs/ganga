@@ -781,6 +781,7 @@ def GPIProxyObjectFactory(_obj):
 
 
 class GPIProxyObject(object):
+    __slots__ = list()
     pass
 
 # create a new GPI class for a given ganga (plugin) class

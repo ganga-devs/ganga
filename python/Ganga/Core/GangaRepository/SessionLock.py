@@ -379,6 +379,7 @@ class SessionLockManager(object):
         #logger.debug( "Initializing SessionLockManager: " + self.fn )
         self._lock = threading.RLock()
         self.last_count_access = None
+        self._stored_session_path = {}
 
     @synchronised
     def startup(self):
@@ -703,6 +704,11 @@ class SessionLockManager(object):
             else:
                 pass
 
+    def _path_helper(self, session):
+        if session not in self._stored_session_path:
+            self._stored_session_path[session] = os.path.join(self.sdir, session)
+        return self._stored_session_path[session]
+
     @synchronised
     @global_disk_lock
     def lock_ids(self, ids):
@@ -716,7 +722,7 @@ class SessionLockManager(object):
 
         slocked = set()
         for session in sessions:
-            sf = os.path.join(self.sdir, session)
+            sf = self._path_helper(session)
             if sf == self.fn:
                 continue
             slocked.update(self.session_read(sf))
@@ -749,7 +755,7 @@ class SessionLockManager(object):
                 continue
             fd = None
             try:
-                sf = os.path.join(self.sdir, session)
+                sf = self._path_helper()
                 if not self.afs:
                     fd = os.open(sf, os.O_RDONLY)
                     fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
@@ -782,7 +788,7 @@ class SessionLockManager(object):
         for session in sessions:
             fd = None
             try:
-                sf = os.path.join(self.sdir, session)
+                sf = self._path_helper()
                 if not self.afs:
                     fd = os.open(sf, os.O_RDONLY)
                     fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
@@ -830,7 +836,7 @@ class SessionLockManager(object):
 
         for session in sessions:
             try:
-                sf = os.path.join(self.sdir, session)
+                sf = self._path_helper()
                 global session_expiration_timeout
                 if((time.time() - os.stat(sf).st_ctime) > session_expiration_timeout):
                     if(sf.endswith(".session")):

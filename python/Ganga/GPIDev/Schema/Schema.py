@@ -44,6 +44,8 @@ _stored_configs = {}
 
 class Version(object):
 
+    __slots__ = ('major', 'minor')
+
     def __init__(self, major, minor):
         self.major = major
         self.minor = minor
@@ -121,8 +123,7 @@ class Schema(object):
 
     @property
     def name(self):
-        from Ganga.GPIDev.Base.Objects import _getName
-        return _getName(self._pluginclass)
+        return self._pluginclass._name
 
     def allItemNames(self):
         return self.datadict.keys()
@@ -581,6 +582,8 @@ class ComponentItem(Item):
     # schema user of a ComponentItem cannot change the forced values below
     _forced = {}
 
+    __slots__=list()
+
     def __init__(self, category, optional=0, load_default=1, **kwds):
         super(ComponentItem, self).__init__()
         kwds['category'] = category
@@ -603,6 +606,8 @@ defaultValue='_NOT_A_VALUE_'
 
 class SimpleItem(Item):
 
+    __slots__=list()
+
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
         super(SimpleItem, self).__init__()
         if typelist == defaultValue:
@@ -619,6 +624,8 @@ class SimpleItem(Item):
 
 
 class SharedItem(Item):
+
+    __slots__=list()
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
         super(SharedItem, self).__init__()
@@ -639,6 +646,8 @@ class SharedItem(Item):
 # defining their metaproperties
 class FileItem(ComponentItem):
 
+    __slots__=list()
+
     def __init__(self, **kwds):
         super(FileItem, self).__init__('files')
         self._update(kwds)
@@ -648,6 +657,8 @@ class FileItem(ComponentItem):
 
 
 class GangaFileItem(ComponentItem):
+
+    __slots__ = list()
 
     def __init__(self, **kwds):
         super(GangaFileItem, self).__init__('gangafiles')

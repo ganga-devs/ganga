@@ -104,6 +104,8 @@ class ConfigError(GangaException):
     """ ConfigError indicates that an option does not exist or it cannot be set.
     """
 
+    __slots__=('what',)
+
     def __init__(self, what=''):
         super(ConfigError, self).__init__()
         self.what = what
@@ -208,6 +210,8 @@ class ConfigOption(object):
        * typelist - None => a typelist as in GPI schema 
     The configuration option may also define the session_value and default_value. The value property gives the effective value.
     """
+
+    __slots__ = ('name', 'hidden', 'cfile', 'examples', 'filter', 'typelist', 'hasModified', 'default_value', 'docstring', 'type', 'user_value', 'session_value')
 
     def __init__(self, name):
         self.name = name
@@ -320,7 +324,7 @@ class ConfigOption(object):
             raise AttributeError('Cannot set "%s" attribute of the option object' % name)
 
         super(ConfigOption, self).__setattr__(name, value)
-        super(ConfigOption, self).__setattr__('_hasModified', True)
+        super(ConfigOption, self).__setattr__('hasModified', True)
 
     def check_defined(self):
         return hasattr(self, 'default_value')

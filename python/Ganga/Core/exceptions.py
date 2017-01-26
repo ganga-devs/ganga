@@ -6,6 +6,8 @@ This module contains all the Ganga Core specific exceptions used throughout the 
 
 class GangaException(Exception):
     """Basic Ganga Exception class"""
+    __slots__=list()
+
     def __str__(self):
         """
         Return a string containing the error type as well as the parent string

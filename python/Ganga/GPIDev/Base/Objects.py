@@ -270,6 +270,8 @@ class Descriptor(object):
     This class also handles thread-locking of a class including both the getter and setter methods to ensure object consistency
     """
 
+    __slots__ = ('_name', '_item', '_checkset_name', '_filter_name', '_getter_name', '_checkset_name')
+
     def __init__(self, name, item):
         """
         Lets build a descriptor for this item with this name
@@ -603,6 +605,8 @@ class ObjectMetaclass(abc.ABCMeta):
     This is a MetaClass...
     TODO explain what this does"""
 
+    __slots__ = list()
+
     def __init__(cls, name, bases, this_dict):
         """
         Init method for a class of name, name
@@ -640,7 +644,7 @@ class ObjectMetaclass(abc.ABCMeta):
         if hasattr(cls, '_additional_slots'):
             attrs_to_add += [_ for _ in cls._additional_slots]
 
-        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject') + tuple(attrs_to_add)
+        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject', '_has_init') + tuple(attrs_to_add)
 
         # If a class has not specified a '_name' then default to using the class '__name__'
         if not cls.__dict__.get('_name'):
@@ -698,6 +702,7 @@ class GangaObject(Node):
     # default entries as evaluated from the schema.
     # This is useful when reading many objects from disk as this wastes CPU as the entry is being overridden
     _should_init = True
+    _has_init = False
 
     @classmethod
     def getNew(cls):
@@ -714,8 +719,9 @@ class GangaObject(Node):
         returnable.__class__.__init__(returnable)
 
         # Just to make sure that if a class's inheritance is broken we still have all of the Core member paramreters initialized
-        Node.__init__(returnable, None)
-        GangaObject.__init__(returnable)
+        if not returnable._has_init:
+            Node.__init__(returnable, None)
+            GangaObject.__init__(returnable)
 
         # Return the newly initialized object
         return returnable
@@ -738,6 +744,8 @@ class GangaObject(Node):
                     setattr(self, attr, self._schema.getDefaultValue(attr))
         else:
             self._data_dict = {}
+
+        self._has_init = True
 
     @synchronised
     def accept(self, visitor):
@@ -997,13 +1005,10 @@ class GangaObject(Node):
         global do_not_copy
         if self._schema is not None:
             for name, item in self._schema.allItems():
-                if not item['copyable'] or name in do_not_copy:
+                if not item['copyable'] or name in do_not_copy or not hasattr(self, name):
                     setattr(self_copy, name, self._schema.getDefaultValue(name))
                 else:
-                    if hasattr(self, name):
-                        setattr(self_copy, name, deepcopy(getattr(self, name)))
-                    else:
-                        setattr(self_copy, name, self._schema.getDefaultValue(name))
+                    setattr(self_copy, name, deepcopy(getattr(self, name)))
 
                 this_attr = getattr(self_copy, name)
                 if isinstance(this_attr, Node) and this_attr._getParent() is not self_copy:
