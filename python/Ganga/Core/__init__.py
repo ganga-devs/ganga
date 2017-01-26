@@ -1,12 +1,4 @@
-import time
-
-from .exceptions import GangaException, ApplicationConfigurationError, \
-    BackendError, RepositoryError, BulkOperationRepositoryError, \
-    IncompleteJobSubmissionError, IncompleteKillError, JobManagerError, \
-    GangaAttributeError, GangaValueError, ProtectedAttributeError, \
-    ReadOnlyObjectError, TypeMismatchError, SchemaError, ApplicationPrepareError, \
-    SplitterError
-"""
+"""Core module containing repository, registry, thread and monitoring services, etc.
 The Core package defines the fundamental subsystems of Ganga Architecture.
 Subsystems are autonomous components (such as a remote services) which may be independently deployed.
 Subsystems may also be created as local objects in the Ganga Client process.
