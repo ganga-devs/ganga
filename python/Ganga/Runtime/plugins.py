@@ -26,6 +26,8 @@ logger.debug("Loading Executable")
 import Ganga.Lib.Executable
 logger.debug("Loading Root")
 import Ganga.Lib.Root
+logger.debug("Loading Notebook")
+import Ganga.Lib.Notebook
 
 logger.debug("Loading LocalHost")
 import Ganga.Lib.Localhost

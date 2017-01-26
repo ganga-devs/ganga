@@ -21,7 +21,7 @@ from Ganga.GPIDev.Lib.Job.Job import lazyLoadJobStatus, lazyLoadJobBackend
 # Setup logging ---------------
 from Ganga.Utility.logging import getLogger, log_unknown_exception, log_user_exception
 
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 from Ganga.Utility.Config import getConfig
 
 from collections import defaultdict

@@ -12,7 +12,7 @@ from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
 from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import Shell

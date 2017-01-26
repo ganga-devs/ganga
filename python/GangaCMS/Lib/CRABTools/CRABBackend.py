@@ -1,5 +1,5 @@
 from ConfigParser import ConfigParser
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.Utility import Config
@@ -185,7 +185,7 @@ class CRABBackend(IBackend):
         config = Config.getConfig('Metrics')
         location = config['location']
         if not os.path.exists(location):
-            raise BackendError(0,'Location %s file doesnt exist.'%(location))
+            raise BackendError('CRAB','Location %s file doesnt exist.'%(location))
 
         config = ConfigParser()
         config.read(location)      
@@ -223,7 +223,7 @@ class CRABBackend(IBackend):
         config = Config.getConfig('Metrics')
         location = config['location']
         if not os.path.exists(location):
-            raise BackendError(0,'Location %s file doesnt exist.'%(location))
+            raise BackendError('CRAB','Location %s file doesnt exist.'%(location))
 
         config = ConfigParser()
         config.read(location)      

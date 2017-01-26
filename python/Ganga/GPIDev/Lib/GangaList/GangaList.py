@@ -1,4 +1,4 @@
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base.Objects import GangaObject, Node
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError, getName

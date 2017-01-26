@@ -6,7 +6,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=True)
 
 from .WNSandbox import OUTPUT_TARBALL_NAME, PYTHON_DIR
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException, GangaIOError
 
 
 class SandboxError(GangaException):
