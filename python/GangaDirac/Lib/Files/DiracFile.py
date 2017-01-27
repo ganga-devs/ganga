@@ -18,6 +18,7 @@ from Ganga.Core.exceptions import GangaFileError
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute, GangaDiracError
 import Ganga.Utility.Config
 from Ganga.Runtime.GPIexport import exportToGPI
+from Ganga.GPIDev.Credentials.CredentialStore import credential_store
 from Ganga.GPIDev.Credentials import require_credential
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from Ganga.Utility.Config import getConfig
@@ -854,7 +855,7 @@ for f in glob.glob('###NAME_PATTERN###'):
         """
         if configDirac['DiracLFNBase']:
             return configDirac['DiracLFNBase']
-        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], config['user'][0], config['user'])
+        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], credential_store[DiracProxy()].username[0], credential_store[DiracProxy()].username)
 
 # add DiracFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate DiracFile() objects via config file)
