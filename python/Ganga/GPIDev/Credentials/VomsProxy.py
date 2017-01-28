@@ -110,19 +110,6 @@ class VomsProxyInfo(ICredentialInfo):
 
     @property
     @cache
-    def username(self):
-        """
-        This returns the username associated with a voms proxy on disk
-        """
-        status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -all' % self.location)
-        if status != 0:
-            return None
-        for line in output.splitlines():
-            if line.split(":")[0].strip() == 'attribute' and line.split(":")[1].split("=")[0].strip()=='nickname':
-                return line.split(":")[1].split("=")[1].strip().split(" ")[0]
-
-    @property
-    @cache
     def role(self):
         """
         This returns the role associated with a voms proxy on disk
@@ -179,7 +166,6 @@ class VomsProxy(ICredentialRequirement):
     _schema.datadict['vo'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation')
     _schema.datadict['role'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Role that the proxy must have')
     _schema.datadict['group'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy - either "group" or "group/subgroup"')
-    _schema.datadict['username'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Username associated to the proxy.')
 
     _category = 'CredentialRequirement'
 
