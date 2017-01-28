@@ -854,7 +854,7 @@ for f in glob.glob('###NAME_PATTERN###'):
         """
         if configDirac['DiracLFNBase']:
             return configDirac['DiracLFNBase']
-        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], DiracProxyInfo(DiracProxy()).username()[0], DiracProxyInfo(DiracProxy()).username())
+        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], DiracProxyInfo(DiracProxy()).username[0], DiracProxyInfo(DiracProxy()).username)
 
 # add DiracFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate DiracFile() objects via config file)

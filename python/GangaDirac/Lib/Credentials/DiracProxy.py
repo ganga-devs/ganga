@@ -116,6 +116,7 @@ class DiracProxyInfo(VomsProxyInfo):
         """
         return self.field('DIRAC group')
 
+    @property
     @cache
     def username(self):
         """
