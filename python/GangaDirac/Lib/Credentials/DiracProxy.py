@@ -117,6 +117,14 @@ class DiracProxyInfo(VomsProxyInfo):
         return self.field('DIRAC group')
 
     @property
+    @cache
+    def username(self):
+        """
+        Returns the username associated with the dirac proxy
+        """
+        return self.field('username')
+
+    @property
     def encodeDefaultProxyFileName(self):
         """
         Returns whether the proxy has any information encoded in the proxy filename
