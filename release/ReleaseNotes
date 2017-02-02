@@ -14,7 +14,6 @@ ganga/python/GangaLHCb
 * Bugfix to correctly import LHCbDirac in the LHCb plugin
 * Grid jobs with no inputdata can run on tier 1s
 
-
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaDirac
 --------------------------------------------------------------------------------------------------------------
