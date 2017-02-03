@@ -10,7 +10,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, Gang
 from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.File import File, ShareDir
-from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
+from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError
 
 from Ganga.Utility.logging import getLogger
 

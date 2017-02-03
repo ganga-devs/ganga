@@ -8,7 +8,7 @@ import threading
 import uuid
 import shutil
 
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -104,7 +104,7 @@ def collectPreparedFiles(app):
         app (GaudiExec): This expects only the GaudiExec app
     """
     if not isinstance(app.is_prepared, ShareDir):
-        raise ApplicationConfigurationError(None, 'Failed to prepare Application Correctly')
+        raise ApplicationConfigurationError('Failed to prepare Application Correctly')
     shared_dir = app.getSharedPath()
     input_files, input_folders = [], []
     for root, dirs, files in os.walk(shared_dir, topdown=True):
@@ -138,7 +138,7 @@ def prepareCommand(app):
             # TODO Fix this after fixing LocalFile
             opts_names.append(os.path.basename(opts_file.namePattern))
         else:
-            raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
+            raise ApplicationConfigurationError("The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                                 getName(opts_file))
 
     sourceEnv = app.getEnvScript()
@@ -233,7 +233,7 @@ def generateDiracInput(app):
     job = app.getJobObject()
 
     if input_folders:
-        raise ApplicationConfigurationError(None, 'Prepared folders not supported yet, please fix this in future')
+        raise ApplicationConfigurationError('Prepared folders not supported yet, please fix this in future')
     else:
         prep_dir = app.getSharedPath()
         addTimestampFile(prep_dir)
@@ -431,7 +431,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
                     inputsandbox += [os.path.join(app.getSharedPath(), file_.namePattern)]
             else:
                 logger.error("Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
-                raise ApplicationConfigurationError(None, "Unsupported filetype: %s with DIRAC backend" % getName(file_))
+                raise ApplicationConfigurationError("Unsupported filetype: %s with DIRAC backend" % getName(file_))
 
         master_job = job.master or job
 

@@ -81,7 +81,7 @@ def getGaudiExecInputData(optsfiles, app):
     except Exception as err:
         msg = 'Unable to parse the job options. Please check options files and extraopts.'
         logger.error("PythonOptsCmakeParserError:\n%s" % str(err))
-        raise ApplicationConfigurationError(None, msg)
+        raise ApplicationConfigurationError(msg)
 
     return parser.get_input_data()
 

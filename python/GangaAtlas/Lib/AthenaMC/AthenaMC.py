@@ -165,7 +165,7 @@ class AthenaMC(IApplication):
         rc, out = AthenaUtils.getAthenaVer()
         # failed
         if not rc:
-            raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
+            raise ApplicationConfigurationError('CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
         self.userarea = out['workArea']
 
          # save current dir
@@ -175,7 +175,7 @@ class AthenaMC(IApplication):
         sString=re.sub('[\+]','.', self.userarea)
         runDir = re.sub('^%s' % sString, '', currentDir)
         if runDir == currentDir:
-            raise ApplicationConfigurationError(None, 'You need to run panda_prepare in a directory under %s' % self.userarea)
+            raise ApplicationConfigurationError('You need to run panda_prepare in a directory under %s' % self.userarea)
         elif runDir == '':
             runDir = '.'
         elif runDir.startswith('/'):
@@ -275,7 +275,7 @@ class AthenaMC(IApplication):
            elif self.firstevent == 1:
               firstpartition = self.partition_number
            else:
-              raise ApplicationConfigurationError(None,"Except for evgen jobs, app.firstevent is an alternative to app.partition_number. You can not specify both at the same time!")
+              raise ApplicationConfigurationError("Except for evgen jobs, app.firstevent is an alternative to app.partition_number. You can not specify both at the same time!")
 
         if job and not job.splitter:
            return ([firstpartition], False)
@@ -296,7 +296,7 @@ class AthenaMC(IApplication):
                  inputs = expandList(job.splitter.input_partitions)
                  return (self.getPartitionsForInputs(inputs[0], job.inputdata), inputs[1]) # propagate open range
            else:
-              raise ApplicationConfigurationError(None,"Either splitter.output_partitions or splitter.input_partitions can be specified, but not both!")
+              raise ApplicationConfigurationError("Either splitter.output_partitions or splitter.input_partitions can be specified, but not both!")
 
     def getInputPartitionInfo(self, ids):
         """ Returns the tuple (jobs_per_input, inputs_per_job, skip_files, skip_jobs). The variables are:
@@ -306,7 +306,7 @@ class AthenaMC(IApplication):
             skip_jobs: How many jobs are skipped in numbering, i.e. in simulation if the first 1000 events 
                  of one large input file are skipped, partition number one would start at event number 1001."""
         if not ids:
-            raise ApplicationConfigurationError(None,"No input dataset specified!")
+            raise ApplicationConfigurationError("No input dataset specified!")
         # This strange division rounds correctly, for example -((-10)/10) == 1,
         jobs_per_input = -((-ids.number_events_file)/self.number_events_job)
         inputs_per_job = -((-self.number_events_job)/ids.number_events_file)
@@ -446,14 +446,14 @@ class AthenaMC(IApplication):
         try:
             assert self.transform_script
         except AssertionError:
-            raise ApplicationConfigurationError(None,"template mode requires the name of the transformation you want to use")
+            raise ApplicationConfigurationError("template mode requires the name of the transformation you want to use")
         
         logger.debug("Using the new template mode. Please use application.extraArgs for the transformation parameters")
 
         try:
             assert "LOG" in self.outputfiles
         except AssertionError:
-            raise ApplicationConfigurationError(None,"template mode requires a logfile, set by job.application.outputdata.logfile")
+            raise ApplicationConfigurationError("template mode requires a logfile, set by job.application.outputdata.logfile")
 
         args =  [ self.atlas_rel,
                  self.se_name,
@@ -503,7 +503,7 @@ class AthenaMC(IApplication):
                 try:
                     assert len(inlfns)>= i
                 except:
-                    raise ApplicationConfigurationError(None,"Not enough input files, got %i expected %i" % (len(inlfns),inputnumbers[-1]))
+                    raise ApplicationConfigurationError("Not enough input files, got %i expected %i" % (len(inlfns),inputnumbers[-1]))
                 self.inputfiles.append(inlfns[i-1])
 
         if not self.dryrun and len(self.inputfiles) < len(inputnumbers):
@@ -519,7 +519,7 @@ class AthenaMC(IApplication):
                        missing.append(fn)
                logger.warning("Not all input files for partition %i found! Missing files: %s" % (partition, missing))
             else:
-               raise ApplicationConfigurationError(None,"No input files for partition %i found ! Files expected: %s" % (partition, matchrange[0]))
+               raise ApplicationConfigurationError("No input files for partition %i found ! Files expected: %s" % (partition, matchrange[0]))
            
         for infile in self.inputfiles:
             self.dsetmap[infile]=self.lfcs.keys()[0]
@@ -549,7 +549,7 @@ class AthenaMC(IApplication):
             try:
                 assert len(self.cavernfiles)>= imax
             except:
-                raise ApplicationConfigurationError(None,"Not enough cavern input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(self.cavernfiles)))
+                raise ApplicationConfigurationError("Not enough cavern input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(self.cavernfiles)))
             self.cavernfiles=self.cavernfiles[:imax]
             self.cavernfile=",".join(self.cavernfiles)
             
@@ -559,7 +559,7 @@ class AthenaMC(IApplication):
             try:
                 assert len(self.mbfiles)>= imax
             except:
-                raise ApplicationConfigurationError(None,"Not enough minbias input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(self.mbfiles)))
+                raise ApplicationConfigurationError("Not enough minbias input files to sustend a single job (expected %d got %d). Aborting" %(imax,len(self.mbfiles)))
             self.mbfiles=self.mbfiles[:imax]
             self.minbiasfile=",".join(self.mbfiles)
  
@@ -640,7 +640,7 @@ class AthenaMC(IApplication):
                             newval=eval(nval)
                             assert newval
                         except AssertionError:
-                            raise ApplicationConfigurationError(None,"error while parsing arguments: %s %d %d" % (val, imin, imax))
+                            raise ApplicationConfigurationError("error while parsing arguments: %s %d %d" % (val, imin, imax))
                         NewArgstring=NewArgstring.replace(val,str(newval))
                         imin=NewArgstring.find(word)
                         imax=NewArgstring[imin:].find(" ")+imin
@@ -663,7 +663,7 @@ class AthenaMC(IApplication):
                 try:
                     assert newval
                 except AssertionError:
-                    raise ApplicationConfigurationError(None,"Error while parsing arguments: %s" % word)
+                    raise ApplicationConfigurationError("Error while parsing arguments: %s" % word)
                 
                 NewArgstring=NewArgstring.replace(word,"="+newval)
 ##             #        need to scan for $entries...
@@ -683,7 +683,7 @@ class AthenaMC(IApplication):
 ##                             newval=eval(nval)
 ##                             assert newval
 ##                         except AssertionError:
-##                             raise ApplicationConfigurationError(None,"error while parsing arguments: %s %d %d" % (val, imin, imin2))
+##                             raise ApplicationConfigurationError("error while parsing arguments: %s %d %d" % (val, imin, imin2))
                     
 ##                     if string.find(val[imin+1:],"inputfile")>-1:
 ##                         newval=self.infileString
@@ -736,7 +736,7 @@ class AthenaMC(IApplication):
         try:
             assert len(self.args)>0
         except AssertionError:
-            raise ApplicationConfigurationError(None,"Transformation with no arguments. Please check your inputs!")
+            raise ApplicationConfigurationError("Transformation with no arguments. Please check your inputs!")
 
         return (None,None)
 
@@ -783,7 +783,7 @@ class AthenaMC(IApplication):
           try:
              assert self.evgen_job_option
           except AssertionError:
-             raise ApplicationConfigurationError(None,'Please provide a start value for parameter evgen_job_option needed for any evgen transformation')
+             raise ApplicationConfigurationError('Please provide a start value for parameter evgen_job_option needed for any evgen transformation')
          
           if os.path.exists(self.evgen_job_option):
               # need to strip the path away.
@@ -794,14 +794,14 @@ class AthenaMC(IApplication):
           try:
               assert self.transform_script
           except AssertionError:
-              raise ApplicationConfigurationError(None,'Please set job.application.transform_script. A possible value for 14 TeV event generation is csc_evgen_trf.py. For 10 TeV event generation, one can use csc_evgen08_trf.py')
+              raise ApplicationConfigurationError('Please set job.application.transform_script. A possible value for 14 TeV event generation is csc_evgen_trf.py. For 10 TeV event generation, one can use csc_evgen08_trf.py')
           
           jobfields=self.evgen_job_option_filename.split(".")
           try:
               assert len(jobfields)==4 and jobfields[1].isdigit() and len(jobfields[1])==6
 
           except:
-              raise ApplicationConfigurationError(None,"Badly formatted job option name %s. Transformation expects to find something named $project.$runNumber.$body.py, where $runNumber is a 6-digit number and $body does not contain any dot (.)" % self.evgen_job_option_filename )
+              raise ApplicationConfigurationError("Badly formatted job option name %s. Transformation expects to find something named $project.$runNumber.$body.py, where $runNumber is a 6-digit number and $body does not contain any dot (.)" % self.evgen_job_option_filename )
           self.runNumber=self.run_number
           if not self.run_number:
               self.runNumber=str(jobfields[1])
@@ -826,7 +826,7 @@ class AthenaMC(IApplication):
            try:
                assert job.splitter._name=="AthenaMCSplitterJob" or job.splitter._name=="AthenaMCTaskSplitterJob"
            except AssertionError:
-               raise ApplicationConfigurationError(None,'If you want to use a job splitter with the AthenaMC application, you have to use AthenaMCSplitterJob')
+               raise ApplicationConfigurationError('If you want to use a job splitter with the AthenaMC application, you have to use AthenaMCSplitterJob')
            
        # checking inputdata
        # handling of dbrelease
@@ -866,13 +866,13 @@ class AthenaMC(IApplication):
            try:
                assert job.inputdata
            except :
-               raise ApplicationConfigurationError(None,"job.inputdata must be used and set to 'AthenaMCInputDatasets'")
+               raise ApplicationConfigurationError("job.inputdata must be used and set to 'AthenaMCInputDatasets'")
        if job.inputdata:
            logger.info("Checking input data. This can take a while")
            try:
                assert job.inputdata._name == 'AthenaMCInputDatasets'
            except :
-               raise ApplicationConfigurationError(None,"job.inputdata must be set to 'AthenaMCInputDatasets'")
+               raise ApplicationConfigurationError("job.inputdata must be set to 'AthenaMCInputDatasets'")
            self.backend_inputdata=job.backend._name
            job.inputdata.get_dataset(self, self.backend_inputdata)
            

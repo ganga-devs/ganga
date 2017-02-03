@@ -65,9 +65,18 @@ also a requirements object that can be used to specify memory, architecture, etc
 
     j = Job()
     j.backend = Condor()
-    j.backend.getenv = True  # send the environment to the host
+    j.backend.getenv = "True"  # send the environment to the host
     j.backend.requirements.memory = 1200
     j.submit()
+
+Also note that the ``getenv`` option is defined as a string so in your ``.gangarc``, you would need to set it to:
+
+.. code-block:: python
+
+    [Condor]
+    getenv = 'True'
+
+To avoid Ganga attempting to assign a boolean instead.
 
 Dirac Backend
 -------------

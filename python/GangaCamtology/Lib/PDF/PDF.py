@@ -16,7 +16,7 @@ __version__ = "1.0"
 import os
 import shutil
 
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 from Ganga.Utility import logging

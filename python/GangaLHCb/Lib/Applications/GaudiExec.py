@@ -11,7 +11,7 @@ import uuid
 from functools import wraps
 from StringIO import StringIO
 
-from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
+from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Base.Filters import allComponentFilters
@@ -227,7 +227,7 @@ class GaudiExec(IPrepareApp):
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
                     opts_file.get(localPath=self.getSharedPath())
                 else:
-                    raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
+                    raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
             self.post_prepare()
 
         except Exception as err:
@@ -353,15 +353,15 @@ class GaudiExec(IPrepareApp):
                     ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
                     full_path = path.join(this_opt.localDir, this_opt.namePattern)
                     if not path.exists(full_path):
-                        raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
+                        raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
                 elif isinstance(this_opt, DiracFile):
                     pass
                 else:
                     logger.error("opts: %s" % self.options)
-                    raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+                    raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
             return self.options
         else:
-            raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")
+            raise ApplicationConfigurationError("No Opts File has been specified, please provide one!")
 
 
     def getEnvScript(self):
