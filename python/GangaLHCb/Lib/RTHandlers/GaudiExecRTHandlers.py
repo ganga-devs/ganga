@@ -343,6 +343,8 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
                 break
             except GangaDiracError as err:
                 raise GangaException("Upload of LFN %s to SE %s failed" % (new_lfn, SE)) 
+            if not returnable:
+                raise GangaException("Upload of LFN %s to SE %s failed" % (new_lfn, SE))
     if should_del:
         os.unlink(os.path.join(localDir, namePattern))
 
