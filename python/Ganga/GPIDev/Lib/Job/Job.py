@@ -1843,9 +1843,8 @@ class Job(GangaObject):
 
                     ############
                     # added as part of typestamp prototype by Justin
-                    j = self.getJobObject()
-                    if j.subjobs:
-                        for jobs in j.subjobs:
+                    if not self._getParent():
+                        for jobs in self.getJobObject().subjobs:
                             # added this 10/8/2009 - now only kills subjobs
                             # which aren't finished.
                             if jobs.status not in ['failed', 'killed', 'completed']:
