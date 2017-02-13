@@ -146,8 +146,6 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         indata = inputdata
 
-        print 'type: ', type(indata)
-
         if indata is not None:
 
             self.depth = indata.depth
