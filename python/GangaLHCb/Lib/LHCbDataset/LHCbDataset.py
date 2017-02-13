@@ -83,7 +83,8 @@ class LHCbDataset(GangaDataset):
                 for this_file in files:
                     self.files.append(deepcopy(this_file))
             elif isType(files, IGangaFile):
-                self.files.append(deepcopy(this_file))
+                for this_file in files:
+                    self.files.append(deepcopy(this_file))
             elif isType(files, (list, tuple, GangaList)):
                 new_list = []
                 for this_file in files:
