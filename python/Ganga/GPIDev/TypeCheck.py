@@ -103,7 +103,7 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
             stripProxy = dummy_func
 
         try:
-            from Ganga.GPIDev.Base import GangaObject
+            from Ganga.GPIDev.Base.Objects import GangaObject
         except:
             GangaObject = None
 

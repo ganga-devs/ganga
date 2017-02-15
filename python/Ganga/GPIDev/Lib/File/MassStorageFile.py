@@ -78,8 +78,7 @@ class MassStorageFile(IGangaFile):
         """
         actual_value = value
         if attr == "namePattern":
-            actual_value = os.path.basename(value)
-            this_localDir = os.path.dirname(value)
+            this_localDir, actual_value = os.path.split(value)
             if this_localDir:
                 self.localDir = this_localDir
         if attr == "localDir":
@@ -101,15 +100,16 @@ class MassStorageFile(IGangaFile):
             self.localDir = _localDir
 
 
-    def _on_attribute__set__(self, obj_type, attrib_name):
-        # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
-        r = copy.deepcopy(self)
-        from Ganga.GPIDev.Lib.Job.Job import Job
-        if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
-            r.locations = []
-            r.localDir = ''
-            r.failureReason = ''
-        return r
+#    def _on_attribute__set__(self, obj_type, attrib_name):
+#        # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
+#        r = copy.deepcopy(self)
+#        from Ganga.GPIDev.Lib.Job.Job import Job
+#        if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
+#            r.locations = []
+#            r.localDir = ''
+#            r.failureReason = ''
+#        return r
+
 
     def __repr__(self):
         """Get the representation of the file."""

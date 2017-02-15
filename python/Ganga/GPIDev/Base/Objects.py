@@ -393,8 +393,6 @@ class Descriptor(object):
         else:
             if not isinstance(v, Node) and isinstance(v, (list, tuple)):
                 try:
-                    # must import here as will fail at the top
-                    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
                     new_v = GangaList()
                 except ImportError:
                     new_v = []
@@ -425,9 +423,6 @@ class Descriptor(object):
             obj (GangaObject): This is the object which controls the attribute we want to assign
             name (str): This is th name of the attribute which we're setting
         """
-
-        # must import here as will fail at the top
-        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
         item = obj._schema[name]
         if isinstance(v, GangaList):
@@ -505,7 +500,6 @@ class Descriptor(object):
             val (unknown): This is the value we want to assign to the attribute
             name (str): This is the name of the attribute which we're changing
         """
-        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList, GangaList
 
         item = obj._schema[name]
 
@@ -555,8 +549,6 @@ class Descriptor(object):
             v (unknown): Object we want a new copy of
             extra_args (tuple): Contains the name of the attribute being copied and the object which owns the object being copied
         """
-        # must import here as will fail at the top
-        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
         name=extra_args[0]
         obj=extra_args[1]
@@ -1226,6 +1218,8 @@ def string_type_shortcut_filter(val, item):
 
 from .Filters import allComponentFilters
 allComponentFilters.setDefault(string_type_shortcut_filter)
+
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 
 #
 #

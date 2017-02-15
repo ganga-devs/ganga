@@ -22,6 +22,7 @@ class IGangaFile(GangaObject):
     _category = 'gangafiles'
     _name = 'IGangaFile'
     _hidden = 1
+    __slots__ = list()
 
     def __init__(self):
         super(IGangaFile, self).__init__()
