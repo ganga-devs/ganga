@@ -1857,7 +1857,7 @@ class Job(GangaObject):
                 logger.error(msg)
                 raise JobError(msg)
         finally:
-            pass   # job._registry.cache_writers_mutex.release()
+            pass  # job._registry.cache_writers_mutex.release()
 
     def resubmit(self, backend=None):
         """Resubmit a failed or completed job.  A backend object may
