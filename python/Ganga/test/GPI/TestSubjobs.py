@@ -31,6 +31,7 @@ class TestSubjobs(GangaUnitTest):
         Create some subjobs and kill them
         """
         from Ganga.GPI import Job, GenericSplitter, Local
+        from GangaTest.Framework.utils import sleep_until_state
         j = Job()
         j.application.exe = "sleep"
         j.splitter = GenericSplitter()
@@ -38,12 +39,16 @@ class TestSubjobs(GangaUnitTest):
         j.splitter.values = [['400'] for _ in range(0, 5)]
         j.backend = Local()
         j.submit()
+
+        sleep_until_state(j, None, 'running')
+        assert j.status == 'running'
+
         j.subjobs(0).kill()
         assert j.subjobs(0).status == 'killed'
         assert j.subjobs(1).status != 'killed'
         j.kill()
         assert j.status == 'killed'
-#        assert all(sj.status == 'killed' for sj in j.subjobs)
+        assert all(sj.status == 'killed' for sj in j.subjobs)
 
     def testSetParentOnLoad(self):
         """
