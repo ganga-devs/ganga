@@ -559,8 +559,6 @@ class Job(GangaObject):
         fqid = self.getFQID('.')
         initial_status = self.status
         logger.debug('attempt to change job %s status from "%s" to "%s"', fqid, initial_status, newstatus)
-        print 'caller name:', inspect.stack()
-        print 'initial_status: ', initial_status, ' newstatus: ', newstatus 
         try:
             state = self.status_graph[initial_status][newstatus]
         except KeyError as err:
@@ -736,7 +734,6 @@ class Job(GangaObject):
         Update master job status based on the status of subjobs.
         This is an auxiliary method for implementing bulk subjob monitoring.
         """
-        print 'updateMasterJobStatus caller name:', inspect.stack()[1][3]
         stats = self.getSubJobStatuses()
 
         # ignore non-split jobs
@@ -1839,8 +1836,6 @@ class Job(GangaObject):
                     raise JobError(msg)
             try:
                 if self.backend.master_kill():
-                    self.updateStatus('killed', transition_update=transition_update)
-                    print 'transition_update: ', transition_update 
                     ############
                     # added as part of typestamp prototype by Justin
                     if not self._getParent():
@@ -1849,6 +1844,7 @@ class Job(GangaObject):
                             # which aren't finished.
                             if jobs.status not in ['failed', 'killed', 'completed']:
                                 jobs.updateStatus('killed', transition_update=transition_update)
+                    self.updateStatus('killed', transition_update=transition_update)
                     #
                     ############
 
