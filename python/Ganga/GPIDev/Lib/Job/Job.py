@@ -1822,7 +1822,7 @@ class Job(GangaObject):
         """
         try:
             # make sure nobody writes to the cache during this operation
-            #self._registry.cache_writers_mutex.lock()
+            #job._registry.cache_writers_mutex.lock()
 
             fqid = self.getFQID('.')
             logger.info('killing job %s', fqid)
@@ -1857,7 +1857,7 @@ class Job(GangaObject):
                 logger.error(msg)
                 raise JobError(msg)
         finally:
-            pass   #self._registry.cache_writers_mutex.release()
+            pass   #job._registry.cache_writers_mutex.release()
 
     def resubmit(self, backend=None):
         """Resubmit a failed or completed job.  A backend object may
