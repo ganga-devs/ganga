@@ -2,6 +2,7 @@
 import Queue
 import traceback
 import collections
+from Ganga.Core.exceptions import GangaException
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Utility.execute import execute
 from Ganga.Utility.logging import getLogger
@@ -115,18 +116,24 @@ class WorkerThreadPool(object):
                 else:
                     result = execute(*item.command_input)
             except Exception as e:
-                logger.error("Exception raised executing '%s' in Thread '%s':\n%s" % (thread._command, thread.gangaName, traceback.format_exc()))
-                if item.fallback_func.function is not None:
-                    if isinstance(item.fallback_func, FunctionInput):
-                        thread._command = getName(item.fallback_func.function)
-                        thread._timeout = 'N/A'
-                        try:
-                            item.fallback_func.function(e, *item.fallback_func.args, **item.fallback_func.kwargs)
-                        except Exception as x:
-                            logger.error("Exception raised in fallback function '%s' of Thread '%s':\n%s" % (thread._command, thread.gangaName, traceback.format_exc()))
-                    else:
-                        logger.error("Unrecognised fallback_func type: '%s'" % repr(item.fallback_func))
-                        logger.error("                       expected: 'FunctionInput'")
+                if issubclass(type(e), GangaException):
+                    logger.error("%s" % e)
+                else:
+                    logger.error("Exception raised executing '%s' in Thread '%s':\n%s" % (thread._command, thread.gangaName, traceback.format_exc()))
+                    if item.fallback_func.function is not None:
+                        if isinstance(item.fallback_func, FunctionInput):
+                            thread._command = getName(item.fallback_func.function)
+                            thread._timeout = 'N/A'
+                            try:
+                                item.fallback_func.function(e, *item.fallback_func.args, **item.fallback_func.kwargs)
+                            except Exception as x:
+                                if not issubclass(type(e), GangaException):
+                                    logger.error("Exception raised in fallback function '%s' of Thread '%s':\n%s" % (thread._command, thread.gangaName, traceback.format_exc()))
+                                else:
+                                    logger.error("%s" % x)
+                        else:
+                            logger.error("Unrecognised fallback_func type: '%s'" % repr(item.fallback_func))
+                            logger.error("                       expected: 'FunctionInput'")
             else:
                 if item.callback_func.function is not None:
                     if isinstance(item.callback_func, FunctionInput):
@@ -136,8 +143,11 @@ class WorkerThreadPool(object):
                             item.callback_func.function(
                                 result, *item.callback_func.args, **item.callback_func.kwargs)
                         except Exception as e:
-                            logger.error("Exception raised in callback_func '%s' of Thread '%s': %s" % (
-                                thread._command, thread.gangaName, traceback.format_exc()))
+                            if not issubclass(type(e), GangaException):
+                                logger.error("Exception raised in callback_func '%s' of Thread '%s': %s" % (
+                                    thread._command, thread.gangaName, traceback.format_exc()))
+                            else:
+                                logger.error("%s" % e)
                     else:
                         logger.error("Unrecognised callback_func type: '%s'" % repr(item.callback_func))
                         logger.error("                       expected: 'FunctionInput'")
