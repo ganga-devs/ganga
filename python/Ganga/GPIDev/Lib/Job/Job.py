@@ -123,6 +123,9 @@ class JobInfo(GangaObject):
     def __init__(self):
         super(JobInfo, self).__init__()
 
+    def _auto__init__(self):
+        self.uuid = str(uuid.uuid4())
+
     def increment(self):
         self.submit_counter += 1
 
@@ -823,16 +826,16 @@ class Job(GangaObject):
         #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         # except: pass
 
-        # register the job (it will also commit it)
-        # job gets its id now
-        registry._add(self)
 
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
             self._init_workspace()
 
         super(Job, self)._auto__init__()
-        self.info.uuid = str(uuid.uuid4())
+
+        # register the job (it will also commit it)
+        # job gets its id now
+        registry._add(self)
 
     def _init_workspace(self):
         logger.debug("Job %s Calling _init_workspace", self.getFQID('.'))

@@ -827,13 +827,16 @@ def GPIProxyClassFactory(name, pluginclass):
             ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
             ## Object was not passed by construction so need to construct new object for internal use
             # Case 1 j = Job(myExistingJob)            # We want to perform a deepcopy
-            if len(args) == 1 and isinstance(args[0], pluginclass):
+            arg_len = len(args)
+            if arg_len == 1 and isinstance(args[0], pluginclass):
                 instance = deepcopy(stripProxy(args[0]))
             # Case 2 file_ = LocalFile('myFile.txt')   # We need to pass the (stripped) arguments to the constructor only if the 
             # Remember self = 1
             # For the moment we're warning the user until it's clear this is a safe thing to do, aka once all classes are deemed safe
             # The args will simply be passed through regardless
-            elif len(args) < len(getargspec(pluginclass.__init__)[0]):
+            elif arg_len == 0:
+                instance = pluginclass.getNew()
+            elif arg_len < len(getargspec(pluginclass.__init__)[0]):
                 clean_args = (stripProxy(arg) for arg in args)
                 instance = pluginclass(*clean_args)
             else:
@@ -850,23 +853,24 @@ def GPIProxyClassFactory(name, pluginclass):
         ## Need to avoid any setter methods for GangaObjects
         ## Would be very nice to remove this entirely as I'm not sure a GangaObject should worry about it's proxy (if any)
 
-        if proxy_obj_str in kwds:
-            # wrapping not constructing so can exit after determining that the proxy attributes are setup correctly
-            return
 
         ## SECOND WE NEED TO MAKE SURE THAT OBJECT ID IS CORRECT AND THIS DOES THINGS LIKE REGISTER A JOB WITH THE REPO
-        instance._auto__init__()
+
+        if proxy_obj_str in kwds:
+            #instance._auto__init__()
+            # wrapping not constructing so can exit after determining that the proxy attributes are setup correctly
+            return
 
         from Ganga.GPIDev.Base.Objects import do_not_copy
         ## All objects with an _auto__init__ method need to have that method called and we set the various node attributes here based upon the schema
         for key, _val in instance._schema.allItems():
-            if not _val['protected'] and not _val['hidden'] and not _val['getter'] and\
-                isType(_val, ComponentItem) and key not in do_not_copy:
-                val = stripProxy(getattr(self, key))
+            if not _val['getter'] and key not in instance._data:
+                val = instance._schema.getDefaultValue(key)
                 if isinstance(val, GangaObject):
                     val._auto__init__()
                 instance.setSchemaAttribute(key, instance._attribute_filter__set__(key, val))
 
+        instance._auto__init__()
 
         ## THIRD ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN
         ## THIS IS MAINLY FOR THE FIRST EXAMPLE ABOVE

@@ -10,6 +10,7 @@ from functools import partial
 import inspect
 import abc
 import threading
+import thread
 from contextlib import contextmanager
 import functools
 
@@ -76,9 +77,10 @@ class Node(object):
     def __init__(self, parent=None):
         super(Node, self).__init__()
         self._parent = parent
-        #self._read_lock = threading.RLock()  # Don't read out of thread whilst we're making a change
+        #self._read_lock = threading.Lock()  # Don't read out of thread whilst we're making a change
         self._write_lock = threading.RLock()  # Don't write from out of thread when modifying an object
         self._read_lock = self._write_lock
+        self._lock_id = None
         self._dirty = False  # dirty flag is true if the object has been modified locally and its contents is out-of-sync with its repository
 
     def __deepcopy__(self, memo=None):
@@ -128,11 +130,8 @@ class Node(object):
         but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
-        root._write_lock.acquire()
-        try:
+        with root._write_lock:
             yield
-        finally:
-            root._write_lock.release()
 
     def _getRoot(self, cond=None):
         # type: () -> Node
@@ -697,23 +696,29 @@ class GangaObject(Node):
     _has_init = False
 
     @classmethod
-    def getNew(cls):
+    def getNew(cls, init_class=True):
         """
         Returns a new instance of this class type without a populated Schema.
         This should be an object which has all of the core logic initialized correctly.
+        Args:
+            init_class (bool): Should the class __init__ method be called by this method or should we return the base object?
         """
         # Build an object of this type
         returnable = cls.__new__(cls, (), {})
 
         # Set that we do NOT want to initialize the schema from defaults
         setattr(returnable, '_should_init', False)
-        # Initialize the most derrived class to get all of the goodness needed higher up.
-        returnable.__class__.__init__(returnable)
+        
+        if init_class:
+            # Initialize the most derrived class to get all of the goodness needed higher up.
+            returnable.__class__.__init__(returnable)
 
         # Just to make sure that if a class's inheritance is broken we still have all of the Core member paramreters initialized
         if not returnable._has_init:
             Node.__init__(returnable, None)
             GangaObject.__init__(returnable)
+
+        returnable._has_init = True
 
         # Return the newly initialized object
         return returnable
@@ -729,15 +734,22 @@ class GangaObject(Node):
         self._registry = None
 
         if self._should_init is True:
-            self._data_dict = dict.fromkeys(self._schema.datadict)
-            for attr, item in self._schema.allItems():
-                ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
-                if item.getProperties()['getter'] is None:
-                    setattr(self, attr, self._schema.getDefaultValue(attr))
+            self.populate_from_schema()
         else:
             self._data_dict = {}
 
         self._has_init = True
+
+
+    def populate_from_schema(self):
+        """
+        Populate the data dict from the schema defaults
+        """
+        self._data_dict = dict.fromkeys(self._schema.datadict)
+        for attr, item in self._schema.allItems():
+            ## If an object is hidden behind a getter method we can't assign a parent or defvalue so don't bother - rcurrie
+            if item.getProperties()['getter'] is None:
+                setattr(self, attr, self._schema.getDefaultValue(attr))
 
     @synchronised
     def accept(self, visitor):
@@ -990,9 +1002,10 @@ class GangaObject(Node):
         Args:
             memo (unknown): Used to track infinite loops etc in the deep-copy of objects
         """
+
         true_parent = self._getParent()
 
-        self_copy = self.getNew()
+        self_copy = self.getNew(init_class=False)
 
         global do_not_copy
         if self._schema is not None:
@@ -1059,6 +1072,8 @@ class GangaObject(Node):
 
     def _loadObject(self):
         """If there's an attached registry then ask it to load this object"""
+        #import traceback
+        #traceback.print_stack()
         if self._registry is not None:
             self._registry._load(self)
 
