@@ -113,7 +113,10 @@ class Schema(object):
         try:
             return self.datadict[name]
         except KeyError:
-            err_str = "Ganga Cannot find: %s in Object: %s" % (name, self.name)
+            if self._pluginclass is not None:
+                err_str = "Ganga Cannot find: %s in Object: %s" % (name, self.name)
+            else:
+                err_str = "Ganga Cannot find: %s attribute for None object" % (name,)
             logger.error(err_str)
             raise GangaAttributeError(err_str)
 
