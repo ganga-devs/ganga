@@ -114,7 +114,7 @@ class DiracFile(IGangaFile):
             if name == 'lfn':
                 this_dir, self.namePattern = os.path.split(value)
                 if this_dir:
-                    self.remoteDir = os.path.this_dir(value)
+                    self.remoteDir = this_dir
                 return value
 
             elif name == 'remoteDir':
