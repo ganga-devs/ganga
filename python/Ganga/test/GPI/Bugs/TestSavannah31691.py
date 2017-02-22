@@ -4,8 +4,6 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 import os
 
-from Ganga.Utility.logging import getLogger
-logger = getLogger()
 
 class TestSavannah31691(GangaUnitTest):
     def test_Savannah31691(self):
