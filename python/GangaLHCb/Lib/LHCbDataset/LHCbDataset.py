@@ -240,12 +240,12 @@ class LHCbDataset(GangaDataset):
             return lfns
         for f in self.files:
             if isDiracFile(f):
-                subfiles = f.getSubFiles()
+                subfiles = f.subfiles
                 if len(subfiles) == 0:
                     lfns.append(f.lfn)
                 else:
-                    for file in subfiles:
-                        lfns.append(file.lfn)
+                    for _file in subfiles:
+                        lfns.append(_file.lfn)
 
         #logger.debug( "Returning LFNS:\n%s" % str(lfns) )
         logger.debug("Returning #%s LFNS" % str(len(lfns)))

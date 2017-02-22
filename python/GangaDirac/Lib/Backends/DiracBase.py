@@ -655,7 +655,10 @@ class DiracBase(IBackend):
             #logger.info('Job ' + job.fqid + ' normCPUTime: ' + str(job.backend.normCPUTime))
 
             # Set DiracFile metadata
-            wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
+            if hasattr(job.outputfiles, 'get'):
+                wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
+            else:
+                wildcards = []
 
             lfn_store = os.path.join(output_path, getConfig('Output')['PostProcessLocationsFileName'])
 
@@ -664,7 +667,7 @@ class DiracBase(IBackend):
                 with open(lfn_store, 'w'):
                     pass
 
-            if job.outputfiles.get(DiracFile):
+            if hasattr(job.outputfiles, 'get') and job.outputfiles.get(DiracFile):
 
                 # Now we can iterate over the contents of the file without touching it
                 with open(lfn_store, 'ab') as postprocesslocationsfile:

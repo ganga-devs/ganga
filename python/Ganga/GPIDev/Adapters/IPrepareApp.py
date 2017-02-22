@@ -33,6 +33,8 @@ class IPrepareApp(IApplication):
     _name = 'PrepareApp'
     _hidden = 1
 
+    __slots__ = list()
+
     def _auto__init__(self, unprepare=None):
         """
         Function called when initializing from the Proxy layer i.e. interactive prompt or 'import ganga'

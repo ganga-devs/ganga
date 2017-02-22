@@ -22,6 +22,8 @@ class ISplitter(GangaObject):
     _category = 'splitters'
     _hidden = 1
 
+    __slots__ = list()
+
     def createSubjob(self, job, additional_skip_args=None):
         """ Create a new subjob by copying the master job and setting all fields correctly.
         """

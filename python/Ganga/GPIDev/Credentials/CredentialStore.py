@@ -56,6 +56,8 @@ class CredentialStore(GangaObject, collections.Mapping):
     retry_limit = 5
     enable_caching = True
 
+    __slots__ = ('credentials',)
+
     def __init__(self):
         super(CredentialStore, self).__init__()
         self.credentials = set()

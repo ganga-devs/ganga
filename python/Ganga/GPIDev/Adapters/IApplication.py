@@ -72,6 +72,8 @@ class IApplication(GangaObject):
     _category = 'applications'
     _hidden = 1
 
+    __slots__ = list()
+
     def __init__(self):
         super(IApplication, self).__init__()
 

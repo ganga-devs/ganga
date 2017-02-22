@@ -47,6 +47,8 @@ class IBackend(GangaObject):
     _category = 'backends'
     _hidden = 1
 
+    __slots__ = list()
+
     # specify how the default implementation of master_prepare() method
     # creates the input sandbox
     _packed_input_sandbox = True

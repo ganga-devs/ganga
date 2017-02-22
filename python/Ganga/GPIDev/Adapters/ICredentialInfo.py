@@ -75,6 +75,8 @@ class ICredentialInfo(object):
     """
     __metaclass__ = ABCMeta
 
+    __slots__ = list()
+
     def __init__(self, requirements, check_file=False, create=False):
         # type: (ICredentialRequirement, bool, bool) -> None
         """
