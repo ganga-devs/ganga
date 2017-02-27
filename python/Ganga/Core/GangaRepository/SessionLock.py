@@ -270,7 +270,7 @@ def dry_run_unix_locks(folder):
         pass
 
     # Open test lock file
-    with open(test_file) as f_lock:
+    with open(test_file, 'w') as f_lock:
         # If lock file is locked, wait until we can lock it and continue
         while True:
             try:
@@ -303,7 +303,7 @@ def global_disk_lock(f):
                 finally:
                     self.afs_lock_release()
             else:
-                with open(self.lockfn) as f_lock:
+                with open(self.lockfn, 'w') as f_lock:
                     while True:
                         try:
                             fcntl.flock(f_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -533,7 +533,7 @@ class SessionLockManager(object):
             # This can fail (thats OK, file deleted in the meantime)
             fd = None
             try:
-                fd = os.open(fn, os.O_RDONLY)
+                fd = os.open(fn, os.O_RDWR)
                 os.lseek(fd, 0, 0)
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_SH)
