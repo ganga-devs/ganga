@@ -565,7 +565,7 @@ class SessionLockManager(object):
             # possible)
             fd = None
             try:
-                fd = os.open(self.fn, os.O_WRONLY)
+                fd = os.open(self.fn, os.O_RDWR)
                 if not self.afs:
                     fcntl.lockf(fd, fcntl.LOCK_EX)
                 os.write(fd, pickle.dumps(self.locked))
@@ -605,7 +605,7 @@ class SessionLockManager(object):
             _output = None
             fd = None
             try:
-                fd = os.open(self.cntfn, os.O_RDONLY)
+                fd = os.open(self.cntfn, os.O_RDWR)
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_SH)
                 # 100 bytes should be enough for any ID. Can raise ValueErrorr
@@ -642,7 +642,7 @@ class SessionLockManager(object):
             # possible)
             fd = None
             try:
-                fd = os.open(self.cntfn, os.O_WRONLY)
+                fd = os.open(self.cntfn, os.O_RDWR)
                 if not self.afs:
                     fcntl.lockf(fd, fcntl.LOCK_EX)
                 os.write(fd, str(self.count) + "\n")
@@ -751,7 +751,7 @@ class SessionLockManager(object):
             try:
                 sf = os.path.join(self.sdir, session)
                 if not self.afs:
-                    fd = os.open(sf, os.O_RDONLY)
+                    fd = os.open(sf, os.O_RDWR)
                     fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
                 with open(sf) as sf_file:
                     names = pickle.load(sf_file)
@@ -784,7 +784,7 @@ class SessionLockManager(object):
             try:
                 sf = os.path.join(self.sdir, session)
                 if not self.afs:
-                    fd = os.open(sf, os.O_RDONLY)
+                    fd = os.open(sf, os.O_RDWR)
                     fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
                 with open(sf) as sf_file:
                     names = pickle.load(sf_file)
