@@ -95,6 +95,7 @@ setup(name='ganga',
           'Programming Language :: Python :: 2.6',
           'Programming Language :: Python :: 2.7',
       ],
+      include_package_data=True,
       package_data={'Ganga': ['Runtime/HEAD_CONFIG.INI']},
       cmdclass={
           'tests': RunTestsCommand,
