@@ -163,9 +163,9 @@ if __name__ == '__main__':
         rc = subprocess.call(exe_cmd, env=my_env, shell=False)
     except Exception as x:
         rc = -9999
-        print('Exception occured in running process: ' + exe_cmd)
-        print('Err was: ' + str(err))
-        subprocess.call('''['echo', '$PATH']''')
+        print('Exception occured in running process: ' + repr(exe_cmd))
+        print('Err was: ' + str(x))
+        subprocess.call('echo $PATH', shell=True)
         print('PATH: ' + str(my_env['PATH']))
         print('PWD: ' + str(my_env['PWD']))
         print("files on WN: " + str(listdir('.')))
