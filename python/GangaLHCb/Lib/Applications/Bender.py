@@ -1,202 +1,521 @@
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-'''Application handler for Bender applications in LHCb.'''
+# -*- coding: utf-8 -*-
+# =============================================================================
+## @file Bender.py
+#  Bender application for Ganga  (CMAKE-based version)
+#  Actually there are three applications under the single hat
+#  - BenderModule : classic Bender application: use a full power of bender 
+#  - BenderScript : execute scripts in the context of ``bender'' environment
+#  - Ostap : execute scripts in the context of ``ostap'' environment
+#  @author Vladimir ROMANOVSKY Vladimir.Romanovskiy@cern.ch
+#  @author Vanya BELYAEV  Ivan.Belyaev@itep.ru       
+# =============================================================================
+"""Bender application for Ganga  (CMAKE-based version)
+Actually there are three applications under the single hat
+- BenderModule : classic Bender application: use a full power of bender 
+- BenderScript : execute scripts in the context of ``bender'' environment
+- Ostap : execute scripts in the context of ``ostap'' environment
+"""
+# =============================================================================
 import os
-import tempfile
-import pprint
-import shutil
-from os.path import split, join
-from Ganga.GPIDev.Schema.Schema import FileItem, SimpleItem
-import Ganga.Utility.logging
-from Ganga.GPIDev.Lib.File import File
-from Ganga.Utility.util import unique
-from Ganga.Core import ApplicationConfigurationError
-from Ganga.GPIDev.Lib.File import ShareDir
-from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
-from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
-from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
-from Ganga.Utility.files import expandfilename, fullpath
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.Shell import Shell
-from AppsBaseUtils import guess_version
-from Ganga.GPIDev.Base.Proxy import isType
+from   Ganga.GPIDev.Lib.File.File      import ShareDir,File
+from   Ganga.GPIDev.Lib.File.LocalFile import LocalFile
+from   Ganga.GPIDev.Schema             import Schema, Version, SimpleItem, GangaFileItem, FileItem, ComponentItem
+from   Ganga.GPIDev.Base               import GangaObject
+
+# =============================================================================
+## @class BenderModule
+#  Helper class to define the main proeprties of Bender applicatiom
+#  - the name of Bender module to run
+#  - dictionary of parameters to be forwarder to <code>configure</code> method
+#  - number of event to process
 #
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+#  Usage:
+#  @code 
+#  j.application = Bender ( component = BenderModule ( module = 'the_path/the_module.py' , events = 1000 ) )
+#  @endcode 
+#  @author Vladimir ROMANOVSKY Vladimir.Romanovskiy@cern.ch
+#  @author Vanya BELYAEV  Ivan.Belyaev@itep.ru       
+class BenderModule(GangaObject):
+    """Helper class to define the main proeprties of Bender applicatiom
+    - the name of Bender module to run
+    - dictionary of parameters to be forwarder to <code>configure</code> method
+    - number of event to process
 
-# Added for XML PostProcessing
-from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript
-from GangaLHCb.Lib.Applications import XMLPostProcessor
+    ======
+    Usage:
+    ======
+    
+    j.application = Bender ( component = BenderModule ( module = 'the_path/the_module.py' , events = 1000 ) )
 
-logger = Ganga.Utility.logging.getLogger()
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
-
-class Bender(GaudiBase):
-
-    """The Bender application handler
-
-    The user specifies a module file (via Bender.module) which contains a
-    Bender python module and the number of events they want to run on
-    (via Bender.events).  The user's module is then run on the data by
-    calling:
-
-    USERMODULE.configure(EventSelectorInput,FileCatalogCatalogs)
-    USERMODULE.run(NUMEVENTS)
-    """
-
-    _name = 'Bender'
-    _category = 'applications'
-    _exportmethods = GaudiBase._exportmethods[:]
-    _exportmethods += ['prepare', 'unprepare']
-
-    _schema = GaudiBase._schema.inherit_copy()
-    docstr = 'The package the application belongs to (e.g. "Sim", "Phys")'
-    _schema.datadict['package'] = SimpleItem(defvalue=None,
-                                             typelist=['str', 'type(None)'],
-                                             doc=docstr)
-    docstr = 'The package where your top level requirements file is read '  \
-             'from. Can be written either as a path '  \
-             '\"Tutorial/Analysis/v6r0\" or in traditional notation '  \
-             '\"Analysis v6r0 Tutorial\"'
-    _schema.datadict['masterpackage'] = SimpleItem(defvalue=None,
-                                                   typelist=[
-                                                       'str', 'type(None)'],
-                                                   doc=docstr)
-    docstr = 'Extra options to be passed onto the SetupProject command '\
-             'used for configuring the environment. As an example '\
-             'setting it to \'--dev\' will give access to the DEV area. '\
-             'For full documentation of the available options see '\
-             'https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'
-    _schema.datadict['setupProjectOptions'] = SimpleItem(defvalue='',
-                                                         typelist=[
-                                                             'str', 'type(None)'],
-                                                         doc=docstr)
-    docstr = 'The name of the module to import. A copy will be made ' \
-             'at submission time'
-    _schema.datadict['module'] = FileItem(preparable=1, defvalue=File(), doc=docstr)
-    docstr = 'The name of the Gaudi application (Bender)'
-    _schema.datadict['project'] = SimpleItem(preparable=1, defvalue='Bender', hidden=1, protected=1,
-                                             typelist=['str'], doc=docstr)
-    docstr = 'The number of events '
-    _schema.datadict['events'] = SimpleItem(
-        defvalue=-1, typelist=['int'], doc=docstr)
-    docstr = 'Parameres for module '
-    _schema.datadict['params'] = SimpleItem(
-        defvalue={}, typelist=['dict', 'str', 'int', 'bool', 'float'], doc=docstr)
-    _schema.version.major += 2
-    _schema.version.minor += 0
-
-    #def __init__(self):
-    #    super(Bender, self).__init__()
-
-    def _get_default_version(self, gaudi_app):
-        return guess_version(self, gaudi_app)
-
-    def _auto__init__(self):
-        if (not self.appname) and (not self.project):
-            self.project = 'Bender'  # default
-        if (not self.appname):
-            self.appname = self.project
-        self._init()
-
-    def _getshell(self):
-
-        import EnvironFunctions
-        return EnvironFunctions._getshell(self)
-
-    def prepare(self, force=False):
-        super(Bender, self).prepare(force)
-        self._check_inputs()
-
-        share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
-                                 'shared',
-                                 getConfig('Configuration')['user'],
-                                 self.is_prepared.name)
-        fillPackedSandbox([self.module],
-                          os.path.join(share_dir,
-                                       'inputsandbox',
-                                       '_input_sandbox_%s.tar' % self.is_prepared.name))
-
-        gzipFile(os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name),
-                 os.path.join(
-                     share_dir, 'inputsandbox', '_input_sandbox_%s.tgz' % self.is_prepared.name),
-                 True)
-
-        # add the newly created shared directory into the metadata system if
-        # the app is associated with a persisted object
-        self.checkPreparedHasParent(self)
-        self.post_prepare()
-        logger.debug("Finished Preparing Application in %s" % share_dir)
-
-    def master_configure(self):
-        return (None, StandardJobConfig())
-
-    def configure(self, master_appconfig):
-
-        # self._configure()
-        modulename = split(self.module.name)[-1].split('.')[0]
-        script = """
+    """    
+    _schema = Schema(Version(1, 0), {
+        'module'    : FileItem   (
+        defvalue  = File () ,
+        doc       = """The file with Bender module. It is expected that module contains methods ``configure'' & ``run'' with the proper signatures""") , 
+        'params'    : SimpleItem (
+        defvalue  = {} ,
+        typelist  = ['dict', 'str', 'int', 'bool', 'float'],
+        doc       = """The dictionary of parameters to be forwarded to ``configure'' method of the supplied Bender module""") , 
+        'events'    : SimpleItem ( defvalue=-1, typelist=['int'], doc= "Number of events to process"),
+        })
+    _category = 'bender_component'
+    _name     = 'BenderModule'
+    
+    layout    = """#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# =============================================================================
+importOptions('{datafile}')
+from Gaudi.Configuration import EventSelector,FileCatalog
 from copy import deepcopy
-from Gaudi.Configuration import *
-importOptions('data.py')
-import %s as USERMODULE
-EventSelectorInput = deepcopy(EventSelector().Input)
-FileCatalogCatalogs = deepcopy(FileCatalog().Catalogs)
-EventSelector().Input=[]
-FileCatalog().Catalogs=[]\n""" % modulename
+inputdata    = deepcopy( EventSelector() .Input    )
+filecatalogs = deepcopy( FileCatalog  () .Catalogs )
+EventSelector().Input    = [] ## reset it 
+FileCatalog  ().Catalogs = [] ## reset it 
+# =============================================================================
+# configure Bender and run it 
+# =============================================================================
+import  sys
+sys.path = sys.path + ['.']
+import {modulename} as USERMODULE
+USERMODULE.configure( inputdata , filecatalogs {paramstring})
+USERMODULE.run({events})
+# =============================================================================
+# The END
+# =============================================================================
+"""
 
-        script_configure = "USERMODULE.configure(EventSelectorInput,FileCatalogCatalogs%s)\n"
-        if self.params:
-            param_string = ",params=%s" % self.params
-        else:
-            param_string = ""
+    ## Returns file names which should be copyed to shared area
+    def inputfiles(self):
+        "Returns file names which should be copyed to shared area"
+        return [LocalFile(self.module.name),]
 
-        script_configure = script_configure % param_string
-        script += script_configure
+    ## Returns  wrapper file which run at WN
+    def getWrapper(self, data_file):
+        " Returns  wrapper file which run at WN"
+        
+        module_name  = os.path.split(self.module.name)[-1].split('.')[0]
+        param_string =  ',params=%s' % self.params if self.params else ''
+        
+        the_script      = self.layout.format (
+            datafile    = data_file ,
+            modulename  = module_name ,
+            paramstring = param_string ,
+            events      = self.events
+            )
 
-        script += "USERMODULE.run(%d)\n" % self.events
-        script += getXMLSummaryScript()
-        # add summary.xml
-        outputsandbox_temp = XMLPostProcessor._XMLJobFiles()
-        outputsandbox_temp += unique(self.getJobObject().outputsandbox)
-        outputsandbox = unique(outputsandbox_temp)
+        from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript
+        the_script += getXMLSummaryScript()
 
-        input_files = []
-        input_files += [FileBuffer('gaudipython-wrapper.py', script)]
-        logger.debug("Returning StandardJobConfig")
-        return (None, StandardJobConfig(inputbox=input_files,
-                                        outputbox=outputsandbox))
+        
+        return the_script
 
-    def _check_inputs(self):
-        """Checks the validity of user's entries for GaudiPython schema"""
-        # Always check for None OR empty
-        #logger.info("self.module: %s" % str(self.module))
-        if isType(self.module, str):
-            self.module = File(self.module)
-        if self.module.name == None:
-            raise ApplicationConfigurationError(None, "Application Module not requested")
-        elif self.module.name == "":
-            raise ApplicationConfigurationError(None, "Application Module not requested")
-        else:
-            # Always check we've been given a FILE!
-            self.module.name = fullpath(self.module.name)
-            if not os.path.isfile(self.module.name):
-                msg = 'Module file %s not found.' % self.module.name
-                raise ApplicationConfigurationError(None, msg)
 
-    def postprocess(self):
-        XMLPostProcessor.postprocess(self, logger)
+# =============================================================================
+## @class BenderScript
+#  Helper class to define the main proeprties of BenderScript application
+#  - the scripts to be executed 
+#  - the configuration scripts (aka ``options'') to be imported 
+#  - bender commands to be executed
+#  - other arguments
+#
+#  The scripts are executed within ``bender'' context
+#  The configuration scripts (aka ``options'') are ``imported'' using <code>importOptions</code> costruction
+# 
+#  The actual command to be executed is:
+#  @code 
+#  > bender [ scripts [ scripts ...  --no-color [ arguments ] --import [ imports [ imports [ ... --no-castor --import=data.py --batch   [ --command  [ commands [ ... 
+#  @endcode
+#  Usage:
+#  @code 
+#  j.application = Bender ( component = BenderScript( scripts   = ['path_to_script/the_script.py']  ,
+#                                                     commands  = [ 'print ls()' ]  ) )
+#  @endcode 
+#  @author Vladimir ROMANOVSKY Vladimir.Romanovskiy@cern.ch
+#  @author Vanya BELYAEV  Ivan.Belyaev@itep.ru       
+class BenderScript(GangaObject):
+    """  Helper class to define the main properties of BenderScript application
+    - the scripts to be executed 
+    - the configuration scripts (``options'') to be imported 
+    - bender commands to be executed
+    - other arguments
+    
+    The scripts are executed within ``bender'' context
+    The configuration scripts (aka ``options'') are ``imported'' using ``importOptions'' construction
+    The auto-generated file data.py is imported after all other imports.
 
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-# Associate the correct run-time handlers to GaudiPython for various backends.
+    The actual command to be executed is:
+    > bender [ scripts [ scripts ...  --no-color [ arguments ] --import [ imports [ imports [ ... --no-castor --import=data.py --batch   [ --command  [ commands [ ...
+    
+    ======
+    Usage:
+    ======
+    j.application = Bender ( component = BenderScript( scripts   = ['path_to_script/the_script.py']  ,
+                                                        commands  = [ 'print ls()' ]  ) )                                                 
+    """
+    _schema = Schema(Version(1, 0), {
+        'scripts'   : FileItem   (
+        defvalue        = []      ,
+        sequence        = 1       ,
+        strict_sequence = 0       , 
+        doc             = """The names of the script files to execute. A copy will be made at submission time. The script are executed within ``bender'' context"""),
+        'imports'   : FileItem   (
+        defvalue        = []      ,
+        sequence        = 1       ,
+        strict_sequence = 0       ,
+        doc             = """The names of the configurtaion scripts (ana ``options'') to be imported via ``importOptions''. A copy will be made at submission time"""),
+        'commands'  : SimpleItem (
+        defvalue        = []      ,
+        typelist        = ['str'] ,
+        sequence        =  1      ,
+        doc             = """The bender commands to be executed, e.g. [ 'run(10)' , 'print ls()' , 'print dir()' ]"""), 
+        'arguments' : SimpleItem (
+        defvalue        = []      ,
+        typelist        = ['str'] ,
+        sequence        =  1      ,
+        doc             = """The list of command-line arguments for bender script, e.g. ['-w','-p5'], etc. Following arguments will be appended automatically:  --no-color, --no-castor and --batch.""")
+        })
+    _category = 'bender_component'
+    _name     = 'BenderScript'
 
+    layout = """#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# =============================================================================
+from distutils.spawn import find_executable
+bender_script = find_executable('bender')
+# =============================================================================
+## redefine arguments 
+# =============================================================================
+sys.argv   += {scripts}        
+sys.argv   += [ '--no-color' ] ## automatically added argument 
+sys.argv   += {arguments}
+sys.argv   += [ '--import'   ] + {imports}
+sys.argv   += [ '--no-castor'] ## automaticlaly added argument 
+sys.argv   += [ '--import={datafile}' ] 
+sys.argv   += [ '--batch'    ] ##  automatically added argument 
+sys.argv   += [ '--command'  ] + {command} 
+##
+# =============================================================================
+## execute bender script 
+# =============================================================================
+import runpy
+runpy.run_path ( bender_script, init_globals = globals() , name = '__main__' )
+# =============================================================================
+# The END
+# =============================================================================
+"""
+
+    ## Returns file names which should be copyed to shared area
+    def inputfiles(self):
+        "Returns file names which should be copyed to shared area"
+        return [ LocalFile(f.name) for f in self.scripts ] + [ LocalFile(f.name) for f in self.imports ]
+    
+    ## Returns  wrapper file which run at WN
+    def getWrapper(self, data_file):
+        "Returns  wrapper file which run at WN"
+
+        the_script    = self.layout.format (
+            scripts   = [ os.path.join ( f.subdir , os.path.basename ( f.name ) ) for f in self.scripts ] , 
+            arguments = self.arguments  ,
+            imports   = [ os.path.join ( f.subdir , os.path.basename ( f.name ) ) for f in self.imports ] ,
+            datafile  = data_file ,
+            command   = self.commands    
+            )
+        return the_script
+
+
+# =============================================================================
+## @class Ostap
+#  Helper class to define the main properties of Ostap application
+#  - the scripts to be executed 
+#  - bender commands to be executed
+#  - other arguments
+#
+#  The scripts are executed within ``ostap'' context
+#  Command line arguments ``--no-color'' and ``--batch'' are added automatically
+#
+#  The actual command to be executed is:
+#  @code 
+#  > ostap [ scripts [scripts [scripts ...  [ arguments ] --no-color --batch   [ --command  [ commands [ commands [ commands
+#  @endcode
+#  Usage:
+#  @code
+#  j.application = Bender ( component = Ostap( scripts   = ['path_to_script/the_script.py']  ,
+#                                              arguments = [ '--no-canvas' ]  ,
+#                                              commands  = [ 'print dir()' ]  ) ) 
+#  @encode
+#  @author Vladimir ROMANOVSKY Vladimir.Romanovskiy@cern.ch
+#  @author Vanya BELYAEV  Ivan.Belyaev@itep.ru       
+class Ostap(GangaObject):
+    """Helper class to define the main properties of Ostap application
+    - the scripts to be executed 
+    - ostap commands to be executed
+    - other arguments
+    
+    The scripts are executed within ``ostap'' context
+    Command line arguments ``--no-color'' and ``--batch'' are added automatically
+
+    The actual command to be executed is:
+    > ostap [ scripts [scripts [scripts ...  [ arguments ] --no-color --batch   [ --command  [ commands [ commands [ commands
+
+    ======
+    Usage:
+    ======
+    j.application = Bender ( component = Ostap( scripts   = ['path_to_script/the_script.py']  ,
+                                                arguments = [ '--no-canvas' ]  ,
+                                                commands  = [ 'print dir()' ]  ) )                                                 
+    """
+    _schema = Schema(Version(1, 0), {
+        'scripts'   : FileItem   (
+        defvalue        = []      ,
+        sequence        = 1       ,
+        strict_sequence = 0       ,
+        doc             = """The names of ostap script files to be executed. The files are executed within ``ostap'' context. A copy will be made at submission time"""),
+        'commands'  : SimpleItem (
+        defvalue        = []      ,
+        typelist        = ['str'] ,
+        sequence        =  1      ,
+        doc             = """The ostap commands to be executed, e.g. [ 'print dir()' ]"""), 
+        'arguments' : SimpleItem (
+        defvalue        = []      ,
+        typelist        = ['str'] ,
+        sequence        =  1      ,
+        doc             = "The list of command-line arguments for ``ostap'' script, e.g. ['-w','-p5'], etc. Following arguments are appended automatically:  --no-color and --batch""")
+        })
+    _category      = 'bender_component'
+    _name          = 'Ostap'
+    _exportmethods = [ ]
+
+    layout = """#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# =============================================================================
+from distutils.spawn import find_executable
+ostap_script = find_executable('ostap')
+import sys
+# =============================================================================
+## redefine arguments 
+# =============================================================================
+sys.argv += {scripts}        
+sys.argv += [ '--no-color' ] ## automatically added argument
+sys.argv += {arguments}
+sys.argv += [ '--batch'    ] ## automatically added argument
+sys.argv += [ '--command'  ] + {command} 
+##
+# =============================================================================
+## execute bender script 
+# =============================================================================
+import runpy
+runpy.run_path ( ostap_script, init_globals = globals() , name = '__main__' )
+# =============================================================================
+# The END
+# =============================================================================
+"""
+    ## Returns file names which should be copyed to shared area
+    def inputfiles(self):
+        "Returns file names which should be copyed to shared area"
+        return [ LocalFile(f.name) for f in self.scripts ]
+
+    ## Returns  wrapper file which run at WN 
+    def getWrapper(self,data_file):
+        "Returns  wrapper file which run at WN "
+        
+        the_script    = self.layout.format (
+            scripts   = [ os.path.join ( f.subdir , os.path.basename ( f.name ) ) for f in self.scripts ] , 
+            arguments = self.arguments  ,
+            command   = self.commands    
+            )
+        return the_script
+
+## import the base class 
+from .GaudiExec import GaudiExec
+# =============================================================================
+## @class Bender
+#  Bender Application
+#  - Simple Usage:
+#  @code 
+#  j = Job( application    = prepareBender ( version = 'v30r1' ) )
+#  j.application.component = BenderModule  ( module = 'pat_to_module/the_module.py' )
+#  @endcode
+#  Usage: 
+#  - For Bender module, the native Bender applictaion:
+#  @code 
+#  j1 = Job()
+#  j1.application = Bender( directory = '$HOME/cmtuser/BenderDev_v30r1' ) 
+#  j1.application.component.module = 'path_to_module/the_module.py' )
+#  @endcode
+#  Note:
+#  1. The ``module'' is required to have configure&run methods  with the proper signature
+#  2. ``summary.xml'' file is not added automatically to the output sandbox
+# 
+#  - For Bender script (the batch analogue of interactive ``bender'' environment):
+#  @code 
+#  j2 = Job()
+#  j2.application = Bender( directory = '$HOME/cmtuser/BenderDev_v30r1' ) 
+#  j2.application.component = BenderScript  ( scripts = [ 'path_to_script/the_script.py' ]  )
+#  @endcode
+#  Note:
+#  1. The ``scripts'' are executed within ``bender'' context
+#  2. ``--no-color'', ``--no-castor'' and ``--batch'' options are added automatically
+#  3. ``data.py'' file is autoimported after other ``import'' scripts 
+#  4. ``summary.xml'' file is *not* added automatically  to the output sandbox
+#
+#  - For Ostap scripts (the batch analogue of interactive ``ostap'' environment):
+#  @code 
+#  j3 = Job()
+#  j3.application = Bender( directory = '$HOME/cmtuser/BenderDev_v30r1' ) 
+#  j3.application.component = Ostap ( scripts = [ 'path_to_script/the_script.py' ]  )
+#  @endcode
+#  Note:
+#  1. The ``scripts'' are executed within ``ostap'' context
+#  2. ``--no-color'' and ``--batch'' options are added automatically
+#
+#  @author Vladimir ROMANOVSKY Vladimir.Romanovskiy@cern.ch
+#  @author Vanya BELYAEV  Ivan.Belyaev@itep.ru       
+class Bender(GaudiExec):
+    """ Bender Application
+
+    =============
+    Simple Usage:
+    =============
+    j = Job( application    = prepareBender ( version = 'v30r1' ) )
+    j.application.component = BenderModule  ( module = 'pat_to_module/the_module.py' )
+    
+    ======
+    Usage:
+    ======
+    
+    - For Bender module, the native Bender applictaion:
+    j1 = Job()
+    j1.application = Bender( directory = '$HOME/cmtuser/BenderDev_v30r1' ) 
+    j1.application.component.module = 'path_to_module/the_module.py' )
+
+    Note:
+    1. The ``module'' is required to have configure&run methods  with the proper signature
+    2. ``summary.xml'' file is not added automatically to the output sandbox
+    
+    - For Bender script (the batch analogue of interactive ``bender'' environment):
+    j2 = Job()
+    j2.application = Bender( directory = '$HOME/cmtuser/BenderDev_v30r1' ) 
+    j2.application.component = BenderScript  ( scripts = [ 'path_to_script/the_script.py' ]  )
+    
+    Note:
+    1. The ``scripts'' are executed within ``bender'' context
+    2. ``--no-color'', ``--no-castor'' and ``--batch'' options are added automatically
+    3. ``data.py'' file is autoimported after other ``import'' scripts 
+    4. ``summary.xml'' file is *not* added automatically  to the output sandbox
+
+     - For Ostap scripts (the batch analogue of interactive ``ostap'' environment):
+    j3 = Job()
+    j3.application = Bender( directory = '$HOME/cmtuser/BenderDev_v30r1' ) 
+    j3.application.component = Ostap ( scripts = [ 'path_to_script/the_script.py' ]  )
+
+    Note:
+    1. The ``scripts'' are executed within ``ostap'' context
+    2. ``--no-color'' and ``--batch'' options are added automatically
+
+    """
+    _schema = Schema(Version(1, 0), {
+        # Options created for constructing/submitting this app
+        'component'        : ComponentItem (
+        category   = 'bender_component' ,
+        defvalue   = BenderModule()      ,
+        doc        = """Bender ``component'' to be used. See plugins[``bender_component''] for allowed values"""
+        ),
+        'directory'        : SimpleItem    (
+        defvalue   = ''          ,
+        typelist   = [None, str] ,
+        comparable = 1           ,
+        doc        ="""A path/directory to the project that you\'re wanting to run.""" ) ,
+        'platform'         : SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
+        ## from GaudiExec 
+        'uploadedInput'    : GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
+        'jobScriptArchive' : GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
+        'useGaudiRun'      : SimpleItem(defvalue=False, hidden = 1, doc='Should be False to call getWNPythonContents function'),
+        'extraOpts'        : SimpleItem(defvalue='', typelist=[str], hidden=1, doc='DO NOT USE IT; An additional string which is to be added to \'options\' when submitting the job'),
+        'options'          : GangaFileItem ( defvalue=[], sequence=1, hidden = 1,doc='List of files which contain the options to pass to gaudirun.py'),
+        'extraArgs'        : SimpleItem(defvalue=[], typelist=[list], sequence=1, hidden=1, doc=' Do NOT USE IT; Extra runtime arguments which are passed to the code running on the WN'),
+        # Prepared job object
+        'is_prepared'      : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
+                                        doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+        'hash'             : SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
+        })
+    _category      = 'applications'
+    _name          = 'Bender'
+    _exportmethods = ['prepare', 'unprepare' ]
+
+    def configure(self, masterjobconfig):	
+        self.options = self.component.inputfiles()
+        return (None,None)
+
+    # =======================================================================
+    def getWNPythonContents(self):
+        """Return the wrapper script which is used to run Bender on the WN
+        """
+        from ..RTHandlers.GaudiExecRTHandlers import GaudiExecDiracRTHandler
+        data_file = GaudiExecDiracRTHandler.data_file
+        return self.component.getWrapper(data_file)
+
+
+# =============================================================================
+## prepare Bender application
+#  @code
+#  j = Job ( application = prepareBender ( 'v30r1' ) ) 
+#  @endcode
+#  One can specify the directory explicitely:
+#  @code
+#  j = Job ( application = prepareBender ( 'v30r1' , path = '$HOME/mydir' ) ) 
+#  @endcode
+#  or use the temporary directory 
+#  @code
+#  j = Job ( application = prepareBender ( 'v30r1' , use_tmp = True  ) ) 
+#  @endcode
+#  One can also use the configuration parameters:
+#  @code
+#  j = Job ( application = prepareBender ( 'v30r1' , module = 'the_path/the_module.py' , params = { ...} ) ) 
+#  @endcode
+def prepareBender ( version  , path = '$HOME/cmtuser', use_tmp = False , **kwargs ) :
+    """Prepare Bender application
+    >>> j = Job ( application = prepareBender ( 'v30r1' ) )
+    One can specify the directory explicitely:
+    >>> j = Job ( application = prepareBender ( 'v30r1' , path = '$HOME/mydir' ) ) 
+    or use temporary directory: 
+    >>> j = Job ( application = prepareBender ( 'v30r1' , use_tmp = True  ) ) 
+    One can also use the configuration parameters:
+    >>> j = Job ( application = prepareBender ( 'v30r1' , module = 'the_path/the_module.py' , params = { ...} ) ) 
+    """
+    from .GaudiExecUtils import prepare_cmake_app
+    if use_tmp :
+        import tempfile
+        path = tempfile.mkdtemp ( prefix = 'GANGA_BENDER_%s_' % version )
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
+        logger.info('Bender application will be prepared in the temporary directory %s' % path )
+        
+    the_path   = prepare_cmake_app ( 'Bender' , version , path )
+    the_module = kwargs.pop ( 'module' , None )
+    if not the_module :
+        from Ganga.GPI import Bender as _B     ## kind of black magic 
+        return _B  ( directory = the_path , **kwargs )
+    
+    from Ganga.GPI import BenderModule as _BM  ## black magic 
+    the_comp = _BM ( module = the_module , 
+                     params = kwargs.pop ( 'params' , {} ) , 
+                     events = kwargs.pop ( 'events' , -1 ) ) 
+    
+    from Ganga.GPI import Bender as _B         ## black magic 
+    return _B ( directory = the_path , 
+                component = the_comp , **kwargs ) 
+
+## export it! 
+from Ganga.Runtime.GPIexport import exportToGPI
+exportToGPI('prepareBender', prepareBender, 'Functions')
+
+## 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
-from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
-
-for backend in ['LSF', 'Interactive', 'PBS', 'SGE', 'Local', 'Condor', 'Remote']:
-    allHandlers.add('Bender', backend, LHCbGaudiRunTimeHandler)
-allHandlers.add('Bender', 'Dirac', LHCbGaudiDiracRunTimeHandler)
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+from ..RTHandlers.GaudiExecRTHandlers                 import GaudiExecDiracRTHandler, GaudiExecRTHandler
+allHandlers.add('Bender', 'Dirac', GaudiExecDiracRTHandler)
+for backend in ("Local","Interactive","LSF","PBS","SGE","Condor"):
+    allHandlers.add('Bender', backend, GaudiExecRTHandler)
+    
+# =============================================================================
+# The END 
+# =============================================================================

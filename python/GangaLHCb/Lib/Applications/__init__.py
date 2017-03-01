@@ -10,10 +10,7 @@ from Ganga.Utility.logging import getLogger
 
 from .GaudiPython import GaudiPython
 
-from .Bender import Bender
-from .BenderScript import BenderScript
-from .Ostap import Ostap
-
+from .Bender    import Bender
 from .GaudiExec import GaudiExec
 
 # Add any additional Packages required by the user in the .gangarc file
