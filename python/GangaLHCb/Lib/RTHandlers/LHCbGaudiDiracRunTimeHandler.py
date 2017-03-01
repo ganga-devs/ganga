@@ -1,7 +1,7 @@
 import copy
 import os
 import pickle
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
@@ -47,7 +47,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         if job.inputdata:
             if not job.splitter:
                 if len(job.inputdata) > 100:
-                    raise BackendError("You're submitting a job to Dirac with no splitter and more than 100 files, please add a splitter and try again!")
+                    raise BackendError("Dirac", "You're submitting a job to Dirac with no splitter and more than 100 files, please add a splitter and try again!")
 
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
@@ -146,7 +146,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
             # As the RT Handler we already know we have a Dirac backend
             if type(job.backend.settings) is not dict:
-                raise ApplicationConfigurationError(None, 'backend.settings should be a dict')
+                raise ApplicationConfigurationError('backend.settings should be a dict')
 
             if 'AncestorDepth' in job.backend.settings:
                 ancestor_depth = job.backend.settings['AncestorDepth']

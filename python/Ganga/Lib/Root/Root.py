@@ -14,7 +14,7 @@ from Ganga.GPIDev.Lib.File import File, ShareDir
 from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.root import getrootsys, getpythonhome
 
-from Ganga.Core import ApplicationPrepareError
+from Ganga.Core.exceptions import ApplicationPrepareError
 
 import Ganga.Utility.logging
 import inspect

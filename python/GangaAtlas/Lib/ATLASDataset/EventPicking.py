@@ -38,12 +38,12 @@ class EventPicking(DQ2Dataset):
         
         job = self._getParent()
         if job and job.inputdata and job.inputdata.pick_event_list.name != '' and  len(job.inputdata.dataset) !=0 :
-            raise ApplicationConfigurationError(None, 'Cannot use event pick list and input dataset at the same time.')
+            raise ApplicationConfigurationError('Cannot use event pick list and input dataset at the same time.')
 
         #parametr check for event picking
         if job and job.inputdata and job.inputdata.pick_event_list.name != '':
             if job.inputdata.pick_data_type == '':
-                raise ApplicationConfigurationError(None, 'Event pick data type (pick_data_type) must be specified.')
+                raise ApplicationConfigurationError('Event pick data type (pick_data_type) must be specified.')
 
         # set X509_USER_PROXY
         from pandatools import Client
@@ -68,7 +68,7 @@ class EventPicking(DQ2Dataset):
             runevttxt.close()
 
         else:
-            raise ApplicationConfigurationError(None, 'Could not read event pick list file %s.' %self.pick_event_list.name)
+            raise ApplicationConfigurationError('Could not read event pick list file %s.' %self.pick_event_list.name)
 
         # convert self.pick_data_type to Athena stream ref
         if self.pick_data_type == 'AOD':
@@ -80,7 +80,7 @@ class EventPicking(DQ2Dataset):
         else:
             errStr  = 'invalid data type %s for event picking. ' % self.pick_data_type
             errStr += ' Must be one of AOD,ESD,RAW'
-            raise ApplicationConfigurationError(None,errStr)
+            raise ApplicationConfigurationError(errStr)
         logger.info('Getting dataset names and LFNs from ELSSI for event picking')
 
         # read
@@ -107,7 +107,7 @@ class EventPicking(DQ2Dataset):
                 for tmpLine in elssiIF.output:
                     errStr += tmpLine + '\n'
                 errStr = "GUID was not found in ELSSI.\n" + errStr
-                raise ApplicationConfigurationError(None,errStr)
+                raise ApplicationConfigurationError(errStr)
 
             # check attribute
             attrNames, attrVals = guidListELSSI
@@ -116,7 +116,7 @@ class EventPicking(DQ2Dataset):
                     if tmpAttrName.strip() == attr:
                         return tmpIdx
                 errStr = "cannot find attribute=%s in %s provided by ELSSI" % (attr,str(attrNames))
-                raise ApplicationConfigurationError(None,errStr)
+                raise ApplicationConfigurationError(errStr)
             # get index
             indexEvt = getAttributeIndex('EventNumber')
             indexRun = getAttributeIndex('RunNumber')
@@ -137,7 +137,7 @@ class EventPicking(DQ2Dataset):
                 # not found
                 if tmpguids == []:
                     errStr = "no GUIDs were found in ELSSI for %s" % paramStr
-                    raise ApplicationConfigurationError(None,errStr)
+                    raise ApplicationConfigurationError(errStr)
                 # append
                 for tmpguid in tmpguids:
                     if not tmpguid in guids:
@@ -177,12 +177,12 @@ class EventPicking(DQ2Dataset):
                     errStr = "Dataset pattern '%s' didn't pick up a file for %s\n" % (self.pick_dataset_pattern,paramStr)
                     for tmpguid,tmpAllDS in tmpAllDSs.iteritems():
                         errStr += "    GUID:%s dataset:%s\n" % (tmpguid,str(tmpAllDS))
-                    raise ApplicationConfigurationError(None,errStr)
+                    raise ApplicationConfigurationError(errStr)
                 # duplicated    
                 if len(tmpLFNs) != 1:
                     paramStr = 'Run:%s Evt:%s Stream:%s' % (runNr,evtNr,self.pick_stream_name)            
                     errStr = "Multiple LFNs %s were found in ELSSI for %s. Please set pick_dataset_pattern and/or pick_stream_name and or event_pick_amitag correctly." %(str(tmpLFNs),paramStr)
-                    raise ApplicationConfigurationError(None,errStr)
+                    raise ApplicationConfigurationError(errStr)
 
         
         # return

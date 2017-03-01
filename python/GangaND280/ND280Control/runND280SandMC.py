@@ -16,7 +16,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 import os, shutil, commands, re
 from Ganga.Utility.files import expandfilename
@@ -73,23 +73,23 @@ class runND280SandMC(IApplication):
         job = self.getJobObject()
 
         if self.cmtsetup == []:
-          raise ApplicationConfigurationError(None,'No cmt setup script given.')
+          raise ApplicationConfigurationError('No cmt setup script given.')
 
         for arg in args:
           if arg == '-c':
-            raise ApplicationConfigurationError(None,'Option "-c" given in args. You must use the configfile variable instead.')
+            raise ApplicationConfigurationError('Option "-c" given in args. You must use the configfile variable instead.')
 
         confopts = self.confopts
 
 
         # use input file from a "dataset"
         if job.inputdata == None:
-            raise ApplicationConfigurationError(None,'The given config file requires an input file but the inputdata of the job is not defined.')
+            raise ApplicationConfigurationError('The given config file requires an input file but the inputdata of the job is not defined.')
         infiles = job.inputdata.get_dataset_filenames()
         if len(infiles) < 1:
-            raise ApplicationConfigurationError(None,'The given config file contains "inputfile" but not input file was given')
+            raise ApplicationConfigurationError('The given config file contains "inputfile" but not input file was given')
         if len(infiles) > 1:
-            raise ApplicationConfigurationError(None,'The given config file contains "inputfile" but more than one input file was given')
+            raise ApplicationConfigurationError('The given config file contains "inputfile" but more than one input file was given')
         confopts.update({'inputfile':infiles[0]})
 
         # extract "run number" from an input filename
@@ -107,7 +107,7 @@ class runND280SandMC(IApplication):
                 if irun >= 1000:
                     rrun = str(irun % 1000)
             else:
-                raise  ApplicationConfigurationError(None,'Can not extract run number')
+                raise  ApplicationConfigurationError('Can not extract run number')
         confopts.update({'run_number':str(int(rrun)),'subrun':str(int(srun))})
 
         # create config file

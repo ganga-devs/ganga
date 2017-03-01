@@ -4,7 +4,7 @@ import functools
 
 from .GangaUnitTest import load_config_files, clear_config
 from Ganga.GPIDev.Credentials.CredentialStore import credential_store
-from Ganga.Core.exceptions import GangaKeyError, CredentialsError
+from Ganga.Core.exceptions import CredentialsError
 from Ganga.Utility.Config import getConfig
 
 external = pytest.mark.skipif(
@@ -72,7 +72,7 @@ class requires_cred(object):
         try:
             credential_store[self._cred_req]
             return function
-        except GangaKeyError:
+        except KeyError:
             try:
                 credential_store.create(self._cred_req)
                 return function

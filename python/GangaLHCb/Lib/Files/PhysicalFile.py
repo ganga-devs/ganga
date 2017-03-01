@@ -10,7 +10,7 @@ import os
 import re
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.Utility.files import expandfilename
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 import Ganga.Utility.logging

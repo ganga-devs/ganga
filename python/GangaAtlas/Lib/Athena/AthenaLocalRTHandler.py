@@ -65,22 +65,22 @@ class AthenaLocalRTHandler(IRuntimeHandler):
 
             if job._getRoot().subjobs:
                 if job.inputdata._name == 'ATLASLocalDataset' or job.inputdata._name == 'ATLASCastorDataset':
-                    if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
+                    if not job.inputdata.names: raise ApplicationConfigurationError('No inputdata has been specified.')
                     input_files = job.inputdata.names
 
                 elif job.inputdata._name == 'ATLASDataset':
-                    if not job.inputdata.lfn: raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
+                    if not job.inputdata.lfn: raise ApplicationConfigurationError('No inputdata has been specified.')
                     input_files = job.inputdata.lfn
 
                 elif job.inputdata._name == 'ATLASTier3Dataset':
                     if not job.inputdata.names:
-                        raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
+                        raise ApplicationConfigurationError('No inputdata has been specified.')
                     if job.inputdata.names:
                         input_files = job.inputdata.names
                         input_guids = input_files
 
                 elif job.inputdata._name == 'DQ2Dataset':
-                    if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
+                    if not job.inputdata.names: raise ApplicationConfigurationError('No inputdata has been specified.')
                     input_guids = job.inputdata.guids
                     input_files = job.inputdata.names
                     if not job.inputdata.type in ['DQ2_LOCAL', 'FILE_STAGER', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
@@ -108,7 +108,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                         input_files = job.inputdata.names
                         input_guids = input_files
                     else:
-                        raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
+                        raise ApplicationConfigurationError('No inputdata has been specified.')
 
                 elif job.inputdata._name == 'DQ2Dataset':
                     if not job.inputdata.type in ['DQ2_LOCAL', 'FILE_STAGER', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD' ]:
@@ -265,7 +265,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if job.outputdata and job.outputdata.outputdata:
             inputbox += [ FileBuffer('output_files','\n'.join(job.outputdata.outputdata)+'\n') ]
         elif job.outputdata and not job.outputdata.outputdata:
-            raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
+            raise ApplicationConfigurationError('j.outputdata.outputdata is empty - Please specify output filename(s).')
    
         exe = os.path.join(os.path.dirname(__file__),'run-athena-local.sh')
         outputbox = jobmasterconfig.outputbox
@@ -275,7 +275,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if job.inputdata and job.inputdata._name == 'StagerDataset':
 
             if not job.inputdata.dataset:
-                raise ApplicationConfigurationError(None,'dataset name not specified in job.inputdata')
+                raise ApplicationConfigurationError('dataset name not specified in job.inputdata')
 
             ## ship fs-copy.py with the job as it's going to be used as a copy command wrapper by FileStager
             inputbox += [ File( os.path.join( os.path.dirname(__file__), 'fs-copy.py') ) ]
@@ -309,7 +309,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             pass
 
         if job.outputdata and job.outputdata._name=='DQ2OutputDataset' and output_location == [ ]:
-            raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
+            raise ApplicationConfigurationError('j.outputdata.outputdata is empty - Please specify output filename(s).')
 
         # set EOS env setting
         environment['EOS_COMMAND_PATH'] = config['PathToEOSBinary']
@@ -371,7 +371,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations(overlap=False)[ datasets[0] ])
                 except:
                     printout = 'Job submission failed ! Dataset %s could not be found in DQ2 ! Maybe retry ?' %(datasets[0])
-                    raise ApplicationConfigurationError(None,printout )
+                    raise ApplicationConfigurationError(printout )
 
 
         if job.inputdata and job.inputdata._name == 'ATLASTier3Dataset':
@@ -502,7 +502,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
 
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
             if not job.outputdata.location:
-                raise ApplicationConfigurationError(None,'j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
+                raise ApplicationConfigurationError('j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
             if not File(os.path.join(os.path.dirname(__file__),'ganga-stage-in-out-dq2.py')) in inputbox:
                 _append_files(inputbox,'ganga-stage-in-out-dq2.py')
                 _append_files(inputbox,'dq2info.tar.gz')
@@ -531,7 +531,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             raise ConfigError('No default location of ATLAS_SOFTWARE specified in the configuration.')
 
         if app.atlas_release=='' and app.atlas_project != "AthAnalysisBase":
-            raise ApplicationConfigurationError(None,'j.application.atlas_release is empty - No ATLAS release version found. Run prepare() or specify a version explictly.')
+            raise ApplicationConfigurationError('j.application.atlas_release is empty - No ATLAS release version found. Run prepare() or specify a version explictly.')
       
         environment={ 
             'ATLAS_RELEASE' : app.atlas_release,
