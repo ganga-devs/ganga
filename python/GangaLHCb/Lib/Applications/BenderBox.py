@@ -45,7 +45,7 @@ class BenderModule(GangaObject):
     Usage:
     ======
     
-    j.application = Bender ( component = BenderModule ( module = 'the_path/the_module.py' , events = 1000 ) )
+    j.application = BenderBox ( tool = BenderModule ( module = 'the_path/the_module.py' , events = 1000 ) )
 
     """    
     _schema = Schema(Version(1, 0), {
@@ -152,7 +152,7 @@ class bender(GangaObject):
     j.application = Bender ( tool = bender ( scripts   = ['path_to_script/the_script.py']  ,
                                              commands  = [ 'print ls()' ]  ) )                                                 
     """
-    _schema = Schema(Version(3, 0), {
+    _schema = Schema(Version(1, 0), {
         'scripts'   : FileItem   (
         defvalue        = []      ,
         sequence        = 1       ,
@@ -264,7 +264,7 @@ class ostap(GangaObject):
                                               arguments = [ '--no-canvas' ]  ,
                                               commands  = [ 'print dir()' ]  ) )                                                 
     """
-    _schema = Schema(Version(3, 0), {
+    _schema = Schema(Version(1, 0), {
         'scripts'   : FileItem   (
         defvalue        = []      ,
         sequence        = 1       ,
@@ -413,7 +413,7 @@ class BenderBox(GaudiExec):
     2. ``--no-color'' and ``--batch'' options are added automatically
 
     """
-    _schema = Schema(Version(3, 0), {
+    _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
         'tool'             : ComponentItem (
         category   = 'BenderTool' ,
