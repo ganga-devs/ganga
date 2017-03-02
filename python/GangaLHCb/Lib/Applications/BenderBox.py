@@ -4,8 +4,8 @@
 #  Bender application for Ganga  (CMAKE-based version)
 #  Actually there are three applications under the single hat
 #  - BenderModule : classic Bender application: use a full power of bender 
-#  - BenderScript : execute scripts in the context of ``bender'' environment
-#  - Ostap : execute scripts in the context of ``ostap'' environment
+#  - BenderRun    : execute scripts in the context of ``bender'' environment
+#  - OstapRun     : execute scripts in the context of ``ostap'' environment
 #  @author Vladimir ROMANOVSKY Vladimir.Romanovskiy@cern.ch
 #  @author Vanya BELYAEV  Ivan.Belyaev@itep.ru       
 # =============================================================================
@@ -109,7 +109,7 @@ USERMODULE.run({events})
         return the_script
 
 # =============================================================================
-## @class bender
+## @class BenderRun
 #  Helper class to define the main properties of BenderScript application
 #  - the scripts to be executed 
 #  - the configuration scripts (aka ``options'') to be imported 
@@ -125,12 +125,12 @@ USERMODULE.run({events})
 #  @endcode
 #  Usage:
 #  @code 
-#  j.application = BenderBox ( tool = bender ( scripts   = ['path_to_script/the_script.py']  ,
-#                                              commands  = [ 'print ls()' ]  ) )
+#  j.application = BenderBox ( tool = BenderRun ( scripts   = ['path_to_script/the_script.py']  ,
+#                                                 commands  = [ 'print ls()' ]  ) )
 #  @endcode 
 #  @author Vladimir ROMANOVSKY Vladimir.Romanovskiy@cern.ch
 #  @author Vanya BELYAEV  Ivan.Belyaev@itep.ru       
-class bender(GangaObject):
+class BenderRun(GangaObject):
     """  Helper class to define the main properties of BenderScript application
     - the scripts to be executed 
     - the configuration scripts (``options'') to be imported 
@@ -147,8 +147,8 @@ class bender(GangaObject):
     ======
     Usage:
     ======
-    j.application = Bender ( tool = bender ( scripts   = ['path_to_script/the_script.py']  ,
-                                             commands  = [ 'print ls()' ]  ) )                                                 
+    j.application = BenderBox ( tool = BenderRun ( scripts   = ['path_to_script/the_script.py']  ,
+                                                   commands  = [ 'print ls()' ]  ) )                                                 
     """
     _schema = Schema(Version(1, 0), {
         'scripts'   : FileItem   (
@@ -173,13 +173,14 @@ class bender(GangaObject):
         doc             = """The list of command-line arguments for bender script, e.g. ['-w','-p5'], etc. Following arguments will be appended automatically:  --no-color, --no-castor and --batch.""")
         })
     _category = 'BenderTool'
-    _name     = 'bender'  
+    _name     = 'BenderRun'  
 
     layout = """#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # =============================================================================
 from distutils.spawn import find_executable
 bender_script = find_executable('bender')
+import sys 
 # =============================================================================
 ## redefine arguments 
 # =============================================================================
@@ -196,7 +197,7 @@ sys.argv   += [ '--command'  ] + {command}
 ## execute bender script 
 # =============================================================================
 import runpy
-runpy.run_path ( bender_script, init_globals = globals() , name = '__main__' )
+runpy.run_path ( bender_script, init_globals = globals() , run_name = '__main__' )
 # =============================================================================
 # The END
 # =============================================================================
@@ -222,7 +223,7 @@ runpy.run_path ( bender_script, init_globals = globals() , name = '__main__' )
 
 
 # =============================================================================
-## @class ostap
+## @class OstapRun
 #  Helper class to define the main properties of Ostap application
 #  - the scripts to be executed 
 #  - bender commands to be executed
@@ -237,13 +238,13 @@ runpy.run_path ( bender_script, init_globals = globals() , name = '__main__' )
 #  @endcode
 #  Usage:
 #  @code
-#  j.application = BenderBox ( tool = Ostap( scripts   = ['path_to_script/the_script.py']  ,
-#                                            arguments = [ '--no-canvas' ]  ,
-#                                            commands  = [ 'print dir()' ]  ) ) 
+#  j.application = BenderBox ( tool = OstapRun ( scripts   = ['path_to_script/the_script.py']  ,
+#                                                arguments = [ '--no-canvas' ]  ,
+#                                                commands  = [ 'print dir()' ]  ) ) 
 #  @encode
 #  @author Vladimir ROMANOVSKY Vladimir.Romanovskiy@cern.ch
 #  @author Vanya BELYAEV  Ivan.Belyaev@itep.ru       
-class ostap(GangaObject):
+class OstapRun(GangaObject):
     """Helper class to define the main properties of Ostap application
     - the scripts to be executed 
     - ostap commands to be executed
@@ -258,9 +259,9 @@ class ostap(GangaObject):
     ======
     Usage:
     ======
-    j.application = BenderBox ( tool = ostap( scripts   = ['path_to_script/the_script.py']  ,
-                                              arguments = [ '--no-canvas' ]  ,
-                                              commands  = [ 'print dir()' ]  ) )                                                 
+    j.application = BenderBox ( tool = OstapRun ( scripts   = ['path_to_script/the_script.py']  ,
+                                                  arguments = [ '--no-canvas' ]  ,
+                                                  commands  = [ 'print dir()' ]  ) )                                                 
     """
     _schema = Schema(Version(1, 0), {
         'scripts'   : FileItem   (
@@ -280,7 +281,7 @@ class ostap(GangaObject):
         doc             = "The list of command-line arguments for ``ostap'' script, e.g. ['-w','-p5'], etc. Following arguments are appended automatically:  --no-color and --batch""")
         })
     _category      = 'BenderTool'
-    _name          = 'ostap'
+    _name          = 'OstapRun'
     _exportmethods = [ ]
 
     layout = """#!/usr/bin/env python
@@ -302,7 +303,7 @@ sys.argv += [ '--command'  ] + {command}
 ## execute bender script 
 # =============================================================================
 import runpy
-runpy.run_path ( ostap_script, init_globals = globals() , name = '__main__' )
+runpy.run_path ( ostap_script, init_globals = globals() , run_name = '__main__' )
 # =============================================================================
 # The END
 # =============================================================================
@@ -348,7 +349,7 @@ from .GaudiExec import GaudiExec
 #  @code 
 #  j2 = Job()
 #  j2.application = BenderBox ( directory = '$HOME/cmtuser/BenderDev_v30r1' ) 
-#  j2.application.tool = bender ( scripts = [ 'path_to_script/the_script.py' ]  )
+#  j2.application.tool = BenderRun ( scripts = [ 'path_to_script/the_script.py' ]  )
 #  @endcode
 #  Note:
 #  1. The ``scripts'' are executed within ``bender'' context
@@ -360,7 +361,7 @@ from .GaudiExec import GaudiExec
 #  @code 
 #  j3 = Job()
 #  j3.application = BenderBox ( directory = '$HOME/cmtuser/BenderDev_v30r1' ) 
-#  j3.application.tool = ostap ( scripts = [ 'path_to_script/the_script.py' ]  )
+#  j3.application.tool = OstapRun ( scripts = [ 'path_to_script/the_script.py' ]  )
 #  @endcode
 #  Note:
 #  1. The ``scripts'' are executed within ``ostap'' context
@@ -393,7 +394,7 @@ class BenderBox(GaudiExec):
     - For Bender script (the batch analogue of interactive ``bender'' environment):
     j2 = Job()
     j2.application = BenderBox ( directory = '$HOME/cmtuser/BenderDev_v30r1' ) 
-    j2.application.tool = bender ( scripts = [ 'path_to_script/the_script.py' ]  )
+    j2.application.tool = BenderRun ( scripts = [ 'path_to_script/the_script.py' ]  )
     
     Note:
     1. The ``scripts'' are executed within ``bender'' context
@@ -404,7 +405,7 @@ class BenderBox(GaudiExec):
      - For Ostap scripts (the batch analogue of interactive ``ostap'' environment):
     j3 = Job()
     j3.application = BenderBox( directory = '$HOME/cmtuser/BenderDev_v30r1' ) 
-    j3.application.tool = ostap ( scripts = [ 'path_to_script/the_script.py' ]  )
+    j3.application.tool = OstapRun ( scripts = [ 'path_to_script/the_script.py' ]  )
 
     Note:
     1. The ``scripts'' are executed within ``ostap'' context
