@@ -24,7 +24,7 @@ from   Ganga.GPIDev.Base               import GangaObject
 
 # =============================================================================
 ## @class Bender_module
-#  Helper class to define the main proeprties of Bender applicatiom
+#  Helper class to define the main properties of Bender applicatiom
 #  - the name of Bender module to run
 #  - dictionary of parameters to be forwarder to <code>configure</code> method
 #  - number of event to process
@@ -36,7 +36,7 @@ from   Ganga.GPIDev.Base               import GangaObject
 #  @author Vladimir ROMANOVSKY Vladimir.Romanovskiy@cern.ch
 #  @author Vanya BELYAEV  Ivan.Belyaev@itep.ru       
 class BenderModule(GangaObject):
-    """Helper class to define the main proeprties of Bender applicatiom
+    """Helper class to define the main properties of Bender applicatiom
     - the name of Bender module to run
     - dictionary of parameters to be forwarder to <code>configure</code> method
     - number of event to process
@@ -112,7 +112,7 @@ USERMODULE.run({events})
 
 # =============================================================================
 ## @class bender
-#  Helper class to define the main proeprties of BenderScript application
+#  Helper class to define the main properties of BenderScript application
 #  - the scripts to be executed 
 #  - the configuration scripts (aka ``options'') to be imported 
 #  - bender commands to be executed
