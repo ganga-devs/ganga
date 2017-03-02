@@ -105,10 +105,8 @@ USERMODULE.run({events})
 
         from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript
         the_script += getXMLSummaryScript()
-
         
         return the_script
-
 
 # =============================================================================
 ## @class bender
