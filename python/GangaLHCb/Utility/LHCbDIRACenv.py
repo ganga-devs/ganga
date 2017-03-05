@@ -1,5 +1,6 @@
 import os
 from os.path import realpath, basename, join, exists, expanduser, getsize
+from fnmatch import fnmatch
 
 import Ganga.Utility.Config
 from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache
@@ -20,13 +21,14 @@ def select_dirac_version(wildcard):
         logger.error("Can't find any LHCbDirac versions")
         raise PluginError
 
-    versions = [s.split() for s in out.splitlines() if fnmatch(s.split()[2],wildcard)]
+    versions = [s.split() for s in out.splitlines() if fnmatch(s.split()[0],wildcard)]
     if len(versions)==0:
-        logger.error("Can't find LHCbDIRAC version matching %s. % wildcard")
+        logger.error("Can't find LHCbDIRAC version matching %s." % wildcard)
         raise PluginError
 
-    version = versions.sort(key = lambda v : v[0])[-1]
-    dereferenced_version=basename(realpath(version[2]))
+    versions.sort(key = lambda v : v[0])
+    version = versions[-1]
+    dereferenced_version=basename(realpath(version[2]))[10:]
     return dereferenced_version
 
     

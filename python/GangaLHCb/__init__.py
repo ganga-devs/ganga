@@ -17,7 +17,7 @@ from Ganga.Runtime.GPIexport import exportToGPI
 
 from Ganga.GPIDev.Credentials.CredentialStore import credential_store
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
-from GangaLHCb.Utility.LHCbDiracEnv import store_dirac_environment
+from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
 
 logger = getLogger()
 
@@ -51,7 +51,7 @@ if not _after_bootstrap:
     configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
                      'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
                       options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
-    defaultLHCbDirac = 'v8r6p*'
+    defaultLHCbDirac = 'prod'
     configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
 
 
