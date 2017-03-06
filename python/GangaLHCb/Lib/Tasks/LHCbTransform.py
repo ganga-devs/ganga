@@ -125,7 +125,7 @@ class LHCbTransform(ITransform):
                 # Create units for these files
                 step = self.files_per_unit
                 if step <= 0:
-                    step = int(1e100)
+                    step = len(new_data.files)
 
                 for num in range(0, len(new_data.files), step):
                     unit = LHCbUnit()
