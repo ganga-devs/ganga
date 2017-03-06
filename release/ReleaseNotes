@@ -20,5 +20,6 @@ ganga/python/GangaDirac
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 * Bugfix to the prepareGaudiExec function when using a directory that doesn't exist yet. #952
+* New application, BenderBox, for Bender with cmake. #969
 
 **************************************************************************************************************
