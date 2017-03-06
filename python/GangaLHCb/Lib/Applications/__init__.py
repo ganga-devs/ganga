@@ -14,6 +14,7 @@ from .Bender import Bender
 from .BenderScript import BenderScript
 from .Ostap import Ostap
 
+from .BenderBox import BenderModule, BenderRun, OstapRun
 from .GaudiExec import GaudiExec
 
 # Add any additional Packages required by the user in the .gangarc file
