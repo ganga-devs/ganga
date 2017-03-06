@@ -111,12 +111,13 @@ def getDiracCommandIncludes(force=False):
         force (bool): Triggers a reload from disk when True
     """
     global DIRAC_INCLUDE
-    if DIRAC_INCLUDE == '' or force:
-        for fname in getConfig('DIRAC')['DiracCommandFiles']:
-            if not os.path.exists(fname):
-                raise RuntimeError("Specified Dirac command file '%s' does not exist." % fname)
-            with open(fname, 'r') as inc_file:
-                DIRAC_INCLUDE += inc_file.read() + '\n'
+    with Dirac_Env_Lock:
+        if DIRAC_INCLUDE == '' or force:
+            for fname in getConfig('DIRAC')['DiracCommandFiles']:
+                if not os.path.exists(fname):
+                    raise RuntimeError("Specified Dirac command file '%s' does not exist." % fname)
+                with open(fname, 'r') as inc_file:
+                    DIRAC_INCLUDE += inc_file.read() + '\n'
 
     return DIRAC_INCLUDE
 

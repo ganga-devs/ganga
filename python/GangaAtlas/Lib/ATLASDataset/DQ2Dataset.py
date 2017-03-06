@@ -508,11 +508,11 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
 
     # container limit: 131, Dataset limit: 200
     if output_datasetname[-1:] == '/' and len(output_datasetname)>config['OUTPUTDATASET_NAMELENGTH']:
-        raise ApplicationConfigurationError(None,'DQ2OutputDataset.datasetname = %s is longer than limit of %s characters ! ' %(output_datasetname,config['OUTPUTDATASET_NAMELENGTH']))
+        raise ApplicationConfigurationError('DQ2OutputDataset.datasetname = %s is longer than limit of %s characters ! ' %(output_datasetname,config['OUTPUTDATASET_NAMELENGTH']))
 
 
     if output_datasetname[-1:] != '/' and len(output_datasetname)>200:
-        raise ApplicationConfigurationError(None,'DQ2OutputDataset.datasetname = %s is longer than limit of 200 characters ! ' %(output_datasetname))
+        raise ApplicationConfigurationError('DQ2OutputDataset.datasetname = %s is longer than limit of 200 characters ! ' %(output_datasetname))
 
     return output_datasetname, output_lfn 
 
@@ -659,7 +659,7 @@ class DQ2Dataset(Dataset):
                 except:
         
                     contents = []
-                    raise ApplicationConfigurationError(None,'DQ2Dataset.get_contents(): problem in call dq2.listFilesInDataset(%s, long=False)' %dataset )
+                    raise ApplicationConfigurationError('DQ2Dataset.get_contents(): problem in call dq2.listFilesInDataset(%s, long=False)' %dataset )
                     
             finally:
                 #dq2_lock.release()

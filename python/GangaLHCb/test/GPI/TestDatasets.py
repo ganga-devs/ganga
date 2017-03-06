@@ -60,8 +60,9 @@ class TestDatasets(GangaUnitTest):
 
         #test behaviour with files on the grid
 
-        LFN_DATA = ['LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000005_1.dimuon.dst',
-                    'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000006_1.dimuon.dst']
+        LFN_DATA = ['LFN:/lhcb/LHCb/Collision16/DIMUON.DST/00053485/0000/00053485_00000424_1.dimuon.dst',
+                    'LFN:/lhcb/LHCb/Collision16/DIMUON.DST/00053485/0000/00053485_00001501_1.dimuon.dst']
+
         ds = LHCbDataset(LFN_DATA)
 
         assert len(ds.getReplicas().keys()) == 2

@@ -2,7 +2,7 @@ import subprocess
 from datetime import datetime
 import time
 import uuid
-from os import path
+from os import makedirs, path
 from Ganga.Core.exceptions import GangaException
 from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.Utility.files import expandfilename
@@ -81,7 +81,7 @@ def getGaudiExecInputData(optsfiles, app):
     except Exception as err:
         msg = 'Unable to parse the job options. Please check options files and extraopts.'
         logger.error("PythonOptsCmakeParserError:\n%s" % str(err))
-        raise ApplicationConfigurationError(None, msg)
+        raise ApplicationConfigurationError(msg)
 
     return parser.get_input_data()
 
@@ -99,7 +99,6 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
     full_path = expandfilename(myPath, True)
     if not path.exists(full_path):
         makedirs(full_path)
-        chdir(full_path)
     if not path.exists(full_path + '/' + myApp + 'Dev_' +myVer):
         _exec_cmd('lb-dev %s %s' % (myApp, myVer), full_path)
     else:

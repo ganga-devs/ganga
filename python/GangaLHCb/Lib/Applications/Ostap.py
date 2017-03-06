@@ -75,7 +75,7 @@ from   os.path import split, join
 from   Ganga.GPIDev.Schema.Schema             import FileItem, SimpleItem
 from   Ganga.GPIDev.Lib.File                  import File
 from   Ganga.Utility.util                     import unique
-from   Ganga.Core                             import ApplicationConfigurationError
+from   Ganga.Core.exceptions                  import ApplicationConfigurationError
 from   Ganga.GPIDev.Lib.File.FileBuffer       import FileBuffer
 from   GangaGaudi.Lib.Applications.GaudiBase  import GaudiBase
 from   GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
@@ -304,7 +304,7 @@ class Ostap(GaudiBase):
         """Checks the validity of user's entries for Ostap schema"""
         
         if not self.scripts and not self.commands and not self.arguments : 
-            raise ApplicationConfigurationError(None, "Application scripts are not defined")
+            raise ApplicationConfigurationError("Application scripts are not defined")
         
         if isinstance ( self.scripts , str ) : self.scripts = [ File ( self.scripts ) ]        
         for f in self.scripts : f.name = fullpath ( f.name )

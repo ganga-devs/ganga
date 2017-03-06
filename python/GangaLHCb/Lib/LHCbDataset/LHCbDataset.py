@@ -3,7 +3,7 @@
 from copy import deepcopy
 import tempfile
 import fnmatch
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
 from Ganga.GPIDev.Base import GangaObject

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from Ganga.Core import GangaAttributeError
+from Ganga.Core.exceptions import GangaAttributeError
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 

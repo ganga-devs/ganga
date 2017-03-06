@@ -247,6 +247,7 @@ class DiracBase(IBackend):
         such that the monitoring server is used rather than the user server
         Args:
             rjobs (list): This is a list of jobs which are to be auto-resubmitted'''
+
         incomplete = 0
 
         def handleError(x):

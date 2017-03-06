@@ -143,10 +143,8 @@ class ShareDir(GangaObject):
                                      'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)')})
 
     _category = 'shareddirs'
-    _exportmethods = ['add', 'ls']
+    _exportmethods = ['add', 'ls', 'path']
     _name = "ShareDir"
-#    def _readonly(self):
-#        return True
 
     def __init__(self, name=None, subdir=os.curdir):
         super(ShareDir, self).__init__()
@@ -213,11 +211,15 @@ class ShareDir(GangaObject):
             else:
                 logger.error('File %s not found' % expandfilename(item.name))
 
+    def path(self):
+        """Get the full path of the ShareDir location"""
+        return os.path.join(getSharedPath(), self.name)
+                
     def ls(self):
         """
         Print the contents of the ShareDir
         """
-        full_shareddir_path = os.path.join(getSharedPath(), self.name)
+        full_shareddir_path = self.path()
         try:
             os.path.isdir(full_shareddir_path)
             cmd = "find '%s'" % (full_shareddir_path)
