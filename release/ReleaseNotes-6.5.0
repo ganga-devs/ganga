@@ -1,0 +1,25 @@
+**************************************************************************************************************
+6.5.0 (2017/03/06)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Exceptions improved - known exceptions will now not produce a long unhelpful trace. #943
+* Bugfix to job killing to keep master job status as running when a subjob is killed. #950
+* Change session locks to be opened as read/write #960
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Protect reading of file with Dirac commands from race conditions. #941
+* Bugfix in the WN script for the Executable application on Dirac - errors now raised properly. #947
+* Bugfix for getOutputDataAccessURLs. #956
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Bugfix to the prepareGaudiExec function when using a directory that doesn't exist yet. #952
+* New application, BenderBox, for Bender with cmake. #969
+
+**************************************************************************************************************
