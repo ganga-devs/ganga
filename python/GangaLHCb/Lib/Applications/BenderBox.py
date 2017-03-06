@@ -24,8 +24,7 @@ from   Ganga.Utility.logging                            import getLogger
 from   Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 from   GangaLHCb.Lib.Applications.GaudiExecUtils        import prepare_cmake_app
-from ..RTHandlers.GaudiExecRTHandlers                   import GaudiExecDiracRTHandler
-from ..RTHandlers.GaudiExecRTHandlers                   import GaudiExecDiracRTHandler, GaudiExecRTHandler
+from   GangaLHCb.Lib.RTHandlers.GaudiExecRTHandlers     import GaudiExecDiracRTHandler, GaudiExecRTHandler
 from   GangaLHCb.Lib.Applications.GaudiExec             import GaudiExec
 
 logger = getLogger() 
