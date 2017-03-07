@@ -110,6 +110,10 @@ class TestExternalGaudiExec(GangaUnitTest):
         from Ganga.GPI import jobs
 
         j = jobs[-1]
+        j = j.copy()
+        j.unpreprare()
+        j.prepare()
+        j.submit()
 
         run_until_completed(j)
 
