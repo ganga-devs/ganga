@@ -111,7 +111,7 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         j = jobs[-1]
         j = j.copy()
-        j.unpreprare()
+        j.unprepare()
         j.prepare()
         j.submit()
 
