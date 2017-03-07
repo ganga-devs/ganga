@@ -16,7 +16,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 import os, shutil, commands, re
 from Ganga.Utility.files import expandfilename
@@ -74,26 +74,26 @@ class runND280CtrlSmpl(IApplication):
         job = self.getJobObject()
 
         if self.cmtsetup == None:
-          raise ApplicationConfigurationError(None,'No cmt setup script given.')
+          raise ApplicationConfigurationError('No cmt setup script given.')
 
         for arg in args:
           if arg == '-c':
-            raise ApplicationConfigurationError(None,'Option "-c" given in args. You must use the configfile variable instead.')
+            raise ApplicationConfigurationError('Option "-c" given in args. You must use the configfile variable instead.')
 
         # setup the config file for this job
         if self.configfile == None:
-          raise ApplicationConfigurationError(None,'No config file given. Use args list or configfile field.')
+          raise ApplicationConfigurationError('No config file given. Use args list or configfile field.')
         # check if given config file exists
         if not os.path.exists(self.configfile):
-          raise ApplicationConfigurationError(None,'The given config file "'+self.configfile+'" was not found.')
+          raise ApplicationConfigurationError('The given config file "'+self.configfile+'" was not found.')
         if not os.path.isfile(self.configfile):
-          raise ApplicationConfigurationError(None,'The given config file "'+self.configfile+'" is not a file.')
+          raise ApplicationConfigurationError('The given config file "'+self.configfile+'" is not a file.')
 
         if job.inputdata == None:
-          raise ApplicationConfigurationError(None,'The inputdata of the job is not defined.')
+          raise ApplicationConfigurationError('The inputdata of the job is not defined.')
         infiles = job.inputdata.get_dataset_filenames()
         if len(infiles) < 1:
-          raise ApplicationConfigurationError(None,'The inputdata is empty.')
+          raise ApplicationConfigurationError('The inputdata is empty.')
 
         # Right here, take the input config file and change it as needed
         # If found inputfile, just put the first file in the inputdata

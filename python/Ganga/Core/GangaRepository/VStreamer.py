@@ -206,7 +206,11 @@ class VStreamer(object):
                 print(self.indent(), '</attribute>', file=self.out)
             else:
                 self.level += 1
-                self.print_value(value)
+                if isinstance(value, GangaObject):
+                    print("", file=self.out)
+                    self.acceptOptional(value)
+                else:
+                    self.print_value(value)
                 self.level -= 1
                 print(self.indent(), end=' ', file=self.out)
                 print('</attribute>', file=self.out)

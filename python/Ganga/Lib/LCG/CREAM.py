@@ -10,7 +10,7 @@ from collections import defaultdict
 from urlparse import urlparse
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.File import FileBuffer

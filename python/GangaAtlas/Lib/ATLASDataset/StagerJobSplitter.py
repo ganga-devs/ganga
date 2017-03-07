@@ -67,10 +67,10 @@ class StagerJobSplitter(ISplitter):
         logger.debug('StagerJobSplitter called')
 
         if job.inputdata._name != 'StagerDataset':
-            raise ApplicationConfigurationError(None,'StagerJobSplitter requires StagerDataset as input')
+            raise ApplicationConfigurationError('StagerJobSplitter requires StagerDataset as input')
 
         if job.application._name not in  ['Athena']:
-            raise ApplicationConfigurationError(None,'StagerJobSplitter requires Athena as application')
+            raise ApplicationConfigurationError('StagerJobSplitter requires Athena as application')
 
         if self.numfiles <= 0: 
             self.numfiles = 1

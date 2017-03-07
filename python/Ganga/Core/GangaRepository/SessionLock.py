@@ -30,7 +30,7 @@ from Ganga.Utility.Config.Config import getConfig, ConfigError
 from Ganga.GPIDev.Base.Proxy import getName
 
 from Ganga.Core.GangaThread import GangaThread
-from Ganga.Core.GangaRepository import RepositoryError
+from Ganga.Core.exceptions import RepositoryError
 
 logger = getLogger()
 
@@ -192,7 +192,7 @@ class SessionLockRefresher(GangaThread):
                     Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
                     On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" % (this_index_file, x))
                 else:
-                    from Ganga.Core import GangaException
+                    from Ganga.Core.exceptions import GangaException
                     raise GangaException("Error Opening global .session file for this session: %s" % this_index_file)
         return now
 
@@ -270,7 +270,7 @@ def dry_run_unix_locks(folder):
         pass
 
     # Open test lock file
-    with open(test_file) as f_lock:
+    with open(test_file, 'w') as f_lock:
         # If lock file is locked, wait until we can lock it and continue
         while True:
             try:
@@ -303,7 +303,7 @@ def global_disk_lock(f):
                 finally:
                     self.afs_lock_release()
             else:
-                with open(self.lockfn) as f_lock:
+                with open(self.lockfn, 'w') as f_lock:
                     while True:
                         try:
                             fcntl.flock(f_lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -533,7 +533,7 @@ class SessionLockManager(object):
             # This can fail (thats OK, file deleted in the meantime)
             fd = None
             try:
-                fd = os.open(fn, os.O_RDONLY)
+                fd = os.open(fn, os.O_RDWR)
                 os.lseek(fd, 0, 0)
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_SH)
@@ -565,7 +565,7 @@ class SessionLockManager(object):
             # possible)
             fd = None
             try:
-                fd = os.open(self.fn, os.O_WRONLY)
+                fd = os.open(self.fn, os.O_RDWR)
                 if not self.afs:
                     fcntl.lockf(fd, fcntl.LOCK_EX)
                 os.write(fd, pickle.dumps(self.locked))
@@ -605,7 +605,7 @@ class SessionLockManager(object):
             _output = None
             fd = None
             try:
-                fd = os.open(self.cntfn, os.O_RDONLY)
+                fd = os.open(self.cntfn, os.O_RDWR)
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_SH)
                 # 100 bytes should be enough for any ID. Can raise ValueErrorr
@@ -642,7 +642,7 @@ class SessionLockManager(object):
             # possible)
             fd = None
             try:
-                fd = os.open(self.cntfn, os.O_WRONLY)
+                fd = os.open(self.cntfn, os.O_RDWR)
                 if not self.afs:
                     fcntl.lockf(fd, fcntl.LOCK_EX)
                 os.write(fd, str(self.count) + "\n")
@@ -751,7 +751,7 @@ class SessionLockManager(object):
             try:
                 sf = os.path.join(self.sdir, session)
                 if not self.afs:
-                    fd = os.open(sf, os.O_RDONLY)
+                    fd = os.open(sf, os.O_RDWR)
                     fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
                 with open(sf) as sf_file:
                     names = pickle.load(sf_file)
@@ -784,7 +784,7 @@ class SessionLockManager(object):
             try:
                 sf = os.path.join(self.sdir, session)
                 if not self.afs:
-                    fd = os.open(sf, os.O_RDONLY)
+                    fd = os.open(sf, os.O_RDWR)
                     fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
                 with open(sf) as sf_file:
                     names = pickle.load(sf_file)

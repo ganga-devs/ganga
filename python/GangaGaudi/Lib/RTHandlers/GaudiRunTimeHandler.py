@@ -7,7 +7,7 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 import Ganga.Utility.Config
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Lib.File import FileBuffer, File
-from Ganga.Core import TypeMismatchError
+from Ganga.Core.exceptions import TypeMismatchError
 from Ganga.Utility.util import unique
 import shutil
 from RunTimeHandlerUtils import sharedir_handler

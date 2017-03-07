@@ -11,7 +11,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Adapters.IMerger import IMerger
 from Ganga.Utility.Plugin import allPlugins
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 
 xml_schema = {}

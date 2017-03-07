@@ -14,6 +14,7 @@ from Ganga.GPIDev.Adapters.ICredentialInfo import cache, retry_command
 from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
 from Ganga.Core.exceptions import CredentialRenewalError
 from Ganga.GPIDev.Credentials.VomsProxy import VomsProxyInfo
+from Ganga.Utility.Shell import Shell
 
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
 
@@ -32,7 +33,7 @@ class DiracProxyInfo(VomsProxyInfo):
             check_file (bool): Raise an exception if the file does not exist
             create (bool): Create the credential file
         """
-        self._shell = None
+        self._shell = Shell()
 
         super(DiracProxyInfo, self).__init__(requirements, check_file, create)
 
@@ -64,7 +65,7 @@ class DiracProxyInfo(VomsProxyInfo):
         Construct and store a shell which has the appropriate DIRAC env saved in it
         """
         if self._shell is None:
-            self._shell = super(DiracProxyInfo, self).shell
+            self._shell = Shell()
             self._shell.env.update(getDiracEnv())
         return self._shell
 
@@ -115,6 +116,14 @@ class DiracProxyInfo(VomsProxyInfo):
         Returns the group associated with the dirac proxy
         """
         return self.field('DIRAC group')
+
+    @property
+    @cache
+    def username(self):
+        """
+        Returns the username associated with the dirac proxy
+        """
+        return self.field('username')
 
     @property
     def encodeDefaultProxyFileName(self):
