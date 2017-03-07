@@ -379,7 +379,8 @@ class OstapRun(GaudiExec):
             arguments = self.arguments ,
             command   = self.commands  
             )
-    
+
+
 # =============================================================================
 ## prepare Bender application
 #  - specify the path:
