@@ -87,7 +87,7 @@ def getGaudiExecInputData(optsfiles, app):
 
 exportToGPI('getGaudiExecInputData', getGaudiExecInputData, 'Functions')
 
-def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
+def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder=None):
     """
         Short helper function for setting up minimal application environments on disk for job submission
         Args:
@@ -100,19 +100,32 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
     if not path.exists(full_path):
         makedirs(full_path)
     if not path.exists(full_path + '/' + myApp + 'Dev_' +myVer):
-        _exec_cmd('lb-dev %s %s' % (myApp, myVer), full_path)
+        devStat, devOut, devErr = _exec_cmd('lb-dev %s %s' % (myApp, myVer), full_path)
+        logger.info("Running lb-dev %s %s" % (myApp, myVer))
+        if devStat != 0:
+            logger.error("lb-dev %s %s failed!" % (myApp, myVer))
+            raise GangaException(devErr)
     else:
         raise GangaException("Path %s already exists. Not checking out application. Try a different location." % str(full_path + '/' + myApp + 'Dev_' +myVer))
     dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
     logger.info("Set up App Env at: %s" % dev_dir)
-    if myGetpack:
-        _exec_cmd('getpack %s' % myGetpack, dev_dir)
-        logger.info("Ran Getpack: %s" % myGetpack)
+    if myUse:
+        lbUse, lbUseOut, lbUseErr = _exec_cmd('git lb-use %s' % myUse, dev_dir)
+        logger.info("Running git lb-use %s" % myUse)
+        if lbUse != 0:
+            logger.error("git lb-use %s failed!" % myUse)
+            raise GangaException(lbUseErr)
+        if myFolder:
+            chk, chkOut, chkErr = _exec_cmd('git lb-checkout %s/master %s' % (myUse, myFolder), dev_dir)
+            logger.info("Running git lb-checkout %s/master %s" % (myUse, myFolder))
+            if chk != 0:
+                logger.error("git lb-checkout %s/master %s failed!" % (myUse, myFolder))
+                raise GangaException(chkErr)
     return dev_dir
 
 exportToGPI('prepare_cmake_app', prepare_cmake_app, 'Functions')
 
-def prepareGaudiExec(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
+def prepareGaudiExec(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder=None):
     """
         Setup and Return a GaudiExec based upon a release version of a given App.
         Args:
@@ -121,7 +134,7 @@ def prepareGaudiExec(myApp, myVer, myPath='$HOME/cmtuser', myGetpack=None):
             myPath (str): This is where lb-dev will be run
             myGepPack (str): This is a getpack which will be run once the lb-dev has executed
     """
-    path = prepare_cmake_app(myApp, myVer, myPath, myGetpack)
+    path = prepare_cmake_app(myApp, myVer, myPath, myUse, myFolder)
     from Ganga.GPI import GaudiExec
     return GaudiExec(directory=path)
 
