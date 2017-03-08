@@ -94,7 +94,8 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
             myApp (str): This is the name of the app to pass to lb-dev
             myVer (str): This is the version of 'myApp' to pass to lb-dev
             myPath (str): This is where lb-dev will be run
-            myGepPack (str): This is a getpack which will be run once the lb-dev has executed
+            myUse (str): This is a git lb-use which will be run once the lb-dev has executed
+            myFolder (str): This is a git lb-checkout after the lb-use. Assumes the master branch of the use project.
     """
     full_path = expandfilename(myPath, True)
     if not path.exists(full_path):
@@ -132,7 +133,8 @@ def prepareGaudiExec(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder=
             myApp (str): This is name of the App you want to run
             myVer (str): This is the version of the app you want
             myPath (str): This is where lb-dev will be run
-            myGepPack (str): This is a getpack which will be run once the lb-dev has executed
+            myUse (str): This is a git lb-use which will be run once the lb-dev has executed
+            myFolder (str): This is a git lb-checkout for after the lb-use. Assumes the master branch of the project
     """
     path = prepare_cmake_app(myApp, myVer, myPath, myUse, myFolder)
     from Ganga.GPI import GaudiExec
