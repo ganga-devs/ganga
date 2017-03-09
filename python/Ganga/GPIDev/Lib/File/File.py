@@ -173,7 +173,9 @@ class ShareDir(GangaObject):
         """
         if name == "name":
             self._real_name = value
-        super(ShareDir, self).setSchemaAttribute(name, value)
+        else:
+            # 'name' hidden behind setter here so shouldn't attempt to modify it
+            super(ShareDir, self).setSchemaAttribute(name, value)
 
     def __setattr__(self, name, value):
         """
@@ -184,7 +186,9 @@ class ShareDir(GangaObject):
         """
         if name == 'name':
             self._real_name = value
-        super(ShareDir, self).__setattr__(name, value)
+        else:
+            # 'name' hidden behind setter here so shouldn't attempt to modify it
+            super(ShareDir, self).__setattr__(name, value)
 
     def __getattr__(self, name):
         """
