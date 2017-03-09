@@ -115,10 +115,12 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
 
-        myHelloOpts = path.join(TestExternalGaudiExec.tmpdir_release, 'testfile.py')
+        myOpts = path.join(TestExternalGaudiExec.tmpdir_release, 'testfile.py')
 
-        FileBuffer('testfile.py', 'print("ThisIsATest")').create(myHelloOpts)
+        FileBuffer('testfile.py', 'print("ThisIsATest")').create(myOpts)
 
+        j.application.options=[LocalFile(myOpts)]
+        
         j.submit()
 
         run_until_completed(j)
