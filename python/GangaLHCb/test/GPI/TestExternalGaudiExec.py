@@ -107,6 +107,7 @@ class TestExternalGaudiExec(GangaUnitTest):
         """
 
         from Ganga.GPI import jobs
+        from Ganga.GPI import Job, LocalFile, prepareGaudiExec
 
         import os
         if os.path.exists(TestExternalGaudiExec.tmpdir_release):
