@@ -36,52 +36,6 @@ class PrepRegistry(Registry):
     def getProxy(self):
         pass
 
-    def shutdown(self):
-        """Flush and disconnect the repository. Called from Repository_runtime.py """
-        self._hasStarted = True
-        from Ganga.Utility.logging import getLogger
-        self.shouldRun = True
-        ## Aparently this shuts down the metadata repo before we want to shut it down...
-        #super(PrepRegistry, self).shutdown()
-        logger = getLogger()
-        #logger.info("Geting id: %s" %  self.metadata.ids()[-1])
-        self.shareref = self.metadata._objects[self.metadata.ids()[-1]]
-        #logger.info("ShareRef: %s" % getName(self.shareref))
-        with self._flush_lock:
-            with self._read_lock:
-                ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
-                ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
-                try:
-                    stripProxy(self.shareref).closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
-                except Exception as err:
-                    logger.error("Shutdown Error in ShareRef")
-                    logger.error("Err: %s" % err)
-
-                try:
-                    self._safe_shutdown()
-                except Exception as err:
-                    logger.debug("Shutdown Error: %s" % err)
-
-                self._hasStarted = False
-
-        self.metadata = None
-
-    def _safe_shutdown(self):
-        try:
-            if not self.metadata is None:
-                self.metadata.shutdown()
-        except Exception as x:
-            logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
-        try:
-            self.flush_all()
-        except Exception as x:
-            logger.error("Exception on flushing '%s' registry: %s", self.name, x)
-        #self._hasStarted = False
-        for obj in self._objects.values():
-            # locks are not guaranteed to survive repository shutdown
-            obj._registry_locked = False
-        self.repository.shutdown()
-
 class ShareRef(GangaObject):
 
     """The shareref table (shared directory reference counter table) provides a mechanism
@@ -141,7 +95,7 @@ class ShareRef(GangaObject):
         elif not os.path.isdir(shareddir) and force is True and basedir is not '':
             if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
-                self.__getName()[basedir] = 0
+                self.__getName()[basedir] = 1
             else:
                 self.__getName()[basedir] += 1
         else:
@@ -169,6 +123,10 @@ class ShareRef(GangaObject):
                     self.__getName()[basedir] = 0
                 else:
                     self.__getName()[basedir] -= 1
+
+                if self.__getName()[basedir] is 0:
+                    shutil.rmtree(shareddir, ignore_errors=True)
+                    logger.info("Removed: %s" % shareddir)
         # if we try to decrease a shareref that doesn't exist, we just set the
         # corresponding shareref to 0
         except KeyError as err:
