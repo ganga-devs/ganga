@@ -19,7 +19,7 @@ Actually there are three applications under the single hat
 import os
 import tempfile 
 from   Ganga.GPIDev.Lib.File.File                       import ShareDir  
-from   Ganga.GPIDev.Schema                              import Schema    , Version , SimpleItem , GangaFileItem
+from   Ganga.GPIDev.Schema                              import Schema , Version , SimpleItem , GangaFileItem
 from   Ganga.Utility.logging                            import getLogger
 from   Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
@@ -33,6 +33,7 @@ logger = getLogger()
 _script_ = """#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # =============================================================================
+from Gaudi.Configuration import importOptions
 importOptions('{datafile}')
 from Gaudi.Configuration import EventSelector,FileCatalog
 from copy import deepcopy
@@ -67,7 +68,7 @@ sys.argv   += {scripts}
 sys.argv   += [ '--no-color' ] ## automatically added argument 
 sys.argv   += {arguments}
 sys.argv   += [ '--import'   ] + {imports}
-sys.argv   += [ '--no-castor'] ## automaticlaly added argument 
+sys.argv   += [ '--no-castor'] ## automatically added argument 
 sys.argv   += [ '--import={datafile}' ] 
 sys.argv   += [ '--batch'    ] ##  automatically added argument 
 sys.argv   += [ '--command'  ] + {command} 
@@ -108,7 +109,6 @@ runpy.run_path ( ostap_script, init_globals = globals() , run_name = '__main__' 
 # =============================================================================
 """
 # =============================================================================
-
 
 # =============================================================================
 ## @class BenderModule
@@ -154,8 +154,9 @@ class BenderModule(GaudiExec):
     _schema.version.minor += 0
     ## make entries 
     for key,val in _schema.datadict.iteritems() :
+        if key == 'useGaudiRun'  : val._update( { 'defvalue' : False } )  
         if not key in ( 'platform' , 'directory' ) : 
-            if not val['hidden'] : val._update( {'hidden' : 1 } )
+            if not val['hidden'] : val._update( { 'hidden'   : 1 } )
     ## add new entries 
     _schema.datadict [ 'module' ] = GangaFileItem (
         optional  = 0 ,
@@ -179,8 +180,8 @@ class BenderModule(GaudiExec):
         """Return the wrapper script which is used to run Bender on the WN
         """
         f = self.module 
-        full_name       = os.path.join  ( f.localDir , f.namePattern  )
-        module_name     = os.path.split ( full_name )[-1].split('.')[0]
+        file_name       = os.path.basename ( os.path.join  ( f.localDir , f.namePattern  ) ) 
+        module_name     = file_name.split('.')[0]
         param_string    = ',params=%s' % self.params if self.params else ''
         data_file       = GaudiExecDiracRTHandler.data_file
         
@@ -243,8 +244,9 @@ class BenderRun(GaudiExec):
     _schema.version.minor += 0
     ## make entries 
     for key,val in _schema.datadict.iteritems() :
+        if key == 'useGaudiRun'  : val._update( { 'defvalue' : False } )  
         if not key in ( 'platform' , 'directory' ) : 
-            if not val['hidden'] : val._update( {'hidden' : 1 } )
+            if not val['hidden'] : val._update( { 'hidden'   : 1 } )
     ## add new entries 
     _schema.datadict [ 'scripts'   ] = GangaFileItem   (
         optional        = 0       ,
@@ -283,10 +285,10 @@ class BenderRun(GaudiExec):
         """Return the wrapper script which is used to run BenderScript on the WN
         """        
         data_file       = GaudiExecDiracRTHandler.data_file        
-        return  _script_bender_.format (
-            scripts   = [ os.path.join ( f.localDir , f.namePattern  ) for f in self.scripts ] , 
+        return _script_bender_.format (
+            scripts   = [ os.path.basename ( os.path.join ( f.localDir , f.namePattern  ) ) for f in self.scripts ] , 
             arguments = self.arguments ,
-            imports   = [ os.path.join ( f.localDir , f.namePattern  ) for f in self.imports ] , 
+            imports   = [ os.path.basename ( os.path.join ( f.localDir , f.namePattern  ) ) for f in self.imports ] , 
             datafile  = data_file ,
             command   = self.commands    
             )
@@ -336,8 +338,9 @@ class OstapRun(GaudiExec):
     _schema.version.minor += 0
     ## make entries 
     for key,val in _schema.datadict.iteritems() :
+        if key == 'useGaudiRun'  : val._update( { 'defvalue' : False } )  
         if not key in ( 'platform' , 'directory' ) : 
-            if not val['hidden'] : val._update( {'hidden' : 1 } )
+            if not val['hidden'] : val._update( { 'hidden'   : 1 } )
     ## add new entries 
     _schema.datadict [ 'scripts'   ] = GangaFileItem   (
         optional        = 0       , 
@@ -372,11 +375,12 @@ class OstapRun(GaudiExec):
         """        
         data_file       = GaudiExecDiracRTHandler.data_file        
         return _script_ostap_.format (
-            scripts   = [ os.path.join ( f.localDir , f.namePattern  ) for f in self.scripts ] , 
+            scripts   = [ os.path.basename ( os.path.join ( f.localDir , f.namePattern  ) ) for f in self.scripts ] , 
             arguments = self.arguments ,
             command   = self.commands  
             )
-    
+
+
 # =============================================================================
 ## prepare Bender application
 #  - specify the path:
