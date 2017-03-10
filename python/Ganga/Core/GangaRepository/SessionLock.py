@@ -755,7 +755,7 @@ class SessionLockManager(object):
                 continue
             fd = None
             try:
-                sf = self._path_helper()
+                sf = self._path_helper(session)
                 if not self.afs:
                     fd = os.open(sf, os.O_RDWR)
                     fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
@@ -788,7 +788,7 @@ class SessionLockManager(object):
         for session in sessions:
             fd = None
             try:
-                sf = self._path_helper()
+                sf = self._path_helper(session)
                 if not self.afs:
                     fd = os.open(sf, os.O_RDWR)
                     fcntl.lockf(fd, fcntl.LOCK_SH)  # ONLY NFS
@@ -836,7 +836,7 @@ class SessionLockManager(object):
 
         for session in sessions:
             try:
-                sf = self._path_helper()
+                sf = self._path_helper(session)
                 global session_expiration_timeout
                 if((time.time() - os.stat(sf).st_ctime) > session_expiration_timeout):
                     if(sf.endswith(".session")):
