@@ -130,7 +130,7 @@ RecoToDST-07/90000000/DST" ,
         metadata = {}
         if 'LFNs' in value:
             files = value['LFNs']
-        if not isinstance(files) is list:  # i.e. a dict of LFN:Metadata
+        if not isinstance(files, list):  # i.e. a dict of LFN:Metadata
             # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
             metadata = files.copy()
 
@@ -170,7 +170,7 @@ RecoToDST-07/90000000/DST" ,
         value = result
         if 'LFNs' in value:
             files = value['LFNs']
-        if not isinstance(files) is list:  # i.e. a dict of LFN:Metadata
+        if not isinstance(files, list):  # i.e. a dict of LFN:Metadata
             # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
             files = files.keys()
 
@@ -262,7 +262,7 @@ class BKQueryDict(GangaObject):
         if 'LFNs' in value:
             files = value['LFNs']
         metadata = {}
-        if not isinstance(files) is list:
+        if not isinstance(files, list):
             if 'LFNs' in files:  # i.e. a dict of LFN:Metadata
                 metadata = files['LFNs'].copy()
 
@@ -281,7 +281,7 @@ class BKQueryDict(GangaObject):
         files = []
         if 'LFNs' in value:
             files = value['LFNs']
-        if not isinstance(files) is list:
+        if not isinstance(files, list):
             if 'LFNs' in files:  # i.e. a dict of LFN:Metadata
                 files = files['LFNs'].keys()
 
