@@ -93,7 +93,7 @@ class TestBookkeeping(GangaUnitTest):
             path="/LHCb/Collision16/Beam6500GeV-VeloClosed-MagDown/Real Data/91000000/RAW",
             type="Path"
         )
-        self.assertRaises(GangaDiracError, bkq.getDataset())
+        self.assertRaises(GangaDiracError, bkq.getDataset)
 
     def test_fail_on_invalid_flag(self):
         """Make sure that an invalid query results in the correct error"""
@@ -105,5 +105,4 @@ class TestBookkeeping(GangaUnitTest):
             path="/LHCb/no/where",
             type="Path"
         )
-        self.assertRaises(GangaDiracError, bkq.getDataset())
-        
+        self.assertRaises(GangaDiracError, bkq.getDataset)
