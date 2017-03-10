@@ -8,61 +8,64 @@ except ImportError:
 
 import os, os.path
 
-import GangaLHCb.Utility.LHCbDiracEnv
-from Ganga.Core.exceptions import PluginError
-
 from Ganga.Utility.logging import getLogger
 from Ganga.testlib.mark import external
+from Ganga.testlib.GangaUnitTest import GangaUnitTest
+
+from Ganga.Core.exceptions import PluginError
 
 logger = getLogger(modulename=True)
 
 
 @external
-class TestLHCbDiracVersion(unittest.TestCase):
+class TestLHCbDiracVersion(GangaUnitTest):
     """Test how the LHCbDIRAC versino is set"""
-
-    def __init__(self, *args, **kwargs):
-        super(TestLHCbDiracVersion, self).__init__(*args, **kwargs)
-
-    def setUp(self):
-        super(TestLHCbDiracVersion, self).setUp()
 
     def test_missing_env(self):
         """Check that missing CMTCONFIG is caught correctly"""
+	from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
         keep = None
         if os.environ.has_key('CMTCONFIG'):
             keep = os.environ.pop('CMTCONFIG')
-        self.assertRaises(PluginError,
-                          GangaLHCb.Utility.LHCbDiracEnv.store_dirac_environment)
+        self.assertRaises(PluginError, store_dirac_environment)
         if keep:
             os.environ['CMTCONFIG'] = keep
 
     def test_wildcard(self):
         """See if version can be specified as a wildcard"""
-        version = GangaLHCb.Utility.LHCbDiracEnv.store_dirac_environment('v*')
+	from GangaLHCb.Utility.LHCbDIRACenv import select_dirac_version
+        version = select_dirac_version('v*')
         assert version[0] == 'v'
         assert len(version) > 1
 
     def test_dereference(self):
         """Test that soft-links are dereferenced"""
-        version = GangaLHCb.Utility.LHCbDiracEnv.store_dirac_environment('prod')
+
+	from GangaLHCb.Utility.LHCbDIRACenv import select_dirac_version
+
+        version = select_dirac_version('prod')
         assert version[0] == 'v'
         assert len(version) > 1
 
     def test_store(self):
         """Make sure that file with environment is stored GANGADIRACENVIRONMENT env variable"""
+	from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
+
         keep = os.environ.pop('GANGADIRACENVIRONMENT')
-        GangaLHCb.Utility.LHCbDiracEnv.store_dirac_environment()
+        store_dirac_environment()
         assert os.environ.has_key('GANGADIRACENVIRONMENT')
         os.environ['GANGADIRACENVIRONMENT'] = keep
 
     def test_write_cache(self):
         """Test that cache file is written"""
+
+	from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
+
         fnamekeep = None
         if os.environ.has_key('GANGADIRACENVIRONMENT'):
             fnamekeep = os.environ['GANGADIRACENVIRONMENT']
             os.rename(fnamekeep, fnamekeep+'.keep')
-        GangaLHCb.Utility.LHCbDiracEnv.store_dirac_environment()
+        store_dirac_environment()
         fname = os.environ['GANGADIRACENVIRONMENT']
         assert os.path.exists(fname)
         assert os.path.getsize(fname)
