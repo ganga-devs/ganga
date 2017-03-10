@@ -879,7 +879,7 @@ under certain conditions; type license() for details.
 
         from Ganga.Runtime import Workspace_runtime, Repository_runtime
         from Ganga.GPIDev.Credentials import credential_store
-        if Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken():
+        if (Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken()) and not config['NoAfsToken']:
             # If the registry or the workspace needs an AFS token then add one to the credential store.
             # Note that this happens before the monitoring starts so that it gets tracked properly
 
