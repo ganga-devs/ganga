@@ -38,7 +38,7 @@ from .util import GenericWrapper
 
 
 class SynchronisedObject(GenericWrapper):
-    __slots__=tuple()
+    __slots__ = list()
     def __init__(self, obj, ignore=None, lock=None):
         if ignore is None:
             ignore = ()
