@@ -392,6 +392,8 @@ class Descriptor(object):
         else:
             if not isinstance(v, Node) and isinstance(v, (list, tuple)):
                 try:
+                    # must import here as will fail at the top
+                    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
                     new_v = GangaList()
                 except ImportError:
                     new_v = []
