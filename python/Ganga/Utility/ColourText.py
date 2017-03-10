@@ -95,7 +95,7 @@ class NoMarkup(object):
     """ Leave text unchanged.
     """
 
-    __slots__ = tuple()
+    __slots__ = list()
 
     def __init__(self, default_code=None):
         pass
