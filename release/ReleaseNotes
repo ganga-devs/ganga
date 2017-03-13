@@ -15,4 +15,5 @@ ganga/python/GangaLHCb
 script. #974
 * Bugfixes to the BenderBox applications. #975
 * Bugfix to allow DiracFile to be used locally with a splitter. #948
+* Bugfix in the submission check for LHCbTransform. #953
 **************************************************************************************************************
