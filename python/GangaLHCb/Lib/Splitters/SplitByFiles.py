@@ -196,6 +196,14 @@ class SplitByFiles(GaudiInputDataSplitter):
 
             logger.debug("outdata: %s " % str(outdata))
             return outdata
+        #If we are not running the jobs on Dirac but are using DiracFiles we want some of the same checks
+        elif all(isinstance(this_file, DiracFile) for this_file in indata):
+            from GangaDirac.Lib.Splitters.OfflineGangaDiracSplitter import OfflineGangaDiracSplitter
+            outdata = OfflineGangaDiracSplitter(indata,
+                                              self.filesPerJob,
+                                              self.maxFiles,
+                                              self.ignoremissing)
+            return outdata
         else:
             logger.debug("Calling Parent Splitter as not on Dirac")
             return super(SplitByFiles, self)._splitter(job, indata)
