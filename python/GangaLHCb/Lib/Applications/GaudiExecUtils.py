@@ -8,6 +8,7 @@ from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.Utility.files import expandfilename
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationPrepareError
 from .PythonOptsCmakeParser import PythonOptsCmakeParser
 
 logger = getLogger()
@@ -101,11 +102,11 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
     if not path.exists(full_path):
         makedirs(full_path)
     if not path.exists(full_path + '/' + myApp + 'Dev_' +myVer):
-        devStat, devOut, devErr = _exec_cmd('lb-dev %s %s' % (myApp, myVer), full_path)
+        devStat, devOut, devErr = _exec_cmd('lb-dev %s/%s' % (myApp, myVer), full_path)
         logger.info("Running lb-dev %s %s" % (myApp, myVer))
         if devStat != 0:
             logger.error("lb-dev %s %s failed!" % (myApp, myVer))
-            raise GangaException(devErr)
+            raise ApplicationPrepareError(devErr)
     else:
         raise GangaException("Path %s already exists. Not checking out application. Try a different location." % str(full_path + '/' + myApp + 'Dev_' +myVer))
     dev_dir = path.join(full_path, myApp + 'Dev_' + myVer)
@@ -115,13 +116,13 @@ def prepare_cmake_app(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder
         logger.info("Running git lb-use %s" % myUse)
         if lbUse != 0:
             logger.error("git lb-use %s failed!" % myUse)
-            raise GangaException(lbUseErr)
+            raise ApplicationPrepareError(lbUseErr)
         if myFolder:
             chk, chkOut, chkErr = _exec_cmd('git lb-checkout %s/master %s' % (myUse, myFolder), dev_dir)
             logger.info("Running git lb-checkout %s/master %s" % (myUse, myFolder))
             if chk != 0:
                 logger.error("git lb-checkout %s/master %s failed!" % (myUse, myFolder))
-                raise GangaException(chkErr)
+                raise ApplicationPrepareError(chkErr)
     return dev_dir
 
 exportToGPI('prepare_cmake_app', prepare_cmake_app, 'Functions')
