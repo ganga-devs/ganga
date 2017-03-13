@@ -14,5 +14,5 @@ ganga/python/GangaLHCb
 * Bugfix for running old DaVinci applications locally - update to default options path in the RT handler
 script. #974
 * Bugfixes to the BenderBox applications. #975
-
+* Bugfix to allow DiracFile to be used locally with a splitter. #948
 **************************************************************************************************************
