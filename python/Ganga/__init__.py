@@ -134,6 +134,8 @@ conf_config.addOption('deleteUnusedShareDir', 'always',
 
 conf_config.addOption('autoGenerateJobWorkspace', False, 'Autogenerate workspace dirs for new jobs')
 
+conf_config.addOption('NoAfsToken', False, 'Do not require an AFS token when running on an AFS filesystem. Not recommended!')
+
 # add named template options
 conf_config.addOption('namedTemplates_ext', 'tpl',
                  'The default file extension for the named template system. If a package sets up their own by calling "establishNamedTemplates" from python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override this without needing the config option')
