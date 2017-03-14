@@ -25,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.5.0 $'
+_gangaVersion = '$Name: 6.5.1 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -133,6 +133,8 @@ conf_config.addOption('deleteUnusedShareDir', 'always',
                  'If set to ask the user is presented with a prompt asking whether Shared directories not associated with a persisted Ganga object should be deleted upon Ganga exit. If set to never, shared directories will not be deleted upon exit, even if they are not associated with a persisted Ganga object. If set to always (the default), then shared directories will always be deleted if not associated with a persisted Ganga object.')
 
 conf_config.addOption('autoGenerateJobWorkspace', False, 'Autogenerate workspace dirs for new jobs')
+
+conf_config.addOption('NoAfsToken', False, 'Do not require an AFS token when running on an AFS filesystem. Not recommended!')
 
 # add named template options
 conf_config.addOption('namedTemplates_ext', 'tpl',

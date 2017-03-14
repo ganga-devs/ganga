@@ -117,38 +117,26 @@ class LHCbTransform(ITransform):
                     assigned_data.files += unit.inputdata.files
 
                 # any new files
-                new_data = LHCbDataset( files = self.inputdata[id].difference(assigned_data).files )
+                new_data = LHCbDataset(files=self.inputdata[id].difference(assigned_data).files)
 
                 if len(new_data.files) == 0:
                     continue
 
-                # create units for these files
-                if self.files_per_unit > 0:
+                # Create units for these files
+                step = self.files_per_unit
+                if step <= 0:
+                    step = len(new_data.files)
 
-                    # loop over the file array and create units for each set
-                    num = 0
-                    while num < len(new_data.files):
-                        unit = LHCbUnit()
-                        unit.name = "Unit %d" % len(self.units)
-                        unit.input_datset_index = id
-                        self.addUnitToTRF(unit)
-                        unit.inputdata = copy.deepcopy(self.inputdata[id])
-                        unit.inputdata.files = []
-                        unit.inputdata.files += new_data.files[
-                            num:num + self.files_per_unit]
-                        num += self.files_per_unit
-
-                else:
-                    # new unit required for this dataset
+                for num in range(0, len(new_data.files), step):
                     unit = LHCbUnit()
                     unit.name = "Unit %d" % len(self.units)
+                    unit.input_datset_index = id
                     self.addUnitToTRF(unit)
                     unit.inputdata = copy.deepcopy(self.inputdata[id])
                     unit.inputdata.files = []
-                    unit.inputdata.files += new_data.files
+                    unit.inputdata.files += new_data.files[num:num+step]
 
         elif self.mc_num_units > 0:
-
             if len(self.units) == 0:
                 # check for appropriate splitter
                 from GangaLHCb.Lib.Splitters.GaussSplitter import GaussSplitter
