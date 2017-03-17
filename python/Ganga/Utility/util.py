@@ -25,7 +25,7 @@ def empty_obj(klass):
 
 def empty_class(klass):
     class _Empty(klass):
-        __slots__ = tuple()
+        __slots__ = list()
         def __init__(self): pass
     return _Empty
 

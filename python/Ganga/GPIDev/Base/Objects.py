@@ -45,7 +45,7 @@ def _getName(obj):
 
 logger = getLogger()
 
-do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data_dict', '_read_lock', '_write_lock', '_proxyObject']
+do_not_copy = ['_index_cache_dict', '_parent', '_registry', '_data_dict', '_lock', '_proxyObject']
 
 def synchronised(f):
     """
@@ -72,15 +72,12 @@ class Node(object):
     thread-safe usage.
     """
     __metaclass__ = abc.ABCMeta
-    __slots__ = ('_parent', '_read_lock', '_write_lock', '_dirty')
+    __slots__ = ('_parent', '_lock', '_dirty')
 
     def __init__(self, parent=None):
         super(Node, self).__init__()
         self._parent = parent
-        #self._read_lock = threading.Lock()  # Don't read out of thread whilst we're making a change
-        self._write_lock = threading.RLock()  # Don't write from out of thread when modifying an object
-        self._read_lock = self._write_lock
-        self._lock_id = None
+        self._lock = threading.RLock()  # Don't write from out of thread when modifying an object
         self._dirty = False  # dirty flag is true if the object has been modified locally and its contents is out-of-sync with its repository
 
     def __deepcopy__(self, memo=None):
@@ -130,7 +127,7 @@ class Node(object):
         but changing them is not. Only one thread can hold this lock at once.
         """
         root = self._getRoot()
-        with root._write_lock:
+        with root._lock:
             yield
 
     def _getRoot(self, cond=None):
@@ -237,7 +234,7 @@ def synchronised_get_descriptor(get_function):
         if obj is None:
             return get_function(self, obj, type_or_value)
 
-        with obj._getRoot()._write_lock:
+        with obj._getRoot()._lock:
             return get_function(self, obj, type_or_value)
 
     return get_decorator
@@ -254,8 +251,7 @@ def synchronised_set_descriptor(set_function):
         if obj is None:
             return set_function(self, obj, type_or_value, root_obj)
 
-        with root_obj._write_lock:
-            #with root_obj._read_lock:
+        with root_obj._lock:
             return set_function(self, obj, type_or_value)
 
     return set_decorator
@@ -392,6 +388,8 @@ class Descriptor(object):
         else:
             if not isinstance(v, Node) and isinstance(v, (list, tuple)):
                 try:
+                    # must import here as will fail at the top
+                    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
                     new_v = GangaList()
                 except ImportError:
                     new_v = []

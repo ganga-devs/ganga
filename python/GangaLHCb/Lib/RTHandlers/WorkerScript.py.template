@@ -15,15 +15,13 @@ if not os.path.exists(opts):
     opts = 'notavailable'
     os.environ['JOBOPTPATH'] = opts
 else:
-    os.environ['JOBOPTPATH'] = os.path.join(os.environ[app + '_release_area'],
+    os.environ['JOBOPTPATH'] = os.path.join(os.environ['LHCBRELEASES'],
             app_upper,
-            app_upper,
-            version,
+            app_upper+'_'+version,
             package,
             app,
-            version,
             'options',
-            'job.opts')
+            app+'-Default.py')
     sys.stdout.write('Using the master optionsfile: %s' % opts)
     sys.stdout.flush()
 
