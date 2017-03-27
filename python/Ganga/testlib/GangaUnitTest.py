@@ -3,6 +3,7 @@ from __future__ import print_function
 import sys
 import shutil
 import os.path
+import pytest
 try:
     import unittest2 as unittest
 except ImportError:
@@ -192,7 +193,18 @@ def emptyRepositories():
         tasks.clean(confirm=True, force=True)
 
 
-def stop_ganga():
+def getCleanUp():
+    """ Return whether the repo is cleaned up on shutdown of each test """
+    # Do we want to empty the repository on shutdown?
+    from Ganga.Utility.Config import getConfig
+    if 'AutoCleanup' in getConfig('TestingFramework'):
+        whole_cleanup = getConfig('TestingFramework')['AutoCleanup']
+    else:
+        whole_cleanup = True
+    return whole_cleanup
+
+
+def stop_ganga(force_cleanup=False):
     """
     This test stops Ganga and shuts it down
 
@@ -204,12 +216,7 @@ def stop_ganga():
 
     logger.info("Deciding how to shutdown")
 
-    # Do we want to empty the repository on shutdown?
-    from Ganga.Utility.Config import getConfig
-    if 'AutoCleanup' in getConfig('TestingFramework'):
-        whole_cleanup = getConfig('TestingFramework')['AutoCleanup']
-    else:
-        whole_cleanup = True
+    whole_cleanup = getCleanUp() or force_cleanup
     logger.info("AutoCleanup: %s" % whole_cleanup)
 
     if whole_cleanup is True:
@@ -246,6 +253,8 @@ class GangaUnitTest(unittest.TestCase):
     """
     This class is the class which all new-style Ganga tests should inherit from
     """
+    _test_dir = None
+    _test_args = {}
 
     @classmethod
     def gangadir(cls):
@@ -278,6 +287,8 @@ class GangaUnitTest(unittest.TestCase):
         print("\n") # useful when watching stdout from tests
         print("Starting Ganga in: %s" % gangadir)
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
+        GangaUnitTest._test_dir = gangadir
+        GangaUnitTest._test_args = extra_opts
 
     def tearDown(self):
         """
@@ -293,6 +304,12 @@ class GangaUnitTest(unittest.TestCase):
         """
         This is used for cleaning up anything at a module level of higher
         """
-        # NB maybe we shouldn't delete tests here as failed tests require debugging
-        #    this is better cleaned prior to running the next job
-        #shutil.rmtree(cls.gangadir(), ignore_errors=True)
+        print("Tearing down test fully on completion")
+        start_ganga(gangadir_for_test=cls._test_dir, extra_opts=cls._test_args)
+        # Should Ganga clean up properly on test finishing?
+        stop_ganga(not pytest.config.getoption("--keepRepo"))
+        if not pytest.config.getoption("--keepRepo"):
+            shutil.rmtree(cls._test_dir, ignore_errors=True)
+        cls._test_dir = ''
+        cls._test_args = {}
+
