@@ -183,7 +183,7 @@ class GangaRepository(object):
             cls = allPlugins.find(category, classname)
             self._found_classes[compound_name] = cls
         cls = self._found_classes[compound_name]
-        obj = cls()
+        obj = cls.getNew(should_load=True)
         obj._data = {}
 
         obj._setFlushed()

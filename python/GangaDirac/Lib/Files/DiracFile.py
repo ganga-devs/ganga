@@ -22,7 +22,7 @@ from Ganga.GPIDev.Credentials import require_credential
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy, DiracProxyInfo
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-import GangaDirac.Lib.Backends.DiracUtils
+from GangaDirac.Lib.Backends.DiracUtils import getAccessURLs
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
@@ -478,7 +478,7 @@ class DiracFile(IGangaFile):
         else:
             for i in self.subfiles:
                 lfns.append(i.lfn)
-        return DiracUtils.getAccessURLs(lfns, thisSE, protocol)
+        return getAccessURLs(lfns, thisSE, protocol)
 
     @require_credential
     def internalCopyTo(self, targetPath):

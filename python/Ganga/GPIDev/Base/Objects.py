@@ -633,7 +633,7 @@ class ObjectMetaclass(abc.ABCMeta):
         if hasattr(cls, '_additional_slots'):
             attrs_to_add += [_ for _ in cls._additional_slots]
 
-        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject', '_has_init') + tuple(attrs_to_add)
+        cls.__slots__ = ('_index_cache_dict', '_registry', '_data_dict', '__dict__', '_proxyObject') + tuple(attrs_to_add)
 
         # If a class has not specified a '_name' then default to using the class '__name__'
         if not cls.__dict__.get('_name'):
@@ -691,10 +691,10 @@ class GangaObject(Node):
     # default entries as evaluated from the schema.
     # This is useful when reading many objects from disk as this wastes CPU as the entry is being overridden
     _should_init = True
-    _has_init = False
+    _should_load = False
 
     @classmethod
-    def getNew(cls, init_class=True):
+    def getNew(cls, should_load=False):
         """
         Returns a new instance of this class type without a populated Schema.
         This should be an object which has all of the core logic initialized correctly.
@@ -704,19 +704,18 @@ class GangaObject(Node):
         # Build an object of this type
         returnable = cls.__new__(cls, (), {})
 
-        # Set that we do NOT want to initialize the schema from defaults
+        # We have implicit knowledge about whether we should attempt to load this object from disk
+        setattr(returnable, '_should_load', should_load)
+
+        Node.__init__(returnable)
+
         setattr(returnable, '_should_init', False)
-        
-        if init_class:
+        GangaObject.__init__(returnable)
+        try:
             # Initialize the most derrived class to get all of the goodness needed higher up.
             returnable.__class__.__init__(returnable)
-
-        # Just to make sure that if a class's inheritance is broken we still have all of the Core member paramreters initialized
-        if not returnable._has_init:
-            Node.__init__(returnable, None)
-            GangaObject.__init__(returnable)
-
-        returnable._has_init = True
+        except:
+            logger.debug("Broken init method for class: %s trying to proceed silently" % cls.__name__)
 
         # Return the newly initialized object
         return returnable
@@ -730,14 +729,12 @@ class GangaObject(Node):
 
         self._index_cache_dict = {}
         self._registry = None
+        self._data_dict = {}
 
-        if self._should_init is True:
+        # Just a flag to prevent expensive double-declarations and to avoid this where needed
+        if self._should_init:
             self.populate_from_schema()
-        else:
-            self._data_dict = {}
-
-        self._has_init = True
-
+        self._should_init = False
 
     def populate_from_schema(self):
         """
@@ -1003,7 +1000,7 @@ class GangaObject(Node):
 
         true_parent = self._getParent()
 
-        self_copy = self.getNew(init_class=False)
+        self_copy = self.getNew()
 
         global do_not_copy
         if self._schema is not None:
@@ -1070,10 +1067,9 @@ class GangaObject(Node):
 
     def _loadObject(self):
         """If there's an attached registry then ask it to load this object"""
-        #import traceback
-        #traceback.print_stack()
-        if self._registry is not None:
+        if self._should_load and self._registry is not None:
             self._registry._load(self)
+            self._should_load = False
 
     # define when the object is read-only (for example a job is read-only in
     # the states other than new)
