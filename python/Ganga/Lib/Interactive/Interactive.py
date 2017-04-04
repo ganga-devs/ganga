@@ -184,7 +184,7 @@ class Interactive(IBackend):
         exeString = jobconfig.getExeString()
         argList = jobconfig.getArgStrings()
         argString = " ".join(map(lambda x: " %s " % x, argList))
-
+        argString = argString.replace(" ", "\ ")
         outputSandboxPatterns = jobconfig.outputbox
         patternsToZip = []
         wnCodeForPostprocessing = ''
