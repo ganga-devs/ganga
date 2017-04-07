@@ -55,7 +55,7 @@ def getDataset(path, dqflag, this_type, start, end, sel):
 
 @diracCommand
 def getAccessURL(lfn, SE, protocol=''):
-    ''' Return the access URL for the given LFN, storage element and protocol '''
+    ''' Return the access URL for the given LFN, storage element and protocol. If 'root' or 'xroot' specified then request both as per LHCbDirac from which this is taken. '''
     if protocol == '':
         protocol=['root', 'xroot']
     elif 'root' in protocol and 'xroot' not in protocol:
