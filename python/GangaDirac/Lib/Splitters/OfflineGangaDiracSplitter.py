@@ -158,6 +158,8 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_si
         file_replicas (dict): This is the dictionary of LFN replicas with LFN as the key
         site_to_SE_mapping (dict): Dict which has sites as keys and SE as values
         SE_to_site_mapping (dict): Dict which has sites as values and SE as keys
+        bannedSites (list) : List which has the sites banned by the job
+        ignoremissing (bool) : Bool for whether to continue if an LFN has no available SEs
 
     Returns:
         site_dict (dict): Dict of {'LFN':set([sites]), ...}
@@ -340,6 +342,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
         filesPerJob (int): Max files per jobs as defined by splitter
         maxFiles (int): This is the max number of files per subset(subjob)
         ignoremissing (bool): Should we ignore missing LFN
+        bannedSites (list): List of banned sites of which the SEs will not be used
 
     Yields:
         dataset (list): A list of LFNs for each subset(subjob)
