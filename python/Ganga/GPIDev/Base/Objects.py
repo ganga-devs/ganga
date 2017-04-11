@@ -699,7 +699,7 @@ class GangaObject(Node):
         Returns a new instance of this class type without a populated Schema.
         This should be an object which has all of the core logic initialized correctly.
         Args:
-            init_class (bool): Should the class __init__ method be called by this method or should we return the base object?
+            should_load (bool): Should the class __init__ method be called by this method or should we return the base object?
         """
         # Build an object of this type
         returnable = cls.__new__(cls, (), {})
