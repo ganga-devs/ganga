@@ -347,7 +347,7 @@ class GaudiExec(IPrepareApp):
         """
         This function returns a sanitized absolute path to the self.options file from user input
         """
-        if self.options:
+        if self.options or self.extraOpts:
             for this_opt in self.options:
                 if isinstance(this_opt, LocalFile):
                     ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
