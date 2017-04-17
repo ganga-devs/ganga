@@ -318,12 +318,12 @@ class GangaRepositoryLocal(GangaRepository):
                     obj = self._make_empty_object_(this_id, cat, cls)
                 except Exception as err:
                     raise IOError('Failed to Parse information in Index file: %s. Err: %s' % (fn, err))
-            this_cache = obj._index_cache
+            this_cache = obj._index_cache_dict
             this_data = this_cache if this_cache else {}
             for k, v in cache.iteritems():
                 this_data[k] = v
             #obj.setNodeData(this_data)
-            obj._index_cache = cache
+            obj._index_cache_dict = cache
             self._cache_load_timestamp[this_id] = fn_ctime
             self._cached_cat[this_id] = cat
             self._cached_cls[this_id] = cls
@@ -359,7 +359,7 @@ class GangaRepositoryLocal(GangaRepository):
                     logger.debug("Writing: %s" % str(new_index))
                     pickle_to_file(new_index, this_file)
                 self._cached_obj[this_id] = new_cache
-                obj._index_cache = {}
+                obj._index_cache_dict = {}
             self._cached_obj[this_id] = new_idx_cache
         except IOError as err:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn, getName(err), err))
@@ -809,9 +809,9 @@ class GangaRepositoryLocal(GangaRepository):
             this_id (int): This is the object id which is the objects key in the objects dict
         """
         new_idx_cache = self.registry.getIndexCache(stripProxy(obj))
-        if new_idx_cache != obj._index_cache:
+        if new_idx_cache != obj._index_cache_dict:
             logger.debug("NEW: %s" % new_idx_cache)
-            logger.debug("OLD: %s" % obj._index_cache)
+            logger.debug("OLD: %s" % obj._index_cache_dict)
             # index is wrong! Try to get read access - then we can fix this
             if len(self.lock([this_id])) != 0:
                 if this_id not in self.incomplete_objects:
@@ -822,17 +822,17 @@ class GangaRepositoryLocal(GangaRepository):
                         self.objects[this_id]._setDirty()
                 # self.unlock([this_id])
 
-                old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache.iteritems())
+                old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache_dict.iteritems())
                 if not old_idx_subset:
                     # Old index cache isn't subset of new index cache
-                    new_idx_subset = all((k in obj._index_cache and obj._index_cache[k] == v) for k, v in new_idx_cache.iteritems())
+                    new_idx_subset = all((k in obj._index_cache_dict and obj._index_cache_dict[k] == v) for k, v in new_idx_cache.iteritems())
                 else:
                     # Old index cache is subset of new index cache so no need to check
                     new_idx_subset = True
 
                 if not old_idx_subset and not new_idx_subset:
                     logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, this_id))
-                    logger.debug("old cache: %s\t\tnew cache: %s" % (obj._index_cache, new_idx_cache))
+                    logger.debug("old cache: %s\t\tnew cache: %s" % (obj._index_cache_dict, new_idx_cache))
                     self.unlock([this_id])
             else:
                 pass
@@ -893,10 +893,10 @@ class GangaRepositoryLocal(GangaRepository):
                     node_val._setParent(obj)
 
         # Check if index cache; if loaded; was valid:
-        if obj._index_cache not in [{}]:
+        if obj._index_cache_dict not in [{}]:
             self._check_index_cache(obj, this_id)
 
-        obj._index_cache = {}
+        obj._index_cache_dict = {}
 
         if this_id not in self._fully_loaded:
             self._fully_loaded[this_id] = obj
