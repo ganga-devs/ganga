@@ -66,7 +66,7 @@ class DiracProxyInfo(VomsProxyInfo):
         """
         if self._shell is None:
             self._shell = Shell()
-            self._shell.env.update(getDiracEnv())
+            self._shell.env.update(getDiracEnv(self.initial_requirements.dirac_env))
         return self._shell
 
     def destroy(self):
@@ -162,6 +162,7 @@ class DiracProxy(ICredentialRequirement):
     _schema.datadict['group'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy')
     _schema.datadict['encodeDefaultProxyFileName'] = \
         SimpleItem(defvalue=True, doc='Should the proxy be generated with the group encoded onto the end of the proxy filename')
+    _schema.datadict['dirac_env'] = SimpleItem(defvalue=None, typelist=[str, None], doc='file which can be used to access a different DIRAC backend')
 
     _category = 'CredentialRequirement'
 

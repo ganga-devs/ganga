@@ -754,7 +754,7 @@ subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=Tru
         return script
 
     def _getDiracEnvStr(self):
-        diracEnv = str(getDiracEnv())
+        diracEnv = str(getDiracEnv(self.credential_requirements.dirac_env))
         return diracEnv
 
     def _WN_wildcard_script(self, namePattern, lfnBase, compressed):
