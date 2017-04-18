@@ -342,7 +342,7 @@ class GaudiExec(IPrepareApp):
         dir_name = self.directory
         return (None, None)
 
-def getOptsFiles(self):
+    def getOptsFiles(self):
         """
         This function returns a sanitized absolute path to the self.options file from user input
         """
