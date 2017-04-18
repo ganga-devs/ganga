@@ -357,7 +357,12 @@ class GaudiExec(IPrepareApp):
             else:
                 logger.error("opts: %s" % self.options)
                 raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+        if self.options or self.extraOpts:
+             return self.options
+        else:
+            raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
 
+            
     def getEnvScript(self):
         """
         Return the script which wraps the running command in a correct environment
