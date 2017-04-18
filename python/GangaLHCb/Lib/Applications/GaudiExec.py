@@ -342,8 +342,7 @@ class GaudiExec(IPrepareApp):
         dir_name = self.directory
         return (None, None)
 
-
-    def getOptsFiles(self):
+def getOptsFiles(self):
         """
         This function returns a sanitized absolute path to the self.options file from user input
         """
@@ -358,12 +357,6 @@ class GaudiExec(IPrepareApp):
             else:
                 logger.error("opts: %s" % self.options)
                 raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
-
-        if self.options or self.extraOpts:
-            return self.options
-        else:
-            raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
-
 
     def getEnvScript(self):
         """
