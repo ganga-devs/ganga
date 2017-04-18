@@ -394,11 +394,9 @@ class CallbackHookEntry(object):
         # record the time when this hook has been run
         self._lastRun = 0
 
+
 def resubmit_if_required(jobList_fromset):
-
-    # resubmit if required
     for j in jobList_fromset:
-
         if not j.do_auto_resubmit:
             continue
 
@@ -406,27 +404,24 @@ def resubmit_if_required(jobList_fromset):
             try_resubmit = j.info.submit_counter <= config['MaxNumResubmits']
         else:
             # Check for max number of resubmissions
-            skip = False
-            for s in j.subjobs:
-                if s.info.submit_counter > config['MaxNumResubmits'] or s.status == "killed":
-                    skip = True
+            n_completed = len([sj for sj in j.subjobs if sj.status == 'completed'])
+            n_failed = len([sj for sj in j.subjobs if sj.status == 'failed'])
 
-                if skip:
-                    continue
+            # Check n_failed > 0 to avoid ZeroDivisionError
+            if n_failed > 0 and (float(n_failed) / float(n_completed + n_failed)) >= config['MaxFracForResubmit']:
+                # Too many subjobs have failed, stop trying
+                continue
 
-                num_com = len([s for s in j.subjobs if s.status in ['completed']])
-                num_fail = len([s for s in j.subjobs if s.status in ['failed']])
+            # Only submit if jobs have failed and not a single subjob has
+            # exceeded config['MaxNumResubmits']
+            try_resubmit = n_failed > 0 and not any([
+                sj.info.submit_counter > config['MaxNumResubmits']
+                for sj in j.subjobs
+            ])
 
-                #log.critical('Checking failed subjobs for job %d... %d %s',j.id,num_com,num_fail)
-
-                try_resubmit = num_fail > 0 and (float(num_fail) / float(num_com + num_fail)) < config['MaxFracForResubmit']
-
-            if try_resubmit:
-                if j.backend.check_auto_resubmit():
-                    log.warning('Auto-resubmit job %d...' % j.id)
-                    j.auto_resubmit()
-
-    return
+        if try_resubmit and j.backend.check_auto_resubmit():
+            log.warning('Auto-resubmit job %d...' % j.id)
+            j.auto_resubmit()
 
 
 def get_jobs_in_bunches(jobList_fromset, blocks_of_size=5, stripProxies=True):
