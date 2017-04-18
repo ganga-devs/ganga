@@ -362,7 +362,7 @@ class GaudiExec(IPrepareApp):
         if self.options or self.extraOpts:
             return self.options
         else:
-            raise ApplicationConfigurationError("No Opts File has been specified, please provide one!")
+            raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
 
 
     def getEnvScript(self):
