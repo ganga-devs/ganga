@@ -412,12 +412,7 @@ def resubmit_if_required(jobList_fromset):
                 # Too many subjobs have failed, stop trying
                 continue
 
-            # Only submit if jobs have failed and not a single subjob has
-            # exceeded config['MaxNumResubmits']
-            try_resubmit = n_failed > 0 and not any([
-                sj.info.submit_counter > config['MaxNumResubmits']
-                for sj in j.subjobs
-            ])
+            try_resubmit = n_failed > 0
 
         if try_resubmit and j.backend.check_auto_resubmit():
             log.warning('Auto-resubmit job %d...' % j.id)
