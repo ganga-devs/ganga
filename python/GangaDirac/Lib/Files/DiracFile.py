@@ -478,7 +478,7 @@ class DiracFile(IGangaFile):
         else:
             for i in self.subfiles:
                 lfns.append(i.lfn)
-        return getAccessURLs(lfns, thisSE, protocol)
+        return getAccessURLs(lfns, thisSE, protocol, self.credential_requirements)
 
     @require_credential
     def internalCopyTo(self, targetPath):
