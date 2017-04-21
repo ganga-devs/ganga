@@ -216,7 +216,7 @@ class ThreadPoolQueueMonitor(object):
                                            kwargs=kwargs,
                                            priority=priority)
 
-    def _addSystem(self, worker_code, args=(), kwargs={}, priority=5):
+    def _addSystem(self, worker_code, args=(), kwargs={}, priority=5, name=None):
 
         if not isinstance(worker_code, collections.Callable):
             logger.error("Error Adding internal task!! please report this to the Ganga developers!")
@@ -230,7 +230,8 @@ class ThreadPoolQueueMonitor(object):
         self._monitoring_threadpool.add_function(worker_code,
                                                  args=args,
                                                  kwargs=kwargs,
-                                                 priority=priority)
+                                                 priority=priority,
+                                                 name=name)
 
     def addProcess(self,
                    command,

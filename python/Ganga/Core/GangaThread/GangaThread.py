@@ -66,3 +66,4 @@ class GangaThread(Thread):
     @synchronised
     def register(self):
         GangaThreadPool.getInstance().addServiceThread(self)
+
