@@ -94,7 +94,8 @@ class MonitoringWorkerThread(GangaThread):
     __slots__ = ('_currently_running_command', '_running_cmd', '_running_args', '_thread_name')
 
     def __init__(self, name):
-        GangaThread.__init__(self, name)
+        is_critical = not config['enable_multiThreadMon']
+        GangaThread.__init__(self, name, critical=is_critical)
         self._currently_running_command = False
         self._running_cmd = None
         self._running_args = None

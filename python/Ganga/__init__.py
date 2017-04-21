@@ -214,6 +214,7 @@ poll_config = makeConfig('PollThread', 'background job status monitoring and out
 poll_config.addOption('repeat_messages', False, 'if 0 then log only once the errors for a given backend and do not repeat them anymore')
 poll_config.addOption('autostart', True, 'enable monitoring automatically at startup, in script mode monitoring is disabled by default, in interactive mode it is enabled', type=type(True))  # enable monitoring on startup
 poll_config.addOption('autostart_monThreads', True, 'enable populating of the monitoring worker threads')
+poll_config.addOption('enable_multiThreadMon', True, 'enable multiple threads to be used for running monitoring tasks')
 poll_config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
 poll_config.addOption('MaxNumResubmits', 5, 'Maximum number of automatic job resubmits to do before giving')
 poll_config.addOption('MaxFracForResubmit', 0.25, 'Maximum fraction of failed jobs before stopping automatic resubmission')

@@ -24,6 +24,7 @@ import time
 from collections import defaultdict
 
 from Ganga.Core.GangaThread.WorkerThreads import getQueues
+from Ganga.Utility.Config import getConfig
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -422,15 +423,17 @@ class IBackend(GangaObject):
 
         ## Only process 10 files from the backend at once
         #blocks_of_size = 10
+        poll_config = getConfig('PollThread')
         try:
-            from Ganga.Utility.Config import getConfig
-            blocks_of_size = getConfig('PollThread')['numParallelJobs']
+            blocks_of_size = poll_config['numParallelJobs']
         except Exception as err:
             logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
             logger.debug("Error: %s" % err)
             blocks_of_size = 5
         ## Separate different backends implicitly
         simple_jobs = {}
+
+        multiThreadMon = poll_config['enable_multiThreadMon']
 
         # FIXME Add some check for (sub)jobs which are in a transient state but
         # are not locked by an active session of ganga
@@ -489,9 +492,11 @@ class IBackend(GangaObject):
                         subjobs_to_monitor = []
                         for sj_id in this_block:
                             subjobs_to_monitor.append(j.subjobs[sj_id])
-                        if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
-                            queues._addSystem(j.backend.updateMonitoringInformation, args=(subjobs_to_monitor,), name="Backend Monitor")
-                        #j.backend.updateMonitoringInformation(subjobs_to_monitor)
+                        if multiThreadMon:
+                            if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
+                                queues._addSystem(j.backend.updateMonitoringInformation, args=(subjobs_to_monitor,), name="Backend Monitor " + getName(j.backend))
+                        else:
+                            j.backend.updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
                         logger.error("Monitoring Error: %s" % err)
 
@@ -506,17 +511,23 @@ class IBackend(GangaObject):
         if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
-                if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
-                    queues._addSystem(stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation, args=(simple_jobs[this_backend],), name="Backend Monitor")
-                #stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
+                if multiThreadMon:
+                    if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
+                        queues._addSystem(stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation,
+                                          args=(simple_jobs[this_backend],), name="Backend Monitor " + getName(this_backend))
+                else:
+                    stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
 
         logger.debug("Finished Monitoring request")
+
+        if not multiThreadMon:
+            return
 
         loop = True
         while loop:
             for stat in queues._monitoring_threadpool.worker_status():
                 loop = False;
-                if stat[0] == "Backend Monitor":
+                if stat[0] is not None and stat[0].startswith("Backend Monitor"):
                     loop = True;
                     break;
             time.sleep(1.)
