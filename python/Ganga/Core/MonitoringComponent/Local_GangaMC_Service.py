@@ -223,8 +223,6 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
         else:
             break
 
-    for t in ThreadPool:
-        t.stop()
     del ThreadPool[:]
     ThreadPool = []
 

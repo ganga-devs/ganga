@@ -183,10 +183,7 @@ class DiracProxy(ICredentialRequirement):
         my_config = getConfig('defaults_DiracProxy')
         default_group = my_config['group']
         if (my_config['encodeDefaultProxyFileName'] and self.group == default_group) or self.group != default_group:
-            if self.dirac_env is not None:
-                return ':'.join(requirement for requirement in [self.group] if requirement) + ':' + str(hash(self.dirac_env)) # filter out the empties
-            else:
-                return ':'.join(requirement for requirement in [self.group] if requirement)  # filter out the empties
+            return ':'.join(requirement for requirement in [self.group] if requirement)  # filter out the empties
         else:
             return ''
 

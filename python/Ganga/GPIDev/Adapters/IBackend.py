@@ -23,8 +23,6 @@ import itertools
 import time
 from collections import defaultdict
 
-from Ganga.Core.GangaThread.WorkerThreads import getQueues
-
 logger = Ganga.Utility.logging.getLogger()
 
 class IBackend(GangaObject):
@@ -435,8 +433,6 @@ class IBackend(GangaObject):
         # FIXME Add some check for (sub)jobs which are in a transient state but
         # are not locked by an active session of ganga
 
-        queues = getQueues()
-
         for j in jobs:
             ## All subjobs should have same backend
             if len(j.subjobs) > 0:
@@ -489,9 +485,7 @@ class IBackend(GangaObject):
                         subjobs_to_monitor = []
                         for sj_id in this_block:
                             subjobs_to_monitor.append(j.subjobs[sj_id])
-                        if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
-                            queues._addSystem(j.backend.updateMonitoringInformation, args=(subjobs_to_monitor,), name="Backend Monitor")
-                        #j.backend.updateMonitoringInformation(subjobs_to_monitor)
+                        j.backend.updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
                         logger.error("Monitoring Error: %s" % err)
 
@@ -506,20 +500,9 @@ class IBackend(GangaObject):
         if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
-                if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
-                    queues._addSystem(stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation, args=(simple_jobs[this_backend],), name="Backend Monitor")
-                #stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
+                stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
 
         logger.debug("Finished Monitoring request")
-
-        loop = True
-        while loop:
-            for stat in queues._monitoring_threadpool.worker_status():
-                loop = False;
-                if stat[0] == "Backend Monitor":
-                    loop = True;
-                    break;
-            time.sleep(1.)
 
     @staticmethod
     def updateMonitoringInformation(jobs):
@@ -560,4 +543,3 @@ def group_jobs_by_backend_credential(jobs):
             logger.debug('Required credential %s is missing', cred_req)
             needed_credentials.add(cred_req)
     return list(jobs_by_credential.values())
-

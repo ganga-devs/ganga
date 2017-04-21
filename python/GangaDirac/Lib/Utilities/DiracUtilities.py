@@ -191,10 +191,7 @@ def execute(command,
     """
 
     if env is None:
-        if cred_req is None:
-            env = getDiracEnv()
-        else:
-            env = getDiracEnv(cred_req.dirac_env)
+        env = getDiracEnv(cred_req.dirac_env)
     if python_setup == '':
         python_setup = getDiracCommandIncludes()
 
