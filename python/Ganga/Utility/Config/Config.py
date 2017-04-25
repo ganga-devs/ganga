@@ -232,6 +232,7 @@ class ConfigOption(object):
             setattr(self, m, meta[m])
 
         self.convert_type('session_value')
+        self.convert_type('gangarc_value')
         self.convert_type('user_value')
 
     def setSessionValue(self, session_value):
@@ -279,12 +280,42 @@ class ConfigOption(object):
                 del self.user_value
             raise x
 
+    def setGangarcValue(self, gangarc_value):
+        if not hasattr(self, 'docstring'):
+            raise ConfigError('Can\'t set a gangarc value without a docstring!')
+
+        self.hasModified = True
+        try:
+            if self.filter:
+                gangarc_value = self.filter(self, gangarc_value)
+        except Exception as x:
+            logger = getLogger()
+            logger.warning('problem with option filter: %s: %s', self.name, x)
+
+        if hasattr(self, 'gangarc_value'):
+            gangarc_value = self.transform_PATH_option(gangarc_value, self.gangarc_value)
+
+        if hasattr(self, 'gangarc_value'):
+            old_value = self.gangarc_value
+
+        self.gangarc_value = gangarc_value
+        try:
+            self.convert_type('gangarc_value')
+        except Exception as x:
+            # rollback if conversion failed
+            try:
+                self.gangarc_value = old_value
+            except NameError:
+                del self.gangarc_value
+            raise x
+
     def overrideDefaultValue(self, default_value):
         self.hasModified = True
         if hasattr(self, 'default_value'):
             default_value = self.transform_PATH_option(default_value, self.default_value)
         self.default_value = default_value
         self.convert_type('user_value')
+        self.convert_type('gangarc_value')
         self.convert_type('session_value')
 
     def __getattr__(self, name):
@@ -293,7 +324,7 @@ class ConfigOption(object):
             if self.name.endswith('_PATH'):
                 values = []
 
-                for n in ['user', 'session', 'default']:
+                for n in ['user', 'gangarc', 'session', 'default']:
                     str_val = n+'_value'
                     if hasattr(self, str_val):
                         values.append(getattr(self, str_val))
@@ -302,14 +333,14 @@ class ConfigOption(object):
                     returnable = reduce(self.transform_PATH_option, values)
                     return returnable
             else:
-                for n in ['user', 'session', 'default']:
+                for n in ['user', 'gangarc', 'session', 'default']:
                     str_val = n+'_value'
                     if hasattr(self, str_val):
                         return getattr(self, str_val)
 
         elif name == 'level':
 
-            for level, name in [(0, 'user'), (1, 'session'), (2, 'default')]:
+            for level, name in [(0, 'user'), (1, 'gangarc') (2, 'session'), (3, 'default')]:
                 if hasattr(self, name + '_value'):
                     return level
 
