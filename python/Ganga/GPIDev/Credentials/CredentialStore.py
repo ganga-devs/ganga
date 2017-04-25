@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import time
 import collections
 from datetime import timedelta
 
@@ -10,6 +11,8 @@ from Ganga.GPIDev.Schema import Schema, Version
 
 from Ganga.Core.exceptions import CredentialsError, GangaKeyError
 from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
+
+from Ganga.Utility.Config import getConfig
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -55,6 +58,9 @@ class CredentialStore(GangaObject, collections.Mapping):
 
     retry_limit = 5
     enable_caching = True
+
+    _last_clean = None
+    _clean_delay = getConfig('Credentials')['CleanDelay']
 
     __slots__ = ('credentials',)
 
@@ -288,7 +294,13 @@ class CredentialStore(GangaObject, collections.Mapping):
         """
         Remove any credentials with missing files
         """
-        self.credentials = set(cred for cred in self.credentials if cred.exists())
+        this_time = time.time()
+        if not CredentialStore._last_clean:
+            CredentialStore._last_clean = this_time
+            self.credentials = set(cred for cred in self.credentials if cred.exists())
+        elif this_time - CredentialStore._last_clean > CredentialStore._clean_delay:
+            self.credentials = set(cred for cred in self.credentials if cred.exists())
+            CredentialStore._last_clean = this_time
 
 # This is a global 'singleton'
 credential_store = CredentialStore()
