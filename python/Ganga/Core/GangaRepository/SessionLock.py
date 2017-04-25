@@ -230,7 +230,10 @@ class SessionLockRefresher(GangaThread):
         return
 
     def numberRepos(self):
-        assert(len(self.fns) == len(self.repos))
+        try:
+            assert(len(self.fns) == len(self.repos))
+        except AssertionError:
+            raise RepositoryError("Number of repos is inconsistent with lock files")
         return len(self.fns)
 
     def addRepo(self, fn, repo):
@@ -245,7 +248,10 @@ class SessionLockRefresher(GangaThread):
         #logger.debug("Removing fn: %s" % fn )
         self.repos.remove(repo)
 
-        assert(len(self.fns) == len(self.repos))
+        try:
+            assert(len(self.fns) == len(self.repos))
+        except AssertionError:
+            raise RepositoryError("Number of repos is inconsistent after removing repo!")
 
 
 def synchronised(f):
@@ -747,7 +753,10 @@ class SessionLockManager(object):
     def check(self):
         with open(self.cntfn) as f:
             newcount = int(f.readline())
-        assert newcount >= self.count
+        try:
+            assert newcount >= self.count
+        except AssertionError:
+            raise RepositoryError("Count in lock file: %s is now inconsistent!" % self.cntfn)
         sessions = os.listdir(self.sdir)
         prevnames = set()
         for session in sessions:
@@ -771,7 +780,7 @@ class SessionLockManager(object):
                     os.close(fd)
             if not len(names & prevnames) == 0:
                 logger.error("Double-locked stuff: " + names & prevnames)
-                assert False
+                raise RepositoryError("Lock file has double-locked objects: %s" % str(names & prevnames))
             # prevnames.union_update(names) Should be alias to update but
             # not in some versions of python
             prevnames.update(names)

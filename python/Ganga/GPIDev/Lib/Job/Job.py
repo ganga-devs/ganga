@@ -11,7 +11,7 @@ import sys
 
 import Ganga.Core.FileWorkspace
 from Ganga.GPIDev.MonitoringServices import getMonitoringObject
-from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError
+from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError, TypeMismatchError
 from Ganga.Core import Sandbox
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
@@ -248,7 +248,10 @@ class Job(GangaObject):
 
         # WE WILL ONLY EVER ACCEPT Job or JobTemplate by design
         if prev_job:
-            assert isinstance(prev_job, (Job, JobTemplate)), "Can only constuct a Job with 1 non-keyword argument which is another Job, or JobTemplate"
+            try:
+                assert isinstance(prev_job, (Job, JobTemplate))
+            except AssertionError:
+                raise TypeMismatchError("Can only constuct a Job with 1 non-keyword argument which is another Job, or JobTemplate")
 
         # START INIT OF SELF
 
@@ -1436,7 +1439,10 @@ class Job(GangaObject):
 
         from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 
-        assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
+        try:
+            assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
+        except AssertionError:
+            raise JobManagerError("Number of subjobs in the job is inconsistent so not submitting the job")
 
         # no longer needed with prepared state
         # if self.master is not None:

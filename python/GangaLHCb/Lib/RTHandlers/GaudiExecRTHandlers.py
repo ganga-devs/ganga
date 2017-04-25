@@ -8,7 +8,7 @@ import threading
 import uuid
 import shutil
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -378,10 +378,16 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         if not isinstance(app.uploadedInput, DiracFile):
             generateDiracInput(app)
-            assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit. Tried to upload to: %s\nIf your Ganga installation is not at CERN your username may be trying to create a non-existent LFN. Try setting the 'DIRAC' configuration 'DiracLFNBase' to your grid user path.\n" % DiracFile.diracLFNBase()
+            try:
+                assert isinstance(app.uploadedInput, DiracFile)
+            except AssertionError:
+                raise ApplicationPrepareError("Failed to upload needed file, aborting submit. Tried to upload to: %s\nIf your Ganga installation is not at CERN your username may be trying to create a non-existent LFN. Try setting the 'DIRAC' configuration 'DiracLFNBase' to your grid user path.\n" % DiracFile.diracLFNBase())
         
         rep_data = app.uploadedInput.getReplicas()
-        assert rep_data != {}, "Failed to find a replica, aborting submit"
+        try:
+            assert rep_data != {}
+        except AssertionError:
+            raise ApplicationPrepareError("Failed to find a replica of uploaded file, aborting submit")
 
 
         if isinstance(app.jobScriptArchive, (DiracFile, LocalFile)):
@@ -389,9 +395,15 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         generateDiracScripts(app)
 
-        assert isinstance(app.jobScriptArchive, DiracFile), "Failed to upload needed file, aborting submit"
+        try:
+            assert isinstance(app.jobScriptArchive, DiracFile)
+        except AssertionError:
+            raise ApplicationPrepareError("Failed to upload needed file, aborting submit")
         rep_data = app.jobScriptArchive.getReplicas()
-        assert rep_data != {}, "Failed to find a replica, aborting submit"
+        try:
+            assert rep_data != {}
+        except AssertionError:
+            raise ApplicationPrepareError("Failed to find a replica, aborting submit")
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 

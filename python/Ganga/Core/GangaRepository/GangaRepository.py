@@ -254,7 +254,10 @@ class GangaRepositoryTransient(object):
             objs (list): Objects we want to store in memory
             force_ids (list, None): IDs to assign to the objects, None for auto-assign
         """
-        assert force_ids is None or len(force_ids) == len(objs)
+        try:
+            assert force_ids is None or len(force_ids) == len(objs)
+        except AssertionError:
+            raise RepositoryError("Inconsistent number of objects and ids, can't add to Repository")
         ids = []
         for i in range(len(objs)):
             obj = objs[i]

@@ -4,7 +4,7 @@
 # $Id: File.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ##########################################################################
 
-from Ganga.Core.exceptions import GangaException
+from Ganga.Core.exceptions import GangaException, SchemaError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import isType
@@ -60,7 +60,10 @@ class File(GangaObject):
         super(File, self).__init__()
 
         if not name is None:
-            assert(isinstance(name, str))
+            try:
+                assert(isinstance(name, str))
+            except AssertionError:
+                raise SchemaError("Name attribute should be a string type. Instead received: %s" % type(name))
             self.name = name
 
         if not subdir is None:

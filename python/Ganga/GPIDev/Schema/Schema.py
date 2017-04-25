@@ -303,7 +303,10 @@ class Schema(object):
             if not item['sequence']:
                 if defvalue is None:
                     if not item['load_default']:
-                        assert(item['optional'])
+                        try:
+                            assert(item['optional'])
+                        except AssertionError:
+                            raise SchemaError("This item '%s' is not a sequence, doesn't have a load_default and is not optional. This is unsupported!" % type(item))
                         return None
 
                 # if a defvalue of a component item is an object (not string) just process it as for SimpleItems (useful for FileItems)
@@ -594,9 +597,15 @@ class ComponentItem(Item):
         kwds['load_default'] = load_default
         #kwds['getter'] = getter
         self._update(kwds, ComponentItem._forced)
-        assert(implies(self['defvalue'] is None and not self['load_default'], self['optional']))
+        try:
+            assert(implies(self['defvalue'] is None and not self['load_default'], self['optional']))
+        except AssertionError:
+            raise SchemaError("ComponentItem has no defvalue, load_default or requirement to be optional")
 
-        assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self['protected'] and not self['sequence'] and not self['copyable']))
+        try:
+            assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self['protected'] and not self['sequence'] and not self['copyable']))
+        except AssertionError:
+            raise SchemaError("There is no getter, transient flag or defvalue and the ComponentItem is protected, not a sequence or not copyable. This is not supported")
 
     def _describe(self):
         return "'" + self['category'] + "' object," + Item._describe(self)
