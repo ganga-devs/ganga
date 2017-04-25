@@ -835,6 +835,10 @@ Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 
 # ------------------------------------------------
 # Registry Dirty Monitoring Services (not related to actual Job Monitoring)
-reg_config = makeConfig('Registry','')
+reg_config = makeConfig('Registry','This config controls the speed of flushing objects to disk')
 reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')
 reg_config.addOption('EnableAutoFlush', True, 'Enable Registry auto-flushing feature')
+
+cred_config = makeConfig('Credentials', 'This configures the credentials singleton')
+cred_config.addOption('CleanDelay', 1, 'Seconds between auto-clean of credentials when proxy externally destroyed')
+cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on disk')
