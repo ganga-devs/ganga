@@ -150,6 +150,7 @@ allConfigs = {}
 # this dictionary contains the value for the options which are defined in the configuration file and which have
 # not yet been defined
 unknownConfigFileValues = defaultdict(dict)
+unknownGangarcFileValues = defaultdict(dict)
 unknownUserConfigValues = defaultdict(dict)
 
 def getConfig(name):
@@ -340,7 +341,7 @@ class ConfigOption(object):
 
         elif name == 'level':
 
-            for level, name in [(0, 'user'), (1, 'gangarc') (2, 'session'), (3, 'default')]:
+            for level, name in [(0, 'user'), (1, 'gangarc'), (2, 'session'), (3, 'default')]:
                 if hasattr(self, name + '_value'):
                     return level
 
@@ -465,6 +466,7 @@ class PackageConfig(object):
         # processing handlers
         self._user_handlers = []
         self._session_handlers = []
+        self._gangarc_handlers = []
 
         self.is_open = False
 
@@ -546,6 +548,23 @@ class PackageConfig(object):
                 if locals().get('logger') is not None:
                     locals().get('logger').debug("dbg: %s" % msg)
 
+        try:
+            conf_value = unknownGangarcFileValues[self.name]
+        except KeyError:
+            msg = "Error getting gangarc Option: %s" % self.name
+            if locals().get('logger') is not None:
+                locals().get('logger').debug("dbg: %s" % msg)
+            conf_value = dict()
+
+        if option.name in conf_value:
+            gangarc_value = conf_value[option.name]
+            try:
+                option.setGangarcValue(gangarc_value) 
+                del conf_value[option.name]
+            except Exception as err:
+                msg = "Error Setting Gangarc Value: %s" % err
+                if locals().get('logger') is not None:
+                    locals().get('logger').debug("dbg: %s" % msg)
 
 
     def setSessionValue(self, name, value):
@@ -604,6 +623,28 @@ class PackageConfig(object):
         logger.debug('successfully set user option [%s]%s = %s', self.name, name, value)
 
         for handler in self._user_handlers:
+            handler[1](name, value)
+
+    def setGangarcValue(self, name, value):
+        """ Modify option  at runtime. This  method corresponds to  the gangarc
+        action so  the value of  the option is considered  'modified' If
+        the  default  type  of  the  option  is  not  string,  then  the
+        expression will be evaluated. """
+
+        self.hasModified = True
+
+        logger = getLogger()
+
+        logger.debug('trying to set user option [%s]%s = %s', self.name, name, value)
+
+        for handler in self._user_handlers:
+            value = handler[0](name, value)
+
+        self.options[name].setGangarcValue(value)
+
+        logger.debug('successfully set user option [%s]%s = %s', self.name, name, value)
+
+        for handler in self._gangarc_handlers:
             handler[1](name, value)
 
     def overrideDefaultValue(self, name, val):
@@ -687,6 +728,18 @@ class PackageConfig(object):
             post = lambda opt, val: None
 
         self._session_handlers.append((pre, post))
+
+
+    def attachGangarcHandler(self, pre, post):
+        """See attachUserHandler(). """
+        # FIXME: this will NOT always work and should be redesigned, see
+        # ConfigOption.filter
+        if pre is None:
+            pre = lambda opt, val: val
+        if post is None:
+            post = lambda opt, val: None
+
+        self._gangarc_handlers.append((pre, post))
 
     def deleteUndefinedOptions(self):
         for o in self.options.keys():
@@ -910,6 +963,26 @@ def setSessionValue(config_name, option_name, value):
     # is added
     unknownConfigFileValues[config_name][option_name] = value
 
+def setGangarcValue(config_name, option_name, value):
+    """
+    Sets the gangarc value for the given config and option.
+    If the given config has not been set already then it is added
+    to the dict to be added later. The session value is superseded by
+    the user value.
+    """
+    if config_name in allConfigs:
+        c = getConfig(config_name)
+        if option_name in c.options:
+            c.setGangarcValue(option_name, value)
+            return
+        if c.is_open:
+            c._addOpenOption(option_name, value)
+            c.setGangarcValue(option_name, value)
+            return
+
+    # put value in the buffer, it will be removed from the buffer when option
+    # is added
+    unknownGangarcFileValues[config_name][option_name] = value
 
 def setSessionValuesFromFiles(filenames, system_vars):
     """ Sets session values for all options in all configuration units
@@ -921,6 +994,33 @@ def setSessionValuesFromFiles(filenames, system_vars):
     At the time of reading the initialization files, the default options in
     the configuration options (default values) may have not yet been defined.
     """
+    gangarcFile = []
+    for filename in filenames:
+        if 'gangarc' in filename:
+            gangarcFile.append(filename)
+            filenames.remove(filename)
+
+    #First take the gangarc values
+    grcCfg = read_ini_files(gangarcFile, system_vars)
+
+    for name in grcCfg.sections():
+        for o in grcCfg.options(name):
+            # Important: do not put the options from the DEFAULTS section into
+            # the configuration units!
+            if o in grcCfg.defaults():
+                continue
+            try:
+                v = grcCfg.get(name, o)
+            except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
+                logger = getLogger()
+                logger.debug("Parse Error!:\n  %s" % err)
+                logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (name, o))
+                v = grcCfg.get(name, o, raw=True)
+            setGangarcValue(name, o, v)
+
+
+    #Now the others
+
     cfg = read_ini_files(filenames, system_vars)
 
     for name in cfg.sections():
@@ -936,7 +1036,7 @@ def setSessionValuesFromFiles(filenames, system_vars):
                 logger.debug("Parse Error!:\n  %s" % err)
                 logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (name, o))
                 v = cfg.get(name, o, raw=True)
-            setUserValue(name, o, v)
+            setSessionValue(name, o, v)
 
 
 def load_user_config(filename, system_vars):
@@ -967,7 +1067,7 @@ def load_user_config(filename, system_vars):
                 logger.debug("Parse Error!:\n  %s" % err)
                 logger.debug("Failed to expand %s:%s, loading it as raw" % (name, o))
                 v = new_cfg.get(name, o, raw=True)
-            current_cfg_section.setUserValue(o, v)
+            current_cfg_section.setGangarcValue(o, v)
 
 
 # KH 050725: Add possibility to overwrite at run-time option set in
