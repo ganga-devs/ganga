@@ -393,7 +393,6 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def generate_config_file(config_file):
-        print 'making config file: ', config_file 
         from Ganga.GPIDev.Lib.Config.Config import config_file_as_text
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
