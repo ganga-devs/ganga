@@ -163,7 +163,7 @@ def getAccessURLs(lfns, defaultSE = '', protocol = ''):
     # Remove the successfully found ones from the list and move on to the next SE.
     for SE in SEs:
         lfns = remainingLFNs
-        thisSEFiles = execute('getAccessURL(%s, "%s", "%s")' % (lfns, SE, protocol))['Successful']
+        thisSEFiles = execute('getAccessURL(%s, "%s", %s)' % (lfns, SE, protocol))['Successful']
         for lfn in thisSEFiles.keys():
             myURLs.append(thisSEFiles[lfn])
             remainingLFNs.remove(lfn)
