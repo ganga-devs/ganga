@@ -266,7 +266,6 @@ def config_file_as_text():
                                 def_value = "\n# ".join(def_lines)
                         except AttributeError as err:
                             pass
-                    print 'o: ', o, ' def_value: ', def_value, ' value: ', value
                     text += '#%s = %s\n' % (o, def_value)
                     text += '%s = %s\n\n' % (o, value)
                 else:
