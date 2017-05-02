@@ -254,8 +254,8 @@ def config_file_as_text():
                     text += INDENT + "Examples:\n"
                     for e in examples.splitlines():
                         text += INDENT + "  " + e.strip() + "\n"
-                if sect.getEffectiveLevel(o) == 0:
-                    value = sect[o]
+                if hasattr(sect.options[o], 'gangarc_value'):
+                    value = sect.options[o].gangarc_value
                     def_value = sect.options[o].default_value
                     if isinstance(value, str):
                         try:
@@ -269,7 +269,10 @@ def config_file_as_text():
                     text += '#%s = %s\n' % (o, def_value)
                     text += '%s = %s\n\n' % (o, value)
                 else:
-                    value = sect.getEffectiveOption(o)
+                    if hasattr(sect.options[o], 'default_value'):
+                        value = sect.options[o].default_value
+                    else:
+                        value = sect.getEffectiveOption(o)
                     if isinstance(value, str):
                         lines = value.splitlines()
                         if len(lines) > 1:

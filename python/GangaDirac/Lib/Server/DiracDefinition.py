@@ -10,9 +10,7 @@ from DIRAC.Core.Base.Script import parseCommandLine
 parseCommandLine()
 from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
-from DIRAC.DataManagementSystem.Client.DataManager import DataManager
 dirac = Dirac()
-diracDM = DataManager()
 
 def diracCommand(f):
     '''
