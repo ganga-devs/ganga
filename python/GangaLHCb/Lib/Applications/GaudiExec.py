@@ -204,11 +204,11 @@ class GaudiExec(IPrepareApp):
         # file is unspecified, has a space or is a relative path
         self.configure(self)
         logger.info('Preparing %s application.' % getName(self))
-        self.is_prepared = ShareDir()
-        logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
         this_build_target = self.buildGangaTarget()
 
+        self.is_prepared = ShareDir()
+        logger.info('Created shared directory: %s' % (self.is_prepared.name))
         try:
             # copy any 'preparable' objects into the shared directory
             send_to_sharedir = self.copyPreparables()
@@ -384,14 +384,12 @@ class GaudiExec(IPrepareApp):
         Args:
             cmd (str): This is the command(s) which are to be executed within the project environment and directory
         """
-
         if not self.directory:
             raise GangaException("Cannot run a command using GaudiExec without a directory first being set!")
         if not path.isdir(self.directory):
             raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
 
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
-
         if not cmd.startswith('./run '):
             cmd = './run ' + cmd
 
