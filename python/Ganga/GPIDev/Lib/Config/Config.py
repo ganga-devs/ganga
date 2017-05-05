@@ -267,10 +267,10 @@ def config_file_as_text(interactive):
                         except AttributeError as err:
                             pass
                     if interactive:
-                        yes = raw_input('The config option %s %s with value %s in your old .gangarc is not the default. Do you want to copy it to the new .gangarc file ([y]/n) ?\n' % (sect.name, o, value))
+                        yes = raw_input('The config option %s %s with value %s in your old .gangarc is not the default. Do you want to copy it to the new .gangarc file (y/[n]) ?\n' % (sect.name, o, value))
                     else:
                         yes = 'y'
-                    if yes.lower() in ['', 'y']:
+                    if yes.lower() in ['y']:
                         text += '#%s = %s\n' % (o, def_value)
                         text += '%s = %s\n\n' % (o, value)
                     else:
