@@ -49,7 +49,6 @@ def gaudiExecBuildLock(f):
 # Global lock for all builds
 gaudiExecBuildLock.globalBuildLock = threading.Lock()
 
-
 class GaudiExec(IPrepareApp):
     """
 
@@ -139,10 +138,11 @@ class GaudiExec(IPrepareApp):
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
+        'envVars':      SimpleItem(defvalue=None, typelist=[None, dict], hidden=1, doc='A dict of the environment variables we want to keep for later'),
         })
     _category = 'applications'
     _name = 'GaudiExec'
-    _exportmethods = ['prepare', 'unprepare', 'execCmd', 'readInputData']
+    _exportmethods = ['prepare', 'unprepare', 'execCmd', 'readInputData', 'getenv']
 
     cmake_sandbox_name = 'cmake-input-sandbox.tgz'
     build_target = 'ganga-input-sandbox'
@@ -268,6 +268,13 @@ class GaudiExec(IPrepareApp):
         df = master_job.application.jobScriptArchive
 
         folder_dir = master_job.getInputWorkspace(create=True).getPath()
+
+        extraopts = ' '
+        extraopts += "\nfrom Gaudi.Configuration import *"
+        extraopts += "\nfrom Configurables import LHCbApp"
+        extraopts += "\nLHCbApp().XMLSummary='summary.xml'"
+
+        self.extraOpts += extraopts
 
         if not df or df.namePattern == '':
             unique_name = GaudiExec.sharedOptsFile_baseName % uuid.uuid4()
@@ -453,7 +460,26 @@ class GaudiExec(IPrepareApp):
             raise GangaException("Wanted Target File: %s NOT found" % wantedTargetFile)
 
         logger.info("Built %s" % wantedTargetFile)
+        # Whilst we are here let's store the application environment but ignore awkward ones
+        env, envstdout, envstderr = _exec_cmd('./run env', self.directory)
+        envDict = {}
+        for item in envstdout.split("\n"):
+            if len(item.split("="))==2:
+                envDict[item.split("=")[0]] = item.split("=")[1]
+        self.envVars = envDict
+
         return wantedTargetFile
+
+
+    def postprocess(self):
+        from GangaLHCb.Lib.Applications import XMLPostProcessor
+        XMLPostProcessor.postprocess(self, logger)
+
+    def getenv(self, cache_env=False):
+        """
+        A function to return the environemnt of the built application
+        """
+        return self.envVars
 
 
     def readInputData(self, opts):
