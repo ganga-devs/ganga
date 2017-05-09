@@ -205,6 +205,9 @@ class GaudiExec(IPrepareApp):
         self.configure(self)
         logger.info('Preparing %s application.' % getName(self))
 
+	# Make sure the summary.xml file gets downloaded for the metadata
+	self.getJobObject().outputfiles.append(LocalFile('summary.xml'))
+
         this_build_target = self.buildGangaTarget()
 
         self.is_prepared = ShareDir()
