@@ -322,6 +322,10 @@ class DiracFile(IGangaFile):
         if self.lfn == "":
             self._optionallyUploadLocalFile()
 
+        # check that it has a replica
+        if not self.getReplicas():
+            raise GangaFileError("No replica found for this file!")
+
         # eval again here as datatime not included in dirac_ganga_server
 
         ret = execute('getMetadata("%s")' % self.lfn, cred_req=self.credential_requirements)
