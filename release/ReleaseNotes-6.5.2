@@ -1,0 +1,34 @@
+**************************************************************************************************************
+6.5.2 (2017/05/08)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Bugfix to job auto resubmission #996
+* Bugfix to the configuration when reading and upating the gangarc #1002
+* Ask the user to confirm copying of non-default options to the new gangarc #1007
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Remove SEs from banned sites from list of possible SEs when splitting #990
+* Added check for replicas in DiracFile getMetadata #1000
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Set root/xroot as the default protocol requested for accessURLs #989
+* Bugfix for the 'extraArgs' in GaudiExec #991
+* Allow GaudiExec jobs to be submitted with only extraOpts #992
+* Bugfix to set prepared status of GaudiExec job after succesfully building the target instead of before #1006
+
+--------------------------------------------------------------------------------------------------------------
+!Input required!
+--------------------------------------------------------------------------------------------------------------
+* A bug may have caused some configurations to have been erroneously written to your gangarc. When starting
+this version of ganga for the first time the gangarc will be updated and you will be asked to confirm that you
+wish to keep any non-standard configurations. If you do not recognise the option then revert it to default
+and you will be fine.
+
+**************************************************************************************************************
