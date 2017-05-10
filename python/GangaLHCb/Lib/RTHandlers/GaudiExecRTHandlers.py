@@ -149,6 +149,8 @@ def prepareCommand(app):
         full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
         if app.extraOpts:
             full_cmd += ' ' + app.getExtraOptsFileName()
+        if app.getMetadata:
+            full_cmd += ' summary.py' 
         if app.extraArgs:
             full_cmd += " " + " ".join(app.extraArgs)
 
@@ -278,7 +280,7 @@ def generateJobScripts(app, appendJobScripts):
     # First create the extraOpts files needed 1 per subjob
     for this_job in rjobs:
         logger.debug("RTHandler Making Scripts: %s" % this_job.fqid)
-        this_job.application.constructExtraFiles(this_job)
+        this_job.application.constructExtraFiles(this_job)        
 
     if not job.master and job.subjobs:
         for sj in rjobs:
@@ -290,8 +292,13 @@ def generateJobScripts(app, appendJobScripts):
     scriptArchive = os.path.join(master_job.application.jobScriptArchive.localDir, master_job.application.jobScriptArchive.namePattern)
 
     if appendJobScripts:
-        # Now lets add the Job scripts to this archive
+        # Now lets add the Job scripts to this archive and potentially the extra options to generate the summary.xml
         with tarfile.open(scriptArchive, 'a') as tar_file:
+            if app.getMetadata:
+                summaryScript = "\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"
+                summaryFile = FileBuffer('summary.py', summaryScript)
+                summaryFile.create()
+                tar_file.add('summary.py')
             for this_job in rjobs:
                 this_app = this_job.application
                 wnScript = generateWNScript(prepareCommand(this_app), this_app)
