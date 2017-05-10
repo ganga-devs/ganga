@@ -58,18 +58,6 @@ def addTimestampFile(given_path, fileName='__timestamp__'):
     with open(time_filename, 'a+') as time_file:
         time_file.write(getTimestampContent())
 
-def addSummaryFile(given_path):
-    """
-    This creates a file in this directory given called summary.py which contains the options to write the summary.xml file needed for the metadata.
-    Args:
-        given_path (str): Path which we want to create the timestamp within
-    """
-    fileName = 'summary.py'
-    summary_filename = path.join(given_path, fileName)
-    logger.debug("Constructing: %s" % summary_filename)
-    with open(summary_filename, 'a+') as summary_file:
-        summary_file.write("\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml")
-
 def getGaudiExecInputData(optsfiles, app):
     '''Returns a LHCbDataSet object from a list of options files. The
        optional argument extraopts will decide if the extraopts string inside
