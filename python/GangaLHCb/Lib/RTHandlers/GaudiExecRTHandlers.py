@@ -280,7 +280,7 @@ def generateJobScripts(app, appendJobScripts):
     # First create the extraOpts files needed 1 per subjob
     for this_job in rjobs:
         logger.debug("RTHandler Making Scripts: %s" % this_job.fqid)
-        this_job.application.constructExtraFiles(this_job)        
+        this_job.application.constructExtraFiles(this_job)
 
     if not job.master and job.subjobs:
         for sj in rjobs:

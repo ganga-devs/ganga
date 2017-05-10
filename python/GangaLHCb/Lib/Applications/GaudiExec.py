@@ -479,7 +479,6 @@ class GaudiExec(IPrepareApp):
         """
         return self.envVars
 
-
     def readInputData(self, opts):
         """
         This reads the inputdata from a file and assigns it to the inputdata field of the parent job.
