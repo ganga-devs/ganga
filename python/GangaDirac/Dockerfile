@@ -31,4 +31,4 @@ ENTRYPOINT (. ~/dirac_ui/bashrc && \
            dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I && \
            dirac-proxy-init -g ${vo}_user -M) && \
            . ~/ganga_env/bin/activate && \
-           ganga
+           /bin/bash
