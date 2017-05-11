@@ -1969,7 +1969,8 @@ class Job(GangaObject):
             if not rjobs and not self.subjobs:
                 rjobs = [self]
             elif auto_resubmit:  # get only the failed jobs for auto resubmit
-                rjobs = [s for s in rjobs if s.status in ['failed']]
+                rjobs = [s for s in rjobs
+                         if s.status == 'failed' and s.info.submit_counter <= config['MaxNumResubmits']]
 
             if rjobs:
                 for sjs in rjobs:
