@@ -25,7 +25,7 @@ from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
-from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl, getXMLSummaryScript
+from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from ..Applications.GaudiExecUtils import addTimestampFile
 from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
@@ -91,9 +91,8 @@ def generateWNScript(commandline, app):
     """
     job = app.getJobObject()
     exe_script_name = getScriptName(app)
-    print 'generateWNScript'
 
-    return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline, XMLSUMMARYPARSING=getXMLSummaryScript(),
+    return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline, 
                                                                       OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
                       subdir='jobScript', executable=True)
 

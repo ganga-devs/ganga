@@ -467,7 +467,7 @@ class GaudiExec(IPrepareApp):
 
     def postprocess(self):
         from GangaLHCb.Lib.Applications import XMLPostProcessor
-        XMLPostProcessor.postprocess(self, logger)
+        XMLPostProcessor.GaudiExecPostProcess(self, logger)
 
     def getenv(self, cache_env=False):
         """
