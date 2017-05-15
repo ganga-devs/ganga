@@ -92,7 +92,7 @@ def generateWNScript(commandline, app):
     job = app.getJobObject()
     exe_script_name = getScriptName(app)
 
-    return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline, 
+    return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
                                                                       OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
                       subdir='jobScript', executable=True)
 
@@ -204,7 +204,7 @@ class GaudiExecRTHandler(IRuntimeHandler):
 
         # If we are getting the metadata we need to make sure the summary.xml is added to the output sandbox if not there already.
         if app.getMetadata and not 'summary.xml' in output_sand:
-            output_sand += ['summary.xml', '__parsedxmlsummary__']
+            output_sand += ['summary.xml']
 
         # NB with inputfiles the mechanics of getting the inputfiled to the input of the Localhost backend is taken care of for us
         # We don't have to do anything to get our files when we start running
@@ -393,7 +393,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         # If we are getting the metadata we need to make sure the summary.xml is added to the output sandbox if not there already.
         if app.getMetadata and not 'summary.xml' in outputsandbox:
-            outputsandbox += ['summary.xml', '__parsedxmlsummary__']
+            outputsandbox += ['summary.xml']
 
 
         if not isinstance(app.uploadedInput, DiracFile):
