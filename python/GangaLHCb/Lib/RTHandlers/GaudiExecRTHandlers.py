@@ -25,7 +25,7 @@ from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
-from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
+from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl, getXMLSummaryScript
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from ..Applications.GaudiExecUtils import addTimestampFile
 from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
@@ -91,8 +91,9 @@ def generateWNScript(commandline, app):
     """
     job = app.getJobObject()
     exe_script_name = getScriptName(app)
+    print 'generateWNScript'
 
-    return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline,
+    return FileBuffer(name=exe_script_name, contents=script_generator(gaudiRun_script_template(), COMMAND=commandline, XMLSUMMARYPARSING=getXMLSummaryScript(),
                                                                       OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')),
                       subdir='jobScript', executable=True)
 
@@ -179,6 +180,11 @@ class GaudiExecRTHandler(IRuntimeHandler):
         scriptArchive = os.path.join(app.jobScriptArchive.localDir, app.jobScriptArchive.namePattern)
 
         inputsandbox.append(File(name=scriptArchive))
+
+        if app.getMetadata:
+            logger.info("Adding options to make the summary.xml")
+            inputsandbox.append(FileBuffer('summary.py', "\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"))
+
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
@@ -196,6 +202,10 @@ class GaudiExecRTHandler(IRuntimeHandler):
         # Setup the command which to be run and the input and output
         input_sand = genDataFiles(job)
         output_sand = []
+
+        # If we are getting the metadata we need to make sure the summary.xml is added to the output sandbox if not there already.
+        if app.getMetadata and not 'summary.xml' in output_sand:
+            output_sand += ['summary.xml', '__parsedxmlsummary__']
 
         # NB with inputfiles the mechanics of getting the inputfiled to the input of the Localhost backend is taken care of for us
         # We don't have to do anything to get our files when we start running
@@ -381,6 +391,10 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         """
 
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
+
+        # If we are getting the metadata we need to make sure the summary.xml is added to the output sandbox if not there already.
+        if app.getMetadata and not 'summary.xml' in outputsandbox:
+            outputsandbox += ['summary.xml', '__parsedxmlsummary__']
 
 
         if not isinstance(app.uploadedInput, DiracFile):

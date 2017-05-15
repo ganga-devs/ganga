@@ -143,7 +143,7 @@ class GaudiExec(IPrepareApp):
         })
     _category = 'applications'
     _name = 'GaudiExec'
-    _exportmethods = ['prepare', 'unprepare', 'execCmd', 'readInputData', 'getenv']
+    _exportmethods = ['prepare', 'unprepare', 'execCmd', 'readInputData']
 
     cmake_sandbox_name = 'cmake-input-sandbox.tgz'
     build_target = 'ganga-input-sandbox'
@@ -205,10 +205,6 @@ class GaudiExec(IPrepareApp):
         # file is unspecified, has a space or is a relative path
         self.configure(self)
         logger.info('Preparing %s application.' % getName(self))
-
-	# Make sure the summary.xml file gets downloaded for the metadata
-        if self.getMetadata:
-            self.getJobObject().outputfiles.append(LocalFile('summary.xml'))
 
         this_build_target = self.buildGangaTarget()
 
