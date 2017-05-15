@@ -139,7 +139,7 @@ class GaudiExec(IPrepareApp):
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
-        'envVars':      SimpleItem(defvalue=None, typelist=[None, dict], hidden=1, doc='A dict of the environment variables we want to keep for later'),
+        'envVars':      SimpleItem(defvalue=None, typelist=[None, dict], hidden=1, doc='A dict to store the environment variable "XMLSUMMARYBASEROOT" for use when merging the XML summary'),
         })
     _category = 'applications'
     _name = 'GaudiExec'
