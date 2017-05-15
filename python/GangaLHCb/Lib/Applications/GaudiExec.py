@@ -459,8 +459,8 @@ class GaudiExec(IPrepareApp):
         envDict = {}
         for item in envstdout.split("\n"):
             if len(item.split("="))==2:
-                if item.split("=")[0] == 'XMLSUMMARYBASEROOT'
-                envDict[item.split("=")[0]] = item.split("=")[1]
+                if item.split("=")[0] == 'XMLSUMMARYBASEROOT':
+                    envDict[item.split("=")[0]] = item.split("=")[1]
         self.envVars = envDict
 
         return wantedTargetFile
