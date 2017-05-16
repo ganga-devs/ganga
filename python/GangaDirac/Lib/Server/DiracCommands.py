@@ -66,11 +66,10 @@ def getReplicas(lfns):
     ''' Return  the locations of the replicas of a given LFN in a dict format, SE: location '''
     return dirac.getReplicas(lfns, active=True, preferDisk = True)
 
-
 @diracCommand
-def getAccessURL(lfn,SE):
-    ''' Return the access URL for the given LFN and storage element '''
-    return dirac.getAccessURL(lfn,SE)
+def getAccessURL(lfn, SE, protocol=''):
+    ''' Return the access URL for the given LFN, storage element and protocol '''
+    return dirac.getReplicaAccessUrl(lfn, SE, protocol)
 
 
 @diracCommand

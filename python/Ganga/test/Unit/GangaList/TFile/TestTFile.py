@@ -1,9 +1,9 @@
 import unittest
 
-from Ganga.GPIDev.Base.Proxy import getProxyClass
+from Ganga.GPIDev.Base.Proxy import addProxy
 from . import TFile
 
-TFile = getProxyClass(TFile)
+TFile = addProxy(TFile)
 
 class TestTFile(unittest.TestCase):
 

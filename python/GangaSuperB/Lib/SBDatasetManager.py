@@ -6,7 +6,7 @@ import subprocess
 import sys
 import types
 
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject 
 from Ganga.GPIDev.Schema import *
 from Ganga.Utility.Config import *

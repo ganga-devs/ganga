@@ -19,7 +19,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute, GangaD
 import Ganga.Utility.Config
 from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.GPIDev.Credentials import require_credential
-from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy, DiracProxyInfo
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 config = getConfig('Configuration')
@@ -137,7 +137,7 @@ class DiracFile(IGangaFile):
 
     def _setLFNnamePattern(self, lfn="", namePattern=""):
 
-        if self.defaultSE != "":
+        if hasattr(self, 'defaultSE') and self.defaultSE != "":
             ## TODO REPLACE THIS WITH IN LIST OF VONAMES KNOWN
             # Check for /lhcb/some/path or /gridpp/some/path
             if namePattern.split(os.pathsep)[0] == self.defaultSE \
@@ -322,6 +322,10 @@ class DiracFile(IGangaFile):
         if self.lfn == "":
             self._optionallyUploadLocalFile()
 
+        # check that it has a replica
+        if not self.getReplicas():
+            raise GangaFileError("No replica found for this file!")
+
         # eval again here as datatime not included in dirac_ganga_server
 
         ret = execute('getMetadata("%s")' % self.lfn, cred_req=self.credential_requirements)
@@ -464,10 +468,11 @@ class DiracFile(IGangaFile):
             return LFNs
 
     @require_credential
-    def accessURL(self, thisSE=''):
+    def accessURL(self, thisSE='', protocol=''):
         """
         Attempt to find an accessURL which corresponds to the specified SE. If no SE is specified then
-        return a random one from all the replicas. 
+        return a random one from all the replicas. Also use the specified protocol - if none then use 
+        the default. 
         """
         from GangaDirac.Lib.Backends.DiracUtils import getAccessURLs
         lfns = []
@@ -476,7 +481,7 @@ class DiracFile(IGangaFile):
         else:
             for i in self.subfiles:
                 lfns.append(i.lfn)
-        return getAccessURLs(lfns, thisSE)
+        return getAccessURLs(lfns, thisSE, protocol)
 
     @require_credential
     def internalCopyTo(self, targetPath):
@@ -853,7 +858,7 @@ for f in glob.glob('###NAME_PATTERN###'):
         """
         if configDirac['DiracLFNBase']:
             return configDirac['DiracLFNBase']
-        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], config['user'][0], config['user'])
+        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], DiracProxyInfo(DiracProxy()).username[0], DiracProxyInfo(DiracProxy()).username)
 
 # add DiracFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate DiracFile() objects via config file)

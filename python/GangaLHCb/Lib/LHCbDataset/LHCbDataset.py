@@ -3,7 +3,7 @@
 from copy import deepcopy
 import tempfile
 import fnmatch
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
 from Ganga.GPIDev.Base import GangaObject
@@ -83,7 +83,7 @@ class LHCbDataset(GangaDataset):
                 for this_file in files:
                     self.files.append(deepcopy(this_file))
             elif isType(files, IGangaFile):
-                self.files.append(deepcopy(this_file))
+                self.files.append(deepcopy(files))
             elif isType(files, (list, tuple, GangaList)):
                 new_list = []
                 for this_file in files:
@@ -339,8 +339,8 @@ class LHCbDataset(GangaDataset):
                 sdatasetsnew += """ \"LFN:%s\",""" % f.lfn
                 sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.lfn, dtype_str)
             else:
-                sdatasetsnew += """ \"PFN:%s\",""" % f.namePattern
-                sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (f.namePattern, dtype_str)
+                sdatasetsnew += """ \"%s\",""" % f.accessURL()[0]
+                sdatasetsold += """ \"DATAFILE='%s' %s\",""" % (f.accessURL()[0], dtype_str)
         if sdatasetsold.endswith(","):
             if self.persistency == 'ROOT':
                 sdatasetsnew = sdatasetsnew[:-1] + """\n], clear=True)"""

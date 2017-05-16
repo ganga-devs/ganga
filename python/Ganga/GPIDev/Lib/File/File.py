@@ -143,44 +143,69 @@ class ShareDir(GangaObject):
                                      'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)')})
 
     _category = 'shareddirs'
-    _exportmethods = ['add', 'ls']
+    _exportmethods = ['add', 'ls', 'path']
     _name = "ShareDir"
-#    def _readonly(self):
-#        return True
+    _real_name = ''
 
     def __init__(self, name=None, subdir=os.curdir):
         super(ShareDir, self).__init__()
+
         self._setRegistry(None)
 
-        if not name:
-            name = 'conf-{0}'.format(uuid.uuid4())
-        self._name = name
+        if self._should_init:
 
-        # incrementing then decrementing the shareref counter has the effect of putting the newly
-        # created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
-        # filled with files, then assigned to an application.
-        #a=Job(); s=ShareDir(); a.application.is_prepared=s
-        #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-        # shareref.increase(self.name)
-        # shareref.decrease(self.name)
+            if not name:
+                name = 'conf-{0}'.format(uuid.uuid4())
+            self._real_name = name
+
+    def setSchemaAttribute(self, name, value):
+        """
+        This method intercepts the setter method used in reading in an XML file.
+        This should be regarded as s specialist use case of overloading this method as
+        this class plays fast and lose with the use of a getter for an attribute which is stored in memory.
+        It may be worth reconsidering the use of a better getter method here if possible but unlikely as
+        this would likely involve coding the class with implicit knowledge of it's proxy which is worse.
+        If the Schema properly supported setters to match the getters this would be a much simplified structure.
+
+        Args:
+            name (str): Atribute being set
+            value (unknown): value being assigned to that attribute
+        """
+        if name == "name":
+            self._real_name = value
+        else:
+            # 'name' hidden behind setter here so shouldn't attempt to modify it
+            super(ShareDir, self).setSchemaAttribute(name, value)
 
     def __setattr__(self, name, value):
         """
-        A setattr wrapper which intercepts calls to assign self.name to self._name so the name gettter works
+        A setattr wrapper which intercepts calls to assign self.name to self._real_name so the name gettter works
         Args:
             name (str): Name of the attribute being set
             value (unknown): value being assigned to the attribute
         """
         if name == 'name':
-            self._name = value
+            self._real_name = value
         else:
+            # 'name' hidden behind setter here so shouldn't attempt to modify it
             super(ShareDir, self).__setattr__(name, value)
+
+    def __getattr__(self, name):
+        """
+        A getter wrapper which intercepts bare calls to name and redirects them to _real_name
+        Args:
+            name (str): The attribute which is being looked for
+        """
+        if name == 'name':
+            return self._real_name
+        return super(ShareDir, self).__getattr__(name)
 
     def _getName(self):
         """
         A getter method for the 'name' schema attribute which will trigger the creation of a SharedDir on disk only when information about it is asked
         """
-        share_dir = os.path.join(getSharedPath(), self._name)
+
+        share_dir = os.path.join(getSharedPath(), self._real_name)
         if not os.path.isdir(share_dir):
             logger.debug("Actually creating: %s" % share_dir)
             os.makedirs(share_dir)
@@ -188,7 +213,7 @@ class ShareDir(GangaObject):
             logger.error("ERROR creating path: %s" % share_dir)
             raise GangaException("ShareDir ERROR")
 
-        return self._name
+        return self._real_name
 
     def add(self, input):
         from Ganga.Core.GangaRepository import getRegistry
@@ -213,11 +238,15 @@ class ShareDir(GangaObject):
             else:
                 logger.error('File %s not found' % expandfilename(item.name))
 
+    def path(self):
+        """Get the full path of the ShareDir location"""
+        return os.path.join(getSharedPath(), self.name)
+                
     def ls(self):
         """
         Print the contents of the ShareDir
         """
-        full_shareddir_path = os.path.join(getSharedPath(), self.name)
+        full_shareddir_path = self.path()
         try:
             os.path.isdir(full_shareddir_path)
             cmd = "find '%s'" % (full_shareddir_path)

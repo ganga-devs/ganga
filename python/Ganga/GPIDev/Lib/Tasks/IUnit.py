@@ -77,7 +77,7 @@ class IUnit(GangaObject):
            trf = self._getParent()
            if not trf:
               raise ApplicationConfigurationError(
-                 None, "This unit has not been associated with a transform and so there is no ID available")
+                 "This unit has not been associated with a transform and so there is no ID available")
            self.id = trf.units.index(self)
            
         return self.id

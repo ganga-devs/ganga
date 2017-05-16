@@ -22,7 +22,6 @@ from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.GPIDev.Credentials import require_credential, credential_store, needed_credentials
-from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.Core.GangaThread.WorkerThreads import getQueues
 from Ganga.Core import monitoring_component
@@ -248,6 +247,7 @@ class DiracBase(IBackend):
         such that the monitoring server is used rather than the user server
         Args:
             rjobs (list): This is a list of jobs which are to be auto-resubmitted'''
+
         incomplete = 0
 
         def handleError(x):
@@ -466,10 +466,7 @@ class DiracBase(IBackend):
             if os.path.exists(os.path.join(dirac_file.localDir, os.path.basename(dirac_file.lfn))) and not force:
                 return
             try:
-                if isType(dirac_file, DiracFile):
-                    dirac_file.get(localPath=dirac_file.localDir)
-                else:
-                    dirac_file.get()
+                dirac_file.get()
                 return dirac_file.lfn
             # should really make the get method throw if doesn't suceed. todo
             except (GangaDiracError, GangaFileError) as e:

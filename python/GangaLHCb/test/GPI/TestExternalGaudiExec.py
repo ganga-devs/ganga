@@ -77,6 +77,10 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         from Ganga.GPI import Job, LocalFile, prepareGaudiExec
 
+        import os
+        if os.path.exists(TestExternalGaudiExec.tmpdir_release):
+            os.system("rm -rf %s/*" % TestExternalGaudiExec.tmpdir_release)
+            
         j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
 
         myHelloOpts = path.join(TestExternalGaudiExec.tmpdir_release, 'hello.py')
@@ -103,8 +107,21 @@ class TestExternalGaudiExec(GangaUnitTest):
         """
 
         from Ganga.GPI import jobs
+        from Ganga.GPI import Job, LocalFile, prepareGaudiExec
 
-        j = jobs[-1]
+        import os
+        if os.path.exists(TestExternalGaudiExec.tmpdir_release):
+            os.system("rm -rf %s/*" % TestExternalGaudiExec.tmpdir_release)
+
+        j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
+
+        myOpts = path.join(TestExternalGaudiExec.tmpdir_release, 'testfile.py')
+
+        FileBuffer('testfile.py', 'print("ThisIsATest")').create(myOpts)
+
+        j.application.options=[LocalFile(myOpts)]
+        
+        j.submit()
 
         run_until_completed(j)
 
@@ -114,11 +131,11 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         assert path.isfile(outputfile)
 
-        assert 'hello.py' in open(outputfile).read()
+        assert 'testfile.py' in open(outputfile).read()
 
         assert 'data.py' in open(outputfile).read()
 
-        assert 'Hello' in open(outputfile).read()
+        assert 'ThisIsATest' in open(outputfile).read()
 
         assert j.application.platform in open(outputfile).read()
 

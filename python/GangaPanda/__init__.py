@@ -58,9 +58,9 @@ def loadPlugins(c):
         import commands
         (s,o) = commands.getstatusoutput('curl --version')
         if (s):
-            raise ApplicationConfigurationError(None,"Couldn't load Panda Client: ensure 'curl' is available")
+            raise ApplicationConfigurationError("Couldn't load Panda Client: ensure 'curl' is available")
         else:
-            raise ApplicationConfigurationError(None,"Couldn't load Panda Client")
+            raise ApplicationConfigurationError("Couldn't load Panda Client")
     import Lib.Athena
     import Lib.Executable
     import Lib.ProdTrans

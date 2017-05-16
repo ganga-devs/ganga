@@ -123,7 +123,6 @@ class IBackend(GangaObject):
         """
         from Ganga.Utility.logging import log_user_exception
 
-
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
         assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
@@ -352,7 +351,7 @@ class IBackend(GangaObject):
                         r = False
                         problems.append(s.id)
             if not r:
-                from Ganga.Core import IncompleteKillError
+                from Ganga.Core.exceptions import IncompleteKillError
                 raise IncompleteKillError(
                     'subjobs %s were not killed' % problems)
         else:

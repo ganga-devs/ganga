@@ -8,7 +8,7 @@ from Ganga.Utility.files import fullpath
 from Ganga.Utility.util import unique
 import Ganga.Utility.logging
 import Ganga.Utility.Config
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 import CMTUtils
 import cmakeUtils
 import subprocess

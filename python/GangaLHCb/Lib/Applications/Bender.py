@@ -10,7 +10,7 @@ from Ganga.GPIDev.Schema.Schema import FileItem, SimpleItem
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.File import File
 from Ganga.Utility.util import unique
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
@@ -175,15 +175,15 @@ FileCatalog().Catalogs=[]\n""" % modulename
         if isType(self.module, str):
             self.module = File(self.module)
         if self.module.name == None:
-            raise ApplicationConfigurationError(None, "Application Module not requested")
+            raise ApplicationConfigurationError("Application Module not requested")
         elif self.module.name == "":
-            raise ApplicationConfigurationError(None, "Application Module not requested")
+            raise ApplicationConfigurationError("Application Module not requested")
         else:
             # Always check we've been given a FILE!
             self.module.name = fullpath(self.module.name)
             if not os.path.isfile(self.module.name):
                 msg = 'Module file %s not found.' % self.module.name
-                raise ApplicationConfigurationError(None, msg)
+                raise ApplicationConfigurationError(msg)
 
     def postprocess(self):
         XMLPostProcessor.postprocess(self, logger)

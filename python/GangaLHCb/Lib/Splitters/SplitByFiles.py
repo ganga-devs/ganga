@@ -159,7 +159,9 @@ class SplitByFiles(GaudiInputDataSplitter):
             self.XMLCatalogueSlice = None
 
         if stripProxy(job.backend).__module__.find('Dirac') > 0:
-
+            bannedSites = []
+            if 'BannedSites' in job.backend.settings:
+                bannedSites = job.backend.settings['BannedSites']
             logger.debug("found Dirac backend")
 
             if self.filesPerJob > 100:
@@ -177,7 +179,8 @@ class SplitByFiles(GaudiInputDataSplitter):
                 outdata = OfflineGangaDiracSplitter(indata,
                                                     self.filesPerJob,
                                                     self.maxFiles,
-                                                    self.ignoremissing)
+                                                    self.ignoremissing,
+                                                    bannedSites)
             elif self.splitterBackend == "splitInputDataBySize":
                 from GangaLHCb.Lib.Splitters.LHCbSplitterUtils import DiracSizeSplitter
                 outdata = DiracSizeSplitter(indata,
@@ -195,6 +198,14 @@ class SplitByFiles(GaudiInputDataSplitter):
                 raise SplitterError("Backend algorithm not selected!")
 
             logger.debug("outdata: %s " % str(outdata))
+            return outdata
+        #If we are not running the jobs on Dirac but are using DiracFiles we want some of the same checks
+        elif all(isinstance(this_file, DiracFile) for this_file in indata):
+            from GangaDirac.Lib.Splitters.OfflineGangaDiracSplitter import OfflineGangaDiracSplitter
+            outdata = OfflineGangaDiracSplitter(indata,
+                                              self.filesPerJob,
+                                              self.maxFiles,
+                                              self.ignoremissing)
             return outdata
         else:
             logger.debug("Calling Parent Splitter as not on Dirac")

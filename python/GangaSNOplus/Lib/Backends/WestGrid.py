@@ -3,7 +3,7 @@ import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 from Ganga.Lib.Batch import Batch
 
 import Ganga.Utility.Config

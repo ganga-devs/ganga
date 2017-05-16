@@ -24,7 +24,7 @@ class StandardJobConfig(object):
 
     """
 
-    def __init__(self, exe=None, inputbox=None, args=None, outputbox=None, env=None):
+    def __init__(self, exe=None, inputbox=None, args=None, outputbox=None, env=None, sharedarea=None):
         """
         exe - executable string to be run on the worker node or a File object to be shipped as executable script to the worker node
         args - list of strings which are passed as arguments to the executable string or File objects which are automatically added to the sandbox
@@ -40,12 +40,15 @@ class StandardJobConfig(object):
             exe = ''
         if inputbox is None:
             inputbox = []
+        if sharedarea is None:
+            sharedarea = []
         if args is None:
             args = []
         if outputbox is None:
             outputbox = []
         self.exe = exe
         self.inputbox = inputbox[:]
+        self.sharedarea = sharedarea[:]
         self.args = args
         self.outputbox = outputbox[:]
         self.env = env
@@ -62,6 +65,7 @@ class StandardJobConfig(object):
         config_str += " Arg: '%s'" % str(self.getArgStrings())
         config_str += " Input Sandbox files: '%s'" % str(self.getSandboxFiles())
         config_str += " Output files: '%s'" % str(self.getOutputSandboxFiles())
+        config_str += " Shared area: '%s'" % str(self.sharedarea)
         return config_str
 
     def getSandboxFiles(self):
@@ -82,6 +86,16 @@ class StandardJobConfig(object):
         '''Get a list of strings which correspond to the arguments to the executable on the worker node.'''
         return self.__args_strings
 
+    def getSharedFiles(self):
+        """Get a list of all files in registered shared areas"""
+        sharedfiles = []
+        for area in self.sharedarea:
+            for root, dirs, files in os.walk(area):
+                for name in files:
+                    logger.debug('Adding shared file %s' % name)
+                    sharedfiles.append(os.path.join(root, name))
+        return sharedfiles
+    
     def processValues(self):
         '''Process original exe,args and inputbox values and extract strings suitable for the further processing.
         If the exe property is a File then this method will check if it has executable attributes.
