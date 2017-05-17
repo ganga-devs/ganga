@@ -1966,7 +1966,7 @@ class Job(GangaObject):
                 rjobs = [self]
             elif auto_resubmit:  # get only the failed jobs for auto resubmit
                 rjobs = [s for s in rjobs
-                         if s.status == 'failed' and s.info.submit_counter <= config['MaxNumResubmits']]
+                         if s.status == 'failed' and s.info.submit_counter <= getConfig("PollThread")['MaxNumResubmits']]
 
             if rjobs:
                 for sjs in rjobs:
