@@ -2,12 +2,22 @@
 
 # Vastly simplified script to unpack and run an Athena job on local resources
 
+# make sure some output files are present just in case
+echo "Create output files to keep Condor happy..."
+touch  output_location
+touch output_guids
+touch output_data
+touch stats.pickle
+
 # store env variables that get stomped on by the setup below
 MY_ATHENA_OPTIONS=$ATHENA_OPTIONS
 MY_OUTPUT_LOCATION=$OUTPUT_LOCATION
 
 # setup Atlas enviroenment
 shopt -s expand_aliases
+echo "------>  Setting up atlas environment"
+# note: need to set this env variable as it's used in subsequent scripts
+export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
 source $ATLAS_LOCAL_ROOT_BASE/user/atlasLocalSetup.sh
 
 # setup the base athena release
@@ -32,8 +42,8 @@ make
 source x86_64-slc6-gcc49-opt/setup.sh
 cd ../
 
-################################################
-# create the input.py file
+# create the input.py file to load in the input data
+echo "------>  Creating the pre/post JO files..."
 cat - >preJobO.py <<EOF
 ic = []
 if os.path.exists('input_files'):
@@ -125,7 +135,6 @@ EOF
 
 sed 's/EventSelector/ServiceMgr.EventSelector/' input.py > input.py.new
 mv input.py.new input.py
-
 
 
 # Running Athena
