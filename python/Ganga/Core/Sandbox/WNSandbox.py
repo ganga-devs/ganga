@@ -23,7 +23,7 @@ def getPackedInputSandbox(tarpath, dest_dir='.'):
     """
 
     with closing(tarfile.open(tarpath, "r:*")) as tf:
-        tf.extractAll()
+        tf.extractall(dest_dir)
 
 
 def createOutputSandbox(output_patterns, filter, dest_dir):
