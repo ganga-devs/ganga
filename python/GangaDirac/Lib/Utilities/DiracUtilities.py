@@ -217,8 +217,8 @@ def execute(command,
                                   update_env=update_env)
 
     # If the time 
-    if returnable == 'Command timed out!':
-        raise GangaDiracError("DIRAC command timed out")
+#    if returnable == 'Command timed out!':
+    raise GangaDiracError("DIRAC command timed out")
 
     # TODO we would like some way of working out if the code has been executed correctly
     # Most commands will be OK now that we've added the check for the valid proxy before executing commands here
