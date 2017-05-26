@@ -24,6 +24,7 @@ from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Objects import _getName
 from Ganga.Utility.files import expandfilename
+from Ganga.Core.exceptions import GangaException
 
 import Ganga.Utility.Config
 
