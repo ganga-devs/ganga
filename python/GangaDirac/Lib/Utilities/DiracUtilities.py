@@ -26,6 +26,14 @@ Dirac_Proxy_Lock = threading.Lock()
 
 class GangaDiracError(GangaException):
     """ Exception type which is thrown from problems executing a command against DIRAC """
+    def __init__(self, message, job_id = None):
+        self.job_id = job_id
+        self.message = message
+    def __str__(self):
+        if self.job_id:
+            return "GangaDiracError, Dirac ID %s : %s" % (self.job_id, self.message)
+        else:
+            return "GangaDiracError: %s" % (self.message)
 
 
 def getDiracEnv():
