@@ -224,7 +224,7 @@ def print_config_file():
                           (o, sect.options[o].default_value) + '\n')
 
 
-def config_file_as_text():
+def config_file_as_text(interactive):
 
     text = ''
 
@@ -254,8 +254,8 @@ def config_file_as_text():
                     text += INDENT + "Examples:\n"
                     for e in examples.splitlines():
                         text += INDENT + "  " + e.strip() + "\n"
-                if sect.getEffectiveLevel(o) == 0:
-                    value = sect[o]
+                if hasattr(sect.options[o], 'gangarc_value'):
+                    value = sect.options[o].gangarc_value
                     def_value = sect.options[o].default_value
                     if isinstance(value, str):
                         try:
@@ -266,10 +266,20 @@ def config_file_as_text():
                                 def_value = "\n# ".join(def_lines)
                         except AttributeError as err:
                             pass
-                    text += '#%s = %s\n' % (o, def_value)
-                    text += '%s = %s\n\n' % (o, value)
+                    if interactive:
+                        yes = raw_input('The config option %s %s with value %s in your old .gangarc is not the default. Do you want to copy it to the new .gangarc file (y/[n]) ?\n' % (sect.name, o, value))
+                    else:
+                        yes = 'y'
+                    if yes.lower() in ['y']:
+                        text += '#%s = %s\n' % (o, def_value)
+                        text += '%s = %s\n\n' % (o, value)
+                    else:
+                        text += '#%s = %s\n' % (o, def_value)
                 else:
-                    value = sect.getEffectiveOption(o)
+                    if hasattr(sect.options[o], 'default_value'):
+                        value = sect.options[o].default_value
+                    else:
+                        value = sect.getEffectiveOption(o)
                     if isinstance(value, str):
                         lines = value.splitlines()
                         if len(lines) > 1:

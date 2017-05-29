@@ -159,7 +159,9 @@ class SplitByFiles(GaudiInputDataSplitter):
             self.XMLCatalogueSlice = None
 
         if stripProxy(job.backend).__module__.find('Dirac') > 0:
-
+            bannedSites = []
+            if 'BannedSites' in job.backend.settings:
+                bannedSites = job.backend.settings['BannedSites']
             logger.debug("found Dirac backend")
 
             if self.filesPerJob > 100:
@@ -177,7 +179,8 @@ class SplitByFiles(GaudiInputDataSplitter):
                 outdata = OfflineGangaDiracSplitter(indata,
                                                     self.filesPerJob,
                                                     self.maxFiles,
-                                                    self.ignoremissing)
+                                                    self.ignoremissing,
+                                                    bannedSites)
             elif self.splitterBackend == "splitInputDataBySize":
                 from GangaLHCb.Lib.Splitters.LHCbSplitterUtils import DiracSizeSplitter
                 outdata = DiracSizeSplitter(indata,

@@ -8,10 +8,10 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import TypeMismatchError, isType, stripProxy, getName
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.Utility.util import containsGangaObjects
+from Ganga.Core.exceptions import GangaException
 
-class SplittingError(Exception):
-
-    def __init__(self, x): Exception.__init__(self, x)
+class SplittingError(GangaException):
+    def __init__(self, x): GangaException.__init__(self, x)
 
 
 class ISplitter(GangaObject):

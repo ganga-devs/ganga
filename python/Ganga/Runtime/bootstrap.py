@@ -392,7 +392,7 @@ under certain conditions; type license() for details.
 
 
     @staticmethod
-    def generate_config_file(config_file):
+    def generate_config_file(config_file, interactive):
         from Ganga.GPIDev.Lib.Config.Config import config_file_as_text
         from Ganga.Utility.logging import getLogger
         logger = getLogger()
@@ -436,7 +436,7 @@ under certain conditions; type license() for details.
 
         with open(os.path.join(os.path.dirname(Ganga.Runtime.__file__), 'HEAD_CONFIG.INI'), 'r') as config_head_file:
             new_config += config_head_file.read()
-        new_config += config_file_as_text()
+        new_config += config_file_as_text(interactive)
         new_config = new_config.replace('Ganga-SVN', new_version_format_to_old(_gangaVersion))  #Add in Ganga-x-y-z format so that it is backward compatible.
         with open(config_file, 'w') as new_config_file:
             new_config_file.write(new_config)
@@ -519,7 +519,7 @@ under certain conditions; type license() for details.
             logger = getLogger('ConfigUpdater')
             logger.info('re-reading in old config for updating...')
             load_user_config(specified_config, {})
-            self.generate_config_file(specified_config)
+            self.generate_config_file(specified_config, interactive)
             sys.exit(0)
         if not os.path.exists(specified_config) \
                 and not os.path.exists(default_config):
@@ -531,7 +531,7 @@ under certain conditions; type license() for details.
             else:
                 yes = 'y'
             if yes.lower() in ['', 'y']:
-                self.generate_config_file(default_config)
+                self.generate_config_file(default_config, interactive)
                 if interactive:
                     raw_input('Press <Enter> to continue.\n')
         elif self.new_version():
@@ -548,7 +548,7 @@ under certain conditions; type license() for details.
                 logger.info('Your ganga config file will be updated.')
                 logger.info('re-reading in old config for updating...')
                 load_user_config(specified_config, {})
-                self.generate_config_file(specified_config)
+                self.generate_config_file(specified_config, interactive)
 
                 # config file generation overwrites user values so we need to reapply the cmd line options to these user settings
                 # e.g. set -o[Configuration]gangadir=/home/mws/mygangadir and the user value gets reset to the .gangarc value
