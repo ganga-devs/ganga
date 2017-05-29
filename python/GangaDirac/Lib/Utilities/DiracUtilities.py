@@ -30,7 +30,6 @@ class GangaDiracError(GangaException):
         GangaException.__init__(self, message)
         self.dirac_id = dirac_id
         self.job_id = job_id
-        self.message = message
     def __str__(self):
         if self.job_id and self.dirac_id:
             return "GangaDiracError, Job %s with Dirac ID %s : %s" % (self.job_id, self.dirac_id, self.message)
