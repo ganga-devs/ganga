@@ -263,7 +263,7 @@ class Schema(object):
                 config = Config.getConfig(def_name)
 
             if is_finalized and not config.hasModified and stored_attr_key in _found_attrs:
-                    defvalue = _found_attrs[stored_attr_key]
+                defvalue = _found_attrs[stored_attr_key]
             else:
                 if is_finalized:
                     if stored_option_key in _stored_options and not config.hasModified:
@@ -289,6 +289,10 @@ class Schema(object):
         if useDefVal:
             # hidden, protected and sequence values are not represented in config
             defvalue = item['defvalue']
+            from Ganga.GPIDev.Base.Proxy import isProxy
+            if isProxy(defvalue):
+                raise GangaException("(2)Proxy found where is shouldn't be in the Config" % stored_attr_key)
+            ## Just in case a developer puts the proxied object into the default value!
             _found_attrs[stored_attr_key] = defvalue
 
         # in the checking mode, use the provided value instead
