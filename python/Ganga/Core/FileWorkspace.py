@@ -18,6 +18,7 @@ import time
 
 from Ganga.Utility.files import expandfilename, chmod_executable
 from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.Core.exceptions import GangaTypeError
 
 logger = getLogger(modulename=1)
 
@@ -99,7 +100,7 @@ class FileWorkspace(object):
         from Ganga.GPIDev.Lib.File import FileBuffer
 
         if not isType(fileobj, FileBuffer):
-            raise TypeError('Usage of tuples is not allowed, use FileBuffer instead')
+            raise GangaTypeError('Usage of tuples is not allowed, use FileBuffer instead')
 
         # output file name
         # Added a subdir to files, (see Ganga/GPIDev/Lib/File/File.py) This allows

@@ -13,7 +13,7 @@ from Ganga.Utility.logic import implies
 
 import Ganga.Utility.Config
 
-from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError, GangaException
+from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError, GangaException, GangaTypeError
 
 from Ganga.Utility.Plugin import allPlugins
 
@@ -455,7 +455,7 @@ class Item(object):
             # find intersection
             forbidden = [k for k in forced if k in kwds]
             if len(forbidden) > 0:
-                raise TypeError('%s received forbidden (forced) keyword arguments %s' % (self.__class__, forbidden))
+                raise GangaTypeError('%s received forbidden (forced) keyword arguments %s' % (self.__class__, forbidden))
             self._meta.update(forced)
 
         self._meta.update(kwds)

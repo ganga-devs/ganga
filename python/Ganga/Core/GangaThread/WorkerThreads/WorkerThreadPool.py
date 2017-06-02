@@ -2,7 +2,7 @@
 import Queue
 import traceback
 import collections
-from Ganga.Core.exceptions import GangaException
+from Ganga.Core.exceptions import GangaException, GangaTypeError
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Utility.execute import execute
 from Ganga.Utility.logging import getLogger
@@ -205,7 +205,7 @@ class WorkerThreadPool(object):
 
     def map(self, function, *iterables):
         if not isinstance(function, collections.Callable):
-            raise TypeError('must be a function')
+            raise GangaTypeError('must be a function')
         if self.isfrozen() is True:
             logger.error("Cannot map a Function as Queue is frozen!")
         for args in zip(*iterables):

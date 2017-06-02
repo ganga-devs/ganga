@@ -502,7 +502,7 @@ class JobRegistry_Monitor(GangaThread):
         self.makeUpdateJobStatusFunction()
 
         # Add credential checking to monitoring loop
-        for afsToken in credential_store.get_all_matching_type(AfsToken):
+        for afsToken in credential_store.get_all_matching_type(AfsToken()):
             log.debug("Setting callback hook for %s" % afsToken.location)
             self.setCallbackHook(self.makeCredCheckJobInsertor(afsToken), {}, True, timeout=config['creds_poll_rate'])
 

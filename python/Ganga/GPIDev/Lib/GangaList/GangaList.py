@@ -1,4 +1,4 @@
-from Ganga.Core.exceptions import GangaException
+from Ganga.Core.exceptions import GangaException, GangaTypeError
 from Ganga.GPIDev.Base.Objects import GangaObject, Node
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError, getName
@@ -278,7 +278,7 @@ class GangaList(GangaObject):
     def __add__(self, obj_list):
         # Savanah 32342
         if not self.is_list(obj_list):
-            raise TypeError('Type %s can not be concatinated to a GangaList' % type(obj_list))
+            raise GangaTypeError('Type %s can not be concatinated to a GangaList' % type(obj_list))
 
         return makeGangaList(self._list.__add__(self.strip_proxy_list(obj_list, True)), preparable=self._is_preparable)
 
