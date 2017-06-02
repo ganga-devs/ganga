@@ -92,12 +92,9 @@ def test_submit_monitor(gpi):
         ([], [])  # Once for the bulk monitoring call
     ]
 
-    # This is called once from LCG master_updateMonitoringInformation and once from LCG updateMonitoringInformation
-    # This does not use the multi-threaded code in the base class as it overloads both methods here.
-    # May want to add multi-threading support to LCG monitoring or update it to share the monitring code used by Local/Dirac/Batch
     with patch('Ganga.Lib.LCG.Grid.status', side_effect=status_results) as status:
         stripProxy(j).backend.master_updateMonitoringInformation([stripProxy(j)])
-        assert status.call_count == 2
+        assert status.call_count == 1
 
     with patch('Ganga.Lib.LCG.Grid.cancel', return_value=True):
         j.kill()
