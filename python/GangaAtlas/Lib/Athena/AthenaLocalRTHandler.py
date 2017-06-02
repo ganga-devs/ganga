@@ -152,12 +152,12 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             elif job.outputdata.location=='' and job.outputdata._name=='DQ2OutputDataset':
                 output_location = ''
             elif job.outputdata.location:
-                output_location = expandfilename(job.outputdata.location)
+                output_location = expandfilename(job.outputdata.location, force=True)
             else:
                 try:
                     output_location=config['LocalOutputLocation']
                     if job.outputdata:
-                        job.outputdata.location = expandfilename(output_location)
+                        job.outputdata.location = expandfilename(output_location, force=True)
                 except ConfigError:
                     logger.warning('No default output location specified in the configuration.')
         else:
@@ -172,7 +172,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             jid = "%d" % job.id
 
         if output_location and job.outputdata and job.outputdata._name!='DQ2OutputDataset':
-
             if job._getRoot().subjobs:
                 if config['NoSubDirsAtAllForLocalOutput']:
                     output_location = output_location
@@ -266,8 +265,12 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             inputbox += [ FileBuffer('output_files','\n'.join(job.outputdata.outputdata)+'\n') ]
         elif job.outputdata and not job.outputdata.outputdata:
             raise ApplicationConfigurationError('j.outputdata.outputdata is empty - Please specify output filename(s).')
-   
-        exe = os.path.join(os.path.dirname(__file__),'run-athena-local.sh')
+
+        if job.application.useCMake:
+            exe = os.path.join(os.path.dirname(__file__), 'run-athena-new.sh')
+        else:
+            exe = os.path.join(os.path.dirname(__file__), 'run-athena-local.sh')
+
         outputbox = jobmasterconfig.outputbox
         environment = jobmasterconfig.env.copy()
 
@@ -422,6 +425,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
         else:
             environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
+
+        # can get stomped over by athena setup so rename
+        environment['GANGA_ATHENA_OPTIONS'] = environment['ATHENA_OPTIONS']
 
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
@@ -661,7 +667,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         else:
             environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
 
-        exe = os.path.join(os.path.dirname(__file__), 'run-athena-local.sh')
+        if job.application.useCMake:
+            exe = os.path.join(os.path.dirname(__file__), 'run-athena-new.sh')
+        else:
+            exe = os.path.join(os.path.dirname(__file__), 'run-athena-local.sh')
 
 #       output sandbox
         outputbox = [ ]
@@ -685,6 +694,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             environment['GANGA_LOG_DEBUG'] = '0'
         else:
             environment['GANGA_LOG_DEBUG'] = '1'
+
+        # can get stomped over by athena setup so rename
+        environment['GANGA_ATHENA_OPTIONS'] = environment['ATHENA_OPTIONS']
 
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
