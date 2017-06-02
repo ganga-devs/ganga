@@ -212,7 +212,7 @@ class ConfigOption(object):
     The configuration option may also define the session_value and default_value. The value property gives the effective value.
     """
 
-    __slots__ = ('name', 'hidden', 'cfile', 'examples', 'filter', 'typelist', 'hasModified', 'default_value', 'docstring', 'type', 'user_value', 'session_value')
+    __slots__ = ('name', 'hidden', 'cfile', 'examples', 'filter', 'typelist', 'hasModified', 'default_value', 'docstring', 'type', 'user_value', 'session_value', 'gangarc_value')
 
     def __init__(self, name):
         self.name = name
