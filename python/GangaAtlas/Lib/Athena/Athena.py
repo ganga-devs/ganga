@@ -375,6 +375,7 @@ class Athena(IPrepareApp):
                  'useNoDebugLogs'         : SimpleItem(defvalue = False, doc='Use debug print-out in logfiles of Local/Batch/CREAM/LCG backend'),
                  'useNewTRF'              : SimpleItem(defvalue = True, doc='Use the original filename with the attempt number for input in --trf when there is only one input, which follows the globbing scheme of new transformation framework'),
                  'useNoAthenaSetup'       : SimpleItem(defvalue = False, doc='Use No Athena setup to allow e.g. free ROOT setup'),
+                 'useCMake'            : SimpleItem(defvalue = False, doc='Use CMake when packing/running the job'),
                  })
                      
     _category = 'applications'
@@ -1154,7 +1155,11 @@ class Athena(IPrepareApp):
             maxFileSize = config['EXE_MAXFILESIZE']
             archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose, self.athena_compile )
         else:
-            archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages, config['dereferenceSymLinks'])
+            if AthenaUtils.useCMake():
+                self.useCMake = True
+                archiveName,archiveFullName = AthenaUtils.archiveWithCpack(True,tmpDir,True)
+
+            archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages, config['dereferenceSymLinks'], archiveName=archiveName)
         logger.info('Creating %s ...', archiveFullName )
 
         # Add InstallArea

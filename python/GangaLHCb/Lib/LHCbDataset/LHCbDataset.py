@@ -15,7 +15,6 @@ from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -96,7 +95,7 @@ class LHCbDataset(GangaDataset):
                     new_list.append(new_file)
                 self.files.extend(new_list)
             elif type(files) is str:
-                self.files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+                self.files.append(string_datafile_shortcut_lhcb(files, None), False)
             else:
                 raise GangaException("Unknown object passed to LHCbDataset constructor!")
 
