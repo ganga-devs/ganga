@@ -4,7 +4,7 @@
 # $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
 ##########################################################################
 
-from Ganga.Core.exceptions import IncompleteJobSubmissionError
+from Ganga.Core.exceptions import GangaKeyError, IncompleteJobSubmissionError
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
@@ -155,10 +155,18 @@ class IBackend(GangaObject):
 
             for sc, sj in zip(subjobconfigs, rjobs):
 
-                fqid = sj.getFQID('.')
                 b = sj.backend
+
+                # Must check for credentials here as we cannot handle missing credentials on Queues by design!
+                if hasattr(b, 'credential_requirements') and b.credential_requirements is not None:
+                    from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+                    try:
+                        cred = credential_store[b.credential_requirements]
+                    except GangaKeyError:
+                        credential_store.create(b.credential_requirements)
+
+                fqid = sj.getFQID('.')
                 # FIXME would be nice to move this to the internal threads not user ones
-                #from Ganga.GPIDev.Base.Proxy import stripProxy
                 getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
 
             def subjob_status_check(rjobs):
