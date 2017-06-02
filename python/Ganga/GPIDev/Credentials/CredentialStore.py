@@ -83,6 +83,11 @@ class CredentialStore(GangaObject, collections.Mapping):
             The newly created ICredentialInfo object
         """
 
+        try:
+            assert isinstance(query, ICredentialRequirement)
+        except AssertionError:
+            raise CredentialsError("Object: '%s' is NOT an ICredentialRequirement instance" % str(query))
+
         cred = query.info_class(query, check_file=check_file, create=create)
         self.credentials.add(cred)
         return cred
