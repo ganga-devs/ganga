@@ -169,7 +169,7 @@ class WorkerThreadPool(object):
         if not isinstance(function, collections.Callable):
             logger.error('Only a python callable object may be added to the queue using the add_function() method')
             return
-        if self._frozen is True:
+        if self.isfrozen() is True:
             if not self._shutdown:
                 logger.warning("Cannot Add Process as Queue is frozen!")
             return
@@ -191,7 +191,7 @@ class WorkerThreadPool(object):
         if not isinstance(command, str):
             logger.error("Input command must be of type 'string'")
             return
-        if self._frozen is True:
+        if self.isfrozen() is True:
             if self._shutdown:
                 logger.warning("Cannot Add Process as Queue is frozen!")
             return
@@ -206,7 +206,7 @@ class WorkerThreadPool(object):
     def map(self, function, *iterables):
         if not isinstance(function, collections.Callable):
             raise TypeError('must be a function')
-        if self._frozen is True:
+        if self.isfrozen() is True:
             logger.error("Cannot map a Function as Queue is frozen!")
         for args in zip(*iterables):
             self.__queue.put(QueueElement(priority=5,
@@ -239,6 +239,15 @@ class WorkerThreadPool(object):
             name_str (str): String to be used in the starts_with comparison of the worker_threads
         """
         return [w for w in self.__worker_threads if w.gangaName.startswith(name_str)]
+
+    def isfrozen(self):
+        return self._frozen
+
+    def freeze(self):
+        self._frozen = True
+
+    def unfreeze(self):
+        self._frozen = False
 
     def _stop_worker_threads(self, shutdown=False):
         self._shutdown = shutdown
