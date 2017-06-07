@@ -149,6 +149,8 @@ def prepareCommand(app):
         full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
         if app.extraOpts:
             full_cmd += ' ' + app.getExtraOptsFileName()
+        if app.getMetadata:
+            full_cmd += ' summary.py' 
         if app.extraArgs:
             full_cmd += " " + " ".join(app.extraArgs)
 
@@ -177,6 +179,11 @@ class GaudiExecRTHandler(IRuntimeHandler):
         scriptArchive = os.path.join(app.jobScriptArchive.localDir, app.jobScriptArchive.namePattern)
 
         inputsandbox.append(File(name=scriptArchive))
+
+        if app.getMetadata:
+            logger.info("Adding options to make the summary.xml")
+            inputsandbox.append(FileBuffer('summary.py', "\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"))
+
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
@@ -194,6 +201,10 @@ class GaudiExecRTHandler(IRuntimeHandler):
         # Setup the command which to be run and the input and output
         input_sand = genDataFiles(job)
         output_sand = []
+
+        # If we are getting the metadata we need to make sure the summary.xml is added to the output sandbox if not there already.
+        if app.getMetadata and not 'summary.xml' in output_sand:
+            output_sand += ['summary.xml']
 
         # NB with inputfiles the mechanics of getting the inputfiled to the input of the Localhost backend is taken care of for us
         # We don't have to do anything to get our files when we start running
@@ -290,8 +301,13 @@ def generateJobScripts(app, appendJobScripts):
     scriptArchive = os.path.join(master_job.application.jobScriptArchive.localDir, master_job.application.jobScriptArchive.namePattern)
 
     if appendJobScripts:
-        # Now lets add the Job scripts to this archive
+        # Now lets add the Job scripts to this archive and potentially the extra options to generate the summary.xml
         with tarfile.open(scriptArchive, 'a') as tar_file:
+            if app.getMetadata:
+                summaryScript = "\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"
+                summaryFile = FileBuffer('summary.py', summaryScript)
+                summaryFile.create()
+                tar_file.add('summary.py')
             for this_job in rjobs:
                 this_app = this_job.application
                 wnScript = generateWNScript(prepareCommand(this_app), this_app)
@@ -374,6 +390,10 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         """
 
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
+
+        # If we are getting the metadata we need to make sure the summary.xml is added to the output sandbox if not there already.
+        if app.getMetadata and not 'summary.xml' in outputsandbox:
+            outputsandbox += ['summary.xml']
 
 
         if not isinstance(app.uploadedInput, DiracFile):
