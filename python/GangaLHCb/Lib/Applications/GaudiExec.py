@@ -354,27 +354,21 @@ class GaudiExec(IPrepareApp):
         dir_name = self.directory
         return (None, None)
 
-
-    def getOptsFiles(self):
+def getOptsFiles(self):
         """
         This function returns a sanitized absolute path to the self.options file from user input
         """
-        if self.options:
-            for this_opt in self.options:
-                if isinstance(this_opt, LocalFile):
-                    ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
-                    full_path = path.join(this_opt.localDir, this_opt.namePattern)
-                    if not path.exists(full_path):
-                        raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
-                elif isinstance(this_opt, DiracFile):
-                    pass
-                else:
-                    logger.error("opts: %s" % self.options)
-                    raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
-            return self.options
-        else:
-            raise ApplicationConfigurationError("No Opts File has been specified, please provide one!")
-
+        for this_opt in self.options:
+            if isinstance(this_opt, LocalFile):
+                ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
+                full_path = path.join(this_opt.localDir, this_opt.namePattern)
+                if not path.exists(full_path):
+                    raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
+            elif isinstance(this_opt, DiracFile):
+                pass
+            else:
+                logger.error("opts: %s" % self.options)
+                raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
 
     def getEnvScript(self):
         """
