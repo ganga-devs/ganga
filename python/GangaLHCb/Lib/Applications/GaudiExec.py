@@ -49,7 +49,6 @@ def gaudiExecBuildLock(f):
 # Global lock for all builds
 gaudiExecBuildLock.globalBuildLock = threading.Lock()
 
-
 class GaudiExec(IPrepareApp):
     """
 
@@ -123,6 +122,17 @@ class GaudiExec(IPrepareApp):
     Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace with 'execfile'
     The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files before executing this one.
 
+    =================
+    Get job metadata:
+    =================
+
+    To get the Gaudi metadata from the job set the option 'getMatadata' to True - the default is false.
+
+    j.application.getMetadata = True
+
+    This will add some options to running the job to create a summary.xml file which is downloaded in the output sandbox and parsed by ganga. Ganga will also
+    merge the summary.xml files using the Gaudi XML merging script for each subjob to create the metadata for the whole job.
+
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
@@ -134,11 +144,13 @@ class GaudiExec(IPrepareApp):
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
         'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
+        'getMetadata':  SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
 
         # Prepared job object
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
+        'envVars':      SimpleItem(defvalue=None, typelist=[None, dict], hidden=1, doc='A dict to store the environment variable "XMLSUMMARYBASEROOT" for use when merging the XML summary'),
         })
     _category = 'applications'
     _name = 'GaudiExec'
@@ -454,8 +466,27 @@ class GaudiExec(IPrepareApp):
             raise GangaException("Wanted Target File: %s NOT found" % wantedTargetFile)
 
         logger.info("Built %s" % wantedTargetFile)
+        # Whilst we are here let's store the application environment but ignore awkward ones
+        env, envstdout, envstderr = _exec_cmd('./run env', self.directory)
+        envDict = {}
+        for item in envstdout.split("\n"):
+            if len(item.split("="))==2:
+                if item.split("=")[0] == 'XMLSUMMARYBASEROOT':
+                    envDict[item.split("=")[0]] = item.split("=")[1]
+        self.envVars = envDict
+
         return wantedTargetFile
 
+
+    def postprocess(self):
+        from GangaLHCb.Lib.Applications import XMLPostProcessor
+        XMLPostProcessor.GaudiExecPostProcess(self, logger)
+
+    def getenv(self, cache_env=False):
+        """
+        A function to return the environment of the built application
+        """
+        return self.envVars
 
     def readInputData(self, opts):
         """
