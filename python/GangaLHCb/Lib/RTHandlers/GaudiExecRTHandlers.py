@@ -229,6 +229,8 @@ allHandlers.add('GaudiExec', 'Condor', GaudiExecRTHandler)
 allHandlers.add('GaudiExec', 'Interactive', GaudiExecRTHandler)
 allHandlers.add('GaudiExec', 'Batch', GaudiExecRTHandler)
 allHandlers.add('GaudiExec', 'LSF', GaudiExecRTHandler)
+allHandlers.add('GaudiExec', 'PBS', GaudiExecRTHandler)
+allHandlers.add('GaudiExec', 'SGE', GaudiExecRTHandler)
 
 
 def generateDiracInput(app):
