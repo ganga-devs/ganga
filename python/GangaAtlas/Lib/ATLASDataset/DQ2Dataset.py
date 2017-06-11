@@ -2124,6 +2124,9 @@ logger = getLogger()
 # New for DQ2 client 2.3.0
 from Ganga.GPIDev.Credentials_old import GridProxy
 gridProxy = GridProxy()
+if not gridProxy.isValid():
+    gridProxy.create()
+
 username = gridProxy.identity(safe=True)
 nickname = getNickname(allowMissingNickname=False)
 if nickname:
