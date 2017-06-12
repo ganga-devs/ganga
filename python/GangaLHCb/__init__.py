@@ -110,6 +110,8 @@ def postBootstrapHook():
     configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
     configDirac.setSessionValue('noInputDataBannedSites', [])
     configDirac.setSessionValue('RequireDefaultSE', False)
+    configDirac.setSessionValue('proxyInitCmd', 'lhcb-proxy-init')
+    configDirac.setSessionValue('proxyInfoCmd', 'lhcb-proxy-info')
 
     configOutput.setSessionValue('FailJobIfNoOutputMatched', 'False')
 

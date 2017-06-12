@@ -87,6 +87,8 @@ if not _after_bootstrap:
 
     configDirac.addOption('serializeBackend', False, 'Developer option to serialize Dirac code for profiling/debugging')
 
+    configDirac.addOption('proxyInitCmd', 'dirac-proxy-init', 'Configurable which sets the default proxy init command for DIRAC')
+    configDirac.addOption('proxyInfoCmd', 'dirac-proxy-info', 'Configurable which sets the default proxy init command for DIRAC')
 
 def standardSetup():
 

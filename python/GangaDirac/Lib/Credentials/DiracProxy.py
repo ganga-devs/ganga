@@ -20,11 +20,11 @@ from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
 
 logger = Ganga.Utility.logging.getLogger()
 
-
 class DiracProxyInfo(VomsProxyInfo):
     """
     A wrapper around a DIRAC proxy file
     """
+
 
     def __init__(self, requirements, check_file=False, create=False):
         """
@@ -49,8 +49,8 @@ class DiracProxyInfo(VomsProxyInfo):
         logger.debug('require ' + self.initial_requirements.group)
         if self.initial_requirements.group:
             group_command = '--group %s --VOMS' % self.initial_requirements.group
-        command = 'dirac-proxy-init --strict --out "%s" %s' % (self.location, group_command)
-        logger.debug(command)
+        command = getConfig('DIRAC')['proxyInitCmd'] + '--strict --out "%s" %s' % (self.location, group_command)
+        logger.info(command)
         self.shell.env['X509_USER_PROXY'] = self.location
         try:
             self.shell.check_call(command)
@@ -82,7 +82,9 @@ class DiracProxyInfo(VomsProxyInfo):
         Return the info on a given proxy using the dirac tools
         """
         self.shell.env['X509_USER_PROXY'] = self.location
-        status, output, message = self.shell.cmd1('dirac-proxy-info --file "%s"' % self.location)
+        info_cmd = getConfig('DIRAC')['proxyInfoCmd'] + ' --file "%s"' % self.location
+        logger.info(info_cmd)
+        status, output, message = self.shell.cmd1(info_cmd)
         return output
 
     def field(self, label):
@@ -137,10 +139,9 @@ class DiracProxyInfo(VomsProxyInfo):
         """
         Returns the time in the future when the proxy will expire in seconds
         """
-        status, output, message = self.shell.cmd1('voms-proxy-info -file "%s" -timeleft' % self.location)
-        if status != 0:
-            return datetime.now()
-        return datetime.now() + timedelta(seconds=int(output))
+        time = self.field('timeleft')
+        split_time = time.split(':')
+        return datetime.now() + timedelta(hours=int(split_time[0]), minutes=int(split_time[1]), seconds=int(split_time[2]))
 
     def default_location(self):
         """
@@ -162,7 +163,7 @@ class DiracProxy(ICredentialRequirement):
     _schema.datadict['group'] = SimpleItem(defvalue=None, typelist=[str, None], doc='Group for the proxy')
     _schema.datadict['encodeDefaultProxyFileName'] = \
         SimpleItem(defvalue=True, doc='Should the proxy be generated with the group encoded onto the end of the proxy filename')
-    _schema.datadict['dirac_env'] = SimpleItem(defvalue=None, typelist=[str, None], doc='file which can be used to access a different DIRAC backend')
+    _schema.datadict['dirac_env'] = SimpleItem(defvalue=None, typelist=[str, None], doc='File which can be used to access a different DIRAC backend')
 
     _category = 'CredentialRequirement'
 
