@@ -8,6 +8,7 @@ from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 from Ganga.testlib.mark import external
 from Ganga.testlib.monitoring import run_until_completed
+from Ganga.GPIDev.Base.Proxy import stripProxy
 
 def latestLbDevVersion(app):
     import subprocess
@@ -98,7 +99,7 @@ class TestExternalGaudiExec(GangaUnitTest):
         from Ganga.GPI import jobs
         
         j = jobs[-1]
-        
+
         j.submit()
 
     def testSubmitJobComplete(self):
@@ -106,21 +107,8 @@ class TestExternalGaudiExec(GangaUnitTest):
         Test that the job completes successfully
         """
 
-        from Ganga.GPI import jobs
-        from Ganga.GPI import Job, LocalFile, prepareGaudiExec
+        j = TestExternalGaudiExec._constructJob()
 
-        import os
-        if os.path.exists(TestExternalGaudiExec.tmpdir_release):
-            os.system("rm -rf %s/*" % TestExternalGaudiExec.tmpdir_release)
-
-        j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
-
-        myOpts = path.join(TestExternalGaudiExec.tmpdir_release, 'testfile.py')
-
-        FileBuffer('testfile.py', 'print("ThisIsATest")').create(myOpts)
-
-        j.application.options=[LocalFile(myOpts)]
-        
         j.submit()
 
         run_until_completed(j)
@@ -131,18 +119,72 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         assert path.isfile(outputfile)
 
-        assert 'testfile.py' in open(outputfile).read()
+        for this_string in ('testfile.py', 'data.py', 'ThisIsATest', j.application.platform):
+            assert this_string in open(outputfile).read()
 
-        assert 'data.py' in open(outputfile).read()
+    @staticmethod
+    def _constructJob():
+        """
+        This is a helper method to construct a new GaudiExec job object for submission testing
+        This just helps reduce repeat code between tests
+        """
 
-        assert 'ThisIsATest' in open(outputfile).read()
+        import os
+        if os.path.exists(TestExternalGaudiExec.tmpdir_release):
+            os.system("rm -fr %s/" % TestExternalGaudiExec.tmpdir_release)
 
-        assert j.application.platform in open(outputfile).read()
+        from Ganga.GPI import Job, LocalFile, prepareGaudiExec
+
+        j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
+
+        myOpts = path.join(TestExternalGaudiExec.tmpdir_release, 'testfile.py')
+
+        FileBuffer('testfile.py', 'print("ThisIsATest")').create(myOpts)
+
+        j.application.options=[LocalFile(myOpts)]
+
+        return j
+
+    def testSubmitJobWithInputFile(self):
+        """
+        This test adds a dummy inputfile into the job and tests that it is returned when the job is completed
+        """
+
+        from Ganga.GPI import LocalFile
+
+        tempName = 'testGaudiExecFile.txt'
+        tempName2 = 'testGaudiExecFile2.txt'
+        tempContent = '12345'
+        tempContent2 = '67890'
+
+        j = TestExternalGaudiExec._constructJob()
+
+        tempFile = path.join(TestExternalGaudiExec.tmpdir_release, tempName)
+        tempFile2 = path.join(TestExternalGaudiExec.tmpdir_release, tempName2)
+        FileBuffer(tempName, tempContent).create(tempFile)
+        FileBuffer(tempName2, tempContent2).create(tempFile2)
+
+        j.inputfiles = [tempFile, LocalFile(tempFile2)]
+        j.outputfiles = [LocalFile(tempName), LocalFile(tempName2)]
+
+        j.submit()
+
+        run_until_completed(j)
+
+        assert j.status == 'completed'
+
+        outputDir = stripProxy(j).getOutputWorkspace(create=False).getPath()
+
+        assert path.isfile(tempFile)
+        assert path.isfile(tempFile2)
+
+        assert tempContent in open(tempFile).read()
+        assert tempContent2 in open(tempFile2).read()
 
     @classmethod
     def tearDownClass(cls):
         """
         Remove the 'release area'
         """
-        shutil.rmtree(cls.tmpdir_release, ignore_errors=True)
+        #shutil.rmtree(cls.tmpdir_release, ignore_errors=True)
 

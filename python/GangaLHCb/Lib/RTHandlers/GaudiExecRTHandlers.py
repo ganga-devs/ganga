@@ -595,6 +595,7 @@ if __name__ == '__main__':
     print("#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
     print("")
 
+    print("CWD: %s" % getcwd())
     print("Files found on WN: %s" % (listdir('.')))
 
     # Extract any/_all_ (b/g)zip files on the WN
