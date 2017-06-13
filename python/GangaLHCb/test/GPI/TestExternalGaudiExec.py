@@ -167,9 +167,6 @@ class TestExternalGaudiExec(GangaUnitTest):
         j.inputfiles = [tempFile, LocalFile(tempFile2)]
         j.outputfiles = [LocalFile(tempName), LocalFile(tempName2)]
 
-        from Ganga.GPI import Dirac
-        j.backend = Dirac()
-
         j.submit()
 
         run_until_completed(j)
@@ -189,5 +186,5 @@ class TestExternalGaudiExec(GangaUnitTest):
         """
         Remove the 'release area'
         """
-        #shutil.rmtree(cls.tmpdir_release, ignore_errors=True)
+        shutil.rmtree(cls.tmpdir_release, ignore_errors=True)
 
