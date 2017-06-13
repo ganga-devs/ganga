@@ -167,6 +167,9 @@ class TestExternalGaudiExec(GangaUnitTest):
         j.inputfiles = [tempFile, LocalFile(tempFile2)]
         j.outputfiles = [LocalFile(tempName), LocalFile(tempName2)]
 
+        from Ganga.GPI import Dirac
+        j.backend = Dirac()
+
         j.submit()
 
         run_until_completed(j)

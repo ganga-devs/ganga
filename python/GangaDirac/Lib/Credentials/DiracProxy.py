@@ -49,8 +49,8 @@ class DiracProxyInfo(VomsProxyInfo):
         logger.debug('require ' + self.initial_requirements.group)
         if self.initial_requirements.group:
             group_command = '--group %s --VOMS' % self.initial_requirements.group
-        command = getConfig('DIRAC')['proxyInitCmd'] + '--strict --out "%s" %s' % (self.location, group_command)
-        logger.info(command)
+        command = getConfig('DIRAC')['proxyInitCmd'] + ' --strict --out "%s" %s' % (self.location, group_command)
+        logger.debug(command)
         self.shell.env['X509_USER_PROXY'] = self.location
         try:
             self.shell.check_call(command)
@@ -83,7 +83,7 @@ class DiracProxyInfo(VomsProxyInfo):
         """
         self.shell.env['X509_USER_PROXY'] = self.location
         info_cmd = getConfig('DIRAC')['proxyInfoCmd'] + ' --file "%s"' % self.location
-        logger.info(info_cmd)
+        logger.debug(info_cmd)
         status, output, message = self.shell.cmd1(info_cmd)
         return output
 
