@@ -62,7 +62,7 @@ class TestExternalGaudiExec(GangaUnitTest):
         """
         from Ganga.GPI import jobs
 
-        j = jobs[-1]
+        j = TestExternalGaudiExec._constructJob()
 
         myOptsFile = path.join(TestExternalGaudiExec.tmpdir_release, 'myOpts.py')
 
@@ -98,7 +98,7 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         from Ganga.GPI import jobs
         
-        j = jobs[-1]
+        j = TestExternalGaudiExec._constructJob()
 
         j.submit()
 
@@ -145,6 +145,21 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         return j
 
+    def testSubmitJobDirac(self):
+        """
+
+        """
+
+        from Ganga.GPI import Dirac, DiracProxy
+
+        j = TestExternalGaudiExec._constructJob()
+
+        j.backend=Dirac(credential_requirements=DiracProxy(group='lhcb_user', encodeDefaultProxyFileName=False))
+
+        j.submit()
+
+        assert j.status == "submitted"
+
     def testSubmitJobWithInputFile(self):
         """
         This test adds a dummy inputfile into the job and tests that it is returned when the job is completed
@@ -180,6 +195,26 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         assert tempContent in open(tempFile).read()
         assert tempContent2 in open(tempFile2).read()
+
+    def testSubmitJobDiracWithInput(self):
+
+        j = TestExternalGaudiExec._constructJob()
+
+        from Ganga.GPI import LocalFile, Dirac, DiracProxy
+
+        j.backend=Dirac(credential_requirements=DiracProxy(group='lhcb_user', encodeDefaultProxyFileName=False))
+
+        tempName = 'testGaudiExecFile.txt'
+        tempContent = '12345'
+        tempFile = path.join(TestExternalGaudiExec.tmpdir_release, tempName)
+        FileBuffer(tempName, tempContent).create(tempFile)
+
+        j.inputfiles = [tempFile]
+        j.outputfiles = [LocalFile(tempName)]
+
+        j.submit()
+
+        assert j.status == "submitted"
 
     @classmethod
     def tearDownClass(cls):
