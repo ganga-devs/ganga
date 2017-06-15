@@ -90,17 +90,27 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
 
     # These are the default options for all test instances
     # They can be overridden by extra_opts
+
+    lhcb_test = pytest.config.getoption("--testLHCb")
+
+    if lhcb_test:
+        import getpass
+        cred_opts = (('Configuration', 'user', getpass.getuser()),
+                      ('defaults_DiracProxy', 'group', 'lhcb_user'))
+    else:
+        cred_opts = (('Configuration', 'user', 'testframework'),
+                     ('defaults_DiracProxy', 'group', 'gridpp_user'))
+
     default_opts = [
         ('Configuration', 'RUNTIME_PATH', 'GangaTest'),
         ('Configuration', 'gangadir', gangadir_for_test),
-        ('Configuration', 'user', 'testframework'),
         ('Configuration', 'repositorytype', 'LocalXML'),
         ('Configuration', 'UsageMonitoringMSG', False),  # Turn off spyware
         ('Configuration', 'lockingStrategy', 'FIXED'),
         ('TestingFramework', 'ReleaseTesting', True),
-        ('Queues', 'NumWorkerThreads', 2),
-        ('defaults_DiracProxy', 'group', 'gridpp_user'),
+        ('Queues', 'NumWorkerThreads', 3),
         ]
+    default_opts += cred_opts
 
     # FIXME Should we need to add the ability to load from a custom .ini file
     # to configure tests without editting this?
