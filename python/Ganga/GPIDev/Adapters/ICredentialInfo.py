@@ -220,7 +220,9 @@ class ICredentialInfo(object):
             ``False`` if even one requirement is not met or if the credential is not valid
         """
         if not self.exists():
+            logger.debug('Credential does NOT exit')
             return False
+        logger.debug('Credential exists, checking it')
         return all(self.check_requirement(query, requirementName) for requirementName in query._schema.datadict)
 
     def check_requirement(self, query, requirement_name):
@@ -236,8 +238,9 @@ class ICredentialInfo(object):
         requirement_value = getattr(query, requirement_name)
         if requirement_value is None:
             # If this requirementName is unspecified then ignore it
+            logger.debug('Param \'%s\': is None' % requirement_name)
             return True
-        logger.debug('\'%s\': \t%s \t%s', requirement_name, getattr(self, requirement_name), requirement_value)
+        logger.debug('Param \'%s\': Have \t%s Want \t%s', requirement_name, getattr(self, requirement_name), requirement_value)
         return getattr(self, requirement_name) == requirement_value
 
     def exists(self):
@@ -245,6 +248,7 @@ class ICredentialInfo(object):
         """
         Does the credential file exist on disk
         """
+        logger.debug('Checking for Credential at: \'%s\'' % self.location)
         return os.path.exists(self.location)
 
     def __eq__(self, other):
