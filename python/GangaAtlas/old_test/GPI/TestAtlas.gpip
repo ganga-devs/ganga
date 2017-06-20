@@ -47,24 +47,6 @@ class TestAtlas(GangaGPITestCase):
     def testMCTask(self):
         return TestMCTask()
 
-    def testAthenaMCLCG_evgen(self):
-        return TestAthenaMCLCG_evgen()
-
-    def testAthenaMCLCG_simul(self):
-        return TestAthenaMCLCG_simul()
-
-    def testAthenaMCLCG_recon(self):
-        return TestAthenaMCLCG_recon()
-
-    def testAthenaMCPanda_evgen(self):
-        return TestAthenaMCPanda_evgen()
-
-    def testAthenaMCPanda_simul(self):
-        return TestAthenaMCPanda_simul()
-
-    def testAthenaMCPanda_recon(self):
-        return TestAthenaMCPanda_recon()
-    
     def testAMIDataset(self):
         return TestAMIDataset(srcdirana)
     
