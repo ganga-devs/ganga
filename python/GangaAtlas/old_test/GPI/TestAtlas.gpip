@@ -47,24 +47,6 @@ class TestAtlas(GangaGPITestCase):
     def testMCTask(self):
         return TestMCTask()
 
-    def testAthenaMCLCG_evgen(self):
-        return TestAthenaMCLCG_evgen()
-
-    def testAthenaMCLCG_simul(self):
-        return TestAthenaMCLCG_simul()
-
-    def testAthenaMCLCG_recon(self):
-        return TestAthenaMCLCG_recon()
-
-    def testAthenaMCPanda_evgen(self):
-        return TestAthenaMCPanda_evgen()
-
-    def testAthenaMCPanda_simul(self):
-        return TestAthenaMCPanda_simul()
-
-    def testAthenaMCPanda_recon(self):
-        return TestAthenaMCPanda_recon()
-    
     def testAMIDataset(self):
         return TestAMIDataset(srcdirana)
     
@@ -119,32 +101,6 @@ class AtlasTest(ICheckTest):
         if self.tmpdir is None:
             return
         print 'AtlasTest %s: removing temporary directory %s' % (self.__class__.__name__, self.tmpdir)
-        os.system('rm -rf %s' % self.tmpdir)
-
-class AtlasTestAthenaMC(ICheckTest):
-    def __init__(self,srcdir=None,j = None):
-        if srcdir is None:
-            self.setup()
-            self.tmpdir = None
-            return
-        self.tmpdir = '/tmp/ganga_%s_testing_data-%s' % (self.__class__.__name__, getpass.getuser())
-        print 'AtlasTest %s: copying testing data from %s to %s' % (self.__class__.__name__, srcdir, self.tmpdir)
-        os.system('rm -rf %s' % self.tmpdir)
-        os.system('cp -r %s %s' % (srcdir, self.tmpdir))
-        self.j = j
-        self.setup()
-
-    def isReadyForCheck(self):
-        return True
-
-    def checkTest(self):
-	assert(self.j.submit()==True)	
-        print "Test %s succeeded!" % (self.__class__.__name__)
-
-    def cleanup(self):
-        if self.tmpdir is None:
-            return
-        print 'AtlasTestAthenaMC %s: removing temporary directory %s' % (self.__class__.__name__, self.tmpdir)
         os.system('rm -rf %s' % self.tmpdir)
 
 
@@ -356,97 +312,3 @@ class TestMCTask(TestTask):
         t.run()
         assert t.n_all() == 5
         self.t = t
-
-class TestAthenaMC_evgen(AtlasTestAthenaMC):
-    def setup(self):
-        j=Job()
-        j.application=AthenaMC() 
-        j.application.mode='template'
-        j.application.atlas_release = '16.6.7.13'
-        j.application.transform_script = 'Generate_trf.py'
-        j.application.extraArgs = 'ecmEnergy=7000 evgenJobOpts=MC11JobOpts-00-00-87_v0.tar.gz runNumber=128501 firstEvent=1 randomSeed=1 outputEVNTFile=$outEvgen jobConfig=MC11.128501.PythiaDYmumu_Mll7to60_Pt15Pt8.py'
-        j.application.production_name='test-%s' % today
-        j.application.number_events_job = 30
-        j.outputdata = AthenaMCOutputDatasets()
-        j.outputdata.outrootfiles['Evgen']='test-%s.EVNT' % today
-        j.outputdata.outrootfiles['LOG']='test-%s.log' % today
-        self.j = j
-
-
-class TestAthenaMC_simul(AtlasTestAthenaMC):
-    def setup(self):
-        j=Job()
-        j.application=AthenaMC() 
-        j.application.mode='simul'
-        j.application.atlas_release = '15.6.12.9'
-        j.application.transform_script = "csc_simul_trf.py"
-        j.application.geometryTag = 'ATLAS-GEO-16-00-00'
-        j.application.number_events_job = 3
-        j.application.extraArgs = 'jobConfig=VertexFromCondDB.py,CalHits.py,jobConfig.LooperKiller.py physicsList=QGSP_BERT DBRelease=12.2.1 ConditionsTag=OFLCOND-SDR-BS7T-02'
-        j.application.production_name='test-%s' % today
-        j.inputdata=AthenaMCInputDatasets()
-        j.inputdata.DQ2dataset='user.fbrochu.SingleOmegaPt05_10.EVNT.r17.0.2.8/' # dataset in CAMBRIDGE, available in both Panda and LCG backends.
-        j.inputdata.number_events_file=30
-        j.outputdata = AthenaMCOutputDatasets ()
-        j.splitter=AthenaMCSplitterJob()
-        j.splitter.numsubjobs = 3
-        self.j = j
-
-class TestAthenaMC_recon(AtlasTestAthenaMC):
-    def setup(self):
-        j=Job()
-        j.application=AthenaMC() 
-        j.application.mode='recon'
-        j.application.atlas_release='15.6.9.8'
-        j.application.transform_script = "Reco_trf.py"
-        j.application.geometryTag = 'ATLAS-GEO-10-00-00'        
-        j.application.production_name = 'test-%s' % today
-        j.application.extraArgs ='RunNumber=105485 autoConfiguration=everything preInclude=RecJobTransforms/SetJetConstants-02-000.py preExec="rec.Commissioning.set_Value_and_Lock(True);InDetFlags.doMinBias.set_Value_and_Lock(False);jobproperties.Beam.energy.set_Value_and_Lock(3500*Units.GeV);muonRecFlags.writeSDOs=True;rec.doDPD=True;InDetFlags.useBeamConstraint.set_Value_and_Lock(True);from CaloRec.CaloCellFlags import jobproperties;jobproperties.CaloCellFlags.doLArDeadOTXCorr.set_Value_and_Lock(False)" postExec="topSequence.TimeOut=7200*Units.s" DBRelease=DBRelease-10.7.1.tar.gz conditionsTag=OFLCOND-DR-BS7T-ANom-15 geometryVersion=ATLAS-GEO-10-00-00 AMITag=r1302 triggerConfig=MCRECO:DB:TRIGGERDBMC:145,73,124 --ignoreerrors=ALL'   
-        j.application.number_events_job = 3     
-        j.inputdata=AthenaMCInputDatasets()
-        j.inputdata.DQ2dataset='group09.phys-exotics.mc09_7TeV.105485.Pythia_DYmumu_1500M1750_unfiltered.digit.RDO.e549_s765_s767_d308' # dataset in ALBERTA, available in both Panda and LCG backends.
-        j.inputdata.datasetType='DQ2'
-        j.inputdata.number_events_file=1
-        j.outputdata=AthenaMCOutputDatasets()
-        j.splitter=AthenaMCSplitterJob()
-        j.splitter.numsubjobs = 3
-        self.j = j
-
-class TestAthenaMCLCG_evgen(TestAthenaMC_evgen):
-    def setup(self):
-        TestAthenaMC_evgen.setup(self)
-        self.j.backend=LCG()
-        self.j.backend.requirements=AtlasLCGRequirements()
-        self.j.backend.requirements.cloud='UK'
-        self.j.backend.requirements.sites=['UKI-SCOTGRID-GLASGOW_SCRATCHDISK']
-
-class TestAthenaMCLCG_simul(TestAthenaMC_simul):
-    def setup(self):
-        TestAthenaMC_simul.setup(self)
-        self.j.backend=LCG()
-        self.j.backend.requirements.cloud='UK'
-
-class TestAthenaMCLCG_recon(TestAthenaMC_recon):
-    def setup(self):
-        TestAthenaMC_recon.setup(self)
-        self.j.backend=LCG()    
-        self.j.backend.requirements.cloud='CA'
-
-class TestAthenaMCPanda_evgen(TestAthenaMC_evgen):
-    def setup(self):
-        TestAthenaMC_evgen.setup(self)
-        self.j.backend=Panda()
-        self.j.application.dryrun = False 
-        self.j.backend.requirements.cloud = "US"
-
-class TestAthenaMCPanda_simul(TestAthenaMC_simul):
-    def setup(self):
-        TestAthenaMC_simul.setup(self)
-        self.j.backend=Panda()
-        self.j.application.dryrun = False 
-
-class TestAthenaMCPanda_recon(TestAthenaMC_recon):
-    def setup(self):
-        TestAthenaMC_recon.setup(self)
-        self.j.backend=Panda()
-        self.j.application.dryrun = False 
