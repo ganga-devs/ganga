@@ -2128,20 +2128,20 @@ if not gridProxy.isValid():
     gridProxy.create()
 
 username = gridProxy.identity(safe=True)
-nickname = getNickname(allowMissingNickname=False)
+nickname = getNickname(allowMissingNickname=True)
 if nickname:
     username = nickname
 os.environ['RUCIO_ACCOUNT'] = username
 logger.debug("Using RUCIO_ACCOUNT = %s " %(os.environ['RUCIO_ACCOUNT'])) 
 
-from dq2.clientapi.DQ2 import DQ2
-dq2=DQ2(force_backend='rucio')
+if gridProxy.isValid():
+    from dq2.clientapi.DQ2 import DQ2
+    dq2=DQ2(force_backend='rucio')
+else:
+    dq2 = None
 
 from threading import Lock
 dq2_lock = Lock()
-
-from Ganga.GPIDev.Credentials_old import GridProxy
-gridProxy = GridProxy()
 
 config = getConfig('DQ2')
 
