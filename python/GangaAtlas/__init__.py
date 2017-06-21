@@ -40,10 +40,6 @@ config.addOption('PathToEOSBinary', '/afs/cern.ch/project/eos/installation/pro/b
 config.addOption('RemoveTempUserAreaAfterPrepare', True, 'If True, user areas created in /tmp are removed after prepare has been called (the version in the gangadir shared area will be used instead)')
 
 # -------------------------------------------------
-# AthenaMC Options
-config = makeConfig('AthenaMC', 'AthenaMC configuration options')
-
-# -------------------------------------------------
 # DQ2 Options
 config = makeConfig('DQ2', 'DQ2 configuration options')
 
@@ -123,7 +119,6 @@ def loadPlugins( config = {} ):
 
    import Lib.Athena
    import Lib.ATLASDataset
-   import Lib.AthenaMC
    import Lib.AtlasLCGRequirements
    import Lib.Tasks
    import Lib.AMIGA
