@@ -2,6 +2,7 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 
 import copy
 import tempfile
+import string
 
 from Ganga.Utility.Shell import Shell
 from Ganga.Utility.logging import getLogger
@@ -176,21 +177,20 @@ def _getshell_SP(self):
 
     self.shell = Shell(setup=fd.name)
     if (not self.shell):
-        raise ApplicationConfigurationError(None, 'Shell not created.')
+        raise ApplicationConfigurationError('Shell not created.')
 
     fd.close()
 
     app_ok = False
-    ver_ok = False
+    identifier = string.join([string.upper(self.appname), self.version],'_')
     for var in self.shell.env:
-        if var.find(self.appname) >= 0:
+        if self.shell.env[var].find(identifier) >= 0:
             app_ok = True
-        if self.shell.env[var].find(self.version) >= 0:
-            ver_ok = True
-    if not app_ok or not ver_ok:
+            break
+    if not app_ok:
         msg = 'Command "%s" failed to properly setup environment.' % cmd
         logger.error(msg)
-        raise ApplicationConfigurationError(None, msg)
+        raise ApplicationConfigurationError(msg)
 
     self.env = copy.deepcopy(self.shell.env)
 

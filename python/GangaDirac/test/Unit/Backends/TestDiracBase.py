@@ -1,21 +1,19 @@
 import tempfile
 import os
-
 import pytest
+
 try:
     from unittest.mock import patch, Mock
 except ImportError:
     from mock import patch, Mock
 
-from Ganga.Core import GangaException
 from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Lib.Splitters import ArgSplitter
 from Ganga.Lib.Executable import Executable
-from GangaDirac.Lib.Backends import Dirac
-from GangaDirac.Lib.Backends.DiracBase import DiracBase
-from GangaDirac.Lib.Files.DiracFile import DiracFile
+from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
+from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
 
 script_template = """
 # dirac job created by ganga
@@ -54,10 +52,13 @@ output(result)
 """
 
 
-@pytest.fixture(scope='function')
+@pytest.yield_fixture(scope='function')
 def db():
     """Provides a DiracBase object per test function"""
-    return DiracBase()
+    load_config_files()
+    from GangaDirac.Lib.Backends.DiracBase import DiracBase
+    yield DiracBase()
+    clear_config()
 
 
 def test__setup_subjob_dataset(db):
@@ -69,8 +70,9 @@ def test__addition_sandbox_content(db):
 
 
 def test__setup_bulk_subjobs(tmpdir, db):
-    from Ganga.Core import BackendError
+    from Ganga.Core.exceptions import BackendError
     from Ganga.GPIDev.Lib.Dataset.Dataset import Dataset
+    from GangaDirac.Lib.Backends import Dirac
 
     name = str(tmpdir.join('submit_script'))
     with open(name, 'w') as fd:
@@ -106,8 +108,11 @@ def test__setup_bulk_subjobs(tmpdir, db):
         assert isinstance(subjob.backend, j.backend.__class__), 'backend dont match'
 
 
-def test__common_submit(tmpdir, db):
-    from Ganga.Core import BackendError
+def test__common_submit(tmpdir, db, mocker):
+    mocker.patch('Ganga.GPIDev.Credentials.credential_store')
+
+    from Ganga.Core.exceptions import BackendError
+
     j = Job()
     j.id = 0
     j.backend = db
@@ -117,7 +122,7 @@ def test__common_submit(tmpdir, db):
     with open(name, 'w') as fd:
         fd.write(script_template.replace('###PARAMETRIC_INPUTDATA###', str([['a'], ['b']])))
 
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={}):
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')):
         db.id = 1234
         db.actualCE = 'test'
         db.status = 'test'
@@ -128,14 +133,14 @@ def test__common_submit(tmpdir, db):
         assert db.actualCE is None, 'actualCE not None'
         assert db.status is None, 'status not None'
 
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={'OK': True, 'Value': 12345}) as execute:
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=12345) as execute:
         assert db._common_submit(name)
 
-        execute.assert_called_once_with("execfile('%s')" % name)
+        execute.assert_called_once_with("execfile('%s')" % name, cred_req=mocker.ANY)
 
         assert db.id == 12345, 'id not set'
 
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={'OK': True, 'Value': [123, 456]}):
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=[123, 456]):
         with patch.object(db, '_setup_bulk_subjobs') as _setup_bulk_subjobs:
             db._common_submit(name)
             _setup_bulk_subjobs.assert_called_once_with([123, 456], name)
@@ -186,7 +191,7 @@ def test_resubmit(db):
 
 
 def test__resubmit(db):
-    from Ganga.Core import BackendError
+    from Ganga.Core.exceptions import BackendError
 
     def _common_submit(dirac_script):
         return '_common_submit run ok'
@@ -235,26 +240,33 @@ def test_reset(db):
     assert [j.status for j in db.getJobObject().subjobs] != ['submitted', 'submitted'], 'subjobs not supposed to reset'
 
 
-def test_kill(db):
+def test_kill(db, mocker):
+    mocker.patch('Ganga.GPIDev.Credentials.credential_store')
+
     db.id = 1234
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={}):
-        from Ganga.Core import BackendError
+
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')):
+        from Ganga.Core.exceptions import BackendError
         with pytest.raises(BackendError):
             db.kill()
 
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={'OK': True}) as execute:
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
         assert db.kill()
-        execute.assert_called_once_with('kill(1234)')
+        execute.assert_called_once_with('kill(1234)', cred_req=mocker.ANY)
 
 
-def test_peek(db):
+def test_peek(db, mocker):
+    mocker.patch('Ganga.GPIDev.Credentials.credential_store')
+
     db.id = 1234
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={'OK': True, 'Value': True}) as execute:
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
         db.peek()
-        execute.assert_called_once_with('peek(1234)')
+        execute.assert_called_once_with('peek(1234)', cred_req=mocker.ANY)
 
 
-def test_getOutputSandbox(db):
+def test_getOutputSandbox(db, mocker):
+    mocker.patch('Ganga.GPIDev.Credentials.credential_store')
+
     j = Job()
     j.id = 0
     j.backend = db
@@ -262,21 +274,23 @@ def test_getOutputSandbox(db):
     db.id = 1234
 
     temp_dir = j.getOutputWorkspace().getPath()
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={'OK': True}) as execute:
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
         assert db.getOutputSandbox(), 'didn\'t run'
-        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % temp_dir)
+        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % temp_dir, cred_req=mocker.ANY)
 
     test_dir = 'test_dir'
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value={'OK': True}) as execute:
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', return_value=True) as execute:
         assert db.getOutputSandbox(test_dir), 'didn\'t run with modified dir'
-        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % test_dir)
+        execute.assert_called_once_with("getOutputSandbox(1234,'%s')" % test_dir, cred_req=mocker.ANY)
 
-    with patch('GangaDirac.Lib.Backends.DiracBase.execute') as execute:
+    with patch('GangaDirac.Lib.Backends.DiracBase.execute', side_effect=GangaDiracError('test Exception')) as execute:
         assert not db.getOutputSandbox(test_dir), 'didn\'t fail gracefully'
         execute.assert_called_once()
 
 
 def test_removeOutputData(db):
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
+
     j = Job()
     j.id = 0
     j.backend = db
@@ -317,12 +331,14 @@ def test_removeOutputData(db):
 
 
 def test_getOutputData(db, tmpdir):
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
+
     j = Job()
     j.id = 0
     j.backend = db
     db._parent = j
 
-    with pytest.raises(GangaException):
+    with pytest.raises(GangaDiracError):
         db.getOutputData('/false/dir')
 
     #######################
@@ -384,6 +400,8 @@ def test_getOutputData(db, tmpdir):
 
 
 def test_getOutputDataLFNs(db):
+    from GangaDirac.Lib.Files.DiracFile import DiracFile
+
     j = Job()
     j.id = 0
     j.backend = db

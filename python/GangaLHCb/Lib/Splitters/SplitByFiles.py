@@ -1,13 +1,14 @@
 from Ganga.Core.exceptions import SplitterError
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.Job import Job
 from GangaDirac.Lib.Files.DiracFile import DiracFile
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 import os
 import copy
 import pickle
@@ -15,12 +16,15 @@ import pickle
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+from Ganga.GPIDev.Credentials import require_credential
 
 logger = Ganga.Utility.logging.getLogger()
 
 
 def getBackend():
-
+    """
+    Returns the backend which is to be used by the splitter based upon the LHCb config
+    """
     lhcbConfig = getConfig('LHCb')
     return lhcbConfig['SplitByFilesBackend']
 
@@ -54,8 +58,9 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         'splitterBackend': SimpleItem(defvalue=getBackend(),
                                       doc='name of the backend algorithm to use for splitting',
-                                      typelist=['str'], protected=1, visitable=0)
-    })
+                                      typelist=['str'], protected=1, visitable=0),
+        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
+        })
 
     _exportmethods = ['split']
 
@@ -123,8 +128,19 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("Returning new subjob")
         return j
 
-    # returns splitter generator
+    @require_credential
     def _splitter(self, job, inputdata):
+        """
+        This is the main method used in splitting by inputdata for Dirac backends
+
+        Args:
+            job (Job): This is the master-job object which contains everything we need to split by inputdata
+            inputdata (list): List of (DiracFile) objects which we're to use in the splitting
+
+        Returns:
+            outdata (generator): a splitter Generator
+
+        """
 
         logger.debug("_splitter")
 
@@ -143,7 +159,9 @@ class SplitByFiles(GaudiInputDataSplitter):
             self.XMLCatalogueSlice = None
 
         if stripProxy(job.backend).__module__.find('Dirac') > 0:
-
+            bannedSites = []
+            if 'BannedSites' in job.backend.settings:
+                bannedSites = job.backend.settings['BannedSites']
             logger.debug("found Dirac backend")
 
             if self.filesPerJob > 100:
@@ -161,7 +179,8 @@ class SplitByFiles(GaudiInputDataSplitter):
                 outdata = OfflineGangaDiracSplitter(indata,
                                                     self.filesPerJob,
                                                     self.maxFiles,
-                                                    self.ignoremissing)
+                                                    self.ignoremissing,
+                                                    bannedSites)
             elif self.splitterBackend == "splitInputDataBySize":
                 from GangaLHCb.Lib.Splitters.LHCbSplitterUtils import DiracSizeSplitter
                 outdata = DiracSizeSplitter(indata,
@@ -180,11 +199,29 @@ class SplitByFiles(GaudiInputDataSplitter):
 
             logger.debug("outdata: %s " % str(outdata))
             return outdata
+        #If we are not running the jobs on Dirac but are using DiracFiles we want some of the same checks
+        elif all(isinstance(this_file, DiracFile) for this_file in indata):
+            from GangaDirac.Lib.Splitters.OfflineGangaDiracSplitter import OfflineGangaDiracSplitter
+            outdata = OfflineGangaDiracSplitter(indata,
+                                              self.filesPerJob,
+                                              self.maxFiles,
+                                              self.ignoremissing)
+            return outdata
         else:
             logger.debug("Calling Parent Splitter as not on Dirac")
             return super(SplitByFiles, self)._splitter(job, indata)
 
+    @require_credential
     def split(self, job):
+        """
+        This is the main method which will split the given job
+
+        Args:
+            job(Job): This is the master job which will be used to split based upon the inputdata
+
+        Return:
+            split_return(list): This is the list of subjobs created from the input job
+        """
         logger.debug("split")
         if self.maxFiles == -1:
             self.maxFiles = None

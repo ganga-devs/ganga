@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
@@ -40,7 +40,7 @@ class CoreTransform(ITransform):
             return
 
         if self.unit_splitter == None and len(self.inputdata) == 0:
-            raise ApplicationConfigurationError(None, "No unit splitter or InputData provided for CoreTransform unit creation, Transform %d (%s)" %
+            raise ApplicationConfigurationError("No unit splitter or InputData provided for CoreTransform unit creation, Transform %d (%s)" %
                                                 (self.getID(), self.name))
 
         # -----------------------------------------------------------------
@@ -58,7 +58,7 @@ class CoreTransform(ITransform):
             subjobs = self.unit_splitter.split(j)
 
             if len(subjobs) == 0:
-                raise ApplicationConfigurationError(None, "Unit splitter gave no subjobs after split for CoreTransform unit creation, Transform %d (%s)" %
+                raise ApplicationConfigurationError("Unit splitter gave no subjobs after split for CoreTransform unit creation, Transform %d (%s)" %
                                                     (self.getID(), self.name))
 
             # only copy the appropriate elements

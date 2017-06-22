@@ -200,7 +200,7 @@ class Interactive(IBackend):
                 getWNCodeForOutputPostprocessing(job, '')
  
         all_inputfiles = [this_file for this_file in job.inputfiles]
-        if job.master: all_inputfiles.extend([this_file for this_file in job.master.inputfiles])
+        if job.master is not None: all_inputfiles.extend([this_file for this_file in job.master.inputfiles])
 
         wnCodeToDownloadInputFiles = ''
 
@@ -259,7 +259,7 @@ class Interactive(IBackend):
         }
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                'InteractiveScriptTemplate.py')
+                'InteractiveScriptTemplate.py.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         commandString = FileUtils.loadScript(script_location, '')

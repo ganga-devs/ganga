@@ -75,9 +75,13 @@ class GaussSplitter(ISplitter):
             j = self._create_subjob(job, inputdata)
             # FIXME this starts from the 1st event and not zero, is it clear why?
             first = self.firstEventNumber + i * self.eventsPerJob + 1
-            opts = 'from Gaudi.Configuration import * \n'
-            opts += 'from Configurables import GenInit \n'
-            opts += 'ApplicationMgr().EvtMax = %d\n' % self.eventsPerJob
+            opts = 'from Configurables import GenInit \n'
+            if isinstance(job.application, Gauss):
+                opts += 'from Gaudi.Configuration import * \n'
+                opts += 'ApplicationMgr().EvtMax = %d\n' % self.eventsPerJob
+            else:
+                opts += 'from Configurables import LHCbApp \n'
+                opts += 'LHCbApp().EvtMax = %d\n' % self.eventsPerJob
             opts += 'GenInit("GaussGen").FirstEventNumber = %d\n' % first
             spillOver = ["GaussGenPrev", "GaussGenPrevPrev", "GaussGenNext"]
             for s in spillOver:

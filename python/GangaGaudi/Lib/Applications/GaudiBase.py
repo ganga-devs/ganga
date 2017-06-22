@@ -12,7 +12,7 @@ import Ganga.Utility.logging
 from Ganga.Utility.files import expandfilename, fullpath
 from GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
 from Ganga.GPIDev.Lib.File import File
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 import Ganga.Utility.Config
 from Ganga.Utility.execute import execute
 from Ganga.GPIDev.Lib.File import ShareDir
@@ -82,7 +82,7 @@ class GaudiBase(IPrepareApp):
     #def _init(self, set_ura):
     def _init(self):
         if self.appname is None:
-            raise ApplicationConfigurationError(None, "appname is None")
+            raise ApplicationConfigurationError("appname is None")
         if (not self.version):
             self.version = self._get_default_version(self.appname)
         if (not self.platform):
@@ -190,7 +190,7 @@ class GaudiBase(IPrepareApp):
                 env=self.getenv(False),
                 cwd=self.user_release_area)
 
-    def unprepare(self):
+    def unprepare(self, force=False):
         self._unregister()
 
     def _unregister(self):
@@ -216,16 +216,16 @@ class GaudiBase(IPrepareApp):
     def _really_prepare(self, force=False):
         if (not self.is_prepared):
             raise ApplicationConfigurationError(
-                None, "Could not establish sharedir")
+                "Could not establish sharedir")
 
         if (not self.user_release_area):
             return  # GaudiPython and Bender dont need the following.
         if (not self.appname):
-            raise ApplicationConfigurationError(None, "appname is None")
+            raise ApplicationConfigurationError("appname is None")
         if (not self.version):
-            raise ApplicationConfigurationError(None, "version is None")
+            raise ApplicationConfigurationError("version is None")
         if (not self.platform):
-            raise ApplicationConfigurationError(None, "platform is None")
+            raise ApplicationConfigurationError("platform is None")
 
         share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                  'shared',

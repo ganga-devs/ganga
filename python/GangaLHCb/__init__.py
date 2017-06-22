@@ -12,7 +12,12 @@ from optparse import OptionParser, OptionValueError
 
 from Ganga.Utility.Config.Config import _after_bootstrap
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.execute import execute
+
+from Ganga.Runtime.GPIexport import exportToGPI
+
+from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
+from GangaLHCb.Utility.LHCbDIRACenv import store_dirac_environment
 
 logger = getLogger()
 
@@ -46,27 +51,8 @@ if not _after_bootstrap:
     configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
                      'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
                       options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
-
-
-def _guess_version(name):
-    if 'GANGASYSROOT' in os.environ.keys():
-        gangasys = os.environ['GANGASYSROOT']
-    else:
-        raise OptionValueError("Can't guess %s version if GANGASYSROOT is not defined" % name)
-    tmp = tempfile.NamedTemporaryFile(suffix='.txt')
-    cmd = 'cd %s && cmt show projects > %s' % (gangasys, tmp.name)
-    rc = subprocess.Popen([cmd], shell=True).wait()
-    if rc != 0:
-        msg = "Fail to get list of projects that Ganga depends on"
-        raise OptionValueError(msg)
-    p = re.compile(r'^\s*%s\s+%s_(\S+)\s+' % (name, name))
-    for line in tmp:
-        m = p.match(line)
-        if m:
-            version = m.group(1)
-            return version
-    msg = 'Failed to identify %s version that Ganga depends on' % name
-    raise OptionValueError(msg)
+    defaultLHCbDirac = 'prod'
+    configLHCb.addOption('LHCbDiracVersion', defaultLHCbDirac, 'set LHCbDirac version')
 
 
 def _store_root_version():
@@ -79,23 +65,8 @@ def _store_root_version():
         msg = 'Tried to setup ROOTVERSION environment variable but no ROOTSYS variable found.'
         raise OptionValueError(msg)
 
-
-def _store_dirac_environment():
-    from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache, get_env
-    diracversion = _guess_version('LHCBDIRAC')
-    platform = os.environ['CMTOPT']
-    fdir = os.path.join(os.path.expanduser("~/.cache/Ganga/GangaLHCb"), platform)
-    fname = os.path.join(fdir, diracversion)
-    if not os.path.exists(fname) or not os.path.getsize(fname):
-        logger.info("Storing new LHCbDirac environment (%s:%s)" % (str(diracversion), str(platform)))
-        cmd = 'lb-run LHCBDIRAC {version} python -c "import os; print(dict(os.environ))"'.format(version=diracversion)
-        env = execute(cmd)  # grab the stdout text
-        env = eval(env)  # env is a string so convert it to a dict
-        write_env_cache(env, fname)
-    os.environ['GANGADIRACENVIRONMENT'] = fname
-
 if not _after_bootstrap:
-    _store_dirac_environment()
+    store_dirac_environment()
     _store_root_version()
 
 
@@ -133,11 +104,11 @@ def postBootstrapHook():
     configDirac = Ganga.Utility.Config.getConfig('DIRAC')
     configOutput = Ganga.Utility.Config.getConfig('Output')
     configPoll = Ganga.Utility.Config.getConfig('PollThread')
-    
+
     configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
     configDirac.setSessionValue('userVO', 'lhcb')
     configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
-    configDirac.setSessionValue('noInputDataBannedSites', ['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
+    configDirac.setSessionValue('noInputDataBannedSites', [])
     configDirac.setSessionValue('RequireDefaultSE', False)
 
     configOutput.setSessionValue('FailJobIfNoOutputMatched', 'False')
@@ -152,4 +123,62 @@ def postBootstrapHook():
 #display_config.setSessionValue( 'jobs_columns', ('fqid', 'status', 'name', 'subjobs', 'application', 'backend', 'backend.actualCE', 'backend.extraInfo', 'comment') )
 #display_config.setSessionValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
 #display_config.setSessionValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
+
+    try:
+        credential_store[DiracProxy()]
+    except KeyError:
+        pass
+
+
+class gridProxy(object):
+    """
+    This is a stub class which wraps functions from the `credential_store` sentinal to familiar functions from Ganga 6.2 and prior
+    """
+
+    @classmethod
+    def renew(cls):
+        """
+        This method is similar to calling::
+
+            credential_store.create(DiracProxy())
+
+        or::
+
+            credential_store[DiracProxy()].renew()
+
+        as appropriate.
+        """
+
+        from Ganga.GPI import credential_store, DiracProxy
+        try:
+            cred = credential_store[DiracProxy()]
+            if not cred.is_valid():
+                cred.create()
+        except KeyError:
+            credential_store.create(DiracProxy())
+
+    @classmethod
+    def create(cls):
+        """
+        This is a wrapper for::
+
+            credential_store.create(DiracProxy())
+        """
+        cls.renew()
+
+    @classmethod
+    def destroy(cls):
+        """
+        This is a wrapper for::
+
+            credential_store[DiracProxy()].destroy()
+        """
+        from Ganga.GPI import credential_store, DiracProxy
+        try:
+            cred = credential_store[DiracProxy()]
+            cred.destroy()
+        except KeyError:
+            pass
+
+exportToGPI('gridProxy', gridProxy, 'Functions')
 

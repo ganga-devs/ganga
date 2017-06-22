@@ -1,42 +1,49 @@
-
 # Dirac commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
+@diracCommand
 def getJobGroupJobs(jg):
     ''' Return jobs in a group'''
-    output(dirac.selectJobs(jobGroup=jg))
+    return dirac.selectJobs(jobGroup=jg)
 
 
+@diracCommand
 def kill(id):
     ''' Kill a given DIRAC Job ID within DIRAC '''
-    output(dirac.delete(id))
+    return dirac.delete(id)
 
 
+@diracCommand
 def peek(id):
     ''' Peek at the DIRAC Job id and return what we saw '''
-    output(dirac.peek(id))
+    return dirac.peek(id)
 
 
+@diracCommand
 def getJobCPUTime(id):
     ''' Get the amount of CPU time taken by the DIRAC Job id'''
-    output(dirac.getJobCPUTime(id))
+    return dirac.getJobCPUTime(id)
 
 
+@diracCommand
 def reschedule(id):
     ''' Reschedule within DIRAC a given DIRAC Job id'''
-    output(dirac.reschedule(id))
+    return dirac.reschedule(id)
 
 
+@diracCommand
 def submit(djob, mode='wms'):
     ''' Submit a DIRAC job given by the jdl:djob with a given mode '''
-    output(dirac.submit(djob, mode=mode))
+    return dirac.submit(djob, mode=mode)
 
 
+@diracCommand
 def ping(system, service):
     ''' Ping a given service on a given system running DIRAC '''
-    output(dirac.ping(system, service))
+    return dirac.ping(system, service)
 
 
+@diracCommand
 def removeFile(lfn):
     ''' Remove a given LFN from the DFC'''
     ret = {}
@@ -45,56 +52,64 @@ def removeFile(lfn):
             ret.update(dirac.removeFile(l))
     else:
         ret.update(dirac.removeFile(lfn))
-    output(ret)
+    return ret
 
 
+@diracCommand
 def getMetadata(lfn):
     ''' Return the metadata associated with a given :DN'''
-    output(dirac.getMetadata(lfn))
+    return dirac.getMetadata(lfn)
 
 
+@diracCommand
 def getReplicas(lfns):
     ''' Return  the locations of the replicas of a given LFN in a dict format, SE: location '''
-    output(dirac.getReplicas(lfns, active=True, preferDisk = True))
+    return dirac.getReplicas(lfns, active=True, preferDisk = True)
+
+@diracCommand
+def getAccessURL(lfn, SE, protocol=''):
+    ''' Return the access URL for the given LFN, storage element and protocol '''
+    return dirac.getReplicaAccessUrl(lfn, SE, protocol)
 
 
-def getAccessURL(lfn,SE):
-    ''' Return the access URL for the given LFN and storage element '''
-    output(dirac.getAccessURL(lfn,SE))
-
-
+@diracCommand
 def getFile(lfns, destDir=''):
     ''' Put the physical file behind the LFN in the destDir path'''
-    output(dirac.getFile(lfns, destDir=destDir))
+    return dirac.getFile(lfns, destDir=destDir)
 
 
+@diracCommand
 def replicateFile(lfn, destSE, srcSE='', locCache=''):
     ''' Replicate a given LFN from a srcSE to a destSE'''
     res = dirac.replicateFile(lfn, destSE, srcSE, locCache)
-    output(res)
-    #print(res)
+    return res
 
 
+@diracCommand
 def removeReplica(lfn, sE):
     ''' Remove the physical files and LFN from the DFC'''
-    output(dirac.removeReplica(lfn, sE))
+    return dirac.removeReplica(lfn, sE)
 
 
+@diracCommand
 def getOutputData(id, outputFiles='', destinationDir=''):
     ''' Return output data of a requeted DIRAC Job id, place outputFiles in a given destinationDir') '''
-    output(dirac.getJobOutputData(id, outputFiles, destinationDir))
+    return dirac.getJobOutputData(id, outputFiles, destinationDir)
 
 
+@diracCommand
 def splitInputData(files, files_per_job):
     ''' Split list of files ito a list of list of smaller files (below files_per_job in length) and return the list of lists'''
-    output(dirac.splitInputData(files, files_per_job))
+    return dirac.splitInputData(files, files_per_job)
 
 
+@diracCommand
 def getInputDataCatalog(lfns, site, xml_file):
     ''' Get the XML describing the given LFNs at a given site'''
-    output(dirac.getInputDataCatalog(lfns, site, xml_file))
+    return dirac.getInputDataCatalog(lfns, site, xml_file)
 
 
+@diracCommand
 def uploadFile(lfn, file, diracSEs, guid=None):
     ''' Upload a given file to an lfn with 1 replica places at each element in diracSEs. Use a given guid if given'''
     outerr = {}
@@ -106,18 +121,19 @@ def uploadFile(lfn, file, diracSEs, guid=None):
             if md.get('OK', False) and lfn in md.get('Value', {'Successful': {}})['Successful']:
                 guid = md['Value']['Successful'][lfn]['GUID']
                 result['Value']['Successful'][lfn].update({'GUID': guid})
-            output(result)
-            return
+            return result
         outerr.update({se: result})
-    else:
-        output(outerr)
+    
+    return outerr
 
 
+@diracCommand
 def addFile(lfn, file, diracSE, guid):
     ''' Upload a given file to an lfn with 1 replica places at each element in diracSEs. Use a given guid if given'''
-    output(dirac.addFile(lfn, file, diracSE, guid))
+    return dirac.addFile(lfn, file, diracSE, guid)
 
 
+@diracCommand
 def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True, noJobDir=True, pipe_out=True):
     '''
     Get the outputsandbox and return the output from Dirac to the calling function
@@ -135,12 +151,10 @@ def getOutputSandbox(id, outputDir=os.getcwd(), oversized=True, noJobDir=True, p
         
         os.system('for file in $(ls %s/*_Ganga_*.log); do ln -s ${file} %s/stdout; break; done' % (outputDir, outputDir))
 
-    if pipe_out:
-        output(result)
-    else:
-        return result
+    return result
 
 
+@diracCommand
 def getOutputDataInfo(id, pipe_out=True):
     ''' Get information on the output data generated by a job of ID and pipe it out or return it'''
     ret = {}
@@ -148,30 +162,27 @@ def getOutputDataInfo(id, pipe_out=True):
     if result.get('OK', False) and 'Value' in result:
         for lfn in result.get('Value', []):
             file_name = os.path.basename(lfn)
-            ret.update({file_name: {'LFN': lfn}})
+            ret[file_name] = {}
+            ret[file_name]['LFN'] = lfn
             md = dirac.getMetadata(lfn)
             if md.get('OK', False) and lfn in md.get('Value', {'Successful': {}})['Successful']:
-                ret[file_name].update(
-                    {'GUID': md['Value']['Successful'][lfn]['GUID']})
+                ret[file_name]['GUID'] =  md['Value']['Successful'][lfn]['GUID']
             # this catches if fail upload, note lfn still exists in list as
             # dirac tried it
             elif md.get('OK', False) and lfn in md.get('Value', {'Failed': {}})['Failed']:
-                ret[file_name].update({'LFN': '###FAILED###'})
-                ret[file_name].update(
-                    {'LOCATIONS': md['Value']['Failed'][lfn]})
-                ret[file_name].update({'GUID': 'NotAvailable'})
+                ret[file_name]['LFN'] = '###FAILED###'
+                ret[file_name]['LOCATIONS'] = md['Value']['Failed'][lfn]
+                ret[file_name]['GUID'] = 'NotAvailable'
                 continue
             rp = dirac.getReplicas(lfn)
             if rp.get('OK', False) and lfn in rp.get('Value', {'Successful': {}})['Successful']:
-                ret[file_name].update(
-                    {'LOCATIONS': rp['Value']['Successful'][lfn].keys()})
-    if pipe_out:
-        output(ret)
-    else:
-        return ret
+                ret[file_name]['LOCATIONS'] = rp['Value']['Successful'][lfn].keys()
+    return ret
+
 
 
 # could shrink this with dirac.getJobOutputLFNs from ##dirac
+@diracCommand
 def getOutputDataLFNs(id, pipe_out=True):
     ''' Get the outputDataLFN which have been generated by a Dirac job of ID and pipe it out or return it'''
     parameters = dirac.parameters(id)
@@ -203,12 +214,10 @@ def getOutputDataLFNs(id, pipe_out=True):
     else:
         result['Message'] = message
 
-    if pipe_out:
-        output(result)
-    else:
-        return result
+    return result
 
 
+@diracCommand
 def normCPUTime(id, pipe_out=True):
     ''' Get the normalied CPU time that has been used by a DIRAC job of ID and pipe it out or return it'''
     parameters = dirac.parameters(id)
@@ -217,12 +226,10 @@ def normCPUTime(id, pipe_out=True):
         parameters = parameters['Value']
         if 'NormCPUTime(s)' in parameters:
             ncput = parameters['NormCPUTime(s)']
-    if pipe_out:
-        output(ncput)
-    else:
-        return ncput
+    return ncput
 
 
+@diracCommand
 def finished_job(id, outputDir=os.getcwd(), oversized=True, noJobDir=True):
     ''' Nesting function to reduce number of calls made against DIRAC when finalising a job, takes arguments such as getOutputSandbox
     Returns the CPU time of the job as a dict, the output sandbox information in another dict and a dict of the LFN of any uploaded data'''
@@ -230,20 +237,19 @@ def finished_job(id, outputDir=os.getcwd(), oversized=True, noJobDir=True):
     out_sandbox = getOutputSandbox(id, outputDir, oversized, noJobDir, pipe_out=False)
     out_dataInfo = getOutputDataInfo(id, pipe_out=False)
     outStateTime = {'completed' : getStateTime(id, 'completed', pipe_out=False)}
-    output((out_cpuTime, out_sandbox, out_dataInfo, outStateTime))
+    return (out_cpuTime, out_sandbox, out_dataInfo, outStateTime)
 
 
+@diracCommand
 def status(job_ids, statusmapping, pipe_out=True):
     '''Function to check the statuses and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
 
+    #return {'OK':True, 'Value':[['WIP', 'WIP', 'WIP', 'WIP', 'WIP']]}
+
     result = dirac.status(job_ids)
     if not result['OK']:
-        if pipe_out:
-            output(result)
-            return
-        else:
-            return result
+        return result
     status_list = []
     bulk_status = result['Value']
     for _id in job_ids:
@@ -267,23 +273,17 @@ def status(job_ids, statusmapping, pipe_out=True):
         except:
             app_status = "unknown ApplicationStatus"
 
-        status_list.append([minor_status, dirac_status, dirac_site,
-                            ganga_status, app_status])
+        status_list.append([minor_status, dirac_status, dirac_site, ganga_status, app_status])
 
-    if pipe_out:
-        output(status_list)
-    else:
-        return status_list
+    return status_list
 
+
+@diracCommand
 def getStateTime(id, status, pipe_out=True):
     ''' Return the state time from DIRAC corresponding to DIRACJob tranasitions'''
     log = dirac.loggingInfo(id)
     if 'Value' not in log:
-        if pipe_out:
-            output(None)
-            return
-        else:
-            return None
+        return None
     L = log['Value']
     checkstr = ''
 
@@ -305,27 +305,22 @@ def getStateTime(id, status, pipe_out=True):
     for l in L:
         if checkstr in l[0]:
             T = datetime.datetime(*(time.strptime(l[3], "%Y-%m-%d %H:%M:%S")[0:6]))
-            if pipe_out:
-                output(T)
-                return
-            else:
-                return T
-    if pipe_out:
-        output(None)
-    else:
-        return None
+            return T
+    
+    return None
 
+
+@diracCommand
 def getBulkStateTime(job_ids, status, pipe_out=True):
     ''' Function to repeatedly call getStateTime for multiple Dirac Job id and return the result in a dictionary '''
     result = {}
     for this_id in job_ids:
         result[this_id] = getStateTime(this_id, status, pipe_out=False)
 
-    if pipe_out:
-        output(result)
-    else:
-        return result
+    return result
 
+
+@diracCommand
 def monitorJobs(job_ids, status_mapping, pipe_out=True):
     ''' This combines 'status' and 'getBulkStateTime' into 1 function call for monitoring
     '''
@@ -341,23 +336,23 @@ def monitorJobs(job_ids, status_mapping, pipe_out=True):
     for this_status, these_jobs in state_job_status.iteritems():
         state_info[this_status] = getBulkStateTime(these_jobs, this_status, pipe_out=False)
 
-    if pipe_out:
-        output((status_info, state_info))
-    else:
-        return (status_info, state_info)
+    return (status_info, state_info)
 
+
+@diracCommand
 def timedetails(id):
     ''' Function to return the loggingInfo for a DIRAC Job of id'''
     log = dirac.loggingInfo(id)
     d = {}
     for i in range(0, len(log['Value'])):
         d[i] = log['Value'][i]
-    output(d)
+    return d
 
 # DiracAdmin commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
 
+@diracCommand
 def getJobPilotOutput(id, dir):
     ''' Get the output of the DIRAC pilot that this job was running on and place it in dir'''
     pwd = os.getcwd()
@@ -367,23 +362,40 @@ def getJobPilotOutput(id, dir):
         result = DiracAdmin().getJobPilotOutput(id)
     finally:
         os.chdir(pwd)
-    output(result)
+    return result
 
 
+@diracCommand
 def getServicePorts():
     ''' Get the service ports from the DiracAdmin based upon the Dirac config'''
-    output(DiracAdmin().getServicePorts())
+    return DiracAdmin().getServicePorts()
 
 
+
+@diracCommand
 def getSitesForSE(se):
     ''' Get the Sites associated with this SE'''
     from DIRAC.Core.Utilities.SiteSEMapping import getSitesForSE
     result = getSitesForSE(storageElement=se)
-    output(result)
+    return result
 
 
+@diracCommand
 def getSEsForSite(site):
     ''' Get the list of SE associated with this site'''
     from DIRAC.Core.Utilities.SiteSEMapping import getSEsForSite
     result = getSEsForSite(site)
-    output(result)
+    return result
+
+
+@diracCommand
+def checkSEStatus(se, access = 'Write'):
+    ''' returns the value of a certain SE status flag (access or other)
+      param se: Storage Element name
+      type se: string
+      param access: type of access
+      type access: string in ('Read', 'Write', 'Remove', 'Check')
+       returns: True or False
+    '''
+    result = dirac.checkSEAccess(se, access)
+    return result

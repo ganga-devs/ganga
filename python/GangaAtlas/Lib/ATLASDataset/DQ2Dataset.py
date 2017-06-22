@@ -27,7 +27,6 @@ from GangaPanda.Lib.PandaTools import get_ce_from_locations
 
 class DQ2Dataset(Dataset):
     """ATLAS DDM Dataset
-
     Class that covers accessing datasets through ATLAS DDM
     """
 
@@ -1467,7 +1466,7 @@ class DQ2OutputDownloader(MTRunner):
 logger = getLogger()
 
 # New for DQ2 client 2.3.0
-from Ganga.GPIDev.Credentials import GridProxy
+from Ganga.GPIDev.Credentials_old import GridProxy
 gridProxy = GridProxy()
 username_global = gridProxy.identity(safe=True)
 nickname = getNickname(allowMissingNickname=False)
@@ -1476,14 +1475,15 @@ if nickname:
 os.environ['RUCIO_ACCOUNT'] = username_global
 logger.debug("Using RUCIO_ACCOUNT = %s " %(os.environ['RUCIO_ACCOUNT'])) 
 
-from dq2.clientapi.DQ2 import DQ2
-dq2=DQ2(force_backend='rucio')
+# Again, if we don't have a valid proxy, don't attempt to create DQ2 object as it will just fail
+if gridProxy.isValid():
+    from dq2.clientapi.DQ2 import DQ2
+    dq2=DQ2(force_backend='rucio')
+else:
+    dq2 = None
 
 from threading import Lock
 dq2_lock = Lock()
-
-from Ganga.GPIDev.Credentials import GridProxy
-gridProxy = GridProxy()
 
 config = getConfig('DQ2')
 

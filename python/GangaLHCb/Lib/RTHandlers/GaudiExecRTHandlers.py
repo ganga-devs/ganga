@@ -8,7 +8,7 @@ import threading
 import uuid
 import shutil
 
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -23,6 +23,7 @@ from Ganga.Utility.util import unique
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
@@ -103,7 +104,7 @@ def collectPreparedFiles(app):
         app (GaudiExec): This expects only the GaudiExec app
     """
     if not isinstance(app.is_prepared, ShareDir):
-        raise ApplicationConfigurationError(None, 'Failed to prepare Application Correctly')
+        raise ApplicationConfigurationError('Failed to prepare Application Correctly')
     shared_dir = app.getSharedPath()
     input_files, input_folders = [], []
     for root, dirs, files in os.walk(shared_dir, topdown=True):
@@ -111,6 +112,13 @@ def collectPreparedFiles(app):
             input_files.append(os.path.join(root, name))
         for name in dirs:
             input_folders.append(os.path.join(root, name))
+
+    for file_ in app.getJobObject().inputfiles:
+        if isinstance(file_, LocalFile):
+            shutil.copy(os.path.join(file_.localDir, os.path.basename(file_.namePattern)), shared_dir)
+            input_files.append(os.path.join(shared_dir, file_.namePattern))
+        elif not isinstance(file_, DiracFile):
+            raise ApplicationConfigurationError(None, "File type: %s Not _yet_ supported in GaudiExec" % type(file_))
 
     return input_files, input_folders
 
@@ -130,7 +138,7 @@ def prepareCommand(app):
             # TODO Fix this after fixing LocalFile
             opts_names.append(os.path.basename(opts_file.namePattern))
         else:
-            raise ApplicationConfigurationError(None, "The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
+            raise ApplicationConfigurationError("The filetype: %s is not yet supported for use as an opts file.\nPlease contact the Ganga devs is you wish this implemented." %
                                                 getName(opts_file))
 
     sourceEnv = app.getEnvScript()
@@ -141,6 +149,8 @@ def prepareCommand(app):
         full_cmd = sourceEnv + "./run gaudirun.py %s %s" % (' '.join(opts_names), GaudiExecDiracRTHandler.data_file)
         if app.extraOpts:
             full_cmd += ' ' + app.getExtraOptsFileName()
+        if app.getMetadata:
+            full_cmd += ' summary.py' 
         if app.extraArgs:
             full_cmd += " " + " ".join(app.extraArgs)
 
@@ -169,6 +179,11 @@ class GaudiExecRTHandler(IRuntimeHandler):
         scriptArchive = os.path.join(app.jobScriptArchive.localDir, app.jobScriptArchive.namePattern)
 
         inputsandbox.append(File(name=scriptArchive))
+
+        if app.getMetadata:
+            logger.info("Adding options to make the summary.xml")
+            inputsandbox.append(FileBuffer('summary.py', "\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"))
+
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
@@ -186,6 +201,10 @@ class GaudiExecRTHandler(IRuntimeHandler):
         # Setup the command which to be run and the input and output
         input_sand = genDataFiles(job)
         output_sand = []
+
+        # If we are getting the metadata we need to make sure the summary.xml is added to the output sandbox if not there already.
+        if app.getMetadata and not 'summary.xml' in output_sand:
+            output_sand += ['summary.xml']
 
         # NB with inputfiles the mechanics of getting the inputfiled to the input of the Localhost backend is taken care of for us
         # We don't have to do anything to get our files when we start running
@@ -210,6 +229,8 @@ allHandlers.add('GaudiExec', 'Condor', GaudiExecRTHandler)
 allHandlers.add('GaudiExec', 'Interactive', GaudiExecRTHandler)
 allHandlers.add('GaudiExec', 'Batch', GaudiExecRTHandler)
 allHandlers.add('GaudiExec', 'LSF', GaudiExecRTHandler)
+allHandlers.add('GaudiExec', 'PBS', GaudiExecRTHandler)
+allHandlers.add('GaudiExec', 'SGE', GaudiExecRTHandler)
 
 
 def generateDiracInput(app):
@@ -225,7 +246,7 @@ def generateDiracInput(app):
     job = app.getJobObject()
 
     if input_folders:
-        raise ApplicationConfigurationError(None, 'Prepared folders not supported yet, please fix this in future')
+        raise ApplicationConfigurationError('Prepared folders not supported yet, please fix this in future')
     else:
         prep_dir = app.getSharedPath()
         addTimestampFile(prep_dir)
@@ -282,8 +303,13 @@ def generateJobScripts(app, appendJobScripts):
     scriptArchive = os.path.join(master_job.application.jobScriptArchive.localDir, master_job.application.jobScriptArchive.namePattern)
 
     if appendJobScripts:
-        # Now lets add the Job scripts to this archive
+        # Now lets add the Job scripts to this archive and potentially the extra options to generate the summary.xml
         with tarfile.open(scriptArchive, 'a') as tar_file:
+            if app.getMetadata:
+                summaryScript = "\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"
+                summaryFile = FileBuffer('summary.py', summaryScript)
+                summaryFile.create()
+                tar_file.add('summary.py')
             for this_job in rjobs:
                 this_app = this_job.application
                 wnScript = generateWNScript(prepareCommand(this_app), this_app)
@@ -312,7 +338,8 @@ def generateDiracScripts(app):
 
 def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
-    Upload a locally available file to the grid as a DiracFile
+    Upload a locally available file to the grid as a DiracFile.
+    Randomly chooses an SE.
 
     Args:
         namePattern (str): name of the file
@@ -323,10 +350,20 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
 
     new_df = DiracFile(namePattern, localDir=localDir)
-    random_SE = random.choice(getConfig('DIRAC')['allDiracSE'])
+    trySEs = getConfig('DIRAC')['allDiracSE']
+    random.shuffle(trySEs)
     new_lfn = os.path.join(getInputFileDir(job), namePattern)
-    returnable = new_df.put(force=True, uploadSE=random_SE, lfn=new_lfn)[0]
-
+    returnable = None
+    for SE in trySEs:
+        #Check that the SE is writable
+        if execute('checkSEStatus("%s", "%s")' % (SE, 'Write')):
+            try:
+                returnable = new_df.put(force=True, uploadSE=SE, lfn=new_lfn)[0]
+                break
+            except GangaDiracError as err:
+                raise GangaException("Upload of input file as LFN %s to SE %s failed" % (new_lfn, SE)) 
+    if not returnable:
+        raise GangaException("Failed to upload input file to any SE")
     if should_del:
         os.unlink(os.path.join(localDir, namePattern))
 
@@ -356,10 +393,14 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
+        # If we are getting the metadata we need to make sure the summary.xml is added to the output sandbox if not there already.
+        if app.getMetadata and not 'summary.xml' in outputsandbox:
+            outputsandbox += ['summary.xml']
+
 
         if not isinstance(app.uploadedInput, DiracFile):
             generateDiracInput(app)
-            assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit"
+            assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit. Tried to upload to: %s\nIf your Ganga installation is not at CERN your username may be trying to create a non-existent LFN. Try setting the 'DIRAC' configuration 'DiracLFNBase' to your grid user path.\n" % DiracFile.diracLFNBase()
         
         rep_data = app.uploadedInput.getReplicas()
         assert rep_data != {}, "Failed to find a replica, aborting submit"
@@ -409,12 +450,13 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         for file_ in job.inputfiles:
             if isinstance(file_, DiracFile):
                 inputsandbox += ['LFN:'+file_.lfn]
-            elif isinstance(file_, LocalFile):
-                base_name = os.path.basename(file_.namePattern)
-                shutil.copyfile(os.path.join(file_.localDir, base_name), os.path.join(app.getSharedPath(), base_name))
+            if isinstance(file_, LocalFile):
+                if job.master is not None and file_ not in job.master.inputfiles:
+                    shutil.copy(os.path.join(file_.localDir, file_.namePattern), app.getSharedPath())
+                    inputsandbox += [os.path.join(app.getSharedPath(), file_.namePattern)]
             else:
                 logger.error("Filetype: %s nor currently supported, please contact Ganga Devs if you require support for this with the DIRAC backend" % getName(file_))
-                raise ApplicationConfigurationError(None, "Unsupported filetype: %s with DIRAC backend" % getName(file_))
+                raise ApplicationConfigurationError("Unsupported filetype: %s with DIRAC backend" % getName(file_))
 
         master_job = job.master or job
 

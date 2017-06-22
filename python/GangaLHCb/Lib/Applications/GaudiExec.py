@@ -8,9 +8,10 @@ import tarfile
 import threading
 import stat
 import uuid
+from functools import wraps
 from StringIO import StringIO
 
-from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError, GangaException
+from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Base.Filters import allComponentFilters
@@ -29,10 +30,41 @@ from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampConten
 
 logger = getLogger()
 
+
+def gaudiExecBuildLock(f):
+    """ Method used to lock the build methods in GaudiExec so we don't run multiple builds in parallel.
+    This is because each new build destorys the target.
+    Args:
+        f(function): This should be the buildGangaTarget from GaudiExec
+    """
+    @wraps(f)
+    def masterPrepLock(self, *args, **kwds):
+        
+        # Get the global lock and prepare
+        with gaudiExecBuildLock.globalBuildLock:
+            return f(self,*args, **kwds)
+
+    return masterPrepLock
+
+# Global lock for all builds
+gaudiExecBuildLock.globalBuildLock = threading.Lock()
+
 class GaudiExec(IPrepareApp):
     """
 
     Welcome to the new GaudiApp for LHCb apps written/constructed making use of the new CMake framework
+
+    =============
+    Simple Usage:
+    =============
+    The simplest usage of GaudiExec can be achieved by using the 'prepareGaudiExec' function
+
+    e.g.
+
+    j=Job(application=prepareGaudiExec('DaVinci','v41r3'));
+
+    This creates a new application env within 'cmtuser' (this is configurable) and returns a GaudiExec object for Ganga to use.
+    This is equivalent to running over a released application when you don't want to check out any private code or make any code changes.
 
     =============
     Requirements:
@@ -90,22 +122,35 @@ class GaudiExec(IPrepareApp):
     Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace with 'execfile'
     The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files before executing this one.
 
+    =================
+    Get job metadata:
+    =================
+
+    To get the Gaudi metadata from the job set the option 'getMatadata' to True - the default is false.
+
+    j.application.getMetadata = True
+
+    This will add some options to running the job to create a summary.xml file which is downloaded in the output sandbox and parsed by ganga. Ganga will also
+    merge the summary.xml files using the Gaudi XML merging script for each subjob to create the metadata for the whole job.
+
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
-        'directory':    SimpleItem(defvalue=None, typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
-        'options':       GangaFileItem(defvalue=None, sequence=1, doc='List of files which contain the options I want to pass to gaudirun.py'),
+        'directory':    SimpleItem(defvalue='', typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
+        'options':       GangaFileItem(defvalue=[], sequence=1, doc='List of files which contain the options I want to pass to gaudirun.py'),
         'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
         'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
-        'extraArgs':    SimpleItem(defvalue=[], typelist=[list], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
+        'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
+        'getMetadata':  SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
 
         # Prepared job object
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
+        'envVars':      SimpleItem(defvalue=None, typelist=[None, dict], hidden=1, doc='A dict to store the environment variable "XMLSUMMARYBASEROOT" for use when merging the XML summary'),
         })
     _category = 'applications'
     _name = 'GaudiExec'
@@ -115,6 +160,7 @@ class GaudiExec(IPrepareApp):
     build_target = 'ganga-input-sandbox'
     build_dest = 'input-sandbox.tgz'
     sharedOptsFile_baseName = 'jobScripts-%s.tar'
+
 
     def __setattr__(self, attr, value):
         """
@@ -138,6 +184,7 @@ class GaudiExec(IPrepareApp):
                 logger.warning("Possibly setting wrong type for options: '%s'" % type(value))
 
         super(GaudiExec, self).__setattr__(attr, actual_value)
+
 
     def unprepare(self, force=False):
         """
@@ -169,11 +216,11 @@ class GaudiExec(IPrepareApp):
         # file is unspecified, has a space or is a relative path
         self.configure(self)
         logger.info('Preparing %s application.' % getName(self))
-        self.is_prepared = ShareDir()
-        logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
         this_build_target = self.buildGangaTarget()
 
+        self.is_prepared = ShareDir()
+        logger.info('Created shared directory: %s' % (self.is_prepared.name))
         try:
             # copy any 'preparable' objects into the shared directory
             send_to_sharedir = self.copyPreparables()
@@ -192,7 +239,7 @@ class GaudiExec(IPrepareApp):
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
                     opts_file.get(localPath=self.getSharedPath())
                 else:
-                    raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
+                    raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
             self.post_prepare()
 
         except Exception as err:
@@ -204,6 +251,7 @@ class GaudiExec(IPrepareApp):
 
         return 1
 
+
     def getExtraOptsFileName(self):
         """
         Returns the name of the opts file which corresponds to the job which owns this app
@@ -211,12 +259,14 @@ class GaudiExec(IPrepareApp):
         """
         return path.join('opts', 'extra_opts_%s_.py' % self.getJobObject().getFQID('.'))
 
+
     def getWrapperScriptName(self):
         """
         Returns the name of the wrapper script file which corresponds to the job which owns this app
         This places the script of interest in a subdir to not overly clutter the WN
         """
         return path.join('wrapper', 'job_%s_optsFileWrapper.py' % self.getJobObject().getFQID('.'))
+
 
     def constructExtraFiles(self, job):
         """
@@ -272,6 +322,7 @@ class GaudiExec(IPrepareApp):
                 tinfo2.size = fileobj2.len
                 tar_file.addfile(tinfo2, fileobj2)
 
+
     def cleanGangaTargetArea(self, this_build_target):
         """
         Method to remove the build target and other files not needed to reproduce the same build target again
@@ -291,6 +342,7 @@ class GaudiExec(IPrepareApp):
             elif path.isdir(path.join(build_dir, obj)):
                 shutil.rmtree(path.join(build_dir, obj), ignore_errors=True)
 
+
     def configure(self, masterappconfig):
         """
         Required even though nothing is done in this step for this App
@@ -302,6 +354,7 @@ class GaudiExec(IPrepareApp):
         dir_name = self.directory
         return (None, None)
 
+
     def getOptsFiles(self):
         """
         This function returns a sanitized absolute path to the self.options file from user input
@@ -312,15 +365,16 @@ class GaudiExec(IPrepareApp):
                     ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
                     full_path = path.join(this_opt.localDir, this_opt.namePattern)
                     if not path.exists(full_path):
-                        raise ApplicationConfigurationError(None, "Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
+                        raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
                 elif isinstance(this_opt, DiracFile):
                     pass
                 else:
                     logger.error("opts: %s" % self.options)
-                    raise ApplicationConfigurationError(None, "Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+                    raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
             return self.options
         else:
-            raise ApplicationConfigurationError(None, "No Opts File has been specified, please provide one!")
+            raise ApplicationConfigurationError("No Opts File has been specified, please provide one!")
+
 
     def getEnvScript(self):
         """
@@ -328,11 +382,11 @@ class GaudiExec(IPrepareApp):
         """
         return 'export CMTCONFIG=%s; source LbLogin.sh --cmtconfig=%s && ' % (self.platform, self.platform)
 
+
     def execCmd(self, cmd):
         """
         This method executes a command within the namespace of the project. The cmd is placed in a bash script which is executed within the env
         This will adopt the platform associated with this application.
-        Any explicit calls to be run within the project env have to be prepended with './run '. This is not added automatically
 
         e.g. The following will execute a 'make' command within the given project dir
 
@@ -342,8 +396,14 @@ class GaudiExec(IPrepareApp):
         Args:
             cmd (str): This is the command(s) which are to be executed within the project environment and directory
         """
+        if not self.directory:
+            raise GangaException("Cannot run a command using GaudiExec without a directory first being set!")
+        if not path.isdir(self.directory):
+            raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
 
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
+        if not cmd.startswith('./run '):
+            cmd = './run ' + cmd
 
         cmd_file.write("#!/bin/bash")
         cmd_file.write("\n")
@@ -359,7 +419,17 @@ class GaudiExec(IPrepareApp):
         # I would have preferred to execute all commands against inside `./run` so we have some sane behaviour
         # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
 
-        rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
+        if not path.isfile(path.join(self.directory, 'build.%s' %self.platform, 'run')):
+            rc, stdout, stderr = _exec_cmd('make', self.directory)
+            if rc != 0:
+                logger.error("Failed to perform initial make on a Cmake based project")
+                logger.error("This is required so that the './run' target exists and is callable within the project")
+                logger.error("StdErr: %s" % str(stderr))
+                raise GangaException("Failed to execute command")
+            if cmd != 'make':
+                rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
+        else:
+            rc, stdout, stderr = _exec_cmd(cmd_file.name, self.directory)
 
         if rc != 0:
             logger.error("Failed to execute command: %s" % cmd_file.name)
@@ -371,6 +441,8 @@ class GaudiExec(IPrepareApp):
 
         return rc, stdout, stderr
 
+
+    @gaudiExecBuildLock
     def buildGangaTarget(self):
         """
         This builds the ganga target 'ganga-input-sandbox' for the project defined by self.directory
@@ -393,7 +465,27 @@ class GaudiExec(IPrepareApp):
             raise GangaException("Wanted Target File: %s NOT found" % wantedTargetFile)
 
         logger.info("Built %s" % wantedTargetFile)
+        # Whilst we are here let's store the application environment but ignore awkward ones
+        env, envstdout, envstderr = _exec_cmd('./run env', self.directory)
+        envDict = {}
+        for item in envstdout.split("\n"):
+            if len(item.split("="))==2:
+                if item.split("=")[0] == 'XMLSUMMARYBASEROOT':
+                    envDict[item.split("=")[0]] = item.split("=")[1]
+        self.envVars = envDict
+
         return wantedTargetFile
+
+
+    def postprocess(self):
+        from GangaLHCb.Lib.Applications import XMLPostProcessor
+        XMLPostProcessor.GaudiExecPostProcess(self, logger)
+
+    def getenv(self, cache_env=False):
+        """
+        A function to return the environment of the built application
+        """
+        return self.envVars
 
     def readInputData(self, opts):
         """
@@ -406,13 +498,14 @@ class GaudiExec(IPrepareApp):
         input_dataset = getGaudiExecInputData(opts, self)
         try:
             job = self.getJobObject()
-        except:
+        except AssertionError:
             raise GangaException("This makes no sense without first belonging to a job object as I can't assign input data!")
 
         if job.inputdata is not None and len(job.inputdata) > 0:
             logger.warning("Warning Job %s already contained inputdata, overwriting" % job.fqid)
 
         job.inputdata = input_dataset
+
 
     def getWNPythonContents(self):
         """

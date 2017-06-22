@@ -14,7 +14,7 @@ from Ganga.GPIDev.Lib.File import File, ShareDir
 from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.root import getrootsys, getpythonhome
 
-from Ganga.Core import ApplicationPrepareError
+from Ganga.Core.exceptions import ApplicationPrepareError
 
 import Ganga.Utility.logging
 import inspect
@@ -513,7 +513,7 @@ def downloadWrapper(app):
 
     # Write a wrapper script that installs ROOT and runs script
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                   'wrapperScriptTemplate.py')
+                                                   'wrapperScriptTemplate.py.template')
     from Ganga.GPIDev.Lib.File import FileUtils
     wrapperscript = FileUtils.loadScript(script_location, '')
 

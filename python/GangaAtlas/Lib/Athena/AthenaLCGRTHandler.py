@@ -127,16 +127,15 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 if job.inputdata._name == 'ATLASLocalDataset':
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
                     input_files = job.inputdata.names
-
                 elif job.inputdata._name == 'ATLASTier3Dataset':
                     if not job.inputdata.names:
-                        raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
+                        raise ApplicationConfigurationError('No inputdata has been specified.')
                     if job.inputdata.names:
                         input_files = job.inputdata.names
                         input_guids = input_files
 
                 elif job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset', 'EventPicking']:
-                    if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified. Failure in job %s.%s. Dataset %s' %(job._getRoot().id, job.id, job.inputdata.dataset)  )
+                    if not job.inputdata.names: raise ApplicationConfigurationError('No inputdata has been specified. Failure in job %s.%s. Dataset %s' %(job._getRoot().id, job.id, job.inputdata.dataset)  )
                     input_guids = job.inputdata.guids
                     input_files = job.inputdata.names
 
@@ -144,7 +143,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
                         # check for conflicts with TAG_LOCAL or TAG_COPY
                         if job.inputdata.type in ['TAG_LOCAL', 'TAG_COPY']:
-                            raise ApplicationConfigurationError(None, "Cannot provide both tag_info and run as '%s'. Please use one or the other!" % job.inputdata.type)
+                            raise ApplicationConfigurationError("Cannot provide both tag_info and run as '%s'. Please use one or the other!" % job.inputdata.type)
                         
                         # check if FILE_STAGER is used
                         if job.inputdata.type == 'FILE_STAGER':
@@ -177,7 +176,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                         input_files = job.inputdata.names 
                         input_guids = input_files
                     else:
-                        raise ApplicationConfigurationError(None,'No inputdata has been specified.') 
+                        raise ApplicationConfigurationError('No inputdata has been specified.')
 
                 elif job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset', 'EventPicking']:
                     if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER', 'TAG_LOCAL', 'TAG_COPY' ]:
@@ -290,7 +289,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     logger.debug('Output4: %s,%s',output_location, job.outputdata.location)
 
         if getConfig('LCG')['JobLogHandler'] == 'DQ2' and (not job.outputdata or (job.outputdata and job.outputdata._name != 'DQ2OutputDataset')):
-            raise ApplicationConfigurationError(None,'Staging of log files in DQ2 requested, but DQ2 output dataset not specified.')
+            raise ApplicationConfigurationError('Staging of log files in DQ2 requested, but DQ2 output dataset not specified.')
         
 #       prepare inputsandbox
 
@@ -318,7 +317,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         if job.outputdata and job.outputdata.outputdata:
             _append_file_buffer(inputbox,'output_files',job.outputdata.outputdata)
         elif job.outputdata and not job.outputdata.outputdata:
-            raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
+            raise ApplicationConfigurationError('j.outputdata.outputdata is empty - Please specify output filename(s).')
 
         exe = os.path.join(__directory__,'run-athena-lcg.sh')
         outputbox = jobmasterconfig.outputbox
@@ -336,7 +335,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             pass
         
         if output_location and output_location.find('/castor/cern.ch/grid/atlas/t0')>=0:
-            raise ApplicationConfigurationError(None,'You are try to save the output to TIER0DISK - please use another area !')
+            raise ApplicationConfigurationError('You are try to save the output to TIER0DISK - please use another area !')
         if not output_location:
             output_location = ''
         if configDQ2['USE_STAGEOUT_SUBSCRIPTION']:
@@ -388,7 +387,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations(overlap=False)[ datasets[0] ])
                 except:
                     printout = 'Job submission failed ! Dataset %s could not be found in DQ2 ! Maybe retry ?' %(datasets[0])
-                    raise ApplicationConfigurationError(None,printout )
+                    raise ApplicationConfigurationError(printout )
 
         if job.inputdata and job.inputdata._name == 'ATLASTier3Dataset':
             environment['DATASETTYPE'] = 'TIER3'
@@ -524,7 +523,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
             #if not job.outputdata.location:
-            #    raise ApplicationConfigurationError(None,'j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
+            #    raise ApplicationConfigurationError('j.outputdata.location is empty - Please specify a DQ2 output location - job not submitted !')
             if not 'ganga-stage-in-out-dq2.py' in [ os.path.basename(file.name) for file in inputbox ]:
                 _append_files(inputbox,'ganga-stage-in-out-dq2.py')
             _append_files(inputbox,'ganga-joboption-parse.py')
@@ -554,7 +553,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 #       prepare environment
 
         if not app.atlas_release: 
-            raise ApplicationConfigurationError(None,'j.application.atlas_release is empty - No ATLAS release version found. Run prepare() or specify a version explictly.')
+            raise ApplicationConfigurationError('j.application.atlas_release is empty - No ATLAS release version found. Run prepare() or specify a version explictly.')
 
         environment={ 
             'ATLAS_RELEASE'  : app.atlas_release,
@@ -626,7 +625,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     environment['GANGA_CHECKMD5SUM'] = 1
                     
             else:
-                raise ApplicationConfigurationError(None,'j.inputdata.dataset is empty - DQ2 dataset name needs to be specified.')
+                raise ApplicationConfigurationError('j.inputdata.dataset is empty - DQ2 dataset name needs to be specified.')
 
             # Raise submission exception
             if (not job.backend.CE and 
@@ -636,10 +635,10 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 not (job.splitter and job.splitter._name == 'AnaTaskSplitterJob') and
                 not (job.splitter and job.splitter._name == 'ATLASTier3Splitter')):
 
-                raise ApplicationConfigurationError(None,'Job submission failed ! Please use DQ2JobSplitter or specify j.backend.requirements.sites or j.backend.requirements.CE !')
+                raise ApplicationConfigurationError('Job submission failed ! Please use DQ2JobSplitter or specify j.backend.requirements.sites or j.backend.requirements.CE !')
 
             if job.inputdata.match_ce_all or job.inputdata.min_num_files>0:
-                raise ApplicationConfigurationError(None,'Job submission failed ! Usage of j.inputdata.match_ce_all or min_num_files is obsolete ! Please use DQ2JobSplitter or specify j.backend.requirements.sites or j.backend.requirements.CE !')
+                raise ApplicationConfigurationError('Job submission failed ! Usage of j.inputdata.match_ce_all or min_num_files is obsolete ! Please use DQ2JobSplitter or specify j.backend.requirements.sites or j.backend.requirements.CE !')
             #if job.inputdata.number_of_files and (job.splitter and job.splitter._name == 'DQ2JobSplitter'):
             #    allLoc = job.inputdata.get_locations(complete=0)
             #    completeLoc = job.inputdata.get_locations(complete=1)
@@ -684,7 +683,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         if app.atlas_dbrelease:
             if not app._name == "AthenaTask" and not (job.splitter and (job.splitter._name == 'DQ2JobSplitter' or job.splitter._name == 'ATLASTier3Splitter')):
-                raise ApplicationConfigurationError(None,'Job submission failed ! Please use DQ2JobSplitter if you are using j.application.atlas_dbrelease !')
+                raise ApplicationConfigurationError('Job submission failed ! Please use DQ2JobSplitter if you are using j.application.atlas_dbrelease !')
             try:
                 environment['ATLAS_DBRELEASE'] = app.atlas_dbrelease.split(':')[0]
                 environment['ATLAS_DBFILE'] = app.atlas_dbrelease.split(':')[1]

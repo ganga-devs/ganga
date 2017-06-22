@@ -17,7 +17,7 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibFileSpecFromLibDS
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 
 from GangaAtlas.Lib.Rucio import generate_output_datasetname
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
@@ -66,14 +66,14 @@ def getDBDatasets(jobO,trf,dbrelease):
                     try:
                         tmpList = Client.queryFilesInDataset(tmpDbrDS,False)
                     except:
-                        raise ApplicationConfigurationError(None,"ERROR : error while looking up dataset %s. Perhaps this dataset does not exist?"%tmpDbrDS)
+                        raise ApplicationConfigurationError("ERROR : error while looking up dataset %s. Perhaps this dataset does not exist?"%tmpDbrDS)
                     # append
                     for tmpLFN,tmpVal in tmpList.iteritems():
                         dbrFiles[tmpLFN] = tmpVal
                     dbrDsList.append(tmpDbrDS)
                 # check
                 if tmpDbrLFN not in dbrFiles:
-                    raise ApplicationConfigurationError(None,"ERROR : %s is not in %s"%(tmpDbrLFN,tmpDbrDS))
+                    raise ApplicationConfigurationError("ERROR : %s is not in %s"%(tmpDbrLFN,tmpDbrDS))
     return dbrFiles,dbrDsList
 
 
@@ -100,10 +100,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             job.backend.nobuild = True
 
         if job.backend.bexec and job.backend.nobuild:
-            raise ApplicationConfigurationError(None,"Contradicting options: job.backend.bexec and job.backend.nobuild are both enabled.")
+            raise ApplicationConfigurationError("Contradicting options: job.backend.bexec and job.backend.nobuild are both enabled.")
 
         if job.backend.requirements.rootver != '' and job.backend.nobuild:
-            raise ApplicationConfigurationError(None,"Contradicting options: job.backend.requirements.rootver given and job.backend.nobuild are enabled.")
+            raise ApplicationConfigurationError("Contradicting options: job.backend.requirements.rootver given and job.backend.nobuild are enabled.")
         
         # Switch on compilation flag if bexec is set or libds is empty
         if job.backend.bexec != '' or not job.backend.nobuild:
@@ -126,23 +126,23 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         # validate application
         #if not app.atlas_release and not job.backend.requirements.rootver:
-        #    raise ApplicationConfigurationError(None,"application.atlas_release is not set. Did you run application.prepare()")
+        #    raise ApplicationConfigurationError("application.atlas_release is not set. Did you run application.prepare()")
         self.dbrelease = app.atlas_dbrelease
         if self.dbrelease != '' and self.dbrelease.find(':') == -1:
-            raise ApplicationConfigurationError(None,"ERROR : invalid argument for DB Release. Must be 'DatasetName:FileName'")
+            raise ApplicationConfigurationError("ERROR : invalid argument for DB Release. Must be 'DatasetName:FileName'")
         self.runConfig = AthenaUtils.ConfigAttr(app.atlas_run_config)
         for k in self.runConfig.keys():
             self.runConfig[k]=AthenaUtils.ConfigAttr(self.runConfig[k])
         if not app.atlas_run_dir:
-            raise ApplicationConfigurationError(None,"application.atlas_run_dir is not set. Did you run application.prepare()")
+            raise ApplicationConfigurationError("application.atlas_run_dir is not set. Did you run application.prepare()")
         self.rundirectory = app.atlas_run_dir
         self.cacheVer = ''
         if app.atlas_project and app.atlas_production:
             self.cacheVer = "-" + app.atlas_project + "_" + app.atlas_production
         if not app.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT','EXE', 'TRF']:
-            raise ApplicationConfigurationError(None,"Panda backend supports only application.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT','EXE', 'TRF']")
+            raise ApplicationConfigurationError("Panda backend supports only application.atlas_exetype in ['ATHENA','PYARA','ARES','ROOT','EXE', 'TRF']")
         if app.atlas_exetype == 'ATHENA' and not app.user_area.name and not job.backend.libds:
-            raise ApplicationConfigurationError(None,'app.user_area.name is null')
+            raise ApplicationConfigurationError('app.user_area.name is null')
 
         # use the shared area if possible
         tmp_user_area_name = app.user_area.name
@@ -168,7 +168,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 self.inputdatatype='Tier3'
                 logger.info('Input dataset is a Tier3 PFN list')
             else: 
-                raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
+                raise ApplicationConfigurationError('Panda backend supports only inputdata=DQ2Dataset()')
 
             #if not app.athena_compile and (len(job.inputdata.dataset) > 1 or any(ds.endswith("/") for ds in job.inputdata.dataset)):
             #    logger.warning("Since this job is submitted to multiple sites; the builjob has to be executed. Enabling athena_compile.")
@@ -182,8 +182,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
 
             if not job.outputdata.outputdata:
-                raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT','EXE' ] and Panda backend")
-            #raise ApplicationConfigurationError(None,"Sorry TRF on Panda backend not yet supported")
+                raise ApplicationConfigurationError("job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT','EXE' ] and Panda backend")
+            #raise ApplicationConfigurationError("Sorry TRF on Panda backend not yet supported")
 
             if app.options:
                 self.job_options += ' %s ' % app.options
@@ -194,7 +194,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 logger.warning("Passing of environment variables to Athena using Panda not supported. Ignoring atlas_environment setting.")
                 
             if job.outputdata.outputdata:
-                raise ApplicationConfigurationError(None,"job.outputdata.outputdata must be empty if atlas_exetype='ATHENA' and Panda backend is used (outputs are auto-detected)")
+                raise ApplicationConfigurationError("job.outputdata.outputdata must be empty if atlas_exetype='ATHENA' and Panda backend is used (outputs are auto-detected)")
             if app.options:
                 if app.options.startswith('-c'):
                     self.job_options += ' %s ' % app.options
@@ -213,7 +213,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         elif app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
 
             if not job.outputdata.outputdata:
-                raise ApplicationConfigurationError(None,"job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT','EXE' ] and Panda backend")
+                raise ApplicationConfigurationError("job.outputdata.outputdata is required for atlas_exetype in ['PYARA','ARES','TRF','ROOT','EXE' ] and Panda backend")
             self.job_options += ' '.join([os.path.basename(fopt.name) for fopt in app.option_file])
 
             # sort out environment variables
@@ -243,7 +243,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 self.job_options += ' %s ' % app.options
 
         if self.job_options == '':
-            raise ApplicationConfigurationError(None,"No Job Options found!")
+            raise ApplicationConfigurationError("No Job Options found!")
         logger.info('Running job options: %s'%self.job_options)
 
         # validate inputdata
@@ -262,7 +262,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 self.inputdatatype='Tier3'
                 logger.info('Input dataset is a Tier3 PFN list')
             else: 
-                raise ApplicationConfigurationError(None,'Panda backend supports only inputdata=DQ2Dataset()')
+                raise ApplicationConfigurationError('Panda backend supports only inputdata=DQ2Dataset()')
         else:
             self.inputdatatype='None'
             logger.info('Proceeding without an input dataset.')
@@ -272,12 +272,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if not job.splitter:
                 runPandaBrokerage(job)
             elif job.splitter._name != 'DQ2JobSplitter' and job.splitter._name != 'AnaTaskSplitterJob':
-                raise ApplicationConfigurationError(None,'Splitting with Panda+DQ2Dataset requires DQ2JobSplitter')
+                raise ApplicationConfigurationError('Splitting with Panda+DQ2Dataset requires DQ2JobSplitter')
         elif self.inputdatatype=='Tier3':
             if job.splitter and job.splitter._name != 'ATLASTier3Splitter':
-                raise ApplicationConfigurationError(None,'Splitting with Panda+ATLASTier3Dataset requires ATLASTier3Splitter')
+                raise ApplicationConfigurationError('Splitting with Panda+ATLASTier3Dataset requires ATLASTier3Splitter')
             if job.backend.site == 'AUTO':
-                raise ApplicationConfigurationError(None,'Panda+ATLASTier3Dataset requires a specified backend.site')
+                raise ApplicationConfigurationError('Panda+ATLASTier3Dataset requires a specified backend.site')
             job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']
         elif self.inputdatatype == 'None':
             runPandaBrokerage(job)
@@ -287,12 +287,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     j.backend.site = job.backend.site
                     
         if len(job.subjobs) == 0 and job.backend.site == 'AUTO':
-            raise ApplicationConfigurationError(None,'Error: backend.site=AUTO after brokerage. Report to DA Help Forum')
+            raise ApplicationConfigurationError('Error: backend.site=AUTO after brokerage. Report to DA Help Forum')
         
         # handle the output dataset
         if job.outputdata:
             if job.outputdata._name != 'DQ2OutputDataset':
-                raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
+                raise ApplicationConfigurationError('Panda backend supports only DQ2OutputDataset')
         else:
             logger.info('Adding missing DQ2OutputDataset')
             job.outputdata = DQ2OutputDataset()
@@ -403,12 +403,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if rc:
                     logger.error('Copying user_area failed with status %d',rc)
                     logger.error(output)
-                    raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+                    raise ApplicationConfigurationError('Packing inputsandbox failed.')
                 rc, output = commands.getstatusoutput('gunzip %s.gz' % (self.inputsandbox))
                 if rc:
                     logger.error('Unzipping user_area failed with status %d',rc)
                     logger.error(output)
-                    raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+                    raise ApplicationConfigurationError('Packing inputsandbox failed.')
 
             for fname in [os.path.abspath(f.name) for f in job.inputsandbox]:
                 fname.rstrip(os.sep)
@@ -420,7 +420,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 rc, out = AthenaUtils.getAthenaVer()
                 # failed
                 if not rc:
-                    #raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
+                    #raise ApplicationConfigurationError('CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
                     logger.warning("CMT could not parse correct environment for inputsandbox - will use the atlas_run_dir as default")
                     
                     # as we don't have to be in the run dir now, create a copy of the run_dir directory structure and use that
@@ -434,9 +434,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                             path = os.path.join(input_dir, 'sbx_tree')
                             fn = os.path.join(app.atlas_run_dir, fn)
                         else:
-                            raise ApplicationConfigurationError(None, "Couldn't copy file %s to recreate run_dir for input sandbox" % fname)
+                            raise ApplicationConfigurationError( "Couldn't copy file %s to recreate run_dir for input sandbox" % fname)
                     else:
-                        raise ApplicationConfigurationError(None, "Couldn't create directory structure to match run_dir %s for input sandbox" % run_path)
+                        raise ApplicationConfigurationError("Couldn't create directory structure to match run_dir %s for input sandbox" % run_path)
 
                 else:
                     userarea = out['workArea']
@@ -451,19 +451,19 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if rc:
                     logger.error('Packing inputsandbox failed with status %d',rc)
                     logger.error(output)
-                    raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+                    raise ApplicationConfigurationError('Packing inputsandbox failed.')
 
             # remove sandbox tree if created
             if "sbx_tree" in os.listdir(os.path.dirname(self.inputsandbox)):                
                 rc, output = commands.getstatusoutput("rm -r %s/sbx_tree" % os.path.dirname(self.inputsandbox))
                 if rc:
-                    raise ApplicationConfigurationError(None, "Couldn't remove directory structure used for input sandbox")
+                    raise ApplicationConfigurationError( "Couldn't remove directory structure used for input sandbox")
                 
             rc, output = commands.getstatusoutput('gzip %s' % (self.inputsandbox))
             if rc:
                 logger.error('Packing inputsandbox failed with status %d',rc)
                 logger.error(output)
-                raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+                raise ApplicationConfigurationError('Packing inputsandbox failed.')
             self.inputsandbox += ".gz"
         else:
             self.inputsandbox = tmp_user_area_name
@@ -626,7 +626,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         if job.inputdata and self.inputdatatype=='DQ2':
             if len(job.inputdata.dataset) > 1:
-                raise ApplicationConfigurationError(None,'Multiple input datasets per subjob not supported. Use a container dataset?')
+                raise ApplicationConfigurationError('Multiple input datasets per subjob not supported. Use a container dataset?')
 
         jspec = JobSpec()
         jspec.jobDefinitionID   = masterjob.id
@@ -1052,9 +1052,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         PsubUtils.disableRedundantTransfer(jspec, job.outputdata.transferredDS)
         
         return jspec
-
-from Ganga.GPIDev.Credentials import GridProxy
-gridProxy = GridProxy()
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 

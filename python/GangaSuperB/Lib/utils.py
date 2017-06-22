@@ -1,6 +1,6 @@
 '''Utility library'''
 
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 
 class QuitException(GangaException):
     '''A custom exception used to stop the execution of a method without 

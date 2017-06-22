@@ -3,7 +3,7 @@ import tempfile
 from Ganga.GPIDev.Lib.File import LocalFile
 import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 logger = Ganga.Utility.logging.getLogger()
 
@@ -39,7 +39,7 @@ class PythonOptsCmakeParser(object):
         err_msg = ''
         options = {}
 
-        rc, stdout, m = self.app.exec_cmd(gaudirun)
+        rc, stdout, m = self.app.execCmd(gaudirun)
 
         if stdout.find('Gaudi.py') >= 0:
             msg = 'The version of gaudirun.py required for your application is not supported.'
@@ -47,7 +47,7 @@ class PythonOptsCmakeParser(object):
 
         elif stdout.find('no such option: -o') >= 0:
             gaudirun = 'gaudirun.py -n -v -p %s %s' % (tmp_pkl.name, py_opts.name)
-            rc, stdout, m = self.app.exec_cmd(gaudirun)
+            rc, stdout, m = self.app.execCmd(gaudirun)
             rc = 0
 
             if stdout and rc == 0:
@@ -57,7 +57,7 @@ class PythonOptsCmakeParser(object):
 
         else:
             cmd = 'gaudirun.py -n -p %s %s' % (tmp_pkl.name, py_opts.name)
-            rc, stdout, m = self.app.exec_cmd(cmd)
+            rc, stdout, m = self.app.execCmd(cmd)
             if rc == 0 and stdout:
                 opts_str = tmp_py.read()
                 err_msg = 'Please check gaudirun.py -o file.py produces a valid python file.'
@@ -69,7 +69,7 @@ class PythonOptsCmakeParser(object):
                 logger.error('Cannot eval() the options file. Exception: %s', err)
                 from traceback import print_exc
                 logger.error(' ', print_exc())
-                raise ApplicationConfigurationError(None, stdout + '###SPLIT###' + m)
+                raise ApplicationConfigurationError(stdout + '###SPLIT###' + m)
             try:
                 opts_pkl_string = tmp_pkl.read()
             except IOError as err:
@@ -78,7 +78,7 @@ class PythonOptsCmakeParser(object):
 
         if not rc == 0:
             logger.debug('Failed to run: %s', gaudirun)
-            raise ApplicationConfigurationError(None, stdout + '###SPLIT###' + m)
+            raise ApplicationConfigurationError(stdout + '###SPLIT###' + m)
 
         tmp_pkl.close()
         py_opts.close()

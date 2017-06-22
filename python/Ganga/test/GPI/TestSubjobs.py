@@ -26,6 +26,30 @@ class TestSubjobs(GangaUnitTest):
 
         assert len(j.subjobs) == 20
 
+    def testKilling(self):
+        """
+        Create some subjobs and kill them
+        """
+        from Ganga.GPI import Job, GenericSplitter, Local
+        from GangaTest.Framework.utils import sleep_until_state
+        j = Job()
+        j.application.exe = "sleep"
+        j.splitter = GenericSplitter()
+        j.splitter.attribute = 'application.args'
+        j.splitter.values = [['400'] for _ in range(0, 5)]
+        j.backend = Local()
+        j.submit()
+
+        sleep_until_state(j, None, 'running')
+        assert j.status == 'running'
+
+        j.subjobs(0).kill()
+        assert j.subjobs(0).status == 'killed'
+        assert j.subjobs(1).status != 'killed'
+        j.kill()
+        assert j.status == 'killed'
+        assert all(sj.status == 'killed' for sj in j.subjobs)
+
     def testSetParentOnLoad(self):
         """
         Test that the parents are set correctly on load
@@ -36,7 +60,7 @@ class TestSubjobs(GangaUnitTest):
         def flush_full_job():
             mj = jobs(0)
             mj.comment = "Make sure I'm dirty " + ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-            stripProxy(mj)._getRegistry()._flush([j])
+            stripProxy(mj)._getRegistry()._flush([stripProxy(mj)])
 
         # Make sure the main job is fully loaded
         j = jobs(0)

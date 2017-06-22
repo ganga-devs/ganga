@@ -3,7 +3,7 @@
 from copy import deepcopy
 import tempfile
 import fnmatch
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
 from Ganga.GPIDev.Base import GangaObject
@@ -82,7 +82,7 @@ class LHCbDataset(GangaDataset):
                 for this_file in files:
                     self.files.append(deepcopy(this_file))
             elif isType(files, IGangaFile):
-                self.files.append(deepcopy(this_file))
+                self.files.append(deepcopy(files))
             elif isType(files, (list, tuple, GangaList)):
                 new_list = []
                 for this_file in files:
@@ -95,7 +95,7 @@ class LHCbDataset(GangaDataset):
                     new_list.append(new_file)
                 self.files.extend(new_list)
             elif type(files) is str:
-                self.files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+                self.files.append(string_datafile_shortcut_lhcb(files, None), False)
             else:
                 raise GangaException("Unknown object passed to LHCbDataset constructor!")
 
@@ -131,8 +131,8 @@ class LHCbDataset(GangaDataset):
         'Returns the replicas for all files in the dataset.'
         lfns = self.getLFNs()
         cmd = 'getReplicas(%s)' % str(lfns)
-        result = get_result(cmd, 'LFC query error', 'Could not get replicas.')
-        return result['Value']['Successful']
+        result = get_result(cmd, 'LFC query error. Could not get replicas.')
+        return result['Successful']
 
     def hasLFNs(self):
         'Returns True is the dataset has LFNs and False otherwise.'
@@ -293,7 +293,7 @@ class LHCbDataset(GangaDataset):
         tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
         cmd = 'getLHCbInputDataCatalog(%s,%d,"%s","%s")' \
               % (str(lfns), depth, site, tmp_xml.name)
-        result = get_result(cmd, 'LFN->PFN error', 'XML catalog error.')
+        result = get_result(cmd, 'LFN->PFN error. XML catalog error.')
         xml_catalog = tmp_xml.read()
         tmp_xml.close()
         return xml_catalog
@@ -338,8 +338,8 @@ class LHCbDataset(GangaDataset):
                 sdatasetsnew += """ \"LFN:%s\",""" % f.lfn
                 sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.lfn, dtype_str)
             else:
-                sdatasetsnew += """ \"PFN:%s\",""" % f.namePattern
-                sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (f.namePattern, dtype_str)
+                sdatasetsnew += """ \"%s\",""" % f.accessURL()[0]
+                sdatasetsold += """ \"DATAFILE='%s' %s\",""" % (f.accessURL()[0], dtype_str)
         if sdatasetsold.endswith(","):
             if self.persistency == 'ROOT':
                 sdatasetsnew = sdatasetsnew[:-1] + """\n], clear=True)"""
@@ -378,7 +378,7 @@ class LHCbDataset(GangaDataset):
         other_files = self._checkOtherFiles(other)
         files = set(self.getFullFileNames()).difference(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -395,10 +395,10 @@ class LHCbDataset(GangaDataset):
     def symmetricDifference(self, other):
         '''Returns a new data set w/ files in either this or other but not
         both.'''
-        other_files = other.checkOtherFiles(other)
+        other_files = other._checkOtherFiles(other)
         files = set(self.getFullFileNames()).symmetric_difference(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -407,7 +407,7 @@ class LHCbDataset(GangaDataset):
         other_files = other._checkOtherFiles(other)
         files = set(self.getFullFileNames()).intersection(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -416,7 +416,7 @@ class LHCbDataset(GangaDataset):
         other_files = self._checkOtherFiles(other)
         files = set(self.getFullFileNames()).union(other_files)
         data = LHCbDataset()
-        data.extend([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -424,7 +424,7 @@ class LHCbDataset(GangaDataset):
         'Returns the bookkeeping metadata for all LFNs. '
         logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
-        b = get_result(cmd, 'Error removing replica', 'Replica rm error.')
+        b = get_result(cmd, 'Error removing replica. Replica rm error.')
         return b
 
     # def pop(self,file):

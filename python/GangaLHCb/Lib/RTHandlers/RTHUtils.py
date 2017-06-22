@@ -1,7 +1,7 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import tempfile
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 import Ganga.Utility.Config
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import FileBuffer, File
@@ -81,7 +81,7 @@ def getXMLSummaryScript(indent=''):
 
     import inspect
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                   'XMLWorkerScript.py')
+                                   'XMLWorkerScript.py.template')
 
     from Ganga.GPIDev.Lib.File import FileUtils
     xml_script = FileUtils.loadScript(script_location, '###INDENT###')
@@ -98,7 +98,7 @@ def create_runscript(useCmake=False):
 
     import inspect
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                                   'WorkerScript.py')
+                                                   'WorkerScript.py.template')
 
     from Ganga.GPIDev.Lib.File import FileUtils
     worker_script = FileUtils.loadScript(script_location, '')

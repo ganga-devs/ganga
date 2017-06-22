@@ -87,7 +87,6 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
             if empty_SE_check:
                 ## If true check, if not false check
                 raise BackendError("Dirac", "Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
-            config = getConfig('Dirac')
             myLine = myLine.replace('###OUTPUT_SE###', str([]))
 
         total_JDL += myLine + "\n"
@@ -194,7 +193,7 @@ def diracAPI_script_template():
     import inspect
     import os.path
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                   'DiracRTHScript.py')
+                                   'DiracRTHScript.py.template')
 
     from Ganga.GPIDev.Lib.File import FileUtils
     script_template = FileUtils.loadScript(script_location, '')
@@ -214,8 +213,7 @@ def diracAPI_script_settings(app):
     job = app.getJobObject()
     diracAPI_line = ''
     if type(job.backend.settings) is not dict:
-        raise ApplicationConfigurationError(
-            None, 'backend.settings should be a dict')
+        raise ApplicationConfigurationError('backend.settings should be a dict')
     for setting, setting_val in job.backend.settings.iteritems():
         if str(setting).startswith('set'):
             _setting = str(setting)[3:]

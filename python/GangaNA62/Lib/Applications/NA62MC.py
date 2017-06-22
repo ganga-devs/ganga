@@ -10,7 +10,7 @@ from Ganga.GPIDev.Lib.File import *
 #from Ganga.GPIDev.Lib.File import SharedDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
 from commands import getstatusoutput
@@ -183,7 +183,7 @@ class NA62MC(IPrepareApp):
 
 
     def configure(self,masterappconfig):
-        from Ganga.Core import ApplicationConfigurationError
+        from Ganga.Core.exceptions import ApplicationConfigurationError
         import os.path
         
         return (None,None)

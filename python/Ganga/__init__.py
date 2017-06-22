@@ -25,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.2.0 $'
+_gangaVersion = '$Name: 6.6.0 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -120,8 +120,8 @@ conf_config.addOption('StartupGPI', '', 'block of GPI commands executed at start
 conf_config.addOption('ReleaseNotes', True, 'Flag to print out the relevent subsection of release notes for each experiment at start up')
 conf_config.addOption('gangadir', expandvars(None, '~/gangadir'),
                  'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=Ganga.Utility.Config.expandvars)
-conf_config.addOption(
-    'repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
+conf_config.addOption('repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
+conf_config.addOption('lockingStrategy', 'UNIX', 'Type of locking strategy which can be used. UNIX or FIXED . default = UNIX')
 conf_config.addOption('workspacetype', 'LocalFilesystem',
                  'Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
 conf_config.addOption('user', getpass.getuser(),
@@ -133,6 +133,8 @@ conf_config.addOption('deleteUnusedShareDir', 'always',
                  'If set to ask the user is presented with a prompt asking whether Shared directories not associated with a persisted Ganga object should be deleted upon Ganga exit. If set to never, shared directories will not be deleted upon exit, even if they are not associated with a persisted Ganga object. If set to always (the default), then shared directories will always be deleted if not associated with a persisted Ganga object.')
 
 conf_config.addOption('autoGenerateJobWorkspace', False, 'Autogenerate workspace dirs for new jobs')
+
+conf_config.addOption('NoAfsToken', False, 'Do not require an AFS token when running on an AFS filesystem. Not recommended!')
 
 # add named template options
 conf_config.addOption('namedTemplates_ext', 'tpl',
@@ -299,26 +301,12 @@ local_config.addOption('location', None, 'The location where the workdir will be
 lcg_config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
 #gproxy_config = getConfig('GridProxy_Properties')
 
-# set default values for the configuration parameters
-lcg_config.addOption(
-    'EDG_ENABLE', False, 'DEPRECATED enables/disables the support of the EDG middleware')
-
-lcg_config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                 'DEPRECATED sets the LCG-UI environment setup script for the EDG middleware',
-                 filter=Ganga.Utility.Config.expandvars)
-
-lcg_config.addOption(
-    'GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
-
 lcg_config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
                  'sets the LCG-UI environment setup script for the GLITE middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption('VirtualOrganisation', '',
                  'sets the name of the grid virtual organisation')
-
-lcg_config.addOption('ConfigVO', '', 'DEPRECATED sets the VO-specific LCG-UI configuration script for the EDG resource broker',
-                 filter=Ganga.Utility.Config.expandvars)
 
 lcg_config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
                  filter=Ganga.Utility.Config.expandvars)
@@ -726,6 +714,15 @@ output_config.addOption('MassStorageFile',
                         'uploadOptions': massStorageUploadOptions,
                         'defaultProtocol': defaultMassStorageProto},
                        massStorageFileExt)
+
+sharedFileBackendPost = {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client', 'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}
+
+output_config.addOption('SharedFile',
+                       {'fileExtensions': [''],
+                        'backendPostprocess': sharedFileBackendPost,
+                        'uploadOptions': {'path': None, 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'},
+                        'defaultProtocol': 'file://'},
+                        docstr_Ext % ('Shared Storage', 'SharedFS'))
 
 # ------------------------------------------------
 # Display
