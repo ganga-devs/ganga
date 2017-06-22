@@ -157,10 +157,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if job.inputdata._name == 'DQ2Dataset':
                 self.inputdatatype='DQ2'
                 logger.info('Input dataset(s) %s',job.inputdata.dataset)
-            elif job.inputdata._name == 'AMIDataset':
-                self.inputdatatype='DQ2'
-                job.inputdata.dataset = job.inputdata.search()
-                logger.info('Input dataset(s) %s',job.inputdata.dataset)
             elif job.inputdata._name == 'EventPicking':
                 self.inputdatatype='DQ2'
                 logger.info('Input dataset(s) %s',job.inputdata.dataset)
@@ -250,10 +246,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.inputdata:
             if job.inputdata._name == 'DQ2Dataset':
                 self.inputdatatype='DQ2'
-                logger.info('Input dataset(s) %s',job.inputdata.dataset)
-            elif job.inputdata._name == 'AMIDataset':
-                self.inputdatatype='DQ2'
-                job.inputdata.dataset = job.inputdata.search()
                 logger.info('Input dataset(s) %s',job.inputdata.dataset)
             elif job.inputdata._name == 'EventPicking':
                 self.inputdatatype='DQ2'
