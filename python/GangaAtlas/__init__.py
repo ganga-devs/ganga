@@ -115,7 +115,6 @@ def loadPlugins( config = {} ):
    import Lib.ATLASDataset
    import Lib.AtlasLCGRequirements
    import Lib.Tasks
-   import Lib.AMIGA
    
    return None
 
