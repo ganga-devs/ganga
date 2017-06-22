@@ -196,8 +196,8 @@ class DQ2JobSplitter(ISplitter):
             else:
                 raise ApplicationConfigurationError('DQ2JobSplitter specifed but no input dataset and no splitter options (%SKIPEVENTS and/or %RNDM) in job.application.options')
 
-        if job.inputdata._name != 'DQ2Dataset'  and job.inputdata._name != 'AMIDataset' and job.inputdata._name != 'EventPicking':
-            raise ApplicationConfigurationError('DQ2 Job Splitter requires a DQ2Dataset or AMIDataset or EventPicking as input')
+        if job.inputdata._name != 'DQ2Dataset'  and job.inputdata._name != 'EventPicking':
+            raise ApplicationConfigurationError('DQ2 Job Splitter requires a DQ2Dataset or EventPicking as input')
 
         if not job.backend._name in [ 'LCG', 'CREAM', 'Panda', 'NG' ] and not ( job.backend._name in ['SGE'] and config['ENABLE_SGE_DQ2JOBSPLITTER'] ):
             raise ApplicationConfigurationError('DQ2JobSplitter requires an LCG, CREAM, Panda or NG backend')
@@ -205,8 +205,6 @@ class DQ2JobSplitter(ISplitter):
         if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0 and self.filesize <=0):
             raise ApplicationConfigurationError("Specify one of the parameters of DQ2JobSplitter for job splitting: numsubjobs, numfiles, numevtsperjob")
  
-        if (self.numevtsperjob > 0 and job.inputdata._name != 'AMIDataset'):
-            raise ApplicationConfigurationError("Event based splitting is supported only for AMIDataset as input dataset type")
         # split options are mutually exclusive
         if ( (self.numfiles > 0 or self.numsubjobs > 0) and self.numevtsperjob > 0):
             raise ApplicationConfigurationError("Split by files (or subjobs) and events can not be defined simultaneously")
@@ -339,10 +337,6 @@ class DQ2JobSplitter(ISplitter):
                     os.environ['X509_USER_PROXY'] = old_proxy
                 else:
                     del os.environ['X509_USER_PROXY']
-
-        #AMIDataset
-        if job.inputdata._name == 'AMIDataset':
-            job.inputdata.dataset = job.inputdata.search()
 
         #EventPicking
         if job.inputdata._name == 'EventPicking':

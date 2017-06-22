@@ -47,9 +47,6 @@ class TestAtlas(GangaGPITestCase):
     def testMCTask(self):
         return TestMCTask()
 
-    def testAMIDataset(self):
-        return TestAMIDataset(srcdirana)
-    
     def testEventPicking(self):
         return TestEventPicking(srcdirana)
 
@@ -201,15 +198,6 @@ class TestAthenaDQ2LCG(TestAthena):
         self.j.backend=LCG()
         self.j.backend.requirements.cloud='ALL'
         self.j.backend.requirements.cputime=1440
-        assert(self.j.submit()==True)
-
-class TestAMIDataset(TestAthena):
-    def setup(self):
-        TestAthena.setup(self)
-        self.j.inputdata=AMIDataset()
-        self.j.inputdata.logicalDatasetName=datasetana
-        self.j.backend=LCG()
-        self.j.backend.requirements.cloud='ALL'
         assert(self.j.submit()==True)
 
 class TestEventPicking(TestAthena):

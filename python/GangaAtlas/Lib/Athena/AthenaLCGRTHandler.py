@@ -138,7 +138,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                         input_files = job.inputdata.names
                         input_guids = input_files
 
-                elif job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset', 'EventPicking']:
+                elif job.inputdata._name in [ 'DQ2Dataset', 'EventPicking']:
                     if not job.inputdata.names: raise ApplicationConfigurationError('No inputdata has been specified. Failure in job %s.%s. Dataset %s' %(job._getRoot().id, job.id, job.inputdata.dataset)  )
                     input_guids = job.inputdata.guids
                     input_files = job.inputdata.names
@@ -188,7 +188,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                     else:
                         raise ApplicationConfigurationError('No inputdata has been specified.')
 
-                elif job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset', 'EventPicking']:
+                elif job.inputdata._name in [ 'DQ2Dataset', 'EventPicking']:
                     if not job.inputdata.type in ['DQ2_LOCAL', 'LFC', 'TAG', 'TNT_LOCAL', 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER', 'TAG_LOCAL', 'TAG_COPY' ]:
                         job.inputdata.type ='DQ2_LOCAL'
                     if not job.inputdata.datatype in ['DATA', 'MC', 'MuonCalibStream']:
@@ -393,7 +393,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                 environment['TAG_TYPE'] = 'LOCAL'                
 
         # Fix DATASETNAME env variable for DQ2_COPY mode
-        if job.inputdata and ( job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset', 'EventPicking']) and (job.inputdata.type in ['DQ2_LOCAL', 'DQ2_COPY', 'FILE_STAGER', 'TAG_LOCAL', 'TAG_COPY' ]):
+        if job.inputdata and ( job.inputdata._name in [ 'DQ2Dataset', 'EventPicking']) and (job.inputdata.type in ['DQ2_LOCAL', 'DQ2_COPY', 'FILE_STAGER', 'TAG_LOCAL', 'TAG_COPY' ]):
             if job.inputdata.dataset:
                 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import resolve_container
                 datasets = resolve_container(job.inputdata.dataset)
@@ -499,9 +499,6 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         
         inputbox.append( File(os.path.join(__directory__,'athena-utility.sh')) )
 
-        if job.inputdata and job.inputdata._name == "AMIDataset" and job.inputdata.goodRunListXML.name != '':
-            inputbox.append( File( job.inputdata.goodRunListXML.name ) )
-    
         if job.inputdata and job.inputdata._name == 'ATLASDataset':
             if job.inputdata.lfc:
                 _append_files(inputbox,'ganga-stagein-lfc.py')
@@ -529,7 +526,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         # CN: added TNTJobSplitter clause  
 
-        if job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset', 'EventPicking' ] ) or (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
+        if job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'EventPicking' ] ) or (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
             _append_files(inputbox,'ganga-stage-in-out-dq2.py','dq2_get','dq2info.tar.gz')
             if job.inputdata and job.inputdata.type == 'LFC' and not (job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter'):
                 _append_files(inputbox,'dq2_get_old')
@@ -538,7 +535,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             _append_files(inputbox,'ganga-stage-in-out-dq2.py','dq2info.tar.gz')
 
         ## insert more scripts to inputsandbox for FileStager
-        if job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset', 'EventPicking']) and job.inputdata.type in ['FILE_STAGER']:
+        if job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'EventPicking']) and job.inputdata.type in ['FILE_STAGER']:
             _append_files(inputbox,'make_filestager_joption.py','dm_util.py','fs-copy.py')
             #_append_files(inputbox,'make_filestager_joption.py','dm_util.py')
 
@@ -633,7 +630,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             environment['DQ2_URL_SERVER'] = configDQ2['DQ2_URL_SERVER']
             environment['DQ2_URL_SERVER_SSL'] = configDQ2['DQ2_URL_SERVER_SSL']
         
-        if job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset', 'EventPicking']):
+        if job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'EventPicking']):
             if job.inputdata.dataset:
                 datasetname = job.inputdata.dataset
                 environment['DATASETNAME'] = ':'.join(datasetname)
@@ -695,7 +692,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             environment['ATLAS_ARCH'] = '64'
             
         #       add software requirement of dq2clients
-        if job.inputdata and job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset', 'EventPicking' ]  and job.inputdata.type in [ 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER'] or app.atlas_dbrelease or configDQ2['USE_ACCESS_INFO']:
+        if job.inputdata and job.inputdata._name in [ 'DQ2Dataset', 'EventPicking' ]  and job.inputdata.type in [ 'TNT_DOWNLOAD', 'DQ2_COPY', 'FILE_STAGER'] or app.atlas_dbrelease or configDQ2['USE_ACCESS_INFO']:
             try:
                 # override the default one if the dq2client_version is presented 
                 # in the job backend's requirements object
@@ -744,7 +741,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         ]
 
         ## retrieve the FileStager log
-        if configDQ2['USE_ACCESS_INFO'] or (job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'AMIDataset', 'EventPicking']) and job.inputdata.type in ['FILE_STAGER']):
+        if configDQ2['USE_ACCESS_INFO'] or (job.inputdata and (job.inputdata._name in [ 'DQ2Dataset', 'EventPicking']) and job.inputdata.type in ['FILE_STAGER']):
             outputbox += ['FileStager.out', 'FileStager.err']
             
         if job.outputsandbox: outputbox += job.outputsandbox

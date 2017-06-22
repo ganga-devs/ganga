@@ -642,12 +642,6 @@ class DQ2Dataset(Dataset):
         datasets = resolve_container(self.dataset)
 
         evtsperfile = 0
-        # Get info from AMI for AMIDataset
-        if (self._name == 'AMIDataset'):
-                metadata = self.get_files_metadata()
-                if (self._getParent()) and (self._getParent()).splitter and (self._getParent()).splitter.numevtsperfile:
-                    evtsperfile = (self._getParent()).splitter.numevtsperfile
-
         for dataset in datasets:
             if backnav:
                 dataset = re.sub('AOD','ESD',dataset)
@@ -766,18 +760,6 @@ class DQ2Dataset(Dataset):
                         try:
                             sumfilesizeDataset += contents_size[guid]
                             contentsSize.append((guid, (lfn, contents_size[guid], contents_checksum[guid],contents_scope[guid])))
-                            if self._name == 'AMIDataset':
-                                nevents = metadata.setdefault(guid,{'events':0, 'lfn':lfn, 'filesize': contents_size[guid]})['events']
-                                if event and (nevents <=  0):
-                                    if evtsperfile > 0:
-                                        metadata[guid]['events'] = evtsperfile
-                                    else:
-                                        logger.warning("Couldn't get number of events  from AMI for dataset %s" %dataset)
-                                        user_input = raw_input("Enter the number of events per file : ")
-                                        evtsperfile = int(user_input)
-                                        metadata[guid]['events'] = evtsperfile
-                                tmpInfo.append((guid, (lfn, contents_size[guid], metadata[guid]['events'])))
-
                         except:
                             pass
                 diffcontentsNew[dataset] = (contents, sumfilesizeDataset)

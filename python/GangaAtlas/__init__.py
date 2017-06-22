@@ -81,12 +81,6 @@ config.addOption('NumberOfDQ2DownloadThreads', 5, 'Number of simultaneous DQ2 do
 config.addOption('setupScript', '/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/gangaDDMSetup.sh', 'Script to setup DQ2Clients software')
 
 # -------------------------------------------------
-# AMI Dataset Options
-config = makeConfig('AMIDataset','AMI dataset')
-config.addOption('MaxNumOfFiles', 3000, 'Maximum number of files in a given dataset patterns')
-config.addOption('MaxNumOfDatasets', 100, 'Maximum number of datasets in a given dataset patterns')
-
-# -------------------------------------------------
 # Tasks Options
 config = getConfig("Tasks")
 config.addOption('cloudPreference',[],'list of preferred clouds to choose for AnaTask analysis')
