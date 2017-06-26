@@ -94,6 +94,10 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         j.prepare()
 
+        assert j.application.is_prepared.name
+
+        assert path.isdir(j.application.is_prepared.path())
+
     def testSubmitJob(self):
 
         from Ganga.GPI import jobs
