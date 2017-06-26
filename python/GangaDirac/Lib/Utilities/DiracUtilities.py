@@ -61,6 +61,7 @@ def getDiracEnv(sourceFile = None):
                 DIRAC_ENV[sourceFile] = get_env(source_command)
             else:
                 logger.error("'DiracEnvSource' config variable empty")
+                logger.error("%s  %s" % (getConfig('DIRAC')['DiracEnvJSON'], getConfig('DIRAC')['DiracEnvSource']))
 
     return DIRAC_ENV[sourceFile]
 
