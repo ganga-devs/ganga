@@ -148,18 +148,13 @@ class ShareDir(GangaObject):
     _category = 'shareddirs'
     _exportmethods = ['add', 'ls', 'path']
     _name = "ShareDir"
-    _real_name = ''
 
     def __init__(self, name=None, subdir=os.curdir):
         super(ShareDir, self).__init__()
 
         self._setRegistry(None)
 
-        if self._should_init:
-
-            if not name:
-                name = 'conf-{0}'.format(uuid.uuid4())
-            self._real_name = name
+        self._real_name = None
 
     def setSchemaAttribute(self, name, value):
         """
@@ -200,7 +195,7 @@ class ShareDir(GangaObject):
             name (str): The attribute which is being looked for
         """
         if name == 'name':
-            return self._real_name
+            return _getName()
         return super(ShareDir, self).__getattr__(name)
 
     def _getName(self):
@@ -208,13 +203,15 @@ class ShareDir(GangaObject):
         A getter method for the 'name' schema attribute which will trigger the creation of a SharedDir on disk only when information about it is asked
         """
 
-        share_dir = os.path.join(getSharedPath(), self._real_name)
-        if not os.path.isdir(share_dir):
-            logger.debug("Actually creating: %s" % share_dir)
-            os.makedirs(share_dir)
-        if not os.path.isdir(share_dir):
-            logger.error("ERROR creating path: %s" % share_dir)
-            raise GangaException("ShareDir ERROR")
+        if not self._real_name:
+            self._real_name = 'conf-{0}'.format(uuid.uuid4())
+            share_dir = os.path.join(getSharedPath(), self._real_name)
+            if not os.path.isdir(share_dir):
+                logger.info("Actually creating: %s" % share_dir)
+                os.makedirs(share_dir)
+            if not os.path.isdir(share_dir):
+                logger.error("ERROR creating path: %s" % share_dir)
+                raise GangaException("ShareDir ERROR")
 
         return self._real_name
 
