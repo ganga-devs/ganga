@@ -466,8 +466,12 @@ class GaudiExec(IPrepareApp):
             raise GangaException("Wanted Target File: %s NOT found" % wantedTargetFile)
 
         logger.info("Built %s" % wantedTargetFile)
+
+
+        # FIXME Make this more pythonic or have a common method for getting the env rather than re-inventing the wheel
+
         # Whilst we are here let's store the application environment but ignore awkward ones
-        env, envstdout, envstderr = _exec_cmd('./run env', self.directory)
+        env, envstdout, envstderr = self.execCmd('./run env')
         envDict = {}
         for item in envstdout.split("\n"):
             if len(item.split("="))==2:
