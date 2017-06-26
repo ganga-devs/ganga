@@ -168,13 +168,6 @@ class LCG(IBackend):
         self.sandboxcache.vo = config['VirtualOrganisation']
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
-        # Should this __really__ be in Core?
-        from Ganga.GPIDev.Base.Proxy import getProxyInterface
-        if 'DQ2SandboxCache' in getProxyInterface.__dict__.keys():
-            DQ2SandboxCache = getProxyInterface()['DQ2SandboxCache']
-        else:
-            DQ2SandboxCache = None
-
         from Ganga.Lib.LCG.LCGSandboxCache import LCGSandboxCache
         if isType(self.sandboxcache, LCGSandboxCache):
             if not self.sandboxcache.lfc_host:
@@ -196,17 +189,6 @@ class LCG(IBackend):
 
             if (self.sandboxcache.se_type in ['srmv2']) and (not self.sandboxcache.srm_token):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
-
-        elif DQ2SandboxCache is not None and isType(self.sandboxcache, DQ2SandboxCache):
-
-            # generate a new dataset name if not given
-            if not self.sandboxcache.dataset_name:
-                from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
-                self.sandboxcache.dataset_name, unused = dq2outputdatasetname("%s.input" % get_uuid(), 0, False, '')
-
-            # subjobs inherits the dataset name from the master job
-            for sj in job.subjobs:
-                sj.backend.sandboxcache.dataset_name = self.sandboxcache.dataset_name
 
         return True
 
