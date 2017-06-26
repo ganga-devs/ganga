@@ -694,7 +694,7 @@ class GangaObject(Node):
     _should_load = False
 
     @classmethod
-    def getNew(cls, should_load=False):
+    def getNew(cls, should_load=False, should_init=False):
         """
         Returns a new instance of this class type without a populated Schema.
         This should be an object which has all of the core logic initialized correctly.
@@ -709,13 +709,14 @@ class GangaObject(Node):
 
         Node.__init__(returnable)
 
-        setattr(returnable, '_should_init', False)
+        setattr(returnable, '_should_init', should_init)
         GangaObject.__init__(returnable)
         try:
             # Initialize the most derrived class to get all of the goodness needed higher up.
             returnable.__class__.__init__(returnable)
         except:
             logger.debug("Broken init method for class: %s trying to proceed silently" % cls.__name__)
+        setattr(returnable, '_should_init', False)
 
         # Return the newly initialized object
         return returnable
@@ -734,7 +735,6 @@ class GangaObject(Node):
         # Just a flag to prevent expensive double-declarations and to avoid this where needed
         if self._should_init:
             self.populate_from_schema()
-        self._should_init = False
 
     def populate_from_schema(self):
         """
