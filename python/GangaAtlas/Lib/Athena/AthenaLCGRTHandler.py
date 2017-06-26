@@ -123,7 +123,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             # DQ2Dataset, ATLASLocalDataset and ATLASCastorDataset job splitting is done in AthenaSplitterJob
 
             if job._getRoot().subjobs:
-                if job.inputdata._name == 'ATLASLocalDataset' or job.inputdata._name == 'ATLASCastorDataset':
+                if job.inputdata._name == 'ATLASLocalDataset':
                     if not job.inputdata.names: raise ApplicationConfigurationError('No inputdata has been specified.')
                     input_files = job.inputdata.names
 
@@ -165,10 +165,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                         job.inputdata.datatype ='MC'
 
             else:
-                if job.inputdata._name == 'ATLASCastorDataset':
-                    input_files = ATLASCastorDataset.get_filenames(app)
-
-                elif job.inputdata._name == 'ATLASLocalDataset':
+                if job.inputdata._name == 'ATLASLocalDataset':
                     input_files = ATLASLocalDataset.get_filenames(app)
 
                 elif job.inputdata._name == 'ATLASDataset':
