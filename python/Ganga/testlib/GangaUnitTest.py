@@ -95,11 +95,12 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
 
     if lhcb_test:
         import getpass
-        cred_opts = (('Configuration', 'user', getpass.getuser()),
-                      ('defaults_DiracProxy', 'group', 'lhcb_user'))
+        cred_opts = [('Configuration', 'user', getpass.getuser()),
+                      ('defaults_DiracProxy', 'group', 'lhcb_user')]
     else:
-        cred_opts = (('Configuration', 'user', 'testframework'),
-                     ('defaults_DiracProxy', 'group', 'gridpp_user'))
+        cred_opts = [('Configuration', 'user', 'testframework'),
+                     ('defaults_DiracProxy', 'group', 'gridpp_user'),
+                     ('DIRAC', 'DiracEnvSource', '/cvmfs/ganga.cern.ch/dirac_ui/bashrc')]
 
     default_opts = [
         ('Configuration', 'RUNTIME_PATH', 'GangaTest'),
@@ -122,8 +123,14 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
 
     # For all the default and extra options, we set the session value
     from Ganga.Utility.Config import setUserValue
-    for opt in default_opts + extra_opts:
-        setUserValue(*opt)
+
+    for opts in default_opts, extra_opts:
+        for opt in opts:
+            try:
+                setUserValue(*opt)
+            except Exception as err:
+                print("Error Setting: %s" % str(opt))
+                print("Err: %s" % err)
 
     # The configuration is currently created at module import and hence can't be
     # regenerated.
@@ -163,8 +170,13 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
 
     # Make sure that all the config options are really set.
     # Some from plugins may not have taken during startup
-    for opt in default_opts + extra_opts:
-        setUserValue(*opt)
+    for opts in default_opts, extra_opts:
+        for opt in opts:
+            try:
+                setUserValue(*opt)
+            except Exception as err:
+                print("Error Setting: %s" % str(opt))
+                print("Err: %s" % err)
 
     logger.info("Passing to Unittest")
 
