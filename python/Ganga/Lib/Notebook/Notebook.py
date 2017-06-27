@@ -114,7 +114,8 @@ class Notebook(IPrepareApp):
             self.checkPreparedHasParent(self)
 
             script = self.wrapper(self.regexp,self.version, self.timeout, self.kernel)
-            script.create(path.join(self.getSharedPath(),script.name))
+            logger.debug("Creating: %s" % path.join(self.getSharedPath(), script.name))
+            script.create(path.join(self.getSharedPath(), script.name))
 
             self.post_prepare()
 
