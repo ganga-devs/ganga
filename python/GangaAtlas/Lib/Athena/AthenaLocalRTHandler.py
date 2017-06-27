@@ -18,7 +18,6 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 from GangaAtlas.Lib.ATLASDataset import ATLASDataset, isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations
-from GangaAtlas.Lib.ATLASDataset import ATLASCastorDataset
 from GangaAtlas.Lib.ATLASDataset import ATLASLocalDataset
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 
@@ -64,7 +63,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             # DQ2Dataset, ATLASLocalDataset and ATLASCastorDataset job splitting is done in AthenaSplitterJob
 
             if job._getRoot().subjobs:
-                if job.inputdata._name == 'ATLASLocalDataset' or job.inputdata._name == 'ATLASCastorDataset':
+                if job.inputdata._name == 'ATLASLocalDataset':
                     if not job.inputdata.names: raise ApplicationConfigurationError('No inputdata has been specified.')
                     input_files = job.inputdata.names
 
@@ -87,10 +86,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                         job.inputdata.type ='DQ2_LOCAL'
        
             else:
-                if job.inputdata._name == 'ATLASCastorDataset':
-                    input_files = ATLASCastorDataset.get_filenames(app)
-
-                elif job.inputdata._name == 'ATLASLocalDataset':
+                if job.inputdata._name == 'ATLASLocalDataset':
                     input_files = ATLASLocalDataset.get_filenames(app)
 
                 elif job.inputdata._name == 'ATLASDataset':
