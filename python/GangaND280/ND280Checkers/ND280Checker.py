@@ -135,9 +135,11 @@ class ND280RDP_Checker(IFileChecker):
     _schema.datadict['path'] = SimpleItem(defvalue = None, typelist=['str','type(None)'], doc='Middle path to store output files')
     _schema.datadict['trig'] = SimpleItem(defvalue = None, typelist=['str','type(None)'], doc='Trigger type, e.g. SPILL or COSMIC')
     _schema.datadict['site'] = SimpleItem(defvalue = None, typelist=['str','type(None)'], doc='Processing site, e.g. wg-bugaboo')
+    _schema.datadict['post_status'] = SimpleItem(defvalue = None, typelist=['bool','type(None)'], doc='Post job information to processingstatus db')
     _category = 'postprocessor'
     _name = 'ND280RDP_Checker'
     _exportmethods = ['check']
+    poststatus = True
 
     def __init__(self):
         super(ND280RDP_Checker,self).__init__()
@@ -171,6 +173,9 @@ class ND280RDP_Checker(IFileChecker):
         self.STAGE = ''
 
     def send_status(self):
+        if not self.post_status:
+            return 0
+
         logger.info('Result for %s %s %s %s is: %s, %s, %s, %s, %s' %  (self.RUN,self.SUBRUN,self.TRIGTYPE,self.STAGE,self.site,self.ReturnCode,self.Time,self.EventsIn,self.EventsOut))
 
         if self.range == 0: return # no remote status report for CosMC
@@ -223,7 +228,6 @@ class ND280RDP_Checker(IFileChecker):
             #return False
             raise PostProcessException('Site is not given')
             
-
         # finds .log file
         self.files = ['*.log']
         filepaths = self.findFiles(job)
