@@ -48,7 +48,7 @@ p.add_option('--NthFieldAsOutDir', action='store', type='string', dest='nth_fiel
 p.add_option('--inTagDS', action='store', type='string', dest='tag_input_dataset', metavar='TAGDATASETNAME', help='Name of the Tag DQ2 datasetname to process')
 p.add_option('--inTagFiles', action='store', type='string', dest='tag_input_files', help='Name of local TAG files to determine input data' )
 p.add_option('--tagCollRef', action='store', type='string', dest='tag_coll_ref', help='Directly specify the collection reference if not in JOs (e.g. TRF usage)' )
-p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['', 'DQ2', 'Local', 'Castor'],  default='', help='Type of the input dataset: DQ2, Local, Castor' )
+p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['', 'DQ2', 'Local'],  default='', help='Type of the input dataset: DQ2, Local,' )
 p.add_option('--inputaccessmode', action='store', type='choice', dest='inputaccessmode', choices = ['DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'FILE_STAGER' ], default='DQ2_LOCAL',  help='Access mode of the DQ2/TAG input dataset: DQ2_LOCAL, FILE_STAGER, LFC, TAG, TAG_REC [default: DQ2_LOCAL]'  )
 p.add_option('--inputfailover', action='store_true', help='Use DQ2_COPY automatically if DQ2_LOCAL fails' )
 p.add_option('--inputaccessprotocol', action='store', type='string', dest='inputaccessprotocol', help='Access protocol on worker node, like Xrootd'  )
@@ -450,8 +450,6 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
 	    if opt.create_poolfilecatalog:
 	        j.inputdata.create_poolfilecatalog=True
 
-        if opt.inputtype=='Castor':
-            j.inputdata = ATLASCastorDataset()
     else:        
         j.inputdata = DQ2Dataset()
         opt.inputtype = 'DQ2'
