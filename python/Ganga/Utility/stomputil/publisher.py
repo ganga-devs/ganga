@@ -5,7 +5,7 @@ from Queue import Queue
 import logging
 logging_DEBUG = logging.DEBUG
 
-BEAT_TIME = 0.3 # Seconds between publisher thread heart beats.
+BEAT_TIME = 0.1 # Seconds between publisher thread heart beats.
 IDLE_TIMEOUT = 30 # Maximum seconds to idle before closing connection.
 EXIT_TIMEOUT = 5 # Maximum seconds to clear queued messages on exit.
 PUBLISHER_TIMESTAMP_HEADER = '_publisher_timestamp' # The publisher timestamp header name
