@@ -36,6 +36,14 @@ class PrepRegistry(Registry):
     def getProxy(self):
         pass
 
+    def shutdown(self):
+        """
+        This allows us to clean up after the ShareDir on shutdown
+        """
+        if self.shareref:
+            self.shareref.cleanUpOrphans()
+        super(PrepRegistry, self).shutdown()
+
 class ShareRef(GangaObject):
 
     """The shareref table (shared directory reference counter table) provides a mechanism
@@ -49,7 +57,7 @@ class ShareRef(GangaObject):
 
     _category = 'sharerefs'
     _name = 'ShareRef'
-    _exportmethods = ['increase', 'decrease', 'ls', 'printtree', 'rebuild', 'lookup']
+    _exportmethods = ['increase', 'decrease', 'ls', 'printtree', 'rebuild', 'lookup', 'registerForRemoval']
 
     #_parent = None
     default_registry = 'prep'
@@ -57,7 +65,7 @@ class ShareRef(GangaObject):
     def __init__(self):
         super(ShareRef, self).__init__()
         self.name = {}
-        #self._setRegistry(None)
+        self.removal_list = []
 
     def __setattr__(self, attr, value):
         actual_value = value
@@ -72,12 +80,37 @@ class ShareRef(GangaObject):
         return self.name
 
     @synchronised
+    def registerForRemoval(self, shareddir):
+        """
+        This registers a given directory for removal on the shutdown of Ganga
+        Args:
+            shareddir (str): This is the directory which we intend to remove recursively when ganga shuts down
+        """
+        if shareddir not in self.removal_list:
+            self.removal_list.append(shareddir)
+
+    @synchronised
+    def cleanUpOrphans(self):
+        """
+        This cleans up the orphan share dir objects on shutdown
+        """
+
+        for shareddir in self.removal_list:
+            try:
+                shutil.rmtree(os.path.join(getSharedPath(), shareddir))
+            except:
+                logger.error("Failed to remove Orphaned Shared Dir: %s" % shareddir)
+
+    @synchronised
     def increase(self, shareddir, force=False):
         """Increase the reference counter for a given shared directory by 1. If the directory
         doesn't currently have a reference counter, one is initialised with a value of 1.
         The shareddir must exist for a reference counter to be initialised (unless Force=True).
         Sharedir should be given relative to the user's shared directory repository, which can
         be discovered by calling 'shareref'.
+        Args:
+            shareddir (str): This is the shareddir which we're registering
+            force (bool): Ignore whether the directory exists on disk or not
         """
         logger.debug("running increase() in prepregistry")
         self._getSessionLock()
@@ -110,6 +143,9 @@ class ShareRef(GangaObject):
         of the counter is 0, the shared object will be removed from the metadata, and the files within
         the shared object directory deleted when Ganga exits. If the optional remove parameter is specified
         the shared directory is removed from the table.
+        Args:
+            shareddir (str): This is the shared directory to reduce the counter for
+            remove (int): Effectively used as a bool. Should the directory be removed when the count reaches 0
         """
         self._getSessionLock()
 
