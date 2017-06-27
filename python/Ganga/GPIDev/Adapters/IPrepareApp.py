@@ -242,8 +242,8 @@ class IPrepareApp(IApplication):
             prepared_object (IPrepareApp): object in a registry which manages a prepared state
         """
         if prepared_object._getRegistry() is None:
-            self.incrementShareCounter(prepared_object.is_prepared.name)
-            self.decrementShareCounter(prepared_object.is_prepared.name)
+            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+            shareref.registerForRemoval(prepared_object.is_prepared.name)
             logger.info('Application is not currently associated with a persisted Ganga object')
             logger.info('(e.g. box, job, task). Both the prepared application and the contents of')
             logger.info('its shared directory will be lost when Ganga exits.')
