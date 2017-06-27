@@ -90,16 +90,28 @@ class ShareRef(GangaObject):
             self.removal_list.append(shareddir)
 
     @synchronised
-    def cleanUpOrphans(self):
+    def cleanUpOrphans(self, orphans=None):
         """
         This cleans up the orphan share dir objects on shutdown
+        Args:
+            orphans (list): An optional list of the orphans to remove from the list
         """
 
-        for shareddir in self.removal_list:
-            try:
-                shutil.rmtree(os.path.join(getSharedPath(), shareddir))
-            except:
-                logger.error("Failed to remove Orphaned Shared Dir: %s" % shareddir)
+        if orphans:
+            to_remove = orphans
+        else:
+            to_remove = self.removal_list
+
+        for shareddir in to_remove:
+            if os.path.exists(os.path.join(getSharedPath(), shareddir)):
+                try:
+                    shutil.rmtree(os.path.join(getSharedPath(), shareddir))
+                except:
+                    logger.error("Failed to remove Orphaned Shared Dir: %s" % shareddir)
+
+        for shareddir in to_remove:
+            if shareddir in self.removal_list:
+                self.removal_list.remove(shareddir)
 
     @synchronised
     def increase(self, shareddir, force=False):
@@ -168,6 +180,7 @@ class ShareRef(GangaObject):
         except KeyError as err:
             logger.debug("KeyError: %s" % err)
             self.__getName()[basedir] = 0
+            self.cleanUpOrphans([basedir,])
 
         self._setDirty()
         self._releaseSessionLockAndFlush()
