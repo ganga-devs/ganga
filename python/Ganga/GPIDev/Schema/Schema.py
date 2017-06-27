@@ -231,7 +231,11 @@ class Schema(object):
         """
         returnable = self._getDefaultValueInternal(attr)
         if make_copy and returnable is not None:
-            return copy.deepcopy(returnable)
+            from Ganga.GPIDev.Base.Objects import GangaObject
+            if isinstance(returnable, GangaObject):
+                return returnable.__class__.getNew(should_init=True)
+            else:
+                return copy.deepcopy(returnable)
         else:
             return returnable
 
