@@ -405,7 +405,6 @@ class ATLASOutputDataset(Dataset):
         outputfiles = job.outputdata.outputdata
         
 
-
 #$Log: not supported by cvs2svn $
 #Revision 1.7  2009/04/24 08:36:21  dvanders
 ##49529: provide name for GangaThread
