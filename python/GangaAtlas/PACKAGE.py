@@ -22,9 +22,9 @@ _external_packages = {
                      'noarch':True ,
                      'RUCIO_APPID' : 'ganga',
                      },
-    'rucio-clients' : { 'version' : '1.0.1',
+    'rucio-clients' : { 'version' : '1.11.3',
                      'PATH' : ['bin/'],
-                     'syspath' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages' ],
+                     'syspath' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.7/site-packages' ],
                      'RUCIO_HOME' : '/afs/cern.ch/sw/ganga/external/rucio-clients/0.2.13/noarch/', # done properly below
                      'RUCIO_AUTH_TYPE' : 'x509_proxy',
                      'RUCIO_ACCOUNT' : 'ganga',
