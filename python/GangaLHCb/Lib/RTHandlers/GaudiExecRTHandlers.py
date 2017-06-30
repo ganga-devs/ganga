@@ -307,9 +307,10 @@ def generateJobScripts(app, appendJobScripts):
         with tarfile.open(scriptArchive, 'a') as tar_file:
             if app.getMetadata:
                 summaryScript = "\nfrom Gaudi.Configuration import *\nfrom Configurables import LHCbApp\nLHCbApp().XMLSummary='summary.xml'"
-                summaryFile = FileBuffer('summary.py', summaryScript)
+                summaryPath = os.path.join(job.getInputWorkspace().getPath(), 'summary.py')
+                summaryFile = FileBuffer(summaryPath, summaryScript)
                 summaryFile.create()
-                tar_file.add('summary.py')
+                tar_file.add(summaryPath)
             for this_job in rjobs:
                 this_app = this_job.application
                 wnScript = generateWNScript(prepareCommand(this_app), this_app)
