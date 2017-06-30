@@ -310,7 +310,7 @@ def generateJobScripts(app, appendJobScripts):
                 summaryPath = os.path.join(job.getInputWorkspace().getPath(), 'summary.py')
                 summaryFile = FileBuffer(summaryPath, summaryScript)
                 summaryFile.create()
-                tar_file.add(summaryPath)
+                tar_file.add(summaryPath, arcname = 'summary.py')
             for this_job in rjobs:
                 this_app = this_job.application
                 wnScript = generateWNScript(prepareCommand(this_app), this_app)
