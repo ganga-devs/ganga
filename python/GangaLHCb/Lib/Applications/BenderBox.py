@@ -35,6 +35,8 @@ _script_ = """#!/usr/bin/env python
 # =============================================================================
 from Gaudi.Configuration import importOptions
 importOptions('{datafile}')
+from Configurables import LHCbApp
+LHCbApp().XMLSummary='summary.xml'
 from Gaudi.Configuration import EventSelector,FileCatalog
 from copy import deepcopy
 inputdata    = deepcopy( EventSelector() .Input    )
@@ -61,6 +63,8 @@ _script_bender_ = """#!/usr/bin/env python
 from distutils.spawn import find_executable
 bender_script = find_executable('bender')
 import sys 
+from Configurables import LHCbApp
+LHCbApp().XMLSummary='summary.xml'
 # =============================================================================
 ## redefine arguments 
 # =============================================================================
@@ -90,6 +94,8 @@ _script_ostap_ = """#!/usr/bin/env python
 from distutils.spawn import find_executable
 ostap_script = find_executable('ostap')
 import sys
+from Configurables import LHCbApp
+LHCbApp().XMLSummary='summary.xml'
 # =============================================================================
 ## redefine arguments 
 # =============================================================================
@@ -155,7 +161,7 @@ class BenderModule(GaudiExec):
     ## make entries 
     for key,val in _schema.datadict.iteritems() :
         if key == 'useGaudiRun'  : val._update( { 'defvalue' : False } )  
-        if not key in ( 'platform' , 'directory' ) : 
+        if not key in ( 'platform' , 'directory', 'getMetadata') : 
             if not val['hidden'] : val._update( { 'hidden'   : 1 } )
     ## add new entries 
     _schema.datadict [ 'module' ] = GangaFileItem (
@@ -245,7 +251,7 @@ class BenderRun(GaudiExec):
     ## make entries 
     for key,val in _schema.datadict.iteritems() :
         if key == 'useGaudiRun'  : val._update( { 'defvalue' : False } )  
-        if not key in ( 'platform' , 'directory' ) : 
+        if not key in ( 'platform' , 'directory', 'getMetadata') : 
             if not val['hidden'] : val._update( { 'hidden'   : 1 } )
     ## add new entries 
     _schema.datadict [ 'scripts'   ] = GangaFileItem   (
@@ -310,7 +316,7 @@ class BenderRun(GaudiExec):
 #  @code
 #  j.application = OstapRun ( scripts   = ['path_to_script/the_script.py']  ,
 #                             arguments = [ '--no-canvas' ]  ,
-#                             commands  = [ 'print dir()' ]  ) ) 
+#                             commands  = [ 'getMetadataprint dir()' ]  ) ) 
 #  @encode
 #  @author Vladimir ROMANOVSKY Vladimir.Romanovskiy@cern.ch
 #  @author Vanya BELYAEV  Ivan.Belyaev@itep.ru       
@@ -339,7 +345,7 @@ class OstapRun(GaudiExec):
     ## make entries 
     for key,val in _schema.datadict.iteritems() :
         if key == 'useGaudiRun'  : val._update( { 'defvalue' : False } )  
-        if not key in ( 'platform' , 'directory' ) : 
+        if not key in ( 'platform' , 'directory', 'getMetadata') : 
             if not val['hidden'] : val._update( { 'hidden'   : 1 } )
     ## add new entries 
     _schema.datadict [ 'scripts'   ] = GangaFileItem   (
