@@ -1979,8 +1979,8 @@ class Job(GangaObject):
                     # before resubmitting it
                     sjs.getOutputWorkspace().remove(preserve_top=True)
             else:
-                logger.error('There is nothing to do for resubmit of Job: %s' % self.getFQID('.'))
-                logger.error('It\'s assumed all subjobs here have been completed, continuing silently')
+                logger.debug('There is nothing to do for resubmit of Job: %s' % self.getFQID('.'))
+                logger.debug('It\'s assumed all subjobs here have been completed, continuing silently')
                 self.updateStatus(oldstatus)
                 return
 
