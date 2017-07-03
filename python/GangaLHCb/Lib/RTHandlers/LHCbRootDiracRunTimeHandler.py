@@ -48,7 +48,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
         job = app.getJobObject()
         outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
-        lhcb_dirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
+        lhcb_dirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles, job)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication

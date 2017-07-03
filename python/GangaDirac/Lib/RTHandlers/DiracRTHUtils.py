@@ -55,7 +55,7 @@ def API_nullifier(item):
         return None
     return item
 
-def dirac_outputfile_jdl(output_files, empty_SE_check):
+def dirac_outputfile_jdl(output_files, empty_SE_check, job):
     """
     This constructs the setOutputData such that the data will be sent to the chosen SE/Token
     In the case that the empty_SE_check is True it will raise an exception if the defaultSE is empty
@@ -76,6 +76,9 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
 
     per_SE_JDL = '''j.setOutputData(###OUTPUTDATA###, outputPath='###OUTPUT_PATH###', outputSE=###OUTPUT_SE###)'''
     total_JDL = ''
+
+    if getConfig('DIRAC')['useGangaPath']:
+        per_SE_JDL = per_SE_JDL.replace('###OUTPUT_PATH###', 'GangaJob_%s/OutputFiles' % job.getFQID('.'))
 
     for outputSE, namePatterns in file_SE_dict.iteritems():
 
