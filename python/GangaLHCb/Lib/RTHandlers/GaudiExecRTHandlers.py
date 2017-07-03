@@ -253,7 +253,7 @@ def generateDiracInput(app):
         addTimestampFile(prep_dir)
         prep_file = _pseudo_session_id + '.tgz'
         tmp_dir = tempfile.gettempdir()
-        compressed_file = os.path.join(tmp_dir, '__'+os.path.basename(prep_file))
+        compressed_file = os.path.join(tmp_dir, 'diracInputFiles_'+os.path.basename(prep_file))
 
         if not job.master:
             rjobs = job.subjobs
@@ -376,7 +376,7 @@ def getInputFileDir(job):
     """
     Return the LFN remote dirname for this job
     """
-    return os.path.join(DiracFile.diracLFNBase(job.backend.credential_requirements), 'GangaInputFile/Job_%s' % job.fqid)
+    return os.path.join(DiracFile.diracLFNBase(job.backend.credential_requirements), 'GangaJob_%s/InputFiles' % job.fqid)
 
 
 def check_creds(cred_req):
@@ -510,7 +510,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         # Already added to sandbox uploaded as LFN
 
         # This code deals with the outputfiles as outputsandbox and outputdata for us
-        lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
+        lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles, job)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
