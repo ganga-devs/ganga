@@ -33,6 +33,7 @@ from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
 
 logger = getLogger()
 
+_pseudo_session_id = str(uuid.uuid4())
 
 def genDataFiles(job):
     """
@@ -79,7 +80,7 @@ def getScriptName(app):
         app (Job): This is the app object which contains everything useful for generating the code
     """
     job = app.getJobObject()
-    return "_".join((getConfig('Configuration')['user'], getName(app), 'Job', job.getFQID('.'), str(uuid.uuid4()), 'script'))+'.py'
+    return "_".join((getConfig('Configuration')['user'], getName(app), 'Job', job.getFQID('.'), _pseudo_session_id, 'script'))+'.py'
 
 
 def generateWNScript(commandline, app):
@@ -250,7 +251,7 @@ def generateDiracInput(app):
     else:
         prep_dir = app.getSharedPath()
         addTimestampFile(prep_dir)
-        prep_file = str(uuid.uuid4()) + '.tgz'
+        prep_file = _pseudo_session_id + '.tgz'
         tmp_dir = tempfile.gettempdir()
         compressed_file = os.path.join(tmp_dir, '__'+os.path.basename(prep_file))
 

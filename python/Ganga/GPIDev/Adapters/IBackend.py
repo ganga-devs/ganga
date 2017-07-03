@@ -502,7 +502,7 @@ class IBackend(GangaObject):
                             subjobs_to_monitor.append(j.subjobs[sj_id])
                         if multiThreadMon:
                             if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
-                                queues._addSystem(j.backend.updateMonitoringInformation, args=(subjobs_to_monitor,), name="Backend Monitor " + getName(j.backend))
+                                queues._addSystem(j.backend.updateMonitoringInformation, args=(subjobs_to_monitor,), name="Backend Monitor")
                         else:
                             j.backend.updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
@@ -522,7 +522,7 @@ class IBackend(GangaObject):
                 if multiThreadMon:
                     if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
                         queues._addSystem(stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation,
-                                          args=(simple_jobs[this_backend],), name="Backend Monitor " + getName(this_backend))
+                                          args=(simple_jobs[this_backend],), name="Backend Monitor")
                 else:
                     stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
 
