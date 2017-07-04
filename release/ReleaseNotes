@@ -13,6 +13,7 @@ ganga/python/GangaAtlas
 * Removed AtlasCastorDataset #1035
 * Removed StagerDataset #1036
 * Allow AthAnalysis to be submitted without setting atlas_release option #1038
+* Bugfix for SL7 - update rucio version and path #1044
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLHCb
