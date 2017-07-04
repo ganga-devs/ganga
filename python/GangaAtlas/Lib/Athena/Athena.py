@@ -1155,6 +1155,7 @@ class Athena(IPrepareApp):
             maxFileSize = config['EXE_MAXFILESIZE']
             archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose, self.athena_compile )
         else:
+            archiveName = ""
             if AthenaUtils.useCMake():
                 self.useCMake = True
                 archiveName,archiveFullName = AthenaUtils.archiveWithCpack(True,tmpDir,True)
