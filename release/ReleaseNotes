@@ -6,6 +6,7 @@ ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 * Silence harmless warning in auto resubmit #1041
 * Update .gangarc on minor version increment rather than bugfix #1048
+* Moved log of used versions to ~/.cache/Ganga
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaAtlas
