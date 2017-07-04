@@ -10,6 +10,7 @@ ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
+* Removed ATLASDataset #1039
 * Removed AtlasCastorDataset #1035
 * Removed StagerDataset #1036
 * Allow AthAnalysis to be submitted without setting atlas_release option #1038
