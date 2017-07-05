@@ -17,7 +17,7 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
-from GangaAtlas.Lib.ATLASDataset import ATLASDataset, isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations
+from GangaAtlas.Lib.ATLASDataset import isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations
 from GangaAtlas.Lib.ATLASDataset import ATLASLocalDataset
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 
@@ -67,10 +67,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     if not job.inputdata.names: raise ApplicationConfigurationError('No inputdata has been specified.')
                     input_files = job.inputdata.names
 
-                elif job.inputdata._name == 'ATLASDataset':
-                    if not job.inputdata.lfn: raise ApplicationConfigurationError('No inputdata has been specified.')
-                    input_files = job.inputdata.lfn
-
                 elif job.inputdata._name == 'ATLASTier3Dataset':
                     if not job.inputdata.names:
                         raise ApplicationConfigurationError('No inputdata has been specified.')
@@ -88,9 +84,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             else:
                 if job.inputdata._name == 'ATLASLocalDataset':
                     input_files = ATLASLocalDataset.get_filenames(app)
-
-                elif job.inputdata._name == 'ATLASDataset':
-                    input_files = ATLASDataset.get_filenames(app)
 
                 elif job.inputdata._name == 'ATLASTier3Dataset':
                     if job.inputdata.names:
@@ -462,12 +455,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             _append_files(inputbox,'dq2_get')
             _append_files(inputbox,'dq2info.tar.gz')
             _append_files(inputbox,'libdcap.so')
-
-        if job.inputdata and job.inputdata._name == 'ATLASDataset':
-            if job.inputdata.lfc:
-                _append_files(inputbox,'ganga-stagein-lfc.py')
-            else:
-                _append_files(inputbox,'ganga-stagein.py')
 
         ## insert more scripts to inputsandbox for FileStager
         if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type in ['FILE_STAGER']:

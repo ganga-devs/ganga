@@ -1155,6 +1155,7 @@ class Athena(IPrepareApp):
             maxFileSize = config['EXE_MAXFILESIZE']
             archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose, self.athena_compile )
         else:
+            archiveName = ""
             if AthenaUtils.useCMake():
                 self.useCMake = True
                 archiveName,archiveFullName = AthenaUtils.archiveWithCpack(True,tmpDir,True)
@@ -1614,12 +1615,6 @@ class AthenaSplitterJob(ISplitter):
                     for j in xrange(numfiles):
                         inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset_filenames()[j])
 
-            if job.inputdata._name == 'ATLASDataset':
-                for i in xrange(self.numsubjobs):    
-                    inputnames.append([])
-                for j in xrange(len(job.inputdata.get_dataset())):
-                    inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset()[j])
-
             if job.inputdata._name == 'DQ2Dataset':
                 # Splitting per dataset
                 if self.split_per_dataset:
@@ -1670,15 +1665,12 @@ class AthenaSplitterJob(ISplitter):
             j.name = job.name + "_" + str(i)
             j.inputdata=job.inputdata
             if job.inputdata:
-                if job.inputdata._name == 'ATLASDataset':
-                    j.inputdata.lfn=inputnames[i]
-                else:
-                    j.inputdata.names=inputnames[i]
-                    if job.inputdata._name == 'DQ2Dataset':
-                        j.inputdata.guids=inputguids[i]
-                        j.inputdata.number_of_files = len(inputguids[i])
-                        if self.split_per_dataset:
-                            j.inputdata.dataset=job.inputdata.dataset[i]
+                j.inputdata.names=inputnames[i]
+                if job.inputdata._name == 'DQ2Dataset':
+                    j.inputdata.guids=inputguids[i]
+                    j.inputdata.number_of_files = len(inputguids[i])
+                    if self.split_per_dataset:
+                        j.inputdata.dataset=job.inputdata.dataset[i]
             j.outputdata=job.outputdata
 
             # Set the output location if we have mapping
