@@ -126,7 +126,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             if job._getRoot().subjobs:
                 if job.inputdata._name == 'ATLASLocalDataset':
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
-                    input_files = job.inputdata.names
+                      
                 elif job.inputdata._name == 'ATLASTier3Dataset':
                     if not job.inputdata.names:
                         raise ApplicationConfigurationError('No inputdata has been specified.')
@@ -483,10 +483,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
         
         inputbox.append( File(os.path.join(__directory__,'athena-utility.sh')) )
-    
-        if job.inputdata and job.inputdata._name == "AMIDataset" and job.inputdata.goodRunListXML.name != '':
-            inputbox.append( File( job.inputdata.goodRunListXML.name ) )
-            
+
         if app.user_area.name: 
             #we will now use the user_area that's stored in the users shared directory
             if app.is_prepared is not True:

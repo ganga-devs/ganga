@@ -66,6 +66,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 if job.inputdata._name == 'ATLASLocalDataset':
                     if not job.inputdata.names: raise ApplicationConfigurationError(None,'No inputdata has been specified.')
                     input_files = job.inputdata.names
+
                 elif job.inputdata._name == 'ATLASTier3Dataset':
                     if not job.inputdata.names:
                         raise ApplicationConfigurationError('No inputdata has been specified.')
@@ -488,7 +489,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         except ConfigError:
             raise ConfigError('No default location of ATLAS_SOFTWARE specified in the configuration.')
 
-        if app.atlas_release=='' and app.atlas_project != "AthAnalysisBase":
+        if app.atlas_release=='' and app.atlas_project != "AthAnalysisBase" and app.atlas_project != "AthAnalysis":
             raise ApplicationConfigurationError('j.application.atlas_release is empty - No ATLAS release version found. Run prepare() or specify a version explictly.')
       
         environment={ 

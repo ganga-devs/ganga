@@ -56,6 +56,7 @@ def filecheck(filename):
         if (fsize>0):
             return fsize
 
+
 from commands import getstatusoutput
 import threading
 from Ganga.Core import GangaThread
@@ -372,7 +373,7 @@ class ATLASOutputDataset(Dataset):
         job = self._getParent()
 
         try:
-            logger.info("ATLASDataset.retrieve() called.")
+            logger.info("ATLASOutputDataset.retrieve() called.")
             logger.debug('job.id: %d, Job.subjobs: %d',job.id,len(job.subjobs))
             logger.debug('job.outputdir: %s',job.outputdir)
             logger.debug('job.outputsandbox: %s',job.outputsandbox)

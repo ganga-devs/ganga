@@ -160,6 +160,10 @@ cmt_setup () {
 	    export EXTRAOPTS=here
 	    mkdir work
 	    cd work
+	elif [[ $ATLAS_PROJECT == AthAnalysis ]]; then
+	    export EXTRAOPTS=here
+	    mkdir work
+	    cd work
 	fi
 
 	# ##### CVMFS setup ###########################################
