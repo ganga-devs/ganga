@@ -22,7 +22,7 @@ from Ganga.Lib.LCG import LCGJobConfig
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasCREAMRequirements
 
-from GangaAtlas.Lib.ATLASDataset import ATLASDataset, isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations, whichCloud
+from GangaAtlas.Lib.ATLASDataset import isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations, whichCloud
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -123,13 +123,9 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             # DQ2Dataset, ATLASLocalDataset and ATLASCastorDataset job splitting is done in AthenaSplitterJob
 
             if job._getRoot().subjobs:
-                if job.inputdata._name == 'ATLASLocalDataset' or job.inputdata._name == 'ATLASCastorDataset':
+                if job.inputdata._name == 'ATLASLocalDataset':
                     if not job.inputdata.names: raise ApplicationConfigurationError('No inputdata has been specified.')
                     input_files = job.inputdata.names
-
-                elif job.inputdata._name == 'ATLASDataset':
-                    if not job.inputdata.lfn: raise ApplicationConfigurationError('No inputdata has been specified.')
-                    input_files = job.inputdata.lfn
 
                 elif job.inputdata._name == 'ATLASTier3Dataset':
                     if not job.inputdata.names:
@@ -165,14 +161,8 @@ class AthenaLCGRTHandler(IRuntimeHandler):
                         job.inputdata.datatype ='MC'
 
             else:
-                if job.inputdata._name == 'ATLASCastorDataset':
-                    input_files = ATLASCastorDataset.get_filenames(app)
-
-                elif job.inputdata._name == 'ATLASLocalDataset':
+                if job.inputdata._name == 'ATLASLocalDataset':
                     input_files = ATLASLocalDataset.get_filenames(app)
-
-                elif job.inputdata._name == 'ATLASDataset':
-                    input_files = ATLASDataset.get_filenames(app)
 
                 elif job.inputdata._name == 'ATLASTier3Dataset':
                     if job.inputdata.names:
@@ -499,12 +489,6 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         
         inputbox.append( File(os.path.join(__directory__,'athena-utility.sh')) )
 
-        if job.inputdata and job.inputdata._name == 'ATLASDataset':
-            if job.inputdata.lfc:
-                _append_files(inputbox,'ganga-stagein-lfc.py')
-            else:
-                _append_files(inputbox,'ganga-stagein.py')
-            
         if app.user_area.name: 
             #we will now use the user_area that's stored in the users shared directory
             if app.is_prepared is not True:
@@ -622,10 +606,6 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         else:
             requirements = AtlasLCGRequirements()
         
-        if job.inputdata and job.inputdata._name == 'ATLASDataset':
-            if job.inputdata.lfc:
-                environment['GANGA_LFC_HOST'] = job.inputdata.lfc
-
         if 'ganga-stage-in-out-dq2.py' in [ os.path.basename(file.name) for file in inputbox ]:
             environment['DQ2_URL_SERVER'] = configDQ2['DQ2_URL_SERVER']
             environment['DQ2_URL_SERVER_SSL'] = configDQ2['DQ2_URL_SERVER_SSL']
