@@ -33,14 +33,8 @@ echo "------>  Running asetup $ATLAS_PROJECT,$ATLAS_VERSION,here..."
 source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_VERSION,here
 
 # Now create the build directory
-echo "------>  Building using cmake..."
-mkdir __athena_build__
-cd __athena_build__
-cmake ../
-make clean
-make
-source x86_64-slc6-gcc49-opt/setup.sh
-cd ../
+echo "------>  Setup user code (if provided)..."
+source usr/*/*/InstallArea/*/setup.sh
 
 # create the input.py file to load in the input data
 echo "------>  Creating the pre/post JO files..."
