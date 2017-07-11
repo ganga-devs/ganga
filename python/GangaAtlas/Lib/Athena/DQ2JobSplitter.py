@@ -221,95 +221,6 @@ class DQ2JobSplitter(ISplitter):
         local_tag = False
         grid_tag = False
 
-        # check for complete TAG mapping between files
-        if job.inputdata.tag_info:
-
-            # check for conflicts with TAG_LOCAL or TAG_COPY
-            if job.inputdata.type in ['TAG_LOCAL', 'TAG_COPY']:
-                raise ApplicationConfigurationError("Cannot provide both tag_info and run as '%s'. Please use one or the other!" % job.inputdata.type)
-            
-            logger.warning('TAG information present - overwriting previous DQ2Dataset definitions')
-
-            job.inputdata.names = []
-            job.inputdata.dataset = []
-
-            # check if FILE_STAGER is used
-            if job.inputdata.type == 'FILE_STAGER':
-                logger.warning("TAG jobs currently can't use the FILE_STAGER. Switching to DQ2_COPY instead.")
-                job.inputdata.type = 'DQ2_COPY'
-
-            # deal with tag_info depending on backend            
-            if job.backend._name == 'Panda':
-
-                # construct a reverse tag map going from AOD -> TAG
-                grid_tag = True
-                rev_tag_map = {}
-                for tag_file in job.inputdata.tag_info:
-
-                    for tag_ref in job.inputdata.tag_info[tag_file]['refs']:
-                        if not tag_ref[0] in rev_tag_map:
-                            rev_tag_map[tag_ref[0]] = {}
-                            rev_tag_map[tag_ref[0]]['dataset'] = tag_ref[1]
-                            rev_tag_map[tag_ref[0]]['guid'] = tag_ref[2]
-                            rev_tag_map[tag_ref[0]]['refs'] = []
-
-                        rev_tag_map[tag_ref[0]]['refs'].append([tag_file, job.inputdata.tag_info[tag_file]['dataset'],job.inputdata.tag_info[tag_file]['guid']])
-
-
-                # construct the tag dataset map for brokering later
-                tag_dataset_map = {}
-                for tag_ref in rev_tag_map:
-                    if not rev_tag_map[tag_ref]['dataset'] in job.inputdata.dataset:
-                        job.inputdata.dataset.append(rev_tag_map[tag_ref]['dataset'])
-                        tag_dataset_map[ rev_tag_map[tag_ref]['dataset'] ] = []
-                        for tag_ref2 in rev_tag_map[tag_ref]['refs']:
-                            if not tag_ref2[1] in tag_dataset_map[ rev_tag_map[tag_ref]['dataset'] ]:
-                                tag_dataset_map[ rev_tag_map[tag_ref]['dataset'] ].append( tag_ref2[1] )
-                        
-                    if not tag_ref in job.inputdata.names:
-                        job.inputdata.names.append(tag_ref)
-
-            else:                
-                # assemble the tag datasets to split over
-                for tag_file in job.inputdata.tag_info:
-
-                    if job.inputdata.tag_info[tag_file]['dataset'] != '' and job.inputdata.tag_info[tag_file]['path'] == '':
-                        grid_tag = True
-
-                        job.inputdata.names.append( tag_file )
-
-                        if not job.inputdata.tag_info[tag_file]['dataset'] in job.inputdata.dataset:
-                            job.inputdata.dataset.append(job.inputdata.tag_info[tag_file]['dataset'])
-
-                        # add to additional datasets list
-                        for tag_ref in job.inputdata.tag_info[tag_file]['refs']:
-                            if job.inputdata.tag_info[tag_file]['dataset'] not in additional_datasets:
-                                additional_datasets[job.inputdata.tag_info[tag_file]['dataset']] = []
-
-                            if not tag_ref[1] in additional_datasets[job.inputdata.tag_info[tag_file]['dataset']]:
-                                additional_datasets[job.inputdata.tag_info[tag_file]['dataset']].append(tag_ref[1])
-
-                    elif job.inputdata.tag_info[tag_file]['path'] != '' and job.inputdata.tag_info[tag_file]['dataset'] == '':
-                        local_tag = True
-                        if not job.inputdata.tag_info[tag_file]['refs'][0][1] in job.inputdata.dataset:
-                            job.inputdata.dataset.append(job.inputdata.tag_info[tag_file]['refs'][0][1])      
-
-                        ## add the referenced files and guids and check for multiple datasets per file
-                        ref_dataset = job.inputdata.tag_info[tag_file]['refs'][0][1]
-                        for ref in job.inputdata.tag_info[tag_file]['refs']:
-                            if ref[1] != ref_dataset:
-                                raise ApplicationConfigurationError('Problems with TAG entry for %s. Multiple datasets referenced for local TAG file.' % tag_file)
-
-                            job.inputdata.names.append( ref[0] )
-                            job.inputdata.guids.append( ref[2] )
-
-                    else:
-                        raise ApplicationConfigurationError('Problems with TAG entry for %s' % tag_file)
-                
-            if grid_tag and local_tag:
-                raise ApplicationConfigurationError('Problems with TAG info - both grid and local TAG files selected.')
-                    
-                    
         # now carry on as before
         orig_numfiles = self.numfiles
         orig_numsubjobs = self.numsubjobs
@@ -621,36 +532,6 @@ class DQ2JobSplitter(ISplitter):
                 self.numfiles = 1
 
             for sites, guids in siteinfo.iteritems():
-
-                # check for TAG datasets at these sites
-                tag_dset_size = 0
-                if len(tag_dataset_map) > 0:
-                    from dq2.clientapi.DQ2 import DQ2
-                    from dq2.info import TiersOfATLAS
-                    dq2=DQ2(force_backend='rucio')
-
-                    logger.warning("Parent dataset %s being used with TAG dataset(s) %s. Brokering now..." % (dataset, tag_dataset_map[dataset] ))
-
-                    for tagDS in tag_dataset_map[dataset]:
-
-                        if not job.inputdata.use_cvmfs_tag:
-                            tag_locations = dq2.listDatasetReplicas(tagDS).values()[0][1]
-                            new_sites = []
-                            dq2alternatenames = []
-                            for site in sites.split(':'):
-                                if site in tag_locations:
-                                    new_sites.append(site)
-                                    dq2alternatenames.append(TiersOfATLAS.getSiteProperty(site,'alternateName'))
-                            for sitename in TiersOfATLAS.getAllSources():
-                                if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
-                                    if TiersOfATLAS.getSiteProperty(sitename,'alternateName') in dq2alternatenames and not sitename in new_sites:
-                                        new_sites.append(sitename)
-                            sites = ':'.join(new_sites)
-
-                        if job.inputdata.tagdataset:
-                            tag_contents = job.inputdata.get_tag_contents(size=True, spec_dataset = tagDS)
-                            tag_dset_size += reduce(operator.add, map(lambda x: x[1][1],tag_contents))
-
                 # preferentially select sites given the cloud priority
                 cloud_pref = config['AnyCloudPreferenceList']
                 if len(cloud_pref) > 0:
@@ -864,9 +745,6 @@ class DQ2JobSplitter(ISplitter):
                     j.application   = job.application
                     j.application.run_event   = []
 
-                    if len(tag_dataset_map) > 0 and not job.inputdata.tag_info:
-                        j.inputdata.tagdataset = tag_dataset_map[dataset]
-                        
                     if self.numevtsperjob > 0:
                         if  unused_events == 0:
                             nevtstoskip = 0
