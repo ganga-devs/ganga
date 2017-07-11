@@ -39,3 +39,8 @@ RUN curl https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python2.7 - --use
 #    echo $ganga_version > ~/gangadir/.used_versions
 
 ENTRYPOINT ["/home/ganga/ganga_env/bin/py.test"]
+
+CMD ["/home/ganga/ganga/python/Ganga/test/Unit", \
+     "/home/ganga/ganga/python/Ganga/Core", \
+     "/home/ganga/ganga/python/Ganga/Runtime", \
+     "/home/ganga/ganga/python/Ganga/Utility"]
