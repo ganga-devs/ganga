@@ -319,6 +319,8 @@ under certain conditions; type license() for details.
     @staticmethod
     def new_version():
         versions_filename = os.path.expanduser('~/.cache/Ganga/.used_versions')
+        if not os.path.exists(os.path.dirname(versions_filename)):
+            os.makedirs(os.path.dirname(versions_filename))
         if not os.path.exists(versions_filename):
             with open(versions_filename, 'w') as versions_file:
                 versions_file.write(_gangaVersion + '\n')

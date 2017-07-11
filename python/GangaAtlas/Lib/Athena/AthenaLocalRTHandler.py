@@ -422,11 +422,14 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         inputbox = [File(os.path.join(os.path.dirname(__file__),'athena-utility.sh'))]
         if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
 
-            for option_file in app.option_file:
-                athena_options += ' ' + os.path.basename(option_file.name)
-                inputbox += [ File(option_file.name) ]
+            if app.command_line:
+                athena_options = app.command_line
+            else:
+                for option_file in app.option_file:
+                    athena_options += ' ' + os.path.basename(option_file.name)
+                    inputbox += [ File(option_file.name) ]
 
-            athena_options += ' %s ' % app.options
+                athena_options += ' %s ' % app.options
 
         else:
             for option_file in app.option_file:
@@ -502,6 +505,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             'GANGA_VERSION' : configSystem['GANGA_VERSION'],
             'DQ2_SETUP_SCRIPT': configDQ2['setupScript']
         }
+
+        # athena compile flag
+        if app.athena_compile:
+            environment['ATHENA_COMPILE'] = 'True'
 
         # Set athena architecture: 32 or 64 bit
         environment['ATLAS_ARCH'] = '32'
