@@ -43,14 +43,14 @@ class GangaDatasetSplitter(ISplitter):
             raise ApplicationConfigurationError(
                 "GangaDatasetSplitter couldn't find any files to split over")
 
-        oldType = type(job.inputdata)
+        masterType = type(job.inputdata)
 
         # split based on all the sub files
         fid = 0
         subjobs = []
         while fid < len(full_list):
             j = self.createSubjob(job)
-            j.inputdata = oldType()
+            j.inputdata = masterType()
             j.inputdata.treat_as_inputfiles = job.inputdata.treat_as_inputfiles
             for sf in full_list[fid:fid + self.files_per_subjob]:
                 j.inputdata.files.append(sf)
