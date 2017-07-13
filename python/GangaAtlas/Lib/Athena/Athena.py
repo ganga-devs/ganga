@@ -1154,13 +1154,25 @@ class Athena(IPrepareApp):
         if self.atlas_exetype in ['EXE']: #and not self.athena_compile:  - for EXE, compilation decides what the tarball is called
             maxFileSize = config['EXE_MAXFILESIZE']
             archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose, self.athena_compile )
-        else:
-            archiveName = ""
+
             if AthenaUtils.useCMake():
                 self.useCMake = True
-                archiveName,archiveFullName = AthenaUtils.archiveWithCpack(True,tmpDir,True)
+        else:
+            # compilation determines whether to send the sources across as well
+            archiveName = ""
+            if self.athena_compile:
+                if AthenaUtils.useCMake():
+                    self.useCMake = True
+                    archiveName,archiveFullName = AthenaUtils.archiveWithCpack(True,tmpDir,True)
 
-            archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages, config['dereferenceSymLinks'], archiveName=archiveName)
+                archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages, config['dereferenceSymLinks'], archiveName=archiveName)
+            else:
+                if AthenaUtils.useCMake():
+                    self.useCMake = True
+                    archiveName,archiveFullName = AthenaUtils.archiveWithCpack(False,tmpDir,True)
+
+                archiveName, archiveFullName = AthenaUtils.archiveJobOFiles(self.userarea, runDir, currentDir, archiveDir, verbose, archiveName=archiveName)
+
         logger.info('Creating %s ...', archiveFullName )
 
         # Add InstallArea
