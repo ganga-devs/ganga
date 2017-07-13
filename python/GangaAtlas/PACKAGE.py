@@ -22,9 +22,9 @@ _external_packages = {
                      'noarch':True ,
                      'RUCIO_APPID' : 'ganga',
                      },
-    'rucio-clients' : { 'version' : '1.0.1',
+    'rucio-clients' : { 'version' : '1.11.3',
                      'PATH' : ['bin/'],
-                     'syspath' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages' ],
+                     'syspath' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.7/site-packages' ],
                      'RUCIO_HOME' : '/afs/cern.ch/sw/ganga/external/rucio-clients/0.2.13/noarch/', # done properly below
                      'RUCIO_AUTH_TYPE' : 'x509_proxy',
                      'RUCIO_ACCOUNT' : 'ganga',
@@ -64,6 +64,13 @@ if 'CMTCONFIG' in os.environ and 'slc5' in os.environ['CMTCONFIG'] and 'i686' in
     _external_packages['rucio-clients']['syspath'] = [ 'externals/kerberos/lib.slc6-i686-2.6', 'externals/kerberos/lib.slc6-x86_64-2.6', 'lib/python2.6/site-packages' ]
 elif 'CMTCONFIG' in os.environ and 'slc5' in os.environ['CMTCONFIG']:
     _external_packages['rucio-clients']['syspath'] = [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages' ]
+
+# use python 2.7 versions if required
+if sys.version_info[0] == 2 and sys.version_info[1] == 7:
+    new_paths = []
+    for p in _external_packages['rucio-clients']['syspath']:
+        new_paths.append( p.replace('2.6', '2.7') )
+    _external_packages['rucio-clients']['syspath'] = new_paths
 
 setup = PackageSetup(_external_packages)
 

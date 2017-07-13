@@ -10,8 +10,6 @@ import cPickle as pickle
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Credentials import require_credential
-from Ganga.GPIDev.Credentials.VomsProxy import VomsProxy
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Lib.Job import JobStatusError
@@ -27,7 +25,7 @@ from Ganga.Utility.logging import getLogger
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
 
-from GangaAtlas.Lib.Credentials.ProxyHelper import inject_proxy
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
 logger = getLogger()
 config = getConfig('Jedi')
@@ -268,7 +266,6 @@ class Jedi(IBackend):
         'individualOutDS': SimpleItem(defvalue=False,protected=0,copyable=1,doc='Create individual output dataset for each data-type. By default, all output files are added to one output dataset'),
         'bexec'         : SimpleItem(defvalue='',protected=0,copyable=1,doc='String for Executable make command - if filled triggers a build job for the Execuatble'),
         'nobuild'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Boolean if no build job should be sent - use it together with Athena.athena_compile variable'),
-        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=VomsProxy()),
     })
 
     _category = 'backends'
@@ -278,7 +275,6 @@ class Jedi(IBackend):
     def __init__(self):
         super(Jedi,self).__init__()
 
-    @require_credential
     def master_submit(self,rjobs,subjobspecs,buildjobspec):
         '''Submit jobs'''
        
@@ -307,8 +303,7 @@ class Jedi(IBackend):
 
         logger.info("Submitting to Jedi ...")
         verbose = logger.isEnabledFor(10)
-        with inject_proxy(self.credential_requirements):
-            status, tmpOut = Client.insertTaskParams(jobspecs, verbose)
+        status, tmpOut = Client.insertTaskParams(jobspecs, verbose)
 
         logger.debug(tmpOut)
 
@@ -334,7 +329,6 @@ class Jedi(IBackend):
 
         return True
 
-    @require_credential
     def master_kill(self):
         '''Kill jobs'''  
 
@@ -346,9 +340,8 @@ class Jedi(IBackend):
         active_status = [ None, 'registered', 'waiting', 'defined', 'pending', 'assigning', 'ready', 'scouting', 'running', 'holding', 'merging', 'prepared', 'aborting', 'finishing' ]
         #active_status = [ None, 'defined', 'unknown', 'assigned', 'waiting', 'activated', 'sent', 'starting', 'running', 'holding', 'transferring' ]
 
-        if self.id and self.status in active_status:
-            with inject_proxy(self.credential_requirements):
-                status, output = Client.killTask(self.id)
+        if self.id and self.status in active_status: 
+            status, output = Client.killTask(self.id)
             if status:
                 logger.error('Failed killing job (status = %d)',status)
                 return False
@@ -500,7 +493,6 @@ class Jedi(IBackend):
                             else:
                                 logger.warning('Unexpected job status %s',status.jobStatus)
 
-    @require_credential
     def master_resubmit(self,jobs):
         '''Resubmit failed Jedi job'''
         from pandatools import Client
@@ -512,8 +504,7 @@ class Jedi(IBackend):
         allJobIDs = jobIDs.keys()
         pandaJobIDs = {}
         for jID in allJobIDs:
-            with inject_proxy(self.credential_requirements):
-                status, jediTaskDict = Client.getJediTaskDetails({'jediTaskID': jID},False,True,verbose=False)
+            status, jediTaskDict = Client.getJediTaskDetails({'jediTaskID': jID},False,True,verbose=False)
             if status != 0:
                 logger.error("Failed to get task details for %s" % jID)
                 raise BackendError('Jedi','Return code %d retrieving job status information.' % status)
@@ -538,9 +529,8 @@ class Jedi(IBackend):
             if len(retryJobs)==0:
                 logger.warning("No failed jobs to resubmit")
                 return False
-
-            with inject_proxy(self.credential_requirements):
-                status,out = Client.retryTask(jID, verbose=False)
+            
+            status,out = Client.retryTask(jID, verbose=False)                                                               
             if status != 0:
                 logger.error(status)
                 logger.error(out)
