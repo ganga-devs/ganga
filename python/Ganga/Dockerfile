@@ -15,27 +15,27 @@ RUN yum groupinstall -y 'development tools' && \
     make altinstall && \
     cd - && \
     rm -rf Python-2.7.13*
-a=1;
-if a=1:
-    # Add the user UID:1000, GID:1000, home at /home/ganga
-    RUN groupadd -r ganga -g 1000 && \
-        useradd -u 1000 -r -g ganga -m -d /home/ganga -s /sbin/nologin -c "Ganga user" ganga && \
-        chmod 755 /home/ganga
 
-    # Set the working directory to ganga home directory
-    WORKDIR /home/ganga
 
-    # Specify the user to execute all commands below
-    USER ganga
+# Add the user UID:1000, GID:1000, home at /home/ganga
+RUN groupadd -r ganga -g 1000 && \
+    useradd -u 1000 -r -g ganga -m -d /home/ganga -s /sbin/nologin -c "Ganga user" ganga && \
+    chmod 755 /home/ganga
 
-    # Install pip, virtualenv and ganga
-    RUN curl https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python2.7 - --user && \
-        ~/.local/bin/pip install --user virtualenv && \
-        ~/.local/bin/virtualenv ganga_env && \
-        . ~/ganga_env/bin/activate && \
-        pip install ganga==$ganga_version && \
-        yes | ganga -g && \
-        echo $ganga_version > ~/gangadir/.used_versions
+# Set the working directory to ganga home directory
+WORKDIR /home/ganga
 
-    ENTRYPOINT . ~/ganga_env/bin/activate && \
-               /bin/bash
+# Specify the user to execute all commands below
+USER ganga
+
+# Install pip, virtualenv and ganga
+RUN curl https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python2.7 - --user && \
+    ~/.local/bin/pip install --user virtualenv && \
+    ~/.local/bin/virtualenv ganga_env && \
+    . ~/ganga_env/bin/activate && \
+    pip install ganga==$ganga_version && \
+    yes | ganga -g && \
+    echo $ganga_version > ~/gangadir/.used_versions
+
+ENTRYPOINT . ~/ganga_env/bin/activate && \
+           /bin/bash
