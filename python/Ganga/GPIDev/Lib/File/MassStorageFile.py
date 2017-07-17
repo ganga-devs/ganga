@@ -65,6 +65,8 @@ class MassStorageFile(IGangaFile):
         self.locations = []
 
         self.shell = Shell.Shell()
+        self._checkConfig()
+
 
     def __setattr__(self, attr, value):
         """
@@ -98,6 +100,14 @@ class MassStorageFile(IGangaFile):
             self.namePattern = _namePattern
             self.localDir = _localDir
 
+    def _checkConfig(self):
+        """
+        Check that the MassStorageFile configuration is correct by trying to make the default path
+        """
+        try:
+            self._mkdir(getConfig('Output')[_getName(self)]['uploadOptions']['path'], False)
+        except GangaException:
+            raise GangaException('Unable to create MassStorageFile. Check your configuration!')
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
