@@ -699,7 +699,7 @@ protoByExperiment = {'atlas': 'root://eosatlas.cern.ch',
                      'undefined': 'root://eos.cern.ch'}
 defaultMassStorageProto = protoByExperiment[groupname]
 
-prefix = '/afs/cern.ch/project/eos/installation/%s/bin/eos.select ' % groupname
+prefix = '/usr/bin/eos '
 massStorageUploadOptions = {'mkdir_cmd': prefix + 'mkdir', 'cp_cmd':
                             prefix + 'cp', 'ls_cmd': prefix + 'ls', 'path': massStoragePath}
 
