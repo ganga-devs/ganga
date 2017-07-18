@@ -102,7 +102,7 @@ class MassStorageFile(IGangaFile):
 
     def _checkConfig(self):
         """
-        Check that the MassStorageFile configuration is correct by trying to make the default path
+        Check that the MassStorageFile configuration is correct
         """
         if not getConfig('Output')[_getName(self)]['uploadOptions']['path'] :
             raise GangaException('Unable to create MassStorageFile. Check your configuration!')
