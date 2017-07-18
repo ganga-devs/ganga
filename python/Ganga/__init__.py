@@ -699,14 +699,14 @@ protoByExperiment = {'atlas': 'root://eosatlas.cern.ch',
                      'undefined': 'root://eos.cern.ch'}
 defaultMassStorageProto = protoByExperiment[groupname]
 
-prefix = '/usr/bin/eos '
-
 import commands
-massStorageUploadOptions = {'mkdir_cmd': prefix + 'mkdir', 'cp_cmd':
-                            prefix + 'cp', 'ls_cmd': prefix + 'ls', 'path': ''}
-if commands.getstatusoutput('which %s' % prefix)[0] == 0 :
-    massStorageUploadOptions = {'mkdir_cmd': prefix + 'mkdir', 'cp_cmd':
-                            prefix + 'cp', 'ls_cmd': prefix + 'ls', 'path': massStoragePath}
+eosinstalled, prefix = commands.getstatusoutput('which eos')
+if not eosinstalled == 0:
+    prefix = ''
+    massStoragePath = ''    
+
+massStorageUploadOptions = {'mkdir_cmd': prefix + ' mkdir', 'cp_cmd':
+                            prefix + ' cp', 'ls_cmd': prefix + ' ls', 'path': massStoragePath}
 
 massStorageFileExt = docstr_Ext % ('Mass Storage', 'EOS')
 
