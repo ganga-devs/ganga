@@ -490,7 +490,12 @@ class GaudiExec(IPrepareApp):
         """
         A function to return the environment of the built application
         """
-        return self.envVars
+        defaultXMLBASE = '/cvmfs/lhcb.cern.ch/lib/lhcb/LHCB/LHCB_v42r4/Kernel/XMLSummaryBase'
+        if self.envVars:
+            return self.envVars
+        else:
+            logger.debug('Using default value for XMLSUMMARYBASE: %s', defaultXMLBASE)
+            return {'XMLSUMMARYBASEROOT' : defaultXMLBASE} 
 
     def readInputData(self, opts):
         """

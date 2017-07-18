@@ -346,7 +346,7 @@ class BenderScript(GaudiBase):
 
     
     def postprocess(self):
-        XMLPostProcessor.postprocess(self, logger)
+        XMLPostProcessor.GaudiExecPostProcess(self, logger)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 # Associate the correct run-time handlers to GaudiPython for various backends.
