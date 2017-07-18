@@ -78,7 +78,7 @@ def dirac_outputfile_jdl(output_files, empty_SE_check, job):
     total_JDL = ''
 
     if getConfig('DIRAC')['useGangaPath']:
-        per_SE_JDL = per_SE_JDL.replace('###OUTPUT_PATH###', 'GangaJob_%s/OutputFiles' % job.getFQID('/'))
+        per_SE_JDL = per_SE_JDL.replace('###OUTPUT_PATH###', 'GangaJob_%s/OutputFiles' % job.getFQID('.'))
 
     for outputSE, namePatterns in file_SE_dict.iteritems():
 
