@@ -27,7 +27,7 @@ def outputFilePostProcessingOnClient(job, outputFileClassName):
     return outputFilePostProcessingTestForWhen(job, outputFileClassName, 'client')
 
 
-def outputFilePostProcessingOnSubmit(job, outputFileClassName):
+def outputFilePostProxessingOnSubmit(job, outputFileClassName):
     """
     Checks if the output files of a given job(we are interested in the backend)
     should have been postprocessed on job submission, depending on job.backend_output_postprocess dictionary

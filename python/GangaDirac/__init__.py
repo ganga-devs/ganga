@@ -49,8 +49,6 @@ if not _after_bootstrap:
 
     configDirac.addOption('DiracLFNBase', '', "Base dir prepended to create LFN name from DiracFile('name'). If this is unset then it will default to /[userVO]/user/[first letter of user name]/[user name]")
 
-    configDirac.addOption('useGangaPath', False, "Should we use the Ganga job ID to auto-construct a LFN relative path?")
-
     configDirac.addOption('ReplicateOutputData', False,
                       'Determines whether outputdata stored on Dirac is replicated')
 
