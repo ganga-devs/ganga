@@ -377,15 +377,6 @@ def getInputFileDir(job):
     return os.path.join(DiracFile.diracLFNBase(job.backend.credential_requirements), 'GangaJob_%s/InputFiles' % job.fqid)
 
 
-def check_creds(cred_req):
-    """
-    """
-    try:
-        credential_store[cred_req]
-    except KeyError:
-        credential_store.create(cred_req)
-
-
 class GaudiExecDiracRTHandler(IRuntimeHandler):
 
     """The runtime handler to run plain executables on the Dirac backend"""
@@ -491,7 +482,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         # Already added to sandbox uploaded as LFN
 
         # This code deals with the outputfiles as outputsandbox and outputdata for us
-        lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles, job)
+        lhcbdirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication

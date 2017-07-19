@@ -157,7 +157,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         lhcbdirac_script_template = lhcbdiracAPI_script_template()
 
-        lhcb_dirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles, job)
+        lhcb_dirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
 
         # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
         # remove after Ganga6 release

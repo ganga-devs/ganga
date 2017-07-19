@@ -22,10 +22,13 @@ def jobid_as_string(job):
         jstr = str(job.id)
     return jstr
 
-def lhcbdirac_outputfile_jdl(output_files, job):
-    """ Construct the setOutputFile section of the JDL for this job"""
+def lhcbdirac_outputfile_jdl(output_files):
+    """ Construct the setOutputFile section of the JDL for this job
+    Args:
+        output_files (list): A list of DiracFile objects to have their output injected into the dirac submit script
+    """
 
-    DiracScript = dirac_outputfile_jdl(output_files, False, job)
+    DiracScript = dirac_outputfile_jdl(output_files, False)
 
     DiracScript = DiracScript.replace('###OUTPUT_SE###', '###OUTPUT_SE###,replicate=\'###REPLICATE###\'')
 

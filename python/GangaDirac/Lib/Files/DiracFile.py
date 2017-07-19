@@ -619,7 +619,7 @@ class DiracFile(IGangaFile):
                 t = datetime.datetime.now()
                 this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
                 lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
-            self.lfn = os.path.join(DiracFile.diracLFNBase(), lfn_folder, self.namePattern)
+            self.lfn = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), lfn_folder, self.namePattern)
 
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
@@ -656,10 +656,10 @@ class DiracFile(IGangaFile):
                     if not os.path.exists(name):
                         raise GangaFileError('File "%s" must exist!' % name)
 
-            if not lfn or not lfn.startswith(DiracFile.diracLFNBase()):
+            if not lfn or not lfn.startswith(DiracFile.diracLFNBase(self.credential_requirements)):
                 if not lfn:
                     name = os.path.basename(name)
-                lfn = os.path.join(DiracFile.diracLFNBase(), name)
+                lfn = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), name)
 
             #lfn = os.path.join(os.path.dirname(self.lfn), this_file)
 
@@ -797,10 +797,10 @@ for f in glob.glob('###NAME_PATTERN###'):
                 t = datetime.datetime.now()
                 this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
                 lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
-            self.lfn = os.path.join(DiracFile.diracLFNBase(), lfn_folder, self.namePattern)
+            self.lfn = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), lfn_folder, self.namePattern)
 
         if self.remoteDir == '':
-            self.remoteDir = DiracFile.diracLFNBase()
+            self.remoteDir = DiracFile.diracLFNBase(self.credential_requirements)
 
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
@@ -850,7 +850,7 @@ for f in glob.glob('###NAME_PATTERN###'):
             return False
 
     @staticmethod
-    def diracLFNBase():
+    def diracLFNBase(credential_requirements):
         """
         Compute a sensible default LFN base name
         If ``DiracLFNBase`` has been defined, use that.
@@ -858,7 +858,8 @@ for f in glob.glob('###NAME_PATTERN###'):
         """
         if configDirac['DiracLFNBase']:
             return configDirac['DiracLFNBase']
-        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], DiracProxyInfo(DiracProxy()).username[0], DiracProxyInfo(DiracProxy()).username)
+        user = DiracProxyInfo(credential_requirements).username
+        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], user[0], user)
 
 # add DiracFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate DiracFile() objects via config file)
