@@ -556,7 +556,7 @@ class Registry(object):
             # Cleanup after ourselves if an error occured
             # Didn't load mark as clean so it's not flushed
             if obj_id in self._objects:
-                self._objects[obj_id]._setFlushed()
+                self._objects[obj_id]._setFlushed(auto_load_deps=False)
             raise
 
     def _acquire_session_lock(self, obj):
