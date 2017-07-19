@@ -296,39 +296,20 @@ class MassStorageFile(IGangaFile):
         # the file name part of self.outputfilenameformat
         filenameStructure = ''
 
-        if self._getParent() is not None:
-            jobfqid = self.getJobObject().fqid
+        if not self.outputfilenameformat:
+            filenameStructure = '{fname}'
 
-            jobid = jobfqid
-            subjobid = ''
+            parent = self._getParent()
+            if parent is not None:
+                folderStructure = '{jid}'
+                if parent._getParent() is not None:
+                    folderStructure = os.path.join(folderStructure, '{sjid}')
 
-            if (jobfqid.find('.') > -1):
-                jobid = jobfqid.split('.')[0]
-                subjobid = jobfqid.split('.')[1]
-
-            if self.outputfilenameformat is None:
-                filenameStructure = '{fname}'
-                # create jid/sjid directories
-                folderStructure = jobid
-                if subjobid != '':
-                    folderStructure = os.path.join(jobid, subjobid)
-
-            else:
-                filenameStructure = os.path.basename(self.outputfilenameformat)
-                filenameStructure = filenameStructure.replace('{jid}', jobid)
-
-                folderStructure = os.path.dirname(self.outputfilenameformat)
-                folderStructure = folderStructure.replace('{jid}', jobid)
-
-                if subjobid != '':
-                    filenameStructure = filenameStructure.replace('{sjid}', subjobid)
-                    folderStructure = folderStructure.replace('{sjid}', subjobid)
         else:
-            if self.outputfilenameformat != None:
-                folderStructure = os.path.dirname(self.outputfilenameformat)
-                filenameStructure = os.path.basename(self.outputfilenameformat)
-            else:
-                filenameStructure = '{fname}'
+            folderStructure = os.path.dirname(self.outputfilenameformat)
+            filenameStructure = os.path.basename(self.outputfilenameformat)
+
+        folderStructure = self.expandString(folderStructure)
 
         # create the folder structure
         if folderStructure:
@@ -346,7 +327,8 @@ class MassStorageFile(IGangaFile):
 
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-                finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
+                finalFilename = self.expandString(filenameStructure, os.path.basename(currentFile))
+           
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
                                                 (cp_cmd, quote(currentFile), quote(os.path.join(massStoragePath, finalFilename))))
 
@@ -364,7 +346,7 @@ class MassStorageFile(IGangaFile):
                 self.subfiles.append(d)
         else:
             currentFile = os.path.join(sourceDir, fileName)
-            finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
+            finalFilename = self.expandString(filenameStructure, fileName)
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
                                                         (cp_cmd, quote(currentFile), quote(os.path.join(massStoragePath, finalFilename))))
             if exitcode != 0:
