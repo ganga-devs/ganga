@@ -31,8 +31,8 @@ USER ganga
 RUN curl https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python2.7 - --user && \
     ~/.local/bin/pip install --user virtualenv && \
     ~/.local/bin/virtualenv ganga_env
-    
-ADD git clone -b $branch --depth 1 https://github.com/ganga-devs/ganga.git
+
+COPY ./ /home/ganga/ganga
     
 RUN . ~/ganga_env/bin/activate && \
     cd ganga && \
