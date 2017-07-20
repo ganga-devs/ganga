@@ -16,6 +16,7 @@ RUN yum groupinstall -y 'development tools' && \
     cd - && \
     rm -rf Python-2.7.13*
 
+
 # Add the user UID:1000, GID:1000, home at /home/ganga
 RUN groupadd -r ganga -g 1000 && \
     useradd -u 1000 -r -g ganga -m -d /home/ganga -s /sbin/nologin -c "Ganga user" ganga && \
