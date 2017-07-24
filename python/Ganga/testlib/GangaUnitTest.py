@@ -89,6 +89,31 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
 
     # These are the default options for all test instances
     # They can be overridden by extra_opts
+
+    #Sort out eos
+
+    ## FIXME Sometimes the wrong user is set gere for the unittests, I've added this to correct for it - rcurrie
+    import pwd
+    try:
+        pwd_nam = pwd.getpwnam(user)
+    except:
+        import getpass
+        user = getpass.getuser()
+    pwd_nam = pwd.getpwnam(user)
+
+    import grp
+    groupid = grp.getgrgid(pwd_nam.pw_gid).gr_name
+    groupnames = {'z5': 'lhcb', 'zp': 'atlas', 'zh': 'cms', 'vl': 'na62'}
+    groupname = groupnames.get(groupid, 'undefined')
+
+    from Ganga.Utility.Config import getConfig
+    outputConfig = getConfig('Output')
+    prefix = '/afs/cern.ch/project/eos/installation/%s/bin/eos.select ' % groupname
+    outputConfig['MassStorageFile']['uploadOptions']['cp_cmd'] = prefix + ' cp'
+    outputConfig['MassStorageFile']['uploadOptions']['ls_cmd'] = prefix + ' ls'
+    outputConfig['MassStorageFile']['uploadOptions']['mkdir_cmd'] = prefix + ' mkdir'
+
+
     default_opts = [
         ('Configuration', 'RUNTIME_PATH', 'GangaTest'),
         ('Configuration', 'gangadir', gangadir_for_test),
@@ -98,7 +123,10 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
         ('Configuration', 'lockingStrategy', 'FIXED'),
         ('TestingFramework', 'ReleaseTesting', True),
         ('Queues', 'NumWorkerThreads', 2),
+        ('outputFile', 'MassStorageFile', outputConfig['MassStorageFile']['uploadOptions'])
     ]
+
+    outputConfig['MassStorageFile']['uploadOptions']['mkdir_cmd'] = prefix + ' mkdir'
 
     # FIXME Should we need to add the ability to load from a custom .ini file
     # to configure tests without editting this?

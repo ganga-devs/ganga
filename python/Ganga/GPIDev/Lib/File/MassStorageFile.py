@@ -64,9 +64,7 @@ class MassStorageFile(IGangaFile):
         super(MassStorageFile, self).__init__()
         self._setNamePath(_namePattern=namePattern, _localDir=localDir)
         self.locations = []
-
         self.shell = Shell.Shell()
-
 
     def __setattr__(self, attr, value):
         """
