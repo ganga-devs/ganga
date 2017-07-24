@@ -55,6 +55,7 @@ def load_config():
 
 @pytest.yield_fixture(scope='class')
 def dirac_job(load_config):
+    from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 
     sandbox_str = uuid.uuid4()
     get_file_str = uuid.uuid4()
@@ -94,8 +95,11 @@ def dirac_job(load_config):
     """
     api_script = dedent(api_script)
 
+    cred_req = DiracProxy(group='lhcb_user')
+    credential_store.create(cred_req)
+
     final_submit_script = api_script.replace('###EXE_SCRIPT###', exe_path_name).replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name))
-    confirm = execute(final_submit_script, return_raw_dict=True)
+    confirm = execute(final_submit_script, cred_req=cred_req, return_raw_dict=True)
     if not isinstance(confirm, dict):
         raise RuntimeError('Problem submitting job\n{0}'.format(confirm))
 
@@ -109,10 +113,10 @@ def dirac_job(load_config):
     logger.info('Waiting for DIRAC job to finish')
     timeout = 1200
     end_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=timeout)
-    status = execute('status([%s], %s)' % (job_id, repr(statusmapping)), return_raw_dict=True)
+    status = execute('status([%s], %s)' % (job_id, repr(statusmapping)), cred_req=cred_req, return_raw_dict=True)
     while (status['OK'] and statusmapping[status['Value'][0][1]] not in ['completed', 'failed'] )and datetime.datetime.utcnow() < end_time:
         time.sleep(5)
-        status = execute('status([%s], %s)' % (job_id, repr(statusmapping)), return_raw_dict=True)
+        status = execute('status([%s], %s)' % (job_id, repr(statusmapping)), cred_req=cred_req, return_raw_dict=True)
         print("Job status: %s" % status)
 
     assert 'OK' in status, 'Failed to get job Status!'
@@ -122,13 +126,13 @@ def dirac_job(load_config):
 
     logger.info("status: %s", status)
 
-    output_data_info = execute('getOutputDataInfo("%s")' % job_id, return_raw_dict=True)
+    output_data_info = execute('getOutputDataInfo("%s")' % job_id, cred_req=cred_req, return_raw_dict=True)
     logger.info('output_data_info: %s' % output_data_info)
     max_retry = 20
     count = 0
     while not output_data_info.get('OK', True) and count != max_retry:
         time.sleep(5)
-        output_data_info = execute('getOutputDataInfo("%s")' % job_id, return_raw_dict=True)
+        output_data_info = execute('getOutputDataInfo("%s")' % job_id, cred_req=cred_req, return_raw_dict=True)
         logger.info("output_data_info:\n%s\n", output_data_info)
         count+=1
     
@@ -140,9 +144,9 @@ def dirac_job(load_config):
     remove_file_lfn = output_data_info['Value']['removeFile.dst']['LFN']
     logger.info("%s %s", get_file_lfn, remove_file_lfn)
 
-    yield JobInfo(job_id, get_file_lfn, remove_file_lfn)
+    yield JobInfo(job_id, get_file_lfn, remove_file_lfn, cred_req)
 
-    confirm = execute('removeFile("%s")' % get_file_lfn, return_raw_dict=True)
+    confirm = execute('removeFile("%s")' % get_file_lfn, cred_req=cred_req, return_raw_dict=True)
     assert 'OK' in confirm, 'removeFile Failed!'
     assert confirm['OK'], 'removeFile Failed!'
 
