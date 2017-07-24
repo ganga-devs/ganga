@@ -123,7 +123,7 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
         ('Configuration', 'lockingStrategy', 'FIXED'),
         ('TestingFramework', 'ReleaseTesting', True),
         ('Queues', 'NumWorkerThreads', 2),
-        ('outputFile', 'MassStorageFile', outputConfig['MassStorageFile']['uploadOptions'])
+        ('outputFile', 'MassStorageFile', outputConfig['MassStorageFile'])
     ]
 
     outputConfig['MassStorageFile']['uploadOptions']['mkdir_cmd'] = prefix + ' mkdir'
