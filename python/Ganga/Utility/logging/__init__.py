@@ -418,7 +418,7 @@ def _getLogger(name=None, modulename=None):
         return _allLoggers[name]
     else:
 
-        if sys.version_info.major == 2 and sys.version_info.minor < 7:
+        if sys.version_info[0] == 2 and sys.version_info[1] < 7:
             logger = logging.getLogger(name)
         else:
             class logger_wrapper(logging.getLoggerClass()):
