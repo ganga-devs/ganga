@@ -411,12 +411,23 @@ def _getLogger(name=None, modulename=None):
         return _allLoggers[name]
     else:
 
-        logger = logging.getLogger(name)
+        class logger_wrapper(logging.getLoggerClass()):
+
+            def debug(self, *args, **kwds):
+                if __debug__:
+                    super(logger_wrapper, self).debug(*args, **kwds)
+
+        logger = logger_wrapper(name)
+
         _allLoggers[name] = logger
+
+        logger.addHandler(default_handler)
 
         if name in config:
             thisConfig = config[name]
             _set_log_level(logger, thisConfig)
+        else:
+            logger.setLevel(_global_level or logging.INFO)
 
         return logger
 
