@@ -12,6 +12,7 @@ from textwrap import dedent
 
 import pytest
 
+from Ganga.GPIDev.Credentials import credential_store
 from Ganga.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 
@@ -36,7 +37,7 @@ statusmapping = {
 }
 
 
-JobInfo = namedtuple('JobInfo', ['id', 'get_file_lfn', 'remove_file_lfn'])
+JobInfo = namedtuple('JobInfo', ['id', 'get_file_lfn', 'remove_file_lfn', 'cred_req'])
 
 
 @pytest.yield_fixture(scope='module')
