@@ -9,6 +9,7 @@ import uuid
 import shutil
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
