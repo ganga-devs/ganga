@@ -103,7 +103,7 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
 
     import grp
     groupid = grp.getgrgid(pwd_nam.pw_gid).gr_name
-    groupnames = {'z5': 'lhcb', 'zp': 'atlas', 'zh': 'cms', 'vl': 'na62'}
+    groupnames = {'z5': 'lhcb.old', 'zp': 'atlas', 'zh': 'cms', 'vl': 'na62'}
     groupname = groupnames.get(groupid, 'undefined')
 
     from Ganga.Utility.Config import getConfig
