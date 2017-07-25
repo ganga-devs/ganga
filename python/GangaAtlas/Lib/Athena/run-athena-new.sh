@@ -4,7 +4,7 @@
 
 # make sure some output files are present just in case
 echo "Create output files to keep Condor happy..."
-touch  output_location
+touch output_location
 touch output_guids
 touch output_data
 touch stats.pickle
@@ -12,6 +12,7 @@ touch stats.pickle
 # store env variables that get stomped on by the setup below
 MY_ATHENA_OPTIONS=$ATHENA_OPTIONS
 MY_OUTPUT_LOCATION=$OUTPUT_LOCATION
+MY_ATLAS_EXETYPE=$ATLAS_EXETYPE
 
 # setup Atlas enviroenment
 shopt -s expand_aliases
@@ -32,15 +33,22 @@ fi
 echo "------>  Running asetup $ATLAS_PROJECT,$ATLAS_VERSION,here..."
 source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_VERSION,here
 
-# Now create the build directory
-echo "------>  Building using cmake..."
-mkdir __athena_build__
-cd __athena_build__
-cmake ../
-make clean
-make
-source x86_64-slc6-gcc49-opt/setup.sh
-cd ../
+# Now setup user code
+if [ n$ATHENA_COMPILE = nTrue ]; then
+    echo "------>  Building using cmake..."
+    mkdir __athena_build__
+    cd __athena_build__
+    cmake ../
+    make clean
+    make
+    source */setup.sh
+    cd ../
+else
+    echo "------>  Setting up user code..."
+    # NOTE: I'd prefer to incude $CMT_CONFIG here though this is what runAthena has so who am I to question that :)
+    # http://pandaserver.cern.ch:25085/trf/user/runAthena-00-00-12
+    source usr/*/*/InstallArea/*/setup.sh
+fi
 
 # create the input.py file to load in the input data
 echo "------>  Creating the pre/post JO files..."
@@ -136,10 +144,37 @@ EOF
 sed 's/EventSelector/ServiceMgr.EventSelector/' input.py > input.py.new
 mv input.py.new input.py
 
-
-# Running Athena
-echo "------>  Running athena preJobO.py $MY_ATHENA_OPTIONS input.py..."
-athena preJobO.py $MY_ATHENA_OPTIONS input.py
+# Run Athena/EXE/Root
+if [ n$MY_ATLAS_EXETYPE == n'ATHENA' ]
+then
+    echo "------>  Running athena preJobO.py $MY_ATHENA_OPTIONS input.py..."
+    athena preJobO.py $MY_ATHENA_OPTIONS input.py ; echo $? > retcode.tmp
+elif [ n$MY_ATLAS_EXETYPE == n'PYARA' ]
+then
+    echo "------>  Running python $MY_ATHENA_OPTIONS..."
+    $pybin $MY_ATHENA_OPTIONS ; echo $? > retcode.tmp
+elif [ n$MY_ATLAS_EXETYPE == n'ROOT' ]
+then
+    echo "------>  Running root -b -q $MY_ATHENA_OPTIONS..."
+    root -b -q $MY_ATHENA_OPTIONS ; echo $? > retcode.tmp
+elif [ n$MY_ATLAS_EXETYPE == n'EXE' ]
+then
+    echo "------>  Checking for %IN args in exe string..."
+    EXE_FILELIST=$(tr '\n' ',' < input_files | sed 's/\//\\\//g' | sed s/,$//)
+    NEW_ATHENA_OPTIONS=`echo $MY_ATHENA_OPTIONS | sed s/%IN/$EXE_FILELIST/`
+    if [ -z "${NEW_ATHENA_OPTIONS}" ]
+    then
+	echo "Problem swapping out %IN args, see stderr for actual error. Maybe try using input_files instead."
+	NEW_ATHENA_OPTIONS=$MY_ATHENA_OPTIONS
+    fi
+    export PATH=$PATH:.
+    echo "------>  Running $NEW_ATHENA_OPTIONS..."
+    ls
+    eval $NEW_ATHENA_OPTIONS ; echo $? > retcode.tmp
+else
+    echo "------>  !!! ERROR: Athena exe type '$ATLAS_EXETYPE' not supported. Contact developers!"
+    exit 1
+fi
 
 echo "------>  Staging output to $MY_OUTPUT_LOCATION..."
 OUTPUT_LOCATION=$MY_OUTPUT_LOCATION
