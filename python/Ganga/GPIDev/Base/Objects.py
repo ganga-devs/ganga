@@ -147,6 +147,27 @@ class Node(object):
         obj = self_parent
 
         if cond is None:
+            while True:
+                parent = obj._getParent()
+                if parent is not None:
+                    obj = parent
+                else:
+                    break
+                return obj
+        else:
+                                                    
+            if cond(obj):
+                return obj
+                                                                                  
+            escape = False
+            while True:
+                parent = obj._getObject()
+                if parent is None or cond(obj):
+                    break
+                obj = parent
+            return obj
+
+        if cond is None:
             while obj._getParent() is not None:
                 obj = obj._getParent()
             return obj
