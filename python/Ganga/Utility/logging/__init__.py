@@ -422,7 +422,7 @@ def _getLogger(name=None, modulename=None):
 
             def debug(self, *args, **kwds):
                 if __debug__:
-                    super(logger_wrapper, self).debug(*args, **kwds)
+                    super(type(self), self).debug(*args, **kwds)
 
         logger = logger_wrapper(name)
 
