@@ -47,4 +47,5 @@ ENTRYPOINT ["/home/ganga/ganga_env/bin/py.test"]
 CMD ["/home/ganga/ganga/python/Ganga/test/Unit", \
      "/home/ganga/ganga/python/Ganga/Core", \
      "/home/ganga/ganga/python/Ganga/Runtime", \
-     "/home/ganga/ganga/python/Ganga/Utility"]
+     "/home/ganga/ganga/python/Ganga/Utility", \
+     "--cov-report", "xml", "--cov", ".", "--junitxml", "tests.xml"]
