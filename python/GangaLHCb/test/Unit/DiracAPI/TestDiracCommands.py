@@ -47,8 +47,8 @@ def load_config():
 
     # make sure post-boostrap hook is run to ensure Dirac config options are set correctly
     # Only becomes an issue if this test is run on it's own
-#    from GangaLHCb import postBootstrapHook
-#    postBootstrapHook()
+    from GangaLHCb import postBootstrapHook
+    postBootstrapHook()
 
     yield
     clear_config()
