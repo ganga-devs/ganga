@@ -1,29 +1,12 @@
-FROM centos:6
+FROM centos:7
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
-ARG branch=develop
 
 RUN yum install -y wget
-
-# Install Python2.7
-RUN yum groupinstall -y 'development tools' && \
-    yum install -y zlib-dev openssl-devel sqlite-devel bzip2-devel readline-devel && \
-    wget -np -O Python-2.7.13.tar.xz https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tar.xz && \
-    tar -xvf Python-2.7.13.tar.xz && \
-    cd Python-2.7.13 && \
-    ./configure --prefix=/usr/local && \
-    make && \
-    make altinstall && \
-    cd - && \
-    rm -rf Python-2.7.13*
 
 # Add the user UID:1000, GID:1000, home at /home/ganga
 RUN groupadd -r ganga -g 1000 && \
     useradd -u 1000 -r -g ganga -m -d /home/ganga -s /sbin/nologin -c "Ganga user" ganga && \
     chmod 755 /home/ganga
-
-COPY ./ /home/ganga/ganga
-
-RUN chown ganga:ganga /home/ganga/ganga -R
 
 # Set the working directory to ganga home directory
 WORKDIR /home/ganga
@@ -32,15 +15,20 @@ WORKDIR /home/ganga
 USER ganga
 
 # Install pip, virtualenv and ganga
-RUN curl https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python2.7 - --user && \
+RUN curl https://bootstrap.pypa.io/get-pip.py | python - --user && \
     ~/.local/bin/pip install --user virtualenv && \
     ~/.local/bin/virtualenv ganga_env
-   
+
+COPY ./ /home/ganga/ganga
+
+# Not nice but needed until https://github.com/moby/moby/issues/6119 fixed
+USER root
+RUN chown ganga:ganga /home/ganga/ganga -R
+USER ganga
+
 RUN . ~/ganga_env/bin/activate && \
     cd ganga && \
     pip install -r requirements.txt
-#    yes | ganga -g && \
-#    echo $ganga_version > ~/gangadir/.used_versions
 
 ENTRYPOINT ["/home/ganga/ganga_env/bin/py.test"]
 
