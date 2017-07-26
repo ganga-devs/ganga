@@ -47,8 +47,8 @@ def load_config():
 
     # make sure post-boostrap hook is run to ensure Dirac config options are set correctly
     # Only becomes an issue if this test is run on it's own
-    from GangaLHCb import postBootstrapHook
-    postBootstrapHook()
+#    from GangaLHCb import postBootstrapHook
+#    postBootstrapHook()
 
     yield
     clear_config()
@@ -95,7 +95,7 @@ def dirac_job(load_config):
     """
     api_script = dedent(api_script)
 
-    cred_req = DiracProxy(group='gridpp_user')
+    cred_req = DiracProxy(group='lhcb_user')
     credential_store.create(cred_req)
 
     final_submit_script = api_script.replace('###EXE_SCRIPT###', exe_path_name).replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name))
