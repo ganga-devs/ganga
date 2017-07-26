@@ -95,7 +95,7 @@ def dirac_job(load_config):
     """
     api_script = dedent(api_script)
 
-    cred_req = DiracProxy(group='lhcb_user')
+    cred_req = DiracProxy(group='lhcb_user', encodeDefaultProxyFileName=False)
     credential_store.create(cred_req)
 
     final_submit_script = api_script.replace('###EXE_SCRIPT###', exe_path_name).replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name))
