@@ -24,7 +24,7 @@ RUN chown ganga:ganga /home/ganga/ganga -R
 USER ganga
 
 RUN source ganga_env/bin/activate && \
-    pip install -r ganga/requirements.txt
+    pip install -r /home/ganga/ganga/requirements.txt
 
 ENTRYPOINT ["/home/ganga/ganga_env/bin/py.test"]
 
