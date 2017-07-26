@@ -1,7 +1,7 @@
 FROM centos:7
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 
-RUN yum install -y wget
+RUN yum install -y wget python-virtualenv
 
 # Add the user UID:1000, GID:1000, home at /home/ganga
 RUN groupadd -r ganga -g 1000 && \
@@ -11,24 +11,20 @@ RUN groupadd -r ganga -g 1000 && \
 # Set the working directory to ganga home directory
 WORKDIR /home/ganga
 
-# Specify the user to execute all commands below
-USER ganga
+# Create the ganga virtualenv
+RUN virtualenv ganga_env
 
-# Install pip, virtualenv and ganga
-RUN curl https://bootstrap.pypa.io/get-pip.py | python - --user && \
-    ~/.local/bin/pip install --user virtualenv && \
-    ~/.local/bin/virtualenv ganga_env
-
+# Copy in the ganga source from host
 COPY ./ /home/ganga/ganga
 
-# Not nice but needed until https://github.com/moby/moby/issues/6119 fixed
-USER root
+# when https://github.com/moby/moby/issues/6119 is fixed we can remove this
+# and bring copy command below user ganga as it will then respect the user command
 RUN chown ganga:ganga /home/ganga/ganga -R
+
 USER ganga
 
-RUN . ~/ganga_env/bin/activate && \
-    cd ganga && \
-    pip install -r requirements.txt
+RUN . ganga_env/bin/activate && \
+    pip install -r ganga/requirements.txt
 
 ENTRYPOINT ["/home/ganga/ganga_env/bin/py.test"]
 
