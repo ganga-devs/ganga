@@ -738,8 +738,16 @@ massStorageUploadOptions = {'mkdir_cmd': prefix + 'mkdir', 'cp_cmd':
 
 massStorageFileExt = docstr_Ext % ('Mass Storage', 'EOS')
 
-massStorageBackendPost = {'LSF': 'WN', 'PBS': 'WN', 'LCG': 'client', 'CREAM': 'client',
-                          'ARC': 'client', 'Local': 'WN', 'Interactive': 'client', 'Dirac': 'client'}
+massStorageBackendPost = {'LSF': 'WN',
+                          'PBS': 'WN',
+                          'Condor': 'WN',
+                          'SGE': 'WN',
+                          'LCG': 'client',
+                          'CREAM': 'client',
+                          'ARC': 'client',
+                          'Local': 'WN',
+                          'Interactive': 'client',
+                          'Dirac': 'client'}
 
 output_config.addOption('MassStorageFile',
                        {'fileExtensions': [''],
@@ -748,7 +756,16 @@ output_config.addOption('MassStorageFile',
                         'defaultProtocol': defaultMassStorageProto},
                        massStorageFileExt)
 
-sharedFileBackendPost = {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client', 'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}
+sharedFileBackendPost = {'LSF': 'WN',
+                         'LCG': 'WN',
+                         'ARC': 'client',
+                         'Dirac': 'client',
+                         'PBS': 'WN',
+                         'SGE': 'WN',
+                         'Condor': 'WN',
+                         'Interactive': 'client',
+                         'Local': 'WN',
+                         'CREAM': 'client'}
 
 output_config.addOption('SharedFile',
                        {'fileExtensions': [''],
