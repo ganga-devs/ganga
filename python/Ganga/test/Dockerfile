@@ -12,7 +12,8 @@ RUN groupadd -r ganga -g 1000 && \
 WORKDIR /home/ganga
 
 # Create the ganga virtualenv
-RUN virtualenv ganga_env
+RUN virtualenv ganga_env && \
+    chown ganga:ganga ganga_env -R
 
 # Copy in the ganga source from host
 COPY ./ /home/ganga/ganga
