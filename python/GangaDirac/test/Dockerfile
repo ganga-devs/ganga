@@ -57,11 +57,10 @@ RUN source ganga_env/bin/activate && \
     cd ganga && \
     pip install -r requirements.txt
 
-ENTRYPOINT ["(. ~/dirac_ui/bashrc && \
-           dirac-proxy-init -x && \
+ENTRYPOINT [". ~/dirac_ui/bashrc && \
            dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I && \
-           dirac-proxy-init -g ${vo}_user -M);", 
-	   "/home/ganga/ganga_env/bin/py.test"]
+           dirac-proxy-init -g ${vo}_user -M && \ 
+	   /home/ganga/ganga_env/bin/py.test"]
 
 CMD ["/home/ganga/ganga/python/GangaDirac/test/Unit", \
      "--cov-report", "xml", "--cov", ".", "--junitxml", "tests.xml"]
