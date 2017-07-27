@@ -757,7 +757,7 @@ output_config.addOption('MassStorageFile',
                        massStorageFileExt)
 
 sharedFileBackendPost = {'LSF': 'WN',
-                         'LCG': 'WN',
+                         'LCG': 'client',
                          'ARC': 'client',
                          'Dirac': 'client',
                          'PBS': 'WN',
