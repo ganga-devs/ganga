@@ -14,7 +14,7 @@ RUN yum groupinstall -y 'development tools' && \
     make && \
     make altinstall && \
     cd - && \
-    rm -rf Python-2.7.13* && \
+    rm -rf Python-2.7.13*
 
 
 # Add the user UID:1000, GID:1000, home at /home/ganga
