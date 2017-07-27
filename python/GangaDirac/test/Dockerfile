@@ -39,7 +39,7 @@ RUN mkdir dirac_ui && \
 
 RUN curl https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python2.7 - --user && \
     ~/.local/bin/pip install --user virtualenv && \
-    ~/.local/bin/virtualenv ganga_env
+    ~/.local/bin/virtualenv ganga_env && \
     (. ganga_env/bin/activate && \
      pip install --upgrade setuptools)
 
