@@ -57,6 +57,11 @@ RUN source ganga_env/bin/activate && \
     cd ganga && \
     pip install -r requirements.txt
 
+# Add DIRAC setup script to config options
+RUN echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc && \
+    echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> ~/.gangarc && \
+    yes | ganga -g > /dev/null
+
 ENTRYPOINT [". ~/dirac_ui/bashrc && \
            dirac-proxy-init -x && \
            dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I && \
