@@ -60,7 +60,7 @@ RUN source ganga_env/bin/activate && \
 # Add DIRAC setup script to config options
 RUN echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc && \
     echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> ~/.gangarc && \
-    yes | ganga -g > /dev/null
+    yes | ~/ganga/bin/ganga -g > /dev/null
 
 ENTRYPOINT [". ~/dirac_ui/bashrc && \
            dirac-proxy-init -x && \
