@@ -1,7 +1,8 @@
 FROM centos:7
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 
-RUN yum install -y wget python-virtualenv
+RUN yum groupinstall -y 'development tools' && \
+    yum install -y wget python-virtualenv
 
 # Add the user UID:1000, GID:1000, home at /home/ganga
 RUN groupadd -r ganga -g 1000 && \
