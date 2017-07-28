@@ -4,7 +4,7 @@ RUN curl https://bootstrap.pypa.io/get-pip.py | python - --user && \
     ~/.local/bin/pip install --user virtualenv && \
     ~/.local/bin/virtualenv ~/ganga_env
 
-COPY ./ ~/ganga
+COPY ./ /root/ganga
 
 ENTRYPOINT ["lhcb-proxy-init && \
 	     export GANGA_CONFIG_PATH=GangaLHCb/LHCb.ini && \
