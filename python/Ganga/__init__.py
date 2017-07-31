@@ -606,7 +606,16 @@ backendPostprocess:defines where postprocessing should be done (WN/client) on di
 uploadOptions:config values needed for the actual %s upload'
 
 # LocalFile
-LocalPost = {'Local': 'client', 'Interactive': 'client', 'CREAM': 'client', 'Dirac': 'client'}
+LocalPost = {'Local': 'client',
+             'Interactive': 'client',
+             'LSF': 'client',
+             'SGE': 'client',
+             'PBS': 'client',
+             'Condor': 'client',
+             'CREAM': 'client',
+             'ARC': 'client',
+             'Dirac': 'client'
+}
 LocalUpOpt = {}
 LocalFileExt = docstr_Ext % ('Local', 'Local')
 output_config.addOption('LocalFile',
@@ -618,8 +627,16 @@ output_config.addOption('LocalFile',
 
 # LCGSEFILE
 
-LCGSEBakPost = {'LSF': 'client', 'PBS': 'client', 'LCG': 'WN', 'CREAM': 'WN',
-                'ARC': 'WN', 'Local': 'WN', 'Interactive': 'WN'}
+LCGSEBakPost = {'LSF': 'client',
+                'PBS': 'client',
+                'SGE': 'client',
+                'Condor': 'client',
+                'LCG': 'WN',
+                'CREAM': 'WN',
+                'ARC': 'WN',
+                'Local': 'WN',
+                'Interactive': 'WN'
+}
 LCGSEUpOpt = {'LFC_HOST': 'lfc-dteam.cern.ch', 'dest_SRM': 'srm-public.cern.ch'}
 LCGSEFileExt = docstr_Ext % ('LCG SE', 'LCG')
 
@@ -632,8 +649,16 @@ output_config.addOption('LCGSEFile',
 # DiracFile
 ## TODO MOVE ME TO GANGADIRAC!!!
 # Should this be in Core or elsewhere?
-diracBackPost = {'Dirac': 'submit', 'LSF': 'WN', 'PBS': 'WN', 'LCG': 'WN',
-                 'CREAM': 'WN', 'ARC': 'WN', 'Local': 'WN', 'Interactive': 'WN'}
+diracBackPost = {'Dirac': 'submit',
+                 'LSF': 'WN',
+                 'PBS': 'WN',
+                 'SGE': 'WN',
+                 'Condor': 'WN',
+                 'LCG': 'WN',
+                 'CREAM': 'WN',
+                 'ARC': 'WN',
+                 'Local': 'WN',
+                 'Interactive': 'WN'}
 diracFileExts = docstr_Ext % ('DIRAC', 'DIRAC')
 
 output_config.addOption('DiracFile',
@@ -645,8 +670,16 @@ output_config.addOption('DiracFile',
 
 # GoogleFile
 
-GoogleFileBackPost = {'Dirac': 'client', 'LSF': 'client', 'PBS': 'client', 'LCG': 'client',
-                      'CREAM': 'client', 'ARC': 'client', 'Local': 'client', 'Interactive': 'client'}
+GoogleFileBackPost = {'Dirac': 'client',
+                      'LSF': 'client',
+                      'PBS': 'client',
+                      'SGE': 'client',
+                      'Condor': 'client',
+                      'LCG': 'client',
+                      'CREAM': 'client',
+                      'ARC': 'client',
+                      'Local': 'client',
+                      'Interactive': 'client'}
 GoogleFileExts = docstr_Ext % ('GoogleDrive', 'Google')
 
 output_config.addOption('GoogleFile',
@@ -705,8 +738,16 @@ massStorageUploadOptions = {'mkdir_cmd': prefix + 'mkdir', 'cp_cmd':
 
 massStorageFileExt = docstr_Ext % ('Mass Storage', 'EOS')
 
-massStorageBackendPost = {'LSF': 'WN', 'PBS': 'WN', 'LCG': 'client', 'CREAM': 'client',
-                          'ARC': 'client', 'Local': 'WN', 'Interactive': 'client', 'Dirac': 'client'}
+massStorageBackendPost = {'LSF': 'WN',
+                          'PBS': 'WN',
+                          'Condor': 'WN',
+                          'SGE': 'WN',
+                          'LCG': 'client',
+                          'CREAM': 'client',
+                          'ARC': 'client',
+                          'Local': 'WN',
+                          'Interactive': 'client',
+                          'Dirac': 'client'}
 
 output_config.addOption('MassStorageFile',
                        {'fileExtensions': [''],
@@ -715,7 +756,16 @@ output_config.addOption('MassStorageFile',
                         'defaultProtocol': defaultMassStorageProto},
                        massStorageFileExt)
 
-sharedFileBackendPost = {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client', 'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}
+sharedFileBackendPost = {'LSF': 'WN',
+                         'LCG': 'client',
+                         'ARC': 'client',
+                         'Dirac': 'client',
+                         'PBS': 'WN',
+                         'SGE': 'WN',
+                         'Condor': 'WN',
+                         'Interactive': 'client',
+                         'Local': 'WN',
+                         'CREAM': 'client'}
 
 output_config.addOption('SharedFile',
                        {'fileExtensions': [''],
