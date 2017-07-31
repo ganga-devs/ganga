@@ -1,20 +1,7 @@
-FROM centos:6
+FROM centos:7
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
-ARG branch=develop
 
-RUN yum install -y wget
-
-# Install Python2.7
-RUN yum groupinstall -y 'development tools' && \
-    yum install -y zlib-dev openssl-devel sqlite-devel bzip2-devel readline-devel && \
-    wget -np -O Python-2.7.13.tar.xz https://www.python.org/ftp/python/2.7.13/Python-2.7.13.tar.xz && \
-    tar -xvf Python-2.7.13.tar.xz && \
-    cd Python-2.7.13 && \
-    ./configure --prefix=/usr/local && \
-    make && \
-    make altinstall && \
-    cd - && \
-    rm -rf Python-2.7.13*
+RUN yum install -y wget python-virtualenv
 
 # Add the user UID:1000, GID:1000, home at /home/ganga
 RUN groupadd -r ganga -g 1000 && \
@@ -24,23 +11,26 @@ RUN groupadd -r ganga -g 1000 && \
 # Set the working directory to ganga home directory
 WORKDIR /home/ganga
 
-# Specify the user to execute all commands below
+# Create the ganga virtualenv
+RUN virtualenv ganga_env && \
+    . ganga_env/bin/activate && \
+    pip install --upgrade setuptools && \
+    chown ganga:ganga ganga_env -R
+
+# Copy in the ganga source from host
+COPY ./ /home/ganga/ganga
+
+# when https://github.com/moby/moby/issues/6119 is fixed we can remove this
+# and bring copy command below user ganga as it will then respect the user command
+RUN chown ganga:ganga /home/ganga/ganga -R
+
 USER ganga
 
-# Install pip, virtualenv and ganga
-RUN curl https://bootstrap.pypa.io/get-pip.py | /usr/local/bin/python2.7 - --user && \
-    ~/.local/bin/pip install --user virtualenv && \
-    ~/.local/bin/virtualenv ganga_env && \
-    git clone -b $branch --depth 1 https://github.com/ganga-devs/ganga.git && \
-    . ~/ganga_env/bin/activate && \
+RUN source ganga_env/bin/activate && \
     cd ganga && \
     pip install -r requirements.txt
-#    yes | ganga -g && \
-#    echo $ganga_version > ~/gangadir/.used_versions
 
 ENTRYPOINT ["/home/ganga/ganga_env/bin/py.test"]
 
 CMD ["/home/ganga/ganga/python/Ganga/test/Unit", \
-     "/home/ganga/ganga/python/Ganga/Core", \
-     "/home/ganga/ganga/python/Ganga/Runtime", \
-     "/home/ganga/ganga/python/Ganga/Utility"]
+     "--cov-report", "xml", "--cov", ".", "--junitxml", "tests.xml"]
