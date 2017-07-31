@@ -59,14 +59,13 @@ RUN source ganga_env/bin/activate && \
 
 # Add DIRAC setup script to config options
 RUN echo -e "[DIRAC]\nDiracEnvSource = ~/dirac_ui/bashrc" > ~/.gangarc && \
-    echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> ~/.gangarc && \
-    yes | ~/ganga/bin/ganga -g > /dev/null
+    echo -e "[Configuration]\nRUNTIME_PATH=GangaDirac" >> ~/.gangarc
 
-ENTRYPOINT [". ~/dirac_ui/bashrc && \
+ENTRYPOINT (. ~/dirac_ui/bashrc && \
            dirac-proxy-init -x && \
            dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I && \
-           dirac-proxy-init -g ${vo}_user -M && \ 
-	   /home/ganga/ganga_env/bin/py.test"]
-
-CMD ["/home/ganga/ganga/python/GangaDirac/test/Unit", \
-     "--cov-report", "xml", "--cov", ".", "--junitxml", "tests.xml"]
+           dirac-proxy-init -g ${vo}_user -M) && \
+	   echo -e "[defaults_DiracProxy]\ngroup=${vo}_user" >> ~/.gangarc && \
+           . ganga_env/bin/activate && \
+           yes | ganga/bin/ganga -g > /dev/null && \
+	   py.test ganga/python/GangaDirac/test/Unit --cov-report xml --cov . --junitxml tests.xml
