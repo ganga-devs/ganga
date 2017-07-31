@@ -2,7 +2,9 @@ FROM hepsw/cvmfs-lhcb:latest
 
 COPY ./ /root/ganga
 
-CMD ["lhcb-proxy-init && \
+CMD ["export X509_CERT_DIR=/cvmfs/lhcb.cern.ch/etc/grid-security/certificates && \
+     export X509_VOMS_DIR=/cvmfs/lhcb.cern.ch/etc/grid-security/vomsdir && \
+     lhcb-proxy-init && \
      export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(dirname $(dirname `which python`))/lib && \
      curl https://bootstrap.pypa.io/get-pip.py | python - --user && \
      ~/.local/bin/pip install --user virtualenv && \
