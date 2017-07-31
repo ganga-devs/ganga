@@ -65,7 +65,7 @@ ENTRYPOINT (. ~/dirac_ui/bashrc && \
            dirac-proxy-init -x && \
            dirac-configure -F -S GridPP -C dips://dirac01.grid.hep.ph.ic.ac.uk:9135/Configuration/Server -I && \
            dirac-proxy-init -g ${vo}_user -M) && \
-	   echo -e "[defaults_DiracProxy]\ngroup=${vo}_user" >> ~/.gangarc && \
+           echo -e "[defaults_DiracProxy]\ngroup=${vo}_user" >> ~/.gangarc && \
            . ganga_env/bin/activate && \
            yes | ganga/bin/ganga -g > /dev/null && \
-	   py.test ganga/python/GangaDirac/test/Unit --cov-report xml --cov . --junitxml tests.xml
+           py.test ganga/python/GangaDirac/test/Unit --cov-report xml --cov . --junitxml tests.xml
