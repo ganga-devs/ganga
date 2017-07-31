@@ -10,7 +10,8 @@ CMD ["lhcb-proxy-init && \
      export GANGA_CONFIG_PATH=GangaLHCb/LHCb.ini && \
      export GANGA_SITE_CONFIG_AREA=/cvmfs/lhcb.cern.ch/lib/GangaConfig/config && \
      . ~/ganga_env/bin/activate && \
-     pip install ~/ganga/requirements.txt && \
+     cd ganga && \
+     pip install requirements.txt && \
      py.test", \
-     "~/ganga/python/GangaLHCb/test/Unit", \
+     "python/GangaLHCb/test/Unit", \
      "--cov-report", "xml", "--cov", ".", "--junitxml", "tests.xml"]
