@@ -16,4 +16,4 @@ ENTRYPOINT . /etc/cvmfs/run-cvmfs.sh && \
            . ~/ganga_env/bin/activate && \
            cd ganga && \
            pip install -r requirements.txt && \
-           py.test python/GangaLHCb/test/Unit --cov-report xml --cov . --junitxml tests.xml
+           py.test python/GangaLHCb/test/Unit --runexternals --cov-report xml --cov . --junitxml tests.xml
