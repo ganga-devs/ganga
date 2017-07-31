@@ -79,6 +79,8 @@ default_formatter = None
 # if defined this is ADDITIONAL handler that is used for the logfile
 file_handler = None
 
+#
+error_handler = None
 
 # FIXME: this should be probably an option in the config
 # if defined, global level (string) overrides anything which is in config
@@ -382,27 +384,45 @@ class FlushedMemoryHandler(_MemHandler):
         The only thread we don't want to buffer is the MainThread. All other threads are supporting threads and not of primary interest.
         The exception to this is when the MemHandler says we flush as we want to always flush then.
         """
+        # Errors should be dumped in the correct place with the correct context
+        if record.levelno > logging.INFO:
+            return True
         return (threading.currentThread().getName() == "MainThread") or \
                 _MemHandler.shouldFlush(self, record)
 
 
-def enableCaching():
+def enableCaching(custom_logger=None, custom_formatter=None):
     """
     Enable caching of log messages at interactive prompt. In the interactive IPython session, the messages from monitoring
     loop will be cached until the next prompt. In non-interactive sessions no caching is required.
+    Args:
+        custom_logger (logger): This is the optional logger we want to enable caching for
+        custom_formatter (str): This is the optional name of the formatter we want to use for cached logging
     """
 
     if not config['_interactive_cache']:
         return
 
-    private_logger.debug('CACHING ENABLED')
+    if private_logger is not None:
+        private_logger.debug('CACHING ENABLED')
     global default_handler, cached_screen_handler
-    main_logger.removeHandler(default_handler)
+
+    if custom_logger is not None:
+        this_logger = custom_logger
+    else:
+        this_logger = main_logger
+
+    this_logger.removeHandler(default_handler)
     cached_screen_handler = FlushedMemoryHandler(1000, target=direct_screen_handler)
-    default_handler = cached_screen_handler
-    if default_formatter is not None:
+    if custom_logger is None:
+        default_handler = cached_screen_handler
+    if custom_formatter is not None:
+        _set_formatter(cached_screen_handler, custom_formatter)
+    elif default_formatter is not None:
         _set_formatter(cached_screen_handler, default_formatter)
-    main_logger.addHandler(default_handler)
+    else:
+        _set_formatter(cached_screen_handler)
+    this_logger.addHandler(default_handler)
 
 
 def _getLogger(name=None, modulename=None):
@@ -431,7 +451,10 @@ def _getLogger(name=None, modulename=None):
 
         _allLoggers[name] = logger
 
-        logger.addHandler(default_handler)
+        enableCaching(logger, default_formatter)
+        if error_handler is not None:
+            _set_formatter(error_handler, default_formatter)
+            logger.addHandler(error_handler)
 
         if name in config:
             thisConfig = config[name]
@@ -509,9 +532,11 @@ def bootstrap(internal=False, handler=None):
         direct_screen_handler.addFilter(NoErrorFilter())
 
         # Add a new handler for ERROR and CRITICAL which prints to stderr
+        global error_handler
         error_logger = logging.StreamHandler(sys.stderr)
         error_logger.setLevel(logging.ERROR)
         _set_formatter(error_logger)
+        error_handler = error_logger
         main_logger.addHandler(error_logger)
 
     global requires_shutdown

@@ -10,6 +10,7 @@ from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Schema import ComponentItem
 
+from Ganga.Core.exceptions import GangaException, GangaValueError
 from Ganga.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass, _getName
 from Ganga.Core.exceptions import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
@@ -735,10 +736,8 @@ def addProxyClass(some_class):
 def getProxyClass(some_class):
     class_name = some_class.__name__
     if not isclass(some_class):
-        from Ganga.Core.exceptions import GangaException
         raise GangaException("Cannot perform getProxyClass on a non-class object: %s:: %s" % (class_name, some_class))
     if not issubclass(some_class, GangaObject):
-        from Ganga.Core.exceptions import GangaException
         raise GangaException("Cannot perform getProxyClass on class which is not a subclass of GangaObject: %s:: %s" % (class_name, some_class))
     proxy_class = getattr(some_class, proxyClass, None)
     ## It's possible we ourselves have added a proxy to the base class which we're now inheriting here.
@@ -762,7 +761,6 @@ def GPIProxyObjectFactory(_obj):
     if hasattr(_obj, proxyObject):
         return getattr(_obj, proxyObject)
     if not isType(_obj, GangaObject):
-        from Ganga.Core.exceptions import GangaException
         raise GangaException("%s is NOT a Proxyable object" % type(_obj))
 
     obj_class = _obj.__class__
@@ -882,7 +880,12 @@ def GPIProxyClassFactory(name, pluginclass):
             if instance._schema.hasAttribute(k):
                 # This calls the same logic when assigning a named attribute as when we're assigning it to the object
                 # There is logic here which we 'could' duplicate but it is over 100 lines of code which then is duplicating funtionality written elsewhere
-                val = ProxyDataDescriptor._process_set_value(instance, kwds[k], k, False)
+                try:
+                    val = ProxyDataDescriptor._process_set_value(instance, kwds[k], k, False)
+                except:
+                    logger.warning('Error assigning following value to attribute: \'%s\'' % k)
+                    logger.warning('value: \'%s\'' % str(kwds[k]))
+                    raise GangaValueError('Error constructing object of type: \'%s\'' % getName(instance))
                 if isinstance(val, GangaObject):
                     val._auto__init__()
                 setattr(instance, k, val)
