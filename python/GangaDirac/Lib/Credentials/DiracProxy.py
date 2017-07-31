@@ -154,11 +154,6 @@ class DiracProxyInfo(VomsProxyInfo):
         else:
             return base_proxy_name
 
-    @property
-    def location(self):
-        """
-        """
-        return self.default_location()
 
 class DiracProxy(ICredentialRequirement):
     """
