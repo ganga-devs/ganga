@@ -1,5 +1,4 @@
 from __future__ import print_function
-
 import sys
 import shutil
 import os.path
@@ -67,12 +66,14 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
         extra_opts (list): A list of tuples which are used to pass command line style options to Ganga
     """
 
+
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()
 
     # End taken from the ganga binary
 
     import Ganga.Runtime
+    from Ganga.Utility.Config import getConfig
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
 
@@ -89,6 +90,14 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
 
     # These are the default options for all test instances
     # They can be overridden by extra_opts
+
+    #Sort out eos
+    outputConfig = getConfig('Output')
+    outputConfig['MassStorageFile']['uploadOptions']['cp_cmd'] = 'cp'
+    outputConfig['MassStorageFile']['uploadOptions']['ls_cmd'] = 'ls'
+    outputConfig['MassStorageFile']['uploadOptions']['mkdir_cmd'] = 'mkdir'
+    outputConfig['MassStorageFile']['uploadOptions']['path'] = '/tmp'
+
     default_opts = [
         ('Configuration', 'RUNTIME_PATH', 'GangaTest'),
         ('Configuration', 'gangadir', gangadir_for_test),
@@ -98,6 +107,7 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
         ('Configuration', 'lockingStrategy', 'FIXED'),
         ('TestingFramework', 'ReleaseTesting', True),
         ('Queues', 'NumWorkerThreads', 2),
+        ('Output', 'MassStorageFile', outputConfig['MassStorageFile'])
     ]
 
     # FIXME Should we need to add the ability to load from a custom .ini file
