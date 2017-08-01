@@ -643,7 +643,7 @@ class ObjectMetaclass(abc.ABCMeta):
         if '_schema' not in this_dict:
             s = "Class %s must _schema (it cannot be silently inherited)" % (name,)
             logger.error(s)
-            raise ValueError(s)
+            raise GangaValueError(s)
 
         attrs_to_add = [ attr for attr, item in this_schema.allItems()]
 
@@ -1121,9 +1121,13 @@ class GangaObject(Node):
             logger.debug("_getRegistryID Exception: %s" % err)
             return None
 
-    def _setFlushed(self):
-        """Un-Set the dirty flag all of the way down the schema."""
-        if self._schema:
+    def _setFlushed(self, auto_load_deps=True):
+        """
+        Un-Set the dirty flag all of the way down the schema.
+        Args:
+            auto_load_deps (bool): Should we attempt to get objects which may be unloaded and load them via the schema?
+        """
+        if self._schema and auto_load_deps:
             for k in self._schema.allItemNames():
                 this_attr = getattr(self, k)
                 if isinstance(this_attr, Node):
@@ -1209,7 +1213,7 @@ def string_type_shortcut_filter(val, item):
     """
     if isinstance(val, type('')):
         if item is None:
-            raise ValueError('cannot apply default string conversion, probably you are trying to use it in the constructor')
+            raise GangaValueError('cannot apply default string conversion, probably you are trying to use it in the constructor')
         from Ganga.Utility.Plugin import allPlugins, PluginManagerError
         try:
             obj = allPlugins.find(item['category'], val)()
@@ -1217,7 +1221,7 @@ def string_type_shortcut_filter(val, item):
             return obj
         except PluginManagerError as err:
             logger.debug("string_type_shortcut_filter Exception: %s" % err)
-            raise ValueError(err)
+            raise GangaValueError('Cannot assign string to object, are you sure this is correct?\n%s' % err)
     return None
 
 # FIXME: change into classmethod (do they inherit?) and then change stripComponentObject to use class instead of
