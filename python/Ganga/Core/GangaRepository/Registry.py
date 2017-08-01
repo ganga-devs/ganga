@@ -10,6 +10,7 @@ from Ganga.Core.exceptions import (GangaException,
 import time
 import threading
 
+from Ganga.Core.GangaThread.GangaThread import GangaThread
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
@@ -204,7 +205,7 @@ def synchronised_complete_lock(f):
                 return f(self, *args, **kwargs)
     return decorated
 
-class RegistryFlusher(threading.Thread):
+class RegistryFlusher(GangaThread):
     """
     This class is intended to be used by the registry to perfom
     automatic flushes on a fixed schedule so that information is not
@@ -495,7 +496,8 @@ class Registry(object):
         Args:
             objs (list): a list of objects to flush
         """
-        logger.debug("_flush")
+        # Too noisy
+        #logger.debug("_flush")
 
         if not isType(objs, (list, tuple, GangaList)):
             objs = [objs]
