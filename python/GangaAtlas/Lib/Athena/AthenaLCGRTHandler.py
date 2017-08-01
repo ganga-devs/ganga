@@ -186,8 +186,6 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
                     input_guids, input_files = _splitlist(job.inputdata.get_contents())
 
-                    if job.inputdata.tagdataset:
-                        input_tag_guids, input_tag_files = _splitlist(job.inputdata.get_tag_contents())
                     if job.inputdata.use_aodesd_backnav:
                         input_esd_guids, input_esd_files = _splitlist(job.inputdata.get_contents(backnav=True))
 
@@ -650,10 +648,6 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             #            incompleteLoc.append(loc)
             #    if incompleteLoc:
             #        raise ApplicationConfigurationError(None,'Job submission failed ! Dataset is incomplete ! Usage of j.inputdata.number_of_files and DQ2JobSplitter is not allowed for incomplete datasets !')
-
-            # Add TAG datasetname
-            if job.inputdata.tagdataset:
-                environment['TAGDATASETNAME'] = ':'.join(job.inputdata.tagdataset)
 
 #       prepare job requirements
         requirementsSoftware = getLCGReleaseTag( app )
