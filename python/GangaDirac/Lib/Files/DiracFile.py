@@ -66,7 +66,7 @@ class DiracFile(IGangaFile):
         df.put('CERN-USER')
 
         j=Job( ... )
-        j.inputsandbox = [df]
+        j.inputfiles = [df]
         j.submit()
 
     3)
