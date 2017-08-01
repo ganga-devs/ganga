@@ -82,7 +82,7 @@ class MassStorageFile(IGangaFile):
             if this_localDir:
                 self.localDir = this_localDir
         if attr == "localDir":
-            if value:
+            if value and (value.find(':') == -1):
                 actual_value = os.path.abspath(expandfilename(value))
 
         super(MassStorageFile, self).__setattr__(attr, actual_value)
@@ -98,18 +98,6 @@ class MassStorageFile(IGangaFile):
         elif _namePattern != '' and _localDir != '':
             self.namePattern = _namePattern
             self.localDir = _localDir
-
-
-#    def _on_attribute__set__(self, obj_type, attrib_name):
-#        # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
-#        r = copy.deepcopy(self)
-#        from Ganga.GPIDev.Lib.Job.Job import Job
-#        if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
-#            r.locations = []
-#            r.localDir = ''
-#            r.failureReason = ''
-#        return r
-
 
     def __repr__(self):
         """Get the representation of the file."""
@@ -597,8 +585,8 @@ class MassStorageFile(IGangaFile):
 
         accessURLs = []
 
-        for file in myLocations:
-            accessURLs.append(protoPath + os.path.join(os.sep, file))
+        for _file in myLocations:
+            accessURLs.append(protoPath + os.path.join(os.sep, _file))
 
         return accessURLs
 
