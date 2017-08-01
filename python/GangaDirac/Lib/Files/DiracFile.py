@@ -88,25 +88,25 @@ class DiracFile(IGangaFile):
         df.remove()
 
     5)
-        To change an LFN filename which is produced by Ganga:
+        To change an LFN path structure which is produced by Ganga:
 
         j=Job( ... )
         j.outputfiles=[DiracFile('myAwesomeLFN.ext', remoteDir='myPath_{jid}_{sjid}')]
         j.submit()
 
-        This will produce LFN with a name similar to:
+        This will produce LFN similar to:
 
         /lhcb/user/<u>/<user>/myPath_1_2/2017_01/123456/123456789/myAwesomeLFN.ext
-        
+
         Other possibilities may look like:
 
         j.outputfiles=[DiracFile('myData.ext', remoteDir='myProject/job{jid}_sj{sjid}')]
          =>
-           /lhcb/user/<u>/<user>/myProject/job1_sj2/2017_01/123456/123456789/myData.txt
+           /lhcb/user/<u>/<user>/myProject/job1_sj2/2017_01/123456/123456789/myData.ext
         
         j.outputfiles=[DiracFile('myData.ext', remoteDir='myProject')]
          =>
-           /lhcb/user/<u>/<user>/myProject/2017_01/123456/123456789/myData.txt
+           /lhcb/user/<u>/<user>/myProject/2017_01/123456/123456789/myData.ext
         
 
         Alternatively you may change in your .gangarc:
@@ -115,9 +115,9 @@ class DiracFile(IGangaFile):
 
         This will give you LFN like:
 
-        /lhcb/user/<u>/<user>/GangaJob_13/OutputFiles/2017_01/123456/123456789/myData.txt
+        /lhcb/user/<u>/<user>/GangaJob_13/OutputFiles/2017_01/123456/123456789/myFile.ext
 
-        for all future jobs.
+        for all future jobs while this is in your .gangarc config.
 
     6)
         Accessing a (potentially remote) file locally known to DIRAC:
