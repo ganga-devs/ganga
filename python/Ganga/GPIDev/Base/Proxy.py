@@ -882,9 +882,10 @@ def GPIProxyClassFactory(name, pluginclass):
                 # There is logic here which we 'could' duplicate but it is over 100 lines of code which then is duplicating funtionality written elsewhere
                 try:
                     val = ProxyDataDescriptor._process_set_value(instance, kwds[k], k, False)
-                except:
+                except Exception as err:
                     logger.warning('Error assigning following value to attribute: \'%s\'' % k)
                     logger.warning('value: \'%s\'' % str(kwds[k]))
+                    logger.warning('Error: \'%s\'' % str(err))
                     raise GangaValueError('Error constructing object of type: \'%s\'' % getName(instance))
                 if isinstance(val, GangaObject):
                     val._auto__init__()
