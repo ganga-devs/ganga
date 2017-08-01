@@ -3,7 +3,7 @@ import os
 import re
 import inspect
 import getpass
-
+import commands
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 
 
@@ -732,7 +732,6 @@ protoByExperiment = {'atlas': 'root://eosatlas.cern.ch',
                      'undefined': 'root://eos.cern.ch'}
 defaultMassStorageProto = protoByExperiment[groupname]
 
-import commands
 eosinstalled, prefix = commands.getstatusoutput('which eos')
 if not eosinstalled == 0:
     prefix = ''

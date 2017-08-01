@@ -1,5 +1,4 @@
 from __future__ import print_function
-
 import sys
 import shutil
 import os.path
@@ -67,12 +66,14 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
         extra_opts (list): A list of tuples which are used to pass command line style options to Ganga
     """
 
+
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()
 
     # End taken from the ganga binary
 
     import Ganga.Runtime
+    from Ganga.Utility.Config import getConfig
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
 
@@ -91,8 +92,6 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
     # They can be overridden by extra_opts
 
     #Sort out eos
-
-    from Ganga.Utility.Config import getConfig
     outputConfig = getConfig('Output')
     outputConfig['MassStorageFile']['uploadOptions']['cp_cmd'] = 'cp'
     outputConfig['MassStorageFile']['uploadOptions']['ls_cmd'] = 'ls'
