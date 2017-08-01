@@ -35,6 +35,99 @@ class DiracFile(IGangaFile):
 
     """
     File stored on a DIRAC storage element
+
+    Usage:
+
+        Some common use cases:
+
+        1) Uploading a file and sending jobs to run over it
+        2) Uploading a file to be sent to where your jobs are running
+        3) Uploading and removing a file
+        4) Removing an existing file from Dirac storage
+        5) Change the path of LFN produced by a ganga job.
+        6) Accessing a (potentially remote) file known to Dirac through an LFN
+
+
+    1)
+        To upload a file and submit a job to use it as inputdata:
+
+        df = DiracFile('/path/to/some/local/file')
+        df.put()
+
+        j=Job( ... )
+        j.inputdata=[df.lfn]
+
+        (The file is now accessible via data.py at the site)
+
+    2)
+        To upload a file and make it available on a workernode:
+
+        df = DiracFile('/path/to/some/local/file')
+        df.put('CERN-USER')
+
+        j=Job( ... )
+        j.inputsandbox = [df]
+        j.submit()
+
+    3)
+        To upload and then remove a file:
+
+        df = DiracFile('/path/to/some/local/file')
+        df.put()
+        df.remove()
+
+    4)
+        To remove an existing file already in Dirac storage
+        
+        df = DiracFile('LFN:/some/lfn/path')
+        df.remove()
+
+        or:
+
+        df = DiracFile(lfn='/some/lfn/path')
+        df.remove()
+
+    5)
+        To change an LFN filename which is produced by Ganga:
+
+        j=Job( ... )
+        j.outputfiles=[DiracFile('myAwesomeLFN.ext', remoteDir='myPath_{jid}_{sjid}')]
+        j.submit()
+
+        This will produce LFN with a name similar to:
+
+        /lhcb/user/<u>/<user>/myPath_1_2/2017_01/123456/123456789/myAwesomeLFN.ext
+        
+        Other possibilities may look like:
+
+        j.outputfiles=[DiracFile('myData.ext', remoteDir='myProject/job{jid}_sj{sjid}')]
+         =>
+           /lhcb/user/<u>/<user>/myProject/job1_sj2/2017_01/123456/123456789/myData.txt
+        
+        j.outputfiles=[DiracFile('myData.ext', remoteDir='myProject')]
+         =>
+           /lhcb/user/<u>/<user>/myProject/2017_01/123456/123456789/myData.txt
+        
+
+        Alternatively you may change in your .gangarc:
+        [Dirac]
+        useGangaPath=True
+
+        This will give you LFN like:
+
+        /lhcb/user/<u>/<user>/GangaJob_13/OutputFiles/2017_01/123456/123456789/myData.txt
+
+        for all future jobs.
+
+    6)
+        Accessing a (potentially remote) file locally known to DIRAC:
+
+        df = DiracFile(lfn='/some/lfn/path')
+        ganga_path = df.accessURL()
+        **exit ganga**
+
+        root ganga_path # to stream a file over xrootd://
+
     """
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
                                      'localDir': SimpleItem(defvalue=None, copyable=1, typelist=['str', 'type(None)'],
