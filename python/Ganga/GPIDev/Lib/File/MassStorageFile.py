@@ -62,10 +62,10 @@ class MassStorageFile(IGangaFile):
             namePattern (str): is the pattern of the output file that has to be written into mass storage
             localDir (str): This is the optional local directory of a file to be uploaded to mass storage
         """
+        self._checkConfig()
         super(MassStorageFile, self).__init__()
         self._setNamePath(_namePattern=namePattern, _localDir=localDir)
         self.locations = []
-
         self.shell = Shell.Shell()
 
     def __setattr__(self, attr, value):
@@ -98,6 +98,13 @@ class MassStorageFile(IGangaFile):
         elif _namePattern != '' and _localDir != '':
             self.namePattern = _namePattern
             self.localDir = _localDir
+
+    def _checkConfig(self):
+        """
+        Check that the MassStorageFile configuration is correct
+        """
+        if not getConfig('Output')[_getName(self)]['uploadOptions']['path'] :
+            raise GangaException('Unable to create MassStorageFile. Check your configuration!')
 
     def __repr__(self):
         """Get the representation of the file."""

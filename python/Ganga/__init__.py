@@ -3,7 +3,7 @@ import os
 import re
 import inspect
 import getpass
-
+import commands
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 
 
@@ -733,9 +733,13 @@ protoByExperiment = {'atlas': 'root://eosatlas.cern.ch',
                      'undefined': 'root://eos.cern.ch'}
 defaultMassStorageProto = protoByExperiment[groupname]
 
-prefix = '/afs/cern.ch/project/eos/installation/%s/bin/eos.select ' % groupname
-massStorageUploadOptions = {'mkdir_cmd': prefix + 'mkdir', 'cp_cmd':
-                            prefix + 'cp', 'ls_cmd': prefix + 'ls', 'path': massStoragePath}
+eosinstalled, prefix = commands.getstatusoutput('which eos')
+if not eosinstalled == 0:
+    prefix = ''
+    massStoragePath = ''    
+
+massStorageUploadOptions = {'mkdir_cmd': prefix + ' mkdir', 'cp_cmd':
+                            prefix + ' cp', 'ls_cmd': prefix + ' ls', 'path': massStoragePath}
 
 massStorageFileExt = docstr_Ext % ('Mass Storage', 'EOS')
 
