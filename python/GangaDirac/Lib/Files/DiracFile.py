@@ -110,7 +110,7 @@ class DiracFile(IGangaFile):
         
 
         Alternatively you may change in your .gangarc:
-        [Dirac]
+        [DIRAC]
         useGangaPath=True
 
         This will give you LFN like:
@@ -207,10 +207,6 @@ class DiracFile(IGangaFile):
                 if os.path.dirname(value):
                     self.remoteDir = os.path.dirname(value)
                 return value
-
-            elif name == 'remoteDir':
-                if self.lfn != os.path.join(value, self.namePattern):
-                    self.lfn = os.path.join(value, self.namePattern)
 
             elif name == 'namePattern':
                 self.localDir = os.path.dirname(value)
@@ -707,17 +703,15 @@ class DiracFile(IGangaFile):
         if not self.remoteDir:
             try:
                 job = self.getJobObject()
-                lfn_folder = os.path.join("GangaUploadedFiles", "GangaJob_%s" % job.getFQID('.'))
+                lfn_folder = os.path.join("GangaJob_%s" % job.getFQID('/'), "OutputFiles")
             except AssertionError:
                 t = datetime.datetime.now()
                 this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-                lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
-            self.lfn = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), lfn_folder, self.namePattern)
+                lfn_folder = os.path.join('GangaFiles_%s' % this_date)
+            lfn_base = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), lfn_folder)
 
-        if self.remoteDir[:4] == 'LFN:':
-            lfn_base = self.remoteDir[4:]
         else:
-            lfn_base = self.remoteDir
+            lfn_base = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), self.remoteDir)
 
         if uploadSE == "":
             if self.defaultSE != "":
@@ -749,12 +743,8 @@ class DiracFile(IGangaFile):
                     if not os.path.exists(name):
                         raise GangaFileError('File "%s" must exist!' % name)
 
-            if not lfn or not lfn.startswith(DiracFile.diracLFNBase(self.credential_requirements)):
-                if not lfn:
-                    name = os.path.basename(name)
-                lfn = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), name)
 
-            #lfn = os.path.join(os.path.dirname(self.lfn), this_file)
+            lfn = os.path.join(lfn_base, os.path.basename(this_file))
 
             d = DiracFile()
             d.namePattern = os.path.basename(name)
@@ -885,20 +875,15 @@ for f in glob.glob('###NAME_PATTERN###'):
         if not self.remoteDir:
             try:
                 job = self.getJobObject()
-                lfn_folder = os.path.join("GangaUploadedFiles", "GangaJob_%s" % job.getFQID('.'))
+                lfn_folder = os.path.join("GangaJob_%s" % job.getFQID('.'), "OutputFiles")
             except AssertionError:
                 t = datetime.datetime.now()
                 this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-                lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
-            self.lfn = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), lfn_folder, self.namePattern)
-
-        if self.remoteDir == '':
-            self.remoteDir = DiracFile.diracLFNBase(self.credential_requirements)
-
-        if self.remoteDir[:4] == 'LFN:':
-            lfn_base = self.remoteDir[4:]
+                lfn_folder = os.path.join('GangaFiles_%s' % this_date)
+            lfn_base = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), lfn_folder)
         else:
-            lfn_base = self.remoteDir
+            lfn_base = oa.path.join(DiracFile.diracLFNBase(self.credential_requirements), self.remoteDir)
+
 
         for this_file in outputFiles:
             isCompressed = this_file.namePattern in patternsToZip
