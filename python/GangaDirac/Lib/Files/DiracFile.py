@@ -140,7 +140,7 @@ class DiracFile(IGangaFile):
                                                        doc='return the logical file name/set the logical file name to use if not '
                                                        'using wildcards in namePattern'),
                                      'remoteDir': SimpleItem(defvalue="", doc='remote directory where the LFN is to be placed within '
-                                                             'the dirac base directory by the put method.'),
+                                                             'this is the relative path of the LFN which is put between the user LFN base and the filename.'),
                                      'guid': SimpleItem(defvalue='', copyable=1, typelist=['str'],
                                                         doc='return the GUID/set the GUID to use if not using wildcards in the namePattern.'),
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], sequence=1, copyable=0,  # hidden=1,
