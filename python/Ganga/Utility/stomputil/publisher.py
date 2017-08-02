@@ -62,7 +62,7 @@ class LoggerListener(stomp_listener):
 
     def _log_frame(self, frame_type, headers, body):
         if self._logger.isEnabledFor(logging_DEBUG):
-           self._logger.debug('STOMP %s frame received headers=%s body=%s.' % (frame_type, headers, body))
+            self._logger.debug('STOMP %s frame received headers=%s body=%s.' % (frame_type, headers, body))
 
 # counter to give unique thread names
 _thread_id = 0
