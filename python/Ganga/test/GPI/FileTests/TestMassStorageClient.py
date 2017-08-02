@@ -113,7 +113,6 @@ class TestMassStorageClient(GangaUnitTest):
             # Check that the files were placed in the correct place on storage
             output_dir = os.path.join(self.outputFilePath, str(j.id), str(sj.id))
             for file_ in j.inputfiles:
-                print(os.path.join(output_dir, file_.namePattern))
                 assert os.path.isfile(os.path.join(output_dir, file_.namePattern))
 
             # Check that wildcard expansion happened correctly
