@@ -61,9 +61,8 @@ class LoggerListener(stomp_listener):
         self._log_frame('ERROR', headers, body)
 
     def _log_frame(self, frame_type, headers, body):
-        """ frame logger """
-        #if self._logger.isEnabledFor(logging_DEBUG):
-        #        self._logger.debug('STOMP %s frame received headers=%s body=%s.' % (frame_type, headers, body))
+        if self._logger.isEnabledFor(logging_DEBUG):
+-           self._logger.debug('STOMP %s frame received headers=%s body=%s.' % (frame_type, headers, body))
 
 # counter to give unique thread names
 _thread_id = 0
@@ -322,8 +321,8 @@ def createPublisher(T, server, port, user='', password='', logger=None,
 
         def _log(self, level, msg, *args, **kwargs):
             """Log message if logger is defined."""
-            #if self._logger is not None:
-            #    self._logger.log(*((level, msg,) + args), **kwargs)
+            if self._logger is not None:
+                self._logger.log(*((level, msg,) + args), **kwargs)
 
     return AsyncStompPublisher()
 
