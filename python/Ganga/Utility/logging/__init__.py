@@ -412,7 +412,6 @@ def _getLogger(name=None, modulename=None):
     else:
 
         logger = logging.getLogger(name)
-
         _allLoggers[name] = logger
 
         if name in config:
