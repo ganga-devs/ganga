@@ -147,7 +147,6 @@ class Node(object):
         obj = self_parent
 
         if cond is None:
-
             while obj._getParent() is not None:
                 obj = obj._getParent()
             return obj
