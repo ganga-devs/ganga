@@ -218,6 +218,8 @@ class LHCbDataset(GangaDataset):
             _file = getDataFile(this_f)
             if _file is None:
                 _file = this_f
+            if not isinstance(_file, IGangaFile):
+                raise GangaException('Cannot extend LHCbDataset based on this object type: %s' % type(_file) )
             myName = _file.namePattern
             from GangaDirac.Lib.Files.DiracFile import DiracFile
             if isType(_file, DiracFile):

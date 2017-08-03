@@ -9,6 +9,7 @@ import uuid
 import shutil
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -252,7 +253,7 @@ def generateDiracInput(app):
         addTimestampFile(prep_dir)
         prep_file = prep_dir + '.tgz'
         tmp_dir = tempfile.gettempdir()
-        compressed_file = os.path.join(tmp_dir, '__'+os.path.basename(prep_file))
+        compressed_file = os.path.join(tmp_dir, 'diracInputFiles_'+os.path.basename(prep_file))
 
         if not job.master:
             rjobs = job.subjobs
@@ -336,7 +337,6 @@ def generateDiracScripts(app):
 
     app.jobScriptArchive = new_df
 
-
 def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
     Upload a locally available file to the grid as a DiracFile.
@@ -375,7 +375,7 @@ def getInputFileDir(job):
     """
     Return the LFN remote dirname for this job
     """
-    return os.path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid)
+    return os.path.join(DiracFile.diracLFNBase(job.backend.credential_requirements), 'GangaJob_%s/InputFiles' % job.fqid)
 
 
 class GaudiExecDiracRTHandler(IRuntimeHandler):

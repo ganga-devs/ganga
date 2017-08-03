@@ -1004,6 +1004,13 @@ class Athena(IPrepareApp):
 
         logger.info('Found Working Directory %s',self.userarea)
         logger.info('Found ATLAS Release %s',self.atlas_release)
+
+        # check for nightlies
+        if "AtlasBuildStamp" in os.environ:
+            # change production as the release found above is one ahead of the actual
+            logger.info('Found ATLAS Nightly release. Setting atlas_production appropriately')
+            self.atlas_production = os.environ['AtlasBuildBranch'] + ',' + os.environ['AtlasBuildStamp']
+
         if self.atlas_production:
             logger.info('Found ATLAS Production Release %s',self.atlas_production)
         if self.atlas_project:
@@ -1446,8 +1453,6 @@ class Athena(IPrepareApp):
             if job.inputdata._name == 'DQ2Dataset':
                 if job.inputdata.dataset and not job.inputdata.dataset_exists():
                     raise ApplicationConfigurationError('DQ2 input dataset %s does not exist.' % job.inputdata.dataset)
-                if job.inputdata.tagdataset and not job.inputdata.tagdataset_exists():
-                    raise ApplicationConfigurationError('DQ2 tag dataset %s does not exist.' % job.inputdata.tagdataset)
 
         # check grid/local class match up
         if job.backend._name in ['LCG', 'CREAM' ,'Panda', 'NG']: 
