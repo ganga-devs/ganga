@@ -597,7 +597,7 @@ class Job(GangaObject):
         except Exception as x:
             self.status = initial_status
             log_user_exception()
-            raise JobStatusError(x), None, sys.exc_info()[2]
+            raise JobStatusError(x)
 
 	final_status = self.status
 
