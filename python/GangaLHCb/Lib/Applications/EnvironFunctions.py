@@ -119,7 +119,7 @@ exit $?
         script_file.write(shell_script)
         script_file.close()
     except:
-        from Ganga.Core.exception import PostProcessException
+        from Ganga.Core.exceptions import PostProcessException
         raise PostProcessException('Problem writing merge script')
 
     return script_file_name

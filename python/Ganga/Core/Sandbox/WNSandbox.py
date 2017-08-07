@@ -22,8 +22,11 @@ def getPackedInputSandbox(tarpath, dest_dir='.'):
       'dest_dir': a destination directory
     """
 
-    with closing(tarfile.open(tarpath, "r:*")) as tf:
-        tf.extractall(dest_dir)
+    try:
+        with closing(tarfile.open(tarpath, "r:*")) as tf:
+            tf.extractall(dest_dir)
+    except:
+        raise Exception("Error opening tar file: %s" % tarpath)
 
 
 def createOutputSandbox(output_patterns, filter, dest_dir):

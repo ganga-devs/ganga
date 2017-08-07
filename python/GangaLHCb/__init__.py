@@ -104,16 +104,22 @@ def postBootstrapHook():
     configDirac = Ganga.Utility.Config.getConfig('DIRAC')
     configOutput = Ganga.Utility.Config.getConfig('Output')
     configPoll = Ganga.Utility.Config.getConfig('PollThread')
+    configProxy = Ganga.Utility.Config.getConfig('defaults_DiracProxy')
 
     configDirac.setSessionValue('DiracEnvJSON', os.environ['GANGADIRACENVIRONMENT'])
     configDirac.setSessionValue('userVO', 'lhcb')
     configDirac.setSessionValue('allDiracSE', ['CERN-USER', 'CNAF-USER', 'GRIDKA-USER', 'IN2P3-USER', 'SARA-USER', 'PIC-USER', 'RAL-USER'])
     configDirac.setSessionValue('noInputDataBannedSites', [])
     configDirac.setSessionValue('RequireDefaultSE', False)
+    configDirac.setSessionValue('proxyInitCmd', 'lhcb-proxy-init')
+    configDirac.setSessionValue('proxyInfoCmd', 'lhcb-proxy-info')
 
     configOutput.setSessionValue('FailJobIfNoOutputMatched', 'False')
 
     configPoll.setSessionValue('autoCheckCredentials', False)
+
+    configProxy.setSessionValue('group', 'lhcb_user')
+    configProxy.setSessionValue('encodeDefaultProxyFileName', False)
 
 # This is being dropped from 6.1.0 due to causing some bug in loading large numbers of jobs
 #
@@ -124,11 +130,21 @@ def postBootstrapHook():
 #display_config.setSessionValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
 #display_config.setSessionValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
 
+    from Ganga.Core.GangaThread.WorkerThreads import getQueues
+    queue = getQueues()
+    if queue is not None:
+        queue.add(updateCreds)
+    else:
+        updateCreds()
+
+def updateCreds():
     try:
-        credential_store[DiracProxy()]
+        for group in ('lhcb_user', ):
+            if group == 'lhcb_user':
+                credential_store[DiracProxy(group=group, encodeDefaultProxyFileName=False)]
+            credential_store[DiracProxy(group=group)]
     except KeyError:
         pass
-
 
 class gridProxy(object):
     """

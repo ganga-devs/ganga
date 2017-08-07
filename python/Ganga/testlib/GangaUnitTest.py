@@ -1,8 +1,8 @@
 from __future__ import print_function
-
 import sys
 import shutil
 import os.path
+import pytest
 try:
     import unittest2 as unittest
 except ImportError:
@@ -67,12 +67,14 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
         extra_opts (list): A list of tuples which are used to pass command line style options to Ganga
     """
 
+
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()
 
     # End taken from the ganga binary
 
     import Ganga.Runtime
+    from Ganga.Utility.Config import getConfig
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
 
@@ -89,16 +91,37 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
 
     # These are the default options for all test instances
     # They can be overridden by extra_opts
+
+    lhcb_test = pytest.config.getoption("--testLHCb")
+
+    if lhcb_test:
+        import getpass
+        cred_opts = [('Configuration', 'user', getpass.getuser()),
+                      ('defaults_DiracProxy', 'group', 'lhcb_user')]
+    else:
+        cred_opts = [('Configuration', 'user', 'testframework'),
+                     ('defaults_DiracProxy', 'group', 'gridpp_user'),
+                     ('DIRAC', 'DiracEnvSource', '/cvmfs/ganga.cern.ch/dirac_ui/bashrc')]
+
+    #Sort out eos
+    outputConfig = getConfig('Output')
+    outputConfig['MassStorageFile']['uploadOptions']['cp_cmd'] = 'cp'
+    outputConfig['MassStorageFile']['uploadOptions']['ls_cmd'] = 'ls'
+    outputConfig['MassStorageFile']['uploadOptions']['mkdir_cmd'] = 'mkdir'
+    outputConfig['MassStorageFile']['uploadOptions']['path'] = '/tmp'
+
+
     default_opts = [
         ('Configuration', 'RUNTIME_PATH', 'GangaTest'),
         ('Configuration', 'gangadir', gangadir_for_test),
-        ('Configuration', 'user', 'testframework'),
         ('Configuration', 'repositorytype', 'LocalXML'),
         ('Configuration', 'UsageMonitoringMSG', False),  # Turn off spyware
         ('Configuration', 'lockingStrategy', 'FIXED'),
         ('TestingFramework', 'ReleaseTesting', True),
-        ('Queues', 'NumWorkerThreads', 2),
-    ]
+        ('Queues', 'NumWorkerThreads', 3),
+        ('Output', 'MassStorageFile', outputConfig['MassStorageFile']),
+        ]
+    default_opts += cred_opts
 
     # FIXME Should we need to add the ability to load from a custom .ini file
     # to configure tests without editting this?
@@ -110,8 +133,14 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
 
     # For all the default and extra options, we set the session value
     from Ganga.Utility.Config import setUserValue
-    for opt in default_opts + extra_opts:
-        setUserValue(*opt)
+
+    for opts in default_opts, extra_opts:
+        for opt in opts:
+            try:
+                setUserValue(*opt)
+            except Exception as err:
+                print("Error Setting: %s" % str(opt))
+                print("Err: %s" % err)
 
     # The configuration is currently created at module import and hence can't be
     # regenerated.
@@ -151,8 +180,13 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
 
     # Make sure that all the config options are really set.
     # Some from plugins may not have taken during startup
-    for opt in default_opts + extra_opts:
-        setUserValue(*opt)
+    for opts in default_opts, extra_opts:
+        for opt in opts:
+            try:
+                setUserValue(*opt)
+            except Exception as err:
+                print("Error Setting: %s" % str(opt))
+                print("Err: %s" % err)
 
     logger.info("Passing to Unittest")
 
@@ -191,7 +225,18 @@ def emptyRepositories():
         tasks.clean(confirm=True, force=True)
 
 
-def stop_ganga():
+def getCleanUp():
+    """ Return whether the repo is cleaned up on shutdown of each test """
+    # Do we want to empty the repository on shutdown?
+    from Ganga.Utility.Config import getConfig
+    if 'AutoCleanup' in getConfig('TestingFramework'):
+        whole_cleanup = getConfig('TestingFramework')['AutoCleanup']
+    else:
+        whole_cleanup = True
+    return whole_cleanup
+
+
+def stop_ganga(force_cleanup=False):
     """
     This test stops Ganga and shuts it down
 
@@ -203,12 +248,7 @@ def stop_ganga():
 
     logger.info("Deciding how to shutdown")
 
-    # Do we want to empty the repository on shutdown?
-    from Ganga.Utility.Config import getConfig
-    if 'AutoCleanup' in getConfig('TestingFramework'):
-        whole_cleanup = getConfig('TestingFramework')['AutoCleanup']
-    else:
-        whole_cleanup = True
+    whole_cleanup = getCleanUp() or force_cleanup
     logger.info("AutoCleanup: %s" % whole_cleanup)
 
     if whole_cleanup is True:
@@ -245,6 +285,8 @@ class GangaUnitTest(unittest.TestCase):
     """
     This class is the class which all new-style Ganga tests should inherit from
     """
+    _test_dir = None
+    _test_args = {}
 
     @classmethod
     def gangadir(cls):
@@ -277,6 +319,8 @@ class GangaUnitTest(unittest.TestCase):
         print("\n") # useful when watching stdout from tests
         print("Starting Ganga in: %s" % gangadir)
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
+        GangaUnitTest._test_dir = gangadir
+        GangaUnitTest._test_args = extra_opts
 
     def tearDown(self):
         """
@@ -292,6 +336,12 @@ class GangaUnitTest(unittest.TestCase):
         """
         This is used for cleaning up anything at a module level of higher
         """
-        # NB maybe we shouldn't delete tests here as failed tests require debugging
-        #    this is better cleaned prior to running the next job
-        #shutil.rmtree(cls.gangadir(), ignore_errors=True)
+        print("Tearing down test fully on completion")
+        start_ganga(gangadir_for_test=cls._test_dir, extra_opts=cls._test_args)
+        # Should Ganga clean up properly on test finishing?
+        stop_ganga(not pytest.config.getoption("--keepRepo"))
+        if not pytest.config.getoption("--keepRepo"):
+            shutil.rmtree(cls._test_dir, ignore_errors=True)
+        cls._test_dir = ''
+        cls._test_args = {}
+

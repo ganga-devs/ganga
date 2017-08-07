@@ -10,6 +10,7 @@ from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Schema import ComponentItem
 
+from Ganga.Core.exceptions import GangaException, GangaValueError
 from Ganga.GPIDev.Base.Objects import Node, GangaObject, ObjectMetaclass, _getName
 from Ganga.Core.exceptions import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
@@ -29,7 +30,7 @@ proxyObject = '_proxyObject'
 
 prepconfig = getConfig('Preparable')
 
-logger = Ganga.Utility.logging.getLogger(modulename=1)
+logger = Ganga.Utility.logging.getLogger()
 
 # some proxy related convieniance methods
 
@@ -339,6 +340,8 @@ valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(val, valTypeList, 
 
 
 class ProxyDataDescriptor(object):
+
+    __slots__ = ('_name', )
 
     def __init__(self, name):
         """
@@ -714,6 +717,8 @@ def proxy_wrap(f):
 
 class ProxyMethodDescriptor(object):
 
+    __slots__ = ('_name', '_internal_name', '__doc__')
+
     def __init__(self, name, internal_name):
         self._name = name
         self._internal_name = internal_name
@@ -745,10 +750,8 @@ def addProxyClass(some_class):
 def getProxyClass(some_class):
     class_name = some_class.__name__
     if not isclass(some_class):
-        from Ganga.Core.exceptions import GangaException
         raise GangaException("Cannot perform getProxyClass on a non-class object: %s:: %s" % (class_name, some_class))
     if not issubclass(some_class, GangaObject):
-        from Ganga.Core.exceptions import GangaException
         raise GangaException("Cannot perform getProxyClass on class which is not a subclass of GangaObject: %s:: %s" % (class_name, some_class))
     proxy_class = getattr(some_class, proxyClass, None)
     ## It's possible we ourselves have added a proxy to the base class which we're now inheriting here.
@@ -772,7 +775,6 @@ def GPIProxyObjectFactory(_obj):
     if hasattr(_obj, proxyObject):
         return getattr(_obj, proxyObject)
     if not isType(_obj, GangaObject):
-        from Ganga.Core.exceptions import GangaException
         raise GangaException("%s is NOT a Proxyable object" % type(_obj))
 
     obj_class = _obj.__class__
@@ -791,6 +793,7 @@ def GPIProxyObjectFactory(_obj):
 
 
 class GPIProxyObject(object):
+    __slots__ = list()
     pass
 
 # create a new GPI class for a given ganga (plugin) class
@@ -836,13 +839,16 @@ def GPIProxyClassFactory(name, pluginclass):
             ## FIRST INITALIZE A RAW OBJECT INSTANCE CORRESPONDING TO 'pluginclass'
             ## Object was not passed by construction so need to construct new object for internal use
             # Case 1 j = Job(myExistingJob)            # We want to perform a deepcopy
-            if len(args) == 1 and isinstance(args[0], pluginclass):
+            arg_len = len(args)
+            if arg_len == 1 and isinstance(args[0], pluginclass):
                 instance = deepcopy(stripProxy(args[0]))
             # Case 2 file_ = LocalFile('myFile.txt')   # We need to pass the (stripped) arguments to the constructor only if the 
             # Remember self = 1
             # For the moment we're warning the user until it's clear this is a safe thing to do, aka once all classes are deemed safe
             # The args will simply be passed through regardless
-            elif len(args) < len(getargspec(pluginclass.__init__)[0]):
+            elif arg_len == 0:
+                instance = pluginclass.getNew()
+            elif arg_len < len(getargspec(pluginclass.__init__)[0]):
                 clean_args = (stripProxy(arg) for arg in args)
                 instance = pluginclass(*clean_args)
             else:
@@ -859,23 +865,24 @@ def GPIProxyClassFactory(name, pluginclass):
         ## Need to avoid any setter methods for GangaObjects
         ## Would be very nice to remove this entirely as I'm not sure a GangaObject should worry about it's proxy (if any)
 
-        if proxy_obj_str in kwds:
-            # wrapping not constructing so can exit after determining that the proxy attributes are setup correctly
-            return
 
         ## SECOND WE NEED TO MAKE SURE THAT OBJECT ID IS CORRECT AND THIS DOES THINGS LIKE REGISTER A JOB WITH THE REPO
-        instance._auto__init__()
+
+        if proxy_obj_str in kwds:
+            #instance._auto__init__()
+            # wrapping not constructing so can exit after determining that the proxy attributes are setup correctly
+            return
 
         from Ganga.GPIDev.Base.Objects import do_not_copy
         ## All objects with an _auto__init__ method need to have that method called and we set the various node attributes here based upon the schema
         for key, _val in instance._schema.allItems():
-            if not _val['protected'] and not _val['hidden'] and not _val['getter'] and\
-                isType(_val, ComponentItem) and key not in do_not_copy:
-                val = stripProxy(getattr(self, key))
+            if not _val['getter'] and key not in instance._data:
+                val = instance._schema.getDefaultValue(key)
                 if isinstance(val, GangaObject):
                     val._auto__init__()
                 instance.setSchemaAttribute(key, instance._attribute_filter__set__(key, val))
 
+        instance._auto__init__()
 
         ## THIRD ALLOW FOR APPLICATION AND IS_PREPARED etc TO TRIGGER RELAVENT CODE AND SET THE KEYWORDS FROM THE SCHEMA AGAIN
         ## THIS IS MAINLY FOR THE FIRST EXAMPLE ABOVE
@@ -887,7 +894,13 @@ def GPIProxyClassFactory(name, pluginclass):
             if instance._schema.hasAttribute(k):
                 # This calls the same logic when assigning a named attribute as when we're assigning it to the object
                 # There is logic here which we 'could' duplicate but it is over 100 lines of code which then is duplicating funtionality written elsewhere
-                val = ProxyDataDescriptor._process_set_value(instance, kwds[k], k, check_read_only=False)
+                try:
+                    val = ProxyDataDescriptor._process_set_value(instance, kwds[k], k, False)
+                except Exception as err:
+                    logger.warning('Error assigning following value to attribute: \'%s\'' % k)
+                    logger.warning('value: \'%s\'' % str(kwds[k]))
+                    logger.warning('Error: \'%s\'' % str(err))
+                    raise GangaValueError('Error constructing object of type: \'%s\'' % getName(instance))
                 if isinstance(val, GangaObject):
                     val._auto__init__()
                 setattr(instance, k, val)
@@ -899,7 +912,7 @@ def GPIProxyClassFactory(name, pluginclass):
 
     from Ganga.Utility.strings import ItemizedTextParagraph
 
-    itbuf = ItemizedTextParagraph('Properties:', linesep='')
+    itbuf = ItemizedTextParagraph('Properties:', 80, ' ', '')
 
     for n, item in pluginclass._schema.allItems():
         if not item['hidden']:
@@ -942,9 +955,9 @@ def GPIProxyClassFactory(name, pluginclass):
                 elif hasattr(raw_self, '_display'):
                     p_text = raw_self._display()
                 else:
-                    p_text = self.__str__(interactive=True)
+                    p_text = self.__str__(True)
             else:
-                p_text = self.__str__(interactive=True)
+                p_text = self.__str__(True)
         except Exception as err:
             p_text = "Error Representing object: %s\nErr:\n%s" % (type(self), err)
 

@@ -7,6 +7,8 @@ class IMonitoringService(object):
     However it will be removed in the future.
     """
 
+    __slots__ = list()
+
     def __init__(self, job_info, config_info=None):
         """Initialize the monitoring service.
 
