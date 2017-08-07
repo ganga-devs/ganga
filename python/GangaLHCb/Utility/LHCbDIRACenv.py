@@ -20,13 +20,11 @@ def select_dirac_version(wildcard):
     cmd = 'lb-run -l LHCbDIRAC'
     out = execute(cmd)
     if out == '':
-        logger.error("Can't find any LHCbDirac versions")
-        raise PluginError
+        raise PluginError("Can't find any LHCbDirac versions from '%s'" % cmd)
 
     versions = [s.split() for s in out.splitlines() if fnmatch(s.split()[0], wildcard)]
     if len(versions) == 0:
-        logger.error("Can't find LHCbDIRAC version matching %s.", wildcard)
-        raise PluginError
+        raise PluginError("Can't find LHCbDIRAC version matching %s.", wildcard)
 
     versions.sort(key=lambda v: v[0])
     version = versions[-1]

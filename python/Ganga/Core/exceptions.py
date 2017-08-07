@@ -4,9 +4,10 @@ This module contains all the Ganga Core specific exceptions used throughout the 
 
 """
 
-
 class GangaException(Exception):
     """Basic Ganga Exception class"""
+    __slots__=list()
+
     def __str__(self):
         """
         Return a string containing the error type as well as the parent string
@@ -180,3 +181,14 @@ class GangaKeyError(GangaException, KeyError):
         super(GangaException, self).__init__(args)
         KeyError.__init__(self, *args)
         self.kwds = kwds
+
+class GangaTypeError(GangaException, TypeError):
+    """
+    Class analogous to GangaKeyError. This class wraps TypeError so that users are prevented from seeing stack traces from known good exceptions thrown in Ganga code.
+    """
+
+    def __init__(self, *args, **kwds):
+        super(GangaException, self).__init__(args)
+        TypeError.__init__(self, *args)
+        self.kwds = kwds
+

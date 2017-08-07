@@ -15,6 +15,8 @@ class PostprocessStatusUpdate(Exception):
 
     """ This exception may be raised by postprocess hooks to change the job status."""
 
+    __slots__ = ('status',)
+
     def __init__(self, status):
         Exception.__init__(self)
         self.status = status
@@ -69,6 +71,8 @@ class IApplication(GangaObject):
     _schema = Schema(Version(0, 0), {})
     _category = 'applications'
     _hidden = 1
+
+    __slots__ = list()
 
     def __init__(self):
         super(IApplication, self).__init__()

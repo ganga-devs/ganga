@@ -5,11 +5,15 @@ import os
 from abc import ABCMeta, abstractmethod
 from datetime import datetime, timedelta
 from functools import wraps
+import time
+import threading
 
 import Ganga.Utility.logging
 
 from Ganga.Core.exceptions import CredentialsError
 from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+
+from Ganga.Utility.Config import getConfig
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -28,23 +32,45 @@ def cache(method):
     Args:
         method (function): This is the method which we're wrapping
     """
+
     @wraps(method)
     def cache_function(self, *args, **kwargs):
 
-        # If the mtime has been changed, clear the cache
-        if credential_store.enable_caching and os.path.exists(self.location):
-            mtime = os.path.getmtime(self.location)
-            if mtime > self.cache['mtime']:
-                self.cache = {'mtime': mtime}
-        else:
-            self.cache = {'mtime': 0}
+        with self.cache_lock:
 
-        # If entry is missing from cache, repopulate it
-        # This will run if the cache was just cleared
-        if method.func_name not in self.cache:
-            self.cache[method.func_name] = method(self, *args, **kwargs)
+            if 'mtime' in self.cache:
+                time_before = self.cache['mtime']
+            else:
+                time_before = -1
 
-        return self.cache[method.func_name]
+            if 'ccheck' in self.cache:
+                check_time = self.cache['cceck']
+            else:
+                check_time = time.time()
+
+            # If the mtime has been changed, clear the cache
+            if credential_store.enable_caching and os.path.exists(self.location):
+                if time.time() - check_time > getConfig('Credentials')['AtomicDelay']:
+                    mtime = os.path.getmtime(self.location)
+                    if mtime > self.cache['mtime']:
+                        self.cache = {'mtime': mtime}
+            else:
+                self.cache = {'mtime': 0}
+
+            time_after = self.cache['mtime']
+
+            if time_before != time_after:
+                for k in self.cache.keys():    
+                    del self.cache[k]
+
+            self.cache['mtime'] = time_after
+
+            # If entry is missing from cache, repopulate it
+            # This will run if the cache was just cleared
+            if method.func_name not in self.cache:
+                self.cache[method.func_name] = method(self, *args, **kwargs)
+
+            return self.cache[method.func_name]
     return cache_function
 
 def retry_command(method):
@@ -75,6 +101,8 @@ class ICredentialInfo(object):
     """
     __metaclass__ = ABCMeta
 
+    __slots__ = ('cache', 'cache_lock', 'initial_requirements')
+
     def __init__(self, requirements, check_file=False, create=False):
         # type: (ICredentialRequirement, bool, bool) -> None
         """
@@ -90,6 +118,7 @@ class ICredentialInfo(object):
         super(ICredentialInfo, self).__init__()
 
         self.cache = {'mtime': 0}
+        self.cache_lock = threading.RLock()
 
         self.initial_requirements = copy.deepcopy(requirements)  # Store the requirements that the object was created with. Used for creation
 
@@ -191,7 +220,9 @@ class ICredentialInfo(object):
             ``False`` if even one requirement is not met or if the credential is not valid
         """
         if not self.exists():
+            logger.debug('Credential does NOT exit')
             return False
+        logger.debug('Credential exists, checking it')
         return all(self.check_requirement(query, requirementName) for requirementName in query._schema.datadict)
 
     def check_requirement(self, query, requirement_name):
@@ -207,8 +238,9 @@ class ICredentialInfo(object):
         requirement_value = getattr(query, requirement_name)
         if requirement_value is None:
             # If this requirementName is unspecified then ignore it
+            logger.debug('Param \'%s\': is None' % requirement_name)
             return True
-        logger.debug('\'%s\': \t%s \t%s', requirement_name, getattr(self, requirement_name), requirement_value)
+        logger.debug('Param \'%s\': Have \t%s Want \t%s', requirement_name, getattr(self, requirement_name), requirement_value)
         return getattr(self, requirement_name) == requirement_value
 
     def exists(self):
@@ -216,6 +248,7 @@ class ICredentialInfo(object):
         """
         Does the credential file exist on disk
         """
+        logger.debug('Checking for Credential at: \'%s\'' % self.location)
         return os.path.exists(self.location)
 
     def __eq__(self, other):

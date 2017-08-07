@@ -104,6 +104,8 @@ class ConfigError(GangaException):
     """ ConfigError indicates that an option does not exist or it cannot be set.
     """
 
+    __slots__=('what',)
+
     def __init__(self, what=''):
         super(ConfigError, self).__init__()
         self.what = what
@@ -210,6 +212,8 @@ class ConfigOption(object):
     The configuration option may also define the session_value and default_value. The value property gives the effective value.
     """
 
+    __slots__ = ('name', 'hidden', 'cfile', 'examples', 'filter', 'typelist', 'hasModified', 'default_value', 'docstring', 'type', 'user_value', 'session_value', 'gangarc_value')
+
     def __init__(self, name):
         self.name = name
         self.hidden = False
@@ -219,7 +223,7 @@ class ConfigOption(object):
         self.typelist = None
         self.hasModified = False
 
-    def defineOption(self, default_value, docstring, **meta):
+    def defineOption(self, default_value, docstring, typelist=None, **meta):
 
         self.default_value = default_value
         self.docstring = docstring
@@ -227,7 +231,7 @@ class ConfigOption(object):
         self.cfile = True
         self.examples = None
         self.filter = None
-        self.typelist = None
+        self.typelist = typelist
 
         for m in meta:
             setattr(self, m, meta[m])
@@ -352,7 +356,7 @@ class ConfigOption(object):
             raise AttributeError('Cannot set "%s" attribute of the option object' % name)
 
         super(ConfigOption, self).__setattr__(name, value)
-        super(ConfigOption, self).__setattr__('_hasModified', True)
+        super(ConfigOption, self).__setattr__('hasModified', True)
 
     def check_defined(self):
         return hasattr(self, 'default_value')
@@ -450,6 +454,8 @@ class PackageConfig(object):
 
     """
 
+    __slots__ = ('name', 'options', 'docstring', 'hidden', 'cfile', '_user_handlers', '_session_handlers', 'is_open', '_config_made', 'hasModified', '__dict__')
+
     def __init__(self, name, docstring, **meta):
         """ Arguments:
          - name may not contain blanks and should be a valid python identifier otherwise ValueError is raised
@@ -490,7 +496,7 @@ class PackageConfig(object):
         """ Get the effective value of option o. """
         return self.getEffectiveOption(o)
 
-    def addOption(self, name, default_value, docstring, override=False, **meta):
+    def addOption(self, name, default_value, docstring, override=False, typelist=None, **meta):
         """
         Add a new option to the configuration.
         """
@@ -508,7 +514,7 @@ class PackageConfig(object):
             logger.warning('attempt to add again the option [%s]%s (ignored)', self.name, name)
             return
 
-        option.defineOption(default_value, docstring, **meta)
+        option.defineOption(default_value, docstring, typelist, **meta)
         self.options[option.name] = option
 
         # is it in the list of unknown options from the standard config files

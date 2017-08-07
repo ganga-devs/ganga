@@ -66,7 +66,7 @@ class DiracProxyInfo(VomsProxyInfo):
         """
         if self._shell is None:
             self._shell = Shell()
-            self._shell.env.update(getDiracEnv())
+            self._shell.env.update(getDiracEnv(self.initial_requirements.dirac_env))
         return self._shell
 
     def destroy(self):
@@ -154,6 +154,11 @@ class DiracProxyInfo(VomsProxyInfo):
         else:
             return base_proxy_name
 
+    @property
+    def location(self):
+        """
+        """
+        return self.default_location()
 
 class DiracProxy(ICredentialRequirement):
     """

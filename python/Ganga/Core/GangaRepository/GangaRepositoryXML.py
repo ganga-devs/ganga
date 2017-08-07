@@ -62,7 +62,7 @@ def check_app_hash(obj):
         hashable_app = None
 
     if hashable_app is not None:
-        if not hashable_app.calc_hash(verify=True):
+        if not hashable_app.calc_hash(True):
             try:
                 logger.warning("%s" % hashable_app)
                 logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (getName(hashable_app), getName(obj), obj._registry_id))
@@ -248,7 +248,7 @@ class GangaRepositoryLocal(GangaRepository):
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary
         # of errors
-        self.update_index(verbose=True, firstRun=True)
+        self.update_index(True, True)
         logger.debug("GangaRepositoryLocal Finished Startup")
 
     def shutdown(self):
@@ -260,7 +260,7 @@ class GangaRepositoryLocal(GangaRepository):
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
         for k in self._fully_loaded:
             try:
-                self.index_write(k, shutdown=True)
+                self.index_write(k, True)
             except Exception as err:
                 logger.error("Warning: problem writing index object with id %s" % k)
         try:
@@ -510,7 +510,7 @@ class GangaRepositoryLocal(GangaRepository):
                 try:
                     os.remove(os.path.join(self.root, 'master.idx'))
                 except OSError as x:
-                    Ganga.Utility.logging.log_user_exception(debug=True)
+                    Ganga.Utility.logging.log_user_exception(True)
         except Exception as err:
             logger.debug("write_error2: %s" % err)
             Ganga.Utility.logging.log_unknown_exception()
@@ -637,7 +637,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         if len(changed_ids) != 0:
             isShutdown = not firstRun
-            self._write_master_cache(shutdown=isShutdown)
+            self._write_master_cache(isShutdown)
 
         return changed_ids
 
@@ -722,7 +722,7 @@ class GangaRepositoryLocal(GangaRepository):
                             safe_save(sfn, split_cache[i], self.to_file)
                             split_cache[i]._setFlushed()
                     # Now generate an index file to take advantage of future non-loading goodness
-                    tempSubJList = SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False, parent=obj)
+                    tempSubJList = SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False, obj)
                     ## equivalent to for sj in job.subjobs
                     tempSubJList._setParent(obj)
                     job_dict = {}
@@ -876,7 +876,7 @@ class GangaRepositoryLocal(GangaRepository):
         if has_children:
             logger.debug("Adding children")
             # NB Keep be a SetSchemaAttribute to bypass the list manipulation which will put this into a list in some cases 
-            obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
+            obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, obj))
         else:
             if obj._schema.hasAttribute(self.sub_split):
                 # Infinite loop if we use setattr btw
@@ -1020,7 +1020,7 @@ class GangaRepositoryLocal(GangaRepository):
                 has_loaded_backup = False
 
             try:
-                fobj, has_loaded_backup2 = self._open_xml_file(fn, this_id, _copy_backup=True)
+                fobj, has_loaded_backup2 = self._open_xml_file(fn, this_id, True)
                 if has_loaded_backup2:
                     has_loaded_backup = has_loaded_backup2
             except Exception as err:
@@ -1089,7 +1089,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         # try loading backup
         try:
-            self.load([this_id], load_backup=True)
+            self.load([this_id], True)
             logger.warning("Object '%s' #%s loaded from backup file - recent changes may be lost." % (self.registry.name, this_id))
             return True
         except Exception as err2:

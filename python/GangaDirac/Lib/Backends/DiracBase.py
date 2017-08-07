@@ -655,7 +655,10 @@ class DiracBase(IBackend):
             #logger.info('Job ' + job.fqid + ' normCPUTime: ' + str(job.backend.normCPUTime))
 
             # Set DiracFile metadata
-            wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
+            if hasattr(job.outputfiles, 'get'):
+                wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
+            else:
+                wildcards = []
 
             lfn_store = os.path.join(output_path, getConfig('Output')['PostProcessLocationsFileName'])
 
@@ -664,7 +667,7 @@ class DiracBase(IBackend):
                 with open(lfn_store, 'w'):
                     pass
 
-            if job.outputfiles.get(DiracFile):
+            if hasattr(job.outputfiles, 'get') and job.outputfiles.get(DiracFile):
 
                 # Now we can iterate over the contents of the file without touching it
                 with open(lfn_store, 'ab') as postprocesslocationsfile:
@@ -864,8 +867,7 @@ class DiracBase(IBackend):
 
         thread_handled_states = ['completed', 'failed']
         for job, state, old_state in zip(monitor_jobs, result, ganga_job_status):
-            if monitoring_component:
-                if monitoring_component.should_stop():
+            if monitoring_component and monitoring_component.should_stop():
                     break
 
             if job.been_queued:
@@ -888,7 +890,9 @@ class DiracBase(IBackend):
 
             if job.backend.status in finalised_statuses:
                 if job.status != 'running':
-                    if job.status in ['removed', 'killed']:
+                    if job.status in ['completing', 'completed']:
+                        continue
+                    elif job.status in ['removed', 'killed']:
                         requeue_job_list.append(job)
                     elif (job.master and job.master.status in ['removed', 'killed']):
                         continue  # user changed it under us
@@ -904,9 +908,12 @@ class DiracBase(IBackend):
             else:
                 if job.status in ['removed', 'killed']:
                     continue
-                if (job.master and job.master.status in ['removed', 'killed']):
+                elif (job.master and job.master.status in ['removed', 'killed']):
                     continue  # user changed it under us
-                if job.status != updated_dirac_status:
+                elif job.status != updated_dirac_status:
+                    if job.status in ['completing', 'completed']:
+                        # Another thread got there first
+                        continue
                     if updated_dirac_status not in jobs_to_update:
                         jobs_to_update[updated_dirac_status] = []
                     jobs_to_update[updated_dirac_status].append(job)
