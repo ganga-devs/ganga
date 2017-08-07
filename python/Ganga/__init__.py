@@ -3,7 +3,7 @@ import os
 import re
 import inspect
 import getpass
-
+import commands
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 
 
@@ -25,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.6.3 $'
+_gangaVersion = '$Name: 6.6.4 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -732,9 +732,13 @@ protoByExperiment = {'atlas': 'root://eosatlas.cern.ch',
                      'undefined': 'root://eos.cern.ch'}
 defaultMassStorageProto = protoByExperiment[groupname]
 
-prefix = '/afs/cern.ch/project/eos/installation/%s/bin/eos.select ' % groupname
-massStorageUploadOptions = {'mkdir_cmd': prefix + 'mkdir', 'cp_cmd':
-                            prefix + 'cp', 'ls_cmd': prefix + 'ls', 'path': massStoragePath}
+eosinstalled, prefix = commands.getstatusoutput('which eos')
+if not eosinstalled == 0:
+    prefix = ''
+    massStoragePath = ''    
+
+massStorageUploadOptions = {'mkdir_cmd': prefix + ' mkdir', 'cp_cmd':
+                            prefix + ' cp', 'ls_cmd': prefix + ' ls', 'path': massStoragePath}
 
 massStorageFileExt = docstr_Ext % ('Mass Storage', 'EOS')
 
