@@ -48,6 +48,8 @@ class VPrinter(object):
     #            'copyable'       - print only copyable properties
     #            any other string - print unhidden properties
 
+    __slots__ = ('level', 'nocomma', 'selection', 'out', 'empty_body', '_interactive')
+
     def __init__(self, out=None, selection='', interactive=False):
         self.level = 0
         self.nocomma = 1

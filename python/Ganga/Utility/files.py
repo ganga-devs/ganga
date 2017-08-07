@@ -9,25 +9,38 @@ Helper functions for operations on files.
 """
 
 import os
+import glob
+import stat
+import shutil
+from Ganga.Utility.logging import getLogger
+
+_stored_expanded_paths = {}
+_stored_full_paths = {}
 
 def expandfilename(filename, force=False):
     """expand a path or filename in a standard way so that it may contain ~ and ${VAR} strings"""
-    expanded_path = os.path.expandvars(os.path.expanduser(filename))
+    if filename in _stored_expanded_paths:
+        expanded_path = _stored_expanded_paths[filename]
+    else:
+        expanded_path = os.path.expandvars(os.path.expanduser(filename))
+        _stored_expanded_paths[filename] = expanded_path
     if os.path.exists(expanded_path) or force:
         return expanded_path
 
-    from Ganga.Utility.logging import getLogger
     getLogger().debug("Filename: %s doesn't exist using it anyway" % filename)
     return filename
 
 
 def fullpath(path, force=False):
     """expandfilename() and additionally: strip leading and trailing whitespaces and expand symbolic links"""
-    full_path = os.path.realpath(expandfilename(path.strip(), True))
+    if path in _stored_full_paths:
+        full_path = _stored_full_paths[path]
+    else:
+        full_path = os.path.realpath(expandfilename(path.strip(), True))
+        _stored_full_paths[path] = full_path
     if os.path.exists(full_path) or force:
         return full_path
 
-    from Ganga.Utility.logging import getLogger
     getLogger().debug("path: %s doesn't exist using it anyway" % path)
     return path
 
@@ -41,20 +54,16 @@ def previous_dir(path, cnt):
 
 def chmod_executable(path):
     "make a file executable by the current user (u+x)"
-    import stat
     os.chmod(path, stat.S_IXUSR | os.stat(path).st_mode)
 
 
 def is_executable(path):
     "check if the file is executable by the current user (u+x)"
-    import stat
     return os.stat(path)[0] & stat.S_IXUSR
 
 
 def real_basename(x):
     """ a 'better' basename (removes the trailing / like on Unix) """
-    import os.path
-    import os
     x = x.rstrip(os.sep)
     return os.path.basename(x)
 
@@ -63,7 +72,6 @@ def multi_glob(pats, exclude=None):
     """ glob using a list of patterns and removing duplicate files, exclude name in the list for which the callback exclude(name) return true
     example: advanced_glob(['*.jpg','*.gif'],exclude=lambda n:len(n)>20) return a list of all JPG and GIF files which have names shorter then 20 characters
     """
-    import glob
 
     unique = {}
     if exclude is None:
@@ -80,9 +88,7 @@ def recursive_copy(src, dest):
     """ copy src file (or a directory tree if src specifies a directory) to dest directory. dest must be a directory and must exist.
     if src is a relative path, then the src directory structure is preserved in dest.
     """
-    import shutil
-    import os.path
-
+    
     if not os.path.isdir(dest):
         raise ValueError(
             'resursive_copy: destination %s must specify a directory (which exists)' % dest)
@@ -117,7 +123,6 @@ def remove_prefix(fn, path_list):
     This function converts each element of the path_list using realpath.abspath.
 
     """
-    import os.path
     for p in path_list:
         # normalize path
         if not p or p == '.':
@@ -132,8 +137,6 @@ def remove_prefix(fn, path_list):
     return fn
 
 if __name__ == "__main__":
-    import os
-    import shutil
 
     workdir = 'test_recursive_copy'
     shutil.rmtree(workdir, True)

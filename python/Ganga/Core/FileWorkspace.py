@@ -18,6 +18,7 @@ import time
 
 from Ganga.Utility.files import expandfilename, chmod_executable
 from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.Core.exceptions import GangaTypeError
 
 logger = getLogger(modulename=1)
 
@@ -41,10 +42,14 @@ class FileWorkspace(object):
     directory (with a given subpath  which may be an empty string ''),
     i.e.: getPath() resolves to 'top/subpath/*' or 'top/*' """
 
+
+    __slots__=('jobid', 'top', 'subpath', '__removeTrials')
+
     def __init__(self, top, subpath=''):
         self.jobid = None
         self.top = top
         self.subpath = subpath
+        self.__removeTrials = 0
 
     def create(self, jobid=None):
         """ create a workspace, an optional jobid parameter specifies the job directory
@@ -95,7 +100,7 @@ class FileWorkspace(object):
         from Ganga.GPIDev.Lib.File import FileBuffer
 
         if not isType(fileobj, FileBuffer):
-            raise TypeError('Usage of tuples is not allowed, use FileBuffer instead')
+            raise GangaTypeError('Usage of tuples is not allowed, use FileBuffer instead')
 
         # output file name
         # Added a subdir to files, (see Ganga/GPIDev/Lib/File/File.py) This allows

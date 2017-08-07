@@ -121,7 +121,7 @@ class TaskRegistry(Registry):
         self._main_thread.start()
 
         # create a registry flusher
-        self.flush_thread = RegistryFlusher(self)
+        self.flush_thread = RegistryFlusher(self, 'TaskRegistryFlusher')
         self.flush_thread.start()
 
     def shutdown(self):

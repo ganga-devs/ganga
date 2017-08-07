@@ -37,23 +37,33 @@ class GangaDiracError(GangaException):
             return GangaException.__str__(self)
 
 
-def getDiracEnv():
+def getDiracEnv(sourceFile = None):
     """
     Returns the dirac environment stored in a global dictionary by Ganga.
     Once loaded and stored this is used for executing all DIRAC code in future
+    Args:
+        sourceFile (str): This is an optional file path which points to the env which should be sourced for this DIRAC
     """
     global DIRAC_ENV
     with Dirac_Env_Lock:
-        if not DIRAC_ENV:
+        if sourceFile is None:
+            sourceFile = 'default'
             cache_file = getConfig('DIRAC')['DiracEnvJSON']
             source_command = getConfig('DIRAC')['DiracEnvSource']
+        else:
+            cache_file = None
+            source_command = sourceFile
+
+        if sourceFile not in DIRAC_ENV:
             if cache_file:
-                DIRAC_ENV = read_env_cache(cache_file)
+                DIRAC_ENV[sourceFile] = read_env_cache(cache_file)
             elif source_command:
-                DIRAC_ENV = get_env(source_command)
+                DIRAC_ENV[sourceFile] = get_env(source_command)
             else:
                 logger.error("'DiracEnvSource' config variable empty")
-    return DIRAC_ENV
+                logger.error("%s  %s" % (getConfig('DIRAC')['DiracEnvJSON'], getConfig('DIRAC')['DiracEnvSource']))
+
+    return DIRAC_ENV[sourceFile]
 
 
 def get_env(env_source):
@@ -191,7 +201,10 @@ def execute(command,
     """
 
     if env is None:
-        env = getDiracEnv()
+        if cred_req is None:
+            env = getDiracEnv()
+        else:
+            env = getDiracEnv(cred_req.dirac_env)
     if python_setup == '':
         python_setup = getDiracCommandIncludes()
 

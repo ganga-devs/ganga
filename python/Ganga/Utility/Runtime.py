@@ -102,6 +102,8 @@ def getSearchPath(configPar="SCRIPTS_PATH"):
 
 class RuntimePackage(object):
 
+    __slots__ = ('path', 'name', 'syspath', 'mod', 'modpath', 'config')
+
     def __init__(self, path):
         import os.path
         import sys

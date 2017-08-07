@@ -19,6 +19,8 @@ class IRuntimeHandler(object):
 
     """
 
+    __slots__ = list()
+
     def master_prepare(self, app, appmasterconfig):
         """ Prepare  the shared/master aspect of  the job submission.
         Called  once  per  job  (both  split and  not-split).  If  the
