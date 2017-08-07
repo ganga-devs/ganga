@@ -252,22 +252,21 @@ def getName(_obj):
     returnable = _getName(obj)
     return returnable
 
+
 def stripProxy(obj):
     """Removes the proxy if there is one
     Args:
         obj (object): This may be an instance or a class
     """
     if isinstance(obj, (list, tuple)):
-        new_obj = type(obj)(stripProxy(_) for _ in obj)
+        return type(obj)(stripProxy(_) for _ in obj)
     elif isinstance(obj, dict):
-        new_obj = dict((k, stripProxy(v)) for k, v in obj.items())
-        obj.clear()
+        return dict((k, stripProxy(v)) for k, v in obj.items())
     elif hasattr(obj, implRef):
-        new_obj = getattr(obj, implRef)
+        return getattr(obj, implRef)
     else:
         return obj
-    obj = new_obj
-    return obj
+
 
 def addProxy(obj):
     """Adds a proxy to a GangaObject instance or class
@@ -283,12 +282,9 @@ def addProxy(obj):
     elif isclass(obj) and issubclass(obj, GangaObject):
         return getProxyClass(obj)
     elif isinstance(obj, (list, tuple)):
-        new_obj = type(obj)(addProxy(_) for _ in obj)
-        obj = new_obj
+        return type(obj)(addProxy(_) for _ in obj)
     elif isinstance(obj, dict):
-        new_obj = dict((k, addProxy(v)) for k, v in obj.items())
-        obj.clear()
-        obj = new_obj
+        return dict((k, addProxy(v)) for k, v in obj.items())
     return obj
 
 
