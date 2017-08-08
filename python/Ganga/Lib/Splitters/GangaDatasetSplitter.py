@@ -18,6 +18,10 @@ class GangaDatasetSplitter(ISplitter):
     _name = "GangaDatasetSplitter"
     _schema = Schema(Version(1, 0), {
         'files_per_subjob': SimpleItem(defvalue=5, doc='the number of files per subjob', typelist=[int]),
+
+        'maxFiles': SimpleItem(defvalue=None,
+                               doc='Maximum number of files to use in a masterjob (None = all files)',
+                               typelist=['int', 'type(None)']),
     })
 
     def split(self, job):
@@ -48,7 +52,10 @@ class GangaDatasetSplitter(ISplitter):
         # split based on all the sub files
         fid = 0
         subjobs = []
-        while fid < len(full_list):
+        filesToRun = len(full_list)
+        if self.maxFiles and not self.maxFiles == -1:
+            filesToRun = self.maxFiles
+        while fid < filesToRun:
             j = self.createSubjob(job)
             j.inputdata = masterType()
             j.inputdata.treat_as_inputfiles = job.inputdata.treat_as_inputfiles
