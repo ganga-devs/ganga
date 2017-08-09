@@ -27,7 +27,7 @@ def outputFilePostProcessingOnClient(job, outputFileClassName):
     return outputFilePostProcessingTestForWhen(job, outputFileClassName, 'client')
 
 
-def outputFilePostProxessingOnSubmit(job, outputFileClassName):
+def outputFilePostProcessingOnSubmit(job, outputFileClassName):
     """
     Checks if the output files of a given job(we are interested in the backend)
     should have been postprocessed on job submission, depending on job.backend_output_postprocess dictionary
@@ -201,7 +201,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
         Args: job(Job) This is the job which we're testing for inputfiles """
         if job.inputfiles is not None and len(job.inputfiles) != 0:
             return True
-        if (job.inputdata is not None and len(job.inputdata) != 0) and isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
+        if job.inputdata is not None and isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
             return True
         return False
 

@@ -146,18 +146,6 @@ class CREAM(IBackend):
             if (self.sandboxcache.se_type in ['srmv2']) and (not self.sandboxcache.srm_token):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
 
-        elif self.sandboxcache._name == 'DQ2SandboxCache':
-
-            # generate a new dataset name if not given
-            if not self.sandboxcache.dataset_name:
-                from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
-                self.sandboxcache.dataset_name, unused = dq2outputdatasetname(
-                    "%s.input" % get_uuid(), 0, False, '')
-
-            # subjobs inherits the dataset name from the master job
-            for sj in job.subjobs:
-                sj.backend.sandboxcache.dataset_name = self.sandboxcache.dataset_name
-
         elif self.sandboxcache._name == 'GridftpSandboxCache':
             if config['CreamInputSandboxBaseURI']:
                 self.sandboxcache.baseURI = config['CreamInputSandboxBaseURI']

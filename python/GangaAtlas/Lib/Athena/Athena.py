@@ -375,6 +375,7 @@ class Athena(IPrepareApp):
                  'useNoDebugLogs'         : SimpleItem(defvalue = False, doc='Use debug print-out in logfiles of Local/Batch/CREAM/LCG backend'),
                  'useNewTRF'              : SimpleItem(defvalue = True, doc='Use the original filename with the attempt number for input in --trf when there is only one input, which follows the globbing scheme of new transformation framework'),
                  'useNoAthenaSetup'       : SimpleItem(defvalue = False, doc='Use No Athena setup to allow e.g. free ROOT setup'),
+                 'useCMake'            : SimpleItem(defvalue = False, doc='Use CMake when packing/running the job'),
                  })
                      
     _category = 'applications'
@@ -1003,6 +1004,13 @@ class Athena(IPrepareApp):
 
         logger.info('Found Working Directory %s',self.userarea)
         logger.info('Found ATLAS Release %s',self.atlas_release)
+
+        # check for nightlies
+        if "AtlasBuildStamp" in os.environ:
+            # change production as the release found above is one ahead of the actual
+            logger.info('Found ATLAS Nightly release. Setting atlas_production appropriately')
+            self.atlas_production = os.environ['AtlasBuildBranch'] + ',' + os.environ['AtlasBuildStamp']
+
         if self.atlas_production:
             logger.info('Found ATLAS Production Release %s',self.atlas_production)
         if self.atlas_project:
@@ -1153,8 +1161,25 @@ class Athena(IPrepareApp):
         if self.atlas_exetype in ['EXE']: #and not self.athena_compile:  - for EXE, compilation decides what the tarball is called
             maxFileSize = config['EXE_MAXFILESIZE']
             archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose, self.athena_compile )
+
+            if AthenaUtils.useCMake():
+                self.useCMake = True
         else:
-            archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages, config['dereferenceSymLinks'])
+            # compilation determines whether to send the sources across as well
+            archiveName = ""
+            if self.athena_compile:
+                if AthenaUtils.useCMake():
+                    self.useCMake = True
+                    archiveName,archiveFullName = AthenaUtils.archiveWithCpack(True,tmpDir,True)
+
+                archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages, config['dereferenceSymLinks'], archiveName=archiveName)
+            else:
+                if AthenaUtils.useCMake():
+                    self.useCMake = True
+                    archiveName,archiveFullName = AthenaUtils.archiveWithCpack(False,tmpDir,True)
+
+                archiveName, archiveFullName = AthenaUtils.archiveJobOFiles(self.userarea, runDir, currentDir, archiveDir, verbose, archiveName=archiveName)
+
         logger.info('Creating %s ...', archiveFullName )
 
         # Add InstallArea
@@ -1428,19 +1453,13 @@ class Athena(IPrepareApp):
             if job.inputdata._name == 'DQ2Dataset':
                 if job.inputdata.dataset and not job.inputdata.dataset_exists():
                     raise ApplicationConfigurationError('DQ2 input dataset %s does not exist.' % job.inputdata.dataset)
-                if job.inputdata.tagdataset and not job.inputdata.tagdataset_exists():
-                    raise ApplicationConfigurationError('DQ2 tag dataset %s does not exist.' % job.inputdata.tagdataset)
 
         # check grid/local class match up
         if job.backend._name in ['LCG', 'CREAM' ,'Panda', 'NG']: 
             # check splitter
             if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AnaTaskSplitterJob', 'ATLASTier3Splitter', 'GenericSplitter']:
                 raise ApplicationConfigurationError("Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
-            
-            # Check that only DQ2Datasets/AMIDatasets are used on the grid        
-            #if job.inputdata and not job.inputdata._name in ['DQ2Dataset', 'AMIDataset']:
-            #    raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.inputdata._name, job.backend._name) )
- 
+
             # Check that only DQ2OutputDatasets are used on the grid
             #if job.outputdata and not job.outputdata._name in ['DQ2OutputDataset']:
             #    raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.outputdata._name, job.backend._name))
@@ -1537,8 +1556,7 @@ class AthenaSplitterJob(ISplitter):
         inputguids=[]
         if job.inputdata:
 
-            if (job.inputdata._name == 'ATLASCastorDataset') or \
-                   (job.inputdata._name == 'ATLASLocalDataset'):
+            if (job.inputdata._name == 'ATLASLocalDataset'):
                 inputnames = []
                 outputnames = []
                 numfiles = len(job.inputdata.get_dataset_filenames())
@@ -1614,12 +1632,6 @@ class AthenaSplitterJob(ISplitter):
                     for j in xrange(numfiles):
                         inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset_filenames()[j])
 
-            if job.inputdata._name == 'ATLASDataset':
-                for i in xrange(self.numsubjobs):    
-                    inputnames.append([])
-                for j in xrange(len(job.inputdata.get_dataset())):
-                    inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset()[j])
-
             if job.inputdata._name == 'DQ2Dataset':
                 # Splitting per dataset
                 if self.split_per_dataset:
@@ -1670,15 +1682,12 @@ class AthenaSplitterJob(ISplitter):
             j.name = job.name + "_" + str(i)
             j.inputdata=job.inputdata
             if job.inputdata:
-                if job.inputdata._name == 'ATLASDataset':
-                    j.inputdata.lfn=inputnames[i]
-                else:
-                    j.inputdata.names=inputnames[i]
-                    if job.inputdata._name == 'DQ2Dataset':
-                        j.inputdata.guids=inputguids[i]
-                        j.inputdata.number_of_files = len(inputguids[i])
-                        if self.split_per_dataset:
-                            j.inputdata.dataset=job.inputdata.dataset[i]
+                j.inputdata.names=inputnames[i]
+                if job.inputdata._name == 'DQ2Dataset':
+                    j.inputdata.guids=inputguids[i]
+                    j.inputdata.number_of_files = len(inputguids[i])
+                    if self.split_per_dataset:
+                        j.inputdata.dataset=job.inputdata.dataset[i]
             j.outputdata=job.outputdata
 
             # Set the output location if we have mapping

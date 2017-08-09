@@ -22,15 +22,12 @@ def getPackedInputSandbox(tarpath, dest_dir='.'):
       'dest_dir': a destination directory
     """
 
-    with closing(tarfile.open(tarpath, "r:*")) as tf:
-        for file_ in tf:
-            try:
-                tf.extract(file_)
-            except IOError as e:
-                os.remove(file_.name)
-                tar.extract(file_)
-            finally:
-                os.chmod(file_.name, file_.mode)
+    try:
+        with closing(tarfile.open(tarpath, "r:*")) as tf:
+            tf.extractall(dest_dir)
+    except:
+        raise Exception("Error opening tar file: %s" % tarpath)
+
 
 def createOutputSandbox(output_patterns, filter, dest_dir):
     """Get all files matching output patterns except filtered with filter and

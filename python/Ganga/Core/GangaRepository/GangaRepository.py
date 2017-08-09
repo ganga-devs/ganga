@@ -27,6 +27,8 @@ class GangaRepository(object):
         The base class implements a transient Ganga Repository for testing purposes.
     """
 
+    __slots__ = ('registry', 'objects', 'incomplete_objects', '_found_classes')
+
     def __init__(self, registry, locking=True):
         """GangaRepository constructor. Initialization should be done in startup()"""
         super(GangaRepository, self).__init__()
@@ -181,7 +183,7 @@ class GangaRepository(object):
             cls = allPlugins.find(category, classname)
             self._found_classes[compound_name] = cls
         cls = self._found_classes[compound_name]
-        obj = cls()
+        obj = cls.getNew(should_load=True)
         obj._data = {}
 
         obj._setFlushed()
@@ -223,6 +225,8 @@ class GangaRepositoryTransient(object):
     """
 # Functions that should be overridden and implemented by derived classes.
 
+    __slots__ = ('_next_id')
+
     def startup(self):
         """
         Startup a minimal in-memory repo
@@ -250,7 +254,10 @@ class GangaRepositoryTransient(object):
             objs (list): Objects we want to store in memory
             force_ids (list, None): IDs to assign to the objects, None for auto-assign
         """
-        assert force_ids is None or len(force_ids) == len(objs)
+        try:
+            assert force_ids is None or len(force_ids) == len(objs)
+        except AssertionError:
+            raise RepositoryError("Inconsistent number of objects and ids, can't add to Repository")
         ids = []
         for i in range(len(objs)):
             obj = objs[i]

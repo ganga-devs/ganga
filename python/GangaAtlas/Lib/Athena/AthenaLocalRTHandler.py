@@ -17,8 +17,7 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
-from GangaAtlas.Lib.ATLASDataset import ATLASDataset, isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations
-from GangaAtlas.Lib.ATLASDataset import ATLASCastorDataset
+from GangaAtlas.Lib.ATLASDataset import isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations
 from GangaAtlas.Lib.ATLASDataset import ATLASLocalDataset
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 
@@ -64,13 +63,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             # DQ2Dataset, ATLASLocalDataset and ATLASCastorDataset job splitting is done in AthenaSplitterJob
 
             if job._getRoot().subjobs:
-                if job.inputdata._name == 'ATLASLocalDataset' or job.inputdata._name == 'ATLASCastorDataset':
+                if job.inputdata._name == 'ATLASLocalDataset':
                     if not job.inputdata.names: raise ApplicationConfigurationError('No inputdata has been specified.')
                     input_files = job.inputdata.names
-
-                elif job.inputdata._name == 'ATLASDataset':
-                    if not job.inputdata.lfn: raise ApplicationConfigurationError('No inputdata has been specified.')
-                    input_files = job.inputdata.lfn
 
                 elif job.inputdata._name == 'ATLASTier3Dataset':
                     if not job.inputdata.names:
@@ -87,14 +82,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                         job.inputdata.type ='DQ2_LOCAL'
        
             else:
-                if job.inputdata._name == 'ATLASCastorDataset':
-                    input_files = ATLASCastorDataset.get_filenames(app)
-
-                elif job.inputdata._name == 'ATLASLocalDataset':
+                if job.inputdata._name == 'ATLASLocalDataset':
                     input_files = ATLASLocalDataset.get_filenames(app)
-
-                elif job.inputdata._name == 'ATLASDataset':
-                    input_files = ATLASDataset.get_filenames(app)
 
                 elif job.inputdata._name == 'ATLASTier3Dataset':
                     if job.inputdata.names:
@@ -152,12 +141,12 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             elif job.outputdata.location=='' and job.outputdata._name=='DQ2OutputDataset':
                 output_location = ''
             elif job.outputdata.location:
-                output_location = expandfilename(job.outputdata.location)
+                output_location = expandfilename(job.outputdata.location, force=True)
             else:
                 try:
                     output_location=config['LocalOutputLocation']
                     if job.outputdata:
-                        job.outputdata.location = expandfilename(output_location)
+                        job.outputdata.location = expandfilename(output_location, force=True)
                 except ConfigError:
                     logger.warning('No default output location specified in the configuration.')
         else:
@@ -172,7 +161,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             jid = "%d" % job.id
 
         if output_location and job.outputdata and job.outputdata._name!='DQ2OutputDataset':
-
             if job._getRoot().subjobs:
                 if config['NoSubDirsAtAllForLocalOutput']:
                     output_location = output_location
@@ -266,36 +254,14 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             inputbox += [ FileBuffer('output_files','\n'.join(job.outputdata.outputdata)+'\n') ]
         elif job.outputdata and not job.outputdata.outputdata:
             raise ApplicationConfigurationError('j.outputdata.outputdata is empty - Please specify output filename(s).')
-   
-        exe = os.path.join(os.path.dirname(__file__),'run-athena-local.sh')
+
+        if job.application.useCMake:
+            exe = os.path.join(os.path.dirname(__file__), 'run-athena-new.sh')
+        else:
+            exe = os.path.join(os.path.dirname(__file__), 'run-athena-local.sh')
+
         outputbox = jobmasterconfig.outputbox
         environment = jobmasterconfig.env.copy()
-
-        ## create and add sample files for FileStager
-        if job.inputdata and job.inputdata._name == 'StagerDataset':
-
-            if not job.inputdata.dataset:
-                raise ApplicationConfigurationError('dataset name not specified in job.inputdata')
-
-            ## ship fs-copy.py with the job as it's going to be used as a copy command wrapper by FileStager
-            inputbox += [ File( os.path.join( os.path.dirname(__file__), 'fs-copy.py') ) ]
-
-            (jo_path, ic_path) = job.inputdata.make_FileStager_jobOptions(job=job, max_events=app.max_events)
-            inputbox += [ File(jo_path), File(ic_path) ]
-
-            ## re-make the environment['ATHENA_OPTIONS']
-            athena_options = os.path.basename( File(jo_path).name )
-            for option_file in app.option_file:
-                athena_option = os.path.basename(option_file.name)
-                athena_options += ' ' + athena_option
-                if app.options:
-                    athena_options =  app.options + ' ' + athena_options
-
-            environment['ATHENA_OPTIONS'] = athena_options
-            environment['DATASETTYPE']    = 'FILE_STAGER'
-
-            ## ask to send back the FileStager.out/err generated by fs-copy.py
-            outputbox += ['FileStager.out', 'FileStager.err']
 
         # If ArgSplitter is used
         try:
@@ -423,6 +389,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         else:
             environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
 
+        # can get stomped over by athena setup so rename
+        environment['GANGA_ATHENA_OPTIONS'] = environment['ATHENA_OPTIONS']
+
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
     def master_prepare( self, app, appconfig ):
@@ -457,11 +426,14 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         inputbox = [File(os.path.join(os.path.dirname(__file__),'athena-utility.sh'))]
         if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
 
-            for option_file in app.option_file:
-                athena_options += ' ' + os.path.basename(option_file.name)
-                inputbox += [ File(option_file.name) ]
+            if app.command_line:
+                athena_options = app.command_line
+            else:
+                for option_file in app.option_file:
+                    athena_options += ' ' + os.path.basename(option_file.name)
+                    inputbox += [ File(option_file.name) ]
 
-            athena_options += ' %s ' % app.options
+                athena_options += ' %s ' % app.options
 
         else:
             for option_file in app.option_file:
@@ -486,12 +458,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             _append_files(inputbox,'dq2_get')
             _append_files(inputbox,'dq2info.tar.gz')
             _append_files(inputbox,'libdcap.so')
-
-        if job.inputdata and job.inputdata._name == 'ATLASDataset':
-            if job.inputdata.lfc:
-                _append_files(inputbox,'ganga-stagein-lfc.py')
-            else:
-                _append_files(inputbox,'ganga-stagein.py')
 
         ## insert more scripts to inputsandbox for FileStager
         if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type in ['FILE_STAGER']:
@@ -530,7 +496,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         except ConfigError:
             raise ConfigError('No default location of ATLAS_SOFTWARE specified in the configuration.')
 
-        if app.atlas_release=='' and app.atlas_project != "AthAnalysisBase":
+        if app.atlas_release=='' and app.atlas_project != "AthAnalysisBase" and app.atlas_project != "AthAnalysis":
             raise ApplicationConfigurationError('j.application.atlas_release is empty - No ATLAS release version found. Run prepare() or specify a version explictly.')
       
         environment={ 
@@ -543,6 +509,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             'GANGA_VERSION' : configSystem['GANGA_VERSION'],
             'DQ2_SETUP_SCRIPT': configDQ2['setupScript']
         }
+
+        # athena compile flag
+        if app.athena_compile:
+            environment['ATHENA_COMPILE'] = 'True'
 
         # Set athena architecture: 32 or 64 bit
         environment['ATLAS_ARCH'] = '32'
@@ -573,28 +543,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if app.max_events:
             if (app.max_events != -999) and (app.max_events > -2):
                 environment['ATHENA_MAX_EVENTS'] = str(app.max_events)
-
-        if job.inputdata and job.inputdata._name == 'StagerDataset':
-
-            if job.inputdata.type not in ['LOCAL']:
-
-                try:
-                    environment['X509CERTDIR']=os.environ['X509_CERT_DIR']
-                except KeyError:
-                    environment['X509CERTDIR']=''
-
-                try:
-                    proxy = os.environ['X509_USER_PROXY']
-                except KeyError:
-                    proxy = '/tmp/x509up_u%s' % os.getuid()
-
-                REMOTE_PROXY = '%s:%s' % (socket.getfqdn(),proxy)
-                environment['REMOTE_PROXY'] = REMOTE_PROXY
-
-                try:
-                    environment['GANGA_GLITE_UI']=configLCG['GLITE_SETUP']
-                except:
-                    pass
 
         if job.inputdata and job.inputdata._name == 'DQ2Dataset':
             if job.inputdata.dataset:
@@ -661,7 +609,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         else:
             environment['DQ2_LOCAL_SITE_ID'] = configDQ2['DQ2_LOCAL_SITE_ID']
 
-        exe = os.path.join(os.path.dirname(__file__), 'run-athena-local.sh')
+        if job.application.useCMake:
+            exe = os.path.join(os.path.dirname(__file__), 'run-athena-new.sh')
+        else:
+            exe = os.path.join(os.path.dirname(__file__), 'run-athena-local.sh')
 
 #       output sandbox
         outputbox = [ ]
@@ -685,6 +636,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             environment['GANGA_LOG_DEBUG'] = '0'
         else:
             environment['GANGA_LOG_DEBUG'] = '1'
+
+        # can get stomped over by athena setup so rename
+        environment['GANGA_ATHENA_OPTIONS'] = environment['ATHENA_OPTIONS']
 
         return StandardJobConfig(File(exe), inputbox, [], outputbox, environment)
 
