@@ -18,6 +18,8 @@ class ICredentialRequirement(GangaObject):
     _name = 'ICredentialRequirement'
     _hidden = 1
 
+    __slots__ = list()
+
     # This attribute refers to the ICredentialInfo subclass which can satisfy the requirements
     info_class = None  # type: Type[ICredentialInfo]
 

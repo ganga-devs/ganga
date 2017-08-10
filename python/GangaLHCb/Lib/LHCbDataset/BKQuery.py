@@ -122,7 +122,7 @@ RecoToDST-07/90000000/DST" ,
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
 
         try:
-            value = get_result(cmd, 'BK query error.')
+            value = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
         except GangaDiracError as err:
             return {'OK': False, 'Value': str(err)}
 
@@ -162,7 +162,7 @@ RecoToDST-07/90000000/DST" ,
         if isType(self.dqflag, knownLists):
             cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate,
                                                                self.endDate, self.selection)
-        result = get_result(cmd, 'BK query error.')
+        result = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
 
         logger.debug("Finished Running Command")
 
@@ -254,9 +254,9 @@ class BKQueryDict(GangaObject):
             return None
         cmd = 'bkQueryDict(%s)' % self.dict
         try:
-            value = get_result(cmd, 'BK query error.')
-        except GangaDiracError:
-            return {'OK':False, 'Value': {}}
+            value = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
+        except GangaDiracError as err:
+            return {'OK':False, 'Value': str(err)}
 
         files = []
         if 'LFNs' in value:
@@ -276,7 +276,7 @@ class BKQueryDict(GangaObject):
         if not self.dict:
             return None
         cmd = 'bkQueryDict(%s)' % self.dict
-        value = get_result(cmd, 'BK query error.')
+        value = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
 
         files = []
         if 'LFNs' in value:

@@ -41,6 +41,8 @@ global_start_time = None
 
 class JobAction(object):
 
+    __slots__ = ('function', 'args', 'kwargs', 'success', 'callback_Success', 'callback_Failure', 'thread', 'description')
+
     def __init__(self, function, args=(), kwargs={},
                  success=(True, ),
                  callback_Success=lambda: None,
@@ -89,8 +91,11 @@ def checkHeartBeat(global_count):
 
 class MonitoringWorkerThread(GangaThread):
 
+    __slots__ = ('_currently_running_command', '_running_cmd', '_running_args', '_thread_name')
+
     def __init__(self, name):
-        GangaThread.__init__(self, name)
+        is_critical = not config['enable_multiThreadMon']
+        GangaThread.__init__(self, name, critical=is_critical)
         self._currently_running_command = False
         self._running_cmd = None
         self._running_args = None
@@ -219,6 +224,8 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
         else:
             break
 
+    for t in ThreadPool:
+        t.stop()
     del ThreadPool[:]
     ThreadPool = []
 
@@ -247,6 +254,8 @@ if config['autostart_monThreads'] is True:
 # Each entry for the updateDict_ts object (based on the UpdateDict class)
 # is a _DictEntry object.
 class _DictEntry(object):
+
+    __slots__ = ('backendObj', 'jobSet', 'entryLock', 'timeoutCounterMax', 'timeoutCounter', 'timeLastUpdate')
 
     def __init__(self, backendObj, jobSet, entryLock, timeoutCounterMax):
         self.backendObj = backendObj
@@ -291,6 +300,8 @@ class UpdateDict(object):
     This serves as the Update Table. Is is meant to be used 
     by wrapping it as a SynchronisedObject so as to ensure thread safety.
     """
+
+    __slots__ = ('table',)
 
     def __init__(self):
         self.table = {}
@@ -386,6 +397,8 @@ class UpdateDict(object):
 
 class CallbackHookEntry(object):
 
+    __slots__ = ('argDict', 'enabled', 'timeout', '_lastRun')
+
     def __init__(self, argDict, enabled=True, timeout=0):
         self.argDict = argDict
         self.enabled = enabled
@@ -394,11 +407,9 @@ class CallbackHookEntry(object):
         # record the time when this hook has been run
         self._lastRun = 0
 
+
 def resubmit_if_required(jobList_fromset):
-
-    # resubmit if required
     for j in jobList_fromset:
-
         if not j.do_auto_resubmit:
             continue
 
@@ -406,27 +417,19 @@ def resubmit_if_required(jobList_fromset):
             try_resubmit = j.info.submit_counter <= config['MaxNumResubmits']
         else:
             # Check for max number of resubmissions
-            skip = False
-            for s in j.subjobs:
-                if s.info.submit_counter > config['MaxNumResubmits'] or s.status == "killed":
-                    skip = True
+            n_completed = len([sj for sj in j.subjobs if sj.status == 'completed'])
+            n_failed = len([sj for sj in j.subjobs if sj.status == 'failed'])
 
-                if skip:
-                    continue
+            # Check n_failed > 0 to avoid ZeroDivisionError
+            if n_failed > 0 and (float(n_failed) / float(n_completed + n_failed)) >= config['MaxFracForResubmit']:
+                # Too many subjobs have failed, stop trying
+                continue
 
-                num_com = len([s for s in j.subjobs if s.status in ['completed']])
-                num_fail = len([s for s in j.subjobs if s.status in ['failed']])
+            try_resubmit = n_failed > 0
 
-                #log.critical('Checking failed subjobs for job %d... %d %s',j.id,num_com,num_fail)
-
-                try_resubmit = num_fail > 0 and (float(num_fail) / float(num_com + num_fail)) < config['MaxFracForResubmit']
-
-            if try_resubmit:
-                if j.backend.check_auto_resubmit():
-                    log.warning('Auto-resubmit job %d...' % j.id)
-                    j.auto_resubmit()
-
-    return
+        if try_resubmit and j.backend.check_auto_resubmit():
+            log.warning('Auto-resubmit job %d...' % j.id)
+            j.auto_resubmit()
 
 
 def get_jobs_in_bunches(jobList_fromset, blocks_of_size=5, stripProxies=True):
@@ -472,6 +475,8 @@ class JobRegistry_Monitor(GangaThread):
     minPollRate = 1.
     global_count = 0
 
+    __slots__ = ('registry_slice', '__sleepCounter', '__updateTimeStamp', 'progressCallback', 'callbackHookDict', 'clientCallbackDict', 'alive', 'enabled', 'steps', 'activeBackends', 'updateJobStatus', 'errors', 'updateDict_ts', '__mainLoopCond', '__cleanUpEvent', '__monStepsTerminatedEvent', 'stopIter', '_runningNow')
+
     def __init__(self, registry_slice):
         GangaThread.__init__(self, name="JobRegistry_Monitor")
         log.debug("Constructing JobRegistry_Monitor")
@@ -497,7 +502,7 @@ class JobRegistry_Monitor(GangaThread):
         self.makeUpdateJobStatusFunction()
 
         # Add credential checking to monitoring loop
-        for afsToken in credential_store.get_all_matching_type(AfsToken):
+        for afsToken in credential_store.get_all_matching_type(AfsToken()):
             log.debug("Setting callback hook for %s" % afsToken.location)
             self.setCallbackHook(self.makeCredCheckJobInsertor(afsToken), {}, True, timeout=config['creds_poll_rate'])
 

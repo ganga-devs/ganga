@@ -49,7 +49,6 @@ def gaudiExecBuildLock(f):
 # Global lock for all builds
 gaudiExecBuildLock.globalBuildLock = threading.Lock()
 
-
 class GaudiExec(IPrepareApp):
     """
 
@@ -123,6 +122,17 @@ class GaudiExec(IPrepareApp):
     Here the OptsFileWrapper script imports the extraOpts and the data.py describing the data to be run over and executes options in the global namespace with 'execfile'
     The OptsFileWrapper will _execute_ the first file in the job.application.options and will import all other opts files before executing this one.
 
+    =================
+    Get job metadata:
+    =================
+
+    To get the Gaudi metadata from the job set the option 'getMatadata' to True - the default is false.
+
+    j.application.getMetadata = True
+
+    This will add some options to running the job to create a summary.xml file which is downloaded in the output sandbox and parsed by ganga. Ganga will also
+    merge the summary.xml files using the Gaudi XML merging script for each subjob to create the metadata for the whole job.
+
     """
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
@@ -133,12 +143,14 @@ class GaudiExec(IPrepareApp):
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
-        'extraArgs':    SimpleItem(defvalue=[], typelist=[list], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
+        'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
+        'getMetadata':  SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
 
         # Prepared job object
         'is_prepared':  SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=[None, ShareDir], protected=0, comparable=1,
             doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash':         SimpleItem(defvalue=None, typelist=[None, str], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
+        'envVars':      SimpleItem(defvalue=None, typelist=[None, dict], hidden=1, doc='A dict to store the environment variable "XMLSUMMARYBASEROOT" for use when merging the XML summary'),
         })
     _category = 'applications'
     _name = 'GaudiExec'
@@ -204,11 +216,11 @@ class GaudiExec(IPrepareApp):
         # file is unspecified, has a space or is a relative path
         self.configure(self)
         logger.info('Preparing %s application.' % getName(self))
-        self.is_prepared = ShareDir()
-        logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
         this_build_target = self.buildGangaTarget()
 
+        self.is_prepared = ShareDir()
+        logger.info('Created shared directory: %s' % (self.is_prepared.name))
         try:
             # copy any 'preparable' objects into the shared directory
             send_to_sharedir = self.copyPreparables()
@@ -342,27 +354,26 @@ class GaudiExec(IPrepareApp):
         dir_name = self.directory
         return (None, None)
 
-
     def getOptsFiles(self):
         """
         This function returns a sanitized absolute path to the self.options file from user input
         """
-        if self.options:
-            for this_opt in self.options:
-                if isinstance(this_opt, LocalFile):
-                    ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
-                    full_path = path.join(this_opt.localDir, this_opt.namePattern)
-                    if not path.exists(full_path):
-                        raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
-                elif isinstance(this_opt, DiracFile):
-                    pass
-                else:
-                    logger.error("opts: %s" % self.options)
-                    raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+        for this_opt in self.options:
+            if isinstance(this_opt, LocalFile):
+                ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
+                full_path = path.join(this_opt.localDir, this_opt.namePattern)
+                if not path.exists(full_path):
+                    raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
+            elif isinstance(this_opt, DiracFile):
+                pass
+            else:
+                logger.error("opts: %s" % self.options)
+                raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+
+        if self.options or self.extraOpts:
             return self.options
         else:
-            raise ApplicationConfigurationError("No Opts File has been specified, please provide one!")
-
+            raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
 
     def getEnvScript(self):
         """
@@ -384,14 +395,12 @@ class GaudiExec(IPrepareApp):
         Args:
             cmd (str): This is the command(s) which are to be executed within the project environment and directory
         """
-
         if not self.directory:
             raise GangaException("Cannot run a command using GaudiExec without a directory first being set!")
         if not path.isdir(self.directory):
             raise GangaException("The given directory: '%s' doesn't exist!" % self.directory)
 
         cmd_file = tempfile.NamedTemporaryFile(suffix='.sh', delete=False)
-
         if not cmd.startswith('./run '):
             cmd = './run ' + cmd
 
@@ -455,8 +464,36 @@ class GaudiExec(IPrepareApp):
             raise GangaException("Wanted Target File: %s NOT found" % wantedTargetFile)
 
         logger.info("Built %s" % wantedTargetFile)
+
+
+        # FIXME Make this more pythonic or have a common method for getting the env rather than re-inventing the wheel
+
+        # Whilst we are here let's store the application environment but ignore awkward ones
+        env, envstdout, envstderr = self.execCmd('./run env')
+        envDict = {}
+        for item in envstdout.split("\n"):
+            if len(item.split("="))==2:
+                if item.split("=")[0] == 'XMLSUMMARYBASEROOT':
+                    envDict[item.split("=")[0]] = item.split("=")[1]
+        self.envVars = envDict
+
         return wantedTargetFile
 
+
+    def postprocess(self):
+        from GangaLHCb.Lib.Applications import XMLPostProcessor
+        XMLPostProcessor.GaudiExecPostProcess(self, logger)
+
+    def getenv(self, cache_env=False):
+        """
+        A function to return the environment of the built application
+        """
+        defaultXMLBASE = '/cvmfs/lhcb.cern.ch/lib/lhcb/LHCB/LHCB_v42r4/Kernel/XMLSummaryBase'
+        if self.envVars:
+            return self.envVars
+        else:
+            logger.debug('Using default value for XMLSUMMARYBASE: %s', defaultXMLBASE)
+            return {'XMLSUMMARYBASEROOT' : defaultXMLBASE} 
 
     def readInputData(self, opts):
         """

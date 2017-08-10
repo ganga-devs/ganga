@@ -53,6 +53,24 @@ def getDataset(path, dqflag, this_type, start, end, sel):
 
     return result
 
+@diracCommand
+def getAccessURL(lfn, SE, protocol=''):
+    ''' Return the access URL for the given LFN, storage element and protocol. If 'root' or 'xroot' specified then request both as per LHCbDirac from which this is taken. '''
+    if protocol == '':
+        protocol=['xroot', 'root']
+    elif 'root' in protocol and 'xroot' not in protocol:
+        protocol.insert( protocol.index( 'root' ), 'xroot' )
+    elif 'xroot' in protocol and 'root' not in protocol:
+         protocol.insert( protocol.index( 'xroot' ) + 1, 'root' )
+    elif 'xroot' in protocol and 'root' in protocol:
+         indexOfRoot = protocol.index( 'root' )
+         indexOfXRoot = protocol.index( 'xroot' )
+         if indexOfXRoot > indexOfRoot:
+             protocol[indexOfRoot], protocol[indexOfXRoot] = protocol[indexOfXRoot], protocol[indexOfRoot]
+    result = dirac.getAccessURL(lfn, SE, protocol)
+    if result.get('OK', True):
+        result['Value']['Successful'] = result['Value']['Successful'][SE]
+    return result
 
 @diracCommand
 def checkTier1s():

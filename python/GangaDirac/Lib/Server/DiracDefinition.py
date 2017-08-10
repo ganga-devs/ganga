@@ -10,9 +10,7 @@ from DIRAC.Core.Base.Script import parseCommandLine
 parseCommandLine()
 from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
-from DIRAC.DataManagementSystem.Client.DataManager import DataManager
 dirac = Dirac()
-diracDM = DataManager()
 
 def diracCommand(f):
     '''
@@ -45,7 +43,7 @@ def diracCommand(f):
             # Catch __ALL__ errors and report them back to Ganga
             # STDERR is lost in normal running so this will have to do!
             output_dict['OK'] = False
-            output_dict['Message'] = str(err)
+            output_dict['Message'] = 'Error: %s' % str(err)
 
         # Pipe the output to the streams
         output(output_dict)

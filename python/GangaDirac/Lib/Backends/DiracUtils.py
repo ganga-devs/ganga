@@ -4,7 +4,6 @@ from Ganga.Core.exceptions import GangaException, BackendError
 #from GangaDirac.BOOT       import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
 from Ganga.Utility.logging import getLogger
-from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Base.Proxy import stripProxy
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -23,16 +22,22 @@ def result_ok(result):
         return output
 
 
-def get_result(command,
-               exception_message=None,
-               eval_includes=None,
-               retry_limit=5):
+def get_result(command, exception_message=None, eval_includes=None, retry_limit=5, credential_requirements=None):
+    '''
+    This method returns the object from the result of running the given command against DIRAC.
+    Args:
+        command (str): This is the command we want to get the output from
+        exception_message (str): This is the message we want to display if the command fails
+        eval_includes (str): This is optional extra objects to include when evaluating the output from the command
+        retry_limit (int): This is the number of times to retry the command if it initially fails
+        credential_requirements (ICredentialRequirement): This is the optional credential which is to be used for this DIRAC session
+    '''
 
     retries = 0
     while retries < retry_limit:
 
         try:
-            return execute(command, eval_includes=eval_includes)
+            return execute(command, eval_includes=eval_includes, cred_req=credential_requirements)
         except GangaDiracError as err:
             logger.error(exception_message)
             logger.debug("Sleeping for 5 additional seconds to reduce possible overloading")
@@ -123,7 +128,7 @@ def for_each(func, *iterables, **kwargs):
                            **kwargs.get('fkwargs', {})))
     return result
 
-def getAccessURLs(lfns, defaultSE = '', protocol = ''):
+def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=None):
     """
     This is a function to get a list of the accessURLs
     for a provided list of lfns. If no defaultSE is provided then one is chosen at random
@@ -137,13 +142,15 @@ def getAccessURLs(lfns, defaultSE = '', protocol = ''):
     else:
         #If some elements are not strings look for the DiracFiles, separates out the LocalFiles from a job's outputfiles list
         for diracFile in lfns:
-            if isinstance(stripProxy(diracFile), DiracFile):
+            try:
                 lfnList.append(diracFile.lfn)
+            except AttributeError:
+                pass
     if not lfnList:
         logger.error("Provided list does not have LFNs or DiracFiles in it")
         return
     # Get all the replicas
-    reps = execute('getReplicas(%s)' % lfnList)
+    reps = execute('getReplicas(%s)' % lfnList, cred_req=credential_requirements)
     # Get the SEs
     SEs = []
     for lf in reps['Successful']:
@@ -163,7 +170,7 @@ def getAccessURLs(lfns, defaultSE = '', protocol = ''):
     # Remove the successfully found ones from the list and move on to the next SE.
     for SE in SEs:
         lfns = remainingLFNs
-        thisSEFiles = execute('getAccessURL(%s, "%s", "%s")' % (lfns, SE, protocol))['Successful']
+        thisSEFiles = execute('getAccessURL(%s, "%s", %s)' % (lfns, SE, protocol), cred_req=credential_requirements)['Successful']
         for lfn in thisSEFiles.keys():
             myURLs.append(thisSEFiles[lfn])
             remainingLFNs.remove(lfn)

@@ -11,7 +11,7 @@ import sys
 
 import Ganga.Core.FileWorkspace
 from Ganga.GPIDev.MonitoringServices import getMonitoringObject
-from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError
+from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError, TypeMismatchError
 from Ganga.Core import Sandbox
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
@@ -41,7 +41,7 @@ def lazyLoadJobFQID(this_job):
 
 
 def lazyLoadJobStatus(this_job):
-    return lazyLoadJobObject(this_job, 'status', do_eval=False)
+    return lazyLoadJobObject(this_job, 'status', False)
 
 
 def lazyLoadJobBackend(this_job):
@@ -122,6 +122,9 @@ class JobInfo(GangaObject):
 
     def __init__(self):
         super(JobInfo, self).__init__()
+
+    def _auto__init__(self):
+        self.uuid = str(uuid.uuid4())
 
     def increment(self):
         self.submit_counter += 1
@@ -232,6 +235,8 @@ class Job(GangaObject):
 
     default_registry = 'jobs'
 
+    _additional_slots = ['_storedRTHandler', '_storedJobSubConfig', '_storedAppSubConfig', '_storedJobMasterConfig', '_storedAppMasterConfig', '_stored_subjobs_proxy']
+
     # TODO: usage of **kwds may be envisaged at this level to optimize the
     # overriding of values, this must be reviewed
     def __init__(self, prev_job=None, **kwds):
@@ -243,7 +248,10 @@ class Job(GangaObject):
 
         # WE WILL ONLY EVER ACCEPT Job or JobTemplate by design
         if prev_job:
-            assert isinstance(prev_job, (Job, JobTemplate)), "Can only constuct a Job with 1 non-keyword argument which is another Job, or JobTemplate"
+            try:
+                assert isinstance(prev_job, (Job, JobTemplate))
+            except AssertionError:
+                raise TypeMismatchError("Can only constuct a Job with 1 non-keyword argument which is another Job, or JobTemplate")
 
         # START INIT OF SELF
 
@@ -252,18 +260,11 @@ class Job(GangaObject):
         # Finished initializing 'special' objects which are used in getter methods and alike
         self.time.newjob()  # <-----------NEW: timestamp method
 
-        # These attributes are entirely transitory. They are not copyable or assumed picklable
-        # These are created to hold the result of calling prepare/configure on the application/RTHandler
-        # and are to make life easier in passing around objects
-        self._storedRTHandler = None
-        self._storedJobSubConfig = None
-        self._storedAppSubConfig = None
-        self._storedJobMasterConfig = None
-        self._storedAppMasterConfig = None
+        #logger.debug("__init__")
 
-        logger.debug("__init__")
-
-        self._stored_subjobs_proxy = None
+        for i in Job._additional_slots:
+            if not hasattr(self, i):
+                setattr(self, i, None)
 
         # FINISH INIT OF SELF
 
@@ -597,7 +598,7 @@ class Job(GangaObject):
         except Exception as x:
             self.status = initial_status
             log_user_exception()
-            raise JobStatusError(x), None, sys.exc_info()[2]
+            raise JobStatusError(x)
 
 	final_status = self.status
 
@@ -825,16 +826,16 @@ class Job(GangaObject):
         #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         # except: pass
 
-        # register the job (it will also commit it)
-        # job gets its id now
-        registry._add(self)
 
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
             self._init_workspace()
 
         super(Job, self)._auto__init__()
-        self.info.uuid = str(uuid.uuid4())
+
+        # register the job (it will also commit it)
+        # job gets its id now
+        registry._add(self)
 
     def _init_workspace(self):
         logger.debug("Job %s Calling _init_workspace", self.getFQID('.'))
@@ -1438,7 +1439,10 @@ class Job(GangaObject):
 
         from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 
-        assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
+        try:
+            assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
+        except AssertionError:
+            raise JobManagerError("Number of subjobs in the job is inconsistent so not submitting the job")
 
         # no longer needed with prepared state
         # if self.master is not None:
@@ -1965,7 +1969,8 @@ class Job(GangaObject):
             if not rjobs and not self.subjobs:
                 rjobs = [self]
             elif auto_resubmit:  # get only the failed jobs for auto resubmit
-                rjobs = [s for s in rjobs if s.status in ['failed']]
+                rjobs = [s for s in rjobs
+                         if s.status == 'failed' and s.info.submit_counter <= getConfig("PollThread")['MaxNumResubmits']]
 
             if rjobs:
                 for sjs in rjobs:
@@ -1974,8 +1979,8 @@ class Job(GangaObject):
                     # before resubmitting it
                     sjs.getOutputWorkspace().remove(preserve_top=True)
             else:
-                logger.error('There is nothing to do for resubmit of Job: %s' % self.getFQID('.'))
-                logger.error('It\'s assumed all subjobs here have been completed, continuing silently')
+                logger.debug('There is nothing to do for resubmit of Job: %s' % self.getFQID('.'))
+                logger.debug('It\'s assumed all subjobs here have been completed, continuing silently')
                 self.updateStatus(oldstatus)
                 return
 

@@ -15,7 +15,6 @@ from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -83,7 +82,7 @@ class LHCbDataset(GangaDataset):
                 for this_file in files:
                     self.files.append(deepcopy(this_file))
             elif isType(files, IGangaFile):
-                self.files.append(deepcopy(this_file))
+                self.files.append(deepcopy(files))
             elif isType(files, (list, tuple, GangaList)):
                 new_list = []
                 for this_file in files:
@@ -96,7 +95,7 @@ class LHCbDataset(GangaDataset):
                     new_list.append(new_file)
                 self.files.extend(new_list)
             elif type(files) is str:
-                self.files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+                self.files.append(string_datafile_shortcut_lhcb(files, None), False)
             else:
                 raise GangaException("Unknown object passed to LHCbDataset constructor!")
 
@@ -219,6 +218,8 @@ class LHCbDataset(GangaDataset):
             _file = getDataFile(this_f)
             if _file is None:
                 _file = this_f
+            if not isinstance(_file, IGangaFile):
+                raise GangaException('Cannot extend LHCbDataset based on this object type: %s' % type(_file) )
             myName = _file.namePattern
             from GangaDirac.Lib.Files.DiracFile import DiracFile
             if isType(_file, DiracFile):
@@ -240,12 +241,12 @@ class LHCbDataset(GangaDataset):
             return lfns
         for f in self.files:
             if isDiracFile(f):
-                subfiles = f.getSubFiles()
+                subfiles = f.subfiles
                 if len(subfiles) == 0:
                     lfns.append(f.lfn)
                 else:
-                    for file in subfiles:
-                        lfns.append(file.lfn)
+                    for _file in subfiles:
+                        lfns.append(_file.lfn)
 
         #logger.debug( "Returning LFNS:\n%s" % str(lfns) )
         logger.debug("Returning #%s LFNS" % str(len(lfns)))

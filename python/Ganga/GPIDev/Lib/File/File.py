@@ -4,7 +4,7 @@
 # $Id: File.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ##########################################################################
 
-from Ganga.Core.exceptions import GangaException
+from Ganga.Core.exceptions import GangaException, SchemaError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import isType
@@ -27,11 +27,14 @@ from Ganga.GPIDev.Lib.File import getSharedPath
 
 from Ganga.Runtime.GPIexport import exportToGPI
 
+import threading
+
 # regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
 urlprefix = re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
 
 logger = getLogger()
 
+_prepare_lock = threading.RLock()
 
 class File(GangaObject):
 
@@ -60,7 +63,10 @@ class File(GangaObject):
         super(File, self).__init__()
 
         if not name is None:
-            assert(isinstance(name, str))
+            try:
+                assert(isinstance(name, str))
+            except AssertionError:
+                raise SchemaError("Name attribute should be a string type. Instead received: %s" % type(name))
             self.name = name
 
         if not subdir is None:
@@ -145,18 +151,13 @@ class ShareDir(GangaObject):
     _category = 'shareddirs'
     _exportmethods = ['add', 'ls', 'path']
     _name = "ShareDir"
-    _real_name = ''
 
     def __init__(self, name=None, subdir=os.curdir):
         super(ShareDir, self).__init__()
 
         self._setRegistry(None)
 
-        if self._should_init:
-
-            if not name:
-                name = 'conf-{0}'.format(uuid.uuid4())
-            self._real_name = name
+        self._real_name = None
 
     def setSchemaAttribute(self, name, value):
         """
@@ -197,7 +198,7 @@ class ShareDir(GangaObject):
             name (str): The attribute which is being looked for
         """
         if name == 'name':
-            return self._real_name
+            return _getName()
         return super(ShareDir, self).__getattr__(name)
 
     def _getName(self):
@@ -205,13 +206,16 @@ class ShareDir(GangaObject):
         A getter method for the 'name' schema attribute which will trigger the creation of a SharedDir on disk only when information about it is asked
         """
 
-        share_dir = os.path.join(getSharedPath(), self._real_name)
-        if not os.path.isdir(share_dir):
-            logger.debug("Actually creating: %s" % share_dir)
-            os.makedirs(share_dir)
-        if not os.path.isdir(share_dir):
-            logger.error("ERROR creating path: %s" % share_dir)
-            raise GangaException("ShareDir ERROR")
+        with _prepare_lock:
+            if not self._real_name:
+                self._real_name = 'conf-{0}'.format(uuid.uuid4())
+                share_dir = os.path.join(getSharedPath(), self._real_name)
+                if not os.path.isdir(share_dir):
+                    logger.debug("Actually creating: %s" % share_dir)
+                    os.makedirs(share_dir)
+                if not os.path.isdir(share_dir):
+                    logger.error("ERROR creating path: %s" % share_dir)
+                    raise GangaException("ShareDir ERROR")
 
         return self._real_name
 
@@ -240,7 +244,7 @@ class ShareDir(GangaObject):
 
     def path(self):
         """Get the full path of the ShareDir location"""
-        return os.path.join(getSharedPath(), self.name)
+        return os.path.join(getSharedPath(), self._getName())
                 
     def ls(self):
         """
