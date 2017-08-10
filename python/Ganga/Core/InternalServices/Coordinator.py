@@ -180,7 +180,7 @@ def enableInternalServices():
     Repository_runtime.bootstrap()
 
     # make sure all required credentials are valid
-    invalid_afs = [afsToken for afsToken in credential_store.get_all_matching_type(AfsToken) if not afsToken.is_valid()]
+    invalid_afs = [afsToken for afsToken in credential_store.get_all_matching_type(AfsToken()) if not afsToken.is_valid()]
 
     if invalid_afs:
         log.error('No valid AFS token was found. Please re-authorise before reactivating this session.')

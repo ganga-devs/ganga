@@ -53,6 +53,8 @@ class MassStorageFile(IGangaFile):
     _name = "MassStorageFile"
     _exportmethods = ["location", "get", "put", "setLocation", "remove", "accessURL"]
 
+    _additional_slots = ['shell']
+
     def __init__(self, namePattern='', localDir='', **kwds):
         """
         MassStorageFile construction
@@ -60,10 +62,10 @@ class MassStorageFile(IGangaFile):
             namePattern (str): is the pattern of the output file that has to be written into mass storage
             localDir (str): This is the optional local directory of a file to be uploaded to mass storage
         """
+        self._checkConfig()
         super(MassStorageFile, self).__init__()
         self._setNamePath(_namePattern=namePattern, _localDir=localDir)
         self.locations = []
-
         self.shell = Shell.Shell()
 
     def __setattr__(self, attr, value):
@@ -76,12 +78,11 @@ class MassStorageFile(IGangaFile):
         """
         actual_value = value
         if attr == "namePattern":
-            actual_value = os.path.basename(value)
-            this_localDir = os.path.dirname(value)
+            this_localDir, actual_value = os.path.split(value)
             if this_localDir:
                 self.localDir = this_localDir
         if attr == "localDir":
-            if value:
+            if value and (value.find(':') == -1):
                 actual_value = os.path.abspath(expandfilename(value))
 
         super(MassStorageFile, self).__setattr__(attr, actual_value)
@@ -98,16 +99,12 @@ class MassStorageFile(IGangaFile):
             self.namePattern = _namePattern
             self.localDir = _localDir
 
-
-    def _on_attribute__set__(self, obj_type, attrib_name):
-        # This is defining the object as uncopyable from outputfiles... do we want this mechanism still?
-        r = copy.deepcopy(self)
-        from Ganga.GPIDev.Lib.Job.Job import Job
-        if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
-            r.locations = []
-            r.localDir = ''
-            r.failureReason = ''
-        return r
+    def _checkConfig(self):
+        """
+        Check that the MassStorageFile configuration is correct
+        """
+        if not getConfig('Output')[_getName(self)]['uploadOptions']['path'] :
+            raise GangaException('Unable to create MassStorageFile. Check your configuration!')
 
     def __repr__(self):
         """Get the representation of the file."""
@@ -296,39 +293,20 @@ class MassStorageFile(IGangaFile):
         # the file name part of self.outputfilenameformat
         filenameStructure = ''
 
-        if self._getParent() is not None:
-            jobfqid = self.getJobObject().fqid
+        if not self.outputfilenameformat:
+            filenameStructure = '{fname}'
 
-            jobid = jobfqid
-            subjobid = ''
+            parent = self._getParent()
+            if parent is not None:
+                folderStructure = '{jid}'
+                if parent._getParent() is not None:
+                    folderStructure = os.path.join(folderStructure, '{sjid}')
 
-            if (jobfqid.find('.') > -1):
-                jobid = jobfqid.split('.')[0]
-                subjobid = jobfqid.split('.')[1]
-
-            if self.outputfilenameformat is None:
-                filenameStructure = '{fname}'
-                # create jid/sjid directories
-                folderStructure = jobid
-                if subjobid != '':
-                    folderStructure = os.path.join(jobid, subjobid)
-
-            else:
-                filenameStructure = os.path.basename(self.outputfilenameformat)
-                filenameStructure = filenameStructure.replace('{jid}', jobid)
-
-                folderStructure = os.path.dirname(self.outputfilenameformat)
-                folderStructure = folderStructure.replace('{jid}', jobid)
-
-                if subjobid != '':
-                    filenameStructure = filenameStructure.replace('{sjid}', subjobid)
-                    folderStructure = folderStructure.replace('{sjid}', subjobid)
         else:
-            if self.outputfilenameformat != None:
-                folderStructure = os.path.dirname(self.outputfilenameformat)
-                filenameStructure = os.path.basename(self.outputfilenameformat)
-            else:
-                filenameStructure = '{fname}'
+            folderStructure = os.path.dirname(self.outputfilenameformat)
+            filenameStructure = os.path.basename(self.outputfilenameformat)
+
+        folderStructure = self.expandString(folderStructure)
 
         # create the folder structure
         if folderStructure:
@@ -346,7 +324,8 @@ class MassStorageFile(IGangaFile):
 
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-                finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
+                finalFilename = self.expandString(filenameStructure, os.path.basename(currentFile))
+           
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
                                                 (cp_cmd, quote(currentFile), quote(os.path.join(massStoragePath, finalFilename))))
 
@@ -364,7 +343,7 @@ class MassStorageFile(IGangaFile):
                 self.subfiles.append(d)
         else:
             currentFile = os.path.join(sourceDir, fileName)
-            finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
+            finalFilename = self.expandString(filenameStructure, fileName)
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' %\
                                                         (cp_cmd, quote(currentFile), quote(os.path.join(massStoragePath, finalFilename))))
             if exitcode != 0:
@@ -595,8 +574,8 @@ class MassStorageFile(IGangaFile):
 
         accessURLs = []
 
-        for file in myLocations:
-            accessURLs.append(protoPath + os.path.join(os.sep, file))
+        for _file in myLocations:
+            accessURLs.append(protoPath + os.path.join(os.sep, _file))
 
         return accessURLs
 

@@ -76,6 +76,8 @@ def expand_vars(env):
 
 class Shell(object):
 
+    __slots__ = ('env', 'dirname', 'shell')
+
     def __init__(self, setup=None, setup_args=[]):
         """
 

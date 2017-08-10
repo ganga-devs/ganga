@@ -1,6 +1,7 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import sys
+from Ganga.Core.exceptions import PluginError
 from Ganga.Utility.Shell import Shell
 from Ganga.Utility.logging import getLogger
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
@@ -67,10 +68,12 @@ def available_packs(appname=None):
 def addNewLHCbapp(appname, use=''):
     temp_apps = available_apps()
     temp_packs = available_packs()
-    assert isinstance(appname, str)
+    try:
+        assert isinstance(appname, str)
+    except AssertionError:
+        raise PluginError("Application name is not a string: %s" % str(appname))
     if any(str(appname).lower() == val.lower() for val in temp_apps):
-        logger.warning(
-            "Error: %s is already in the list of supported apps, not adding" % appname)
+        logger.warning("Error: %s is already in the list of supported apps, not adding" % appname)
         return
     global available_lhcb_apps
     global available_lhcb_packs

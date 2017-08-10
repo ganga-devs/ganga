@@ -23,7 +23,7 @@ class FakeShell(object):
         >>> assert s.cmd1.call_count == 2
     """
     vo = 'some_group'
-    timeleft = 100
+    timeleft = '1:2:3'
 
     def __init__(self):
         self.env = {}
@@ -39,7 +39,7 @@ class FakeShell(object):
         elif '-timeleft' in cmd:
             val = self.timeleft
 
-        return 0, val, ''
+        return 0, val, '',
 
     def _system(self, cmd):
         return 0
@@ -51,6 +51,7 @@ class FakeShell(object):
 def resolver(dummy_class, input_):
     values = {}
     values['DIRAC group'] = 'some_group'
+    values['timeleft'] = dummy_class.shell.timeleft
     return values[input_]
 
 
@@ -105,7 +106,7 @@ def test_is_valid(fake_shell):
 
     assert v.is_valid()
 
-    fake_shell.timeleft = 0
+    fake_shell.timeleft = '0:0:0'
 
     assert not v.is_valid()
 

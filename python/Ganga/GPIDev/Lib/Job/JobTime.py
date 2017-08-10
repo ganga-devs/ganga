@@ -1,5 +1,6 @@
 import datetime
 
+from Ganga.Core.exceptions import GangaTypeError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
@@ -311,7 +312,7 @@ class JobTime(GangaObject):
             else:
                 # string = error
                 if not isinstance(subjob, int):
-                    raise TypeError("Subjob id requires type 'int'")
+                    raise GangaTypeError("Subjob id requires type 'int'")
                 # subjob id supplied
                 for sj in j.subjobs:
                     if sj.id == subjob:

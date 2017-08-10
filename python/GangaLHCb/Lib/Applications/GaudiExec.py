@@ -369,12 +369,12 @@ class GaudiExec(IPrepareApp):
             else:
                 logger.error("opts: %s" % self.options)
                 raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+
         if self.options or self.extraOpts:
-             return self.options
+            return self.options
         else:
             raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
 
-            
     def getEnvScript(self):
         """
         Return the script which wraps the running command in a correct environment
@@ -464,8 +464,12 @@ class GaudiExec(IPrepareApp):
             raise GangaException("Wanted Target File: %s NOT found" % wantedTargetFile)
 
         logger.info("Built %s" % wantedTargetFile)
+
+
+        # FIXME Make this more pythonic or have a common method for getting the env rather than re-inventing the wheel
+
         # Whilst we are here let's store the application environment but ignore awkward ones
-        env, envstdout, envstderr = _exec_cmd('./run env', self.directory)
+        env, envstdout, envstderr = self.execCmd('./run env')
         envDict = {}
         for item in envstdout.split("\n"):
             if len(item.split("="))==2:
@@ -484,7 +488,12 @@ class GaudiExec(IPrepareApp):
         """
         A function to return the environment of the built application
         """
-        return self.envVars
+        defaultXMLBASE = '/cvmfs/lhcb.cern.ch/lib/lhcb/LHCB/LHCB_v42r4/Kernel/XMLSummaryBase'
+        if self.envVars:
+            return self.envVars
+        else:
+            logger.debug('Using default value for XMLSUMMARYBASE: %s', defaultXMLBASE)
+            return {'XMLSUMMARYBASEROOT' : defaultXMLBASE} 
 
     def readInputData(self, opts):
         """

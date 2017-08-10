@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import time
 import collections
 from datetime import timedelta
 
@@ -8,8 +9,10 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Proxy import export
 from Ganga.GPIDev.Schema import Schema, Version
 
-from Ganga.Core.exceptions import CredentialsError, GangaKeyError
+from Ganga.Core.exceptions import CredentialsError, GangaKeyError, GangaTypeError
 from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
+
+from Ganga.Utility.Config import getConfig
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -56,6 +59,11 @@ class CredentialStore(GangaObject, collections.Mapping):
     retry_limit = 5
     enable_caching = True
 
+    _last_clean = None
+    _clean_delay = getConfig('Credentials')['CleanDelay']
+
+    __slots__ = ('credentials',)
+
     def __init__(self):
         super(CredentialStore, self).__init__()
         self.credentials = set()
@@ -68,12 +76,19 @@ class CredentialStore(GangaObject, collections.Mapping):
 
         Args:
             query (ICredentialRequirement):
-            check_file: Raise an exception if the file does not exist
-            create: Create the credential file
+            check_file (bool): Raise an exception if the file does not exist
+            create (bool): Create the credential file
 
         Returns:
             The newly created ICredentialInfo object
         """
+
+        try:
+            assert isinstance(query, ICredentialRequirement), "Error checking 'query'"
+            assert isinstance(create, bool), "Error checking 'create'"
+            assert isinstance(check_file, bool), "Error checking 'check_file'"
+        except AssertionError as err:
+            raise CredentialsError("Requirements to make a Credential are wrong. Please check your arguments. %s" % err)
 
         cred = query.info_class(query, check_file=check_file, create=create)
         self.credentials.add(cred)
@@ -164,13 +179,13 @@ class CredentialStore(GangaObject, collections.Mapping):
 
         Raises:
             GangaKeyError: If it could not provide a credential
-            TypeError: If query is of the wrong type
+            GangaTypeError: If query is of the wrong type
         """
 
         self.clean()
 
         if not isinstance(query, ICredentialRequirement):
-            raise TypeError('Credential store query should be of type ICredentialRequirement')
+            raise GangaTypeError('Credential store query should be of type ICredentialRequirement')
 
         match = self.match(query)
         if match:
@@ -201,6 +216,14 @@ class CredentialStore(GangaObject, collections.Mapping):
         Returns:
             A single ICredentialInfo object which matches the requirements or ``default``
         """
+
+        try:
+            assert isinstance(query, ICredentialRequirement), "Error checking 'query'"
+            if default is not None:
+                assert isinstance(default, ICredentialInfo), "Error checking 'default'"
+        except AssertionError as err:
+            raise CredentialsError("Requirements for get-ing a Credential are wrong. Please check your arguments. %s" % err)
+
         try:
             return self[query]
         except KeyError:
@@ -218,6 +241,11 @@ class CredentialStore(GangaObject, collections.Mapping):
             list[ICredentialInfo]: An list of all matching objects
         """
 
+        try:
+            assert isinstance(query, ICredentialRequirement), "Error checking 'query'"
+        except AssertionError as err:
+            raise CredentialsError("Requirements for matching all Credential are wrong. Please check your arguments. %s" % err)
+
         return [cred for cred in self.credentials if isinstance(cred, query.info_class)]
 
     def matches(self, query):
@@ -232,6 +260,11 @@ class CredentialStore(GangaObject, collections.Mapping):
             list[ICredentialInfo]: An list of all matching objects
         """
 
+        try:
+            assert isinstance(query, ICredentialRequirement), "Error checking 'query'"
+        except AssertionError as err:
+            raise CredentialsError("Requirements for matching any Credential are wrong. Please check your arguments. %s" % err)
+
         return [cred for cred in self.get_all_matching_type(query) if cred.check_requirements(query)]
 
     def match(self, query):
@@ -245,6 +278,11 @@ class CredentialStore(GangaObject, collections.Mapping):
         Returns:
             ICredentialInfo: A single credential object. If more than one is found, the first is returned
         """
+
+        try:
+            assert isinstance(query, ICredentialRequirement), "Error checking 'query'"
+        except AssertionError as err:
+            raise CredentialsError("Requirements for matching a Credential are wrong. Please check your arguments. %s" % err)
 
         matches = self.matches(query)
         if len(matches) == 1:
@@ -286,7 +324,13 @@ class CredentialStore(GangaObject, collections.Mapping):
         """
         Remove any credentials with missing files
         """
-        self.credentials = set(cred for cred in self.credentials if cred.exists())
+        this_time = time.time()
+        if not CredentialStore._last_clean:
+            CredentialStore._last_clean = this_time
+            self.credentials = set(cred for cred in self.credentials if cred.exists())
+        elif this_time - CredentialStore._last_clean > CredentialStore._clean_delay:
+            self.credentials = set(cred for cred in self.credentials if cred.exists())
+            CredentialStore._last_clean = this_time
 
 # This is a global 'singleton'
 credential_store = CredentialStore()

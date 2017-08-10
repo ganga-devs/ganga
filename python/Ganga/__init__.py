@@ -3,7 +3,7 @@ import os
 import re
 import inspect
 import getpass
-
+import commands
 from Ganga.Utility.ColourText import ANSIMarkup, overview_colours
 
 
@@ -25,7 +25,7 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.6.0 $'
+_gangaVersion = '$Name: 6.6.4 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -214,6 +214,7 @@ poll_config = makeConfig('PollThread', 'background job status monitoring and out
 poll_config.addOption('repeat_messages', False, 'if 0 then log only once the errors for a given backend and do not repeat them anymore')
 poll_config.addOption('autostart', True, 'enable monitoring automatically at startup, in script mode monitoring is disabled by default, in interactive mode it is enabled', type=type(True))  # enable monitoring on startup
 poll_config.addOption('autostart_monThreads', True, 'enable populating of the monitoring worker threads')
+poll_config.addOption('enable_multiThreadMon', True, 'enable multiple threads to be used for running monitoring tasks')
 poll_config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
 poll_config.addOption('MaxNumResubmits', 5, 'Maximum number of automatic job resubmits to do before giving')
 poll_config.addOption('MaxFracForResubmit', 0.25, 'Maximum fraction of failed jobs before stopping automatic resubmission')
@@ -606,7 +607,16 @@ backendPostprocess:defines where postprocessing should be done (WN/client) on di
 uploadOptions:config values needed for the actual %s upload'
 
 # LocalFile
-LocalPost = {'Local': 'client', 'Interactive': 'client', 'CREAM': 'client', 'Dirac': 'client'}
+LocalPost = {'Local': 'client',
+             'Interactive': 'client',
+             'LSF': 'client',
+             'SGE': 'client',
+             'PBS': 'client',
+             'Condor': 'client',
+             'CREAM': 'client',
+             'ARC': 'client',
+             'Dirac': 'client'
+}
 LocalUpOpt = {}
 LocalFileExt = docstr_Ext % ('Local', 'Local')
 output_config.addOption('LocalFile',
@@ -618,8 +628,16 @@ output_config.addOption('LocalFile',
 
 # LCGSEFILE
 
-LCGSEBakPost = {'LSF': 'client', 'PBS': 'client', 'LCG': 'WN', 'CREAM': 'WN',
-                'ARC': 'WN', 'Local': 'WN', 'Interactive': 'WN'}
+LCGSEBakPost = {'LSF': 'client',
+                'PBS': 'client',
+                'SGE': 'client',
+                'Condor': 'client',
+                'LCG': 'WN',
+                'CREAM': 'WN',
+                'ARC': 'WN',
+                'Local': 'WN',
+                'Interactive': 'WN'
+}
 LCGSEUpOpt = {'LFC_HOST': 'lfc-dteam.cern.ch', 'dest_SRM': 'srm-public.cern.ch'}
 LCGSEFileExt = docstr_Ext % ('LCG SE', 'LCG')
 
@@ -632,8 +650,16 @@ output_config.addOption('LCGSEFile',
 # DiracFile
 ## TODO MOVE ME TO GANGADIRAC!!!
 # Should this be in Core or elsewhere?
-diracBackPost = {'Dirac': 'submit', 'LSF': 'WN', 'PBS': 'WN', 'LCG': 'WN',
-                 'CREAM': 'WN', 'ARC': 'WN', 'Local': 'WN', 'Interactive': 'WN'}
+diracBackPost = {'Dirac': 'submit',
+                 'LSF': 'WN',
+                 'PBS': 'WN',
+                 'SGE': 'WN',
+                 'Condor': 'WN',
+                 'LCG': 'WN',
+                 'CREAM': 'WN',
+                 'ARC': 'WN',
+                 'Local': 'WN',
+                 'Interactive': 'WN'}
 diracFileExts = docstr_Ext % ('DIRAC', 'DIRAC')
 
 output_config.addOption('DiracFile',
@@ -645,8 +671,16 @@ output_config.addOption('DiracFile',
 
 # GoogleFile
 
-GoogleFileBackPost = {'Dirac': 'client', 'LSF': 'client', 'PBS': 'client', 'LCG': 'client',
-                      'CREAM': 'client', 'ARC': 'client', 'Local': 'client', 'Interactive': 'client'}
+GoogleFileBackPost = {'Dirac': 'client',
+                      'LSF': 'client',
+                      'PBS': 'client',
+                      'SGE': 'client',
+                      'Condor': 'client',
+                      'LCG': 'client',
+                      'CREAM': 'client',
+                      'ARC': 'client',
+                      'Local': 'client',
+                      'Interactive': 'client'}
 GoogleFileExts = docstr_Ext % ('GoogleDrive', 'Google')
 
 output_config.addOption('GoogleFile',
@@ -699,14 +733,26 @@ protoByExperiment = {'atlas': 'root://eosatlas.cern.ch',
                      'undefined': 'root://eos.cern.ch'}
 defaultMassStorageProto = protoByExperiment[groupname]
 
-prefix = '/afs/cern.ch/project/eos/installation/%s/bin/eos.select ' % groupname
-massStorageUploadOptions = {'mkdir_cmd': prefix + 'mkdir', 'cp_cmd':
-                            prefix + 'cp', 'ls_cmd': prefix + 'ls', 'path': massStoragePath}
+eosinstalled, prefix = commands.getstatusoutput('which eos')
+if not eosinstalled == 0:
+    prefix = ''
+    massStoragePath = ''    
+
+massStorageUploadOptions = {'mkdir_cmd': prefix + ' mkdir', 'cp_cmd':
+                            prefix + ' cp', 'ls_cmd': prefix + ' ls', 'path': massStoragePath}
 
 massStorageFileExt = docstr_Ext % ('Mass Storage', 'EOS')
 
-massStorageBackendPost = {'LSF': 'WN', 'PBS': 'WN', 'LCG': 'client', 'CREAM': 'client',
-                          'ARC': 'client', 'Local': 'WN', 'Interactive': 'client', 'Dirac': 'client'}
+massStorageBackendPost = {'LSF': 'WN',
+                          'PBS': 'WN',
+                          'Condor': 'WN',
+                          'SGE': 'WN',
+                          'LCG': 'client',
+                          'CREAM': 'client',
+                          'ARC': 'client',
+                          'Local': 'WN',
+                          'Interactive': 'client',
+                          'Dirac': 'client'}
 
 output_config.addOption('MassStorageFile',
                        {'fileExtensions': [''],
@@ -715,7 +761,16 @@ output_config.addOption('MassStorageFile',
                         'defaultProtocol': defaultMassStorageProto},
                        massStorageFileExt)
 
-sharedFileBackendPost = {'LSF': 'client', 'LCG': 'client', 'ARC': 'client', 'Dirac': 'client', 'PBS': 'client', 'Interactive': 'client', 'Local': 'client', 'CREAM': 'client'}
+sharedFileBackendPost = {'LSF': 'WN',
+                         'LCG': 'client',
+                         'ARC': 'client',
+                         'Dirac': 'client',
+                         'PBS': 'WN',
+                         'SGE': 'WN',
+                         'Condor': 'WN',
+                         'Interactive': 'client',
+                         'Local': 'WN',
+                         'CREAM': 'client'}
 
 output_config.addOption('SharedFile',
                        {'fileExtensions': [''],
@@ -834,6 +889,10 @@ Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 
 # ------------------------------------------------
 # Registry Dirty Monitoring Services (not related to actual Job Monitoring)
-reg_config = makeConfig('Registry','')
+reg_config = makeConfig('Registry','This config controls the speed of flushing objects to disk')
 reg_config.addOption('AutoFlusherWaitTime', 30, 'Time to wait between auto-flusher runs')
 reg_config.addOption('EnableAutoFlush', True, 'Enable Registry auto-flushing feature')
+
+cred_config = makeConfig('Credentials', 'This configures the credentials singleton')
+cred_config.addOption('CleanDelay', 1, 'Seconds between auto-clean of credentials when proxy externally destroyed')
+cred_config.addOption('AtomicDelay', 1, 'Seconds between checking credential on disk')

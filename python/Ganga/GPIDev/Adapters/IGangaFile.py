@@ -22,6 +22,7 @@ class IGangaFile(GangaObject):
     _category = 'gangafiles'
     _name = 'IGangaFile'
     _hidden = 1
+    __slots__ = list()
 
     def __init__(self):
         super(IGangaFile, self).__init__()
@@ -236,4 +237,38 @@ class IGangaFile(GangaObject):
                     logger.error('failed to remove temporary/intermediary file: %s' % f)
                     logger.debug("Err: %s" % err)
                     raise err
+
+    def expandString(self, inputStr, fileName=''):
+        """
+        This method deals with the automatic string replacement in the string notation for IGangaFile objects
+        Args:
+            inputStr(str): This is the input string which is being evaluated/expanded
+            fileName(str): This is an optional filename used to replace {fname}
+        Returns:
+            str:    This new string is the result of fully expanding the inputStr object
+        """
+
+        outputStr = inputStr
+
+        if self._getParent() is not None:
+            jobfqid = self.getJobObject().fqid
+                                
+            jobid = jobfqid
+            subjobid = ''
+
+            split = jobfqid.split('.')
+
+            if len(split) > 1:
+                jobid = split[0]
+                subjobid = split[1]
+          
+            outputStr = outputStr.replace('{jid}', jobid)                                                                    
+            outputStr = outputStr.replace('{sjid}', subjobid)
+
+        if fileName:
+            outputStr = outputStr.replace('{fname}', fileName)
+        else:
+            outputStr = outputStr.replace('{fname}', os.path.basename(self.namePattern))
+
+        return outputStr
 

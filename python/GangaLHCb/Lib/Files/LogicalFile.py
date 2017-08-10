@@ -58,7 +58,7 @@ class LogicalFile(DiracFile):
         logger.warning("!!! LogicalFile has been deprecated, this is now just a wrapper to the DiracFile object")
         logger.warning("!!! Please update your scripts before LogicalFile is removed")
 
-        self._setLFNnamePattern(_lfn=self.name, _namePattern='')
+        self._setLFNnamePattern(lfn=self.name, namePattern='')
 
     def __setattr__(self, name, value):
 

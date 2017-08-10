@@ -38,6 +38,8 @@ class ItemizedTextParagraph(object):
     (#) is a line separator
     """
 
+    __slots__ = ('head', 'head_size', 'items', 'desc', 'width', 'sep', 'sep_size', 'linesep')
+
     def __init__(self, head, width=80, separator=' ', linesep=None):
         self.head = head
         self.head_size = len(self.head)
