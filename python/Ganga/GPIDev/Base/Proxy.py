@@ -252,12 +252,20 @@ def getName(_obj):
     returnable = _getName(obj)
     return returnable
 
+
 def stripProxy(obj):
     """Removes the proxy if there is one
     Args:
         obj (object): This may be an instance or a class
     """
-    return getattr(obj, implRef, obj)
+    if isinstance(obj, (list, tuple)):
+        return type(obj)(stripProxy(_) for _ in obj)
+    elif isinstance(obj, dict):
+        return dict((k, stripProxy(v)) for k, v in obj.items())
+    elif hasattr(obj, implRef):
+        return getattr(obj, implRef)
+    else:
+        return obj
 
 
 def addProxy(obj):
@@ -273,6 +281,10 @@ def addProxy(obj):
                 return GPIProxyObjectFactory(obj)
     elif isclass(obj) and issubclass(obj, GangaObject):
         return getProxyClass(obj)
+    elif isinstance(obj, (list, tuple)):
+        return type(obj)(addProxy(_) for _ in obj)
+    elif isinstance(obj, dict):
+        return dict((k, addProxy(v)) for k, v in obj.items())
     return obj
 
 
@@ -715,10 +727,8 @@ class ProxyMethodDescriptor(object):
                 method = getattr(stripProxy(obj), self._internal_name)
             return proxy_wrap(method)
         except Exception as err:
-            if isinstance(err, GangaException):
-                logger.error("%s" % err)
-            else:
-                raise
+            logger.error("%s" % err)
+            raise
 
 ##########################################################################
 
@@ -1142,24 +1152,31 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 
     # export public methods of this class and also of all the bases
     # this class is scanned last to extract the most up-to-date docstring
-    dicts = (b.__dict__ for b in reversed(pluginclass.__mro__))
-    for dct in dicts:
-        for k in dct:
-            if getattr(dct[k], 'exported', False):
+    exported_dicts = (b.__dict__ for b in reversed(pluginclass.__mro__))
+
+    for subclass_dict in exported_dicts:
+        for k in subclass_dict:
+            if getattr(subclass_dict[k], 'exported', False):
                 exported_methods.append(k)  # Add all @export'd methods
             if k in exported_methods:
+
+                # Should we expose the object/method directly or a custom '_export_' wrapper?
                 internal_name = "_export_" + k
-                if internal_name not in dct:
+                if internal_name not in subclass_dict:
                     internal_name = k
+
                 try:
-                    method = dct[internal_name]
+                    method = subclass_dict[internal_name]
                 except KeyError as err:
                     logger.debug("ObjectMetaClass Error internal_name: %s,\t d: %s" % (internal_name, d))
                     logger.debug("ObjectMetaClass Error: %s" % err)
                     raise
 
+                # If this is a method make sure we wrap the method so it's not exposed to GPI objects
                 if not isinstance(method, types.FunctionType):
                     continue
+
+                # Wrap the method so that arguments are stripped before the method runs and a proxied object is returned
                 f = ProxyMethodDescriptor(k, internal_name)
                 f.__doc__ = method.__doc__
                 d[k] = f
