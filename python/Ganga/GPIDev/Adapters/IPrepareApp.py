@@ -222,6 +222,16 @@ class IPrepareApp(IApplication):
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref.decrease(shared_directory_name, remove)
 
+    def getShareCounterVal(self, shared_directory_name):
+        """
+        Function to get the current value of the counter
+        Args:
+            shared_directory_name (str): full name of directory managed by this app
+
+        """
+        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        return shareref.counterVal(shared_directory_name)
+
     def listShareDirs(self):
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref

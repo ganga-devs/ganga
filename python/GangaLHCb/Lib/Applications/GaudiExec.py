@@ -138,8 +138,8 @@ class GaudiExec(IPrepareApp):
         # Options created for constructing/submitting this app
         'directory':    SimpleItem(defvalue='', typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
         'options':       GangaFileItem(defvalue=[], sequence=1, doc='List of files which contain the options I want to pass to gaudirun.py'),
-        'uploadedInput': GangaFileItem(defvalue=None, hidden=1, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
-        'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
+        'uploadedInput': GangaFileItem(defvalue=None, hidden=0, doc='This stores the input for the job which has been pre-uploaded so that it gets to the WN'),
+        'jobScriptArchive': GangaFileItem(defvalue=None, hidden=0, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc49-opt', typelist=[str], doc='Platform the application was built for'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
@@ -195,10 +195,14 @@ class GaudiExec(IPrepareApp):
         logger.debug('Running unprepare in GaudiExec app')
         if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
+            if not self.getShareCounterVal(self.is_prepared.name) and self.uploadedInput:
+                self.uploadedInput.remove()
             self.is_prepared = None
         self.hash = None
         self.uploadedInput = None
-        self.jobScriptArchive = None
+        if self.jobScriptArchive:
+            self.jobScriptArchive.remove()
+            self.jobScriptArchive = None
 
 
     def prepare(self, force=False):

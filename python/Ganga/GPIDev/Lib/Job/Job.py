@@ -1758,6 +1758,8 @@ class Job(GangaObject):
                         self.application.decrementShareCounter(self.application.is_prepared.name)
                         for _ in self.subjobs:
                             self.application.decrementShareCounter(self.application.is_prepared.name)
+                    if self.application.getShareCounterVal(self.application.is_prepared.name)==0:
+                        self.application.is_prepared.removeAssociatedFiles()
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")

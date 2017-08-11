@@ -57,7 +57,7 @@ class ShareRef(GangaObject):
 
     _category = 'sharerefs'
     _name = 'ShareRef'
-    _exportmethods = ['increase', 'decrease', 'ls', 'printtree', 'rebuild', 'lookup', 'registerForRemoval']
+    _exportmethods = ['increase', 'decrease', 'counterVal', 'ls', 'printtree', 'rebuild', 'lookup', 'registerForRemoval']
 
     #_parent = None
     default_registry = 'prep'
@@ -112,6 +112,14 @@ class ShareRef(GangaObject):
         for shareddir in to_remove:
             if shareddir in self.removal_list:
                 self.removal_list.remove(shareddir)
+
+    @synchronised
+    def counterVal(self, shareddir):
+        """Return the current counter value for the named shareddir"""
+        from Ganga.GPIDev.Lib.File import getSharedPath
+        shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
+        basedir = os.path.basename(shareddir)
+        return self.__getName()[basedir]
 
     @synchronised
     def increase(self, shareddir, force=False):

@@ -9,6 +9,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 import os
 import shutil
 import uuid
@@ -146,7 +147,8 @@ class ShareDir(GangaObject):
 
     """
     _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', getter="_getName", doc='path to the file source'),
-                                     'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)')})
+                                     'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)'),
+                                     'associated_files': SimpleItem(defvalue=[], typelist = [list], doc='A list of files associated with the sharedir')})
 
     _category = 'shareddirs'
     _exportmethods = ['add', 'ls', 'path']
@@ -293,6 +295,11 @@ class ShareDir(GangaObject):
         permissions,  i.e. the  permissions of  the  existing 'source'
         file are checked"""
         return self.executable or is_executable(expandfilename(self.name))
+
+    def removeAssociatedFiles(self):
+        for entry in self.associated_files:
+            if isinstance(entry, IGangaFile):
+                entry.remove()
 
 Ganga.Utility.Config.config_scope['ShareDir'] = ShareDir
 

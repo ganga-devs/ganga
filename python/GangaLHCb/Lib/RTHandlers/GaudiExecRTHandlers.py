@@ -269,7 +269,7 @@ def generateDiracInput(app):
     new_df = uploadLocalFile(job, os.path.basename(compressed_file), tmp_dir)
 
     app.uploadedInput = new_df
-
+    app.is_prepared.associated_files.append(DiracFile(lfn = new_df.lfn))
 
 def generateJobScripts(app, appendJobScripts):
     """
@@ -336,6 +336,8 @@ def generateDiracScripts(app):
     new_df = uploadLocalFile(job, app.jobScriptArchive.namePattern, app.jobScriptArchive.localDir)
 
     app.jobScriptArchive = new_df
+
+    app.is_prepared.associated_files.append(DiracFile(lfn=new_df.lfn))
 
 def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
