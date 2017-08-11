@@ -297,9 +297,11 @@ class ShareDir(GangaObject):
         return self.executable or is_executable(expandfilename(self.name))
 
     def removeAssociatedFiles(self):
+        """ Remove the files in the associated file list"""
         for entry in self.associated_files:
             if isinstance(entry, IGangaFile):
                 entry.remove()
+                self.associated_files.pop(entry)
 
 Ganga.Utility.Config.config_scope['ShareDir'] = ShareDir
 
