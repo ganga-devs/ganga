@@ -195,9 +195,9 @@ class GaudiExec(IPrepareApp):
         logger.debug('Running unprepare in GaudiExec app')
         if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
-            if not self.getShareCounterVal(self.is_prepared.name) and self.uploadedInput:
-                self.uploadedInput.remove()
             self.is_prepared = None
+        if self.getShareCounterVal(self.is_prepared.name)==0 and self.uploadedInput:
+            self.uploadedInput.remove()
         self.hash = None
         self.uploadedInput = None
         if self.jobScriptArchive:
