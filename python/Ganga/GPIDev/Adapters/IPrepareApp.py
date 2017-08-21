@@ -220,7 +220,7 @@ class IPrepareApp(IApplication):
         remove = remove
         logger.debug('Decrementing shared directory reference counter')
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-        shareref.decrease(shared_directory_name, remove)
+        shareref.decrease(shared_directory, remove)
 
     def getShareCounterVal(self, shared_directory_name):
         """
