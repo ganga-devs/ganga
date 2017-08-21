@@ -136,13 +136,13 @@ class BoxRegistry(Registry):
                     logger.debug(
                         'Removing a prepared job from the box and decreasing the shareref counter')
                     obj.application.decrementShareCounter(
-                        obj.application.is_prepared.name)
+                        obj.application.is_prepared)
         if obj._category == 'applications':
             if hasattr(obj, 'is_prepared'):
                 if obj.is_prepared is not None and obj.is_prepared is not True:
                     logger.debug(
                         'Removing a prepared application from the box and decreasing the shareref counter')
-                    obj.decrementShareCounter(obj.is_prepared.name)
+                    obj.decrementShareCounter(obj.is_prepared)
 
         self._remove(self._get_obj(obj_id))
 
