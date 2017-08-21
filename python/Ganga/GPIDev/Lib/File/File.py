@@ -7,7 +7,7 @@
 from Ganga.Core.exceptions import GangaException, SchemaError
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
@@ -149,7 +149,7 @@ class ShareDir(GangaObject):
     """
     _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', getter="_getName", doc='path to the file source'),
                                      'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)'),
-                                     'associated_files': SimpleItem(defvalue=[], typelist = [list], doc='A list of files associated with the sharedir')})
+                                     'associated_files': GangaFileItem(defvalue=[], typelist = [str, IGangaFile], doc='A list of files associated with the sharedir')})
 
     _category = 'shareddirs'
     _exportmethods = ['add', 'ls', 'path', 'removeAssociatedFiles', 'remove']
