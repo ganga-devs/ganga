@@ -170,8 +170,8 @@ class ShareRef(GangaObject):
         self._getSessionLock()
 
         from Ganga.GPIDev.Lib.File import getSharedPath
-        shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
-        basedir = os.path.basename(shareddir)
+        shareddirname = os.path.join(getSharedPath(), os.path.basename(shareddir.name))
+        basedir = os.path.basename(shareddirname)
         # if remove==1, we force the shareref counter to 0
         try:
             if self.__getName()[basedir] > 0:
@@ -181,8 +181,9 @@ class ShareRef(GangaObject):
                     self.__getName()[basedir] -= 1
 
                 if self.__getName()[basedir] is 0:
-                    shutil.rmtree(shareddir, ignore_errors=True)
-                    logger.info("Removed: %s" % shareddir)
+#                    shutil.rmtree(shareddir, ignore_errors=True)
+                    shareddir.remove()
+                    logger.info("Removed: %s" % shareddir.name)
         # if we try to decrease a shareref that doesn't exist, we just set the
         # corresponding shareref to 0
         except KeyError as err:

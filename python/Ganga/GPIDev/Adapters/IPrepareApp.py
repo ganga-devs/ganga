@@ -210,12 +210,12 @@ class IPrepareApp(IApplication):
         logger.debug('within incrementShareCounter, calling increase')
         shareref.increase(shared_directory_name)
 
-    def decrementShareCounter(self, shared_directory_name, remove=0):
+    def decrementShareCounter(self, shared_directory, remove=0):
         """
         Function which is used to decrement the number of (sub)jobs which share the prepared sandbox
         managed by this app
         Args:
-            shared_directory_name (str): full name of directory managed by this app
+            shared_directory (ShareDir): The ShareDir object managed by this app
         """
         remove = remove
         logger.debug('Decrementing shared directory reference counter')
