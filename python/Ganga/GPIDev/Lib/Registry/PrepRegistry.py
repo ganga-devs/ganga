@@ -164,7 +164,7 @@ class ShareRef(GangaObject):
         the shared object directory deleted when Ganga exits. If the optional remove parameter is specified
         the shared directory is removed from the table.
         Args:
-            shareddir (str): This is the shared directory to reduce the counter for
+            shareddir (ShareDir): This is the shared directory object to reduce the counter for
             remove (int): Effectively used as a bool. Should the directory be removed when the count reaches 0
         """
         self._getSessionLock()
