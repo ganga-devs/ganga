@@ -318,6 +318,7 @@ def generateJobScripts(app, appendJobScripts):
                 this_script = os.path.join(tmp_dir, wnScript.name)
                 wnScript.create(this_script)
                 tar_file.add(this_script, arcname=os.path.join(wnScript.subdir, wnScript.name))
+                os.unlink(this_script)
 
     gzipFile(scriptArchive, scriptArchive+'.gz', True)
     app.jobScriptArchive.namePattern = app.jobScriptArchive.namePattern + '.gz'
