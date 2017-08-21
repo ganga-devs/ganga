@@ -233,7 +233,7 @@ class ShareDir(GangaObject):
                     shutil.copy2(expandfilename(item), os.path.join(getSharedPath(), self.name))
                     shareref = getRegistry("prep").getShareRef()
                     shareref.increase(self.name)
-                    shareref.decrease(self.name)
+                    shareref.decrease(self)
                 else:
                     logger.error('File %s not found' % expandfilename(item))
             elif isType(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
@@ -241,7 +241,7 @@ class ShareDir(GangaObject):
                 shutil.copy2(expandfilename(item.name), os.path.join(getSharedPath(), self.name))
                 shareref = getRegistry("prep").getShareRef()
                 shareref.increase(self.name)
-                shareref.decrease(self.name)
+                shareref.decrease(self)
             else:
                 logger.error('File %s not found' % expandfilename(item.name))
 
