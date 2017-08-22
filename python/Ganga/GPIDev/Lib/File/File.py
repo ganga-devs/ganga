@@ -5,7 +5,6 @@
 ##########################################################################
 
 from Ganga.Core.exceptions import GangaException, SchemaError
-from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from Ganga.GPIDev.Base.Proxy import isType
@@ -308,8 +307,8 @@ class ShareDir(GangaObject):
         """ Remove the ShareDir and all of its associated files.
             This doesn't take care of the ShareRef so should only be
             called from there """
-        logger.info("Removed: %s" % self.path())
         shutil.rmtree(self.path(), ignore_errors=True)
+        logger.info("Removed: %s" % self.path())
         self.removeAssociatedFiles()
 
 Ganga.Utility.Config.config_scope['ShareDir'] = ShareDir
