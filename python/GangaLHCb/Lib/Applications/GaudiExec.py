@@ -30,8 +30,6 @@ from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampConten
 
 logger = getLogger()
 
-#THis is a nonsens comment
-
 def gaudiExecBuildLock(f):
     """ Method used to lock the build methods in GaudiExec so we don't run multiple builds in parallel.
     This is because each new build destorys the target.
