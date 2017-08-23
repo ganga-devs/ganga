@@ -5,6 +5,7 @@
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
-* ...
+* Change to signature of decrementShareCounter and incrementShareCounter in IPrepareApp. Both take ShareDir objects now. #1106
+* Change to signature of decrease and increase methods in the PrepRegistry. Bothe take ShareDir objects now. #1106
 
 **************************************************************************************************************
