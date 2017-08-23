@@ -994,7 +994,7 @@ class GangaObject(Node):
             shareref = getRegistry("prep").getShareRef()
 
             logger.debug("Increasing shareref")
-            shareref.increase(shared_dir.name)
+            shareref.increase(shared_dir)
 
     def __copy__(self):
         obj = self.getNew()
