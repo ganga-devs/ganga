@@ -203,7 +203,7 @@ class IPrepareApp(IApplication):
         Function which is used to increment the number of (sub)jobs which share the prepared sandbox
         managed by this app
         Args:
-            shared_directory_name (str): full name of directory managed by this app
+            shared_directory (ShareDir): The ShareDir object managed by this app
         """
         logger.debug('Incrementing shared directory reference counter')
         shareref = getRegistry("prep").getShareRef()

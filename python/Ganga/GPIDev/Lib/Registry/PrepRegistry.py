@@ -129,7 +129,7 @@ class ShareRef(GangaObject):
         Sharedir should be given relative to the user's shared directory repository, which can
         be discovered by calling 'shareref'.
         Args:
-            shareddir (str): This is the shareddir which we're registering
+            shareddir (ShareDir): This is the shareddir which we're registering
             force (bool): Ignore whether the directory exists on disk or not
         """
         logger.debug("running increase() in prepregistry")

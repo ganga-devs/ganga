@@ -151,7 +151,7 @@ class ShareDir(GangaObject):
                                      'associated_files': GangaFileItem(defvalue=[], typelist = [str, IGangaFile], doc='A list of files associated with the sharedir')})
 
     _category = 'shareddirs'
-    _exportmethods = ['add', 'ls', 'path', 'removeAssociatedFiles', 'remove']
+    _exportmethods = ['add', 'ls', 'path', 'remove']
     _name = "ShareDir"
 
     def __init__(self, name=None, subdir=os.curdir):
@@ -301,6 +301,7 @@ class ShareDir(GangaObject):
         for entry in list(self.associated_files):
             if isinstance(entry, IGangaFile):
                 entry.remove()
+        self.associated_files = None
 
     def remove(self):
         """ Remove the ShareDir and all of its associated files.
