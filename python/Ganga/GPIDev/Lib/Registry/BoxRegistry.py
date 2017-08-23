@@ -106,12 +106,12 @@ class BoxRegistry(Registry):
                     logger.debug(
                         'Adding a prepared job to the box and increasing the shareref counter')
                     obj.application.incrementShareCounter(
-                        obj.application.is_prepared.name)
+                        obj.application.is_prepared)
         if obj._category == 'applications':
             if hasattr(obj, 'is_prepared'):
                 if obj.is_prepared is not None and obj.is_prepared is not True:
                     logger.debug('Adding a prepared application to the box and increasing the shareref counter')
-                    obj.incrementShareCounter(obj.is_prepared.name)
+                    obj.incrementShareCounter(obj.is_prepared)
 
         obj = obj.clone()
         nobj = BoxMetadataObject()

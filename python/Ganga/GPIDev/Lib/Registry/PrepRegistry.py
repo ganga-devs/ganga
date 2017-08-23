@@ -117,8 +117,8 @@ class ShareRef(GangaObject):
     def counterVal(self, shareddir):
         """Return the current counter value for the named shareddir"""
         from Ganga.GPIDev.Lib.File import getSharedPath
-        shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
-        basedir = os.path.basename(shareddir)
+        shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir.name))
+        basedir = os.path.basename(shareddir.name)
         return self.__getName()[basedir]
 
     @synchronised
@@ -137,22 +137,22 @@ class ShareRef(GangaObject):
 
 
         from Ganga.GPIDev.Lib.File import getSharedPath
-        shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
-        basedir = os.path.basename(shareddir)
-        if os.path.isdir(shareddir) and force is False:
+        shareddirname = os.path.join(getSharedPath(), os.path.basename(shareddir.name))
+        basedir = os.path.basename(shareddirname)
+        if os.path.isdir(shareddirname) and force is False:
             if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 1
             else:
                 self.__getName()[basedir] += 1
-        elif not os.path.isdir(shareddir) and force is True and basedir is not '':
+        elif not os.path.isdir(shareddirname) and force is True and basedir is not '':
             if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 1
             else:
                 self.__getName()[basedir] += 1
         else:
-            logger.error('Directory %s does not exist' % shareddir)
+            logger.error('Directory %s does not exist' % shareddirname)
 
         self._setDirty()
         self._releaseSessionLockAndFlush()

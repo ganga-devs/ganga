@@ -198,7 +198,7 @@ class IPrepareApp(IApplication):
         from Ganga.GPIDev.Base.VPrinterOld import VPrinterOld
         self.accept(VPrinterOld(f, sel))
 
-    def incrementShareCounter(self, shared_directory_name):
+    def incrementShareCounter(self, shared_directory):
         """
         Function which is used to increment the number of (sub)jobs which share the prepared sandbox
         managed by this app
@@ -208,7 +208,7 @@ class IPrepareApp(IApplication):
         logger.debug('Incrementing shared directory reference counter')
         shareref = getRegistry("prep").getShareRef()
         logger.debug('within incrementShareCounter, calling increase')
-        shareref.increase(shared_directory_name)
+        shareref.increase(shared_directory)
 
     def decrementShareCounter(self, shared_directory, remove=0):
         """
@@ -222,14 +222,14 @@ class IPrepareApp(IApplication):
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref.decrease(shared_directory, remove)
 
-    def getShareCounterVal(self, shared_directory_name):
+    def getShareCounterVal(self, shared_directory):
         """
         Function to get the current value of the counter
         Args:
             shared_directory_name (str): full name of directory managed by this app
         """
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-        return shareref.counterVal(shared_directory_name)
+        return shareref.counterVal(shared_directory)
 
     def listShareDirs(self):
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
@@ -259,5 +259,5 @@ class IPrepareApp(IApplication):
             logger.info('Shared directory location: %s' % (self.is_prepared.name))
             # logger.error(self.listShareDirContents(prepared_object.is_prepared.name))
         else:
-            self.incrementShareCounter(prepared_object.is_prepared.name)
+            self.incrementShareCounter(prepared_object.is_prepared)
 
