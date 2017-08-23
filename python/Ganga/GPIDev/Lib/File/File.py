@@ -301,7 +301,6 @@ class ShareDir(GangaObject):
         for entry in list(self.associated_files):
             if isinstance(entry, IGangaFile):
                 entry.remove()
-#                self.associated_files.pop(entry)
 
     def remove(self):
         """ Remove the ShareDir and all of its associated files.
