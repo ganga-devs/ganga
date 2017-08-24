@@ -27,6 +27,8 @@ class IChecker(IPostProcessor):
     _hidden = 1
     order = 2
 
+    __slots__ = list()
+
     def execute(self, job, newstatus):
         """
         Execute the check method, if check fails pass the check and issue an ERROR message. Message is also added to the debug folder.
@@ -68,6 +70,8 @@ class IFileChecker(IChecker):
     _hidden = 1
     result = True
     order = 2
+
+    __slots__ = list()
 
     def findFiles(self, job):
 

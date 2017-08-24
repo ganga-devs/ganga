@@ -4,7 +4,7 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
-from Ganga.Core.exceptions import GangaException
+from Ganga.Core.exceptions import GangaException, GangaTypeError
 
 from Ganga.GPIDev.Base.Proxy import stripProxy
 
@@ -16,15 +16,6 @@ from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
-
-class BoxTypeError(GangaException, TypeError):
-
-    def __init__(self, what=''):
-        GangaException.__init__(self, what)
-        self.what = what
-
-    def __str__(self):
-        return "BoxTypeError: %s" % self.what
 
 class BoxMetadataObject(GangaObject):
 
@@ -106,7 +97,7 @@ class BoxRegistry(Registry):
         if isinstance(obj, list):
             obj = makeGangaList(obj)
         if not isinstance(obj, GangaObject):
-            raise BoxTypeError(
+            raise GangaTypeError(
                 "The Box can only contain Ganga Objects (i.e. Applications, Datasets or Backends). Check that the object is first in box.add(obj,'name')")
 
         if obj._category == 'jobs':
@@ -115,12 +106,12 @@ class BoxRegistry(Registry):
                     logger.debug(
                         'Adding a prepared job to the box and increasing the shareref counter')
                     obj.application.incrementShareCounter(
-                        obj.application.is_prepared.name)
+                        obj.application.is_prepared)
         if obj._category == 'applications':
             if hasattr(obj, 'is_prepared'):
                 if obj.is_prepared is not None and obj.is_prepared is not True:
                     logger.debug('Adding a prepared application to the box and increasing the shareref counter')
-                    obj.incrementShareCounter(obj.is_prepared.name)
+                    obj.incrementShareCounter(obj.is_prepared)
 
         obj = obj.clone()
         nobj = BoxMetadataObject()
@@ -145,13 +136,13 @@ class BoxRegistry(Registry):
                     logger.debug(
                         'Removing a prepared job from the box and decreasing the shareref counter')
                     obj.application.decrementShareCounter(
-                        obj.application.is_prepared.name)
+                        obj.application.is_prepared)
         if obj._category == 'applications':
             if hasattr(obj, 'is_prepared'):
                 if obj.is_prepared is not None and obj.is_prepared is not True:
                     logger.debug(
                         'Removing a prepared application from the box and decreasing the shareref counter')
-                    obj.decrementShareCounter(obj.is_prepared.name)
+                    obj.decrementShareCounter(obj.is_prepared)
 
         self._remove(self._get_obj(obj_id))
 

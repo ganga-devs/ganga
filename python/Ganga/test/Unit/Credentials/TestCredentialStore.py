@@ -129,7 +129,7 @@ def test_len():
     store.create(FakeCred())
     assert len(store) == 2, 'Adding a repeated requirement should not increase the size of the store'
 
-    assert len(store.get_all_matching_type(FakeCred)) == 2
+    assert len(store.get_all_matching_type(FakeCred())) == 2
 
     store.remove(store[FakeCred()])
     assert len(store) == 1

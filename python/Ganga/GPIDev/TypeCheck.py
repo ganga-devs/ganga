@@ -19,7 +19,9 @@ def safer_eval( _input ):
         if temp_output is None:
             if len(_input) > 0:
                 try:
-                    _output = eval(str(_input))
+                    if not isinstance(_input, str):
+                        _input = str(_input)
+                    _output = eval(_input)
                 except:
                     _output = str(_input)
             else:
@@ -31,7 +33,9 @@ def safer_eval( _input ):
     except ImportError:
         if len(_input) > 0:
             try:
-                _output = eval(str(_input))
+                if not isinstance(_input, str):
+                    _input = str(_input)
+                _output = eval(_input)
             except:
                 _output = str(_input)
         else:
@@ -52,13 +56,13 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
 
             if _t not in found_types:
                 temp = safer_eval(_t)
-                if type(temp) != type(type('')):
+                if not isinstance(temp, type(str)):
                     temp = type(temp)
                 found_types[_t] = temp
             _type = found_types[_t]
 
             if _type == str:
-                GangaSplit = str(_t).split('.')
+                GangaSplit = _t.split('.')
                 if len(GangaSplit) > 1:
                     from Ganga.Utility.util import importName
 
@@ -99,7 +103,7 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
             stripProxy = dummy_func
 
         try:
-            from Ganga.GPIDev.Base import GangaObject
+            from Ganga.GPIDev.Base.Objects import GangaObject
         except:
             GangaObject = None
 

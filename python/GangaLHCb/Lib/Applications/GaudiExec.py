@@ -30,7 +30,6 @@ from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampConten
 
 logger = getLogger()
 
-
 def gaudiExecBuildLock(f):
     """ Method used to lock the build methods in GaudiExec so we don't run multiple builds in parallel.
     This is because each new build destorys the target.
@@ -194,7 +193,7 @@ class GaudiExec(IPrepareApp):
         """
         logger.debug('Running unprepare in GaudiExec app')
         if self.is_prepared is not None:
-            self.decrementShareCounter(self.is_prepared.name)
+            self.decrementShareCounter(self.is_prepared)
             self.is_prepared = None
         self.hash = None
         self.uploadedInput = None
@@ -354,27 +353,26 @@ class GaudiExec(IPrepareApp):
         dir_name = self.directory
         return (None, None)
 
-
     def getOptsFiles(self):
         """
         This function returns a sanitized absolute path to the self.options file from user input
         """
-        if self.options:
-            for this_opt in self.options:
-                if isinstance(this_opt, LocalFile):
-                    ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
-                    full_path = path.join(this_opt.localDir, this_opt.namePattern)
-                    if not path.exists(full_path):
-                        raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
-                elif isinstance(this_opt, DiracFile):
-                    pass
-                else:
-                    logger.error("opts: %s" % self.options)
-                    raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+        for this_opt in self.options:
+            if isinstance(this_opt, LocalFile):
+                ## FIXME LocalFile should return the basename and folder in 2 attibutes so we can piece it together, now it doesn't
+                full_path = path.join(this_opt.localDir, this_opt.namePattern)
+                if not path.exists(full_path):
+                    raise ApplicationConfigurationError("Opts File: \'%s\' has been specified but does not exist please check and try again!" % full_path)
+            elif isinstance(this_opt, DiracFile):
+                pass
+            else:
+                logger.error("opts: %s" % self.options)
+                raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(this_opt))
+
+        if self.options or self.extraOpts:
             return self.options
         else:
-            raise ApplicationConfigurationError("No Opts File has been specified, please provide one!")
-
+            raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
 
     def getEnvScript(self):
         """
@@ -465,8 +463,12 @@ class GaudiExec(IPrepareApp):
             raise GangaException("Wanted Target File: %s NOT found" % wantedTargetFile)
 
         logger.info("Built %s" % wantedTargetFile)
+
+
+        # FIXME Make this more pythonic or have a common method for getting the env rather than re-inventing the wheel
+
         # Whilst we are here let's store the application environment but ignore awkward ones
-        env, envstdout, envstderr = _exec_cmd('./run env', self.directory)
+        env, envstdout, envstderr = self.execCmd('./run env')
         envDict = {}
         for item in envstdout.split("\n"):
             if len(item.split("="))==2:
@@ -479,7 +481,8 @@ class GaudiExec(IPrepareApp):
 
     def postprocess(self):
         from GangaLHCb.Lib.Applications import XMLPostProcessor
-        XMLPostProcessor.GaudiExecPostProcess(self, logger)
+        if self.getMetadata:
+            XMLPostProcessor.GaudiExecPostProcess(self, logger)
 
     def getenv(self, cache_env=False):
         """

@@ -32,6 +32,8 @@ class TestXMLCorruption(GangaUnitTest):
         global global_AutoStartReg
         global_AutoStartReg = False
 
+        j.name='modified_name'
+
     def test_b_TestRemoveXML(self):
         # Remove XML force to use backup
         XMLFileName = getXMLFile(0)

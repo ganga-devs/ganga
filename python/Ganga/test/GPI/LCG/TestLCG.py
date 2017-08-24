@@ -94,7 +94,7 @@ def test_submit_monitor(gpi):
 
     with patch('Ganga.Lib.LCG.Grid.status', side_effect=status_results) as status:
         stripProxy(j).backend.master_updateMonitoringInformation([stripProxy(j)])
-        assert status.call_count == 1
+        assert status.call_count >= 1
 
     with patch('Ganga.Lib.LCG.Grid.cancel', return_value=True):
         j.kill()

@@ -4,11 +4,12 @@
 # $Id: File.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ##########################################################################
 
-from Ganga.Core.exceptions import GangaException
+from Ganga.Core.exceptions import GangaException, SchemaError
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
+from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 import os
 import shutil
 import uuid
@@ -27,11 +28,14 @@ from Ganga.GPIDev.Lib.File import getSharedPath
 
 from Ganga.Runtime.GPIexport import exportToGPI
 
+import threading
+
 # regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
 urlprefix = re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
 
 logger = getLogger()
 
+_prepare_lock = threading.RLock()
 
 class File(GangaObject):
 
@@ -60,7 +64,10 @@ class File(GangaObject):
         super(File, self).__init__()
 
         if not name is None:
-            assert(isinstance(name, str))
+            try:
+                assert(isinstance(name, str))
+            except AssertionError:
+                raise SchemaError("Name attribute should be a string type. Instead received: %s" % type(name))
             self.name = name
 
         if not subdir is None:
@@ -140,23 +147,19 @@ class ShareDir(GangaObject):
 
     """
     _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', getter="_getName", doc='path to the file source'),
-                                     'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)')})
+                                     'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)'),
+                                     'associated_files': GangaFileItem(defvalue=[], typelist = [str, IGangaFile], doc='A list of files associated with the sharedir')})
 
     _category = 'shareddirs'
-    _exportmethods = ['add', 'ls', 'path']
+    _exportmethods = ['add', 'ls', 'path', 'remove']
     _name = "ShareDir"
-    _real_name = ''
 
     def __init__(self, name=None, subdir=os.curdir):
         super(ShareDir, self).__init__()
 
         self._setRegistry(None)
 
-        if self._should_init:
-
-            if not name:
-                name = 'conf-{0}'.format(uuid.uuid4())
-            self._real_name = name
+        self._real_name = None
 
     def setSchemaAttribute(self, name, value):
         """
@@ -197,7 +200,7 @@ class ShareDir(GangaObject):
             name (str): The attribute which is being looked for
         """
         if name == 'name':
-            return self._real_name
+            return _getName()
         return super(ShareDir, self).__getattr__(name)
 
     def _getName(self):
@@ -205,13 +208,16 @@ class ShareDir(GangaObject):
         A getter method for the 'name' schema attribute which will trigger the creation of a SharedDir on disk only when information about it is asked
         """
 
-        share_dir = os.path.join(getSharedPath(), self._real_name)
-        if not os.path.isdir(share_dir):
-            logger.debug("Actually creating: %s" % share_dir)
-            os.makedirs(share_dir)
-        if not os.path.isdir(share_dir):
-            logger.error("ERROR creating path: %s" % share_dir)
-            raise GangaException("ShareDir ERROR")
+        with _prepare_lock:
+            if not self._real_name:
+                self._real_name = 'conf-{0}'.format(uuid.uuid4())
+                share_dir = os.path.join(getSharedPath(), self._real_name)
+                if not os.path.isdir(share_dir):
+                    logger.debug("Actually creating: %s" % share_dir)
+                    os.makedirs(share_dir)
+                if not os.path.isdir(share_dir):
+                    logger.error("ERROR creating path: %s" % share_dir)
+                    raise GangaException("ShareDir ERROR")
 
         return self._real_name
 
@@ -225,22 +231,22 @@ class ShareDir(GangaObject):
                     logger.info('Copying file %s to shared directory %s' % (item, self.name))
                     shutil.copy2(expandfilename(item), os.path.join(getSharedPath(), self.name))
                     shareref = getRegistry("prep").getShareRef()
-                    shareref.increase(self.name)
-                    shareref.decrease(self.name)
+                    shareref.increase(self)
+                    shareref.decrease(self)
                 else:
                     logger.error('File %s not found' % expandfilename(item))
             elif isType(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
                 logger.info('Copying file object %s to shared directory %s' % (item.name, self.name))
                 shutil.copy2(expandfilename(item.name), os.path.join(getSharedPath(), self.name))
                 shareref = getRegistry("prep").getShareRef()
-                shareref.increase(self.name)
-                shareref.decrease(self.name)
+                shareref.increase(self)
+                shareref.decrease(self)
             else:
                 logger.error('File %s not found' % expandfilename(item.name))
 
     def path(self):
         """Get the full path of the ShareDir location"""
-        return os.path.join(getSharedPath(), self.name)
+        return os.path.join(getSharedPath(), self._getName())
                 
     def ls(self):
         """
@@ -289,6 +295,21 @@ class ShareDir(GangaObject):
         permissions,  i.e. the  permissions of  the  existing 'source'
         file are checked"""
         return self.executable or is_executable(expandfilename(self.name))
+
+    def removeAssociatedFiles(self):
+        """ Remove the files in the associated file list"""
+        for entry in list(self.associated_files):
+            if isinstance(entry, IGangaFile):
+                entry.remove()
+        self.associated_files = None
+
+    def remove(self):
+        """ Remove the ShareDir and all of its associated files.
+            This doesn't take care of the ShareRef so should only be
+            called from there """
+        shutil.rmtree(self.path(), ignore_errors=True)
+        logger.info("Removed: %s" % self.path())
+        self.removeAssociatedFiles()
 
 Ganga.Utility.Config.config_scope['ShareDir'] = ShareDir
 

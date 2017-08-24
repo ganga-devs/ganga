@@ -50,6 +50,8 @@ class FixedLockManager(object):
     This explicitly forbids multiple parallel Ganga sessions.
     """
 
+    __slots__ = ('sync_lock', 'locked', 'repo', 'cntfn', 'global_lock', 'count')
+
     def __init__(self, repo, root, name, minimum_count=0):
 
 

@@ -11,7 +11,7 @@ import Ganga.Utility.logging
 from Ganga.Utility.util import unique
 import Ganga.Utility.Config
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError, GangaTypeError
 from Ganga.Utility.files import expandfilename
 from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd
 from Ganga.GPIDev.Lib.File.OutputFileManager import outputFilePostProcessingOnWN
@@ -110,7 +110,7 @@ class PythonOptionsParser(object):
                     joined_py_opts += 'importOptions(\'' + name + '\')\n'
                 else:
                     msg = 'Only extensions of type ".opts" and ".py" allowed'
-                    raise TypeError(msg)
+                    raise GangaTypeError(msg)
             except IOError as err:
                 logger.error('_join_opts_files Error: %s', str(err))
                 logger.error('There was an IOError with the options file: %s', name)
