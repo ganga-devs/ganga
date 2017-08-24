@@ -5,7 +5,19 @@
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
+* Added associated_files to ShareDir, a list of IGangaFiles that are used by an application. #1106
 * Change to signature of decrementShareCounter and incrementShareCounter in IPrepareApp. Both take ShareDir objects now. #1106
 * Change to signature of decrease and increase methods in the PrepRegistry. Bothe take ShareDir objects now. #1106
+* Added counterVal method to get shareref counter of a ShareDir. #1106
+* maxFiles attribute added to GangaDatasetSplitter. Default is -1, use all files. #1105
+* Bugfix for proxy returning objects properly. #1103
+* Ganga optimised bigly. #917
 
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Uploaded DiracFiles for GaudiExec added to ShareDir associated_files and removed with the job. #1106
+* Bugfix to GaudiExec - script files are deleted from temp after job submission. #1104
+* Bugfix to GaudiExec - make postprocessor for XML summary follow getMetadata flag. #1110
+* GaudiExec can be submitted with only extra opts. #994
 **************************************************************************************************************
