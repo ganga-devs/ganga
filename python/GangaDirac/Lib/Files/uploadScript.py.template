@@ -26,7 +26,6 @@ lfn=os.path.join('###LFN_BASE###', file_name)
 wildcard='###WILDCARD###'
 storage_elements=###SEs###
 
-
 with closing(open('###LOCATIONSFILE_NAME###','ab')) as locationsfile:
     for se in storage_elements:
         sys.stdout.write('\\nUploading file: \"%s\" as \"%s\" at \"%s\"\\n' % (file_name, lfn, se))
