@@ -30,7 +30,6 @@ from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampConten
 
 logger = getLogger()
 
-
 def gaudiExecBuildLock(f):
     """ Method used to lock the build methods in GaudiExec so we don't run multiple builds in parallel.
     This is because each new build destorys the target.
@@ -194,7 +193,7 @@ class GaudiExec(IPrepareApp):
         """
         logger.debug('Running unprepare in GaudiExec app')
         if self.is_prepared is not None:
-            self.decrementShareCounter(self.is_prepared.name)
+            self.decrementShareCounter(self.is_prepared)
             self.is_prepared = None
         self.hash = None
         self.uploadedInput = None
