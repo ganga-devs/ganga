@@ -466,7 +466,7 @@ class ProxyDataDescriptor(object):
                     raw_app = stripProxy(obj.application)
                     if raw_app != val:
                         raw_app.unprepare()
-                        shareref.increase(val.is_prepared.name)
+                        shareref.increase(val.is_prepared)
 
             # check that the shared directory actually exists before
             # assigning the (prepared) application to a job
@@ -498,7 +498,7 @@ class ProxyDataDescriptor(object):
                 obj.unprepare()
                 from Ganga.Core.GangaRepository import getRegistry
                 shareref = getRegistry("prep").getShareRef()
-                shareref.increase(val.name)
+                shareref.increase(val)
 
         if isinstance(val, str):
             logger.error("Setting string type to 'is_prepared'")
@@ -1016,7 +1016,7 @@ def GPIProxyClassFactory(name, pluginclass):
                             from Ganga.Core.GangaRepository import getRegistry
                             shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                             logger.debug('increasing counter from proxy.py')
-                            shareref.increase(self.application.is_prepared.name)
+                            shareref.increase(self.application.is_prepared)
                             logger.debug('Found ShareDir directory: %s' % self.application.is_prepared.name)
                 elif self.application.is_prepared not in [None, True]:
                     shared_path = _getSharedPath()
@@ -1025,7 +1025,7 @@ def GPIProxyClassFactory(name, pluginclass):
                         logger.error('Unpreparing Job #%s' % self.id)
                         from Ganga.Core.GangaRepository import getRegistry
                         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                        shareref.increase(self.application.is_prepared.name)
+                        shareref.increase(self.application.is_prepared)
                         self.unprepare()
 
         if unprepare is True:
@@ -1043,7 +1043,7 @@ def GPIProxyClassFactory(name, pluginclass):
             if hasattr(c, 'is_prepared') and c._getRegistry() is None:
                 from Ganga.Core.GangaRepository import getRegistry
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                shareref.increase(self.is_prepared.name)
+                shareref.increase(self.is_prepared)
             stripProxy(c)._auto__init__(unprepare=True)
         else:
             c = stripProxy(self).clone()
