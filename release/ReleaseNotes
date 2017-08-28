@@ -12,7 +12,11 @@ ganga/python/Ganga
 * maxFiles attribute added to GangaDatasetSplitter. Default is -1, use all files. #1105
 * Bugfix for proxy returning objects properly. #1103
 * Ganga optimised bigly. #917
-
+   Bugfix: CPU bottleneck in constructing objects inheriting from GangaObject
+   Bugfix: Race condition in credential managment
+   Feature: Improved parallel monitoring on backends which support standard interface
+   Cleanup: using __slots__ and _additional_slots for managing attributes
+   Cleanup: simplified thread locking
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaDirac
