@@ -1534,6 +1534,9 @@ class AthenaSplitterJob(ISplitter):
         'numfiles_subjob'     : SimpleItem(defvalue=0,sequence=0, doc="Number of files per subjob"),
         'match_subjobs_files' : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of inputfiles"),
         'split_per_dataset'   : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of datasets"),
+        'events_per_subjob'   : SimpleItem(defvalue=-1,sequence=0, doc='Number of Events to process per subjob. Must be used with numsubjobs.'
+                                                                       'The total events processed with be events_per_subjob * numsubjobs. Please'
+                                                                       'make sure this covers the number of events required'),
         'output_loc_to_input' : SimpleItem(defvalue={}, doc='Dictionary that lists the input files that should go to a '
                                                             'particular output dir, e.g. { "/out/dir": ["/in/file1", "/in/file2"].'
                                                             'Input files must match what is given to ATLASLocalDataset }')
@@ -1554,11 +1557,12 @@ class AthenaSplitterJob(ISplitter):
         # Preparation
         inputnames=[]
         inputguids=[]
-        if job.inputdata:
+        if job.inputdata and (job.inputdata._name == 'ATLASLocalDataset'):
 
-            if (job.inputdata._name == 'ATLASLocalDataset'):
-                inputnames = []
-                outputnames = []
+            # Special case for events_per_subjob as input data is ignored
+            inputnames = []
+            outputnames = []
+            if self.events_per_subjob < 0:
                 numfiles = len(job.inputdata.get_dataset_filenames())
                 if self.numfiles_subjob > 0:
                     self.numsubjobs = int( math.ceil( numfiles / float(self.numfiles_subjob) ) )
@@ -1631,50 +1635,21 @@ class AthenaSplitterJob(ISplitter):
 
                     for j in xrange(numfiles):
                         inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset_filenames()[j])
+            else:
+                # for splitting on events, all data is passed to every subjob and skip events/max events
+                # is set appropriately
+                if self.numfiles_subjob > 0 or self.match_subjobs_files or self.split_per_dataset:
+                    raise ApplicationConfigurationError("Cannot use events_per_subjob with numfiles_subjob, match_subjobs_files, split_per_dataset")
 
-            if job.inputdata._name == 'DQ2Dataset':
-                # Splitting per dataset
-                if self.split_per_dataset:
-                    contents = job.inputdata.get_contents(overlap=False)
-                    datasets = job.inputdata.dataset
-                    self.numsubjobs = len(datasets)
-                    for dataset in datasets:
-                        content = contents[dataset]
-                        content.sort(lambda x,y:cmp(x[1],y[1]))
-                        inputnames.append( [ lfn for guid, lfn in content ] )
-                        inputguids.append( [ guid for guid, lfn in content ] )
-                else:
-                    # Splitting per file
-                    content = []
-                    input_files = []
-                    input_guids = []
-                    names = None
-                    # Get list of filenames and guids
-                    contents = job.inputdata.get_contents()
-                    if self.match_subjobs_files:
-                        self.numsubjobs = len(contents)
-                    elif self.numfiles_subjob>0:
-                        numjobs = len(contents) / int(self.numfiles_subjob)
-                        if (len(contents) % self.numfiles_subjob)>0:
-                            numjobs += 1
-                        self.numsubjobs = numjobs
-                        logger.info('Submitting %s subjobs',numjobs)
+                if self.numsubjobs < 1:
+                    raise ApplicationConfigurationError("Please specify the number of subjobs if using events_per_subjob")
 
-                    # Fill dummy values
-                    for i in xrange(self.numsubjobs):    
-                        inputnames.append([])
-                        inputguids.append([])
-                    input_files = [ lfn  for guid, lfn in contents ]
-                    input_guids = [ guid for guid, lfn in contents ]
+                logger.warning("Splitting by number of events. All data will be passed to all subjobs and the total number of events to be"
+                               "processed will be numsubjobs * events_per_subjob (%d * %d = %d in this case)" %
+                               (self.numsubjobs, self.events_per_subjob, self.numsubjobs * self.events_per_subjob))
 
-                    # Splitting
-                    for j in xrange(len(input_files)):
-                        inputnames[j % self.numsubjobs].append(input_files[j])
-                        inputguids[j % self.numsubjobs].append(input_guids[j])
-
-        if job.backend._name == 'LCG' and job.backend.middleware=='GLITE' and self.numsubjobs>config['MaxJobsAthenaSplitterJobLCG']:
-            printout = 'Job submission failed ! AthenaSplitterJob.numsubjobs>%s - glite WMS does not like bulk jobs with more than approximately 100 subjobs - use less subjobs or use job.backend.middleware=="EDG"  ' %config['MaxJobsAthenaSplitterJobLCG']
-            raise ApplicationConfigurationError(printout)
+                for j in xrange(self.numsubjobs):
+                    inputnames.append(job.inputdata.get_dataset_filenames())
 
         # Do the splitting
         for i in range(self.numsubjobs):
@@ -1683,11 +1658,7 @@ class AthenaSplitterJob(ISplitter):
             j.inputdata=job.inputdata
             if job.inputdata:
                 j.inputdata.names=inputnames[i]
-                if job.inputdata._name == 'DQ2Dataset':
-                    j.inputdata.guids=inputguids[i]
-                    j.inputdata.number_of_files = len(inputguids[i])
-                    if self.split_per_dataset:
-                        j.inputdata.dataset=job.inputdata.dataset[i]
+
             j.outputdata=job.outputdata
 
             # Set the output location if we have mapping
@@ -1695,6 +1666,10 @@ class AthenaSplitterJob(ISplitter):
                 j.outputdata.location = outputnames[i]
 
             j.application = job.application
+            if self.events_per_subjob > 0:
+                j.application.max_events = self.events_per_subjob
+                j.application.skip_events = self.events_per_subjob * i
+
             j.backend=job.backend
             j.inputsandbox=job.inputsandbox
             j.outputsandbox=job.outputsandbox
@@ -1702,74 +1677,6 @@ class AthenaSplitterJob(ISplitter):
             subjobs.append(j)
         return subjobs
 
-class ATLASTier3Splitter(ISplitter):
-    """Splitter for ATLASTier3Dataset"""
-    
-    _name = "ATLASTier3Splitter"
-    _schema = Schema(Version(1,0), {
-        'numjobs'              : SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
-        'numfiles'             : SimpleItem(defvalue=0,sequence=0, doc="Number of files per subjob")
-        } )
-
-    _GUIPrefs = [ { 'attribute' : 'numjobs',           'widget' : 'Int' },
-                  { 'attribute' : 'numfiles',          'widget' : 'Int' },
-                  ]
-
-    ### Splitting based on numsubjobs
-    def split(self,job):
-        from Ganga.GPIDev.Lib.Job import Job
-        subjobs = []
-        logger.debug("ATLASTier3Splitter split called")
-        
-        if not job.inputdata:
-            raise ApplicationConfigurationError("ATLASTier3Splitter requires ATLASTier3Dataset")
-        if job.inputdata._name != 'ATLASTier3Dataset':
-            raise ApplicationConfigurationError("ATLASTier3Splitter requires ATLASTier3Dataset")
-        if self.numjobs and self.numfiles:
-            logger.warning('You specified numjobs and numfiles. Setting numjobs = 0 to continue.')
-            self.numjobs = 0
-            #raise ApplicationConfigurationError(None, "ATLASTier3Splitter: specify numjobs or numfiles, but not both.")
-       
-        if job.inputdata.pfnListFile.name:
-            logger.info('Loading file names from %s'%job.inputdata.pfnListFile.name)
-            pfnListFile = open(job.inputdata.pfnListFile.name)
-            job.inputdata.names = [name.strip() for name in pfnListFile]
-            pfnListFile.close()
- 
-        allnames = list(job.inputdata.names)
-
-        # default behaviour is 20 subjobs
-        if not self.numjobs and not self.numfiles:
-            self.numjobs = min(20,len(allnames))
-
-        # limit numfiles and numjobs
-        self.numjobs = min(self.numjobs,len(allnames))
-        self.numfiles = min(self.numfiles,len(allnames))
-
-        # calculate numfiles and numjobs
-        if self.numfiles:
-            (self.numjobs,r) = divmod(len(allnames),self.numfiles)
-            if r: self.numjobs += 1
-        elif self.numjobs:
-            (self.numfiles,r) = divmod(len(allnames),self.numjobs)
-            if r: self.numfiles += 1
-
-        # Do the splitting
-        allnames.reverse()
-        for i in range(self.numjobs):
-            j = Job()
-            j.inputdata=job.inputdata
-            j.inputdata.names=[]
-            while allnames and len(j.inputdata.names) < self.numfiles:
-                j.inputdata.names.append(allnames.pop())
-            j.outputdata = job.outputdata
-            j.application = job.application
-            j.backend = job.backend
-            j.inputsandbox = job.inputsandbox
-            j.outputsandbox = job.outputsandbox
-            subjobs.append(j)
-        
-        return subjobs
 
 from Ganga.GPIDev.Adapters.IMerger import IMerger
 from commands import getstatusoutput    
