@@ -12,8 +12,6 @@ from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
 from Ganga.Core.GangaRepository.GangaRepositoryXML import safe_save
-
-
 import os
 import shutil
 import uuid
