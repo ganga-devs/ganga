@@ -299,12 +299,16 @@ class ShareDir(GangaObject):
         return self.executable or is_executable(expandfilename(self.name))
 
     def getAssociatedFiles(self):
+        """ Load the list of associated files from the saved XML. This is
+        necessary to keep the list consistent when copying jobs. """
         if os.path.isfile(os.path.join(self.path(), 'associated_files.xml')):
             with open(os.path.join(self.path(), 'associated_files.xml'), "r") as fobj:
                 tmpobj, errs = from_file(fobj)
                 self.associated_files = tmpobj
  
     def addAssociatedFile(self, newFile):
+        """ Add an associated file to the ShareDir. Use this method to save
+        it to theXML """
         self.getAssociatedFiles()
         self.associated_files.append(newFile)
         safe_save(os.path.join(self.path(), 'associated_files.xml'), self.associated_files, to_file)
@@ -318,6 +322,7 @@ class ShareDir(GangaObject):
         self.associated_files = None
 
     def listAssociatedFiles(self):
+        """ List the associated_files of the ShareDir """
         self.getAssociatedFiles()
         return self.associated_files
 
