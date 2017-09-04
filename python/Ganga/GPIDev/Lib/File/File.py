@@ -300,10 +300,9 @@ class ShareDir(GangaObject):
 
     def getAssociatedFiles(self):
         if os.path.isfile(os.path.join(self.path(), 'associated_files.xml')):
-            fobj = open(os.path.join(self.path(), 'associated_files.xml'), "r")
-            tmpobj, errs = from_file(fobj)
-            self.associated_files = tmpobj
-            fobj.close()
+            with open(os.path.join(self.path(), 'associated_files.xml'), "r") as fobj:
+                tmpobj, errs = from_file(fobj)
+                self.associated_files = tmpobj
  
     def addAssociatedFile(self, newFile):
         self.getAssociatedFiles()
