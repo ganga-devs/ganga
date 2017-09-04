@@ -10,6 +10,10 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
+from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
+from Ganga.Core.GangaRepository.GangaRepositoryXML import safe_save
+
+
 import os
 import shutil
 import uuid
@@ -151,7 +155,7 @@ class ShareDir(GangaObject):
                                      'associated_files': GangaFileItem(defvalue=[], typelist = [str, IGangaFile], doc='A list of files associated with the sharedir')})
 
     _category = 'shareddirs'
-    _exportmethods = ['add', 'ls', 'path', 'remove']
+    _exportmethods = ['add', 'ls', 'path', 'remove', 'addAssociatedFile', 'listAssociatedFiles']
     _name = "ShareDir"
 
     def __init__(self, name=None, subdir=os.curdir):
@@ -296,12 +300,29 @@ class ShareDir(GangaObject):
         file are checked"""
         return self.executable or is_executable(expandfilename(self.name))
 
+    def getAssociatedFiles(self):
+        if os.path.isfile(os.path.join(self.path(), 'associated_files.xml')):
+            fobj = open(os.path.join(self.path(), 'associated_files.xml'), "r")
+            tmpobj, errs = from_file(fobj)
+            self.associated_files = tmpobj
+            fobj.close()
+ 
+    def addAssociatedFile(self, newFile):
+        self.getAssociatedFiles()
+        self.associated_files.append(newFile)
+        safe_save(os.path.join(self.path(), 'associated_files.xml'), self.associated_files, to_file)
+
     def removeAssociatedFiles(self):
         """ Remove the files in the associated file list"""
+        self.getAssociatedFiles()
         for entry in list(self.associated_files):
             if isinstance(entry, IGangaFile):
                 entry.remove()
         self.associated_files = None
+
+    def listAssociatedFiles(self):
+        self.getAssociatedFiles()
+        return self.associated_files
 
     def remove(self):
         """ Remove the ShareDir and all of its associated files.

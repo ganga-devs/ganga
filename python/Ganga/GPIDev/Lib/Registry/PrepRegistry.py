@@ -3,6 +3,7 @@ import shutil
 import time
 import copy
 import threading
+from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.Core.GangaRepository.Registry import Registry
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Objects import synchronised
@@ -140,13 +141,13 @@ class ShareRef(GangaObject):
         shareddirname = os.path.join(getSharedPath(), os.path.basename(shareddir.name))
         basedir = os.path.basename(shareddirname)
         if os.path.isdir(shareddirname) and force is False:
-            if basedir not in self.__getName():
+            if shareddir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 1
             else:
                 self.__getName()[basedir] += 1
         elif not os.path.isdir(shareddirname) and force is True and basedir is not '':
-            if basedir not in self.__getName():
+            if shareddir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 1
             else:
