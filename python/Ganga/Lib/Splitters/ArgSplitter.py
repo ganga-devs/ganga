@@ -5,11 +5,10 @@
 ###############################################################################
 
 import copy
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
+from Ganga.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
@@ -58,7 +57,13 @@ class ArgSplitter(ISplitter):
             j = self.createSubjob(job,['application'])
             # Add new arguments to subjob
             app = copy.deepcopy(job.application)
-            app.args = arg
+            if hasattr(app, 'args'):
+                app.args = arg
+            elif hasattr(app, 'extraArgs'):
+                app.extraArgs = arg
+            else:
+                raise SplittingError('Application has neither args or extraArgs in its schema') 
+                    
             j.application = app
             logger.debug('Arguments for split job is: ' + str(arg))
             subjobs.append(stripProxy(j))
