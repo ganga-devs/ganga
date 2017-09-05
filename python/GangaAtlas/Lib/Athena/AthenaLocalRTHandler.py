@@ -280,6 +280,13 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         # set EOS env setting
         environment['EOS_COMMAND_PATH'] = config['PathToEOSBinary']
 
+        # Max/skip event settings
+        if app.skip_events > 0:
+            environment['ATHENA_SKIP_EVENTS'] = str(app.skip_events)
+
+        if app.max_events > 0:
+            environment['ATHENA_MAX_EVENTS'] = str(app.max_events)
+
         # flag for single output dir
         if (config['SingleDirForLocalOutput'] or config['NoSubDirsAtAllForLocalOutput']) and job._getParent():
             environment['SINGLE_OUTPUT_DIR'] = jid
@@ -312,21 +319,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             environment['DQ2_OUTPUT_SPACE_TOKENS']= ':'.join(configDQ2['DQ2_OUTPUT_SPACE_TOKENS'])
             environment['DQ2_BACKUP_OUTPUT_LOCATIONS']= ':'.join(configDQ2['DQ2_BACKUP_OUTPUT_LOCATIONS'])
             
-        # CN: extra condition for TNTSplitter
-        if job._getRoot().splitter and job._getRoot().splitter._name == 'TNTJobSplitter':
-            # set up dq2 environment
-            datasetname = job.inputdata.dataset
-            environment['DATASETNAME']= ':'.join(datasetname) 
-            environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations())
-            environment['DQ2_URL_SERVER']=configDQ2['DQ2_URL_SERVER']
-            environment['DQ2_URL_SERVER_SSL']=configDQ2['DQ2_URL_SERVER_SSL']
-            #environment['DATASETTYPE']=job.inputdata.type
-            # At present, DQ2 download is the only thing that works
-            environment['DATASETTYPE']="DQ2_DOWNLOAD"
-            if job.inputdata.accessprotocol:
-                 environment['DQ2_LOCAL_PROTOCOL'] = job.inputdata.accessprotocol
-            if job.inputsandbox: inputbox += job.inputsandbox   
-
         # Fix DATASETNAME env variable for DQ2_COPY mode
         if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type in [ 'DQ2_LOCAL', 'DQ2_COPY', 'FILE_STAGER' ]:
             if job.inputdata.dataset:
@@ -340,11 +332,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                     raise ApplicationConfigurationError(printout )
 
 
-        if job.inputdata and job.inputdata._name == 'ATLASTier3Dataset':
-            environment['DATASETTYPE'] = 'TIER3'
-
-
-            
         # USE_POOLFILECATALOG_FAILOVER of Local/ATLASLocalDataset
         if job.inputdata and job.inputdata._name == 'ATLASLocalDataset':
             if job.inputdata.use_poolfilecatalog_failover:
