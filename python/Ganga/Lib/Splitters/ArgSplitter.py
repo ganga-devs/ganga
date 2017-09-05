@@ -18,7 +18,8 @@ class ArgSplitter(ISplitter):
     """
     Split job by changing the args attribute of the application.
 
-    This splitter only applies to the applications which have args attribute (e.g. Executable, Root).
+    This splitter only applies to the applications which have args attribute (e.g. Executable, Root), or those
+    with extraArgs (GaudiExec). If an application has both, args takes precedence.
     It is a special case of the GenericSplitter.
 
     This splitter allows the creation of a series of subjobs where
