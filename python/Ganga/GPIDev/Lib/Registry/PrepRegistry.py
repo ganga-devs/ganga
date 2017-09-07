@@ -79,6 +79,16 @@ class ShareRef(GangaObject):
             self.name = {}
         return self.name
 
+    def __removeFromRef(self, dirName):
+	""" Remove the sharedir from the ShareRef"""
+        logger.debug("running increase() in prepregistry")
+        self._getSessionLock()
+
+        del self.__getName()[dirName]
+
+        self._setDirty()
+        self._releaseSessionLockAndFlush()
+
     @synchronised
     def registerForRemoval(self, shareddir):
         """
@@ -183,6 +193,7 @@ class ShareRef(GangaObject):
                 if self.__getName()[basedir] is 0:
 #                    shutil.rmtree(shareddir, ignore_errors=True)
                     shareddir.remove()
+                    self.__removeFromRef(basedir)
                     logger.info("Removed: %s" % shareddir.name)
         # if we try to decrease a shareref that doesn't exist, we just set the
         # corresponding shareref to 0

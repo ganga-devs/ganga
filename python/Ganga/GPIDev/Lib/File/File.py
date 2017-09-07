@@ -12,6 +12,7 @@ from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
 from Ganga.Core.GangaRepository.GangaRepositoryXML import safe_save
+from Ganga.GPIDev.Base.Objects import synchronised
 import os
 import shutil
 import uuid
@@ -298,6 +299,7 @@ class ShareDir(GangaObject):
         file are checked"""
         return self.executable or is_executable(expandfilename(self.name))
 
+    @synchronised
     def getAssociatedFiles(self):
         """ Load the list of associated files from the saved XML. This is
         necessary to keep the list consistent when copying jobs. """
@@ -305,7 +307,8 @@ class ShareDir(GangaObject):
             with open(os.path.join(self.path(), 'associated_files.xml'), "r") as fobj:
                 tmpobj, errs = from_file(fobj)
                 self.associated_files = tmpobj
- 
+
+    @synchronised 
     def addAssociatedFile(self, newFile):
         """ Add an associated file to the ShareDir. Use this method to save
         it to theXML """
@@ -313,6 +316,7 @@ class ShareDir(GangaObject):
         self.associated_files.append(newFile)
         safe_save(os.path.join(self.path(), 'associated_files.xml'), self.associated_files, to_file)
 
+    @synchronised
     def removeAssociatedFiles(self):
         """ Remove the files in the associated file list"""
         self.getAssociatedFiles()
@@ -321,6 +325,7 @@ class ShareDir(GangaObject):
                 entry.remove()
         self.associated_files = None
 
+    @synchronised
     def listAssociatedFiles(self):
         """ List the associated_files of the ShareDir """
         self.getAssociatedFiles()
