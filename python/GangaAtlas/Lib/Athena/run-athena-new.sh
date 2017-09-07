@@ -13,6 +13,8 @@ touch stats.pickle
 MY_ATHENA_OPTIONS=$ATHENA_OPTIONS
 MY_OUTPUT_LOCATION=$OUTPUT_LOCATION
 MY_ATLAS_EXETYPE=$ATLAS_EXETYPE
+MY_ATHENA_MAX_EVENTS=$ATHENA_MAX_EVENTS
+MY_ATHENA_SKIP_EVENTS=$ATHENA_SKIP_EVENTS
 
 # setup Atlas enviroenment
 shopt -s expand_aliases
@@ -131,18 +133,25 @@ if os.path.exists('input_files'):
             
     # set the InputCollections depending on what's in the namespace
     try:
-        EventSelector.InputCollections = ic
+        ServiceMgr.EventSelector.InputCollections = ic
     except NameError:
         svcMgr.EventSelector.InputCollections = ic
 
-    if os.environ.has_key('ATHENA_MAX_EVENTS'):
-        theApp.EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
+    if os.environ.has_key('MY_ATHENA_MAX_EVENTS') and os.environ['MY_ATHENA_MAX_EVENTS']:
+        theApp.EvtMax = int(os.environ['MY_ATHENA_MAX_EVENTS'])
     else:
         theApp.EvtMax = -1
+
+    if os.environ.has_key('MY_ATHENA_SKIP_EVENTS') and os.environ['MY_ATHENA_SKIP_EVENTS']:
+        try:
+            ServiceMgr.EventSelector.SkipEvents = int(os.environ['MY_ATHENA_SKIP_EVENTS'])
+        except NameError:
+            svcMgr.EventSelector.SkipEvents = int(os.environ['MY_ATHENA_SKIP_EVENTS'])
 EOF
 
-sed 's/EventSelector/ServiceMgr.EventSelector/' input.py > input.py.new
-mv input.py.new input.py
+# re-export the max/skip events as all env variables have been stomped on from above
+export MY_ATHENA_MAX_EVENTS
+export MY_ATHENA_SKIP_EVENTS
 
 # Run Athena/EXE/Root
 if [ n$MY_ATLAS_EXETYPE == n'ATHENA' ]
