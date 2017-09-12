@@ -287,6 +287,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if app.max_events > 0:
             environment['ATHENA_MAX_EVENTS'] = str(app.max_events)
 
+        # Flag if we're in ByteStream Data
+        if app.atlas_run_config.has_key('input') and app.atlas_run_config['input'].has_key('inBS'):
+            environment['USE_BYTESTREAM'] = 'True'
+
         # flag for single output dir
         if (config['SingleDirForLocalOutput'] or config['NoSubDirsAtAllForLocalOutput']) and job._getParent():
             environment['SINGLE_OUTPUT_DIR'] = jid
