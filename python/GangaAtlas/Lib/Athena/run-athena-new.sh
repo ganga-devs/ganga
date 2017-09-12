@@ -16,6 +16,11 @@ MY_ATLAS_EXETYPE=$ATLAS_EXETYPE
 MY_ATHENA_MAX_EVENTS=$ATHENA_MAX_EVENTS
 MY_ATHENA_SKIP_EVENTS=$ATHENA_SKIP_EVENTS
 
+# check for bytestream
+if [ n$USE_BYTESTREAM = nTrue ]; then
+    MY_USE_BYTESTREAM=True
+fi
+
 # setup Atlas enviroenment
 shopt -s expand_aliases
 echo "------>  Setting up atlas environment"
@@ -133,9 +138,15 @@ if os.path.exists('input_files'):
             
     # set the InputCollections depending on what's in the namespace
     try:
-        ServiceMgr.EventSelector.InputCollections = ic
+        if os.environ.has_key('MY_USE_BYTESTREAM'):
+            ServiceMgr.ByteStreamInputSvc.FullFileName = ic
+        else:
+            ServiceMgr.EventSelector.InputCollections = ic
     except NameError:
-        svcMgr.EventSelector.InputCollections = ic
+        if os.environ.has_key('MY_USE_BYTESTREAM'):
+            svcMgr.ByteStreamInputSvc.FullFileName = ic
+        else:
+            svcMgr.EventSelector.InputCollections = ic
 
     if os.environ.has_key('MY_ATHENA_MAX_EVENTS') and os.environ['MY_ATHENA_MAX_EVENTS']:
         theApp.EvtMax = int(os.environ['MY_ATHENA_MAX_EVENTS'])
@@ -152,6 +163,11 @@ EOF
 # re-export the max/skip events as all env variables have been stomped on from above
 export MY_ATHENA_MAX_EVENTS
 export MY_ATHENA_SKIP_EVENTS
+
+# re-export the byte stream flag
+if [ n$MY_USE_BYTESTREAM = nTrue ]; then
+    export MY_USE_BYTESTREAM
+fi
 
 # Run Athena/EXE/Root
 if [ n$MY_ATLAS_EXETYPE == n'ATHENA' ]
