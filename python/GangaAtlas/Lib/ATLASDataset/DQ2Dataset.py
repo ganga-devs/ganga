@@ -2023,12 +2023,12 @@ class DQ2OutputDownloader(MTRunner):
 logger = getLogger()
 
 # New for DQ2 client 2.3.0
-#from Ganga.GPIDev.Credentials_old import GridProxy
-#gridProxy = GridProxy()
-#if not gridProxy.isValid():
-#    gridProxy.create()
+from Ganga.GPIDev.Credentials_old import GridProxy
+gridProxy = GridProxy()
+if not gridProxy.isValid():
+    gridProxy.create()
 
-username = 'mslater' #gridProxy.identity(safe=True)
+username = gridProxy.identity(safe=True)
 # Note: Allow missing nickname as if we can't create a proxy for some reason, we still want to start Ganga
 nickname = getNickname(allowMissingNickname=True)
 if nickname:
@@ -2037,12 +2037,12 @@ os.environ['RUCIO_ACCOUNT'] = username
 logger.debug("Using RUCIO_ACCOUNT = %s " %(os.environ['RUCIO_ACCOUNT'])) 
 
 # Again, if we don't have a valid proxy, don't attempt to create DQ2 object as it will just fail
-#if gridProxy.isValid():
-#    from dq2.clientapi.DQ2 import DQ2
-#    dq2=DQ2(force_backend='rucio')
-#else:
-#    dq2 = None
-dq2 = None
+if gridProxy.isValid():
+    from dq2.clientapi.DQ2 import DQ2
+    dq2=DQ2(force_backend='rucio')
+else:
+    dq2 = None
+
 from threading import Lock
 dq2_lock = Lock()
 
