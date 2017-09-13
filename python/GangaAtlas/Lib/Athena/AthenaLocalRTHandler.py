@@ -287,6 +287,10 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if app.max_events > 0:
             environment['ATHENA_MAX_EVENTS'] = str(app.max_events)
 
+        # Flag if we're in ByteStream Data
+        if app.atlas_run_config.has_key('input') and app.atlas_run_config['input'].has_key('inBS'):
+            environment['USE_BYTESTREAM'] = 'True'
+
         # flag for single output dir
         if (config['SingleDirForLocalOutput'] or config['NoSubDirsAtAllForLocalOutput']) and job._getParent():
             environment['SINGLE_OUTPUT_DIR'] = jid
@@ -394,16 +398,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             jobid = "%d" % job.id
 
         # Generate output dataset name
-        if job.outputdata:
-            if job.outputdata._name=='DQ2OutputDataset':
-                dq2_datasetname = job.outputdata.datasetname
-                dq2_isGroupDS = job.outputdata.isGroupDS
-                dq2_groupname = job.outputdata.groupname
-            else:
-                dq2_datasetname = ''
-                dq2_isGroupDS = False
-                dq2_groupname = ''
-            self.output_datasetname, self.output_lfn = dq2outputdatasetname(dq2_datasetname, jobid, dq2_isGroupDS, dq2_groupname)
+        dq2_datasetname = ''
+        dq2_isGroupDS = False
+        dq2_groupname = ''
 
         # Expand Athena jobOptions
         if not app.option_file and not app.command_line:
