@@ -1,0 +1,168 @@
+#!/usr/bin/env python
+#-*- python -*-
+
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: statcvs,v 1.1 2008-07-17 16:41:39 moscicki Exp $
+################################################################################
+
+import os, tempfile, sys
+
+if len(sys.argv) == 2:
+    target_dir = sys.argv[1]
+else:
+    target_dir = '.'
+
+# which branches to show (0=all, 2=trunk (HEAD), 4=branches of trunk, 6=branches of branches of trunk, etc)
+# branches specify the number of dot-separated version numbers in a branch
+if len(sys.argv) == 3:
+    branches = int(sys.argv[2])
+else:
+    branches = 0
+
+f = ""
+
+outf = tempfile.mktemp()
+
+if os.path.exists(outf):
+    os.remove(outf)
+    
+if os.system("cd %s; cvs log %s &> %s"%(target_dir,f,outf)):
+    print 'cvs log error for ',f
+
+infotxt = file(outf).read()
+
+import re
+
+UNTAGGED_REVISIONS = {}
+
+cnt = 1
+
+for i in infotxt.split('============================================================================='):
+
+    try:
+        header,commits = i.split('keyword substitution:')
+    except ValueError:
+        continue
+
+    try:
+        header,tags = header.split('symbolic names:')
+    except ValueError:
+        break
+
+    ##if cnt==1:
+    ##    print '*'*30
+    ##    print tags
+    ##    print '*'*30
+    ##    print commits
+    
+    pars = { 'RCS file' : None, 'head' : None, 'tags' : {} }
+
+    highest_tagged_revision = {}
+    
+    for l in header.split('\n'):
+        l = l.strip()
+        if not l: continue
+        if l[0] == '?': continue
+        #print 'INPUT="'+l+'"'
+        key,val = l.split(':')
+        pars[key] = val.strip()
+
+    ##if cnt == 1:
+    ##    print pars
+        
+    if 'Attic' == os.path.split(pars['RCS file'])[0][-len("Attic"):]:
+        continue
+    
+    for t in tags.split('\n'):
+        t = t.strip()
+        if not t: continue
+        #print 'INPUT="'+t+'"'
+        name,version = t.split(':')
+        version = version.strip()
+        pars['tags'].setdefault(version,[])
+        pars['tags'][version].append(name)
+        branch_id = len(version.split('.')) # which branch
+        
+        # return True if v1<v2
+        def before(v1,v2):
+            v11 = v1.split('.')
+            v22 = v2.split('.')
+            assert(len(v11) == len(v22))
+            for i in range(len(v11)):
+                if int(v11[i]) > int(v22[i]): return False
+                if int(v11[i]) < int(v22[i]): return True
+            # are equal!
+            return False
+
+        ##if cnt==1:
+        ##    print "check tag",version,branch_id
+
+        def set_highest():
+            highest_tagged_revision[branch_id] = version
+            ##if cnt==1:
+            ##    print "highest tagged revision for branch %d is %s"%(branch_id,version)
+            
+        if not highest_tagged_revision.has_key(branch_id):
+            set_highest()
+        else:
+            if before(highest_tagged_revision[branch_id],version):
+                set_highest()
+           
+
+    ##if cnt ==1:
+    ##    print  highest_tagged_revision
+        
+    untagged_revisions = {}
+
+    for r in commits.split('----------------------------'):
+        lines = r.split('\n')
+        #print '***',lines
+
+        if not lines or (len(lines)==1 and not lines[0]):
+            continue
+        
+        l = lines[1]
+
+        if l[:len('revision')] == 'revision':
+            rev = l.split()[-1]
+            branch_id = len(rev.split('.'))
+            if not highest_tagged_revision.has_key(branch_id) or before(highest_tagged_revision[branch_id],rev):
+                untagged_revisions[branch_id] = rev
+
+    
+    if untagged_revisions:
+        UNTAGGED_REVISIONS[pars['RCS file']] = untagged_revisions.values()
+
+    cnt += 1
+    
+
+print "#Untagged files in CVS (in all branches)"
+print "#Directory: ",target_dir
+if not branches:
+    print "Showing all branches"
+if branches == 2:
+    print "Showing only TRUNK"
+
+print "Showing branches with this number of dot-separated version numbers:", branches
+
+fnames = UNTAGGED_REVISIONS.keys()
+fnames.sort()
+
+for rev in fnames:
+    if branches:
+        ok = False
+        for r in UNTAGGED_REVISIONS[rev]:
+            if len(r.split('.')) == branches:
+                ok = True
+                break
+        if not ok:
+            continue
+    print '%s %s' % (rev,reduce(lambda x,y: x+' '+y, UNTAGGED_REVISIONS[rev]))
+    
+print '#Ignored files in Attic'    
+print '#Full log in %s'%(outf)
+
+
+

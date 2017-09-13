@@ -1,0 +1,22 @@
+print "Generation of configuration file template"
+
+flavour = Ganga.Utility.Config.Config.getFlavour()
+
+import os.path, Ganga
+
+gangaPath = os.path.dirname(os.path.dirname(os.path.dirname(Ganga.__file__)))
+
+headerFile = os.path.join(gangaPath,"python","Ganga","Runtime","HEAD_CONFIG.INI")
+
+text = open(headerFile).read()
+text += Ganga.GPIDev.Lib.Config.Config.config_file_as_text()
+
+if flavour:
+    filename = "CONFIG_TEMPLATE_%s.INI"%flavour   
+else:
+    filename = "CONFIG_TEMPLATE.INI"   
+
+configFile = os.path.join(gangaPath,"templates",filename)
+print >>open(configFile,'w'), text
+
+print "created:",configFile
