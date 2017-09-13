@@ -1177,8 +1177,8 @@ under certain conditions; type license() for details.
         """
         ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
         from Ganga.Utility.logging import getLogger
-        logger = getLogger(modulename=True)
-        logger.error("%s" % value)
+        logger = getLogger()
+        #logger.error("%s" % value)
 
         from Ganga.Core.exceptions import GangaException
         import traceback
@@ -1190,6 +1190,8 @@ under certain conditions; type license() for details.
             logger.error("If you're able to reproduce this please report this to the Ganga developers!")
             #logger.error("value: %s" % value)
             exception_obj.showtraceback((etype, value, tb), tb_offset=tb_offset)
+        else:
+            logger.error("%s" % value)
         return None
 
     @staticmethod

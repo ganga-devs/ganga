@@ -21,6 +21,8 @@ class ThreadPoolQueueMonitor(object):
     the getConfig('Queues')['NumWorkerThreads'] config option.
     '''
 
+    __slots__ = ('_user_threadpool', '_monitoring_threadpool', '_frozen', '_shutdown')
+
     def __init__(self, user_threadpool=None, monitoring_threadpool=None):
 
         if user_threadpool is None:
@@ -214,13 +216,13 @@ class ThreadPoolQueueMonitor(object):
                                            kwargs=kwargs,
                                            priority=priority)
 
-    def _addSystem(self, worker_code, args=(), kwargs={}, priority=5):
+    def _addSystem(self, worker_code, args=(), kwargs={}, priority=5, name=None):
 
         if not isinstance(worker_code, collections.Callable):
             logger.error("Error Adding internal task!! please report this to the Ganga developers!")
             return
 
-        if self._frozen is True:
+        if self.isfrozen() is True:
             if not self._shutdown:
                 logger.warning("Queue System is frozen not adding any more System processes!")
             return
@@ -228,7 +230,8 @@ class ThreadPoolQueueMonitor(object):
         self._monitoring_threadpool.add_function(worker_code,
                                                  args=args,
                                                  kwargs=kwargs,
-                                                 priority=priority)
+                                                 priority=priority,
+                                                 name=name)
 
     def addProcess(self,
                    command,
@@ -304,7 +307,7 @@ class ThreadPoolQueueMonitor(object):
             logger.error("Input command must be of type 'string'")
             return
 
-        if self._frozen is True:
+        if self.isfrozen() is True:
             if not self._shutdown:
                 logger.warning("Queues system is frozen. Not adding any more processes!")
             return
@@ -360,13 +363,16 @@ class ThreadPoolQueueMonitor(object):
 
     def freeze(self):
         self._frozen = True
-        self._user_threadpool._frozen = True
-        self._monitoring_threadpool._frozen = True
+        self._user_threadpool.freeze()
+        self._monitoring_threadpool.freeze()
 
     def unfreeze(self):
         self._frozen = False
-        self._user_threadpool._frozen = False
-        self._monitoring_threadpool._frozen = False
+        self._user_threadpool.unfreeze()
+        self._monitoring_threadpool.unfreeze()
+
+    def isfrozen(self):
+        return self._frozen
 
     def _stop_all_threads(self, shutdown=False):
         self._shutdown = shutdown

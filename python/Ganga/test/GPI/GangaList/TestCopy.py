@@ -4,7 +4,6 @@ import random
 import string
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 class TestCopy(GangaUnitTest):
 
@@ -23,6 +22,7 @@ class TestCopy(GangaUnitTest):
 
     def testCopy(self):
 
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         gl = GangaList()
 
         numberOfFiles = 100
@@ -40,6 +40,7 @@ class TestCopy(GangaUnitTest):
 
     def testDeepCopy(self):
 
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         gl = GangaList()
 
         numberOfFiles = 100

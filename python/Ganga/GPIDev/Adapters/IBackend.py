@@ -4,7 +4,7 @@
 # $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
 ##########################################################################
 
-from Ganga.Core.exceptions import IncompleteJobSubmissionError
+from Ganga.Core.exceptions import GangaKeyError, IncompleteJobSubmissionError
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
@@ -22,6 +22,9 @@ import os
 import itertools
 import time
 from collections import defaultdict
+
+from Ganga.Core.GangaThread.WorkerThreads import getQueues
+from Ganga.Utility.Config import getConfig
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -46,6 +49,8 @@ class IBackend(GangaObject):
     _schema = Schema(Version(0, 0), {})
     _category = 'backends'
     _hidden = 1
+
+    __slots__ = list()
 
     # specify how the default implementation of master_prepare() method
     # creates the input sandbox
@@ -150,10 +155,18 @@ class IBackend(GangaObject):
 
             for sc, sj in zip(subjobconfigs, rjobs):
 
-                fqid = sj.getFQID('.')
                 b = sj.backend
+
+                # Must check for credentials here as we cannot handle missing credentials on Queues by design!
+                if hasattr(b, 'credential_requirements') and b.credential_requirements is not None:
+                    from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+                    try:
+                        cred = credential_store[b.credential_requirements]
+                    except GangaKeyError:
+                        credential_store.create(b.credential_requirements)
+
+                fqid = sj.getFQID('.')
                 # FIXME would be nice to move this to the internal threads not user ones
-                #from Ganga.GPIDev.Base.Proxy import stripProxy
                 getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
 
             def subjob_status_check(rjobs):
@@ -418,9 +431,9 @@ class IBackend(GangaObject):
 
         ## Only process 10 files from the backend at once
         #blocks_of_size = 10
+        poll_config = getConfig('PollThread')
         try:
-            from Ganga.Utility.Config import getConfig
-            blocks_of_size = getConfig('PollThread')['numParallelJobs']
+            blocks_of_size = poll_config['numParallelJobs']
         except Exception as err:
             logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
             logger.debug("Error: %s" % err)
@@ -428,8 +441,12 @@ class IBackend(GangaObject):
         ## Separate different backends implicitly
         simple_jobs = {}
 
+        multiThreadMon = poll_config['enable_multiThreadMon']
+
         # FIXME Add some check for (sub)jobs which are in a transient state but
         # are not locked by an active session of ganga
+
+        queues = getQueues()
 
         for j in jobs:
             ## All subjobs should have same backend
@@ -483,7 +500,11 @@ class IBackend(GangaObject):
                         subjobs_to_monitor = []
                         for sj_id in this_block:
                             subjobs_to_monitor.append(j.subjobs[sj_id])
-                        j.backend.updateMonitoringInformation(subjobs_to_monitor)
+                        if multiThreadMon:
+                            if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
+                                queues._addSystem(j.backend.updateMonitoringInformation, args=(subjobs_to_monitor,), name="Backend Monitor")
+                        else:
+                            j.backend.updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
                         logger.error("Monitoring Error: %s" % err)
 
@@ -498,9 +519,26 @@ class IBackend(GangaObject):
         if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
-                stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
+                if multiThreadMon:
+                    if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
+                        queues._addSystem(stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation,
+                                          args=(simple_jobs[this_backend],), name="Backend Monitor")
+                else:
+                    stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
 
         logger.debug("Finished Monitoring request")
+
+        if not multiThreadMon:
+            return
+
+        loop = True
+        while loop:
+            for stat in queues._monitoring_threadpool.worker_status():
+                loop = False;
+                if stat[0] is not None and stat[0].startswith("Backend Monitor"):
+                    loop = True;
+                    break;
+            time.sleep(1.)
 
     @staticmethod
     def updateMonitoringInformation(jobs):
@@ -541,3 +579,4 @@ def group_jobs_by_backend_credential(jobs):
             logger.debug('Required credential %s is missing', cred_req)
             needed_credentials.add(cred_req)
     return list(jobs_by_credential.values())
+

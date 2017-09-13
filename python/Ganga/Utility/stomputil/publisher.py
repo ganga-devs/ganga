@@ -5,7 +5,7 @@ from Queue import Queue
 import logging
 logging_DEBUG = logging.DEBUG
 
-BEAT_TIME = 0.3 # Seconds between publisher thread heart beats.
+BEAT_TIME = 0.1 # Seconds between publisher thread heart beats.
 IDLE_TIMEOUT = 30 # Maximum seconds to idle before closing connection.
 EXIT_TIMEOUT = 5 # Maximum seconds to clear queued messages on exit.
 PUBLISHER_TIMESTAMP_HEADER = '_publisher_timestamp' # The publisher timestamp header name
@@ -39,6 +39,8 @@ except (Exception, ImportError) as err:
 class LoggerListener(stomp_listener):
     """Connection listener which logs STOMP events."""
 
+    __slots__ = ('_logger', '_log_frame')
+
     def __init__(self, logger):
         self._logger = logger 
 
@@ -61,8 +63,9 @@ class LoggerListener(stomp_listener):
         self._log_frame('ERROR', headers, body)
 
     def _log_frame(self, frame_type, headers, body):
-        if self._logger.isEnabledFor(logging_DEBUG):
-            self._logger.debug('STOMP %s frame received headers=%s body=%s.' % (frame_type, headers, body))
+        """ frame logger """
+        #if self._logger.isEnabledFor(logging_DEBUG):
+        #        self._logger.debug('STOMP %s frame received headers=%s body=%s.' % (frame_type, headers, body))
 
 # counter to give unique thread names
 _thread_id = 0
@@ -104,6 +107,8 @@ def createPublisher(T, server, port, user='', password='', logger=None,
 
     class AsyncStompPublisher(T):
         """Asynchronous asynchronous publisher for sending messages to an MSG server."""
+
+        __slots__ = ('__should_stop', '__sending', '_cx', '_logger', 'idle_timeout', 'backoff_initial', 'backoff_multiplier', 'backoff_max', '_message_queue', '__finalized')
 
         def __init__(self):
             T.__init__(self, name=('AsyncStompPublisher_%s_%s:%s' % (_thread_id, server, port)))
@@ -321,8 +326,8 @@ def createPublisher(T, server, port, user='', password='', logger=None,
 
         def _log(self, level, msg, *args, **kwargs):
             """Log message if logger is defined."""
-            if self._logger is not None:
-                self._logger.log(*((level, msg,) + args), **kwargs)
+            #if self._logger is not None:
+            #    self._logger.log(*((level, msg,) + args), **kwargs)
 
     return AsyncStompPublisher()
 

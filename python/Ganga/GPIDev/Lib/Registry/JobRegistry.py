@@ -81,7 +81,7 @@ class JobRegistry(Registry):
             stripProxy(jt)._setRegistry(self.metadata)
             self.metadata._add(jt)
         self.jobtree = self.metadata[self.metadata.ids()[-1]]
-        self.flush_thread = RegistryFlusher(self)
+        self.flush_thread = RegistryFlusher(self, 'JobRegistryFlusher')
         self.flush_thread.start()
 
     def shutdown(self):
