@@ -6,8 +6,8 @@ import gzip
 import sys
 from contextlib import closing
 from DIRAC.Core.Base.Script import parseCommandLine
-from DIRAC.Interfaces.API.Dirac import Dirac
 parseCommandLine()
+from DIRAC.Interfaces.API.Dirac import Dirac
 dirac=Dirac()
 errmsg=''
 file_name='###UPLOAD_FILE###'
@@ -28,7 +28,7 @@ storage_elements=###SEs###
 
 with closing(open('###LOCATIONSFILE_NAME###','ab')) as locationsfile:
     for se in storage_elements:
-        sys.stdout.write('\nUploading file: \"%s\" as \"%s\" at \"%s\"\n' % (file_name, lfn, se))
+        sys.stdout.write('\\nUploading file: \"%s\" as \"%s\" at \"%s\"\\n' % (file_name, lfn, se))
         try:
             result = dirac.addFile(lfn, file_name, se)
         except Exception as x:
