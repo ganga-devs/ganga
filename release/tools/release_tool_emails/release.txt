@@ -1,0 +1,13 @@
+Hello all,
+
+Ganga *version* release is ready.
+For more information regarding this release please follow the link below:
+http://cern.ch/ganga/release/*version*/reports/html/Release.html
+
+Detailed setup and installation instructions are available at:
+http://cern.ch/ganga/user/installation/
+
+Do not hesitate to contact us if you encounter any problems.
+
+Regards,
+Ganga Developers
