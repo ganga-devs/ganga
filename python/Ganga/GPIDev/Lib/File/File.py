@@ -10,6 +10,9 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
+from Ganga.Core.GangaRepository.VStreamer import to_file, from_file
+from Ganga.Core.GangaRepository.GangaRepositoryXML import safe_save
+from Ganga.GPIDev.Base.Objects import synchronised
 import os
 import shutil
 import uuid
@@ -151,7 +154,7 @@ class ShareDir(GangaObject):
                                      'associated_files': GangaFileItem(defvalue=[], typelist = [str, IGangaFile], doc='A list of files associated with the sharedir')})
 
     _category = 'shareddirs'
-    _exportmethods = ['add', 'ls', 'path', 'remove']
+    _exportmethods = ['add', 'ls', 'path', 'remove', 'addAssociatedFile', 'listAssociatedFiles']
     _name = "ShareDir"
 
     def __init__(self, name=None, subdir=os.curdir):
@@ -296,12 +299,37 @@ class ShareDir(GangaObject):
         file are checked"""
         return self.executable or is_executable(expandfilename(self.name))
 
+    @synchronised
+    def getAssociatedFiles(self):
+        """ Load the list of associated files from the saved XML. This is
+        necessary to keep the list consistent when copying jobs. """
+        if os.path.isfile(os.path.join(self.path(), 'associated_files.xml')):
+            with open(os.path.join(self.path(), 'associated_files.xml'), "r") as fobj:
+                tmpobj, errs = from_file(fobj)
+                self.associated_files = tmpobj
+
+    @synchronised 
+    def addAssociatedFile(self, newFile):
+        """ Add an associated file to the ShareDir. Use this method to save
+        it to theXML """
+        self.getAssociatedFiles()
+        self.associated_files.append(newFile)
+        safe_save(os.path.join(self.path(), 'associated_files.xml'), self.associated_files, to_file)
+
+    @synchronised
     def removeAssociatedFiles(self):
         """ Remove the files in the associated file list"""
+        self.getAssociatedFiles()
         for entry in list(self.associated_files):
             if isinstance(entry, IGangaFile):
                 entry.remove()
         self.associated_files = None
+
+    @synchronised
+    def listAssociatedFiles(self):
+        """ List the associated_files of the ShareDir """
+        self.getAssociatedFiles()
+        return self.associated_files
 
     def remove(self):
         """ Remove the ShareDir and all of its associated files.
