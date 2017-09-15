@@ -32,7 +32,7 @@ _external_packages = {
                      'RUCIO_APPID' : 'ganga',
                      },
 
-    'panda-client' : { 'version' : '0.5.80',
+    'panda-client' : { 'version' : '0.5.91',
                        'syspath':['lib/python2.6/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
@@ -71,6 +71,12 @@ if sys.version_info[0] == 2 and sys.version_info[1] == 7:
     for p in _external_packages['rucio-clients']['syspath']:
         new_paths.append( p.replace('2.6', '2.7') )
     _external_packages['rucio-clients']['syspath'] = new_paths
+
+# if Panda is already setup, use that
+for p in sys.path:
+    if p.find("PandaClient") > -1:
+        del _external_packages['panda-client']
+        break
 
 setup = PackageSetup(_external_packages)
 
