@@ -29,6 +29,8 @@ class AfsTokenInfo(ICredentialInfo):
 
     info_pattern = re.compile(r"^User's \(AFS ID \d*\) tokens for (?P<id>\w*@\S*) \[Expires (?P<expires>.*)\]$", re.MULTILINE)
 
+    __slots__=('shell', 'cache', 'initial_requirements')
+
     def __init__(self, requirements, check_file=False, create=False):
         """
         Args:

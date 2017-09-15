@@ -15,6 +15,8 @@ def synchronised(f):
 
 class GangaThread(Thread):
 
+    __slots__ = ('__should_stop_flag', '__critical', '_lock', 'gangaName')
+
     def __init__(self, name, auto_register=True, critical=True, **kwds):
 
         self.gangaName = str(name)  # want to copy actual not by ref!
@@ -64,3 +66,4 @@ class GangaThread(Thread):
     @synchronised
     def register(self):
         GangaThreadPool.getInstance().addServiceThread(self)
+

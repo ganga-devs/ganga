@@ -70,26 +70,55 @@ def dirac_outputfile_jdl(output_files, empty_SE_check):
     file_SE_dict = {}
 
     for this_file in _output_files:
+        
+        # Group files by destination SE
         if not this_file.defaultSE in file_SE_dict:
-            file_SE_dict[this_file.defaultSE] = []
-        file_SE_dict[this_file.defaultSE].append( this_file.namePattern )
+            file_SE_dict[this_file.defaultSE] = {}
+
+        # Then group them by remoteDir
+        remoteDir = this_file.expandString(this_file.remoteDir)
+        if not remoteDir in file_SE_dict[this_file.defaultSE]:
+            file_SE_dict[this_file.defaultSE][remoteDir] = []
+
+        # Now can construct string to upload the file
+        file_SE_dict[this_file.defaultSE][remoteDir].append(this_file.namePattern)
 
     per_SE_JDL = '''j.setOutputData(###OUTPUTDATA###, outputPath='###OUTPUT_PATH###', outputSE=###OUTPUT_SE###)'''
     total_JDL = ''
 
-    for outputSE, namePatterns in file_SE_dict.iteritems():
+    ganga_defined_output_path = ""
 
-        myLine = str(per_SE_JDL)
-        myLine = myLine.replace('###OUTPUTDATA###', str(namePatterns))
-        if outputSE != '':
-            myLine = myLine.replace('###OUTPUT_SE###', str([outputSE]))
-        else:
-            if empty_SE_check:
-                ## If true check, if not false check
-                raise BackendError("Dirac", "Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
-            myLine = myLine.replace('###OUTPUT_SE###', str([]))
+    if output_files:
+        job = output_files[0].getJobObject()
+        if getConfig('DIRAC')['useGangaPath']:
+            ganga_defined_output_path = 'GangaJob_%s/OutputFiles' % job.getFQID('/')
 
-        total_JDL += myLine + "\n"
+    # Loop over all SE
+    for outputSE, remote_dirs in file_SE_dict.iteritems():
+
+        # Loop over all paths for the LFN
+        for remote_dir, namePatterns in remote_dirs.iteritems():
+
+            myLine = str(per_SE_JDL)
+            myLine = myLine.replace('###OUTPUTDATA###', str(namePatterns))
+            if outputSE != '':
+                myLine = myLine.replace('###OUTPUT_SE###', str([outputSE]))
+            else:
+                if empty_SE_check:
+                    ## If true check, if not false check
+                    raise BackendError("Dirac", "Can't submit a DIRAC job with DiracFile outputfile without setting a defaultSE.")
+                myLine = myLine.replace('###OUTPUT_SE###', str([]))
+
+            relative_path = ''
+            if getConfig('DIRAC')['useGangaPath']:
+                relative_path = ganga_defined_output_path
+
+            if remote_dir:
+                relative_path = remote_dir
+
+            myLine = myLine.replace('###OUTPUT_PATH###', relative_path)
+
+            total_JDL += myLine + "\n"
 
     return total_JDL
 

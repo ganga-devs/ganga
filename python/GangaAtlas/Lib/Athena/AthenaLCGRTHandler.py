@@ -646,10 +646,6 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             #    if incompleteLoc:
             #        raise ApplicationConfigurationError(None,'Job submission failed ! Dataset is incomplete ! Usage of j.inputdata.number_of_files and DQ2JobSplitter is not allowed for incomplete datasets !')
 
-            # Add TAG datasetname
-            if job.inputdata.tagdataset:
-                environment['TAGDATASETNAME'] = ':'.join(job.inputdata.tagdataset)
-
 #       prepare job requirements
         requirementsSoftware = getLCGReleaseTag( app )
 

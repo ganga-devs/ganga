@@ -6,6 +6,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, GangaFileItem
 from Ganga.GPIDev.Base.Proxy import getName
 import Ganga.Utility.logging
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
+from Ganga.GPIDev.Base.Objects import GangaObject
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -96,8 +97,10 @@ class GangaDataset(Dataset):
             elif hasattr(f, 'getFilenameList'):
                 filelist += f.getFilenameList()
             else:
-                logger.warning(
-                    "accessURL or getFilenameList not implemented for File '%s'" % getName(f))
+                if isinstance(f, GangaObject):
+                    logger.warning("accessURL or getFilenameList not implemented for File '%s'" % getName(f))
+                else:
+                    logger.warning("Warning, not sure how to parse file: %s" % str(f))
 
         return filelist
 

@@ -1,6 +1,7 @@
 import os
 import re
 import fnmatch
+import getpass
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
@@ -67,6 +68,7 @@ class DQ2Dataset(Dataset):
 
     _category = 'datasets'
     _name = 'DQ2Dataset'
+
     _exportmethods = ['list_datasets', 'list_contents', 'list_locations', 'list_locations_ce',
                       'list_locations_num_files', 'get_contents', 'get_locations']
 
@@ -79,7 +81,6 @@ class DQ2Dataset(Dataset):
         Returns:
             bool - True if dataset exists, False if not
         """
-
         # do we have a dataset to start with?
         if not self.dataset:
             return False
@@ -1466,21 +1467,28 @@ class DQ2OutputDownloader(MTRunner):
 logger = getLogger()
 
 # New for DQ2 client 2.3.0
-from Ganga.GPIDev.Credentials_old import GridProxy
-gridProxy = GridProxy()
-username_global = gridProxy.identity(safe=True)
-nickname = getNickname(allowMissingNickname=False)
-if nickname:
-    username_global = nickname
-os.environ['RUCIO_ACCOUNT'] = username_global
+#from Ganga.GPIDev.Credentials_old import GridProxy
+#gridProxy = GridProxy()
+#if not gridProxy.isValid():
+#    gridProxy.create()
+
+#username = gridProxy.identity(safe=True)
+# Note: Allow missing nickname as if we can't create a proxy for some reason, we still want to start Ganga
+#nickname = getNickname(allowMissingNickname=True)
+#if nickname:
+#    username = nickname
+os.environ['RUCIO_ACCOUNT'] = getpass.getuser()
+
 logger.debug("Using RUCIO_ACCOUNT = %s " %(os.environ['RUCIO_ACCOUNT'])) 
 
 # Again, if we don't have a valid proxy, don't attempt to create DQ2 object as it will just fail
-if gridProxy.isValid():
-    from dq2.clientapi.DQ2 import DQ2
-    dq2=DQ2(force_backend='rucio')
-else:
-    dq2 = None
+#if gridProxy.isValid():
+#    from dq2.clientapi.DQ2 import DQ2
+#    dq2=DQ2(force_backend='rucio')
+#else:
+#    dq2 = None
+
+dq2 = None
 
 from threading import Lock
 dq2_lock = Lock()

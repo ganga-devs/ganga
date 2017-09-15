@@ -36,6 +36,14 @@ class PrepRegistry(Registry):
     def getProxy(self):
         pass
 
+    def shutdown(self):
+        """
+        This allows us to clean up after the ShareDir on shutdown
+        """
+        if self.shareref:
+            self.shareref.cleanUpOrphans()
+        super(PrepRegistry, self).shutdown()
+
 class ShareRef(GangaObject):
 
     """The shareref table (shared directory reference counter table) provides a mechanism
@@ -49,7 +57,7 @@ class ShareRef(GangaObject):
 
     _category = 'sharerefs'
     _name = 'ShareRef'
-    _exportmethods = ['increase', 'decrease', 'ls', 'printtree', 'rebuild', 'lookup']
+    _exportmethods = ['increase', 'decrease', 'counterVal', 'ls', 'printtree', 'rebuild', 'lookup', 'registerForRemoval']
 
     #_parent = None
     default_registry = 'prep'
@@ -57,7 +65,7 @@ class ShareRef(GangaObject):
     def __init__(self):
         super(ShareRef, self).__init__()
         self.name = {}
-        #self._setRegistry(None)
+        self.removal_list = []
 
     def __setattr__(self, attr, value):
         actual_value = value
@@ -72,34 +80,79 @@ class ShareRef(GangaObject):
         return self.name
 
     @synchronised
+    def registerForRemoval(self, shareddir):
+        """
+        This registers a given directory for removal on the shutdown of Ganga
+        Args:
+            shareddir (str): This is the directory which we intend to remove recursively when ganga shuts down
+        """
+        if shareddir not in self.removal_list:
+            self.removal_list.append(shareddir)
+
+    @synchronised
+    def cleanUpOrphans(self, orphans=None):
+        """
+        This cleans up the orphan share dir objects on shutdown
+        Args:
+            orphans (list): An optional list of the orphans to remove from the list
+        """
+
+        if orphans:
+            to_remove = orphans
+        else:
+            to_remove = self.removal_list
+
+        for shareddir in to_remove:
+            if os.path.exists(os.path.join(getSharedPath(), shareddir)):
+                try:
+                    shutil.rmtree(os.path.join(getSharedPath(), shareddir))
+                except:
+                    logger.error("Failed to remove Orphaned Shared Dir: %s" % shareddir)
+
+        for shareddir in to_remove:
+            if shareddir in self.removal_list:
+                self.removal_list.remove(shareddir)
+
+    @synchronised
+    def counterVal(self, shareddir):
+        """Return the current counter value for the named shareddir"""
+        from Ganga.GPIDev.Lib.File import getSharedPath
+        shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir.name))
+        basedir = os.path.basename(shareddir.name)
+        return self.__getName()[basedir]
+
+    @synchronised
     def increase(self, shareddir, force=False):
         """Increase the reference counter for a given shared directory by 1. If the directory
         doesn't currently have a reference counter, one is initialised with a value of 1.
         The shareddir must exist for a reference counter to be initialised (unless Force=True).
         Sharedir should be given relative to the user's shared directory repository, which can
         be discovered by calling 'shareref'.
+        Args:
+            shareddir (ShareDir): This is the shareddir which we're registering
+            force (bool): Ignore whether the directory exists on disk or not
         """
         logger.debug("running increase() in prepregistry")
         self._getSessionLock()
 
 
         from Ganga.GPIDev.Lib.File import getSharedPath
-        shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
-        basedir = os.path.basename(shareddir)
-        if os.path.isdir(shareddir) and force is False:
+        shareddirname = os.path.join(getSharedPath(), os.path.basename(shareddir.name))
+        basedir = os.path.basename(shareddirname)
+        if os.path.isdir(shareddirname) and force is False:
             if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 1
             else:
                 self.__getName()[basedir] += 1
-        elif not os.path.isdir(shareddir) and force is True and basedir is not '':
+        elif not os.path.isdir(shareddirname) and force is True and basedir is not '':
             if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 1
             else:
                 self.__getName()[basedir] += 1
         else:
-            logger.error('Directory %s does not exist' % shareddir)
+            logger.error('Directory %s does not exist' % shareddirname)
 
         self._setDirty()
         self._releaseSessionLockAndFlush()
@@ -110,12 +163,15 @@ class ShareRef(GangaObject):
         of the counter is 0, the shared object will be removed from the metadata, and the files within
         the shared object directory deleted when Ganga exits. If the optional remove parameter is specified
         the shared directory is removed from the table.
+        Args:
+            shareddir (ShareDir): This is the shared directory object to reduce the counter for
+            remove (int): Effectively used as a bool. Should the directory be removed when the count reaches 0
         """
         self._getSessionLock()
 
         from Ganga.GPIDev.Lib.File import getSharedPath
-        shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
-        basedir = os.path.basename(shareddir)
+        shareddirname = os.path.join(getSharedPath(), os.path.basename(shareddir.name))
+        basedir = os.path.basename(shareddirname)
         # if remove==1, we force the shareref counter to 0
         try:
             if self.__getName()[basedir] > 0:
@@ -125,13 +181,15 @@ class ShareRef(GangaObject):
                     self.__getName()[basedir] -= 1
 
                 if self.__getName()[basedir] is 0:
-                    shutil.rmtree(shareddir, ignore_errors=True)
-                    logger.info("Removed: %s" % shareddir)
+#                    shutil.rmtree(shareddir, ignore_errors=True)
+                    shareddir.remove()
+                    logger.info("Removed: %s" % shareddir.name)
         # if we try to decrease a shareref that doesn't exist, we just set the
         # corresponding shareref to 0
         except KeyError as err:
             logger.debug("KeyError: %s" % err)
             self.__getName()[basedir] = 0
+            self.cleanUpOrphans([basedir,])
 
         self._setDirty()
         self._releaseSessionLockAndFlush()

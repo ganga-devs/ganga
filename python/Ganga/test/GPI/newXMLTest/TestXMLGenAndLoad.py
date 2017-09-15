@@ -25,6 +25,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         from Ganga.GPI import Job, jobs
         j=Job()
         assert len(jobs) == 1
+        j.name = 'modified_name'
 
     def test_b_JobXMLExists(self):
         # Check things exist

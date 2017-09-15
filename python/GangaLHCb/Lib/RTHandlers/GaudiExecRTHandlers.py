@@ -8,7 +8,7 @@ import threading
 import uuid
 import shutil
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -20,6 +20,7 @@ from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostproces
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
+from Ganga.GPIDev.Credentials.CredentialStore import credential_store
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
@@ -32,6 +33,7 @@ from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
 
 logger = getLogger()
 
+_pseudo_session_id = str(uuid.uuid4())
 
 def genDataFiles(job):
     """
@@ -78,8 +80,7 @@ def getScriptName(app):
         app (Job): This is the app object which contains everything useful for generating the code
     """
     job = app.getJobObject()
-
-    return getName(app)+"_Job_"+job.getFQID('.')+'_script.py'
+    return "_".join((getConfig('Configuration')['user'], getName(app), 'Job', job.getFQID('.'), _pseudo_session_id, 'script'))+'.py'
 
 
 def generateWNScript(commandline, app):
@@ -250,9 +251,9 @@ def generateDiracInput(app):
     else:
         prep_dir = app.getSharedPath()
         addTimestampFile(prep_dir)
-        prep_file = prep_dir + '.tgz'
+        prep_file = _pseudo_session_id + '.tgz'
         tmp_dir = tempfile.gettempdir()
-        compressed_file = os.path.join(tmp_dir, '__'+os.path.basename(prep_file))
+        compressed_file = os.path.join(tmp_dir, 'diracInputFiles_'+os.path.basename(prep_file))
 
         if not job.master:
             rjobs = job.subjobs
@@ -268,7 +269,7 @@ def generateDiracInput(app):
     new_df = uploadLocalFile(job, os.path.basename(compressed_file), tmp_dir)
 
     app.uploadedInput = new_df
-
+    app.is_prepared.associated_files.append(DiracFile(lfn = new_df.lfn))
 
 def generateJobScripts(app, appendJobScripts):
     """
@@ -317,6 +318,7 @@ def generateJobScripts(app, appendJobScripts):
                 this_script = os.path.join(tmp_dir, wnScript.name)
                 wnScript.create(this_script)
                 tar_file.add(this_script, arcname=os.path.join(wnScript.subdir, wnScript.name))
+                os.unlink(this_script)
 
     gzipFile(scriptArchive, scriptArchive+'.gz', True)
     app.jobScriptArchive.namePattern = app.jobScriptArchive.namePattern + '.gz'
@@ -336,6 +338,7 @@ def generateDiracScripts(app):
 
     app.jobScriptArchive = new_df
 
+    app.is_prepared.associated_files.append(DiracFile(lfn=new_df.lfn))
 
 def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
@@ -351,6 +354,7 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
 
     new_df = DiracFile(namePattern, localDir=localDir)
+    new_df.credential_requirements=job.backend.credential_requirements
     trySEs = getConfig('DIRAC')['allDiracSE']
     random.shuffle(trySEs)
     new_lfn = os.path.join(getInputFileDir(job), namePattern)
@@ -375,7 +379,16 @@ def getInputFileDir(job):
     """
     Return the LFN remote dirname for this job
     """
-    return os.path.join(DiracFile.diracLFNBase(), 'GangaInputFile/Job_%s' % job.fqid)
+    return os.path.join(DiracFile.diracLFNBase(job.backend.credential_requirements), 'GangaJob_%s/InputFiles' % job.fqid)
+
+
+def check_creds(cred_req):
+    """
+    """
+    try:
+        credential_store[cred_req]
+    except KeyError:
+        credential_store.create(cred_req)
 
 
 class GaudiExecDiracRTHandler(IRuntimeHandler):
@@ -392,6 +405,9 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             appmasterconfig (unknown): Output passed from the application master configuration call
         """
 
+        cred_req = app.getJobObject().backend.credential_requirements
+        check_creds(cred_req)
+
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
 
         # If we are getting the metadata we need to make sure the summary.xml is added to the output sandbox if not there already.
@@ -401,10 +417,16 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         if not isinstance(app.uploadedInput, DiracFile):
             generateDiracInput(app)
-            assert isinstance(app.uploadedInput, DiracFile), "Failed to upload needed file, aborting submit. Tried to upload to: %s\nIf your Ganga installation is not at CERN your username may be trying to create a non-existent LFN. Try setting the 'DIRAC' configuration 'DiracLFNBase' to your grid user path.\n" % DiracFile.diracLFNBase()
+            try:
+                assert isinstance(app.uploadedInput, DiracFile)
+            except AssertionError:
+                raise ApplicationPrepareError("Failed to upload needed file, aborting submit. Tried to upload to: %s\nIf your Ganga installation is not at CERN your username may be trying to create a non-existent LFN. Try setting the 'DIRAC' configuration 'DiracLFNBase' to your grid user path.\n" % DiracFile.diracLFNBase(cred_req))
         
         rep_data = app.uploadedInput.getReplicas()
-        assert rep_data != {}, "Failed to find a replica, aborting submit"
+        try:
+            assert rep_data != {}
+        except AssertionError:
+            raise ApplicationPrepareError("Failed to find a replica of uploaded file, aborting submit")
 
 
         if isinstance(app.jobScriptArchive, (DiracFile, LocalFile)):
@@ -412,9 +434,15 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
 
         generateDiracScripts(app)
 
-        assert isinstance(app.jobScriptArchive, DiracFile), "Failed to upload needed file, aborting submit"
+        try:
+            assert isinstance(app.jobScriptArchive, DiracFile)
+        except AssertionError:
+            raise ApplicationPrepareError("Failed to upload needed file, aborting submit")
         rep_data = app.jobScriptArchive.getReplicas()
-        assert rep_data != {}, "Failed to find a replica, aborting submit"
+        try:
+            assert rep_data != {}
+        except AssertionError:
+            raise ApplicationPrepareError("Failed to find a replica, aborting submit")
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
@@ -428,6 +456,8 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             appmasterconfig (unknown): Output passed from the application master_configure call
             jobmasterconfig (tuple): Output from the master job prepare step
         """
+        cred_req = app.getJobObject().backend.credential_requirements
+        check_creds(cred_req)
 
         # NB this needs to be removed safely
         # Get the inputdata and input/output sandbox in a sorted way
@@ -584,6 +614,7 @@ if __name__ == '__main__':
     print("#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#")
     print("")
 
+    print("CWD: %s" % getcwd())
     print("Files found on WN: %s" % (listdir('.')))
 
     # Extract any/_all_ (b/g)zip files on the WN

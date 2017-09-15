@@ -716,31 +716,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     finp.prodDBlockToken = 'local'
                     
                 jspec.addFile(finp)
-
-            if job.inputdata.tag_info and not job.inputdata.use_cvmfs_tag:
-                # add the TAG files
-                tag_files = job.inputdata.tag_info.keys()
-                tag_guids = []
-                for tf in job.inputdata.tag_info.keys():
-                    tag_guids.append( job.inputdata.tag_info[tf]['guid'] )
-                    
-                for guid, lfn in zip(tag_guids,tag_files):
-                    finp = FileSpec()
-                    finp.lfn            = lfn
-                    finp.GUID           = guid
-                    #            finp.fsize =
-                    #            finp.md5sum =
-                    finp.dataset        = job.inputdata.tag_info[lfn]['dataset']  #job.inputdata.tagdataset[0]
-                    finp.prodDBlock     = job.inputdata.tag_info[lfn]['dataset'] #job.inputdata.tagdataset[0]
-                    finp.dispatchDBlock = job.inputdata.tag_info[lfn]['dataset'] #job.inputdata.tagdataset[0]
-                    finp.type           = 'input'
-                    finp.status         = 'ready'
-
-                    if job.backend.forcestaged:
-                        finp.prodDBlockToken = 'local'
-                        
-                    jspec.addFile(finp)
-                    
+                
 #       output files
         outMap = {}
         AthenaUtils.convertConfToOutputOld(self.runConfig,jspec,outMap,job.backend.individualOutDS,self.extOutFile,masterjob.outputdata.datasetname)
@@ -880,11 +856,6 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if app.atlas_exetype in ['TRF']:
             tmpJobO = app.options
 
-            # sort out TAG use for exe types other than just athena
-            if self.inputdatatype == 'DQ2' and (len(job.inputdata.tagdataset) != 0 or job.inputdata.tag_info):
-                tmpJobO = tmpJobO.replace("%IN", "$MY_INPUT_FILES")
-                tmpJobO = "echo -e \"from commands import getstatusoutput\\nrc,o=getstatusoutput('ls pre_*-????-*-*-*.py')\\n__import__(o.split()[0][:-3])\\nfrom AthenaCommon.AthenaCommonFlags import athenaCommonFlags\\nopen('__input_files.txt', 'w').write(','.join(athenaCommonFlags.FilesInput() ))\" > __my_conv.py ; python __my_conv.py ; export MY_INPUT_FILES=`cat __input_files.txt` ; " + tmpJobO
-                
             # output
             tmpOutMap = []
             for tmpName,tmpLFN in outMap['IROOT']:

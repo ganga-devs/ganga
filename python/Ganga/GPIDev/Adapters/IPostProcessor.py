@@ -29,6 +29,8 @@ class IPostProcessor(GangaObject):
     success = True
     failure = False
 
+    __slots__ = list()
+
     def __init__(self):
         super(IPostProcessor, self).__init__()
 
@@ -54,6 +56,8 @@ class MultiPostProcessor(IPostProcessor):
     _schema = Schema(Version(1, 0), {
         'process_objects': ComponentItem('postprocessor', defvalue=[], hidden=1, doc='A list of Processors to run', sequence=1)
     })
+
+    __slots__ = list()
 
     def __init__(self, *args):
         super(MultiPostProcessor, self).__init__()

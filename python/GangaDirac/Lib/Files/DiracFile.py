@@ -22,7 +22,7 @@ from Ganga.GPIDev.Credentials import require_credential
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy, DiracProxyInfo
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-config = getConfig('Configuration')
+from GangaDirac.Lib.Backends.DiracUtils import getAccessURLs
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
@@ -35,6 +35,99 @@ class DiracFile(IGangaFile):
 
     """
     File stored on a DIRAC storage element
+
+    Usage:
+
+        Some common use cases:
+
+        1) Uploading a file and sending jobs to run over it
+        2) Uploading a file to be sent to where your jobs are running
+        3) Uploading and removing a file
+        4) Removing an existing file from Dirac storage
+        5) Change the path of LFN produced by a ganga job.
+        6) Accessing a (potentially remote) file known to Dirac through an LFN
+
+
+    1)
+        To upload a file and submit a job to use it as inputdata:
+
+        df = DiracFile('/path/to/some/local/file')
+        df.put()
+
+        j=Job( ... )
+        j.inputdata=[df.lfn]
+
+        (The file is now accessible via data.py at the site)
+
+    2)
+        To upload a file and make it available on a workernode:
+
+        df = DiracFile('/path/to/some/local/file')
+        df.put('CERN-USER')
+
+        j=Job( ... )
+        j.inputfiles = [df]
+        j.submit()
+
+    3)
+        To upload and then remove a file:
+
+        df = DiracFile('/path/to/some/local/file')
+        df.put()
+        df.remove()
+
+    4)
+        To remove an existing file already in Dirac storage
+        
+        df = DiracFile('LFN:/some/lfn/path')
+        df.remove()
+
+        or:
+
+        df = DiracFile(lfn='/some/lfn/path')
+        df.remove()
+
+    5)
+        To change an LFN path structure which is produced by Ganga:
+
+        j=Job( ... )
+        j.outputfiles=[DiracFile('myAwesomeLFN.ext', remoteDir='myPath_{jid}_{sjid}')]
+        j.submit()
+
+        This will produce LFN similar to:
+
+        /lhcb/user/<u>/<user>/myPath_1_2/2017_01/123456/123456789/myAwesomeLFN.ext
+
+        Other possibilities may look like:
+
+        j.outputfiles=[DiracFile('myData.ext', remoteDir='myProject/job{jid}_sj{sjid}')]
+         =>
+           /lhcb/user/<u>/<user>/myProject/job1_sj2/2017_01/123456/123456789/myData.ext
+        
+        j.outputfiles=[DiracFile('myData.ext', remoteDir='myProject')]
+         =>
+           /lhcb/user/<u>/<user>/myProject/2017_01/123456/123456789/myData.ext
+        
+
+        Alternatively you may change in your .gangarc:
+        [DIRAC]
+        useGangaPath=True
+
+        This will give you LFN like:
+
+        /lhcb/user/<u>/<user>/GangaJob_13/OutputFiles/2017_01/123456/123456789/myFile.ext
+
+        for all future jobs while this is in your .gangarc config.
+
+    6)
+        Accessing a (potentially remote) file locally known to DIRAC:
+
+        df = DiracFile(lfn='/some/lfn/path')
+        ganga_path = df.accessURL()
+        **exit ganga**
+
+        root ganga_path # to stream a file over xrootd://
+
     """
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
                                      'localDir': SimpleItem(defvalue=None, copyable=1, typelist=['str', 'type(None)'],
@@ -47,7 +140,7 @@ class DiracFile(IGangaFile):
                                                        doc='return the logical file name/set the logical file name to use if not '
                                                        'using wildcards in namePattern'),
                                      'remoteDir': SimpleItem(defvalue="", doc='remote directory where the LFN is to be placed within '
-                                                             'the dirac base directory by the put method.'),
+                                                             'this is the relative path of the LFN which is put between the user LFN base and the filename.'),
                                      'guid': SimpleItem(defvalue='', copyable=1, typelist=['str'],
                                                         doc='return the GUID/set the GUID to use if not using wildcards in the namePattern.'),
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], sequence=1, copyable=0,  # hidden=1,
@@ -64,9 +157,8 @@ class DiracFile(IGangaFile):
     _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove',
                       "replicate", 'put', 'locations', 'location', 'accessURL',
                       '_updateRemoteURLs', 'hasMatchedFiles']
-    _remoteURLs = {}
-    _storedReplicas = {}
-    _have_copied = False
+
+    _additional_slots = ['_have_copied', '_remoteURLs', '_storedReplicas']
 
     def __init__(self, namePattern='', localDir=None, lfn='', remoteDir=None, **kwds):
         """
@@ -83,6 +175,10 @@ class DiracFile(IGangaFile):
         if remoteDir is not None:
             self.remoteDir = remoteDir
 
+        self._have_copied = False
+        self._remoteURLs = {}
+        self._storedReplicas = {}
+
     def __setattr__(self, attr, value):
         """
         This is an overloaded setter method to make sure that we're auto-expanding the filenames of files which exist.
@@ -93,8 +189,7 @@ class DiracFile(IGangaFile):
         """
         actual_value = value
         if attr == "namePattern":
-            actual_value = os.path.basename(value)
-            this_dir = os.path.dirname(value)
+            this_dir, actual_value = os.path.split(value)
             if this_dir:
                 self.localDir = this_dir
         elif attr == 'localDir':
@@ -110,18 +205,14 @@ class DiracFile(IGangaFile):
         if value != "" and value is not None:
             #   Do some checking of the filenames in a subprocess
             if name == 'lfn':
-                self.namePattern = os.path.basename(value)
-                if os.path.dirname(value):
-                    self.remoteDir = os.path.dirname(value)
+                this_dir, self.namePattern = os.path.split(value)
+                if this_dir:
+                    self.remoteDir = this_dir
                 return value
 
-            elif name == 'remoteDir':
-                if self.lfn != os.path.join(value, self.namePattern):
-                    self.lfn = os.path.join(value, self.namePattern)
-
             elif name == 'namePattern':
-                self.localDir = os.path.dirname(value)
-                return os.path.basename(value)
+                self.localDir, this_name = os.path.split(value)
+                return this_name
 
             elif name == 'localDir':
                 if value:
@@ -169,20 +260,20 @@ class DiracFile(IGangaFile):
         # Attempt to spend too long loading un-needed objects into memory in
         # order to read job status
         if name is 'lfn':
-            if self.lfn == "":
+            if not self.lfn:
                 logger.warning("Do NOT have an LFN, for file: %s" % self.namePattern)
                 logger.warning("If file exists locally try first using the method put()")
             return object.__getattribute__(self, 'lfn')
         elif name in ['guid', 'locations']:
             if configDirac['DiracFileAutoGet']:
                 if name is 'guid':
-                    if self.guid is None or self.guid == '':
-                        if self.lfn != "":
+                    if self.guid:
+                        if self.lfn:
                             self.getMetadata()
                             return object.__getattribute__(self, 'guid')
-                if name is 'locations':
+                elif name is 'locations':
                     if self.locations == []:
-                        if self.lfn != "":
+                        if self.lfn:
                             self.getMetadata()
                             return object.__getattribute__(self, 'locations')
 
@@ -197,7 +288,7 @@ class DiracFile(IGangaFile):
         """
         Returns the subfiles for this instance
         """
-        if self.lfn == '':
+        if self.lfn:
             self.setLocation()
         return self.subfiles
 
@@ -474,14 +565,13 @@ class DiracFile(IGangaFile):
         return a random one from all the replicas. Also use the specified protocol - if none then use 
         the default. 
         """
-        from GangaDirac.Lib.Backends.DiracUtils import getAccessURLs
         lfns = []
         if len(self.subfiles) == 0:
             lfns.append(self.lfn)
         else:
             for i in self.subfiles:
                 lfns.append(i.lfn)
-        return getAccessURLs(lfns, thisSE, protocol)
+        return getAccessURLs(lfns, thisSE, protocol, self.credential_requirements)
 
     @require_credential
     def internalCopyTo(self, targetPath):
@@ -614,17 +704,15 @@ class DiracFile(IGangaFile):
         if not self.remoteDir:
             try:
                 job = self.getJobObject()
-                lfn_folder = os.path.join("GangaUploadedFiles", "GangaJob_%s" % job.getFQID('.'))
+                lfn_folder = os.path.join("GangaJob_%s" % job.getFQID('/'), "OutputFiles")
             except AssertionError:
                 t = datetime.datetime.now()
                 this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-                lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
-            self.lfn = os.path.join(DiracFile.diracLFNBase(), lfn_folder, self.namePattern)
+                lfn_folder = os.path.join('GangaFiles_%s' % this_date)
+            lfn_base = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), lfn_folder)
 
-        if self.remoteDir[:4] == 'LFN:':
-            lfn_base = self.remoteDir[4:]
         else:
-            lfn_base = self.remoteDir
+            lfn_base = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), self.remoteDir)
 
         if uploadSE == "":
             if self.defaultSE != "":
@@ -656,12 +744,7 @@ class DiracFile(IGangaFile):
                     if not os.path.exists(name):
                         raise GangaFileError('File "%s" must exist!' % name)
 
-            if not lfn or not lfn.startswith(DiracFile.diracLFNBase()):
-                if not lfn:
-                    name = os.path.basename(name)
-                lfn = os.path.join(DiracFile.diracLFNBase(), name)
-
-            #lfn = os.path.join(os.path.dirname(self.lfn), this_file)
+            lfn = os.path.join(lfn_base, os.path.basename(this_file))
 
             d = DiracFile()
             d.namePattern = os.path.basename(name)
@@ -757,7 +840,7 @@ subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=Tru
         return script
 
     def _getDiracEnvStr(self):
-        diracEnv = str(getDiracEnv())
+        diracEnv = str(getDiracEnv(self.credential_requirements.dirac_env))
         return diracEnv
 
     def _WN_wildcard_script(self, namePattern, lfnBase, compressed):
@@ -792,20 +875,15 @@ for f in glob.glob('###NAME_PATTERN###'):
         if not self.remoteDir:
             try:
                 job = self.getJobObject()
-                lfn_folder = os.path.join("GangaUploadedFiles", "GangaJob_%s" % job.getFQID('.'))
+                lfn_folder = os.path.join("GangaJob_%s" % job.getFQID('.'), "OutputFiles")
             except AssertionError:
                 t = datetime.datetime.now()
                 this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-                lfn_folder = os.path.join("GangaUploadedFiles", 'GangaFiles_%s' % this_date)
-            self.lfn = os.path.join(DiracFile.diracLFNBase(), lfn_folder, self.namePattern)
-
-        if self.remoteDir == '':
-            self.remoteDir = DiracFile.diracLFNBase()
-
-        if self.remoteDir[:4] == 'LFN:':
-            lfn_base = self.remoteDir[4:]
+                lfn_folder = os.path.join('GangaFiles_%s' % this_date)
+            lfn_base = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), lfn_folder)
         else:
-            lfn_base = self.remoteDir
+            lfn_base = oa.path.join(DiracFile.diracLFNBase(self.credential_requirements), self.remoteDir)
+
 
         for this_file in outputFiles:
             isCompressed = this_file.namePattern in patternsToZip
@@ -850,15 +928,18 @@ for f in glob.glob('###NAME_PATTERN###'):
             return False
 
     @staticmethod
-    def diracLFNBase():
+    def diracLFNBase(credential_requirements):
         """
         Compute a sensible default LFN base name
         If ``DiracLFNBase`` has been defined, use that.
         Otherwise, construct one from the user name and the user VO
+        Args:
+            credential_requirements (DiracProxy): This is the credential which governs how we should format the path
         """
         if configDirac['DiracLFNBase']:
             return configDirac['DiracLFNBase']
-        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], DiracProxyInfo(DiracProxy()).username[0], DiracProxyInfo(DiracProxy()).username)
+        user = DiracProxyInfo(credential_requirements).username
+        return '/{0}/user/{1}/{2}'.format(configDirac['userVO'], user[0], user)
 
 # add DiracFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate DiracFile() objects via config file)

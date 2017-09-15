@@ -19,6 +19,8 @@ class PluginManagerError(GangaValueError):
 
 class PluginManager(object):
 
+    __slots__ = ('all_dict', 'first', '_prev_found')
+
     def __init__(self):
         self.all_dict = {}
         self.first = {}

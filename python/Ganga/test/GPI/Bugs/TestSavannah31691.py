@@ -19,9 +19,16 @@ class TestSavannah31691(GangaUnitTest):
         for i in range(5):
             Job()
 
-        self.assertEqual(len(os.listdir(localDir)), 5)
+        dir_list = os.listdir(localDir)
+        for i in range(5):
+            assert str(i) in dir_list
 
         # Delete job 0, then try again to list content of local workspace
         jobs(0).remove()
 
-        self.assertEqual(len(os.listdir(localDir)), 4)
+        dir_list = os.listdir(localDir)
+        for i in range(1, 5):
+            assert str(i) in dir_list
+
+        assert '0' not in dir_list
+
