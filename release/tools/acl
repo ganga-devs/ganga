@@ -1,0 +1,50 @@
+#!/usr/bin/env python2
+#-*- python -*-
+
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: acl,v 1.1 2008-07-17 16:41:39 moscicki Exp $
+################################################################################
+
+import os,sys
+
+def usage():
+    print ''' Change recursively AFS ACL rights on a given directory (default is .)
+    acl protect [dir]  - write protected for all
+    acl public [dir]   - make readible by all
+    acl ganga [dir]    - make writable by ganga team
+    '''
+    sys.exit(2)
+
+try:
+    cmd = sys.argv[1]
+except IndexError:
+    usage()
+
+dir = '.'
+try:
+    dir = sys.argv[2]
+except IndexError:
+    pass
+
+
+cmds = { 'protect': ['find %s -type d -exec fs setacl -dir {} -clear -acl system:anyuser rl \;'],
+         'public': ['find %s -type d -exec fs setacl -dir {} -acl system:anyuser rl \;'],
+         'ganga' : ['find %s -type d -exec fs setacl -dir {} -acl ganga_group:dev rldiwk \;',
+                    'find %s -type d -exec fs setacl -dir {} -acl ganga_group:admin rldiwka \;']
+         }
+
+try:
+    sc = cmds[cmd]
+except KeyError:
+    print 'unknown command',c
+    usage()
+
+print '"'+dir+'"','=>',cmd.upper()
+
+for c in sc:
+    c = c%dir
+    print c
+    os.system(c)
+    
