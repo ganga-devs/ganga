@@ -269,7 +269,7 @@ def generateDiracInput(app):
     new_df = uploadLocalFile(job, os.path.basename(compressed_file), tmp_dir)
 
     app.uploadedInput = new_df
-    app.is_prepared.associated_files.append(DiracFile(lfn = new_df.lfn))
+    app.is_prepared.addAssociatedFile(DiracFile(lfn = new_df.lfn))
 
 def generateJobScripts(app, appendJobScripts):
     """
@@ -338,7 +338,7 @@ def generateDiracScripts(app):
 
     app.jobScriptArchive = new_df
 
-    app.is_prepared.associated_files.append(DiracFile(lfn=new_df.lfn))
+    app.is_prepared.addAssociatedFile(DiracFile(lfn=new_df.lfn))
 
 def uploadLocalFile(job, namePattern, localDir, should_del=True):
     """
@@ -414,6 +414,11 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         if app.getMetadata and not 'summary.xml' in outputsandbox:
             outputsandbox += ['summary.xml']
 
+        # Check a previously uploaded input is there in case of a job copy
+        if isinstance(app.uploadedInput, DiracFile):
+            if app.uploadedInput.getReplicas() == {}:
+                app.uploadedInput = None
+                logger.info("Previously uploaded cmake target missing from Dirac. Uploading it again.")
 
         if not isinstance(app.uploadedInput, DiracFile):
             generateDiracInput(app)
