@@ -29,9 +29,14 @@ from Ganga.Lib.Mergers.Merger import *
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir, File
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, GPIProxyObject
-
-from pandatools import AthenaUtils
 from Ganga.Utility.Plugin import allPlugins
+
+# importing pandatools can fail for no obvious reason
+try:
+    from pandatools import AthenaUtils
+except:
+    logger.error("Problems loading the pandatools library. Try setting up Panda before running Ganga using 'lsetup panda'")
+    raise
 
 def mktemp(extension,name,path):
     """Create a unique file"""

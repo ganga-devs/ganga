@@ -1,0 +1,71 @@
+#!/bin/bash
+
+if [ -z $1 ]
+then
+    echo Usage: $0 Ganga-X-Y-Z
+    exit
+fi
+
+VERSION=$1
+BASEDIR=`mktemp -d`
+SVNURL=svn+ssh://svn.cern.ch/reps/ganga
+
+cd $BASEDIR
+echo Working dir: `pwd`
+echo Checking out release: svn co $SVNURL/tags/$1
+svn co $SVNURL/tags/$1
+cd $1
+
+echo Looking in `pwd` for files to change:
+find . -path '*/.svn' -prune -o -type f -exec grep -H '\$Name: not supported by cvs2svn \$' {} \;
+find . -path '*/.svn' -prune -o -type f -exec grep -H '\$Name: Ganga-SVN \$' {} \;
+
+echo Is it OK to modify these files??
+OPTIONS="Yes No"
+select opt in $OPTIONS; do
+    if [ "$opt" = "Yes" ]; then
+        echo proceeding...
+        break
+    elif [ "$opt" = "No" ]; then
+        echo Bailing out...
+        exit
+    else
+        echo bad option
+    fi
+done
+
+echo Setting version string
+find . -path '*/.svn' -prune -o -type f -exec sed -i 's/\$Name: not supported by cvs2svn \$/\$Name: '$1' \$/g' {} \;
+find . -path '*/.svn' -prune -o -type f -exec sed -i 's/\$Name: Ganga-SVN \$/\$Name: '$1' \$/g' {} \;
+
+echo svn diff:
+svn diff --diff-cmd diff -x '-U0'
+
+echo Is it OK to commit these files to the branch??
+OPTIONS="Yes No"
+select opt in $OPTIONS; do
+    if [ "$opt" = "Yes" ]; then
+        echo Committing changes to the version branch
+        svn commit -m"Set release string"
+        break
+    elif [ "$opt" = "No" ]; then
+        break
+    else
+        echo bad option
+    fi
+done
+
+echo Is it OK to remove $BASEDIR ??
+OPTIONS="Yes No"
+select opt in $OPTIONS; do
+    if [ "$opt" = "Yes" ]; then
+        echo proceeding...
+	rm -rf $BASEDIR
+        break
+    elif [ "$opt" = "No" ]; then
+        echo Bailing out...
+        exit
+    else
+        echo bad option
+    fi
+done

@@ -1,0 +1,152 @@
+#!/usr/bin/env python2
+#-*-python-*-
+
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: ganga-guess,v 1.2 2009-02-05 07:28:24 gangage Exp $
+################################################################################
+
+import os.path, sys, os
+
+def usage(error=None):
+    print >> sys.stderr, ''' synopsis: ganga-guess.py SHELL [VERSION] [PLATFORM]
+    SHELL: -csh, -sh : print shell setup commands (to be used with eval or source)
+           -dir      : print the release directory only
+    If VERSION is not given then user will be prompted interactively
+    '''
+    if error:
+        print
+        print 'ERROR:',error
+        sys.exit(2)
+    
+# defaults if no command line arguments...
+prefixStr = '/afs/cern.ch/sw/ganga/install'
+versionStr = None
+platfStr = 'slc4_ia32_gcc34'
+compStr = None
+
+if len(sys.argv) < 2:
+    usage("Please provide -csh or -sh option to select your shell flavour...")
+
+shellStr = sys.argv[1]
+
+if not shellStr in ('-csh','-sh','-dir'):
+    usage("Unrecognized shell type. Please provide -csh or -sh or -dir option to select your shell flavour...")
+
+shellStr = shellStr[1:]
+
+if shellStr == 'dir':
+    print '%s/%s/%s' % (prefixStr,platfStr,versionStr)
+    sys.exit(0)
+
+# override version if provided at command line
+if len(sys.argv) > 2:
+    versionStr = sys.argv[2]
+else:
+    print >> sys.stderr, 'Setting Ganga environment:'
+    
+    import fnmatch
+    ls = os.listdir('%s/%s'%(prefixStr,platfStr))
+    ls = [n for n in ls if fnmatch.fnmatch(n, '?.?.?*')]
+
+    #ls.append('4.1.0-hotfix1')
+
+    def stoi(i):
+	"Cast string to integer whenever is possible"
+        try:
+	    return int(i)
+	except ValueError:
+    	    return i
+    
+    def cmpver(a, b):
+	"Compare x.y.z versions numerically" 	
+	import re
+	a = map(stoi, re.findall("\d+|\w+", a))
+	b = map(stoi, re.findall("\d+|\w+", b))
+	return cmp(a, b) # -1 if a<b, 0 if a=b, 1 if a>b
+    
+    # make 4.0.0 appear AFTER 4.0.0-beta5 : 4.0.0 > 4.0.0-beta5
+    def relcmp(x,y):
+        tags = ['beta','alpha'] #'hotfix'
+
+        xt = x.split('-')
+        yt = y.split('-')
+
+        if xt[0] != yt[0]:
+            return cmpver(xt[0],yt[0])
+
+        if len(xt)==1 and len(yt) == 1: return 0
+
+        if len(xt)==1: return 1
+        if len(yt)==1: return -1
+
+        return cmp(xt[1],yt[1])
+
+    ls.sort(relcmp)
+    for d in ls:
+        print >> sys.stderr, ' ', d
+
+    defaultVer = ls[-1]
+    
+    for i in range(len(ls)):
+        defaultVer = ls[-i-1]
+        if defaultVer.find('beta')==-1 and defaultVer.find('alpha')==-1:
+            break
+    
+    while not versionStr:
+        print >> sys.stderr, 'Enter your choice [q]quit, [%s] : '%defaultVer,
+        try:
+            choice = raw_input()
+        except EOFError:
+            print
+            sys.exit(1)
+        if not choice:
+            versionStr = defaultVer
+        if choice.upper() == 'Q':
+            sys.exit(1)
+        if choice in ls:
+            versionStr = choice
+
+print >> sys.stderr
+print >> sys.stderr,'Setting up Ganga ',versionStr,platfStr,'('+shellStr+')'
+
+    
+setupcmds = { 'sh': """export PATH=%(PATH)s ; export GANGA_CONFIG_PATH=/afs/cern.ch/sw/ganga/install/config/GangaLHCb.ini:GangaLHCb/LHCb.ini
+""",
+              'csh': """setenv PATH %(PATH)s ; setenv GANGA_CONFIG_PATH /afs/cern.ch/sw/ganga/install/config/GangaLHCb.ini:GangaLHCb/LHCb.ini
+"""
+              }
+# if versionStr contains hotfix: strip the hotfix part (use public release) and replace GANGA_CONFIG_PATH=GangaLHCb/LHCb.ini by an absolute path to your hotfix configuration file
+
+def prepend_search_path(p,dir,prefix):
+    """ Prepend dir to path removing duplicates if necessery (also from previous versions) based on the prefix.
+    """
+    newpath = ""
+    matched = 0
+    for d in p.split(':'):
+        if newpath: newpath += ':'
+        if d.find(prefix) != -1:
+            newpath += dir
+            matched = 1
+        else:
+            newpath += d
+    if not matched:
+        if newpath: newpath = dir+':'+newpath
+        else:
+            newpath = dir
+    return newpath
+
+vars = {'PATH': prepend_search_path(os.environ['PATH'],'%s/%s/%s/bin' % (prefixStr,platfStr,versionStr),prefixStr) }
+
+print setupcmds[shellStr]%vars
+
+def test():
+    p = '/afs/cern.ch/sw/ganga/install/rh73_gcc32/2.0.3/bin:/afs/cern.ch/sw/Gaudi/www/ganga/sw/install/bin:/home/moscicki/bin:/home/moscicki/scripts:/usr/sue/bin:/usr/bin:/bin:/usr/bin/X11:/usr/local/bin:/usr/local/bin/X11:/cern/pro/bin:.'
+    print prepend_search_path(p,'x','/afs/cern.ch/sw/ganga')
+    
+    p = 'c:d/x:/afs/cern.ch/sw/ganga/install/rh73_gcc32/2.0.3/bin:/afs/cern.ch/sw/Gaudi/www/ganga/sw/install/bin:/home/moscicki/bin:/home/moscicki/scripts:/usr/sue/bin:/usr/bin:/bin:/usr/bin/X11:/usr/local/bin:/usr/local/bin/X11:/cern/pro/bin:.'
+    print prepend_search_path(p,'x','/afs/cern.ch/sw/ganga')
+
+    print prepend_search_path('','x','/afs/cern.ch/sw/ganga')
+    print prepend_search_path('a:b:c','x','/afs/cern.ch/sw/ganga')    
