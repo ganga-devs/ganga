@@ -11,7 +11,7 @@ import sys
 
 import Ganga.Core.FileWorkspace
 from Ganga.GPIDev.MonitoringServices import getMonitoringObject
-from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError, TypeMismatchError
+from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError, TypeMismatchError, SplitterError
 from Ganga.Core import Sandbox
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
@@ -1755,9 +1755,9 @@ class Job(GangaObject):
                 # decrement the reference counter.
                 if hasattr(self.application, 'is_prepared') and self.application.__getattribute__('is_prepared'):
                     if self.application.is_prepared is not True:
-                        self.application.decrementShareCounter(self.application.is_prepared.name)
+                        self.application.decrementShareCounter(self.application.is_prepared)
                         for _ in self.subjobs:
-                            self.application.decrementShareCounter(self.application.is_prepared.name)
+                            self.application.decrementShareCounter(self.application.is_prepared)
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")

@@ -30,7 +30,6 @@ from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampConten
 
 logger = getLogger()
 
-
 def gaudiExecBuildLock(f):
     """ Method used to lock the build methods in GaudiExec so we don't run multiple builds in parallel.
     This is because each new build destorys the target.
@@ -194,7 +193,7 @@ class GaudiExec(IPrepareApp):
         """
         logger.debug('Running unprepare in GaudiExec app')
         if self.is_prepared is not None:
-            self.decrementShareCounter(self.is_prepared.name)
+            self.decrementShareCounter(self.is_prepared)
             self.is_prepared = None
         self.hash = None
         self.uploadedInput = None
@@ -354,7 +353,6 @@ class GaudiExec(IPrepareApp):
         dir_name = self.directory
         return (None, None)
 
-
     def getOptsFiles(self):
         """
         This function returns a sanitized absolute path to the self.options file from user input
@@ -375,7 +373,6 @@ class GaudiExec(IPrepareApp):
             return self.options
         else:
             raise ApplicationConfigurationError("No options (as options files or extra options) has been specified. Please provide some.")
-
 
     def getEnvScript(self):
         """
@@ -484,7 +481,8 @@ class GaudiExec(IPrepareApp):
 
     def postprocess(self):
         from GangaLHCb.Lib.Applications import XMLPostProcessor
-        XMLPostProcessor.GaudiExecPostProcess(self, logger)
+        if self.getMetadata:
+            XMLPostProcessor.GaudiExecPostProcess(self, logger)
 
     def getenv(self, cache_env=False):
         """
