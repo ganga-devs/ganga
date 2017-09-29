@@ -275,7 +275,7 @@ class DiracBase(IBackend):
                     masterScript += sjScript
 
                 masterScript += '\noutput(resultdict)\n'
-                dirac_script_filename = '/afs/cern.ch/user/m/masmith/mytest_dirac-script-%s.py' % i
+                dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(),'dirac-script-%s.py') % i
                 with open(dirac_script_filename, 'w') as f:
                     f.write(masterScript)
                 getQueues()._monitoring_threadpool.add_function(self._hyperspeed_submit, (dirac_script_filename))
@@ -307,7 +307,7 @@ class DiracBase(IBackend):
             masterScript += sjScript
 
         masterScript += '\noutput(resultdict)\n'
-        dirac_script_filename = '/afs/cern.ch/user/m/masmith/mytest_dirac-script.py'
+        dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(), 'dirac-script.py')
         with open(dirac_script_filename, 'w') as f:
             f.write(masterScript)
 
