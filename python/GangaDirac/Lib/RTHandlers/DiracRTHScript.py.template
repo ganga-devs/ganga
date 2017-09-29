@@ -28,4 +28,6 @@ j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
 # submit the job to dirac
 j.setPlatform( 'ANY' )
 result = dirac.submit(j)
-output(result)
+#output(result)
+diracid = result['Value']
+resultdict.update({sjNo : diracid})

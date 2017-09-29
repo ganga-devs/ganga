@@ -92,6 +92,8 @@ if not _after_bootstrap:
     configDirac.addOption('proxyInitCmd', 'dirac-proxy-init', 'Configurable which sets the default proxy init command for DIRAC')
     configDirac.addOption('proxyInfoCmd', 'dirac-proxy-info', 'Configurable which sets the default proxy init command for DIRAC')
 
+    configDirac.addOption('maxSubjobsPerProcess', 500, 'Set the maximum number of subjobs to be submitted per process.')
+
 def standardSetup():
 
     import PACKAGE

@@ -9,6 +9,7 @@ import time
 import datetime
 import shutil
 import tempfile
+import math
 from collections import defaultdict
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
@@ -28,7 +29,7 @@ from Ganga.Core import monitoring_component
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
-
+from Ganga.Utility.logic import implies
 
 class DiracBase(IBackend):
 
@@ -95,6 +96,8 @@ class DiracBase(IBackend):
         'settings': SimpleItem(defvalue={'CPUTime': 2 * 86400},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
+        'hyperspeed_submit' : SimpleItem(defvalue=True, 
+                               doc='Shall we use the experimental hyperspeed submission?'),
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
                       'getOutputDataLFNs', 'getOutputDataAccessURLs', 'peek', 'reset', 'debug']
@@ -154,7 +157,8 @@ class DiracBase(IBackend):
         dirac_cmd = """execfile(\'%s\')""" % dirac_script
 
         try:
-            result = execute(dirac_cmd, cred_req=self.credential_requirements)
+            result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True)
+            print result
         except GangaDiracError as err:
 
             err_msg = 'Error submitting job to Dirac: %s' % str(err)
@@ -178,6 +182,138 @@ class DiracBase(IBackend):
         Args:
             subjobcofig (unknown): This is the config for this subjob (I think)'''
         return []
+
+    @require_credential
+    def _hyperspeed_submit(self, myscript):
+        '''Submit the job via the Dirac server but do it at hyperspeed!
+        Args:
+            dirac_script (str): filename of the JDL which is to be submitted to DIRAC
+        '''
+        j = self.getJobObject()
+        self.id = None
+        self.actualCE = None
+        self.status = None
+        self.extraInfo = None
+        self.statusInfo = ''
+        j.been_queued = False
+        dirac_cmd = """execfile(\'%s\')""" % myscript
+
+        try:
+            result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True)
+        except GangaDiracError as err:
+            err_msg = 'Error submitting job to Dirac: %s' % str(err)
+            logger.error(err_msg)
+            logger.error("\n\n===\n%s\n===\n" % myscript)
+            logger.error("\n\n====\n")
+            with open(myscript, 'r') as file_in:
+                logger.error("%s" % file_in.read())
+            logger.error("\n====\n")
+            raise BackendError('Dirac', err_msg)
+
+        #Now put the list of Dirac IDs into the subjobs and get them monitored:
+        for jobNo in result.keys():
+            sjNo = str(jobNo).split('.')[1]
+            j.subjobs[int(sjNo)].backend.id = result[jobNo]
+            j.subjobs[int(sjNo)].updateStatus('submitted')
+            j.time.timenow('submitted')
+            stripProxy(j.subjobs[int(sjNo)].info).increment()
+
+        return type(self.id) == int
+
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
+        """  Submit the master job and all of its subjobs. To keep things speedy when talking to DIRAC
+        we submit several subjobs in the same process. Therefore for each subjob we collect the code for
+       the dirac-script into one large file that we then execute.
+        """
+        from Ganga.Utility.logging import log_user_exception
+
+        if not self.hyperspeed_submit:
+            return IBackend.master_submit(self, subjobconfigs, masterjobconfig, keep_joing, parallel_submit)
+
+        logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
+        logger.debug("rjobs: %s" % len(rjobs))
+        assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
+
+        incomplete = 0
+        incomplete_subjobs = []
+
+        def handleError(x):
+            if keep_going:
+                incomplete_subjobs.append(fqid)
+                return False
+            else:
+                if incomplete:
+                    raise x
+                else:
+                    return True
+
+        master_input_sandbox = self.master_prepare(masterjobconfig)
+
+        
+        if parallel_submit and len(rjobs) > configDirac['maxSubjobsPerProcess']:
+
+            from Ganga.Core.GangaThread.WorkerThreads import getQueues
+            nPerThread = configDirac['maxSubjobsPerProcess']
+            threads_before = getQueues().totalNumIntThreads()
+            nThreadsToUse = math.ceil((len(rjobs)*1.0)/configDirac['maxSubjobsPerProcess'])
+            for i in range(0,int(nThreadsToUse)):
+                masterScript = 'resultdict = {}\n'
+                for sc, sj in zip(subjobconfigs[i*nPerThread:(i+1)*nPerThread], rjobs[i*nPerThread:(i+1)*nPerThread]):
+                    b = stripProxy(sj.backend)
+                    sj.updateStatus('submitting')
+                    # Must check for credentials here as we cannot handle missing credentials on Queues by design!
+                    if hasattr(b, 'credential_requirements') and b.credential_requirements is not None:
+                        from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+                        try:
+                            cred = credential_store[b.credential_requirements]
+                        except GangaKeyError:
+                            credential_store.create(b.credential_requirements)
+
+                    fqid = sj.getFQID('.')
+                    sjScript = b.submit(sc, master_input_sandbox)
+                    masterScript += "\nsjNo=\'%s\'" % fqid
+                    masterScript += sjScript
+
+                masterScript += '\noutput(resultdict)\n'
+                dirac_script_filename = '/afs/cern.ch/user/m/masmith/mytest_dirac-script-%s.py' % i
+                with open(dirac_script_filename, 'w') as f:
+                    f.write(masterScript)
+                getQueues()._monitoring_threadpool.add_function(self._hyperspeed_submit, (dirac_script_filename))
+
+                def subjob_status_check(rjobs):
+                    has_submitted = True
+                    for sj in rjobs[i*nPerThread:(i+1)*nPerThread]:
+                        if sj.status not in ["submitted","failed","completed","running","completing"]:
+                            has_submitted = False
+                            break
+                    return has_submitted
+
+                while not subjob_status_check(rjobs):
+                    import time
+                    time.sleep(1.)
+
+            for i in rjobs:
+                if i.status in ["new", "failed"]:
+                    return 0
+            return 1
+        
+        masterScript = 'resultdict = {}\n'
+        for sc, sj in zip(subjobconfigs, rjobs):
+            fqid = sj.getFQID('.')
+            b = stripProxy(sj.backend)
+            sj.updateStatus('submitting')
+            sjScript = b.submit(sc, master_input_sandbox)
+            masterScript += "\nsjNo=\'%s\'" % fqid
+            masterScript += sjScript
+
+        masterScript += '\noutput(resultdict)\n'
+        dirac_script_filename = '/afs/cern.ch/user/m/masmith/mytest_dirac-script.py'
+        with open(dirac_script_filename, 'w') as f:
+            f.write(masterScript)
+
+        self._hyperspeed_submit(dirac_script_filename)
+
+        return 1
 
     def submit(self, subjobconfig, master_input_sandbox):
         """Submit a DIRAC job
@@ -232,15 +368,17 @@ class DiracBase(IBackend):
 
         dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##', sandbox_str)
 
-        dirac_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
-        with open(dirac_script_filename, 'w') as f:
-            f.write(dirac_script)
+        return dirac_script
 
-        try:
-            return self._common_submit(dirac_script_filename)
-        finally:
+#        dirac_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
+#        with open(dirac_script_filename, 'w') as f:
+#            f.write(dirac_script)
+
+#        try:
+#            return self._common_submit(dirac_script_filename)
+#        finally:
             # CLEANUP after workaround
-            shutil.rmtree(tmp_dir, ignore_errors = True)
+#            shutil.rmtree(tmp_dir, ignore_errors = True)
 
     def master_auto_resubmit(self, rjobs):
         '''Duplicate of the IBackend.master_resubmit but hooked into auto resubmission
