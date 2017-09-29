@@ -211,13 +211,18 @@ class DiracBase(IBackend):
             raise BackendError('Dirac', err_msg)
 
         #Now put the list of Dirac IDs into the subjobs and get them monitored:
-        for jobNo in result.keys():
-            sjNo = str(jobNo).split('.')[1]
-            j.subjobs[int(sjNo)].backend.id = result[jobNo]
-            j.subjobs[int(sjNo)].updateStatus('submitted')
+        if len(result.keys())>1:
+            for jobNo in result.keys():
+                sjNo = jobNo.split('.')[1]
+                j.subjobs[int(sjNo)].backend.id = result[jobNo]
+                j.subjobs[int(sjNo)].updateStatus('submitted')
+                j.time.timenow('submitted')
+                stripProxy(j.subjobs[int(sjNo)].info).increment()
+        else:
+            j.backend.id = result[result.keys()[0]]
+            j.updateStatus('submitted')
             j.time.timenow('submitted')
-            stripProxy(j.subjobs[int(sjNo)].info).increment()
-
+            stripProxy(j.info).increment()
         return type(self.id) == int
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
