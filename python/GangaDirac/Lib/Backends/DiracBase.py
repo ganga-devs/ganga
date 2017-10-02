@@ -158,7 +158,6 @@ class DiracBase(IBackend):
 
         try:
             result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True)
-            print result
         except GangaDiracError as err:
 
             err_msg = 'Error submitting job to Dirac: %s' % str(err)
