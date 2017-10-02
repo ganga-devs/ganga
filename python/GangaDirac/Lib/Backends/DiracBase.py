@@ -197,7 +197,6 @@ class DiracBase(IBackend):
         self.statusInfo = ''
         j.been_queued = False
         dirac_cmd = """execfile(\'%s\')""" % myscript
-
         try:
             result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True)
         except GangaDiracError as err:
@@ -278,7 +277,10 @@ class DiracBase(IBackend):
             dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(),'dirac-script-%s.py') % i
             with open(dirac_script_filename, 'w') as f:
                 f.write(masterScript)
-
+            upperlimit = (i+1)*nPerProcess
+            if upperlimit > len(rjobs) :
+                upperlimit = len(rjobs)
+            logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit))
             #Either do the submission in parallel or sequentially
             if parallel_submit:
                 getQueues()._monitoring_threadpool.add_function(self._hyperspeed_submit, (dirac_script_filename))
@@ -296,7 +298,7 @@ class DiracBase(IBackend):
             while not subjob_status_check(rjobs):
                 import time
                 time.sleep(1.)
-
+            logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit))
         for i in rjobs:
             if i.status in ["new", "failed"]:
                 return 0
