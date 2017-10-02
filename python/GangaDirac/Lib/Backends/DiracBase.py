@@ -281,6 +281,9 @@ class DiracBase(IBackend):
                 sjScript = sjScript.replace("output(result)", "resultdict.update({sjNo : result['Value']})")
                 if nSubjobs !=0 :
                     sjScript = sjScript.replace("from DIRAC.Core.Base.Script import parseCommandLine\nparseCommandLine()\n", "\n")
+                    sjScript = re.sub("from .*DIRAC\.Interfaces\.API.Dirac.* import Dirac.*","",sjScript)
+                    sjScript = re.sub("from .*DIRAC\.Interfaces\.API\..*Job import .*Job","",sjScript)
+                    sjScript = re.sub("dirac = Dirac.*\(\)","",sjScript)
                 masterScript += "\nsjNo=\'%s\'" % fqid
                 masterScript += sjScript
                 nSubjobs +=1
