@@ -254,72 +254,54 @@ class DiracBase(IBackend):
 
         master_input_sandbox = self.master_prepare(masterjobconfig)
 
-        
-        if parallel_submit and len(rjobs) > configDirac['maxSubjobsPerProcess']:
+        nPerProcess = configDirac['maxSubjobsPerProcess']
+        nProcessToUse = math.ceil((len(rjobs)*1.0)/nPerProcess)
 
-            from Ganga.Core.GangaThread.WorkerThreads import getQueues
-            nPerThread = configDirac['maxSubjobsPerProcess']
-            threads_before = getQueues().totalNumIntThreads()
-            nThreadsToUse = math.ceil((len(rjobs)*1.0)/configDirac['maxSubjobsPerProcess'])
-            for i in range(0,int(nThreadsToUse)):
-                masterScript = 'resultdict = {}\n'
-                for sc, sj in zip(subjobconfigs[i*nPerThread:(i+1)*nPerThread], rjobs[i*nPerThread:(i+1)*nPerThread]):
-                    b = stripProxy(sj.backend)
-                    sj.updateStatus('submitting')
-                    # Must check for credentials here as we cannot handle missing credentials on Queues by design!
-                    if hasattr(b, 'credential_requirements') and b.credential_requirements is not None:
-                        from Ganga.GPIDev.Credentials.CredentialStore import credential_store
-                        try:
-                            cred = credential_store[b.credential_requirements]
-                        except GangaKeyError:
-                            credential_store.create(b.credential_requirements)
+        from Ganga.Core.GangaThread.WorkerThreads import getQueues
+        # Must check for credentials here as we cannot handle missing credentials on Queues by design!
+        try:
+            cred = credential_store[self.credential_requirements]
+        except GangaKeyError:
+            credential_store.create(self.credential_requirements)
 
-                    fqid = sj.getFQID('.')
-                    sjScript = b.submit(sc, master_input_sandbox)
-                    masterScript += "\nsjNo=\'%s\'" % fqid
-                    masterScript += sjScript
+        for i in range(0,int(nProcessToUse)):
+            masterScript = 'resultdict = {}\n'
+            for sc, sj in zip(subjobconfigs[i*nPerProcess:(i+1)*nPerProcess], rjobs[i*nPerProcess:(i+1)*nPerProcess]):
+                b = stripProxy(sj.backend)
+                sj.updateStatus('submitting')
+                fqid = sj.getFQID('.')
+                sjScript = b.submit(sc, master_input_sandbox)
+                masterScript += "\nsjNo=\'%s\'" % fqid
+                masterScript += sjScript
 
-                masterScript += '\noutput(resultdict)\n'
-                dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(),'dirac-script-%s.py') % i
-                with open(dirac_script_filename, 'w') as f:
-                    f.write(masterScript)
+            masterScript += '\noutput(resultdict)\n'
+            dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(),'dirac-script-%s.py') % i
+            with open(dirac_script_filename, 'w') as f:
+                f.write(masterScript)
+
+            #Either do the submission in parallel or sequentially
+            if parallel_submit:
                 getQueues()._monitoring_threadpool.add_function(self._hyperspeed_submit, (dirac_script_filename))
+            else:
+                self._hyperspeed_submit(dirac_script_filename)
 
-                def subjob_status_check(rjobs):
-                    has_submitted = True
-                    for sj in rjobs[i*nPerThread:(i+1)*nPerThread]:
-                        if sj.status not in ["submitted","failed","completed","running","completing"]:
-                            has_submitted = False
-                            break
-                    return has_submitted
+            def subjob_status_check(rjobs):
+                has_submitted = True
+                for sj in rjobs[i*nPerProcess:(i+1)*nPerProcess]:
+                    if sj.status not in ["submitted","failed","completed","running","completing"]:
+                        has_submitted = False
+                        break
+                return has_submitted
 
-                while not subjob_status_check(rjobs):
-                    import time
-                    time.sleep(1.)
+            while not subjob_status_check(rjobs):
+                import time
+                time.sleep(1.)
 
-            for i in rjobs:
-                if i.status in ["new", "failed"]:
-                    return 0
-            return 1
-        
-        masterScript = 'resultdict = {}\n'
-        for sc, sj in zip(subjobconfigs, rjobs):
-            fqid = sj.getFQID('.')
-            b = stripProxy(sj.backend)
-            sj.updateStatus('submitting')
-            sjScript = b.submit(sc, master_input_sandbox)
-            masterScript += "\nsjNo=\'%s\'" % fqid
-            masterScript += sjScript
-
-        masterScript += '\noutput(resultdict)\n'
-        dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(), 'dirac-script.py')
-        with open(dirac_script_filename, 'w') as f:
-            f.write(masterScript)
-
-        self._hyperspeed_submit(dirac_script_filename)
-
+        for i in rjobs:
+            if i.status in ["new", "failed"]:
+                return 0
         return 1
-
+        
     def submit(self, subjobconfig, master_input_sandbox):
         """Submit a DIRAC job
         Args:
