@@ -268,7 +268,7 @@ class DiracBase(IBackend):
                 b = stripProxy(sj.backend)
                 sj.updateStatus('submitting')
                 fqid = sj.getFQID('.')
-                sjScript = b.submit(sc, master_input_sandbox)
+                sjScript = b._job_script(sc, master_input_sandbox)
                 masterScript += "\nsjNo=\'%s\'" % fqid
                 masterScript += sjScript
 
@@ -279,7 +279,7 @@ class DiracBase(IBackend):
             upperlimit = (i+1)*nPerProcess
             if upperlimit > len(rjobs) :
                 upperlimit = len(rjobs)
-            logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit))
+            logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
             #Either do the submission in parallel or sequentially
             if parallel_submit:
                 getQueues()._monitoring_threadpool.add_function(self._block_submit, (dirac_script_filename))
@@ -297,13 +297,13 @@ class DiracBase(IBackend):
             while not subjob_status_check(rjobs):
                 import time
                 time.sleep(1.)
-            logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit))
+            logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
         for i in rjobs:
             if i.status in ["new", "failed"]:
                 return 0
         return 1
-        
-    def submit(self, subjobconfig, master_input_sandbox):
+
+    def _job_script(self, subjobconfig, master_input_sandbox):
         """Submit a DIRAC job
         Args:
             subjobconfig (unknown):
@@ -367,6 +367,69 @@ class DiracBase(IBackend):
 #        finally:
             # CLEANUP after workaround
 #            shutil.rmtree(tmp_dir, ignore_errors = True)
+        
+    def submit(self, subjobconfig, master_input_sandbox):
+        """Submit a DIRAC job
+        Args:
+            subjobconfig (unknown):
+            master_input_sandbox (list): file names which are in the master sandbox of the master sandbox (if any)
+        """
+
+        j = self.getJobObject()
+
+        sboxname = j.createPackedInputSandbox(subjobconfig.getSandboxFiles())
+
+        input_sandbox = master_input_sandbox[:]
+        input_sandbox += sboxname
+
+        input_sandbox += self._addition_sandbox_content(subjobconfig)
+
+        ## Add LFN to the inputfiles section of the file
+        input_sandbox_userFiles = []
+        for this_file in j.inputfiles:
+            if isType(this_file, DiracFile):
+                input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
+        if j.master:
+            for this_file in j.master.inputfiles:
+                if isType(this_file, DiracFile):
+                    input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
+
+        for this_file in input_sandbox_userFiles:
+            input_sandbox.append(this_file)
+
+        logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
+        logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
+
+
+        # This is a workaroud for the fact DIRAC doesn't like whitespace in sandbox filenames
+        ### START_WORKAROUND
+        tmp_dir = tempfile.mkdtemp()
+
+        # Loop through all files and if the filename contains a ' ' copy it to a location which doesn't contain one.
+        # This does have the limitation that all file basenames must not contain a ' ' character.
+        # However we don't make any in Ganga as of 20/09/16
+        sandbox_str = '['
+        for file_ in input_sandbox:
+            if ' ' in str(file_):
+                new_name = os.path.join(tmp_dir, os.path.basename(file_))
+                shutil.copy(file_, new_name)
+                file_ = new_name
+            sandbox_str += '\'' + str(file_) + '\', '
+        sandbox_str += ']'
+        logger.debug("sandbox_str: %s" % sandbox_str)
+        ### FINISH_WORKAROUND
+
+        dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##', sandbox_str)
+
+        dirac_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
+        with open(dirac_script_filename, 'w') as f:
+            f.write(dirac_script)
+
+        try:
+            return self._common_submit(dirac_script_filename)
+        finally:
+            # CLEANUP after workaround
+            shutil.rmtree(tmp_dir, ignore_errors = True)
 
     def master_auto_resubmit(self, rjobs):
         '''Duplicate of the IBackend.master_resubmit but hooked into auto resubmission
