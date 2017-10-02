@@ -209,7 +209,7 @@ class DiracBase(IBackend):
             raise BackendError('Dirac', err_msg)
 
         #Now put the list of Dirac IDs into the subjobs and get them monitored:
-        if len(result.keys())>1:
+        if len(j.subjobs)>0:
             for jobNo in result.keys():
                 sjNo = jobNo.split('.')[1]
                 j.subjobs[int(sjNo)].backend.id = result[jobNo]
@@ -221,7 +221,6 @@ class DiracBase(IBackend):
             j.updateStatus('submitted')
             j.time.timenow('submitted')
             stripProxy(j.info).increment()
-
         #Check that everything got submitted ok
         if len(result.keys()) != lenSubjobs:
             raise BackendError("Some subjobs failed to submit! Check their status!")
@@ -233,7 +232,6 @@ class DiracBase(IBackend):
         we can submit several subjobs in the same process. Therefore for each subjob we collect the code for
        the dirac-script into one large file that we then execute.
         """
-        from Ganga.Utility.logging import log_user_exception
         #If you want to go slowly use the regular master_submit:
         if not self.blockSubmit:
             return IBackend.master_submit(self, subjobconfigs, masterjobconfig, keep_joing, parallel_submit)
@@ -308,7 +306,6 @@ class DiracBase(IBackend):
                         has_submitted = False
                         break
                 return has_submitted
-
             while not subjob_status_check(rjobs):
                 import time
                 time.sleep(1.)
