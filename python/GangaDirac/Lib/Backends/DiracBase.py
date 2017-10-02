@@ -273,11 +273,10 @@ class DiracBase(IBackend):
             masterScript = 'resultdict = {}\n'
             for sc, sj in zip(subjobconfigs[i*nPerProcess:(i+1)*nPerProcess], rjobs[i*nPerProcess:(i+1)*nPerProcess]):
                 #Add in the script for each subjob
-                b = stripProxy(sj.backend)
                 sj.updateStatus('submitting')
                 fqid = sj.getFQID('.')
                 #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
-                sjScript = b._job_script(sc, master_input_sandbox)
+                sjScript = self._job_script(sc, master_input_sandbox)
                 sjScript = sjScript.replace("output(result)", "resultdict.update({sjNo : result['Value']})")
                 if nSubjobs !=0 :
                     sjScript = sjScript.replace("from DIRAC.Core.Base.Script import parseCommandLine\nparseCommandLine()\n", "\n")
