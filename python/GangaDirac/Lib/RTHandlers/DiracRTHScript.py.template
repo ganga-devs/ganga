@@ -5,6 +5,7 @@ parseCommandLine()
 ###DIRAC_IMPORT###
 ###DIRAC_JOB_IMPORT###
 dirac = ###DIRAC_OBJECT###
+
 j = ###JOB_OBJECT###
 
 # default commands added by ganga
@@ -28,6 +29,4 @@ j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
 # submit the job to dirac
 j.setPlatform( 'ANY' )
 result = dirac.submit(j)
-#output(result)
-diracid = result['Value']
-resultdict.update({sjNo : diracid})
+output(result)

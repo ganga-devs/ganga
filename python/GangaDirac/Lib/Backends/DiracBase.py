@@ -96,7 +96,7 @@ class DiracBase(IBackend):
         'settings': SimpleItem(defvalue={'CPUTime': 2 * 86400},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
-        'block_submit' : SimpleItem(defvalue=True, 
+        'blockSubmit' : SimpleItem(defvalue=True, 
                                doc='Shall we use the experimental block submission?'),
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
@@ -183,7 +183,7 @@ class DiracBase(IBackend):
         return []
 
     @require_credential
-    def _block_submit(self, myscript):
+    def _block_submit(self, myscript, lenSubjobs):
         '''Submit a block of jobs via the Dirac server in one go.
         Args:
             dirac_script (str): filename of the JDL which is to be submitted to DIRAC
@@ -221,18 +221,24 @@ class DiracBase(IBackend):
             j.updateStatus('submitted')
             j.time.timenow('submitted')
             stripProxy(j.info).increment()
+
+        #Check that everything got submitted ok
+        if len(result.keys()) != lenSubjobs:
+            raise BackendError("Some subjobs failed to submit! Check their status!")
+
         return type(self.id) == int
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
         """  Submit the master job and all of its subjobs. To keep things speedy when talking to DIRAC
-        we submit several subjobs in the same process. Therefore for each subjob we collect the code for
+        we can submit several subjobs in the same process. Therefore for each subjob we collect the code for
        the dirac-script into one large file that we then execute.
         """
         from Ganga.Utility.logging import log_user_exception
-
-        if not self.block_submit:
+        #If you want to go slowly use the regular master_submit:
+        if not self.blockSubmit:
             return IBackend.master_submit(self, subjobconfigs, masterjobconfig, keep_joing, parallel_submit)
 
+        #Otherwise use the block submit. Much of this is copied from IBackend
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
         assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
@@ -262,16 +268,25 @@ class DiracBase(IBackend):
         except GangaKeyError:
             credential_store.create(self.credential_requirements)
 
+        # Loop over the processes and create the master script for each one.
         for i in range(0,int(nProcessToUse)):
+            nSubjobs = 0
+            #The Dirac IDs are stored in a dict so create it at the start of the script
             masterScript = 'resultdict = {}\n'
             for sc, sj in zip(subjobconfigs[i*nPerProcess:(i+1)*nPerProcess], rjobs[i*nPerProcess:(i+1)*nPerProcess]):
+                #Add in the script for each subjob
                 b = stripProxy(sj.backend)
                 sj.updateStatus('submitting')
                 fqid = sj.getFQID('.')
+                #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
                 sjScript = b._job_script(sc, master_input_sandbox)
+                sjScript = sjScript.replace("output(result)", "resultdict.update({sjNo : result['Value']})")
+                if nSubjobs !=0 :
+                    sjScript = sjScript.replace("from DIRAC.Core.Base.Script import parseCommandLine\nparseCommandLine()\n", "\n")
                 masterScript += "\nsjNo=\'%s\'" % fqid
                 masterScript += sjScript
-
+                nSubjobs +=1
+            #Return the dict of job numbers and Dirac IDs
             masterScript += '\noutput(resultdict)\n'
             dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(),'dirac-script-%s.py') % i
             with open(dirac_script_filename, 'w') as f:
@@ -280,12 +295,12 @@ class DiracBase(IBackend):
             if upperlimit > len(rjobs) :
                 upperlimit = len(rjobs)
             logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
-            #Either do the submission in parallel or sequentially
-            if parallel_submit:
-                getQueues()._monitoring_threadpool.add_function(self._block_submit, (dirac_script_filename))
-            else:
-                self._block_submit(dirac_script_filename)
 
+            #Either do the submission in parallel with threads or sequentially
+            if parallel_submit:
+                getQueues()._monitoring_threadpool.add_function(self._block_submit, (dirac_script_filename, nSubjobs))
+            else:
+                self._block_submit(dirac_script_filename, nSubjobs)
             def subjob_status_check(rjobs):
                 has_submitted = True
                 for sj in rjobs[i*nPerProcess:(i+1)*nPerProcess]:
@@ -304,7 +319,7 @@ class DiracBase(IBackend):
         return 1
 
     def _job_script(self, subjobconfig, master_input_sandbox):
-        """Submit a DIRAC job
+        """Get the script to submit a single DIRAC job
         Args:
             subjobconfig (unknown):
             master_input_sandbox (list): file names which are in the master sandbox of the master sandbox (if any)
@@ -357,16 +372,6 @@ class DiracBase(IBackend):
         dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##', sandbox_str)
 
         return dirac_script
-
-#        dirac_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
-#        with open(dirac_script_filename, 'w') as f:
-#            f.write(dirac_script)
-
-#        try:
-#            return self._common_submit(dirac_script_filename)
-#        finally:
-            # CLEANUP after workaround
-#            shutil.rmtree(tmp_dir, ignore_errors = True)
         
     def submit(self, subjobconfig, master_input_sandbox):
         """Submit a DIRAC job
