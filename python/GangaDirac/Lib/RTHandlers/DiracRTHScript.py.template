@@ -5,7 +5,6 @@ parseCommandLine()
 ###DIRAC_IMPORT###
 ###DIRAC_JOB_IMPORT###
 dirac = ###DIRAC_OBJECT###
-
 j = ###JOB_OBJECT###
 
 # default commands added by ganga
