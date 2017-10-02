@@ -96,8 +96,8 @@ class DiracBase(IBackend):
         'settings': SimpleItem(defvalue={'CPUTime': 2 * 86400},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
-        'hyperspeed_submit' : SimpleItem(defvalue=True, 
-                               doc='Shall we use the experimental hyperspeed submission?'),
+        'block_submit' : SimpleItem(defvalue=True, 
+                               doc='Shall we use the experimental block submission?'),
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
                       'getOutputDataLFNs', 'getOutputDataAccessURLs', 'peek', 'reset', 'debug']
@@ -183,8 +183,8 @@ class DiracBase(IBackend):
         return []
 
     @require_credential
-    def _hyperspeed_submit(self, myscript):
-        '''Submit the job via the Dirac server but do it at hyperspeed!
+    def _block_submit(self, myscript):
+        '''Submit a block of jobs via the Dirac server in one go.
         Args:
             dirac_script (str): filename of the JDL which is to be submitted to DIRAC
         '''
@@ -230,7 +230,7 @@ class DiracBase(IBackend):
         """
         from Ganga.Utility.logging import log_user_exception
 
-        if not self.hyperspeed_submit:
+        if not self.block_submit:
             return IBackend.master_submit(self, subjobconfigs, masterjobconfig, keep_joing, parallel_submit)
 
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
@@ -282,9 +282,9 @@ class DiracBase(IBackend):
             logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit))
             #Either do the submission in parallel or sequentially
             if parallel_submit:
-                getQueues()._monitoring_threadpool.add_function(self._hyperspeed_submit, (dirac_script_filename))
+                getQueues()._monitoring_threadpool.add_function(self._block_submit, (dirac_script_filename))
             else:
-                self._hyperspeed_submit(dirac_script_filename)
+                self._block_submit(dirac_script_filename)
 
             def subjob_status_check(rjobs):
                 has_submitted = True
