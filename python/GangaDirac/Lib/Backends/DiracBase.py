@@ -22,6 +22,7 @@ from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.Utility.logic import implies
 from Ganga.GPIDev.Credentials import require_credential, credential_store, needed_credentials
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.Core.GangaThread.WorkerThreads import getQueues
@@ -29,7 +30,6 @@ from Ganga.Core import monitoring_component
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
-from Ganga.Utility.logic import implies
 
 class DiracBase(IBackend):
 
@@ -97,7 +97,7 @@ class DiracBase(IBackend):
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
         'blockSubmit' : SimpleItem(defvalue=True, 
-                               doc='Shall we use the experimental block submission?'),
+                               doc='Shall we use the block submission?'),
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
                       'getOutputDataLFNs', 'getOutputDataAccessURLs', 'peek', 'reset', 'debug']
@@ -239,7 +239,9 @@ class DiracBase(IBackend):
         #Otherwise use the block submit. Much of this is copied from IBackend
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
-        assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
+
+        if rjobs and len(subjobconfigs) != len(rjobs):
+            raise BackendError("The number of subjob configurations does not match the number of subjobs!")
 
         incomplete = 0
         incomplete_subjobs = []
@@ -301,21 +303,25 @@ class DiracBase(IBackend):
                 getQueues()._monitoring_threadpool.add_function(self._block_submit, (dirac_script_filename, nSubjobs))
             else:
                 self._block_submit(dirac_script_filename, nSubjobs)
-            def subjob_status_check(rjobs):
+
+            while not self._subjob_status_check(rjobs, nPerProcess, i):
+                import time
+                time.sleep(1.)
+
+            logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
+
+        for i in rjobs:
+            if i.status in ["new", "failed"]:
+                return 0
+        return 1
+
+    def _subjob_status_check(rjobs, nPerProcess, i):
                 has_submitted = True
                 for sj in rjobs[i*nPerProcess:(i+1)*nPerProcess]:
                     if sj.status not in ["submitted","failed","completed","running","completing"]:
                         has_submitted = False
                         break
                 return has_submitted
-            while not subjob_status_check(rjobs):
-                import time
-                time.sleep(1.)
-            logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
-        for i in rjobs:
-            if i.status in ["new", "failed"]:
-                return 0
-        return 1
 
     def _job_script(self, subjobconfig, master_input_sandbox):
         """Get the script to submit a single DIRAC job
