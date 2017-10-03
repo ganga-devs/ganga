@@ -183,7 +183,7 @@ class DiracBase(IBackend):
         return []
 
     @require_credential
-    def _block_submit(self, myscript, lenSubjobs):
+    def _block_submit(self, myscript, lenSubjobs, keep_going = False):
         '''Submit a block of jobs via the Dirac server in one go.
         Args:
             dirac_script (str): filename of the JDL which is to be submitted to DIRAC
@@ -224,8 +224,10 @@ class DiracBase(IBackend):
         #Check that everything got submitted ok
         if len(result.keys()) != lenSubjobs:
             raise BackendError("Some subjobs failed to submit! Check their status!")
+            if not keep_going:
+                return 0
 
-        return type(self.id) == int
+        return 1 
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
         """  Submit the master job and all of its subjobs. To keep things speedy when talking to DIRAC
@@ -245,16 +247,6 @@ class DiracBase(IBackend):
 
         incomplete = 0
         incomplete_subjobs = []
-
-        def handleError(x):
-            if keep_going:
-                incomplete_subjobs.append(fqid)
-                return False
-            else:
-                if incomplete:
-                    raise x
-                else:
-                    return True
 
         master_input_sandbox = self.master_prepare(masterjobconfig)
 
@@ -300,9 +292,9 @@ class DiracBase(IBackend):
 
             #Either do the submission in parallel with threads or sequentially
             if parallel_submit:
-                getQueues()._monitoring_threadpool.add_function(self._block_submit, (dirac_script_filename, nSubjobs))
+                getQueues()._monitoring_threadpool.add_function(self._block_submit, (dirac_script_filename, nSubjobs, keep_going))
             else:
-                self._block_submit(dirac_script_filename, nSubjobs)
+                self._block_submit(dirac_script_filename, nSubjobs, keep_going)
 
             while not self._subjob_status_check(rjobs, nPerProcess, i):
                 import time
@@ -315,7 +307,7 @@ class DiracBase(IBackend):
                 return 0
         return 1
 
-    def _subjob_status_check(rjobs, nPerProcess, i):
+    def _subjob_status_check(self, rjobs, nPerProcess, i):
                 has_submitted = True
                 for sj in rjobs[i*nPerProcess:(i+1)*nPerProcess]:
                     if sj.status not in ["submitted","failed","completed","running","completing"]:
