@@ -266,7 +266,7 @@ class TestDiracCommands(object):
         accessResultProtocol = execute('getAccessURL("%s", "%s", %s)' % (dirac_job.get_file_lfn, SE, ['xroot']), cred_req=dirac_job.cred_req, return_raw_dict = True)
         logger.info(accessResultProtocol)
         assert accessResultProtocol['OK'], 'getAccessURL command with protocol not executed successfully'
-        assert ('root://' in accessResultProtocol['Value']['Successful'][dirac_job.get_file_lfn])
+        assert ('root://' in accessResultProtocol['Value']['Successful'][dirac_job.get_file_lfn]), 'URL does not start with root protocol'
 
     def test_replicateFile(self, dirac_job, dirac_sites):
 
