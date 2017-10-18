@@ -186,7 +186,7 @@ def test_submit(db):
 
 
 def test_resubmit(db):
-    with patch.object(db, '_resubmit', return_value='_resubmit run ok'):
+    with patch.object(db, '_blockResubmit', return_value='_resubmit run ok'):
         assert db.resubmit() == '_resubmit run ok'
 
 
