@@ -271,12 +271,14 @@ class DiracBase(IBackend):
                 #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
                 sjScript = self._job_script(sc, master_input_sandbox)
                 sjScript = sjScript.replace("output(result)", "resultdict.update({sjNo : result['Value']})")
+                if nSubjobs == 0:
+                    sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
                 if nSubjobs !=0 :
                     sjScript = sjScript.replace("from DIRAC.Core.Base.Script import parseCommandLine\nparseCommandLine()\n", "\n")
                     sjScript = re.sub("from .*DIRAC\.Interfaces\.API.Dirac.* import Dirac.*","",sjScript)
                     sjScript = re.sub("from .*DIRAC\.Interfaces\.API\..*Job import .*Job","",sjScript)
                     sjScript = re.sub("dirac = Dirac.*\(\)","",sjScript)
-                masterScript += "\nsjNo=\'%s\'" % fqid
+                    masterScript += "\nsjNo=\'%s\'" % fqid
                 masterScript += sjScript
                 nSubjobs +=1
             #Return the dict of job numbers and Dirac IDs
@@ -470,7 +472,10 @@ class DiracBase(IBackend):
 
     def resubmit(self):
         """Resubmit a DIRAC job"""
-        return self._resubmit()
+        if self.blockSubmit:
+            return self._blockResubmit()
+        else:
+            return self._resubmit()
 
     def _resubmit(self):
         """Resubmit a DIRAC job"""
@@ -536,6 +541,75 @@ class DiracBase(IBackend):
         f.close()
         return self._common_submit(new_script_filename)
 
+    def _blockResubmit(self):
+        """Resubmit a DIRAC job that was submitted with bulk submission. This requires writing a new dirac-script for the individual job."""
+        j = self.getJobObject()
+        parametric = False
+
+        if j.master is None:
+            scriptDir = j.getInputWorkspace().getPath()
+        else:
+            scriptDir = j.master.getInputWorkspace().getPath()
+
+        diracScriptFiles = []
+        for fileName in os.listdir(scriptDir):
+            if fnmatch.fnmatch(fileName, 'dirac-script-*.py'):
+                diracScriptFiles.append(fileName)
+
+        new_script_filename = ''
+
+        for diracScript in diracScriptFiles:
+            script_path = os.path.join(scriptDir, diracScript)
+            # Check old script
+            if not os.path.exists(script_path):
+                raise BackendError('Dirac', 'No "dirac-script.py" found in j.inputdir')
+
+            # Read old script
+            with open(script_path, 'r') as f:
+                script = f.read()
+            # Is the subjob we want in there?
+            if not ("sjNo='%s'" % j.fqid) in script:
+                continue
+
+            #First pick out the imports etc at the start
+            newScript =  re.compile(r'%s.*?%s' % ('resultdict = {}',"dirac = Dirac.*?\(\)\n"),re.S).search(script).group(0)
+            newScript += '\n'
+            #Now pick out the job part
+            start = "sjNo='%s'" % j.fqid
+            newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Value'\]}\)"),re.S).search(script).group(0)
+            newScript += '\noutput(resultdict)'
+            
+            # Modify the new script with the user settings
+
+            start_user_settings = '# <-- user settings\n'
+            new_script = newScript[
+                :newScript.find(start_user_settings) + len(start_user_settings)]
+
+            job_ident = get_job_ident(newScript.split('\n'))
+            for key, value in self.settings.iteritems():
+                if str(key).startswith('set'):
+                    _key = key[3:]
+                else:
+                    _key = key
+                if type(value) is str:
+                    template = '%s.set%s("%s")\n'
+                else:
+                    template = '%s.set%s(%s)\n'
+                new_script += template % (job_ident, str(_key), str(value))
+            new_script += newScript[newScript.find('# user settings -->'):]
+
+            # Save new script
+            new_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
+            with open(new_script_filename, 'w') as f:
+                f.write(new_script)
+            # Break the loop now we have written the new script
+            break
+
+        if new_script_filename == '':
+            raise BackendError('Dirac', 'Script for job number %s not found. Resubmission failed.' % j.fqid)
+
+        return self._block_submit(new_script_filename, 1)
+ 
     def reset(self, doSubjobs=False):
         """Resets the state of a job back to 'submitted' so that the
         monitoring will run on it again.
