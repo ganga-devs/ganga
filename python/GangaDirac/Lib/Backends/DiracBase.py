@@ -556,6 +556,8 @@ class DiracBase(IBackend):
             if fnmatch.fnmatch(fileName, 'dirac-script-*.py'):
                 diracScriptFiles.append(fileName)
 
+        new_script_filename = ''
+
         for diracScript in diracScriptFiles:
             script_path = os.path.join(scriptDir, diracScript)
             # Check old script
@@ -602,6 +604,9 @@ class DiracBase(IBackend):
                 f.write(new_script)
             # Break the loop now we have written the new script
             break
+
+        if new_script_filename == '':
+            raise BackendError('Dirac', 'Script for job number %s not found. Resubmission failed.' % j.fqid)
 
         return self._block_submit(new_script_filename, 1)
  
