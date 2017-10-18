@@ -563,9 +563,8 @@ class DiracBase(IBackend):
                 raise BackendError('Dirac', 'No "dirac-script.py" found in j.inputdir')
 
             # Read old script
-            f = open(script_path, 'r')
-            script = f.read()
-            f.close()
+            with open(script_path, 'r') as f:
+                script = f.read()
             # Is the subjob we want in there?
             if not ("sjNo='%s'" % j.fqid) in script:
                 continue
@@ -599,11 +598,12 @@ class DiracBase(IBackend):
 
             # Save new script
             new_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
-            f = open(new_script_filename, 'w')
-            f.write(new_script)
-            f.flush()
-            f.close()
-            return self._block_submit(new_script_filename, 1)
+            with open(new_script_filename, 'w') as f:
+                f.write(new_script)
+            # Break the loop now we have written the new script
+            break
+
+        return self._block_submit(new_script_filename, 1)
  
     def reset(self, doSubjobs=False):
         """Resets the state of a job back to 'submitted' so that the
