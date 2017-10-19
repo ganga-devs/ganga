@@ -1,0 +1,17 @@
+**************************************************************************************************************
+6.7.2 (2017/10/19)
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Improve Dirac submission speed. Several subjobs are submitted in one process. The attribute to set this is in
+the Dirac backend is 'bulkSubmit' which is set to true by default. The number per process is set by
+the option 'maxSubjobsPerProcess' in the DIRAC configuration. #1131 and #1138
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* The LHCbDirac environment has been hard-coded to x86_64-slc6-gcc49-opt so jobs can be submitted from any platform. #1134
+* Minor bugfix to exception in GaudiExec RTHandler. #1140
+
+**************************************************************************************************************
