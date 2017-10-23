@@ -44,13 +44,13 @@ def cache(method):
                 time_before = -1
 
             if 'ccheck' in self.cache:
-                check_time = self.cache['cceck']
+                check_time = self.cache['ccheck']
             else:
                 check_time = time.time()
 
             # If the mtime has been changed, clear the cache
             if credential_store.enable_caching and os.path.exists(self.location):
-                if time.time() - check_time > getConfig('Credentials')['AtomicDelay']:
+                if (time.time() - check_time > getConfig('Credentials')['AtomicDelay']) or (abs(time.time() - time_before)  > getConfig('Credentials')['AtomicDelay']):
                     mtime = os.path.getmtime(self.location)
                     if mtime > self.cache['mtime']:
                         self.cache = {'mtime': mtime}
