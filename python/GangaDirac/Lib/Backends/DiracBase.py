@@ -104,7 +104,7 @@ class DiracBase(IBackend):
                                doc='Do you want to download the output sandbox when the job finalises. Only for finaliseOnMaster.')
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
-                      'getOutputDataLFNs', 'getOutputDataAccessURLs', 'peek', 'reset', 'debug', 'finalise_jobs']
+                      'getOutputDataLFNs', 'getOutputDataAccessURLs', 'peek', 'reset', 'debug', 'finaliseCompletingJobs']
     _packed_input_sandbox = True
     _category = "backends"
     _name = 'DiracBase'
