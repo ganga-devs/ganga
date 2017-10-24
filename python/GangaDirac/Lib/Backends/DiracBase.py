@@ -896,7 +896,6 @@ class DiracBase(IBackend):
             job (Job): Thi is the job we want to finalise
             updated_dirac_status (str): String representing the Ganga finalisation state of the job failed/completed
         """
-        print 'internal finalisation!'
         if job.backend.finaliseOnMaster and job.master:
             job.updateStatus('completing')
             allComplete = True
@@ -1081,10 +1080,7 @@ class DiracBase(IBackend):
         statusmapping = configDirac['statusmapping']
         for sj in jobs:
             inputDict[sj.backend.id] = sj.getOutputWorkspace().getPath()
-        print 'inputDict: ', inputDict
         returnDict, statusList = execute("finaliseJobs(%s, %s, %s)" % (inputDict, repr(statusmapping), downloadSandbox), cred_req=jobs[0].backend.credential_requirements)
-        print 'returnDict: ', returnDict
-        print 'statusList: ', statusList
 
         #Cycle over the jobs and store the info
         for sj in jobs:
