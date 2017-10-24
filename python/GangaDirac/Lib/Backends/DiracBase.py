@@ -800,6 +800,26 @@ class DiracBase(IBackend):
         except GangaDiracError as err:
             logger.error("%s" % err)
 
+    def finaliseCompletingJobs(self, downloadSandbox=True):
+        """
+         A function to finalise all the subjobs in the completing state, so they are ready, before all the subjobs complete.
+        """
+        j = self.getJobObject()
+        if j.master:
+            j = j.master
+        if not j.subjobs:
+            logger.warning("There are no subjobs - this will finalise in its own time.")
+            return
+        jobList = []
+        for sj in j.subjobs:
+            if sj.status == 'completing'
+                jobList.append(sj)
+        if len(jobList) == 0:
+            logger.warning("No subjobs are ready to be finalised yet. Be more patient.")
+            return
+        else:
+            DiracBase.finalise_jobs(jobList, downloadSandbox)
+
     @staticmethod
     def _bulk_updateStateTime(jobStateDict, bulk_time_lookup={} ):
         """ This performs the same as the _getStateTime method but loops over a list of job ids within the DIRAC namespace (much faster)
@@ -900,7 +920,7 @@ class DiracBase(IBackend):
             job.updateStatus('completing')
             allComplete = True
             for sj in job.master.subjobs:
-                if sj.status not in ['completing', 'failed', 'killed', 'removed']:
+                if sj.status not in ['completing', 'failed', 'killed', 'removed', 'completed']:
                     allComplete = False
                     break
             if allComplete:
