@@ -812,7 +812,7 @@ class DiracBase(IBackend):
             return
         jobList = []
         for sj in j.subjobs:
-            if sj.status == 'completing'
+            if sj.status == 'completing':
                 jobList.append(sj)
         if len(jobList) == 0:
             logger.warning("No subjobs are ready to be finalised yet. Be more patient.")
