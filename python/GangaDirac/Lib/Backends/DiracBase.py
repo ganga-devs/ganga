@@ -1096,32 +1096,37 @@ class DiracBase(IBackend):
         #First grab all the info from Dirac
         inputDict = {}
 
+        nPerProcess = configDirac['maxSubjobsPerProcess']
+        nProcessToUse = math.ceil((len(rjobs)*1.0)/nPerProcess)
+
         jobs = [stripProxy(j) for j in theseJobs]
         statusmapping = configDirac['statusmapping']
-        for sj in jobs:
-            inputDict[sj.backend.id] = sj.getOutputWorkspace().getPath()
-        returnDict, statusList = execute("finaliseJobs(%s, %s, %s)" % (inputDict, repr(statusmapping), downloadSandbox), cred_req=jobs[0].backend.credential_requirements)
 
-        #Cycle over the jobs and store the info
-        for sj in jobs:
-            #Check we are able to get the job status - if not set to failed.
-            if sj.backend.id not in statusList['Value'].keys():
-                logger.error("Job %s with DIRAC ID %s has been removed from DIRAC. Unable to finalise it." % (sj.getFQID(), sj.backend.id))
-                sj.force_status('failed')
-                continue
-            #If we wanted the sandbox make sure it downloaded OK.
-            if not returnDict[sj.backend.id]['outSandbox']['OK'] and downloadSandbox:
-                logger.error("Output sandbox error for job %s: %s. Unable to finalise it." % (sj.getFQID(), returnDict[sj.backend.id]['outSandbox']['Error']))
-                sj.force_status('failed')
-                continue
-            #Set the outputfile location
-            for fileName in returnDict[sj.backend.id]['outDataInfo'].keys():
-                sj.outputfiles.extend(DiracFile(lfn = fileName['LFN'], locations = fileName['LOCATIONS'], guid = fileName['GUID']))
-            #Set the CPU time
-            sj.backend.normCPUTime = returnDict[sj.backend.id]['cpuTime']
-            #Set the status
-            sj.updateStatus(statusmapping[statusList['Value'][sj.backend.id]['Status']])
-            
+        for i in range(0,int(nProcessToUse)):
+            jobSlice = jobs[i*nPerProcess:(i+1)*nPerProcess]
+            for sj in jobSlice:
+                inputDict[sj.backend.id] = sj.getOutputWorkspace().getPath()
+            returnDict, statusList = execute("finaliseJobs(%s, %s, %s)" % (inputDict, repr(statusmapping), downloadSandbox), cred_req=jobSlice[0].backend.credential_requirements)
+
+            #Cycle over the jobs and store the info
+            for sj in jobSlice:
+                #Check we are able to get the job status - if not set to failed.
+                if sj.backend.id not in statusList['Value'].keys():
+                    logger.error("Job %s with DIRAC ID %s has been removed from DIRAC. Unable to finalise it." % (sj.getFQID(), sj.backend.id))
+                    sj.force_status('failed')
+                    continue
+                #If we wanted the sandbox make sure it downloaded OK.
+                if not returnDict[sj.backend.id]['outSandbox']['OK'] and downloadSandbox:
+                    logger.error("Output sandbox error for job %s: %s. Unable to finalise it." % (sj.getFQID(), returnDict[sj.backend.id]['outSandbox']['Error']))
+                    sj.force_status('failed')
+                    continue
+                #Set the outputfile location
+                for fileName in returnDict[sj.backend.id]['outDataInfo'].keys():
+                    sj.outputfiles.extend(DiracFile(lfn = fileName['LFN'], locations = fileName['LOCATIONS'], guid = fileName['GUID']))
+                #Set the CPU time
+                sj.backend.normCPUTime = returnDict[sj.backend.id]['cpuTime']
+                #Set the status
+                sj.updateStatus(statusmapping[statusList['Value'][sj.backend.id]['Status']])
 
     @staticmethod
     def requeue_dirac_finished_jobs(requeue_jobs, finalised_statuses):
