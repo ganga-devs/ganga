@@ -241,6 +241,23 @@ def finished_job(id, outputDir=os.getcwd(), oversized=True, noJobDir=True):
 
 
 @diracCommand
+def finaliseJobs(inputDict, statusmapping, downloadSandbox=True, oversized=True, noJobDir=True):
+    ''' A function to get the necessaries to finalise a whole bunch of jobs. Returns a dict of job information and a dict of stati.'''
+    returnDict = {}
+    statusList = dirac.status(inputDict.keys())
+    for diracID in inputDict.keys():
+        returnDict[diracID] = {}
+        returnDict[diracID]['cpuTime'] = normCPUTime(diracID, pipe_out=False)
+        if downloadSandbox:
+            returnDict[diracID]['outSandbox'] = getOutputSandbox(diracID, inputDict[diracID], oversized, noJobDir, pipe_out=False)
+        else:
+            returnDict[diracID]['outSandbox'] = None
+        returnDict[diracID]['outDataInfo'] = getOutputDataInfo(diracID, pipe_out=False)
+        returnDict[diracID]['outStateTime'] = {'completed' : getStateTime(diracID, 'completed', pipe_out=False)}
+    return returnDict, statusList
+
+
+@diracCommand
 def status(job_ids, statusmapping, pipe_out=True):
     '''Function to check the statuses and return the Ganga status of a job after looking it's DIRAC status against a Ganga one'''
     # Translate between the many statuses in DIRAC and the few in Ganga
