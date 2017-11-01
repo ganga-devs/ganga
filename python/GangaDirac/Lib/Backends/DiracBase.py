@@ -472,8 +472,13 @@ class DiracBase(IBackend):
 
     def resubmit(self):
         """Resubmit a DIRAC job"""
-        if self.blockSubmit and j.master.getInputWorkspace().getPath(), 'dirac-script-0.py'):
-            return self._blockResubmit()
+        if self.blockSubmit:
+            if self.getJobObject().master and os.path.exists(os.path.join(self.getJobObject().master.getInputWorkspace().getPath(), 'dirac-script-0.py')):
+                return self._blockResubmit()
+            elif os.path.exists(os.path.join(self.getJobObject().getInputWorkspace().getPath(), 'dirac-script-0.py')):
+                return self._blockResubmit()
+            else:
+                return self._resubmit()
         else:
             return self._resubmit()
 
