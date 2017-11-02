@@ -72,14 +72,15 @@ class IBackend(GangaObject):
         try:
             sj.updateStatus('submitting')
             if b.submit(sc, master_input_sandbox):
-                sj.updateStatus('submitted')
+                sj.updateStatus('submitted',  update_master = False)
                 sj.info.increment()
+                return 1
             else:
                 raise IncompleteJobSubmissionError(fqid, 'submission failed')
         except Exception as err:
             #from Ganga.Utility.logging import log_user_exception
-            sj.updateStatus('failed')
-
+#            sj.updateStatus('new')
+            sj.updateStatus('failed', update_master = False)
             #from Ganga.Core.exceptions import GangaException
             #if isinstance(err, GangaException):
             #    logger.error("%s" % err)
@@ -87,8 +88,17 @@ class IBackend(GangaObject):
             #else:
             #    #log_user_exception(logger, debug=False)
             logger.error("Parallel Job Submission Failed: %s" % err)
+            return 0
         finally:
             pass
+
+    def _successfulSubmit(self, out, sj, incomplete_subjobs):
+        if out == 0:
+            incomplete_subjobs.append(sj.getFQID('.'))
+
+    def _incompleteSubmit(self, err, sj, failList):
+        print 'incomplete submission! %s', sj.getFQID()
+        failList.append(sj.getFQID())
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
         """  Submit   the  master  job  and  all   its  subjobs.   The
@@ -167,12 +177,12 @@ class IBackend(GangaObject):
 
                 fqid = sj.getFQID('.')
                 # FIXME would be nice to move this to the internal threads not user ones
-                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
+                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger), callback_func = self._successfulSubmit, callback_args = (sj, incomplete_subjobs))
 
             def subjob_status_check(rjobs):
                 has_submitted = True
                 for sj in rjobs:
-                    if sj.status not in ["submitted","failed","completed","running","completing"]:
+                    if sj.status not in [ "submitted","failed","completed","running","completing"] and sj.getFQID() not in incomplete_subjobs:
                         has_submitted = False
                         break
                 return has_submitted
@@ -181,10 +191,17 @@ class IBackend(GangaObject):
                 import time
                 time.sleep(1.)
 
-            for i in rjobs:
-                if i.status in ["new", "failed"]:
-                    return 0
-            return 1
+            print 'incomplete_subjobs', incomplete_subjobs
+
+            if incomplete_subjobs:
+                sj.master.updateStatus('new')
+                raise IncompleteJobSubmissionError(
+                    incomplete_subjobs, 'submission failed for subjobs %s' % incomplete_subjobs)
+                return 1
+            else:
+                sj.master.updateStatus('submitted')
+                return 1
+
 
         for sc, sj in zip(subjobconfigs, rjobs):
 

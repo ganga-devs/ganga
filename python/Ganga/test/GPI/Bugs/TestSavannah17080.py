@@ -12,12 +12,32 @@ class TestSavannah17080(GangaUnitTest):
         j.backend= TestSubmitter()
         b = j.splitter.backs[1]
         b.fail = 'submit'
+        j.parallel_submit = False
 
         assert j.status == 'new'
 
         j.submit(keep_going=False)
-        assert j.status in ['submitted', 'running']
+        assert j.status in ['submitting', 'submitted', 'running']
         assert j.subjobs[0].status in ['submitted', 'running']
+
+        assert j.subjobs[1].status == 'failed'
+        assert j.subjobs[2].status == 'new'
+
+    def test_CondorConfigDefaultsParallel(self):
+        from Ganga.GPI import Job, TestSplitter, TestSubmitter
+
+        j = Job()
+        j.splitter = TestSplitter()
+        j.splitter.backs = [TestSubmitter(),TestSubmitter(),TestSubmitter()]
+        j.backend= TestSubmitter()
+        b = j.splitter.backs[1]
+        b.fail = 'submit'
+
+        assert j.status == 'new'
+
+        j.submit(keep_going=False)
+        assert j.status =='new'
+        assert j.subjobs[0].status == 'new'
 
         assert j.subjobs[1].status == 'new'
         assert j.subjobs[2].status == 'new'
