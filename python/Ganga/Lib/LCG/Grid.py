@@ -1030,7 +1030,7 @@ def __arc_sync__(ce_list, cred_req):
     """Collect jobs to jobs.xml"""
 
     if ce_list[0]:
-        cmd = 'arcsync %s -j %s -f -c h%s' % (__arc_get_config_file_arg__(
+        cmd = 'arcsync %s -j %s -f -c %s' % (__arc_get_config_file_arg__(
         ), config["ArcJobListFile"], ' -c '.join(ce_list))
     else:
         cmd = 'arcsync %s -j %s -f ' % (
