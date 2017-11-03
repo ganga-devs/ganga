@@ -79,8 +79,8 @@ class IBackend(GangaObject):
                 raise IncompleteJobSubmissionError(fqid, 'submission failed')
         except Exception as err:
             #from Ganga.Utility.logging import log_user_exception
-#            sj.updateStatus('new')
-            sj.updateStatus('failed', update_master = False)
+            sj.updateStatus('new', update_master = False)
+#            sj.updateStatus('failed', update_master = False)
             #from Ganga.Core.exceptions import GangaException
             #if isinstance(err, GangaException):
             #    logger.error("%s" % err)
@@ -94,11 +94,10 @@ class IBackend(GangaObject):
 
     def _successfulSubmit(self, out, sj, incomplete_subjobs):
         if out == 0:
+            sj.updateStatus('new', update_master = False)
             incomplete_subjobs.append(sj.getFQID('.'))
-
-    def _incompleteSubmit(self, err, sj, failList):
-        print 'incomplete submission! %s', sj.getFQID()
-        failList.append(sj.getFQID())
+        else:
+            sj.updateStatus('submitted', update_master = False)
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
         """  Submit   the  master  job  and  all   its  subjobs.   The
@@ -181,8 +180,14 @@ class IBackend(GangaObject):
 
             def subjob_status_check(rjobs):
                 has_submitted = True
+                if incomplete_subjobs:
+                    print 'incomplete_subjobs in check!', incomplete_subjobs
+                    raise IncompleteJobSubmissionError(
+                        incomplete_subjobs, 'submission failed')
+                    return 0
+
                 for sj in rjobs:
-                    if sj.status not in [ "submitted","failed","completed","running","completing"] and sj.getFQID() not in incomplete_subjobs:
+                    if sj.status not in [ "submitted","failed","completed","running","completing"]:
                         has_submitted = False
                         break
                 return has_submitted

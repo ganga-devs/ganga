@@ -737,8 +737,6 @@ class Job(GangaObject):
         """
         stats = self.getSubJobStatuses()
 
-        print 'rock you like a hurricane: ', stats
-
         # ignore non-split jobs
         if not stats and self.master is not None:
             logger.warning('ignoring master job status updated for job %s (NOT MASTER)', self.getFQID('.'))
@@ -753,10 +751,6 @@ class Job(GangaObject):
 
         if new_stat == self.status:
             return
-
-        # if in submitting and a job reverts to new, make sure the master job goes to new.
-#        if self.status == 'submitting' and 'new' in stats:
-#            new_stat = 'new'
 
         if not new_stat:
             logger.critical('undefined state for job %s, status=%s', self.id, stats)
@@ -1561,11 +1555,11 @@ class Job(GangaObject):
 
         except IncompleteJobSubmissionError as x:
             logger.warning('Not all subjobs have been sucessfully submitted: %s', x)
-            return 0 
-#            print 'len rjobs: ', len(rjobs)
-#            for sj in self.subjobs:
-#                if sj.status == 'submitting':
-#                    sj.updateStatus('new')
+            for i in range(len(rjobs)):
+                if self.subjobs[i].status == 'submitting':
+                    self.subjobs[i].updateStatus('new')
+            self.updateStatus('failed')
+            return 1
 
         except Exception as err:
             if isType(err, GangaException):
@@ -1581,14 +1575,13 @@ class Job(GangaObject):
                 logger.error('%s ... reverting job %s to the new status', err, self.getFQID('.'))
                 self.updateStatus('new')
                 raise JobError("Error: %s" % err), None, sys.exc_info()[2]
-            return 0
-
 
         # This appears to be done by the backend now in a way that handles sub-jobs,
         # in the case of a master job however we need to still perform this
         if len(rjobs) != 1:
             self.info.increment()
         #if self.master is not None:
+        print 'bb'
         self.updateStatus('submitted')
 
         # send job submission message
