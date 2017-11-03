@@ -26,10 +26,9 @@ def standardSetup():
 
 def loadPlugins(config=None):
     #import Lib.Backends
-    #import Lib.Checkers
-    pass
-    #import Lib.Applications
-    #import Lib.RTHandlers
-    #import Lib.Datasets
+    import Lib.Checkers
+    import Lib.Applications
+    import Lib.RTHandlers
+    import Lib.Datasets
     #import Lib.Datafiles
-    #import Lib.Splitters
+    import Lib.Splitters
