@@ -235,7 +235,7 @@ class DiracBase(IBackend):
         """
         #If you want to go slowly use the regular master_submit:
         if not self.blockSubmit:
-            return IBackend.master_submit(self, subjobconfigs, masterjobconfig, keep_joing, parallel_submit)
+            return IBackend.master_submit(self, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
 
         #Otherwise use the block submit. Much of this is copied from IBackend
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
@@ -555,6 +555,10 @@ class DiracBase(IBackend):
         for fileName in os.listdir(scriptDir):
             if fnmatch.fnmatch(fileName, 'dirac-script-*.py'):
                 diracScriptFiles.append(fileName)
+
+        #Did we find any of the new style dirac scripts? If not try the old way as the job may have been submitted with an old ganga version.
+        if diracScriptFiles == []:
+            return self._resubmit()
 
         new_script_filename = ''
 
