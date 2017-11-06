@@ -181,13 +181,12 @@ class IBackend(GangaObject):
             def subjob_status_check(rjobs):
                 has_submitted = True
                 if incomplete_subjobs:
-                    print 'incomplete_subjobs in check!', incomplete_subjobs
                     raise IncompleteJobSubmissionError(
                         incomplete_subjobs, 'submission failed')
                     return 0
 
                 for sj in rjobs:
-                    if sj.status not in [ "submitted","failed","completed","running","completing"]:
+                    if sj.status not in ["submitted","failed","completed","running","completing"]:
                         has_submitted = False
                         break
                 return has_submitted
@@ -195,8 +194,6 @@ class IBackend(GangaObject):
             while not subjob_status_check(rjobs):
                 import time
                 time.sleep(1.)
-
-            print 'incomplete_subjobs', incomplete_subjobs
 
             if incomplete_subjobs:
                 sj.master.updateStatus('new')
