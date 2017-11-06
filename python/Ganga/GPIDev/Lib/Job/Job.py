@@ -1581,7 +1581,6 @@ class Job(GangaObject):
         if len(rjobs) != 1:
             self.info.increment()
         #if self.master is not None:
-        print 'bb'
         self.updateStatus('submitted')
 
         # send job submission message
