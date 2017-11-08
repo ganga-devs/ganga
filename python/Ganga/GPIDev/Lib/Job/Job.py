@@ -1558,8 +1558,8 @@ class Job(GangaObject):
             for i in range(len(rjobs)):
                 if self.subjobs[i].status == 'submitting':
                     self.subjobs[i].updateStatus('new')
-            self.updateStatus('failed')
-            return 1
+#            self.updateStatus('failed')
+#            return 1
 
         except Exception as err:
             if isType(err, GangaException):
