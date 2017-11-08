@@ -1536,7 +1536,6 @@ class Job(GangaObject):
             if len(rjobs) != 1:
                 self.info.increment()
             if self.master is not None:
-                print 'aaaaaaa'
                 self.updateStatus('submitted')
             # make sure that the status change goes to the repository, NOTE:
             # this commit is redundant if updateStatus() is used on the line
@@ -1558,13 +1557,11 @@ class Job(GangaObject):
 
         except IncompleteJobSubmissionError as x:
             logger.warning('Not all subjobs have been sucessfully submitted: %s', x)
-            for i in range(len(rjobs)):
-                if self.subjobs[i].status == 'submitting':
-                    self.subjobs[i].updateStatus('new')
             self.updateStatus('failed')
-#            return 1
-
+            raise x
         except Exception as err:
+            raise JobError("Error: %s" % err), None, sys.exc_info()[2]
+
             if isType(err, GangaException):
                 log_user_exception(logger, debug=True)
                 logger.error("%s" % err)
@@ -1573,37 +1570,12 @@ class Job(GangaObject):
 
             if keep_on_fail:
                 self.updateStatus('failed')
+                
             else:
                 # revert to the new status
                 logger.error('%s ... reverting job %s to the new status', err, self.getFQID('.'))
                 self.updateStatus('new')
                 raise JobError("Error: %s" % err), None, sys.exc_info()[2]
-
-        # This appears to be done by the backend now in a way that handles sub-jobs,
-        # in the case of a master job however we need to still perform this
-        if len(rjobs) != 1:
-            self.info.increment()
-        #if self.master is not None:
-        print 'bbb'
-        if allSubmitted:
-            self.updateStatus('submitted')
-        else:
-            self.updateStatus('failed')
-
-        # send job submission message
-        if len(self.subjobs) == 0:
-            ganga_job_submitted(getName(self.application), getName(self.backend), "1", "0", "0")
-        else:
-            submitted_count = 0
-            for sj in self.subjobs:
-                if sj.status == 'submitted':
-                    submitted_count += 1
-
-            ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", submitted_count)
-
-        self._getRegistry()._flush([self])
-
-        return 1
 
     def rollbackToNewState(self):
         """

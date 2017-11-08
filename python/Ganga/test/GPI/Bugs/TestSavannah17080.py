@@ -2,8 +2,10 @@ from Ganga.testlib.GangaUnitTest import GangaUnitTest
 import pytest
 
 class TestSavannah17080(GangaUnitTest):
+    # These tests for failures during submission
 
     def test_CondorConfigDefaults(self):
+        # A test with sequential submission
         from Ganga.GPI import Job, TestSplitter, TestSubmitter
 
         j = Job()
@@ -16,14 +18,15 @@ class TestSavannah17080(GangaUnitTest):
 
         assert j.status == 'new'
 
-#        with pytest.raises(Exception):
-        j.submit(keep_going=False)
+        with pytest.raises(Exception):
+            j.submit(keep_going=True)
         assert j.subjobs[0].status in ['submitted', 'running']
 
         assert j.subjobs[1].status == 'new'
         assert j.subjobs[2].status == 'new'
 
     def test_CondorConfigDefaultsParallel(self):
+        # A test with parallel submission
         from Ganga.GPI import Job, TestSplitter, TestSubmitter
 
         j = Job()
@@ -32,13 +35,15 @@ class TestSavannah17080(GangaUnitTest):
         j.backend= TestSubmitter()
         b = j.splitter.backs[1]
         b.fail = 'submit'
+        j.parallel_submit = True
 
         assert j.status == 'new'
 
-#        with pytest.raises(Exception):
-        j.submit(keep_going=False)
-#        assert j.status =='new'
-        assert j.subjobs[0].status == 'submitted'
+        with pytest.raises(Exception):
+            j.submit(keep_going=True)
 
-        assert j.subjobs[1].status == 'failed'
-        assert j.subjobs[2].status == 'submitted'
+        assert j.status =='failed'
+        assert j.subjobs[0].status in ['submitted', 'running']
+
+        assert j.subjobs[1].status == 'new'
+        assert j.subjobs[2].status in ['submitted', 'running']
