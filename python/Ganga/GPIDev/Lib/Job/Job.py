@@ -1452,6 +1452,8 @@ class Job(GangaObject):
 
         rtHandler = self._getRuntimeHandler()
 
+        allSubmitted = False
+
         try:
 
             logger.info("submitting job %s", self.getFQID('.'))
@@ -1534,6 +1536,7 @@ class Job(GangaObject):
             if len(rjobs) != 1:
                 self.info.increment()
             if self.master is not None:
+                print 'aaaaaaa'
                 self.updateStatus('submitted')
             # make sure that the status change goes to the repository, NOTE:
             # this commit is redundant if updateStatus() is used on the line
@@ -1550,7 +1553,7 @@ class Job(GangaObject):
                         submitted_count += 1
 
                 ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", submitted_count)
-
+            allSubmitted = True
             return 1
 
         except IncompleteJobSubmissionError as x:
@@ -1558,7 +1561,7 @@ class Job(GangaObject):
             for i in range(len(rjobs)):
                 if self.subjobs[i].status == 'submitting':
                     self.subjobs[i].updateStatus('new')
-#            self.updateStatus('failed')
+            self.updateStatus('failed')
 #            return 1
 
         except Exception as err:
@@ -1581,7 +1584,11 @@ class Job(GangaObject):
         if len(rjobs) != 1:
             self.info.increment()
         #if self.master is not None:
-        self.updateStatus('submitted')
+        print 'bbb'
+        if allSubmitted:
+            self.updateStatus('submitted')
+        else:
+            self.updateStatus('failed')
 
         # send job submission message
         if len(self.subjobs) == 0:

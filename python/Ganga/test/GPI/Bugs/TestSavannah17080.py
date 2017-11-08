@@ -37,8 +37,8 @@ class TestSavannah17080(GangaUnitTest):
 
 #        with pytest.raises(Exception):
         j.submit(keep_going=False)
-        assert j.status =='new'
+#        assert j.status =='new'
         assert j.subjobs[0].status == 'submitted'
 
-        assert j.subjobs[1].status == 'new'
+        assert j.subjobs[1].status == 'failed'
         assert j.subjobs[2].status == 'submitted'
