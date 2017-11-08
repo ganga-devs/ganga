@@ -72,21 +72,11 @@ class IBackend(GangaObject):
         try:
             sj.updateStatus('submitting')
             if b.submit(sc, master_input_sandbox):
-                sj.updateStatus('submitted', update_master = False)
                 sj.info.increment()
                 return 1
             else:
                 raise IncompleteJobSubmissionError(fqid, 'submission failed')
         except Exception as err:
-            #from Ganga.Utility.logging import log_user_exception
-            sj.updateStatus('failed')
-#            sj.updateStatus('failed', update_master = False)
-            #from Ganga.Core.exceptions import GangaException
-            #if isinstance(err, GangaException):
-            #    logger.error("%s" % err)
-            #    #log_user_exception(logger, debug=True)
-            #else:
-            #    #log_user_exception(logger, debug=False)
             logger.error("Parallel Job Submission Failed: %s" % err)
             return 0
         finally:
@@ -179,8 +169,6 @@ class IBackend(GangaObject):
                 getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger), callback_func = self._successfulSubmit, callback_args = (sj, incomplete_subjobs))
 #                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
 
-            print incomplete_subjobs
-
             def subjob_status_check(rjobs):
                 has_submitted = True
                 for sj in rjobs:
@@ -195,14 +183,8 @@ class IBackend(GangaObject):
                 time.sleep(1.)
 
             if incomplete_subjobs:
-#                sj.master.updateStatus('new')
-                print 'oh no!!'
                 raise IncompleteJobSubmissionError(
                     incomplete_subjobs, 'submission failed for subjobs %s' % incomplete_subjobs)
-#                return 1
-            else:
-                print 'gone right'
-#                sj.master.updateStatus('submitted')
             return 1
 
         # Alternatively submit sequentially
