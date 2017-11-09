@@ -50,7 +50,10 @@ def getDiracEnv(sourceFile = None):
             sourceFile = 'default'
             cache_file = getConfig('DIRAC')['DiracEnvJSON']
             source_command = getConfig('DIRAC')['DiracEnvSource']
+            if not cache_file and not source_command:
+                source_command = getConfig('DIRAC')['DiracEnvFile']
         else:
+            # Needed for backwards compatibility with old configs...
             cache_file = None
             source_command = sourceFile
 
@@ -82,7 +85,20 @@ def get_env(env_source):
     env = dict(os.environ)
     gexecute.execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
     if not any(key.startswith('DIRAC') for key in env):
-        raise RuntimeError("'DIRAC*' not found in environment")
+        fake_dict = {}
+        with open(env_source) as _env:
+            for _line in _env.readlines():
+                split_val = _line.split('=')
+                if len(split_val) == 2:
+                    key = split_val[0]
+                    value = split_val[1]
+                    fake_dict[key] = value
+        if not any(key.startswith('DIRAC') for key in fake_dict):
+            logger.error("Env: %s" % str(env))
+            logger.error("Fake: %s" % str(fake_dict))
+            raise RuntimeError("'DIRAC*' not found in environment")
+        else:
+            return fake_dict
     return env
 
 
