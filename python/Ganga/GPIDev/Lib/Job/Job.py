@@ -1467,7 +1467,9 @@ class Job(GangaObject):
             #if hasattr(self.application, 'is_prepared'):
             #    logger.debug("Calling self.prepare()")
             #    self.prepare()
+            print 'about to prepare'
             self._selfAppPrepare(prepare)
+            print 'prepared'
 
             # Splitting
             logger.debug("Checking Job: %s for splitting" % self.getFQID('.'))
@@ -1560,8 +1562,6 @@ class Job(GangaObject):
             self.updateStatus('failed')
             raise x
         except Exception as err:
-            raise JobError("Error: %s" % err), None, sys.exc_info()[2]
-
             if isType(err, GangaException):
                 log_user_exception(logger, debug=True)
                 logger.error("%s" % err)
@@ -1575,7 +1575,7 @@ class Job(GangaObject):
                 # revert to the new status
                 logger.error('%s ... reverting job %s to the new status', err, self.getFQID('.'))
                 self.updateStatus('new')
-                raise JobError("Error: %s" % err), None, sys.exc_info()[2]
+            raise JobError("Error: %s" % err), None, sys.exc_info()[2]
 
     def rollbackToNewState(self):
         """
