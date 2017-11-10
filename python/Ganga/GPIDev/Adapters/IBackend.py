@@ -165,7 +165,6 @@ class IBackend(GangaObject):
                 fqid = sj.getFQID('.')
                 # FIXME would be nice to move this to the internal threads not user ones
                 getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger), callback_func = self._successfulSubmit, callback_args = (sj, incomplete_subjobs))
-#                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
 
             def subjob_status_check(rjobs):
                 has_submitted = True

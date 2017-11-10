@@ -559,7 +559,7 @@ class Job(GangaObject):
 
         fqid = self.getFQID('.')
         initial_status = self.status
-        logger.info('attempt to change job %s status from "%s" to "%s"', fqid, initial_status, newstatus)
+        logger.debug('attempt to change job %s status from "%s" to "%s"', fqid, initial_status, newstatus)
         try:
             state = self.status_graph[initial_status][newstatus]
         except KeyError as err:
@@ -1452,8 +1452,6 @@ class Job(GangaObject):
 
         rtHandler = self._getRuntimeHandler()
 
-        allSubmitted = False
-
         try:
 
             logger.info("submitting job %s", self.getFQID('.'))
@@ -1467,9 +1465,7 @@ class Job(GangaObject):
             #if hasattr(self.application, 'is_prepared'):
             #    logger.debug("Calling self.prepare()")
             #    self.prepare()
-            print 'about to prepare'
             self._selfAppPrepare(prepare)
-            print 'prepared'
 
             # Splitting
             logger.debug("Checking Job: %s for splitting" % self.getFQID('.'))
@@ -1554,7 +1550,6 @@ class Job(GangaObject):
                         submitted_count += 1
 
                 ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", submitted_count)
-            allSubmitted = True
             return 1
 
         except IncompleteJobSubmissionError as x:
