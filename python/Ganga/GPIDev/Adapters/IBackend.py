@@ -79,8 +79,6 @@ class IBackend(GangaObject):
         except Exception as err:
             logger.error("Parallel Job Submission Failed: %s" % err)
             return 0
-        finally:
-            pass
 
     def _successfulSubmit(self, out, sj, incomplete_subjobs):
         if out == 0:
@@ -153,7 +151,6 @@ class IBackend(GangaObject):
             threads_before = getQueues().totalNumIntThreads()
 
             for sc, sj in zip(subjobconfigs, rjobs):
-                print 'in the parallel'
 
                 b = sj.backend
 
@@ -205,18 +202,12 @@ class IBackend(GangaObject):
                         raise IncompleteJobSubmissionError(fqid, 'submission failed')
             except Exception as x:
                 sj.updateStatus('new')
-                return 0 
                 if isType(x, GangaException):
                     logger.error("%s" % x)
                     log_user_exception(logger, debug=True)
                 else:
                     log_user_exception(logger, debug=False)
-                if handleError(IncompleteJobSubmissionError(fqid, str(x))):
-                    return 0
-
-        if incomplete_subjobs:
-            raise IncompleteJobSubmissionError(
-                incomplete_subjobs, 'submission failed')
+                return 0
 
         return 1
 
