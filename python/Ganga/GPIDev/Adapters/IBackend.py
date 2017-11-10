@@ -201,9 +201,10 @@ class IBackend(GangaObject):
                     stripProxy(sj.info).increment()
                 else:
                     if handleError(IncompleteJobSubmissionError(fqid, 'submission failed')):
-                        return 0
+                        raise IncompleteJobSubmissionError(fqid, 'submission failed')
             except Exception as x:
-                #sj.updateStatus('new')
+                sj.updateStatus('new')
+                return 0 
                 if isType(x, GangaException):
                     logger.error("%s" % x)
                     log_user_exception(logger, debug=True)
