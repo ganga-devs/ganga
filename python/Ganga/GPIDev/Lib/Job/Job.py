@@ -1535,7 +1535,7 @@ class Job(GangaObject):
             # in the case of a master job however we need to still perform this
             if len(rjobs) != 1:
                 self.info.increment()
-            if self.master is not None:
+            if self.master is None:
                 self.updateStatus('submitted')
             # make sure that the status change goes to the repository, NOTE:
             # this commit is redundant if updateStatus() is used on the line
