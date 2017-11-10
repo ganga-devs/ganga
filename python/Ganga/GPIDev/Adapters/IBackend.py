@@ -153,6 +153,7 @@ class IBackend(GangaObject):
             threads_before = getQueues().totalNumIntThreads()
 
             for sc, sj in zip(subjobconfigs, rjobs):
+                print 'in the parallel'
 
                 b = sj.backend
 
