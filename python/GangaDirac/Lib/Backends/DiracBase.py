@@ -235,7 +235,7 @@ class DiracBase(IBackend):
         """
         #If you want to go slowly use the regular master_submit:
         if not self.blockSubmit:
-            return IBackend.master_submit(self, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
+            return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
 
         #Otherwise use the block submit. Much of this is copied from IBackend
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
