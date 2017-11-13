@@ -269,7 +269,7 @@ class DiracBase(IBackend):
                 sj.updateStatus('submitting')
                 fqid = sj.getFQID('.')
                 #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
-                sjScript = self.backend._job_script(sj, sc, master_input_sandbox)
+                sjScript = sj.backend._job_script(sc, master_input_sandbox)
                 sjScript = sjScript.replace("output(result)", "resultdict.update({sjNo : result['Value']})")
                 if nSubjobs == 0:
                     sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
@@ -316,7 +316,7 @@ class DiracBase(IBackend):
                         break
                 return has_submitted
 
-    def _job_script(self, subjob, subjobconfig, master_input_sandbox):
+    def _job_script(self, subjobconfig, master_input_sandbox):
         """Get the script to submit a single DIRAC job
         Args:
             subjobconfig (unknown):
@@ -325,7 +325,7 @@ class DiracBase(IBackend):
 
         j = self.getJobObject()
 
-        sboxname = subjob.createPackedInputSandbox(subjobconfig.getSandboxFiles())
+        sboxname = j.createPackedInputSandbox(subjobconfig.getSandboxFiles())
 
         input_sandbox = master_input_sandbox[:]
         input_sandbox += sboxname
