@@ -207,6 +207,9 @@ class DiracBase(IBackend):
             logger.error("\n====\n")
             raise BackendError('Dirac', err_msg)
 
+        if not isinstance(result, dict):
+            raise GangaDiracError(result)
+
         #Now put the list of Dirac IDs into the subjobs and get them monitored:
         if len(j.subjobs)>0:
             for jobNo in result.keys():
