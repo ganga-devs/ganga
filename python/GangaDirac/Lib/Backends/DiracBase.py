@@ -235,7 +235,7 @@ class DiracBase(IBackend):
         """
         #If you want to go slowly use the regular master_submit:
         if not self.blockSubmit:
-            return IBackend.master_submit(self, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
+            return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
 
         #Otherwise use the block submit. Much of this is copied from IBackend
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
@@ -269,7 +269,7 @@ class DiracBase(IBackend):
                 sj.updateStatus('submitting')
                 fqid = sj.getFQID('.')
                 #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
-                sjScript = self._job_script(sc, master_input_sandbox)
+                sjScript = sj.backend._job_script(sc, master_input_sandbox)
                 sjScript = sjScript.replace("output(result)", "resultdict.update({sjNo : result['Value']})")
                 if nSubjobs == 0:
                     sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
