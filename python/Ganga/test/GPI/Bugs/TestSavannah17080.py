@@ -1,4 +1,5 @@
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from Ganga.Core.exceptions import IncompleteJobSubmissionError
 import pytest
 
 class TestSavannah17080(GangaUnitTest):
@@ -18,7 +19,7 @@ class TestSavannah17080(GangaUnitTest):
 
         assert j.status == 'new'
 
-        with pytest.raises(Exception):
+        with pytest.raises(IncompleteJobSubmissionError):
             j.submit(keep_going=True)
         assert j.subjobs[0].status in ['submitted', 'running']
 
@@ -39,7 +40,7 @@ class TestSavannah17080(GangaUnitTest):
 
         assert j.status == 'new'
 
-        with pytest.raises(Exception):
+        with pytest.raises(IncompleteJobSubmissionError):
             j.submit(keep_going=True)
 
         assert j.status =='failed'

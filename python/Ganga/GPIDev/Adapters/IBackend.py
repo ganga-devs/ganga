@@ -206,7 +206,7 @@ class IBackend(GangaObject):
                     log_user_exception(logger, debug=True)
                 else:
                     log_user_exception(logger, debug=False)
-                return 0
+                raise IncompleteJobSubmissionError(fqid, 'submission failed')
 
         return 1
 
