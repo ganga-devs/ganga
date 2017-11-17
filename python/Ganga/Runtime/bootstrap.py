@@ -27,7 +27,7 @@ import sys
 import time
 import re
 
-from Ganga import _gangaVersion, _gangaPythonPath
+from Ganga import _gangaVersion, _gangaPythonPath, _development
 from Ganga.Utility.Config.Config import getConfig
 from Ganga.Utility import stacktracer
 import Ganga.Runtime
@@ -182,6 +182,10 @@ class GangaProgram(object):
         # see Ganga/old_test/Performance tests
         self.start_time = time.time()
 
+        versionString = _gangaVersion
+        if _development:
+            versionString += ' - DEV'
+
         if hello_string is None:
             self.hello_string = """
 *** Welcome to Ganga ***
@@ -192,7 +196,7 @@ Type help() or help('index') for online help.
 This is free software (GPL), and you are welcome to redistribute it
 under certain conditions; type license() for details.
 
-""" % _gangaVersion
+""" % versionString
         else:
             self.hello_string = hello_string
 
