@@ -244,7 +244,10 @@ def execute(command,
             return returnable['Value']
         else:
             raise GangaDiracError(returnable['Message'])
-    else:
-        # If the output is NOT a dictionary return it
+    elif isinstance(returnable, dict):
+        # If the output is a dictionary return and it has been requested, then return it
         return returnable
+    else:
+        # Else raise an exception as it should be a dictionary
+        raise  GangaDiracError(returnable)
 
