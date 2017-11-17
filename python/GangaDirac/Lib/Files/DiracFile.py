@@ -766,6 +766,9 @@ class DiracFile(IGangaFile):
                 self.failureReason += '\n' + failureReason
                 continue
 
+            if not isinstance(stdout, dict):
+                raise GangaDiracError(stdout)
+
             stdout_temp = stdout.get('Successful')
 
             if not stdout_temp:
