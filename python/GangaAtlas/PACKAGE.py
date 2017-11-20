@@ -32,7 +32,7 @@ _external_packages = {
                      'RUCIO_APPID' : 'ganga',
                      },
 
-    'panda-client' : { 'version' : '0.5.91',
+    'panda-client' : { 'version' : '0.5.94',
                        'syspath':['lib/python2.6/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
