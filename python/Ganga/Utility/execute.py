@@ -240,8 +240,8 @@ def execute(command,
     stdout, stderr = p.communicate(command)
 
     # Close the timeout watching thread
-    logger.debug("stdout: %s" % stdout)
-    logger.debug("stderr: %s" % stderr)
+    logger.info("stdout: %s" % stdout)
+    logger.info("stderr: %s" % stderr)
 
     timer.cancel()
     if timeout is not None:
