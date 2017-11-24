@@ -63,7 +63,7 @@ class DiracFile(IGangaFile):
         To upload a file and make it available on a workernode:
 
         df = DiracFile('/path/to/some/local/file')
-        df.put('CERN-USER')
+        df.put(uploadSE = 'CERN-USER')
 
         j=Job( ... )
         j.inputfiles = [df]
