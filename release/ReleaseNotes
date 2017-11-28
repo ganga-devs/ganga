@@ -16,7 +16,7 @@ ganga/python/GangaDirac
 * Bugfixes for resubmitting jobs submitted with bulkSubmit or old versions of ganga #1138, #1150
 * Bugfix to blockSubmit to use subjob sandboxes. Also sequential submission fixed. #1157
 * Exception raised if call to DIRAC does not return a dictionary #1160
-* Bgufix for auto_resubmit.#1167
+* Bugfix for auto_resubmit.#1167
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaAtlas
