@@ -454,7 +454,10 @@ class DiracBase(IBackend):
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
-                    result = b._resubmit()
+                    if self._blockResubmit():
+                        result = b._blockResubmit()
+                    else:
+                        result = b._resubmit()
                     if result:
                         sj.updateStatus('submitted')
                         # sj._commit() # PENDING: TEMPORARY DISABLED
