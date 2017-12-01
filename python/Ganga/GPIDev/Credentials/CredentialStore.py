@@ -315,7 +315,7 @@ class CredentialStore(GangaObject, collections.Mapping):
     def clear(self):
         # type: () -> None
         """
-        Remove all credentials in the system (without destorying them)
+        Remove all credentials in the system (without destroying them)
         """
         self.credentials = set()
 
