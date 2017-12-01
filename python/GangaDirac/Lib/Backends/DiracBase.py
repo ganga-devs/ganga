@@ -240,7 +240,7 @@ class DiracBase(IBackend):
         """
         #If you want to go slowly use the regular master_submit:
         if not self.blockSubmit:
-            return IBackend.master_submit(self, subjobconfigs, masterjobconfig, keep_joing, parallel_submit)
+            return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
 
         #Otherwise use the block submit. Much of this is copied from IBackend
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
@@ -274,7 +274,7 @@ class DiracBase(IBackend):
                 sj.updateStatus('submitting')
                 fqid = sj.getFQID('.')
                 #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
-                sjScript = self._job_script(sc, master_input_sandbox)
+                sjScript = sj.backend._job_script(sc, master_input_sandbox)
                 sjScript = sjScript.replace("output(result)", "resultdict.update({sjNo : result['Value']})")
                 if nSubjobs == 0:
                     sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
@@ -459,7 +459,10 @@ class DiracBase(IBackend):
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
-                    result = b._resubmit()
+                    if self._blockResubmit():
+                        result = b._blockResubmit()
+                    else:
+                        result = b._resubmit()
                     if result:
                         sj.updateStatus('submitted')
                         # sj._commit() # PENDING: TEMPORARY DISABLED
@@ -560,6 +563,10 @@ class DiracBase(IBackend):
         for fileName in os.listdir(scriptDir):
             if fnmatch.fnmatch(fileName, 'dirac-script-*.py'):
                 diracScriptFiles.append(fileName)
+
+        #Did we find any of the new style dirac scripts? If not try the old way as the job may have been submitted with an old ganga version.
+        if diracScriptFiles == []:
+            return self._resubmit()
 
         new_script_filename = ''
 
