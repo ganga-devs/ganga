@@ -414,6 +414,7 @@ class DiracFile(IGangaFile):
         try:
             logger.info("Removing replica at %s for LFN %s" % (SE, self.lfn))
             stdout = execute('removeReplica("%s", "%s")' % (self.lfn, SE), cred_req=self.credential_requirements)
+            self.locations.remove(SE)
         except GangaDiracError as err:
             raise err
 

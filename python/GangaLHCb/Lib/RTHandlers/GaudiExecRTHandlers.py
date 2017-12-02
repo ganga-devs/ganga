@@ -8,7 +8,7 @@ import threading
 import uuid
 import shutil
 
-from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException
+from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException, GangaFileError
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
