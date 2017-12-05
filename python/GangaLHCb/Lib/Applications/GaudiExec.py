@@ -486,7 +486,7 @@ class GaudiExec(IPrepareApp):
             XMLPostProcessor.GaudiExecPostProcess(self, logger)
 
         #Remove one of the replicas for the job script archive and cmake tarball
-        if self.getJobObject().subjobs:
+        if not self.getJobObject().master:
             self.removeUploadedReplicas()
 
     def removeUploadedReplicas(self):
