@@ -495,15 +495,18 @@ class GaudiExec(IPrepareApp):
         one of each at a random location.
         """
         #Start with the job script archive
-        self.jobScriptArchive.getReplicas()
-        while len(self.jobScriptArchive.locations) > 1:
-            SEToRemove = random.choice(self.jobScriptArchive.locations)
-            self.jobScriptArchive.removeReplica(SEToRemove)
 
-        self.uploadedInput.getReplicas()
-        while len(self.uploadedInput.locations) > 1:
-            SEToRemove = random.choice(self.uploadedInput.locations)
-            self.uploadedInput.removeReplica(SEToRemove)
+        if isinstance(self.jobScriptArchive, DiracFile):
+            self.jobScriptArchive.getReplicas()
+            while len(self.jobScriptArchive.locations) > 1:
+                SEToRemove = random.choice(self.jobScriptArchive.locations)
+                self.jobScriptArchive.removeReplica(SEToRemove)
+
+        if isinstance(self.uploadedInput, DiracFile):
+            self.uploadedInput.getReplicas()
+            while len(self.uploadedInput.locations) > 1:
+                SEToRemove = random.choice(self.uploadedInput.locations)
+                self.uploadedInput.removeReplica(SEToRemove)
 
     def getenv(self, cache_env=False):
         """
