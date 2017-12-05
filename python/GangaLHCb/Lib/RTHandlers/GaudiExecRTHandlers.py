@@ -387,11 +387,18 @@ def replicateJobFile(fileToReplicate):
         fileToReplicate.getReplicas()
 
     trySEs = [SE for SE in getConfig('DIRAC')['allDiracSE'] if SE not in fileToReplicate.locations]
-
-    try:
-        success = fileToReplicate.replicate(random.choice(trySEs))
-    except (GangaFileError, GangaDiracError) as err:
-        raise err
+    random.shuffle(trySEs)
+    success = None
+    for SE in trySEs:
+        if execute('checkSEStatus("%s", "%s")' % (SE, 'Write')):
+            try:
+                fileToReplicate.replicate(SE)
+                success = True
+                break
+            except (GangaFileError, GangaDiracError) as err:
+                raise err
+    if not success:
+        raise GangaException("Failed to replicate %s to any SE" % fileToReplicate.lfn)
 
 def getInputFileDir(job):
     """
