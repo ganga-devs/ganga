@@ -8,7 +8,7 @@ import threading
 import uuid
 import shutil
 
-from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException
+from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException, GangaFileError
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
@@ -375,6 +375,31 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
     return returnable
 
 
+def replicateJobFile(fileToReplicate):
+    """
+    A method to replicate a file to a random SE.
+    """
+
+    if not isinstance(fileToReplicate, DiracFile):
+        raise GangaDiracError("Can only request replicas of DiracFiles. %s is not a DiracFile" % fileToReplicate)
+
+    if len(fileToReplicate.locations)==0:
+        fileToReplicate.getReplicas()
+
+    trySEs = [SE for SE in getConfig('DIRAC')['allDiracSE'] if SE not in fileToReplicate.locations]
+    random.shuffle(trySEs)
+    success = None
+    for SE in trySEs:
+        if execute('checkSEStatus("%s", "%s")' % (SE, 'Write')):
+            try:
+                fileToReplicate.replicate(SE)
+                success = True
+                break
+            except (GangaFileError, GangaDiracError) as err:
+                raise err
+    if not success:
+        raise GangaException("Failed to replicate %s to any SE" % fileToReplicate.lfn)
+
 def getInputFileDir(job):
     """
     Return the LFN remote dirname for this job
@@ -448,6 +473,10 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             assert rep_data != {}
         except AssertionError:
             raise ApplicationPrepareError("Failed to find a replica, aborting submit")
+
+        #Create a replica of the job and scripts files
+        replicateJobFile(app.jobScriptArchive)
+        replicateJobFile(app.uploadedInput)
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
