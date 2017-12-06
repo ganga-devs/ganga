@@ -1,17 +1,15 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-import datetime
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, addProxy
+from Ganga.GPIDev.Base.Proxy import isType, addProxy
 from Ganga.GPIDev.Credentials import require_credential
-from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
+from Ganga.Utility.logging import getLogger
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
-from Ganga.Utility.logging import getLogger
+
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-
 
 class BKQuery(GangaObject):
 
@@ -19,7 +17,7 @@ class BKQuery(GangaObject):
 
     Currently 4 types of queries are supported: Path, RunsByDate, Run and
     Production.  These correspond to the Dirac API methods
-    DiracLHCb.bkQuery<type> (see Dirac docs for details).  
+    DiracLHCb.bkQuery<type> (see Dirac docs for details).
 
 
     Path formats are as follows:
@@ -30,7 +28,7 @@ class BKQuery(GangaObject):
 
     type = "RunsByDate":
      /<ConfigurationName>/<Configuration Version>/<Processing Pass>/\
-<Event Type>/<File Type> 
+<Event Type>/<File Type>
 
     type = "Run":
     /<Run Number>/<Processing Pass>/<Event Type>/<File Type>
@@ -46,8 +44,8 @@ class BKQuery(GangaObject):
     dqflag = "All" ,
     path = "/LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data/\
 RecoToDST-07/90000000/DST" ,
-    type = "Path" 
-    ) 
+    type = "Path"
+    )
 
     bkq = BKQuery (
     startDate = "2010-05-18" ,
@@ -55,20 +53,20 @@ RecoToDST-07/90000000/DST" ,
     endDate = "2010-05-20" ,
     dqflag = "All" ,
     path = "/LHCb/Collision10/Real Data/90000000/RAW" ,
-    type = "RunsByDate" 
-    ) 
+    type = "RunsByDate"
+    )
 
     bkq = BKQuery (
     dqflag = "All" ,
     path = "111183-126823/Real Data/Reco14/Stripping20/90000000/DIMUON.DST" ,
-    type = "Run" 
-    ) 
+    type = "Run"
+    )
 
     bkq = BKQuery (
     dqflag = "All" ,
     path = "/5842/Real Data/RecoToDST-07/90000000/DST" ,
-    type = "Production" 
-    ) 
+    type = "Production"
+    )
 
     then (for any type) one can get the data set by doing the following:
     data = bkq.getDataset()
@@ -85,7 +83,7 @@ RecoToDST-07/90000000/DST" ,
     docstr = 'End date string yyyy-mm-dd (only works for type="RunsByDate")'
     schema['endDate'] = SimpleItem(defvalue='', doc=docstr)
     docstr = 'Data quality flag (string or list of strings).'
-    schema['dqflag'] = SimpleItem(defvalue='OK', typelist=['str', 'list'], doc=docstr)
+    schema['dqflag'] = SimpleItem(defvalue=['OK', 'UNCHECKED'], typelist=['str', 'list'], doc=docstr)
     docstr = 'Type of query (Path, RunsByDate, Run, Production)'
     schema['type'] = SimpleItem(defvalue='Path', doc=docstr)
     docstr = 'Selection criteria: Runs, ProcessedRuns, NotProcessed (only works for type="RunsByDate")'
@@ -132,7 +130,7 @@ RecoToDST-07/90000000/DST" ,
         metadata = {}
         if 'LFNs' in value:
             files = value['LFNs']
-        if not type(files) is list:  # i.e. a dict of LFN:Metadata
+        if not isinstance(files, list):  # i.e. a dict of LFN:Metadata
             # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
             metadata = files.copy()
 
@@ -172,7 +170,7 @@ RecoToDST-07/90000000/DST" ,
         value = result
         if 'LFNs' in value:
             files = value['LFNs']
-        if not type(files) is list:  # i.e. a dict of LFN:Metadata
+        if not isinstance(files, list):  # i.e. a dict of LFN:Metadata
             # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
             files = files.keys()
 
@@ -258,13 +256,13 @@ class BKQueryDict(GangaObject):
         try:
             value = get_result(cmd, 'BK query error.', credential_requirements=self.credential_requirements)
         except GangaDiracError as err:
-            return {'OK':False, 'Value': {}}
+            return {'OK':False, 'Value': str(err)}
 
         files = []
         if 'LFNs' in value:
             files = value['LFNs']
         metadata = {}
-        if not type(files) is list:
+        if not isinstance(files, list):
             if 'LFNs' in files:  # i.e. a dict of LFN:Metadata
                 metadata = files['LFNs'].copy()
 
@@ -283,7 +281,7 @@ class BKQueryDict(GangaObject):
         files = []
         if 'LFNs' in value:
             files = value['LFNs']
-        if not type(files) is list:
+        if not isinstance(files, list):
             if 'LFNs' in files:  # i.e. a dict of LFN:Metadata
                 files = files['LFNs'].keys()
 
