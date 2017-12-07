@@ -72,23 +72,20 @@ class IBackend(GangaObject):
         try:
             sj.updateStatus('submitting')
             if b.submit(sc, master_input_sandbox):
-                sj.updateStatus('submitted')
                 sj.info.increment()
+                return 1
             else:
                 raise IncompleteJobSubmissionError(fqid, 'submission failed')
         except Exception as err:
-            #from Ganga.Utility.logging import log_user_exception
-            sj.updateStatus('failed')
-
-            #from Ganga.Core.exceptions import GangaException
-            #if isinstance(err, GangaException):
-            #    logger.error("%s" % err)
-            #    #log_user_exception(logger, debug=True)
-            #else:
-            #    #log_user_exception(logger, debug=False)
             logger.error("Parallel Job Submission Failed: %s" % err)
-        finally:
-            pass
+            return 0
+
+    def _successfulSubmit(self, out, sj, incomplete_subjobs):
+        if out == 0:
+            incomplete_subjobs.append(sj.getFQID('.'))
+            sj.updateStatus('new', update_master = False)
+        else:
+            sj.updateStatus('submitted', update_master = False)
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
         """  Submit   the  master  job  and  all   its  subjobs.   The
@@ -146,7 +143,7 @@ class IBackend(GangaObject):
                     return True
 
         master_input_sandbox = self.master_prepare(masterjobconfig)
-
+        # Shall we submit in parallel
         if parallel_submit:
 
             from Ganga.Core.GangaThread.WorkerThreads import getQueues
@@ -167,12 +164,12 @@ class IBackend(GangaObject):
 
                 fqid = sj.getFQID('.')
                 # FIXME would be nice to move this to the internal threads not user ones
-                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
+                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger), callback_func = self._successfulSubmit, callback_args = (sj, incomplete_subjobs))
 
             def subjob_status_check(rjobs):
                 has_submitted = True
                 for sj in rjobs:
-                    if sj.status not in ["submitted","failed","completed","running","completing"]:
+                    if sj.status not in ["submitted","failed","completed","running","completing"] and sj.getFQID('.') not in incomplete_subjobs:
                         has_submitted = False
                         break
                 return has_submitted
@@ -181,11 +178,12 @@ class IBackend(GangaObject):
                 import time
                 time.sleep(1.)
 
-            for i in rjobs:
-                if i.status in ["new", "failed"]:
-                    return 0
+            if incomplete_subjobs:
+                raise IncompleteJobSubmissionError(
+                    incomplete_subjobs, 'submission failed for subjobs %s' % incomplete_subjobs)
             return 1
 
+        # Alternatively submit sequentially
         for sc, sj in zip(subjobconfigs, rjobs):
 
             fqid = sj.getFQID('.')
@@ -200,20 +198,15 @@ class IBackend(GangaObject):
                     stripProxy(sj.info).increment()
                 else:
                     if handleError(IncompleteJobSubmissionError(fqid, 'submission failed')):
-                        return 0
+                        raise IncompleteJobSubmissionError(fqid, 'submission failed')
             except Exception as x:
-                #sj.updateStatus('new')
+                sj.updateStatus('new')
                 if isType(x, GangaException):
                     logger.error("%s" % x)
                     log_user_exception(logger, debug=True)
                 else:
                     log_user_exception(logger, debug=False)
-                if handleError(IncompleteJobSubmissionError(fqid, str(x))):
-                    return 0
-
-        if incomplete_subjobs:
-            raise IncompleteJobSubmissionError(
-                incomplete_subjobs, 'submission failed')
+                raise IncompleteJobSubmissionError(fqid, 'submission failed')
 
         return 1
 

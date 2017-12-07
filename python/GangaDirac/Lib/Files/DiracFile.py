@@ -63,7 +63,7 @@ class DiracFile(IGangaFile):
         To upload a file and make it available on a workernode:
 
         df = DiracFile('/path/to/some/local/file')
-        df.put('CERN-USER')
+        df.put(uploadSE = 'CERN-USER')
 
         j=Job( ... )
         j.inputfiles = [df]
@@ -154,7 +154,7 @@ class DiracFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "DiracFile"
-    _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove',
+    _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove', 'removeReplica',
                       "replicate", 'put', 'locations', 'location', 'accessURL',
                       '_updateRemoteURLs', 'hasMatchedFiles']
 
@@ -402,6 +402,23 @@ class DiracFile(IGangaFile):
         self.locations = []
         self.guid = ''
         return True
+
+    @require_credential
+    def removeReplica(self, SE):
+        """
+        Remove the replica from the given SE
+        """
+        self.getReplicas()
+        if SE not in self.locations:
+            raise GangaFileError("No replica at supplied SE: %s" % SE)
+        try:
+            logger.info("Removing replica at %s for LFN %s" % (SE, self.lfn))
+            stdout = execute('removeReplica("%s", "%s")' % (self.lfn, SE), cred_req=self.credential_requirements)
+            self.locations.remove(SE)
+        except GangaDiracError as err:
+            raise err
+
+        return True 
 
     @require_credential
     def getMetadata(self):

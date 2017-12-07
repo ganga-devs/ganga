@@ -25,14 +25,8 @@ def getLCGRootPath():
 
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
-_gangaVersion = '$Name: 6.7.2 $'
-
-# [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
-r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
-if r:
-    _gangaVersion = r.group('version')
-else:
-    _gangaVersion = "SVN_TRUNK"
+_gangaVersion = '6.7.3'
+_development = False
 
 # store a path to Ganga libraries
 _gangaPythonPath = os.path.dirname(os.path.dirname(__file__))
