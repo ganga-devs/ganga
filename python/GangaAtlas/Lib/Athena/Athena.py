@@ -1010,8 +1010,8 @@ class Athena(IPrepareApp):
         logger.info('Found Working Directory %s',self.userarea)
         logger.info('Found ATLAS Release %s',self.atlas_release)
 
-        # check for nightlies
-        if "AtlasBuildStamp" in os.environ:
+        # check for nightlies - AtlasReleaseType will be 'nightly' if so, 'stable' if not
+        if "AtlasReleaseType" in os.environ and os.environ['AtlasReleaseType'] == 'nightly':
             # change production as the release found above is one ahead of the actual
             logger.info('Found ATLAS Nightly release. Setting atlas_production appropriately')
             self.atlas_production = os.environ['AtlasBuildBranch'] + ',' + os.environ['AtlasBuildStamp']
