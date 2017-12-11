@@ -1217,6 +1217,10 @@ class DiracBase(IBackend):
             if monitoring_component:
                 if monitoring_component.should_stop():
                     break
+            # Job has changed underneath us don't attempt to finalize
+            if j.backend.status not in finalised_statuses:
+                j.been_queued = False
+                continue
             if not configDirac['serializeBackend']:
                 getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                            args=(j, finalised_statuses[j.backend.status]),
