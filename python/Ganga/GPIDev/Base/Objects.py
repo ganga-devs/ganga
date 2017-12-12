@@ -459,6 +459,35 @@ class Descriptor(object):
 
         return v_copy
 
+    @staticmethod
+    def check_inheritance(obj, attr_name):
+        """
+        This function crawls down the given attr_name for a given obj and checks that the parents are set correctly
+        Args:
+            obj (GangaObject): This is the object which controls the attribute we're examining
+            attr_name (str): This is the name of the attribute which we're going ot examine to find it's parents
+        """
+        attr_item = obj._schema.getItem(attr_name)
+        this_attr = getattr(obj, attr_name)
+        if hasattr(attr_item, '_getter_name') and attr_item._getter_name:
+            return
+        if not obj._schema[attr_name].getProperties()['visitable'] or obj._schema[attr_name].getProperties()['transient']:
+            return
+        if isinstance(this_attr, Node):
+            if hasattr(this_attr, '__len__'):
+                from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+                for item in this_attr:
+                    if isinstance(item, Node):
+                        for _this_attr in item._schema.allItemNames():
+                            Descriptor.check_inheritance(item, _this_attr)
+                        if isinstance(this_attr, GangaList) and this_attr._getParent() is not None:
+                            assert item._getParent() is this_attr._getParent()
+                        else:
+                            assert item._getParent() is this_attr
+                assert this_attr._getParent() is obj
+            else:
+                assert this_attr._getParent() is obj
+
     @synchronised_set_descriptor
     def __set__(self, obj, val, root_obj=None):
         """
@@ -508,6 +537,11 @@ class Descriptor(object):
         obj.setSchemaAttribute(_set_name, new_value)
 
         obj._setDirty()
+
+        try:
+            Descriptor.check_inheritance(obj, _set_name)
+        except AssertionError:
+            raise RuntimeError("Something went wrong in setting: '%s'::'%s' = '%s'" % (_getName(obj), _set_name, str(val)))
 
     @staticmethod
     def cleanValue(obj, val, name):
