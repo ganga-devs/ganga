@@ -2,9 +2,10 @@
 @VERSION@
 
 --------------------------------------------------------------------------------------------------------------
-ganga/python/GangaDirac
+ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 * parallel_submit is set to default true for jobs, except interactive backend. Some bugfixes to job submission logic. #1128
+* Bugfix to job removal for jobs loaded from disk. #1181
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaDirac
