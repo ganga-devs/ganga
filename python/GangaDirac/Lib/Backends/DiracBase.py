@@ -92,7 +92,7 @@ class DiracBase(IBackend):
         'diracOpts': SimpleItem(defvalue='',
                                 doc='DIRAC API commands to add the job definition script. Only edit '
                                 'if you *really* know what you are doing'),
-        'settings': SimpleItem(defvalue={'CPUTime': 2 * 86400},
+        'settings': SimpleItem(defvalue={'CPUTime': 14 * 86400},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
         'blockSubmit' : SimpleItem(defvalue=True, 
@@ -1076,6 +1076,10 @@ class DiracBase(IBackend):
             if monitoring_component:
                 if monitoring_component.should_stop():
                     break
+            # Job has changed underneath us don't attempt to finalize
+            if j.backend.status not in finalised_statuses:
+                j.been_queued = False
+                continue
             if not configDirac['serializeBackend']:
                 getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                            args=(j, finalised_statuses[j.backend.status]),

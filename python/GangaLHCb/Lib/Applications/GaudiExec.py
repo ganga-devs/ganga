@@ -1,5 +1,6 @@
 from os import rename, path, makedirs, chdir, unlink, listdir, chmod
 from os import stat as os_stat
+import random
 import tempfile
 import time
 import subprocess
@@ -483,6 +484,29 @@ class GaudiExec(IPrepareApp):
         from GangaLHCb.Lib.Applications import XMLPostProcessor
         if self.getMetadata:
             XMLPostProcessor.GaudiExecPostProcess(self, logger)
+
+        #Remove one of the replicas for the job script archive and cmake tarball
+        if not self.getJobObject().master:
+            self.removeUploadedReplicas()
+
+    def removeUploadedReplicas(self):
+        """
+        Remove all the replicas of the cmake tarball and job script archive. Will leave
+        one of each at a random location.
+        """
+        #Start with the job script archive
+
+        if isinstance(self.jobScriptArchive, DiracFile):
+            self.jobScriptArchive.getReplicas()
+            while len(self.jobScriptArchive.locations) > 1:
+                SEToRemove = random.choice(self.jobScriptArchive.locations)
+                self.jobScriptArchive.removeReplica(SEToRemove)
+
+        if isinstance(self.uploadedInput, DiracFile):
+            self.uploadedInput.getReplicas()
+            while len(self.uploadedInput.locations) > 1:
+                SEToRemove = random.choice(self.uploadedInput.locations)
+                self.uploadedInput.removeReplica(SEToRemove)
 
     def getenv(self, cache_env=False):
         """
