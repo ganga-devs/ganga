@@ -1673,14 +1673,6 @@ class Job(GangaObject):
                 for sj in self.subjobs:
                     sj.application.transition_update('removed')
 
-        if self._registry:
-            try:
-                self._registry._remove(self, auto_removed=1)
-            except GangaException as err:
-                logger.warning("Error trying to fully remove Job #'%s':: %s" % (self.getFQID('.'), err))
-
-        self.status = 'removed'
-
         if not template:
             # remove the corresponding workspace files
 
@@ -1738,6 +1730,14 @@ class Job(GangaObject):
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
                 pass
+
+        if self._registry:
+            try:
+                self._registry._remove(self, auto_removed=1)
+            except GangaException as err:
+                logger.warning("Error trying to fully remove Job #'%s':: %s" % (self.getFQID('.'), err))
+
+        self.status = 'removed'
 
         try:
             self._releaseSessionLockAndFlush()
