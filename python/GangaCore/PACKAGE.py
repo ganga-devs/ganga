@@ -113,7 +113,7 @@ def detectPlatform():
 # guess defaults if not defined
 if not _defaultExternalHome:
     import os.path
-    import Ganga
+    import GangaCore
     from GangaCore.Utility.files import fullpath
     p = fullpath(GangaCore.__file__)
     for i in range(5):
