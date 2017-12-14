@@ -1,20 +1,20 @@
 import datetime
 import time
-from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from Ganga.Core.exceptions import BackendError
-from Ganga.Lib.Batch import Batch
+from GangaCore.GPIDev.Adapters.IBackend import IBackend
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Core.exceptions import BackendError
+from GangaCore.Lib.Batch import Batch
 
-import Ganga.Utility.Config
+import GangaCore.Utility.Config
 
-from Ganga.Core import FileWorkspace
+from GangaCore.Core import FileWorkspace
 import os
 
 
 
 
-config = Ganga.Utility.Config.makeConfig('WestGrid','internal WestGrid command line interface')
+config = GangaCore.Utility.Config.makeConfig('WestGrid','internal WestGrid command line interface')
 
 config.addOption('shared_python_executable', False, "Shared PYTHON")
 
@@ -68,7 +68,7 @@ class WestGrid(Batch):
     _category = 'backends'
     _name = 'WestGrid'
 
-    config = Ganga.Utility.Config.getConfig('WestGrid')
+    config = GangaCore.Utility.Config.getConfig('WestGrid')
     def __init__(self):
         super(WestGrid,self).__init__()
         if self.voproxy:

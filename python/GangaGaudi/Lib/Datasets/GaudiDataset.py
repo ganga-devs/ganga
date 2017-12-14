@@ -2,15 +2,15 @@
 
 import tempfile
 import fnmatch
-from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.Utility.Config import getConfig, ConfigError
-import Ganga.Utility.logging
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
+from GangaCore.GPIDev.Lib.Dataset import Dataset
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.Utility.Config import getConfig, ConfigError
+import GangaCore.Utility.logging
+from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -92,13 +92,13 @@ class GaudiDataset(Dataset):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-from Ganga.GPIDev.Base.Filters import allComponentFilters
+from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
 
 def string_dataset_shortcut(files, item):
-    from Ganga.GPIDev.Base.Objects import ObjectMetaclass
-    from Ganga.GPIDev.Base.Proxy import stripProxy
-    from Ganga.GPIDev.Base.Proxy import getProxyInterface
+    from GangaCore.GPIDev.Base.Objects import ObjectMetaclass
+    from GangaCore.GPIDev.Base.Proxy import stripProxy
+    from GangaCore.GPIDev.Base.Proxy import getProxyInterface
     filterList = [stripProxy(i)._schema.datadict['inputdata'] for i in getProxyInterface().__dict__.values()
                   if isinstance(stripProxy(i), ObjectMetaclass)
                   and issubclass(stripProxy(i), Job)

@@ -7,10 +7,10 @@ try:
 except ImportError:
     from mock import patch, ANY
 
-from Ganga.Core.exceptions import GangaFileError
-from Ganga.Utility.logging import getLogger
+from GangaCore.Core.exceptions import GangaFileError
+from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
-from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
+from GangaCore.testlib.GangaUnitTest import load_config_files, clear_config
 
 logger = getLogger(modulename=True)
 

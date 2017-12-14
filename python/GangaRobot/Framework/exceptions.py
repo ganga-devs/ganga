@@ -1,4 +1,4 @@
-from Ganga.Core.exceptions import GangaException
+from GangaCore.Core.exceptions import GangaException
 
 class GangaRobotFatalError(GangaException):
     def __init__(self, excpt=None, message=''):

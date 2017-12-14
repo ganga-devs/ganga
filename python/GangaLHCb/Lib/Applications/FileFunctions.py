@@ -1,5 +1,5 @@
 
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 
 configGaudi = getConfig('GAUDI')
 

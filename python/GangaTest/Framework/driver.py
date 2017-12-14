@@ -6,7 +6,7 @@
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
-# This file is part of Ganga. 
+# This file is part of GangaCore. 
 #
 # Ganga is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,9 +30,9 @@ This file is executed as a Ganga script so we can access to all GPI objects
 
 import os,os.path,sys,new
 
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 myconfig = getConfig('TestingFramework')
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 #logger
 logger=getLogger('GangaTest.Framework')
 
@@ -65,7 +65,7 @@ class GPIRunner:
                 """
                 import os.path
                 testFile = os.path.split(testPath)[1]           
-                execfile( testFile , Ganga.Runtime._prog.local_ns )
+                execfile( testFile , GangaCore.Runtime._prog.local_ns )
                 
         def tearDown(self):
                 """
@@ -87,9 +87,9 @@ class UnitRunner:
         def load(self):
                 self.__instance = None
                 try:                    
-                        exec_module_code(self.testPath,Ganga.Runtime._prog.local_ns)
+                        exec_module_code(self.testPath,GangaCore.Runtime._prog.local_ns)
                         testClass=os.path.splitext(os.path.basename(self.testPath))[0]
-                        clazz = Ganga.Runtime._prog.local_ns[testClass]# getattr(Ganga.Runtime._prog.local_ns.__dict__, testClass)                  
+                        clazz = GangaCore.Runtime._prog.local_ns[testClass]# getattr(GangaCore.Runtime._prog.local_ns.__dict__, testClass)                  
                         self.__instance = clazz()
                 except Exception as e:
                         logger.error("Cannot load test")
@@ -147,9 +147,9 @@ class GPIPRunner:
         def load(self):
                 self.__instance = None
                 try:
-                        exec_module_code(self.testPath,Ganga.Runtime._prog.local_ns)
+                        exec_module_code(self.testPath,GangaCore.Runtime._prog.local_ns)
                         testClass=os.path.splitext(os.path.basename(self.testPath))[0]
-                        clazz = Ganga.Runtime._prog.local_ns[testClass]# getattr(Ganga.Runtime._prog.local_ns.__dict__, testClass)
+                        clazz = GangaCore.Runtime._prog.local_ns[testClass]# getattr(GangaCore.Runtime._prog.local_ns.__dict__, testClass)
                         self.clazz = clazz
                         self.__instance = clazz()
                         self.testsuite = self._getTestSuite()
@@ -327,7 +327,7 @@ def cleanup():
                 templates.clean(confirm=True, force=True)
 
         try:
-            lock_files = Ganga.Core.GangaRepository.SessionLock.getGlobalSessionFiles()
+            lock_files = GangaCore.Core.GangaRepository.SessionLock.getGlobalSessionFiles()
 
             for i in lock_files:
                 if i.endswith('global_lock'):
@@ -465,11 +465,11 @@ if __name__=="__main__":
 
         try:
                 ## Disable internal services such as monitoring and other tasks
-                from Ganga.Core.InternalServices import Coordinator
+                from GangaCore.Core.InternalServices import Coordinator
         #        if Coordinator.servicesEnabled:
         #                Coordinator.disableInternalServices()
 
-                from Ganga.Core.InternalServices import ShutdownManager
+                from GangaCore.Core.InternalServices import ShutdownManager
                 ShutdownManager._ganga_run_exitfuncs()
 
         except:

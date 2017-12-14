@@ -1,12 +1,12 @@
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Adapters.IBackend import IBackend
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Schema import *
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+import GangaCore.Utility.logging
+logger = GangaCore.Utility.logging.getLogger()
 
 class StoreTestApplication(IApplication):
     _schema = Schema(Version(1,0), {'factor':SimpleItem(defvalue=10),'shared_config':SimpleItem(defvalue=0,protected=True,copyable=False), 'specific_config' : SimpleItem(defvalue=0,protected=True,copyable=False)} )
@@ -32,7 +32,7 @@ class StoreTestSplitter(ISplitter):
     _name = 'StoreTestSplitter'
 
     def split(self,job):
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         subjobs = []
         for i in range(self.n):
             #print "*"*80

@@ -1,8 +1,8 @@
 
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 getConfig('defaults_DiracProxy').addOption('group', 'some_group', '')
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
-from Ganga.GPIDev.Credentials.AfsToken import AfsToken
+from GangaCore.GPIDev.Credentials.AfsToken import AfsToken
 
 
 def test_encoded():

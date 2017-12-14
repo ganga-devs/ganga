@@ -1,8 +1,8 @@
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Schema import *
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+import GangaCore.Utility.logging
+logger = GangaCore.Utility.logging.getLogger()
 
 class ProdTrans(IApplication):
     """Ganga application for production queues."""

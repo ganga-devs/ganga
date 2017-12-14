@@ -1,19 +1,19 @@
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.File import *
 
-from Ganga.Lib.LCG import LCGJobConfig
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from Ganga.Utility.Config import makeConfig, ConfigError
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.files import expandfilename
+from GangaCore.Lib.LCG import LCGJobConfig
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.Utility.Config import makeConfig, ConfigError
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.files import expandfilename
 
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
-from Ganga.Lib.Mergers.Merger import *
+from GangaCore.Lib.Mergers.Merger import *
 
 # ------------------------------------------------------
 # Spider RTHandler

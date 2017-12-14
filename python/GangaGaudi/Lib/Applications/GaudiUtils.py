@@ -3,19 +3,19 @@ import os
 import os.path
 import pprint
 import tempfile
-from Ganga.Utility.Shell import Shell
-from Ganga.Utility.files import fullpath
-from Ganga.Utility.util import unique
-import Ganga.Utility.logging
-import Ganga.Utility.Config
-from Ganga.Core.exceptions import GangaException
+from GangaCore.Utility.Shell import Shell
+from GangaCore.Utility.files import fullpath
+from GangaCore.Utility.util import unique
+import GangaCore.Utility.logging
+import GangaCore.Utility.Config
+from GangaCore.Core.exceptions import GangaException
 import CMTUtils
 import cmakeUtils
 import subprocess
 import time
 import collections
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

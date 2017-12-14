@@ -1,11 +1,11 @@
 import re, os, sys, types
 
-from Ganga.Core.exceptions import BackendError
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from Ganga.Utility.Config import getConfig, ConfigError
-from Ganga.Utility.logging import getLogger
-from Ganga.Lib.LCG import LCGRequirements
+from GangaCore.Core.exceptions import BackendError
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Utility.Config import getConfig, ConfigError
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Lib.LCG import LCGRequirements
 
 from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, _resolveSites, getSites 
 

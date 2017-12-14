@@ -1,10 +1,10 @@
-from Ganga.GPIDev.Lib.Tasks.common import *
-from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
-from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
-from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
+from GangaCore.GPIDev.Lib.Tasks.common import *
+from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
+from GangaCore.GPIDev.Lib.Job.Job import JobError
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
+from GangaCore.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
 
 from GangaNA62.Lib.Tasks.NA62Unit import NA62Unit
 

@@ -6,7 +6,7 @@ from socket import *
 import time
 from commands import getstatusoutput
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 # Ganga Service class that provides the interface to the server
@@ -208,7 +208,7 @@ class GangaService:
             return ""
 
         sock.send(cmd + "\n###ENDCMD###")
-        logger.info("Command sent. Waiting for output from Ganga...")
+        logger.info("Command sent. Waiting for output from GangaCore...")
         data = sock.recv(1024)
         while data.find("###ENDMSG###") == -1:
             data += sock.recv(1024)

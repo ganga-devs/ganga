@@ -3,15 +3,15 @@ import os
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Lib.File import FileBuffer
-from Ganga.GPIDev.Lib.File.File import File
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import unique
+from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Lib.File import FileBuffer
+from GangaCore.GPIDev.Lib.File.File import File
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.util import unique
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -203,6 +203,6 @@ if __name__ == '__main__':
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('Im3ShapeApp', 'Dirac', Im3ShapeDiracRTHandler)
 

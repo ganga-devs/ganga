@@ -1,15 +1,15 @@
-from Ganga.Core.exceptions import ApplicationConfigurationError
+from GangaCore.Core.exceptions import ApplicationConfigurationError
 
 import copy
 import tempfile
 import string
 
-from Ganga.Utility.Shell import Shell
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.Shell import Shell
+from GangaCore.Utility.logging import getLogger
 
-import Ganga.Utility.Config
+import GangaCore.Utility.Config
 # Cannot configure LHCb without Gaudi changing underneath
-gaudiConfig = Ganga.Utility.Config.getConfig('GAUDI')
+gaudiConfig = GangaCore.Utility.Config.getConfig('GAUDI')
 
 #---------------------------------------
 
@@ -119,7 +119,7 @@ exit $?
         script_file.write(shell_script)
         script_file.close()
     except:
-        from Ganga.Core.exceptions import PostProcessException
+        from GangaCore.Core.exceptions import PostProcessException
         raise PostProcessException('Problem writing merge script')
 
     return script_file_name
@@ -158,7 +158,7 @@ def _getshell_SP(self):
     fd = tempfile.NamedTemporaryFile()
     script = '#!/bin/sh\n'
     if self.user_release_area:
-        from Ganga.Utility.files import expandfilename
+        from GangaCore.Utility.files import expandfilename
         script += 'User_release_area=%s; export User_release_area\n' % \
             expandfilename(self.user_release_area)
     if self.platform:

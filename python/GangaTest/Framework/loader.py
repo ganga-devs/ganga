@@ -6,7 +6,7 @@
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
-# This file is part of Ganga. 
+# This file is part of GangaCore. 
 #
 # Ganga is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ DEFAULT_TEST_TIMEOUT = 120
 class GangaTestLoader:
     """
     Ganga specific TestLoader:
-    Loads all the tests from project, filtering based on the given pattern (e.g. Ganga.test.Bugs.* .
+    Loads all the tests from project, filtering based on the given pattern (e.g. GangaCore.test.Bugs.* .
     There are two types of tests that may be loaded :
         - *Release Tests* : tests distributed within Ganga distribution and located in a separate branch for each top-level package ( e.g. Ganga/old_test/)
         - *Local Tests*   : local test-cases loaded from arbitrary locations 
@@ -56,7 +56,7 @@ class GangaTestLoader:
         self.configAlias=''
         
         # automatically append user and site specific configuration when running test-cases        
-        from Ganga.Utility.Config import getConfig
+        from GangaCore.Utility.Config import getConfig
         syscfg = getConfig('System')
         self.userConfig = ":".join([os.path.expanduser(syscfg['GANGA_CONFIG_FILE']),
                                     syscfg['GANGA_CONFIG_PATH']])
@@ -81,7 +81,7 @@ class GangaTestLoader:
         self.current_report_name = None
         
         #set the verbosity based on GangaTest.Framework logging config           
-        from Ganga.Utility.logging import getLogger
+        from GangaCore.Utility.logging import getLogger
         tfLogger = getLogger(name='GangaTest.Framework')
         if tfLogger.level < 20 :#DEBUG
             self.verbose = True
@@ -231,10 +231,10 @@ class GangaTestLoader:
             Ganga/old_test/Folders
                            /{testA,testB,testE,testF}
                            /TestGroup{testC,testD}                     
-        So, the pattern Ganga.test.Folders.* will match all the tests 
-        while the pattern Ganga.test.Folders.TestGroup.* will match just the test belonging to TestGroup
+        So, the pattern GangaCore.test.Folders.* will match all the tests 
+        while the pattern GangaCore.test.Folders.TestGroup.* will match just the test belonging to TestGroup
         Invidual tests can be selected by specifying the complete path: 
-                  Ganga.test.Folders.TestGroup.testE or Ganga.test.Folders.testA
+                  GangaCore.test.Folders.TestGroup.testE or GangaCore.test.Folders.testA
         
         N.B.:
             It may be possible that a complete path to match multiple tests if a test with the same name is defined as a single test(.gpi,.gpim) in a directory
@@ -429,16 +429,16 @@ def %(method_name)s(self):
            script_runner.extend(['-t','3600'])
 
         try:
-            import Ganga.Core.InternalServices.Coordinator
-            if Ganga.Core.InternalServices.Coordinator.servicesEnabled:
-                from Ganga.Core.InternalServices.Coordinator import disableInternalServices
+            import GangaCore.Core.InternalServices.Coordinator
+            if GangaCore.Core.InternalServices.Coordinator.servicesEnabled:
+                from GangaCore.Core.InternalServices.Coordinator import disableInternalServices
                 disableInternalServices()
         
-            from Ganga.Core.InternalServices.Coordinator import enableInternalServices, disableInternalServices
+            from GangaCore.Core.InternalServices.Coordinator import enableInternalServices, disableInternalServices
             enableInternalServices()
             reactivate()
         
-            from Ganga.Core.GangaRepository import getRegistryProxy
+            from GangaCore.Core.GangaRepository import getRegistryProxy
             for j in getRegistryProxy('jobs'): j.remove()
             for t in getRegistryProxy('templates'): t.remove()
             if hasattr(getRegistryProxy('jobs'),'clean'):
@@ -449,7 +449,7 @@ def %(method_name)s(self):
             disableInternalServices()
         
         #    # DANGEROUS only use as a last resort to files being kept open
-        #    #from Ganga.Runtime import bootstrap
+        #    #from GangaCore.Runtime import bootstrap
         #    #bootstrap.safeCloseOpenFiles()
         #
         except:
@@ -584,7 +584,7 @@ def %(method_name)s(self):
                 return coverage_path
             return 'None'
         runPyFile = os.path.join(self.releaseTopDir,"python","GangaTest","Framework","driver.py")
-        from Ganga.Utility.Config import getConfig
+        from GangaCore.Utility.Config import getConfig
         if self.schema_test is not '':
             newgangadir = os.path.join(getConfig('Configuration')['gangadir'],self.schema_test)
             testCmd ="cd %s ; env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s PYTHONUNBUFFERED=1 "\

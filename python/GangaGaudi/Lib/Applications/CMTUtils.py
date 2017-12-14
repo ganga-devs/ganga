@@ -1,8 +1,8 @@
-from Ganga.Utility.execute import execute
-import Ganga.Utility.logging
+from GangaCore.Utility.execute import execute
+import GangaCore.Utility.logging
 import os
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 
 def get_user_platform(env=os.environ):
@@ -28,7 +28,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
 
     user_ra = user_release_area
     update_project_path(user_release_area)
-    from Ganga.Utility.files import fullpath
+    from GangaCore.Utility.files import fullpath
     full_user_ra = fullpath(user_ra)  # expand any symbolic links
 
     # Work our way through the CMTPROJECTPATH until we find a cmt directory
@@ -77,7 +77,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
                 py_project_areas.append(pypath)
 
     # savannah 47793 (remove multiple copies of the same areas)
-    from Ganga.Utility.util import unique
+    from GangaCore.Utility.util import unique
     project_areas = unique(project_areas)
     py_project_areas = unique(py_project_areas)
 
@@ -111,7 +111,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
     for pypath in py_project_areas:
         if os.path.exists(pypath):
             from GangaGaudi.Lib.Applications.GaudiUtils import pyFileCollector
-            from Ganga.Utility.Config import getConfig
+            from GangaCore.Utility.Config import getConfig
             configGaudi = getConfig('GAUDI')
             pyFileCollector(
                 pypath, merged_pys, subdir_pys, configGaudi['pyFileCollectionDepth'])
@@ -129,7 +129,7 @@ def make(self, argument=''):
        to. The actual command executed is "cmt broadcast make <argument>"
        after the proper configuration has taken place."""
 
-    from Ganga.Utility.Config import getConfig
+    from GangaCore.Utility.Config import getConfig
     config = getConfig('GAUDI')
 
     execute('cmt broadcast %s %s' % (config['make_cmd'], argument),

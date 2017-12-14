@@ -10,9 +10,9 @@ from pylab import *
 import sys
 from functools import reduce
 
-from Ganga.Utility.Config import makeConfig
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import isStringLike, canLoopOver
+from GangaCore.Utility.Config import makeConfig
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.util import isStringLike, canLoopOver
 
 logger = getLogger()
 config = makeConfig('GangaPlotter','GangaPlotter configuration parameters')
@@ -28,7 +28,7 @@ class GetJobAttrException(Exception):
     def __str__(self):
         return self.msg
 
-## this function could be put in Ganga.Utility.util
+## this function could be put in GangaCore.Utility.util
 def isNumeric(myValue):
     '''checks via type() if myVar is numeric or not'''
     if type(myValue)==type(1) or type(myValue)==type(1) or \

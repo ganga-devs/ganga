@@ -9,22 +9,22 @@
 
 import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions, random
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.File import *
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
 from GangaPanda.Lib.Panda.Panda import runPandaBrokerage, uploadSources, getLibFileSpecFromLibDS
-from Ganga.Core.exceptions import BackendError
+from GangaCore.Core.exceptions import BackendError
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2, getDatasets
 
-from Ganga.Utility.GridShell import getShell
+from GangaCore.Utility.GridShell import getShell
 from GangaPanda.Lib.Panda.Panda import setChirpVariables
 
 def createContainer(name):
@@ -150,7 +150,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         # use the shared area if possible
         tmp_user_area_name = app.user_area.name
         if app.is_prepared is not True:
-            from Ganga.Utility.files import expandfilename
+            from GangaCore.Utility.files import expandfilename
             shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
             tmp_user_area_name = os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.user_area.name))
                              
@@ -1027,14 +1027,14 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         
         return jspec
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 for app in ['Athena', 'ExecutableDQ2', 'RootDQ2']:
     allHandlers.add(app,'Panda',AthenaPandaRTHandler)
 
-from Ganga.Utility.Config import getConfig, ConfigError
+from GangaCore.Utility.Config import getConfig, ConfigError
 configDQ2 = getConfig('DQ2')
 configPanda = getConfig('Panda')
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()

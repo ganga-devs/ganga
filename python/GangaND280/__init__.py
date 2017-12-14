@@ -1,7 +1,7 @@
 # File: GangaND280/__init__.py
 
-from Ganga.Utility.Config import makeConfig
-from Ganga.Utility.Config.Config import _after_bootstrap
+from GangaCore.Utility.Config import makeConfig
+from GangaCore.Utility.Config.Config import _after_bootstrap
 
 if not _after_bootstrap:
    configND280 = makeConfig('ND280', 'Configuration parameters for the ND280 Ganga plugin')

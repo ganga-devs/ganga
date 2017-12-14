@@ -1,5 +1,5 @@
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+import GangaCore.Utility.logging
+logger = GangaCore.Utility.logging.getLogger()
 
 
 class CMTVersion(object):

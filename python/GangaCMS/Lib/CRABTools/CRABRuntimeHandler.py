@@ -1,5 +1,5 @@
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 
 class CRABRuntimeHandler(IRuntimeHandler):

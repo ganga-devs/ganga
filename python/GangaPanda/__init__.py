@@ -1,6 +1,6 @@
 ## Config options
-from Ganga.Utility.Config import makeConfig
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.Config import makeConfig
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 # -------------------------------------------------
@@ -48,13 +48,13 @@ def standardSetup():
 def loadPlugins(c):
 
     import sys
-    from Ganga.Utility.logging import getLogger
+    from GangaCore.Utility.logging import getLogger
 
     try:
         import Lib.Panda
         import Lib.Jedi
     except SystemExit:
-        from Ganga.Core.exceptions import ApplicationConfigurationError
+        from GangaCore.Core.exceptions import ApplicationConfigurationError
         import commands
         (s,o) = commands.getstatusoutput('curl --version')
         if (s):

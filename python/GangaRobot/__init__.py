@@ -22,10 +22,10 @@ For robot script usage:
 
 """
 
-import Ganga.Utility.Config
+import GangaCore.Utility.Config
 
 def _initconfig():
-    config=Ganga.Utility.Config.makeConfig('Robot','Parameters for the Robot to run repetitive tests',is_open=True)
+    config=GangaCore.Utility.Config.makeConfig('Robot','Parameters for the Robot to run repetitive tests',is_open=True)
     
     config.addOption('Driver_Run',['submit', 20, 'finish', 'extract', 'report'],
                      'List of action names and sleep periods (seconds)')
@@ -82,7 +82,7 @@ def _initconfig():
                      'Number of concurrent threads to use when using the ThreadedSubmitter')
 
 def loadPlugins(config={}):
-    from Ganga.Utility.Config.Config import _after_bootstrap
+    from GangaCore.Utility.Config.Config import _after_bootstrap
 
     if not _after_bootstrap:
 

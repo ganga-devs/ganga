@@ -16,7 +16,7 @@ __version__ = "1.0"
 from PDF import PDF
 from PDF_LCG import PDF_LCG
 from PDF_Local import PDF_Local
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add( "PDF", "Interactive", PDF_Local )
 allHandlers.add( "PDF", "Local", PDF_Local )

@@ -1,15 +1,15 @@
-from Ganga.Core.exceptions import *
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter, GangaObject
-from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File.File import ShareDir
+from GangaCore.Core.exceptions import *
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter, GangaObject
+from GangaCore.GPIDev.Adapters.IBackend import IBackend
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.File.File import ShareDir
 import sys
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+import GangaCore.Utility.logging
+logger = GangaCore.Utility.logging.getLogger()
 
 class CrashType(GangaObject):
     _schema = Schema(Version(1,0), {'expr':SimpleItem(defvalue=''), 'method':SimpleItem(defvalue=''),'condition':SimpleItem(defvalue='')})
@@ -49,7 +49,7 @@ class CrashTestSplitter(ISplitter):
     _name = 'CrashTestSplitter'
 
     def split(self,job):
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         subjobs = []
         for i in range(self.n):
             logger.debug('Create subjob '+str(i))

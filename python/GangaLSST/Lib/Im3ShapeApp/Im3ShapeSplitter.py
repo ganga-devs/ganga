@@ -5,13 +5,13 @@
 ###############################################################################
 
 import copy
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
 from GangaLSST.Lib.Im3ShapeApp.Im3ShapeApp import Im3ShapeApp
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 

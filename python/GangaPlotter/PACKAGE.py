@@ -12,7 +12,7 @@ external_packages = {
    #'pyqt'       : {'version' : '3.18.1_python2.5', 'PYTHONPATH':'lib/python2.5/site-packages', 'LD_LIBRARY_PATH' :'lib'}
    }
 
-from Ganga.Utility.Setup import PackageSetup
+from GangaCore.Utility.Setup import PackageSetup
 
 setup = PackageSetup(external_packages)
 

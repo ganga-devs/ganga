@@ -1,6 +1,6 @@
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
-from Ganga.Core.exceptions import SplitterError
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
+from GangaCore.Core.exceptions import SplitterError
 from xml.dom.minidom import parse
 
 import os

@@ -1,8 +1,8 @@
-from Ganga.GPIDev.Adapters.ISplitter import SplittingError
+from GangaCore.GPIDev.Adapters.ISplitter import SplittingError
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 
@@ -31,7 +31,7 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     file_replicas = {}
 
-    from Ganga.Core.GangaThread.WorkerThreads import getQueues
+    from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 
     for i in inputs:
         #logging.debug( "getting metadata: %s" % str(i.lfn) )

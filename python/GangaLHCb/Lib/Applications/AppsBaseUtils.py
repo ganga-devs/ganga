@@ -1,16 +1,16 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import sys
-from Ganga.Core.exceptions import PluginError
-from Ganga.Utility.Shell import Shell
-from Ganga.Utility.logging import getLogger
+from GangaCore.Core.exceptions import PluginError
+from GangaCore.Utility.Shell import Shell
+from GangaCore.Utility.logging import getLogger
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
-import Ganga.Utility.Config
+import GangaCore.Utility.Config
 
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
 
-from Ganga.GPIDev.Schema import SimpleItem
+from GangaCore.GPIDev.Schema import SimpleItem
 
 available_lhcb_apps = None
 available_lhcb_packs = None

@@ -6,7 +6,7 @@ The FileEmailer class can be configured to email text and/or html files.
 
 from GangaRobot.Framework.Action import IAction
 from GangaRobot.Framework import Utility
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 from email.MIMEText import MIMEText
 from email.MIMEMultipart import MIMEMultipart
 from smtplib import SMTP

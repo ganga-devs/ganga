@@ -5,9 +5,9 @@ The CoreSubmitter class provides a generic submitter implementation.
 """
 
 from GangaRobot.Lib.Base.BaseSubmitter import BaseSubmitter
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility import files
-from Ganga.GPI import *
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility import files
+from GangaCore.GPI import *
 import os
 
 logger = getLogger()

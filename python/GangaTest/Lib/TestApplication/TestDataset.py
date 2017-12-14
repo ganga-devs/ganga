@@ -1,5 +1,5 @@
-from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.Dataset import Dataset
+from GangaCore.GPIDev.Schema import *
 
 # Test Dataset
 
@@ -30,7 +30,7 @@ class TestListViewDataset(Dataset):
         #return self.files
         return obj
 
-from Ganga.GPIDev.Base.Filters import allComponentFilters
+from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
 def list_assignment_shortcut(v,item):
     if type(v) is type([]):

@@ -1,8 +1,8 @@
 #XML differencer - reads the XML files for two test versions
 # and looks for differences between test case success failures
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 import os, xml, fnmatch
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 newreportdir = None

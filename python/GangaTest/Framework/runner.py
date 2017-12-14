@@ -7,7 +7,7 @@
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
-# This file is part of Ganga. 
+# This file is part of GangaCore. 
 #
 # Ganga is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,9 +31,9 @@ import os
 import sys
 
 ## Configuration
-from Ganga.Utility.Config import getConfig, makeConfig
-from Ganga.Utility.files import previous_dir
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig, makeConfig
+from GangaCore.Utility.files import previous_dir
+from GangaCore.Utility.logging import getLogger
 
 myFullPath =  os.path.abspath(os.path.dirname(__file__))
 gangaReleaseTopDir = previous_dir(myFullPath,3)
@@ -89,7 +89,7 @@ loggerConfig.addOption('GangaTest.Framework', "INFO", '')
 #logger
 myLogger=getLogger()
 
-def start( config = myConfig , test_selection='Ganga.test.*', logger=myLogger):
+def start( config = myConfig , test_selection='GangaCore.test.*', logger=myLogger):
     """
     """    
     import os

@@ -1,11 +1,11 @@
 #Check for grid proxy
 from GangaRobot.Framework.Action import IAction
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig
 import os, datetime, time
 from GangaRobot.Framework.exceptions import *
-#from Ganga.GPIDev.Credentials_old.GridProxy import GridProxy
-from Ganga.GPIDev.Credentials_old import getCredential
+#from GangaCore.GPIDev.Credentials_old.GridProxy import GridProxy
+from GangaCore.GPIDev.Credentials_old import getCredential
 
 logger = getLogger()
 

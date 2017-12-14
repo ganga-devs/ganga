@@ -1,15 +1,15 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-from Ganga.Utility.Config import getConfig, ConfigError
-import Ganga.Utility.logging
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Lib.File import LocalFile
-from Ganga.GPIDev.Base.Proxy import isType
+from GangaCore.Utility.Config import getConfig, ConfigError
+import GangaCore.Utility.logging
+from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.GPIDev.Lib.File import LocalFile
+from GangaCore.GPIDev.Base.Proxy import isType
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaLHCb.Lib.Files import LogicalFile, PhysicalFile
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

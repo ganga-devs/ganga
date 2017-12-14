@@ -16,7 +16,7 @@ __version__ = "1.0"
 from Classify import Classify
 from ClassifyLCG import ClassifyLCG
 from ClassifyLocal import ClassifyLocal
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add( "Classify", "Interactive", ClassifyLocal )
 allHandlers.add( "Classify", "Local", ClassifyLocal )

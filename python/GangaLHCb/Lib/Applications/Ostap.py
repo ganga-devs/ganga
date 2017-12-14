@@ -72,24 +72,24 @@ __author__  = 'Vladimir ROMANOVSKY, Vanya BELYAEV'
 # =============================================================================
 import os
 from   os.path import split, join
-from   Ganga.GPIDev.Schema.Schema             import FileItem, SimpleItem
-from   Ganga.GPIDev.Lib.File                  import File
-from   Ganga.Utility.util                     import unique
-from   Ganga.Core.exceptions                  import ApplicationConfigurationError
-from   Ganga.GPIDev.Lib.File.FileBuffer       import FileBuffer
+from   GangaCore.GPIDev.Schema.Schema             import FileItem, SimpleItem
+from   GangaCore.GPIDev.Lib.File                  import File
+from   GangaCore.Utility.util                     import unique
+from   GangaCore.Core.exceptions                  import ApplicationConfigurationError
+from   GangaCore.GPIDev.Lib.File.FileBuffer       import FileBuffer
 from   GangaGaudi.Lib.Applications.GaudiBase  import GaudiBase
 from   GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
-from   Ganga.Utility.files                    import expandfilename, fullpath
-from   Ganga.Utility.Config                   import getConfig
+from   GangaCore.Utility.files                    import expandfilename, fullpath
+from   GangaCore.Utility.Config                   import getConfig
 from   AppsBaseUtils                          import guess_version
 #
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
 # Added for XML PostProcessing
 from GangaLHCb.Lib.Applications import XMLPostProcessor
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+import GangaCore.Utility.logging
+logger = GangaCore.Utility.logging.getLogger()
 
 # =============================================================================
 ## the actual wrapper script to execute 
@@ -316,7 +316,7 @@ class Ostap(GaudiBase):
 # Associate the correct run-time handlers to GaudiPython for various backends.
 # =============================================================================
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
 

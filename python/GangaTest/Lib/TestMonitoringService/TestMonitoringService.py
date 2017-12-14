@@ -1,4 +1,4 @@
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 class TestMonitoringService:

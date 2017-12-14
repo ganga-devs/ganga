@@ -1,17 +1,17 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import shutil
-from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Lib.File import File, ShareDir
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.files import expandfilename
-from Ganga.Utility.util import unique
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
-from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy
-from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
+from GangaCore.GPIDev.Lib.File import File, ShareDir
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.files import expandfilename
+from GangaCore.Utility.util import unique
+from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
+from GangaCore.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
+from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -78,12 +78,12 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=None):
     job = stripProxy(app).getJobObject()
 
     # user added items from the interactive GPI
-    from Ganga.Utility.Config import getConfig
+    from GangaCore.Utility.Config import getConfig
     if not getConfig('Output')['ForbidLegacyInput']:
         inputsandbox = job.inputsandbox[:]
     else:
         if len(job.inputsandbox) > 0:
-            from Ganga.GPIDev.Lib.Job import JobError
+            from GangaCore.GPIDev.Lib.Job import JobError
             raise JobError("InputFiles have been requested but there are objects in the inputSandBox... Aborting Job Prepare!")
         inputsandbox = []
         for filepattern in getInputFilesPatterns(job)[0]:

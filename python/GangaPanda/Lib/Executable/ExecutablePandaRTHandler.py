@@ -9,14 +9,14 @@
 
 import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions, time
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.Core.exceptions import BackendError
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.Core.exceptions import BackendError
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.File import *
 
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset, DQ2OutputDataset
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
@@ -369,13 +369,13 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         
         return jspec
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('Executable','Panda',ExecutablePandaRTHandler)
 
-from Ganga.Utility.Config import getConfig, ConfigError
+from GangaCore.Utility.Config import getConfig, ConfigError
 config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
 configPanda = getConfig('Panda')
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()

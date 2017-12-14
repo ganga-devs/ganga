@@ -1,5 +1,5 @@
 import os, system, time, datetime, subprocess
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 
 config = getConfig('Configuration')
 gangadir = config['gangadir']

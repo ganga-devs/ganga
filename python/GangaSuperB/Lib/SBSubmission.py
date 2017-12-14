@@ -1,9 +1,9 @@
 '''This class defines the number of subjobs per use case'''
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Schema import *
-import Ganga.Utility.logging
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Schema import *
+import GangaCore.Utility.logging
 
 
 class SBSubmission(ISplitter):
@@ -17,7 +17,7 @@ class SBSubmission(ISplitter):
     
     def split(self, job):
         '''The method creates and returns an array of subjobs starting from the job passed as parameter'''
-        logger = Ganga.Utility.logging.getLogger()
+        logger = GangaCore.Utility.logging.getLogger()
         logger.debug('SBSubmission split called.')
         subjobs = []
         

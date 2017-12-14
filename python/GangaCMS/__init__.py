@@ -1,25 +1,25 @@
 import os
-import Ganga.Utility.Config
+import GangaCore.Utility.Config
 import platform
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 ## CMSSW parameters
-configCMSSW=Ganga.Utility.Config.makeConfig('CMSSW','Parameters for CMSSW')
+configCMSSW=GangaCore.Utility.Config.makeConfig('CMSSW','Parameters for CMSSW')
 
 dscrpt = 'The version CMSSW used for job submission.'
 configCMSSW.addOption('CMSSW_VERSION','CMSSW_3_7_0',dscrpt)
 dscrpt = 'The CMSSW setup script used for env configuration.'
 
-config = Ganga.Utility.Config.getConfig('System')
+config = GangaCore.Utility.Config.getConfig('System')
 ganga_pythonpath = config['GANGA_PYTHONPATH']
 
 configCMSSW.addOption('CMSSW_SETUP','%s/GangaCMS/scripts/'%(ganga_pythonpath),dscrpt)
 dscrpt = 'The location of the CMSSW Framework.'
 configCMSSW.addOption('location','~/',dscrpt)
 
-configMetrics = Ganga.Utility.Config.makeConfig('Metrics','List of desired metrics.')
+configMetrics = GangaCore.Utility.Config.makeConfig('Metrics','List of desired metrics.')
 dscrpt = 'The location of the metrics.cms list.'
 configMetrics.addOption('location','%s/GangaCMS/metrics.ini'%(ganga_pythonpath),dscrpt)
 
@@ -40,7 +40,7 @@ def standardSetup():
         return
     logger.info('GangaCMS> not supported different OS than SLC5')
 
-    config = Ganga.Utility.Config.getConfig('CMSSW')
+    config = GangaCore.Utility.Config.getConfig('CMSSW')
     cmssw_version = config['CMSSW_VERSION']
     cmssw_setup = config['CMSSW_SETUP']
     crab_version = config['CRAB_VERSION']
@@ -56,7 +56,7 @@ def standardSetup():
         logger.error('GangaCMS> CMSSW location not found: "%s"'%(cmsswhome))
         return
 
-#    from Ganga.Utility.Shell import Shell
+#    from GangaCore.Utility.Shell import Shell
 #    shell = Shell(cmssw_setup_script)   
 
     logger.info('GangaCMS> [INFO] getEnvironment : done')
@@ -71,7 +71,7 @@ def loadPlugins( config = {} ):
     for params in [Lib.ConfParams.CMSSW(),Lib.ConfParams.CRAB(),Lib.ConfParams.GRID(),Lib.ConfParams.USER()]:
 
       section = params.__class__.__name__
-      crab_cfg_configs[section] = Ganga.Utility.Config.makeConfig('%s_CFG'%(section),'Parameters for %s at crab.cfg.'%(section))
+      crab_cfg_configs[section] = GangaCore.Utility.Config.makeConfig('%s_CFG'%(section),'Parameters for %s at crab.cfg.'%(section))
 
       for k in params.schemadic.keys():
        crab_cfg_configs[section].addOption(k,None,'%s at crab.cfg'%(k))

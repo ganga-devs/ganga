@@ -4,11 +4,11 @@
 # $Id: PrimeFactorizer.py,v 1.2 2009-04-23 13:47:59 moscicki Exp $
 ################################################################################
 
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import *
-from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Lib.File import File
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Utility.Config import getConfig
+from GangaCore.GPIDev.Lib.File import File
 
 class PrimeFactorizer(IApplication):
     """
@@ -27,8 +27,8 @@ class PrimeFactorizer(IApplication):
         super(PrimeFactorizer,self).__init__()
 
     def configure(self,masterappconfig):
-        from Ganga.GPI import TUTDIR
-        from Ganga.Core.exceptions import ApplicationConfigurationError
+        from GangaCore.GPI import TUTDIR
+        from GangaCore.Core.exceptions import ApplicationConfigurationError
         import os.path
 
         ## the prime number factorizer executable
@@ -57,7 +57,7 @@ mc.addOption('GangaTutorial',None,'')
 
 class RTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+        from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         c = StandardJobConfig(app.exe,app.inputs,app.args,app.outputs,app.envs)
         c.monitoring_svc = mc['GangaTutorial']
@@ -66,14 +66,14 @@ class RTHandler(IRuntimeHandler):
 
 class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from Ganga.Lib.LCG import LCGJobConfig
+        from GangaCore.Lib.LCG import LCGJobConfig
 
         c = LCGJobConfig(app.exe,app.inputs,app.args,app.outputs,app.envs)
         c.monitoring_svc = mc['GangaTutorial']
 
         return c
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('PrimeFactorizer','LSF', RTHandler)
 allHandlers.add('PrimeFactorizer','Local', RTHandler)
@@ -89,8 +89,8 @@ allHandlers.add('PrimeFactorizer','Batch', RTHandler)
 ##############################################################
 ## handler for NG
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
 class NGRTHandler(IRuntimeHandler):
 

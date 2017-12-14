@@ -3,9 +3,9 @@ Configuration options for the remote autonomous testing
 of new releases of Ganga
 """
 
-import Ganga.Utility.Config
+import GangaCore.Utility.Config
 
-config=Ganga.Utility.Config.makeConfig('TestRobot','Parameters for the autonomous independent testing of Ganga')
+config=GangaCore.Utility.Config.makeConfig('TestRobot','Parameters for the autonomous independent testing of Ganga')
 
 config.addOption('ReleasePath','http://cern/ch/ganga/download/','Default URL to check for Ganga releases')
 config.addOption('InstallPath','','default install path for Ganga scratch testing')

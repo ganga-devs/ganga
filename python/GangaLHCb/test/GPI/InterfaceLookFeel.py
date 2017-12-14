@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestInterfaceLookFeel(GangaUnitTest):
@@ -9,7 +9,7 @@ class TestInterfaceLookFeel(GangaUnitTest):
         """
         This test tests the Executable app and that the DaVinci are assignable
         """
-        from Ganga.GPI import Job, LSF, Executable, DaVinci
+        from GangaCore.GPI import Job, LSF, Executable, DaVinci
 
         j1 = Job(name='my',application='DaVinci')
         j2 = Job(application = DaVinci())

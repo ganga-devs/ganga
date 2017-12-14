@@ -6,8 +6,8 @@ The BaseSubmitter class provides an abstract submitter implementation.
 
 from GangaRobot.Framework.Action import IAction
 from GangaRobot.Framework import Utility
-from Ganga.Utility.logging import getLogger
-from Ganga.GPI import *
+from GangaCore.Utility.logging import getLogger
+from GangaCore.GPI import *
 
 logger = getLogger()
 

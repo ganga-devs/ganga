@@ -1,10 +1,10 @@
 from ConfigParser import ConfigParser
-from Ganga.Core.exceptions import BackendError
-from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
-from Ganga.Utility import Config
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Shell import Shell
+from GangaCore.Core.exceptions import BackendError
+from GangaCore.GPIDev.Adapters.IBackend import IBackend
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
+from GangaCore.Utility import Config
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.Shell import Shell
 from GangaCMS.Lib.CRABTools.CRABServer import CRABServer
 from GangaCMS.Lib.CRABTools.CRABServerError import CRABServerError
 from xml.dom.minidom import parse

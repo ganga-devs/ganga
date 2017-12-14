@@ -5,10 +5,10 @@ The ThreadedSubmitter class provides a generic submitter implementation.
 """
 
 from GangaRobot.Lib.Core.CoreSubmitter import CoreSubmitter
-from Ganga.Utility.logging import getLogger
-from Ganga.GPI import load
-from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from GangaCore.Utility.logging import getLogger
+from GangaCore.GPI import load
+from GangaCore.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
+from GangaCore.GPIDev.Base.Proxy import stripProxy
 
 logger = getLogger()
 

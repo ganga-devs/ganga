@@ -1,13 +1,13 @@
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
-from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from GangaCore.GPIDev.Base.Proxy import isType
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Lib.Tasks.IUnit import IUnit
+from GangaCore.GPIDev.Lib.Job.Job import JobError
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
-from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
-from Ganga.Utility.logging import getLogger
+from GangaCore.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
+from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 

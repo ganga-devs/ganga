@@ -1,7 +1,7 @@
-from Ganga.GPIDev.Lib.Tasks.common import *
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from GangaCore.GPIDev.Lib.Tasks.common import *
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 import time
-from Ganga.GPIDev.Lib.Tasks import ITask
+from GangaCore.GPIDev.Lib.Tasks import ITask
 from GangaNA62.Lib.Tasks.NA62Transform import NA62Transform
 from GangaNA62.Lib.Applications.NA62MC import NA62MC
 

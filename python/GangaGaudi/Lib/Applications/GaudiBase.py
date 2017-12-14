@@ -5,21 +5,21 @@ import os
 import tempfile
 import gzip
 import shutil
-from Ganga.GPIDev.Base.Proxy import stripProxy
-from Ganga.GPIDev.Schema import SimpleItem, Schema, Version
-from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
-import Ganga.Utility.logging
-from Ganga.Utility.files import expandfilename, fullpath
+from GangaCore.GPIDev.Base.Proxy import stripProxy
+from GangaCore.GPIDev.Schema import SimpleItem, Schema, Version
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
+import GangaCore.Utility.logging
+from GangaCore.Utility.files import expandfilename, fullpath
 from GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
-from Ganga.GPIDev.Lib.File import File
-from Ganga.Core.exceptions import ApplicationConfigurationError
-import Ganga.Utility.Config
-from Ganga.Utility.execute import execute
-from Ganga.GPIDev.Lib.File import ShareDir
-from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Proxy import getName
+from GangaCore.GPIDev.Lib.File import File
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+import GangaCore.Utility.Config
+from GangaCore.Utility.execute import execute
+from GangaCore.GPIDev.Lib.File import ShareDir
+from GangaCore.Utility.Config import getConfig
+from GangaCore.GPIDev.Base.Proxy import getName
 import copy
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 
 class GaudiBase(IPrepareApp):
@@ -96,7 +96,7 @@ class GaudiBase(IPrepareApp):
             else:
                 self.user_release_area = expanded.split(os.pathsep)[0]
 
-        from Ganga.Utility.Shell import expand_vars
+        from GangaCore.Utility.Shell import expand_vars
         env = expand_vars(os.environ)
 
         env['User_release_area'] = self.user_release_area

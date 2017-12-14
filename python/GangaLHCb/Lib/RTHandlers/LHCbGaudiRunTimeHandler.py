@@ -2,14 +2,14 @@
 import copy
 import os
 import pickle
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from RTHUtils import is_gaudi_child, getXMLSummaryScript, create_runscript
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
-from Ganga.GPIDev.Lib.File import FileBuffer, LocalFile, MassStorageFile
-from Ganga.GPIDev.Base.Proxy import addProxy
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import unique
+from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from GangaCore.GPIDev.Lib.File import FileBuffer, LocalFile, MassStorageFile
+from GangaCore.GPIDev.Base.Proxy import addProxy
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.util import unique
 from GangaGaudi.Lib.RTHandlers.GaudiRunTimeHandler import GaudiRunTimeHandler
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import script_generator, get_share_path, master_sandbox_prepare, sandbox_prepare
 logger = getLogger()
@@ -74,8 +74,8 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
 
             outbox, outdata = parser.get_output(job)
 
-            from Ganga.GPIDev.Lib.File import FileUtils
-            from Ganga.GPIDev.Base.Filters import allComponentFilters
+            from GangaCore.GPIDev.Lib.File import FileUtils
+            from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
             fileTransform = allComponentFilters['gangafiles']
             job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)])

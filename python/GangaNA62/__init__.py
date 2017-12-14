@@ -1,6 +1,6 @@
 import os
-import Ganga.Utility.logging
-import Ganga.Utility.Config
+import GangaCore.Utility.logging
+import GangaCore.Utility.Config
 
 def standardSetup():
 
@@ -22,5 +22,5 @@ def loadPlugins( config = {} ):
 #    import Lib.DIRAC
     #import Lib.Tasks
 
-#from Ganga.GPIDev.Credentials_old import getCredential
+#from GangaCore.GPIDev.Credentials_old import getCredential
 #proxy = getCredential('GridProxy', '')

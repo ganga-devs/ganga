@@ -8,11 +8,11 @@
 
 import sys, os, re, urllib, commands, imp, threading, time, fnmatch, getpass
 
-from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.GPIDev.Schema import *
-from Ganga.Utility.files import expandfilename
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Config import getConfig, ConfigError
+from GangaCore.GPIDev.Lib.Dataset import Dataset
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Utility.files import expandfilename
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig, ConfigError
 
 from dq2.common.DQException import *
 from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, getSites
@@ -26,8 +26,8 @@ from dq2.info.TiersOfATLASValidator import is_site
 from dq2.repository.DQRepositoryException import DQFrozenDatasetException
 
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
 _refreshToACache()
 
@@ -446,7 +446,7 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
     usertag = config['usertag']
 
     # Get DN or nickname
-    from Ganga.GPIDev.Credentials_old import GridProxy
+    from GangaCore.GPIDev.Credentials_old import GridProxy
     gridProxy = GridProxy()
     username = gridProxy.identity(safe=True)
     if config['ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET']:
@@ -998,7 +998,7 @@ class DQ2Dataset(Dataset):
 
         dataset_locations_num = {}
 
-        from Ganga.Utility.GridShell import getShell
+        from GangaCore.Utility.GridShell import getShell
         gridshell = getShell()
         gridshell.env['LFC_CONNTIMEOUT'] = '45'
 
@@ -1088,7 +1088,7 @@ class DQ2Dataset(Dataset):
                 dataset = re.sub('AOD','ESD',dataset)
 
             locations_list = {}
-            from Ganga.Utility.GridShell import getShell
+            from GangaCore.Utility.GridShell import getShell
             gridshell = getShell()
             gridshell.env['LFC_CONNTIMEOUT'] = '45'
             exe = os.path.join(os.path.dirname(__file__)+'/ganga-readlfc.py')
@@ -1638,7 +1638,7 @@ class DQ2OutputDataset(Dataset):
         """Determine outputdata and outputsandbox locations of finished jobs
         and fill output variable"""
 
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         from GangaAtlas.Lib.ATLASDataset import filecheck
 
         job = self._getParent()
@@ -1830,7 +1830,7 @@ class DQ2OutputDataset(Dataset):
     def retrieve(self, type=None, name=None, **options ):
         """Retrieve files listed in outputdata and registered in output from
         remote SE to local filesystem in background thread"""
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         from GangaAtlas.Lib.ATLASDataset import Download
         import os, threading
 
@@ -2023,7 +2023,7 @@ class DQ2OutputDownloader(MTRunner):
 logger = getLogger()
 
 # New for DQ2 client 2.3.0
-#from Ganga.GPIDev.Credentials_old import GridProxy
+#from GangaCore.GPIDev.Credentials_old import GridProxy
 #gridProxy = GridProxy()
 #if not gridProxy.isValid():
 #    gridProxy.create()

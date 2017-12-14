@@ -6,13 +6,13 @@ import imp
 import tempfile
 import pickle
 import subprocess
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
-from Ganga.GPIDev.Adapters.IMerger import IMerger
-from Ganga.Utility.Plugin import allPlugins
-from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Base.Proxy import GPIProxyObject
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Adapters.IPostProcessor import PostProcessException
+from GangaCore.GPIDev.Adapters.IMerger import IMerger
+from GangaCore.Utility.Plugin import allPlugins
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.GPIDev.Base.Proxy import GPIProxyObject
 
 xml_schema = {}
 xml_summary = {}
@@ -130,8 +130,8 @@ class GaudiXMLSummaryMerger(IMerger):
     _schema.datadict['env_var'] = SimpleItem(defvalue='', typelist=['str'])
 
     def mergefiles(self, file_list, output_file, jobs):
-        from Ganga.GPIDev.Lib.Job import Job
-        from Ganga.GPIDev.Base.Proxy import isType
+        from GangaCore.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Base.Proxy import isType
         gaudi_env = {}
         if isType(jobs, Job):
             gaudi_env = jobs.application.getenv()

@@ -1,6 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 """Write a script containing CMT command which can subsequence be executed."""
-import Ganga.Utility.logging
+import GangaCore.Utility.logging
 import os
 import sys
 import time
@@ -8,10 +8,10 @@ import types
 import warnings
 import tempfile
 import shutil
-from Ganga.Utility.Shell import Shell
+from GangaCore.Utility.Shell import Shell
 from AppsBaseUtils import available_packs
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

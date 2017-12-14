@@ -1,10 +1,10 @@
-from Ganga.Core.exceptions import SplitterError
-from Ganga.GPIDev.Adapters.ISplitter import SplittingError
+from GangaCore.Core.exceptions import SplitterError
+from GangaCore.GPIDev.Adapters.ISplitter import SplittingError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
-from Ganga.Core.GangaThread.WorkerThreads import getQueues
+from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from copy import deepcopy
 import random
@@ -101,8 +101,8 @@ def getLFNReplicas(allLFNs, index, allLFNData):
         logger.error("Failed to Get Replica Info: [%s:%s] of %s" % (str(this_min), str(this_max), len(allLFNs)))
         raise
 
-    import Ganga.Runtime.Repository_runtime
-    Ganga.Runtime.Repository_runtime.updateLocksNow()
+    import GangaCore.Runtime.Repository_runtime
+    GangaCore.Runtime.Repository_runtime.updateLocksNow()
 
     allLFNData[index] = output
 
@@ -255,8 +255,8 @@ def lookUpLFNReplicas(inputs, ignoremissing):
     while len(allLFNData) != int(math.ceil(float(len(allLFNs)) * limit_divide_one)):
         time.sleep(1.)
         # This can take a while so lets protect any repo locks
-        import Ganga.Runtime.Repository_runtime
-        Ganga.Runtime.Repository_runtime.updateLocksNow()
+        import GangaCore.Runtime.Repository_runtime
+        GangaCore.Runtime.Repository_runtime.updateLocksNow()
 
     bad_lfns = []
 
@@ -518,8 +518,8 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
         iterations = iterations + 1
 
         # Can take a while so lets not let threads become un-locked
-        import Ganga.Runtime.Repository_runtime
-        Ganga.Runtime.Repository_runtime.updateLocksNow()
+        import GangaCore.Runtime.Repository_runtime
+        GangaCore.Runtime.Repository_runtime.updateLocksNow()
 
         # If on final run, will exit loop after this so lets try and cleanup
         if iterations >= iterative_limit:

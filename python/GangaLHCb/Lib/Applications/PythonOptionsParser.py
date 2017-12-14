@@ -4,18 +4,18 @@ of inputdata, outputdata and output files.'''
 
 import tempfile
 import fnmatch
-from Ganga.GPIDev.Base.Proxy import stripProxy, getName
-from Ganga.GPIDev.Lib.File import FileBuffer
-from Ganga.GPIDev.Lib.File import LocalFile
-import Ganga.Utility.logging
-from Ganga.Utility.util import unique
-import Ganga.Utility.Config
+from GangaCore.GPIDev.Base.Proxy import stripProxy, getName
+from GangaCore.GPIDev.Lib.File import FileBuffer
+from GangaCore.GPIDev.Lib.File import LocalFile
+import GangaCore.Utility.logging
+from GangaCore.Utility.util import unique
+import GangaCore.Utility.Config
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from Ganga.Core.exceptions import ApplicationConfigurationError, GangaTypeError
-from Ganga.Utility.files import expandfilename
+from GangaCore.Core.exceptions import ApplicationConfigurationError, GangaTypeError
+from GangaCore.Utility.files import expandfilename
 from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd
-from Ganga.GPIDev.Lib.File.OutputFileManager import outputFilePostProcessingOnWN
-logger = Ganga.Utility.logging.getLogger()
+from GangaCore.GPIDev.Lib.File.OutputFileManager import outputFilePostProcessingOnWN
+logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -130,7 +130,7 @@ class PythonOptionsParser(object):
             logger.debug('No inputdata has been defined in the options file.')
             logger.debug("%s" % str(err))
 
-        from Ganga.GPIDev.Base.Filters import allComponentFilters
+        from GangaCore.GPIDev.Base.Filters import allComponentFilters
         file_filter = allComponentFilters['gangafiles']
 
         all_files = []
@@ -150,7 +150,7 @@ class PythonOptionsParser(object):
     def get_output_files(self):
         '''Collects and organizes filenames that the job outputs'''
 
-        sbtypes = Ganga.Utility.Config.getConfig('LHCb')['outputsandbox_types']
+        sbtypes = GangaCore.Utility.Config.getConfig('LHCb')['outputsandbox_types']
         outsandbox = []
         outputdata = []
 

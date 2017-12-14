@@ -3,10 +3,10 @@
 from GangaRobot.Framework.Action import IAction
 from GangaRobot.Framework import Utility
 from GangaRobot.Framework.exceptions import *
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 import os, urllib, datetime, subprocess, time, fnmatch, shutil
-#from Ganga.Utility.Config import getConfig
-import Ganga.Utility.Config
+#from GangaCore.Utility.Config import getConfig
+import GangaCore.Utility.Config
 #from GangaTest.Lib.TestRobot.Utils import Emailer
 
 logger = getLogger()
@@ -32,7 +32,7 @@ class Checker(IAction):
 
     def execute(self, runid):
         #Get configuration data
-        config = Ganga.Utility.Config.getConfig('TestRobot')
+        config = GangaCore.Utility.Config.getConfig('TestRobot')
         self._getconfig()
         #Email on Startup
         if (self.EmailOnStartup == True):
@@ -66,7 +66,7 @@ class Checker(IAction):
 
     def _getconfig(self):
        
-        config = Ganga.Utility.Config.getConfig('TestRobot')
+        config = GangaCore.Utility.Config.getConfig('TestRobot')
         self.DownloadURL = config['ReleasePath']
         self.SleepTime = config['SleepTime']
         self.EmailOnStartup = config['EmailOnStartup']
@@ -79,7 +79,7 @@ class Checker(IAction):
         self._getfiledata()
 
     def _getfiledata(self):
-        gangaconfig = Ganga.Utility.Config.getConfig('Configuration')
+        gangaconfig = GangaCore.Utility.Config.getConfig('Configuration')
         gangadirname = gangaconfig['gangadir']
         self.LastVersionData = 'None'
         #for file in os.listdir(gangadirname):
@@ -93,7 +93,7 @@ class Checker(IAction):
             logger.info(e)
             pass
         #dirs below will have been deleted on clean up
-        config = Ganga.Utility.Config.getConfig('TestRobot')
+        config = GangaCore.Utility.Config.getConfig('TestRobot')
         #Set Install path with new directory  
         dirname = os.path.join(gangadirname, "Releases")
         try:
@@ -196,7 +196,7 @@ class Checker(IAction):
         return Data
                 
     def _heartbeat(self):
-        config = Ganga.Utility.Config.getConfig('Configuration')
+        config = GangaCore.Utility.Config.getConfig('Configuration')
         heartbeatfile = str(config['gangadir'])+os.sep+"heartbeat.txt"
         heartbeattmpfile = str(config['gangadir'])+os.sep+"heartbeattemp.txt"
         try:
@@ -222,7 +222,7 @@ class Checker(IAction):
         #Function to email list on startup of ganga (following restart by cronjob)
         from email.MIMEText import MIMEText
         from smtplib import SMTP
-        emailcfg = Ganga.Utility.Config.getConfig('Robot')
+        emailcfg = GangaCore.Utility.Config.getConfig('Robot')
         host = emailcfg['FileEmailer_Host']
         from_ = emailcfg['FileEmailer_From']
         recipients = [recepient.strip() for recepient in \

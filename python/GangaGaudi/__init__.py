@@ -1,14 +1,14 @@
 import os
-import Ganga.Utility.logging
-import Ganga.Utility.Config
+import GangaCore.Utility.logging
+import GangaCore.Utility.Config
 
-from Ganga.Utility.Config.Config import _after_bootstrap
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.Config.Config import _after_bootstrap
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 if not _after_bootstrap:
 
-    configGaudi = Ganga.Utility.Config.makeConfig(
+    configGaudi = GangaCore.Utility.Config.makeConfig(
     'GAUDI', 'Generic GAUDI based parameters')
 
     dscrpt = 'The command used to make a CMT application.'

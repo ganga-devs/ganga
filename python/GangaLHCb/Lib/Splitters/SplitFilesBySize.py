@@ -1,15 +1,15 @@
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Adapters.ISplitter import SplittingError
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Adapters.ISplitter import SplittingError
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Base.Proxy import stripProxy
-import Ganga.Utility.logging
-from Ganga.GPIDev.Lib.Job import Job
-logger = Ganga.Utility.logging.getLogger()
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Base.Proxy import stripProxy
+import GangaCore.Utility.logging
+from GangaCore.GPIDev.Lib.Job import Job
+logger = GangaCore.Utility.logging.getLogger()
 import os
 import copy
 import pickle
@@ -53,11 +53,11 @@ class SplitFilesBySize(GaudiInputDataSplitter):
                 else:
                     logger.error(
                         "Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
-                    from Ganga.Core.exceptions import GangaException
+                    from GangaCore.Core.exceptions import GangaException
                     raise GangaException(
                         "Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
         elif isinstance(dataset, list):
-            from Ganga.GPIDev.Base.Proxy import isType
+            from GangaCore.GPIDev.Base.Proxy import isType
             for i in dataset:
                 if type(i) is str:
                     datatmp.append(DiracFile(lfn=i))
@@ -69,7 +69,7 @@ class SplitFilesBySize(GaudiInputDataSplitter):
                     raise x
         else:
             logger.error("Unkown dataset type, cannot perform split here")
-            from Ganga.Core.exceptions import GangaException
+            from GangaCore.Core.exceptions import GangaException
             raise GangaException(
                 "Unkown dataset type, cannot perform split here")
 

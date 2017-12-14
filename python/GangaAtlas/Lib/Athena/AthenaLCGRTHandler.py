@@ -9,25 +9,25 @@
 
 import os, pwd, commands, re, string, time, sys
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.File import *
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
-from Ganga.Utility.logging import getLogger
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.Utility.Config import getConfig, makeConfig, ConfigError
+from GangaCore.Utility.logging import getLogger
 
-from Ganga.Lib.LCG import LCGJobConfig
+from GangaCore.Lib.LCG import LCGJobConfig
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasLCGRequirements
 from GangaAtlas.Lib.AtlasLCGRequirements import AtlasCREAMRequirements
 
 from GangaAtlas.Lib.ATLASDataset import isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations, whichCloud
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset import DQ2OutputDataset
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
-from Ganga.Utility.files import expandfilename
+from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
 # the config file may have a section

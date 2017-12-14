@@ -6,18 +6,18 @@ import os
 import subprocess
 import sys
 
-from Ganga.Core.exceptions import (GangaException,
+from GangaCore.Core.exceptions import (GangaException,
                                    ApplicationConfigurationError)
-from Ganga.Core import FileWorkspace
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import File
-from Ganga.Lib.Executable import Executable
-from Ganga.Lib.LCG import LCG
-from Ganga.Lib.Mergers.Merger import TextMerger
-from Ganga.Utility.Config import *
-import Ganga.Utility.logging
+from GangaCore.Core import FileWorkspace
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.File import File
+from GangaCore.Lib.Executable import Executable
+from GangaCore.Lib.LCG import LCG
+from GangaCore.Lib.Mergers.Merger import TextMerger
+from GangaCore.Utility.Config import *
+import GangaCore.Utility.logging
 
 import db
 import SBDatasetManager
@@ -261,7 +261,7 @@ class RTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         logger.debug('RTHandler prepare called.')
         
-        from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+        from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         return StandardJobConfig(app.exe,
                                  app._getParent().inputsandbox,
                                  convertIntToStringArgs(app.args),
@@ -338,7 +338,7 @@ class LCGRTHandler(IRuntimeHandler):
         if j.backend.requirements.walltime == 0:
             j.backend.requirements.walltime = 24 * 60 # dobbiamo fornire un valore in minuti
         
-        #from Ganga.Lib.LCG import LCGJobConfig
+        #from GangaCore.Lib.LCG import LCGJobConfig
         #return LCGJobConfig(app.exe,app._getParent().inputsandbox,convertIntToStringArgs(app.args),app._getParent().outputsandbox,app.env)
     
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
@@ -350,7 +350,7 @@ class LCGRTHandler(IRuntimeHandler):
         job.backend.requirements.other = masterjob.backend.requirements.other
         job.backend.requirements.walltime = masterjob.backend.requirements.walltime
         
-        from Ganga.Lib.LCG import LCGJobConfig
+        from GangaCore.Lib.LCG import LCGJobConfig
         return LCGJobConfig(app.exe, 
                             app._getParent().inputsandbox, 
                             convertIntToStringArgs(app.args), 
@@ -362,7 +362,7 @@ class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         logger.debug('gLiteRTHandler prepare called.')
         
-        from Ganga.Lib.gLite import gLiteJobConfig
+        from GangaCore.Lib.gLite import gLiteJobConfig
         return gLiteJobConfig(app.exe,
                               app._getParent().inputsandbox,
                               convertIntToStringArgs(app.args),
@@ -370,7 +370,7 @@ class gLiteRTHandler(IRuntimeHandler):
                               app.env)
 
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 
 allHandlers.add('SBApp','LSF', RTHandler)
@@ -387,4 +387,4 @@ allHandlers.add('SBApp','Cronus', RTHandler)
 allHandlers.add('SBApp','Remote', LCGRTHandler)
 allHandlers.add('SBApp','CREAM', LCGRTHandler)
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()

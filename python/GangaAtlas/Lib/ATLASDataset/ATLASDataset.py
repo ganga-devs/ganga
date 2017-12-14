@@ -10,14 +10,14 @@
 import os, re, fnmatch
 import commands
 
-from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.Dataset import Dataset
+from GangaCore.GPIDev.Schema import *
 
-from Ganga.Utility.Config  import getConfig, makeConfig, ConfigError 
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Shell import Shell
-from Ganga.Utility.files import expandfilename
-from Ganga.Utility.GridShell import getShell
+from GangaCore.Utility.Config  import getConfig, makeConfig, ConfigError 
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.Shell import Shell
+from GangaCore.Utility.files import expandfilename
+from GangaCore.Utility.GridShell import getShell
 
 shell = Shell()
 logger = getLogger()
@@ -59,7 +59,7 @@ def filecheck(filename):
 
 from commands import getstatusoutput    
 import threading
-from Ganga.Core import GangaThread
+from GangaCore.Core import GangaThread
 
 class Download:
     """Helper class for background download of files stored on remote SEs"""
@@ -300,7 +300,7 @@ class ATLASOutputDataset(Dataset):
     def fill(self, type=None, name=None, **options ):
         """Determine outputdata and outputsandbox locations of finished jobs
         and fill output variable"""
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         job = self._getParent()
 
 #       Determine local output path to store files
@@ -367,7 +367,7 @@ class ATLASOutputDataset(Dataset):
     def retrieve(self, type=None, name=None, **options ):
         """Retieve files listed in outputdata and registered in output from
         remote SE to local filesystem in background thread"""
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         import os
         
         job = self._getParent()
@@ -466,7 +466,7 @@ class ATLASOutputDataset(Dataset):
 #  files
 #
 #Revision 1.28  2007/09/24 08:42:10  elmsheus
-#Apply patches to migrate to Ganga.Utility.GridShell
+#Apply patches to migrate to GangaCore.Utility.GridShell
 #
 #Revision 1.27  2007/05/23 13:28:31  elmsheus
 #Add ATLASOutputDatasetLFC config variable to set LFC host for ATLASOutputDataset

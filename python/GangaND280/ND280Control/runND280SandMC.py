@@ -7,19 +7,19 @@
 Ganga module to execute runND280 from the nd280Control package.
 """
 
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Schema import *
 
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 
-from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Lib.File import *
+from GangaCore.GPIDev.Lib.Registry.PrepRegistry import ShareRef
+from GangaCore.GPIDev.Base.Proxy import isType
+from GangaCore.Core.exceptions import ApplicationConfigurationError
 
 import os, shutil, commands, re
-from Ganga.Utility.files import expandfilename
+from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
 import ND280Configs
@@ -43,7 +43,7 @@ class runND280SandMC(IApplication):
 
     """
     _schema = Schema(Version(1,1), {
-        'args' : SimpleItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.File.File','int'],sequence=1,strict_sequence=0,doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
+        'args' : SimpleItem(defvalue=[],typelist=['str','GangaCore.GPIDev.Lib.File.File.File','int'],sequence=1,strict_sequence=0,doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
         'cmtsetup' : SimpleItem(defvalue=[],doc='Setup script(s) in bash to set up cmt and the cmt package of the executable.', typelist=['str'],sequence=1,strict_sequence=0),
         'confopts' : SimpleItem(defvalue={},doc='Options for configuration file', typelist=['str']),
         'env' : SimpleItem(defvalue={},typelist=['str'],doc='Environment'),
@@ -157,7 +157,7 @@ def convertIntToStringArgs(args):
 
 class RTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+        from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         c = StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
         return c
@@ -165,17 +165,17 @@ class RTHandler(IRuntimeHandler):
 
 class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from Ganga.Lib.LCG import LCGJobConfig
+        from GangaCore.Lib.LCG import LCGJobConfig
 
         return LCGJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
 
 class gLiteRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from Ganga.Lib.gLite import gLiteJobConfig
+        from GangaCore.Lib.gLite import gLiteJobConfig
 
         return gLiteJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('runND280SandMC','LSF', RTHandler)
 allHandlers.add('runND280SandMC','Local', RTHandler)

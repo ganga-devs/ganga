@@ -1,17 +1,17 @@
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Lib.Tasks.common import getJobByID
-from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
-from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.Core.exceptions import GangaAttributeError
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.GPIDev.Lib.Tasks.common import getJobByID
+from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
+from GangaCore.GPIDev.Lib.Job.Job import JobError
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.Core.exceptions import GangaAttributeError
 from GangaLHCb.Lib.Tasks.LHCbUnit import LHCbUnit
-from Ganga.GPIDev.Base.Proxy import isType
+from GangaCore.GPIDev.Base.Proxy import isType
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 
@@ -164,7 +164,7 @@ class LHCbTransform(ITransform):
                 return None
 
             for inds in self.inputdata:
-                from Ganga.GPIDev.Lib.Tasks.TaskChainInput import TaskChainInput
+                from GangaCore.GPIDev.Lib.Tasks.TaskChainInput import TaskChainInput
                 if isType(inds, TaskChainInput) and inds.input_trf_id == parent._getParent().getID():
                     incl_pat_list += inds.include_file_mask
                     excl_pat_list += inds.exclude_file_mask

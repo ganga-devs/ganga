@@ -9,9 +9,9 @@ def loadPlugins(c):
 
 from GangaTutorial.Lib.primes.primes import check_prime_job, split_prime_job
 
-from Ganga.Runtime.GPIexport import exportToGPI
+from GangaCore.Runtime.GPIexport import exportToGPI
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 exportToGPI("check_prime_job",check_prime_job,"Functions")

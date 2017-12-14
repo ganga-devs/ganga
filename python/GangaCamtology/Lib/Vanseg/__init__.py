@@ -16,7 +16,7 @@ __version__ = "1.0"
 from Vanseg import Vanseg
 from VansegLCG import VansegLCG
 from VansegLocal import VansegLocal
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add( "Vanseg", "Interactive", VansegLocal )
 allHandlers.add( "Vanseg", "Local", VansegLocal )

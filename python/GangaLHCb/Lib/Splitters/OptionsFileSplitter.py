@@ -1,8 +1,8 @@
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Lib.Job import Job
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Lib.Job import Job
 import pickle
 import os
 import copy

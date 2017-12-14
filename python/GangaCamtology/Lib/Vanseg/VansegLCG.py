@@ -15,11 +15,11 @@ __date__    = "30 November 2007"
 __version__ = "1.1"
 
 from VansegLocal import VansegLocal
-from Ganga.GPIDev.Lib.File import  File
-from Ganga.Lib.LCG import LCGJobConfig
-from Ganga.Lib.LCG import LCGRequirements
-from Ganga.Utility import logging
-from Ganga.Utility.files import fullpath
+from GangaCore.GPIDev.Lib.File import  File
+from GangaCore.Lib.LCG import LCGJobConfig
+from GangaCore.Lib.LCG import LCGRequirements
+from GangaCore.Utility import logging
+from GangaCore.Utility.files import fullpath
 
 import os
 

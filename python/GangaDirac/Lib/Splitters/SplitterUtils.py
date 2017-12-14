@@ -1,10 +1,10 @@
-from Ganga.GPIDev.Adapters.ISplitter import SplittingError
+from GangaCore.GPIDev.Adapters.ISplitter import SplittingError
 #from GangaDirac.BOOT                    import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 

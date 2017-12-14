@@ -1,7 +1,7 @@
 from __future__ import absolute_import
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.mark import external
-from Ganga.testlib.monitoring import run_until_completed, run_until_state
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.testlib.mark import external
+from GangaCore.testlib.monitoring import run_until_completed, run_until_state
 import os
 
 
@@ -12,7 +12,7 @@ class TestExeDiracRTHandler(GangaUnitTest):
         """
         Check a simple job fails and raises the correct exception
         """
-        from Ganga.GPI import Job, Dirac, Executable
+        from GangaCore.GPI import Job, Dirac, Executable
         import time
         j =  Job(backend = Dirac())
         j.application = Executable(exe = 'ech')

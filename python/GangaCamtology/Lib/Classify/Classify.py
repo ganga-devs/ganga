@@ -16,11 +16,11 @@ __version__ = "1.2"
 import os
 import shutil
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
-from Ganga.Utility import logging
-from Ganga.Utility.files import fullpath
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
+from GangaCore.Utility import logging
+from GangaCore.Utility.files import fullpath
 
 logger = logging.getLogger()
 

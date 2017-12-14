@@ -18,12 +18,12 @@ import os
 import shutil
 import time
 
-from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
-from Ganga.Utility import logging
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.files import fullpath
-from Ganga.Utility.GridShell import getShell
+from GangaCore.GPIDev.Lib.Dataset import Dataset
+from GangaCore.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
+from GangaCore.Utility import logging
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.files import fullpath
+from GangaCore.Utility.GridShell import getShell
 
 logger = logging.getLogger()
 shell = getShell()

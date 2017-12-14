@@ -1,24 +1,24 @@
-from Ganga.Core.exceptions import SplitterError
+from GangaCore.Core.exceptions import SplitterError
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
-from Ganga.GPIDev.Adapters.ISplitter import SplittingError
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
-import Ganga.Utility.logging
-from Ganga.GPIDev.Lib.Job import Job
+from GangaCore.GPIDev.Adapters.ISplitter import SplittingError
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
+import GangaCore.Utility.logging
+from GangaCore.GPIDev.Lib.Job import Job
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 import os
 import copy
 import pickle
 
-from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-from Ganga.GPIDev.Base.Filters import allComponentFilters
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Credentials import require_credential
+from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.GPIDev.Base.Filters import allComponentFilters
+from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
+from GangaCore.GPIDev.Credentials import require_credential
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 
 def getBackend():
@@ -88,7 +88,7 @@ class SplitByFiles(GaudiInputDataSplitter):
                     datatmp.append(i)
                 else:
                     logger.error("Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
-                    from Ganga.Core.exceptions import GangaException
+                    from GangaCore.Core.exceptions import GangaException
                     raise GangaException("Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
         elif isinstance(dataset, (list, GangaList)):
             for this_file in dataset:
@@ -99,14 +99,14 @@ class SplitByFiles(GaudiInputDataSplitter):
                 else:
                     logger.error("Unexpected type: %s" % str(type(this_file)))
                     logger.error("Wanted object to inherit from type: %s: %s" % (str(type(IGangaFile()))))
-                    from Ganga.Core.exceptions import GangaException
+                    from GangaCore.Core.exceptions import GangaException
                     x = GangaException("Unknown(unexpected) file object: %s" % this_file)
                     raise x
         elif type(dataset) is str:
             datatmp.append(DiracFile(lfn=dataset))
         else:
             logger.error("Unkown dataset type, cannot perform split here")
-            from Ganga.Core.exceptions import GangaException
+            from GangaCore.Core.exceptions import GangaException
             logger.error("Dataset found: " + str(dataset))
             raise GangaException("Unkown dataset type, cannot perform split here")
 

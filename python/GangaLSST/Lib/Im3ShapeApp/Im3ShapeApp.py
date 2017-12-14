@@ -2,26 +2,26 @@
 # Ganga Project. http://cern.ch/ganga
 ##########################################################################
 
-from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, GangaFileItem
+from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, GangaFileItem
 
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 
-from Ganga.GPIDev.Lib.File import File, ShareDir
-from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError
+from GangaCore.GPIDev.Lib.File import File, ShareDir
+from GangaCore.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 
-from Ganga.GPIDev.Base.Proxy import getName, isType, stripProxy
+from GangaCore.GPIDev.Base.Proxy import getName, isType, stripProxy
 
 import os
 import shutil
-from Ganga.Utility.files import expandfilename
+from GangaCore.Utility.files import expandfilename
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Lib.File import LocalFile
+from GangaCore.GPIDev.Lib.File import LocalFile
 
 logger = getLogger()
 

@@ -8,10 +8,10 @@ Ganga module to control the input files.
 It relies on the basic ND280Dataset class which is used through inheritance in other more specific classes.
 """
 
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.Dataset import Dataset
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
 
 import os, re, fnmatch
 import commands

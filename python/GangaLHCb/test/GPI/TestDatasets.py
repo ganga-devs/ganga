@@ -1,15 +1,15 @@
 from __future__ import absolute_import
 
 import pytest
-from Ganga.testlib.mark import external
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.testlib.mark import external
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestDatasets(GangaUnitTest):
 
     def testDatasetsFunctions(self):
 
-        from Ganga.GPI import DiracFile, PhysicalFile, LHCbDataset, Job, LocalFile
+        from GangaCore.GPI import DiracFile, PhysicalFile, LHCbDataset, Job, LocalFile
 
         # test constructors/setters
         ds = LHCbDataset(['lfn:a', 'pfn:b'])
@@ -56,7 +56,7 @@ class TestDatasets(GangaUnitTest):
     @external
     def testDatasets(self):
 
-        from Ganga.GPI import DiracFile, PhysicalFile, LHCbDataset, Job, LocalFile
+        from GangaCore.GPI import DiracFile, PhysicalFile, LHCbDataset, Job, LocalFile
 
         #test behaviour with files on the grid
 

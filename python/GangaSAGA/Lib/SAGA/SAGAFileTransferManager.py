@@ -4,10 +4,10 @@ __date__    = "13 September 2009"
 __version__ = "1.0"
 
 # Import Ganga Threading Stuff
-from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
+from GangaCore.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
 # Setup Utility Logger
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 import os

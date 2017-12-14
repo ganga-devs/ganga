@@ -3,19 +3,19 @@
 from copy import deepcopy
 import tempfile
 import fnmatch
-from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Lib.Dataset import GangaDataset
-from Ganga.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.Utility.Config import getConfig, ConfigError
-import Ganga.Utility.logging
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.GPIDev.Lib.Dataset import GangaDataset
+from GangaCore.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.Utility.Config import getConfig, ConfigError
+import GangaCore.Utility.logging
 from LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
-from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
+from GangaCore.GPIDev.Base.Proxy import isType, stripProxy, getName
+from GangaCore.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
-from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-logger = Ganga.Utility.logging.getLogger()
+from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
+from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -37,7 +37,7 @@ class LHCbDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
+    schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0, doc=docstr)
     docstr = 'Use contents of file rather than generating catalog.'
@@ -183,7 +183,7 @@ class LHCbDataset(GangaDataset):
     def extend(self, files, unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
-        from Ganga.GPIDev.Base import ReadOnlyObjectError
+        from GangaCore.GPIDev.Base import ReadOnlyObjectError
 
         if self._parent is not None and self._parent._readonly():
             raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, getName(self)))
@@ -453,7 +453,7 @@ class LHCbDataset(GangaDataset):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-from Ganga.GPIDev.Base.Filters import allComponentFilters
+from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
 
 def string_datafile_shortcut_lhcb(name, item):
@@ -461,7 +461,7 @@ def string_datafile_shortcut_lhcb(name, item):
     # Overload the LHCb instance if the Core beet us to it
     mainFileOutput = None
     try:
-        mainFileOutput = Ganga.GPIDev.Lib.File.string_file_shortcut(name, item)
+        mainFileOutput = GangaCore.GPIDev.Lib.File.string_file_shortcut(name, item)
     except Exception, x:
         logger.debug("Failed to Construct a default file type: %s" % str(name))
         pass
@@ -501,11 +501,11 @@ allComponentFilters['gangafiles'] = string_datafile_shortcut_lhcb
 
 def string_dataset_shortcut(files, item):
     from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
-    from Ganga.GPIDev.Base.Objects import ObjectMetaclass
+    from GangaCore.GPIDev.Base.Objects import ObjectMetaclass
     # This clever change mirrors that in IPostprocessor (see there)
     # essentially allows for dynamic extensions to JobTemplate
     # such as LHCbJobTemplate etc.
-    from Ganga.GPIDev.Base.Proxy import getProxyInterface
+    from GangaCore.GPIDev.Base.Proxy import getProxyInterface
     inputdataList = [stripProxy(i)._schema.datadict['inputdata'] for i in getProxyInterface().__dict__.values()
                      if isinstance(stripProxy(i), ObjectMetaclass)
                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))

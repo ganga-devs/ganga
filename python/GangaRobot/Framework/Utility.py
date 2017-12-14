@@ -1,7 +1,7 @@
 """Utilities for GangaRobot."""
 
-from Ganga.Utility.Config.Config import getConfig
-from Ganga.Utility import files
+from GangaCore.Utility.Config.Config import getConfig
+from GangaCore.Utility import files
 import os
 import time
 

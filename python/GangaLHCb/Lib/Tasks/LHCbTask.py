@@ -1,16 +1,16 @@
 from copy import deepcopy
 
-from Ganga.GPIDev.Base.Proxy import stripProxy
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Schema import Schema, Version
-from Ganga.Core.exceptions import GangaException
-from Ganga.Core.exceptions import GangaAttributeError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from GangaCore.GPIDev.Base.Proxy import stripProxy
+from GangaCore.GPIDev.Base.Proxy import isType
+from GangaCore.GPIDev.Schema import Schema, Version
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.Core.exceptions import GangaAttributeError
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 import time
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
-from Ganga.GPIDev.Lib.Tasks import ITask
+from GangaCore.GPIDev.Lib.Tasks import ITask
 from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 

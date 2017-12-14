@@ -9,21 +9,21 @@ import os, sys, time, commands, re, tempfile, exceptions, urllib, fnmatch
 import cPickle as pickle
 import json
 
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Credentials import require_credential
-from Ganga.GPIDev.Credentials.VomsProxy import VomsProxy
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Lib.Job import JobStatusError
-from Ganga.Core.exceptions import BackendError
-from Ganga.Core import Sandbox
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Core import FileWorkspace
-from Ganga.Utility.Shell import Shell
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig, setConfigOption
-from Ganga.Utility.logging import getLogger
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Adapters.IBackend import IBackend
+from GangaCore.GPIDev.Credentials import require_credential
+from GangaCore.GPIDev.Credentials.VomsProxy import VomsProxy
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.File import *
+from GangaCore.GPIDev.Lib.Job import JobStatusError
+from GangaCore.Core.exceptions import BackendError
+from GangaCore.Core import Sandbox
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.Core import FileWorkspace
+from GangaCore.Utility.Shell import Shell
+from GangaCore.Utility.Config import makeConfig, ConfigError, getConfig, setConfigOption
+from GangaCore.Utility.logging import getLogger
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
@@ -63,7 +63,7 @@ def setChirpVariables():
     nickname = getNickname(allowMissingNickname=False) 
     if configPanda['chirpserver'] and not configPanda['chirpconfig']:
         tempchirpconfig = 'chirp^%s^/%s^-d chirp' %(configPanda['chirpserver'],nickname)
-        Ganga.Utility.Config.setConfigOption('Panda','chirpconfig', tempchirpconfig)
+        GangaCore.Utility.Config.setConfigOption('Panda','chirpconfig', tempchirpconfig)
     return 
 
 # AGISSpecTS = time.time()
@@ -689,8 +689,8 @@ class Panda(IBackend):
         logger.debug("Using Panda server baseURLSSL=%s" %Client.baseURLSSL)
 
         #from pandatools import Client
-        from Ganga.Core.exceptions import IncompleteJobSubmissionError
-        from Ganga.Utility.logging import log_user_exception
+        from GangaCore.Core.exceptions import IncompleteJobSubmissionError
+        from GangaCore.Utility.logging import log_user_exception
 
         assert(implies(rjobs,len(subjobspecs)==len(rjobs))) 
        
@@ -902,8 +902,8 @@ class Panda(IBackend):
         """ Rerun the splitting for subjobs. Basically a helper function that creates a new master job from
         this parent and submits it"""
         
-        from Ganga.GPIDev.Lib.Job import Job
-        from Ganga.Core.GangaRepository import getRegistry
+        from GangaCore.GPIDev.Lib.Job import Job
+        from GangaCore.Core.GangaRepository import getRegistry
         import uuid
         from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 

@@ -8,21 +8,21 @@ from GangaGaudi.Lib.Applications.Gaudi import Gaudi
 from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
 from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps, guess_version, available_packs
 from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, activeSummaryItems
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-from Ganga.GPIDev.Schema import SimpleItem
+from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from GangaCore.GPIDev.Schema import SimpleItem
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from Ganga.Utility.Shell import Shell
+from GangaCore.Utility.Shell import Shell
 from GangaLHCb.Lib.Applications.PythonOptionsParser import PythonOptionsParser
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.files import expandfilename
-from Ganga.Utility.execute import execute
-from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
-from Ganga.Core.exceptions import ApplicationConfigurationError
-import Ganga.Utility.logging
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.files import expandfilename
+from GangaCore.Utility.execute import execute
+from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+import GangaCore.Utility.logging
 import subprocess
 import pickle
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 
 class AppName(Gaudi):
@@ -314,7 +314,7 @@ class AppName(Gaudi):
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 for (backend, handler) in backend_handlers().iteritems():
     allHandlers.add('AppName', backend, handler)
 

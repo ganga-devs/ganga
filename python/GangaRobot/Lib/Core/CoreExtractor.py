@@ -6,7 +6,7 @@ The CoreExtractor class provides a generic extractor implementation.
 
 from GangaRobot.Framework import Utility
 from GangaRobot.Lib.Base.BaseExtractor import BaseExtractor
-from Ganga.GPI import *
+from GangaCore.GPI import *
 
 
 class CoreExtractor(BaseExtractor):

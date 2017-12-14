@@ -1,12 +1,12 @@
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
-from Ganga.GPIDev.Lib.Job import Job
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
+from GangaCore.GPIDev.Lib.Job import Job
 from SplitterUtils import DatasetSplitter
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 #import copy
-import Ganga.Utility.logging
+import GangaCore.Utility.logging
 # from GangaGaudi.Lib.Datasets import GaudiDataset
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 
 class GaudiInputDataSplitter(ISplitter):

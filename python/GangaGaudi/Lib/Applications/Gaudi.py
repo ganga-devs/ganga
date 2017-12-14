@@ -4,21 +4,21 @@ import os
 import tempfile
 import gzip
 import pickle
-from Ganga.GPIDev.Schema import SimpleItem, FileItem
-from Ganga.Core.exceptions import ApplicationConfigurationError
-import Ganga.Utility.logging
-from Ganga.Core.GangaRepository import getRegistry
-from Ganga.GPIDev.Lib.File import ShareDir
-from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
-from Ganga.Utility.util import unique
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.files import expandfilename
+from GangaCore.GPIDev.Schema import SimpleItem, FileItem
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+import GangaCore.Utility.logging
+from GangaCore.Core.GangaRepository import getRegistry
+from GangaCore.GPIDev.Lib.File import ShareDir
+from GangaCore.GPIDev.Lib.Registry.PrepRegistry import ShareRef
+from GangaCore.Utility.util import unique
+from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.files import expandfilename
 from GaudiBase import GaudiBase
-from Ganga.Utility.files import fullpath
+from GangaCore.Utility.files import fullpath
 from GangaGaudi.Lib.Applications.GaudiUtils import gzipFile
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -98,8 +98,8 @@ class Gaudi(GaudiBase):
 
     def prepare(self, force=False):
 
-        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-        from Ganga.GPIDev.Lib.File.File import File
+        from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
+        from GangaCore.GPIDev.Lib.File.File import File
         if isType(self.optsfile, (list, tuple, GangaList)):
             for this_file in self.optsfile:
                 if type(this_file) is str:
@@ -176,7 +176,7 @@ class Gaudi(GaudiBase):
             # Check for non-exting optsfiles defined
             nonexistentOptFiles = []
             for f in self.optsfile:
-                from Ganga.GPIDev.Lib.File.File import File
+                from GangaCore.GPIDev.Lib.File.File import File
                 if type(f) is str:
                     myFile = File(f)
                 else:

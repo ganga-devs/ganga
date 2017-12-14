@@ -6,28 +6,28 @@ import tempfile
 import pprint
 import shutil
 from os.path import split, join
-from Ganga.GPIDev.Schema.Schema import FileItem, SimpleItem
-import Ganga.Utility.logging
-from Ganga.GPIDev.Lib.File import File
-from Ganga.Utility.util import unique
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Lib.File import ShareDir
-from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
+from GangaCore.GPIDev.Schema.Schema import FileItem, SimpleItem
+import GangaCore.Utility.logging
+from GangaCore.GPIDev.Lib.File import File
+from GangaCore.Utility.util import unique
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Lib.File import ShareDir
+from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
 from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
 from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
-from Ganga.Utility.files import expandfilename, fullpath
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.Shell import Shell
+from GangaCore.Utility.files import expandfilename, fullpath
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.Shell import Shell
 from AppsBaseUtils import guess_version
-from Ganga.GPIDev.Base.Proxy import isType
+from GangaCore.GPIDev.Base.Proxy import isType
 #
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
 # Added for XML PostProcessing
 from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript
 from GangaLHCb.Lib.Applications import XMLPostProcessor
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -191,7 +191,7 @@ FileCatalog().Catalogs=[]\n""" % modulename
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 # Associate the correct run-time handlers to GaudiPython for various backends.
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
 

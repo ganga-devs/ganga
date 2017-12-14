@@ -7,7 +7,7 @@ import time
 from socket import *
 import threading
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 class WatchdogThread ( threading.Thread ):
@@ -89,7 +89,7 @@ reset_time = time.time()
 logger = getLogger()
 
 # start the monitoring
-from Ganga.Core import monitoring_component
+from GangaCore.Core import monitoring_component
 monitoring_component.enableMonitoring()
 
 # start the user script execution

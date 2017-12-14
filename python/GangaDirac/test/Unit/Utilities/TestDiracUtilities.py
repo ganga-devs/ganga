@@ -2,7 +2,7 @@ import pytest
 
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
 
-from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
+from GangaCore.testlib.GangaUnitTest import load_config_files, clear_config
 
 
 @pytest.yield_fixture(scope='module', autouse=True)
