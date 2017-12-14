@@ -5,7 +5,7 @@ The IAction interface should be implemented by actions to be executed by Driver.
 """
 
 from GangaRobot.Framework import Utility
-from Ganga.Utility.Config import ConfigError
+from GangaCore.Utility.Config import ConfigError
 
 class IAction(object):
     

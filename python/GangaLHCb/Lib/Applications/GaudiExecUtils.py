@@ -3,12 +3,12 @@ from datetime import datetime
 import time
 import uuid
 from os import makedirs, path
-from Ganga.Core.exceptions import GangaException
-from Ganga.Runtime.GPIexport import exportToGPI
-from Ganga.Utility.files import expandfilename
-from Ganga.Utility.logging import getLogger
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.Core.exceptions import ApplicationPrepareError
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.Runtime.GPIexport import exportToGPI
+from GangaCore.Utility.files import expandfilename
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.Core.exceptions import ApplicationPrepareError
 from .PythonOptsCmakeParser import PythonOptsCmakeParser
 
 logger = getLogger()
@@ -138,7 +138,7 @@ def prepareGaudiExec(myApp, myVer, myPath='$HOME/cmtuser', myUse=None, myFolder=
             myFolder (str): This is a git lb-checkout for after the lb-use. Assumes the master branch of the project
     """
     path = prepare_cmake_app(myApp, myVer, myPath, myUse, myFolder)
-    from Ganga.GPI import GaudiExec
+    from GangaCore.GPI import GaudiExec
     return GaudiExec(directory=path)
 
 exportToGPI('prepareGaudiExec', prepareGaudiExec, 'Functions')

@@ -1,5 +1,5 @@
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
 
 class JediRequirements(GangaObject):
     '''Helper class to group Jedi requirements.

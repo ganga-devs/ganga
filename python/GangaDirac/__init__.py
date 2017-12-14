@@ -1,11 +1,11 @@
 import os
 #from multiprocessing     import cpu_count
-from Ganga.Utility.Config import makeConfig, getConfig
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.Config import makeConfig, getConfig
+from GangaCore.Utility.logging import getLogger
 
-from Ganga.Utility.Config.Config import _after_bootstrap
+from GangaCore.Utility.Config.Config import _after_bootstrap
 
-from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+from GangaCore.GPIDev.Credentials.CredentialStore import credential_store
 
 logger = getLogger()
 

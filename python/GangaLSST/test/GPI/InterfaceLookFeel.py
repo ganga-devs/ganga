@@ -1,4 +1,4 @@
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestInterfaceLookFeel(GangaUnitTest):
@@ -7,7 +7,7 @@ class TestInterfaceLookFeel(GangaUnitTest):
 
             # Just testing that the job construction works
 
-            from Ganga.GPI import Job, Im3ShapeApp, Im3ShapeSplitter, DiracFile, LocalFile, GangaDataset, Dirac
+            from GangaCore.GPI import Job, Im3ShapeApp, Im3ShapeSplitter, DiracFile, LocalFile, GangaDataset, Dirac
 
             j=Job()
             app = Im3ShapeApp(

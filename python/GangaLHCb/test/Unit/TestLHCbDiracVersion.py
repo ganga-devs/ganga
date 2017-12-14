@@ -8,11 +8,11 @@ except ImportError:
 
 import os, os.path
 
-from Ganga.Utility.logging import getLogger
-from Ganga.testlib.mark import external
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.Utility.logging import getLogger
+from GangaCore.testlib.mark import external
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
-from Ganga.Core.exceptions import PluginError
+from GangaCore.Core.exceptions import PluginError
 
 logger = getLogger(modulename=True)
 

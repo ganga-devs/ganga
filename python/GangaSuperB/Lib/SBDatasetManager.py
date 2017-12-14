@@ -6,11 +6,11 @@ import subprocess
 import sys
 import types
 
-from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Base import GangaObject 
-from Ganga.GPIDev.Schema import *
-from Ganga.Utility.Config import *
-import Ganga.Utility.logging
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.GPIDev.Base import GangaObject 
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Utility.Config import *
+import GangaCore.Utility.logging
 
 import db
 import objectid
@@ -518,4 +518,4 @@ class SBDatasetManager(GangaObject):
         '''Print the User id string'''
         print(utils.getOwner())
     
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()

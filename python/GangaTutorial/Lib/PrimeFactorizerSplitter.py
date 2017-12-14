@@ -4,10 +4,10 @@
 # $Id: PrimeFactorizerSplitter.py,v 1.1 2008-07-17 16:41:37 moscicki Exp $
 ################################################################################
 
-from Ganga.GPIDev.Schema import *
-from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Lib.File import File
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Utility.Config import getConfig
+from GangaCore.GPIDev.Lib.File import File
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
 
 class PrimeFactorizerSplitter(ISplitter):
     """Job splitter for prime number factorization"""
@@ -19,7 +19,7 @@ class PrimeFactorizerSplitter(ISplitter):
 
     ### Splitting based on numsubjobs
     def split(self,job):
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         subjobs = []
         primeTables = job.inputdata.get_dataset()
 

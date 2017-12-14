@@ -1,10 +1,10 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaDirac.Lib.Files.DiracFile                import DiracFile
 #from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path
-#from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
-#from Ganga.Core.exceptions                         import ApplicationConfigurationError, GangaException
-from Ganga.GPI import *
-from Ganga.old_test import generateUniqueTempFile
+#from GangaCore.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
+#from GangaCore.Core.exceptions                         import ApplicationConfigurationError, GangaException
+from GangaCore.GPI import *
+from GangaCore.old_test import generateUniqueTempFile
 #import GangaDirac.Lib.Server.DiracServer as DiracServer
 # GangaTest.Framework.utils defines some utility methods
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
@@ -15,7 +15,7 @@ import os
 import string
 import random
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 def rand_str():
@@ -46,8 +46,8 @@ echo "%s" > b.root
         tmpf.close()
         self.filepath = os.path.join(self.root, self.filename)
         logger.info("FilePath: %s" % str(self.filepath))
-        #import Ganga.Core.InternalServices.Coordinator
-        #Ganga.Core.InternalServices.Coordinator.enableMonitoringService()
+        #import GangaCore.Core.InternalServices.Coordinator
+        #GangaCore.Core.InternalServices.Coordinator.enableMonitoringService()
 
     def tearDown(self):
         os.remove(self.filepath)

@@ -6,9 +6,9 @@
 # A DQ2 dataset superclass, with event picking capability
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Schema import *
-from Ganga.Utility.logging import getLogger
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Utility.logging import getLogger
 import os
 
 logger = getLogger()

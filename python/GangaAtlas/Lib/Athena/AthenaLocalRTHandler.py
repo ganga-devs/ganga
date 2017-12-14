@@ -9,23 +9,23 @@
 
 import os, socket, pwd, commands, re, string
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.File import *
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 from GangaAtlas.Lib.ATLASDataset import isDQ2SRMSite, getLocationsCE, getIncompleteLocationsCE, getIncompleteLocations
 from GangaAtlas.Lib.ATLASDataset import ATLASLocalDataset
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 
-from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig, makeConfig, ConfigError
+from GangaCore.Utility.logging import getLogger
 
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.Utility.files import expandfilename
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.Utility.files import expandfilename
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])

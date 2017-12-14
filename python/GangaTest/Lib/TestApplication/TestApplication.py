@@ -1,12 +1,12 @@
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 
-from Ganga.GPIDev.Lib.File import File
+from GangaCore.GPIDev.Lib.File import File
 
 class TestApplication(IPrepareApp):
     _schema = Schema(Version(1,0), {'exe':SimpleItem(defvalue='/usr/bin/env'),
@@ -16,7 +16,7 @@ class TestApplication(IPrepareApp):
                                     'optsfile' : FileItem(),
                                     'modified' : SimpleItem(defvalue=0),
                                     'nodefault_file_item' : FileItem(defvalue=File('a')),
-                                    'args' :  SimpleItem(defvalue=["Hello World"],typelist=['str','Ganga.GPIDev.Lib.File.File'],sequence=1,doc="List of arguments for the executable. Arguments may be strings or File objects."),# introduced for RTHandler compatibility
+                                    'args' :  SimpleItem(defvalue=["Hello World"],typelist=['str','GangaCore.GPIDev.Lib.File.File'],sequence=1,doc="List of arguments for the executable. Arguments may be strings or File objects."),# introduced for RTHandler compatibility
                                     'env' : SimpleItem(defvalue={},doc='Environment'),# introduced for RTHandler compatibility
                                     'fail': SimpleItem(defvalue='',doc='Define the artificial runtime failures: "config", "prepare"'),
                                     'postprocess_mark_as_failed': SimpleItem(defvalue=False,doc='Update teh status of the job as failed in the postprocess step'),
@@ -56,7 +56,7 @@ class TestApplication(IPrepareApp):
         if self.postprocess_mark_as_failed:
             logger.info('postprocess: trying to mark the job as failed')
 
-            from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
+            from GangaCore.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
             raise PostprocessStatusUpdate("failed") 
 
     def postprocess_failed(self):
@@ -94,7 +94,7 @@ class TestAdvancedFileProperties(IApplication):
 #    # setting files = "x" is equvalent to setting files = ['x']                
 #    def _attribute_filter__set__(self,n,v):
 #        if n == 'files':
-#            from Ganga.GPIDev.Base.Filters import allComponentFilters
+#            from GangaCore.GPIDev.Base.Filters import allComponentFilters
 #            v = allComponentFilters['files'](v,self._schema.getItem('file_or_files'))
 #            if not type(v) is type([]):
 #                v = [v]
@@ -105,9 +105,9 @@ class TestAdvancedFileProperties(IApplication):
 #        return v*2
     
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
-from Ganga.Lib.Executable.Executable import RTHandler
+from GangaCore.Lib.Executable.Executable import RTHandler
 
 class TestRTHandler(RTHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):

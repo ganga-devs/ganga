@@ -7,8 +7,8 @@ The BaseExtractor class provides an abstract extractor implementation.
 from GangaRobot.Framework.Action import IAction
 from GangaRobot.Framework import Utility
 from GangaRobot.Lib.Base.Extract import Node
-from Ganga.Utility.logging import getLogger
-from Ganga.GPI import *
+from GangaCore.Utility.logging import getLogger
+from GangaCore.GPI import *
 
 logger = getLogger()
 

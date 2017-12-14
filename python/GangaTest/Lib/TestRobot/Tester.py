@@ -8,9 +8,9 @@ new instance of the new ganga to test them
 """
 from GangaRobot.Framework.Action import IAction
 from GangaRobot.Framework import Utility
-from Ganga.Utility.logging import getLogger
-from Ganga.GPI import *
-import Ganga.Utility.Config
+from GangaCore.Utility.logging import getLogger
+from GangaCore.GPI import *
+import GangaCore.Utility.Config
 import os, datetime, time, shutil
 from os.path import join
 from GangaRobot.Framework.exceptions import *
@@ -31,7 +31,7 @@ class Tester(IAction):
 
         jobsList = []
 
-        config = Ganga.Utility.Config.getConfig('TestRobot')
+        config = GangaCore.Utility.Config.getConfig('TestRobot')
         OptionList = config['TestPairs']
         InstallDir = config['InstallPath']
         JobDir = config['JobDir']
@@ -152,9 +152,9 @@ class Tester(IAction):
     def _WriteFinalState(self):
         import tempfile, fnmatch
         tmpdir = tempfile.gettempdir()
-        config = Ganga.Utility.Config.getConfig('TestRobot')
+        config = GangaCore.Utility.Config.getConfig('TestRobot')
         CurrentVersionData = config['VersionNumber']+" - "+config['VersionTime']
-        gangaconfig = Ganga.Utility.Config.getConfig('Configuration')
+        gangaconfig = GangaCore.Utility.Config.getConfig('Configuration')
         testrobotdir = gangaconfig['gangadir']
         VersionFileFound = False
         from os.path import join,isfile
@@ -179,7 +179,7 @@ class Tester(IAction):
             f.close()
 
     def _HeartBeat(self):
-        config = Ganga.Utility.Config.getConfig('Configuration')
+        config = GangaCore.Utility.Config.getConfig('Configuration')
         heartbeatfile = str(config['gangadir'])+os.sep+"heartbeat.txt"
         heartbeattmpfile = str(config['gangadir'])+os.sep+"heartbeattemp.txt"
         try:

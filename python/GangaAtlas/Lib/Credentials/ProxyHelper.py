@@ -1,13 +1,13 @@
 import contextlib
 import os
 
-from Ganga.GPIDev.Credentials import credential_store
+from GangaCore.GPIDev.Credentials import credential_store
 
 # get nickname
 def getNickname(gridProxy=None,allowMissingNickname=True):
     import re
-    from Ganga.Utility.logging import getLogger
-    from Ganga.GPIDev.Credentials_old import GridProxy
+    from GangaCore.Utility.logging import getLogger
+    from GangaCore.GPIDev.Credentials_old import GridProxy
 
     logger = getLogger()
     if not gridProxy:
@@ -22,7 +22,7 @@ def getNickname(gridProxy=None,allowMissingNickname=True):
                 break
     # check        
     if nickName == '':
-        from Ganga.Core.exceptions import ApplicationConfigurationError
+        from GangaCore.Core.exceptions import ApplicationConfigurationError
         wMessage =  'Could not get nickname from voms proxy. '
         wMessage += 'Please register nickname to ATLAS VO via\n\n'
         wMessage += '   https://lcg-voms.cern.ch:8443/vo/atlas/vomrs\n'

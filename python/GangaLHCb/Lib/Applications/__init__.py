@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 import os
 
-from Ganga.Runtime.GPIexport import exportToGPI
-from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory
+from GangaCore.Runtime.GPIexport import exportToGPI
+from GangaCore.GPIDev.Base.Proxy import GPIProxyClassFactory
 
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 from GangaLHCb.Lib.Applications import AppsBaseUtils
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 
 from .GaudiPython import GaudiPython
 
@@ -18,7 +18,7 @@ from .BenderBox import BenderModule, BenderRun, OstapRun
 from .GaudiExec import GaudiExec
 
 # Add any additional Packages required by the user in the .gangarc file
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 
 logger = getLogger()
 logger.debug("User Added Apps")

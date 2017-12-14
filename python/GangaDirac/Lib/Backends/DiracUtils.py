@@ -1,10 +1,10 @@
 import time
 import itertools
-from Ganga.Core.exceptions import GangaException, BackendError
+from GangaCore.Core.exceptions import GangaException, BackendError
 #from GangaDirac.BOOT       import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute, GangaDiracError
-from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from GangaCore.Utility.logging import getLogger
+from GangaCore.GPIDev.Base.Proxy import stripProxy
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -179,5 +179,5 @@ def getAccessURLs(lfns, defaultSE = '', protocol = '', credential_requirements=N
             break
     return myURLs
 
-from Ganga.Runtime.GPIexport import exportToGPI
+from GangaCore.Runtime.GPIexport import exportToGPI
 exportToGPI('getAccessURLs', getAccessURLs, 'Functions')

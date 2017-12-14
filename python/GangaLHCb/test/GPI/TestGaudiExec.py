@@ -4,14 +4,14 @@ from os import makedirs, path
 import shutil
 from tempfile import gettempdir
 
-from Ganga.GPIDev.Base.Proxy import stripProxy
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.GPIDev.Base.Proxy import stripProxy
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 class TestGaudiExec(GangaUnitTest):
 
     def testInternal(self):
 
-        from Ganga.GPI import GaudiExec, Job, LocalFile, DiracFile
+        from GangaCore.GPI import GaudiExec, Job, LocalFile, DiracFile
 
         tmp_fol = gettempdir()
         gaudi_testFol = path.join(tmp_fol, 'GaudiExecTest')

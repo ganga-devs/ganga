@@ -1,8 +1,8 @@
 #Clean
 
 from GangaRobot.Framework.Action import IAction
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig
 import os, shutil
 from os.path import join
 from GangaRobot.Framework.exceptions import *
@@ -18,7 +18,7 @@ class Publisher(IAction):
     
     def execute(self, runid):
         logger.info("Starting publication")
-        from Ganga.Utility.files import expandfilename
+        from GangaCore.Utility.files import expandfilename
         config = getConfig('TestRobot')
         topdir=expandfilename(config['JobDir'])
         publishPath=expandfilename(config['PublishPath'])

@@ -14,12 +14,12 @@ __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__    = "30 November 2007"
 __version__ = "1.2"
 
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.GPIDev.Lib.File import  File
-from Ganga.GPIDev.Lib.File import  FileBuffer
-from Ganga.Utility import logging
-from Ganga.Utility.files import fullpath
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.GPIDev.Lib.File import  File
+from GangaCore.GPIDev.Lib.File import  FileBuffer
+from GangaCore.Utility import logging
+from GangaCore.Utility.files import fullpath
 
 import os
 import time

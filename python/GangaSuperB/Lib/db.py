@@ -8,9 +8,9 @@ import re
 import psycopg2
 import psycopg2.extras
 
-from Ganga.Utility.Config import *
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+from GangaCore.Utility.Config import *
+import GangaCore.Utility.logging
+logger = GangaCore.Utility.logging.getLogger()
 
 # From psycogp2 documentation: In Python 2, if you want to uniformly receive 
 # all your database input in Unicode, you can register the related typecasters 

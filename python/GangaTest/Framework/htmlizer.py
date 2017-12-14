@@ -8,7 +8,7 @@
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
-# This file is part of Ganga. 
+# This file is part of GangaCore. 
 #
 # Ganga is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ code_repository_prefix = ''
 code_repository_suffix = ''
 html_dir = ''
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 myLogger = getLogger()
 
 ##Summary reports

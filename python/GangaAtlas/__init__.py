@@ -1,9 +1,9 @@
 # File: GangaAtlas/__init__.py
 
 ## Config options
-from Ganga.Utility.Config import makeConfig, getConfig
+from GangaCore.Utility.Config import makeConfig, getConfig
 import os
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 # -------------------------------------------------
@@ -95,7 +95,7 @@ def standardSetup():
     PACKAGE.standardSetup()
 
     # set up X509_CERT_DIR for DQ2
-    from Ganga.Utility.GridShell import getShell
+    from GangaCore.Utility.GridShell import getShell
     gshell = getShell()
     if gshell:
         try:
@@ -121,14 +121,14 @@ def loadPlugins( config = {} ):
 # some checks to make sure that new Dashboard MSG service is enabled in the user's configuration
 
 def postBootstrapHook():
-    from Ganga.Utility.logging import getLogger
+    from GangaCore.Utility.logging import getLogger
 
     logger = getLogger()
 
-    from Ganga.Utility.Config import getConfig
+    from GangaCore.Utility.Config import getConfig
     cfg = getConfig('MonitoringServices')
 
-    MONITORING_DEFAULT = "Ganga.Lib.MonitoringServices.Dashboard.LCGAthenaMS.LCGAthenaMS"
+    MONITORING_DEFAULT = "GangaCore.Lib.MonitoringServices.Dashboard.LCGAthenaMS.LCGAthenaMS"
 
     for name in cfg.options:
         value = cfg[name]
