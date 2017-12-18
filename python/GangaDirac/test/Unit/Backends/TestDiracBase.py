@@ -72,7 +72,7 @@ def test__addition_sandbox_content(db):
 def test__setup_bulk_subjobs(tmpdir, db):
     from Ganga.Core.exceptions import BackendError
     from Ganga.GPIDev.Lib.Dataset.Dataset import Dataset
-    from GangaDirac.Lib.Backends import Dirac
+    from GangaDirac.Lib.Backends.Dirac import Dirac
 
     name = str(tmpdir.join('submit_script'))
     with open(name, 'w') as fd:
@@ -186,7 +186,7 @@ def test_submit(db):
 
 
 def test_resubmit(db):
-    with patch.object(db, '_resubmit', return_value='_resubmit run ok'):
+    with patch.object(db, '_blockResubmit', return_value='_resubmit run ok'):
         assert db.resubmit() == '_resubmit run ok'
 
 

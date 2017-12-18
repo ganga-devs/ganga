@@ -231,7 +231,7 @@ class Root(IPrepareApp):
         """
         logger.debug('Running unprepare in Root app')
         if self.is_prepared is not None:
-            self.decrementShareCounter(self.is_prepared.name)
+            self.decrementShareCounter(self.is_prepared)
             self.is_prepared = None
         self.hash = None
 

@@ -331,7 +331,7 @@ class Loader(object):
                         # element (</class>) is reached
                         self.ignore_count = 1
                     else:
-                        # Initialize and cache a c class instance to use as a classs fctory
+                        # Initialize and cache a c class instance to use as a classs factory
                         obj = cls.getNew()
                 self.stack.append(obj)
 

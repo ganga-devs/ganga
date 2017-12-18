@@ -24,6 +24,8 @@ class StandardJobConfig(object):
 
     """
 
+    __slots__ = ('exe', 'inputbox', 'sharedarea', 'args', 'outputbox', 'env', '__all_inputbox', '__args_strings', '__exe_string', '__sandbox_check')
+
     def __init__(self, exe=None, inputbox=None, args=None, outputbox=None, env=None, sharedarea=None):
         """
         exe - executable string to be run on the worker node or a File object to be shipped as executable script to the worker node

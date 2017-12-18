@@ -66,6 +66,8 @@ class IMerger(IPostProcessor):
     })
     order = 1
 
+    __slots__ = list()
+
     def execute(self, job, newstatus):
         """
         Execute

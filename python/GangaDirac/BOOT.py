@@ -12,8 +12,14 @@ logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 
 
-def diracAPI(cmd, timeout=60):
-    '''Execute DIRAC API commands from w/in Ganga.
+def diracAPI(cmd, timeout=60, cred_req=None):
+    '''
+    Args:
+        cmd (str): This is the command you want to execute from within an active DIRAC session
+        timeout (int): This is the maximum time(sec) the session has to complete the task
+        cred_req (ICredentialRequirement): This is the (optional) credential passed to construct the correct DIRAC env
+
+    Execute DIRAC API commands from w/in Ganga.
 
     The stdout will be returned, e.g.:
 
@@ -30,7 +36,7 @@ def diracAPI(cmd, timeout=60):
     diracAPI(\'status([66])\')
 
     '''
-    return execute(cmd, timeout=timeout)
+    return execute(cmd, timeout=timeout, cred_req=cred_req)
 
 exportToGPI('diracAPI', diracAPI, 'Functions')
 

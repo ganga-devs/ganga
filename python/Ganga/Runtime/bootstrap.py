@@ -27,7 +27,7 @@ import sys
 import time
 import re
 
-from Ganga import _gangaVersion, _gangaPythonPath
+from Ganga import _gangaVersion, _gangaPythonPath, _development
 from Ganga.Utility.Config.Config import getConfig
 from Ganga.Utility import stacktracer
 import Ganga.Runtime
@@ -182,6 +182,10 @@ class GangaProgram(object):
         # see Ganga/old_test/Performance tests
         self.start_time = time.time()
 
+        versionString = _gangaVersion
+        if _development:
+            versionString += ' - DEV'
+
         if hello_string is None:
             self.hello_string = """
 *** Welcome to Ganga ***
@@ -192,7 +196,7 @@ Type help() or help('index') for online help.
 This is free software (GPL), and you are welcome to redistribute it
 under certain conditions; type license() for details.
 
-""" % _gangaVersion
+""" % versionString
         else:
             self.hello_string = hello_string
 
@@ -318,22 +322,32 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def new_version():
-        versions_filename = os.path.join(getConfig('Configuration')['gangadir'], '.used_versions')
+        versions_filename = os.path.expanduser('~/.cache/Ganga/.used_versions')
+        if not os.path.exists(os.path.dirname(versions_filename)):
+            os.makedirs(os.path.dirname(versions_filename))
         if not os.path.exists(versions_filename):
             with open(versions_filename, 'w') as versions_file:
                 versions_file.write(_gangaVersion + '\n')
-            return True
+            return True, True
 
+        majVersion, minVersion, bugVersion = _gangaVersion.split('.')
+        newMinVersion = False
+        minVersion = majVersion+'.'+minVersion+'.'
+        # Check to see if this is a new bugfix version
         with open(versions_filename, 'r+') as versions_file:
             if versions_file.read().find(_gangaVersion) < 0:
+                # Check to see if this is a new minor version as well
+                versions_file.seek(0)
+                if versions_file.read().find(minVersion) < 0:
+                    newMinVersion = True
                 versions_file.write(_gangaVersion + '\n')
-                return True
+                return True, newMinVersion
 
-        return False
+        return False, newMinVersion
 
     @staticmethod
     def rollHistoryForward():
-        versions_filename = os.path.join(getConfig('Configuration')['gangadir'], '.used_versions')
+        versions_filename = os.path.expanduser('~/.cache/Ganga/.used_versions')
         hasLoaded_newer = False
         with open(versions_filename, 'r') as versions_file:
             this_version = versions_file.read()
@@ -521,6 +535,7 @@ under certain conditions; type license() for details.
             load_user_config(specified_config, {})
             self.generate_config_file(specified_config, interactive)
             sys.exit(0)
+        bugVer, minVer = self.new_version()
         if not os.path.exists(specified_config) \
                 and not os.path.exists(default_config):
             # Sleep for 1 sec to allow for most of the bootstrap to finish so
@@ -534,7 +549,7 @@ under certain conditions; type license() for details.
                 self.generate_config_file(default_config, interactive)
                 if interactive:
                     raw_input('Press <Enter> to continue.\n')
-        elif self.new_version():
+        elif bugVer:
             self.print_release_notes()
             self.rollHistoryForward()
             # if config explicitly set we dont want to update the versions file
@@ -543,12 +558,13 @@ under certain conditions; type license() for details.
             # also if config explicitly set dont try to update it for new version
             # impacts hammercloud if you do?
             if not self.options.config_file_set_explicitly:
-                logger = getLogger('ConfigUpdater')
-                logger.info('It appears that this is the first time you have run %s' % _gangaVersion)
-                logger.info('Your ganga config file will be updated.')
-                logger.info('re-reading in old config for updating...')
-                load_user_config(specified_config, {})
-                self.generate_config_file(specified_config, interactive)
+                if minVer:
+                    logger = getLogger('ConfigUpdater')
+                    logger.info('It appears that this is the first time you have run %s' % _gangaVersion)
+                    logger.info('Your ganga config file will be updated.')
+                    logger.info('re-reading in old config for updating...')
+                    load_user_config(specified_config, {})
+                    self.generate_config_file(specified_config, interactive)
 
                 # config file generation overwrites user values so we need to reapply the cmd line options to these user settings
                 # e.g. set -o[Configuration]gangadir=/home/mws/mygangadir and the user value gets reset to the .gangarc value
@@ -1165,8 +1181,8 @@ under certain conditions; type license() for details.
         """
         ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
         from Ganga.Utility.logging import getLogger
-        logger = getLogger(modulename=True)
-        logger.error("%s" % value)
+        logger = getLogger()
+        #logger.error("%s" % value)
 
         from Ganga.Core.exceptions import GangaException
         import traceback
@@ -1178,6 +1194,8 @@ under certain conditions; type license() for details.
             logger.error("If you're able to reproduce this please report this to the Ganga developers!")
             #logger.error("value: %s" % value)
             exception_obj.showtraceback((etype, value, tb), tb_offset=tb_offset)
+        else:
+            logger.error("%s" % value)
         return None
 
     @staticmethod

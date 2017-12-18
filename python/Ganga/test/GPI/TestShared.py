@@ -1,10 +1,11 @@
 from __future__ import absolute_import
-
+from mock import patch
 from os import path
 
 from Ganga.testlib.GangaUnitTest import GangaUnitTest
 
 from Ganga.Core.GangaRepository import getRegistry
+
 
 
 class TestShared(GangaUnitTest):
@@ -17,7 +18,7 @@ class TestShared(GangaUnitTest):
         super(TestShared, self).setUp(extra_opts=extra_opts)
 
     def test_A_Construction(self):
-        from Ganga.GPI import Job
+        from Ganga.GPI import Job, LocalFile
         j = Job()
 
         assert(j.application.is_prepared == None)
@@ -28,7 +29,15 @@ class TestShared(GangaUnitTest):
         
         TestShared.shared_area_location = j.application.is_prepared.path()
         assert(path.isdir(TestShared.shared_area_location))
-        
+
+        TestShared.a_file_location = path.join(j.application.is_prepared.path(), 'a.txt')
+        TestShared.b_file_location = path.join(j.application.is_prepared.path(), 'b.txt')
+
+        open(TestShared.a_file_location, 'w').close()
+        open(TestShared.b_file_location, 'w').close()
+        j.application.is_prepared.associated_files.append(LocalFile(TestShared.a_file_location))
+        j.application.is_prepared.associated_files.append(LocalFile(TestShared.b_file_location))
+
 
     def test_B_Persistency(self):
         """
@@ -44,19 +53,27 @@ class TestShared(GangaUnitTest):
 
         assert(path.isdir(j.application.is_prepared.path()))
 
+        for lf in j.application.is_prepared.associated_files:
+            assert (path.join(lf.localDir, lf.namePattern) in [TestShared.a_file_location, TestShared.b_file_location])
+            assert (path.isfile(path.join(lf.localDir, lf.namePattern)))
+
         
     def test_C_Unprepare(self):
         """Make sure that unprepare restore None for the shared area."""
-        from Ganga.GPI import jobs
-        j = jobs[-1]
+        with patch('__builtin__.raw_input', return_value='y') as _raw_input:
+            from Ganga.GPI import jobs
+            j = jobs[-1]
 
-        assert(j.application.is_prepared != None)
+            assert(j.application.is_prepared != None)
 
-        TestShared.shared_area_location == j.application.is_prepared.path()
+            TestShared.shared_area_location == j.application.is_prepared.path()
 
-        j.unprepare()
+            j.unprepare()
 
-        assert(j.application.is_prepared == None)
+            assert(j.application.is_prepared == None)
+
+            assert(not path.isfile(TestShared.a_file_location))
+            assert(not path.isfile(TestShared.b_file_location))
 
 
     def test_D_Cleanup(self):
@@ -65,6 +82,8 @@ class TestShared(GangaUnitTest):
         j = jobs[-1]
 
         assert(not path.isdir(TestShared.shared_area_location))
+        assert(not path.isfile(TestShared.a_file_location))
+        assert(not path.isfile(TestShared.b_file_location))
 
         j.prepare()
 

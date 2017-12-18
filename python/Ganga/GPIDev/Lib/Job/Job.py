@@ -11,7 +11,7 @@ import sys
 
 import Ganga.Core.FileWorkspace
 from Ganga.GPIDev.MonitoringServices import getMonitoringObject
-from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError
+from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError, JobManagerError, TypeMismatchError, SplitterError
 from Ganga.Core import Sandbox
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
@@ -41,7 +41,7 @@ def lazyLoadJobFQID(this_job):
 
 
 def lazyLoadJobStatus(this_job):
-    return lazyLoadJobObject(this_job, 'status', do_eval=False)
+    return lazyLoadJobObject(this_job, 'status', False)
 
 
 def lazyLoadJobBackend(this_job):
@@ -122,6 +122,9 @@ class JobInfo(GangaObject):
 
     def __init__(self):
         super(JobInfo, self).__init__()
+
+    def _auto__init__(self):
+        self.uuid = str(uuid.uuid4())
 
     def increment(self):
         self.submit_counter += 1
@@ -222,7 +225,7 @@ class Job(GangaObject):
                                      'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1, copyable=0),
                                      'fqid': SimpleItem(getter="getStringFQID", transient=1, protected=1, load_default=0, defvalue=None, optional=1, copyable=0, comparable=0, typelist=[str], doc='fully qualified job identifier', visitable=0),
                                      'been_queued': SimpleItem(transient=1, hidden=1, defvalue=False, optional=0, copyable=0, comparable=0, typelist=[bool], doc='flag to show job has been queued for postprocessing', visitable=0),
-                                     'parallel_submit': SimpleItem(transient=1, defvalue=False, doc="Enable Submission of subjobs in parallel"),
+                                     'parallel_submit': SimpleItem(transient=1, defvalue=True, doc="Enable Submission of subjobs in parallel"),
                                      })
 
     _category = 'jobs'
@@ -231,6 +234,8 @@ class Job(GangaObject):
                       'resubmit', 'peek', 'force_status', 'runPostProcessors']
 
     default_registry = 'jobs'
+
+    _additional_slots = ['_storedRTHandler', '_storedJobSubConfig', '_storedAppSubConfig', '_storedJobMasterConfig', '_storedAppMasterConfig', '_stored_subjobs_proxy']
 
     # TODO: usage of **kwds may be envisaged at this level to optimize the
     # overriding of values, this must be reviewed
@@ -243,7 +248,10 @@ class Job(GangaObject):
 
         # WE WILL ONLY EVER ACCEPT Job or JobTemplate by design
         if prev_job:
-            assert isinstance(prev_job, (Job, JobTemplate)), "Can only constuct a Job with 1 non-keyword argument which is another Job, or JobTemplate"
+            try:
+                assert isinstance(prev_job, (Job, JobTemplate))
+            except AssertionError:
+                raise TypeMismatchError("Can only constuct a Job with 1 non-keyword argument which is another Job, or JobTemplate")
 
         # START INIT OF SELF
 
@@ -252,18 +260,11 @@ class Job(GangaObject):
         # Finished initializing 'special' objects which are used in getter methods and alike
         self.time.newjob()  # <-----------NEW: timestamp method
 
-        # These attributes are entirely transitory. They are not copyable or assumed picklable
-        # These are created to hold the result of calling prepare/configure on the application/RTHandler
-        # and are to make life easier in passing around objects
-        self._storedRTHandler = None
-        self._storedJobSubConfig = None
-        self._storedAppSubConfig = None
-        self._storedJobMasterConfig = None
-        self._storedAppMasterConfig = None
+        #logger.debug("__init__")
 
-        logger.debug("__init__")
-
-        self._stored_subjobs_proxy = None
+        for i in Job._additional_slots:
+            if not hasattr(self, i):
+                setattr(self, i, None)
 
         # FINISH INIT OF SELF
 
@@ -597,7 +598,7 @@ class Job(GangaObject):
         except Exception as x:
             self.status = initial_status
             log_user_exception()
-            raise JobStatusError(x), None, sys.exc_info()[2]
+            raise JobStatusError(x)
 
 	final_status = self.status
 
@@ -825,16 +826,16 @@ class Job(GangaObject):
         #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         # except: pass
 
-        # register the job (it will also commit it)
-        # job gets its id now
-        registry._add(self)
 
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
             self._init_workspace()
 
         super(Job, self)._auto__init__()
-        self.info.uuid = str(uuid.uuid4())
+
+        # register the job (it will also commit it)
+        # job gets its id now
+        registry._add(self)
 
     def _init_workspace(self):
         logger.debug("Job %s Calling _init_workspace", self.getFQID('.'))
@@ -1438,7 +1439,10 @@ class Job(GangaObject):
 
         from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
 
-        assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
+        try:
+            assert(self.subjobs in [[], GangaList()] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
+        except AssertionError:
+            raise JobManagerError("Number of subjobs in the job is inconsistent so not submitting the job")
 
         # no longer needed with prepared state
         # if self.master is not None:
@@ -1529,7 +1533,7 @@ class Job(GangaObject):
             # in the case of a master job however we need to still perform this
             if len(rjobs) != 1:
                 self.info.increment()
-            if self.master is not None:
+            if self.master is None:
                 self.updateStatus('submitted')
             # make sure that the status change goes to the repository, NOTE:
             # this commit is redundant if updateStatus() is used on the line
@@ -1546,15 +1550,12 @@ class Job(GangaObject):
                         submitted_count += 1
 
                 ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", submitted_count)
-
             return 1
 
         except IncompleteJobSubmissionError as x:
             logger.warning('Not all subjobs have been sucessfully submitted: %s', x)
-            for i in range(len(rjobs)):
-                if self.subjobs[i].status == 'submitting':
-                    self.subjobs[i].updateStatus('new')
-
+            self.updateStatus('failed')
+            raise x
         except Exception as err:
             if isType(err, GangaException):
                 log_user_exception(logger, debug=True)
@@ -1564,33 +1565,12 @@ class Job(GangaObject):
 
             if keep_on_fail:
                 self.updateStatus('failed')
+                
             else:
                 # revert to the new status
                 logger.error('%s ... reverting job %s to the new status', err, self.getFQID('.'))
                 self.updateStatus('new')
-                raise JobError("Error: %s" % err), None, sys.exc_info()[2]
-
-        # This appears to be done by the backend now in a way that handles sub-jobs,
-        # in the case of a master job however we need to still perform this
-        if len(rjobs) != 1:
-            self.info.increment()
-        #if self.master is not None:
-        self.updateStatus('submitted')
-
-        # send job submission message
-        if len(self.subjobs) == 0:
-            ganga_job_submitted(getName(self.application), getName(self.backend), "1", "0", "0")
-        else:
-            submitted_count = 0
-            for sj in self.subjobs:
-                if sj.status == 'submitted':
-                    submitted_count += 1
-
-            ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", submitted_count)
-
-        self._getRegistry()._flush([self])
-
-        return 1
+            raise JobError("Error: %s" % err), None, sys.exc_info()[2]
 
     def rollbackToNewState(self):
         """
@@ -1693,14 +1673,6 @@ class Job(GangaObject):
                 for sj in self.subjobs:
                     sj.application.transition_update('removed')
 
-        if self._registry:
-            try:
-                self._registry._remove(self, auto_removed=1)
-            except GangaException as err:
-                logger.warning("Error trying to fully remove Job #'%s':: %s" % (self.getFQID('.'), err))
-
-        self.status = 'removed'
-
         if not template:
             # remove the corresponding workspace files
 
@@ -1751,13 +1723,21 @@ class Job(GangaObject):
                 # decrement the reference counter.
                 if hasattr(self.application, 'is_prepared') and self.application.__getattribute__('is_prepared'):
                     if self.application.is_prepared is not True:
-                        self.application.decrementShareCounter(self.application.is_prepared.name)
+                        self.application.decrementShareCounter(self.application.is_prepared)
                         for _ in self.subjobs:
-                            self.application.decrementShareCounter(self.application.is_prepared.name)
+                            self.application.decrementShareCounter(self.application.is_prepared)
             except KeyError as err:
                 logger.debug("KeyError, likely job hasn't been loaded.")
                 logger.debug("In that case try and skip")
                 pass
+
+        if self._registry:
+            try:
+                self._registry._remove(self, auto_removed=1)
+            except GangaException as err:
+                logger.warning("Error trying to fully remove Job #'%s':: %s" % (self.getFQID('.'), err))
+
+        self.status = 'removed'
 
         try:
             self._releaseSessionLockAndFlush()
@@ -1975,8 +1955,8 @@ class Job(GangaObject):
                     # before resubmitting it
                     sjs.getOutputWorkspace().remove(preserve_top=True)
             else:
-                logger.error('There is nothing to do for resubmit of Job: %s' % self.getFQID('.'))
-                logger.error('It\'s assumed all subjobs here have been completed, continuing silently')
+                logger.debug('There is nothing to do for resubmit of Job: %s' % self.getFQID('.'))
+                logger.debug('It\'s assumed all subjobs here have been completed, continuing silently')
                 self.updateStatus(oldstatus)
                 return
 

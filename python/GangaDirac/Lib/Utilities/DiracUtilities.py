@@ -37,23 +37,36 @@ class GangaDiracError(GangaException):
             return GangaException.__str__(self)
 
 
-def getDiracEnv():
+def getDiracEnv(sourceFile = None):
     """
     Returns the dirac environment stored in a global dictionary by Ganga.
     Once loaded and stored this is used for executing all DIRAC code in future
+    Args:
+        sourceFile (str): This is an optional file path which points to the env which should be sourced for this DIRAC
     """
     global DIRAC_ENV
     with Dirac_Env_Lock:
-        if not DIRAC_ENV:
+        if sourceFile is None:
+            sourceFile = 'default'
             cache_file = getConfig('DIRAC')['DiracEnvJSON']
             source_command = getConfig('DIRAC')['DiracEnvSource']
+            if not cache_file and not source_command:
+                source_command = getConfig('DIRAC')['DiracEnvFile']
+        else:
+            # Needed for backwards compatibility with old configs...
+            cache_file = None
+            source_command = sourceFile
+
+        if sourceFile not in DIRAC_ENV:
             if cache_file:
-                DIRAC_ENV = read_env_cache(cache_file)
+                DIRAC_ENV[sourceFile] = read_env_cache(cache_file)
             elif source_command:
-                DIRAC_ENV = get_env(source_command)
+                DIRAC_ENV[sourceFile] = get_env(source_command)
             else:
                 logger.error("'DiracEnvSource' config variable empty")
-    return DIRAC_ENV
+                logger.error("%s  %s" % (getConfig('DIRAC')['DiracEnvJSON'], getConfig('DIRAC')['DiracEnvSource']))
+
+    return DIRAC_ENV[sourceFile]
 
 
 def get_env(env_source):
@@ -72,7 +85,20 @@ def get_env(env_source):
     env = dict(os.environ)
     gexecute.execute('source {0}'.format(env_source), shell=True, env=env, update_env=True)
     if not any(key.startswith('DIRAC') for key in env):
-        raise RuntimeError("'DIRAC*' not found in environment")
+        fake_dict = {}
+        with open(env_source) as _env:
+            for _line in _env.readlines():
+                split_val = _line.split('=')
+                if len(split_val) == 2:
+                    key = split_val[0]
+                    value = split_val[1]
+                    fake_dict[key] = value
+        if not any(key.startswith('DIRAC') for key in fake_dict):
+            logger.error("Env: %s" % str(env))
+            logger.error("Fake: %s" % str(fake_dict))
+            raise RuntimeError("'DIRAC*' not found in environment")
+        else:
+            return fake_dict
     return env
 
 
@@ -191,7 +217,10 @@ def execute(command,
     """
 
     if env is None:
-        env = getDiracEnv()
+        if cred_req is None:
+            env = getDiracEnv()
+        else:
+            env = getDiracEnv(cred_req.dirac_env)
     if python_setup == '':
         python_setup = getDiracCommandIncludes()
 
@@ -231,7 +260,10 @@ def execute(command,
             return returnable['Value']
         else:
             raise GangaDiracError(returnable['Message'])
-    else:
-        # If the output is NOT a dictionary return it
+    elif isinstance(returnable, dict):
+        # If the output is a dictionary return and it has been requested, then return it
         return returnable
+    else:
+        # Else raise an exception as it should be a dictionary
+        raise  GangaDiracError(returnable)
 

@@ -8,10 +8,10 @@ from Ganga.Core.exceptions import ApplicationPrepareError, ProtectedAttributeErr
 
 class TestNotebook(GangaUnitTest):
 
-#    def setUp(self):
-#        """Make sure that the Job object isn't destroyed between tests"""
-#        extra_opts = [ ('TestingFramework', 'AutoCleanup', 'False') ]
-#        super(TestNotebook, self).setUp(extra_opts=extra_opts)
+    def setUp(self):
+        """Make sure that the Job object isn't destroyed between tests"""
+        extra_opts = [ ('TestingFramework', 'AutoCleanup', 'False') ]
+        super(TestNotebook, self).setUp(extra_opts=extra_opts)
 
     def testPrepareCycle(self):
         """

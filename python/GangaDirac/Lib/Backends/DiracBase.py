@@ -9,11 +9,12 @@ import time
 import datetime
 import shutil
 import tempfile
+import math
 from collections import defaultdict
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
 from Ganga.GPIDev.Lib.Job.Job import Job
-from Ganga.Core.exceptions import GangaFileError, BackendError, IncompleteJobSubmissionError
+from Ganga.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
@@ -28,7 +29,6 @@ from Ganga.Core import monitoring_component
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
-
 
 class DiracBase(IBackend):
 
@@ -92,9 +92,11 @@ class DiracBase(IBackend):
         'diracOpts': SimpleItem(defvalue='',
                                 doc='DIRAC API commands to add the job definition script. Only edit '
                                 'if you *really* know what you are doing'),
-        'settings': SimpleItem(defvalue={'CPUTime': 2 * 86400},
+        'settings': SimpleItem(defvalue={'CPUTime': 14 * 86400},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
+        'blockSubmit' : SimpleItem(defvalue=True, 
+                               doc='Shall we use the block submission?'),
     })
     _exportmethods = ['getOutputData', 'getOutputSandbox', 'removeOutputData',
                       'getOutputDataLFNs', 'getOutputDataAccessURLs', 'peek', 'reset', 'debug']
@@ -179,6 +181,196 @@ class DiracBase(IBackend):
             subjobcofig (unknown): This is the config for this subjob (I think)'''
         return []
 
+    @require_credential
+    def _block_submit(self, myscript, lenSubjobs, keep_going = False):
+        '''Submit a block of jobs via the Dirac server in one go.
+        Args:
+            dirac_script (str): filename of the JDL which is to be submitted to DIRAC
+        '''
+        j = self.getJobObject()
+        self.id = None
+        self.actualCE = None
+        self.status = None
+        self.extraInfo = None
+        self.statusInfo = ''
+        j.been_queued = False
+        dirac_cmd = """execfile(\'%s\')""" % myscript
+        try:
+            result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True)
+        except GangaDiracError as err:
+            err_msg = 'Error submitting job to Dirac: %s' % str(err)
+            logger.error(err_msg)
+            logger.error("\n\n===\n%s\n===\n" % myscript)
+            logger.error("\n\n====\n")
+            with open(myscript, 'r') as file_in:
+                logger.error("%s" % file_in.read())
+            logger.error("\n====\n")
+            raise BackendError('Dirac', err_msg)
+
+        #Now put the list of Dirac IDs into the subjobs and get them monitored:
+        if len(j.subjobs)>0:
+            for jobNo in result.keys():
+                sjNo = jobNo.split('.')[1]
+                j.subjobs[int(sjNo)].backend.id = result[jobNo]
+                j.subjobs[int(sjNo)].updateStatus('submitted')
+                j.time.timenow('submitted')
+                stripProxy(j.subjobs[int(sjNo)].info).increment()
+        else:
+            j.backend.id = result[result.keys()[0]]
+            j.updateStatus('submitted')
+            j.time.timenow('submitted')
+            stripProxy(j.info).increment()
+        #Check that everything got submitted ok
+        if len(result.keys()) != lenSubjobs:
+            raise BackendError("Some subjobs failed to submit! Check their status!")
+            if not keep_going:
+                return 0
+
+        return 1 
+
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
+        """  Submit the master job and all of its subjobs. To keep things speedy when talking to DIRAC
+        we can submit several subjobs in the same process. Therefore for each subjob we collect the code for
+       the dirac-script into one large file that we then execute.
+        """
+        #If you want to go slowly use the regular master_submit:
+        if not self.blockSubmit:
+            return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, parallel_submit)
+
+        #Otherwise use the block submit. Much of this is copied from IBackend
+        logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
+        logger.debug("rjobs: %s" % len(rjobs))
+
+        if rjobs and len(subjobconfigs) != len(rjobs):
+            raise BackendError("The number of subjob configurations does not match the number of subjobs!")
+
+        incomplete = 0
+        incomplete_subjobs = []
+
+        master_input_sandbox = self.master_prepare(masterjobconfig)
+
+        nPerProcess = configDirac['maxSubjobsPerProcess']
+        nProcessToUse = math.ceil((len(rjobs)*1.0)/nPerProcess)
+
+        from Ganga.Core.GangaThread.WorkerThreads import getQueues
+        # Must check for credentials here as we cannot handle missing credentials on Queues by design!
+        try:
+            cred = credential_store[self.credential_requirements]
+        except GangaKeyError:
+            credential_store.create(self.credential_requirements)
+
+        # Loop over the processes and create the master script for each one.
+        for i in range(0,int(nProcessToUse)):
+            nSubjobs = 0
+            #The Dirac IDs are stored in a dict so create it at the start of the script
+            masterScript = 'resultdict = {}\n'
+            for sc, sj in zip(subjobconfigs[i*nPerProcess:(i+1)*nPerProcess], rjobs[i*nPerProcess:(i+1)*nPerProcess]):
+                #Add in the script for each subjob
+                sj.updateStatus('submitting')
+                fqid = sj.getFQID('.')
+                #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
+                sjScript = sj.backend._job_script(sc, master_input_sandbox)
+                sjScript = sjScript.replace("output(result)", "resultdict.update({sjNo : result['Value']})")
+                if nSubjobs == 0:
+                    sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
+                if nSubjobs !=0 :
+                    sjScript = sjScript.replace("from DIRAC.Core.Base.Script import parseCommandLine\nparseCommandLine()\n", "\n")
+                    sjScript = re.sub("from .*DIRAC\.Interfaces\.API.Dirac.* import Dirac.*","",sjScript)
+                    sjScript = re.sub("from .*DIRAC\.Interfaces\.API\..*Job import .*Job","",sjScript)
+                    sjScript = re.sub("dirac = Dirac.*\(\)","",sjScript)
+                    masterScript += "\nsjNo=\'%s\'" % fqid
+                masterScript += sjScript
+                nSubjobs +=1
+            #Return the dict of job numbers and Dirac IDs
+            masterScript += '\noutput(resultdict)\n'
+            dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(),'dirac-script-%s.py') % i
+            with open(dirac_script_filename, 'w') as f:
+                f.write(masterScript)
+            upperlimit = (i+1)*nPerProcess
+            if upperlimit > len(rjobs) :
+                upperlimit = len(rjobs)
+            logger.info("Submitting subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
+
+            #Either do the submission in parallel with threads or sequentially
+            if parallel_submit:
+                getQueues()._monitoring_threadpool.add_function(self._block_submit, (dirac_script_filename, nSubjobs, keep_going))
+            else:
+                self._block_submit(dirac_script_filename, nSubjobs, keep_going)
+
+            while not self._subjob_status_check(rjobs, nPerProcess, i):
+                import time
+                time.sleep(1.)
+
+            logger.info("Submitted subjobs %s to %s" % (i*nPerProcess, upperlimit-1))
+
+        for i in rjobs:
+            if i.status in ["new", "failed"]:
+                return 0
+        return 1
+
+    def _subjob_status_check(self, rjobs, nPerProcess, i):
+                has_submitted = True
+                for sj in rjobs[i*nPerProcess:(i+1)*nPerProcess]:
+                    if sj.status not in ["submitted","failed","completed","running","completing"]:
+                        has_submitted = False
+                        break
+                return has_submitted
+
+    def _job_script(self, subjobconfig, master_input_sandbox):
+        """Get the script to submit a single DIRAC job
+        Args:
+            subjobconfig (unknown):
+            master_input_sandbox (list): file names which are in the master sandbox of the master sandbox (if any)
+        """
+
+        j = self.getJobObject()
+
+        sboxname = j.createPackedInputSandbox(subjobconfig.getSandboxFiles())
+
+        input_sandbox = master_input_sandbox[:]
+        input_sandbox += sboxname
+
+        input_sandbox += self._addition_sandbox_content(subjobconfig)
+
+        ## Add LFN to the inputfiles section of the file
+        input_sandbox_userFiles = []
+        for this_file in j.inputfiles:
+            if isType(this_file, DiracFile):
+                input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
+        if j.master:
+            for this_file in j.master.inputfiles:
+                if isType(this_file, DiracFile):
+                    input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
+
+        for this_file in input_sandbox_userFiles:
+            input_sandbox.append(this_file)
+
+        logger.debug("dirac_script: %s" % str(subjobconfig.getExeString()))
+        logger.debug("sandbox_cont:\n%s" % str(input_sandbox))
+
+
+        # This is a workaroud for the fact DIRAC doesn't like whitespace in sandbox filenames
+        ### START_WORKAROUND
+        tmp_dir = tempfile.mkdtemp()
+
+        # Loop through all files and if the filename contains a ' ' copy it to a location which doesn't contain one.
+        # This does have the limitation that all file basenames must not contain a ' ' character.
+        # However we don't make any in Ganga as of 20/09/16
+        sandbox_str = '['
+        for file_ in input_sandbox:
+            if ' ' in str(file_):
+                new_name = os.path.join(tmp_dir, os.path.basename(file_))
+                shutil.copy(file_, new_name)
+                file_ = new_name
+            sandbox_str += '\'' + str(file_) + '\', '
+        sandbox_str += ']'
+        logger.debug("sandbox_str: %s" % sandbox_str)
+        ### FINISH_WORKAROUND
+
+        dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##', sandbox_str)
+
+        return dirac_script
+        
     def submit(self, subjobconfig, master_input_sandbox):
         """Submit a DIRAC job
         Args:
@@ -262,7 +454,10 @@ class DiracBase(IBackend):
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
-                    result = b._resubmit()
+                    if self._blockResubmit():
+                        result = b._blockResubmit()
+                    else:
+                        result = b._resubmit()
                     if result:
                         sj.updateStatus('submitted')
                         # sj._commit() # PENDING: TEMPORARY DISABLED
@@ -280,7 +475,10 @@ class DiracBase(IBackend):
 
     def resubmit(self):
         """Resubmit a DIRAC job"""
-        return self._resubmit()
+        if self.blockSubmit:
+            return self._blockResubmit()
+        else:
+            return self._resubmit()
 
     def _resubmit(self):
         """Resubmit a DIRAC job"""
@@ -346,6 +544,79 @@ class DiracBase(IBackend):
         f.close()
         return self._common_submit(new_script_filename)
 
+    def _blockResubmit(self):
+        """Resubmit a DIRAC job that was submitted with bulk submission. This requires writing a new dirac-script for the individual job."""
+        j = self.getJobObject()
+        parametric = False
+
+        if j.master is None:
+            scriptDir = j.getInputWorkspace().getPath()
+        else:
+            scriptDir = j.master.getInputWorkspace().getPath()
+
+        diracScriptFiles = []
+        for fileName in os.listdir(scriptDir):
+            if fnmatch.fnmatch(fileName, 'dirac-script-*.py'):
+                diracScriptFiles.append(fileName)
+
+        #Did we find any of the new style dirac scripts? If not try the old way as the job may have been submitted with an old ganga version.
+        if diracScriptFiles == []:
+            return self._resubmit()
+
+        new_script_filename = ''
+
+        for diracScript in diracScriptFiles:
+            script_path = os.path.join(scriptDir, diracScript)
+            # Check old script
+            if not os.path.exists(script_path):
+                raise BackendError('Dirac', 'No "dirac-script.py" found in j.inputdir')
+
+            # Read old script
+            with open(script_path, 'r') as f:
+                script = f.read()
+            # Is the subjob we want in there?
+            if not ("sjNo='%s'" % j.fqid) in script:
+                continue
+
+            #First pick out the imports etc at the start
+            newScript =  re.compile(r'%s.*?%s' % ('resultdict = {}',"dirac = Dirac.*?\(\)\n"),re.S).search(script).group(0)
+            newScript += '\n'
+            #Now pick out the job part
+            start = "sjNo='%s'" % j.fqid
+            newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Value'\]}\)"),re.S).search(script).group(0)
+            newScript += '\noutput(resultdict)'
+            
+            # Modify the new script with the user settings
+
+            start_user_settings = '# <-- user settings\n'
+            new_script = newScript[
+                :newScript.find(start_user_settings) + len(start_user_settings)]
+
+            job_ident = get_job_ident(newScript.split('\n'))
+            for key, value in self.settings.iteritems():
+                if str(key).startswith('set'):
+                    _key = key[3:]
+                else:
+                    _key = key
+                if type(value) is str:
+                    template = '%s.set%s("%s")\n'
+                else:
+                    template = '%s.set%s(%s)\n'
+                new_script += template % (job_ident, str(_key), str(value))
+            new_script += newScript[newScript.find('# user settings -->'):]
+
+            # Save new script
+            new_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
+            with open(new_script_filename, 'w') as f:
+                f.write(new_script)
+            # Break the loop now we have written the new script
+            break
+
+        if new_script_filename == '':
+            raise BackendError('Dirac', 'Script for job number %s not found. Resubmission failed.' % j.fqid)
+
+        return self._block_submit(new_script_filename, 1)
+ 
     def reset(self, doSubjobs=False):
         """Resets the state of a job back to 'submitted' so that the
         monitoring will run on it again.
@@ -655,7 +926,10 @@ class DiracBase(IBackend):
             #logger.info('Job ' + job.fqid + ' normCPUTime: ' + str(job.backend.normCPUTime))
 
             # Set DiracFile metadata
-            wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
+            if hasattr(job.outputfiles, 'get'):
+                wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
+            else:
+                wildcards = []
 
             lfn_store = os.path.join(output_path, getConfig('Output')['PostProcessLocationsFileName'])
 
@@ -664,7 +938,7 @@ class DiracBase(IBackend):
                 with open(lfn_store, 'w'):
                     pass
 
-            if job.outputfiles.get(DiracFile):
+            if hasattr(job.outputfiles, 'get') and job.outputfiles.get(DiracFile):
 
                 # Now we can iterate over the contents of the file without touching it
                 with open(lfn_store, 'ab') as postprocesslocationsfile:
@@ -802,6 +1076,10 @@ class DiracBase(IBackend):
             if monitoring_component:
                 if monitoring_component.should_stop():
                     break
+            # Job has changed underneath us don't attempt to finalize
+            if j.backend.status not in finalised_statuses:
+                j.been_queued = False
+                continue
             if not configDirac['serializeBackend']:
                 getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                            args=(j, finalised_statuses[j.backend.status]),
@@ -864,8 +1142,7 @@ class DiracBase(IBackend):
 
         thread_handled_states = ['completed', 'failed']
         for job, state, old_state in zip(monitor_jobs, result, ganga_job_status):
-            if monitoring_component:
-                if monitoring_component.should_stop():
+            if monitoring_component and monitoring_component.should_stop():
                     break
 
             if job.been_queued:
@@ -888,7 +1165,9 @@ class DiracBase(IBackend):
 
             if job.backend.status in finalised_statuses:
                 if job.status != 'running':
-                    if job.status in ['removed', 'killed']:
+                    if job.status in ['completing', 'completed']:
+                        continue
+                    elif job.status in ['removed', 'killed']:
                         requeue_job_list.append(job)
                     elif (job.master and job.master.status in ['removed', 'killed']):
                         continue  # user changed it under us
@@ -904,9 +1183,12 @@ class DiracBase(IBackend):
             else:
                 if job.status in ['removed', 'killed']:
                     continue
-                if (job.master and job.master.status in ['removed', 'killed']):
+                elif (job.master and job.master.status in ['removed', 'killed']):
                     continue  # user changed it under us
-                if job.status != updated_dirac_status:
+                elif job.status != updated_dirac_status:
+                    if job.status in ['completing', 'completed']:
+                        # Another thread got there first
+                        continue
                     if updated_dirac_status not in jobs_to_update:
                         jobs_to_update[updated_dirac_status] = []
                     jobs_to_update[updated_dirac_status].append(job)

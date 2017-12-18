@@ -214,11 +214,6 @@ class ITransform(GangaObject):
             if task.transforms[trf_id].status != "completed":
                 return 0
 
-        # set the start time if not already set
-        if len(self.required_trfs) > 0 and self.units[0].start_time == 0:
-            for unit in self.units:
-                unit.start_time = time.time() + self.chain_delay * 60 - 1
-
         # report the info for this transform
         unit_status = { "new":0, "hold":0, "running":0, "completed":0, "bad":0, "recreating":0 }
         for unit in self.units:
@@ -233,6 +228,11 @@ class ITransform(GangaObject):
         # ask the unit splitter if we should create any more units given the
         # current data
         self.createUnits()
+
+        # set the start time if not already set
+        if len(self.required_trfs) > 0 and self.units[0].start_time == 0:
+            for unit in self.units:
+                unit.start_time = time.time() + self.chain_delay * 60 - 1
 
         # loop over units and update them ((re)submits will be called here)
         old_status = self.status

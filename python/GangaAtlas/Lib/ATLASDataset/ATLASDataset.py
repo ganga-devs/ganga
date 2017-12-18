@@ -24,19 +24,6 @@ logger = getLogger()
 config = getConfig('Athena')
 configDQ2 = getConfig('DQ2')
 
-def flatten(l, ltypes=(list, tuple)):
-    """Helper routine to flatten arrays"""
-    i = 0
-    # len(l) is eval'd each time --
-    # no need for maxint with
-    # try...except, just run to
-    # the dynamic size of the list
-    while (i < len(l)):
-        while (isinstance(l[i], ltypes)):
-            l[i:i+1] = list(l[i])
-        i += 1
-    return l
-
 def filecheck(filename):
     """Check if filename exists and return filesize"""
 
@@ -69,43 +56,6 @@ def filecheck(filename):
         if (fsize>0):
             return fsize
 
-def expand(name):
-    '''
-    Expand file names according to ATLAS conventions
-   
-    Append the approriate LFC path
-
-    Digits within square brackets are expanded
-    lfn:rome.004100.recov10.T1_McAtNLO_top._[00001-10,00011,00014-20].AOD.pool.root
-      
-    '''
-   
-    n = name.split('.')
-             
-    if n[0] == 'rome':
-        name = '/grid/atlas/datafiles/rome/%s/%s/%s' % (n[2],'.'.join(n[0:4]),name)
-    elif n[0] in ['mc11','csc11']:
-        if n[3] == 'recon':
-            name = '/grid/atlas/datafiles/%s/recon/%s/%s' % (n[0],'.'.join(n[0:6]),name)
-        else:
-            name = '/grid/atlas/datafiles/%s/%s/%s/%s' % (n[0],n[3],'.'.join(n[0:5]),name)
-
-    match1 = re.match('^(\S*)\[([0-9\-,]+)\](.*)$',name)
-    if not match1: return [ name ] 
-   
-    names = []
-    re_comma = re.compile('(\d+)-(\d+)')
-    for part in match1.group(2).split(','):
-        match2 = re_comma.match(part)
-        if not match2:
-            names += [ match1.group(1)+part+match1.group(3) ]
-            continue
-        l = max(len(match2.group(1)),len(match2.group(2)))
-        i1 = int(match2.group(1))
-        i2 = int(match2.group(2))
-        names += [ match1.group(1) + '%0*d' % (l,i) + match1.group(3) for i in range(i1,i2+1) ]
-      
-    return names  
 
 from commands import getstatusoutput    
 import threading
@@ -212,76 +162,6 @@ class Download:
                 logger.warning("dq2-get finished")
             else:
                 logger.error("Error occured during %s %s", self.cmd, out)
-
-
-class ATLASDataset(Dataset):
-    """ATLAS Datasets is a list of LFNs"""
-    
-    _schema = Schema(Version(1,1), {
-        'lfn': SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc='List of input file lfns'),
-        'lfc': SimpleItem(defvalue='',sequence=0, doc='LFC Catalog address')
-        
-        })
-    
-    _category = 'datasets'
-    _name = 'ATLASDataset'
-
-    _exportmethods = ['get_dataset']
-
-    _GUIPrefs = [ { 'attribute' : 'lfn',  'widget' : 'String_List' },
-                  { 'attribute' : 'lfc',  'widget' : 'String' } ]
-
-    def __init__(self):
-        super(ATLASDataset, self).__init__()
-
-    def filenames(self):
-        """Get filenames by expanding the given names"""
-       
-        files=[]
-        if self.lfn:
-            for lfn in self.lfn:
-                if self.lfc=='':
-                    files+=expand(lfn)
-                else:
-                    files.append(lfn)
-      
-        return files
-
-    def get_dataset(app):
-        """Retrieve the file names starting from an application object"""
-        job=app._getRoot()
-        if not job:
-            logger.warning('Application object is not associated to a job.')
-            return []
-         
-#       jobs without inputdata are allowed
-         
-        if not job.inputdata: return []
-      
-        if not job.inputdata._name == 'ATLASDataset':
-            logger.warning('Dataset is not of type ATLASDataset.')
-            return []
-
-        return job.inputdata.filenames()
-
-    @staticmethod
-    def get_filenames(app):
-        """Retrieve the file names starting from an application object"""
-      
-        job=app._getRoot()
-        if not job:
-            logger.warning('Application object is not associated to a job.')
-            return []
-         
-#       jobs without inputdata are allowed
-         
-        if not job.inputdata: return []
-      
-        if not job.inputdata._name == 'ATLASDataset':
-            logger.warning('Dataset is not of type ATLASDataset.')
-            return []
-
-        return job.inputdata.filenames()
 
 
 class ATLASTier3Dataset(Dataset):
@@ -493,7 +373,7 @@ class ATLASOutputDataset(Dataset):
         job = self._getParent()
 
         try:
-            logger.info("ATLASDataset.retrieve() called.")
+            logger.info("ATLASOutputDataset.retrieve() called.")
             logger.debug('job.id: %d, Job.subjobs: %d',job.id,len(job.subjobs))
             logger.debug('job.outputdir: %s',job.outputdir)
             logger.debug('job.outputsandbox: %s',job.outputsandbox)
@@ -525,99 +405,6 @@ class ATLASOutputDataset(Dataset):
 #       Output files 
         outputfiles = job.outputdata.outputdata
         
-#       Search output_guid files from LCG jobs in outputsandbox
-        if (job.backend._name == 'LCG' ):
-            threads = []
-            outputnew = flatten(self.output)
-             
-            for iguid in outputnew:
-                cmd = None
-                if iguid[0:5]=="guid:":
-                    cmd = "lcg-lr --vo atlas "+iguid
-                if cmd:
-                    thread = Download.download_lcglr(cmd)
-                    thread.setDaemon(True)
-                    thread.start()
-                    threads.append(thread)
-                
-            for thread in threads:
-                thread.join()
-
-            logger.debug('output %s', outputnew)
-            logger.debug('lfns %s', Download.lfns)
-#        Download the lfns of every subjob to local outputlocation subdirectory
-            threads = []
-            if (len(Download.lfns)!=0):
-                logger.info("Please be patient - background downloading files from remote SE.")
-                # Master job retrieve
-                pfnid = []
-                if not job.master and job.subjobs and outputlocation=='':
-                    for subjob in job.subjobs:
-                        id = "%d/%d" % (job._getRoot().id,subjob.id)
-                        pfnid.append(id)
-                elif not job.master and job.subjobs and outputlocation != job.outputdir:
-                    for subjob in job.subjobs:
-                        id = "%d/%d" % (job._getRoot().id, subjob.id)
-                        pfnid.append(id)
-                        try:
-                            os.makedirs(outputlocation+"/"+id)
-                        except OSError:
-                            pass
-                else:
-                    if outputlocation=='':
-                        id = "%d/%d" % (job._getRoot().id,job.id)
-                        pfnid.append(id)
-                    elif outputlocation != job.outputdir:
-                        if job._getRoot().subjobs:
-                            id = "%d/%d" % (job._getRoot().id, job.id)
-                        else:
-                            id = "%d" % job.id
-                        try:
-                            os.makedirs(outputlocation+"/"+id)
-                        except OSError:
-                            pass
-
-                for ilfn in range(len(Download.lfns)):
-                    for ifile in xrange(len(outputfiles)):
-                        # Find correct jobid
-                        for ipfnid in pfnid:
-                            ipfnid = re.sub('/','.',ipfnid)
-                            if (Download.lfns[ilfn]).find(ipfnid)>0:
-                                
-                                ipfnid = re.sub('\.','/',ipfnid)
-                                id = ipfnid
-
-                        print id, pfnid, Download.lfns
-                        
-                        if (Download.lfns[ilfn]).find(outputfiles[ifile])>0:
-                            if outputlocation == '':
-                                if job.subjobs:
-                                    tempid = int(id.split('/')[1])
-                                    pfn = job.subjobs[tempid].outputdir+outputfiles[ifile]
-                                else:
-                                    pfn = job.outputdir+outputfiles[ifile]
-                                    
-                            elif outputlocation != job.outputdir:
-                                pfn = outputlocation+"/"+id+"/"+outputfiles[ifile]
-                            else:
-                                pfn = outputlocation+outputfiles[ifile]
-                            
-                            logger.info("Downloading %s", pfn)
-                            cmd = "lcg-cp --vo atlas "+Download.lfns[ilfn]+" file:"+pfn
-                            thread = Download.download_lcgcp(cmd,ifile,pfn)
-                            thread.setDaemon(True)
-                            thread.start()
-                            threads.append(thread)
-
-#                for thread in threads:
-#                    thread.join()
-#                logger.info("Downloading finished.")
-
-            Download.lfns = []
-
-
-#        logger.debug('Download.rootfile %s', Download.rootfile)
-
 
 #$Log: not supported by cvs2svn $
 #Revision 1.7  2009/04/24 08:36:21  dvanders

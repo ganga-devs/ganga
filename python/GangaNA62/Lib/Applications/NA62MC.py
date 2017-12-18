@@ -76,7 +76,7 @@ class NA62MC(IPrepareApp):
         """
         logger.debug('Running unprepare in NA62MC app')
         if self.is_prepared is not None:
-            self.decrementShareCounter(self.is_prepared.name)
+            self.decrementShareCounter(self.is_prepared)
             self.is_prepared = None
         self.hash = None
 

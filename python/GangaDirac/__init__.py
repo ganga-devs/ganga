@@ -49,6 +49,8 @@ if not _after_bootstrap:
 
     configDirac.addOption('DiracLFNBase', '', "Base dir prepended to create LFN name from DiracFile('name'). If this is unset then it will default to /[userVO]/user/[first letter of user name]/[user name]")
 
+    configDirac.addOption('useGangaPath', False, "Should we use the Ganga job ID to auto-construct a LFN relative path?")
+
     configDirac.addOption('ReplicateOutputData', False,
                       'Determines whether outputdata stored on Dirac is replicated')
 
@@ -87,6 +89,10 @@ if not _after_bootstrap:
 
     configDirac.addOption('serializeBackend', False, 'Developer option to serialize Dirac code for profiling/debugging')
 
+    configDirac.addOption('proxyInitCmd', 'dirac-proxy-init', 'Configurable which sets the default proxy init command for DIRAC')
+    configDirac.addOption('proxyInfoCmd', 'dirac-proxy-info', 'Configurable which sets the default proxy init command for DIRAC')
+
+    configDirac.addOption('maxSubjobsPerProcess', 100, 'Set the maximum number of subjobs to be submitted per process.')
 
 def standardSetup():
 
