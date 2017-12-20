@@ -151,7 +151,7 @@ class ITransform(GangaObject):
         # first, validate the transform
         if not self.validate():
             raise ApplicationConfigurationError(
-                None, "Validate failed for Transform %s" % self.name)
+                "Validate failed for Transform %s" % self.name)
 
         self.updateStatus("running")
 
@@ -186,7 +186,7 @@ class ITransform(GangaObject):
             task = self._getParent()
             if not task:
                 raise ApplicationConfigurationError(
-                    None, "This transform has not been associated with a task and so there is no ID available")
+                    "This transform has not been associated with a task and so there is no ID available")
             self.id = task.transforms.index(self)
         
         return self.id
@@ -214,11 +214,6 @@ class ITransform(GangaObject):
             if task.transforms[trf_id].status != "completed":
                 return 0
 
-        # set the start time if not already set
-        if len(self.required_trfs) > 0 and self.units[0].start_time == 0:
-            for unit in self.units:
-                unit.start_time = time.time() + self.chain_delay * 60 - 1
-
         # report the info for this transform
         unit_status = { "new":0, "hold":0, "running":0, "completed":0, "bad":0, "recreating":0 }
         for unit in self.units:
@@ -233,6 +228,11 @@ class ITransform(GangaObject):
         # ask the unit splitter if we should create any more units given the
         # current data
         self.createUnits()
+
+        # set the start time if not already set
+        if len(self.required_trfs) > 0 and self.units[0].start_time == 0:
+            for unit in self.units:
+                unit.start_time = time.time() + self.chain_delay * 60 - 1
 
         # loop over units and update them ((re)submits will be called here)
         old_status = self.status
@@ -390,7 +390,7 @@ class ITransform(GangaObject):
     def addUnitToTRF(self, unit, prev_unit=None):
         """Add a unit to this Transform given the input and output data"""
         if not unit:
-            raise ApplicationConfigurationError(None, "addUnitTOTRF failed for Transform %d (%s): No unit specified" % (self.getID(), self.name))
+            raise ApplicationConfigurationError("addUnitTOTRF failed for Transform %d (%s): No unit specified" % (self.getID(), self.name))
 
         addInfoString( self, "Adding Unit to TRF...")
         unit.updateStatus("hold")

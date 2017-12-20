@@ -3,8 +3,4 @@ from GangaTest.Framework.utils import failureException
 j = Job(outputfiles = [ LocalFile('stdin'), LocalFile('stdout')])
 
 j.backend = LCG()
-cnf = cfg = Ganga.Utility.Config.getConfig('LCG')
-if cnf['GLITE_ENABLE']:
-    assert(j.submit())
-else:
-    raise failureException("Current Configuration CANNOT test GLITE backend!")
+assert(j.submit())

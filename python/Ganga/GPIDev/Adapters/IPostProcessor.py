@@ -29,6 +29,8 @@ class IPostProcessor(GangaObject):
     success = True
     failure = False
 
+    __slots__ = list()
+
     def __init__(self):
         super(IPostProcessor, self).__init__()
 
@@ -55,24 +57,23 @@ class MultiPostProcessor(IPostProcessor):
         'process_objects': ComponentItem('postprocessor', defvalue=[], hidden=1, doc='A list of Processors to run', sequence=1)
     })
 
-    def __init__(self):
+    __slots__ = list()
+
+    def __init__(self, *args):
         super(MultiPostProcessor, self).__init__()
 
-    def __construct__(self, args):
-        if len(args) == 1 or len(args) > 1 and isType(args, (GangaList, list)):
-            if isinstance(args, list) or isType(args, GangaList):
-                for process in args:
-                    self.addProcess(process)
-            elif isType(args, MultiPostProcessor):
-                for process in stripProxy(args).process_objects:
-                    self.addProcess(process)
+        for process in args:
+            if isinstance(process, MultiPostProcessor):
+                for process_ in process.process_objects:
+                    self.addProcess(process_)
+            elif isinstance(process, (list, tuple, GangaList)):
+                for process_ in process:
+                    self.addProcess(process_)
             else:
-                self.addProcess(args)
+                self.addProcess(process)
 
-            if hasattr(self.process_objects, 'order'):
-                self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
-        else:
-            super(MultiPostProcessor, self).__construct__(args)
+        if hasattr(self.process_objects, 'order'):
+            self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
 
     def __str__(self):
         if not isType(self.process_objects, GangaObject):
@@ -154,13 +155,13 @@ def postprocessor_filter(value, item):
     if item in valid_jobtypes:
         ds = MultiPostProcessor()
         if isinstance(value, list) or isType(value, GangaList):
-            ds.__construct__(value)
+            for item_ in value:
+            	ds.append(item_)
         else:
-            ds.__construct__([value])
+            ds.append(value)
         return ds
     else:
-        raise PostProcessException(
-            "j.postprocessors only takes objects of category 'postprocessor'")
+        raise PostProcessException("j.postprocessors only takes objects of category 'postprocessor'")
 
 allComponentFilters['postprocessor'] = postprocessor_filter
 

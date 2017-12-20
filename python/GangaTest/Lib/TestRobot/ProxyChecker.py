@@ -4,8 +4,8 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
 import os, datetime, time
 from GangaRobot.Framework.exceptions import *
-#from Ganga.GPIDev.Credentials.GridProxy import GridProxy
-from Ganga.GPIDev.Credentials import getCredential
+#from Ganga.GPIDev.Credentials_old.GridProxy import GridProxy
+from Ganga.GPIDev.Credentials_old import getCredential
 
 logger = getLogger()
 

@@ -1,8 +1,9 @@
 # This first line will grab the requirements from setup.py
 -e .
 
-pytest
+pytest==3.2.5
 pytest-cov
+pytest-mock
 unittest2
 coverage
 pygments

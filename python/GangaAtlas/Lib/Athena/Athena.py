@@ -29,9 +29,14 @@ from Ganga.Lib.Mergers.Merger import *
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir, File
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, GPIProxyObject
-
-from pandatools import AthenaUtils
 from Ganga.Utility.Plugin import allPlugins
+
+# importing pandatools can fail for no obvious reason
+try:
+    from pandatools import AthenaUtils
+except:
+    logger.error("Problems loading the pandatools library. Try setting up Panda before running Ganga using 'lsetup panda'")
+    raise
 
 def mktemp(extension,name,path):
     """Create a unique file"""
@@ -358,6 +363,7 @@ class Athena(IPrepareApp):
                  'run_event_file'         : SimpleItem(defvalue='', doc='Name of the file containing run/event list for Panda backend'),
                  'option_file'            : FileItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc="list of job options files" ),
                  'options'                : SimpleItem(defvalue='',doc='Additional Athena options'),
+                 'command_line'           : SimpleItem(defvalue='',doc='Command line to run in the given atlas_run_dir after Athena setup'),
                  'user_setupfile'         : FileItem(preparable=1, doc='User setup script for special setup'),
                  'exclude_from_user_area' : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Pattern of files to exclude from user area'),
                  'append_to_user_area'    : SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='Extra files to include in the user area'),
@@ -374,6 +380,7 @@ class Athena(IPrepareApp):
                  'useNoDebugLogs'         : SimpleItem(defvalue = False, doc='Use debug print-out in logfiles of Local/Batch/CREAM/LCG backend'),
                  'useNewTRF'              : SimpleItem(defvalue = True, doc='Use the original filename with the attempt number for input in --trf when there is only one input, which follows the globbing scheme of new transformation framework'),
                  'useNoAthenaSetup'       : SimpleItem(defvalue = False, doc='Use No Athena setup to allow e.g. free ROOT setup'),
+                 'useCMake'            : SimpleItem(defvalue = False, doc='Use CMake when packing/running the job'),
                  })
                      
     _category = 'applications'
@@ -418,7 +425,7 @@ class Athena(IPrepareApp):
             self.package       = cmt['package']
             self.userarea      = os.path.realpath(cmt['%s_cmtpath' % self.package])
         except KeyError:
-            raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
+            raise ApplicationConfigurationError('CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
 
         # Determine ATLAS Release Version
         rc, output = commands.getstatusoutput('cmt -quiet show projects')
@@ -491,7 +498,7 @@ class Athena(IPrepareApp):
         if 'CMTCONFIG' in os.environ:
             self.atlas_cmtconfig = os.environ['CMTCONFIG']
             if self.atlas_cmtconfig.startswith('x86_64'):
-                raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
+                raise ApplicationConfigurationError('CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
         return
 
     def setup(self):
@@ -932,9 +939,6 @@ class Athena(IPrepareApp):
         if self.atlas_cmtconfig == "":
             if 'CMTCONFIG' in os.environ:
                 self.atlas_cmtconfig = os.environ['CMTCONFIG']
-                if self.atlas_cmtconfig.startswith('x86_64'):
-                    #raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
-                    logger.warning('CMTCONFIG = %s, Your CMT setup is using 64 bit - are you sure you want to use 64 bit ?'% self.atlas_cmtconfig)
             else:
                 self.atlas_cmtconfig = config['CMTCONFIG']
                 os.environ['CMTCONFIG'] = self.atlas_cmtconfig 
@@ -942,7 +946,7 @@ class Athena(IPrepareApp):
 
         # check for conflicts
         if self.useMana and self.useRootCore:
-            raise ApplicationConfigurationError(None,'Cannot specify RootCore and Mana. One or the other please!')
+            raise ApplicationConfigurationError('Cannot specify RootCore and Mana. One or the other please!')
         
         # ensure mana jobs are EXE
         if self.useMana:
@@ -956,7 +960,7 @@ class Athena(IPrepareApp):
             # find the workarea
             tmpSt,tmpOut = MiscUtils.getManaSetupParam('workarea')
             if not tmpSt:
-                raise ApplicationConfigurationError(None,'Problem getting workarea from Mana setup: "%s"' % tmpOut)
+                raise ApplicationConfigurationError('Problem getting workarea from Mana setup: "%s"' % tmpOut)
 
             logger.info("Setting the Mana work area to '%s'"% tmpOut.strip())
 
@@ -964,7 +968,7 @@ class Athena(IPrepareApp):
             if self.atlas_release == '':
                 tmpSt,tmpOut = MiscUtils.getManaVer()
                 if not tmpSt:
-                    raise ApplicationConfigurationError(None,'Problem getting Mana version from Mana setup: "%s"' % tmpOut.strip())
+                    raise ApplicationConfigurationError('Problem getting Mana version from Mana setup: "%s"' % tmpOut.strip())
 
                 logger.info("Setting the Mana version to '%s'"% tmpOut.strip())
                 self.atlas_release = tmpOut.strip()
@@ -974,7 +978,7 @@ class Athena(IPrepareApp):
             sMana, oMana, self.atlas_release, self.atlas_cmtconfig = MiscUtils.checkManaVersion(self.atlas_release, self.atlas_cmtconfig)
 
             if not sMana:
-                raise ApplicationConfigurationError(None,'Error checking mana version: "%s"' % oMana)
+                raise ApplicationConfigurationError('Error checking mana version: "%s"' % oMana)
 
             logger.info("Final Mana version '%s', cmt config '%s'" % (self.atlas_release, self.atlas_cmtconfig))
 
@@ -984,7 +988,7 @@ class Athena(IPrepareApp):
             rc, out = AthenaUtils.getAthenaVer()
             # failed
             if not rc:
-                raise ApplicationConfigurationError(None, 'CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
+                raise ApplicationConfigurationError('CMT could not parse correct environment ! \n Did you start/setup ganga in the run/ or cmt/ subdirectory of your athena analysis package ?')
             self.userarea = out['workArea'] 
             self.atlas_release = out['athenaVer'] 
             self.grouparea = out['groupArea'] 
@@ -1005,6 +1009,13 @@ class Athena(IPrepareApp):
 
         logger.info('Found Working Directory %s',self.userarea)
         logger.info('Found ATLAS Release %s',self.atlas_release)
+
+        # check for nightlies - AtlasReleaseType will be 'nightly' if so, 'stable' if not
+        if "AtlasReleaseType" in os.environ and os.environ['AtlasReleaseType'] == 'nightly':
+            # change production as the release found above is one ahead of the actual
+            logger.info('Found ATLAS Nightly release. Setting atlas_production appropriately')
+            self.atlas_production = os.environ['AtlasBuildBranch'] + ',' + os.environ['AtlasBuildStamp']
+
         if self.atlas_production:
             logger.info('Found ATLAS Production Release %s',self.atlas_production)
         if self.atlas_project:
@@ -1020,7 +1031,7 @@ class Athena(IPrepareApp):
         sString=re.sub('[\+]','.', self.userarea)
         runDir = re.sub('^%s' % sString, '', currentDir)
         if runDir == currentDir:
-            raise ApplicationConfigurationError(None, 'You need to run prepare() in a directory under %s' % self.userarea)
+            raise ApplicationConfigurationError('You need to run prepare() in a directory under %s' % self.userarea)
         elif runDir == '':
             runDir = '.'
         elif runDir.startswith('/'):
@@ -1044,28 +1055,16 @@ class Athena(IPrepareApp):
             else:
                 jobO = ' -c %s ' % self.options
 
-        if not self.option_file and not self.atlas_exetype in ['EXE', 'TRF']:
+        if not self.option_file and not self.command_line and not self.atlas_exetype in ['EXE', 'TRF']:
             raise ApplicationConfigurationError(None,'Set option_file before calling prepare()')
         for opt_file in self.option_file:
             if not self.atlas_exetype in ['EXE', 'TRF']: 
                 if not opt_file.exists():
                     raise ApplicationConfigurationError(None,'The job option file %s does not exist.' % opt_file.name)
-                else:
-                    # check for dodgy TAG things
-                    if 'uncompress.py' in self.append_to_user_area and 'subcoll.tar.gz' in self.append_to_user_area:
-                        for ln in open(opt_file.name).readlines():
-                            bad_lines = ['from IOVDbSvc.CondDB import conddb', 'include("RecJobTransforms/UseOracle.py")']
- 
-                            for bl in bad_lines:
-                                posA = ln.find(bl)
-                                posB = ln.find("#")
- 
-                                if posA != -1 and (posA < posB or posB == -1):
-                                    raise ApplicationConfigurationError(None,'Please remove the line "%s" from your JOs' % bl)
+                jobO = jobO + opt_file.name + " "
 
-                    jobO = jobO + opt_file.name + " "
-            else:
-                pass
+        if self.command_line:
+            jobO = self.command_line
 
         supStream = [s.upper() for s in self.atlas_supp_stream]
         shipInput = False
@@ -1085,7 +1084,7 @@ class Athena(IPrepareApp):
             #self.atlas_run_config = {'input': {}, 'other': {}, 'output': {'outAANT': [('AANTupleStream', 'AANT', 'AnalysisSkeleton.aan.root')], 'alloutputs': ['AnalysisSkeleton.aan.root']}}
             logger.info('Detected Athena run configuration: %s',self.atlas_run_config)
             if not rc:
-                raise ApplicationConfigurationError(None, 'Error in AthenaUtils.extractRunConfig - could not extract Athena configuration!')
+                raise ApplicationConfigurationError('Error in AthenaUtils.extractRunConfig - could not extract Athena configuration!')
         else:
             self.atlas_run_config = {'input': {}, 'other': {}, 'output': {}}
             logger.info('Set Athena run configuration to: %s',self.atlas_run_config)
@@ -1122,7 +1121,7 @@ class Athena(IPrepareApp):
         if self.useRootCore or self.useRootCoreNoBuild:
             # check $ROOTCOREDIR
             if 'ROOTCOREDIR' not in os.environ:
-                raise ApplicationConfigurationError(None,'$ROOTCOREDIR is not definied in your enviornment. Please setup RootCore runtime beforehand')
+                raise ApplicationConfigurationError('$ROOTCOREDIR is not definied in your enviornment. Please setup RootCore runtime beforehand')
 
             # check grid_submit.sh
             rootCoreSubmitSh  = os.environ['ROOTCOREDIR'] + '/scripts/grid_submit.sh'
@@ -1134,7 +1133,7 @@ class Athena(IPrepareApp):
             for tmpShFile in [rootCoreSubmitSh,rootCoreCompileSh,rootCoreRunSh]:
                 if not os.path.exists(tmpShFile):
                     tmpErrMsg  = "%s doesn't exist. Please use a newer version of RootCore" % tmpShFile
-                    raise ApplicationConfigurationError(None,tmpErrMsg)
+                    raise ApplicationConfigurationError(tmpErrMsg)
 
             logger.info("Copying RootCore packages to current dir ...")
             # destination
@@ -1156,7 +1155,7 @@ class Athena(IPrepareApp):
             tmpStat %= 255
             if tmpStat != 0:
                 tmpErrMsg  = "%s failed with %s" % (rootCoreSubmitSh,tmpStat)
-                raise ApplicationConfigurationError(None,tmpErrMsg)
+                raise ApplicationConfigurationError(tmpErrMsg)
             # copy build and run scripts
             shutil.copy(rootCoreRunSh,rootCoreDestWorkDir)            
             shutil.copy(rootCoreCompileSh,rootCoreDestWorkDir)
@@ -1167,8 +1166,25 @@ class Athena(IPrepareApp):
         if self.atlas_exetype in ['EXE']: #and not self.athena_compile:  - for EXE, compilation decides what the tarball is called
             maxFileSize = config['EXE_MAXFILESIZE']
             archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose, self.athena_compile )
+
+            if AthenaUtils.useCMake():
+                self.useCMake = True
         else:
-            archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages, config['dereferenceSymLinks'])
+            # compilation determines whether to send the sources across as well
+            archiveName = ""
+            if self.athena_compile:
+                if AthenaUtils.useCMake():
+                    self.useCMake = True
+                    archiveName,archiveFullName = AthenaUtils.archiveWithCpack(True,tmpDir,True)
+
+                archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages, config['dereferenceSymLinks'], archiveName=archiveName)
+            else:
+                if AthenaUtils.useCMake():
+                    self.useCMake = True
+                    archiveName,archiveFullName = AthenaUtils.archiveWithCpack(False,tmpDir,True)
+
+                archiveName, archiveFullName = AthenaUtils.archiveJobOFiles(self.userarea, runDir, currentDir, archiveDir, verbose, archiveName=archiveName)
+
         logger.info('Creating %s ...', archiveFullName )
 
         # Add InstallArea
@@ -1283,7 +1299,7 @@ class Athena(IPrepareApp):
         req.close()
 
         if (athena_compile==True) and (NG==True):
-            raise ApplicationConfigurationError(None, 'athena_compile==True and NG==True ! There is no compilation possible on NorduGrid (NG) - please remove either the athena_compile or NG option as argument of the prepare() method !')
+            raise ApplicationConfigurationError('athena_compile==True and NG==True ! There is no compilation possible on NorduGrid (NG) - please remove either the athena_compile or NG option as argument of the prepare() method !')
 
         if athena_compile==1 or athena_compile==True:
             athena_compile_flag='True'
@@ -1425,15 +1441,15 @@ class Athena(IPrepareApp):
                 tmp_user_area_name = os.path.join(os.path.join(shared_path,self.is_prepared.name),os.path.basename(self.user_area.name))
                                         
             if not os.path.exists( tmp_user_area_name ):
-                raise ApplicationConfigurationError(None,'The tar file %s with the user area does not exist.' % tmp_user_area_name)
+                raise ApplicationConfigurationError('The tar file %s with the user area does not exist.' % tmp_user_area_name)
 
         if self.group_area.name:
             if string.find(self.group_area.name,"http")<0 and not self.group_area.exists():
-                raise ApplicationConfigurationError(None,'The tar file %s with the group area does not exist.' % self.group_area.name)
+                raise ApplicationConfigurationError('The tar file %s with the group area does not exist.' % self.group_area.name)
        
         for opt_file in self.option_file:
             if not self.atlas_exetype in ['EXE', 'TRF'] and not opt_file.exists():
-                raise ApplicationConfigurationError(None,'The job option file %s does not exist.' % opt_file.name)
+                raise ApplicationConfigurationError('The job option file %s does not exist.' % opt_file.name)
 
 
         job = self.getJobObject()
@@ -1441,37 +1457,31 @@ class Athena(IPrepareApp):
         if job.inputdata:
             if job.inputdata._name == 'DQ2Dataset':
                 if job.inputdata.dataset and not job.inputdata.dataset_exists():
-                    raise ApplicationConfigurationError(None,'DQ2 input dataset %s does not exist.' % job.inputdata.dataset)
-                if job.inputdata.tagdataset and not job.inputdata.tagdataset_exists():
-                    raise ApplicationConfigurationError(None,'DQ2 tag dataset %s does not exist.' % job.inputdata.tagdataset)
+                    raise ApplicationConfigurationError('DQ2 input dataset %s does not exist.' % job.inputdata.dataset)
 
         # check grid/local class match up
         if job.backend._name in ['LCG', 'CREAM' ,'Panda', 'NG']: 
             # check splitter
             if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AnaTaskSplitterJob', 'ATLASTier3Splitter', 'GenericSplitter']:
-                raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
-            
-            # Check that only DQ2Datasets/AMIDatasets are used on the grid        
-            #if job.inputdata and not job.inputdata._name in ['DQ2Dataset', 'AMIDataset']:
-            #    raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.inputdata._name, job.backend._name) )
- 
+                raise ApplicationConfigurationError("Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
+
             # Check that only DQ2OutputDatasets are used on the grid
             #if job.outputdata and not job.outputdata._name in ['DQ2OutputDataset']:
             #    raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.outputdata._name, job.backend._name))
         elif (job.backend._name in ['SGE' ] and config['ENABLE_SGE_DQ2JOBSPLITTER']):
             if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AthenaSplitterJob']:
-                raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
+                raise ApplicationConfigurationError("Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
 
         elif job.backend._name in [ 'Jedi']: 
             # check splitter
             if job.splitter and not job.splitter._name in [ 'GenericSplitter']:
-                raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
+                raise ApplicationConfigurationError("Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
  
         else:
             
             # check splitter
             if job.splitter and not job.splitter._name in ['AthenaSplitterJob', 'AnaTaskSplitterJob', 'ATLASTier3Splitter']:
-                raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
+                raise ApplicationConfigurationError("Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
              
             # Check that only ATLASLocalDataset are used locally       
             #if job.inputdata and not job.inputdata._name in ['ATLASLocalDataset']:
@@ -1484,19 +1494,19 @@ class Athena(IPrepareApp):
         # Check if DQ2_COPY is set and disable it
         if job.backend._name in ['LCG', 'CREAM' ]:
             if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type == 'DQ2_COPY' and not config['ENABLE_DQ2COPY']:
-                raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='DQ2_COPY' is not supported anymore ! Please use a different input access mode." )
+                raise ApplicationConfigurationError("The workflow job.inputdata.type='DQ2_COPY' is not supported anymore ! Please use a different input access mode." )
 
         # Check if FILE_STAGER is set 
         if job.backend._name in ['SGE' ]:
             if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type == 'FILE_STAGER' and not config['ENABLE_SGE_FILESTAGER']:
-                raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='FILE_STAGER' is not enabled for SGE backend. Switch is on with config.Athena.ENABLE_SGE_FILESTAGER=True and use it carefully." )
+                raise ApplicationConfigurationError("The workflow job.inputdata.type='FILE_STAGER' is not enabled for SGE backend. Switch is on with config.Athena.ENABLE_SGE_FILESTAGER=True and use it carefully." )
         elif job.backend._name in ['LSF', 'PBS', 'Local', 'Condor' ]:
             if job.inputdata and job.inputdata._name in [ 'DQ2Dataset' ] and job.inputdata.type == 'FILE_STAGER':
-                raise ApplicationConfigurationError(None,"The workflow job.inputdata.type='FILE_STAGER' is not enabled for the %s backend." % job.backend._name )
+                raise ApplicationConfigurationError("The workflow job.inputdata.type='FILE_STAGER' is not enabled for the %s backend." % job.backend._name )
                          
         # check recex options
         if not self.recex_type in ['', 'RDO', 'ESD', 'AOD']:
-            raise ApplicationConfigurationError(None, 'RecEx type %s not supported. Try RDO, ESD or AOD.' % self.recex_type)
+            raise ApplicationConfigurationError('RecEx type %s not supported. Try RDO, ESD or AOD.' % self.recex_type)
 
         # Switch to RUCIO - no longer need to find the LATEST DB
         #try:
@@ -1529,6 +1539,9 @@ class AthenaSplitterJob(ISplitter):
         'numfiles_subjob'     : SimpleItem(defvalue=0,sequence=0, doc="Number of files per subjob"),
         'match_subjobs_files' : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of inputfiles"),
         'split_per_dataset'   : SimpleItem(defvalue=False,sequence=0, doc="Match the number of subjobs to the number of datasets"),
+        'events_per_subjob'   : SimpleItem(defvalue=-1,sequence=0, doc='Number of Events to process per subjob. Must be used with numsubjobs.'
+                                                                       'The total events processed with be events_per_subjob * numsubjobs. Please'
+                                                                       'make sure this covers the number of events required'),
         'output_loc_to_input' : SimpleItem(defvalue={}, doc='Dictionary that lists the input files that should go to a '
                                                             'particular output dir, e.g. { "/out/dir": ["/in/file1", "/in/file2"].'
                                                             'Input files must match what is given to ATLASLocalDataset }')
@@ -1549,12 +1562,12 @@ class AthenaSplitterJob(ISplitter):
         # Preparation
         inputnames=[]
         inputguids=[]
-        if job.inputdata:
+        if job.inputdata and (job.inputdata._name == 'ATLASLocalDataset'):
 
-            if (job.inputdata._name == 'ATLASCastorDataset') or \
-                   (job.inputdata._name == 'ATLASLocalDataset'):
-                inputnames = []
-                outputnames = []
+            # Special case for events_per_subjob as input data is ignored
+            inputnames = []
+            outputnames = []
+            if self.events_per_subjob < 0:
                 numfiles = len(job.inputdata.get_dataset_filenames())
                 if self.numfiles_subjob > 0:
                     self.numsubjobs = int( math.ceil( numfiles / float(self.numfiles_subjob) ) )
@@ -1573,7 +1586,7 @@ class AthenaSplitterJob(ISplitter):
                         all_input += file_list
 
                     if frozenset(all_input) != frozenset(job.inputdata.names):
-                        raise ApplicationConfigurationError(None, 'Not all inputdata specified in splitter data mapping.'
+                        raise ApplicationConfigurationError('Not all inputdata specified in splitter data mapping.'
                                                                   'Please make sure all input data is mapped.')
 
                     # check we have enough subjobs for outputdirs
@@ -1617,7 +1630,7 @@ class AthenaSplitterJob(ISplitter):
                     for file_list in inputnames:
                         all_input += file_list
                     if frozenset(all_input) != frozenset(job.inputdata.names):
-                        raise ApplicationConfigurationError(None, "Inputdata was incorrectly mapped to output location."
+                        raise ApplicationConfigurationError("Inputdata was incorrectly mapped to output location."
                                                                   "This shouldn't happen - please contact the devs!")
 
                 else:
@@ -1627,56 +1640,21 @@ class AthenaSplitterJob(ISplitter):
 
                     for j in xrange(numfiles):
                         inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset_filenames()[j])
+            else:
+                # for splitting on events, all data is passed to every subjob and skip events/max events
+                # is set appropriately
+                if self.numfiles_subjob > 0 or self.match_subjobs_files or self.split_per_dataset:
+                    raise ApplicationConfigurationError("Cannot use events_per_subjob with numfiles_subjob, match_subjobs_files, split_per_dataset")
 
-            if job.inputdata._name == 'ATLASDataset':
-                for i in xrange(self.numsubjobs):    
-                    inputnames.append([])
-                for j in xrange(len(job.inputdata.get_dataset())):
-                    inputnames[j % self.numsubjobs].append(job.inputdata.get_dataset()[j])
+                if self.numsubjobs < 1:
+                    raise ApplicationConfigurationError("Please specify the number of subjobs if using events_per_subjob")
 
-            if job.inputdata._name == 'DQ2Dataset':
-                # Splitting per dataset
-                if self.split_per_dataset:
-                    contents = job.inputdata.get_contents(overlap=False)
-                    datasets = job.inputdata.dataset
-                    self.numsubjobs = len(datasets)
-                    for dataset in datasets:
-                        content = contents[dataset]
-                        content.sort(lambda x,y:cmp(x[1],y[1]))
-                        inputnames.append( [ lfn for guid, lfn in content ] )
-                        inputguids.append( [ guid for guid, lfn in content ] )
-                else:
-                    # Splitting per file
-                    content = []
-                    input_files = []
-                    input_guids = []
-                    names = None
-                    # Get list of filenames and guids
-                    contents = job.inputdata.get_contents()
-                    if self.match_subjobs_files:
-                        self.numsubjobs = len(contents)
-                    elif self.numfiles_subjob>0:
-                        numjobs = len(contents) / int(self.numfiles_subjob)
-                        if (len(contents) % self.numfiles_subjob)>0:
-                            numjobs += 1
-                        self.numsubjobs = numjobs
-                        logger.info('Submitting %s subjobs',numjobs)
+                logger.warning("Splitting by number of events. All data will be passed to all subjobs and the total number of events to be"
+                               "processed will be numsubjobs * events_per_subjob (%d * %d = %d in this case)" %
+                               (self.numsubjobs, self.events_per_subjob, self.numsubjobs * self.events_per_subjob))
 
-                    # Fill dummy values
-                    for i in xrange(self.numsubjobs):    
-                        inputnames.append([])
-                        inputguids.append([])
-                    input_files = [ lfn  for guid, lfn in contents ]
-                    input_guids = [ guid for guid, lfn in contents ]
-
-                    # Splitting
-                    for j in xrange(len(input_files)):
-                        inputnames[j % self.numsubjobs].append(input_files[j])
-                        inputguids[j % self.numsubjobs].append(input_guids[j])
-
-        if job.backend._name == 'LCG' and job.backend.middleware=='GLITE' and self.numsubjobs>config['MaxJobsAthenaSplitterJobLCG']:
-            printout = 'Job submission failed ! AthenaSplitterJob.numsubjobs>%s - glite WMS does not like bulk jobs with more than approximately 100 subjobs - use less subjobs or use job.backend.middleware=="EDG"  ' %config['MaxJobsAthenaSplitterJobLCG']
-            raise ApplicationConfigurationError(None, printout)
+                for j in xrange(self.numsubjobs):
+                    inputnames.append(job.inputdata.get_dataset_filenames())
 
         # Do the splitting
         for i in range(self.numsubjobs):
@@ -1684,15 +1662,8 @@ class AthenaSplitterJob(ISplitter):
             j.name = job.name + "_" + str(i)
             j.inputdata=job.inputdata
             if job.inputdata:
-                if job.inputdata._name == 'ATLASDataset':
-                    j.inputdata.lfn=inputnames[i]
-                else:
-                    j.inputdata.names=inputnames[i]
-                    if job.inputdata._name == 'DQ2Dataset':
-                        j.inputdata.guids=inputguids[i]
-                        j.inputdata.number_of_files = len(inputguids[i])
-                        if self.split_per_dataset:
-                            j.inputdata.dataset=job.inputdata.dataset[i]
+                j.inputdata.names=inputnames[i]
+
             j.outputdata=job.outputdata
 
             # Set the output location if we have mapping
@@ -1700,6 +1671,10 @@ class AthenaSplitterJob(ISplitter):
                 j.outputdata.location = outputnames[i]
 
             j.application = job.application
+            if self.events_per_subjob > 0:
+                j.application.max_events = self.events_per_subjob
+                j.application.skip_events = self.events_per_subjob * i
+
             j.backend=job.backend
             j.inputsandbox=job.inputsandbox
             j.outputsandbox=job.outputsandbox
@@ -1707,74 +1682,6 @@ class AthenaSplitterJob(ISplitter):
             subjobs.append(j)
         return subjobs
 
-class ATLASTier3Splitter(ISplitter):
-    """Splitter for ATLASTier3Dataset"""
-    
-    _name = "ATLASTier3Splitter"
-    _schema = Schema(Version(1,0), {
-        'numjobs'              : SimpleItem(defvalue=0,sequence=0, doc="Number of subjobs"),
-        'numfiles'             : SimpleItem(defvalue=0,sequence=0, doc="Number of files per subjob")
-        } )
-
-    _GUIPrefs = [ { 'attribute' : 'numjobs',           'widget' : 'Int' },
-                  { 'attribute' : 'numfiles',          'widget' : 'Int' },
-                  ]
-
-    ### Splitting based on numsubjobs
-    def split(self,job):
-        from Ganga.GPIDev.Lib.Job import Job
-        subjobs = []
-        logger.debug("ATLASTier3Splitter split called")
-        
-        if not job.inputdata:
-            raise ApplicationConfigurationError(None, "ATLASTier3Splitter requires ATLASTier3Dataset")
-        if job.inputdata._name != 'ATLASTier3Dataset':
-            raise ApplicationConfigurationError(None, "ATLASTier3Splitter requires ATLASTier3Dataset")
-        if self.numjobs and self.numfiles:
-            logger.warning('You specified numjobs and numfiles. Setting numjobs = 0 to continue.')
-            self.numjobs = 0
-            #raise ApplicationConfigurationError(None, "ATLASTier3Splitter: specify numjobs or numfiles, but not both.")
-       
-        if job.inputdata.pfnListFile.name:
-            logger.info('Loading file names from %s'%job.inputdata.pfnListFile.name)
-            pfnListFile = open(job.inputdata.pfnListFile.name)
-            job.inputdata.names = [name.strip() for name in pfnListFile]
-            pfnListFile.close()
- 
-        allnames = list(job.inputdata.names)
-
-        # default behaviour is 20 subjobs
-        if not self.numjobs and not self.numfiles:
-            self.numjobs = min(20,len(allnames))
-
-        # limit numfiles and numjobs
-        self.numjobs = min(self.numjobs,len(allnames))
-        self.numfiles = min(self.numfiles,len(allnames))
-
-        # calculate numfiles and numjobs
-        if self.numfiles:
-            (self.numjobs,r) = divmod(len(allnames),self.numfiles)
-            if r: self.numjobs += 1
-        elif self.numjobs:
-            (self.numfiles,r) = divmod(len(allnames),self.numjobs)
-            if r: self.numfiles += 1
-
-        # Do the splitting
-        allnames.reverse()
-        for i in range(self.numjobs):
-            j = Job()
-            j.inputdata=job.inputdata
-            j.inputdata.names=[]
-            while allnames and len(j.inputdata.names) < self.numfiles:
-                j.inputdata.names.append(allnames.pop())
-            j.outputdata = job.outputdata
-            j.application = job.application
-            j.backend = job.backend
-            j.inputsandbox = job.inputsandbox
-            j.outputsandbox = job.outputsandbox
-            subjobs.append(j)
-        
-        return subjobs
 
 from Ganga.GPIDev.Adapters.IMerger import IMerger
 from commands import getstatusoutput    

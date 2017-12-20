@@ -17,10 +17,8 @@ class TestXMLCorruption(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        super(TestXMLCorruption, self).setUp()
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
-        setConfigOption('Configuration', 'AutoStartReg', global_AutoStartReg)
+        extra_opts = [('TestingFramework', 'AutoCleanup', 'False'), ('Configuration', 'AutoStartReg', global_AutoStartReg)]
+        super(TestXMLCorruption, self).setUp(extra_opts=extra_opts)
 
     def test_a_JobConstruction(self):
         """ First construct the Job object (singular)"""
@@ -33,6 +31,8 @@ class TestXMLCorruption(GangaUnitTest):
 
         global global_AutoStartReg
         global_AutoStartReg = False
+
+        j.name='modified_name'
 
     def test_b_TestRemoveXML(self):
         # Remove XML force to use backup

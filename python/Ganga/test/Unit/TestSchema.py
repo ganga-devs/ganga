@@ -1,7 +1,7 @@
 import unittest
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
-
+from Ganga.Core.exceptions import GangaAttributeError
 
 class TestVersion(unittest.TestCase):
     """
@@ -53,7 +53,7 @@ class TestSchema(unittest.TestCase):
         def _get():
             temp = self.s['b']
 
-        self.assertRaises(AttributeError, _get)
+        self.assertRaises(GangaAttributeError, _get)
 
     def test_category_name(self):
         class PClass(object):

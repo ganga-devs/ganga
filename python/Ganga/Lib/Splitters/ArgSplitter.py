@@ -5,11 +5,10 @@
 ###############################################################################
 
 import copy
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from Ganga.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
@@ -19,7 +18,8 @@ class ArgSplitter(ISplitter):
     """
     Split job by changing the args attribute of the application.
 
-    This splitter only applies to the applications which have args attribute (e.g. Executable, Root).
+    This splitter only applies to the applications which have args attribute (e.g. Executable, Root), or those
+    with extraArgs (GaudiExec). If an application has both, args takes precedence.
     It is a special case of the GenericSplitter.
 
     This splitter allows the creation of a series of subjobs where
@@ -58,7 +58,13 @@ class ArgSplitter(ISplitter):
             j = self.createSubjob(job,['application'])
             # Add new arguments to subjob
             app = copy.deepcopy(job.application)
-            app.args = arg
+            if hasattr(app, 'args'):
+                app.args = arg
+            elif hasattr(app, 'extraArgs'):
+                app.extraArgs = arg
+            else:
+                raise SplittingError('Application has neither args or extraArgs in its schema') 
+                    
             j.application = app
             logger.debug('Arguments for split job is: ' + str(arg))
             subjobs.append(stripProxy(j))

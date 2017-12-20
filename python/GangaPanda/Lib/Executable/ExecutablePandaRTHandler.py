@@ -10,7 +10,7 @@
 import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions, time
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
@@ -56,13 +56,13 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             if rc:
                 logger.error('Packing inputsandbox failed with status %d',rc)
                 logger.error(output)
-                raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+                raise ApplicationConfigurationError('Packing inputsandbox failed.')
         if len(job.inputsandbox) > 0:
             rc, output = commands.getstatusoutput('gzip %s' % (inpw.getPath(inputsandbox)))
             if rc:
                 logger.error('Packing inputsandbox failed with status %d',rc)
                 logger.error(output)
-                raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
+                raise ApplicationConfigurationError('Packing inputsandbox failed.')
             inputsandbox += ".gz"
         else:
             inputsandbox = None
@@ -78,22 +78,22 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 #       input dataset
         if job.inputdata:
             if job.inputdata._name != 'DQ2Dataset':
-                raise ApplicationConfigurationError(None,'PANDA application supports only DQ2Datasets')
+                raise ApplicationConfigurationError('PANDA application supports only DQ2Datasets')
 
         # run brokerage here if not splitting
         if not job.splitter:
             from GangaPanda.Lib.Panda.Panda import runPandaBrokerage
             runPandaBrokerage(job)
         elif job.splitter._name not in ['DQ2JobSplitter', 'ArgSplitter', 'ArgSplitterTask']:
-            raise ApplicationConfigurationError(None,'Panda splitter must be DQ2JobSplitter or ArgSplitter')
+            raise ApplicationConfigurationError('Panda splitter must be DQ2JobSplitter or ArgSplitter')
         
         if job.backend.site == 'AUTO':
-            raise ApplicationConfigurationError(None,'site is still AUTO after brokerage!')
+            raise ApplicationConfigurationError('site is still AUTO after brokerage!')
 
 #       output dataset
         if job.outputdata:
             if job.outputdata._name != 'DQ2OutputDataset':
-                raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
+                raise ApplicationConfigurationError('Panda backend supports only DQ2OutputDataset')
         else:
             logger.info('Adding missing DQ2OutputDataset')
             job.outputdata = DQ2OutputDataset()
@@ -159,7 +159,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             if self.inputsandbox:
                 jspec.jobParameters     += ' -i %s' % (self.inputsandbox)
             else:
-                raise ApplicationConfigurationError(None,'Executable on Panda with build job defined, but inputsandbox is emtpy !')
+                raise ApplicationConfigurationError('Executable on Panda with build job defined, but inputsandbox is emtpy !')
             matchURL = re.search('(http.*://[^/]+)/',Client.baseURLCSRVSSL)
             if matchURL:
                 jspec.jobParameters += ' --sourceURL %s ' % matchURL.group(1)
@@ -227,7 +227,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             job.outputdata.datasetname = job._getRoot().outputdata.datasetname
 
         if not job.outputdata.datasetname:
-            raise ApplicationConfigurationError(None,'DQ2OutputDataset has no datasetname')
+            raise ApplicationConfigurationError('DQ2OutputDataset has no datasetname')
 
         jspec = JobSpec()
         jspec.jobDefinitionID   = job._getRoot().id
@@ -368,9 +368,6 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         jspec.jobParameters = param
         
         return jspec
-
-from Ganga.GPIDev.Credentials import GridProxy
-gridProxy = GridProxy()
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('Executable','Panda',ExecutablePandaRTHandler)

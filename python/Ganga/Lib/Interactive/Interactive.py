@@ -90,6 +90,10 @@ class Interactive(IBackend):
                 pass
         return value
 
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
+        """ Overload master_submit to avoid parallel submission with Interactive backend"""
+        return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going)
+
     def submit(self, jobconfig, master_input_sandbox):
         """Submit job to backend (i.e. run job interactively).
 
@@ -158,8 +162,7 @@ class Interactive(IBackend):
         try:
             shutil.rmtree(self.workdir)
         except OSError as x:
-            logger.warning("Problem removing workdir %s: %s", self.workdir,
-                    str(x))
+            logger.warning("Problem removing workdir %s: %s", self.workdir, str(x))
 
             return None
 
@@ -201,7 +204,7 @@ class Interactive(IBackend):
                 getWNCodeForOutputPostprocessing(job, '')
  
         all_inputfiles = [this_file for this_file in job.inputfiles]
-        if job.master: all_inputfiles.extend([this_file for this_file in job.master.inputfiles])
+        if job.master is not None: all_inputfiles.extend([this_file for this_file in job.master.inputfiles])
 
         wnCodeToDownloadInputFiles = ''
 
@@ -260,7 +263,7 @@ class Interactive(IBackend):
         }
 
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                'InteractiveScriptTemplate.py')
+                'InteractiveScriptTemplate.py.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         commandString = FileUtils.loadScript(script_location, '')

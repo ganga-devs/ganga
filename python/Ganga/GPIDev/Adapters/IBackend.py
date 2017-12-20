@@ -4,20 +4,27 @@
 # $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
 ##########################################################################
 
-from Ganga.Core.exceptions import IncompleteJobSubmissionError
+from Ganga.Core.exceptions import GangaKeyError, IncompleteJobSubmissionError
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import Schema, Version
+from Ganga.GPIDev.Credentials import credential_store, needed_credentials
 
 import Ganga.Utility.logging
 
 from Ganga.Utility.logic import implies
 
+from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError
+
 import os
 import itertools
 import time
+from collections import defaultdict
+
+from Ganga.Core.GangaThread.WorkerThreads import getQueues
+from Ganga.Utility.Config import getConfig
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -43,6 +50,8 @@ class IBackend(GangaObject):
     _category = 'backends'
     _hidden = 1
 
+    __slots__ = list()
+
     # specify how the default implementation of master_prepare() method
     # creates the input sandbox
     _packed_input_sandbox = True
@@ -63,23 +72,20 @@ class IBackend(GangaObject):
         try:
             sj.updateStatus('submitting')
             if b.submit(sc, master_input_sandbox):
-                sj.updateStatus('submitted')
                 sj.info.increment()
+                return 1
             else:
                 raise IncompleteJobSubmissionError(fqid, 'submission failed')
         except Exception as err:
-            #from Ganga.Utility.logging import log_user_exception
-            sj.updateStatus('failed')
-
-            #from Ganga.Core.exceptions import GangaException
-            #if isinstance(err, GangaException):
-            #    logger.error("%s" % err)
-            #    #log_user_exception(logger, debug=True)
-            #else:
-            #    #log_user_exception(logger, debug=False)
             logger.error("Parallel Job Submission Failed: %s" % err)
-        finally:
-            pass
+            return 0
+
+    def _successfulSubmit(self, out, sj, incomplete_subjobs):
+        if out == 0:
+            incomplete_subjobs.append(sj.getFQID('.'))
+            sj.updateStatus('new', update_master = False)
+        else:
+            sj.updateStatus('submitted', update_master = False)
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
         """  Submit   the  master  job  and  all   its  subjobs.   The
@@ -117,9 +123,7 @@ class IBackend(GangaObject):
         support for keep_going flag.
 
         """
-        from Ganga.Core import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
-
 
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
@@ -139,7 +143,7 @@ class IBackend(GangaObject):
                     return True
 
         master_input_sandbox = self.master_prepare(masterjobconfig)
-
+        # Shall we submit in parallel
         if parallel_submit:
 
             from Ganga.Core.GangaThread.WorkerThreads import getQueues
@@ -148,16 +152,24 @@ class IBackend(GangaObject):
 
             for sc, sj in zip(subjobconfigs, rjobs):
 
-                fqid = sj.getFQID('.')
                 b = sj.backend
+
+                # Must check for credentials here as we cannot handle missing credentials on Queues by design!
+                if hasattr(b, 'credential_requirements') and b.credential_requirements is not None:
+                    from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+                    try:
+                        cred = credential_store[b.credential_requirements]
+                    except GangaKeyError:
+                        credential_store.create(b.credential_requirements)
+
+                fqid = sj.getFQID('.')
                 # FIXME would be nice to move this to the internal threads not user ones
-                #from Ganga.GPIDev.Base.Proxy import stripProxy
-                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
+                getQueues()._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger), callback_func = self._successfulSubmit, callback_args = (sj, incomplete_subjobs))
 
             def subjob_status_check(rjobs):
                 has_submitted = True
                 for sj in rjobs:
-                    if sj.status not in ["submitted","failed","completed","running","completing"]:
+                    if sj.status not in ["submitted","failed","completed","running","completing"] and sj.getFQID('.') not in incomplete_subjobs:
                         has_submitted = False
                         break
                 return has_submitted
@@ -166,11 +178,12 @@ class IBackend(GangaObject):
                 import time
                 time.sleep(1.)
 
-            for i in rjobs:
-                if i.status in ["new", "failed"]:
-                    return 0
+            if incomplete_subjobs:
+                raise IncompleteJobSubmissionError(
+                    incomplete_subjobs, 'submission failed for subjobs %s' % incomplete_subjobs)
             return 1
 
+        # Alternatively submit sequentially
         for sc, sj in zip(subjobconfigs, rjobs):
 
             fqid = sj.getFQID('.')
@@ -185,20 +198,15 @@ class IBackend(GangaObject):
                     stripProxy(sj.info).increment()
                 else:
                     if handleError(IncompleteJobSubmissionError(fqid, 'submission failed')):
-                        return 0
+                        raise IncompleteJobSubmissionError(fqid, 'submission failed')
             except Exception as x:
-                #sj.updateStatus('new')
+                sj.updateStatus('new')
                 if isType(x, GangaException):
                     logger.error("%s" % x)
                     log_user_exception(logger, debug=True)
                 else:
                     log_user_exception(logger, debug=False)
-                if handleError(IncompleteJobSubmissionError(fqid, str(x))):
-                    return 0
-
-        if incomplete_subjobs:
-            raise IncompleteJobSubmissionError(
-                incomplete_subjobs, 'submission failed')
+                raise IncompleteJobSubmissionError(fqid, 'submission failed')
 
         return 1
 
@@ -290,7 +298,6 @@ class IBackend(GangaObject):
         If you override this method for bulk optimization then make sure that you call updateMasterJobStatus() on the master job,
         so the master job will be monitored by the monitoring loop.
         """
-        from Ganga.Core import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
         incomplete = 0
 
@@ -322,7 +329,7 @@ class IBackend(GangaObject):
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
-            if master:
+            if master is not None:
                 master.updateMasterJobStatus()
         return 1
 
@@ -350,7 +357,7 @@ class IBackend(GangaObject):
                         r = False
                         problems.append(s.id)
             if not r:
-                from Ganga.Core import IncompleteKillError
+                from Ganga.Core.exceptions import IncompleteKillError
                 raise IncompleteKillError(
                     'subjobs %s were not killed' % problems)
         else:
@@ -417,9 +424,9 @@ class IBackend(GangaObject):
 
         ## Only process 10 files from the backend at once
         #blocks_of_size = 10
+        poll_config = getConfig('PollThread')
         try:
-            from Ganga.Utility.Config import getConfig
-            blocks_of_size = getConfig('PollThread')['numParallelJobs']
+            blocks_of_size = poll_config['numParallelJobs']
         except Exception as err:
             logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
             logger.debug("Error: %s" % err)
@@ -427,8 +434,12 @@ class IBackend(GangaObject):
         ## Separate different backends implicitly
         simple_jobs = {}
 
+        multiThreadMon = poll_config['enable_multiThreadMon']
+
         # FIXME Add some check for (sub)jobs which are in a transient state but
         # are not locked by an active session of ganga
+
+        queues = getQueues()
 
         for j in jobs:
             ## All subjobs should have same backend
@@ -482,7 +493,11 @@ class IBackend(GangaObject):
                         subjobs_to_monitor = []
                         for sj_id in this_block:
                             subjobs_to_monitor.append(j.subjobs[sj_id])
-                        j.backend.updateMonitoringInformation(subjobs_to_monitor)
+                        if multiThreadMon:
+                            if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
+                                queues._addSystem(j.backend.updateMonitoringInformation, args=(subjobs_to_monitor,), name="Backend Monitor")
+                        else:
+                            j.backend.updateMonitoringInformation(subjobs_to_monitor)
                     except Exception as err:
                         logger.error("Monitoring Error: %s" % err)
 
@@ -497,10 +512,26 @@ class IBackend(GangaObject):
         if len(simple_jobs) > 0:
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
-
-                stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
+                if multiThreadMon:
+                    if queues.totalNumIntThreads() < getConfig("Queues")['NumWorkerThreads']:
+                        queues._addSystem(stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation,
+                                          args=(simple_jobs[this_backend],), name="Backend Monitor")
+                else:
+                    stripProxy(simple_jobs[this_backend][0].backend).updateMonitoringInformation(simple_jobs[this_backend])
 
         logger.debug("Finished Monitoring request")
+
+        if not multiThreadMon:
+            return
+
+        loop = True
+        while loop:
+            for stat in queues._monitoring_threadpool.worker_status():
+                loop = False;
+                if stat[0] is not None and stat[0].startswith("Backend Monitor"):
+                    loop = True;
+                    break;
+            time.sleep(1.)
 
     @staticmethod
     def updateMonitoringInformation(jobs):
@@ -512,3 +543,33 @@ class IBackend(GangaObject):
         """
 
         raise NotImplementedError
+
+
+def group_jobs_by_backend_credential(jobs):
+    # type: (List[Job]) -> List[List[Job]]
+    """
+    Split a list of jobs based on the credential required by their backends.
+
+    Any missing or invalid credentials are added to ``needed_credentials``
+
+    Args:
+        jobs: a list of ``Job``s
+
+    Returns:
+        a list of list of ``Job``s with each sublist sharing a credential
+    """
+    jobs_by_credential = defaultdict(list)
+    for j in jobs:
+        try:
+            cred_req = j.backend.credential_requirements
+            cred = credential_store[cred_req]
+            if not cred.is_valid():
+                logger.debug('Required credential %s is not valid', cred)
+                needed_credentials.add(cred_req)
+                continue
+            jobs_by_credential[cred].append(j)
+        except KeyError:
+            logger.debug('Required credential %s is missing', cred_req)
+            needed_credentials.add(cred_req)
+    return list(jobs_by_credential.values())
+

@@ -14,7 +14,7 @@ config.addOption('LocalOutputLocation', '/castor/cern.ch/atlas/scratch/%s/ganga'
 config.addOption('IndividualSubjobDirsForLocalOutput', False, 'When copying local output, should dir structure be jid.sid (False) or jid/sid (True)' )
 config.addOption('SingleDirForLocalOutput', False, 'When copying local output, only a single dirs used for output and output filenames are changed with jid.sid' )
 config.addOption('NoSubDirsAtAllForLocalOutput', False, 'When copying local output, all output is copied to the given output location with no subdirs created' )
-config.addOption('ATLAS_SOFTWARE', '/afs/cern.ch/project/gd/apps/atlas/slc3/software', 'FIXME')
+config.addOption('ATLAS_SOFTWARE', '/cvmfs/atlas.cern.ch/repo/sw/software/', 'FIXME')
 config.addOption('PRODUCTION_ARCHIVE_BASEURL', 'http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/Production/kits/', 'FIXME')
 config.addOption('ExcludedSites', '' , 'FIXME')
 config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The path in which the cmtsetup magic function will look up the setup.sh for CMT environment setup')
@@ -38,10 +38,6 @@ config.addOption('AnyCloudPreferenceList', [ ], 'List of clouds that should be p
 config.addOption('ATLASOutputDatasetLFC', 'prod-lfc-atlas-local.cern.ch', 'FIXME')
 config.addOption('PathToEOSBinary', '/afs/cern.ch/project/eos/installation/pro/bin/eos.select', 'Path to the EOS binary for output copying/checking')
 config.addOption('RemoveTempUserAreaAfterPrepare', True, 'If True, user areas created in /tmp are removed after prepare has been called (the version in the gangadir shared area will be used instead)')
-
-# -------------------------------------------------
-# AthenaMC Options
-config = makeConfig('AthenaMC', 'AthenaMC configuration options')
 
 # -------------------------------------------------
 # DQ2 Options
@@ -85,12 +81,6 @@ config.addOption('NumberOfDQ2DownloadThreads', 5, 'Number of simultaneous DQ2 do
 config.addOption('setupScript', '/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/gangaDDMSetup.sh', 'Script to setup DQ2Clients software')
 
 # -------------------------------------------------
-# AMI Dataset Options
-config = makeConfig('AMIDataset','AMI dataset')
-config.addOption('MaxNumOfFiles', 3000, 'Maximum number of files in a given dataset patterns')
-config.addOption('MaxNumOfDatasets', 100, 'Maximum number of datasets in a given dataset patterns')
-
-# -------------------------------------------------
 # Tasks Options
 config = getConfig("Tasks")
 config.addOption('cloudPreference',[],'list of preferred clouds to choose for AnaTask analysis')
@@ -123,10 +113,8 @@ def loadPlugins( config = {} ):
 
    import Lib.Athena
    import Lib.ATLASDataset
-   import Lib.AthenaMC
    import Lib.AtlasLCGRequirements
    import Lib.Tasks
-   import Lib.AMIGA
    
    return None
 

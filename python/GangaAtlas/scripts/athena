@@ -44,16 +44,15 @@ p.add_option('--name', '-n', action='store', type='string', dest='name', help='J
 # Input dataset
 p.add_option('--inDS', '-i', action='store', type='string', dest='input_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname to process')
 p.add_option('--inPfnListFile', action='store', type='string', dest='input_pfnlistfile', help='Filename with list of input files to process for ATLASTier3Dataset')
+p.add_option('--NthFieldAsOutDir', action='store', type='string', dest='nth_field_as_outdir', help='If multiple input list files given, store the output in a dir given by the field of the list file name, e.g. =2,3 data.201608.top.stuff.txt -> 201608.top/<output>')
 p.add_option('--inTagDS', action='store', type='string', dest='tag_input_dataset', metavar='TAGDATASETNAME', help='Name of the Tag DQ2 datasetname to process')
 p.add_option('--inTagFiles', action='store', type='string', dest='tag_input_files', help='Name of local TAG files to determine input data' )
 p.add_option('--tagCollRef', action='store', type='string', dest='tag_coll_ref', help='Directly specify the collection reference if not in JOs (e.g. TRF usage)' )
-p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['', 'DQ2', 'Local', 'Castor'],  default='', help='Type of the input dataset: DQ2, Local, Castor' )
+p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['', 'DQ2', 'Local'],  default='', help='Type of the input dataset: DQ2, Local,' )
 p.add_option('--inputaccessmode', action='store', type='choice', dest='inputaccessmode', choices = ['DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'FILE_STAGER' ], default='DQ2_LOCAL',  help='Access mode of the DQ2/TAG input dataset: DQ2_LOCAL, FILE_STAGER, LFC, TAG, TAG_REC [default: DQ2_LOCAL]'  )
 p.add_option('--inputfailover', action='store_true', help='Use DQ2_COPY automatically if DQ2_LOCAL fails' )
 p.add_option('--inputaccessprotocol', action='store', type='string', dest='inputaccessprotocol', help='Access protocol on worker node, like Xrootd'  )
 p.add_option('--locallocation', action='append', type='string', dest='locallocation', nargs=2, help='Directory and file pattern for ATLASLocalDataset: e.g. /path/to/dir/ *AOD*.root. Accepts multiple entries and comma separated dirs.')
-p.add_option('--inputlfn', action='store', type='string', dest='inputlfn', help='ATLASDataset lfn parameter, e.g. --inputlfn=rome.004100.recov10.T1_McAtNLO_top._[00001-00010].AOD.pool.root or --inputlfn=lfn:file1.root,lfn:file2.root' )
-p.add_option('--inputlfc', action='store', type='string', dest='inputlfc', help='ATLASDataset lfc host parameter, e.g. --inputlfc=lfc-fzk.gridka.de' )
 p.add_option('--match_ce_all', action='store_const', const='match_ce_all', dest='match_ce_all', help='Job are sent to incomplete and complete inputdataset sources' )
 p.add_option('--inputnames', action='store', type='string', dest='inputnames', help='Logical files names to process with DQ2Dataset seperated by : or ,  e.g. --inputnames=file1.root:file2.root' )
 p.add_option('--inputnamespattern', action='store', type='string', dest='inputnamespattern', help='Logical files names to process with DQ2Dataset seperated by : or ,  e.g. --inputnames=file1.root:file2.root' )
@@ -87,15 +86,13 @@ p.add_option('--use_shortfilename', action='store_true', help='Use shorter versi
 p.add_option('--split', '-s', action='store', type='int', dest='numsubjobs', help='Number of subjobs, if a job should be splitted. The splitting is done via the list of inputfile')
 p.add_option('--splitfiles', action='store', type='int', dest='numfiles_subjob', help='Number of files per subjob, if a job should be splitted.')
 p.add_option('--splitfilesize', action='store', type='int', dest='filesize', help='Maximum filesize sum per subjob im MB, if a job should be splitted.')
+p.add_option('--nEventsPerSubJob', action='store', type='int', dest='events_per_subjob', help='Split by events. Must be used with --split to go process --split * --nEventsPerSubJob in total')
 p.add_option('--match_subjobs_files', action='store_const', const='match_subjobs_files', dest='match_subjobs_files', help='Match the number of subjobs to the number of inputfiles"')
-p.add_option('--noblacklist', action='store_true', dest='noblacklist', help='Do not use black list of sites create by GangaRobot functional tests')
-p.add_option('--usefax', action='store_true', dest='usefax', help='Allow submission to a site although data is not there for FAX usage')
 
 # Backends
 p.add_option('--lcg', action='store_const', const='lcg', dest='backend', help='Submit job(s) to LCG Grid')
 p.add_option('--cream', action='store_const', const='cream', dest='backend', help='Submit job(s) to a CREAM CE')
 p.add_option('--ng', action='store_const', const='ng', dest='backend', help='Submit job(s) to NorduGrid')
-p.add_option('--panda', action='store_const', const='panda', dest='backend', help='Submit job(s) to Panda')
 p.add_option('--jedi', action='store_const', const='jedi', dest='backend', help='Submit job(s) to jedi')
 p.add_option('--lsf', action='store_const', const='lsf', dest='backend', help='Submit job(s) to the local LSF batch system, e.g. on lxplus')
 p.add_option('--condor', action='store_const', const='condor', dest='backend', help='Submit job(s) to the local Condor batch system')
@@ -184,7 +181,7 @@ opt, args = p.parse_args()
 
 # make panda the default backend
 if not opt.backend:
-    opt.backend = "panda"
+    opt.backend = "jedi"
 
 # Job query
 if opt.jobid:
@@ -214,9 +211,9 @@ if opt.jobid:
 
 if args:
     option_files=[]
-    if args:  
+    if args:
         for option_file in args:
-            if not opt.athena_exe in ['EXE', 'TRF']:        
+            if not opt.athena_exe in ['EXE', 'TRF'] and opt.backend == "jedi":
                 if not os.access(option_file,os.R_OK):
                     print >>sys.stderr, 'ERROR: Cannot read athena job option file: %s' % option_file
                     sys.exit(4)
@@ -280,14 +277,25 @@ if opt.user_area_path:
 if opt.group_area:
     j.application.group_area=opt.group_area
 
-j.application.option_file = option_files
-if opt.options:
-    if opt.athena_exe in ['EXE', 'TRF', 'PYARA']:
-        j.application.options = " %s " %opt.options
-    else:
-        aoptions = opt.options.replace('"',"'''")        
-    	aoptions = opt.options.replace('\'',"'''")
-        j.application.options = "-c '''%s''' " %aoptions
+# TODO: Check if this works with Jedi as well
+if opt.backend != "jedi":
+    # Just pass the command line straight through to Athena
+    # options make this a bit more tricky...
+    j.application.command_line = ' '.join(args)
+    if opt.options:
+        if opt.athena_exe in ['EXE', 'TRF', 'PYARA']:
+            j.application.command_line += " " + opt.options
+        else:
+            j.application.command_line = " -c \"%s\" %s " % (opt.options, j.application.command_line)
+else:
+    j.application.option_file = option_files
+    if opt.options:
+        if opt.athena_exe in ['EXE', 'TRF', 'PYARA']:
+            j.application.options = " %s " %opt.options
+        else:
+            aoptions = opt.options.replace('"',"'''")
+            aoptions = opt.options.replace('\'',"'''")
+            j.application.options = "-c '''%s''' " %aoptions
 
 if opt.user_setupfile:
     j.application.user_setupfile = opt.user_setupfile
@@ -366,7 +374,7 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
                 j.inputdata = ATLASLocalDataset()
 
                 # check for multiple PFN lists
-                if opt.input_pfnlistfile.find(",") == -1:
+                if opt.input_pfnlistfile.find(",") == -1 and not opt.nth_field_as_outdir:
                     j.inputdata.get_dataset_from_list(opt.input_pfnlistfile, no_dir_check=True)
                 else:
                     # first set the local splitter
@@ -380,10 +388,28 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
                            logger.error('File %s does not exist',pfn_list)
                            sys.exit(1)
 
-                        f = open(pfn_list)
+                        pfn_file = open(pfn_list)
+
+                        # check for nth_field option
                         pfn_list = os.path.basename(pfn_list)
-                        j.splitter.output_loc_to_input[pfn_list] = []
-                        for ln in f.readlines():
+                        if opt.nth_field_as_outdir:
+
+                            # grab the field numbers
+                            field_nums = [int(f.strip()) for f in opt.nth_field_as_outdir.split(',')]
+                            toks = pfn_list.split('.')
+                            new_pfn_toks = []
+                            for f in field_nums:
+                                if f > len(toks):
+                                    print >>sys.stderr, "ERROR: Field number '%d' greater than the number of fields in list file name '%s'" % (f, pfn_list)
+                                    sys.exit(5)
+                                new_pfn_toks.append(toks[f])
+
+                            pfn_list = '.'.join(new_pfn_toks)
+
+                        if pfn_list not in j.splitter.output_loc_to_input:
+                            j.splitter.output_loc_to_input[pfn_list] = []
+
+                        for ln in pfn_file.readlines():
                             # ignore comments and blank lines
                             if not ln.strip() or ln.strip()[0] == '#':
                                 continue
@@ -421,8 +447,6 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
 	    if opt.create_poolfilecatalog:
 	        j.inputdata.create_poolfilecatalog=True
 
-        if opt.inputtype=='Castor':
-            j.inputdata = ATLASCastorDataset()
     else:        
         j.inputdata = DQ2Dataset()
         opt.inputtype = 'DQ2'
@@ -563,8 +587,15 @@ if True:
 	j.outputdata.outputdata += opt.extOutFile.split(':')
 
 # splitter
+if opt.events_per_subjob > 0:
+    if not opt.numsubjobs:
+        logger.error('Please specify the number of subjobs with --split when using --nEventsPerSubJob')
+        sys.exit(-1)
+    j.splitter = AthenaSplitterJob()
+    j.splitter.numsubjobs = opt.numsubjobs
+    j.splitter.events_per_subjob = opt.events_per_subjob
 
-if opt.numsubjobs > 0:
+elif opt.numsubjobs > 0:
     if (opt.backend in [ 'lcg' ] or opt.glite or (opt.backend in ['sge'] and config.Athena.ENABLE_SGE_DQ2JOBSPLITTER)):
         j.splitter = DQ2JobSplitter()
 	j.splitter.numsubjobs = opt.numsubjobs
@@ -624,14 +655,6 @@ if opt.match_subjobs_files:
     if opt.outputdata:
         #j.merger=AthenaOutputMerger()
         pass
-
-if opt.noblacklist:
-    if j.splitter and j.splitter.__class__.__name__=='DQ2JobSplitter':
-        j.splitter.use_blacklist=False
-
-if opt.usefax:
-    if j.splitter and j.splitter.__class__.__name__=='DQ2JobSplitter':
-        j.splitter.use_fax=True
 
 # backend
 

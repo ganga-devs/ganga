@@ -1,4 +1,4 @@
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException, GangaTypeError
 from Ganga.GPIDev.Base.Objects import GangaObject, Node
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError, getName
@@ -93,6 +93,8 @@ class GangaListIter(object):
 
     """Simple wrapper around the listiterator"""
 
+    __slots__=('it',)
+
     def __init__(self, it):
         self.it = it
 
@@ -119,26 +121,11 @@ class GangaList(GangaObject):
                                     })
     _enable_config = 1
 
+    _additional_slots = ['_is_a_ref']
+
     def __init__(self):
         self._is_a_ref = False
         super(GangaList, self).__init__()
-
-    def __construct__(self, args):
-
-        #super(GangaList, self).__construct__(args)
-
-        if len(args) == 1:
-            if isType(args[0], (len, GangaList, tuple)):
-                for elem in args[0]:
-                    self._list.expand(self.strip_proxy(elem))
-            elif args[0] is None:
-                self._list = None
-            else:
-                raise GangaException("Construct: Attempting to assign a non list item: %s to a GangaList._list!" % str(args[0]))
-        else:
-            super(GangaList, self).__construct__(args)
-
-        return
 
     # convenience methods
     @staticmethod
@@ -278,7 +265,7 @@ class GangaList(GangaObject):
             raise ReadOnlyObjectError(
                 'object %s is readonly and attribute "%s" cannot be modified now' % (repr(self), getName(self)))
         else:
-            self._getWriteAccess()
+            self._getSessionLock()
             # TODO: BUG: This should only be set _after_ the change has been
             # done! This can lead to data loss!
             self._setDirty()
@@ -291,7 +278,7 @@ class GangaList(GangaObject):
     def __add__(self, obj_list):
         # Savanah 32342
         if not self.is_list(obj_list):
-            raise TypeError('Type %s can not be concatinated to a GangaList' % type(obj_list))
+            raise GangaTypeError('Type %s can not be concatinated to a GangaList' % type(obj_list))
 
         return makeGangaList(self._list.__add__(self.strip_proxy_list(obj_list, True)), preparable=self._is_preparable)
 
@@ -485,19 +472,23 @@ class GangaList(GangaObject):
 
     def append(self, obj, my_filter=True):
         if isType(obj, GangaList):
-            self._list.append(stripProxy(obj))
+            stripped_o = stripProxy(obj)
+            stripped_o._setParent(self._getParent())
+            self._list.append(stripped_o)
             return
         elem = self.strip_proxy(obj, my_filter)
         list_objs = (list, tuple)
         if isType(elem, GangaObject):
-            stripProxy(elem)._setParent(self._getParent())
-            self._list.append(elem)
+            stripped_e = stripProxy(elem)
+            stripped_e._setParent(self._getParent())
+            self._list.append(stripped_e)
         elif isType(elem, list_objs):
             new_list = []
             def my_append(_obj):
                 if isType(_obj, GangaObject):
-                    stripProxy(_obj)._setParent(self._getParent())
-                    return stripProxy(_obj)
+                    stripped_o = stripProxy(_obj)
+                    stripped_o._setParent(self._getParent())
+                    return stripped_o
                 else:
                     return _obj
             self._list.append([my_append(l) for l in elem])

@@ -136,13 +136,6 @@ class GoogleFile(IGangaFile):
 
         self._check_Ganga_folder()
 
-    def __construct__(self, args):
-        if (len(args) != 1) or (not isType(args[0], str)):
-            super(GoogleFile, self).__construct__(args)
-        else:
-            self.namePattern = args[0]
-        self.cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata.pkl')
-
     def _attribute_filter__set__(self, n, v):
         if n == 'localDir':
             return os.path.expanduser(os.path.expandvars(v))
@@ -182,10 +175,15 @@ class GoogleFile(IGangaFile):
         else:
             logger.info('There are no credentials to delete')
 
-    def get(self):
+    def internalCopyTo(self, targetPath):
         """
-        Retrieves files uploaded to GoogleDrive through a job or by a standalone GoogleFile
+        Retrieves files uploaded to GoogleDrive
+        Args:
+            targetPath (str): Target path where the file is copied to
         """
+
+        dir_path = targetPath
+
         service = self._setup_service()
 
         # Checks for wildcards and loops through get procedure for each result,
@@ -196,21 +194,14 @@ class GoogleFile(IGangaFile):
                     resp, content = service._http.request(f.downloadURL)
                     if resp.status == 200:
                         # print 'Status: %s' % resp
-                        logger.info(
-                            "File \'%s\' downloaded succesfully" % f.title)
-                        dir_path = f.localDir
-                        if f.localDir == '':
-                            dir_path = self.localDir
-                            if self.localDir == '':
-                                dir_path = os.getcwd()
+                        logger.info("File \'%s\' downloaded succesfully" % f.title)
                         completeName = os.path.join(dir_path, f.title)
                         with open(completeName, "wb") as gotfile:
                             gotfile.write(content)
 
                     else:
                         # print 'An error occurred: %s' % resp
-                        logger.info(
-                            "Download unsuccessful, file \'%s\' may not exist on GoogleDrive" % f.title)
+                        logger.info("Download unsuccessful, file \'%s\' may not exist on GoogleDrive" % f.title)
                 else:
                     # The file doesn't have any content stored on Drive.
                     logger.info(

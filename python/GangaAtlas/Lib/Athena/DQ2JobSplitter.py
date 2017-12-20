@@ -19,8 +19,8 @@ from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
 from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
 
-from Ganga.GPIDev.Credentials import GridProxy
-gridProxy = GridProxy()
+#from Ganga.GPIDev.Credentials_old import GridProxy
+#gridProxy = GridProxy()
 
 logger = getLogger()
 
@@ -147,7 +147,7 @@ class DQ2JobSplitter(ISplitter):
             
                 # check splitting options
                 if self.numsubjobs <= 0:
-                    raise ApplicationConfigurationError(None,'DQ2JobSplitter must have numsubjobs specified if not using inputdata')
+                    raise ApplicationConfigurationError('DQ2JobSplitter must have numsubjobs specified if not using inputdata')
 
                 subjobs = []
                 skipevent = 0
@@ -194,156 +194,24 @@ class DQ2JobSplitter(ISplitter):
                 return subjobs
     
             else:
-                raise ApplicationConfigurationError(None,'DQ2JobSplitter specifed but no input dataset and no splitter options (%SKIPEVENTS and/or %RNDM) in job.application.options')            
+                raise ApplicationConfigurationError('DQ2JobSplitter specifed but no input dataset and no splitter options (%SKIPEVENTS and/or %RNDM) in job.application.options')
 
-        if job.inputdata._name != 'DQ2Dataset'  and job.inputdata._name != 'AMIDataset' and job.inputdata._name != 'EventPicking':
-            raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset or AMIDataset or EventPicking as input')
+        if job.inputdata._name != 'DQ2Dataset'  and job.inputdata._name != 'EventPicking':
+            raise ApplicationConfigurationError('DQ2 Job Splitter requires a DQ2Dataset or EventPicking as input')
 
         if not job.backend._name in [ 'LCG', 'CREAM', 'Panda', 'NG' ] and not ( job.backend._name in ['SGE'] and config['ENABLE_SGE_DQ2JOBSPLITTER'] ):
-            raise ApplicationConfigurationError(None,'DQ2JobSplitter requires an LCG, CREAM, Panda or NG backend')
+            raise ApplicationConfigurationError('DQ2JobSplitter requires an LCG, CREAM, Panda or NG backend')
         
         if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0 and self.filesize <=0):
-            raise ApplicationConfigurationError(None,"Specify one of the parameters of DQ2JobSplitter for job splitting: numsubjobs, numfiles, numevtsperjob")
+            raise ApplicationConfigurationError("Specify one of the parameters of DQ2JobSplitter for job splitting: numsubjobs, numfiles, numevtsperjob")
  
-        if (self.numevtsperjob > 0 and job.inputdata._name != 'AMIDataset'):
-            raise ApplicationConfigurationError(None,"Event based splitting is supported only for AMIDataset as input dataset type")
         # split options are mutually exclusive
         if ( (self.numfiles > 0 or self.numsubjobs > 0) and self.numevtsperjob > 0):
-            raise ApplicationConfigurationError(None,"Split by files (or subjobs) and events can not be defined simultaneously")
+            raise ApplicationConfigurationError("Split by files (or subjobs) and events can not be defined simultaneously")
 
         if (job.application.max_events > 0 and self.numevtsperjob > 0):
-            raise ApplicationConfigurationError(None,"Split by maximum events and split by events can not be defined simultaneously")
+            raise ApplicationConfigurationError("Split by maximum events and split by events can not be defined simultaneously")
         
-        # check correct usage of inputdata.tagdataset and create a mapping from TAG DS to parent DS
-        tag_dataset_map = {}
-        if job.inputdata and job.inputdata._name == 'DQ2Dataset' and len(job.inputdata.tagdataset) != 0:
-            if len(job.inputdata.dataset) != 0:
-
-                if len(job.inputdata.tagdataset) != 1 and len(job.inputdata.tagdataset) != len(job.inputdata.dataset):
-                    raise ApplicationConfigurationError(None,"There must be a 1->1 mapping of TAG datasets to parent datasets or only a single TAG dataset")
-
-                index = 0
-
-                for inds in job.inputdata.dataset:
-
-                    # expand container
-                    indslist = resolve_container([inds]);
-
-                    for inds2 in indslist:
-                        if len(job.inputdata.tagdataset) > 0:
-                            tag_dataset_map[inds2] = resolve_container( [job.inputdata.tagdataset[index]] )
-                        else:
-                            tag_dataset_map[inds2] = resolve_container( [job.inputdata.tagdataset[0]] )
-
-                        # attempt to match on tid names
-                        if inds2.find('tid') != -1:
-                            tidnum = inds2[ inds2.find('tid'): ]
-
-                            for tagds in tag_dataset_map[inds2]:
-                                if tagds.find(tidnum) != -1:
-                                    tag_dataset_map[inds2] = [tagds]
-                                    break
-                        
-                    index += 1
-
-            else:
-                
-                # Use ELSSI to match TAGs if required - nicked from PsubUtils to give more flexibility.
-
-                # set up X509_USER_PROXY if needed
-                if 'X509_USER_PROXY' in os.environ.keys():
-                    old_proxy = os.environ['X509_USER_PROXY']
-                else:
-                    old_proxy = ''
-
-                os.environ['X509_USER_PROXY'] = gridProxy.location()
-
-                from pandatools import countGuidsClient
-                streamRef = 'StreamAOD_ref'
-                if 'collRefName' in job.application.atlas_run_config['input']:
-                    streamRef = job.application.atlas_run_config['input']['collRefName']
-                elif job.inputdata.tag_coll_ref in ['AOD', 'ESD', 'RAW']:
-                    streamRef = "Stream%s_ref" % job.inputdata.tag_coll_ref
-
-                newTagDSList = []
-
-                for tagDS in job.inputdata.tagdataset:
-                    logger.warning("Using ELSSI DB to match TAG dataset %s to source datasets..." % tagDS)
-                    tagIF = countGuidsClient.countGuidsClient()
-                    tagIF.debug = False
-                    dsNameForLookUp = re.sub('_tid\d+(_\d+)*$','', tagDS)
-
-                    if dsNameForLookUp != tagDS:
-                        logger.warning("Cannot search for individual tid datasets. Defaulting to parent container %s" % dsNameForLookUp)
-
-                    if dsNameForLookUp.endswith("/"):
-                        dsNameForLookUp = dsNameForLookUp[:-1]
-
-                    tagResults = tagIF.countGuids(dsNameForLookUp,"", streamRef + ",StreamTAG_ref")
-                    
-                    if not tagResults:
-                        tagResults = tagIF.countGuids(dsNameForLookUp,"", streamRef + ",StreamTAG")
-                        if not tagResults:
-                            raise ApplicationConfigurationError(None,"Could not find references to TAG dataset %s in ELSSI DB. Try matching from dq2 or using TagPrepare." % dsNameForLookUp)
-                                                        
-                    # NOTE: The folowing should use the TAG info returned by countGuids but ELSSI DB
-                    # is messed up for pre 2011 data. This should be fixed!
-                    
-                    # find the parent datasets
-                    parentGUIDs = []
-                    for g in tagResults[1]:
-                        if not g[1][0] in parentGUIDs:
-                            parentGUIDs.append(g[1][0])
-
-                    from pandatools import Client
-                    parentDSList = Client.listDatasetsByGUIDs(parentGUIDs,'')
-                    parentDSNameList = []
-                    for g in parentDSList[0].keys():
-                        if not parentDSList[0][g][0] in parentDSNameList:
-                            parentDSNameList.append( parentDSList[0][g][0])
-
-                    # attempt to match on tid names with TAG and parent
-                    single_tid = ''
-                    if tagDS.find('tid') != -1:
-                        tidnum = tagDS[ tagDS.find('tid'): ]
-
-                        for ds in parentDSNameList:
-                            if ds.find(tidnum) != -1:
-                                single_tid = ds
-
-                    # Fill the inputdata fields
-                    for g in parentDSList[0].keys():
-                        if single_tid != '' and parentDSList[0][g][0] != single_tid:
-                            continue
-
-                        if not g in job.inputdata.guids:
-                            job.inputdata.guids.append(g)
-                            
-                        if not parentDSList[0][g][0] in job.inputdata.dataset:
-                            job.inputdata.dataset.append(parentDSList[0][g][0])
-                            if single_tid != '':
-                                tag_dataset_map[ parentDSList[0][g][0] ] = [tagDS]
-                            else:
-                                if dsNameForLookUp == tagDS:
-                                    tag_dataset_map[ parentDSList[0][g][0] ] = resolve_container( [dsNameForLookUp ] )                                    
-                                else:
-                                    tag_dataset_map[ parentDSList[0][g][0] ] = resolve_container( [dsNameForLookUp + '/'] )
-
-
-
-                        if not parentDSList[0][g][1] in job.inputdata.names:
-                            job.inputdata.names.append(parentDSList[0][g][1])
-
-                # reset the gird proxy
-                if old_proxy != '':
-                    os.environ['X509_USER_PROXY'] = old_proxy
-                else:
-                    del os.environ['X509_USER_PROXY']
-
-        #AMIDataset
-        if job.inputdata._name == 'AMIDataset':
-            job.inputdata.dataset = job.inputdata.search()
-
         #EventPicking
         if job.inputdata._name == 'EventPicking':
             guid_run_evt_map = job.inputdata.get_pick_dataset()
@@ -353,95 +221,6 @@ class DQ2JobSplitter(ISplitter):
         local_tag = False
         grid_tag = False
 
-        # check for complete TAG mapping between files
-        if job.inputdata.tag_info:
-
-            # check for conflicts with TAG_LOCAL or TAG_COPY
-            if job.inputdata.type in ['TAG_LOCAL', 'TAG_COPY']:
-                raise ApplicationConfigurationError(None, "Cannot provide both tag_info and run as '%s'. Please use one or the other!" % job.inputdata.type)
-            
-            logger.warning('TAG information present - overwriting previous DQ2Dataset definitions')
-
-            job.inputdata.names = []
-            job.inputdata.dataset = []
-
-            # check if FILE_STAGER is used
-            if job.inputdata.type == 'FILE_STAGER':
-                logger.warning("TAG jobs currently can't use the FILE_STAGER. Switching to DQ2_COPY instead.")
-                job.inputdata.type = 'DQ2_COPY'
-
-            # deal with tag_info depending on backend            
-            if job.backend._name == 'Panda':
-
-                # construct a reverse tag map going from AOD -> TAG
-                grid_tag = True
-                rev_tag_map = {}
-                for tag_file in job.inputdata.tag_info:
-
-                    for tag_ref in job.inputdata.tag_info[tag_file]['refs']:
-                        if not tag_ref[0] in rev_tag_map:
-                            rev_tag_map[tag_ref[0]] = {}
-                            rev_tag_map[tag_ref[0]]['dataset'] = tag_ref[1]
-                            rev_tag_map[tag_ref[0]]['guid'] = tag_ref[2]
-                            rev_tag_map[tag_ref[0]]['refs'] = []
-
-                        rev_tag_map[tag_ref[0]]['refs'].append([tag_file, job.inputdata.tag_info[tag_file]['dataset'],job.inputdata.tag_info[tag_file]['guid']])
-
-
-                # construct the tag dataset map for brokering later
-                tag_dataset_map = {}
-                for tag_ref in rev_tag_map:
-                    if not rev_tag_map[tag_ref]['dataset'] in job.inputdata.dataset:
-                        job.inputdata.dataset.append(rev_tag_map[tag_ref]['dataset'])
-                        tag_dataset_map[ rev_tag_map[tag_ref]['dataset'] ] = []
-                        for tag_ref2 in rev_tag_map[tag_ref]['refs']:
-                            if not tag_ref2[1] in tag_dataset_map[ rev_tag_map[tag_ref]['dataset'] ]:
-                                tag_dataset_map[ rev_tag_map[tag_ref]['dataset'] ].append( tag_ref2[1] )
-                        
-                    if not tag_ref in job.inputdata.names:
-                        job.inputdata.names.append(tag_ref)
-
-            else:                
-                # assemble the tag datasets to split over
-                for tag_file in job.inputdata.tag_info:
-
-                    if job.inputdata.tag_info[tag_file]['dataset'] != '' and job.inputdata.tag_info[tag_file]['path'] == '':
-                        grid_tag = True
-
-                        job.inputdata.names.append( tag_file )
-
-                        if not job.inputdata.tag_info[tag_file]['dataset'] in job.inputdata.dataset:
-                            job.inputdata.dataset.append(job.inputdata.tag_info[tag_file]['dataset'])
-
-                        # add to additional datasets list
-                        for tag_ref in job.inputdata.tag_info[tag_file]['refs']:
-                            if job.inputdata.tag_info[tag_file]['dataset'] not in additional_datasets:
-                                additional_datasets[job.inputdata.tag_info[tag_file]['dataset']] = []
-
-                            if not tag_ref[1] in additional_datasets[job.inputdata.tag_info[tag_file]['dataset']]:
-                                additional_datasets[job.inputdata.tag_info[tag_file]['dataset']].append(tag_ref[1])
-
-                    elif job.inputdata.tag_info[tag_file]['path'] != '' and job.inputdata.tag_info[tag_file]['dataset'] == '':
-                        local_tag = True
-                        if not job.inputdata.tag_info[tag_file]['refs'][0][1] in job.inputdata.dataset:
-                            job.inputdata.dataset.append(job.inputdata.tag_info[tag_file]['refs'][0][1])      
-
-                        ## add the referenced files and guids and check for multiple datasets per file
-                        ref_dataset = job.inputdata.tag_info[tag_file]['refs'][0][1]
-                        for ref in job.inputdata.tag_info[tag_file]['refs']:
-                            if ref[1] != ref_dataset:
-                                raise ApplicationConfigurationError(None,'Problems with TAG entry for %s. Multiple datasets referenced for local TAG file.' % tag_file)
-
-                            job.inputdata.names.append( ref[0] )
-                            job.inputdata.guids.append( ref[2] )
-
-                    else:
-                        raise ApplicationConfigurationError(None,'Problems with TAG entry for %s' % tag_file)
-                
-            if grid_tag and local_tag:
-                raise ApplicationConfigurationError(None,'Problems with TAG info - both grid and local TAG files selected.')
-                    
-                    
         # now carry on as before
         orig_numfiles = self.numfiles
         orig_numsubjobs = self.numsubjobs
@@ -475,9 +254,9 @@ class DQ2JobSplitter(ISplitter):
                         allowed_sites = job.backend.requirements.list_sites_cloud( req_str = rel_tag_str )
 
                     if len(allowed_sites) == 0:
-                        raise ApplicationConfigurationError(None,'DQ2JobSplitter could not find any allowed sites. This could be due to blacklisting, not having the required release installed or sites/clouds being manually excluded.')
+                        raise ApplicationConfigurationError('DQ2JobSplitter could not find any allowed sites. This could be due to blacklisting, not having the required release installed or sites/clouds being manually excluded.')
                 else: 
-                    raise ApplicationConfigurationError(None,'DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
+                    raise ApplicationConfigurationError('DQ2JobSplitter requires a cloud or a site to be set - please use the --cloud option, j.backend.requirements.cloud=CLOUDNAME (T0, IT, ES, FR, UK, DE, NL, TW, CA, US, NG) or j.backend.requirements.sites=SITENAME')
                 allowed_sites_all = job.backend.requirements.list_sites(True,True)
                 # Apply GangaRobot blacklist
                 if self.use_blacklist:
@@ -501,14 +280,14 @@ class DQ2JobSplitter(ISplitter):
                     try:
                         db_dataset = job.application.atlas_dbrelease.split(':')[0]
                     except:
-                        raise ApplicationConfigurationError(None,'Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
+                        raise ApplicationConfigurationError('Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
                     from dq2.clientapi.DQ2 import DQ2
                     from dq2.info import TiersOfATLAS
                     dq2=DQ2(force_backend='rucio')
                     try:
                         db_locations = dq2.listDatasetReplicas(db_dataset).values()[0][1]
                     except:
-                        raise ApplicationConfigurationError(None,'Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
+                        raise ApplicationConfigurationError('Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
 
                     # Update allowed_sites to contain all possible spacetokens of a site
                     dq2alternatenames = []
@@ -593,7 +372,7 @@ class DQ2JobSplitter(ISplitter):
             allowed_sites = TiersOfATLAS.getAllSources()
             
         if not allowed_sites:
-            raise ApplicationConfigurationError(None,'DQ2JobSplitter found no allowed_sites for dataset')
+            raise ApplicationConfigurationError('DQ2JobSplitter found no allowed_sites for dataset')
 
         if 'LRZ-LMU_DATADISK' in allowed_sites:
             allowed_sites.append('LRZ-LMU-RUCIOTEST_DATADISK')
@@ -684,7 +463,7 @@ class DQ2JobSplitter(ISplitter):
                         break
                             
                 if len(cloud_set) == 0:
-                    raise ApplicationConfigurationError(None, 'Cloud option \'ALL\' could not find a complete replica of the dataset in any cloud. Please try a specific site or cloud.')
+                    raise ApplicationConfigurationError('Cloud option \'ALL\' could not find a complete replica of the dataset in any cloud. Please try a specific site or cloud.')
                 else:
                     cloud_list = list(cloud_set)
                     if not fav_cloud in cloud_list:
@@ -707,7 +486,7 @@ class DQ2JobSplitter(ISplitter):
         allcontents = {}
         if job.inputdata._name == 'EventPicking' and job.backend._name == 'Panda':
             if (job.inputdata.pick_filter_policy == 'reject'):
-                raise ApplicationConfigurationError(None,"Pick event filter policy 'reject' not supported on Panda backend.")
+                raise ApplicationConfigurationError("Pick event filter policy 'reject' not supported on Panda backend.")
             # create a file containing list of files
             test_area = os.environ['TestArea']
             eventPickFileList = '%s/epFileList_%s.dat' % (test_area, commands.getoutput('uuidgen'))
@@ -753,36 +532,6 @@ class DQ2JobSplitter(ISplitter):
                 self.numfiles = 1
 
             for sites, guids in siteinfo.iteritems():
-
-                # check for TAG datasets at these sites
-                tag_dset_size = 0
-                if len(tag_dataset_map) > 0:
-                    from dq2.clientapi.DQ2 import DQ2
-                    from dq2.info import TiersOfATLAS
-                    dq2=DQ2(force_backend='rucio')
-
-                    logger.warning("Parent dataset %s being used with TAG dataset(s) %s. Brokering now..." % (dataset, tag_dataset_map[dataset] ))
-
-                    for tagDS in tag_dataset_map[dataset]:
-
-                        if not job.inputdata.use_cvmfs_tag:
-                            tag_locations = dq2.listDatasetReplicas(tagDS).values()[0][1]
-                            new_sites = []
-                            dq2alternatenames = []
-                            for site in sites.split(':'):
-                                if site in tag_locations:
-                                    new_sites.append(site)
-                                    dq2alternatenames.append(TiersOfATLAS.getSiteProperty(site,'alternateName'))
-                            for sitename in TiersOfATLAS.getAllSources():
-                                if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
-                                    if TiersOfATLAS.getSiteProperty(sitename,'alternateName') in dq2alternatenames and not sitename in new_sites:
-                                        new_sites.append(sitename)
-                            sites = ':'.join(new_sites)
-
-                        if job.inputdata.tagdataset:
-                            tag_contents = job.inputdata.get_tag_contents(size=True, spec_dataset = tagDS)
-                            tag_dset_size += reduce(operator.add, map(lambda x: x[1][1],tag_contents))
-
                 # preferentially select sites given the cloud priority
                 cloud_pref = config['AnyCloudPreferenceList']
                 if len(cloud_pref) > 0:
@@ -941,7 +690,7 @@ class DQ2JobSplitter(ISplitter):
                 if job.backend._name in ['LCG', 'CREAM' ] and job.application.athena_compile==True and  nrjob > config['MaxJobsDQ2JobSplitterLCGCompile']: 
                     logger.error('!!! The number of allowed subjobs on the %s backend and with athena_compile=True is %s, but DQ2JobSplitter is trying to split into %s subjobs !!!', job.backend._name, config['MaxJobsDQ2JobSplitterLCGCompile'], nrjob )
                     logger.error('!!! Please pre-compile the code locally and use athena_compile=False in a new job submission if more subjobs are required !!!' )
-                    raise ApplicationConfigurationError(None,'!!! Submission stopped !!!')
+                    raise ApplicationConfigurationError('!!! Submission stopped !!!')
 
                 if nrfiles > len(guids):
                     nrfiles = len(guids)
@@ -996,9 +745,6 @@ class DQ2JobSplitter(ISplitter):
                     j.application   = job.application
                     j.application.run_event   = []
 
-                    if len(tag_dataset_map) > 0 and not job.inputdata.tag_info:
-                        j.inputdata.tagdataset = tag_dataset_map[dataset]
-                        
                     if self.numevtsperjob > 0:
                         if  unused_events == 0:
                             nevtstoskip = 0
@@ -1207,7 +953,7 @@ class DQ2JobSplitter(ISplitter):
         if not subjobs:
             logger.error('DQ2JobSplitter did not produce any subjobs! Either the dataset is not present in the cloud or at the site or all chosen sites are black-listed for the moment.')
             logger.error('job.inputdata.dataset %s job.backend.site %s ' % (job.inputdata.dataset, job.backend.site))
-            raise ApplicationConfigurationError(None,'!!! Stopping submission now !!!')
+            raise ApplicationConfigurationError('!!! Stopping submission now !!!')
 
         # reset missing files in case of a previous submission attempt
         self.missing_files = []

@@ -12,7 +12,7 @@ from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.File.File import File
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 
 from Ganga.Utility.logging import getLogger
 
@@ -71,7 +71,7 @@ class Executable(IPrepareApp):
         """
         logger.debug('Running unprepare in Executable app')
         if self.is_prepared is not None:
-            self.decrementShareCounter(self.is_prepared.name)
+            self.decrementShareCounter(self.is_prepared)
             self.is_prepared = None
         self.hash = None
 
@@ -144,7 +144,7 @@ class Executable(IPrepareApp):
         return 1
 
     def configure(self, masterappconfig):
-        from Ganga.Core import ApplicationConfigurationError
+        from Ganga.Core.exceptions import ApplicationConfigurationError
         import os.path
 
         # do the validation of input attributes, with additional checks for exe
@@ -154,19 +154,19 @@ class Executable(IPrepareApp):
             if isinstance(x, str):
                 if exe:
                     if not x:
-                        raise ApplicationConfigurationError(None, 'exe not specified')
+                        raise ApplicationConfigurationError('exe not specified')
 
                     if len(x.split()) > 1:
-                        raise ApplicationConfigurationError(None, 'exe "%s" contains white spaces' % x)
+                        raise ApplicationConfigurationError('exe "%s" contains white spaces' % x)
 
                     dirn, filen = os.path.split(x)
                     if not filen:
-                        raise ApplicationConfigurationError(None, 'exe "%s" is a directory' % x)
+                        raise ApplicationConfigurationError('exe "%s" is a directory' % x)
                     if dirn and not os.path.isabs(dirn) and self.is_prepared is None:
-                        raise ApplicationConfigurationError(None, 'exe "%s" is a relative path' % x)
+                        raise ApplicationConfigurationError('exe "%s" is a relative path' % x)
                     if not os.path.basename(x) == x:
                         if not os.path.isfile(x):
-                            raise ApplicationConfigurationError(None, '%s: file not found' % x)
+                            raise ApplicationConfigurationError('%s: file not found' % x)
 
             else:
                 try:
@@ -174,9 +174,9 @@ class Executable(IPrepareApp):
                     if isinstance(x, int):
                         return
                     if not x.exists():
-                        raise ApplicationConfigurationError(None, '%s: file not found' % x.name)
+                        raise ApplicationConfigurationError('%s: file not found' % x.name)
                 except AttributeError as err:
-                    raise ApplicationConfigurationError(err, '%s (%s): unsupported type, must be a string or File' % (str(x), str(type(x))))
+                    raise ApplicationConfigurationError('%s (%s): unsupported type, must be a string or File' % (str(x), str(type(x))))
 
         validate_argument(self.exe, exe=1)
 

@@ -15,9 +15,9 @@ logger = Ganga.Utility.logging.getLogger()
 
 class PrepRegistry(Registry):
 
-    def __init__(self, name, doc, update_index_time=30):
+    def __init__(self, name, doc):
 
-        super(PrepRegistry, self).__init__(name, doc, update_index_time)
+        super(PrepRegistry, self).__init__(name, doc)
 
     def startup(self):
         self._needs_metadata = True
@@ -37,50 +37,12 @@ class PrepRegistry(Registry):
         pass
 
     def shutdown(self):
-        """Flush and disconnect the repository. Called from Repository_runtime.py """
-        self._hasStarted = True
-        from Ganga.Utility.logging import getLogger
-        self.shouldRun = True
-        ## Aparently this shuts down the metadata repo before we want to shut it down...
-        #super(PrepRegistry, self).shutdown()
-        logger = getLogger()
-        #logger.info("Geting id: %s" %  self.metadata.ids()[-1])
-        self.shareref = self.metadata._objects[self.metadata.ids()[-1]]
-        #logger.info("ShareRef: %s" % getName(self.shareref))
-        self._lock.acquire()
-        ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
-        ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
-        try:
-            stripProxy(self.shareref).closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
-        except Exception as err:
-            logger.error("Shutdown Error in ShareRef")
-            logger.error("Err: %s" % err)
-
-        try:
-            self._safe_shutdown()
-        except Exception as err:
-            logger.debug("Shutdown Error: %s" % err)
-        finally:
-            self._hasStarted = False
-            self._lock.release()
-
-        self.metadata = None
-
-    def _safe_shutdown(self):
-        try:
-            if not self.metadata is None:
-                self.metadata.shutdown()
-        except Exception as x:
-            logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
-        try:
-            self.flush_all()
-        except Exception as x:
-            logger.error("Exception on flushing '%s' registry: %s", self.name, x)
-        #self._hasStarted = False
-        for obj in self._objects.values():
-            # locks are not guaranteed to survive repository shutdown
-            obj._registry_locked = False
-        self.repository.shutdown()
+        """
+        This allows us to clean up after the ShareDir on shutdown
+        """
+        if self.shareref:
+            self.shareref.cleanUpOrphans()
+        super(PrepRegistry, self).shutdown()
 
 class ShareRef(GangaObject):
 
@@ -95,7 +57,7 @@ class ShareRef(GangaObject):
 
     _category = 'sharerefs'
     _name = 'ShareRef'
-    _exportmethods = ['increase', 'decrease', 'ls', 'printtree', 'rebuild', 'lookup']
+    _exportmethods = ['increase', 'decrease', 'counterVal', 'ls', 'printtree', 'rebuild', 'lookup', 'registerForRemoval']
 
     #_parent = None
     default_registry = 'prep'
@@ -103,18 +65,61 @@ class ShareRef(GangaObject):
     def __init__(self):
         super(ShareRef, self).__init__()
         self.name = {}
-        #self._setRegistry(None)
+        self.removal_list = []
 
-    def __construct__(self, args):
-        super(ShareRef, self).__construct__(args)
-        if self.name is None:
-            self.name = {}
-        #self._setRegistry(None)
+    def __setattr__(self, attr, value):
+        actual_value = value
+        if attr == "name":
+            if not actual_value:
+                actual_value = {}
+        super(ShareRef, self).__setattr__(attr, actual_value)
 
     def __getName(self):
         if not hasattr(self, 'name') or self.name is None:
             self.name = {}
         return self.name
+
+    @synchronised
+    def registerForRemoval(self, shareddir):
+        """
+        This registers a given directory for removal on the shutdown of Ganga
+        Args:
+            shareddir (str): This is the directory which we intend to remove recursively when ganga shuts down
+        """
+        if shareddir not in self.removal_list:
+            self.removal_list.append(shareddir)
+
+    @synchronised
+    def cleanUpOrphans(self, orphans=None):
+        """
+        This cleans up the orphan share dir objects on shutdown
+        Args:
+            orphans (list): An optional list of the orphans to remove from the list
+        """
+
+        if orphans:
+            to_remove = orphans
+        else:
+            to_remove = self.removal_list
+
+        for shareddir in to_remove:
+            if os.path.exists(os.path.join(getSharedPath(), shareddir)):
+                try:
+                    shutil.rmtree(os.path.join(getSharedPath(), shareddir))
+                except:
+                    logger.error("Failed to remove Orphaned Shared Dir: %s" % shareddir)
+
+        for shareddir in to_remove:
+            if shareddir in self.removal_list:
+                self.removal_list.remove(shareddir)
+
+    @synchronised
+    def counterVal(self, shareddir):
+        """Return the current counter value for the named shareddir"""
+        from Ganga.GPIDev.Lib.File import getSharedPath
+        shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir.name))
+        basedir = os.path.basename(shareddir.name)
+        return self.__getName()[basedir]
 
     @synchronised
     def increase(self, shareddir, force=False):
@@ -123,31 +128,34 @@ class ShareRef(GangaObject):
         The shareddir must exist for a reference counter to be initialised (unless Force=True).
         Sharedir should be given relative to the user's shared directory repository, which can
         be discovered by calling 'shareref'.
+        Args:
+            shareddir (ShareDir): This is the shareddir which we're registering
+            force (bool): Ignore whether the directory exists on disk or not
         """
         logger.debug("running increase() in prepregistry")
-        self._getWriteAccess()
+        self._getSessionLock()
 
 
         from Ganga.GPIDev.Lib.File import getSharedPath
-        shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
-        basedir = os.path.basename(shareddir)
-        if os.path.isdir(shareddir) and force is False:
+        shareddirname = os.path.join(getSharedPath(), os.path.basename(shareddir.name))
+        basedir = os.path.basename(shareddirname)
+        if os.path.isdir(shareddirname) and force is False:
             if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.__getName()[basedir] = 1
             else:
                 self.__getName()[basedir] += 1
-        elif not os.path.isdir(shareddir) and force is True and basedir is not '':
+        elif not os.path.isdir(shareddirname) and force is True and basedir is not '':
             if basedir not in self.__getName():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
-                self.__getName()[basedir] = 0
+                self.__getName()[basedir] = 1
             else:
                 self.__getName()[basedir] += 1
         else:
-            logger.error('Directory %s does not exist' % shareddir)
+            logger.error('Directory %s does not exist' % shareddirname)
 
         self._setDirty()
-        self._releaseWriteAccess()
+        self._releaseSessionLockAndFlush()
 
     @synchronised
     def decrease(self, shareddir, remove=0):
@@ -155,12 +163,15 @@ class ShareRef(GangaObject):
         of the counter is 0, the shared object will be removed from the metadata, and the files within
         the shared object directory deleted when Ganga exits. If the optional remove parameter is specified
         the shared directory is removed from the table.
+        Args:
+            shareddir (ShareDir): This is the shared directory object to reduce the counter for
+            remove (int): Effectively used as a bool. Should the directory be removed when the count reaches 0
         """
-        self._getWriteAccess()
+        self._getSessionLock()
 
         from Ganga.GPIDev.Lib.File import getSharedPath
-        shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
-        basedir = os.path.basename(shareddir)
+        shareddirname = os.path.join(getSharedPath(), os.path.basename(shareddir.name))
+        basedir = os.path.basename(shareddirname)
         # if remove==1, we force the shareref counter to 0
         try:
             if self.__getName()[basedir] > 0:
@@ -168,14 +179,20 @@ class ShareRef(GangaObject):
                     self.__getName()[basedir] = 0
                 else:
                     self.__getName()[basedir] -= 1
+
+                if self.__getName()[basedir] is 0:
+#                    shutil.rmtree(shareddir, ignore_errors=True)
+                    shareddir.remove()
+                    logger.info("Removed: %s" % shareddir.name)
         # if we try to decrease a shareref that doesn't exist, we just set the
         # corresponding shareref to 0
         except KeyError as err:
             logger.debug("KeyError: %s" % err)
             self.__getName()[basedir] = 0
+            self.cleanUpOrphans([basedir,])
 
         self._setDirty()
-        self._releaseWriteAccess()
+        self._releaseSessionLockAndFlush()
 
     def lookup(self, sharedir, unprepare=False):
         """
@@ -279,7 +296,7 @@ class ShareRef(GangaObject):
         Otherwise, it will be added to the shareref table with a reference count of zero; 
         this results in the directory being deleted upon Ganga exit.
         """
-        self._getWriteAccess()
+        self._getSessionLock()
         # clear the shareref table
         self.name = {}
         lookup_input = []
@@ -343,7 +360,7 @@ class ShareRef(GangaObject):
                 shutil.rmtree(os.path.join(getSharedPath(), this_dir))
 
         self._setDirty()
-        self._releaseWriteAccess()
+        self._releaseSessionLockAndFlush()
 
 
     @staticmethod
@@ -438,7 +455,7 @@ class ShareRef(GangaObject):
                 cleanup_list.append(shareddir)
             ## DISABLED BY RCURRIE
 
-        self._getWriteAccess()
+        self._getSessionLock()
         for element in cleanup_list:
             del self.name[element]
         allnames = copy.deepcopy(self.__getName())

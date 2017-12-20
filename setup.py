@@ -7,11 +7,9 @@ import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
+_gangaVersion = '6.7.4'
 
 def version():
-    ganga_python_dir = os.path.join(file_path, 'python')
-    sys.path.insert(0, ganga_python_dir)
-    from Ganga import _gangaVersion
     return _gangaVersion
 
 
@@ -95,6 +93,7 @@ setup(name='ganga',
           'Programming Language :: Python :: 2.6',
           'Programming Language :: Python :: 2.7',
       ],
+      include_package_data=True,
       package_data={'Ganga': ['Runtime/HEAD_CONFIG.INI']},
       cmdclass={
           'tests': RunTestsCommand,

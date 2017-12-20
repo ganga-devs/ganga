@@ -65,9 +65,18 @@ also a requirements object that can be used to specify memory, architecture, etc
 
     j = Job()
     j.backend = Condor()
-    j.backend.getenv = True  # send the environment to the host
+    j.backend.getenv = "True"  # send the environment to the host
     j.backend.requirements.memory = 1200
     j.submit()
+
+Also note that the ``getenv`` option is defined as a string so in your ``.gangarc``, you would need to set it to:
+
+.. code-block:: python
+
+    [Condor]
+    getenv = 'True'
+
+To avoid Ganga attempting to assign a boolean instead.
 
 Dirac Backend
 -------------
@@ -84,8 +93,8 @@ To run with this, simply do the following:
 
 .. code-block:: python
 
-    [defaults_GridCommand]
-    init = dirac-proxy-init -g <dirac user group> -M
+    [defaults_DiracProxy]
+    group = <dirac user group>
 
 * After this, you can run Ganga with the Dirac plugins setup and pointing to the GridPP Dirac instance by simply running:
 
@@ -111,15 +120,13 @@ After successfully doing this, do the following steps to configure Ganga:
     RUNTIME_PATH = GangaDirac
 
     [LCG]
-    GLITE_ENABLE = True
     GLITE_SETUP = /home/<username>/dirac_ui/bashrc
 
     [DIRAC]
     DiracEnvSource = /home/<username>/dirac_ui/bashrc
 
-    [defaults_GridCommand]
-    info = dirac-proxy-info
-    init = dirac-proxy-init -g <dirac user group> -M
+    [defaults_DiracProxy]
+    group = <dirac user group>
 
 
 Testing Dirac Submission Through Ganga

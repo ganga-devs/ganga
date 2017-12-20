@@ -3,7 +3,7 @@
 from copy import deepcopy
 import tempfile
 import fnmatch
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 from Ganga.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
 from Ganga.GPIDev.Base import GangaObject
@@ -82,7 +82,7 @@ class LHCbDataset(GangaDataset):
                 for this_file in files:
                     self.files.append(deepcopy(this_file))
             elif isType(files, IGangaFile):
-                self.files.append(deepcopy(this_file))
+                self.files.append(deepcopy(files))
             elif isType(files, (list, tuple, GangaList)):
                 new_list = []
                 for this_file in files:
@@ -95,7 +95,7 @@ class LHCbDataset(GangaDataset):
                     new_list.append(new_file)
                 self.files.extend(new_list)
             elif type(files) is str:
-                self.files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+                self.files.append(string_datafile_shortcut_lhcb(files, None), False)
             else:
                 raise GangaException("Unknown object passed to LHCbDataset constructor!")
 
@@ -111,32 +111,6 @@ class LHCbDataset(GangaDataset):
         self.persistency = persistency
         self.depth = depth
         logger.debug("Dataset Created")
-
-    def __construct__(self, args):
-        logger.debug("__construct__")
-        self.files = []
-        if (len(args) != 1):
-            super(LHCbDataset, self).__construct__(args[1:])
-
-        #logger.debug("__construct__: %s" % str(args))
-
-        if len(args) == 0:
-            return
-
-        self.files = []
-        if type(args[0]) is str:
-            this_file = string_datafile_shortcut_lhcb(args[0], None)
-            self.files.append(args[0])
-        else:
-            for file_arg in args[0]:
-                if type(file_arg) is str:
-                    this_file = string_datafile_shortcut_lhcb(file_arg, None)
-                else:
-                    this_file = file_arg
-                self.files.append(file_arg)
-        # Equally as expensive
-        #logger.debug( "Constructing dataset len: %s\n%s" % (str(len(self.files)), str(self.files) ) )
-        logger.debug("Constructing dataset len: %s" % str(len(self.files)))
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
@@ -157,8 +131,8 @@ class LHCbDataset(GangaDataset):
         'Returns the replicas for all files in the dataset.'
         lfns = self.getLFNs()
         cmd = 'getReplicas(%s)' % str(lfns)
-        result = get_result(cmd, 'LFC query error', 'Could not get replicas.')
-        return result['Value']['Successful']
+        result = get_result(cmd, 'LFC query error. Could not get replicas.')
+        return result['Successful']
 
     def hasLFNs(self):
         'Returns True is the dataset has LFNs and False otherwise.'
@@ -244,6 +218,8 @@ class LHCbDataset(GangaDataset):
             _file = getDataFile(this_f)
             if _file is None:
                 _file = this_f
+            if not isinstance(_file, IGangaFile):
+                raise GangaException('Cannot extend LHCbDataset based on this object type: %s' % type(_file) )
             myName = _file.namePattern
             from GangaDirac.Lib.Files.DiracFile import DiracFile
             if isType(_file, DiracFile):
@@ -265,12 +241,12 @@ class LHCbDataset(GangaDataset):
             return lfns
         for f in self.files:
             if isDiracFile(f):
-                subfiles = f.getSubFiles()
+                subfiles = f.subfiles
                 if len(subfiles) == 0:
                     lfns.append(f.lfn)
                 else:
-                    for file in subfiles:
-                        lfns.append(file.lfn)
+                    for _file in subfiles:
+                        lfns.append(_file.lfn)
 
         #logger.debug( "Returning LFNS:\n%s" % str(lfns) )
         logger.debug("Returning #%s LFNS" % str(len(lfns)))
@@ -319,7 +295,7 @@ class LHCbDataset(GangaDataset):
         tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
         cmd = 'getLHCbInputDataCatalog(%s,%d,"%s","%s")' \
               % (str(lfns), depth, site, tmp_xml.name)
-        result = get_result(cmd, 'LFN->PFN error', 'XML catalog error.')
+        result = get_result(cmd, 'LFN->PFN error. XML catalog error.')
         xml_catalog = tmp_xml.read()
         tmp_xml.close()
         return xml_catalog
@@ -364,8 +340,8 @@ class LHCbDataset(GangaDataset):
                 sdatasetsnew += """ \"LFN:%s\",""" % f.lfn
                 sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.lfn, dtype_str)
             else:
-                sdatasetsnew += """ \"PFN:%s\",""" % f.namePattern
-                sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (f.namePattern, dtype_str)
+                sdatasetsnew += """ \"%s\",""" % f.accessURL()[0]
+                sdatasetsold += """ \"DATAFILE='%s' %s\",""" % (f.accessURL()[0], dtype_str)
         if sdatasetsold.endswith(","):
             if self.persistency == 'ROOT':
                 sdatasetsnew = sdatasetsnew[:-1] + """\n], clear=True)"""
@@ -404,7 +380,7 @@ class LHCbDataset(GangaDataset):
         other_files = self._checkOtherFiles(other)
         files = set(self.getFullFileNames()).difference(other_files)
         data = LHCbDataset()
-        data.__construct__([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -421,10 +397,10 @@ class LHCbDataset(GangaDataset):
     def symmetricDifference(self, other):
         '''Returns a new data set w/ files in either this or other but not
         both.'''
-        other_files = other.checkOtherFiles(other)
+        other_files = other._checkOtherFiles(other)
         files = set(self.getFullFileNames()).symmetric_difference(other_files)
         data = LHCbDataset()
-        data.__construct__([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -433,7 +409,7 @@ class LHCbDataset(GangaDataset):
         other_files = other._checkOtherFiles(other)
         files = set(self.getFullFileNames()).intersection(other_files)
         data = LHCbDataset()
-        data.__construct__([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -442,7 +418,7 @@ class LHCbDataset(GangaDataset):
         other_files = self._checkOtherFiles(other)
         files = set(self.getFullFileNames()).union(other_files)
         data = LHCbDataset()
-        data.__construct__([list(files)])
+        data.extend(list(files))
         data.depth = self.depth
         return data
 
@@ -450,7 +426,7 @@ class LHCbDataset(GangaDataset):
         'Returns the bookkeeping metadata for all LFNs. '
         logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
-        b = get_result(cmd, 'Error removing replica', 'Replica rm error.')
+        b = get_result(cmd, 'Error removing replica. Replica rm error.')
         return b
 
     # def pop(self,file):
@@ -534,11 +510,11 @@ def string_dataset_shortcut(files, item):
                      if isinstance(stripProxy(i), ObjectMetaclass)
                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))
                      and 'inputdata' in stripProxy(i)._schema.datadict]
-    if type(files) not in [list, tuple]:
+    if type(files) not in [list, tuple, GangaList]:
         return None
     if item in inputdataList:
         ds = LHCbDataset()
-        ds.__construct__([files])
+        ds.extend(files)
         return ds
     else:
         return None  # used to be c'tors, but shouldn't happen now

@@ -2,7 +2,7 @@ import commands, exceptions, random, re, sys, time
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.Core import BackendError
+from Ganga.Core.exceptions import BackendError
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getDatasets
 
@@ -144,7 +144,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 self.dbrelease_dataset = m.group(1)
                 self.dbrelease = m.group(2)
             else:
-                raise ApplicationConfigurationError(None, "Error retrieving LATEST DBRelease. Try setting application.dbrelease manually.")
+                raise ApplicationConfigurationError("Error retrieving LATEST DBRelease. Try setting application.dbrelease manually.")
         else:
             self.dbrelease_dataset = app.dbrelease_dataset
             self.dbrelease = app.dbrelease
@@ -224,10 +224,18 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 itype = app.input_type
             else:
                 itype = m.group(5)
-            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
-                jspec.jobParameters += ' --input%sFile %s' % (itype, ','.join(job.inputdata.names))
+
+            # Change inputfile parameter depending on input type
+            if job.backend.requirements.transfertype.upper() == 'DIRECT':
+                tmp_in_file = "@tmpin_" + job.inputdata.dataset[0].split(':')[-1]
             else:
-                jspec.jobParameters += ' input%sFile=%s' % (itype, ','.join(job.inputdata.names))
+                tmp_in_file = ','.join(job.inputdata.names)
+
+            # set the inputfile parameter
+            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
+                jspec.jobParameters += ' --input%sFile %s' % (itype, tmp_in_file)
+            else:
+                jspec.jobParameters += ' input%sFile=%s' % (itype, tmp_in_file)
 
         # Log files.
         lfspec = FileSpec()

@@ -13,7 +13,8 @@ from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Lib.Job import JobStatusError
-from Ganga.Core import BackendError, Sandbox
+from Ganga.Core.exceptions import BackendError
+from Ganga.Core import Sandbox
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Core import FileWorkspace
@@ -24,7 +25,7 @@ from Ganga.Utility.logging import getLogger
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
 
-from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
 logger = getLogger()
 config = getConfig('Jedi')
@@ -280,7 +281,7 @@ class Jedi(IBackend):
         from pandatools import Client
         from pandatools import MiscUtils
 
-        from Ganga.Core import IncompleteJobSubmissionError
+        from Ganga.Core.exceptions import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
         job = self.getJobObject()
@@ -432,8 +433,6 @@ class Jedi(IBackend):
                     do_master_update = False
 
                 tot_num_mjobs += num_mjobs
-                ## for some reason, one should call job._commit() to store panda jobs into the repository
-                job._commit()
                 logger.debug('Job %s retrieved %d Panda jobs' % (job.getFQID('.'),tot_num_mjobs) )
             # Now monitor the already attached Panda jobs
             else:
@@ -565,7 +564,6 @@ class Jedi(IBackend):
             j.status = 'submitted'
             j.time.timenow('submitted')
             master_job.subjobs.append(j)
-        master_job._commit()
         return True
 
     def get_stats(self):

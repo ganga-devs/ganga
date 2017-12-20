@@ -12,7 +12,8 @@ import errno
 import copy
 import threading
 
-from Ganga.Core.GangaRepository.SessionLock import SessionLockManager
+from Ganga.Core.GangaRepository.SessionLock import SessionLockManager, dry_run_unix_locks
+from Ganga.Core.GangaRepository.FixedLock import FixedLockManager
 
 import Ganga.Utility.logging
 
@@ -27,6 +28,8 @@ from Ganga.GPIDev.Base.Objects import Node
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
+
+from Ganga.Utility.Config import getConfig
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -59,7 +62,7 @@ def check_app_hash(obj):
         hashable_app = None
 
     if hashable_app is not None:
-        if not hashable_app.calc_hash(verify=True):
+        if not hashable_app.calc_hash(True):
             try:
                 logger.warning("%s" % hashable_app)
                 logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (getName(hashable_app), getName(obj), obj._registry_id))
@@ -224,12 +227,28 @@ class GangaRepositoryLocal(GangaRepository):
             self.to_file = pickle_to_file
             self.from_file = pickle_from_file
         else:
-            raise RepositoryError(self.repo, "Unknown Repository type: %s" % self.registry.type)
-        self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
+            raise RepositoryError(self, "Unknown Repository type: %s" % self.registry.type)
+        if getConfig('Configuration')['lockingStrategy'] == "UNIX":
+            # First test the UNIX locks are working as expected
+            try:
+                dry_run_unix_locks(self.lockroot)
+            except Exception as err:
+                # Locking has not worked, lets raise an error
+                logger.error("Error: %s" % err)
+                msg="\n\nUnable to launch due to underlying filesystem not working with unix locks."
+                msg+="Please try launching again with [Configuration]lockingStrategy=FIXED to start Ganga without multiple session support."
+                raise RepositoryError(self, msg)
+
+            # Locks passed test so lets continue
+            self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
+        elif getConfig('Configuration')['lockingStrategy'] == "FIXED":
+            self.sessionlock = FixedLockManager(self, self.lockroot, self.registry.name)
+        else:
+            raise RepositoryError(self, "Unable to launch due to unknown file-locking Strategy: \"%s\"" % getConfig('Configuration')['lockingStrategy'])
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary
         # of errors
-        self.update_index(verbose=True, firstRun=True)
+        self.update_index(True, True)
         logger.debug("GangaRepositoryLocal Finished Startup")
 
     def shutdown(self):
@@ -241,7 +260,7 @@ class GangaRepositoryLocal(GangaRepository):
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
         for k in self._fully_loaded:
             try:
-                self.index_write(k, shutdown=True)
+                self.index_write(k, True)
             except Exception as err:
                 logger.error("Warning: problem writing index object with id %s" % k)
         try:
@@ -350,6 +369,8 @@ class GangaRepositoryLocal(GangaRepository):
             False if not present
         Raise RepositoryError"""
         try:
+            if not os.path.exists(self.root):
+                os.makedirs(self.root)
             obj_chunks = [d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
         except OSError as err:
             logger.debug("get_index_listing Exception: %s" % err)
@@ -489,7 +510,7 @@ class GangaRepositoryLocal(GangaRepository):
                 try:
                     os.remove(os.path.join(self.root, 'master.idx'))
                 except OSError as x:
-                    Ganga.Utility.logging.log_user_exception(debug=True)
+                    Ganga.Utility.logging.log_user_exception(True)
         except Exception as err:
             logger.debug("write_error2: %s" % err)
             Ganga.Utility.logging.log_unknown_exception()
@@ -616,7 +637,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         if len(changed_ids) != 0:
             isShutdown = not firstRun
-            self._write_master_cache(shutdown=isShutdown)
+            self._write_master_cache(isShutdown)
 
         return changed_ids
 
@@ -701,7 +722,7 @@ class GangaRepositoryLocal(GangaRepository):
                             safe_save(sfn, split_cache[i], self.to_file)
                             split_cache[i]._setFlushed()
                     # Now generate an index file to take advantage of future non-loading goodness
-                    tempSubJList = SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False, parent=obj)
+                    tempSubJList = SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False, obj)
                     ## equivalent to for sj in job.subjobs
                     tempSubJList._setParent(obj)
                     job_dict = {}
@@ -778,44 +799,6 @@ class GangaRepositoryLocal(GangaRepository):
             except (OSError, IOError, XMLFileError) as x:
                 raise RepositoryError(self, "Error of type: %s on flushing id '%s': %s" % (type(x), this_id, x))
 
-    def is_loaded(self, this_id):
-        """
-        Has "this_id" been loaded from disk already
-        Check self.objects for the ._data sttribute
-        Args:
-            this_id (int): This is the id we want to check has been fully loaded from disk
-        """
-        return (this_id in self.objects) and (self.objects[this_id]._data is not None)
-
-    def count_nodes(self, this_id):
-        """
-        Count the number of nodes in "this_id" of self.objects"
-        Is this used any more?
-        Args:
-            this_id (int): This is the ID we will look for all subnodes of on disk, i.e. subjobs, etc
-        """
-        node_count = 0
-        fn = self.get_fn(this_id)
-
-        ld = os.listdir(os.path.dirname(fn))
-        i = 0
-        while str(i) in ld:
-            sfn = os.path.join(os.path.dirname(fn), str(i), self.dataFileName)
-            if os.path.exists(sfn):
-                node_count = node_count + 1
-            i += 1
-
-        return node_count
-
-    def _actually_loaded(self, this_id):
-        """
-        Return if "this_id" is in the _full_loaded dictionary of objects loaded from XML by this class
-        This is different to is_loaded as it checks for actual read operations
-        Args:
-            this_id (int): This is an integer corresponding to a key in the _fully_loaded dict (possibly objects too)
-        """
-        return this_id in self._fully_loaded
-
     def _check_index_cache(self, obj, this_id):
         """
         Checks the index cache of "this_id" against the index cache generated from the "obj"ect
@@ -857,7 +840,7 @@ class GangaRepositoryLocal(GangaRepository):
                 # most likely the result of another ganga
                 # process modifying the repo
 
-    def _must_actually_load_xml(self, fn, this_id, load_backup, has_children, tmpobj):
+    def _parse_xml(self, fn, this_id, load_backup, has_children, tmpobj):
         """
         If we must actually load the object from disk then we end up here.
         This replaces the attrs of "objects[this_id]" with the attrs from tmpobj
@@ -893,7 +876,7 @@ class GangaRepositoryLocal(GangaRepository):
         if has_children:
             logger.debug("Adding children")
             # NB Keep be a SetSchemaAttribute to bypass the list manipulation which will put this into a list in some cases 
-            obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, parent=obj))
+            obj.setSchemaAttribute(self.sub_split, SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup, obj))
         else:
             if obj._schema.hasAttribute(self.sub_split):
                 # Infinite loop if we use setattr btw
@@ -918,9 +901,9 @@ class GangaRepositoryLocal(GangaRepository):
         if this_id not in self._fully_loaded:
             self._fully_loaded[this_id] = obj
 
-    def _actually_load_xml(self, fobj, fn, this_id, load_backup):
+    def _load_xml_from_obj(self, fobj, fn, this_id, load_backup):
         """
-        This is the method which will load the job from fn using the fobj using the self.from_file method and _must_actually_load_xml is called to replace the
+        This is the method which will load the job from fn using the fobj using the self.from_file method and _parse_xml is called to replace the
         self.objects[this_id] with the correct attributes. We also preseve knowledge of if we're being asked to load a backup or not
         Args:
             fobj (file handler): This is the file handler for the fn
@@ -936,6 +919,8 @@ class GangaRepositoryLocal(GangaRepository):
 
         if len(errs) > 0:
             logger.error("#%s Error(s) Loading File: %s" % (len(errs), fobj.name))
+            for err in errs:
+                logger.error("err: %s" % err)
             raise InaccessibleObjectError(self, this_id, errs[0])
 
         logger.debug("Checking children: %s" % str(this_id))
@@ -946,7 +931,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         logger.debug("Found children: %s" % str(has_children))
 
-        self._must_actually_load_xml(fn, this_id, load_backup, has_children, tmpobj)
+        self._parse_xml(fn, this_id, load_backup, has_children, tmpobj)
 
         if hasattr(self.objects[this_id], self.sub_split):
             sub_attr = getattr(self.objects[this_id], self.sub_split)
@@ -1035,7 +1020,7 @@ class GangaRepositoryLocal(GangaRepository):
                 has_loaded_backup = False
 
             try:
-                fobj, has_loaded_backup2 = self._open_xml_file(fn, this_id, _copy_backup=True)
+                fobj, has_loaded_backup2 = self._open_xml_file(fn, this_id, True)
                 if has_loaded_backup2:
                     has_loaded_backup = has_loaded_backup2
             except Exception as err:
@@ -1046,7 +1031,7 @@ class GangaRepositoryLocal(GangaRepository):
                 raise
 
             try:
-                self._actually_load_xml(fobj, fn, this_id, load_backup)
+                self._load_xml_from_obj(fobj, fn, this_id, load_backup)
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % err)
                 logger.error("Adding id: %s to Corrupt IDs will not attempt to re-load this session" % this_id)
@@ -1104,7 +1089,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         # try loading backup
         try:
-            self.load([this_id], load_backup=True)
+            self.load([this_id], True)
             logger.warning("Object '%s' #%s loaded from backup file - recent changes may be lost." % (self.registry.name, this_id))
             return True
         except Exception as err2:

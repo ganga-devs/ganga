@@ -23,9 +23,9 @@ str_bad = markup("bad", overview_colours["bad"])
 
 class TaskRegistry(Registry):
 
-    def __init__(self, name, doc, update_index_time=30):
+    def __init__(self, name, doc):
 
-        super(TaskRegistry, self).__init__( name, doc, update_index_time=update_index_time)
+        super(TaskRegistry, self).__init__( name, doc )
 
         self._main_thread = None
 
@@ -121,7 +121,7 @@ class TaskRegistry(Registry):
         self._main_thread.start()
 
         # create a registry flusher
-        self.flush_thread = RegistryFlusher(self)
+        self.flush_thread = RegistryFlusher(self, 'TaskRegistryFlusher')
         self.flush_thread.start()
 
     def shutdown(self):
@@ -268,13 +268,6 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         tasks('10.2')) : same as above
         """
         return _wrap(stripProxy(self).__call__(x))
-
-    def __getslice__(self, i1, i2):
-        """ Get a slice. Examples:
-        tasks[2:] : get first two tasks,
-        tasks[-10:] : get last 10 tasks.
-        """
-        return _wrap(stripProxy(self).__getslice__(i1, i2))
 
     def __getitem__(self, x):
         """ Get a job by positional index. Examples:

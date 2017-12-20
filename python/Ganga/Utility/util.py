@@ -13,7 +13,7 @@
 
 def empty_obj(klass):
     class Empty(klass):
-
+        __slots__ = ('__class__',)
         def __init__(self): pass
     newcopy = Empty()
     newcopy.__class__ = klass
@@ -25,7 +25,7 @@ def empty_obj(klass):
 
 def empty_class(klass):
     class _Empty(klass):
-
+        __slots__ = list()
         def __init__(self): pass
     return _Empty
 
@@ -153,11 +153,11 @@ def hostname():
     if hostname._hostname_cache == '':
         import socket
         try:
-            hostname._hostname_cache = socket.gethostbyaddr(hostname_tmp)[0]
+            hostname._hostname_cache = socket.getfqdn()
         # [bugfix #20333]:
         # while working offline and with an improper /etc/hosts configuration
         # the localhost cannot be resolved
-        except:
+        except socket.error:
             hostname._hostname_cache = 'localhost'
 
     return hostname._hostname_cache
@@ -228,7 +228,7 @@ class GenericWrapper(object):
 
 
 class Proxy(object):
-
+    __slots__=('_obj',)
     def __init__(self, obj):
         super(Proxy, self).__init__(obj)
         self._obj = obj

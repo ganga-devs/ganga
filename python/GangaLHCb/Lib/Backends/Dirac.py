@@ -2,13 +2,13 @@ from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
-from Ganga.Core import BackendError
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException, BackendError
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
+from Ganga.GPIDev.Credentials              import require_credential
 
 
 class Dirac(DiracBase):
@@ -26,28 +26,31 @@ class Dirac(DiracBase):
     def _addition_sandbox_content(self, subjobconfig):
         input_sandbox = []
         j = self.getJobObject()
-        for f in j.inputfiles.get(DiracFile):
-            if f.lfn == '':
-                raise GangaException(
-                    'Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' % f.namePattern)
-            else:
-                input_sandbox.append('LFN:' + f.lfn)
+        if hasattr(j.inputfiles, 'get'):
+            for f in j.inputfiles.get(DiracFile):
+                if f.lfn == '':
+                    raise GangaException(
+                        'Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' % f.namePattern)
+                else:
+                    input_sandbox.append('LFN:' + f.lfn)
         return input_sandbox
 
     def _setup_subjob_dataset(self, dataset):
         return LHCbDataset(files=[DiracFile(lfn=f) for f in dataset])
 
+    @require_credential
     def checkSites(self):
         cmd = 'checkSites()'
-        result = execute(cmd)
+        result = execute(cmd, cred_req=self.credential_requirements)
         if not result_ok(result):
             logger.warning('Could not obtain site info: %s' % str(result))
             return
         return result.get('Value', {})
 
+    @require_credential
     def checkTier1s(self):
         cmd = 'checkTier1s()'
-        result = execute(cmd)
+        result = execute(cmd, cred_req=self.credential_requirements)
         if not result_ok(result):
             logger.warning('Could not obtain Tier-1 info: %s' % str(result))
             return

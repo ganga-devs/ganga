@@ -10,7 +10,7 @@ import os
 import re
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.Utility.files import expandfilename
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 import Ganga.Utility.logging
@@ -64,15 +64,6 @@ class PhysicalFile(LocalFile):
             "!!! PhysicalFile has been deprecated, this is now just a wrapper to the LocalFile object")
         logger.warning(
             "!!! Please update your scripts before PhysicalFile is removed")
-
-    def __construct__(self, args):
-        if (len(args) != 1) or (type(args[0]) is not type('')):
-            super(PhysicalFile, self).__construct__(args)
-        else:
-            self.name = full_expand_filename(args[0])
-            val = full_expand_filename(args[0])
-            self.localDir = os.path.dirname(val)
-            self.namePattern = os.path.basename(val)
 
     def _attribute_filter__set__(self, n, v):
         if n == 'name':

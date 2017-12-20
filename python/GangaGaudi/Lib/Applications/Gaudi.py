@@ -5,7 +5,7 @@ import tempfile
 import gzip
 import pickle
 from Ganga.GPIDev.Schema import SimpleItem, FileItem
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core.exceptions import ApplicationConfigurationError
 import Ganga.Utility.logging
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir
@@ -190,7 +190,7 @@ class Gaudi(GaudiBase):
                 for _f in nonexistentOptFiles:
                     tmpmsg += "'%s', " % _f.name
                 msg = tmpmsg[:-2] + ']'
-                raise ApplicationConfigurationError(None, msg)
+                raise ApplicationConfigurationError(msg)
 
     def master_configure(self):
         '''Handles all common master_configure actions.'''

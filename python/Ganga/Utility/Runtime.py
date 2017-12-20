@@ -13,6 +13,8 @@
 #                    configuration parameter defining search path
 #                    to be passed as arument
 
+from Ganga.Core.exceptions import PluginError
+
 from Ganga.Utility.util import importName
 
 #from Ganga.Utility.external.ordereddict import oDict
@@ -100,6 +102,8 @@ def getSearchPath(configPar="SCRIPTS_PATH"):
 
 class RuntimePackage(object):
 
+    __slots__ = ('path', 'name', 'syspath', 'mod', 'modpath', 'config')
+
     def __init__(self, path):
         import os.path
         import sys
@@ -120,7 +124,7 @@ class RuntimePackage(object):
             if allRuntimes[self.name].path != self.path:
                 logger.warning('possible clash: runtime "%s" already exists at path "%s"', self.name, allRuntimes[self.name].path)
 
-        allRuntimes[self.name] = self
+        allRuntimes[self.path] = self
 
         if self.syspath:
             # FIXME: not sure if I really want to modify sys.path (side effects!!)
@@ -194,11 +198,11 @@ class RuntimePackage(object):
             template_pathname = os.path.join(self.modpath, 'templates')
             if os.path.isdir(template_pathname):
                 establishNamedTemplates(template_registryname,
-                                        template_pathname,
-                                        "Registry for '%s' NamedTemplates" % self.name.strip(
-                                            'Ganga'),
-                                        file_ext=file_ext,
-                                        pickle_files=pickle_files)
+       template_pathname,
+       "Registry for '%s' NamedTemplates" % self.name.strip(
+           'Ganga'),
+       file_ext=file_ext,
+       pickle_files=pickle_files)
         except:
             logger.debug('failed to load named template registry')
             raise
@@ -234,6 +238,42 @@ class RuntimePackage(object):
             logger.debug("no postBootstrapHook() in runtime package %s", self.name)
 
 
+def initSetupRuntimePackages():
+    """ Short wrapper function to init and setup Runtime Plugins """
+    initRuntimePackages()
+
+    # perform any setup of runtime packages
+    logger.debug('Setting up Runtime Packages')
+    for r in allRuntimes.values():
+        r.standardSetup()
+
+
+def initRuntimePackages():
+    """
+    initialize runtime packages, they are registered in allRuntimes
+    dictionary automatically
+    """
+    import Ganga.Utility.files
+    from Ganga.Utility.Config.Config import getConfig
+    config = getConfig('Configuration')
+
+    #if config['IgnoreRuntimeWarnings']:
+    #    import warnings
+    #    warnings.filterwarnings(action="ignore", category=RuntimeWarning)
+
+
+    import inspect
+    import os.path
+
+    GangaRootPath = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../..'))
+    def transform(x):
+        return os.path.normpath(Ganga.Utility.files.expandfilename(os.path.join(GangaRootPath,x)))
+
+    paths = map(transform, filter(None, map(lambda x: os.path.expandvars(os.path.expanduser(x)), config['RUNTIME_PATH'].split(':'))))
+
+    for path in paths:
+        r = RuntimePackage(path)
+
 
 def loadPlugins(environment):
     """
@@ -243,7 +283,9 @@ def loadPlugins(environment):
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
     env_dict = environment.__dict__
-    for n, r in zip(allRuntimes.keys(), allRuntimes.values()):
+    logger.debug("Loading: %s PLUGINS" % str(allRuntimes.keys()))
+    for n, r in allRuntimes.iteritems():
+        logger.debug("Bootstrapping: %s" % n)
         try:
             r.bootstrap(env_dict)
         except Exception as err:
@@ -252,17 +294,19 @@ def loadPlugins(environment):
             raise err
         try:
             r.loadNamedTemplates(env_dict, Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_ext'],
-                                           Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
+          Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
         except Exception as err:
             logger.error('problems with loading Named Templates for %s', n)
             logger.error('Reason: %s' % str(err))
 
-    for r in allRuntimes.values():
+    for n, r in allRuntimes.iteritems():
+        logger.debug("Loading: %s" % n)
         try:
             r.loadPlugins()
         except Exception as err:
-            logger.error('problems with loading Named Templates for %s', n)
+            logger.error('problems with loading Plugin %s', n)
             logger.error('Reason: %s' % str(err))
+            raise PluginError("Failed to load plugin: %s. Ganga will now shutdown to prevent job corruption." % n)
 
 def autoPopulateGPI(my_interface=None):
     """
@@ -316,7 +360,8 @@ def setPluginDefaults(my_interface=None):
     try:
         batch_default = allPlugins.find('backends', batch_default_name)
     except Exception as x:
-        raise Ganga.Utility.Config.ConfigError('Check configuration. Unable to set default Batch backend alias (%s)' % str(x))
+        from Ganga.Utility.Config import ConfigError
+        raise ConfigError('Check configuration. Unable to set default Batch backend alias (%s)' % str(x))
     else:
         allPlugins.add(batch_default, 'backends', 'Batch')
         from Ganga.Runtime.GPIexport import exportToInterface

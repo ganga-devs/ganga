@@ -2,7 +2,7 @@
 # Change LogicalFile to be a wrapper for the DiracFile,
 # make sure DiracFile replicates required functionality and add any
 # possible translation layer here
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.Utility.logging import getLogger
@@ -55,23 +55,10 @@ class LogicalFile(DiracFile):
 
         self.name = name
 
-        logger.warning(
-            "!!! LogicalFile has been deprecated, this is now just a wrapper to the DiracFile object")
-        logger.warning(
-            "!!! Please update your scripts before LogicalFile is removed")
+        logger.warning("!!! LogicalFile has been deprecated, this is now just a wrapper to the DiracFile object")
+        logger.warning("!!! Please update your scripts before LogicalFile is removed")
 
-        self._setLFNnamePattern(_lfn=self.name, _namePattern='')
-
-    def __construct__(self, args):
-
-        if len(args) >= 1:
-            self.name = args[0]
-            self._setLFNnamePattern(_lfn=self.name, _namePattern='')
-
-        if (len(args) != 1) or (type(args[0]) is not type('')):
-            super(LogicalFile, self).__construct__(args)
-        else:
-            self.name = strip_filename(args[0])
+        self._setLFNnamePattern(lfn=self.name, namePattern='')
 
     def __setattr__(self, name, value):
 

@@ -5,22 +5,24 @@ from __future__ import absolute_import
 # $Id: LocalFile.py,v 0.1 2011-09-29 15:40:00 idzhunov Exp $
 ##########################################################################
 
+import errno
+import re
+import os
+from os import path
+import copy
+import shutil
+from pipes import quote
+import glob
+
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File import FileBuffer
+from Ganga.Utility.files import expandfilename
 
 import Ganga.Utility.logging
-
-import errno
-import re
-import os
-import os.path
-import copy
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -35,11 +37,10 @@ class LocalFile(IGangaFile):
                                      'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
                                                 sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                                      'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
-                                     #'output_location': SimpleItem(defvalue=None, typelist=[str, None], hidden=1, copyable=1, doc="path of output location on disk")
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"
-    _exportmethods = ["location", "remove", "accessURL", "processOutputWildcardMatches", "hasMatchedFiles"]
+    _exportmethods = ["location", "remove", "accessURL"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
@@ -48,59 +49,50 @@ class LocalFile(IGangaFile):
         super(LocalFile, self).__init__()
 
         self.tmp_pwd = None
-        self.output_location = None
 
         if isinstance(namePattern, str):
             self.namePattern = namePattern
+            if localDir:
+            	self.localDir = localDir
         elif isinstance(namePattern, File):
-            self.namePattern = os.path.basename(namePattern.name)
-            self.localDir = os.path.dirname(namePattern.name)
+            self.namePattern = path.basename(namePattern.name)
+            self.localDir = path.dirname(namePattern.name)
         elif isinstance(namePattern, FileBuffer):
             namePattern.create()
-            self.namePattern = os.path.basename(namePattern.name)
-            self.localDir = os.path.dirname(namePattern.name)
+            self.namePattern = path.basename(namePattern.name)
+            self.localDir = path.dirname(namePattern.name)
         else:
             logger.error("Unkown type: %s . Cannot Create LocalFile from this!" % type(namePattern))
 
-        if isinstance(localDir, str):
-            if localDir != '':
-                self.localDir = localDir
-            else:
-                if os.path.dirname(namePattern) != '':
-                    self.localDir = os.path.dirname(namePattern)
-                else:
-                    # Record the current pwd, assume this is true as we weren't told otherwise
-                    this_pwd = os.path.abspath('.')
-                    self.tmp_pwd = this_pwd
-        else:
-            logger.error("Unkown type: %s . Cannot set LocalFile localDir using this!" % type(localDir))
 
-    def __construct__(self, args):
-        # TODO GET RID OF ME, GET RID OF ME, GET RID OF ME!!!
+    def __setattr__(self, attr, value):
+        """
+        This is an overloaded setter method to make sure that we're auto-expanding the filenames of files which exist.
+        In the case we're assigning any other attributes the value is simply passed through
+        Args:
+            attr (str): This is the name of the attribute which we're assigning
+            value (unknown): This is the value being assigned.
+        """
+        actual_value = value
+        if attr == 'namePattern':
+            if len(value.split(os.sep)) > 1:
+                this_dir = path.dirname(value)
+                if this_dir:
+                    self.localDir = this_dir
+                elif path.isfile(path.join(os.getcwd(), path.basename(value))):
+                    self.localDir = os.getcwd()
+            actual_value = path.basename(value)
+        elif attr == 'localDir':
+            if value:
+                new_value = path.abspath(expandfilename(value))
+                if path.exists(new_value):
+                    actual_value = new_value
 
-        self.tmp_pwd = None
-        self.output_location = None
-
-        self.localDir = ''
-
-        from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
-        if len(args) == 1 and isinstance(args[0], str):
-            self.namePattern = args[0]
-            if os.path.dirname(self.namePattern) != '':
-                self.localDir = os.path.dirname(self.namePattern)
-        elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
-            self.namePattern = args[0]
-            self.localDir = args[1]
-        elif len(args) == 1 and isinstance(args[0], SandboxFile):
-            super(LocalFile, self).__construct__(args)
-
-        if self.localDir == '' and self.namePattern != '':
-            this_pwd = os.path.abspath('.')
-            self.tmp_pwd = this_pwd
+        super(LocalFile, self).__setattr__(attr, actual_value)
+        
 
     def __repr__(self):
         """Get the representation of the file."""
-
         return "LocalFile(namePattern='%s', localDir='%s')" % (self.namePattern, self.localDir)
 
     def location(self):
@@ -109,10 +101,10 @@ class LocalFile(IGangaFile):
     def accessURL(self):
         URLs = []
         for file in self.location():
-            URLs.append('file://' + os.path.join(os.sep, file))
+            URLs.append('file://' + path.join(os.sep, file))
         return URLs
 
-    def processOutputWildcardMatches(self):
+    def setLocation(self):
         """This collects the subfiles for wildcarded output LocalFile"""
         import glob
 
@@ -122,14 +114,18 @@ class LocalFile(IGangaFile):
             fileName = '%s.gz' % self.namePattern
 
         sourceDir = self.getJobObject().outputdir
-        if regex.search(fileName) is not None:
+        
+        if self.localDir:
+            fileName = path.join(self.localDir, fileName)
 
-            for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
+        for currentFile in glob.glob(path.join(sourceDir, fileName)):
 
-                d = LocalFile(namePattern=os.path.basename(currentFile))
-                d.compressed = self.compressed
+            base_name = path.basename(currentFile)
 
-                self.subfiles.append(GPIProxyObjectFactory(d))
+            d = LocalFile(base_name)
+            d.compressed = self.compressed
+
+            self.subfiles.append(d)
 
     def processWildcardMatches(self):
 
@@ -146,12 +142,12 @@ class LocalFile(IGangaFile):
         sourceDir = self.localDir
 
         if regex.search(fileName) is not None:
-            for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-                d = LocalFile(namePattern=os.path.basename(
-                    currentFile), localDir=os.path.dirname(currentFile))
+            for currentFile in glob.glob(path.join(sourceDir, fileName)):
+                d = LocalFile(namePattern=path.basename(
+                    currentFile), localDir=path.dirname(currentFile))
                 d.compressed = self.compressed
 
-                self.subfiles.append(GPIProxyObjectFactory(d))
+                self.subfiles.append(d)
 
     def getFilenameList(self):
         """Return the files referenced by this LocalFile"""
@@ -159,22 +155,12 @@ class LocalFile(IGangaFile):
         self.processWildcardMatches()
         if self.subfiles:
             for f in self.subfiles:
-                filelist.append(os.path.join(f.localDir, f.namePattern))
+                filelist.append(path.join(f.localDir, f.namePattern))
         else:
-            if self.localDir == '':
-                if os.path.exists(os.path.join(self.tmp_pwd, self.namePattern)):
-                    self.localDir = self.tmp_pwd
-                    logger.debug("File: %s found, Setting localDir: %s" % (self.namePattern, self.localDir))
-                else:
-                    this_pwd = os.path.abspath('.')
-                    now_tmp_pwd = this_pwd
-                    if os.path.exists(os.path.join(now_tmp_pwd, self.namePattern)):
-                        self.localDir = now_tmp_pwd
-                        logger.debug("File: %s found, Setting localDir: %s" % (self.namePattern, self.localDir))
-                    else:
-                        logger.debug("File: %s NOT found, NOT setting localDir: %s !!!" % (self.namePattern, self.localDir))
+            if path.exists(path.join(self.localDir, self.namePattern)):
+                logger.debug("File: %s found, Setting localDir: %s" % (self.namePattern, self.localDir))
 
-            filelist.append(os.path.join(self.localDir, self.namePattern))
+            filelist.append(path.join(self.localDir, self.namePattern))
 
         return filelist
 
@@ -193,13 +179,12 @@ class LocalFile(IGangaFile):
 
         # check if single file exists (no locations field to try)
         job = self.getJobObject()
-        if job:
-            fname = self.namePattern
-            if self.compressed:
-                fname += ".gz"
+        fname = self.namePattern
+        if self.compressed:
+            fname += ".gz"
 
-            if os.path.isfile(os.path.join(job.getOutputWorkspace().getPath(), fname)):
-                return True
+        if path.isfile(path.join(job.getOutputWorkspace().getPath(), fname)):
+            return True
 
         return False
 
@@ -218,7 +203,7 @@ class LocalFile(IGangaFile):
                     logger.warning("y/n please!")
                     keyin = None
             if _actual_delete:
-                if not os.path.exists(this_file):
+                if not path.exists(this_file):
                     logger.warning(
                         "File %s did not exist, can't delete" % this_file)
                 else:
@@ -242,53 +227,90 @@ class LocalFile(IGangaFile):
 
         return
 
+    def internalCopyTo(self, targetPath):
+        """
+        Copy a the file to the local storage using the get mechanism
+        Args:
+            targetPath (str): Target path where the file is to copied to
+        """
+        for currentFile in glob.glob(os.path.join(self.localDir, self.namePattern)):
+            shutil.copy(currentFile, path.join(targetPath, path.basename(currentFile)))
 
-## rcurrie Attempted to implement for 6.1.9 but commenting out due to not being able to correctly make use of setLocation
+    def get(self):
+        """
+        Method to get the Local file and/or to check that a file exists locally
+        """
+        # Deliberately do nothing.
 
-#    def getWNScriptDownloadCommand(self, indent):
-#
-#        script = """
-####INDENT###os.system('###CP_COMMAND')
-#
-#"""
-#        full_path = os.path.join(self.localDir, self.namePattern)
-#        replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : 'cp %s .' % full_path}
-#
-#        for k, v in replace_dict.iteritems():
-#            script = script.replace(k, v)
-#
-#        return script
-#
-#
-#    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
-#
-#        cp_template = """
-####INDENT###os.system("###CP_COMMAND###")
-#"""
-#        script = ""
-#
-#        for this_file in outputFiles:
-#            filename = this_file.namePattern
-#            cp_cmd = 'cp %s %s' % (filename, self.output_location)
-#
-#            this_cp = str(cp_template)
-#
-#            replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd}
-#
-#            for k, v in replace_dict.iteritems():
-#                print("Replace %s : %s" % (k, v))
-#                this_cp = this_cp.replace(k, v)
-#
-#            script = this_cp
-#            break
-#
-#        return script
-#
-#    def setLocation(self):
-#
-#        job = self.getJobObject()
-#
-#        self.output_location = job.getOutputWorkspace(create=True).getPath()
-#
-#        return
+    def put(self):
+	"""
+        Copy the file to the detination (in the case of LocalFile the localDir)
+        """
+        # This is useful for placing the LocalFile in a subdir at the end of a job
+
+        #FIXME this method should be written to work with some other parameter than localDir for job outputs but for now this 'works'
+        if self.localDir:
+            try:
+                job = self.getJobObject()
+            except AssertionError as err:
+                return
+
+            # Copy to 'desitnation'
+
+            if path.isfile(path.join(job.outputdir, self.namePattern)):
+                if not path.exists(path.join(job.outputdir, self.localDir)):
+                    os.makedirs(path.join(job.outputdir, self.localDir))
+                shutil.copy(path.join(job.outputdir, self.namePattern),
+                            path.join(job.outputdir, self.localDir, self.namePattern))
+           
+    def cleanUpClient(self):
+        """
+        This performs the cleanup method on the client output workspace to remove temporary files
+        """
+        # For LocalFile this is where the file is stored so don't remove it
+        pass
+
+    def getWNScriptDownloadCommand(self, indent):
+
+        # create symlink
+        shortScript = """
+# create symbolic links for LocalFiles
+for f in ###FILELIST###:
+    if not os.path.exists(os.path.basename(f)):
+        os.symlink(f, os.path.basename(f))
+"""
+        from Ganga.GPIDev.Lib.File import FileUtils
+        shortScript = FileUtils.indentScript(shortScript, '###INDENT###')
+
+        shortScript = shortScript.replace('###FILELIST###', "%s" % self.getFilenameList())
+
+        return shortScript
+
+
+    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
+
+        cp_template = """
+###INDENT###os.system("###CP_COMMAND###")
+"""
+        script = ""
+
+        j = self.getJobObject()
+        output_dir = j.getOutputWorkspace(create=True).getPath()
+
+        for this_file in outputFiles:
+            filename = this_file.namePattern
+            cp_cmd = 'cp %s %s' % (filename, quote(output_dir))
+
+            this_cp = cp_template
+
+            replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd}
+
+            for k, v in replace_dict.iteritems():
+                this_cp = this_cp.replace(k, v)
+
+            script = this_cp
+            break
+
+        return script
+
 

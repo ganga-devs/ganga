@@ -10,7 +10,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, Gang
 from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.File import File, ShareDir
-from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
+from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError
 
 from Ganga.Utility.logging import getLogger
 
@@ -66,7 +66,7 @@ class Im3ShapeApp(IPrepareApp):
         """
         logger.debug('Running unprepare in Im3ShapeApp')
         if self.is_prepared is not None:
-            self.decrementShareCounter(self.is_prepared.name)
+            self.decrementShareCounter(self.is_prepared)
             self.is_prepared = None
         self.hash = None
 

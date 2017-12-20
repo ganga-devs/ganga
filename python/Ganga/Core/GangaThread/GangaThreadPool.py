@@ -1,4 +1,5 @@
 from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Config import getConfig
 import time
 
 logger = getLogger('GangaThread')
@@ -22,12 +23,14 @@ class GangaThreadPool(object):
             return GangaThreadPool._instance
 
     getInstance = SingletonHelper()
+    shutdown_policy = 'interactive'
+
+    __slots__ = ('__threads', 'SHUTDOWN_TIMEOUT', '_instance')
 
     def __init__(self):
 
-        if not GangaThreadPool._instance == None:
-            raise RuntimeError(
-                'Only one instance of GangaThreadPool is allowed!')
+        if not GangaThreadPool._instance is None:
+            raise RuntimeError('Only one instance of GangaThreadPool is allowed!')
 
         GangaThreadPool._instance = self
 
@@ -51,7 +54,7 @@ class GangaThreadPool(object):
         except ValueError as e:
             logger.debug("%s" % e)
 
-    def shutdown(self, should_wait_cb=None):
+    def shutdown(self):
         """Shutdown the Ganga session.
 
         @param should_wait_cb: A callback function with the following signature
@@ -71,7 +74,7 @@ class GangaThreadPool(object):
         """
 
         try:
-            self._really_shutdown(should_wait_cb)
+            self._really_shutdown()
         except Exception as err:
             from Ganga.Utility.logging import getLogger
             logger = getLogger('GangaThread')
@@ -79,7 +82,7 @@ class GangaThreadPool(object):
             logger.error("\n%s" % err)
         return
 
-    def _really_shutdown(self, should_wait_cb=None):
+    def _really_shutdown(self):
 
         from Ganga.Utility.logging import getLogger
         logger = getLogger('GangaThread')
@@ -94,6 +97,9 @@ class GangaThreadPool(object):
 
         t_start = time.time()
 
+        # Note that this is negative for the logic below to work
+        t_last = -t_start
+
         def __cnt_alive_threads__(_all_threads):
             num_alive_threads = 0
             for t in _all_threads:
@@ -102,6 +108,7 @@ class GangaThreadPool(object):
             return num_alive_threads
 
         # wait for the background shutdown thread to finish
+        config = getConfig('PollThread')
         while shutdown_thread.isAlive():
             logger.debug('Waiting for max %d seconds for threads to finish' % self.SHUTDOWN_TIMEOUT)
             logger.debug('There are %d alive background threads' % __cnt_alive_threads__(self.__threads))
@@ -109,32 +116,66 @@ class GangaThreadPool(object):
             logger.debug('%s' % self.__alive_non_critical_thread_ids())
             shutdown_thread.join(self.SHUTDOWN_TIMEOUT)
 
-            if shutdown_thread.isAlive():
-                # if should_wait_cb callback exists then ask if we should wait
-                if should_wait_cb:
-                    total_time = time.time() - t_start
-                    critical_thread_ids = self.__alive_critical_thread_ids()
-                    non_critical_thread_ids = self.__alive_non_critical_thread_ids()
-                    if not should_wait_cb(total_time, critical_thread_ids, non_critical_thread_ids):
-                        logger.debug('GangaThreadPool shutdown anyway after %d sec.' % (time.time() - t_start))
+            # Have all the threads finished?
+            if not shutdown_thread.isAlive():
+                logger.debug('GangaThreadPool shutdown properly')
+                break
+
+            # Nope, so decide what we should do based on shutdown policy
+            total_time = time.time() - t_start
+            critical_thread_ids = self.__alive_critical_thread_ids()
+            non_critical_thread_ids = self.__alive_non_critical_thread_ids()
+
+            if GangaThreadPool.shutdown_policy == 'batch':
+                # we have batch shutdown policy so wait until PollThread.forced_shutdown_timeout for critical threads
+                # and PollThread.forced_shutdown_first_prompt_time for non-critical threads
+                if critical_thread_ids:
+                    if total_time > config['forced_shutdown_timeout']:
+                        getLogger().warning('Shutdown was forced after waiting for %d seconds for background '
+                                            'activities to finish (monitoring, output download, etc). This may '
+                                            'result in some jobs being corrupted.', total_time)
+                        break
+
+                elif non_critical_thread_ids:
+                    if total_time > config['forced_shutdown_first_prompt_time']:
                         break
                 else:
-                    pass
+                    break
             else:
-                logger.debug('GangaThreadPool shutdown properly')
+                # we have interactive shutdown policy so for critical threads, wait until
+                # PollThread.forced_shutdown_first_prompt_time before asking every
+                # PollThread.forced_shutdown_prompt_time before asking to force exit. For non-critical threads wait
+                # for PollThread.forced_shutdown_first_prompt_time before forcing the exit.
+                if critical_thread_ids:
+                    if ((t_last < 0 and time.time() + t_last > config['forced_shutdown_first_prompt_time']) or
+                            (t_last > 0 and time.time() - t_last > config['forced_shutdown_prompt_time'])):
+                        msg = 'Job status update or output download still in progress (shutdown not completed ' \
+                              'after %d seconds). %d background thread(s) still running: %s. Do you want to force ' \
+                              'the exit (y/[n])? ' % (total_time, len(critical_thread_ids), critical_thread_ids)
+                        resp = raw_input(msg)
+                        t_last = time.time()
+                        if resp.lower() == 'y':
+                            break
+                elif non_critical_thread_ids:
+                    if total_time > config['forced_shutdown_first_prompt_time']:
+                        break
+                else:
+                    break
 
         # log warning message if critical thread still alive
         critical_thread_ids = self.__alive_critical_thread_ids()
         if critical_thread_ids:
+            logger.debug('GangaThreadPool shutdown anyway after %d sec.' % (time.time() - t_start))
             logger.warning('Shutdown forced. %d background thread(s) still running: %s', len(critical_thread_ids), critical_thread_ids)
 
         # log debug message if critical thread still alive
         non_critical_thread_ids = self.__alive_non_critical_thread_ids()
         if non_critical_thread_ids:
+            logger.debug('GangaThreadPool shutdown anyway after %d sec.' % (time.time() - t_start))
             logger.debug('Shutdown forced. %d non-critical background thread(s) still running: %s', len(non_critical_thread_ids), non_critical_thread_ids)
 
         # set singleton instance to None
-        self._instance = None
+        GangaThreadPool._instance = None
         for i in self.__threads:
             del i
         self.__threads = []

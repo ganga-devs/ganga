@@ -27,7 +27,7 @@ def standardSetup():
     import sys, os.path
 
     # insert the path to Ganga itself
-    exeDir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
+    exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
 
     gangaDir = os.path.join(os.path.dirname(exeDir), 'python' )
 
@@ -40,7 +40,9 @@ standardSetup()
 del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
+import Ganga.Runtime
+Ganga.Runtime._prog = None
 import sys
 
 def log(level, err):
@@ -55,19 +57,12 @@ def log(level, err):
         sys.stderr.write('(consider --debug option for more information)\n')
 
 try:
-    # Process options given at command line and in configuration file(s)
-    # Perform environment setup and bootstrap
-    import Ganga.Runtime
-    Ganga.Runtime._prog = Ganga.Runtime.GangaProgram()
-    Ganga.Runtime._prog.parseOptions()
-    Ganga.Runtime._prog.configure()
-    Ganga.Runtime._prog.initEnvironment()
-    Ganga.Runtime._prog.bootstrap(Ganga.Runtime._prog.interactive)
-    Ganga.Runtime._prog.new_user_wizard()
     # Import GPI and run Ganga
-    from Ganga.GPI import *
-    Ganga.Runtime._prog.run()
+    Ganga.Runtime.setupGanga()
+    from Ganga import GPI
+    Ganga.Runtime._prog.run(GPI.__dict__)
 except GangaException as err:
-    log(Ganga.Runtime._prog.options.force_loglevel, err)
+    if Ganga.Runtime._prog:
+        log(Ganga.Runtime._prog.options.force_loglevel, err)
     sys.exit(-1)
 

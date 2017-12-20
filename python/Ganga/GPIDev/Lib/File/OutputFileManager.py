@@ -27,7 +27,7 @@ def outputFilePostProcessingOnClient(job, outputFileClassName):
     return outputFilePostProcessingTestForWhen(job, outputFileClassName, 'client')
 
 
-def outputFilePostProxessingOnSubmit(job, outputFileClassName):
+def outputFilePostProcessingOnSubmit(job, outputFileClassName):
     """
     Checks if the output files of a given job(we are interested in the backend)
     should have been postprocessed on job submission, depending on job.backend_output_postprocess dictionary
@@ -50,13 +50,10 @@ def outputFilePostProcessingTestForWhen(job, outputFileClassName, when):
 
     return False
 
-"""
-Intented for grid backends where we have to set the outputsandbox patterns for the output file types that have to be processed on the client
-"""
-
-
 def getOutputSandboxPatterns(job):
-
+    """
+    Intended for grid backends where we have to set the outputsandbox patterns for the output file types that have to be processed on the client
+    """
     outputPatterns = []
 
     if len(job.outputfiles) > 0:
@@ -67,7 +64,7 @@ def getOutputSandboxPatterns(job):
 
             outputFileClassName = getName(outputFile)
 
-            if outputFilePostProcessingOnClient(job, outputFileClassName) or outputFileClassName == 'LocalFile':
+            if outputFilePostProcessingOnClient(job, outputFileClassName):
                 if outputFile.namePattern not in outputPatterns:
                     if outputFile.compressed:
                         outputPatterns.append('%s.gz' % outputFile.namePattern)
@@ -76,19 +73,17 @@ def getOutputSandboxPatterns(job):
 
     return outputPatterns
 
-"""
-we have to set the inputsandbox patterns for the input files that will be copied from the client, also write the commands for downloading input files from the WN
-"""
-
-
 def getInputFilesPatterns(job):
+    """
+    we have to set the inputsandbox patterns for the input files that will be copied from the client, also write the commands for downloading input files from the WN
+    """
 
     tmpDir = tempfile.mkdtemp()
 
     inputPatterns = []
 
     # if GangaDataset is used, check if they want the inputfiles transferred
-    inputfiles_list = copy.deepcopy(job.inputfiles)
+    inputfiles_list = copy.deepcopy(job.inputfiles if job.inputfiles else [])
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
     if not job.subjobs and job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
         inputfiles_list += job.inputdata.files
@@ -97,16 +92,10 @@ def getInputFilesPatterns(job):
 
         inputFileClassName = getName(inputFile)
 
-        if inputFileClassName == 'LocalFile':
-            for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
-                if currentFile not in inputPatterns:
-                    inputPatterns.append(currentFile)
-
-        elif outputFilePostProcessingOnClient(job, inputFileClassName):
+        if outputFilePostProcessingOnClient(job, inputFileClassName):
 
             # download in temp dir
-            inputFile.localDir = tmpDir
-            inputFile.get()
+            inputFile.copyTo(tmpDir)
 
             for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
                 if currentFile not in inputPatterns:
@@ -115,12 +104,10 @@ def getInputFilesPatterns(job):
     return inputPatterns, tmpDir
 
 
-"""
-This should be used from only from Interactive backend
-"""
-
-
 def getOutputSandboxPatternsForInteractive(job):
+    """
+    This should be used from only from Interactive backend
+    """
 
     patternsToSandbox = [getConfig('Output')['PostProcessLocationsFileName']]
     patternsToZip = []
@@ -129,7 +116,7 @@ def getOutputSandboxPatternsForInteractive(job):
 
         outputFileClassName = getName(outputFile)
 
-        if outputFileClassName == 'LocalFile' or (outputFileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):
+        if outputFilePostProcessingOnClient(job, outputFileClassName):
             if outputFile.compressed:
                 patternsToSandbox.append('%s.gz' % outputFile.namePattern)
                 patternsToZip.append(outputFile.namePattern)
@@ -139,13 +126,11 @@ def getOutputSandboxPatternsForInteractive(job):
     return (patternsToSandbox, patternsToZip)
 
 
-"""
-This should be used from Local and Batch backend, where there is code on the WN for 
-sending the output(optionally compressed before that) to the outputsandbox
-"""
-
-
 def getWNCodeForOutputSandbox(job, files, jobid):
+    """
+    This should be used from Local and Batch backend, where there is code on the WN for
+    sending the output(optionally compressed before that) to the outputsandbox
+    """
 
     patternsToSandbox = []
     patternsToZip = []
@@ -158,7 +143,7 @@ def getWNCodeForOutputSandbox(job, files, jobid):
 
             outputFileClassName = getName(outputFile)
 
-            if outputFileClassName == 'LocalFile' or (outputFileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):
+            if outputFilePostProcessingOnClient(job, outputFileClassName):
                 patternsToSandbox.append(outputFile.namePattern)
 
     insertScript = """\n
@@ -210,53 +195,51 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     """
 
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
-    if job.inputfiles is None or len(job.inputfiles) == 0 and\
-            (not job.inputdata or ((not isType(job.inputdata, GangaDataset)) or\
-                not job.inputdata.treat_as_inputfiles )):
-        return ""
+
+    def doIHaveInputFiles(job):
+        """ helper function for determining if a job has inputfiles it needs to make available
+        Args: job(Job) This is the job which we're testing for inputfiles """
+        if job.inputfiles is not None and len(job.inputfiles) != 0:
+            return True
+        if job.inputdata is not None and isinstance(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
+            return True
+        return False
+
+    if job.master is not None:
+        if not doIHaveInputFiles(job.master) and not doIHaveInputFiles(job):
+            return ""
+    else:
+        if not doIHaveInputFiles(job):
+            return ""
 
     insertScript = """\n
 """
 
-    # first, go over any LocalFiles in GangaDatasets to be transferred
-    # The LocalFiles in inputfiles have already been dealt with
-    if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
-        for inputFile in job.inputdata.files:
-            inputfileClassName = getName(inputFile)
+    inputfiles_list = []
+    if not job.inputfiles:
+        # if GangaDataset is used, check if they want the inputfiles transferred
+        if job.master is not None:
+            inputfiles_list = job.master.inputfiles
+    else:
+        inputfiles_list = job.inputfiles
 
-            if inputfileClassName == "LocalFile":
-
-                # special case for LocalFile
-                if getName(job.backend) in ['Localhost', 'Batch', 'LSF', 'Condor', 'PBS']:
-                    # create symlink
-                    shortScript = """
-# create symbolic links for LocalFiles
-for f in ###FILELIST###:
-   os.symlink(f, os.path.basename(f)) 
-"""
-                    from Ganga.GPIDev.Lib.File import FileUtils
-                    shortScript = FileUtils.indentScript(shortScript, '###INDENT####')
-
-                    insertScript += shortScript
-
-                    insertScript = insertScript.replace('###FILELIST###', "%s" % inputFile.getFilenameList())
-
-    # if GangaDataset is used, check if they want the inputfiles transferred
-    inputfiles_list = job.inputfiles
-    if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
-        inputfiles_list += job.inputdata.files
+    if job.inputdata:
+        if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
+            inputfiles_list += job.inputdata.files
+    elif job.master is not None:
+        if job.master.inputdata and isType(job.master.inputdata, GangaDataset) and job.master.inputdata.treat_as_inputfiles:
+            inputfiles_list += job.master.inputdata.files
 
     for inputFile in inputfiles_list:
 
         inputfileClassName = getName(inputFile)
 
-        if outputFilePostProcessingOnWN(job, inputfileClassName):
-            inputFile.processWildcardMatches()
-            if inputFile.subfiles:
-                for subfile in inputFile.subfiles:
-                    insertScript += subfile.getWNScriptDownloadCommand(indent)
-            else:
-                insertScript += inputFile.getWNScriptDownloadCommand(indent)
+        inputFile.processWildcardMatches()
+        if inputFile.subfiles:
+            for subfile in inputFile.subfiles:
+                insertScript += subfile.getWNScriptDownloadCommand(indent)
+        else:
+            insertScript += inputFile.getWNScriptDownloadCommand(indent)
 
     insertScript = insertScript.replace('###INDENT###', indent)
 
@@ -279,12 +262,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
             backendClassName = getName(job.backend)
 
             if outputFile.compressed:
-                if outputfileClassName == 'LocalFile' and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
-                    patternsToZip.append(outputFile.namePattern)
-                elif outputfileClassName != 'LocalFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
-                    patternsToZip.append(outputFile.namePattern)
-                elif outputfileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputfileClassName) and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
-                    patternsToZip.append(outputFile.namePattern)
+                patternsToZip.append(outputFile.namePattern)
 
             if outputfileClassName not in outputFilesProcessedOnWN.keys():
                 outputFilesProcessedOnWN[outputfileClassName] = []
@@ -354,7 +332,11 @@ def expandWildCards(filelist):
 
 
 def getWNCodeForInputdataListCreation(job, indent):
-    """generate the code to create ths inputdata list on the worker node"""
+    """generate the code to create ths inputdata list on the worker node
+    Args:
+        job (Job): Job object which this file is being generated for
+        indent (str): Indent level in the script of choice which is to be placed infront of generated code
+    """
     insertScript = """\n
 ###INDENT###open("__GangaInputData.txt__", "w").write( "\\n".join( ###FILELIST### ) )
 """

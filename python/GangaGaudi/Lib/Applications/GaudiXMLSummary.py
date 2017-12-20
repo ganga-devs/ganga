@@ -11,7 +11,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Adapters.IMerger import IMerger
 from Ganga.Utility.Plugin import allPlugins
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 
 xml_schema = {}
@@ -44,19 +44,10 @@ class GaudiXMLSummary(GangaObject):
     _name = "GaudiXMLSummary"
     _exportmethods = ['create', 'summary']
 
-    def __init__(self):
+    def __init__(self, job, file):
         super(GaudiXMLSummary, self).__init__()
         self.data = None
-
-    def __construct__(self, args):
-        from Ganga.GPIDev.Lib.Job.Job import Job
-        if (len(args) > 2) or (len(args) == 0) or (type(args[0]) is not Job):
-            super(GaudiXMLSummary, self).__construct__(args)
-        else:
-            if len(args) == 1:
-                self.create(args[0])
-            else:
-                self.create(args[0], args[1])
+        self.create(job, file)
 
     def _attribute_filter__set__(self, n, v):
         if n == 'env_var':

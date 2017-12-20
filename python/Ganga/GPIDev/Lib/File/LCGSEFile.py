@@ -11,10 +11,12 @@ from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 logger = Ganga.Utility.logging.getLogger()
-from Ganga.Utility import GridShell
+from Ganga.Utility.GridShell import getShell
 
 from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
 from Ganga.GPIDev.Base.Proxy import getName
+
+from Ganga.GPIDev.Credentials import require_credential, VomsProxy
 
 import re
 import os
@@ -45,7 +47,9 @@ class LCGSEFile(IGangaFile):
         'locations': SimpleItem(defvalue=[], copyable=1, typelist=[str], sequence=1, doc="list of locations where the outputfiles were uploaded"),
         'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
         'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
-        'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere')})
+        'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
+        'credential_requirements': ComponentItem('CredentialRequirement', defvalue='VomsProxy'),
+    })
     _category = 'gangafiles'
     _name = "LCGSEFile"
     _exportmethods = ["location", "setLocation", "get", "put", "getUploadCmd"]
@@ -59,22 +63,10 @@ class LCGSEFile(IGangaFile):
 
         self.locations = []
 
-        self.shell = GridShell.getShell()
-
     def __setattr__(self, attr, value):
         if attr == 'se_type' and value not in ['', 'srmv1', 'srmv2', 'se']:
             raise AttributeError('invalid se_type: %s' % value)
         super(LCGSEFile, self).__setattr__(attr, value)
-
-    def __construct__(self, args):
-        self.localDir = ''
-        if len(args) == 1 and isinstance(args[0], str):
-            self.namePattern = args[0]
-        elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
-            self.namePattern = args[0]
-            self.localDir = args[1]
-        self.shell = GridShell.getShell()
-        self.locations = []
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
@@ -151,7 +143,7 @@ class LCGSEFile(IGangaFile):
 
     def getUploadCmd(self):
 
-        vo = getConfig('LCG')['VirtualOrganisation']
+        vo = self.credential_requirements.vo
 
         cmd = 'lcg-cr --vo %s ' % vo
         if self.se != '':
@@ -167,6 +159,7 @@ class LCGSEFile(IGangaFile):
 
         return cmd
 
+    @require_credential
     def put(self):
         """
         Executes the internally created command for file upload to LCG SE, this method will
@@ -201,7 +194,7 @@ class LCGSEFile(IGangaFile):
                 cmd = cmd.replace('filename', currentFile)
                 cmd = cmd + ' file:%s' % currentFile
 
-                (exitcode, output, m) = self.shell.cmd1(
+                (exitcode, output, m) = getShell(self.credential_requirements).cmd1(
                     cmd, capture_stderr=True)
 
                 d = LCGSEFile(namePattern=os.path.basename(currentFile))
@@ -248,7 +241,7 @@ class LCGSEFile(IGangaFile):
 
             logger.debug("cmd is: %s" % cmd)
 
-            (exitcode, output, m) = self.shell.cmd1(cmd, capture_stderr=True)
+            (exitcode, output, m) = getShell(self.credential_requirements).cmd1(cmd, capture_stderr=True)
 
             if exitcode == 0:
 
@@ -284,7 +277,7 @@ class LCGSEFile(IGangaFile):
 
         import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                        'scripts/LCGSEFileWNScript.py')
+                                        'scripts/LCGSEFileWNScript.py.template')
 
         from Ganga.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '###INDENT###')
@@ -296,32 +289,27 @@ class LCGSEFile(IGangaFile):
 
         return script
 
-    def get(self):
+    @require_credential
+    def internalCopyTo(self, targetPath):
         """
         Retrieves locally all files matching this LCGSEFile object pattern
+        Args:
+            targetPath (str): Target path where the file is copied to
         """
-        to_location = self.localDir
-
-        if not os.path.isdir(self.localDir):
-            if self._getParent() is not None:
-                to_location = self.getJobObject().outputdir
-            else:
-                logger.info("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
-                return
+        to_location = targetPath
 
         # set lfc host
         os.environ['LFC_HOST'] = self.lfc_host
 
-        vo = getConfig('LCG')['VirtualOrganisation']
+        vo = self.credential_requirements.vo
 
         for location in self.locations:
             destFileName = os.path.join(to_location, self.namePattern)
-            cmd = 'lcg-cp --vo %s %s file:%s' % (vo, location, destFileName)
-            (exitcode, output, m) = self.shell.cmd1(cmd, capture_stderr=True)
+            cmd = 'lcg-cp --vo {vo} {remote_path} file:{local_path}'.format(vo=vo, remote_path=location, local_path=destFileName)
+            (exitcode, output, m) = getShell(self.credential_requirements).cmd1(cmd, capture_stderr=True)
 
             if exitcode != 0:
-                logger.error(
-                    'command %s failed to execute , reason for failure is %s' % (cmd, output))
+                logger.error('command %s failed to execute , reason for failure is %s' % (cmd, output))
 
     def getWNScriptDownloadCommand(self, indent):
 
@@ -336,12 +324,13 @@ class LCGSEFile(IGangaFile):
         script = script.replace('###INDENT###', indent)
         script = script.replace('###LFC_HOST###', self.lfc_host)
         script = script.replace(
-            '###VO###', getConfig('LCG')['VirtualOrganisation'])
+            '###VO###', self.credential_requirements.vo)
         script = script.replace('###LOCATION###', self.se_rpath)
         script = script.replace('###NAMEPATTERN###', self.namePattern)
 
         return script
 
+    @require_credential
     def processWildcardMatches(self):
         if self.subfiles:
             return self.subfiles
@@ -349,10 +338,9 @@ class LCGSEFile(IGangaFile):
         from fnmatch import fnmatch
 
         if regex.search(self.namePattern):
-            # TODO namePattern shouldn't contain slashes and se_rpath should
-            # not contain wildcards
-            exitcode, output, m = self.shell.cmd1('lcg-ls lfn:/grid/' + getConfig(
-                'LCG')['VirtualOrganisation'] + '/' + self.se_rpath, capture_stderr=True)
+            #TODO namePattern shouldn't contain slashes and se_rpath should not contain wildcards
+            cmd = 'lcg-ls lfn:/grid/{vo}/{se_rpath}'.format(vo=self.credential_requirements.vo, se_rpath=self.se_rpath)
+            exitcode,output,m = getShell(self.credential_requirements).cmd1(cmd, capture_stderr=True)
 
             for filename in output.split('\n'):
                 if fnmatch(filename, self.namePattern):

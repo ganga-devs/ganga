@@ -1,4 +1,4 @@
-import textwrap
+import textwrap, re
 
 import Ganga.Utility.logging
 
@@ -89,18 +89,19 @@ class ConfigProxy(object):
                   ' : ' + markup(stripProxy(self).docstring, docstring_colour) + '\n')
         opts = sorted(stripProxy(self).options.keys())
         INDENT = '     ' * 2
+        p = re.compile('[\.\w]*\.')
         for o in opts:
             sio.write(levels[stripProxy(self).getEffectiveLevel(
-                o)] + '   ' + markup(o, name_colour) + ' = ' + markup(repr(stripProxy(self)[o]), value_colour) + '\n')
+                o)] + '   ' + markup(o, name_colour) + ' = ' + markup(p.sub('',repr(stripProxy(self)[o])), value_colour) + '\n')
             sio.write(textwrap.fill(markup(stripProxy(self).options[o].docstring.strip(
             ), docstring_colour), width=80, initial_indent=INDENT, subsequent_indent=INDENT) + '\n')
             typelist = stripProxy(self).options[o].typelist
             if not typelist:
                 typedesc = 'Type: ' + \
-                    str(type(stripProxy(self).options[o].default_value))
+                    p.sub('',str(type(stripProxy(self).options[o].default_value)))
             else:
                 typedesc = 'Allowed types: ' + \
-                    str([t.split('.')[-1] for t in typelist])
+                    str([p.sub('',str(t)) for t in typelist])
             sio.write(markup(INDENT + typedesc, docstring_colour) + '\n')
             filter = stripProxy(self).options[o].filter
             if filter:
@@ -223,7 +224,7 @@ def print_config_file():
                           (o, sect.options[o].default_value) + '\n')
 
 
-def config_file_as_text():
+def config_file_as_text(interactive):
 
     text = ''
 
@@ -253,8 +254,8 @@ def config_file_as_text():
                     text += INDENT + "Examples:\n"
                     for e in examples.splitlines():
                         text += INDENT + "  " + e.strip() + "\n"
-                if sect.getEffectiveLevel(o) == 0:
-                    value = sect[o]
+                if hasattr(sect.options[o], 'gangarc_value'):
+                    value = sect.options[o].gangarc_value
                     def_value = sect.options[o].default_value
                     if isinstance(value, str):
                         try:
@@ -265,10 +266,18 @@ def config_file_as_text():
                                 def_value = "\n# ".join(def_lines)
                         except AttributeError as err:
                             pass
+                    if interactive:
+                        yes = raw_input('The config option %s %s with value %s in your old .gangarc is not the default. Do you want to copy it to the new .gangarc file ([y]/n) ?\n' % (sect.name, o, value))
+                    else:
+                        yes = 'y'
                     text += '#%s = %s\n' % (o, def_value)
-                    text += '%s = %s\n\n' % (o, value)
+                    if yes.lower() not in ['n']:
+                        text += '%s = %s\n\n' % (o, value)
                 else:
-                    value = sect.getEffectiveOption(o)
+                    if hasattr(sect.options[o], 'default_value'):
+                        value = sect.options[o].default_value
+                    else:
+                        value = sect.getEffectiveOption(o)
                     if isinstance(value, str):
                         lines = value.splitlines()
                         if len(lines) > 1:

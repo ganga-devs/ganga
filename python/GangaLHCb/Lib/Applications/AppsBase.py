@@ -153,7 +153,7 @@ class AppName(Gaudi):
             msg = 'Unable to parse the job options. Please check options ' \
                   'files and extraopts.'
             logger.error("PythonOptionsParserError:\n%s" % str(err))
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
 
         return GPIProxyObjectFactory(parser.get_input_data())
 
@@ -246,7 +246,7 @@ class AppName(Gaudi):
                       'found in %s . ' % f.name
             msg += msg2
             logger.debug(msg)
-            raise ApplicationConfigurationError(None, msg)
+            raise ApplicationConfigurationError(msg)
         return parser
 
     def _parse_options(self):

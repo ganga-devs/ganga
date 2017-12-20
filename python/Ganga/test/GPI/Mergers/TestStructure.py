@@ -46,25 +46,32 @@ class TestStructure(GangaUnitTest):
     def runJobSlice(self):
 
         for j in self.jobslice:
+            this_bak = j.backend
+
+        for j in self.jobslice:
             j.submit()
         for j in self.jobslice:
             assert run_until_completed(j, timeout=10), 'Timeout on job submission: job is still not finished'
-            print('# upcoming status')
-            print("Status 3: %s" % j.status)
-            print('# printed status')
-            print('# upcoming impl status')
-            print("Status 3: %s" % j._impl.status)
-            print('# printed impl status')
-            print 'j._impl.__dict__', j._impl.__dict__
+            #print('# upcoming status')
+            #print("Status 3: %s" % j.status)
+            #print('# printed status')
+            #print('# upcoming impl status')
+            #print("Status 3: %s" % j._impl.status)
+            #print('# printed impl status')
+            #print('j._impl.__dict__: %s' j._impl.__dict__)
             #print 'type(j).__dict__', type(j).__dict__
-            assert j.status == 'completed'
 
     def testStructureCreated(self):
 
         self.runJobSlice()
 
         for j in self.jobslice:
+            print("Examining: %s" % j.id)
+            print("status: %s" % j.status)
+            print("Looking in: %s" % j.outputdir)
+            print("ls: %s" % str(os.listdir(j.outputdir)))
             assert os.path.exists(os.path.join(j.outputdir, 'out.txt')), 'File must exist'
+
             assert os.path.exists(os.path.join(j.outputdir, 'subdir', 'out.txt')), 'File in directory must exist'
 
     def testStructureOfMerger(self):
@@ -92,3 +99,4 @@ class TestStructure(GangaUnitTest):
         for j in self.jobslice:
             with pytest.raises(PostProcessException):
                 tm.merge(self.jobslice, outputdir=j.outputdir)
+

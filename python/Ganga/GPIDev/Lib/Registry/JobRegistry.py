@@ -11,7 +11,7 @@ from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 from Ganga.Core.exceptions import GangaException
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher
 
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, addProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType
 
 import Ganga.Utility.logging
 
@@ -29,8 +29,8 @@ logger = Ganga.Utility.logging.getLogger()
 
 class JobRegistry(Registry):
 
-    def __init__(self, name, doc, update_index_time=30):
-        super(JobRegistry, self).__init__(name, doc, update_index_time)
+    def __init__(self, name, doc):
+        super(JobRegistry, self).__init__(name, doc)
         self.stored_slice = JobRegistrySlice(self.name)
         self.stored_slice.objects = self
         self.stored_proxy = JobRegistrySliceProxy(self.stored_slice)
@@ -81,7 +81,7 @@ class JobRegistry(Registry):
             stripProxy(jt)._setRegistry(self.metadata)
             self.metadata._add(jt)
         self.jobtree = self.metadata[self.metadata.ids()[-1]]
-        self.flush_thread = RegistryFlusher(self)
+        self.flush_thread = RegistryFlusher(self, 'JobRegistryFlusher')
         self.flush_thread.start()
 
     def shutdown(self):
@@ -275,13 +275,6 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         jobs('10.2')) : same as above
         """
         return stripProxy(self).__call__(x)
-
-    def __getslice__(self, i1, i2):
-        """ Get a slice. Examples:
-        jobs[2:] : get first two jobs,
-        jobs[-10:] : get last 10 jobs.
-        """
-        return _wrap(stripProxy(self).__getslice__(i1, i2))
 
     def __getitem__(self, x):
         """ Get a job by positional index. Examples:

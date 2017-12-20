@@ -1,9 +1,13 @@
+import contextlib
+import os
+
+from Ganga.GPIDev.Credentials import credential_store
 
 # get nickname
 def getNickname(gridProxy=None,allowMissingNickname=True):
     import re
     from Ganga.Utility.logging import getLogger
-    from Ganga.GPIDev.Credentials import GridProxy
+    from Ganga.GPIDev.Credentials_old import GridProxy
 
     logger = getLogger()
     if not gridProxy:
@@ -28,7 +32,28 @@ def getNickname(gridProxy=None,allowMissingNickname=True):
         if allowMissingNickname:
             logger.warning(wMessage)
         else:
-            raise ApplicationConfigurationError(None,wMessage)
+            raise ApplicationConfigurationError(wMessage)
     return nickName
 
- 
+
+@contextlib.contextmanager
+def inject_proxy(cred_req):
+    """
+    Inject the location of the proxy file into os.environ and clean
+    up again afterwards.
+
+    Args:
+        cred_req (VomsProxy): the requirement for the credential
+    """
+    try:
+        old_proxy = os.environ['X509_USER_PROXY']
+    except KeyError:
+        # If there was no existing entry, put ours in and then remove it afterwards
+        os.environ['X509_USER_PROXY'] = credential_store[cred_req].location
+        yield
+        del os.environ['X509_USER_PROXY']
+    else:
+        # if there is an existing entry, preserve it and replace it afterwards
+        os.environ['X509_USER_PROXY'] = credential_store[cred_req].location
+        yield
+        os.environ['X509_USER_PROXY'] = old_proxy

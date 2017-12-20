@@ -1,7 +1,7 @@
 from __future__ import print_function, absolute_import
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy, isType, getName
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
@@ -10,7 +10,7 @@ from Ganga.Utility.Config import config_scope
 
 from Ganga.Utility.Plugin import PluginManagerError, allPlugins
 
-from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Base.Objects import GangaObject, ObjectMetaclass
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
@@ -18,6 +18,7 @@ from .GangaRepository import SchemaVersionError
 
 import xml.sax.saxutils
 import copy
+from cStringIO import StringIO
 
 logger = getLogger()
 
@@ -48,10 +49,12 @@ class XMLFileError(GangaException):
         return "XMLFileError: %s %s" % (self.message, err)
 
 def _raw_to_file(j, fobj=None, ignore_subs=[]):
-    vstreamer = VStreamer(out=fobj, selection=ignore_subs)
+    sio = StringIO()
+    vstreamer = VStreamer(out=sio, selection=ignore_subs)
     vstreamer.begin_root()
-    stripProxy(j).accept(vstreamer)
+    j.accept(vstreamer)
     vstreamer.end_root()
+    print(sio.getvalue(), file=fobj)
 
 def to_file(j, fobj=None, ignore_subs=[]):
     #used to debug write problems - rcurrie
@@ -140,7 +143,7 @@ def fastXML(obj, indent='', ignore_subs=''):
         sl.append('</class>')
         return sl
     else:
-        return ["<value>", escape(repr(stripProxy(obj))), "</value>"]
+        return ["<value>", escape(repr(obj)), "</value>"]
 
 ##########################################################################
 # A visitor to print the object tree into XML.
@@ -182,10 +185,10 @@ class VStreamer(object):
         return
 
     def print_value(self, x):
-        print('\n', self.indent(), '<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
+        print('\n', self.indent(), '<value>%s</value>' % escape(repr(x)), file=self.out)
 
     def showAttribute(self, node, name):
-        return not node._schema.getItem(name)['transient'] and (self.level > 1 or name not in self.selection)
+        return (self.level > 1 or name not in self.selection) and not node._schema.getItem(name)['transient']
 
     def simpleAttribute(self, node, name, value, sequence):
         if self.showAttribute(node, name):
@@ -203,7 +206,11 @@ class VStreamer(object):
                 print(self.indent(), '</attribute>', file=self.out)
             else:
                 self.level += 1
-                self.print_value(value)
+                if isinstance(value, GangaObject):
+                    print("", file=self.out)
+                    self.acceptOptional(value)
+                else:
+                    self.print_value(value)
                 self.level -= 1
                 print(self.indent(), end=' ', file=self.out)
                 print('</attribute>', file=self.out)
@@ -219,15 +226,15 @@ class VStreamer(object):
         else:
             if isType(s, str):
                 print(self.indent(), '<value>%s</value>' % escape(repr(s)), file=self.out)
-            elif hasattr(stripProxy(s), 'accept'):
-                stripProxy(s).accept(self)
+            elif hasattr(s, 'accept'):
+                s.accept(self)
             elif isType(s, (list, tuple, GangaList)):
                 print(self.indent(), '<sequence>', file=self.out)
                 for sub_s in s:
                     self.acceptOptional(sub_s)
                 print(self.indent(), '</sequence>', file=self.out)
             else:
-                self.print_value(stripProxy(s))
+                self.print_value(s)
         self.level -= 1
 
     def componentAttribute(self, node, name, subnode, sequence):
@@ -324,8 +331,8 @@ class Loader(object):
                         # element (</class>) is reached
                         self.ignore_count = 1
                     else:
-                        # make a new ganga object
-                        obj = cls()
+                        # Initialize and cache a c class instance to use as a classs factory
+                        obj = cls.getNew()
                 self.stack.append(obj)
 
             # push the attribute name on the stack
@@ -356,31 +363,44 @@ class Loader(object):
                 aname = self.stack.pop()
                 obj = self.stack[-1]
                 # update the object's attribute
-                obj.setSchemaAttribute(aname, value)
+                try:
+                    obj.setSchemaAttribute(aname, value)
+                except:
+                    raise GangaException("ERROR in loading XML, failed to set attribute %s for class %s" % (aname, _getName(obj)))
                 #logger.info("Setting: %s = %s" % (aname, value))
 
             # when </value> is seen the value_construct buffer (CDATA) should
             # be a python expression (e.g. quoted string)
             if name == 'value':
-                # unescape the special characters
-                s = unescape(self.value_construct)
-                #logger.debug('string value: %s',s)
-                if s not in _cached_eval_strings:
-                    # This is ugly and classes which use this are bad, but this needs to be fixed in another PR
-                    # TODO Make the scope of objects a lot better than whatever is in the config
-                    # This is a dictionary constructed from eval-ing things in the Config. Why does should it do this?
-                    # Anyway, lets save the result for speed
-                    _cached_eval_strings[s] = eval(s, config_scope)
-                val = copy.deepcopy(_cached_eval_strings[s])
-                #logger.debug('evaled value: %s type=%s',repr(val),type(val))
-                self.stack.append(val)
-                self.value_construct = None
+                try:
+                    # unescape the special characters
+                    s = unescape(self.value_construct)
+                    #logger.debug('string value: %s',s)
+                    if s not in _cached_eval_strings:
+                        # This is ugly and classes which use this are bad, but this needs to be fixed in another PR
+                        # TODO Make the scope of objects a lot better than whatever is in the config
+                        # This is a dictionary constructed from eval-ing things in the Config. Why does should it do this?
+                        # Anyway, lets save the result for speed
+                        _cached_eval_strings[s] = eval(s, config_scope)
+                    eval_str = _cached_eval_strings[s]
+                    if not isinstance(eval_str, str):
+                        val = copy.deepcopy(eval_str)
+                    else:
+                        val = eval_str
+                    #logger.debug('evaled value: %s type=%s',repr(val),type(val))
+                    self.stack.append(val)
+                    self.value_construct = None
+                except:
+                    raise GangaException("ERROR in loading XML, failed to correctly parse attribute value: \'%s\'" % str(self.value_construct))
 
             # when </sequence> is seen we remove last items from stack (as indicated by sequence_start)
             # we make a GangaList from these items and put it on stack
             if name == 'sequence':
                 pos = self.sequence_start.pop()
-                alist = makeGangaList(self.stack[pos:])
+                try:
+                    alist = makeGangaList(self.stack[pos:])
+                except:
+                    raise GangaException("ERROR in loading XML, failed to construct a sequence(list) properly")
                 del self.stack[pos:]
                 self.stack.append(alist)
 
@@ -389,6 +409,16 @@ class Loader(object):
             # the object stays on the stack (will be removed by </attribute> or
             # is a root object)
             if name == 'class':
+                obj = self.stack[-1]
+                cls = obj.__class__
+                if isinstance(cls, GangaObject):
+                    for attr, item in cls._schema.allItems():
+                        if attr not in obj._data:
+                            if item.getProperties()['getter'] is None:
+                                try:
+                                    setattr(obj, attr, self._schema.getDefaultValue(attr))
+                                except:
+                                    raise GangaException("ERROR in loading XML, failed to set default attribute %s for class %s" % (attr, _getName(obj)))
                 pass
 
         def char_data(data):

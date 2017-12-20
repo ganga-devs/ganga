@@ -3,7 +3,7 @@
 from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.Core import GangaException
+from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.File import LocalFile
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaDirac.Lib.Files.DiracFile import DiracFile
@@ -38,13 +38,13 @@ def strToDataFile(name, allowNone=True):
         else:
             raise GangaException( "Cannot construct file object: %s" % str(name) )
 
-def getDataFile(file):
-    if isType(file, DiracFile):
-        return file
-    if isType(file, LocalFile):
-        return file
-    if type(file) == type(''):
-        return strToDataFile(file)
+def getDataFile(file_):
+    if isType(file_, DiracFile):
+        return file_
+    if isType(file_, LocalFile):
+        return file_
+    if isinstance(file_, str):
+        return strToDataFile(file_)
     return None
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

@@ -1,13 +1,15 @@
 from __future__ import print_function
-
 import sys
 import shutil
 import os.path
+import pytest
 try:
     import unittest2 as unittest
 except ImportError:
     import unittest
 
+ganga_test_dir_name = 'gangadir testing'
+ganga_config_file = '/not/a/file'
 
 def _getGangaPath():
     """
@@ -40,7 +42,7 @@ def load_config_files():
     system_vars = {}
     for opt in getConfig('System'):
         system_vars[opt] = getConfig('System')[opt]
-    config_files = GangaProgram.get_config_files(os.path.expanduser('~/.gangarc'))
+    config_files = GangaProgram.get_config_files(ganga_config_file)
     setSessionValuesFromFiles(config_files, system_vars)
 
 
@@ -57,7 +59,7 @@ def clear_config():
 _setupGangaPath()
 
 
-def start_ganga(gangadir_for_test, extra_opts=[]):
+def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
     """
     Startup Ganga by calling the same set of 'safe' functions each time
     Args:
@@ -65,12 +67,14 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
         extra_opts (list): A list of tuples which are used to pass command line style options to Ganga
     """
 
+
     import Ganga.PACKAGE
     Ganga.PACKAGE.standardSetup()
 
     # End taken from the ganga binary
 
     import Ganga.Runtime
+    from Ganga.Utility.Config import getConfig
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
 
@@ -82,30 +86,61 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
     this_argv = [
         'ganga',  # `argv[0]` is usually the name of the program so fake that here
     ]
+    if extra_args:
+        this_argv += extra_args
 
     # These are the default options for all test instances
     # They can be overridden by extra_opts
+
+    lhcb_test = pytest.config.getoption("--testLHCb")
+
+    if lhcb_test:
+        import getpass
+        cred_opts = [('Configuration', 'user', getpass.getuser()),
+                      ('defaults_DiracProxy', 'group', 'lhcb_user')]
+    else:
+        cred_opts = [('Configuration', 'user', 'testframework'),
+                     ('defaults_DiracProxy', 'group', 'gridpp_user'),
+                     ('DIRAC', 'DiracEnvSource', '/cvmfs/ganga.cern.ch/dirac_ui/bashrc')]
+
+    #Sort out eos
+    outputConfig = getConfig('Output')
+    outputConfig['MassStorageFile']['uploadOptions']['cp_cmd'] = 'cp'
+    outputConfig['MassStorageFile']['uploadOptions']['ls_cmd'] = 'ls'
+    outputConfig['MassStorageFile']['uploadOptions']['mkdir_cmd'] = 'mkdir'
+    outputConfig['MassStorageFile']['uploadOptions']['path'] = '/tmp'
+
+
     default_opts = [
         ('Configuration', 'RUNTIME_PATH', 'GangaTest'),
         ('Configuration', 'gangadir', gangadir_for_test),
-        ('Configuration', 'user', 'testframework'),
         ('Configuration', 'repositorytype', 'LocalXML'),
         ('Configuration', 'UsageMonitoringMSG', False),  # Turn off spyware
+        ('Configuration', 'lockingStrategy', 'FIXED'),
         ('TestingFramework', 'ReleaseTesting', True),
-        ('Queues', 'NumWorkerThreads', 2),
-    ]
+        ('Queues', 'NumWorkerThreads', 3),
+        ('Output', 'MassStorageFile', outputConfig['MassStorageFile']),
+        ]
+    default_opts += cred_opts
 
     # FIXME Should we need to add the ability to load from a custom .ini file
     # to configure tests without editting this?
 
     # Actually parse the options
     Ganga.Runtime._prog = Ganga.Runtime.GangaProgram(argv=this_argv)
+    Ganga.Runtime._prog.default_config_file = ganga_config_file
     Ganga.Runtime._prog.parseOptions()
 
     # For all the default and extra options, we set the session value
-    from Ganga.Utility.Config import setConfigOption
-    for opt in default_opts + extra_opts:
-        setConfigOption(*opt)
+    from Ganga.Utility.Config import setUserValue
+
+    for opts in default_opts, extra_opts:
+        for opt in opts:
+            try:
+                setUserValue(*opt)
+            except Exception as err:
+                print("Error Setting: %s" % str(opt))
+                print("Err: %s" % err)
 
     # The configuration is currently created at module import and hence can't be
     # regenerated.
@@ -135,18 +170,23 @@ def start_ganga(gangadir_for_test, extra_opts=[]):
 
     # Adapted from the Coordinator class, check for the required credentials and stop if not found
     # Hopefully stops us falling over due to no AFS access of something similar
-    from Ganga.Core.InternalServices import Coordinator
-    missing_cred = Coordinator.getMissingCredentials()
+    from Ganga.GPIDev.Credentials import get_needed_credentials
+    missing_cred = get_needed_credentials()
 
     logger.info("Checking Credentials")
 
     if missing_cred:
-        raise Exception("Failed due to missing credentials %s" % str(missing_cred))
+        raise Exception("Failed due to missing credentials %s" % missing_cred)
 
     # Make sure that all the config options are really set.
     # Some from plugins may not have taken during startup
-    for opt in default_opts + extra_opts:
-        setConfigOption(*opt)
+    for opts in default_opts, extra_opts:
+        for opt in opts:
+            try:
+                setUserValue(*opt)
+            except Exception as err:
+                print("Error Setting: %s" % str(opt))
+                print("Err: %s" % err)
 
     logger.info("Passing to Unittest")
 
@@ -185,7 +225,18 @@ def emptyRepositories():
         tasks.clean(confirm=True, force=True)
 
 
-def stop_ganga():
+def getCleanUp():
+    """ Return whether the repo is cleaned up on shutdown of each test """
+    # Do we want to empty the repository on shutdown?
+    from Ganga.Utility.Config import getConfig
+    if 'AutoCleanup' in getConfig('TestingFramework'):
+        whole_cleanup = getConfig('TestingFramework')['AutoCleanup']
+    else:
+        whole_cleanup = True
+    return whole_cleanup
+
+
+def stop_ganga(force_cleanup=False):
     """
     This test stops Ganga and shuts it down
 
@@ -197,12 +248,7 @@ def stop_ganga():
 
     logger.info("Deciding how to shutdown")
 
-    # Do we want to empty the repository on shutdown?
-    from Ganga.Utility.Config import getConfig
-    if 'AutoCleanup' in getConfig('TestingFramework'):
-        whole_cleanup = getConfig('TestingFramework')['AutoCleanup']
-    else:
-        whole_cleanup = True
+    whole_cleanup = getCleanUp() or force_cleanup
     logger.info("AutoCleanup: %s" % whole_cleanup)
 
     if whole_cleanup is True:
@@ -219,10 +265,14 @@ def stop_ganga():
     logger.info("Mimicking ganga exit")
     from Ganga.Core.InternalServices import ShutdownManager
 
-    import Ganga.Core
-    Ganga.Core.change_atexitPolicy(interactive_session=False, new_policy='batch')
+    # make sure we don't have an interactive shutdown policy
+    from Ganga.Core.GangaThread import GangaThreadPool
+    GangaThreadPool.shutdown_policy = 'batch'
+
     # This should now be safe
     ShutdownManager._ganga_run_exitfuncs()
+
+    logger.info("Clearing Config")
 
     # Undo any manual editing of the config and revert to defaults
     clear_config()
@@ -235,13 +285,15 @@ class GangaUnitTest(unittest.TestCase):
     """
     This class is the class which all new-style Ganga tests should inherit from
     """
+    _test_dir = None
+    _test_args = {}
 
     @classmethod
     def gangadir(cls):
         """
         Return the directory that this test should store its registry and repository in
         """
-        return os.path.join(_getGangaPath(), 'gangadir_testing', cls.__name__)
+        return os.path.join(_getGangaPath(), ganga_test_dir_name, cls.__name__)
 
     @classmethod
     def setUpClass(cls):
@@ -264,8 +316,11 @@ class GangaUnitTest(unittest.TestCase):
         gangadir = self.gangadir()
         if not os.path.isdir(gangadir):
             os.makedirs(gangadir)
+        print("\n") # useful when watching stdout from tests
         print("Starting Ganga in: %s" % gangadir)
         start_ganga(gangadir_for_test=gangadir, extra_opts=extra_opts)
+        GangaUnitTest._test_dir = gangadir
+        GangaUnitTest._test_args = extra_opts
 
     def tearDown(self):
         """
@@ -281,6 +336,12 @@ class GangaUnitTest(unittest.TestCase):
         """
         This is used for cleaning up anything at a module level of higher
         """
-        # NB maybe we shouldn't delete tests here as failed tests require debugging
-        #    this is better cleaned prior to running the next job
-        #shutil.rmtree(cls.gangadir(), ignore_errors=True)
+        print("Tearing down test fully on completion")
+        start_ganga(gangadir_for_test=cls._test_dir, extra_opts=cls._test_args)
+        # Should Ganga clean up properly on test finishing?
+        stop_ganga(not pytest.config.getoption("--keepRepo"))
+        if not pytest.config.getoption("--keepRepo"):
+            shutil.rmtree(cls._test_dir, ignore_errors=True)
+        cls._test_dir = ''
+        cls._test_args = {}
+

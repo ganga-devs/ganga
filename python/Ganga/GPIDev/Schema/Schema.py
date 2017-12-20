@@ -13,13 +13,17 @@ from Ganga.Utility.logic import implies
 
 import Ganga.Utility.Config
 
-from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError, GangaException
+from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError, GangaException, GangaTypeError
 
 from Ganga.Utility.Plugin import allPlugins
 
 import types
 
 from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
+
+from inspect import isclass
+
+from Ganga.Utility.Config import Config
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -28,6 +32,8 @@ _found_components = {}
 _found_configs = {}
 _found_attrs = {}
 _stored_defaults = {}
+_stored_options = {}
+_stored_configs = {}
 
 #
 # Ganga Public Interface Schema
@@ -37,6 +43,8 @@ _stored_defaults = {}
 
 
 class Version(object):
+
+    __slots__ = ('major', 'minor')
 
     def __init__(self, major, minor):
         self.major = major
@@ -54,9 +62,11 @@ class Version(object):
 
 def defaultConfigSectionName(name):
     global _stored_defaults
-    if name not in _stored_defaults:
+    try:
+        return _stored_defaults[name]
+    except KeyError:
        _stored_defaults[name] = 'defaults_' + name  # _Properties
-    return _stored_defaults[name]
+       return _stored_defaults[name]
 
 # Schema defines the logical model of the Ganga Public Interface (GPI)
 # for  jobs and  pluggable  job components  such  as applications  and
@@ -92,16 +102,21 @@ class Schema(object):
     # datadict: dictionary of properties (schema items) Defaults to '{}'
     # version: the version information
 
+    __slots__ = ('datadict', 'version', '_pluginclass')
+
     def __init__(self, version, datadict=None):
         self.datadict = datadict or {}
         self.version = version
         self._pluginclass = None
 
     def __getitem__(self, name):
-        if name in self.datadict:
+        try:
             return self.datadict[name]
-        else:
-            err_str = "Ganga Cannot find: %s in Object: %s" % (name, self.name)
+        except KeyError:
+            if self._pluginclass is not None:
+                err_str = "Ganga Cannot find: %s in Object: %s" % (name, self.name)
+            else:
+                err_str = "Ganga Cannot find: %s attribute for None object" % (name,)
             logger.error(err_str)
             raise GangaAttributeError(err_str)
 
@@ -111,8 +126,7 @@ class Schema(object):
 
     @property
     def name(self):
-        from Ganga.GPIDev.Base.Objects import _getName
-        return _getName(self._pluginclass)
+        return self._pluginclass._name
 
     def allItemNames(self):
         return self.datadict.keys()
@@ -143,10 +157,7 @@ class Schema(object):
         if self.datadict is None:
             return []
 
-        r = []
-        for n, c in zip(self.datadict.keys(), self.datadict.values()):
-            if issubclass(c.__class__, klass):
-                r.append((n, c))
+        r = [(n, c) for (n, c) in self.datadict.iteritems() if issubclass(c.__class__, klass)]
         return r
 
     def isEqual(self, schema):
@@ -157,7 +168,7 @@ class Schema(object):
         new_dict = {}
         for key, val in self.datadict.iteritems():
             new_dict[key] = copy.deepcopy(val)
-        return Schema(version=copy.deepcopy(self.version), datadict=new_dict)
+        return Schema(copy.deepcopy(self.version), new_dict)
 
     def createDefaultConfig(self):
         # create a configuration unit for default values of object properties
@@ -183,7 +194,7 @@ class Schema(object):
                 if isinstance(item['defvalue'], dict):
                     if not types is None:
                         types.append('dict')
-                config.addOption(name, item['defvalue'], item['doc'], override=False, typelist=types)
+                config.addOption(name, item['defvalue'], item['doc'], False, typelist=types)
 
 
         def prehook(name, x):
@@ -198,7 +209,7 @@ class Schema(object):
                 if not isinstance(x, str) and not x is None:
                     raise Ganga.Utility.Config.ConfigError(errmsg + "only strings and None allowed as a default value of Component Item.")
                 try:
-                    self._getDefaultValueInternal(name, x, check=True)
+                    self._getDefaultValueInternal(name, x, True)
                 except Exception as err:
                     logger.info("Unexpected error: %s", err)
                     raise
@@ -220,7 +231,11 @@ class Schema(object):
         """
         returnable = self._getDefaultValueInternal(attr)
         if make_copy and returnable is not None:
-            return copy.deepcopy(returnable)
+            from Ganga.GPIDev.Base.Objects import GangaObject
+            if isinstance(returnable, GangaObject):
+                return returnable.__class__.getNew(should_init=True)
+            else:
+                return copy.deepcopy(returnable)
         else:
             return returnable
 
@@ -232,21 +247,38 @@ class Schema(object):
 
         item = self.getItem(attr)
 
-        stored_attr_key = def_name + ':' + str(attr)
+        stored_option_key = def_name
+        stored_attr_key = def_name + ':' + attr
 
-        from Ganga.Utility.Config import Config
         is_finalized = Config._after_bootstrap
 
         useDefVal = False
 
         try:
-            # Attempt to get the relevant config section
-            config = Config.getConfig(def_name, create=False)
 
-            if is_finalized and stored_attr_key in _found_attrs and not config.hasModified():
+            # Attempt to get the relevant config section
+            if is_finalized:
+                if stored_option_key in _stored_configs:
+                    config = _stored_configs[stored_option_key]
+                else:
+                    config = Config.getConfig(def_name)
+                    _stored_configs[stored_option_key] = config
+            else:
+                config = Config.getConfig(def_name)
+
+            if is_finalized and not config.hasModified and stored_attr_key in _found_attrs:
                 defvalue = _found_attrs[stored_attr_key]
             else:
-                if attr in config.getEffectiveOptions():
+                if is_finalized:
+                    if stored_option_key in _stored_options and not config.hasModified:
+                        eff_ops = _stored_options[stored_option_key]
+                    else:
+                        eff_ops = config.getEffectiveOptions()
+                        _stored_options[stored_option_key] = eff_ops
+                else:
+                    eff_ops = config.getEffectiveOptions()
+
+                if attr in eff_ops:
                     defvalue = config[attr]
                     from Ganga.GPIDev.Base.Proxy import isProxy
                     if isProxy(defvalue):
@@ -279,7 +311,10 @@ class Schema(object):
             if not item['sequence']:
                 if defvalue is None:
                     if not item['load_default']:
-                        assert(item['optional'])
+                        try:
+                            assert(item['optional'])
+                        except AssertionError:
+                            raise SchemaError("This item '%s' is not a sequence, doesn't have a load_default and is not optional. This is unsupported!" % type(item))
                         return None
 
                 # if a defvalue of a component item is an object (not string) just process it as for SimpleItems (useful for FileItems)
@@ -289,14 +324,16 @@ class Schema(object):
 
                 if isinstance(defvalue, str) or defvalue is None:
                     try:
-                        config = Config.getConfig(def_name, create=False)
-                        has_modified = config.hasModified()
+                        config = Config.getConfig(def_name)
+                        has_modified = config.hasModified
                     except KeyError:
                         has_modified = False
 
                     if category not in _found_components or has_modified:
                         _found_components[category] = allPlugins.find(category, defvalue)
                     return _found_components[category]()
+                if isclass(defvalue):
+                    return defvalue()
 
         # If needed/requested make a copy of the function elsewhwre
         return defvalue
@@ -378,6 +415,8 @@ class Item(object):
                         'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0,
                         'optional': 0, 'category': 'internal', 'typelist': None, 'load_default': 1}
 
+    __slots__ = ('_meta')
+
     def __init__(self):
         super(Item, self).__init__()
         self._meta = copy.deepcopy(Item._metaproperties)
@@ -420,7 +459,7 @@ class Item(object):
             # find intersection
             forbidden = [k for k in forced if k in kwds]
             if len(forbidden) > 0:
-                raise TypeError('%s received forbidden (forced) keyword arguments %s' % (self.__class__, forbidden))
+                raise GangaTypeError('%s received forbidden (forced) keyword arguments %s' % (self.__class__, forbidden))
             self._meta.update(forced)
 
         self._meta.update(kwds)
@@ -515,7 +554,9 @@ class Item(object):
                             if not valueTypeAllowed(dKey, validTypes) or not valueTypeAllowed(dVal, validTypes):
                                 raise TypeMismatchError('Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % (dKey, dVal, name, validTypes))
                     else:  # new value is not a dict
-                        raise TypeMismatchError('Attribute "%s" expects a dictionary.' % name)
+                        if val == []:
+                            return
+                        raise TypeMismatchError('Attribute "%s" expects a dictionary. Found: "%s".' % (name, found))
                     return
                 else:  # a 'simple' (i.e. non-dictionary) non-sequence value
                     self.__check(valueTypeAllowed(val, validTypes), name, validTypes, val)
@@ -555,16 +596,24 @@ class ComponentItem(Item):
     # schema user of a ComponentItem cannot change the forced values below
     _forced = {}
 
+    __slots__=list()
+
     def __init__(self, category, optional=0, load_default=1, **kwds):
         super(ComponentItem, self).__init__()
         kwds['category'] = category
         kwds['optional'] = optional
         kwds['load_default'] = load_default
         #kwds['getter'] = getter
-        self._update(kwds, forced=ComponentItem._forced)
-        assert(implies(self['defvalue'] is None and not self['load_default'], self['optional']))
+        self._update(kwds, ComponentItem._forced)
+        try:
+            assert(implies(self['defvalue'] is None and not self['load_default'], self['optional']))
+        except AssertionError:
+            raise SchemaError("ComponentItem has no defvalue, load_default or requirement to be optional")
 
-        assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self['protected'] and not self['sequence'] and not self['copyable']))
+        try:
+            assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self['protected'] and not self['sequence'] and not self['copyable']))
+        except AssertionError:
+            raise SchemaError("There is no getter, transient flag or defvalue and the ComponentItem is protected, not a sequence or not copyable. This is not supported")
 
     def _describe(self):
         return "'" + self['category'] + "' object," + Item._describe(self)
@@ -576,6 +625,8 @@ defaultValue='_NOT_A_VALUE_'
 
 
 class SimpleItem(Item):
+
+    __slots__=list()
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
         super(SimpleItem, self).__init__()
@@ -593,6 +644,8 @@ class SimpleItem(Item):
 
 
 class SharedItem(Item):
+
+    __slots__=list()
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
         super(SharedItem, self).__init__()
@@ -613,6 +666,8 @@ class SharedItem(Item):
 # defining their metaproperties
 class FileItem(ComponentItem):
 
+    __slots__=list()
+
     def __init__(self, **kwds):
         super(FileItem, self).__init__('files')
         self._update(kwds)
@@ -622,6 +677,8 @@ class FileItem(ComponentItem):
 
 
 class GangaFileItem(ComponentItem):
+
+    __slots__ = list()
 
     def __init__(self, **kwds):
         super(GangaFileItem, self).__init__('gangafiles')

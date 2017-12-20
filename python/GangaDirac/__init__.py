@@ -4,6 +4,9 @@ from Ganga.Utility.Config import makeConfig, getConfig
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.Config.Config import _after_bootstrap
+
+from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+
 logger = getLogger()
 
 if not _after_bootstrap:
@@ -46,6 +49,8 @@ if not _after_bootstrap:
 
     configDirac.addOption('DiracLFNBase', '', "Base dir prepended to create LFN name from DiracFile('name'). If this is unset then it will default to /[userVO]/user/[first letter of user name]/[user name]")
 
+    configDirac.addOption('useGangaPath', False, "Should we use the Ganga job ID to auto-construct a LFN relative path?")
+
     configDirac.addOption('ReplicateOutputData', False,
                       'Determines whether outputdata stored on Dirac is replicated')
 
@@ -66,7 +71,7 @@ if not _after_bootstrap:
                                             'Deleted': 'failed',
                                             'Done': 'completed',
                                             'Failed': 'failed',
-                                            'Killed': 'killed',
+                                            'Killed': 'failed',
                                             'Matched': 'submitted',
                                             'Received': 'submitted',
                                             'Running': 'running',
@@ -77,13 +82,17 @@ if not _after_bootstrap:
     configDirac.addOption('finalised_statuses',
                                                 {'Done': 'completed',
                                                  'Failed': 'failed',
-                                                 'Killed': 'killed',
+                                                 'Killed': 'failed',
                                                  'Deleted': 'failed',
                                                  'Unknown: No status for Job': 'failed'},
                                                 "Mapping of Dirac to Ganga Job statuses used to construct a queue to finalize a given job, i.e. final statues in 'statusmapping'")
 
     configDirac.addOption('serializeBackend', False, 'Developer option to serialize Dirac code for profiling/debugging')
 
+    configDirac.addOption('proxyInitCmd', 'dirac-proxy-init', 'Configurable which sets the default proxy init command for DIRAC')
+    configDirac.addOption('proxyInfoCmd', 'dirac-proxy-info', 'Configurable which sets the default proxy init command for DIRAC')
+
+    configDirac.addOption('maxSubjobsPerProcess', 100, 'Set the maximum number of subjobs to be submitted per process.')
 
 def standardSetup():
 
@@ -99,4 +108,14 @@ def loadPlugins(config=None):
     import Lib.RTHandlers
     logger.debug("Loading Files")
     import Lib.Files
+
+def postBootstrapHook():
+    dirac_conf = getConfig('DIRAC')
+    if not dirac_conf['DiracEnvSource'] and not dirac_conf['DiracEnvJSON']:
+        return
+    from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
+    try:
+        credential_store[DiracProxy()]
+    except KeyError:
+        pass
 

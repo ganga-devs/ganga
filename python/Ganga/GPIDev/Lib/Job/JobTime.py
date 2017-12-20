@@ -1,5 +1,6 @@
 import datetime
 
+from Ganga.Core.exceptions import GangaTypeError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
@@ -145,7 +146,7 @@ class JobTime(GangaObject):
                 logger.debug("Wrote '%s' to timestamps.", status)
 
         # subjobs method:
-        if j.master:  # identifies subjobs
+        if j.master is not None:  # identifies subjobs
             logger.debug(
                 "j.time.timenow() caught subjob %d.%d in the '%s' status", j.master.id, j.id, status)
 
@@ -262,9 +263,8 @@ class JobTime(GangaObject):
 
         # If job is SUBJOB do the normal procedure. Not sure this clause is
         # neccessary as subjobs will be caught normally
-        if j.master:
-            logger.debug(
-                "j.time.details(): subjob %d.%d caught.", j.master.id, j.id)
+        if j.master is not None:
+            logger.debug("j.time.details(): subjob %d.%d caught.", j.master.id, j.id)
             detdict = j.backend.timedetails()
             return detdict
 
@@ -312,7 +312,7 @@ class JobTime(GangaObject):
             else:
                 # string = error
                 if not isinstance(subjob, int):
-                    raise TypeError("Subjob id requires type 'int'")
+                    raise GangaTypeError("Subjob id requires type 'int'")
                 # subjob id supplied
                 for sj in j.subjobs:
                     if sj.id == subjob:

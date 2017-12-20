@@ -14,10 +14,8 @@ class TestXMLGenAndLoad(GangaUnitTest):
 
     def setUp(self):
         """Make sure that the Job object isn't destroyed between tests"""
-        extra_opts = [('Registry', 'AutoFlusherWaitTime', 5)]
+        extra_opts = [('Registry', 'AutoFlusherWaitTime', 5), ('TestingFramework', 'AutoCleanup', 'False')]
         super(TestXMLGenAndLoad, self).setUp(extra_opts=extra_opts)
-        from Ganga.Utility.Config import setConfigOption
-        setConfigOption('TestingFramework', 'AutoCleanup', 'False')
 
     def test_a_JobConstruction(self):
         """ First construct the Job object (singular)"""
@@ -27,6 +25,7 @@ class TestXMLGenAndLoad(GangaUnitTest):
         from Ganga.GPI import Job, jobs
         j=Job()
         assert len(jobs) == 1
+        j.name = 'modified_name'
 
     def test_b_JobXMLExists(self):
         # Check things exist
