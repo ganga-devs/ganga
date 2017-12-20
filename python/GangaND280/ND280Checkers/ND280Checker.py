@@ -29,7 +29,7 @@ class FileCheckeR(IFileChecker):
     self.searchStrings are the search strings you would like to check for.
     self.files are the files you would like to check.
     self.failIfFound (default = True) decides whether to fail the job if the string is found. If you set this to false the job will fail if the string *isnt* found.
-    self.fileMustExist toggles whether to fail the job if the specified file doesn't exist (default is True).
+    self.filesMustExist toggles whether to fail the job if the specified file doesn't exist (default is True).
     """
     _schema = IFileChecker._schema.inherit_copy()
     _schema.datadict['searchStrings'] = SimpleItem(defvalue = [], doc='String to search for')
@@ -81,6 +81,7 @@ class ND280Kin_Checker(IFileChecker):
 
         logger.info("Checking/moving outputs of run "+job.name)
         
+        self.filesMustExist = False
         self.files = ['*.kin']
         filepaths = self.findFiles(job)
         if len(filepaths) != 1:
