@@ -596,3 +596,18 @@ class SGE(Batch):
     def __init__(self):
         super(SGE, self).__init__()
 
+#_________________________________________________________________________
+
+class Slurm(Batch):
+
+    ''' SGE backend - submit jobs to Slurm.
+    '''
+    _schema = Batch._schema.inherit_copy()
+    _category = 'backends'
+    _name = 'Slurm'
+
+    config = Ganga.Utility.Config.getConfig('Slurm')
+
+    def __init__(self):
+        super(Slurm, self).__init__()
+
