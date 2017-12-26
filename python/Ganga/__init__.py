@@ -572,6 +572,10 @@ slurm_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defin
 slurm_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
 
 slurm_config.addOption('kill_str', 'scancel %s', "String used to kill job")
+tempstr = '''
+'''
+slurm_config.addOption('preexecute', tempstr,
+                 "String contains commands executing before submiting job to queue")
 
 # ------------------------------------------------
 # Mergers
