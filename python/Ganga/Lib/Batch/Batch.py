@@ -600,7 +600,7 @@ class SGE(Batch):
 
 class Slurm(Batch):
 
-    ''' SGE backend - submit jobs to Slurm.
+    ''' Slurm backend - submit jobs to Slurm.
     '''
     _schema = Batch._schema.inherit_copy()
     _category = 'backends'
