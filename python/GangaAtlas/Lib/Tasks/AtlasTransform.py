@@ -1,11 +1,11 @@
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
-from Ganga.GPIDev.Lib.Tasks.common import *
-from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
-from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
-from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
+from GangaCore.GPIDev.Lib.Tasks.common import *
+from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
+from GangaCore.GPIDev.Lib.Job.Job import JobError
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
+from GangaCore.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
 from GangaAtlas.Lib.Tasks.AtlasUnit import AtlasUnit
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import ATLASLocalDataset, ATLASOutputDataset
@@ -14,15 +14,15 @@ from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsExc
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
-import Ganga.GPI as GPI
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
+import GangaCore.GPI as GPI
 import os
 
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 configDQ2 = getConfig('DQ2')
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 class AtlasTransform(ITransform):

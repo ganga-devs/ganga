@@ -4,8 +4,8 @@ to install ganga on a remote machine
 
 from GangaRobot.Framework.Action import IAction
 from GangaRobot.Framework import Utility
-from Ganga.Utility.logging import getLogger
-import Ganga.Utility.Config
+from GangaCore.Utility.logging import getLogger
+import GangaCore.Utility.Config
 from GangaRobot.Framework.exceptions import *
 
 import os, urllib, datetime, time
@@ -46,7 +46,7 @@ class Installer(IAction):
 
     def _getConfigInfo(self):
         """ Gets the config info from the ganga config file """
-        config = Ganga.Utility.Config.getConfig('TestRobot')     
+        config = GangaCore.Utility.Config.getConfig('TestRobot')     
         self.InstallPath = config['InstallPath']
         self.downloadURL = config['ReleasePath']        
         self.VersionNumber = config['VersionNumber']
@@ -59,7 +59,7 @@ class Installer(IAction):
         except IOError as e:
             raise GangaRobotBreakError(e, IOError)
             
-        config = Ganga.Utility.Config.getConfig('IndependantTest')
+        config = GangaCore.Utility.Config.getConfig('IndependantTest')
 
         cmd = "python "+f+" --prefix="+self.InstallPath+" --extern=GangaTest "+self.VersionNumber
         logger.debug("Executing command: '%s'",cmd)

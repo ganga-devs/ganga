@@ -1,9 +1,9 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaDirac.Lib.RTHandlers.ExeDiracRTHandler import ExeDiracRTHandler, exe_script_template
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Core.exceptions import ApplicationConfigurationError, GangaException
-from Ganga.GPI import *
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.Core.exceptions import ApplicationConfigurationError, GangaException
+from GangaCore.GPI import *
 
 # GangaTest.Framework.utils defines some utility methods
 #from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state

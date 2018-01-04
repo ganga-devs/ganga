@@ -1,15 +1,15 @@
 import commands, exceptions, random, re, sys, time
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.Core.exceptions import BackendError
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.Core.exceptions import BackendError
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getDatasets
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+import GangaCore.Utility.logging
+logger = GangaCore.Utility.logging.getLogger()
 
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 configPanda = getConfig('Panda')
 
 def getLatestDBReleaseCaching():
@@ -248,5 +248,5 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         
         return jspec
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('ProdTrans', 'Panda', ProdTransPandaRTHandler)

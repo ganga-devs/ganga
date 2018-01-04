@@ -8,7 +8,7 @@
 
 external_packages = {}
 
-from Ganga.Utility.Setup import PackageSetup
+from GangaCore.Utility.Setup import PackageSetup
 
 setup = PackageSetup( external_packages )
 

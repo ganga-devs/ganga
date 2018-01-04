@@ -17,11 +17,12 @@ Actually there are three applications under the single hat
 """
 # =============================================================================
 import os
-import tempfile
-from   Ganga.GPIDev.Lib.File.File                       import ShareDir
-from   Ganga.GPIDev.Schema                              import Schema , Version , SimpleItem , GangaFileItem
-from   Ganga.Utility.logging                            import getLogger
-from   Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+import tempfile 
+from   GangaCore.GPIDev.Lib.File.File                       import ShareDir  
+from   GangaCore.GPIDev.Schema                              import Schema , Version , SimpleItem , GangaFileItem
+from   GangaCore.Utility.logging                            import getLogger
+from   GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+
 
 from   GangaLHCb.Lib.Applications.GaudiExecUtils        import prepare_cmake_app
 from   GangaLHCb.Lib.RTHandlers.GaudiExecRTHandlers     import GaudiExecDiracRTHandler, GaudiExecRTHandler
@@ -419,7 +420,7 @@ def prepareBender ( version , module , path = '$HOME/cmtuser', use_tmp = False ,
 
     the_path = prepare_cmake_app ( 'Bender' , version , path )
 
-    from Ganga.GPI import BenderModule as _BM  ## black magic
+    from GangaCore.GPI import BenderModule as _BM  ## black magic
     return _BM ( module = module , directory = the_path , **kwargs )
 
 # =============================================================================
@@ -466,7 +467,8 @@ def prepareBenderRun ( version , script = '' , path = '$HOME/cmtuser', use_tmp =
     scripts = kwargs.pop('scripts', [] )
     if script : scripts.append ( script )
     #
-    from Ganga.GPI import BenderRun as _BR  ## black magic
+
+    from GangaCore.GPI import BenderRun as _BR  ## black magic    
     return _BR ( scripts = scripts , directory = the_path , **kwargs )
 
 
@@ -520,11 +522,11 @@ def prepareOstapRun ( version , script = '' , path = '$HOME/cmtuser', use_tmp = 
     scripts = kwargs.pop('scripts', [] )
     if script : scripts.append ( script )
     #
-    from Ganga.GPI import OstapRun as _OR  ## black magic
+    from GangaCore.GPI import OstapRun as _OR  ## black magic    
     return _OR ( scripts = scripts , directory = the_path , **kwargs )
 
-## export it!
-from Ganga.Runtime.GPIexport import exportToGPI
+## export it! 
+from GangaCore.Runtime.GPIexport import exportToGPI
 exportToGPI ( 'prepareBender'      , prepareBender       , 'Functions' )
 exportToGPI ( 'prepareBenderRun'   , prepareBenderRun    , 'Functions' )
 exportToGPI ( 'prepareOstapRun'    , prepareOstapRun     , 'Functions' )

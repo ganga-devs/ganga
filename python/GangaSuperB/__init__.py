@@ -1,9 +1,9 @@
 
-from Ganga.Runtime.GPIexport import exportToGPI
-from Ganga.Utility.Config import *
+from GangaCore.Runtime.GPIexport import exportToGPI
+from GangaCore.Utility.Config import *
 
-from Ganga.Utility.Config.Config import _after_bootstrap
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.Config.Config import _after_bootstrap
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 if not _after_bootstrap:

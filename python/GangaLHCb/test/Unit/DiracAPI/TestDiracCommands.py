@@ -12,11 +12,11 @@ from textwrap import dedent
 
 import pytest
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 
-from Ganga.testlib.mark import external
-from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
+from GangaCore.testlib.mark import external
+from GangaCore.testlib.GangaUnitTest import load_config_files, clear_config
 
 logger = getLogger(modulename=True)
 

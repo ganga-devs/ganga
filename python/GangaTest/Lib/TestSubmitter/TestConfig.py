@@ -1,4 +1,4 @@
-from Ganga.Utility.Config import makeConfig
+from GangaCore.Utility.Config import makeConfig
 
 # test configuration properties
 test_config = makeConfig('TestConfig','testing stuff')

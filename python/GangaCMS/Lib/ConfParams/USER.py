@@ -5,8 +5,8 @@
 # 08/06/10 @ ubeda
 #
 
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
 
 class USER(GangaObject):
 

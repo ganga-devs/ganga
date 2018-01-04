@@ -1,12 +1,12 @@
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.Tasks.common import *
-from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
-from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
-from Ganga.Utility.logging import getLogger
-import Ganga.GPI as GPI
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.Tasks.common import *
+from GangaCore.GPIDev.Lib.Tasks.IUnit import IUnit
+from GangaCore.GPIDev.Lib.Job.Job import JobError
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
+from GangaCore.Utility.logging import getLogger
+import GangaCore.GPI as GPI
 
 import os
 
@@ -53,7 +53,7 @@ class ND280Unit_CSVEvtList(IUnit):
       else:
         patterncsv = tmpname+"_sub%d"
 
-      from Ganga.GPIDev.Lib.File import FileBuffer
+      from GangaCore.GPIDev.Lib.File import FileBuffer
       thiscsv = patterncsv % self.subpartid
 
       # Create the CSV file for this Unit

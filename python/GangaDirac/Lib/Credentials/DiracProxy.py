@@ -5,20 +5,20 @@ import re
 import subprocess
 from datetime import datetime, timedelta
 
-import Ganga.Utility.logging
-from Ganga.Core.exceptions import InvalidCredentialError, GangaValueError
-from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Schema import SimpleItem
+import GangaCore.Utility.logging
+from GangaCore.Core.exceptions import InvalidCredentialError, GangaValueError
+from GangaCore.Utility.Config import getConfig
+from GangaCore.GPIDev.Schema import SimpleItem
 
-from Ganga.GPIDev.Adapters.ICredentialInfo import cache, retry_command
-from Ganga.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
-from Ganga.Core.exceptions import CredentialRenewalError
-from Ganga.GPIDev.Credentials.VomsProxy import VomsProxyInfo
-from Ganga.Utility.Shell import Shell
+from GangaCore.GPIDev.Adapters.ICredentialInfo import cache, retry_command
+from GangaCore.GPIDev.Adapters.ICredentialRequirement import ICredentialRequirement
+from GangaCore.Core.exceptions import CredentialRenewalError
+from GangaCore.GPIDev.Credentials.VomsProxy import VomsProxyInfo
+from GangaCore.Utility.Shell import Shell
 
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 class DiracProxyInfo(VomsProxyInfo):
     """

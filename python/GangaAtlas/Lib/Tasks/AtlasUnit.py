@@ -1,9 +1,9 @@
-from Ganga.GPIDev.Lib.Tasks.common import *
-from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
-from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from GangaCore.GPIDev.Lib.Tasks.common import *
+from GangaCore.GPIDev.Lib.Tasks.IUnit import IUnit
+from GangaCore.GPIDev.Lib.Job.Job import JobError
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
 
@@ -13,13 +13,13 @@ from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 from GangaAtlas.Lib.Athena.Athena import AthenaSplitterJob
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
-from Ganga.GPIDev.Schema import *
-import Ganga.GPI as GPI
+from GangaCore.GPIDev.Schema import *
+import GangaCore.GPI as GPI
 
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 configDQ2 = getConfig('DQ2')
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 import os

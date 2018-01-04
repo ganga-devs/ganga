@@ -1,6 +1,6 @@
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.Job import Job
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.Job import Job
 
 
 class TestSplitter(ISplitter):

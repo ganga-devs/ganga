@@ -4,7 +4,7 @@ try:
 except ImportError:
     import mock
 
-from Ganga.Utility.Config import getConfig, makeConfig
+from GangaCore.Utility.Config import getConfig, makeConfig
 makeConfig('defaults_DiracProxy', '')
 getConfig('defaults_DiracProxy').addOption('group', 'some_group', '')
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy, DiracProxyInfo
@@ -57,13 +57,13 @@ def resolver(dummy_class, input_):
 
 @pytest.yield_fixture(scope='function')
 def fake_shell(mocker):
-    #from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
+    #from GangaCore.testlib.GangaUnitTest import load_config_files, clear_config
     #load_config_files()
     s = mocker.patch('GangaDirac.Lib.Credentials.DiracProxy.DiracProxyInfo.shell', FakeShell())
     mocker.patch('GangaDirac.Lib.Credentials.DiracProxy.DiracProxyInfo.field', resolver)
     mocker.patch('GangaDirac.Lib.Credentials.DiracProxy.DiracProxyInfo.identity', return_value='some_user')
-    mocker.patch('Ganga.GPIDev.Adapters.ICredentialInfo.os.path.exists', return_value=True)
-    mocker.patch('Ganga.GPIDev.Credentials.CredentialStore.CredentialStore.enable_caching', False)
+    mocker.patch('GangaCore.GPIDev.Adapters.ICredentialInfo.os.path.exists', return_value=True)
+    mocker.patch('GangaCore.GPIDev.Credentials.CredentialStore.CredentialStore.enable_caching', False)
     yield s
     #clear_config()
 

@@ -63,7 +63,7 @@ project = u'Ganga'
 copyright = u'2016, Ganga Developers'
 author = u'Ganga Developers'
 
-from Ganga import _gangaVersion
+from GangaCore import _gangaVersion
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

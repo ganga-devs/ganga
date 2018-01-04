@@ -1,15 +1,15 @@
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
 
-from Ganga.Utility.Config import makeConfig, ConfigError
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.files import expandfilename
+from GangaCore.Utility.Config import makeConfig, ConfigError
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.files import expandfilename
 
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
-from Ganga.Lib.Mergers.Merger import *
+from GangaCore.Lib.Mergers.Merger import *
 
 import urlparse
 
@@ -58,7 +58,7 @@ class Spider(IApplication):
 
     def postprocess(self):
         """Sort out the results of the spider"""
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         j = self.getJobObject()
 
         # extract all the spidered links and images, etc from the job

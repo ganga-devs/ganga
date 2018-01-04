@@ -1,15 +1,15 @@
-from Ganga.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
-from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
-from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from GangaCore.GPIDev.Lib.Tasks.common import makeRegisteredJob, getJobByID
+from GangaCore.GPIDev.Lib.Tasks.IUnit import IUnit
+from GangaCore.GPIDev.Lib.Job.Job import JobError
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
 from commands import getstatusoutput
 from datetime import datetime, date, time
 
 import os
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 class NA62Unit(IUnit):
