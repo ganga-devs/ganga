@@ -1,16 +1,16 @@
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.Tasks.common import *
-from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
-from Ganga.GPIDev.Lib.Job.Job import JobError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
-from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
-from Ganga.Utility.logging import getLogger
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.Tasks.common import *
+from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
+from GangaCore.GPIDev.Lib.Job.Job import JobError
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Lib.Tasks.ITransform import ITransform
+from GangaCore.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
+from GangaCore.Utility.logging import getLogger
 from ND280Unit_CSVEvtList import ND280Unit_CSVEvtList
 from GangaND280.ND280Dataset.ND280Dataset import ND280LocalDataset
 from GangaND280.ND280Splitter.ND280Splitter import splitCSVFile
-import Ganga.GPI as GPI
+import GangaCore.GPI as GPI
 
 import os
 

@@ -19,8 +19,8 @@ from GangaRobot.Lib.Core.CoreExtractor import CoreExtractor
 from GangaRobot.Lib.Core.CoreReporter import CoreReporter
 from GangaRobot.Lib.Ext.DiracExtractor import DiracExtractor
 from GangaRobot.Framework import Utility
-from Ganga.Utility import files
-from Ganga.GPI import *
+from GangaCore.Utility import files
+from GangaCore.GPI import *
 import glob
 import os
 

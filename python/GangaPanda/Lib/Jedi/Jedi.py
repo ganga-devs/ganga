@@ -8,19 +8,19 @@
 import os, sys, time, commands, re, tempfile, exceptions, urllib, datetime
 import cPickle as pickle
 
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Lib.Job import JobStatusError
-from Ganga.Core.exceptions import BackendError
-from Ganga.Core import Sandbox
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Core import FileWorkspace
-from Ganga.Utility.Shell import Shell
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig, setConfigOption
-from Ganga.Utility.logging import getLogger
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Adapters.IBackend import IBackend
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.File import *
+from GangaCore.GPIDev.Lib.Job import JobStatusError
+from GangaCore.Core.exceptions import BackendError
+from GangaCore.Core import Sandbox
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.Core import FileWorkspace
+from GangaCore.Utility.Shell import Shell
+from GangaCore.Utility.Config import makeConfig, ConfigError, getConfig, setConfigOption
+from GangaCore.Utility.logging import getLogger
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
@@ -281,8 +281,8 @@ class Jedi(IBackend):
         from pandatools import Client
         from pandatools import MiscUtils
 
-        from Ganga.Core.exceptions import IncompleteJobSubmissionError
-        from Ganga.Utility.logging import log_user_exception
+        from GangaCore.Core.exceptions import IncompleteJobSubmissionError
+        from GangaCore.Utility.logging import log_user_exception
 
         job = self.getJobObject()
 
@@ -552,7 +552,7 @@ class Jedi(IBackend):
 
     def master_setup_bulk_subjobs(self, jobs, jdefids):
            
-        from Ganga.GPIDev.Lib.Job.Job import Job
+        from GangaCore.GPIDev.Lib.Job.Job import Job
         master_job=self.getJobObject()
         for i in range(len(jdefids)):
             j=Job()

@@ -6,8 +6,8 @@ The BaseFinisher class provides an abstract finisher implementation.
 
 from GangaRobot.Framework.Action import IAction
 from GangaRobot.Framework import Utility
-from Ganga.Utility.logging import getLogger
-from Ganga.GPI import *
+from GangaCore.Utility.logging import getLogger
+from GangaCore.GPI import *
 import time
 
 logger = getLogger()

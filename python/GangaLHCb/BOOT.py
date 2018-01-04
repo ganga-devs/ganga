@@ -1,13 +1,13 @@
-from Ganga.Runtime.GPIexport import exportToGPI
+from GangaCore.Runtime.GPIexport import exportToGPI
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 
 def browseBK(gui=True):
     """Return an LHCbDataset from the GUI LHCb Bookkeeping.
 
-    Utility function to launch the new LHCb bookkeeping from inside Ganga.
+    Utility function to launch the new LHCb bookkeeping from inside GangaCore.
     The function returns an LHCbDataset object. 
 
     After browsing and selecting the desired datafiles, click on the
@@ -23,9 +23,9 @@ def browseBK(gui=True):
     # them in the jobs inputdata field, ready for submission
     j.inputdata=browseBK()    
     """
-    import Ganga.Utility.logging
-    from Ganga.GPIDev.Base.Proxy import addProxy
-    logger = Ganga.Utility.logging.getLogger()
+    import GangaCore.Utility.logging
+    from GangaCore.GPIDev.Base.Proxy import addProxy
+    logger = GangaCore.Utility.logging.getLogger()
     try:
         from GangaLHCb.Lib.Backends.Bookkeeping import Bookkeeping
         from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
@@ -40,7 +40,7 @@ exportToGPI('browseBK', browseBK, 'Functions')
 
 def fixBKQueryInBox(newCategory='query'):
     import os
-    from Ganga.Utility.Config import getConfig
+    from GangaCore.Utility.Config import getConfig
 
     def _filt(line):
         return 'class name=\"BKQuery\"' in line
@@ -96,7 +96,7 @@ exportToGPI('fixBKQueryInBox', fixBKQueryInBox, 'Functions')
 
 def restoreOLDBox():
     import os
-    from Ganga.Utility.Config import getConfig
+    from GangaCore.Utility.Config import getConfig
     gangadir = getConfig('Configuration')['gangadir']
     logger.info('found gangadir = ' + gangadir)
     for root, dirs, files in os.walk(gangadir):

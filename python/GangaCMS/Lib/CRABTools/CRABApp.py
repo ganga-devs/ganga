@@ -5,14 +5,14 @@
 #
 import subprocess
 
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Schema import *
-from Ganga.Utility.logging import getLogger
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Utility.logging import getLogger
 
 from GangaCMS.Lib.ConfParams import *
 from GangaCMS.Lib.CRABTools.CRABServer import *
 
-import Ganga.Utility.Config
+import GangaCore.Utility.Config
 
 logger = getLogger()
 
@@ -53,7 +53,7 @@ class CRABApp(IApplication):
 
       section = params.__class__.__name__
 
-      config = Ganga.Utility.Config.getConfig('%s_CFG'%(section))
+      config = GangaCore.Utility.Config.getConfig('%s_CFG'%(section))
       file.write('['+section+']\n\n')
 
       for k in params.schemadic.keys():

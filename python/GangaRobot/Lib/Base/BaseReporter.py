@@ -8,7 +8,7 @@ from GangaRobot.Framework.Action import IAction
 from GangaRobot.Framework import Utility
 from GangaRobot.Lib.Base.Extract import Node
 from GangaRobot.Lib.Base.Report import Report
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 

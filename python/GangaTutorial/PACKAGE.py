@@ -12,7 +12,7 @@ external_packages = {
 #   'Python' : {'version' : '2.3.4', 'PYTHONPATH':'lib/python2.3', 'LD_LIBRARY_PATH':'lib', 'PATH' : 'bin'} }
     }
 
-from Ganga.Utility.Setup import PackageSetup
+from GangaCore.Utility.Setup import PackageSetup
 
 setup = PackageSetup(external_packages)
 

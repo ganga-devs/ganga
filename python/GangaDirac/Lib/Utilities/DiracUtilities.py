@@ -6,12 +6,12 @@ import json
 import time
 from copy import deepcopy
 
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
-from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Credentials import credential_store
-import Ganga.Utility.execute as gexecute
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.GPIDev.Base.Proxy import isType
+from GangaCore.GPIDev.Credentials import credential_store
+import GangaCore.Utility.execute as gexecute
 
 logger = getLogger()
 
@@ -39,7 +39,7 @@ class GangaDiracError(GangaException):
 
 def getDiracEnv(sourceFile = None):
     """
-    Returns the dirac environment stored in a global dictionary by Ganga.
+    Returns the dirac environment stored in a global dictionary by GangaCore.
     Once loaded and stored this is used for executing all DIRAC code in future
     Args:
         sourceFile (str): This is an optional file path which points to the env which should be sourced for this DIRAC

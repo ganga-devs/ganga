@@ -1,11 +1,11 @@
 import sys
 import os
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 def assert_cannot_submit(j):
-    from Ganga.GPIDev.Lib.Job.Job import JobError
+    from GangaCore.GPIDev.Lib.Job.Job import JobError
     try:
         j.submit()
         assert False, 'submit() should raise JobError'
@@ -13,7 +13,7 @@ def assert_cannot_submit(j):
         pass  
 
 def assert_cannot_kill(j):
-    from Ganga.GPIDev.Lib.Job.Job import JobError    
+    from GangaCore.GPIDev.Lib.Job.Job import JobError    
     try:
         j.kill()
         assert False, 'kill() should raise JobError'
@@ -29,7 +29,7 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
     If break_states is specified, the call terminates when job enters in one of these state, returning False
     '''
 
-    from Ganga.GPIDev.Base.Proxy import stripProxy
+    from GangaCore.GPIDev.Base.Proxy import stripProxy
     j = stripProxy(j)
     if j.master is not None:
         j = j.master
@@ -38,8 +38,8 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
         timeout = config['timeout']
         
     from time import sleep
-    from Ganga.Core import monitoring_component
-    from Ganga.Core.GangaRepository import getRegistryProxy
+    from GangaCore.Core import monitoring_component
+    from GangaCore.Core.GangaRepository import getRegistryProxy
     
     jobs = getRegistryProxy('jobs')
 
@@ -115,7 +115,7 @@ import unittest
 failureException = unittest.TestCase.failureException
 
 try:
-    from Ganga.Utility.Config import getConfig
+    from GangaCore.Utility.Config import getConfig
     config = getConfig('TestingFramework')
 except: # if we are outside Ganga, use a simple dict
     config={}

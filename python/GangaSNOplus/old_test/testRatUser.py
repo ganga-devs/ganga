@@ -13,11 +13,11 @@ import os
 import unittest
 import time
 
-from Ganga import Core
+from GangaCore import Core
 from GangaSNOplus.Lib.RTHandlers.RTRATUser import UserRTHandler
 from GangaSNOplus.Lib.Applications.RATUser import RATUser
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 class TestRatUser(unittest.TestCase):

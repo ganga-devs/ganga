@@ -8,13 +8,13 @@
 
 import os
 import re
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from Ganga.Utility.files import expandfilename
-from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from GangaCore.Utility.files import expandfilename
+from GangaCore.Core.exceptions import GangaException
+from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
+import GangaCore.Utility.logging
+logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -47,7 +47,7 @@ class PhysicalFile(LocalFile):
     _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', doc='PFN'),
                                      'namePattern': SimpleItem(defvalue="", doc='pattern of the file name', transient=1),
                                      'localDir': SimpleItem(defvalue="", doc='local dir where the file is stored, used from get and put methods', transient=1),
-                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LocalFile'],
+                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=['GangaCore.GPIDev.Lib.File.LocalFile'],
                                                                sequence=1, copyable=0, doc="collected files from the wildcard namePattern", transient=1),
                                      'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0, doc='wheather the output file should be compressed before sending somewhere', transient=1)})
     _category = 'gangafiles'

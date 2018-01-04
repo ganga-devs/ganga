@@ -3,12 +3,12 @@
 #
 # $Id: GListApp.py,v 1.2 2008-10-22 11:59:19 wreece Exp $
 ##########################################################################
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
-from Ganga.GPIDev.Lib.File import File, ShareDir
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
+from GangaCore.GPIDev.Lib.File import File, ShareDir
 
 
 class GListApp(IPrepareApp):
@@ -19,7 +19,7 @@ class GListApp(IPrepareApp):
     _exportedmethods = ['configure']
     _name = 'GListApp'
     _schema = Schema(Version(1, 0), {
-        'bound_print_comp': ComponentItem('files', defvalue=[], sequence=1, summary_print='_print_summary_bound_comp', typelist=['str', 'Ganga.test.GPI.GangaList.TFile.TFile']),
+        'bound_print_comp': ComponentItem('files', defvalue=[], sequence=1, summary_print='_print_summary_bound_comp', typelist=['str', 'GangaCore.test.GPI.GangaList.TFile.TFile']),
         'bound_print_simple': SimpleItem(defvalue=[], sequence=1, summary_print='_print_summary_bound_simple'),
         'no_summary': SimpleItem(defvalue=[], sequence=1, summary_sequence_maxlen=-1, typelist=['str']),
         'seq': SimpleItem(defvalue=[], sequence=1, typelist=['int']),

@@ -7,12 +7,12 @@
 """
 
 external_packages = { }
-from Ganga.Utility.Setup import PackageSetup
+from GangaCore.Utility.Setup import PackageSetup
 
 setup = PackageSetup(external_packages)
 
 def standardSetup(setup=setup):
-    import Ganga.Utility.Setup
+    import GangaCore.Utility.Setup
 
     for p in setup.packages:
         setup.prependPath(p,'PYTHONPATH')

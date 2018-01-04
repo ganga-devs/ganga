@@ -20,9 +20,9 @@
 
 import os
 
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
-from Ganga.GPIDev.Lib.File import *
+from GangaCore.GPIDev.Lib.File import *
 
 
 # Assume that the applications should come from the GangaSNOplus/Lib/Applications directory
@@ -34,7 +34,7 @@ class RTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
 
         logger.debug('RAT::RTHandler prepare ...')
-        from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+        from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         #create the backend wrapper script
         job=app.getJobObject()
@@ -142,7 +142,7 @@ class WGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
 
         logger.debug('RAT::RTHandler prepare ...')
-        from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+        from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         #create the backend wrapper script
         job=app.getJobObject()
@@ -226,7 +226,7 @@ class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
 
         logger.debug('RAT::LCGRTHandler prepare ...')
-        from Ganga.Lib.LCG import LCGJobConfig
+        from GangaCore.Lib.LCG import LCGJobConfig
 
         #create the backend wrapper script
         job=app.getJobObject()

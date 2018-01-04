@@ -3,8 +3,8 @@ __all__ = ['test_logger']
 
 # this function may be used to test logging problems in runtime packages
 def test_logger():
-    import Ganga.Utility.logging
-    logger = Ganga.Utility.logging.getLogger()
+    import GangaCore.Utility.logging
+    logger = GangaCore.Utility.logging.getLogger()
     # this is to test manually (visually) the logging level mechanism
     print "logger test RAW ",logger,logger.name
     logger.debug('logger test DEBUG')

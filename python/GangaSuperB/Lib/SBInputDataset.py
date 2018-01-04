@@ -4,19 +4,19 @@ import math
 import os
 from subprocess import *
 
-from Ganga.Core.exceptions import (GangaException,
+from GangaCore.Core.exceptions import (GangaException,
                                    ApplicationConfigurationError)
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.GPIDev.Lib.File import File
-import Ganga.Utility.logging
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.Dataset import Dataset
+from GangaCore.GPIDev.Lib.File import File
+import GangaCore.Utility.logging
 
 import db
 import SBDatasetManager
 import utils
 
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 
 class SBInputProductionAnalysis(Dataset):

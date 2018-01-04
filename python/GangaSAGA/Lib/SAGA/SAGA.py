@@ -6,33 +6,33 @@ __version__ = "1.0"
 COMPRESSED_TRANSFER = True
 
 # Ganga GPIDev Imports
-from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import FileBuffer
+from GangaCore.GPIDev.Adapters.IBackend import IBackend
+from GangaCore.GPIDev.Schema import *
+from GangaCore.GPIDev.Lib.File import FileBuffer
 
 # Compression lib
 if COMPRESSED_TRANSFER:
     import tarfile
 
 # Setup Utility Logger
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+import GangaCore.Utility.logging
+logger = GangaCore.Utility.logging.getLogger()
 
 # Setup Utility Config
-import Ganga.Utility.Config
-config = Ganga.Utility.Config.makeConfig('SAGA','parameters of the SAGA backend')
+import GangaCore.Utility.Config
+config = GangaCore.Utility.Config.makeConfig('SAGA','parameters of the SAGA backend')
 config.addOption('remove_workdir', True, 'remove automatically the local working directory when the job completed')
 
 # Other Utility Imports
-import Ganga.Utility.util
-import Ganga.Utility.logic
+import GangaCore.Utility.util
+import GangaCore.Utility.logic
 
 # SAGA Job Package Imports
 import saga.job
 
 # The threaded download manager
-from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
-from Ganga.Core.exceptions import GangaException
+from GangaCore.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
+from GangaCore.Core.exceptions import GangaException
 
 # Other classes that are part of the SAGA iBackend
 from GangaSAGA.Lib.SAGA.SAGAFileTransferManager import SAGAFileTransferManager
@@ -162,12 +162,12 @@ class SAGA(IBackend):
         if self.enable_compression:
             logger.info("  * adding %s user defined files to input sandbox", len(sandbox_files))
             
-            import Ganga.Core.Sandbox as Sandbox
-            from Ganga.GPIDev.Lib.File import File
-            from Ganga.Core.Sandbox.WNSandbox import PYTHON_DIR
+            import GangaCore.Core.Sandbox as Sandbox
+            from GangaCore.GPIDev.Lib.File import File
+            from GangaCore.Core.Sandbox.WNSandbox import PYTHON_DIR
             import inspect
 
-            fileutils = File( inspect.getsourcefile(Ganga.Utility.files), subdir=PYTHON_DIR )
+            fileutils = File( inspect.getsourcefile(GangaCore.Utility.files), subdir=PYTHON_DIR )
             compressed_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + [ fileutils ] )
 
             try:
@@ -359,8 +359,8 @@ class SAGA(IBackend):
         ws = SAGAWrapperScript()
                 
         import inspect
-        import Ganga.Core.Sandbox as Sandbox
-        import Ganga.Utility as Utility
+        import GangaCore.Core.Sandbox as Sandbox
+        import GangaCore.Utility as Utility
         ws.setInlineModules(inspect.getsource(Sandbox.WNSandbox))
         
         ws.setExecutable(jobconfig.getExeString())
@@ -374,7 +374,7 @@ class SAGA(IBackend):
         logger.debug("setting up new saga job with id: %s", job.id)
         
         # create jobscript in input sandbox
-        from Ganga.GPIDev.Lib.File import FileBuffer
+        from GangaCore.GPIDev.Lib.File import FileBuffer
         jobscript = job.getInputWorkspace().writefile(FileBuffer('__jobscript__',text),executable=1)
 
         logger.debug("  * created new jobscript wrapper: %s", jobscript)
@@ -554,7 +554,7 @@ class SAGA(IBackend):
 ##############################################################################
 ##
 ## Register a default runtime handler
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from Ganga.Lib.Executable import RTHandler
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.Lib.Executable import RTHandler
 allHandlers.add('Executable','SAGA', RTHandler)
  

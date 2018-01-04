@@ -1,22 +1,22 @@
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Schema import *
 
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 
-from Ganga.GPIDev.Lib.File import *
-#from Ganga.GPIDev.Lib.File import File
-#from Ganga.GPIDev.Lib.File import SharedDir
-from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Lib.File import *
+#from GangaCore.GPIDev.Lib.File import File
+#from GangaCore.GPIDev.Lib.File import SharedDir
+from GangaCore.GPIDev.Lib.Registry.PrepRegistry import ShareRef
+from GangaCore.GPIDev.Base.Proxy import isType
+from GangaCore.Core.exceptions import ApplicationConfigurationError
 
-from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
+from GangaCore.GPIDev.Lib.File.SandboxFile import SandboxFile
 from commands import getstatusoutput
 
 import os, shutil
-from Ganga.Utility.files import expandfilename
+from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
 class NA62MC(IPrepareApp):
@@ -183,7 +183,7 @@ class NA62MC(IPrepareApp):
 
 
     def configure(self,masterappconfig):
-        from Ganga.Core.exceptions import ApplicationConfigurationError
+        from GangaCore.Core.exceptions import ApplicationConfigurationError
         import os.path
         
         return (None,None)
@@ -191,7 +191,7 @@ class NA62MC(IPrepareApp):
 
 class RTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+        from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         #prepared_exe = File(os.path.join(shared_path,self.is_prepared.name, self.script_name))
         prepared_exe = File(os.path.join( os.path.dirname(__file__), "runNA62MC.sh"))
@@ -219,7 +219,7 @@ class RTHandler(IRuntimeHandler):
 
 class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from Ganga.Lib.LCG import LCGJobConfig
+        from GangaCore.Lib.LCG import LCGJobConfig
 
         prepared_exe = File(os.path.join( os.path.dirname(__file__), "runNA62MC.sh"))
         
@@ -247,7 +247,7 @@ class LCGRTHandler(IRuntimeHandler):
         
         return LCGJobConfig(prepared_exe,inputbox,args,outputbox,env)
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('NA62MC','LSF', RTHandler)
 allHandlers.add('NA62MC','Local', RTHandler)

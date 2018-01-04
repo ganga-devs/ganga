@@ -1,19 +1,19 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-from Ganga.GPIDev.Lib.Job import Job
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.Utility.files import expandfilename
-import Ganga.Utility.logging
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-import Ganga.Utility.Config
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Lib.File import FileBuffer, File
-from Ganga.Core.exceptions import TypeMismatchError
-from Ganga.Utility.util import unique
+from GangaCore.GPIDev.Lib.Job import Job
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.Utility.files import expandfilename
+import GangaCore.Utility.logging
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+import GangaCore.Utility.Config
+from GangaCore.GPIDev.Base.Proxy import isType
+from GangaCore.GPIDev.Lib.File import FileBuffer, File
+from GangaCore.Core.exceptions import TypeMismatchError
+from GangaCore.Utility.util import unique
 import shutil
 from RunTimeHandlerUtils import sharedir_handler
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
+from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 

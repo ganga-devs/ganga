@@ -1,7 +1,7 @@
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from Ganga.Utility.Config import getConfig, ConfigError
-from Ganga.Utility.logging import getLogger
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Utility.Config import getConfig, ConfigError
+from GangaCore.Utility.logging import getLogger
 
 class PandaRequirements(GangaObject):
     '''Helper class to group Panda requirements.

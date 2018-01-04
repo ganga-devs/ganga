@@ -1,9 +1,9 @@
-from Ganga.Runtime.GPIexport import exportToGPI
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
-#from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
-#from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
+from GangaCore.Runtime.GPIexport import exportToGPI
+from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+#from GangaCore.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
+#from GangaCore.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 logger = getLogger()
 #user_threadpool       = WorkerThreadPool()
@@ -19,7 +19,7 @@ def diracAPI(cmd, timeout=60, cred_req=None):
         timeout (int): This is the maximum time(sec) the session has to complete the task
         cred_req (ICredentialRequirement): This is the (optional) credential passed to construct the correct DIRAC env
 
-    Execute DIRAC API commands from w/in Ganga.
+    Execute DIRAC API commands from w/in GangaCore.
 
     The stdout will be returned, e.g.:
 
@@ -54,7 +54,7 @@ def diracAPI_interactive(connection_attempts=5):
     import traceback
     from GangaDirac.Lib.Server.InspectionClient import runClient
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)), 'InspectionServer.py')
-    from Ganga.Core.GangaThread.WorkerThreads import getQueues
+    from GangaCore.Core.GangaThread.WorkerThreads import getQueues
     getQueues().add(execute("execfile('%s')" % serverpath, timeout=None, shell=False))
 
     #time.sleep(1)
@@ -78,9 +78,9 @@ exportToGPI('diracAPI_interactive', diracAPI_interactive, 'Functions')
 
 def diracAPI_async(cmd, timeout=120):
     '''
-    Execute DIRAC API commands from w/in Ganga.
+    Execute DIRAC API commands from w/in GangaCore.
     '''
-    from Ganga.Core.GangaThread.WorkerThreads import getQueues
+    from GangaCore.Core.GangaThread.WorkerThreads import getQueues
     return getQueues().add(execute(cmd, timeout=timeout))
 
 exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
@@ -91,7 +91,7 @@ exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
 def getDiracFiles():
     import os
     from GangaDirac.Lib.Files.DiracFile import DiracFile
-    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+    from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
     filename = DiracFile.diracLFNBase().replace('/', '-') + '.lfns'
     logger.info('Creating list, this can take a while if you have a large number of SE files, please wait...')
     execute('dirac-dms-user-lfns &> /dev/null', shell=True, timeout=None)
@@ -109,7 +109,7 @@ exportToGPI('getDiracFiles', getDiracFiles, 'Functions')
 def dumpObject(object, filename):
     '''
     These are complimentary functions to export/load which are already exported to
-    the GPI from Ganga.GPIDev.Persistency. The difference being that these functions will
+    the GPI from GangaCore.GPIDev.Persistency. The difference being that these functions will
     export the objects using the pickle persistency format rather than a Ganga streaming
     (human readable) format.
     '''
@@ -127,7 +127,7 @@ exportToGPI('dumpObject', dumpObject, 'Functions')
 def loadObject(filename):
     '''
     These are complimentary functions to export/load which are already exported to
-    the GPI from Ganga.GPIDev.Persistency. The difference being that these functions will
+    the GPI from GangaCore.GPIDev.Persistency. The difference being that these functions will
     export the objects using the pickle persistency format rather than a Ganga streaming
     (human readable) format.
     '''

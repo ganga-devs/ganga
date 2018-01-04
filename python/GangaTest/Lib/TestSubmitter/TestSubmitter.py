@@ -1,12 +1,12 @@
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+import GangaCore.Utility.logging
+logger = GangaCore.Utility.logging.getLogger()
 
-from Ganga.Utility.Config import makeConfig,getConfig
+from GangaCore.Utility.Config import makeConfig,getConfig
 
-from Ganga.GPIDev.Lib.Job import JobError
+from GangaCore.GPIDev.Lib.Job import JobError
 
 monconf = getConfig('PollThread')
 monconf.addOption('TestSubmitter',1,'poll rate for test submitter')
@@ -22,7 +22,7 @@ monconf.addOption('TestSubmitter',1,'poll rate for test submitter')
 
 import time
 
-from Ganga.GPIDev.Adapters.IBackend import IBackend
+from GangaCore.GPIDev.Adapters.IBackend import IBackend
 
 class TestSubmitter(IBackend):
     _schema = Schema(Version(1,0), {'time' : SimpleItem(defvalue=5,changable_at_resubmit=1),
