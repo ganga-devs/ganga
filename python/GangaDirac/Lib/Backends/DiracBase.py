@@ -26,7 +26,7 @@ from GangaCore.GPIDev.Credentials import require_credential, credential_store, n
 from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
 from GangaCore.Core.GangaThread.WorkerThreads import getQueues
 from GangaCore.Core import monitoring_component
-
+from GangaCore.Runtime.GPIexport import exportToGPI
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
