@@ -1,8 +1,8 @@
 from __future__ import absolute_import
-from Ganga.testlib.mark import external
+from GangaCore.testlib.mark import external
 import pytest
 
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestJob(GangaUnitTest):
@@ -12,7 +12,7 @@ class TestJob(GangaUnitTest):
     # MWS: This whole test probably needs looking at and maybe switched to GaudiExec?
     @external
     def testSubmitLocal(self):
-        from Ganga.GPI import DaVinci, Job, TestSubmitter, JobError
+        from GangaCore.GPI import DaVinci, Job, TestSubmitter, JobError
         from GangaLHCb.testlib import addLocalTestSubmitter
 
         ap = DaVinci()

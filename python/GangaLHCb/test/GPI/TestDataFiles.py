@@ -1,14 +1,14 @@
 from __future__ import absolute_import
 
-from Ganga.testlib.mark import external
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.testlib.mark import external
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
 
 
 class TestDataFiles(GangaUnitTest):
 
     def testDataFiles(self):
 
-        from Ganga.GPI import DiracFile, config
+        from GangaCore.GPI import DiracFile, config
 
         # LFNs
         name = 'test.txt'
@@ -26,7 +26,7 @@ class TestDataFiles(GangaUnitTest):
 
     @external
     def testDataFilesExternal(self):
-        from Ganga.GPI import DiracFile
+        from GangaCore.GPI import DiracFile
         
         # Methods
         lfn = DiracFile(lfn='/lhcb/LHCb/Collision16/DIMUON.DST/00053485/0000/00053485_00000424_1.dimuon.dst')

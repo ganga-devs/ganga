@@ -1,15 +1,15 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import tempfile
-from Ganga.Core.exceptions import ApplicationConfigurationError
-import Ganga.Utility.Config
-from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Lib.File import FileBuffer, File
-import Ganga.Utility.logging
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+import GangaCore.Utility.Config
+from GangaCore.Utility.files import expandfilename
+from GangaCore.GPIDev.Lib.File import FileBuffer, File
+import GangaCore.Utility.logging
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template, dirac_outputfile_jdl
-from Ganga.GPIDev.Base.Proxy import isType
+from GangaCore.GPIDev.Base.Proxy import isType
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
@@ -86,7 +86,7 @@ def getXMLSummaryScript(indent=''):
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                    'XMLWorkerScript.py.template')
 
-    from Ganga.GPIDev.Lib.File import FileUtils
+    from GangaCore.GPIDev.Lib.File import FileUtils
     xml_script = FileUtils.loadScript(script_location, '###INDENT###')
 
     script += xml_script
@@ -103,7 +103,7 @@ def create_runscript(useCmake=False):
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                                    'WorkerScript.py.template')
 
-    from Ganga.GPIDev.Lib.File import FileUtils
+    from GangaCore.GPIDev.Lib.File import FileUtils
     worker_script = FileUtils.loadScript(script_location, '')
 
     worker_script = worker_script.replace('###CONSTRUCT_ENVIRON###', environ_script)

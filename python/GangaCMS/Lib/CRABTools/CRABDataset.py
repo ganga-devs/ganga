@@ -1,5 +1,5 @@
-from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
+from GangaCore.GPIDev.Lib.Dataset import Dataset
+from GangaCore.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCMS.Lib.ConfParams import CMSSW, CRAB, GRID, USER
 
 

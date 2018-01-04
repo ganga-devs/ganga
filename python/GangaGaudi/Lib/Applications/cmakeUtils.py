@@ -1,5 +1,5 @@
 
-import Ganga.Core.exceptions
+import GangaCore.Core.exceptions
 import os
 
 

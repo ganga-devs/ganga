@@ -4,11 +4,11 @@ from os import path
 import shutil
 from tempfile import mkdtemp
 
-from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
-from Ganga.testlib.GangaUnitTest import GangaUnitTest
-from Ganga.testlib.mark import external
-from Ganga.testlib.monitoring import run_until_completed
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
+from GangaCore.testlib.GangaUnitTest import GangaUnitTest
+from GangaCore.testlib.mark import external
+from GangaCore.testlib.monitoring import run_until_completed
+from GangaCore.GPIDev.Base.Proxy import stripProxy
 
 def latestLbDevVersion(app):
     import subprocess
@@ -46,7 +46,7 @@ class TestExternalGaudiExec(GangaUnitTest):
         """
         This tests that we can construct a GaudiExec object in a simple way
         """
-        from Ganga.GPI import Job, prepareGaudiExec
+        from GangaCore.GPI import Job, prepareGaudiExec
 
         j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
 
@@ -60,7 +60,7 @@ class TestExternalGaudiExec(GangaUnitTest):
         """
         Test that we can parse a fake opts file and get the inputdata from it
         """
-        from Ganga.GPI import jobs
+        from GangaCore.GPI import jobs
 
         j = TestExternalGaudiExec._constructJob()
 
@@ -76,7 +76,7 @@ class TestExternalGaudiExec(GangaUnitTest):
 
     def testPrepareJob(self):
 
-        from Ganga.GPI import Job, LocalFile, prepareGaudiExec
+        from GangaCore.GPI import Job, LocalFile, prepareGaudiExec
 
         import os
         if os.path.exists(TestExternalGaudiExec.tmpdir_release):
@@ -100,7 +100,7 @@ class TestExternalGaudiExec(GangaUnitTest):
 
     def testSubmitJob(self):
 
-        from Ganga.GPI import jobs
+        from GangaCore.GPI import jobs
         
         j = TestExternalGaudiExec._constructJob()
 
@@ -137,7 +137,7 @@ class TestExternalGaudiExec(GangaUnitTest):
         if os.path.exists(TestExternalGaudiExec.tmpdir_release):
             os.system("rm -fr %s/" % TestExternalGaudiExec.tmpdir_release)
 
-        from Ganga.GPI import Job, LocalFile, prepareGaudiExec
+        from GangaCore.GPI import Job, LocalFile, prepareGaudiExec
 
         j = Job(application=prepareGaudiExec('DaVinci', latestDaVinci(), TestExternalGaudiExec.tmpdir_release))
 
@@ -154,7 +154,7 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         """
 
-        from Ganga.GPI import Dirac, DiracProxy
+        from GangaCore.GPI import Dirac, DiracProxy
 
         j = TestExternalGaudiExec._constructJob()
 
@@ -169,7 +169,7 @@ class TestExternalGaudiExec(GangaUnitTest):
         This test adds a dummy inputfile into the job and tests that it is returned when the job is completed
         """
 
-        from Ganga.GPI import LocalFile
+        from GangaCore.GPI import LocalFile
 
         tempName = 'testGaudiExecFile.txt'
         tempName2 = 'testGaudiExecFile2.txt'
@@ -204,7 +204,7 @@ class TestExternalGaudiExec(GangaUnitTest):
 
         j = TestExternalGaudiExec._constructJob()
 
-        from Ganga.GPI import LocalFile, Dirac, DiracProxy
+        from GangaCore.GPI import LocalFile, Dirac, DiracProxy
 
         j.backend=Dirac(credential_requirements=DiracProxy(group='lhcb_user', encodeDefaultProxyFileName=False))
 

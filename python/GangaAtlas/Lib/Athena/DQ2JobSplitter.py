@@ -8,18 +8,18 @@
 import math, socket, operator, copy, os, StringIO
 from functools import reduce
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Lib.Job import Job
-from Ganga.GPIDev.Schema import *
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Lib.Job import Job
+from GangaCore.GPIDev.Schema import *
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
-from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
+from GangaCore.Utility.Config import getConfig, makeConfig, ConfigError
 
-#from Ganga.GPIDev.Credentials_old import GridProxy
+#from GangaCore.GPIDev.Credentials_old import GridProxy
 #gridProxy = GridProxy()
 
 logger = getLogger()

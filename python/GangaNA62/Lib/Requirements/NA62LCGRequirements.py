@@ -1,7 +1,7 @@
 import re
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from Ganga.Utility.Config import getConfig
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Utility.Config import getConfig
 
 class NA62LCGRequirements(GangaObject):
    '''Helper class for NA62 specific LCG requirements.

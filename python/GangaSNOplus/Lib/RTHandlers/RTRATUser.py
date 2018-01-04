@@ -25,9 +25,9 @@ import string
 
 from GangaSNOplus.Lib.Utilities import RATUtil
 
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 
-from Ganga.GPIDev.Lib.File import *
+from GangaCore.GPIDev.Lib.File import *
 
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import mangle_job_name, diracAPI_script_settings, API_nullifier
 
@@ -43,7 +43,7 @@ class UserLCGRTHandler(IRuntimeHandler):
         '''Prepare method: called to configure the job for the specified backend.
         '''
         logger.debug('RAT::LCGRTHandler prepare ...')
-        from Ganga.Lib.LCG import LCGJobConfig
+        from GangaCore.Lib.LCG import LCGJobConfig
 
         job=app.getJobObject()
 
@@ -168,7 +168,7 @@ class UserDiracRTHandler(IRuntimeHandler):
         '''Prepare method: called to configure the job for the specified backend.
         '''
         logger.debug('RAT::DiracRTHandler prepare ...')
-        from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+        from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         job=app.getJobObject()
 
@@ -324,7 +324,7 @@ class UserRTHandler(IRuntimeHandler):
         '''Prepare method: called to configure the job for the specified backend.
         '''
         logger.debug('RAT::RTHandler prepare ...')
-        from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+        from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         job=app.getJobObject()
 
@@ -453,7 +453,7 @@ class UserWGRTHandler(IRuntimeHandler):
         '''Prepare method: called to configure the job for the specified backend.
         '''
         logger.debug('RAT::WGRTHandler prepare ...')
-        from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+        from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
         job=app.getJobObject()
 

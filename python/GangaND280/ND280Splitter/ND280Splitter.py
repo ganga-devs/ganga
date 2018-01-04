@@ -9,10 +9,10 @@ This module contains various splitters for ND280 jobs.
 
 import inspect
 
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
-from Ganga.GPIDev.Schema import *
-from Ganga.Utility.logging import getLogger
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Utility.logging import getLogger
 
 logger = getLogger()
 
@@ -252,7 +252,7 @@ class ND280SplitCSVByNbEvt(ISplitter):
 
             subLines = '\n'.join(sub)
 
-            from Ganga.GPIDev.Lib.File import FileBuffer
+            from GangaCore.GPIDev.Lib.File import FileBuffer
             thiscsv = patterncsv % s
             # Save in the main job's inputdir now, then the file will be moved to
             # the inputdir of each subjobs.

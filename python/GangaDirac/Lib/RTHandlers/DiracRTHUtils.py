@@ -1,11 +1,11 @@
-from Ganga.Core.exceptions import BackendError, ApplicationConfigurationError
-from Ganga.Core.exceptions import SplitterError
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.util import unique
+from GangaCore.Core.exceptions import BackendError, ApplicationConfigurationError
+from GangaCore.Core.exceptions import SplitterError
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.util import unique
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Base.Proxy import getName
+from GangaCore.GPIDev.Base.Proxy import getName
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -224,7 +224,7 @@ def diracAPI_script_template():
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                    'DiracRTHScript.py.template')
 
-    from Ganga.GPIDev.Lib.File import FileUtils
+    from GangaCore.GPIDev.Lib.File import FileUtils
     script_template = FileUtils.loadScript(script_location, '')
 
     return script_template
