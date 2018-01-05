@@ -31,4 +31,5 @@ ENTRYPOINT (. /root/dirac_ui/bashrc &&\
 	   dirac-proxy-init -g ${vo}_user -M) &&\
 	   echo -e "[defaults_DiracProxy]\ngroup=${vo}_user" >> ~/.gangarc &&\
 	   yes | /root/venv/bin/ganga -g &&\
-	   /root/venv/bin/pytest /root/ganga/python/GangaDirac/test/Unit --cov-report term --cov-report xml:cov-GangaDirac.xml --cov /root/ganga/python/GangaDirac --junitxml tests-GangaDirac.xml
+           . /root/ganga/python/GangaDirac/testlib/setup_env.sh &&\
+	   /root/venv/bin/pytest /root/ganga/python/GangaDirac/test --cov-report term --cov-report xml:cov-GangaDirac.xml --cov /root/ganga/python/GangaDirac --junitxml tests-GangaDirac.xml
