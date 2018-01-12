@@ -81,7 +81,7 @@ class ConfigProxy(object):
         value_colour = getColour(
             display_config['config_value_colour'])  # fx.normal
 
-        levels = ['**', '* ', '  ']
+        levels = ['***', '** ', '* ', '   ']
         levels = map(lambda x: markup(x, fg.red), levels)
         from cStringIO import StringIO
         sio = StringIO()
