@@ -463,7 +463,6 @@ under certain conditions; type license() for details.
         logger = getLogger('ReleaseNotes')
         if getConfig('Configuration')['ReleaseNotes'] == True:
             packages = itertools.imap(lambda x: 'ganga/python/' + x, itertools.ifilter(lambda x: x != '', ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
-            print 'packages: '
             for p in packages:
                 print p
             pathname = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'release', 'ReleaseNotes-%s' % _gangaVersion)
