@@ -71,7 +71,7 @@ class RunTestsCommand(Command):
 
 
 pythonPackages = find_packages('python')
-pythonPackages.append('python/release')
+pythonPackages.append('release')
 
 setup(name='ganga',
       description='Job management tool',
@@ -82,7 +82,7 @@ setup(name='ganga',
       author_email='project-ganga-developers@cern.ch',
       license='GPL v2',
       scripts=['bin/ganga'],
-      package_dir={'': 'python', 'release':'release'},
+      package_dir={'': 'python', 'release':'python/release'},
       packages=pythonPackages,
       install_requires=[
           'ipython==1.2.1',
