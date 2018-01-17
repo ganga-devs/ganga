@@ -606,7 +606,7 @@ class Slurm(Batch):
     _category = 'backends'
     _name = 'Slurm'
 
-    config = Ganga.Utility.Config.getConfig('Slurm')
+    config = GangaCore.Utility.Config.getConfig('Slurm')
 
     def __init__(self):
         super(Slurm, self).__init__()
