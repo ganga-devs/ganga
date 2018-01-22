@@ -359,7 +359,7 @@ _MemHandler = logging.handlers.MemoryHandler
 class flushAtIPythonPrompt(object):
     """ This is a dummy class that calls a function when it's being constructed into a string """
 
-    __slots__ = list()
+#    __slots__ = list()
 
     def __str__(self):
         """ This str method returns an empty string bug calls for the FlushedMemoryHandler to flush it's cache.
@@ -373,7 +373,7 @@ class flushAtIPythonPrompt(object):
 class FlushedMemoryHandler(_MemHandler):
     """ Flushed memory handler used for caching anything sent to the logging not on the MainThread"""
 
-    __slots__ = list()
+#    __slots__ = list()
 
     def __init__(self, *args, **kwds):
         _MemHandler.__init__(self, *args, **kwds)
@@ -385,45 +385,62 @@ class FlushedMemoryHandler(_MemHandler):
         The exception to this is when the MemHandler says we flush as we want to always flush then.
         """
         # Errors should be dumped in the correct place with the correct context
-        if record.levelno > logging.INFO:
-            return True
+#        if record.levelno > logging.INFO:
+#            return True
         return (threading.currentThread().getName() == "MainThread") or \
                 _MemHandler.shouldFlush(self, record)
 
 
-def enableCaching(custom_logger=None, custom_formatter=None):
+#def enableCaching(custom_logger=None, custom_formatter=None):
+#    """
+#    Enable caching of log messages at interactive prompt. In the interactive IPython session, the messages from monitoring
+#    loop will be cached until the next prompt. In non-interactive sessions no caching is required.
+#    Args:
+#        custom_logger (logger): This is the optional logger we want to enable caching for
+#        custom_formatter (str): This is the optional name of the formatter we want to use for cached logging
+#    """
+
+#    if not config['_interactive_cache']:
+#        return
+
+#    if private_logger is not None:
+#        private_logger.debug('CACHING ENABLED')
+#    global default_handler, cached_screen_handler
+
+#    if custom_logger is not None:
+#        this_logger = custom_logger
+#    else:
+#        this_logger = main_logger
+
+#    this_logger.removeHandler(default_handler)
+#    cached_screen_handler = FlushedMemoryHandler(1000, target=direct_screen_handler)
+#    if custom_logger is None:
+#        default_handler = cached_screen_handler
+#    if custom_formatter is not None:
+#        _set_formatter(cached_screen_handler, custom_formatter)
+#    elif default_formatter is not None:
+#        _set_formatter(cached_screen_handler, default_formatter)
+#    else:
+#        _set_formatter(cached_screen_handler)
+#    this_logger.addHandler(default_handler)
+
+
+def enableCaching():
     """
     Enable caching of log messages at interactive prompt. In the interactive IPython session, the messages from monitoring
     loop will be cached until the next prompt. In non-interactive sessions no caching is required.
-    Args:
-        custom_logger (logger): This is the optional logger we want to enable caching for
-        custom_formatter (str): This is the optional name of the formatter we want to use for cached logging
     """
-
     if not config['_interactive_cache']:
         return
-
-    if private_logger is not None:
-        private_logger.debug('CACHING ENABLED')
+    private_logger.debug('CACHING ENABLED')
     global default_handler, cached_screen_handler
-
-    if custom_logger is not None:
-        this_logger = custom_logger
-    else:
-        this_logger = main_logger
-
-    this_logger.removeHandler(default_handler)
+    main_logger.removeHandler(default_handler)
     cached_screen_handler = FlushedMemoryHandler(1000, target=direct_screen_handler)
-    if custom_logger is None:
-        default_handler = cached_screen_handler
-    if custom_formatter is not None:
-        _set_formatter(cached_screen_handler, custom_formatter)
-    elif default_formatter is not None:
+    default_handler = cached_screen_handler
+    if default_formatter is not None:
         _set_formatter(cached_screen_handler, default_formatter)
-    else:
-        _set_formatter(cached_screen_handler)
-    this_logger.addHandler(default_handler)
-
+    main_logger.addHandler(default_handler)
+  
 
 def _getLogger(name=None, modulename=None):
     """ Get a logger, either by name or by modulename and return it"""
@@ -438,29 +455,29 @@ def _getLogger(name=None, modulename=None):
         return _allLoggers[name]
     else:
 
-        if sys.version_info[0] == 2 and sys.version_info[1] < 7:
-            logger = logging.getLogger(name)
-        else:
-            class logger_wrapper(logging.getLoggerClass()):
+#        if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+        logger = logging.getLogger(name)
+#        else:
+#            class logger_wrapper(logging.getLoggerClass()):
 
-                def debug(self, *args, **kwds):
-                    if __debug__:
-                        super(type(self), self).debug(*args, **kwds)
+#                def debug(self, *args, **kwds):
+#                    if __debug__:
+#                        super(type(self), self).debug(*args, **kwds)
 
-            logger = logger_wrapper(name)
+#            logger = logger_wrapper(name)
 
         _allLoggers[name] = logger
 
-        enableCaching(logger, default_formatter)
-        if error_handler is not None:
-            _set_formatter(error_handler, default_formatter)
-            logger.addHandler(error_handler)
+#        enableCaching(logger, default_formatter)
+#        if error_handler is not None:
+#            _set_formatter(error_handler, default_formatter)
+#            logger.addHandler(error_handler)
 
         if name in config:
             thisConfig = config[name]
             _set_log_level(logger, thisConfig)
-        else:
-            logger.setLevel(_global_level or logging.INFO)
+#        else:
+#            logger.setLevel(_global_level or logging.INFO)
 
         return logger
 
