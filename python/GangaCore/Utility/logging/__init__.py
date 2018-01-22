@@ -359,7 +359,7 @@ _MemHandler = logging.handlers.MemoryHandler
 class flushAtIPythonPrompt(object):
     """ This is a dummy class that calls a function when it's being constructed into a string """
 
-#    __slots__ = list()
+    __slots__ = list()
 
     def __str__(self):
         """ This str method returns an empty string bug calls for the FlushedMemoryHandler to flush it's cache.
@@ -373,7 +373,7 @@ class flushAtIPythonPrompt(object):
 class FlushedMemoryHandler(_MemHandler):
     """ Flushed memory handler used for caching anything sent to the logging not on the MainThread"""
 
-#    __slots__ = list()
+    __slots__ = list()
 
     def __init__(self, *args, **kwds):
         _MemHandler.__init__(self, *args, **kwds)
