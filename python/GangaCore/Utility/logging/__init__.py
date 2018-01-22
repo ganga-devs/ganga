@@ -476,8 +476,8 @@ def _getLogger(name=None, modulename=None):
         if name in config:
             thisConfig = config[name]
             _set_log_level(logger, thisConfig)
-#        else:
-#            logger.setLevel(_global_level or logging.INFO)
+        else:
+            logger.setLevel(_global_level or logging.INFO)
 
         return logger
 
