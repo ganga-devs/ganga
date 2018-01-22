@@ -455,16 +455,16 @@ def _getLogger(name=None, modulename=None):
         return _allLoggers[name]
     else:
 
-        if sys.version_info[0] == 2 and sys.version_info[1] < 7:
-            logger = logging.getLogger(name)
-        else:
-            class logger_wrapper(logging.getLoggerClass()):
+#        if sys.version_info[0] == 2 and sys.version_info[1] < 7:
+        logger = logging.getLogger(name)
+#        else:
+#            class logger_wrapper(logging.getLoggerClass()):
 
-                def debug(self, *args, **kwds):
-                    if __debug__:
-                        super(type(self), self).debug(*args, **kwds)
+#                def debug(self, *args, **kwds):
+#                    if __debug__:
+#                        super(type(self), self).debug(*args, **kwds)
 
-            logger = logger_wrapper(name)
+#            logger = logger_wrapper(name)
 
         _allLoggers[name] = logger
 
