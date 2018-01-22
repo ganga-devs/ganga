@@ -469,9 +469,9 @@ def _getLogger(name=None, modulename=None):
         _allLoggers[name] = logger
 
 #        enableCaching(logger, default_formatter)
-#        if error_handler is not None:
-#            _set_formatter(error_handler, default_formatter)
-#            logger.addHandler(error_handler)
+        if error_handler is not None:
+            _set_formatter(error_handler, default_formatter)
+            logger.addHandler(error_handler)
 
         if name in config:
             thisConfig = config[name]
