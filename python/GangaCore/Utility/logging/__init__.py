@@ -437,23 +437,10 @@ def _getLogger(name=None, modulename=None):
     if name in _allLoggers:
         return _allLoggers[name]
     else:
-
-#        print('getting logger: ', name)
-#        print('version info: ', sys.version_info )
-#        if sys.version_info[0] == 2 and sys.version_info[1] < 7:
         logger = logging.getLogger(name)
-#        else:
-#            class logger_wrapper(logging.getLoggerClass()):
-
-#                def debug(self, *args, **kwds):
-#                    if __debug__:
-#                        super(type(self), self).debug(*args, **kwds)
-
-#            logger = logger_wrapper(name)
 
         _allLoggers[name] = logger
 
-#        enableCaching(logger, default_formatter)
         if error_handler is not None:
             _set_formatter(error_handler, default_formatter)
             logger.addHandler(error_handler)
