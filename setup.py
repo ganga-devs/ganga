@@ -70,6 +70,9 @@ class RunTestsCommand(Command):
         subprocess.check_call(' '.join(cmd), cwd=file_path, shell=True, env=self._get_test_env())
 
 
+allPackages = find_packages('./')
+print allPackages
+
 setup(name='ganga',
       description='Job management tool',
       long_description=readme(),
@@ -79,8 +82,8 @@ setup(name='ganga',
       author_email='project-ganga-developers@cern.ch',
       license='GPL v2',
       scripts=['bin/ganga'],
-      package_dir={'': 'python'},
-      packages=find_packages('python'),
+      package_dir={'ganga': 'ganga'},
+      packages=allPackages,
       install_requires=[
           'ipython==1.2.1',
           'httplib2>=0.8',

@@ -29,20 +29,31 @@ def standardSetup():
     # insert the path to Ganga itself
     exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
 
-    gangaDir = os.path.join(os.path.dirname(exeDir), 'python' )
+    gangaDir = os.path.join(os.path.dirname(exeDir), 'ganga' )
+#    gangaDir = os.path.dirname(os.path.dirname(exeDir))
+    print('gangaDir: ', gangaDir)
 
     sys.path.insert(0, gangaDir)
 
+#    from ganga import pathSetup
+#    pathSetup()
+
+
     from GangaCore.PACKAGE import standardSetup
+    print('about to package setup')
     standardSetup()
+    print('done package setup')
 
 standardSetup()
 del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 from GangaCore.Core.exceptions import GangaException
+print('about to RUNTIME')
 import GangaCore.Runtime
+print('about to set something')
 GangaCore.Runtime._prog = None
+print('about ot import sys')
 import sys
 
 def log(level, err):
@@ -58,6 +69,7 @@ def log(level, err):
 
 try:
     # Import GPI and run Ganga
+    print('setupGanga')
     GangaCore.Runtime.setupGanga()
     from GangaCore import GPI
     GangaCore.Runtime._prog.run(GPI.__dict__)
