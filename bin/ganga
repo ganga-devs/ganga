@@ -30,9 +30,6 @@ def standardSetup():
     exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
     gangaDir = os.path.join(os.path.dirname(exeDir), 'ganga' )
 
-#    sys.path.insert(0, gangaDir)
-
-
     sys.path.insert(0, os.path.dirname(exeDir))
 
     #This function is needed to add the individual ganga modules to the sys path - saved rewriting all the code.
