@@ -42,7 +42,7 @@ class RunTestsCommand(Command):
 
     @staticmethod
     def _get_test_env():
-        ganga_python_dir = os.path.join(file_path, 'python')
+        ganga_python_dir = os.path.join(file_path, 'ganga')
 
         test_env = os.environ.copy()
         path = ':'.join(s for s in [ganga_python_dir, test_env.get('PYTHONPATH', None)] if s)
@@ -55,12 +55,12 @@ class RunTestsCommand(Command):
         cmd = ['py.test']
 
         if self.type in ['unit', 'all']:
-            cmd.append('python/GangaCore/test/Unit')
-            cmd.append('python/GangaCore/Core')
-            cmd.append('python/GangaCore/Runtime')
-            cmd.append('python/GangaCore/Utility')
+            cmd.append('ganga/GangaCore/test/Unit')
+            cmd.append('ganga/GangaCore/Core')
+            cmd.append('ganga/GangaCore/Runtime')
+            cmd.append('ganga/GangaCore/Utility')
         if self.type in ['integration', 'all']:
-            cmd.append('python/GangaCore/test/GPI')
+            cmd.append('ganga/GangaCore/test/GPI')
 
         if self.coverage:
             cmd.append('--cov-report xml --cov .')
