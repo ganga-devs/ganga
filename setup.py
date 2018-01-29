@@ -82,7 +82,7 @@ setup(name='ganga',
       author_email='project-ganga-developers@cern.ch',
       license='GPL v2',
       scripts=['bin/ganga'],
-      package_dir={'ganga': 'ganga'},
+#      package_dir={'': ''},
       packages=allPackages,
       install_requires=[
           'ipython==1.2.1',
