@@ -8,7 +8,7 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-#
+#.
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -463,7 +463,7 @@ under certain conditions; type license() for details.
         logger = getLogger('ReleaseNotes')
         if getConfig('Configuration')['ReleaseNotes'] == True:
             packages = itertools.imap(lambda x: 'ganga/ganga/' + x, itertools.ifilter(lambda x: x != '', ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
-            pathname = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'GangaRelease', 'ReleaseNotes-%s' % _gangaVersion)
+            pathname = os.path.join(os.path.dirname(__file__), '..', '..', 'GangaRelease', 'ReleaseNotes-%s' % _gangaVersion)
 
             if not os.path.exists(pathname):
                 logger.warning("couldn't find release notes for version %s" % _gangaVersion)
