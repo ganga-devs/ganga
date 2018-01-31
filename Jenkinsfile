@@ -7,6 +7,7 @@ pipeline {
     // Build stage
     stage('Build Core Image') {
       steps {
+        sh "docker rmi --force gangacoretest:${env.BRANCH_NAME} || true"
         sh "docker build -t gangacoretest:${env.BRANCH_NAME} -f ${env.WORKSPACE}/python/GangaCore/test/Dockerfile ."
       }
     }
@@ -22,7 +23,7 @@ pipeline {
           post {
             always {
               junit "**/tests-GangaCore.xml"
-              sh "docker rm GangaCore${env.BRANCH_NAME}" 
+              sh "docker rm --force GangaCore${env.BRANCH_NAME}" 
             }
           }
         }
@@ -36,8 +37,8 @@ pipeline {
           post {
             always {
               junit "**/tests-GangaDirac.xml"
-              sh "docker rm GangaDirac${env.BRANCH_NAME}"
-              sh "docker rmi gangadiractest:${env.BRANCH_NAME}"
+              sh "docker rm --force GangaDirac${env.BRANCH_NAME}"
+              sh "docker rmi --force gangadiractest:${env.BRANCH_NAME}"
             }
           }
         }
@@ -51,8 +52,8 @@ pipeline {
           post {
             always {
               junit "**/tests-GangaLHCb.xml"
-              sh "docker rm GangaLHCb${env.BRANCH_NAME}"
-              sh "docker rmi gangalhcbtest:${env.BRANCH_NAME}"
+              sh "docker rm --force GangaLHCb${env.BRANCH_NAME}"
+              sh "docker rmi --force gangalhcbtest:${env.BRANCH_NAME}"
             }
           }
         }
@@ -62,7 +63,7 @@ pipeline {
   post { 
     always { 
       cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'cov-*.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, lineCoverageTargets: '80, 0, 0', maxNumberOfBuilds: 0, methodCoverageTargets: '80, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
-      sh "docker rmi gangacoretest:${env.BRANCH_NAME}"
+      sh "docker rmi --force gangacoretest:${env.BRANCH_NAME}"
     }
   }
 }
