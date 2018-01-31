@@ -49,10 +49,6 @@ class TestDatasets(GangaUnitTest):
         assert sorted(ds.intersection(ds2).getFileNames()) == ['a', 'd']
         assert sorted(ds.union(ds2).getFileNames()) == ['a', 'b', 'c', 'd']
 
-
-    # TODO: Mark as expected to fail because there should be an addProxy in __getitem__.
-    # Will be superceded by new Proxy handling code from Matt Williams
-#    @pytest.mark.xfail
     @external
     def testDatasets(self):
 
@@ -60,8 +56,7 @@ class TestDatasets(GangaUnitTest):
 
         #test behaviour with files on the grid
 
-        LFN_DATA = ['LFN:/lhcb/LHCb/Collision16/DIMUON.DST/00053485/0000/00053485_00000424_1.dimuon.dst',
-                    'LFN:/lhcb/LHCb/Collision16/DIMUON.DST/00053485/0000/00053485_00001501_1.dimuon.dst']
+        LFN_DATA = ['LFN:/lhcb/LHCb/Collision17/DIMUON.DST/00067804/0003/00067804_00030224_1.dimuon.dst', 'LFN:/lhcb/LHCb/Collision17/DIMUON.DST/00067804/0003/00067804_00030520_1.dimuon.dst']
 
         ds = LHCbDataset(LFN_DATA)
 

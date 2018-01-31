@@ -1,7 +1,7 @@
 FROM hepsw/cvmfs-lhcb:latest
 LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 
-RUN yum install -y wget git python-virtualenv
+RUN yum install -y wget git python-virtualenv glibc-devel gcc
 
 WORKDIR /root
 
@@ -20,5 +20,4 @@ ENTRYPOINT . /etc/cvmfs/run-cvmfs.sh &&\
 	    pip install -e ganga &&\
 	    (cd ganga && pip install --upgrade -r requirements.txt) &&\
 	    lhcb-proxy-init &&\
-            . /root/ganga/python/GangaLHCb/testlib/setup_env.sh &&\
-	    /root/venv/bin/pytest /root/ganga/python/GangaLHCb/test --cov-report term --cov-report xml:cov-GangaLHCb.xml --cov /root/ganga/python/GangaLHCb --junitxml tests-GangaLHCb.xml
+	    /root/venv/bin/pytest --testLHCb /root/ganga/python/GangaLHCb/test --cov-report term --cov-report xml:cov-GangaLHCb.xml --cov /root/ganga/python/GangaLHCb --junitxml tests-GangaLHCb.xml

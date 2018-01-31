@@ -14,7 +14,7 @@ RUN virtualenv venv && \
     cd ganga && \
     pip install --upgrade -r requirements.txt
 
-ENTRYPOINT ["/root/venv/bin/pytest"]
+#ENTRYPOINT ["/root/venv/bin/pytest"]
 
 #CMD ["/root/ganga/python/Ganga/test/Unit", \
 #     "--cov-report", "xml", "--cov", ".", "--junitxml", "tests.xml"]

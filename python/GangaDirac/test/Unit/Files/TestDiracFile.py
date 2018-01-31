@@ -11,6 +11,7 @@ from GangaCore.Core.exceptions import GangaFileError
 from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError
 from GangaCore.testlib.GangaUnitTest import load_config_files, clear_config
+from GangaCore.Utility.Config import getConfig
 
 logger = getLogger(modulename=True)
 
@@ -23,6 +24,8 @@ def df():
     f = DiracFile('np', 'ld', 'lfn')
     f.locations = ['location']
     f.guid = 'guid'
+    getConfig('defaults_DiracProxy').setSessionValue('group', 'gridpp_user')
+    getConfig('DIRAC').setSessionValue('DiracEnvSource', '~/dirac_ui/bashrc')
     yield f
     clear_config()
 

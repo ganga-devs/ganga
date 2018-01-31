@@ -55,6 +55,8 @@ class VomsProxyInfo(ICredentialInfo):
         logger.debug(voms_command)
         command = 'voms-proxy-init -out "%s" %s' % (self.location, voms_command)
         logger.debug(command)
+        if not self.shell:
+            raise CredentialRenewalError('Failed to create VOMS proxy due to configuration problem')
         try:
             self.shell.check_call(command)
         except subprocess.CalledProcessError:
