@@ -7,7 +7,9 @@ pipeline {
     // Build stage
     stage('Build Core Image') {
       steps {
-        sh "docker rmi --force gangacoretest:${env.BRANCH_NAME} || true"
+        sh "docker stop $(docker ps -aq) || true" 
+        sh "docker rm $(docker ps -aq) || true"
+        sh "docker rmi $(docker images -q) || true"
         sh "docker build -t gangacoretest:${env.BRANCH_NAME} -f ${env.WORKSPACE}/python/GangaCore/test/Dockerfile ."
       }
     }
