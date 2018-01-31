@@ -15,7 +15,7 @@ pipeline {
       parallel {
         stage('GangaCore') {
           steps {
-            sh "docker run --name GangaCore${env.BRANCH_NAME} gangacoretest:${env.BRANCH_NAME} /root/ganga/python/GangaCore/test --cov-report term --cov-report xml:cov-GangaCore.xml --cov /root/ganga/python/GangaCore  --junitxml tests-GangaCore.xml || true"
+            sh "docker run --name GangaCore${env.BRANCH_NAME} gangacoretest:${env.BRANCH_NAME} || true"
             sh "docker cp GangaCore${env.BRANCH_NAME}:/root/tests-GangaCore.xml ."
             sh "docker cp GangaCore${env.BRANCH_NAME}:/root/cov-GangaCore.xml ."
           }
