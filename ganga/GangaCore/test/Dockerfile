@@ -16,5 +16,5 @@ RUN virtualenv venv && \
 
 ENTRYPOINT ["/root/venv/bin/pytest"]
 
-#CMD ["/root/ganga/python/Ganga/test/Unit", \
-#     "--cov-report", "xml", "--cov", ".", "--junitxml", "tests.xml"]
+CMD ["/root/ganga/python/Ganga/test/Unit", \
+     "--cov-report", "xml", "--cov", ".", "--junitxml", "tests.xml"]
