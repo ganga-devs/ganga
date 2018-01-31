@@ -571,7 +571,7 @@ slurm_config.addOption('submit_res_pattern', 'Submitted batch job (?P<id>\d+)',
 
 slurm_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
 slurm_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
-
+slurm_config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
 slurm_config.addOption('kill_str', 'scancel %s', "String used to kill job")
 
 slurm_config.addOption('preexecute', '', "String contains commands executing before submiting job to queue")
