@@ -103,7 +103,7 @@ class GangaTestLoader:
         if self.enableReleaseTests:
             #work on copy
             _patterns = patterns[:]            
-            self.testsTopDir = "%s/python" % self.releaseTopDir
+            self.testsTopDir = "%s/ganga" % self.releaseTopDir
             #_log(self.logger,'info',"Searching release tests in %s " % self.testsTopDir)
             
             new_pattern = self.__convertSearchPattern(_patterns)
@@ -304,7 +304,7 @@ class GangaTestLoader:
                 #use (as in release tests) the GANGA_PACKAGE/old_test/config dir to load
                 #the configuration from
                 tpath = fullpath(l)
-                rpath = os.path.join(self.releaseTopDir,'python')
+                rpath = os.path.join(self.releaseTopDir,'ganga')
                 idx = tpath.rfind(rpath)                
                 if idx >= 0:
                     package = tpath[idx+len(rpath)+1:].split(os.sep)[0]
@@ -334,7 +334,7 @@ class GangaTestLoader:
             self.configAlias = os.path.splitext(config)[0]            
             # construct the test configuration path
             # 1. User config : GANGA_CONFIG_FILE:GANGA_CONFIG_PATH
-            config_path = "%s/python/%s/old_test/config/%s"%(self.releaseTopDir,gangaPackage,config)
+            config_path = "%s/ganga/%s/old_test/config/%s"%(self.releaseTopDir,gangaPackage,config)
             ganga_config_path = ":".join([config_path,self.userConfig])
 
             ext = get_ext(file)
@@ -583,7 +583,7 @@ def %(method_name)s(self):
             if coverage_path:
                 return coverage_path
             return 'None'
-        runPyFile = os.path.join(self.releaseTopDir,"python","GangaTest","Framework","driver.py")
+        runPyFile = os.path.join(self.releaseTopDir,"ganga","GangaTest","Framework","driver.py")
         from GangaCore.Utility.Config import getConfig
         if self.schema_test is not '':
             newgangadir = os.path.join(getConfig('Configuration')['gangadir'],self.schema_test)
@@ -698,7 +698,7 @@ def %(method_name)s(self):
             return 
             
         testCmds = []
-        runPyFile = os.path.join(self.releaseTopDir,"python","GangaTest","Framework","driver.py")
+        runPyFile = os.path.join(self.releaseTopDir,"ganga","GangaTest","Framework","driver.py")
         for name in dir(module):
 
             clazz = getattr(module, name)
@@ -790,7 +790,7 @@ def %(method_name)s(self):
             return []
             
         tests = []
-        runPyFile = os.path.join(self.releaseTopDir,"python","GangaTest","Framework","driver.py")
+        runPyFile = os.path.join(self.releaseTopDir,"ganga","GangaTest","Framework","driver.py")
         for name in dir(module):
 
             try:
@@ -902,7 +902,7 @@ def %(method_name)s(self):
             return []
             
         tests = []
-        runPyFile = os.path.join(self.releaseTopDir,"python","GangaTest","Framework","driver.py")
+        runPyFile = os.path.join(self.releaseTopDir,"ganga","GangaTest","Framework","driver.py")
         for name in dir(module):
             clazz = getattr(module, name)
             sclazz = str(clazz)
