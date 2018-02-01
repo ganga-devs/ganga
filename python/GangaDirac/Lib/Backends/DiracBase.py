@@ -11,21 +11,21 @@ import shutil
 import tempfile
 import math
 from collections import defaultdict
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from Ganga.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
-from Ganga.GPIDev.Lib.Job.Job import Job
-from Ganga.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from GangaCore.GPIDev.Adapters.IBackend import IBackend, group_jobs_by_backend_credential
+from GangaCore.GPIDev.Lib.Job.Job import Job
+from GangaCore.Core.exceptions import GangaFileError, GangaKeyError, BackendError, IncompleteJobSubmissionError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok, get_job_ident, get_parametric_datasets, outputfiles_iterator, outputfiles_foreach, getAccessURLs
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import GangaDiracError, execute
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
-from Ganga.Utility.ColourText import getColour
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger, log_user_exception
-from Ganga.GPIDev.Credentials import require_credential, credential_store, needed_credentials
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
-from Ganga.Core.GangaThread.WorkerThreads import getQueues
-from Ganga.Core import monitoring_component
+from GangaCore.Utility.ColourText import getColour
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger, log_user_exception
+from GangaCore.GPIDev.Credentials import require_credential, credential_store, needed_credentials
+from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
+from GangaCore.Core.GangaThread.WorkerThreads import getQueues
+from GangaCore.Core import monitoring_component
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
@@ -92,7 +92,7 @@ class DiracBase(IBackend):
         'diracOpts': SimpleItem(defvalue='',
                                 doc='DIRAC API commands to add the job definition script. Only edit '
                                 'if you *really* know what you are doing'),
-        'settings': SimpleItem(defvalue={'CPUTime': 2 * 86400},
+        'settings': SimpleItem(defvalue={'CPUTime': 14 * 86400},
                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
         'credential_requirements': ComponentItem('CredentialRequirement', defvalue=DiracProxy),
         'blockSubmit' : SimpleItem(defvalue=True, 
@@ -252,7 +252,7 @@ class DiracBase(IBackend):
         nPerProcess = configDirac['maxSubjobsPerProcess']
         nProcessToUse = math.ceil((len(rjobs)*1.0)/nPerProcess)
 
-        from Ganga.Core.GangaThread.WorkerThreads import getQueues
+        from GangaCore.Core.GangaThread.WorkerThreads import getQueues
         # Must check for credentials here as we cannot handle missing credentials on Queues by design!
         try:
             cred = credential_store[self.credential_requirements]
@@ -454,7 +454,10 @@ class DiracBase(IBackend):
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
-                    result = b._resubmit()
+                    if self._blockResubmit():
+                        result = b._blockResubmit()
+                    else:
+                        result = b._resubmit()
                     if result:
                         sj.updateStatus('submitted')
                         # sj._commit() # PENDING: TEMPORARY DISABLED
@@ -1073,6 +1076,10 @@ class DiracBase(IBackend):
             if monitoring_component:
                 if monitoring_component.should_stop():
                     break
+            # Job has changed underneath us don't attempt to finalize
+            if j.backend.status not in finalised_statuses:
+                j.been_queued = False
+                continue
             if not configDirac['serializeBackend']:
                 getQueues()._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                            args=(j, finalised_statuses[j.backend.status]),

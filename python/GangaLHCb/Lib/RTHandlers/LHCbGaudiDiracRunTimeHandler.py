@@ -1,7 +1,7 @@
 import copy
 import os
 import pickle
-from Ganga.Core.exceptions import BackendError
+from GangaCore.Core.exceptions import BackendError
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
@@ -9,14 +9,14 @@ from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouput
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.GPIDev.Lib.File import FileBuffer, LocalFile
-from Ganga.GPIDev.Base.Proxy import addProxy, isType, stripProxy
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import unique
-from Ganga.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.GPIDev.Lib.File import FileBuffer, LocalFile
+from GangaCore.GPIDev.Base.Proxy import addProxy, isType, stripProxy
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.util import unique
+from GangaCore.Core.exceptions import ApplicationConfigurationError
 from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript, is_gaudi_child, lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 logger = getLogger()
 
@@ -94,8 +94,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
             outbox, outdata = parser.get_output(job)
 
-            from Ganga.GPIDev.Lib.File import FileUtils
-            from Ganga.GPIDev.Base.Filters import allComponentFilters
+            from GangaCore.GPIDev.Lib.File import FileUtils
+            from GangaCore.GPIDev.Base.Filters import allComponentFilters
 
             fileTransform = allComponentFilters['gangafiles']
             outdata_files = [fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)]
@@ -204,7 +204,7 @@ def gaudi_script_template():
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                    'GaudiTemplate.py.template')
 
-    from Ganga.GPIDev.Lib.File import FileUtils
+    from GangaCore.GPIDev.Lib.File import FileUtils
     script_template = FileUtils.loadScript(script_location, '')
 
     return script_template

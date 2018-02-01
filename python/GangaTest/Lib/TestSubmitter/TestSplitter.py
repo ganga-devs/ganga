@@ -4,8 +4,8 @@
 # $Id: TestSplitter.py,v 1.1 2008-07-17 16:41:36 moscicki Exp $
 ###############################################################################
 
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Schema import *
 
 class TestSplitter(ISplitter):
     """ Splitting to different backends...
@@ -17,7 +17,7 @@ class TestSplitter(ISplitter):
         } )
 
     def split(self,job):
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         subjobs = []
         if self.fail == 'exception':
             x = 'triggered failure during splitting'

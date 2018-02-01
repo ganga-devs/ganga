@@ -1,8 +1,8 @@
 #Clean
 
 from GangaRobot.Framework.Action import IAction
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig
 import os, shutil
 from os.path import join
 from GangaRobot.Framework.exceptions import *

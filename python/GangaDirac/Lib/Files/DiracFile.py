@@ -7,21 +7,21 @@ import re
 import os.path
 import random
 import glob
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from Ganga.GPIDev.Adapters.IGangaFile import IGangaFile
-from Ganga.GPIDev.Lib.File import FileUtils
-from Ganga.GPIDev.Lib.Job.Job import Job
-from Ganga.Utility.files import expandfilename
-from Ganga.Core.exceptions import GangaFileError
+from GangaCore.GPIDev.Base.Proxy import stripProxy, isType, getName
+from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from GangaCore.GPIDev.Adapters.IGangaFile import IGangaFile
+from GangaCore.GPIDev.Lib.File import FileUtils
+from GangaCore.GPIDev.Lib.Job.Job import Job
+from GangaCore.Utility.files import expandfilename
+from GangaCore.Core.exceptions import GangaFileError
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute, GangaDiracError
-import Ganga.Utility.Config
-from Ganga.Runtime.GPIexport import exportToGPI
-from Ganga.GPIDev.Credentials import require_credential
+import GangaCore.Utility.Config
+from GangaCore.Runtime.GPIexport import exportToGPI
+from GangaCore.GPIDev.Credentials import require_credential
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy, DiracProxyInfo
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Backends.DiracUtils import getAccessURLs
 configDirac = getConfig('DIRAC')
 logger = getLogger()
@@ -154,7 +154,7 @@ class DiracFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "DiracFile"
-    _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove',
+    _exportmethods = ["get", "getMetadata", "getReplicas", 'getSubFiles', 'remove', 'removeReplica',
                       "replicate", 'put', 'locations', 'location', 'accessURL',
                       '_updateRemoteURLs', 'hasMatchedFiles']
 
@@ -402,6 +402,23 @@ class DiracFile(IGangaFile):
         self.locations = []
         self.guid = ''
         return True
+
+    @require_credential
+    def removeReplica(self, SE):
+        """
+        Remove the replica from the given SE
+        """
+        self.getReplicas()
+        if SE not in self.locations:
+            raise GangaFileError("No replica at supplied SE: %s" % SE)
+        try:
+            logger.info("Removing replica at %s for LFN %s" % (SE, self.lfn))
+            stdout = execute('removeReplica("%s", "%s")' % (self.lfn, SE), cred_req=self.credential_requirements)
+            self.locations.remove(SE)
+        except GangaDiracError as err:
+            raise err
+
+        return True 
 
     @require_credential
     def getMetadata(self):
@@ -943,7 +960,7 @@ for f in glob.glob('###NAME_PATTERN###'):
 
 # add DiracFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate DiracFile() objects via config file)
-Ganga.Utility.Config.config_scope['DiracFile'] = DiracFile
+GangaCore.Utility.Config.config_scope['DiracFile'] = DiracFile
 
 exportToGPI('GangaDirac', GangaList, 'Classes')
 

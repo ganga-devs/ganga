@@ -21,17 +21,17 @@
 
 import os
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
+from GangaCore.Core.exceptions import ApplicationConfigurationError
 
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Schema import *
 
-from Ganga.GPIDev.Lib.File import *
+from GangaCore.GPIDev.Lib.File import *
 
 ###################################################################
 
-config = Ganga.Utility.Config.makeConfig('defaults_RATProd','Defaults for the RATProd application')
+config = GangaCore.Utility.Config.makeConfig('defaults_RATProd','Defaults for the RATProd application')
 
 config.addOption('local_softwareEnvironment', None, 'Local snoing-install directory (or directory with env_rat-x.y.sh files)')
 config.addOption('local_environment', [], 'Environment options required to run on local or batch system')
@@ -198,7 +198,7 @@ class RATSplitter(ISplitter):
     
 ###################################################################
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaSNOplus.Lib.RTHandlers.RTRATProd import RTHandler, WGRTHandler, LCGRTHandler
 
 allHandlers.add('RATProd','Local', RTHandler)
@@ -211,4 +211,4 @@ allHandlers.add('RATProd','Interactive', RTHandler)
 allHandlers.add('RATProd','Batch', RTHandler)
 allHandlers.add('RATProd','WestGrid', WGRTHandler)
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()

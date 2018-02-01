@@ -5,10 +5,10 @@ from optparse import OptionValueError
 from fnmatch import fnmatch
 
 from GangaDirac.Lib.Utilities.DiracUtilities import write_env_cache
-import Ganga.Utility.Config
-from Ganga.Utility.execute import execute
-from Ganga.Utility.logging import getLogger
-from Ganga.Core.exceptions import PluginError
+import GangaCore.Utility.Config
+from GangaCore.Utility.execute import execute
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Core.exceptions import PluginError
 
 logger = getLogger()
 
@@ -35,6 +35,9 @@ def select_dirac_version(wildcard):
 def store_dirac_environment():
     """Store the LHCbDIRAC environment in a cache file."""
 
+
+# Re-enable test case in TestLHCbDiracVersion.py when re-enabled.
+    
 #    platform_env_var = 'CMTCONFIG'
 #    try:
 #        platform = os.environ[platform_env_var]
@@ -44,7 +47,7 @@ def store_dirac_environment():
     #While LHCbDirac is only available for gcc49 we shall unfortunately hard-code the platform.
     platform = 'x86_64-slc6-gcc49-opt'
 
-    wildcard = Ganga.Utility.Config.getConfig('LHCb')['LHCbDiracVersion']
+    wildcard = GangaCore.Utility.Config.getConfig('LHCb')['LHCbDiracVersion']
     diracversion = select_dirac_version(wildcard)
     fdir = join(expanduser("~/.cache/Ganga/GangaLHCb"), platform)
     fname = join(fdir, diracversion)

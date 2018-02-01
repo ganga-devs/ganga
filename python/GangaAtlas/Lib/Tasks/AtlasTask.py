@@ -1,19 +1,19 @@
-from Ganga.GPIDev.Lib.Tasks.common import *
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from GangaCore.GPIDev.Lib.Tasks.common import *
+from GangaCore.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 import time
-from Ganga.GPIDev.Lib.Tasks import ITask
+from GangaCore.GPIDev.Lib.Tasks import ITask
 from GangaAtlas.Lib.Tasks.AtlasTransform import AtlasTransform
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Schema import *
 
-from Ganga.Utility.Config import getConfig
+from GangaCore.Utility.Config import getConfig
 configDQ2 = getConfig('DQ2')
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 logger = getLogger()
 
 ########################################################################

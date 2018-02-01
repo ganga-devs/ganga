@@ -7,7 +7,7 @@ import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
-_gangaVersion = '6.7.2'
+_gangaVersion = '6.7.4'
 
 def version():
     return _gangaVersion
@@ -55,12 +55,12 @@ class RunTestsCommand(Command):
         cmd = ['py.test']
 
         if self.type in ['unit', 'all']:
-            cmd.append('python/Ganga/test/Unit')
-            cmd.append('python/Ganga/Core')
-            cmd.append('python/Ganga/Runtime')
-            cmd.append('python/Ganga/Utility')
+            cmd.append('python/GangaCore/test/Unit')
+            cmd.append('python/GangaCore/Core')
+            cmd.append('python/GangaCore/Runtime')
+            cmd.append('python/GangaCore/Utility')
         if self.type in ['integration', 'all']:
-            cmd.append('python/Ganga/test/GPI')
+            cmd.append('python/GangaCore/test/GPI')
 
         if self.coverage:
             cmd.append('--cov-report xml --cov .')

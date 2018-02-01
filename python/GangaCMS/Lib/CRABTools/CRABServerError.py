@@ -1,4 +1,4 @@
-from Ganga.Core.exceptions import GangaException
+from GangaCore.Core.exceptions import GangaException
 
 
 class CRABServerError(GangaException):

@@ -4,11 +4,11 @@
 # $Id: PrimeTableDataset.py,v 1.1 2008-07-17 16:41:37 moscicki Exp $
 ################################################################################
 
-from Ganga.GPIDev.Schema import *
-from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Lib.File import File
-from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.Utility.logging import getLogger
+from GangaCore.GPIDev.Schema import *
+from GangaCore.Utility.Config import getConfig
+from GangaCore.GPIDev.Lib.File import File
+from GangaCore.GPIDev.Lib.Dataset import Dataset
+from GangaCore.Utility.logging import getLogger
 
 class PrimeTableDataset(Dataset):
     """Prime number lookup table definition."""

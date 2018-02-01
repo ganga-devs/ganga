@@ -1,5 +1,5 @@
-from Ganga.GPIDev.Base.Objects import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from GangaCore.GPIDev.Base.Objects import GangaObject
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 
 # Test Ganga Object. 

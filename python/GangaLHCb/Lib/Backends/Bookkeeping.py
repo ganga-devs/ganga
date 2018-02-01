@@ -1,15 +1,15 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-"""The LHCb Bookkeeping interface to Ganga."""
+"""The LHCb Bookkeeping interface to GangaCore."""
 
 import os
 import sys
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-import Ganga.Utility.logging
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
+import GangaCore.Utility.logging
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

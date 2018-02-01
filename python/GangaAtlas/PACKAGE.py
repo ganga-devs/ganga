@@ -9,7 +9,7 @@
 #Change this is you want to use external packages for different platform
 
 import sys, os
-from Ganga.Utility.Setup import PackageSetup, checkPythonVersion, getExternalHome
+from GangaCore.Utility.Setup import PackageSetup, checkPythonVersion, getExternalHome
 
 
 _external_packages = { 

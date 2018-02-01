@@ -1,7 +1,7 @@
 # Definition of config - as it comes in the plugin code
 
-import Ganga.Utility.Config
-cc = Ganga.Utility.Config.makeConfig('TestConfig2','more testing stuff')
+import GangaCore.Utility.Config
+cc = GangaCore.Utility.Config.makeConfig('TestConfig2','more testing stuff')
 
 cc.addOption('str1','','doc')
 cc.addOption('str2','','doc')

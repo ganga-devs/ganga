@@ -1,11 +1,11 @@
 import os.path
 import tempfile
-from Ganga.GPIDev.Lib.File import LocalFile
-import Ganga.Utility.logging
+from GangaCore.GPIDev.Lib.File import LocalFile
+import GangaCore.Utility.logging
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.Utility.files import expandfilename
-logger = Ganga.Utility.logging.getLogger()
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.Utility.files import expandfilename
+logger = GangaCore.Utility.logging.getLogger()
 
 ## Due to a bug in Gaudi at some point we need this equivalence here: see #204
 DataObjectDescriptorCollection = str
@@ -98,7 +98,7 @@ class PythonOptsCmakeParser(object):
             logger.error('No inputdata has been defined in the options file.')
             logger.error("%s" % str(err))
 
-        from Ganga.GPIDev.Base.Filters import allComponentFilters
+        from GangaCore.GPIDev.Base.Filters import allComponentFilters
         file_filter = allComponentFilters['gangafiles']
 
         all_files = []

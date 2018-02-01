@@ -1,4 +1,4 @@
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
 
 

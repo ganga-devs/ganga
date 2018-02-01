@@ -1,14 +1,14 @@
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
-from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
-from Ganga.Core.exceptions import GangaException, BackendError
+from GangaCore.GPIDev.Schema import Schema, Version, ComponentItem
+from GangaCore.Core.exceptions import GangaException, BackendError
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-from Ganga.GPIDev.Credentials              import require_credential
+import GangaCore.Utility.logging
+logger = GangaCore.Utility.logging.getLogger()
+from GangaCore.GPIDev.Credentials              import require_credential
 
 
 class Dirac(DiracBase):

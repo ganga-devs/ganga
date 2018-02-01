@@ -9,16 +9,16 @@ relevant data may be extracted in a later version.
 """
 
 from GangaRobot.Lib.Base.BaseExtractor import BaseExtractor
-from Ganga.GPI import *
+from GangaCore.GPI import *
 from GangaLHCb.Lib.DIRAC.DiracUtils import *
 #from GangaLHCb.Lib.DIRAC.DiracServer import DiracServer
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 
-configLHCb = Ganga.Utility.Config.getConfig('LHCb')
-configDirac = Ganga.Utility.Config.getConfig('DIRAC')
+configLHCb = GangaCore.Utility.Config.getConfig('LHCb')
+configDirac = GangaCore.Utility.Config.getConfig('DIRAC')
 #dirac_ganga_server = DiracServer()
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()
 
 
 class DiracExtractor(BaseExtractor):

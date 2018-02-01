@@ -1,6 +1,6 @@
 import pytest
 
-from Ganga.Core.exceptions import BackendError
+from GangaCore.Core.exceptions import BackendError
 
 
 def test_result_ok():

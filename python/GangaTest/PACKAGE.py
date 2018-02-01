@@ -12,7 +12,7 @@ external_packages = {
 #        'subprocess':{'version':'2.4.2', 'noarch':True, 'PYTHONPATH':'lib/python2.2/site-packages', 'maxHexVersion':'0x20400f0'}
         }
 
-from Ganga.Utility.Setup import PackageSetup
+from GangaCore.Utility.Setup import PackageSetup
 
 setup = PackageSetup(external_packages)
 

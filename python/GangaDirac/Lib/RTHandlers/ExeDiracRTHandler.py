@@ -2,16 +2,17 @@
 import os
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Lib.File import File, FileBuffer
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import unique
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy
+from GangaDirac.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
+from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
+from GangaCore.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Lib.File import File, FileBuffer
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.util import unique
+from GangaCore.GPIDev.Base.Proxy import isType, stripProxy
 logger = getLogger()
 config = getConfig('DIRAC')
 
@@ -23,7 +24,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
     """The runtime handler to run plain executables on the Dirac backend"""
 
     def master_prepare(self, app, appmasterconfig):
-        from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
         if type(app.exe) == File:
             input_dir = app.getJobObject().getInputWorkspace().getPath()
@@ -37,7 +37,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                  outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
-        from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import sandbox_prepare
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app)
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
@@ -61,8 +60,6 @@ class ExeDiracRTHandler(IRuntimeHandler):
         exe_script_name = 'exe-script.py'
 
         logger.info("Setting Command to be: '%s'" % repr(commandline))
-
-        from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import script_generator
 
         inputsandbox.append(FileBuffer(name=exe_script_name,
                             contents=script_generator(exe_script_template(),
@@ -181,5 +178,5 @@ if __name__ == '__main__':
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('Executable', 'Dirac', ExeDiracRTHandler)

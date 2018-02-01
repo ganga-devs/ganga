@@ -8,15 +8,16 @@ import tempfile
 import time
 import uuid
 import random
+import stat
 from textwrap import dedent
 
 import pytest
 
-from Ganga.Utility.logging import getLogger
+from GangaCore.Utility.logging import getLogger
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 
-from Ganga.testlib.mark import external
-from Ganga.testlib.GangaUnitTest import load_config_files, clear_config
+from GangaCore.testlib.mark import external
+from GangaCore.testlib.GangaUnitTest import load_config_files, clear_config
 
 logger = getLogger(modulename=True)
 
@@ -60,11 +61,10 @@ def dirac_job(load_config):
     get_file_str = uuid.uuid4()
     remove_file_str = uuid.uuid4()
 
-    exe_script = """
-    #!/bin/bash
-    echo '%s' > sandboxFile.txt
-    echo '%s' > getFile.dst
-    echo '%s' > removeFile.dst
+    exe_script = """#!/bin/bash
+echo '%s' > sandboxFile.txt
+echo '%s' > getFile.dst
+echo '%s' > removeFile.dst
     """ % (sandbox_str, get_file_str, remove_file_str)
 
     logger.info("exe_script:\n%s\n" % str(exe_script))
@@ -72,8 +72,11 @@ def dirac_job(load_config):
     exe_file, exe_path_name = tempfile.mkstemp()
     with os.fdopen(exe_file, 'wb') as f:
         f.write(exe_script)
+    st = os.stat(exe_path_name)
+    os.chmod(exe_path_name, st.st_mode | stat.S_IEXEC)
 
     api_script = """
+    # Script written in TestDiracCommands.py
     from DIRAC.Interfaces.API.Dirac import Dirac
     from DIRAC.Interfaces.API.Job import Job
     from DIRAC.Core.Utilities.SiteSEMapping import getSEsForCountry
@@ -361,10 +364,11 @@ class TestDiracCommands(object):
     def test_getInputDataCatalog(self, dirac_job):
         confirm = execute('getInputDataCatalog("%s","","")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['Message'] == 'Failed to access all of requested input data' or confirm['Message'] == 'Could not access any requested input data', 'Command not executed successfully'
+        assert confirm['Message'].startswith('Failed to access') or confirm['Message'].startswith('Exception during construction'), 'Command not executed successfully'
 
     def test_getLHCbInputDataCatalog(self, dirac_job):
         confirm = execute('getLHCbInputDataCatalog("%s",0,"","")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['Message'] == 'Failed to access all of requested input data' or confirm['Message'] == 'Could not access any requested input data', 'Command not executed successfully'
+        assert confirm['Message'].startswith('Failed to access') or confirm['Message'].startswith('Exception during construction'), 'Command not executed successfully'
+
 

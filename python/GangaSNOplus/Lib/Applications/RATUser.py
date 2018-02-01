@@ -29,17 +29,17 @@ import os
 
 from GangaSNOplus.Lib.Utilities import RATUtil
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
+from GangaCore.Core.exceptions import ApplicationConfigurationError
 
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Schema import *
 
-from Ganga.GPIDev.Lib.File import *
+from GangaCore.GPIDev.Lib.File import *
 
 ###################################################################
 
-config = Ganga.Utility.Config.makeConfig('defaults_RATUser','Defaults for the RATUser application')
+config = GangaCore.Utility.Config.makeConfig('defaults_RATUser','Defaults for the RATUser application')
 
 config.addOption('local_softwareEnvironment', None, 'Local snoing-install directory (or directory with env_rat-x.y.sh files)')
 config.addOption('local_environment', [], 'Environment options required to run on local or batch system')
@@ -92,7 +92,7 @@ class RATUser(IApplication):
     _category = 'applications'
     _name = 'RATUser'
 
-    config = Ganga.Utility.Config.getConfig('defaults_RATUser')
+    config = GangaCore.Utility.Config.getConfig('defaults_RATUser')
     def configure(self,masterappconfig):
         '''Configure method, called once per job.
         '''
@@ -203,7 +203,7 @@ class RATUserSplitter(ISplitter):
     
 ###################################################################
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaSNOplus.Lib.RTHandlers.RTRATUser import UserRTHandler, UserLCGRTHandler, UserWGRTHandler, UserDiracRTHandler
 
 allHandlers.add('RATUser','Local', UserRTHandler)
@@ -217,4 +217,4 @@ allHandlers.add('RATUser','Interactive', UserRTHandler)
 allHandlers.add('RATUser','Batch', UserRTHandler)
 allHandlers.add('RATUser','WestGrid', UserWGRTHandler)
 
-logger = Ganga.Utility.logging.getLogger()
+logger = GangaCore.Utility.logging.getLogger()

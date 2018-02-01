@@ -8,19 +8,19 @@ import threading
 import uuid
 import shutil
 
-from Ganga.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.GPIDev.Base.Proxy import getName
-from Ganga.GPIDev.Lib.File.File import File, ShareDir
-from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
-from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
-from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import unique
-from Ganga.GPIDev.Credentials.CredentialStore import credential_store
+from GangaCore.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException, GangaFileError
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from GangaCore.GPIDev.Base.Proxy import getName
+from GangaCore.GPIDev.Lib.File.File import File, ShareDir
+from GangaCore.GPIDev.Lib.File.FileBuffer import FileBuffer
+from GangaCore.GPIDev.Lib.File.LocalFile import LocalFile
+from GangaCore.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
+from GangaCore.Utility.Config import getConfig
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.util import unique
+from GangaCore.GPIDev.Credentials.CredentialStore import credential_store
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
@@ -366,7 +366,7 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
                 returnable = new_df.put(force=True, uploadSE=SE, lfn=new_lfn)[0]
                 break
             except GangaDiracError as err:
-                raise GangaException("Upload of input file as LFN %s to SE %s failed" % (new_lfn, SE)) 
+                logger.warning("Upload of input file as LFN %s to SE %s failed" % (new_lfn, SE)) 
     if not returnable:
         raise GangaException("Failed to upload input file to any SE")
     if should_del:
@@ -374,6 +374,31 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
 
     return returnable
 
+
+def replicateJobFile(fileToReplicate):
+    """
+    A method to replicate a file to a random SE.
+    """
+
+    if not isinstance(fileToReplicate, DiracFile):
+        raise GangaDiracError("Can only request replicas of DiracFiles. %s is not a DiracFile" % fileToReplicate)
+
+    if len(fileToReplicate.locations)==0:
+        fileToReplicate.getReplicas()
+
+    trySEs = [SE for SE in getConfig('DIRAC')['allDiracSE'] if SE not in fileToReplicate.locations]
+    random.shuffle(trySEs)
+    success = None
+    for SE in trySEs:
+        if execute('checkSEStatus("%s", "%s")' % (SE, 'Write')):
+            try:
+                fileToReplicate.replicate(SE)
+                success = True
+                break
+            except (GangaFileError, GangaDiracError) as err:
+                raise err
+    if not success:
+        raise GangaException("Failed to replicate %s to any SE" % fileToReplicate.lfn)
 
 def getInputFileDir(job):
     """
@@ -448,6 +473,10 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
             assert rep_data != {}
         except AssertionError:
             raise ApplicationPrepareError("Failed to find a replica, aborting submit")
+
+        #Create a replica of the job and scripts files
+        replicateJobFile(app.jobScriptArchive)
+        replicateJobFile(app.uploadedInput)
 
         return StandardJobConfig(inputbox=unique(inputsandbox), outputbox=unique(outputsandbox))
 
@@ -652,6 +681,6 @@ if __name__ == '__main__':
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('GaudiExec', 'Dirac', GaudiExecDiracRTHandler)
 

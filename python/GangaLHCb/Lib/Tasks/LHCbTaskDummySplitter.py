@@ -1,6 +1,6 @@
-from Ganga.GPIDev.Base.Proxy import *
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Schema import *
+from GangaCore.GPIDev.Base.Proxy import *
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Schema import *
 
 
 class LHCbTaskDummySplitter(ISplitter):

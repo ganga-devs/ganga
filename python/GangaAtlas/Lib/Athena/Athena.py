@@ -11,25 +11,25 @@
 import os, re, commands, string, sys, shutil
 import math
 
-from Ganga.Core.exceptions import ApplicationConfigurationError
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
+from GangaCore.Core.exceptions import ApplicationConfigurationError
+from GangaCore.GPIDev.Base import GangaObject
+from GangaCore.GPIDev.Schema import *
 
-from Ganga.Utility.Config import getConfig, ConfigError
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.files import expandfilename
+from GangaCore.Utility.Config import getConfig, ConfigError
+from GangaCore.Utility.logging import getLogger
+from GangaCore.Utility.files import expandfilename
 
-from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
-from Ganga.GPIDev.Adapters.IApplication import IApplication
-from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
-from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
+from GangaCore.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
+from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
+from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaAtlas.Lib.ATLASDataset import filecheck, ATLASOutputDataset
 
-from Ganga.Lib.Mergers.Merger import *
-from Ganga.Core.GangaRepository import getRegistry
-from Ganga.GPIDev.Lib.File import ShareDir, File
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, GPIProxyObject
-from Ganga.Utility.Plugin import allPlugins
+from GangaCore.Lib.Mergers.Merger import *
+from GangaCore.Core.GangaRepository import getRegistry
+from GangaCore.GPIDev.Lib.File import ShareDir, File
+from GangaCore.GPIDev.Base.Proxy import GPIProxyObjectFactory, GPIProxyObject
+from GangaCore.Utility.Plugin import allPlugins
 
 # importing pandatools can fail for no obvious reason
 try:
@@ -515,7 +515,7 @@ class Athena(IPrepareApp):
         """Collect job statistics from different log files and fill dict
         Athena.stats"""
         import gzip, time, fileinput
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         job = self.getJobObject()
 
         if job.backend._name in [ 'Panda' ]:
@@ -760,7 +760,7 @@ class Athena(IPrepareApp):
 
     def postprocess_failed(self):
         """Check consistency of output dataset"""
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         job = self.getJobObject()
         if job.backend._name in [ 'LCG', 'CREAM' ]:
             # it's the master job 
@@ -781,7 +781,7 @@ class Athena(IPrepareApp):
     def postprocess(self):
         """Determine outputdata and outputsandbox locations of finished jobs
         and fill output variable"""
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         job = self.getJobObject()
         
         if not job.backend._name in [ 'NG', 'Panda', 'Jedi' ]:
@@ -1010,8 +1010,8 @@ class Athena(IPrepareApp):
         logger.info('Found Working Directory %s',self.userarea)
         logger.info('Found ATLAS Release %s',self.atlas_release)
 
-        # check for nightlies
-        if "AtlasBuildStamp" in os.environ:
+        # check for nightlies - AtlasReleaseType will be 'nightly' if so, 'stable' if not
+        if "AtlasReleaseType" in os.environ and os.environ['AtlasReleaseType'] == 'nightly':
             # change production as the release found above is one ahead of the actual
             logger.info('Found ATLAS Nightly release. Setting atlas_production appropriately')
             self.atlas_production = os.environ['AtlasBuildBranch'] + ',' + os.environ['AtlasBuildStamp']
@@ -1311,7 +1311,7 @@ class Athena(IPrepareApp):
         file('install.sh','w').write( file_install( athena_compile_flag))
         if self.user_area_path != '':
             if not os.path.exists(self.user_area_path):
-                from Ganga.Core import FileWorkspace
+                from GangaCore.Core import FileWorkspace
                 ws=FileWorkspace.FileWorkspace(FileWorkspace.gettop(),subpath='file')
                 ws.create(None)
                 self.user_area_path = ws.getPath()
@@ -1436,7 +1436,7 @@ class Athena(IPrepareApp):
         if self.user_area.name:
             tmp_user_area_name = self.user_area.name
             if self.is_prepared is not True:
-                from Ganga.Utility.files import expandfilename
+                from GangaCore.Utility.files import expandfilename
                 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
                 tmp_user_area_name = os.path.join(os.path.join(shared_path,self.is_prepared.name),os.path.basename(self.user_area.name))
                                         
@@ -1528,7 +1528,7 @@ class Athena(IPrepareApp):
 
         return (0,None)
 
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
 
 class AthenaSplitterJob(ISplitter):
     """Athena handler for job splitting"""
@@ -1555,7 +1555,7 @@ class AthenaSplitterJob(ISplitter):
 
     ### Splitting based on numsubjobs
     def split(self,job):
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         subjobs = []
         logger.debug("AthenaSplitterJob split called")
         
@@ -1683,7 +1683,7 @@ class AthenaSplitterJob(ISplitter):
         return subjobs
 
 
-from Ganga.GPIDev.Adapters.IMerger import IMerger
+from GangaCore.GPIDev.Adapters.IMerger import IMerger
 from commands import getstatusoutput    
 import threading
 from GangaAtlas.Lib.ATLASDataset import Download
@@ -1724,7 +1724,7 @@ class AthenaOutputMerger(IMerger):
     def merge(self, subjobs = None, sum_outputdir = None, **options ):
         '''Merge local root tuples of subjobs output'''
         import os
-        from Ganga.GPIDev.Lib.Job import Job
+        from GangaCore.GPIDev.Lib.Job import Job
         job = self._getRoot()
         if (isinstance(job,GPIProxyObject) and not isinstance(job._impl,Job)) or not isinstance(job, Job):
             job = None
@@ -1912,7 +1912,7 @@ class _RootMergeToolAANT(IMerger):
 
     def mergefiles(self, file_list, output_file):
 
-        from Ganga.Utility.root import getrootprefix, checkrootprefix
+        from GangaCore.Utility.root import getrootprefix, checkrootprefix
         rc, rootprefix =  getrootprefix()
 
         if rc != 0:
