@@ -1,7 +1,7 @@
 # This first line will grab the requirements from setup.py
 -e .
 
-pytest==3.2.5
+pytest
 pytest-cov
 pytest-mock
 unittest2
