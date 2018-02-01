@@ -14,4 +14,4 @@ RUN virtualenv venv && \
     cd ganga && \
     pip install --upgrade -r requirements.txt
 
-ENTRYPOINT /root/venv/bin/pytest --cov-report term --cov-report xml:cov-GangaCore.xml --cov /root/ganga/python/GangaCore/test --junitxml tests-GangaCore.xml
+ENTRYPOINT /root/venv/bin/pytest --cov-report term --cov-report xml:cov-GangaCore.xml --cov /root/ganga/python/GangaCore/test --junitxml tests-GangaCore.xml /root/ganga/python/GangaCore/test
