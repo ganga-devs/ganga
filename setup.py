@@ -84,7 +84,7 @@ setup(name='ganga',
       license='GPL v2',
       scripts=['bin/ganga'],
       package_dir={ 'GangaRelease':'ganga/GangaRelease', 'GangaTemplates':'ganga/GangaTemplates'},
-      packages=find_packages('./'),
+      packages=pythonPackages,
       install_requires=[
           'ipython==1.2.1',
           'httplib2>=0.8',
