@@ -19,7 +19,7 @@ def standardSetup():
     """Function to perform standard setup for GangaCore.
     """
 
-    gangaDir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../../python'))
+    gangaDir = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), '../../ganga'))
 
     sys.path.insert(0, gangaDir)
 
