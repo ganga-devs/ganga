@@ -101,7 +101,7 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
     else:
         cred_opts = [('Configuration', 'user', 'testframework'),
                      ('defaults_DiracProxy', 'group', 'gridpp_user'),
-                     ('DIRAC', 'DiracEnvSource', '/cvmfs/ganga.cern.ch/dirac_ui/bashrc')]
+                     ('DIRAC', 'DiracEnvSource', '~/dirac_ui/bashrc')]
 
     #Sort out eos
     outputConfig = getConfig('Output')
