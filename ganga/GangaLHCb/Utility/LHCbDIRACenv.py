@@ -35,6 +35,9 @@ def select_dirac_version(wildcard):
 def store_dirac_environment():
     """Store the LHCbDIRAC environment in a cache file."""
 
+
+# Re-enable test case in TestLHCbDiracVersion.py when re-enabled.
+    
 #    platform_env_var = 'CMTCONFIG'
 #    try:
 #        platform = os.environ[platform_env_var]
