@@ -8,6 +8,7 @@ import tempfile
 import time
 import uuid
 import random
+import stat
 from textwrap import dedent
 
 import pytest
@@ -60,11 +61,10 @@ def dirac_job(load_config):
     get_file_str = uuid.uuid4()
     remove_file_str = uuid.uuid4()
 
-    exe_script = """
-    #!/bin/bash
-    echo '%s' > sandboxFile.txt
-    echo '%s' > getFile.dst
-    echo '%s' > removeFile.dst
+    exe_script = """#!/bin/bash
+echo '%s' > sandboxFile.txt
+echo '%s' > getFile.dst
+echo '%s' > removeFile.dst
     """ % (sandbox_str, get_file_str, remove_file_str)
 
     logger.info("exe_script:\n%s\n" % str(exe_script))
@@ -72,8 +72,11 @@ def dirac_job(load_config):
     exe_file, exe_path_name = tempfile.mkstemp()
     with os.fdopen(exe_file, 'wb') as f:
         f.write(exe_script)
+    st = os.stat(exe_path_name)
+    os.chmod(exe_path_name, st.st_mode | stat.S_IEXEC)
 
     api_script = """
+    # Script written in TestDiracCommands.py
     from DIRAC.Interfaces.API.Dirac import Dirac
     from DIRAC.Interfaces.API.Job import Job
     from DIRAC.Core.Utilities.SiteSEMapping import getSEsForCountry
@@ -255,6 +258,19 @@ class TestDiracCommands(object):
         logger.info(confirm)
         assert confirm['OK'], 'getReplicas command not executed successfully'
 
+    def test_getAccessURL(self, dirac_job):
+        confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn, cred_req=dirac_job.cred_req, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'getReplicas command not executed successfully'
+        SE = random.choice(confirm['Value']['Successful'][dirac_job.get_file_lfn].keys())
+        accessResult = execute('getAccessURL("%s", "%s")' % (dirac_job.get_file_lfn, SE), cred_req=dirac_job.cred_req, return_raw_dict = True)
+        logger.info(accessResult)
+        assert accessResult['OK'], 'getAccessURL command not executed successfully'
+        accessResultProtocol = execute('getAccessURL("%s", "%s", %s)' % (dirac_job.get_file_lfn, SE, ['xroot']), cred_req=dirac_job.cred_req, return_raw_dict = True)
+        logger.info(accessResultProtocol)
+        assert accessResultProtocol['OK'], 'getAccessURL command with protocol not executed successfully'
+        assert ('root://' in accessResultProtocol['Value']['Successful'][dirac_job.get_file_lfn]), 'URL does not start with root protocol'
+
     def test_replicateFile(self, dirac_job, dirac_sites):
 
         for new_location in dirac_sites:
@@ -348,10 +364,11 @@ class TestDiracCommands(object):
     def test_getInputDataCatalog(self, dirac_job):
         confirm = execute('getInputDataCatalog("%s","","")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['Message'] == 'Failed to access all of requested input data' or confirm['Message'] == 'Could not access any requested input data', 'Command not executed successfully'
+        assert confirm['Message'].startswith('Failed to access') or confirm['Message'].startswith('Exception during construction'), 'Command not executed successfully'
 
     def test_getLHCbInputDataCatalog(self, dirac_job):
         confirm = execute('getLHCbInputDataCatalog("%s",0,"","")' % dirac_job.get_file_lfn, return_raw_dict=True)
         logger.info(confirm)
-        assert confirm['Message'] == 'Failed to access all of requested input data' or confirm['Message'] == 'Could not access any requested input data', 'Command not executed successfully'
+        assert confirm['Message'].startswith('Failed to access') or confirm['Message'].startswith('Exception during construction'), 'Command not executed successfully'
+
 

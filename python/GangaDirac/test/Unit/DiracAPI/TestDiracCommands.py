@@ -18,6 +18,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 
 from GangaCore.testlib.mark import external
 from GangaCore.testlib.GangaUnitTest import load_config_files, clear_config
+from GangaCore.Utility.Config import getConfig
 
 logger = getLogger(modulename=True)
 
@@ -44,6 +45,8 @@ JobInfo = namedtuple('JobInfo', ['id', 'get_file_lfn', 'remove_file_lfn', 'cred_
 def load_config():
     """Load the Ganga config files before the test and clean them up afterwards"""
     load_config_files()
+    getConfig('defaults_DiracProxy').setSessionValue('group', 'gridpp_user')
+    getConfig('DIRAC').setSessionValue('DiracEnvSource', '~/dirac_ui/bashrc')
     yield
     clear_config()
 
@@ -56,11 +59,10 @@ def dirac_job(load_config):
     get_file_str = uuid.uuid4()
     remove_file_str = uuid.uuid4()
 
-    exe_script = """
-    #!/bin/bash
-    echo '%s' > sandboxFile.txt
-    echo '%s' > getFile.dst
-    echo '%s' > removeFile.dst
+    exe_script = """#!/bin/bash
+echo '%s' > sandboxFile.txt
+echo '%s' > getFile.dst
+echo '%s' > removeFile.dst
     """ % (sandbox_str, get_file_str, remove_file_str)
 
     logger.info("exe_script:\n%s\n" % str(exe_script))
@@ -253,6 +255,15 @@ class TestDiracCommands(object):
         confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn, cred_req=dirac_job.cred_req, return_raw_dict=True)
         logger.info(confirm)
         assert confirm['OK'], 'getReplicas command not executed successfully'
+
+    def test_getAccessURL(self, dirac_job):
+        confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn, cred_req=dirac_job.cred_req, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'getReplicas command not executed successfully'
+        SE = random.choice(confirm['Value']['Successful'][dirac_job.get_file_lfn].keys())
+        accessResult = execute('getAccessURL("%s", "%s")' % (dirac_job.get_file_lfn, SE), cred_req=dirac_job.cred_req, return_raw_dict = True)
+        logger.info(accessResult)
+        assert accessResult['OK'], 'getAccessURL command not executed successfully'
 
     def test_replicateFile(self, dirac_job, dirac_sites):
 
