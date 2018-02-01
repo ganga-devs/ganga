@@ -366,7 +366,7 @@ def uploadLocalFile(job, namePattern, localDir, should_del=True):
                 returnable = new_df.put(force=True, uploadSE=SE, lfn=new_lfn)[0]
                 break
             except GangaDiracError as err:
-                raise GangaException("Upload of input file as LFN %s to SE %s failed" % (new_lfn, SE)) 
+                logger.warning("Upload of input file as LFN %s to SE %s failed" % (new_lfn, SE)) 
     if not returnable:
         raise GangaException("Failed to upload input file to any SE")
     if should_del:
