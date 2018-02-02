@@ -1,13 +1,14 @@
 
 from GangaCore.Utility.Config import getConfig
-getConfig('defaults_DiracProxy').addOption('group', 'some_group', '')
+getConfig('defaults_DiracProxy').addOption('group', 'gridpp_user', '')
+getConfig('defaults_DiracProxy').setSessionValue('group', 'gridpp_user')
 from GangaDirac.Lib.Credentials.DiracProxy import DiracProxy
 from GangaCore.GPIDev.Credentials.AfsToken import AfsToken
 
 
 def test_encoded():
     v = DiracProxy()
-    assert v.encoded() == 'some_group'
+    assert v.encoded() == 'gridpp_user'
 
     v = DiracProxy(group='foo')
     assert v.encoded() == 'foo'

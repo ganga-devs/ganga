@@ -67,9 +67,9 @@ def getReplicas(lfns):
     return dirac.getReplicas(lfns, active=True, preferDisk = True)
 
 @diracCommand
-def getAccessURL(lfn, SE, protocol=''):
-    ''' Return the access URL for the given LFN, storage element and protocol '''
-    return dirac.getReplicaAccessUrl(lfn, SE, protocol)
+def getAccessURL(lfn, SE, protocol=False):
+    ''' Return the access URL for the given LFN, storage element and protocol. The protocol should be in the form of a list '''
+    return dirac.getAccessURL(lfn, SE, False, protocol)
 
 
 @diracCommand
