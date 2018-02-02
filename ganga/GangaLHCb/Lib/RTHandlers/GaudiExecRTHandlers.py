@@ -396,7 +396,7 @@ def replicateJobFile(fileToReplicate):
                 success = True
                 break
             except (GangaFileError, GangaDiracError) as err:
-                raise err
+                logger.warning("Failed to replicate %s to %s. Trying another SE." % (fileToReplicate.lfn, SE))
     if not success:
         raise GangaException("Failed to replicate %s to any SE" % fileToReplicate.lfn)
 
