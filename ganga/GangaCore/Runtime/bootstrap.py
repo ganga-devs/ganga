@@ -1070,6 +1070,11 @@ under certain conditions; type license() for details.
             #exec compiled_script
 
             if script:
+                from GangaCore.Utility.Config.Config import setConfigOption
+                if not getConfig('PollThread').hasModified:
+                    setConfigOption('PollThread','forced_shutdown_policy', 'timeout')
+                from GangaCore.Core.GangaThread import GangaThreadPool
+                GangaThreadPool.shutdown_policy = 'batch'
                 execfile(script, local_ns)
             else:
                 logger.error("'%s' not found" % self.args[0])
@@ -1284,17 +1289,20 @@ under certain conditions; type license() for details.
     @staticmethod
     def ganga_prompt(_=None):
 
-        from GangaCore.GPIDev.Credentials import get_needed_credentials
+        try:
+            from GangaCore.GPIDev.Credentials import get_needed_credentials
 
-        needed_credentials = get_needed_credentials()
+            needed_credentials = get_needed_credentials()
 
-        # Add still-needed credentials to the prompt
-        if needed_credentials:
-            prompt = 'Warning, some credentials needed by the monitoring are missing or invalid:\n'
-            for cred_req in needed_credentials:
-                prompt += '  ' + str(cred_req).replace('\n ', '') + '\n'
-            prompt += 'Call `credential_store.renew()` to update them.\n'
-            print(prompt)
+            # Add still-needed credentials to the prompt
+            if needed_credentials:
+                prompt = 'Warning, some credentials needed by the monitoring are missing or invalid:\n'
+                for cred_req in needed_credentials:
+                    prompt += '  ' + str(cred_req).replace('\n ', '') + '\n'
+                prompt += 'Call `credential_store.renew()` to update them.\n'
+                print(prompt)
+        except KeyboardInterrupt:
+            return
 
 
 #
