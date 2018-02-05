@@ -256,6 +256,15 @@ class TestDiracCommands(object):
         logger.info(confirm)
         assert confirm['OK'], 'getReplicas command not executed successfully'
 
+    def test_getAccessURL(self, dirac_job):
+        confirm = execute('getReplicas("%s")' % dirac_job.get_file_lfn, cred_req=dirac_job.cred_req, return_raw_dict=True)
+        logger.info(confirm)
+        assert confirm['OK'], 'getReplicas command not executed successfully'
+        SE = random.choice(confirm['Value']['Successful'][dirac_job.get_file_lfn].keys())
+        accessResult = execute('getAccessURL("%s", "%s")' % (dirac_job.get_file_lfn, SE), cred_req=dirac_job.cred_req, return_raw_dict = True)
+        logger.info(accessResult)
+        assert accessResult['OK'], 'getAccessURL command not executed successfully'
+
     def test_replicateFile(self, dirac_job, dirac_sites):
 
         for new_location in dirac_sites:
