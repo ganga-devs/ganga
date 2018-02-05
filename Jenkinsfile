@@ -2,6 +2,11 @@ pipeline {
   agent any
   options {
     buildDiscarder(logRotator(numToKeepStr: '5'))
+    properties([
+  pipelineTriggers([
+    issueCommentTrigger('.*test this please.*')
+  ])
+])
   }
   stages {
     // Build stage
