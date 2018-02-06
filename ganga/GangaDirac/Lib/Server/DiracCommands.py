@@ -67,6 +67,12 @@ def getReplicas(lfns):
     return dirac.getReplicas(lfns, active=True, preferDisk = True)
 
 @diracCommand
+def getReplicasForJobs(lfns):
+    ''' Return the locations of the replicas of a given LFN in a dict format, SE: location.
+        This is for use in the splitter to negate copies at SEs that are not to be used for user jobs '''
+    return dirac.getReplicas(lfns)
+
+@diracCommand
 def getAccessURL(lfn, SE, protocol=False):
     ''' Return the access URL for the given LFN, storage element and protocol. The protocol should be in the form of a list '''
     return dirac.getAccessURL(lfn, SE, False, protocol)
