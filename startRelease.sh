@@ -1,8 +1,6 @@
 #!/bin/bash
 #Setup the release
-#VERSION=$(echo $(git describe) | cut -d "-" -f 1)
-VERSION=1.1.1
-
+VERSION=$(echo $(git describe) | cut -d "-" -f 1)
 echo $VERSION
 
 echo "Checking requested release version string"
