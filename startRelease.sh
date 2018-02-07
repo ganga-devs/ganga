@@ -56,3 +56,41 @@ git add python/GangaCore/__init__.py ./setup.py
 
 #Committing changes
 git commit -m "Setting release number"
+
+#Now create a tag and fire it at github
+git tag -a $VERSION
+
+git push origin $VERSION
+
+#Now send the release notes to github - need some python magic
+
+function sendReleaseNotes {
+python - <<END
+import requests
+import json
+import os
+
+version = os.environ['VERSION']
+
+changelog = open('release/ReleaseNotes-'+version, 'r').readlines()
+changelog = changelog[4:-2]  # Strip headings...?
+changelog = ''.join(changelog)
+
+release = {
+  'tag_name': version,
+  'target_commitish': 'master',
+  'name': version,
+  'body': changelog,
+  'draft': False,
+  'prerelease': False
+}
+
+r = requests.post('https://api.github.com/repos/ganga-devs/ganga/releases', data=json.dumps(release), headers={'Authorization':'token c116f095458783fd73e271a1c3d9eb7a739cd256'})
+
+r.raise_for_status()
+END
+}
+
+sendReleaseNotes
+
+#All done!
