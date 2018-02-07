@@ -6,8 +6,7 @@ pipeline {
   stages {
     // Build stage
     stage('Build Core Image') {
-        def tagNo = sh(script: "git describe", returnStdout: true).toString().trim()
-        sh "echo ${env.tagNo}"
+        sh "./startRelease.sh"
     }
   }
 
