@@ -71,12 +71,12 @@ git tag -a $VERSION
 #Now send the release notes to github - need some python magic
 echo "Creating new release on github"
 function sendReleaseNotes {
-python - <<END
+version=$VERSION python - <<END
 import requests
 import json
 import os
 
-version = os.environ['VERSION']
+version = os.environ.get('version')
 
 changelog = open('release/ReleaseNotes-'+version, 'r').readlines()
 changelog = changelog[4:-2]  # Strip headings...?
