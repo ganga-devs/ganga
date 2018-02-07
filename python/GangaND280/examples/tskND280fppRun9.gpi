@@ -25,7 +25,7 @@ a.cmtsetup = ['/home/t2k/t2k-software/Run_At_Start_T2k_%s.sh'%ver,'/home/t2k/t2k
 a.confopts = {'nd280ver':ver,
               'comment':'%s-%s'%(ver,site),
               'db_time':rollback,
-              'database_geometry_p6':'True',
+              'database_p6':'True',
               'event_select':trig,
               'midas_file':'placeholder',
               'production':'True',
