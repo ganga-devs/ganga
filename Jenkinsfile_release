@@ -6,7 +6,9 @@ pipeline {
   stages {
     // Build stage
     stage('Build Core Image') {
+        steps{
         sh "./startRelease.sh"
+      }
     }
   }
 
