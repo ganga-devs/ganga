@@ -92,7 +92,7 @@ class Interactive(IBackend):
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
         """ Overload master_submit to avoid parallel submission with Interactive backend"""
-        return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going)
+        return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, False)
 
     def submit(self, jobconfig, master_input_sandbox):
         """Submit job to backend (i.e. run job interactively).
