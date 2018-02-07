@@ -7,8 +7,9 @@ pipeline {
     // Build stage
     stage('Build Core Image') {
       steps {
-          def tagNo = $(git describe)
-
+        sh """git describe
+        
+        """
       }
     }
   }
