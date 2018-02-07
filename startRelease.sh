@@ -22,6 +22,8 @@ elif [[ $tag ]]; then
     exit 1
 fi
 
+echo "Sorting release notes"
+
 #Setting version and date on release notes
 sed --in-place "s/@VERSION@/${VERSION} (`date '+%Y\/%m\/%d'`)/g" release/ReleaseNotes
 
@@ -47,6 +49,8 @@ git add release/ReleaseNotes-${VERSION}
 #Committing changes
 git commit -m "Updating release notes"
 
+echo "Changing version numbers"
+
 #Setting version number and turn off DEV flag
 #sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '\$Name: ${VERSION} \$'/g" python/Ganga/__init__.py
 sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" python/GangaCore/__init__.py
@@ -57,13 +61,15 @@ git add python/GangaCore/__init__.py ./setup.py
 #Committing changes
 git commit -m "Setting release number"
 
+echo "Creating tag $VERSION"
 #Now create a tag and fire it at github
 git tag -a $VERSION
 
-git push origin $VERSION
+#echo "Pushing to origin"
+#git push origin $VERSION
 
 #Now send the release notes to github - need some python magic
-
+echo "Creating new release on github"
 function sendReleaseNotes {
 python - <<END
 import requests
