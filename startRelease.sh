@@ -91,7 +91,7 @@ release = {
   'prerelease': False
 }
 
-r = requests.post('https://api.github.com/repos/ganga-devs/ganga/releases', data=json.dumps(release), headers={'Authorization':'token c116f095458783fd73e271a1c3d9eb7a739cd256'})
+r = requests.post('https://api.github.com/repos/ganga-devs/ganga/releases', data=json.dumps(release), headers={'Authorization':'token sometoken'})
 
 r.raise_for_status()
 END
