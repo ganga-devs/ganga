@@ -7,8 +7,8 @@ pipeline {
     // Build stage
     stage('Build Core Image') {
       steps {
-        sh """git describe
-        
+        sh """tagNo=$(git describe)
+        echo $tagNo
         """
       }
     }
