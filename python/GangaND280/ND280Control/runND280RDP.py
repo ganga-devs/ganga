@@ -185,4 +185,5 @@ allHandlers.add('runND280RDP','Batch', RTHandler)
 allHandlers.add('runND280RDP','Cronus', RTHandler)
 allHandlers.add('runND280RDP','Remote', LCGRTHandler)
 allHandlers.add('runND280RDP','CREAM', LCGRTHandler)
-
+allHandlers.add('runND280RDP','Batch', RTHandler)
+allHandlers.add('runND280RDP','Slurm', RTHandler)

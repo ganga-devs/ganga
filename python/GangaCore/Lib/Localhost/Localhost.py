@@ -37,13 +37,18 @@ class Localhost(IBackend):
                                      'workdir': SimpleItem(defvalue='', protected=1, copyable=0, doc='Working directory.'),
                                      'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Hostname where the job was submitted.'),
                                      'wrapper_pid': SimpleItem(defvalue=-1, protected=1, copyable=0, hidden=1, doc='(internal) process id of the execution wrapper'),
-                                     'nice': SimpleItem(defvalue=0, doc='adjust process priority using nice -n command')
+                                     'nice': SimpleItem(defvalue=0, doc='adjust process priority using nice -n command'),
+                                     'force_parallel': SimpleItem(defvalue=False, doc='should jobs really be submitted in parallel')
                                      })
     _category = 'backends'
     _name = 'Local'
 
     def __init__(self):
         super(Localhost, self).__init__()
+
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False):
+        """ Overload master_submit to avoid parallel submission with Interactive backend"""
+        return IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going, self.force_parallel)
 
     def submit(self, jobconfig, master_input_sandbox):
         prepared = self.preparejob(jobconfig, master_input_sandbox)
