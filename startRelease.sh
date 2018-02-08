@@ -1,6 +1,8 @@
 #!/bin/bash
 #Setup the release
-VERSION=$(echo $(git symbolic-ref HEAD) | cut -d "-" -f 2)
+echo $GIT_BRANCH
+
+VERSION=$(echo ${GIT_BRANCH} | cut -d "-" -f 2)
 
 echo $VERSION
 
