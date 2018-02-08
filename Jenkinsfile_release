@@ -12,7 +12,6 @@ pipeline {
            ./startRelease.sh
            """
         }
-               sh "echo "oops""
       }
     }
   }
