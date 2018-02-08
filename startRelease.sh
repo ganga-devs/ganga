@@ -97,4 +97,29 @@ END
 
 sendReleaseNotes
 
+#Below is the necessaries for the pypi upload. Maybe best done somewhere else
+
+pip install --upgrade pip
+pip install --upgrade twine
+
+cat << EOF > ~/.pypirc
+[distutils]
+index-servers =
+    pypi
+
+[pypi]
+#The repository line is apparently outdated now
+#repository = https://pypi.python.org/pypi/
+username: ${PYPI_USER}
+password: ${PYPI_PASSWORD}
+EOF
+
+#python setup.py register
+python setup.py sdist
+twine upload --skip-existing dist/ganga-*.tar.gz
+
+#rm dist/ganga-*.tar.gz
+rm ~/.pypirc
+
+
 #All done!
