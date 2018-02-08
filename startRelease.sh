@@ -69,7 +69,7 @@ echo "Creating tag $VERSION"
 git tag -a $VERSION
 
 #echo "Pushing to origin"
-#git push origin $VERSION
+git push  --tags
 
 #Now send the release notes to github - need some python magic
 echo "Creating new release on github"
