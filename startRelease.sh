@@ -1,6 +1,8 @@
 #!/bin/bash
 #Setup the release
-VERSION=$(echo $(git describe) | cut -d "-" -f 1)
+#VERSION=$(echo $(git describe) | cut -d "-" -f 1)
+VERSION=1.1.1
+
 echo $VERSION
 
 echo "Checking requested release version string"
@@ -69,7 +71,7 @@ git tag -a $VERSION
 #Now send the release notes to github - need some python magic
 echo "Creating new release on github"
 function sendReleaseNotes {
-version=$VERSION python - <<END
+version=$VERSION apitoken=$GITHUBAPITOKEN python - <<END
 import requests
 import json
 import os
@@ -89,7 +91,7 @@ release = {
   'prerelease': False
 }
 
-r = requests.post('https://api.github.com/repos/ganga-devs/ganga/releases', data=json.dumps(release), headers={'Authorization':'token sometoken'})
+r = requests.post('https://api.github.com/repos/ganga-devs/ganga/releases', data=json.dumps(release), headers={'Authorization':'token apitoken'})
 
 r.raise_for_status()
 END
@@ -99,27 +101,27 @@ sendReleaseNotes
 
 #Below is the necessaries for the pypi upload. Maybe best done somewhere else
 
-pip install --upgrade pip
-pip install --upgrade twine
+#pip install --upgrade pip
+#pip install --upgrade twine
 
-cat << EOF > ~/.pypirc
-[distutils]
-index-servers =
-    pypi
+#cat << EOF > ~/.pypirc
+#[distutils]
+#index-servers =
+#    pypi
 
-[pypi]
+#[pypi]
 #The repository line is apparently outdated now
 #repository = https://pypi.python.org/pypi/
-username: ${PYPI_USER}
-password: ${PYPI_PASSWORD}
-EOF
+#username: $PYPI_USER
+#password: $PYPI_PASSWORD
+#EOF
 
 #python setup.py register
-python setup.py sdist
-twine upload --skip-existing dist/ganga-*.tar.gz
+#python setup.py sdist
+#twine upload --skip-existing dist/ganga-*.tar.gz
 
 #rm dist/ganga-*.tar.gz
-rm ~/.pypirc
+#rm ~/.pypirc
 
 
 #All done!
