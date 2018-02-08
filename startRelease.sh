@@ -66,10 +66,10 @@ git commit -m "Setting release number"
 
 echo "Creating tag $VERSION"
 #Now create a tag and fire it at github
-git tag -a $VERSION
+git tag -a $VERSION -m "Release ${VERSION}"
 
 #echo "Pushing to origin"
-git push  --tags
+git push --tags
 
 #Now send the release notes to github - need some python magic
 echo "Creating new release on github"
