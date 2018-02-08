@@ -371,10 +371,11 @@ inputfile =
         if self.options['db_time']:
             configfile += "database_rollback_date = " + self.options['db_time'] + "\n"
             configfile += "dq_database_rollback_date = " + self.options['db_time'] + "\n"
-            configfile += "\n"
 
         if self.options['database_P6']:
             configfile += 'database_P6 = %s\n' % self.options['database_P6']
+
+        configfile += "\n"
 
         ### Unpack - only if this is a midas file
         if self.options['midas_file']:
