@@ -7,11 +7,13 @@ pipeline {
     // Build stage
     stage('Build Core Image') {
         steps{
+            try{
 		withCredentials([usernamePassword(credentialsId: 'PyPi', passwordVariable: 'PYPI_PASSWORD', usernameVariable: 'PYPI_USER'), string(credentialsId: '3c8f4c29-6a7e-4b89-9735-de6c6ad4540e', variable: 'GITHUBAPITOKEN')]) {
         sh """
            ./startRelease.sh
            """
-	}
+	  }
+        }
       }
     }
   }
