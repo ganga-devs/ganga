@@ -1,7 +1,6 @@
 #!/bin/bash
 #Setup the release
-#VERSION=$(echo $(git describe) | cut -d "-" -f 1)
-VERSION=1.1.1
+VERSION=$(echo $(git symbolic-ref HEAD) | cut -d "-" -f 2)
 
 echo $VERSION
 
@@ -69,6 +68,7 @@ echo "Creating tag $VERSION"
 git tag -a $VERSION -m "Release ${VERSION}"
 
 #echo "Pushing to origin"
+git push
 git push --tags
 
 #Now send the release notes to github - need some python magic
@@ -126,5 +126,11 @@ sendReleaseNotes
 #rm dist/ganga-*.tar.gz
 #rm ~/.pypirc
 
+#Now the release is sorted we can set the development flag again and push the changes back to the release branch!
+sed --in-place "s/^_development = .*/_development = False/g" python/GangaCore/__init__.py
+git add python/GangaCore/__init__.py
+
+git commit -m "setting development flag"
+git push
 
 #All done!

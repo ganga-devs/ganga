@@ -8,7 +8,13 @@ pipeline {
     stage('Build Core Image') {
         steps{
 		withCredentials([usernamePassword(credentialsId: 'PyPi', passwordVariable: 'PYPI_PASSWORD', usernameVariable: 'PYPI_USER'), string(credentialsId: '3c8f4c29-6a7e-4b89-9735-de6c6ad4540e', variable: 'GITHUBAPITOKEN')]) {
-        sh "./startRelease.sh"
+        sh """
+           virtualenv releaseEnv
+           . releaseEnv/bin/activate
+           ./startRelease.sh
+           deactivate
+           rm -rf releaseEnv
+           """"
 	}
       }
     }
