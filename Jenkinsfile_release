@@ -13,7 +13,8 @@ pipeline {
            . releaseEnv/bin/activate
            ./startRelease.sh
            deactivate
-           rm -rf releaseEnv """"
+           rm -rf releaseEnv
+           """
 	}
       }
     }
