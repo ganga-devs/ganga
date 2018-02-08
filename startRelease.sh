@@ -5,6 +5,9 @@ VERSION=1.1.1
 
 echo $VERSION
 
+echo $PYPI_USER
+
+
 echo "Checking requested release version string"
 
 #Check if the requested version is "x.y.z"
@@ -91,7 +94,7 @@ release = {
   'prerelease': False
 }
 
-r = requests.post('https://api.github.com/repos/ganga-devs/ganga/releases', data=json.dumps(release), headers={'Authorization':'token apitoken'})
+r = requests.post('https://api.github.com/repos/ganga-devs/ganga/releases', data=json.dumps(release), headers={'Authorization':'token %s'}) % os.environ.get('apitoken')
 
 r.raise_for_status()
 END
