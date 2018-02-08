@@ -4,9 +4,6 @@ VERSION=$(echo $(git symbolic-ref HEAD) | cut -d "-" -f 2)
 
 echo $VERSION
 
-echo $PYPI_USER
-
-
 echo "Checking requested release version string"
 
 #Check if the requested version is "x.y.z"
@@ -54,7 +51,6 @@ git commit -m "Updating release notes"
 echo "Changing version numbers"
 
 #Setting version number and turn off DEV flag
-#sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '\$Name: ${VERSION} \$'/g" python/Ganga/__init__.py
 sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" python/GangaCore/__init__.py
 sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ./setup.py
 sed --in-place "s/^_development = .*/_development = False/g" python/GangaCore/__init__.py
@@ -102,7 +98,7 @@ END
 
 sendReleaseNotes
 
-#Below is the necessaries for the pypi upload. Maybe best done somewhere else
+#Below is the necessaries for the pypi upload. Maybe best done somewhere else but if this is running in a virtual env then probably fine.
 
 #pip install --upgrade pip
 #pip install --upgrade twine
