@@ -26,13 +26,13 @@ fi
 echo "Sorting release notes"
 
 #Setting version and date on release notes
-sed --in-place "s/@VERSION@/${VERSION} (`date '+%Y\/%m\/%d'`)/g" release/ReleaseNotes
+sed --in-place "s/@VERSION@/${VERSION} (`date '+%Y\/%m\/%d'`)/g" ganga/GangaRelease/ReleaseNotes
 
 #Copying release notes
-git mv release/ReleaseNotes release/ReleaseNotes-${VERSION}
+git mv ganga/GangaRelease/ReleaseNotes ganga/GangaRelease/ReleaseNotes-${VERSION}
 
 #Creating new release notes from template
-cat << EOF > release/ReleaseNotes
+cat << EOF > ganga/GangaRelease/ReleaseNotes
 **************************************************************************************************************
 @VERSION@
 
@@ -44,8 +44,8 @@ ganga/ganga/Ganga
 
 **************************************************************************************************************
 EOF
-git add release/ReleaseNotes
-git add release/ReleaseNotes-${VERSION}
+git add ganga/GangaRelease/ReleaseNotes
+git add ganga/GangaRelease/ReleaseNotes-${VERSION}
 
 #Committing changes
 git commit -m "Updating release notes"
@@ -79,7 +79,7 @@ import os
 
 version = os.environ.get('version')
 
-changelog = open('release/ReleaseNotes-'+version, 'r').readlines()
+changelog = open('ganga/GangaRelease/ReleaseNotes-'+version, 'r').readlines()
 changelog = changelog[4:-2]  # Strip headings...?
 changelog = ''.join(changelog)
 
