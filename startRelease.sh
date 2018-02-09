@@ -38,7 +38,7 @@ cat << EOF > release/ReleaseNotes
 
 
 --------------------------------------------------------------------------------------------------------------
-ganga/python/Ganga
+ganga/ganga/Ganga
 --------------------------------------------------------------------------------------------------------------
 * ...
 
@@ -53,10 +53,10 @@ git commit -m "Updating release notes"
 echo "Changing version numbers"
 
 #Setting version number and turn off DEV flag
-sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" python/GangaCore/__init__.py
+sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ganga/GangaCore/__init__.py
 sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '${VERSION}'/g" ./setup.py
-sed --in-place "s/^_development = .*/_development = False/g" python/GangaCore/__init__.py
-git add python/GangaCore/__init__.py ./setup.py
+sed --in-place "s/^_development = .*/_development = False/g" ganga/GangaCore/__init__.py
+git add ganga/GangaCore/__init__.py ./setup.py
 
 #Committing changes
 git commit -m "Setting release number"
@@ -125,8 +125,8 @@ sendReleaseNotes
 #rm ~/.pypirc
 
 #Now the release is sorted we can set the development flag again and push the changes back to the release branch!
-sed --in-place "s/^_development = .*/_development = False/g" python/GangaCore/__init__.py
-git add python/GangaCore/__init__.py
+sed --in-place "s/^_development = .*/_development = False/g" ganga/GangaCore/__init__.py
+git add ganga/GangaCore/__init__.py
 
 git commit -m "setting development flag"
 git push
