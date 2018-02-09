@@ -7,7 +7,7 @@ pipeline {
     // Build stage
     stage('Build Core Image') {
       steps {
-        sh "docker build -t gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID} -f ${env.WORKSPACE}/python/GangaCore/test/Dockerfile ."
+        sh "docker build -t gangacoretest:${env.BRANCH_NAME}-${env.BUILD_ID} -f ${env.WORKSPACE}/ganga/GangaCore/test/Dockerfile ."
       }
     }
     // Parallel testing stage
@@ -28,7 +28,7 @@ pipeline {
         }
         stage('GangaDirac') {
           steps {
-            sh "docker build -t gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} -f ${env.WORKSPACE}/python/GangaDirac/test/Dockerfile ."
+            sh "docker build -t gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} -f ${env.WORKSPACE}/ganga/GangaDirac/test/Dockerfile ."
             sh "docker run --name GangaDirac${env.BRANCH_NAME}-${env.BUILD_ID} -v ~/.globus:/root/.globus -e vo=gridpp gangadiractest:${env.BRANCH_NAME}-${env.BUILD_ID} || true"
             sh "docker cp GangaDirac${env.BRANCH_NAME}-${env.BUILD_ID}:/root/tests-GangaDirac.xml ."
             sh "docker cp GangaDirac${env.BRANCH_NAME}-${env.BUILD_ID}:/root/cov-GangaDirac.xml ."
@@ -43,7 +43,7 @@ pipeline {
         }
         stage('GangaLHCb') {
           steps {
-            sh "docker build -t gangalhcbtest:${env.BRANCH_NAME}-${env.BUILD_ID} -f ${env.WORKSPACE}/python/GangaLHCb/test/Dockerfile ."
+            sh "docker build -t gangalhcbtest:${env.BRANCH_NAME}-${env.BUILD_ID} -f ${env.WORKSPACE}/ganga/GangaLHCb/test/Dockerfile ."
             sh "docker run --privileged --name GangaLHCb${env.BRANCH_NAME}-${env.BUILD_ID} -v ~/.globus:/root/.globus gangalhcbtest:${env.BRANCH_NAME}-${env.BUILD_ID} || true"
             sh "docker cp GangaLHCb${env.BRANCH_NAME}-${env.BUILD_ID}:/root/tests-GangaLHCb.xml ."
             sh "docker cp GangaLHCb${env.BRANCH_NAME}-${env.BUILD_ID}:/root/cov-GangaLHCb.xml ."
