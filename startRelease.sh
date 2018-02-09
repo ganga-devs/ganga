@@ -66,7 +66,7 @@ echo "Creating tag $VERSION"
 git tag -a $VERSION -m "Release ${VERSION}"
 
 #echo "Pushing to origin"
-#git push
+git push
 git push --tags
 
 #Now send the release notes to github - need some python magic
@@ -129,6 +129,6 @@ sed --in-place "s/^_development = .*/_development = False/g" python/GangaCore/__
 git add python/GangaCore/__init__.py
 
 git commit -m "setting development flag"
-#git push
+git push
 
 #All done!

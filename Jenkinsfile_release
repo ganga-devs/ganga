@@ -16,8 +16,8 @@ pipeline {
     }
   }
   post {
-    success {
-     mail bcc: '', body: 'New Ganga version has been released', cc: '', from: 'project-ganga-developers@cern.ch', replyTo: 'project-ganga-developers@cern.ch', subject: 'New Ganga released', to: 'project-ganga-developers@cern.ch' 
-    }
+//    success {
+//     mail bcc: '', body: 'New Ganga version has been released', cc: '', from: 'project-ganga-developers@cern.ch', replyTo: 'project-ganga-developers@cern.ch', subject: 'New Ganga released', to: 'project-ganga-developers@cern.ch' 
+//    }
   }
 }
