@@ -26,7 +26,7 @@ def getLCGRootPath():
 # ------------------------------------------------
 # store Ganga version based on new git tag for this file
 _gangaVersion = '6.7.4'
-_development = False
+_development = True
 
 # store a path to Ganga libraries
 _gangaPythonPath = os.path.dirname(os.path.dirname(__file__))
@@ -555,6 +555,28 @@ sge_config.addOption('postexecute', '', "String contains commands executing befo
 sge_config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
 sge_config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
+# ------------------------------------------------
+# Slurm
+
+slurm_config = makeConfig('Slurm', 'internal Slurm command line interface')
+slurm_config.addOption('shared_python_executable', False, "Shared PYTHON")
+slurm_config.addOption('jobid_name', 'SLURM_JOB_ID', "Name of environment with ID of the job")
+# Slurm does not seem to have an envronment variable with a queue name.
+slurm_config.addOption('queue_name', 'SLURM_CLUSTER_NAME', "Name of environment with queue name of the job")
+slurm_config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
+
+slurm_config.addOption('submit_str', 'cd %s; sbatch %s %s %s %s', "String used to submit job to queue")
+slurm_config.addOption('submit_res_pattern', 'Submitted batch job (?P<id>\d+)',
+                 "String pattern for replay from the submit command")
+
+slurm_config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
+slurm_config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
+slurm_config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
+slurm_config.addOption('kill_str', 'scancel %s', "String used to kill job")
+
+slurm_config.addOption('preexecute', '', "String contains commands executing before submiting job to queue")
+slurm_config.addOption('postexecute', '', "String contains commands executing before submiting job to queue")
+slurm_config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 # ------------------------------------------------
 # Mergers
 merge_config = makeConfig('Mergers', 'parameters for mergers')
