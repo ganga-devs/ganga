@@ -70,7 +70,7 @@ def getReplicas(lfns):
 def getReplicasForJobs(lfns):
     ''' Return the locations of the replicas of a given LFN in a dict format, SE: location.
         This is for use in the splitter to negate copies at SEs that are not to be used for user jobs '''
-    return dirac.getReplicas(lfns)
+    return dirac.getReplicasForJobs(lfns)
 
 @diracCommand
 def getAccessURL(lfn, SE, protocol=False):
