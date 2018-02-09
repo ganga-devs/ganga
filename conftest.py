@@ -6,4 +6,4 @@ def pytest_addoption(parser):
     parser.addoption("--testLHCb", action="store_true",
         help="should we try to use an LHCb proxy for testing")
 
-pytest_plugins = "GangaCore.testlib.fixtures"
+pytest_plugins = "ganga.GangaCore.testlib.fixtures"
