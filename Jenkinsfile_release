@@ -11,6 +11,7 @@ pipeline {
         sh """
            virtualenv gangaRelease
            . gangaRelease/bin/activate
+           pip install requests
            ./startRelease.sh
            deactivate
            rm -r gangaRelease
