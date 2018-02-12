@@ -31,11 +31,21 @@ def register_exitfunc():
     registereing this  300 times is just bad...
     """
     if not register_exitfunc._has_registered:
-        atexit.register(_ganga_run_exitfuncs)
+        atexit.register(_protected_ganga_exitfuncs)
         register_exitfunc._has_registered = True
 register_exitfunc._has_registered = False
 
-def _ganga_run_exitfuncs():
+
+def _protected_ganga_exitfuncs():
+    try:
+        _unprotected_ganga_exitfuncs()
+    except KeyboardInterrupt:
+        logger.error("PLEASE DO NOT hit Ctrl+C on ganga exit before waiting a while!")
+        logger.error("This will more than likely lead to repo/job corruption")
+        pass
+
+
+def _unprotected_ganga_exitfuncs():
     """Run all exit functions from plugins and internal services in the correct order
 
     Go over all plugins and internal services and call the appropriate shutdown functions in the correct order. Because
@@ -130,3 +140,4 @@ def _ganga_run_exitfuncs():
     # show any open files after everything's shutdown
     if bootstrap.DEBUGFILES or bootstrap.MONITOR_FILES:
         bootstrap.printOpenFiles()
+
