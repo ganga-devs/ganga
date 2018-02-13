@@ -68,8 +68,8 @@ echo "Creating tag $VERSION"
 #Now create a tag and fire it at github
 git tag -a $VERSION -m "Release ${VERSION}"
 
-#echo "Pushing to origin"
-git push
+echo "Pushing to origin"
+git push -u origin
 git push --tags
 
 #Now send the release notes to github - need some python magic
