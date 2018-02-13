@@ -2,8 +2,10 @@
 #Setup the release
 echo $GIT_BRANCH
 
+BRANCHNAME=$(echo ${GIT_BRANCH} | cut -d "/" -f 2)
 VERSION=$(echo ${GIT_BRANCH} | cut -d "-" -f 2)
 
+echo $BRANCHNAME
 echo $VERSION
 
 echo "Checking requested release version string"
@@ -63,7 +65,7 @@ git add ganga/GangaCore/__init__.py ./setup.py
 
 #Committing changes
 git commit -m "Setting release number"
-git push -u origin $GIT_BRANCH
+git push -u origin ${BRANCHNAME}
 echo "Creating tag $VERSION"
 #Now create a tag and fire it at github
 git tag -a $VERSION -m "Release ${VERSION}"
