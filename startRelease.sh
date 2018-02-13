@@ -77,7 +77,7 @@ echo "Creating tag $VERSION"
 git tag -a $VERSION -m "Release ${VERSION}"
 
 echo "Pushing to origin"
-git push --tags
+#git push --tags
 
 #Now send the release notes to github - need some python magic
 echo "Creating new release on github"
@@ -141,6 +141,6 @@ sed --in-place "s/^_development = .*/_development = True/g" ganga/GangaCore/__in
 git add ganga/GangaCore/__init__.py
 
 git commit -m "setting development flag"
-git push origin ${BRANCHNAME}
+#git push origin ${BRANCHNAME}
 
 #All done!
