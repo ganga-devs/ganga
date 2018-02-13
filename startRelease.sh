@@ -5,18 +5,15 @@ echo $GIT_BRANCH
 BRANCHNAME=$(echo ${GIT_BRANCH} | cut -d "/" -f 2)
 VERSION=$(echo ${GIT_BRANCH} | cut -d "-" -f 2)
 
-#We start on a commit so checkout the branch
+#We start on a commit so checkout the branch and change the config to only push this one
 git checkout -b $BRANCHNAME
-
-git branch
-
 git config --global push.default current
 
 echo $BRANCHNAME
 echo $VERSION
 
 echo "Checking requested release version string"
-#First remove all local tags and get the ones from the remote. This is in case of imperfect clean up
+#First remove all local tags and get the ones from the remote. This is in case of imperfect clean up - shouldn't really be necessary after testing
 git tag -d $(git tag)
 git fetch --tags
 
@@ -77,7 +74,7 @@ echo "Creating tag $VERSION"
 git tag -a $VERSION -m "Release ${VERSION}"
 
 echo "Pushing to origin"
-#git push --tags
+git push --tags
 
 #Now send the release notes to github - need some python magic
 echo "Creating new release on github"
@@ -108,9 +105,9 @@ r.raise_for_status()
 END
 }
 
-#sendReleaseNotes
+sendReleaseNotes
 
-#Below is the necessaries for the pypi upload. Maybe best done somewhere else but if this is running in a virtual env then probably fine.
+#Below is the necessaries for the pypi upload.
 
 pip install --upgrade pip
 pip install --upgrade twine
@@ -119,21 +116,19 @@ cat << EOF > ~/.pypirc
 [distutils]
 index-servers =
     pypi
-    testpypi
 
 [testpypi]
 #The repository line is apparently outdated now
 #repository = https://pypi.python.org/pypi/
-repository = htpps://test.pypi.org/legacy/
 username: $PYPI_USER
 password: $PYPI_PASSWORD
 EOF
-echo "uploading to test pypi"
+echo "uploading to pypi"
 python setup.py register
 python setup.py sdist
-twine upload --skip-existing --repository testpypi dist/gangatest-*.tar.gz
+twine upload --skip-existing dist/ganga-*.tar.gz
 
-rm dist/gangatest-*.tar.gz
+rm dist/ganga-*.tar.gz
 rm ~/.pypirc
 
 #Now the release is sorted we can set the development flag again and push the changes back to the release branch!
@@ -141,6 +136,6 @@ sed --in-place "s/^_development = .*/_development = True/g" ganga/GangaCore/__in
 git add ganga/GangaCore/__init__.py
 
 git commit -m "setting development flag"
-#git push origin ${BRANCHNAME}
+git push origin ${BRANCHNAME}
 
 #All done!
