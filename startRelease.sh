@@ -7,6 +7,9 @@ VERSION=$(echo ${GIT_BRANCH} | cut -d "-" -f 2)
 echo $VERSION
 
 echo "Checking requested release version string"
+#First remove all local tags and get the ones from the remote. This is in case of imperfect clean up
+git tag -d $(git tag)
+git fetch --tags
 
 #Check if the requested version is "x.y.z"
 if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
