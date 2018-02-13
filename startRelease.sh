@@ -108,7 +108,7 @@ r.raise_for_status()
 END
 }
 
-sendReleaseNotes
+#sendReleaseNotes
 
 #Below is the necessaries for the pypi upload. Maybe best done somewhere else but if this is running in a virtual env then probably fine.
 
@@ -131,9 +131,9 @@ EOF
 echo "uploading to test pypi"
 python setup.py register
 python setup.py sdist
-twine upload --skip-existing --repository testpypi dist/ganga-*.tar.gz
+twine upload --skip-existing --repository testpypi dist/gangatest-*.tar.gz
 
-rm dist/ganga-*.tar.gz
+rm dist/gangatest-*.tar.gz
 rm ~/.pypirc
 
 #Now the release is sorted we can set the development flag again and push the changes back to the release branch!
