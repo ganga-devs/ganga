@@ -113,33 +113,33 @@ sendReleaseNotes
 
 #Below is the necessaries for the pypi upload. Maybe best done somewhere else but if this is running in a virtual env then probably fine.
 
-#pip install --upgrade pip
-#pip install --upgrade twine
+pip install --upgrade pip
+pip install --upgrade twine
 
-#cat << EOF > ~/.pypirc
-#[distutils]
-#index-servers =
-#    pypi
+cat << EOF > ~/.pypirc
+[distutils]
+index-servers =
+    pypi
 
-#[pypi]
+[pypi]
 #The repository line is apparently outdated now
 #repository = https://pypi.python.org/pypi/
-#username: $PYPI_USER
-#password: $PYPI_PASSWORD
-#EOF
+username: $PYPI_USER
+password: $PYPI_PASSWORD
+EOF
+echo "uploading to pypi"
+python setup.py register
+python setup.py sdist
+twine upload --skip-existing dist/ganga-*.tar.gz
 
-#python setup.py register
-#python setup.py sdist
-#twine upload --skip-existing dist/ganga-*.tar.gz
-
-#rm dist/ganga-*.tar.gz
-#rm ~/.pypirc
+rm dist/ganga-*.tar.gz
+rm ~/.pypirc
 
 #Now the release is sorted we can set the development flag again and push the changes back to the release branch!
-sed --in-place "s/^_development = .*/_development = False/g" ganga/GangaCore/__init__.py
+sed --in-place "s/^_development = .*/_development = True/g" ganga/GangaCore/__init__.py
 git add ganga/GangaCore/__init__.py
 
 git commit -m "setting development flag"
-git push
+git push origin ${BRANCHNAME}
 
 #All done!
