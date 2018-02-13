@@ -5,6 +5,10 @@ echo $GIT_BRANCH
 BRANCHNAME=$(echo ${GIT_BRANCH} | cut -d "/" -f 2)
 VERSION=$(echo ${GIT_BRANCH} | cut -d "-" -f 2)
 
+git branch
+
+git config --global push.default current
+
 echo $BRANCHNAME
 echo $VERSION
 
