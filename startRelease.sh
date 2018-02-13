@@ -72,7 +72,6 @@ git add ganga/GangaCore/__init__.py ./setup.py
 
 #Committing changes
 git commit -m "Setting release number"
-git push origin ${BRANCHNAME}
 echo "Creating tag $VERSION"
 #Now create a tag and fire it at github
 git tag -a $VERSION -m "Release ${VERSION}"
@@ -120,17 +119,19 @@ cat << EOF > ~/.pypirc
 [distutils]
 index-servers =
     pypi
+    testpypi
 
-[pypi]
+[testpypi]
 #The repository line is apparently outdated now
 #repository = https://pypi.python.org/pypi/
+repository = htpps://test.pypi.org/legacy/
 username: $PYPI_USER
 password: $PYPI_PASSWORD
 EOF
-echo "uploading to pypi"
+echo "uploading to test pypi"
 python setup.py register
 python setup.py sdist
-twine upload --skip-existing dist/ganga-*.tar.gz
+twine upload --skip-existing --respository testpypi dist/ganga-*.tar.gz
 
 rm dist/ganga-*.tar.gz
 rm ~/.pypirc
