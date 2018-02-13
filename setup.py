@@ -74,7 +74,7 @@ pythonPackages = find_packages('./')
 pythonPackages.append('ganga/GangaRelease')
 pythonPackages.append('ganga/GangaTemplates')
 
-setup(name='ganga',
+setup(name='gangatest',
       description='Job management tool',
       long_description=readme(),
       url='https://github.com/ganga-devs/ganga',
