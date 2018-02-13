@@ -131,7 +131,7 @@ EOF
 echo "uploading to test pypi"
 python setup.py register
 python setup.py sdist
-twine upload --skip-existing --respository testpypi dist/ganga-*.tar.gz
+twine upload --skip-existing --repository testpypi dist/ganga-*.tar.gz
 
 rm dist/ganga-*.tar.gz
 rm ~/.pypirc
