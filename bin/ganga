@@ -26,23 +26,27 @@ def standardSetup():
     """   
     import sys, os.path
 
-    # insert the path to Ganga itself
+    # insert the path to Ganga itself - this is required for the installation on CVMFS
     exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
-
-    gangaDir = os.path.join(os.path.dirname(exeDir), 'python' )
+    gangaDir = os.path.join(os.path.dirname(exeDir), 'ganga' )
 
     sys.path.insert(0, gangaDir)
 
-    from Ganga.PACKAGE import standardSetup
+    #This function is needed to add the individual ganga modules to the sys path - awful hack but saved rewriting all the code. This is needed for pip installs
+    pathsToAdd = filter(lambda p : 'ganga' in os.listdir(p), filter(lambda x : not x=='' and os.path.isdir(x), sys.path))
+    for p in pathsToAdd:
+        sys.path.insert(0, os.path.join(p, 'ganga'))
+
+    from GangaCore.PACKAGE import standardSetup
     standardSetup()
 
 standardSetup()
 del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-from Ganga.Core.exceptions import GangaException
-import Ganga.Runtime
-Ganga.Runtime._prog = None
+from GangaCore.Core.exceptions import GangaException
+import GangaCore.Runtime
+GangaCore.Runtime._prog = None
 import sys
 
 def log(level, err):
@@ -58,11 +62,11 @@ def log(level, err):
 
 try:
     # Import GPI and run Ganga
-    Ganga.Runtime.setupGanga()
-    from Ganga import GPI
-    Ganga.Runtime._prog.run(GPI.__dict__)
+    GangaCore.Runtime.setupGanga()
+    from GangaCore import GPI
+    GangaCore.Runtime._prog.run(GPI.__dict__)
 except GangaException as err:
-    if Ganga.Runtime._prog:
-        log(Ganga.Runtime._prog.options.force_loglevel, err)
+    if GangaCore.Runtime._prog:
+        log(GangaCore.Runtime._prog.options.force_loglevel, err)
     sys.exit(-1)
 
