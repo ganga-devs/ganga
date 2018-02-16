@@ -11,7 +11,6 @@ pipeline {
             sshagent(credentials: ['ca9d193d-edba-4a2f-b7d6-f45a25a41f39']){
               sh """
               ls
-              if [ -d "gangaRelease" ]; then rm -r gangaRelease; fi
               virtualenv gangaRelease
               . gangaRelease/bin/activate
               pip install requests
