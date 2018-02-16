@@ -3,19 +3,21 @@
 echo $GIT_BRANCH
 
 BRANCHNAME=$(echo ${GIT_BRANCH} | cut -d "/" -f 2)
-VERSION=$(echo ${GIT_BRANCH} | cut -d "-" -f 2)
+STUPIDVERSION=$(echo ${GIT_BRANCH} | cut -d "-" -f 2)
+
+VERSION="${STUPIDVERSION//_/.}"
 
 #We start on a commit so checkout the branch and change the config to only push this one
-git checkout -b $BRANCHNAME
-git config --global push.default current
+#git checkout -b $BRANCHNAME
+#git config --global push.default current
 
 echo $BRANCHNAME
 echo $VERSION
 
 echo "Checking requested release version string"
 #First remove all local tags and get the ones from the remote. This is in case of imperfect clean up - shouldn't really be necessary after testing
-git tag -d $(git tag)
-git fetch --tags
+#git tag -d $(git tag)
+#git fetch --tags
 
 #Check if the requested version is "x.y.z"
 if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -32,6 +34,7 @@ elif [[ $tag ]]; then
     exit 1
 fi
 
+exit 1
 echo "Sorting release notes"
 
 #Setting version and date on release notes
