@@ -117,9 +117,9 @@ cat << EOF > ~/.pypirc
 index-servers =
     pypi
 
-[testpypi]
+[pypi]
 #The repository line is apparently outdated now
-repository = https://pypi.python.org/pypi/
+#repository = https://pypi.python.org/pypi/
 username: $PYPI_USER
 password: $PYPI_PASSWORD
 EOF
