@@ -843,7 +843,7 @@ def GPIProxyClassFactory(name, pluginclass):
             # For the moment we're warning the user until it's clear this is a safe thing to do, aka once all classes are deemed safe
             # The args will simply be passed through regardless
             elif arg_len == 0:
-                instance = pluginclass.getNew()
+                instance = pluginclass.getNew(should_init=True)
             elif arg_len < len(getargspec(pluginclass.__init__)[0]):
                 clean_args = (stripProxy(arg) for arg in args)
                 instance = pluginclass(*clean_args)

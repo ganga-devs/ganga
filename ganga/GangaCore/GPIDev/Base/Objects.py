@@ -715,7 +715,7 @@ class GangaObject(Node):
     _should_load = False
 
     @classmethod
-    def getNew(cls, should_load=False, should_init=True):
+    def getNew(cls, should_load=False, should_init=False):
         """
         Returns a new instance of this class type without a populated Schema.
         This should be an object which has all of the core logic initialized correctly.
