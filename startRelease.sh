@@ -3,11 +3,9 @@
 echo $GIT_BRANCH
 
 BRANCHNAME=$(echo ${GIT_BRANCH} | cut -d "/" -f 2)
-VERSION=$(echo $(git describe) | cut -d "-" -f 1)
+STUPIDVERSION=$(echo ${GIT_BRANCH} | cut -d "-" -f 2)
 
-#BRANCHNAME=$(echo ${GIT_BRANCH} | cut -d "/" -f 2)
-#VERSION=$(echo ${GIT_BRANCH} | cut -d "-" -f 2)
-
+VERSION=bar=${STUPIDVERSION/_/.}
 
 #We start on a commit so checkout the branch and change the config to only push this one
 #git checkout -b $BRANCHNAME
