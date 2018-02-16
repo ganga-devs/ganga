@@ -120,7 +120,8 @@ inputfile =
                            'inputfile':'',
                            'version_number':'',
                            'custom_list':'',
-                           'db_time':''}
+                           'db_time':'',
+                           'database_P6':''}
 
     ### Raw Data Options: Dictionary of options specific to Raw data processing cfg files
     raw_options={ 'midas_file':'',
