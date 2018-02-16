@@ -112,7 +112,8 @@ inputfile =
                     'cmtroot':'environment',
                     'nd280ver':'',
                     'custom_list':'',
-                    'db_time':''}
+                    'db_time':'',
+                    'database_P6':''}
 
     ## Ignore options - options that are not essential and can be overlooked
     common_options_ignore={'comment':'','midas_file':'',
