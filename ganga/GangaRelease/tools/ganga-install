@@ -210,19 +210,19 @@ def main():
         command(ganga_tarball,CONFIG['install_dir'],tarPath=ganga_tarball_path)
 
         # import setup.py module from bin directory to get the dependency list
-        sys.path.insert(0,ganga_top+'/python')
+        sys.path.insert(0,ganga_top+'/ganga')
 
         if CONFIG['plugin_packages']:
             print "Resolving additional external dependencies for: ",' '.join(CONFIG['plugin_packages'])
 
         #override the platform if overriden with --platf option (required for versions >=4.3.2)
-        import Ganga.PACKAGE
+        import GangaCore.PACKAGE
         if CONFIG['platform']:
-            Ganga.PACKAGE._defaultPlatform = CONFIG['platform']
+            GangaCore.PACKAGE._defaultPlatform = CONFIG['platform']
         # we need a tarPath relative to the externalHome
-        Ganga.PACKAGE._defaultExternalHome = ''
+        GangaCore.PACKAGE._defaultExternalHome = ''
 
-        for pkg in ['Ganga']+CONFIG['plugin_packages']:
+        for pkg in ['GangaCore']+CONFIG['plugin_packages']:
             print 'resolving dependencies for',pkg
             try:
                 setup = importName(pkg+'.PACKAGE','setup')
@@ -271,7 +271,7 @@ def main():
             print '='*10
 
         if CONFIG['pre4.3']:
-            replace_prefix("%s/python/Ganga/PACKAGE.py" % ganga_top, [('/afs/cern.ch/sw/ganga/external',CONFIG['external_dir'])],silent)
+            replace_prefix("%s/ganga/GangaCore/PACKAGE.py" % ganga_top, [('/afs/cern.ch/sw/ganga/external',CONFIG['external_dir'])],silent)
 
         print
         print 'Ganga sucessfully installed in',CONFIG['prefix']
