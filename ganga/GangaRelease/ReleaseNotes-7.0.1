@@ -1,0 +1,32 @@
+**************************************************************************************************************
+7.0.1 (2018/02/18)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Major re-ordering of code. The module Ganga has been renamed to GangaCore to resolve problems with case
+insensitive operating systems (MacOS) #1183. The python folder has been renamed to ganga and the release notes
+and templates moved into it (GangaRelease and GangaTemplates). When installing with pip Ganga now appears as a
+single module (ganga) and the release notes are now included. When importing ganga in python import.ganga has
+become import ganga.ganga . Subsequently the ganga namespace is available as usual (i.e. print ganga.jobs). #1198
+* Bugfix for logging. INFO message should be cached until a new prompt. #1197
+* Bugfix for showing configs. #1187
+* Bugfix for ganga shutdown. #1195
+* Parallel submit disabled by default for local jobs. Can be used with j.backend.force_parallel=True . #1208
+* Slurm backend now available. #1192
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Now use getReplicasForJobs when splitting with OfflineGangaDiracSplitter. #1203
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Bugfix for BenderBox. #1184
+* Bugfix to uploading replica of job script and cmake tarballs for GaudiExec. Instead of raising an exception
+on failure ganga will give a warning and try another SE. In case of no successful SE an exception is raised. #1190 and #1182
+ 
+
+**************************************************************************************************************
