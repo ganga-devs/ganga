@@ -1163,7 +1163,7 @@ class Athena(IPrepareApp):
 
         # archive sources
         verbose = False
-        if self.atlas_exetype in ['EXE']: #and not self.athena_compile:  - for EXE, compilation decides what the tarball is called
+        if self.atlas_exetype in ['EXE'] and not self.useAthenaPackages: #and not self.athena_compile:  - for EXE, compilation decides what the tarball is called
             maxFileSize = config['EXE_MAXFILESIZE']
             archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose, self.athena_compile )
 
@@ -1189,7 +1189,7 @@ class Athena(IPrepareApp):
 
         # Add InstallArea
         if not self.athena_compile: 
-            if not self.atlas_exetype in ['EXE']: 
+            if not self.atlas_exetype in ['EXE'] and not self.useAthenaPackages: 
                 nobuild = True
                 AthenaUtils.archiveInstallArea(self.userarea, self.grouparea, archiveName, archiveFullName, archiveDir, nobuild, verbose)
                 logger.info('Option athena_compile=%s. Adding InstallArea to %s ...', self.athena_compile, archiveFullName )
