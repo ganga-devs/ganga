@@ -278,11 +278,15 @@ def execute(command,
         # If output
         if stdout:
             stdout_temp = pickle.loads(stdout)
-    except (pickle.UnpicklingError, EOFError) as err:
+    # Downsides to wanting to be explicit in how this failed is you need to know all the ways it can!
+    except (pickle.UnpicklingError, EOFError, ValueError) as err:
         if not shell:
-            logger.error("Execute Err: %s", err)
+            log = logger.error
         else:
-            logger.debug("Execute Err: %s", err)
+            log = logger.debug
+        log("Command Failed to Execute:\n%s" % command)
+        log("Command Output is:\n%s" % stdout)
+        log("Error received:\n%s" % err)
 
     if not stdout_temp:
         local_ns = locals()
