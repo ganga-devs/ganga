@@ -144,7 +144,7 @@ def generate_site_selection(input_site, wanted_common_site, uniqueSE, site_to_SE
     return req_sitez
 
 
-def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_site_mapping, bannedSites, ignoremissing):
+def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_site_mapping, bannedSites, ignoremissing, bad_lfns):
     """
     If uniqueSE:
         This constructs 2 dicts which allow for going between SE and sites based upon a key/value lookup.
@@ -222,6 +222,7 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_si
         elif site_dict[_lfn] == set([]) and ignoremissing:
             logger.warning('LFN %s has no site available and ignoremissing = true! Removing this LFN from the dataset!' % str(_lfn))
             del site_dict[_lfn]
+            bad_lfns.append(_lfn)
 
     if site_dict == {}:
         raise SplitterError('There are no LFNs in the dataset - perhaps you have banned too many sites.')
@@ -393,7 +394,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
 
     # Now lets generate a dictionary of some chosen site vs LFN to use in
     # constructing subsets
-    site_dict = calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_site_mapping, bannedSites, ignoremissing)
+    site_dict = calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_site_mapping, bannedSites, ignoremissing, bad_lfns)
 
 
     allChosenSets = {}
@@ -425,6 +426,10 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
 
     if check_count != len(inputs) - len(bad_lfns):
         logger.error("SERIOUS SPLITTING ERROR!!!!!")
+        logger.warning("%s != %s - %s" % (check_count, len(inputs), len(bad_lfns)))
+        logger.warning("inputs:\n%s" % str(inputs))
+        logger.warning("bad_lfns:\n%s" % str(bad_lfns))
+        logger.warning("check_count:\n%s" % str(check_count))
         raise SplitterError("Files Missing after Splitting!")
     else:
         logger.info("File count checked! Ready to Submit")
