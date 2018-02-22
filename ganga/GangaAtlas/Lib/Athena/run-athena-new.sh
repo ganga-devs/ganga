@@ -147,6 +147,8 @@ if os.path.exists('input_files'):
             svcMgr.ByteStreamInputSvc.FullFileName = ic
         else:
             svcMgr.EventSelector.InputCollections = ic
+    except AttributeError:
+        jps.AthenaCommonFlags.FilesInput = ic
 
     if os.environ.has_key('MY_ATHENA_MAX_EVENTS') and os.environ['MY_ATHENA_MAX_EVENTS']:
         theApp.EvtMax = int(os.environ['MY_ATHENA_MAX_EVENTS'])

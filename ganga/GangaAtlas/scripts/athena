@@ -309,6 +309,8 @@ if opt.atlas_supp_stream:
 if opt.collectstats:
     j.application.collect_stats=True
 
+if opt.useAthenaPackages:
+    j.application.useAthenaPackages = True
 if opt.useRootCore:
     j.application.useRootCore = True
 if opt.useRootCoreNoBuild:
@@ -345,9 +347,6 @@ else:
                     j.application.prepare()
 	else:
 	    j.application.is_prepared=True
-
-if opt.useAthenaPackages:
-    j.application.useAthenaPackages = True
 
 if opt.cmtConfig:
     j.application.atlas_cmtconfig=opt.cmtConfig
