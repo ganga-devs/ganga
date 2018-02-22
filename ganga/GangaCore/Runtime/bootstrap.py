@@ -629,7 +629,7 @@ under certain conditions; type license() for details.
                     cv = r.group('version').split('-')  #Version number is in Ganga-x-y-z format
                     if len(cv) == 1:
                         cv = new_version_format_to_old(cv[0]).split('-')
-                    if cv[1] != '6':
+                    if cv[1] != '7':
                         this_logger.error('file %s was created by a development release (%s)', config_file, r.group('version'))
                         this_logger.error('try -g option to create valid ~/.gangarc')
         except IOError as x:
