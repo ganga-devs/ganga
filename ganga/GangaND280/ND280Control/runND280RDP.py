@@ -63,11 +63,11 @@ class runND280RDP(IApplication):
     def __init__(self):
         super(runND280RDP,self).__init__()
 
-
     def prepare(self, force=False):
         pass
+
     def configure(self,masterappconfig):
-        
+
         args = convertIntToStringArgs(self.args)
 
         job = self.getJobObject()
@@ -105,7 +105,7 @@ class runND280RDP(IApplication):
                 if len(infiles) > 1:
                   raise ApplicationConfigurationError('The given config file contains "midas_file" but more than one file was given')
                 line = 'midas_file = ' + infiles[0] + '\n'
-            
+
             outConf += line
         job.getInputWorkspace().writefile(FileBuffer('nd280Config.cfg',outConf),executable=0)
 
@@ -141,7 +141,7 @@ config = getConfig('defaults_runND280') #_Properties
 def convertIntToStringArgs(args):
 
     result = []
-    
+
     for arg in args:
         if isinstance(arg,int):
             result.append(str(arg))
@@ -158,7 +158,7 @@ class RTHandler(IRuntimeHandler):
 
         c = StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
         return c
-        
+
 
 class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
