@@ -50,7 +50,7 @@ class runND280CtrlSmpl(IApplication):
         } )
     _category = 'applications'
     _name = 'runND280CtrlSmpl'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'configfile', 'widget' : 'String' },
@@ -65,9 +65,11 @@ class runND280CtrlSmpl(IApplication):
     def __init__(self):
         super(runND280CtrlSmpl,self).__init__()
 
+    def prepare(self, force=False):
+        pass
 
     def configure(self,masterappconfig):
-        
+
         args = convertIntToStringArgs(self.args)
         anaargs = convertIntToStringArgs(self.oaanalysisargs)
 
@@ -105,7 +107,7 @@ class runND280CtrlSmpl(IApplication):
             inputfilesfnd = re.match(r"^inputfiles\s*=", line)
             if inputfilesfnd:
               line = 'inputfiles = ' + ' '.join(infiles) + '\n'
-            
+
             outConf += line
         job.getInputWorkspace().writefile(FileBuffer('nd280Config.cfg',outConf),executable=0)
 
@@ -137,7 +139,7 @@ config = getConfig('defaults_runND280CtrlSmpl') #_Properties
 def convertIntToStringArgs(args):
 
     result = []
-    
+
     for arg in args:
         if isinstance(arg,int):
             result.append(str(arg))
@@ -154,7 +156,7 @@ class RTHandler(IRuntimeHandler):
 
         c = StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
         return c
-        
+
 
 class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
@@ -183,4 +185,3 @@ allHandlers.add('runND280CtrlSmpl','Batch', RTHandler)
 allHandlers.add('runND280CtrlSmpl','Cronus', RTHandler)
 allHandlers.add('runND280CtrlSmpl','Remote', LCGRTHandler)
 allHandlers.add('runND280CtrlSmpl','CREAM', LCGRTHandler)
-

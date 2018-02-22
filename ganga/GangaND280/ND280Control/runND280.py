@@ -46,7 +46,7 @@ class runND280(IApplication):
         } )
     _category = 'applications'
     _name = 'runND280'
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'configfile', 'widget' : 'String' },
@@ -61,9 +61,11 @@ class runND280(IApplication):
     def __init__(self):
         super(runND280,self).__init__()
 
+    def prepare(self, force=False):
+        pass
 
     def configure(self,masterappconfig):
-        
+
         args = convertIntToStringArgs(self.args)
 
         job = self.getJobObject()
@@ -111,7 +113,7 @@ class runND280(IApplication):
                 if len(infiles) > 1:
                   raise ApplicationConfigurationError('The given config file contains "midas_file" but more than one file was given')
                 line = 'midas_file = ' + infiles[0] + '\n'
-            
+
             outConf += line
         job.getInputWorkspace().writefile(FileBuffer('nd280Config.cfg',outConf),executable=0)
 
@@ -139,7 +141,7 @@ config = getConfig('defaults_runND280') #_Properties
 def convertIntToStringArgs(args):
 
     result = []
-    
+
     for arg in args:
         if isinstance(arg,int):
             result.append(str(arg))
@@ -156,7 +158,7 @@ class RTHandler(IRuntimeHandler):
 
         c = StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
         return c
-        
+
 
 class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
@@ -185,4 +187,3 @@ allHandlers.add('runND280','Batch', RTHandler)
 allHandlers.add('runND280','Cronus', RTHandler)
 allHandlers.add('runND280','Remote', LCGRTHandler)
 allHandlers.add('runND280','CREAM', LCGRTHandler)
-
