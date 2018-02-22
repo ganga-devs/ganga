@@ -49,7 +49,7 @@ class ND280Executable(IPrepareApp, IApplication):
     _category = 'applications'
     _name = 'ND280Executable'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'exe', 'widget' : 'File' },
                   { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'outputfile', 'widget' : 'String' },
@@ -63,6 +63,8 @@ class ND280Executable(IPrepareApp, IApplication):
     def __init__(self):
         super(ND280Executable,self).__init__()
 
+    def prepare(self, force=False):
+        pass
 
     def configure(self,masterappconfig):
         

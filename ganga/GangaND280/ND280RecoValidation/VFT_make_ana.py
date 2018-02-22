@@ -55,7 +55,7 @@ class VFT_make_ana(IApplication):
     _category = 'applications'
     _name = 'VFT_make_ana'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'tree', 'widget' : 'String' },
                   { 'attribute' : 'ana_custom', 'widget' : 'String' },
@@ -75,6 +75,8 @@ class VFT_make_ana(IApplication):
     def __init__(self):
         super(VFT_make_ana,self).__init__()
 
+    def prepare(self, force=False):
+        pass
 
     def configure(self,masterappconfig):
         
