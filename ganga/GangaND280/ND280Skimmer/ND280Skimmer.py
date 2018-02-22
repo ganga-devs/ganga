@@ -45,7 +45,7 @@ class ND280RecoSkimmer(IPrepareApp, IApplication):
     _category = 'applications'
     _name = 'ND280RecoSkimmer'
     _scriptname = None
-    _exportmethods = []
+    _exportmethods = ['prepare']
     _GUIPrefs = [ { 'attribute' : 'csvfile', 'widget' : 'String' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'outputfile', 'widget' : 'String' },
@@ -59,6 +59,8 @@ class ND280RecoSkimmer(IPrepareApp, IApplication):
     def __init__(self):
         super(ND280RecoSkimmer,self).__init__()
 
+    def prepare(self, force=False):
+        pass
 
     def configure(self,masterappconfig):
         
