@@ -50,7 +50,7 @@ class runND280SandMC(IApplication):
         } )
     _category = 'applications'
     _name = 'runND280SandMC'
-    _exportmethods = ['prepare']
+    _exportmethods = []
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'confopts', 'widget' : 'String' },
@@ -65,11 +65,9 @@ class runND280SandMC(IApplication):
     def __init__(self):
         super(runND280SandMC,self).__init__()
 
-    def prepare(self, force=False):
-        pass
 
     def configure(self,masterappconfig):
-
+        
         args = convertIntToStringArgs(self.args)
 
         job = self.getJobObject()
@@ -146,7 +144,7 @@ config = getConfig('defaults_runND280') #_Properties
 def convertIntToStringArgs(args):
 
     result = []
-
+    
     for arg in args:
         if isinstance(arg,int):
             result.append(str(arg))
@@ -163,7 +161,7 @@ class RTHandler(IRuntimeHandler):
 
         c = StandardJobConfig(app._scriptname,app._getParent().inputsandbox,[],app._getParent().outputsandbox,app.env)
         return c
-
+        
 
 class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
@@ -192,3 +190,4 @@ allHandlers.add('runND280SandMC','Batch', RTHandler)
 allHandlers.add('runND280SandMC','Cronus', RTHandler)
 allHandlers.add('runND280SandMC','Remote', LCGRTHandler)
 allHandlers.add('runND280SandMC','CREAM', LCGRTHandler)
+
