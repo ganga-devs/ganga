@@ -53,7 +53,7 @@ class RecoPlusVFT(IApplication):
     _category = 'applications'
     _name = 'RecoPlusVFT'
     _scriptname = None
-    _exportmethods = ['prepare']
+    _exportmethods = []
     _GUIPrefs = [ { 'attribute' : 'reco_exe', 'widget' : 'File' },
                   { 'attribute' : 'reco_args', 'widget' : 'String_List' },
                   { 'attribute' : 'vft_exe', 'widget' : 'File' },
@@ -75,8 +75,6 @@ class RecoPlusVFT(IApplication):
     def __init__(self):
         super(RecoPlusVFT,self).__init__()
 
-    def prepare(self, force=False):
-        pass
 
     def configure(self,masterappconfig):
         if self.cmtsetup == None:

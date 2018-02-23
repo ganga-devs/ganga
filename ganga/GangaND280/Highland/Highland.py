@@ -50,7 +50,7 @@ class Highland(IApplication):
     _category = 'applications'
     _name = 'Highland'
     _scriptname = None
-    _exportmethods = ['prepare']
+    _exportmethods = []
     _GUIPrefs = [ { 'attribute' : 'exe', 'widget' : 'File' },
                   { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'outputfile', 'widget' : 'String' },
@@ -64,8 +64,6 @@ class Highland(IApplication):
     def __init__(self):
         super(Highland,self).__init__()
 
-    def prepare(self, force=False):
-        pass
 
     def configure(self,masterappconfig):
         

@@ -55,7 +55,7 @@ class oaReconPlusoaAnalysis(IApplication):
     _category = 'applications'
     _name = 'oaReconPlusoaAnalysis'
     _scriptname = None
-    _exportmethods = ['prepare']
+    _exportmethods = []
     _GUIPrefs = [ { 'attribute' : 'reco_args', 'widget' : 'String_List' },
                   { 'attribute' : 'anal_args', 'widget' : 'String_List' },
                   { 'attribute' : 'filenamesubstr', 'widget' : 'String' },
@@ -73,8 +73,6 @@ class oaReconPlusoaAnalysis(IApplication):
     def __init__(self):
         super(oaReconPlusoaAnalysis,self).__init__()
 
-    def prepare(self, force=False):
-        pass
 
     def configure(self,masterappconfig):
         if self.cmtsetup == None:
