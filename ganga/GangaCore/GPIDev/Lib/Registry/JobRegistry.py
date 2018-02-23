@@ -73,6 +73,9 @@ class JobRegistry(Registry):
         return cache
 
     def startup(self):
+        """
+            This is the main startup method of the Registry
+        """
         self._needs_metadata = True
         super(JobRegistry, self).startup()
         if len(self.metadata.ids()) == 0:
@@ -84,9 +87,11 @@ class JobRegistry(Registry):
         self.flush_thread = RegistryFlusher(self, 'JobRegistryFlusher')
         self.flush_thread.start()
 
-        ### This code checks for jobs which are in the submitting state
-        ### If a job is 'submitting' an call to force_status('failed') is made
-        ### This should be enough to fix some future issues with monitoring
+    def check(self):
+        """
+            This code checks for jobs which are in the submitting state
+            If a job is 'submitting' an call to force_status('failed') is made
+            This should be enough to fix some future issues with monitoring """
 
         def _shouldAutoKill(this_job):
             """ This checks to see if the job is in a transistional state
