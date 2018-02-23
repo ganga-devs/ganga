@@ -55,17 +55,17 @@ if not os.path.isdir(ganga_install):
     error(ganga_install + ' does not exist')
 
 # import setup.py module from bin directory to get the dependency list
-sys.path.insert(0, ganga_install + '/python')
+sys.path.insert(0, ganga_install + '/ganga')
 
 if CONFIG['plugin_packages']:
     print("Resolving additional external dependencies for: ", ' '.join(CONFIG['plugin_packages']))
 
-import Ganga.PACKAGE
-Ganga.PACKAGE._defaultPlatform = CONFIG['platform']
+import GangaCore.PACKAGE
+GangaCore.PACKAGE._defaultPlatform = CONFIG['platform']
 # we need a tarPath relative to the externalHome
-Ganga.PACKAGE._defaultExternalHome = ''
+GangaCore.PACKAGE._defaultExternalHome = ''
 
-for pkg in ['Ganga'] + CONFIG['plugin_packages']:
+for pkg in ['GangaCore'] + CONFIG['plugin_packages']:
     print('resolving dependencies for', pkg)
     try:
         setup = import_name(pkg + '.PACKAGE', 'setup')
