@@ -24,7 +24,7 @@ shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']
 
 import ND280Configs
 
-class runND280RDP(IApplication):
+class runND280RDP(IPrepareApp):
     """
     runND280RDP application running runND280 from nd280Control.
         app = runND280RDP()
