@@ -271,7 +271,7 @@ def stop_ganga(force_cleanup=False):
     GangaThreadPool.shutdown_policy = 'batch'
 
     # This should now be safe
-    ShutdownManager._ganga_run_exitfuncs()
+    ShutdownManager._unprotected_ganga_exitfuncs()
 
     logger.info("Clearing Config")
 
