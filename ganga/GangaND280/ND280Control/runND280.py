@@ -7,7 +7,7 @@
 Ganga module to execute runND280 from the nd280Control package.
 """
 
-from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -22,7 +22,7 @@ import os, shutil, commands, re
 from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
-class runND280(IApplication):
+class runND280(IPrepareApp):
     """
     runND280 application running runND280 from nd280Control.
         app = runND280()
