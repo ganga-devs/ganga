@@ -48,7 +48,7 @@ class runND280RDP(IApplication):
         } )
     _category = 'applications'
     _name = 'runND280RDP'
-    _exportmethods = ['prepare']
+    _exportmethods = []
     _GUIPrefs = [ { 'attribute' : 'args', 'widget' : 'String_List' },
                   { 'attribute' : 'cmtsetup', 'widget' : 'String' },
                   { 'attribute' : 'confopts', 'widget' : 'String' },
@@ -62,9 +62,6 @@ class runND280RDP(IApplication):
 
     def __init__(self):
         super(runND280RDP,self).__init__()
-
-    def prepare(self, force=False):
-        pass
 
     def configure(self,masterappconfig):
 
