@@ -4,7 +4,7 @@
 # Created 16/12/2013
 ################################################################################
 
-from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
@@ -20,7 +20,7 @@ import os, shutil, commands, re, time
 from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
-class VFT_make_ana(IApplication):
+class VFT_make_ana(IPrepareApp):
     """
     VFT_make_ana application running reconUtils/macros/grtf_VFT/make_ana.py
 

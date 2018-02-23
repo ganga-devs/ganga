@@ -7,7 +7,7 @@
 Ganga module with classes to skim from reco files a set of events listed in a CSV file.
 """
 
-from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
@@ -25,7 +25,7 @@ import os, shutil, commands, re, time
 from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
-class ND280RecoSkimmer(IPrepareApp, IApplication):
+class ND280RecoSkimmer(IPrepareApp, IPrepareApp):
     """
     ND280RecoSkimmer application to skim reco files from a list of run, subrun and event numbers in a CSV file.
 
