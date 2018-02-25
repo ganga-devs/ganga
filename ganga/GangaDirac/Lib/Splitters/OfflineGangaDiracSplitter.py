@@ -175,7 +175,7 @@ def getLFNReplicas(allLFNs, index, allLFNData):
     if (index + 1) * LFN_parallel_limit > len(allLFNs):
         this_max = len(allLFNs)
     else:
-        this_max = (index + 1) * LFN_parallel_limit
+        this_max = int((index + 1) * LFN_parallel_limit)
 
     try:
         output = wrapped_execute('getReplicasForJobs(%s)' % str(allLFNs[this_min:this_max]), dict)
