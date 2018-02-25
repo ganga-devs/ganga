@@ -170,7 +170,7 @@ def getLFNReplicas(allLFNs, index, allLFNData):
 
     global LFN_parallel_limit
 
-    this_min = index * LFN_parallel_limit
+    this_min = int(index * LFN_parallel_limit)
 
     if (index + 1) * LFN_parallel_limit > len(allLFNs):
         this_max = len(allLFNs)
