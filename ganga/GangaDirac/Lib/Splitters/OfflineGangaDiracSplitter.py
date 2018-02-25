@@ -279,21 +279,20 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
         time.sleep(0.1)
 
     # Remove the banned sites (CE) from the mappings
-    for iSE in SE_to_CE_mapping.keys():
+    for iSE in CE_to_SE_mapping.keys():
         for site in CE_to_SE_mapping[iSE]:
             if any(site == item for item in bannedSites):
                 CE_to_SE_mapping[iSE].remove(site)
             if not CE_to_SE_mapping[iSE]:
                 del CE_to_SE_mapping[iSE]
 
-    if uniqueSE:
-        # Now calculate the 'inverse' dictionary of site for each SE
-        for SE, sites in SE_to_CE_mapping.iteritems():
-            for site_i in sites:
-                if site_i not in SE_to_CE_mapping:
-                    SE_to_CE_mapping[site_i] = set([])
-                if SE not in SE_to_CE_mapping[site_i]:
-                    SE_to_CE_mapping[site_i].add(SE)
+    # Now calculate the 'inverse' dictionary of site for each SE
+    for SE, sites in CE_to_SE_mapping.iteritems():
+        for site_i in sites:
+            if site_i not in SE_to_CE_mapping:
+                SE_to_CE_mapping[site_i] = set([])
+            if SE not in SE_to_CE_mapping[site_i]:
+                SE_to_CE_mapping[site_i].add(SE)
 
     # These can be used to select the site which know of a given SE
     # Or vice versa
@@ -486,6 +485,9 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
 
     logger.debug("Found all SE in use")
 
+
+    #logger.info("%s" % str(CE_to_SE_mapping))
+    #logger.info("%s" % str(SE_to_CE_mapping))
 
     # BELOW IS WHERE THE ACTUAL SPLITTING IS DONE
 
