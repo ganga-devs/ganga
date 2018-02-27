@@ -385,7 +385,7 @@ class FlushedMemoryHandler(_MemHandler):
         The exception to this is when the MemHandler says we flush as we want to always flush then.
         """
         # Errors should be dumped in the correct place with the correct context
-        if record.levelno > logging.INFO:
+        if record.levelno > logging.WARNING:
             return True
         return (threading.currentThread().getName() == "MainThread") or \
                 _MemHandler.shouldFlush(self, record)
