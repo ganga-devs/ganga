@@ -1283,8 +1283,8 @@ under certain conditions; type license() for details.
         enableCaching()
 
         # Magic ganga function for replacing 'execfile'
-#        from GangaCore.Runtime.IPythonMagic import magic_ganga
-#        ipshell.define_magic('ganga', magic_ganga)
+        from GangaCore.Runtime.IPythonMagic import GangaMagics
+        ipshell.register_magics(GangaMagics)
 
         # Setting up the confirmation of exit on Ctrl+D this prompt annoys some users(developers)
         from GangaCore.Utility.Config.Config import getConfig
