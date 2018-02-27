@@ -705,7 +705,12 @@ def proxy_wrap(f):
     def proxy_wrapped(*args, **kwargs):
         s_args = [stripProxy(a) for a in args]
         s_kwargs = dict((name, stripProxy(a)) for name, a in kwargs.items())
-        r = f(*s_args, **s_kwargs)
+        try:
+            r = f(*s_args, **s_kwargs)
+        except KeyboardInterrupt:
+            logger.error("Command was interrupted by a Ctrl+C event!")
+            logger.error("This can lead to inconsistencies")
+            return
         return addProxy(r)
 
     return proxy_wrapped
