@@ -53,7 +53,9 @@ class GangaPrompt(Prompts):
 
     def in_prompt_tokens(self, cli = None):
         from datetime import datetime
-        return [(Token.Prompt,  '['+str(datetime.now().strftime("%H:%M:%S"))+']\nGanga In ['.format(GangaPrompt.environment)),
+        from GangaCore.Utility.logging import flushAtIPythonPrompt
+        __flushCmd = flushAtIPythonPrompt()
+        return [(Token.Prompt,  str(__flushCmd)+'['+str(datetime.now().strftime("%H:%M:%S"))+']\nGanga In ['.format(GangaPrompt.environment)),
                 (Token.PromptNum, str(self.shell.execution_count)),
                 (Token.Prompt, ']: ')]
 
@@ -1260,33 +1262,6 @@ under certain conditions; type license() for details.
         cfg.PlainTextFormatter.pprint = True
         banner = exit_msg = ''
         cfg.TerminalInteractiveShell.prompts_class = GangaPrompt
-
-#        prompt_config = cfg.PromptManager
-        # Here __flushCmd evaluates the object in the local_ns with this name to a str
-        # The magic function time here is the builtin time prompt This renders in the same way as:
-        #
-        # -------------------------------------
-        #
-        # [18:45:20]
-        # Ganga In [1]: if True:
-        #          ...:     print("Hello")
-        #          ...:
-        #               Hello
-        #
-        # [18:45:43]
-        # Ganga In [2]:
-        #
-        # -------------------------------------
-#        prompt_config.in_template = '{__flushCmd}[{time}]\nGanga In [\\#]: '
-#        prompt_config.in2_template = '         .\\D.: '
-#        prompt_config.out_template = 'Ganga Out [\\#]: '
-
-        
-
-        # Add the flush command into the local_ns
-        from GangaCore.Utility.logging import flushAtIPythonPrompt
-        __flushCmd = flushAtIPythonPrompt()
-        local_ns['__flushCmd'] = __flushCmd
 
         # Import the embed function
         from IPython.terminal.embed import InteractiveShellEmbed
