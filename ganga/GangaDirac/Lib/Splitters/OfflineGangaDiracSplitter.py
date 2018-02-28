@@ -1,5 +1,4 @@
 from GangaCore.Core.exceptions import SplitterError
-from GangaCore.GPIDev.Adapters.ISplitter import SplittingError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
@@ -112,9 +111,9 @@ def wrapped_execute(command, expected_type):
         result = execute(command)
         assert isinstance(result, expected_type)
     except AssertionError:
-        raise SplittingError("Output from DIRAC expected to be of type: '%s', we got the following: '%s'" % (expected_type, result))
+        raise SplitterError("Output from DIRAC expected to be of type: '%s', we got the following: '%s'" % (expected_type, result))
     except GangaDiracError as err:
-        raise SplittingError("Error from Dirac: %s" % err)
+        raise SplitterError("Error from Dirac: %s" % err)
     return result
 
 
@@ -179,7 +178,7 @@ def getLFNReplicas(allLFNs, index, allLFNData):
 
     try:
         output = wrapped_execute('getReplicasForJobs(%s)' % str(allLFNs[this_min:this_max]), dict)
-    except SplittingError:
+    except SplitterError:
         logger.error("Failed to Get Replica Info: [%s:%s] of %s" % (str(this_min), str(this_max), len(allLFNs)))
         raise
 
@@ -263,14 +262,12 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_m
     # First find the SE for each site
     for lfn, repz in file_replicas.iteritems():
         sitez = set([])
-        if uniqueSE:
-            for replica in repz:
-                sitez.add(replica)
-                if not replica in found:
-                    getQueues()._monitoring_threadpool.add_function(addToMapping, (str(replica), CE_to_SE_mapping))
-
-                    maps_size = maps_size + 1
-                    found.append(replica)
+        for replica in repz:
+            sitez.add(replica)
+            if not replica in found:
+                getQueues()._monitoring_threadpool.add_function(addToMapping, (str(replica), CE_to_SE_mapping))
+                maps_size = maps_size + 1
+                found.append(replica)
 
         SE_dict[lfn] = sitez
 
@@ -355,7 +352,7 @@ def lookUpLFNReplicas(inputs, ignoremissing):
     # Check if we have any bad lfns
     if bad_lfns and ignoremissing is False:
         logger.error("Errors found getting LFNs:\n%s" % str(bad_lfns))
-        raise SplittingError("Error trying to split dataset with invalid LFN and ignoremissing = False")
+        raise SplitterError("Error trying to split dataset with invalid LFN and ignoremissing = False")
 
     return bad_lfns
 
@@ -379,7 +376,7 @@ def updateLFNData(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
 
         if output is None:
             msg = "Error getting Replica information from Dirac: [%s,%s]" % ( str(i * LFN_parallel_limit), str((i + 1) * LFN_parallel_limit))
-            raise SplittingError(msg)
+            raise SplitterError(msg)
 
         # Identify files which have Failed to be found by DIRAC
         results = output
@@ -445,10 +442,10 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
     uniqueSE = configDirac['OfflineSplitterUniqueSE']
 
     if inputs is None:
-        raise SplittingError("Cannot Split Job as the inputdata appears to be None!")
+        raise SplitterError("Cannot Split Job as the inputdata appears to be None!")
 
     if len(inputs.getLFNs()) != len(inputs.files):
-        raise SplittingError("Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
+        raise SplitterError("Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
 
     file_replicas = {}
 
@@ -543,6 +540,7 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
     """
 
     good_fraction = configDirac['OfflineSplitterFraction']
+    bad_fraction = 1.0
     iterative_limit = configDirac['OfflineSplitterLimit']
 
     allSubSets = []
@@ -567,7 +565,12 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
             req_sitez = allChosenSets[iterating_LFN]
             _this_subset = []
 
-            #logger.debug("find common LFN for: " + str(allChosenSets[iterating_LFN]))
+            if len(req_sitez) < wanted_common_site:
+                continue
+
+            limit = int(math.floor(float(filesPerJob) * good_fraction))
+                     
+            max_limit = int(math.ceil(float(filesPerJob) * bad_fraction))
 
             # Construct subset
             # Starting with i, populate subset with LFNs which have an
@@ -576,22 +579,18 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
                 if this_LFN in chosen_lfns:
                     continue
                 if req_sitez.issubset(site_dict[this_LFN]):
-                    if len(_this_subset) >= filesPerJob:
+                    if len(_this_subset) >= min(filesPerJob, max_limit):
                         break
                     _this_subset.append(this_LFN)
 
-            limit = int(math.floor(float(filesPerJob) * good_fraction))
-
-            #logger.debug("Size limit: %s" % str(limit))
-
             # If subset is too small throw it away
-            if len(_this_subset) < limit:
+            if len(_this_subset) < limit and len(_this_subset) < max_limit:
                 #logger.debug("%s < %s" % (str(len(_this_subset)), str(limit)))
                 allChosenSets[iterating_LFN] = generate_site_selection(site_dict[iterating_LFN], wanted_common_site, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping)
                 continue
             else:
-                logger.debug("found common LFN for: " + str(allChosenSets[iterating_LFN]))
-                logger.debug("%s > %s" % (str(len(_this_subset)), str(limit)))
+                #logger.info("found common LFN for: " + str(allChosenSets[iterating_LFN]))
+                #logger.info("%s > %s" % (str(len(_this_subset)), str(limit)))
                 # else Dataset was large enough to be considered useful
                 logger.debug("Generating Dataset of size: %s" % str(len(_this_subset)))
                 ## Construct DiracFile here as we want to keep the above combination
@@ -605,6 +604,9 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
         # Lets keep track of how many times we've tried this
         iterations = iterations + 1
 
+        #logger.info("Iteration: %s" % iterations)
+        #logger.info("%s %s" % (good_fraction, bad_fraction))
+
         # Can take a while so lets not let threads become un-locked
         import GangaCore.Runtime.Repository_runtime
         GangaCore.Runtime.Repository_runtime.updateLocksNow()
@@ -612,16 +614,19 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
         # If on final run, will exit loop after this so lets try and cleanup
         if iterations >= iterative_limit:
 
-            if good_fraction < 0.5:
+            if good_fraction < 0.2:
                 good_fraction = good_fraction * 0.75
+                bad_fraction = bad_fraction * 0.75
                 iterations = 0
             elif wanted_common_site > 1:
                 logger.debug("Reducing Common Site Size")
                 wanted_common_site = wanted_common_site - 1
                 iterations = 0
-                good_fraction = 0.75
+                good_fraction = 0.5
+                bad_fraction = 0.75
             else:
                 good_fraction = good_fraction * 0.75
+                #bad_fraction = bad_fraction * 0.75
 
             logger.debug("good_fraction: %s" % str(good_fraction))
 
