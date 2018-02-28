@@ -1,6 +1,6 @@
 from GangaCore.Core.exceptions import SplitterError
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
-from GangaCore.GPIDev.Adapters.ISplitter import SplittingError
+from GangaCore.Core.exceptions import SplitterError
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.files import expandfilename
