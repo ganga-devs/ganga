@@ -455,7 +455,7 @@ class DiracBase(IBackend):
                     b = sj.backend
                     sj.updateStatus('submitting')
                     if self.blockSubmit:
-                        result = sj.backend._blockResubmit()
+                        result = b._blockResubmit()
                     else:
                         result = b._resubmit()
                     if result:
@@ -550,7 +550,6 @@ class DiracBase(IBackend):
         parametric = False
 
         if j.master is None:
-            logger.warning('no master!')
             scriptDir = j.getInputWorkspace().getPath()
         else:
             scriptDir = j.master.getInputWorkspace().getPath()
@@ -577,7 +576,6 @@ class DiracBase(IBackend):
                 script = f.read()
             # Is the subjob we want in there?
             if not ("sjNo='%s'" % j.fqid) in script:
-                logger.warning('not found job in script %s' % j.fqid)
                 continue
 
             #First pick out the imports etc at the start
@@ -615,7 +613,7 @@ class DiracBase(IBackend):
             break
 
         if new_script_filename == '':
-            raise BackendError('Dirac', 'Script for job number %s not found. Resubmission failed.' % j.getFQID('.'))
+            raise BackendError('Dirac', 'Script for job number %s not found. Resubmission failed.' % j.fqid)
 
         return self._block_submit(new_script_filename, 1)
  
