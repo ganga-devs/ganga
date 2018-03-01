@@ -3,7 +3,7 @@ LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 
 RUN yum install -y wget git python-virtualenv
 
-RUN yum install python-dev
+RUN yum install python-devel
 
 WORKDIR /root
 
