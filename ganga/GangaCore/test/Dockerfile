@@ -3,6 +3,8 @@ LABEL maintainer "Alexander Richards <a.richards@imperial.ac.uk>"
 
 RUN yum install -y wget git python-virtualenv
 
+RUN yum install python-dev
+
 WORKDIR /root
 
 COPY . ganga
