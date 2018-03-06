@@ -638,6 +638,19 @@ class Registry(object):
         #finally:
         #    pass
 
+        # Now we check the repo for faults and for inconsistent objects
+        reg_config = getConfig('Registry')
+
+        if reg_config['DisableLoadCheck']:
+            return
+        else:
+            self.check()
+
+    def check(self):
+        """ This stub allows for a Registry class to perform maintenance on startup after the repo has been initialized
+        This is intended to be called after the startup proceedure has been finished """
+        pass
+
     @synchronised_complete_lock
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """

@@ -118,6 +118,7 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
         ('Configuration', 'UsageMonitoringMSG', False),  # Turn off spyware
         ('Configuration', 'lockingStrategy', 'FIXED'),
         ('TestingFramework', 'ReleaseTesting', True),
+        ('Registry', 'DisableLoadCheck', True),
         ('Queues', 'NumWorkerThreads', 3),
         ('Output', 'MassStorageFile', outputConfig['MassStorageFile']),
         ]
