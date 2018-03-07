@@ -1,7 +1,7 @@
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaCore.GPIDev.Adapters.ISplitter import SplittingError
+from GangaCore.Core.exceptions import SplitterError
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from GangaCore.Utility.Config import getConfig
@@ -107,7 +107,7 @@ class SplitFilesBySize(GaudiInputDataSplitter):
                 f.close()
             else:
                 logger.error('Cannot split if no inputdata given!')
-                raise SplittingError(
+                raise SplitterError(
                     'job.inputdata is None and no inputdata found in optsfile')
 
         self.depth = indata.depth
