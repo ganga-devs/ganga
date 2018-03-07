@@ -5,7 +5,8 @@
 ###############################################################################
 
 import copy
-from GangaCore.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
+from GangaCore.Core.exceptions import SplitterError
+from GangaCore.GPIDev.Adapters.ISplitter import ISplitter
 from GangaCore.GPIDev.Base.Proxy import stripProxy
 from GangaCore.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
@@ -63,7 +64,7 @@ class ArgSplitter(ISplitter):
             elif hasattr(app, 'extraArgs'):
                 app.extraArgs = arg
             else:
-                raise SplittingError('Application has neither args or extraArgs in its schema') 
+                raise SplitterError('Application has neither args or extraArgs in its schema') 
                     
             j.application = app
             logger.debug('Arguments for split job is: ' + str(arg))

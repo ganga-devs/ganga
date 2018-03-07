@@ -1,4 +1,4 @@
-from GangaCore.GPIDev.Adapters.ISplitter import SplittingError
+from GangaCore.Core.exceptions import SplitterError
 #from GangaDirac.BOOT                    import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
@@ -28,7 +28,7 @@ def DiracSizeSplitter(inputs, filesPerJob, maxSize, ignoremissing):
     i = inputs.__class__()
 
     if inputs.getLFNs() != len(inputs.files):
-        raise SplittingError(
+        raise SplitterError(
             "Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
 
     all_files = igroup(inputs.files[:filesPerJob], getConfig('DIRAC')['splitFilesChunks'],
@@ -50,7 +50,7 @@ def DiracSizeSplitter(inputs, filesPerJob, maxSize, ignoremissing):
 
             if not result_ok(result):
                 logger.error('DIRAC:: Error splitting files: %s' % str(result))
-                raise SplittingError('Error splitting files.')
+                raise SplitterError('Error splitting files.')
 
             split_files += result.get('Value', [])
 
@@ -59,7 +59,7 @@ def DiracSizeSplitter(inputs, filesPerJob, maxSize, ignoremissing):
             split_files = [LFNsToSplit]
 
     if len(split_files) == 0:
-        raise SplittingError('An unknown error occured.')
+        raise SplitterError('An unknown error occured.')
 
     # FIXME
     # check that all files were available on the grid
@@ -71,7 +71,7 @@ def DiracSizeSplitter(inputs, filesPerJob, maxSize, ignoremissing):
         for f in diff:
             logger.warning('Ignored file: %s' % f)
         if not ignoremissing:
-            raise SplittingError('Some files not found!')
+            raise SplitterError('Some files not found!')
     ###
 
     logger.debug("Split Files: %s" % str(split_files))

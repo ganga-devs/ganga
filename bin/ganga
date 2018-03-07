@@ -19,12 +19,12 @@
 # This is a Copy/Paste logic which must stay in THIS file
 
 from __future__ import print_function
-
+import sys
 
 def standardSetup():
     """Function to perform standard setup for Ganga.
     """   
-    import sys, os.path
+    import os.path
 
     # insert the path to Ganga itself - this is required for the installation on CVMFS
     exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.realpath(__file__))))
@@ -40,7 +40,13 @@ def standardSetup():
     from GangaCore.PACKAGE import standardSetup
     standardSetup()
 
-standardSetup()
+
+try:
+    standardSetup()
+except KeyboardInterrupt:
+    import logging
+    logging.error("Ganga Startup was forced to exit due to a Ctrl+C Event")
+    sys.exit(-1)
 del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -65,6 +71,10 @@ try:
     GangaCore.Runtime.setupGanga()
     from GangaCore import GPI
     GangaCore.Runtime._prog.run(GPI.__dict__)
+except KeyboardInterrupt:
+    import logging
+    logging.error("Ganga was forced to exit due to a Ctrl+C Event")
+    pass
 except GangaException as err:
     if GangaCore.Runtime._prog:
         log(GangaCore.Runtime._prog.options.force_loglevel, err)

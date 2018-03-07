@@ -118,6 +118,7 @@ def start_ganga(gangadir_for_test, extra_opts=[], extra_args=None):
         ('Configuration', 'UsageMonitoringMSG', False),  # Turn off spyware
         ('Configuration', 'lockingStrategy', 'FIXED'),
         ('TestingFramework', 'ReleaseTesting', True),
+        ('Registry', 'DisableLoadCheck', True),
         ('Queues', 'NumWorkerThreads', 3),
         ('Output', 'MassStorageFile', outputConfig['MassStorageFile']),
         ]
@@ -270,7 +271,7 @@ def stop_ganga(force_cleanup=False):
     GangaThreadPool.shutdown_policy = 'batch'
 
     # This should now be safe
-    ShutdownManager._ganga_run_exitfuncs()
+    ShutdownManager._unprotected_ganga_exitfuncs()
 
     logger.info("Clearing Config")
 
