@@ -25,7 +25,6 @@ class DiracProxyInfo(VomsProxyInfo):
     A wrapper around a DIRAC proxy file
     """
 
-
     def __init__(self, requirements, check_file=False, create=False):
         """
         Args:
