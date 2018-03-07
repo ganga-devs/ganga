@@ -1,5 +1,4 @@
 from GangaCore.Core.exceptions import SplitterError
-from GangaCore.GPIDev.Adapters.ISplitter import SplittingError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from GangaCore.Utility.Config import getConfig
 from GangaCore.Utility.logging import getLogger
@@ -11,13 +10,95 @@ import random
 import time
 import math
 
+"""
+    This is the Ganga DIRAC splitter
+    (questions to rcurrie@cern.ch)
+
+    This splitter follows the logical progression described below to try to optimally split
+    a list of files such that the mininum number of total jobs are created.
+
+    Pre-Splitting:
+
+    1. For a given set of files determine the valid SE and CE we can use
+    2. Construct a mapping between these.
+        This allows us to answer:
+            For a given SE which CE can access it?
+            For a given CE which SE can we access?
+
+    3. Get a full list of all of the replicas for all files against all of the valid SE
+        This is attempted to be done in large chunks goverened by LFN_parallel_limit
+        Requesting all replicas for >3,000 files can cause timeouts and other problems
+        I opted to reduce this and run mulitple queries in parallel to speed this up.
+
+    4. Keep track of all LFN with no valid replicas.
+        Inform the user of them and remove them from the splitting if requested.
+
+
+    Splitting the files into subsets:
+
+    For the next LFN in the list:
+
+        How many common SE do we want to be able to submit this job to?
+            If there are multiple replicas of the data on the grid we can submit jobs
+            such that there is maximum failover if a site goes into downtime.
+            If the user requests uniqueSE the possible CE where the job can run will
+            try to share the same SE.
+
+        Select randomly the given maximum number of SE up to the common-SE amount
+            (if available)
+
+        How many files per subjob do we want as a maximum?
+            (More files == Less jobs == Longer job CPUtime)
+
+        Loop through all of the LFN and attempt to assemble LFN subsets which are >= 0.75
+        the amount of LFN the user requested per subjob.
+
+        Once we have a subset with the required number of LFN which are at the required
+        number of SE add this subset to the list of used LFN and continue to the next
+        unallocated LFN.
+
+        
+        So on the first iteration of the splitter we identify how many files we can put
+        into a larger subset of files.
+            i.e. how many jobs >= 0.75 * 100LFN and <= 100LFN with 2 site redundancy
+            can we construct?
+
+    After the list has been run through once we lower the size of the subset to construct.
+        Run through the previous logic again and attempt to construct smaller LFN subset.
+        (This is not currently configurable and is set to 0.75 but in principle this can be
+        configured)
+
+        i.e. for the next iteration of the LFN accept subsets
+        >= 0.75* 0.75 * 100  in size
+
+        next iteration over all of the LFN this looks for subsets
+        >= 0.75 * 0.75 * 0.75 * 100 in size
+
+    Keep going with multiple iterations until the acceptable size of the subset has dropped
+    to 50% of the originally required number of jobs per site. (accepted < 0.5 * 100)
+
+        Now, reduce the number of sites required for this job to be able to run at
+        (if possible) and restart requiring subjobs be >= 0.75 * requested subsetsize again
+
+    Now keep going until we eventually construct subsets of 1 LFN in size and then
+    return all subsets
+
+
+
+
+    This favours generating larger subsets with multiple sites where the jobs can run 
+    but when there are LFN which can't be allocated to sites with multiple SE the algorithm
+    will attempt to find larger subsets with reduced redundancy.
+"""
+
+
+
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 
 global_random = random
 
-LFN_parallel_limit = 250
-limit_divide_one = 1. / float(LFN_parallel_limit)
+LFN_parallel_limit = 250.
 
 def wrapped_execute(command, expected_type):
     """
@@ -30,9 +111,9 @@ def wrapped_execute(command, expected_type):
         result = execute(command)
         assert isinstance(result, expected_type)
     except AssertionError:
-        raise SplittingError("Output from DIRAC expected to be of type: '%s', we got the following: '%s'" % (expected_type, result))
+        raise SplitterError("Output from DIRAC expected to be of type: '%s', we got the following: '%s'" % (expected_type, result))
     except GangaDiracError as err:
-        raise SplittingError("Error from Dirac: %s" % err)
+        raise SplitterError("Error from Dirac: %s" % err)
     return result
 
 
@@ -60,16 +141,16 @@ def find_random_site(original_SE_list, banned_SE):
     return chosen_element
 
 
-def addToMapping(SE, site_to_SE_mapping):
+def addToMapping(SE, CE_to_SE_mapping):
     """
     This function is used for adding all of the known site for a given SE
-    The output is stored in the dictionary site_to_SE_mapping
+    The output is stored in the dictionary of CE_to_SE_mapping
     Args:
-        SE (str): For this SE we want to determine which sites we can access it
-        site_to_SE_mapping (dict): We will add sites which can find this SE to this dict with the key (SE) and value (sites(list))
+        SE (str): For this SE we want to determine which CE we can access it
+        CE_to_SE_mapping (dict): We will add CEs which can find this SE to this dict with the key (SE) and value (CE(list))
     """
     result = wrapped_execute('getSitesForSE("%s")' % str(SE), list)
-    site_to_SE_mapping[SE] = result
+    CE_to_SE_mapping[SE] = result
 
 
 def getLFNReplicas(allLFNs, index, allLFNData):
@@ -88,16 +169,16 @@ def getLFNReplicas(allLFNs, index, allLFNData):
 
     global LFN_parallel_limit
 
-    this_min = index * LFN_parallel_limit
+    this_min = int(index * LFN_parallel_limit)
 
     if (index + 1) * LFN_parallel_limit > len(allLFNs):
         this_max = len(allLFNs)
     else:
-        this_max = (index + 1) * LFN_parallel_limit
+        this_max = int((index + 1) * LFN_parallel_limit)
 
     try:
         output = wrapped_execute('getReplicasForJobs(%s)' % str(allLFNs[this_min:this_max]), dict)
-    except SplittingError:
+    except SplitterError:
         logger.error("Failed to Get Replica Info: [%s:%s] of %s" % (str(this_min), str(this_max), len(allLFNs)))
         raise
 
@@ -109,42 +190,48 @@ def getLFNReplicas(allLFNs, index, allLFNData):
     logger.info("Got Replica Info: [%s:%s] of %s" % (str(this_min), str(this_max), len(allLFNs)))
 
 
-def generate_site_selection(input_site, wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping):
+def generate_site_selection(input_site, wanted_common_SE, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping):
     """
     Return a set of sites which are a subset of the given input_site.
-    The size of the returned set is determined by 'wanted_common_site'.
+    The size of the returned set is determined by 'wanted_common_SE'.
     'uniqueSE' governs if all elements in the returned set should be accessing uniqueSE or not.
 
     Args:
         input_site (list): list of input sites
-        wanted_common_site (int): the size of the subset we want
+        wanted_common_SE (int): the size of the subset we want
         uniqueSE (bool): Should returned sites be able to share the same SE
-        site_to_SE_mapping (dict): Dict which has sites as keys and SE as values
-        SE_to_site_mapping (dict): Dict which has sites as values and SE as keys
+        CE_to_SE_mapping (dict): Dict which has sites as keys and SE as values
+        SE_to_CE_mapping (dict): Dict which has sites as values and SE as keys
     """
 
     req_sitez = set([])
-    if len(input_site) > wanted_common_site:
-        used_site = set([])
-        for se in range(wanted_common_site):
-            this_site = find_random_site(input_site, used_site)
-            req_sitez.add(this_site)
+    if len(input_site) > wanted_common_SE:
+        used_SE = set([])
+
+        # Loop through the possible CE which we want to 
+        for _ in range(wanted_common_SE):
+            this_SE = find_random_site(input_site, used_SE)
+            req_sitez.add(this_SE)
+
+            # If we're demanding each CE definately not share an SE
             if uniqueSE:
+                # Which CE can map to the SE
+                these_CE = SE_to_CE_mapping[this_SE]
+                for this_CE in these_CE:
+                    # For each CE make sure we add the SE it can see to the used list
+                    for SE in CE_to_SE_mapping[this_CE]:
+                        used_SE.add(SE)
 
-                these_SE = SE_to_site_mapping[this_site]
-                for this_SE in these_SE:
-
-                    for site in site_to_SE_mapping[this_SE]:
-                        used_site.add(site)
+            # Just use any SE
             else:
-                used_site.add(this_site)
+                used_SE.add(this_SE)
     else:
         for s in input_site:
             req_sitez.add(s)
     return req_sitez
 
 
-def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_site_mapping, bannedSites, ignoremissing):
+def calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping, bannedSites, ignoremissing, bad_lfns):
     """
     If uniqueSE:
         This constructs 2 dicts which allow for going between SE and sites based upon a key/value lookup.
@@ -156,10 +243,11 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_si
 
     Args:
         file_replicas (dict): This is the dictionary of LFN replicas with LFN as the key
-        site_to_SE_mapping (dict): Dict which has sites as keys and SE as values
-        SE_to_site_mapping (dict): Dict which has sites as values and SE as keys
+        CE_to_SE_mapping (dict): Dict which has sites as keys and SE as values
+        SE_to_CE_mapping (dict): Dict which has sites as values and SE as keys
         bannedSites (list) : List which has the sites banned by the job
         ignoremissing (bool) : Bool for whether to continue if an LFN has no available SEs
+        bad_lfns (list): List of LFN which are known to not have valid replicas on the grid
 
     Returns:
         site_dict (dict): Dict of {'LFN':set([sites]), ...}
@@ -174,36 +262,34 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_si
     # First find the SE for each site
     for lfn, repz in file_replicas.iteritems():
         sitez = set([])
-        if uniqueSE:
-            for replica in repz:
-                sitez.add(replica)
-                if not replica in found:
-                    getQueues()._monitoring_threadpool.add_function(addToMapping, (str(replica), site_to_SE_mapping))
-
-                    maps_size = maps_size + 1
-                    found.append(replica)
+        for replica in repz:
+            sitez.add(replica)
+            if not replica in found:
+                getQueues()._monitoring_threadpool.add_function(addToMapping, (str(replica), CE_to_SE_mapping))
+                maps_size = maps_size + 1
+                found.append(replica)
 
         SE_dict[lfn] = sitez
 
     # Doing this in parallel so wait for it to finish
-    while len(site_to_SE_mapping) != maps_size:
+    while len(CE_to_SE_mapping) != maps_size:
         time.sleep(0.1)
 
-    for iSE in site_to_SE_mapping.keys():
-        for site in site_to_SE_mapping[iSE]:
+    # Remove the banned sites (CE) from the mappings
+    for iSE in CE_to_SE_mapping.keys():
+        for site in CE_to_SE_mapping[iSE]:
             if any(site == item for item in bannedSites):
-                site_to_SE_mapping[iSE].remove(site)
-        if not site_to_SE_mapping[iSE]:
-            del site_to_SE_mapping[iSE]
+                CE_to_SE_mapping[iSE].remove(site)
+            if not CE_to_SE_mapping[iSE]:
+                del CE_to_SE_mapping[iSE]
 
-    if uniqueSE:
-        # Now calculate the 'inverse' dictionary of site for each SE
-        for _SE, _sites in site_to_SE_mapping.iteritems():
-            for site_i in _sites:
-                if site_i not in SE_to_site_mapping:
-                    SE_to_site_mapping[site_i] = set([])
-                if _SE not in SE_to_site_mapping[site_i]:
-                    SE_to_site_mapping[site_i].add(_SE)
+    # Now calculate the 'inverse' dictionary of site for each SE
+    for SE, sites in CE_to_SE_mapping.iteritems():
+        for site_i in sites:
+            if site_i not in SE_to_CE_mapping:
+                SE_to_CE_mapping[site_i] = set([])
+            if SE not in SE_to_CE_mapping[site_i]:
+                SE_to_CE_mapping[site_i].add(SE)
 
     # These can be used to select the site which know of a given SE
     # Or vice versa
@@ -211,17 +297,18 @@ def calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_si
     # Now lets generate a dictionary of some chosen site vs LFN to use in
     # constructing subsets
     site_dict = {}
-    for _lfn, sites in SE_dict.iteritems():
-        site_dict[_lfn] = set([])
-        for _site in sites:
-            if _site in site_to_SE_mapping.keys():
-                for _SE in site_to_SE_mapping[_site]:
-                    site_dict[_lfn].add(_SE)
-        if site_dict[_lfn] == set([]) and not ignoremissing:
-            raise SplitterError('LFN %s has no site available and ignoremissing = false! Perhaps you have banned too many sites.' % str(_lfn))
-        elif site_dict[_lfn] == set([]) and ignoremissing:
-            logger.warning('LFN %s has no site available and ignoremissing = true! Removing this LFN from the dataset!' % str(_lfn))
-            del site_dict[_lfn]
+    for lfn, sites in SE_dict.iteritems():
+        site_dict[lfn] = set([])
+        for site in sites:
+            if site in CE_to_SE_mapping.keys():
+                for SE in CE_to_SE_mapping[site]:
+                    site_dict[lfn].add(SE)
+        if site_dict[lfn] == set([]) and not ignoremissing:
+            raise SplitterError('LFN %s has no site available and ignoremissing = false! Perhaps you have banned too many sites.' % str(lfn))
+        elif site_dict[lfn] == set([]) and ignoremissing:
+            logger.warning('LFN %s has no site available and ignoremissing = true! Removing this LFN from the dataset!' % str(lfn))
+            del site_dict[lfn]
+            bad_lfns.append(lfn)
 
     if site_dict == {}:
         raise SplitterError('There are no LFNs in the dataset - perhaps you have banned too many sites.')
@@ -235,8 +322,7 @@ def lookUpLFNReplicas(inputs, ignoremissing):
     Args:
         inputs (list): This is a list of input DiracFile which are 
     Returns:
-        allLFNs (list): List of all of the LFNs in the inputs
-        LFNdict (dict): dict of LFN to DiracFiles
+        bad_lfns (list): A list of LFN which have no replica information when querying `getReplicasForJobs` from DIRAC
     """
     allLFNData = {}
     # Build a useful dictionary and list
@@ -247,12 +333,12 @@ def lookUpLFNReplicas(inputs, ignoremissing):
 
     # Request the replicas for all LFN 'LFN_parallel_limit' at a time to not overload the
     # server and give some feedback as this is going on
-    global limit_divide_one
-    for i in range(int(math.ceil(float(len(allLFNs)) * limit_divide_one))):
+    global LFN_parallel_limit
+    for i in range(int(math.ceil(float(len(allLFNs)) / LFN_parallel_limit))):
 
         getQueues()._monitoring_threadpool.add_function(getLFNReplicas, (allLFNs, i, allLFNData))
 
-    while len(allLFNData) != int(math.ceil(float(len(allLFNs)) * limit_divide_one)):
+    while len(allLFNData) != int(math.ceil(float(len(allLFNs)) / LFN_parallel_limit)):
         time.sleep(1.)
         # This can take a while so lets protect any repo locks
         import GangaCore.Runtime.Repository_runtime
@@ -261,17 +347,17 @@ def lookUpLFNReplicas(inputs, ignoremissing):
     bad_lfns = []
 
     # Sort this information and store is in the relevant Ganga objects
-    badLFNCheck(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData)
+    updateLFNData(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData)
 
     # Check if we have any bad lfns
     if bad_lfns and ignoremissing is False:
         logger.error("Errors found getting LFNs:\n%s" % str(bad_lfns))
-        raise SplittingError("Error trying to split dataset with invalid LFN and ignoremissing = False")
+        raise SplitterError("Error trying to split dataset with invalid LFN and ignoremissing = False")
 
-    return allLFNs, LFNdict, bad_lfns
+    return bad_lfns
 
 
-def badLFNCheck(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
+def updateLFNData(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
     """
     Method to re-sort the LFN replica data and check for bad LFNs
 
@@ -283,19 +369,14 @@ def badLFNCheck(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
         allLFNData (dict): All LFN replica data
     """
 
-    # FIXME here to keep the repo settings as they were before we changed the
-    # flush count
-    original_write_perm = {}
-
     global LFN_parallel_limit
-    global limit_divide_one
 
-    for i in range(int(math.ceil(float(len(allLFNs)) * limit_divide_one))):
+    for i in range(int(math.ceil(float(len(allLFNs)) / LFN_parallel_limit))):
         output = allLFNData.get(i)
 
         if output is None:
             msg = "Error getting Replica information from Dirac: [%s,%s]" % ( str(i * LFN_parallel_limit), str((i + 1) * LFN_parallel_limit))
-            raise SplittingError(msg)
+            raise SplitterError(msg)
 
         # Identify files which have Failed to be found by DIRAC
         results = output
@@ -361,22 +442,17 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
     uniqueSE = configDirac['OfflineSplitterUniqueSE']
 
     if inputs is None:
-        raise SplittingError("Cannot Split Job as the inputdata appears to be None!")
+        raise SplitterError("Cannot Split Job as the inputdata appears to be None!")
 
     if len(inputs.getLFNs()) != len(inputs.files):
-        raise SplittingError("Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
+        raise SplitterError("Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata")
 
     file_replicas = {}
 
     logger.info("Requesting LFN replica info")
 
     # Perform a lookup of where LFNs are all stored
-    allLFNs, LFNdict, bad_lfns = lookUpLFNReplicas(inputs, ignoremissing)
-
-    # This finds all replicas for all LFNs...
-    # This will probably struggle for LFNs which don't exist
-    # Bad LFN should have been removed by this point however
-    all_lfns = [LFNdict[this_lfn].locations for this_lfn in LFNdict if this_lfn not in bad_lfns]
+    bad_lfns = lookUpLFNReplicas(inputs, ignoremissing)
 
     logger.info("Got all good replicas")
 
@@ -386,30 +462,35 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
 
     logger.info("found all replicas")
 
-    site_to_SE_mapping = {}
-    SE_to_site_mapping = {}
+    # This contains information on the mapping between CE and SE(site) in DIRAC as multiple CE may access an SE(site)
+    CE_to_SE_mapping = {}
+    # This contains the mapping between the SE and the CE
+    SE_to_CE_mapping = {}
 
     allSubSets = []
 
     # Now lets generate a dictionary of some chosen site vs LFN to use in
     # constructing subsets
-    site_dict = calculateSiteSEMapping(file_replicas, uniqueSE, site_to_SE_mapping, SE_to_site_mapping, bannedSites, ignoremissing)
+    site_dict = calculateSiteSEMapping(file_replicas, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping, bannedSites, ignoremissing, bad_lfns)
 
 
     allChosenSets = {}
     # Now select a set of site to use as a seed for constructing a subset of
     # LFN
     for lfn in site_dict.keys():
-        allChosenSets[lfn] = generate_site_selection(site_dict[lfn], wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping)
+        allChosenSets[lfn] = generate_site_selection(site_dict[lfn], wanted_common_site, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping)
 
     logger.debug("Found all SE in use")
 
+
+    #logger.info("%s" % str(CE_to_SE_mapping))
+    #logger.info("%s" % str(SE_to_CE_mapping))
 
     # BELOW IS WHERE THE ACTUAL SPLITTING IS DONE
 
     logger.info("Calculating best data subsets")
 
-    allSubSets = performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping)
+    allSubSets = performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping)
 
     avg = 0.
     for this_set in allSubSets:
@@ -425,6 +506,10 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
 
     if check_count != len(inputs) - len(bad_lfns):
         logger.error("SERIOUS SPLITTING ERROR!!!!!")
+        logger.warning("%s != %s - %s" % (check_count, len(inputs), len(bad_lfns)))
+        logger.warning("inputs:\n%s" % str(inputs))
+        logger.warning("bad_lfns:\n%s" % str(bad_lfns))
+        logger.warning("check_count:\n%s" % str(check_count))
         raise SplitterError("Files Missing after Splitting!")
     else:
         logger.info("File count checked! Ready to Submit")
@@ -436,7 +521,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing, ban
     for dataset in allSubSets:
         yield dataset
 
-def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping):
+def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping):
     """
     This is the main method which loops through the LFNs and creates subsets which are returned a list of list of LFNs
 
@@ -446,15 +531,16 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
         allChosenSets (dict): A dict with LFNs as keys and a sub-set of sites where each LFN is replicated
         wanted_common_site (int): Number of sites which we want to have in common for each LFN
 
-        uniqueSE (bool): Should we check to make sure sites don't share an SE
-        site_to_SE_mapping (dict): Dict which has sites as keys and SE as values
-        SE_to_site_mapping (dict): Dict which has sites as values and SE as keys
+        uniqueSE (bool): Should we check to make sure CE don't share an SE
+        CE_to_SE_mapping (dict): Dict which has CE as keys and SE as values
+        SE_to_CE_mapping (dict): Dict which has CE as values and SE as keys
 
     Returns:
         allSubSets (list): Return a list of subsets each subset being a list of LFNs
     """
 
     good_fraction = configDirac['OfflineSplitterFraction']
+    bad_fraction = 1.0
     iterative_limit = configDirac['OfflineSplitterLimit']
 
     allSubSets = []
@@ -479,7 +565,12 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
             req_sitez = allChosenSets[iterating_LFN]
             _this_subset = []
 
-            #logger.debug("find common LFN for: " + str(allChosenSets[iterating_LFN]))
+            if len(req_sitez) < wanted_common_site:
+                continue
+
+            limit = int(math.floor(float(filesPerJob) * good_fraction))
+                     
+            max_limit = int(math.ceil(float(filesPerJob) * bad_fraction))
 
             # Construct subset
             # Starting with i, populate subset with LFNs which have an
@@ -488,22 +579,18 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
                 if this_LFN in chosen_lfns:
                     continue
                 if req_sitez.issubset(site_dict[this_LFN]):
-                    if len(_this_subset) >= filesPerJob:
+                    if len(_this_subset) >= min(filesPerJob, max_limit):
                         break
                     _this_subset.append(this_LFN)
 
-            limit = int(math.floor(float(filesPerJob) * good_fraction))
-
-            #logger.debug("Size limit: %s" % str(limit))
-
             # If subset is too small throw it away
-            if len(_this_subset) < limit:
+            if len(_this_subset) < limit and len(_this_subset) < max_limit:
                 #logger.debug("%s < %s" % (str(len(_this_subset)), str(limit)))
-                allChosenSets[iterating_LFN] = generate_site_selection(site_dict[iterating_LFN], wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping)
+                allChosenSets[iterating_LFN] = generate_site_selection(site_dict[iterating_LFN], wanted_common_site, uniqueSE, CE_to_SE_mapping, SE_to_CE_mapping)
                 continue
             else:
-                logger.debug("found common LFN for: " + str(allChosenSets[iterating_LFN]))
-                logger.debug("%s > %s" % (str(len(_this_subset)), str(limit)))
+                #logger.info("found common LFN for: " + str(allChosenSets[iterating_LFN]))
+                #logger.info("%s > %s" % (str(len(_this_subset)), str(limit)))
                 # else Dataset was large enough to be considered useful
                 logger.debug("Generating Dataset of size: %s" % str(len(_this_subset)))
                 ## Construct DiracFile here as we want to keep the above combination
@@ -517,6 +604,9 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
         # Lets keep track of how many times we've tried this
         iterations = iterations + 1
 
+        #logger.info("Iteration: %s" % iterations)
+        #logger.info("%s %s" % (good_fraction, bad_fraction))
+
         # Can take a while so lets not let threads become un-locked
         import GangaCore.Runtime.Repository_runtime
         GangaCore.Runtime.Repository_runtime.updateLocksNow()
@@ -524,16 +614,19 @@ def performSplitting(site_dict, filesPerJob, allChosenSets, wanted_common_site, 
         # If on final run, will exit loop after this so lets try and cleanup
         if iterations >= iterative_limit:
 
-            if good_fraction < 0.5:
+            if good_fraction < 0.2:
                 good_fraction = good_fraction * 0.75
+                bad_fraction = bad_fraction * 0.75
                 iterations = 0
             elif wanted_common_site > 1:
                 logger.debug("Reducing Common Site Size")
                 wanted_common_site = wanted_common_site - 1
                 iterations = 0
-                good_fraction = 0.75
+                good_fraction = 0.5
+                bad_fraction = 0.75
             else:
                 good_fraction = good_fraction * 0.75
+                #bad_fraction = bad_fraction * 0.75
 
             logger.debug("good_fraction: %s" % str(good_fraction))
 
