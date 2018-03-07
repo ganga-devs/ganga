@@ -248,4 +248,3 @@ cat output_files | while read filespec; do
 	fi
     done
 done
-
