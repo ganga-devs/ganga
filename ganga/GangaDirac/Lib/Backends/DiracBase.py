@@ -270,7 +270,7 @@ class DiracBase(IBackend):
                 fqid = sj.getFQID('.')
                 #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
                 sjScript = sj.backend._job_script(sc, master_input_sandbox)
-                sjScript = sjScript.replace("output(result)", "resultdict.update({sjNo : result['Value']})")
+                sjScript = sjScript.replace("output(result)", "if isinstance(result, dict):\n    resultdict.update({sjNo : result['Value']})\nelse:\n    output(result)")
                 if nSubjobs == 0:
                     sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
                 if nSubjobs !=0 :
