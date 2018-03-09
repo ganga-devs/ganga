@@ -136,6 +136,8 @@ class JobRegistry(Registry):
                             _killJob(sj)
                             haveKilled = True
                     if not haveKilled:
+                        if v.status == 'submitting':
+                            v.updateStatus("submitted")
                         logger.warning("Job status re-updated after potential force-close")
                         v.updateMasterJobStatus()
                 else:
