@@ -8,10 +8,7 @@ from GangaCore.GPIDev.Base import GangaObject
 from GangaCore.GPIDev.Base.Proxy import TypeMismatchError, isType, stripProxy, getName
 from GangaCore.GPIDev.Schema import Schema, Version
 from GangaCore.Utility.util import containsGangaObjects
-from GangaCore.Core.exceptions import GangaException
-
-class SplittingError(GangaException):
-    def __init__(self, x): GangaException.__init__(self, x)
+from GangaCore.Core.exceptions import GangaException, SplitterError
 
 
 class ISplitter(GangaObject):
@@ -64,23 +61,22 @@ class ISplitter(GangaObject):
     def validatedSplit(self, job):
         """ Perform splitting using the split() method and validate the mutability
         invariants. If the invariants are broken (or exception occurs in the
-        split() method) then SplittingError exception is raised. This method is
+        split() method) then SplitterError exception is raised. This method is
         called directly by the framework and should not be modified in the derived
         classes. """
 
         # try:
         subjobs = self.split(stripProxy(job))
         # except Exception,x:
-        #raise SplittingError(x)
+        #raise SplitterError(x)
         #raise x
         # if not len(subjobs):
-        #raise SplittingError('splitter did not create any subjobs')
+        #raise SplitterError('splitter did not create any subjobs')
 
         cnt = 0
         for s in subjobs:
             if not isType(s.backend, type(stripProxy(job.backend))):
-                raise SplittingError('masterjob backend %s is not the same as the subjob (probable subjob id=%d) backend %s' % (job.backend._name, cnt, getName(s.backend)))
+                raise SplitterError('masterjob backend %s is not the same as the subjob (probable subjob id=%d) backend %s' % (job.backend._name, cnt, getName(s.backend)))
             cnt += 1
 
         return subjobs
-
