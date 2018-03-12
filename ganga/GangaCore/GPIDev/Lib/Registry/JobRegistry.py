@@ -137,7 +137,7 @@ class JobRegistry(Registry):
                             haveKilled = True
                     if not haveKilled:
                         logger.warning("Job status re-updated after potential force-close")
-                        v.updateStatus()
+                        v.updateMasterJobStatus()
                 else:
                     _killJob(v)
             elif _shouldAutoCheck(v):
