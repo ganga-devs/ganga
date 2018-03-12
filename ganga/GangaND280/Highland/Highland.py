@@ -8,7 +8,7 @@ This module is designed to run any highland executable accessible in the $PATH e
 """
 
 
-from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
@@ -24,7 +24,7 @@ import os, shutil, commands, re
 from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
-class Highland(IApplication):
+class Highland(IPrepareApp):
     """
     Highland application running any highland executables.
 
