@@ -6,7 +6,7 @@ import optparse
 import sys
 import os
 import re
-from Ganga.Core.exceptions import GangaException
+from GangaCore.Core.exceptions import GangaException
 
 usage = """
 ------------------
@@ -173,7 +173,8 @@ p.add_option('--configJEM', action='store', type='string', dest='configJEM', hel
 p.add_option('--overwriteQueuedata', action='store_true', help='Expert option: Enable overwriteQueuedata' )
 p.add_option('--overwriteQueuedataConfig', action='store', type='string', dest='overwriteQueuedataConfig', help='Expert option: Config string for overwriteQueuedata' )
 
-p.add_option('--useAthenaPackages', action='store_true', help='Enable to setup Athena env for PYARA' )
+p.add_option('--useAthenaPackages', action='store_true', help='Enable to setup Athena env for PYARA [Deprecated: is now the default. Use --noUserPackageSetup to turn off]' )
+p.add_option('--noUserPackageSetup', action='store_true', help='Disable the Athena setup of user packages for EXE jobs' )
 
 p.add_option('--transferredDS', action='store', type='string', dest='transferredDS', help='Specify a comma-separated list of patterns so that only datasets which match the given patterns are transferred when --outputlocation is set. Either \ or "" is required when a wildcard is used. If omitted, all datasets are transferred')
 
@@ -309,8 +310,9 @@ if opt.atlas_supp_stream:
 if opt.collectstats:
     j.application.collect_stats=True
 
-if opt.useAthenaPackages:
-    j.application.useAthenaPackages = True
+j.application.useAthenaPackages = True
+if opt.noUserPackageSetup:
+    j.application.useAthenaPackages = False
 if opt.useRootCore:
     j.application.useRootCore = True
 if opt.useRootCoreNoBuild:
