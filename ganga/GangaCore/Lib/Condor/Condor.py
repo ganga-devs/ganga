@@ -287,7 +287,7 @@ class Condor(IBackend):
 
         fileList = []
         for filePath in infileList:
-            fileList.append(os.path.basename(filePath))
+            fileList.append(filePath)
 
         if job.name:
             name = job.name
