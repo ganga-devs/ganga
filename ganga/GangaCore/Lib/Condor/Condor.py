@@ -144,7 +144,6 @@ class Condor(IBackend):
 
         cdfpath = self.preparejob(jobconfig, master_input_sandbox)
         status = self.submit_cdf(cdfpath)
-#        status = True
         return status
 
     def submit_cdf(self, cdfpath=""):
