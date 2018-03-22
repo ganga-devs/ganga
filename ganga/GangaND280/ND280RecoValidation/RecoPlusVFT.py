@@ -7,7 +7,7 @@
 This module is designed to run any ND280 executable accessible in the $PATH environment variable.
 """
 
-from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
@@ -23,7 +23,7 @@ import os, shutil, commands, re, time
 from GangaCore.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
-class RecoPlusVFT(IApplication):
+class RecoPlusVFT(IPrepareApp):
     """
     RecoPlusVFT application running any ND280 executables.
 
