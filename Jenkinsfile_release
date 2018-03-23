@@ -1,0 +1,30 @@
+pipeline {
+  agent any
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '5'))
+  }
+  stages {
+    // Build stage
+    stage('Build Core Image') {
+        steps{
+          withCredentials([usernamePassword(credentialsId: 'PyPi', passwordVariable: 'PYPI_PASSWORD', usernameVariable: 'PYPI_USER'), string(credentialsId: '3c8f4c29-6a7e-4b89-9735-de6c6ad4540e', variable: 'GITHUBAPITOKEN')]) {
+            sshagent(credentials: ['ca9d193d-edba-4a2f-b7d6-f45a25a41f39']){
+              sh """
+              virtualenv gangaRelease
+              . gangaRelease/bin/activate
+              pip install requests
+              ./startRelease.sh
+              deactivate
+              rm -r gangaRelease
+              """
+          }
+        }
+      }
+    }
+  }
+//  post {
+//    success {
+//     mail bcc: '', body: 'New Ganga version has been released', cc: '', from: 'project-ganga-developers@cern.ch', replyTo: 'project-ganga-developers@cern.ch', subject: 'New Ganga released', to: 'project-ganga-developers@cern.ch' 
+//    }
+//  }
+}

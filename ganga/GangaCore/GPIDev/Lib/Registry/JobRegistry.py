@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, print_function
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -73,6 +73,9 @@ class JobRegistry(Registry):
         return cache
 
     def startup(self):
+        """
+            This is the main startup method of the Registry
+        """
         self._needs_metadata = True
         super(JobRegistry, self).startup()
         if len(self.metadata.ids()) == 0:
@@ -83,6 +86,73 @@ class JobRegistry(Registry):
         self.jobtree = self.metadata[self.metadata.ids()[-1]]
         self.flush_thread = RegistryFlusher(self, 'JobRegistryFlusher')
         self.flush_thread.start()
+
+    def check(self):
+        """
+            This code checks for jobs which are in the submitting state
+            If a job is 'submitting' an call to force_status('failed') is made
+            This should be enough to fix some future issues with monitoring """
+
+        def _shouldAutoKill(this_job):
+            """ This checks to see if the job is in a transistional state
+                By construction jobs in this state on disk need to be failed
+            """
+            return this_job.status in ["submitting", "completing"]
+
+        def _shouldAutoCheck(this_job):
+            """ This checks to see if the job is in a state where the
+                dict describing the job is potentially stale
+            """
+            return this_job.status in ["new"]
+
+        def _killJob(this_job):
+            logger.warning("Auto-Failing job in bad state: %s was %s" % (this_job.getFQID('.'), this_job.status))
+            logger.warning("To try this job again resubmit or use a backend.reset()")
+            this_job.force_status('failed')
+
+        reverse_job_list = self._objects.keys()
+        reverse_job_list.reverse()
+
+        num_loaded = 0
+        num_checked = 0
+        for k in reverse_job_list:
+            if (num_loaded is 5) and (num_checked is 5):
+                break
+            v = self._objects[k]
+            if _shouldAutoKill(v):
+                if num_loaded is 5:
+                    continue
+                try:
+                    num_loaded+=1
+                    self._load(v)
+                    logger.debug("Loaded job: %s" % v.getFQID('.'))
+                except RegistryLockError:
+                    logger.debug("Failed to load job, it's potentially being used by another ganga sesion")
+                    continue
+                if v.subjobs:
+                    haveKilled = False
+                    for sj in v.subjobs:
+                        if _shouldAutoKill(sj):
+                            _killJob(sj)
+                            haveKilled = True
+                    if not haveKilled:
+                        if v.status == 'submitting':
+                            v.updateStatus("submitted")
+                        logger.warning("Job status re-updated after potential force-close")
+                        v.updateMasterJobStatus()
+                else:
+                    _killJob(v)
+            elif _shouldAutoCheck(v):
+                if num_checked is 5:
+                    continue
+                try:
+                    num_checked+=1
+                    self._load(v)
+                    logger.debug("Loaded job: %s" % v.getFQID('.'))
+                except RegistryLockError:
+                    logger.debug("Failed to load job, it's potentially being used by another ganga sesion")
+                    continue
+
 
     def shutdown(self):
         self.flush_thread.join()

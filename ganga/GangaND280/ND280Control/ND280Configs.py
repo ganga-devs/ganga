@@ -15,7 +15,7 @@ class ND280Config:
     """
     This is an adaptation of ND280Computing/tools/ND280Configs.py.
     A class to handle automatically creating nd280Control config info.
-    
+
     Types
 
     gnsetup = GENIE setup config
@@ -40,20 +40,20 @@ class ND280Config:
 comment = v11r31-wg-bugaboo
 cmtpath = environment
 midas_file = /neut/datasrv2a/vavilov/nd280_00005012_0033.daq.mid.gz
-num_events = 
+num_events =
 save_geometry = 1
-enable_modules = 
+enable_modules =
 cmtroot = environment
 db_time = 2014-06-25 06:00:00
 module_list = oaCalib oaRecon oaAnalysis
-version_number = 
+version_number =
 event_select = SPILL
-custom_list = 
+custom_list =
 nd280ver = v11r31
 production = True
-process_truncated = 
-disable_modules = 
-inputfile = 
+process_truncated =
+disable_modules =
+inputfile =
 
     >>> cfg.options['nd280ver']='v11r31'
     >>> cfg.options['comment'] = 'v11r31-wg-bugaboo'
@@ -64,11 +64,11 @@ inputfile =
 
     >>> cfg.options['production'] = 'True'
     >>> cfg.options['save_geometry'] = '1'
-    
+
     >>> cfg_str = cfg.CreateConfig()
-    >>> print cfg_str # prints configuration file info 
+    >>> print cfg_str # prints configuration file info
     """
-   
+
     def __init__(self, cfgtype,extra_opts):
         self.cfgtype=cfgtype.lower()
         self.options=self.common_options
@@ -99,7 +99,7 @@ inputfile =
             raise 'ND280Configs: Not a recognised config type'
 
         self.options.update(extra_opts)
-        
+
     ### Global
     cfgtype=''
     config_filename=''
@@ -112,15 +112,17 @@ inputfile =
                     'cmtroot':'environment',
                     'nd280ver':'',
                     'custom_list':'',
-                    'db_time':''}
-    
+                    'db_time':'',
+                    'database_P6':''}
+
     ## Ignore options - options that are not essential and can be overlooked
     common_options_ignore={'comment':'','midas_file':'',
                            'event_select':'',
                            'inputfile':'',
                            'version_number':'',
                            'custom_list':'',
-                           'db_time':''}
+                           'db_time':'',
+                           'database_P6':''}
 
     ### Raw Data Options: Dictionary of options specific to Raw data processing cfg files
     raw_options={ 'midas_file':'',
@@ -201,7 +203,7 @@ inputfile =
                 'production':'True',
                 'save_geometry':'1',
                 'comment':'prod6sand201011airrun3'}
-    
+
     sandmc_options_ignore={}
 
     #### MC
@@ -290,7 +292,7 @@ inputfile =
                   'nbunches':'1',
                   'elmc_random_seed':'999'}
 
-   
+
     def CheckOptions(self):
         allOK=1
         ## Quick check to see if there are any blank options, only allowed for comment.
@@ -301,7 +303,7 @@ inputfile =
                 else:
                     print 'Please ensure a value for ' + k + ' using the object.options[\'' + k + '\']'
                     allOK=0
-            
+
         return allOK
 
     def ListOptions(self):
@@ -328,21 +330,21 @@ inputfile =
             return creator()
         else:
             raise 'ND280Configs: Not a reconised config type'
-        
-            
+
+
 
     ######################## GENIE Setup
     def CreateGENIEsetupCF(self):
         pass
-    
- 
+
+
     ######################## Raw Data Processing Config file
     def CreateRawCF(self):
 
         if not self.CheckOptions():
             print 'ERROR please make sure all options stated above are entered'
             return ''
-        
+
         configfile = ''
         configfile += "# Automatically generated config file\n\n"
 
@@ -371,8 +373,11 @@ inputfile =
         if self.options['db_time']:
             configfile += "database_rollback_date = " + self.options['db_time'] + "\n"
             configfile += "dq_database_rollback_date = " + self.options['db_time'] + "\n"
-            configfile += "\n"
 
+        if self.options['database_P6']:
+            configfile += 'database_P6 = %s\n' % self.options['database_P6']
+
+        configfile += "\n"
 
         ### Unpack - only if this is a midas file
         if self.options['midas_file']:
@@ -432,7 +437,7 @@ inputfile =
         if not self.options['stage'] in ['base','fgd','tript','all']:
             print 'ERROR "stage" options should be one of',['base','fgd','tript','all']
             return ''
-        
+
         configfile = ''
         configfile += "# Automatically generated config file\n\n"
 
@@ -506,7 +511,7 @@ inputfile =
         if not self.options['stage'] in ['neutMC','g4anal','neutSetup']:
             print 'ERROR "stage" options should be one of',['neutMC','g4anal','neutSetup']
             return ''
-        
+
         configfile = ''
         configfile += "# Automatically generated config file\n\n"
 
@@ -561,7 +566,7 @@ inputfile =
         configfile += "neut_card = " + self.options['neut_card'] + "\n"
         configfile += "flux_file = " + self.options['flux_file'] + "\n"
         configfile += "maxint_file = " + self.options['maxint_file'] + "\n"
-        
+
         configfile += "pot = " + self.options['pot'] + "\n"
         #configfile += "num_events = 5000\n" # DVtmp
         configfile += "neutrino_type = " + self.options['neutrino_type'] + "\n"

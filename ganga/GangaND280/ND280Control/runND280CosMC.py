@@ -7,7 +7,7 @@
 Ganga module to execute runND280 from the nd280Control package.
 """
 
-from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -24,7 +24,7 @@ shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']
 
 import ND280Configs
 
-class runND280CosMC(IApplication):
+class runND280CosMC(IPrepareApp):
     """
     runND280CosMC application running runND280 from nd280Control with configuration files
     (created hereby) specific for Cosmic MC processing
