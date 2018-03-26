@@ -196,7 +196,7 @@ class DiracBase(IBackend):
         j.been_queued = False
         dirac_cmd = """execfile(\'%s\')""" % myscript
         try:
-            result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True)
+            result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = False)
         except GangaDiracError as err:
             err_msg = 'Error submitting job to Dirac: %s' % str(err)
             logger.error(err_msg)
@@ -206,6 +206,7 @@ class DiracBase(IBackend):
                 logger.error("%s" % file_in.read())
             logger.error("\n====\n")
             raise BackendError('Dirac', err_msg)
+            return 0
 
         #Now put the list of Dirac IDs into the subjobs and get them monitored:
         if len(j.subjobs)>0:
@@ -273,7 +274,7 @@ class DiracBase(IBackend):
                 fqid = sj.getFQID('.')
                 #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
                 sjScript = sj.backend._job_script(sc, master_input_sandbox)
-                sjScript = sjScript.replace("output(result)", "if isinstance(result, dict):\n\tresultdict.update({sjNo : result['Value']})\nelse:\n\traise SubmissionException")
+                sjScript = sjScript.replace("output(result)", "if isinstance(result, dict) and 'Value' in result:\n\tresultdict.update({sjNo : result['Value']})\nelse:\n\traise SubmissionException")
                 if nSubjobs == 0:
                     sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
                 if nSubjobs !=0 :
