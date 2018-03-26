@@ -29,7 +29,7 @@ class FileCheckeR(IFileChecker):
     self.searchStrings are the search strings you would like to check for.
     self.files are the files you would like to check.
     self.failIfFound (default = True) decides whether to fail the job if the string is found. If you set this to false the job will fail if the string *isnt* found.
-    self.fileMustExist toggles whether to fail the job if the specified file doesn't exist (default is True).
+    self.filesMustExist toggles whether to fail the job if the specified file doesn't exist (default is True).
     """
     _schema = IFileChecker._schema.inherit_copy()
     _schema.datadict['searchStrings'] = SimpleItem(defvalue = [], doc='String to search for')
@@ -81,6 +81,7 @@ class ND280Kin_Checker(IFileChecker):
 
         logger.info("Checking/moving outputs of run "+job.name)
         
+        self.filesMustExist = False
         self.files = ['*.kin']
         filepaths = self.findFiles(job)
         if len(filepaths) != 1:
@@ -134,9 +135,11 @@ class ND280RDP_Checker(IFileChecker):
     _schema.datadict['path'] = SimpleItem(defvalue = None, typelist=['str','type(None)'], doc='Middle path to store output files')
     _schema.datadict['trig'] = SimpleItem(defvalue = None, typelist=['str','type(None)'], doc='Trigger type, e.g. SPILL or COSMIC')
     _schema.datadict['site'] = SimpleItem(defvalue = None, typelist=['str','type(None)'], doc='Processing site, e.g. wg-bugaboo')
+    _schema.datadict['post_status'] = SimpleItem(defvalue = None, typelist=['bool','type(None)'], doc='Post job information to processingstatus db')
     _category = 'postprocessor'
     _name = 'ND280RDP_Checker'
     _exportmethods = ['check']
+    poststatus = True
 
     def __init__(self):
         super(ND280RDP_Checker,self).__init__()
@@ -170,6 +173,9 @@ class ND280RDP_Checker(IFileChecker):
         self.STAGE = ''
 
     def send_status(self):
+        if not self.post_status:
+            return 0
+
         logger.info('Result for %s %s %s %s is: %s, %s, %s, %s, %s' %  (self.RUN,self.SUBRUN,self.TRIGTYPE,self.STAGE,self.site,self.ReturnCode,self.Time,self.EventsIn,self.EventsOut))
 
         if self.range == 0: return # no remote status report for CosMC
@@ -222,7 +228,6 @@ class ND280RDP_Checker(IFileChecker):
             #return False
             raise PostProcessException('Site is not given')
             
-
         # finds .log file
         self.files = ['*.log']
         filepaths = self.findFiles(job)
