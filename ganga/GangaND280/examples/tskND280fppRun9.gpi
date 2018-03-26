@@ -1,0 +1,67 @@
+import os
+
+#input_file = 'input/Run9/wbeam/20171008_1014.list'
+input_file = 'input/Run9/wbeam/test.list'
+
+# headers
+ver='v11r31p29'
+trig='SPILL'
+path='production006/Z/fpp/ND280'
+site='wg-bugaboo'
+rollback='2017-10-30 00:00:00'
+
+
+# create a Task and a Transform
+t   = ND280Task()
+t.name = 'ND280RDP'
+t.comment = os.path.splitext(os.path.basename(input_file))[0]
+trf = ND280Transform()
+#trf.submit_with_threads = True
+
+# setup an application
+
+a = runND280RDP()
+a.cmtsetup = ['/home/t2k/t2k-software/Run_At_Start_T2k_%s.sh'%ver,'/home/t2k/t2k-software/work-%s/nd280Control/*/cmt/setup.sh'%ver]
+a.confopts = {'nd280ver':ver,
+              'comment':'%s-%s'%(ver,site),
+              'db_time':rollback,
+              'database_p6':'True',
+              'event_select':trig,
+              'midas_file':'placeholder',
+              'production':'True',
+              'save_geometry':'1'}
+trf.application = a
+
+
+# transform name ?
+trf.name='runND280'
+
+
+# Input files
+d=ND280LocalDataset()
+#d.get_dataset('/global/scratch/t2k/raw/ND280/ND280/00003000_00003999','nd280_00003227*.mid.gz')
+#d.get_dataset_from_list('raw.list')
+#d.get_raw_from_list('/global/scratch/t2k/raw/ND280/ND280','runsub_temp.list')
+d.get_raw_from_list('/global/scratch/t2k/raw/ND280/ND280', input_file )
+
+trf.addInputData(d)
+
+# Output file(s)
+# trf.outputfiles=[SandboxFile("*.root"),SandboxFile("*.log"),SandboxFile("*catalogue.dat")]
+
+# Backend
+#trf.backend = PBS(queue='srvq', extraopts='-l walltime=1:12:00,mem=2000mb -j oe')
+#trf.backend=Local()
+#trf.backend=PBS(extraopts='-l walltime=24:00:00,mem=2000mb -j oe')
+trf.backend=PBS(extraopts='-l walltime=4:00:00,mem=2000mb -j oe')
+
+trf.postprocessors=ND280RDP_Checker(prfx='/global/scratch/t2k',path=path,trig=trig,site=site,post_status=True)
+
+# speed up job submission
+#trf.abort_loop_on_submit = False
+trf.submit_with_threads = True
+
+#  set the task going
+t.appendTransform(trf)
+t.float = 480
+t.run()

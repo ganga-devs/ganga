@@ -151,9 +151,9 @@ class ND280LocalDataset(ND280Dataset):
 
        directory = os.path.abspath(directory)
        if filter:
-           new_names = [ os.path.join(directory,name) for name in fnmatch.filter(os.listdir(directory),filter) ]
+           new_names = [ os.path.join(directory,name) for name in fnmatch.filter(sorted(os.listdir(directory)),filter) ]
        else:
-           new_names = [ os.path.join(directory,name) for name in os.listdir(directory) ]
+           new_names = [ os.path.join(directory,name) for name in sorted(os.listdir(directory)) ]
 
        self.names.extend( new_names )
 

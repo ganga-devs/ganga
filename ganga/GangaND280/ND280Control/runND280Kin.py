@@ -7,7 +7,7 @@
 Ganga module to execute RunAtmPitSim.exe from the atmPitSim package.
 """
 
-from GangaCore.GPIDev.Adapters.IApplication import IApplication
+from GangaCore.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaCore.GPIDev.Schema import *
 
@@ -24,7 +24,7 @@ shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']
 
 import ND280Configs
 
-class runND280Kin(IApplication):
+class runND280Kin(IPrepareApp):
     """
     runND280Kin application running RunAtmPitSim.exe from the atmPitSim package
     for generating .kin files.
