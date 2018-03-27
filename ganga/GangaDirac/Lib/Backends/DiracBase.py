@@ -198,11 +198,8 @@ class DiracBase(IBackend):
         try:
             result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True)
             #First check if the submission raised an exception. The returned dict should have entries of length 2 in case of success
-            if not len(result[result.keys()[0]]) == 2:     
-                raise GangaDiracError("Failure in job submission: %s" % result['Message'])
-            #Check that every subjob got submitted ok
-            if len(result.keys()) != lenSubjobs:
-                raise BackendError("Some subjobs failed to submit! Check their status!")
+#            if not len(result[result.keys()[0]]) == 2:     
+#                raise GangaDiracError("Failure in job submission: %s" % result['Message'])
 
         except GangaDiracError as err:
             err_msg = 'Error submitting job to Dirac: %s' % str(err)
@@ -229,6 +226,10 @@ class DiracBase(IBackend):
             j.updateStatus('submitted')
             j.time.timenow('submitted')
             stripProxy(j.info).increment()
+
+        #Check that every subjob got submitted ok
+        if len(result.keys()) != lenSubjobs:
+            raise GangaDiracError("Some subjobs failed to submit! Check their status!")
 
         return 1 
 
@@ -266,18 +267,15 @@ class DiracBase(IBackend):
         # Loop over the processes and create the master script for each one.
         for i in range(0,int(nProcessToUse)):
             nSubjobs = 0
-            #Define a submission exception:
-            masterScript = 'class SubmissionException(Exception):\n    def __str__(self):\n        return "Error in job submission"\n'
             #The Dirac IDs are stored in a dict so create it at the start of the script
-            masterScript += 'resultdict = {}\n'
-            masterScript += 'try:\n'
+            masterScript = 'resultdict = {}\n'
             for sc, sj in zip(subjobconfigs[i*nPerProcess:(i+1)*nPerProcess], rjobs[i*nPerProcess:(i+1)*nPerProcess]):
                 #Add in the script for each subjob
                 sj.updateStatus('submitting')
                 fqid = sj.getFQID('.')
                 #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
                 sjScript = sj.backend._job_script(sc, master_input_sandbox)
-                sjScript = sjScript.replace("output(result)", "if isinstance(result, dict) and 'Value' in result:\n\tresultdict.update({sjNo : result['Value']})\nelse:\n\traise SubmissionException")
+                sjScript = sjScript.replace("output(result)", "if isinstance(result, dict) and 'Value' in result:\nresultdict.update({sjNo : result['Value']})\nelse:\nraise SubmissionException")
                 if nSubjobs == 0:
                     sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
                 if nSubjobs !=0 :
@@ -285,12 +283,9 @@ class DiracBase(IBackend):
                     sjScript = re.sub("from .*DIRAC\.Interfaces\.API.Dirac.* import Dirac.*","",sjScript)
                     sjScript = re.sub("from .*DIRAC\.Interfaces\.API\..*Job import .*Job","",sjScript)
                     sjScript = re.sub("dirac = Dirac.*\(\)","",sjScript)
-                    masterScript += "\n\tsjNo=\'%s\'" % fqid
-                sjScript = sjScript.replace('\n', '\n\t') 
+                    masterScript += "\n\jNo=\'%s\'" % fqid
                 masterScript += sjScript
                 nSubjobs +=1
-            #Catch the exception and deal with it
-            masterScript +='\nexcept SubmissionException:\n\tresultdict = result'
             #Return the dict of job numbers and Dirac IDs          
             masterScript += '\noutput(resultdict)\n'
             dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(),'dirac-script-%s.py') % i
@@ -589,12 +584,12 @@ class DiracBase(IBackend):
                 continue
 
             #First pick out the imports etc at the start
-            newScript =  re.compile(r'%s.*?%s' % ('class SubmissionException\(Exception\)\:',"dirac = Dirac.*?\(\)\n"),re.S).search(script).group(0)
+            newScript =  re.compile(r'%s.*?%s' % ('resultdict = {}',"dirac = Dirac.*?\(\)\n"),re.S).search(script).group(0)
             newScript += '\n'
             #Now pick out the job part
-            start = "\tsjNo='%s'" % j.fqid
-            newScript += re.compile(r'%s.*?%s' % (start,"\t\traise SubmissionException"),re.S).search(script).group(0)
-            newScript += '\nexcept SubmissionException:\n\tresultdict = result\noutput(resultdict)'
+            start = "sjNo='%s'" % j.fqid
+            newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Value'\]}\)"),re.S).search(script).group(0)
+            newScript += '\noutput(resultdict)'
             
             # Modify the new script with the user settings
 
@@ -609,11 +604,11 @@ class DiracBase(IBackend):
                 else:
                     _key = key
                 if type(value) is str:
-                    template = '\t%s.set%s("%s")\n'
+                    template = '%s.set%s("%s")\n'
                 else:
-                    template = '\t%s.set%s(%s)\n'
+                    template = '%s.set%s(%s)\n'
                 new_script += template % (job_ident, str(_key), str(value))
-            new_script += newScript[newScript.find('\t# user settings -->'):]
+            new_script += newScript[newScript.find('# user settings -->'):]
 
             # Save new script
             new_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
