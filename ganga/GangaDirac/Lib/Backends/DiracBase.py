@@ -606,7 +606,11 @@ class DiracBase(IBackend):
             newScript += '\n'
             #Now pick out the job part
             start = "sjNo='%s'" % j.fqid
-            newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Value'\]}\)"),re.S).search(script).group(0)
+            #Check if the original script included the check for the dirac output
+            if "result[\'Message\']" in script:
+                newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Message'\]}\)"),re.S).search(script).group(0)
+            else:
+                newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Value'\]}\)"),re.S).search(script).group(0)
             newScript += '\noutput(resultdict)'
             
             # Modify the new script with the user settings
