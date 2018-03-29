@@ -419,7 +419,8 @@ class GaudiExec(IPrepareApp):
         # but this requires a build to have been run before we can use this command reliably... so we're just going to be explicit
 
         if not path.isfile(path.join(self.directory, 'build.%s' %self.platform, 'run')):
-            rc, stdout, stderr = _exec_cmd('make', self.directory)
+            initialCommand = 'export CMTCONFIG=%s && source LbLogin.sh --cmtconfig=%s && make' % (self.platform, self.platform)
+            rc, stdout, stderr = _exec_cmd(initialCommand, self.directory)
             if rc != 0:
                 logger.error("Failed to perform initial make on a Cmake based project")
                 logger.error("This is required so that the './run' target exists and is callable within the project")
