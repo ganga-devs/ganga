@@ -441,10 +441,6 @@ def _getLogger(name=None, modulename=None):
 
         _allLoggers[name] = logger
 
-        if error_handler is not None:
-            _set_formatter(error_handler, default_formatter)
-            logger.addHandler(error_handler)
-
         if name in config:
             thisConfig = config[name]
             _set_log_level(logger, thisConfig)
