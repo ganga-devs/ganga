@@ -387,6 +387,10 @@ class Descriptor(object):
         """
         item = obj._schema[name]
 
+        from GangaCore.GPIDev.Base.Proxy import isProxy, stripProxy
+        if isProxy(v):
+            v = stripProxy(v)
+
         if v is None:
             if item.hasProperty('category'):
                 assertion = item['optional'] and (item['category'] != 'internal')
@@ -407,10 +411,11 @@ class Descriptor(object):
                 new_dict[key] = Descriptor.cloneObject(item, obj, name)
             return new_dict
         else:
-            if not isinstance(v, Node) and isinstance(v, (list, tuple)):
+            from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
+            if not isinstance(v, Node) and isinstance(v, (list, tuple, GangaList)):
                 try:
                     # must import here as will fail at the top
-                    from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
+#                    from GangaCore.GPIDev.Lib.GangaList.GangaList import GangaList
                     new_v = GangaList()
                 except ImportError:
                     new_v = []

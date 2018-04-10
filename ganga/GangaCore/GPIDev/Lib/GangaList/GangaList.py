@@ -241,9 +241,9 @@ class GangaList(GangaObject):
 
     def getCategory(self):
         """Returns a list of categories for the objects in the list. Returns [] for an empty list."""
-
+        from GangaCore.Utility.util import unique
         def return_cat(elem):
-            if hasattr(elem, 'category'):
+            if hasattr(elem, '_category'):
                 return elem._category
             else:
                 return type(elem)
