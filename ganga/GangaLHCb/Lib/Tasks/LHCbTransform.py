@@ -12,6 +12,7 @@ from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaCore.Utility.logging import getLogger
+from GangaCore.GPIDev.Base.Proxy import isProxy, stripProxy
 
 logger = getLogger()
 
@@ -227,7 +228,7 @@ class LHCbTransform(ITransform):
         for id, query in enumerate(self.queries):
 
             # Get the latest dataset
-            latest_dataset = query.getDataset()
+            latest_dataset = stripProxy(query.getDataset())
 
             # Compare to previous inputdata, get new and removed
             logger.info(

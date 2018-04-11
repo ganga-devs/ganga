@@ -507,12 +507,6 @@ class Descriptor(object):
 
         _set_name = _getName(self)
 
-        from GangaCore.GPIDev.Base.Proxy import isProxy, stripProxy
-        if isProxy(val):
-            val = stripProxy(val)
-        if isProxy(obj):
-            obj = stripProxy(obj)
-
         if isinstance(val, str):
             if val:
                 from GangaCore.GPIDev.Base.Proxy import stripProxy, runtimeEvalString
@@ -567,7 +561,6 @@ class Descriptor(object):
 
         item = obj._schema[name]
 
-
         ## If the item has been defined as a sequence great, let's continue!
         if item['sequence']:
             # These objects are lists
@@ -601,6 +594,7 @@ class Descriptor(object):
 
         if isinstance(new_val, Node) and new_val._getParent() is not obj:
             new_val._setParent(obj)
+
         return new_val
 
     @staticmethod
@@ -613,6 +607,7 @@ class Descriptor(object):
             v (unknown): Object we want a new copy of
             extra_args (tuple): Contains the name of the attribute being copied and the object which owns the object being copied
         """
+
         name=extra_args[0]
         obj=extra_args[1]
         if isinstance(v, (list, tuple, GangaList)):
