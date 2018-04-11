@@ -5,7 +5,7 @@ from GangaCore.GPIDev.Base.Proxy import isProxy, addProxy, isType, getProxyAttr,
 from GangaCore.GPIDev.Base.VPrinter import full_print, summary_print
 from GangaCore.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
 from GangaCore.GPIDev.Base.Objects import synchronised
-from GangaCore.Utility.util import containsGangaObjects
+from GangaCore.Utility.util import containsGangaObjects, unique
 import copy
 import sys
 from functools import partial
@@ -241,7 +241,6 @@ class GangaList(GangaObject):
 
     def getCategory(self):
         """Returns a list of categories for the objects in the list. Returns [] for an empty list."""
-        from GangaCore.Utility.util import unique
         def return_cat(elem):
             if hasattr(elem, '_category'):
                 return elem._category
