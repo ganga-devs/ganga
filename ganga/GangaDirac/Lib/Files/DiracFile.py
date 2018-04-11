@@ -899,7 +899,7 @@ for f in glob.glob('###NAME_PATTERN###'):
                 lfn_folder = os.path.join('GangaFiles_%s' % this_date)
             lfn_base = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), lfn_folder)
         else:
-            lfn_base = oa.path.join(DiracFile.diracLFNBase(self.credential_requirements), self.remoteDir)
+            lfn_base = os.path.join(DiracFile.diracLFNBase(self.credential_requirements), self.remoteDir)
 
 
         for this_file in outputFiles:
