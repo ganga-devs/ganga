@@ -12,7 +12,7 @@ from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaCore.Utility.logging import getLogger
-from GangaCore.GPIDev.Base.Proxy import isProxy, stripProxy
+from GangaCore.GPIDev.Base.Proxy import stripProxy
 
 logger = getLogger()
 
