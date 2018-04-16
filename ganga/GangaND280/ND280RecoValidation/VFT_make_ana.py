@@ -80,7 +80,7 @@ class VFT_make_ana(IPrepareApp):
         
         self.ana_useropt = convertIntToStringArgs(self.ana_useropt)
         args = []
-        args.append('$RECONUTILSROOT/macros/grtf_VFT/make_ana.py')
+        args.append('${ND280ANALYSISTOOLSROOT:-${RECONUTILSROOT}}/macros/grtf_VFT/make_ana.py')
 
         job = self.getJobObject()
 
