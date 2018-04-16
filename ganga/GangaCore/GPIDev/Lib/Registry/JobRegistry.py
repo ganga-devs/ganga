@@ -9,7 +9,7 @@ from __future__ import absolute_import, print_function
 from GangaCore.Utility.external.OrderedDict import OrderedDict as oDict
 
 from GangaCore.Core.exceptions import GangaException
-from GangaCore.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher
+from GangaCore.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError, RegistryFlusher, RegistryLockError
 
 from GangaCore.GPIDev.Base.Proxy import stripProxy, isType
 
