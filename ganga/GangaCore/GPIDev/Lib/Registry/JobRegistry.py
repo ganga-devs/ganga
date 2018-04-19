@@ -129,19 +129,23 @@ class JobRegistry(Registry):
                 except RegistryLockError:
                     logger.debug("Failed to load job, it's potentially being used by another ganga sesion")
                     continue
-                if v.subjobs:
-                    haveKilled = False
-                    for sj in v.subjobs:
-                        if _shouldAutoKill(sj):
-                            _killJob(sj)
-                            haveKilled = True
-                    if not haveKilled:
-                        if v.status == 'submitting':
-                            v.updateStatus("submitted")
-                        logger.warning("Job status re-updated after potential force-close")
-                        v.updateMasterJobStatus()
-                else:
-                    _killJob(v)
+                try:
+                    if v.subjobs:
+                        haveKilled = False
+                        for sj in v.subjobs:
+                            if _shouldAutoKill(sj):
+                                _killJob(sj)
+                                haveKilled = True
+                        if not haveKilled:
+                            if v.status == 'submitting':
+                                v.updateStatus("submitted")
+                            logger.warning("Job status re-updated after potential force-close")
+                            v.updateMasterJobStatus()
+                    else:
+                        _killJob(v)
+                except RegistryLockError as err:
+                    logger.error(err)
+                    continue
             elif _shouldAutoCheck(v):
                 if num_checked is 5:
                     continue
