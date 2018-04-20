@@ -11,8 +11,8 @@ ganga/ganga/GangaCore
 * Warning messages cached. #1230
 * Logging of execute function improved. #1224
 * Improved handling of ctrl-c input from users. #1194
-* New check of the repository when ganga is started. The status of the last 5 jobs are checked for being in a
-bad state (submitting) and forces them to failed. #1193, #1237, #1240
+* New possible check of the repository when ganga is started. The status of the last 5 jobs are checked for being in a
+bad state (submitting) and forces them to failed. To enable set DisableLoadCheck=False in .gangarc #1193, #1237, #1240
 
 --------------------------------------------------------------------------------------------------------------
 ganga/ganga/GangaDirac
