@@ -1,0 +1,45 @@
+**************************************************************************************************************
+7.0.2 (2018/04/20)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaCore
+--------------------------------------------------------------------------------------------------------------
+* Bugfix for Condor submission when copying files to WN. #1241
+* Logging error handler removed to prevent duplicate error logs. #1247
+* should_init on GangaObjects True by default. #1216
+* Warning messages cached. #1230
+* Logging of execute function improved. #1224
+* Improved handling of ctrl-c input from users. #1194
+* New possible check of the repository when ganga is started. The status of the last 5 jobs are checked for being in a
+bad state (submitting) and forces them to failed. To enable set DisableLoadCheck=False in .gangarc #1193, #1237, #1240
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Error messages in Dirac scripts from failed submission now returned to user. #1243
+* Bugfix for DiracFile setting remoteDir. #1241
+* Added kwarg validTime to DiracProxy. This sets the requested time of validity of the credential on
+creation. Time must be of format HH:MM . Defaults to 24h. #1236
+* Bugfix to auto resubmission. #1234
+* Bugfix to splitting for files that have no valid replicas. #1225
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Initial cmake for projects created with prepareGaudiExec() now executed in application environment. #1246
+* Default GaudiExec() platform updated to x86_64-slc6-gcc62-opt. #1246
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaND280
+--------------------------------------------------------------------------------------------------------------
+* Location of grtf macros altered. #1249 #1253
+* Applications use IPrepareApp. New modules added. #1226
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fix for useAthenaPackages. #1227
+* Atlas.ini updated. #1228
+
+**************************************************************************************************************
