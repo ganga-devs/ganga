@@ -80,7 +80,7 @@ class VFT_make_ana(IPrepareApp):
         
         self.ana_useropt = convertIntToStringArgs(self.ana_useropt)
         args = []
-        args.append('$RECONUTILSROOT/macros/grtf_VFT/make_ana.py')
+        args.append('${ND280ANALYSISTOOLSROOT:-${RECONUTILSROOT}}/macros/grtf_VFT/make_ana.py')
 
         job = self.getJobObject()
 
@@ -117,7 +117,7 @@ class VFT_make_ana(IPrepareApp):
 
         if self.run_pdf:
           args.append('&&')
-          args.append('$ND280ANALYSISTOOLSROOT/macros/grtf/pdfgen/make_pdf.py')
+          args.append('${ND280ANALYSISTOOLSROOT:-${RECONUTILSROOT}}/macros/grtf/pdfgen/make_pdf.py')
 
           if not 'ana_output' in [self.pdf_rdp, self.pdf_mcp, self.pdf_oldrdp, self.pdf_oldmcp]:
             raise ApplicationConfigurationError('None of the pdf inputs is set to use the make_ana.py output. Please set "pdf_rdp", "pdf_mcp", "pdf_oldrdp", or "pdf_oldmcp" to the value "ana_output"')

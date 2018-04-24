@@ -200,8 +200,10 @@ class DiracBase(IBackend):
         self.statusInfo = ''
         j.been_queued = False
         dirac_cmd = """execfile(\'%s\')""" % myscript
+        submitFailures = {}
         try:
             result = execute(dirac_cmd, cred_req=self.credential_requirements, return_raw_dict = True)
+
         except GangaDiracError as err:
             err_msg = 'Error submitting job to Dirac: %s' % str(err)
             logger.error(err_msg)
@@ -210,26 +212,47 @@ class DiracBase(IBackend):
             with open(myscript, 'r') as file_in:
                 logger.error("%s" % file_in.read())
             logger.error("\n====\n")
+            j.updateStatus('failed')
             raise BackendError('Dirac', err_msg)
+            return 0
 
         #Now put the list of Dirac IDs into the subjobs and get them monitored:
         if len(j.subjobs)>0:
             for jobNo in result.keys():
                 sjNo = jobNo.split('.')[1]
-                j.subjobs[int(sjNo)].backend.id = result[jobNo]
-                j.subjobs[int(sjNo)].updateStatus('submitted')
-                j.time.timenow('submitted')
-                stripProxy(j.subjobs[int(sjNo)].info).increment()
+                #If we get an int we have a DIRAC ID so job submitted
+                if isinstance(result[jobNo], int):
+                    j.subjobs[int(sjNo)].backend.id = result[jobNo]
+                    j.subjobs[int(sjNo)].updateStatus('submitted')
+                    j.time.timenow('submitted')
+                    stripProxy(j.subjobs[int(sjNo)].info).increment()
+                #If we get a string we have an error message. Add to the list of failures
+                elif isinstance(result[jobNo], str):
+                    j.subjobs[int(sjNo)].updateStatus('failed')
+                    submitFailures.update({jobNo : result[jobNo]})
+                #If we have neither int or str then something disastrous happened
+                else:
+                    j.subjobs[int(sjNo)].updateStatus('failed')
+                    submitFailures.update({jobNo : 'DIRAC error!'})
         else:
-            j.backend.id = result[result.keys()[0]]
-            j.updateStatus('submitted')
-            j.time.timenow('submitted')
-            stripProxy(j.info).increment()
-        #Check that everything got submitted ok
-        if len(result.keys()) != lenSubjobs:
-            raise BackendError("Some subjobs failed to submit! Check their status!")
-            if not keep_going:
-                return 0
+            if isinstance(result[result.keys()[0]], int):
+                j.backend.id = result[result.keys()[0]]
+                j.updateStatus('submitted')
+                j.time.timenow('submitted')
+                stripProxy(j.info).increment()
+            elif isinstance(result[result.keys()[0]], str):
+                j.updateStatus('failed')
+                submitFailures.update({result.keys()[0] : result[result.keys()[0]]})
+            else:
+                j.updateStatus('failed')
+                submitFailures.update({result.keys()[0] : 'DIRAC error!'})
+
+        #Check that every subjob got submitted ok
+        if len(submitFailures.keys()) > 0:
+            for sjNo in submitFailures.keys():
+                logger.error('Job submission failed for job %s : %s' % (sjNo, submitFailures[sjNo]))
+            raise GangaDiracError("Some subjobs failed to submit! Check their status!")
+            return 0
 
         return 1 
 
@@ -275,7 +298,7 @@ class DiracBase(IBackend):
                 fqid = sj.getFQID('.')
                 #Change the output of the job script for our own ends. This is a bit of a hack but it saves having to rewrite every RTHandler
                 sjScript = sj.backend._job_script(sc, master_input_sandbox)
-                sjScript = sjScript.replace("output(result)", "resultdict.update({sjNo : result['Value']})")
+                sjScript = sjScript.replace("output(result)", "if isinstance(result, dict) and 'Value' in result:\n\tresultdict.update({sjNo : result['Value']})\nelse:\n\tresultdict.update({sjNo : result['Message']})")
                 if nSubjobs == 0:
                     sjScript = re.sub("(dirac = Dirac.*\(\))",r"\1\nsjNo='%s'\n" % fqid, sjScript)
                 if nSubjobs !=0 :
@@ -286,7 +309,7 @@ class DiracBase(IBackend):
                     masterScript += "\nsjNo=\'%s\'" % fqid
                 masterScript += sjScript
                 nSubjobs +=1
-            #Return the dict of job numbers and Dirac IDs
+            #Return the dict of job numbers and Dirac IDs          
             masterScript += '\noutput(resultdict)\n'
             dirac_script_filename = os.path.join(self.getJobObject().getInputWorkspace().getPath(),'dirac-script-%s.py') % i
             with open(dirac_script_filename, 'w') as f:
@@ -588,7 +611,11 @@ class DiracBase(IBackend):
             newScript += '\n'
             #Now pick out the job part
             start = "sjNo='%s'" % j.fqid
-            newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Value'\]}\)"),re.S).search(script).group(0)
+            #Check if the original script included the check for the dirac output
+            if "result[\'Message\']" in script:
+                newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Message'\]}\)"),re.S).search(script).group(0)
+            else:
+                newScript += re.compile(r'%s.*?%s' % (start,"resultdict.update\({sjNo : result\['Value'\]}\)"),re.S).search(script).group(0)
             newScript += '\noutput(resultdict)'
             
             # Modify the new script with the user settings
