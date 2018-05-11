@@ -237,7 +237,7 @@ class GaudiExec(IPrepareApp):
                     # NB safe to put it here as should have expressly setup a path for this job by now.
                     # We cannot _not_ place this here based upon the backend.
                     # Always have to put it here regardless of if we're on DIRAC or Local so prepared job can be copied.
-                    opts_file.get(localPath=self.getSharedPath())
+                    opts_file.get(targetPath=self.getSharedPath())
                 else:
                     raise ApplicationConfigurationError("Opts file type %s not yet supported please contact Ganga devs if you require this support" % getName(opts_file))
             self.post_prepare()
