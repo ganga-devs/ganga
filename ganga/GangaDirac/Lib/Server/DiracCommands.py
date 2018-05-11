@@ -405,3 +405,62 @@ def checkSEStatus(se, access = 'Write'):
     '''
     result = dirac.checkSEAccess(se, access)
     return result
+
+@diracCommand
+def listFiles(baseDir, days):
+
+    from DIRAC.Resources.Catalog.FileCatalog import FileCatalog
+    fc = FileCatalog()
+
+    withMetaData = False
+    if days:
+        withMetaData = True    
+
+    from datetime import datetime, timedelta
+
+    def isOlderThan(cTimeStruct, days):
+        timeDelta = timedelta( days = days )
+        maxCTime = datetime.utcnow() - timeDelta
+        if cTimeStruct < maxCTime:
+            return True
+        return False
+
+    baseDir = baseDir.rstrip('/')
+    print ("Will search for files in %s" % baseDir)
+
+    activeDirs = [baseDir]
+
+    allFiles = []
+    emptyDirs = []
+
+    while len(activeDirs) > 0:
+        currentDir = activeDirs.pop()	
+        res = fc.listDirectory(currentDir, withMetaData, timeout = 360)
+        if not res['OK']:
+            raise Exception("Error retrieving directory contents", "%s %s" % ( currentDir, res['Message'] ) )
+        elif currentDir in res['Value']['Failed']:
+            raise Exception("Error retrieving directory contents", "%s %s" % ( currentDir, res['Value']['Failed'][currentDir] ) )
+        else:
+            dirContents = res['Value']['Successful'][currentDir]
+            subdirs = dirContents['SubDirs']
+            files = dirContents['Files']
+            if not subdirs and not files:
+                emptyDirs.append( currentDir )
+                print ('%s: empty directory' % currentDir)
+            else:
+                for subdir in sorted( subdirs, reverse=True):
+                    if (not withMetaData) or isOlderThan(subdirs[subdir]['CreationDate'], days):
+                        activeDirs.append(subdir)
+                for filename in sorted(files):
+                    fileOK = False
+                    if (not withMetaData) or isOlderThan(files[filename]['MetaData']['CreationDate'], days):
+                        fileOK = True
+		    if not fileOK:
+                        files.pop(filename)
+                allFiles += sorted(files)
+
+                if len( files ) or len( subdirs ):
+                    print ("%s: %d files, %d sub-directories" % ( currentDir, len(files), len(subdirs) ) )
+
+    return allFiles
+
