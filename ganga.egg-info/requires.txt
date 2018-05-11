@@ -1,0 +1,5 @@
+ipython==1.2.1
+httplib2>=0.8
+python-gflags>=2.0
+google-api-python-client>=1.1
+stomp.py>=3.1.7
