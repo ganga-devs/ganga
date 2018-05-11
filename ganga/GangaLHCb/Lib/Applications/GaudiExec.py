@@ -1,5 +1,4 @@
-
-s import rename, path, makedirs, chdir, unlink, listdir, chmod
+from os import rename, path, makedirs, chdir, unlink, listdir, chmod
 from os import stat as os_stat
 import random
 import tempfile
