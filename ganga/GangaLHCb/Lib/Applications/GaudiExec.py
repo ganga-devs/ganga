@@ -210,10 +210,6 @@ class GaudiExec(IPrepareApp):
         Args:
             force (bool): Forces a prepare to be run
         """
-        #edit
-        ddb, conddb = execute('getDDBtags("{0}")'.format('/lhcb/MC/2016/ALLSTREAMS.DST/00072104/0000/00072104_00000351_7.AllStreams.dst'))
-        self.extraOpts += "\nDaVinci().DDDBtag = '" + ddb + "'\n"
-
         if (self.is_prepared is not None) and not force:
             raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % getName(self))
 
@@ -315,6 +311,9 @@ class GaudiExec(IPrepareApp):
             # Add the extra opts file to the job
             tinfo = tarfile.TarInfo(extra_opts_file)
             tinfo.mtime = time.time()
+	    ddb, conddb = execute('getDDBtags("{0}")'.format(job.inputdata[0].lfn))
+	    self.extraOpts += '"'+'DaVinci().DDDBtag = ' + "'" + ddb + "'" + ';"' 
+	    self.extraOpts += '"' + 'DaVinci().CondDBtag = ' + "'" + conddb + "'" + ';"' 
             fileobj = StringIO(self.extraOpts)
             tinfo.size = fileobj.len
             tar_file.addfile(tinfo, fileobj)
