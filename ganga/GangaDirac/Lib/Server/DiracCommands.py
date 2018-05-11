@@ -77,31 +77,6 @@ def getAccessURL(lfn, SE, protocol=False):
     ''' Return the access URL for the given LFN, storage element and protocol. The protocol should be in the form of a list '''
     return dirac.getAccessURL(lfn, SE, False, protocol)
 
-#edit
-@diracCommand
-def getDDBtags( lfn ):
-    from LHCbDIRAC.BookkeepingSystem.Client.BookkeepingClient import BookkeepingClient
-    import types
-    bk = BookkeepingClient()
-    prod = lfn.split('/')[5]
-    res = bk.getProductionInformations( prod )
-    ddb = ''
-    conddb = ''
-    if res['OK']:
-        val = res['Value']
-        #print "Production Info: "
-	steps = val['Steps']
-	last_step = steps[-1]
-	ddb = last_step[4]
-	conddb = last_step[5]
-	#print 'DDB    : {0}'.format(ddb)
-       # print 'CONDDB : {0}'.format(conddb)
-
-	#for i in steps:
-	#	print 'DDB : {0}'.format(i[4])
-	#	print 'CONDDB : {0}'.format(i[5])
-	return ddb, conddb
-
 @diracCommand
 def getFile(lfns, destDir=''):
     ''' Put the physical file behind the LFN in the destDir path'''
@@ -429,3 +404,26 @@ def checkSEStatus(se, access = 'Write'):
     '''
     result = dirac.checkSEAccess(se, access)
     return result
+
+@diracCommand
+def getDDBtags( lfn ):
+    ''' returns the DDB and CONDDB tags of the last 
+	production step for a given LFN 
+    '''
+    from LHCbDIRAC.BookkeepingSystem.Client.BookkeepingClient import BookkeepingClient
+    import types
+    bk = BookkeepingClient()
+    prod = long(lfn.split('/')[5])
+    res = bk.getProductionInformations( prod )
+    ddb = ''
+    conddb = ''
+    if res['OK']:
+        val = res['Value']
+	steps = val['Steps']
+	last_step = steps[-1]
+	ddb = last_step[4]
+	conddb = last_step[5]
+	return ddb, conddb
+    
+
+
