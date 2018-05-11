@@ -3,6 +3,9 @@
 from copy import deepcopy
 import tempfile
 import fnmatch
+import itertools
+
+
 from GangaCore.Core.exceptions import GangaException
 from GangaCore.GPIDev.Lib.Dataset import GangaDataset
 from GangaCore.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
@@ -40,6 +43,13 @@ class LHCbDataset_custom(GangaDataset):
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
     schema['files'] = GangaFileItem(defvalue=[], typelist=['str', 'GangaCore.GPIDev.Adapters.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
+    
+    #the idea is to change the files property to names and prefix and then make a @attribute called files that actually generates the list of dirac files fro mthe stored names.
+    schema['_names'] = SimpleItem(defvalue=None, typelist=['type(None)', 'list'], doc=docstr)
+    schema['_prefix']  = SimpleItem(defvalue='', doc=docstr)
+    	
+	
+
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0, doc=docstr)
     docstr = 'Use contents of file rather than generating catalog.'
@@ -50,9 +60,6 @@ class LHCbDataset_custom(GangaDataset):
     schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
 
 
-    #NEW OBJECTS
-    schema['_names'] = SimpleItem(defvalue=None, typelist=['str','type(None)'], doc=docstr)
-    schema['_prefix']  = SimpleItem(defvalue='', doc=docstr)
     
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
@@ -62,18 +69,14 @@ class LHCbDataset_custom(GangaDataset):
                       'getLFNs', 'getFileNames', 'getFullFileNames',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata',
-                      'isEmpty', 'hasPFNs', 'getPFNs']  # ,'pop']
+                      'isEmpty', 'hasPFNs', 'getPFNs', 'files']  # ,'pop']
     
-    def __init__(self, files=None, persistency=None, depth=0, fromRef=False, _names=None, _prefix=''):
-        super(LHCbDataset_custom, self).__init__()
+    def __init__(self, files=None, persistency=None, depth=0, fromRef=False, dataset=None):
+        super(LHCbDataset_custom, self).__init__()	
 
-	if self._names is None:
-	    self._names = []
-	    self._prefix= ''
-	    
-	
-	
 
+	if dataset is not None:
+	    self.files2 = dataset.files2  
 
         if files is None:
             files = []
@@ -468,5 +471,85 @@ class LHCbDataset_custom(GangaDataset):
     #        self.removeFile(file)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
+
+    
+    @property 
+    def files2(self):
+
+	from GangaDirac.Lib.Files.DiracFile import DiracFile
+
+	dataset = GangaList()
+	for name in self._names:
+	    Dfile = DiracFile()
+	    Dfile.lfn=self._prefix+name
+	    dataset.append(Dfile)
+	return dataset
+
+
+
+    @files2.setter
+    def files2(self, fullnames):
+	
+	#singe string case
+	if isinstance(fullnames, str):
+	    self.names=fullnames
+	    self.prefix= ''
+
+	#list of strings case
+	if isinstance(fullnames, list):
+ 	    if all(isinstance(elem, str) for elem in fullnames):	    
+		
+		prefix = ""
+		end=False
+		for i,char in enumerate(fullnames[0]):
+		    for x in fullnames:
+		    	if x[i] != char:
+			    end=True
+			    break
+		    if end:
+			break
+		    prefix=prefix+char
+	 
+		self._prefix=prefix
+	
+		stripped_names=[]
+		for name in fullnames:
+		    stripped_names.append(name.replace(self._prefix,''))
+
+		self._names = stripped_names
+
+	#LHCb dataset case
+	elif isinstance(fullnames,LHCbDataset_custom):
+	    self.names = fullnames._names
+	    self.prefix = fullnames._prefix
+
+	#GangaList Case
+	elif isinstance(fullnames, GangaList):
+	    def isFileTest(_file):
+		#return isinstance(_file, IGanfaFile)
+		return True
+	    areFiles = all([isFileTest(f) for f in fullnames._list])
+	    if areFiles:
+		names=[]
+		for f in fullnames:
+		    names.append(f.lfn)
+		self.files2 = names
+
+	else:
+	    raise GangaException("Unknown object passed to LHCbDataset_custom")
+
+		
+	
+
+
+	
+
+
+
+	
+        
+	
+
 
 
