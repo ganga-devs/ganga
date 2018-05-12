@@ -26,7 +26,7 @@ from GangaCore.Utility.files import expandfilename, fullpath
 
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase import DiracBase
-from GangaDirac.Lib.Utilities.DiracUtilities import execute #edit
+from GangaDirac.Lib.Utilities.DiracUtilities import execute 
 
 from .GaudiExecUtils import getGaudiExecInputData, _exec_cmd, getTimestampContent, gaudiPythonWrapper
 
@@ -135,7 +135,6 @@ class GaudiExec(IPrepareApp):
     merge the summary.xml files using the Gaudi XML merging script for each subjob to create the metadata for the whole job.
 
     """
-    #edit
     _schema = Schema(Version(1, 0), {
         # Options created for constructing/submitting this app
         'directory':    SimpleItem(defvalue='', typelist=[None, str], comparable=1, doc='A path to the project that you\'re wanting to run.'),
@@ -144,7 +143,7 @@ class GaudiExec(IPrepareApp):
         'jobScriptArchive': GangaFileItem(defvalue=None, hidden=1, copyable=0, doc='This file stores the uploaded scripts which are generated fron this app to run on the WN'),
         'useGaudiRun':  SimpleItem(defvalue=True, doc='Should \'options\' be run as "python options.py data.py" rather than "gaudirun.py options.py data.py"'),
         'platform' :    SimpleItem(defvalue='x86_64-slc6-gcc62-opt', typelist=[str], doc='Platform the application was built for'),
-        'autoDBtags'  :    SimpleItem(defvalue=False, doc='Automatically set database tags for MC'),
+        'autoDBtags' :  SimpleItem(defvalue=False, doc='Automatically set database tags for MC'),
         'extraOpts':    SimpleItem(defvalue='', typelist=[str], doc='An additional string which is to be added to \'options\' when submitting the job'),
         'extraArgs':    SimpleItem(defvalue=[], typelist=[str], sequence=1, doc='Extra runtime arguments which are passed to the code running on the WN'),
         'getMetadata':  SimpleItem(defvalue=False, doc='Do you want to get the metadata from your jobs'),
@@ -311,9 +310,10 @@ class GaudiExec(IPrepareApp):
             # Add the extra opts file to the job
             tinfo = tarfile.TarInfo(extra_opts_file)
             tinfo.mtime = time.time()
-	    ddb, conddb = execute('getDDBtags("{0}")'.format(job.inputdata[0].lfn))
-	    self.extraOpts += '"'+'DaVinci().DDDBtag = ' + "'" + ddb + "'" + ';"' 
-	    self.extraOpts += '"' + 'DaVinci().CondDBtag = ' + "'" + conddb + "'" + ';"' 
+	    if self.autoDBtags:
+		ddb, conddb = execute('getDDBtags("{0}")'.format(job.inputdata[0].lfn)) # take the tags only from the first file
+		self.extraOpts += '"' + 'DaVinci().DDDBtag = '   + "'" + ddb    + "'" + ';"' 
+		self.extraOpts += '"' + 'DaVinci().CondDBtag = ' + "'" + conddb + "'" + ';"' 
             fileobj = StringIO(self.extraOpts)
             tinfo.size = fileobj.len
             tar_file.addfile(tinfo, fileobj)
