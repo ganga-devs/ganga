@@ -7,7 +7,6 @@ import random
 import threading
 import uuid
 import shutil
-from GangaCore.GPIDev.Base.Proxy import addProxy, stripProxy, isType
 from GangaCore.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException, GangaFileError
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -537,9 +536,9 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         inputsandbox += ['LFN:'+app.uploadedInput.lfn]
         inputsandbox += ['LFN:'+app.jobScriptArchive.lfn]
 
-        logger.info("Input Sand: %s" % inputsandbox)
+        logger.debug("Input Sand: %s" % inputsandbox)
 
-        logger.info("input_data: %s" % input_data)
+        logger.debug("input_data: %s" % input_data)
 
         outputfiles = [this_file for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
