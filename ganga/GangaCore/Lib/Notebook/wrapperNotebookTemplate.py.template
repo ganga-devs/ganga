@@ -12,7 +12,7 @@ if __name__ == '__main__':
     print('Unique identifier : ','###UUID###')
     
     from IPython import nbformat
-    from IPython.nbconvert.preprocessors import ExecutePreprocessor
+    from nbconvert.preprocessors import ExecutePreprocessor
 
     files = os.listdir(os.getcwd())
 
