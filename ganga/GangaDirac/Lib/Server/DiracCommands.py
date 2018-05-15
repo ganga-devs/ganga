@@ -426,7 +426,6 @@ def listFiles(baseDir, days):
         return False
 
     baseDir = baseDir.rstrip('/')
-    print ("Will search for files in %s" % baseDir)
 
     activeDirs = [baseDir]
 
@@ -437,16 +436,15 @@ def listFiles(baseDir, days):
         currentDir = activeDirs.pop()	
         res = fc.listDirectory(currentDir, withMetaData, timeout = 360)
         if not res['OK']:
-            raise Exception("Error retrieving directory contents", "%s %s" % ( currentDir, res['Message'] ) )
+            return "Error retrieving directory contents", "%s %s" % ( currentDir, res['Message'] )
         elif currentDir in res['Value']['Failed']:
-            raise Exception("Error retrieving directory contents", "%s %s" % ( currentDir, res['Value']['Failed'][currentDir] ) )
+            return "Error retrieving directory contents", "%s %s" % ( currentDir, res['Value']['Failed'][currentDir] )
         else:
             dirContents = res['Value']['Successful'][currentDir]
             subdirs = dirContents['SubDirs']
             files = dirContents['Files']
             if not subdirs and not files:
                 emptyDirs.append( currentDir )
-                print ('%s: empty directory' % currentDir)
             else:
                 for subdir in sorted( subdirs, reverse=True):
                     if (not withMetaData) or isOlderThan(subdirs[subdir]['CreationDate'], days):
@@ -458,9 +456,6 @@ def listFiles(baseDir, days):
 		    if not fileOK:
                         files.pop(filename)
                 allFiles += sorted(files)
-
-                if len( files ) or len( subdirs ):
-                    print ("%s: %d files, %d sub-directories" % ( currentDir, len(files), len(subdirs) ) )
 
     return allFiles
 
