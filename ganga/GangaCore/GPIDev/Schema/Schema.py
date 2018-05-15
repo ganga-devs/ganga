@@ -556,7 +556,7 @@ class Item(object):
                     else:  # new value is not a dict
                         if val == []:
                             return
-                        raise TypeMismatchError('Attribute "%s" expects a dictionary. Found: "%s".' % (name, found))
+                        raise TypeMismatchError('Attribute "%s" expects a dictionary. Found: "%s".' % (name, type(val)))
                     return
                 else:  # a 'simple' (i.e. non-dictionary) non-sequence value
                     self.__check(valueTypeAllowed(val, validTypes), name, validTypes, val)
