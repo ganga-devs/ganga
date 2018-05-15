@@ -7,7 +7,6 @@ import random
 import threading
 import uuid
 import shutil
-
 from GangaCore.Core.exceptions import ApplicationConfigurationError, ApplicationPrepareError, GangaException, GangaFileError
 from GangaCore.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaCore.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -515,7 +514,7 @@ class GaudiExecDiracRTHandler(IRuntimeHandler):
         for file_ in job.inputfiles:
             if isinstance(file_, DiracFile):
                 inputsandbox += ['LFN:'+file_.lfn]
-            if isinstance(file_, LocalFile):
+            elif isinstance(file_, LocalFile):
                 if job.master is not None and file_ not in job.master.inputfiles:
                     shutil.copy(os.path.join(file_.localDir, file_.namePattern), app.getSharedPath())
                     inputsandbox += [os.path.join(app.getSharedPath(), file_.namePattern)]
