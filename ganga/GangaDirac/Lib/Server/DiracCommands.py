@@ -407,23 +407,16 @@ def checkSEStatus(se, access = 'Write'):
     return result
 
 @diracCommand
-def listFiles(baseDir, days):
+def listFiles(baseDir, td):
 
     from DIRAC.Resources.Catalog.FileCatalog import FileCatalog
     fc = FileCatalog()
 
     withMetaData = False
-    if days:
+    if td:
         withMetaData = True    
 
     from datetime import datetime, timedelta
-
-    def isOlderThan(cTimeStruct, days):
-        timeDelta = timedelta( days = days )
-        maxCTime = datetime.utcnow() - timeDelta
-        if cTimeStruct < maxCTime:
-            return True
-        return False
 
     baseDir = baseDir.rstrip('/')
 
@@ -447,11 +440,11 @@ def listFiles(baseDir, days):
                 emptyDirs.append( currentDir )
             else:
                 for subdir in sorted( subdirs, reverse=True):
-                    if (not withMetaData) or isOlderThan(subdirs[subdir]['CreationDate'], days):
+                    if (not withMetaData) or subdirs[subdir]['CreationDate'] < (datetime.utcnow() - td):
                         activeDirs.append(subdir)
                 for filename in sorted(files):
                     fileOK = False
-                    if (not withMetaData) or isOlderThan(files[filename]['MetaData']['CreationDate'], days):
+                    if (not withMetaData) or files[filename]['MetaData']['CreationDate'] < (datetime.utcnow() - td):
                         fileOK = True
 		    if not fileOK:
                         files.pop(filename)
