@@ -44,6 +44,7 @@ class ARC(IBackend):
         'exitcode_arc': SimpleItem(defvalue='', protected=1, copyable=0, doc='Middleware exit code'),
         'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='The ARC CE where the job actually runs.'),
         'queue': SimpleItem(defvalue='', typelist=[str], doc='The queue to send the job to.'),
+        'xRSLextras': SimpleItem(defvalue = None, typelist = [dict, None], doc='Extra things to put into the xRSL for submission.'),
         'reason': SimpleItem(defvalue='', protected=1, copyable=0, doc='Reason of causing the job status'),
         'workernode': SimpleItem(defvalue='', protected=1, copyable=0, doc='The worker node on which the job actually runs.'),
         'isbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The input sandbox URI on ARC CE'),
@@ -861,6 +862,13 @@ sys.exit(0)
 
         xrsl['environment'].update({'GANGA_LCG_CE': self.CE})
         #xrsl['Requirements'] = self.requirements.merge(jobconfig.requirements).convert()
+
+        if self.xRSLextras:
+            for key in self.xRSLextras.keys():
+                if key in xrsl.keys():
+                    xrsl[key].update(self.xRSLextras[key])
+                else:
+                    xrsl[key] = self.xRSLextras[key]
 
         # if self.jobtype.upper() in ['NORMAL','MPICH']:
         #xrsl['JobType'] = self.jobtype.upper()
