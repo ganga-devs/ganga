@@ -43,6 +43,7 @@ class ARC(IBackend):
         'exitcode': SimpleItem(defvalue='', protected=1, copyable=0, doc='Application exit code'),
         'exitcode_arc': SimpleItem(defvalue='', protected=1, copyable=0, doc='Middleware exit code'),
         'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='The ARC CE where the job actually runs.'),
+        'queue': SimpleItem(defvalue='', typelist=[str], doc='The queue to send the job to.'),
         'reason': SimpleItem(defvalue='', protected=1, copyable=0, doc='Reason of causing the job status'),
         'workernode': SimpleItem(defvalue='', protected=1, copyable=0, doc='The worker node on which the job actually runs.'),
         'isbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The input sandbox URI on ARC CE'),
@@ -854,6 +855,7 @@ sys.exit(0)
             #'stderr'                : 'stderr',
             'inputFiles': input_sandbox,
             'outputFiles': output_sandbox,
+            'queue': self.queue,
             #'OutputSandboxBaseDestURI': 'gsiftp://localhost'
         }
 
