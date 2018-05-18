@@ -407,16 +407,25 @@ def checkSEStatus(se, access = 'Write'):
     return result
 
 @diracCommand
-def listFiles(baseDir, td):
+def listFiles(baseDir, minAge = None):
+    ''' Return a list of LFNs for files stored on the grid in the argument
+        directory and its subdirectories
+        param baseDir: Top directory to begin search
+        type baseDir: string
+        param minAge: minimum age of files to be returned
+        type minAge: datetime.timedelta
+    '''
 
     from DIRAC.Resources.Catalog.FileCatalog import FileCatalog
     fc = FileCatalog()
 
-    withMetaData = False
-    if td:
-        withMetaData = True    
-
     from datetime import datetime, timedelta
+
+    withMetaData = False
+    cutoffTime = datetime.utcnow()
+    if minAge:
+        withMetaData = True    
+        cutoffTime = datetime.utcnow() - minAge
 
     baseDir = baseDir.rstrip('/')
 
@@ -440,11 +449,11 @@ def listFiles(baseDir, td):
                 emptyDirs.append( currentDir )
             else:
                 for subdir in sorted( subdirs, reverse=True):
-                    if (not withMetaData) or subdirs[subdir]['CreationDate'] < (datetime.utcnow() - td):
+                    if (not withMetaData) or subdirs[subdir]['CreationDate'] < cutoffTime:
                         activeDirs.append(subdir)
                 for filename in sorted(files):
                     fileOK = False
-                    if (not withMetaData) or files[filename]['MetaData']['CreationDate'] < (datetime.utcnow() - td):
+                    if (not withMetaData) or files[filename]['MetaData']['CreationDate'] < cutoffTime:
                         fileOK = True
 		    if not fileOK:
                         files.pop(filename)
