@@ -3,8 +3,16 @@
 
 
 --------------------------------------------------------------------------------------------------------------
-ganga/ganga/Ganga
+ganga/ganga/GangaCore
 --------------------------------------------------------------------------------------------------------------
-* ...
+* Bugfix for shutdown manager.#1264
+* Added 'queue' to ARC backend to specify queue to submit to. Also added 'xRSLextras', a dict of other options
+and arguments to be added to the xRSL when submitting a job. #1267
+* Bugfix for notebook submission.#1261
+
+--------------------------------------------------------------------------------------------------------------
+ganga/ganga/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Bugfix for DiracFile as inputfile in GaudiExec jobs.#1266
 
 **************************************************************************************************************
