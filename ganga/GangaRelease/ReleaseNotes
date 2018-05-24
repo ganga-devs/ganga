@@ -9,6 +9,7 @@ ganga/ganga/GangaCore
 * Added 'queue' to ARC backend to specify queue to submit to. Also added 'xRSLextras', a dict of other options
 and arguments to be added to the xRSL when submitting a job. #1267
 * Bugfix for notebook submission.#1261
+* Bugfix to display dicts correctly. #1272
 
 --------------------------------------------------------------------------------------------------------------
 ganga/ganga/GangaLHCb
