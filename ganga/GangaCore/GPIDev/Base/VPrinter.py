@@ -23,6 +23,11 @@ def quoteValue(value, interactive=False):
             return str(value)
         else:
             return repr(value)
+    if hasattr(value, "items"):
+        # If it's a mapping like a dict then quote each key and value
+        quoted_list = ["%s:%s"%(quoteValue(k, interactive), quoteValue(v, interactive)) for k,v in value.items()]
+        string_of_list = '{' + ', '.join(quoted_list) + '}'
+        return string_of_list
     try:
         # If it's an iterable like a list or a GangaList then quote each element
         quoted_list = [quoteValue(val, interactive) for val in value]
