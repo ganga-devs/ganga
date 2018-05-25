@@ -462,7 +462,7 @@ under certain conditions; type license() for details.
         import itertools
         logger = getLogger('ReleaseNotes')
         if getConfig('Configuration')['ReleaseNotes'] == True:
-            packages = itertools.imap(lambda x: 'ganga/ganga/' + x, itertools.ifilter(lambda x: x != '', ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
+            packages = itertools.imap(lambda x: 'ganga/ganga/' + x, itertools.ifilter(lambda x: x != '', ['GangaCore'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
             pathname = os.path.join(os.path.dirname(__file__), '..', '..', 'GangaRelease', 'ReleaseNotes-%s' % _gangaVersion)
 
             if not os.path.exists(pathname):
