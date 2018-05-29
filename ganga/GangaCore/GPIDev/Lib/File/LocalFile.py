@@ -124,7 +124,7 @@ class LocalFile(IGangaFile):
 
             d = LocalFile(base_name)
             d.compressed = self.compressed
-
+            d.localDir = sourceDir
             self.subfiles.append(d)
 
     def processWildcardMatches(self):
