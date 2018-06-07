@@ -344,7 +344,7 @@ class DiracBase(IBackend):
                 return has_submitted
 
     def _job_script(self, subjobconfig, master_input_sandbox, tmp_dir):
-        """Get the script to submit a single DIRAC job_
+        """Get the script to submit a single DIRAC job
         Args:
             subjobconfig (unknown):
             master_input_sandbox (list): file names which are in the master sandbox of the master sandbox (if any)
